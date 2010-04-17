@@ -1,0 +1,412 @@
+krscv <- function(xz,
+                  y,
+                  max.K=10,
+                  kernel.type=c("nominal","ordinal"),
+                  restarts=0,
+                  tensor = c("enabled","disabled","auto"),
+                  cv.norm=c("L2","L1")) {
+
+  tensor <- match.arg(tensor)
+  cv.norm <- match.arg(cv.norm)  
+
+  ## First define the cv function to be fed to optim
+
+  kernel.type <- match.arg(kernel.type)
+
+  t1 <- Sys.time()
+
+  cv.func <- function(input,
+                      x,
+                      y,
+                      z,
+                      K,
+                      max.K,
+                      restart,
+                      num.restarts,
+                      z.unique,
+                      ind,
+                      ind.vals,
+                      nrow.z.unique,
+                      kernel.type,
+                      j=NULL,
+                      nrow.K.mat=NULL,
+                      t2=NULL,
+                      tensor=tensor,
+                      cv.norm=cv.norm) {
+
+    ## For model of given complexity search for optimal bandwidths
+
+    if(is.null(K)) {
+      num.x <- NCOL(x)
+      num.z <- NCOL(z)
+      K <- round(input[1:num.x])
+      lambda <- input[(num.x+1):(num.x+num.z)]
+    } else {
+      lambda <- input
+    }
+    ## When using weights= lambda of zero fails. Trivial to trap.
+    lambda <- ifelse(lambda <= 0, .Machine$double.eps, lambda)
+
+    cv <- cv.kernel.spline(x=x,
+                           y=y,
+                           z=z,
+                           K=K,
+                           lambda=lambda,
+                           z.unique=z.unique,
+                           ind=ind,
+                           ind.vals=ind.vals,
+                           nrow.z.unique=nrow.z.unique,
+                           kernel.type=kernel.type,
+                           tensor=tensor)
+
+    ## Some i/o unless options(crs.messages=FALSE)
+
+    fw.format.3 <- function(input) sapply(input,sprintf,fmt="%#.3f")
+    fw.format.2 <- function(input) sapply(input,sprintf,fmt="%#.2f")
+    if(!is.null(j)) {
+      if(j==1) {
+        tmp.1 <- paste(j,"/",nrow.K.mat,", k[1]=",K[1],sep="")
+      } else {
+        dt <- (t2-t1)*(nrow.K.mat-j+1)/j
+        tmp.0 <- paste(", ",fw.format.2(as.numeric(dt,units="mins")),"/",
+                       fw.format.2(as.numeric((t2-t1),units="mins")),
+                       "m",sep="")
+        tmp.1 <- paste(j,"/",nrow.K.mat,tmp.0,", k[1]=",K[1],sep="")
+      }
+    } else {
+      tmp.1 <- paste("k[1]=", K[1],sep="")
+    }
+    if(num.x > 1) for(i in 2:num.x) tmp.1 <- paste(tmp.1, ", k[", i, "]=", K[i],sep="")
+    tmp.2 <- paste(", rs=", restart, "/", num.restarts,sep="")
+    tmp.3 <- ""
+    for(i in 1:num.z) tmp.3 <- paste(tmp.3, ", l[", i, "]=", fw.format.3(lambda[i]),sep="")
+    tmp.4 <- paste(", cv=", format(cv,digits=6), sep="")
+    if(num.restarts > 0) {
+      msg <- paste(tmp.1,tmp.2,tmp.3,tmp.4,sep="")
+    } else {
+      msg <- paste(tmp.1,tmp.3,tmp.4,sep="")
+    }
+
+    console <<- printClear(console)
+    console <<- printPush(msg,console = console)
+
+    return(cv)
+
+  }
+
+  xztmp <- splitFrame(xz,factor.to.numeric=TRUE)
+  x <- xztmp$x
+  z <- xztmp$z
+  if(is.null(z)) stop(" categorical kernel smoothing requires ordinal/nominal predictors")
+
+  z <- as.matrix(xztmp$z)
+  num.z <- NCOL(z)
+  z.unique <- uniquecombs(z)
+  ind <-  attr(z.unique,"index")
+  ind.vals <-  unique(ind) #sort(unique(ind))
+  nrow.z.unique <- NROW(z.unique)
+  num.x <- NCOL(x)
+  n <- NROW(x)
+
+  ## check whether tensor spline dimension results in zero/low df...
+
+  k <- max.K^num.x + ifelse(tensor!="disabled",max.K*num.x,0)
+  df <- n - k
+  if(df <= 0) {
+    stop(paste(" maximum spline dimension (",k,") equals/exceeds sample size (",n,")\n   perhaps use tensor=\"disabled\" or else decrease degree.max",sep=""))
+  } else if(df <= 10) {
+    warning(paste(" maximum spline dimension (",k,") and sample size (",n,") close",sep=""))
+  }
+
+  if(min(table(ind)) <= k) stop(paste(" insufficient data for one or more unique combinations of z (",min(table(ind))," obs.)\n   in order to estimate spline at max.K (",k," bases):\n   either reduce max.K or collapse categories",sep=""))
+
+  if(max.K < 1) stop(" max.K must be greater than or equal to 1")
+
+  console <- newLineConsole()
+  console <- printPush("Working...",console = console)
+
+  ## Exhaustive evaluation over all combinations of K, search over
+  ## lambda for each combination
+
+  K.mat <- matrix.combn(0:max.K,num.x)
+  nrow.K.mat <- NROW(K.mat)
+  cv.min.vec <- numeric(nrow.K.mat)
+  tensor.vec <- character(nrow.K.mat)
+  lambda.mat <- matrix(NA,nrow.K.mat,num.z)
+
+  cv.min <- .Machine$double.xmax
+
+  t2 <- Sys.time() ## placeholder
+
+  output <- list()
+  output.restart <- list()
+
+  for(j in 1:nrow.K.mat) {
+
+    if(tensor=="auto") {
+
+      ## First tensor=="enabled"
+
+      output$convergence <- 42
+
+      while(output$convergence != 0) {
+
+        output <- optim(par=runif(num.z),
+                        cv.func,
+                        lower=rep(0,num.z),
+                        upper=rep(1,num.z),
+                        method="L-BFGS-B",
+                        x=x,
+                        y=y,
+                        z=z,
+                        K=K.mat[j,],
+                        max.K=max.K,
+                        restart=0,
+                        num.restarts=restarts,
+                        z.unique=z.unique,
+                        ind=ind,
+                        ind.vals=ind.vals,
+                        nrow.z.unique=nrow.z.unique,
+                        kernel.type=kernel.type,
+                        j=j,
+                        nrow.K.mat=nrow.K.mat,
+                        t2=t2,
+                        tensor="enabled")
+
+      }
+
+      if(restarts > 0) {
+
+        for(r in 1:restarts) {
+          
+          output.restart$convergence <- 42
+          
+          while(output.restart$convergence != 0) {
+
+            output.restart <- optim(par=runif(num.z),
+                                    cv.func,
+                                    lower=rep(0,num.z),
+                                    upper=rep(1,num.z),
+                                    method="L-BFGS-B",
+                                    x=x,
+                                    y=y,
+                                    z=z,
+                                    K=K.mat[j,],
+                                    max.K=max.K,
+                                    restart=r,
+                                    num.restarts=restarts,
+                                    z.unique=z.unique,
+                                    ind=ind,
+                                    ind.vals=ind.vals,
+                                    nrow.z.unique=nrow.z.unique,
+                                    kernel.type=kernel.type,
+                                    j=j,
+                                    nrow.K.mat=nrow.K.mat,
+                                    t2=t2,
+                                    tensor="enabled")
+
+          }
+
+          if(output.restart$value < output$value) output <- output.restart
+
+        }
+
+      } ## end restarts
+
+      cv.min.vec[j] <- output$value
+      tensor.vec[j] <- "enabled"
+
+      if(output$value < cv.min) {
+        output.opt <- output
+        cv.min <- output$value
+        K.opt <- K.mat[j,]
+        lambda.opt <- output$par
+        tensor.opt <- "enabled"
+      }
+
+      ## Next, tensor=="disabled"
+
+      output$convergence <- 42
+
+      while(output$convergence != 0) {
+
+        output <- optim(par=runif(num.z),
+                        cv.func,
+                        lower=rep(0,num.z),
+                        upper=rep(1,num.z),
+                        method="L-BFGS-B",
+                        x=x,
+                        y=y,
+                        z=z,
+                        K=K.mat[j,],
+                        max.K=max.K,
+                        restart=0,
+                        num.restarts=restarts,
+                        z.unique=z.unique,
+                        ind=ind,
+                        ind.vals=ind.vals,
+                        nrow.z.unique=nrow.z.unique,
+                        kernel.type=kernel.type,
+                        j=j,
+                        nrow.K.mat=nrow.K.mat,
+                        t2=t2,
+                        tensor="disabled")
+
+      }
+
+      if(restarts > 0) {
+
+        for(r in 1:restarts) {
+
+          output.restart$convergence <- 42
+
+          while(output.restart$convergence != 0) {
+
+            output.restart <- optim(par=runif(num.z),
+                                    cv.func,
+                                    lower=rep(0,num.z),
+                                    upper=rep(1,num.z),
+                                    method="L-BFGS-B",
+                                    x=x,
+                                    y=y,
+                                    z=z,
+                                    K=K.mat[j,],
+                                    max.K=max.K,
+                                    restart=r,
+                                    num.restarts=restarts,
+                                    z.unique=z.unique,
+                                    ind=ind,
+                                    ind.vals=ind.vals,
+                                    nrow.z.unique=nrow.z.unique,
+                                    kernel.type=kernel.type,
+                                    j=j,
+                                    nrow.K.mat=nrow.K.mat,
+                                    t2=t2,
+                                    tensor="disabled")
+
+          }
+
+          if(output.restart$value < output$value) output <- output.restart
+
+        }
+
+      } ## end restarts
+
+      if(output$value < cv.min) {
+        output.opt <- output
+        cv.min <- output$value
+        K.opt <- K.mat[j,]
+        lambda.opt <- output$par
+        tensor.opt <- "disabled"
+        cv.min.vec[j] <- output$value
+        tensor.vec[j] <- "disabled"
+      }
+
+      lambda.mat[j,] <- output$par
+
+    } else { ## end auto
+
+      ## Either tensor=="enabled" or "disabled"
+
+      output$convergence <- 42
+
+      while(output$convergence != 0) {
+
+        output <- optim(par=runif(num.z),
+                        cv.func,
+                        lower=rep(0,num.z),
+                        upper=rep(1,num.z),
+                        method="L-BFGS-B",
+                        x=x,
+                        y=y,
+                        z=z,
+                        K=K.mat[j,],
+                        max.K=max.K,
+                        restart=0,
+                        num.restarts=restarts,
+                        z.unique=z.unique,
+                        ind=ind,
+                        ind.vals=ind.vals,
+                        nrow.z.unique=nrow.z.unique,
+                        kernel.type=kernel.type,
+                        j=j,
+                        nrow.K.mat=nrow.K.mat,
+                        t2=t2,
+                        tensor=tensor)
+
+      }
+
+      if(restarts > 0) {
+
+        for(r in 1:restarts) {
+
+          output.restart$convergence <- 42
+
+          while(output.restart$convergence != 0) {
+
+            output.restart <- optim(par=runif(num.z),
+                                    cv.func,
+                                    lower=rep(0,num.z),
+                                    upper=rep(1,num.z),
+                                    method="L-BFGS-B",
+                                    x=x,
+                                    y=y,
+                                    z=z,
+                                    K=K.mat[j,],
+                                    max.K=max.K,
+                                    restart=r,
+                                    num.restarts=restarts,
+                                    z.unique=z.unique,
+                                    ind=ind,
+                                    ind.vals=ind.vals,
+                                    nrow.z.unique=nrow.z.unique,
+                                    kernel.type=kernel.type,
+                                    j=j,
+                                    nrow.K.mat=nrow.K.mat,
+                                    t2=t2,
+                                    tensor=tensor)
+
+          }
+
+          if(output.restart$value < output$value) output <- output.restart
+
+        }
+
+      } ## end restarts
+
+      if(output$value < cv.min) {
+        output.opt <- output
+        cv.min <- output$value
+        K.opt <- K.mat[j,]
+        lambda.opt <- output$par
+        tensor.opt <- tensor
+      }
+
+      tensor.vec[j] <- tensor
+      cv.min.vec[j] <- output$value
+      lambda.mat[j,] <- output$par
+
+    }
+
+    t2 <- Sys.time()
+
+  }
+
+  console <- printClear(console)
+  console <- printPop(console)
+
+  if(any(K.opt==max.K)) warning(paste(" optimal K equals search maximum (", max.K,"): rerun with larger max.K",sep=""))
+
+  crscv(K=K.opt,
+        I=NULL,
+        tensor=tensor.opt,
+        tensor.vec=tensor.vec,
+        max.K=max.K,
+        restarts=restarts,
+        K.mat=K.mat,
+        lambda=lambda.opt,
+        lambda.mat=lambda.mat,
+        cv.func=cv.min,
+        cv.func.vec=as.matrix(cv.min.vec))
+
+}

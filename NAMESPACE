@@ -1,0 +1,20 @@
+useDynLib(crs)
+import(stats)
+export(crs,
+       krscv,
+       frscv,
+       gsl.bs)
+
+S3method(crs, formula)
+S3method(crs, default)
+
+S3method(print, crscv)
+S3method(summary, crscv)
+
+S3method(print, crs)
+S3method(summary, crs)
+S3method(predict, crs)
+S3method(plot, crs)
+
+S3method(gsl.bs, default)
+S3method(predict, gsl.bs)

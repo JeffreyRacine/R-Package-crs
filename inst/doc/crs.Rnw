@@ -1,0 +1,431 @@
+% $Id: jss_np.Rnw,v 1.69 2008/07/22 19:01:59 jracine Exp jracine $
+
+%\VignetteIndexEntry{The crs Package}
+%\VignetteDepends{crs}
+%\VignetteKeywords{nonparametric, spline, categorical}
+%\VignettePackage{crs}
+
+\documentclass[nojss]{jss}
+
+%% need no \usepackage{Sweave.sty}
+
+\usepackage{amsmath}
+\usepackage{enumitem}
+\usepackage[utf8x]{inputenc} 
+
+\newcommand{\field}[1]{\mathbb{#1}}
+\newcommand{\R}{\field{R}}
+
+\author{Jeffrey S.~Racine\\McMaster University}
+
+\title{The \pkg{crs} Package}
+
+\Plainauthor{Jeffrey S.~Racine}
+
+\Plaintitle{The crs Package}
+
+\Abstract{ 
+  
+  This vignette outlines the implementation of the regression spline
+  method contained in the \proglang{R} \pkg{crs} package, and also
+  presents a few illustrative examples.
+
+}
+
+\Keywords{nonparametric, semiparametric, regression spline,
+  categorical data}
+
+\Plainkeywords{Nonparametric, spline, econometrics, categorical}
+
+\Address{Jeffrey S.~Racine\\
+  Department of Economics\\
+  McMaster University\\
+  Hamilton, Ontario, Canada, L8S 4L8\\
+  E-mail: \email{racinej@mcmaster.ca}\\
+  URL: \url{http://www.mcmaster.ca/economics/racine/}\\
+}
+
+\begin{document}
+
+%% Note that you should use the \pkg{}, \proglang{} and \code{} commands.
+
+%% Note - fragile using \label{} in \section{} - must be outside
+
+%% For graphics
+
+<<eval=TRUE,echo=FALSE,keep.source=TRUE,results=hide>>=
+library(crs)
+options(prompt = "R> ", crs.messages = FALSE, digits = 3)
+@ 
+
+%% <<fig=TRUE,eval=TRUE, height=, width=>>=
+
+\section*{Introduction}
+
+The \pkg{crs} package implements a framework for nonparametric
+regression that admits both continuous and categorical predictors. The
+categorical predictors can be handled in two ways, namely 1) using
+kernel weighting where the kernel functions are tailored to the
+discrete support of the categorical predictors \citep{RACINE_LI:2004},
+and 2) using indicator basis functions. This package implements the
+approach described in \citep{MA_RACINE_YANG:2010} when the option
+\code{kernel=TRUE} is selected as described below. As well, it
+implements related methods that the author is currently developing.
+
+
+Cross-validation (leave-out-out, \citeauthor{STONE:1974}
+\citeyear{STONE:1974}, \citeauthor{STONE:1977} \citeyear{STONE:1977})
+is relied on for selecting unknowns that impact on model
+performance. In particular,
+
+\begin{enumerate}
+  [label=(\roman{*}),ref=(\roman{*})]
+
+\item the degree of the spline for each dimension of the continuous
+  predictors can be manually specified or chosen by leave-one-out
+  cross-validation
+
+\item bandwidths for each dimension of the categorical predictors can
+  be specified manually or chosen by leave-one-out cross-validation
+  
+\item when the indicator basis functions are used instead, whether to
+  include each categorical predictor or not can be specified manually
+  or chosen via leave-one-out cross-validation
+  
+\item we allow the degree of the spline for each dimension of the
+  continuous predictors to include zero and when the degree is zero
+  the variable is thereby excluded from the regression: in this
+  manner, irrelevant variables, whether continuous or categorical, can
+  be automatically removed negating the need for pre-testing and so
+  forth (\citeauthor{HALL_RACINE_LI:2004}
+  \citeyear{HALL_RACINE_LI:2004}, \citeauthor{HALL_LI_RACINE:2007}
+  \citeyear{HALL_LI_RACINE:2007})
+  
+\end{enumerate}
+
+The design philosophy of the \pkg{crs} package aims to closely mimic
+the behavior of the \code{lm} function. Indeed, the implementation
+relies on \code{lm} for computation of the spline coefficients,
+obtaining fitted values, prediction and the like. 95\% confidence
+bounds for the fit and derivatives are constructed from asymptotic
+formulae and automatically generated. Below we describe in more detail
+the specifics of the implementation for the interested reader.
+
+\section*{Implementation}
+
+Spline regression methods can be limited in their potential
+applicability as they are predicated on \emph{continuous}
+predictors. However, in applied settings we often encounter
+\emph{categorical} predictors such as strength of preference
+(``strongly prefer'', ``weakly prefer'', ``indifferent'' etc.) and so
+forth. When confronted with categorical predictors, researchers
+typically break their data into subsets governed by the values of the
+categorical predictors (i.e.~they break their data into `cells') and
+then conduct regression using only the response and continuous
+predictors lying in each cell. Though consistent, this `frequency'
+approach can be inefficient. Recent developments in the kernel
+smoothing of categorical data \citep{LI_RACINE:2007} suggest more
+efficient estimation approaches in such settings. The \pkg{crs}
+package considers two complementary approaches that seamlessly handles
+the mix of continuous and categorical predictors often encountered in
+applied settings.
+
+For the continuous predictors the regression spline model employs the
+B-spline routines in the GNU Scientific Library. The B-spline function
+is the maximally differentiable interpolative basis function (B-spline
+stands for `basis-spline').
+
+Heuristically, we conduct linear (in parameter) regression using the
+\proglang{R} function \code{lm}. However, we replace the continuous
+predictors with B-splines of potentially differing order for every
+continuous predictor. We adopt the \code{intercept=FALSE} variants
+(the B-splines will therefore not sum to one, i.e., an order $m$
+B-spline has $m+1$ columns and we drop the first as is often done) and
+include instead an intercept in the model. This allows multiple bases
+to coexist when there is more than one continuous predictor without
+introducing singularities. In addition to these bases we also allow
+for inclusion of their tensor product (interaction) defined by
+\begin{equation*}
+B_1\otimes B_2\otimes \dots \otimes B_p,
+\end{equation*}
+where $\otimes$ is the Kronecker product where the products operate
+column-wise and $B_j$ is the basis matrix for predictor $j$ as
+outlined above. When the tensor product of the $p$ B-spline bases is
+omitted we have a semiparametric `additive' spline model, otherwise we
+have a fully nonparametric (with interaction among all variables)
+model. Whether to include the tensor product or not can be
+automatically determined via leave-line-out cross-validation (see the
+options for \code{tensor=} in \code{?crs}).
+
+We offer the option to use categorical kernel weighting
+(\code{lm(\dots,weights=L)}) to handle the presence of categorical
+predictors (see below for a description of \code{L}). We also offer the
+option of using indicator basis functions for the categorical
+predictors (again taking care to remove one column to avoid
+singularity given the presence of the intercept term in the
+model). These bases are then treated similar to the bases $B_j$ for
+continuous predictors described above.
+
+Figure \ref{gsl matplot} presents an example of a B-spline and its
+first derivative (the spline derivatives are required in order to
+compute derivatives from the spline regression model).
+
+\setkeys{Gin}{width=0.45\textwidth}
+\begin{figure}[!ht]
+\begin{center}
+<<fig=TRUE,echo=FALSE,keep.source=TRUE>>=
+degree <- 5
+x <- seq(0,1,length=1000)
+B <- gsl.bs(x,degree=degree,intercept=TRUE)
+matplot(x,B,type="l")
+@ 
+<<fig=TRUE,echo=FALSE,keep.source=TRUE>>=
+deriv <- 1
+B <- gsl.bs(x,degree=degree,deriv=deriv,intercept=TRUE)
+matplot(x,B,type="l")
+@ 
+\caption{\label{gsl matplot}A degree-\Sexpr{degree} B-spline (left)
+  and its \Sexpr{deriv}-order derivative (right).}
+\end{center}
+\end{figure}
+
+\subsection*{Kernel Weighting}
+
+Let $Z_i$ be an $r$-dimensional vector of categorical/discrete
+predictors.  We use $z_s$ to denote the $s$-th component of $z$, we
+assume that $z_s$ takes $c_s$ different values in $D_s
+\stackrel{def}{=} \{0,1,\dots ,c_s-1\}$, $s=1,\dots,r$, and let
+$c_s\geq 2$ be a finite positive constant. For expositional simplicity
+we will consider the case in which the components of $z$ are
+unordered.
+
+For an unordered categorical predictor, we suggest using a variant of
+the kernel function outlined in \citep{AITCHISON_AITKEN:1976} defined
+as
+\begin{equation}
+  \label{eq:barL(new)}
+  l( Z_{is}, z_{s},\lambda_s) =
+  \left\{ \begin{array}{ll} 1, & \text{ when $ Z_{is} = z_s$},\\
+      \lambda_s, &  \text{  otherwise}.
+    \end{array}  \right.
+\end{equation}
+Let ${\bf 1}(A)$ denote the usual indicator function, which assumes
+the value one if $A$ holds true, zero otherwise. Using
+\eqref{eq:barL(new)}, we can construct a product kernel function given
+by
+\begin{equation*}
+  L(Z_i,z,\lambda) = \prod_{s=1}^r l( Z_{is},z_s,\lambda_s) =
+  \prod_{s=1}^{r} \lambda_s^{ {\bf 1}( Z_{is} \neq z_s) }.
+\end{equation*}
+
+Note that when $\lambda_s=1$ all observations are `pooled' hence the
+variable $z_s$ is removed from the resulting estimate, while when
+$\lambda_s=0$ only observations lying in a given cell are used to form
+the estimate.
+
+\subsection*{Estimation}
+
+Estimating the model requires construction of the spline bases and
+their tensor product (if specified) along with the categorical kernel
+weighting function. Then, for a given degree for each dimension of the
+continuous predictors and bandwidth for the categorical predictors (or
+indicator bases), the model is fit via least-squares. Alternatively,
+the degree and bandwidth can be jointly determined via leave-one-out
+cross-validation via the option \code{cv=TRUE}. This then evaluates
+the model for each unique combination of degree for each continuous
+predictor from \code{degree=0} through \code{degree=degree.max}
+(default 5). For each unique combination of degree, the bandwidths
+($\in[0,1]$) are obtained via numerical minimization (see
+\code{optim}) and restarting can be conducted via
+\code{restarts=}. The model possessing the lowest cross-validation
+criterion is then selected as the final model.
+
+\subsection*{Cross-Validation}
+
+Letting $\hat\varepsilon_i$ denote the $i$th residual from the
+categorical regression spline model, the leave-one-out
+cross-validation function is given by
+\begin{equation*}
+CV=\frac{1}{n}\sum_{i=1}^n\frac{\hat\varepsilon_i^2}{(1-h_{ii})^2}
+\end{equation*}
+and this computation can be done with effectively one pass through the
+data set, where $h_{tt}$ denotes the $t$th diagonal element of the
+spline basis projection matrix. Since $h_{tt}$ is computed routinely
+for robust diagnostics by many statistics programs, this can be
+computed along with (and hence as cheaply as) the vector of spline
+coefficients themselves. Thus leave-one-out cross-validation is
+computationally appealing, particularly for large data sets.
+
+\subsection*{Pruning}
+
+Once a model has been selected via cross-validation
+(i.e. \code{degree}, \code{include} or \code{lambda}), there is the
+opportunity to (potentially) further refine the model by adding the
+option \code{prune=TRUE} to the \code{crs} function call. Pruning
+is accomplished by conducting stepwise cross-validated variable
+selection using a modified version of the \code{stepAIC} function in
+the \proglang{R} \pkg{MASS} package where the function
+\code{extractAIC} is replaced with the function \code{extractCV} with
+additional modifications where necessary. Pruning of potentially
+superfluous bases is undertaken, however, the pruned model
+(potentially containing a subset of the bases) is returned \emph{only
+  if its cross-validation score is lower than the model being
+  pruned}. When this is not the case a warning is issued to this
+effect. A final pruning stage is commonplace in the spline framework
+and may positively impact on the finite-sample efficiency of the
+resulting estimator depending on the rank of the model being
+pruned. Note that this option can only be applied when
+\code{kernel=FALSE}.
+
+\section*{Illustrative Examples}
+
+Next we provide a few illustrative examples that may be of interest to
+the reader.
+
+\subsection*{Example 1 - One Categorical/One Continuous Predictor}
+
+By way of illustration we consider a simple example involving one
+continuous and one discrete predictor.
+
+<<echo=TRUE,keep.source=TRUE>>=
+set.seed(1234)
+n <- 1000
+x <- runif(n)
+z <- rbinom(n,1,.5)
+y <- cos(2*pi*x) + z + rnorm(n,sd=1)
+z <- factor(z)
+model <- crs(y~x+z,cv=TRUE,tensor="auto",kernel=TRUE)
+summary(model)
+@ 
+
+The function \code{crs} called in this example returns a
+\code{crs} object.  The generic functions \code{fitted} and
+\code{residuals} extract (or generate) estimated values and
+residuals. Furthermore, the functions \code{summary}, \code{predict},
+and \code{plot} (options \code{mean=FALSE}, \code{deriv=FALSE},
+\code{ci=FALSE}, \code{plot.behavior} = \code{c("plot"},
+\code{"plot-data"}, \code{"data")}) support objects of this
+type. Figure \ref{crs plot} presents summary output in the form of
+partial regression surfaces (predictors not appearing on the axes are
+held constant at their medians/modes).
+
+\setkeys{Gin}{width=0.75\textwidth}
+\begin{figure}[!ht]
+\begin{center}
+<<fig=TRUE,multifig=TRUE,echo=FALSE,keep.source=TRUE>>=
+options(SweaveHooks = list(multifig = function() par(mfrow=c(2,2))))
+plot(model,mean=TRUE)
+@ 
+\caption{\label{crs plot}A simple example using
+  \code{plot(model,mean=TRUE)}.}
+\end{center}
+\end{figure}
+
+\subsection*{Example 2 - Regression Discontinuity Design}
+
+By way of illustration we consider a simple example involving two
+continuous predictors and one categorical predictor. In this example
+there is a `discontinuity' in the regression surface potentially
+demarcated by the discrete predictor.
+
+<<echo=TRUE,keep.source=TRUE>>=
+set.seed(1234)
+n <- 10000
+x1 <- runif(n)
+x2 <- runif(n)
+dgp <- numeric(n)
+z <- ifelse(x1>.5,1,0)
+dgp <- cos(2*pi*x1)+sin(2*pi*x2)+2*z
+z <- factor(z)
+y <- dgp + rnorm(n,sd=1)
+model <- crs(y~x1+x2+z,cv=TRUE,tensor="auto",degree.max=8)
+summary(model)
+@ 
+
+Figure \ref{rdd plot} plots the resulting estimate. The discontinuity
+occurs when $x_1>0.5$ but the nature of the discontinuity is unknown
+as is the functional form on either side of the potential
+discontinuity. The categorical regression spline is able to detect
+this `break' and testing for a significant break involves nothing more
+than an (asymptotic) F-test as the following illustrates (note the
+argument \code{include=0} says to drop the one categorical predictor
+or, say, \code{c(1,1,\dots,0,1\dots,1)} for multivariate categorical
+predictors).
+
+<<echo=TRUE,keep.source=TRUE>>=
+## When kernel=FALSE, we could use the anova() function
+model.res <- crs(y~x1+x2+z,degree=model$degree,tensor=model$tensor,include=0)
+anova(model.res$model.lm,model$model.lm)
+## As this only works with kernel=FALSE, we could also do this manually...
+F <- model$df.residual*(sum(residuals(model.res)^2)
+                        -sum(residuals(model)^2))/sum(residuals(model)^2)
+F
+## Compute the P-value for the F-statistic
+P <- 1-pf(F,1,model$df.residual)
+P
+@ 
+
+Note that \code{summary} supports the option \code{sigtest=TRUE} that
+conducts an F-test for significance for each predictor (though be
+warned that this can be fragile when \code{tensor="enabled"}).
+
+<<echo=TRUE,keep.source=TRUE>>=
+summary(model,sigtest=TRUE)
+@ 
+
+\setkeys{Gin}{width=0.75\textwidth}
+\begin{figure}[!ht]
+\begin{center}
+<<fig=TRUE,echo=FALSE,keep.source=TRUE>>=
+num.eval <- 50
+x1.seq.0 <- seq(min(x1[z==0]),max(x1[z==0]),length=num.eval)
+x2.seq.0 <- seq(min(x2[z==0]),max(x2[z==0]),length=num.eval)
+x.grid <- expand.grid(x1.seq.0,x2.seq.0)
+newdata <- data.frame(x1=x.grid[,1],x2=x.grid[,2],z=factor(rep(0,num.eval**2),levels=c(0,1)))
+z0 <- matrix(predict(model,newdata=newdata),num.eval,num.eval)
+
+x1.seq.1 <- seq(min(x1[z==1]),max(x1[z==1]),length=num.eval)
+x2.seq.1 <- seq(min(x2[z==1]),max(x2[z==1]),length=num.eval)
+x.grid <- expand.grid(x1.seq.1,x2.seq.1)
+newdata <- data.frame(x1=x.grid[,1],x2=x.grid[,2],z=factor(rep(1,num.eval),levels=c(0,1)))
+z1 <- matrix(predict(model,newdata=newdata),num.eval,num.eval)
+xlim <- c(0,1)
+zlim=c(min(z0,z1),max(z0,z1))
+theta <- 15
+phi <- 10
+persp(x=x1.seq.0,y=x2.seq.0,z=z0,
+      xlab="x1",ylab="x2",zlab="y",
+      xlim=xlim,
+      ylim=xlim,      
+      zlim=zlim,
+      ticktype="detailed",      
+      border="red",
+      theta=theta,phi=phi)
+par(new=TRUE)
+persp(x=x1.seq.1,y=x2.seq.1,z=z1,
+      xlab="x1",ylab="x2",zlab="y",
+      xlim=xlim,
+      ylim=xlim,      
+      zlim=zlim,
+      theta=theta,phi=phi,
+      ticktype="detailed",
+      border="blue")
+@ 
+\caption{\label{rdd plot}Regression discontinuity design estimated
+  by \code{crs}.}
+\end{center}
+\end{figure}
+
+
+\section*{Acknowledgements}
+
+I would like to gratefully acknowledge support from the Natural
+Sciences and Engineering Research Council of Canada
+(\url{http://www.nserc.ca}), the Social Sciences and Humanities
+Research Council of Canada (\url{http://www.sshrc.ca}), and the Shared
+Hierarchical Academic Research Computing Network
+(\url{http://www.sharcnet.ca}).
+
+\bibliography{crs}
+
+\end{document}

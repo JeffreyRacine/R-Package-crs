@@ -1,0 +1,348 @@
+\name{crs}
+\alias{crs}
+\alias{crs.default}
+\alias{crs.formula}
+\title{Categorical Regression Splines}
+
+\description{ \code{crs} computes a regression spline estimate of a
+    one (1) dimensional dependent variable on an \code{r}-dimensional
+    vector of continuous and categorical
+    (\code{\link{factor}}/\code{\link{ordered}}) predictors.}
+
+\usage{
+crs(\dots)
+\method{crs}{default}(xz,
+    y,
+    degree,
+    include = NULL,
+    kernel = FALSE,
+    lambda = NULL,
+    kernel.type = c("nominal","ordinal"),
+    tensor = c("enabled","disabled","auto"),
+    deriv = 0,
+    data.return = FALSE,
+    prune = FALSE,
+    \dots)
+
+\method{crs}{formula}(formula,
+    data = list(),
+    degree = NULL,
+    include = NULL,
+    degree.max = 5,
+    cv = NULL,
+    cv.norm = c("L2", "L1"),
+    kernel = FALSE,
+    lambda = NULL,
+    kernel.type = c("nominal","ordinal"),
+    tensor = c("enabled","disabled","auto"),
+    deriv = 0,
+    data.return = FALSE,
+    prune = FALSE,
+    \dots)
+}
+\arguments{
+  
+  \item{xz}{ numeric (\code{x}) and or ordinal/nominal factor predictors
+    (\code{z}) }
+  
+  \item{y}{ a numeric vector of responses. }
+  
+  \item{degree}{ integer/vector specifying the degree of the regression
+    spline for each dimension of the continuous \code{x}}
+  
+  \item{include}{ integer/vector specifying whether each of the
+  ordinal/nominal predictors in \code{x} are included or omitted from
+  the resulting estimate }
+
+  \item{kernel.type}{
+    a character string indicating whether the kernel
+    for the discrete predictors \code{z} should be unordered
+    (\dQuote{\code{nominal}}, default) or ordered
+    (\dQuote{\code{ordinal}}) - see \code{\link{crs}} for details
+  }
+  
+  \item{lambda}{ a vector of bandwidths for each dimension of the
+  categorical \code{z}}
+  
+  \item{formula}{ a symbolic description of the model to be fit }
+  
+  \item{data}{ an optional data frame containing the variables in the
+  model }
+  
+  \item{cv}{ a logical value (default \code{cv=FALSE}) indicating
+    whether to perform cross-validated model selection or not }
+
+  \item{cv.norm}{ a character string (default \code{cv.norm="L2"})
+  indicating whether the L2-norm is used (sum of squared delete-one
+  residuals) or the L1-norm (sum of absolute delete-one-residuals) in
+  the cross-validation function }
+
+  \item{kernel}{ a logical value (default \code{kernel=FALSE})
+    indicating whether to use kernel smoothing or not }
+
+  \item{degree.max}{ the maximum degree of the spline in each dimension
+    for the continuous predictors (default \code{degree.max=5})}
+
+  \item{tensor}{ a character string (default \code{tensor="enabled"})
+  indicating whether tensor product terms (i.e. interaction terms) are
+  included in the model or not. Note this can be automatically
+  determined by cross-validation if \code{cv=TRUE} and
+  \code{tensor="auto"}, and is an \sQuote{all or none} proposition
+  (i.e. interaction terms for all predictors or for no predictors given
+  the nature of \sQuote{tensor products}) }
+
+  \item{deriv}{ an integer \code{l} (default \code{deriv=0}) specifying
+  whether to compute the univariate \code{l}th partial derivative for
+  each continuous predictor (and difference in levels for each
+  categorical predictor) or not and if so what order. Note that if
+  \code{deriv} is higher than the spline degree of the associated
+  continuous predictor then the derivative will be zero and a warning
+  issued to this effect }
+
+  \item{data.return}{ a logical value indicating whether to return
+  \code{x,z,y} or not (default \code{data.return=FALSE}) }
+
+  \item{prune}{ a logical value (default \code{prune=FALSE}) specifying
+   whether the (final) model is to be \sQuote{pruned} using a stepwise
+   cross-validation criterion based upon a modified version of
+   \code{\link[MASS]{stepAIC}} (see below for details) }
+
+  \item{\dots}{ optional arguments }
+  
+}
+
+\details{
+
+  Typical usages are (see below for a  list of options and also
+  the examples at the end of this help file)
+  \preformatted{
+    ## Categorical data should be cast before call (necessary for plot method)
+    z <- factor(z) 
+    model <- crs(y~x+z,cv=TRUE,kernel=TRUE,tensor="auto")
+    
+    ## Categorical data should be cast before call (necessary for plot method)
+    z1 <- factor(z1)
+    z2 <- factor(z2)
+    model <- crs(y~x1+x2+z1+z2,degree=c(3,4),lambda=c(.1,.2),kernel=TRUE)
+    }
+    
+  \code{crs} computes a regression spline estimate of a one (1)
+  dimensional dependent variable on an \code{r}-dimensional vector of
+  continuous and categorical
+  (\code{\link{factor}}/\code{\link{ordered}}) predictors.
+
+  The regression spline model employs the tensor product B-spline basis
+  matrix for a multivariate polynomial spline via the B-spline routines
+  in the GNU Scientific Library and the
+  \code{\link{tensor.prod.model.matrix}} function in the \pkg{mgcv}
+  package.
+
+  When \code{tensor="disabled"} the model becomes additive (additively
+  separable) in nature (i.e. no interaction terms thus semiparametric
+  not fully nonparametric).
+
+  When \code{kernel=FALSE} the model uses indicator basis functions for
+  the ordinal/nominal predictors rather than kernel weighting.
+
+  When \code{kernel=TRUE} the product kernel function for the discrete
+  predictors is of the \sQuote{Li-Racine} type (see Li and Racine (2007)
+  for details).
+  
+  When \code{kernel=TRUE}, numerical search is undertaken using
+  \code{\link{optim}} and the box-constrained \code{L-BFGS-B} method
+  (see \code{\link{optim}} for details). The user may restart the
+  algorithm as many times as desired via the \code{restarts} argument
+  (default \code{restarts=0}). The approach ascends from \code{degree=0}
+  through \code{degree.max} and for each value of \code{degree} searches
+  for the optimal bandwidths. After the most complex model has been
+  searched then the optimal \code{degree}/\code{lambda} combination is
+  selected. If any element of the optimal \code{degree} vector coincides
+  with \code{degree.max} a warning is produced and the user ought to
+  restart their search with a larger value of \code{degree.max}.
+
+  Note that the default \code{plot} method for a \code{crs} object
+  provides some diagnostic measures, in particular, a) residuals versus
+  fitted values (useful for checking the assumption that
+  \code{E(u|x)=0}), b) a normal quantile-quantile plot which allows
+  residuals to be assessed for normality (\code{\link{qqnorm}}), c) a
+  scale-location plot that is useful for checking the assumption that
+  the errors are iid and, in particular, that the variance is
+  homogeneous, and d) \sQuote{Cook's distance} which computes the
+  single-case influence function. See below for other arguments for the
+  plot function for a \code{crs} object.
+
+  Note that setting \code{prune=TRUE} produces a final \sQuote{pruning}
+  of the model via a stepwise cross-validation criterion achieved by
+  modifying \code{\link[MASS]{stepAIC}} and replacing \code{extractAIC}
+  with \code{extractCV} throughout the function. This option may be
+  enabled to remove potentially superfluous bases thereby improving the
+  finite-sample efficiency of the resulting model.  Note that if the
+  cross-validation score for the pruned model is no better than that for
+  the original model then the original model is returned with a warning
+  to this effect. Note also that this option can only be used when
+  \code{kernel=FALSE}.
+  
+}
+
+\value{
+
+  \code{crs} returns a \code{crs} object.  The generic functions
+    \code{\link{fitted}} and \code{\link{residuals}} extract (or
+    generate) estimated values and residuals. Furthermore, the functions
+    \code{\link{summary}}, \code{\link{predict}}, and \code{\link{plot}}
+    (options \code{mean=FALSE}, \code{deriv=FALSE}, \code{ci=FALSE},
+    \code{plot.behavior=c("plot","plot-data","data")}) support objects
+    of this type. The returned object has the following components:
+
+  \item{fitted.values}{ estimates of the regression function
+    (conditional mean) at the sample points or evaluation points }
+
+  \item{lwr,upr}{ lower/upper bound for a 95\% confidence interval for
+  the \code{fitted.values} (conditional mean) obtained from
+  \code{\link{predict.lm}} via the argument
+  \code{interval="confidence"}}
+
+  \item{residuals}{ residuals computed at the sample points or
+  evaluation points }
+
+  \item{degree}{ integer/vector specifying the degree of the regression
+    spline for each dimension of the continuous \code{x}}
+  
+  \item{include}{ integer/vector specifying whether each of the
+  ordinal/nominal predictors \code{z} are included or omitted from the
+  resulting estimate if \code{kernel=FALSE} (see below)}
+
+  \item{kernel}{ a logical value indicating whether kernel smoothing was
+  used (\code{kernel=TRUE}) or not }
+  
+  \item{lambda}{ vector of bandwidths used if \code{kernel=TRUE}}
+  
+  \item{call}{ a symbolic description of the model  }
+  
+  \item{r.squared}{ coefficient of determination }
+
+  \item{model.lm}{ an object of \sQuote{\code{\link{class}}}
+  \sQuote{\code{\link{lm}}} if \code{kernel=FALSE} or a list of objects
+  of \sQuote{\code{\link{class}}} \sQuote{\code{\link{lm}}} if
+  \code{kernel=TRUE} (accessed by \code{model.lm[[1]]},
+  \code{model.lm[[2]]},\dots,. By way of example, if \code{foo} is a
+  \code{crs} object and \code{kernel=FALSE}, then \code{foo$model.lm}
+  is an object of \sQuote{\code{\link{class}}}
+  \sQuote{\code{\link{lm}}}, while objects of
+  \sQuote{\code{\link{class}}} \sQuote{\code{\link{lm}}} return the
+  \code{\link{model.frame}} in \code{model.lm$model} which can be
+  accessed via \code{foo$model.lm$model} where \code{foo} is the
+  \code{crs} object (the model frame \code{foo$model.lm$model}
+  contains the B-spline bases underlying the estimate which might be of
+  interest). Again by way of example, when \code{kernel=TRUE} then
+  \code{foo$model.lm[[1]]$model} contains the model frame for the first
+  unique combination of categorical predictors,
+  \code{foo$model.lm[[2]]$model} the second and so forth (the weights
+  will potentially differ for each model depending on the value(s) of
+  \code{lambda})}
+
+  \item{deriv.mat}{ a matrix of derivatives (or differences in levels
+  for the categorical \code{z}) whose order is determined by
+  \code{deriv=} in the \code{crs} call }
+
+  \item{deriv.mat.lwr}{ a matrix of 95\% coverage lower bounds for
+  \code{deriv.mat}}
+
+  \item{deriv.mat.upr}{ a matrix of 95\% coverage upper bounds for
+  \code{deriv.mat}}
+
+  \item{hatvalues}{ the \code{\link{hatvalues}} for the estimated model}
+
+}
+  
+\section{Usage Issues}{
+
+  In order for \code{\link{plot}} to function properly with the options
+  \code{mean=TRUE} and \code{deriv=TRUE}, you need to properly cast your
+  categorical predictors prior to listing them in the
+  \code{\link{formula}} interface.
+  
+  Note that \code{summary} supports the option \code{sigtest=TRUE} that
+  conducts an F-test for significance for each predictor (though be
+  warned that this can be fragile when \code{tensor="enabled"}).
+
+}
+\references{
+
+  Racine, J.S and L. Yang and S. Ma (2010), \dQuote{Spline Regression in
+  the Presence of Categorical Predictors,} manuscript.
+
+  Li, Q. and J.S. Racine (2007), \emph{Nonparametric Econometrics:
+		Theory and Practice,} Princeton University Press.
+
+}
+
+\author{
+  Jeffrey S. Racine \email{racinej@mcmaster.ca}
+}
+
+%\section{Usage Issues}{
+%}
+
+\seealso{
+  \code{\link{loess}}, \code{\link[np]{npreg}}
+}
+
+\examples{
+set.seed(123)
+## Example - simulated data
+n <- 10000
+num.eval <- 50
+x1 <- runif(n)
+x2 <- runif(n)
+z <- rbinom(n,1,.5)
+dgp <- cos(2*pi*x1)+sin(2*pi*x2)+z
+z <- factor(z)
+y <- dgp + rnorm(n,sd=.5)
+
+## Estimate a model with specified degree and bandwidth
+model <- crs(y~x1+x2+z,degree=c(5,5),lambda=c(0.1),kernel=TRUE)
+summary(model)
+
+## Perspective plot
+x1.seq <- seq(min(x1),max(x1),length=num.eval)
+x2.seq <- seq(min(x2),max(x2),length=num.eval)
+x.grid <- expand.grid(x1.seq,x2.seq)
+newdata <- data.frame(x1=x.grid[,1],x2=x.grid[,2],
+                      z=factor(rep(0,num.eval**2),levels=c(0,1)))
+z0 <- matrix(predict(model,newdata=newdata),num.eval,num.eval)
+newdata <- data.frame(x1=x.grid[,1],x2=x.grid[,2],
+                      z=factor(rep(1,num.eval),levels=c(0,1)))
+z1 <- matrix(predict(model,newdata=newdata),num.eval,num.eval)
+zlim=c(min(z0,z1),max(z0,z1))
+persp(x=x1.seq,y=x2.seq,z=z0,
+      xlab="x1",ylab="x2",zlab="y",zlim=zlim,
+      ticktype="detailed",      
+      border="red",
+      theta=45,phi=45)
+par(new=TRUE)
+persp(x=x1.seq,y=x2.seq,z=z1,
+      xlab="x1",ylab="x2",zlab="y",zlim=zlim,
+      theta=45,phi=45,
+      ticktype="detailed",
+      border="blue")
+
+## Partial regression surface plot
+plot(model,mean=TRUE,ci=TRUE)
+\dontrun{
+## A plot example where we extract the partial surfaces, confidence
+## intervals etc. automatically generated by plot(mean=TRUE,...) but do
+## not plot, rather save for separate use.
+pdat <- plot(model,mean=TRUE,ci=TRUE,plot.behavior="data")
+
+## Column 1 is the (evaluation) predictor ([,1]), 2-4 ([,-1]) the mean,
+## lwr, and upr (note the returned value is a `list' hence pdat[[1]] is
+## data for the first predictor, pdat[[2]] the second etc). Note that
+## matplot() can plot this nicely.
+matplot(pdat[[1]][,1],pdat[[1]][,-1],
+        xlab=names(pdat[[1]][1]),ylab=names(pdat[[1]][2]),
+        lty=c(1,2,2),col=c(1,2,2),type="l")
+}
+}
+\keyword{nonparametric}
+

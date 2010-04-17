@@ -1,0 +1,211 @@
+Changes from Version 0.13.4 to 0.13.5 [17-Apr-2010]
+
+* changed package and function names to `crs' as Lijian strictly
+  prefers `regression spline' to `smoothing spline' (The major
+  difference is to place knots on sample points (smoothing spline,
+  Wahba) or on equidistant deterministic points (B spline, Stone))
+
+Changes from Version 0.13.3 to 0.13.4 [07-Apr-2010]
+
+* fixed annoying "Working... Working" in plot (message produced by
+  predict.*.spline sufficient here)
+
+* added option for L1 CV (incomplete as properly this would require L1
+  estimation as well)
+
+* neglected to set cv and cv.pruned when degree is zero (fixed)
+
+* adjusted R-squared corrected
+
+Changes from Version 0.13.2 to 0.13.3 [28-Mar-2010]
+
+* had to revamp derivative code to support pruning by taking out the
+  reordering prior to derivative estimation - new approach is more
+  natural with less issues. Examples all pass with flying colors
+
+* had to modify the add1.lm function (modified version is add1.lm.cv)
+  to flesh out stepCV
+
+Changes from Version 0.13.1 to 0.13.2 [28-Mar-2010]
+
+* modified stepAIC code from the MASS package to admit the
+  cross-validation objective function, renamed to stepCV to not
+  clobber users using stepAIC - this is a three line addition of the
+  extractCV() function followed by wholesale replacement of AIC with
+  CV - appears to work perfectly and now pruning returns models that
+  indeed improve in terms of CV (was mixing objective functions
+  pruning with stepAIC at the final stage (BIC) and hence testing for
+  model that improves etc.)
+
+Changes from Version 0.13.0 to 0.13.1 [25-Mar-2010]
+
+* migrated pruning inside predict.factor.spline, derivatives not
+  crashing and are working for one continuous regressor - one major
+  benefit is that the object is now a proper cssreg object hence
+  predict etc. are fully supported (the old function prune.cssreg
+  could not do this)
+
+Changes from Version 0.12.6 to 0.13.0 [22-Mar-2010]
+
+* added prune.cssreg that allows for a final pruning stage a la
+  Friedman's MARS, or alternatively a BIC model selection criterion to
+  complement cross-validation - I prefer first running
+  cross-validation as it operates at the _variable_ level while
+  stepAIC operates at the individual basis level
+
+* added passing back of hatvalues from predict.factor.spline and
+  predict.kernel.spline to facilitate default plot (added Cook's
+  Distance)
+
+* fixed corner case via data.frame(as.matrix(P))
+
+* added passing of se back in fitted.values[,4] so now confidence
+  intervals for differences in levels are implemented (though no cov()
+  term). Also, went through code and cleaned up all lingering
+  issues. A true milestone hence the new cssver
+
+Changes from Version 0.12.5 to 0.12.6 [22-Mar-2010]
+
+* lwr/upr error bounds (95% cis) now being returned and used in plot
+  when ci=TRUE - lingering issue with differences in levels
+
+Changes from Version 0.12.4 to 0.12.5 [21-Mar-2010]
+
+* no longer using ncoeffs as a passable parameter, rather nbreak (>=2)
+
+* all appears to be working smoothly. Now passing back model/model
+  list for cssreg. Next standard errors from predict and for
+  derivatives.
+
+Changes from Version 0.12.3 to 0.12.4 [20-Mar-2010]
+
+* kernel derivatives implemented and appear to be working
+  properly. drop=FALSE populated so that as.matrix() no longer needed
+  and handles corner cases of nrow=1 in matrices etc. This is the
+  first real fully functioning version with multivariate derivatives
+  etc. appearing to work. Passes R CMD check and numerous toy
+  examples. One big improvement is adding factor.to.numeric to
+  splitFrame() to admit both numeric and character string factors.
+
+Changes from Version 0.12.2 to 0.12.3 [20-Mar-2010]
+
+* streamlining code, removing now redundant functions (prod.spline can
+  be handled by prod.kernel.spline so removed former and renamed the
+  latter to prod.spline throughout)
+
+Changes from Version 0.12.1 to 0.12.2 [16-Mar-2010]
+
+* fitted and predict are faster than the matrix multiplication I am
+  using (not to mention simpler) - moving to these for simplicity and
+  to facilitate standard errors
+
+Changes from Version 0.12.0 to 0.12.1 [16-Mar-2010]
+
+* multivariate gradients working with tensor enabled/disabled - now
+  cleaning up to match np in terms of functionality
+
+Changes from Version 0.11.9 to 0.12.0 [13-Mar-2010]
+
+* gradients successfully implemented - remains to get factor/ordered
+  in plot and allowing for plot to handle factor in formula (not a
+  high priority)
+
+Changes from Version 0.11.8 to 0.11-9 [13-Mar-2010]
+
+* adding S3 plot class
+
+* support for mean and (continuous) derivatives with drawback that
+  data must be cast as a factor to work
+
+Changes from Version 0.11.6 to 0.11-8 [13-Mar-2010]
+
+* multivariate bugs squashed for factor estimator... now to test for
+  kernel... if working, we move on to a plot method for the fit and
+  derivatives
+
+Changes from Version 0.11.5 to 0.11-6 [11-Mar-2010]
+
+* multivariate derivatives implemented and appear to be working, at
+  least when tensor is disabled so I can verify
+
+* next to add to predict in order to get evaluation (attribute? could
+  add gradients function to do this? a bit odd but not sure what else
+  would be easier)
+
+Changes from Version 0.11.4 to 0.11-5 [11-Mar-2010]
+
+* about to begin adding derivatives
+
+Changes from Version 0.10-8 to 0.11-4 [11-Mar-2010]
+
+* total reworking of package for S3 methods - now one function cssreg
+  that does it all, supports predict properly etc. Big effort but now
+  much happier with code (streamlined and simpler to maintain)
+
+* gsl spline support for derivatives, have dumped spline package as it
+  is missing its S-Plus counterpart's derivative capabilities
+
+Changes from Version 0.10-8 to 0.10-9 [4-Mar-2010]
+
+* cleaned up and lingering bugs gone related to use of predict.bs (now
+  compares exactly with pre package code)
+
+Changes from Version 0.10-7 to 0.10-8 [4-Mar-2010]
+
+* added factor smoothing splines using indicator basis functions
+
+* this (fssreg) supplants ssreg, so will have a change from x=matrix
+  to x=data frame shortly
+
+* corrected glitch in B-splines and reverting to using predict.bs as
+  previously
+
+* removing poly() splines and switch
+
+Changes from Version 0.10-6 to 0.10-7 [2-Mar-2010]
+
+* removed straight search pending MIQP solver in R 
+
+* added better i/o to help gauge time to completion
+
+* fixed bug in dimension warning
+
+* added more trapping of issues for small cells having less data than
+  the spline degree etc. prior to beginning search
+
+Changes from Version 0.10-5 to 0.10-6 [1-Mar-2010]
+
+* multivariate x now implemented and working in ssregcv and cssregcv
+  for exhaustive search - issues remain with straight search
+  (parscale, ndeps etc.)
+
+Changes from Version 0.10-4 to 0.10-5 [27-Feb-2010]
+
+* new functions predict.spline, model.spline, and cv.spline
+  automatically handle K=0 and z/no z cases - code much more modular
+  hence handling multivariate x will in principle be simplified
+
+Changes from Version 0.10-3 to 0.10-4 [27-Feb-2010]
+
+* implementing tensor product splines in function to facilitate
+  multivariate x and make codebase easier to handle - handle base case
+  of zero in this function so use intercept=TRUE
+
+* revisiting search with discrete K
+
+Changes from Version 0.10-2 to 0.10-3 [26-Feb-2010]
+
+* added S3 predict method for ssreg and cssreg
+
+* added ssreg and ssregcv for continuous-only x case to facilitate
+  comparison of improvements
+
+* added wage1 and cps71 data and examples
+
+Changes from Version 0.00-0 to 0.10-2 [24-Feb-2010]
+
+* S3 methods for summary, print
+
+* created functions cssreg and cssregcv
+
+* initial version of the css package
