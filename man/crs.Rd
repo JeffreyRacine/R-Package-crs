@@ -262,9 +262,10 @@ crs(\dots)
   categorical predictors prior to listing them in the
   \code{\link{formula}} interface.
   
-  Note that \code{summary} supports the option \code{sigtest=TRUE} that
-  conducts an F-test for significance for each predictor (though be
-  warned that this can be fragile when \code{tensor="enabled"}).
+  Note that \code{\link{summary}} supports the option
+  \code{sigtest=TRUE} that conducts an F-test for significance for each
+  predictor (though be warned that this can be fragile when
+  \code{tensor="enabled"}).
 
 }
 \references{

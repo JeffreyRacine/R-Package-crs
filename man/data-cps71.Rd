@@ -33,16 +33,16 @@ data(cps71)
 attach(cps71)
 require(np)
 
-model.ss <- crs(logwage~age,cv=TRUE)
+model.crs <- crs(logwage~age,cv=TRUE)
 
 model.np <- npreg(logwage~age,regtype="ll",bwmethod="cv.aic")
 
 plot(age,logwage,cex=0.25,col="grey")
-lines(age,fitted(model.ss))
+lines(age,fitted(model.crs))
 lines(age,fitted(model.np),col="red",lty=2)
 legend(22.5,15,c("Regression Spline","Local Linear"),lty=c(1,2),col=c("black","red"))
 
-summary(model.ss)
+summary(model.crs)
 summary(model.np)
 detach("package:np")
 }
