@@ -19,7 +19,7 @@ krscv(xz,
       max.K=10,
       kernel.type=c("nominal","ordinal"),
       restarts=0,
-      tensor = c("enabled","disabled","auto"),
+      basis = c("additive-tensor","additive","tensor","auto"),
       cv.norm = c("L2","L1"))
 }
 
@@ -50,10 +50,10 @@ krscv(xz,
     values, defaults to \code{0}
   }
 
-  \item{tensor}{ a character string (default \code{tensor="enabled"})
+  \item{basis}{ a character string (default \code{basis="enabled"})
   indicating whether tensor product terms (i.e. interaction terms) are
   included in the model or not. Note this is automatically determined
-  when \code{tensor="auto"}, and is an \sQuote{all or none}
+  when \code{basis="auto"}, and is an \sQuote{all or none}
   proposition (i.e. interaction terms for all predictors or for no
   predictors) }
 

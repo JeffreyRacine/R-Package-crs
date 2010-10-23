@@ -3,10 +3,10 @@ krscv <- function(xz,
                   max.K=10,
                   kernel.type=c("nominal","ordinal"),
                   restarts=0,
-                  tensor = c("enabled","disabled","auto"),
+                  basis = c("additive-tensor","additive","tensor","auto"),
                   cv.norm=c("L2","L1")) {
 
-  tensor <- match.arg(tensor)
+  basis <- match.arg(basis)
   cv.norm <- match.arg(cv.norm)  
 
   ## First define the cv function to be fed to optim
@@ -31,7 +31,7 @@ krscv <- function(xz,
                       j=NULL,
                       nrow.K.mat=NULL,
                       t2=NULL,
-                      tensor=tensor,
+                      basis=basis,
                       cv.norm=cv.norm) {
 
     ## For model of given complexity search for optimal bandwidths
@@ -57,7 +57,7 @@ krscv <- function(xz,
                            ind.vals=ind.vals,
                            nrow.z.unique=nrow.z.unique,
                            kernel.type=kernel.type,
-                           tensor=tensor)
+                           basis=basis)
 
     ## Some i/o unless options(crs.messages=FALSE)
 
@@ -110,15 +110,15 @@ krscv <- function(xz,
 
   ## check whether tensor spline dimension results in zero/low df...
 
-  k <- max.K^num.x + ifelse(tensor!="disabled",max.K*num.x,0)
+  k <- max.K^num.x + ifelse(basis!="additive",max.K*num.x,0)
   df <- n - k
   if(df <= 0) {
-    stop(paste(" maximum spline dimension (",k,") equals/exceeds sample size (",n,")\n   perhaps use tensor=\"disabled\" or else decrease degree.max",sep=""))
+    stop(paste(" maximum spline dimension (",k,") equals/exceeds sample size (",n,")\n   perhaps use basis=\"additive\" or else decrease degree.max",sep=""))
   } else if(df <= 10) {
     warning(paste(" maximum spline dimension (",k,") and sample size (",n,") close",sep=""))
   }
-
-  if(min(table(ind)) <= k) stop(paste(" insufficient data for one or more unique combinations of z (",min(table(ind))," obs.)\n   in order to estimate spline at max.K (",k," bases):\n   either reduce max.K or collapse categories",sep=""))
+# 17/06/10 - really dig into what this tests and whether it is necessary or not (probably is!)
+#  if(min(table(ind)) <= k) stop(paste(" insufficient data for one or more unique combinations of z (",min(table(ind))," obs.)\n   in order to estimate spline at max.K (",k," bases):\n   either reduce max.K or collapse categories",sep=""))
 
   if(max.K < 1) stop(" max.K must be greater than or equal to 1")
 
@@ -131,7 +131,7 @@ krscv <- function(xz,
   K.mat <- matrix.combn(0:max.K,num.x)
   nrow.K.mat <- NROW(K.mat)
   cv.min.vec <- numeric(nrow.K.mat)
-  tensor.vec <- character(nrow.K.mat)
+  basis.vec <- character(nrow.K.mat)
   lambda.mat <- matrix(NA,nrow.K.mat,num.z)
 
   cv.min <- .Machine$double.xmax
@@ -143,9 +143,9 @@ krscv <- function(xz,
 
   for(j in 1:nrow.K.mat) {
 
-    if(tensor=="auto") {
+    if(basis=="auto") {
 
-      ## First tensor=="enabled"
+      ## First basis=="additive-tensor"
 
       output$convergence <- 42
 
@@ -171,7 +171,7 @@ krscv <- function(xz,
                         j=j,
                         nrow.K.mat=nrow.K.mat,
                         t2=t2,
-                        tensor="enabled")
+                        basis="additive-tensor")
 
       }
 
@@ -203,7 +203,7 @@ krscv <- function(xz,
                                     j=j,
                                     nrow.K.mat=nrow.K.mat,
                                     t2=t2,
-                                    tensor="enabled")
+                                    basis="additive-tensor")
 
           }
 
@@ -214,17 +214,17 @@ krscv <- function(xz,
       } ## end restarts
 
       cv.min.vec[j] <- output$value
-      tensor.vec[j] <- "enabled"
+      basis.vec[j] <- "additive-tensor"
 
       if(output$value < cv.min) {
         output.opt <- output
         cv.min <- output$value
         K.opt <- K.mat[j,]
         lambda.opt <- output$par
-        tensor.opt <- "enabled"
+        basis.opt <- "additive-tensor"
       }
 
-      ## Next, tensor=="disabled"
+      ## Next, basis=="additive"
 
       output$convergence <- 42
 
@@ -250,7 +250,7 @@ krscv <- function(xz,
                         j=j,
                         nrow.K.mat=nrow.K.mat,
                         t2=t2,
-                        tensor="disabled")
+                        basis="additive")
 
       }
 
@@ -282,7 +282,7 @@ krscv <- function(xz,
                                     j=j,
                                     nrow.K.mat=nrow.K.mat,
                                     t2=t2,
-                                    tensor="disabled")
+                                    basis="additive")
 
           }
 
@@ -297,16 +297,16 @@ krscv <- function(xz,
         cv.min <- output$value
         K.opt <- K.mat[j,]
         lambda.opt <- output$par
-        tensor.opt <- "disabled"
+        basis.opt <- "additive"
         cv.min.vec[j] <- output$value
-        tensor.vec[j] <- "disabled"
+        basis.vec[j] <- "additive"
       }
 
       lambda.mat[j,] <- output$par
 
     } else { ## end auto
 
-      ## Either tensor=="enabled" or "disabled"
+      ## Either basis=="additive-tensor" or "additive"
 
       output$convergence <- 42
 
@@ -332,7 +332,7 @@ krscv <- function(xz,
                         j=j,
                         nrow.K.mat=nrow.K.mat,
                         t2=t2,
-                        tensor=tensor)
+                        basis=basis)
 
       }
 
@@ -364,7 +364,7 @@ krscv <- function(xz,
                                     j=j,
                                     nrow.K.mat=nrow.K.mat,
                                     t2=t2,
-                                    tensor=tensor)
+                                    basis=basis)
 
           }
 
@@ -379,10 +379,10 @@ krscv <- function(xz,
         cv.min <- output$value
         K.opt <- K.mat[j,]
         lambda.opt <- output$par
-        tensor.opt <- tensor
+        basis.opt <- basis
       }
 
-      tensor.vec[j] <- tensor
+      basis.vec[j] <- basis
       cv.min.vec[j] <- output$value
       lambda.mat[j,] <- output$par
 
@@ -399,8 +399,8 @@ krscv <- function(xz,
 
   crscv(K=K.opt,
         I=NULL,
-        tensor=tensor.opt,
-        tensor.vec=tensor.vec,
+        basis=basis.opt,
+        basis.vec=basis.vec,
         max.K=max.K,
         restarts=restarts,
         K.mat=K.mat,

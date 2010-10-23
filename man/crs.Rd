@@ -18,7 +18,7 @@ crs(\dots)
     kernel = FALSE,
     lambda = NULL,
     kernel.type = c("nominal","ordinal"),
-    tensor = c("enabled","disabled","auto"),
+    basis = c("additive-tensor","additive","tensor","auto"),
     deriv = 0,
     data.return = FALSE,
     prune = FALSE,
@@ -34,7 +34,7 @@ crs(\dots)
     kernel = FALSE,
     lambda = NULL,
     kernel.type = c("nominal","ordinal"),
-    tensor = c("enabled","disabled","auto"),
+    basis = c("additive-tensor","additive","tensor","auto"),
     deriv = 0,
     data.return = FALSE,
     prune = FALSE,
@@ -83,11 +83,11 @@ crs(\dots)
   \item{degree.max}{ the maximum degree of the spline in each dimension
     for the continuous predictors (default \code{degree.max=5})}
 
-  \item{tensor}{ a character string (default \code{tensor="enabled"})
+  \item{basis}{ a character string (default \code{basis="additive-tensor"})
   indicating whether tensor product terms (i.e. interaction terms) are
   included in the model or not. Note this can be automatically
   determined by cross-validation if \code{cv=TRUE} and
-  \code{tensor="auto"}, and is an \sQuote{all or none} proposition
+  \code{basis="auto"}, and is an \sQuote{all or none} proposition
   (i.e. interaction terms for all predictors or for no predictors given
   the nature of \sQuote{tensor products}) }
 
@@ -118,7 +118,7 @@ crs(\dots)
   \preformatted{
     ## Categorical data should be cast before call (necessary for plot method)
     z <- factor(z) 
-    model <- crs(y~x+z,cv=TRUE,kernel=TRUE,tensor="auto")
+    model <- crs(y~x+z,cv=TRUE,kernel=TRUE,basis="auto")
     
     ## Categorical data should be cast before call (necessary for plot method)
     z1 <- factor(z1)
@@ -137,7 +137,7 @@ crs(\dots)
   \code{\link{tensor.prod.model.matrix}} function in the \pkg{mgcv}
   package.
 
-  When \code{tensor="disabled"} the model becomes additive (additively
+  When \code{basis="additive"} the model becomes additive (additively
   separable) in nature (i.e. no interaction terms thus semiparametric
   not fully nonparametric).
 
@@ -265,7 +265,7 @@ crs(\dots)
   Note that \code{\link{summary}} supports the option
   \code{sigtest=TRUE} that conducts an F-test for significance for each
   predictor (though be warned that this can be fragile when
-  \code{tensor="enabled"}).
+  \code{basis="additive-tensor"}).
 
 }
 \references{

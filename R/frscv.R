@@ -1,10 +1,10 @@
 frscv <- function(xz,
                   y,
                   max.K=10,
-                  tensor = c("enabled","disabled","auto"),
+                  basis = c("additive-tensor","additive","tensor","auto"),
                   cv.norm=c("L2","L1")) {
 
-  tensor <- match.arg(tensor)
+  basis <- match.arg(basis)
   cv.norm <- match.arg(cv.norm)  
 
   t1 <- Sys.time()
@@ -19,7 +19,7 @@ frscv <- function(xz,
                       j=NULL,
                       nrow.KI.mat=NULL,
                       t2=NULL,
-                      tensor=tensor,
+                      basis=basis,
                       cv.norm=cv.norm) {
 
     if(missing(input) || missing(x) || missing(y) || missing(max.K)) stop(" you must provide input, x, y, and max.K")
@@ -44,7 +44,7 @@ frscv <- function(xz,
                            z=z,
                            K=K,
                            I=I,
-                           tensor=tensor)
+                           basis=basis)
 
     ## Some i/o unless options(crs.messages=FALSE)
 
@@ -110,15 +110,15 @@ frscv <- function(xz,
     num.bases.z <- numeric(length=num.z)
     for(i in 1:num.z) num.bases.z[i] <- (length(unique(as.numeric(z[,i])))-1)
     k <- k + sum(num.bases.z)    
-    k <- k + ifelse(tensor!="disabled",max.K^num.x*prod(num.bases.z),0)
+    k <- k + ifelse(basis!="additive",max.K^num.x*prod(num.bases.z),0)
   } else {
-    k <- k + ifelse(tensor!="disabled",max.K^num.x,0)
+    k <- k + ifelse(basis!="additive",max.K^num.x,0)
   }
 
   df <- n - k
 
   if(df <= 0) {
-    stop(paste(" maximum spline dimension (",k,") equals/exceeds sample size (",n,")\n   perhaps use tensor=\"disabled\" or else decrease degree.max",sep=""))
+    stop(paste(" maximum spline dimension (",k,") equals/exceeds sample size (",n,")\n   perhaps use basis=\"additive\" or else decrease degree.max",sep=""))
   } else if(df <= 10) {
     warning(paste(" maximum spline dimension (",k,") and sample size (",n,") close",sep=""))
   }
@@ -132,14 +132,14 @@ frscv <- function(xz,
     KI.mat <- matrix.combn(0:max.K,num.x)
   }
   nrow.KI.mat <- NROW(KI.mat)
-  tensor.vec <- character(nrow.KI.mat)
+  basis.vec <- character(nrow.KI.mat)
   cv.min.vec <- numeric(nrow.KI.mat)
 
   cv.min <- .Machine$double.xmax
 
   for(j in 1:nrow.KI.mat) {
 
-    if(tensor=="auto") {
+    if(basis=="auto") {
 
       output <- cv.func(input=KI.mat[j,],
                         x=x,
@@ -151,13 +151,13 @@ frscv <- function(xz,
                         j=j,
                         nrow.KI.mat=nrow.KI.mat,
                         t2=Sys.time(),
-                        tensor="enabled")
+                        basis="additive-tensor")
 
       if(output < cv.min) {
         cv.min <- output
         K.opt <- KI.mat[j,1:num.x]
-        tensor.opt <- "enabled"
-        tensor.vec[j] <- "enabled"
+        basis.opt <- "additive-tensor"
+        basis.vec[j] <- "additive-tensor"
         if(!is.null(z)) I.opt <- KI.mat[j,(num.x+1):(num.x+num.z)]
       }
 
@@ -171,19 +171,19 @@ frscv <- function(xz,
                         j=j,
                         nrow.KI.mat=nrow.KI.mat,
                         t2=Sys.time(),
-                        tensor="disabled")
+                        basis="additive")
 
       if(output < cv.min) {
         cv.min <- output
         K.opt <- KI.mat[j,1:num.x]
-        tensor.opt <- "disabled"
-        tensor.vec[j] <- "disabled"
+        basis.opt <- "additive"
+        basis.vec[j] <- "additive"
         if(!is.null(z)) I.opt <- KI.mat[j,(num.x+1):(num.x+num.z)]
       }
 
     } else {
 
-      ## not auto, so use either "enabled" or "disabled"
+      ## not auto, so use either "additive-tensor" or "additive"
 
       output <- cv.func(input=KI.mat[j,],
                         x=x,
@@ -195,13 +195,13 @@ frscv <- function(xz,
                         j=j,
                         nrow.KI.mat=nrow.KI.mat,
                         t2=Sys.time(),
-                        tensor=tensor)
+                        basis=basis)
 
       if(output < cv.min) {
         cv.min <- output
         K.opt <- KI.mat[j,1:num.x]
-        tensor.opt <- tensor
-        tensor.vec[j] <- tensor
+        basis.opt <- basis
+        basis.vec[j] <- basis
         if(!is.null(z)) I.opt <- KI.mat[j,(num.x+1):(num.x+num.z)]
       }
 
@@ -220,8 +220,8 @@ frscv <- function(xz,
 
   crscv(K=K.opt,
         I=I.opt,
-        tensor=tensor.opt,
-        tensor.vec=tensor.vec,
+        basis=basis.opt,
+        basis.vec=basis.vec,
         max.K=max.K,
         K.mat=KI.mat,
         restarts=NULL,

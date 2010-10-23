@@ -22,7 +22,7 @@ crsEst <- function(xz,
                    kernel=FALSE,
                    lambda=NULL,
                    kernel.type=c("nominal","ordinal"),
-                   tensor=c("enabled","disabled","auto"),
+                   basis=c("additive-tensor","additive","tensor","auto"),
                    deriv=0,
                    data.return=FALSE,
                    prune=FALSE,
@@ -31,7 +31,7 @@ crsEst <- function(xz,
   ## Take data frame xz and parse into factors (z) and numeric (x).
 
   kernel.type <- match.arg(kernel.type)
-  tensor <- match.arg(tensor)
+  basis <- match.arg(basis)
 
   if(!kernel) {
     xztmp <- splitFrame(xz)
@@ -65,7 +65,7 @@ crsEst <- function(xz,
                                    z=z,
                                    K=degree,
                                    I=include,
-                                   tensor=tensor,
+                                   basis=basis,
                                    prune=prune)
 
     prune.index <- model$prune.index
@@ -84,7 +84,7 @@ crsEst <- function(xz,
                                      z=z,
                                      K=degree,
                                      I=include,
-                                     tensor=tensor,
+                                     basis=basis,
                                      deriv.index=m,
                                      deriv=deriv,
                                      prune.index=prune.index)
@@ -102,7 +102,7 @@ crsEst <- function(xz,
                                          z=z,
                                          K=degree,
                                          I=include,
-                                         tensor=tensor,
+                                         basis=basis,
                                          prune=prune,
                                          prune.index=prune.index)$fitted.values
 
@@ -113,7 +113,7 @@ crsEst <- function(xz,
                                               I=include,
                                               xeval=x,
                                               zeval=ztmp,
-                                              tensor=tensor,
+                                              basis=basis,
                                               prune=prune,
                                               prune.index=prune.index)$fitted.values
 
@@ -139,7 +139,7 @@ crsEst <- function(xz,
                                    K=degree,
                                    lambda=lambda,
                                    kernel.type=kernel.type,
-                                   tensor=tensor)
+                                   basis=basis)
 
     prune.index <- NULL
 
@@ -158,7 +158,7 @@ crsEst <- function(xz,
                                      K=degree,
                                      lambda=lambda,
                                      kernel.type=kernel.type,
-                                     tensor=tensor,
+                                     basis=basis,
                                      deriv.index=m,
                                      deriv=deriv)
 
@@ -177,7 +177,7 @@ crsEst <- function(xz,
                                          K=degree,
                                          lambda=lambda,
                                          kernel.type=kernel.type,
-                                         tensor=tensor)$fitted.values
+                                         basis=basis)$fitted.values
 
           zpred.base <- predict.kernel.spline(x=x,
                                               y=y,
@@ -187,7 +187,7 @@ crsEst <- function(xz,
                                               kernel.type=kernel.type,
                                               xeval=x,
                                               zeval=ztmp,
-                                              tensor=tensor)$fitted.values
+                                              basis=basis)$fitted.values
 
           deriv.mat[,i] <- zpred[,1]-zpred.base[,1]
           deriv.mat.lwr[,i] <- deriv.mat[,i] - qnorm(0.975)*sqrt(zpred[,4]^2+zpred.base[,4]^2)
@@ -218,7 +218,7 @@ crsEst <- function(xz,
               include=include,
               lambda=lambda,
               kernel=kernel,
-              tensor=tensor,
+              basis=basis,
               num.x=num.x,
               num.z=num.z,
               xnames=xnames,
@@ -250,14 +250,14 @@ crs.default <- function(xz,
                         kernel=FALSE,
                         lambda=NULL,
                         kernel.type=c("nominal","ordinal"),
-                        tensor=c("enabled","disabled","auto"),
+                        basis=c("additive-tensor","additive","tensor","auto"),
                         deriv=0,
                         data.return=FALSE,
                         prune=FALSE,
                         ...) {
 
   kernel.type <- match.arg(kernel.type)
-  tensor <- match.arg(tensor)
+  basis <- match.arg(basis)
 
   est <- crsEst(xz=xz,
                    y=y,
@@ -266,7 +266,7 @@ crs.default <- function(xz,
                    kernel=kernel,
                    lambda=lambda,
                    kernel.type=kernel.type,
-                   tensor=tensor,
+                   basis=basis,
                    deriv=deriv,
                    data.return=data.return,
                    prune=prune)
@@ -297,7 +297,7 @@ crs.formula <- function(formula,
                         kernel=FALSE,
                         lambda=NULL,
                         kernel.type=c("nominal","ordinal"),
-                        tensor=c("enabled","disabled","auto"),
+                        basis=c("additive-tensor","additive","tensor","auto"),
                         deriv=0,
                         data.return=FALSE,
                         prune=FALSE,
@@ -305,7 +305,7 @@ crs.formula <- function(formula,
 
   cv.norm <- match.arg(cv.norm)
   kernel.type <- match.arg(kernel.type)
-  tensor <- match.arg(tensor)
+  basis <- match.arg(basis)
 
   mf <- model.frame(formula=formula, data=data)
   mt <- attr(mf, "terms")
@@ -317,7 +317,7 @@ crs.formula <- function(formula,
 
   if(is.null(degree)&&is.null(include)&&is.null(cv)&&is.null(lambda)) warning(" no degree/include/cv/lambda arguments given: default model is degree=1")
 
-  if(!is.null(cv)&&tensor=="enabled"&&NCOL(xz)>1) warning(" cv specified but tensor set to enabled: you might consider tensor=\"auto\"")
+  if(!is.null(cv)&&basis=="additive-tensor"&&NCOL(xz)>1) warning(" cv specified but basis set to additive-tensor: you might consider basis=\"auto\"")
 
   if(kernel==TRUE&&prune==TRUE) warning(" pruning cannot coexist with categorical kernel smoothing (pruning ignored)")
 
@@ -329,11 +329,11 @@ crs.formula <- function(formula,
       cv <- frscv(xz=xz,
                   y=y,
                   max.K=degree.max,
-                  tensor=tensor,
+                  basis=basis,
                   cv.norm=cv.norm)
       degree <- cv$K
       include <- cv$I
-      tensor <- cv$tensor
+      basis <- cv$basis
     }
 
   } else {
@@ -344,11 +344,11 @@ crs.formula <- function(formula,
       cv <- krscv(xz=xz,
                   y=y,
                   max.K=degree.max,
-                  tensor=tensor,
+                  basis=basis,
                   cv.norm=cv.norm)
       degree <- cv$K
       lambda <- cv$lambda
-      tensor <- cv$tensor
+      basis <- cv$basis
     }
 
   }
@@ -360,7 +360,7 @@ crs.formula <- function(formula,
                      kernel=kernel,
                      lambda=lambda,
                      kernel.type=kernel.type,
-                     tensor=tensor,
+                     basis=basis,
                      deriv=deriv,
                      data.return=data.return,
                      prune=prune,
@@ -396,7 +396,7 @@ predict.crs <- function(object,
     ## Get training data from object (xz and y) and parse into factors
     ## and numeric.
 
-    tensor <- object$tensor
+    basis <- object$basis
     deriv <- object$deriv
     prune <- object$prune
     prune.index <- object$prune.index
@@ -446,7 +446,7 @@ predict.crs <- function(object,
                                    I=include,
                                    xeval=xeval,
                                    zeval=zeval,
-                                   tensor=tensor,
+                                   basis=basis,
                                    prune=prune,
                                    prune.index=prune.index)$fitted.values
 
@@ -471,7 +471,7 @@ predict.crs <- function(object,
                                        I=include,
                                        xeval=xeval,
                                        zeval=zeval,
-                                       tensor=tensor,
+                                       basis=basis,
                                        deriv.index=m,
                                        deriv=deriv,
                                        prune.index=prune.index)
@@ -490,7 +490,7 @@ predict.crs <- function(object,
                                            I=include,
                                            xeval=xeval,
                                            zeval=zeval,
-                                           tensor=tensor,
+                                           basis=basis,
                                            prune=prune,
                                            prune.index=prune.index)$fitted.values
 
@@ -501,7 +501,7 @@ predict.crs <- function(object,
                                                 I=include,
                                                 xeval=xeval,
                                                 zeval=zevaltmp,
-                                                tensor=tensor,
+                                                basis=basis,
                                                 prune=prune,
                                                 prune.index=prune.index)$fitted.values
 
@@ -539,7 +539,7 @@ predict.crs <- function(object,
                                    kernel.type=kernel.type,
                                    xeval=xeval,
                                    zeval=zeval,
-                                   tensor=tensor)$fitted.values
+                                   basis=basis)$fitted.values
 
       fitted.values <- tmp[,1]
       lwr <- tmp[,2]
@@ -563,7 +563,7 @@ predict.crs <- function(object,
                                        kernel.type=kernel.type,
                                        xeval=xeval,
                                        zeval=zeval,
-                                       tensor=tensor,
+                                       basis=basis,
                                        deriv.index=m,
                                        deriv=deriv)
             deriv.mat[,i] <- tmp[,1]
@@ -582,7 +582,7 @@ predict.crs <- function(object,
                                            kernel.type=kernel.type,
                                            xeval=xeval,
                                            zeval=zeval,
-                                           tensor=tensor)$fitted.values
+                                           basis=basis)$fitted.values
 
             zpred.base <- predict.kernel.spline(x=x,
                                                 y=y,
@@ -592,7 +592,7 @@ predict.crs <- function(object,
                                                 kernel.type=kernel.type,
                                                 xeval=xeval,
                                                 zeval=zevaltmp,
-                                                tensor=tensor)$fitted.values
+                                                basis=basis)$fitted.values
 
             deriv.mat[,i] <- zpred[,1]-zpred.base[,1]
             deriv.mat.lwr[,i] <- deriv.mat[,i] - qnorm(0.975)*sqrt(zpred[,4]^2+zpred.base[,4]^2)
@@ -663,8 +663,8 @@ summary.crs <- function(object,
     cat(paste("\nInclusion indicator for ",format(object$znames[j]),": ",format(object$include[j]),sep=""),sep="")
   if(!is.null(object$lambda)) for(j in 1:length(object$lambda))
     cat(paste("\nBandwidth for ",format(object$znames[j]),": ",format(object$lambda[j]),sep=""),sep="")
-  cat(paste("\nTensor interaction: ",format(object$tensor),sep=""))
-  if(!object$kernel) cat(paste("\nPruning of final model: ",format(ifelse(object$prune,"enabled","disabled")),sep=""))
+  cat(paste("\nBasis interaction: ",format(object$basis),sep=""))
+  if(!object$kernel) cat(paste("\nPruning of final model: ",format(ifelse(object$prune,"additive-tensor","additive")),sep=""))
   cat(paste("\nTraining observations: ", format(object$nobs), sep=""))
   cat(paste("\nRank of model frame: ", format(object$k), sep=""))  
   cat(paste("\nResidual standard error: ", format(sqrt(sum(object$residuals^2)/object$df.residual),digits=4)," on ", format(object$df.residual)," degrees of freedom",sep=""))
@@ -1033,13 +1033,13 @@ crs.sigtest <- function(object,...) {
     if(!is.factor(object$xz[,i])) {
       degree <- object$degree
       degree[j.num.x] <- 0
-      model.res <- crs(object$formula,degree=degree,include=object$include,tensor=object$tensor,prune=object$prune,data=eval(object$call$data))
+      model.res <- crs(object$formula,degree=degree,include=object$include,basis=object$basis,prune=object$prune,data=eval(object$call$data))
       sg[[i]] <- anova(model.res$model.lm,object$model.lm)
       j.num.x <- j.num.x + 1
     } else {
       include <- object$include
       include[j.num.z] <- 0
-      model.res <- crs(object$formula,degree=object$degree,include=include,tensor=object$tensor,prune=object$prune,data=eval(object$call$data))
+      model.res <- crs(object$formula,degree=object$degree,include=include,basis=object$basis,prune=object$prune,data=eval(object$call$data))
       sg[[i]] <- anova(model.res$model.lm,object$model.lm)
       j.num.z <- j.num.z + 1      
     }

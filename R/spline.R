@@ -11,15 +11,16 @@ prod.spline <- function(x,
                         I=NULL,
                         xeval=NULL,
                         zeval=NULL,
-                        tensor=c("enabled","disabled","auto"),
+                        basis=c("additive-tensor","additive","tensor","auto"),
                         deriv.index=1,
                         deriv=0) {
 
-  tensor <- match.arg(tensor)
+  basis <- match.arg(basis)
 
   if(missing(x) || missing (K)) stop(" must provide x and K")
 
   ## Care in passing (extra cast) and ensure K is a vector of integers
+  ## (K contains the spline degree [integer] for each dimension).
 
   x <- as.matrix(x)
   K <- round(K) 
@@ -82,12 +83,20 @@ prod.spline <- function(x,
     ## plus tensor product (all interactions), otherwise just the
     ## original bases for the one variable.
 
+    ## [Oct 23 2010, CESG Vancouver] Currently we have additive
+    ## splines with (additive) tensor product added via
+    ## cbind(P,tensor.prod.model.matrix(tp)) [`functional anova'
+    ## setup]. We might simply add a switch at this point to only
+    ## return the tensor product as in P<-tensor.prod.model.matrix(tp)
+    ## and we are done. Then we have additive, additive with tensor
+    ## (`functional anova') and tensor only.
+
     if(NROW(tp) > 1) {
       P <- tp[[1]]
       for(i in 2:NROW(tp)) P <- cbind(P,tp[[i]])
       dim.P.no.tensor <- NCOL(P)
-      ## Now add tensor if tensor==enabled
-      if(tensor=="enabled") P <- cbind(P,tensor.prod.model.matrix(tp))
+      ## Now add tensor if tensor==additive-tensor
+      if(basis=="additive-tensor") P <- cbind(P,tensor.prod.model.matrix(tp))
     } else {
       P <- tp[[1]]
       dim.P.no.tensor <- NCOL(P)
@@ -118,11 +127,11 @@ predict.kernel.spline <- function(x,
                                   kernel.type=c("nominal","ordinal"),
                                   xeval=NULL,
                                   zeval=NULL,
-                                  tensor=c("enabled","disabled","auto")){
+                                  basis=c("additive-tensor","additive","tensor","auto")){
 
   if(missing(x) || missing(y) || missing (K)) stop(" must provide x, y and K")
 
-  tensor <- match.arg(tensor)
+  basis <- match.arg(basis)
   kernel.type <- match.arg(kernel.type)
 
   x <- as.matrix(x)
@@ -140,12 +149,12 @@ predict.kernel.spline <- function(x,
 
       ## Degree > 0
 
-      P <- prod.spline(x=x,K=K,tensor=tensor)
+      P <- prod.spline(x=x,K=K,basis=basis)
       model <- lm(y~P)
       if(is.null(xeval)) {
         fit.spline <- predict(model,interval="confidence",se.fit=TRUE)
       } else {
-        P <- prod.spline(x=x,K=K,xeval=xeval,tensor=tensor)
+        P <- prod.spline(x=x,K=K,xeval=xeval,basis=basis)
         fit.spline <- predict(model,newdata=data.frame(as.matrix(P)),interval="confidence",se.fit=TRUE)
       }
 
@@ -191,12 +200,12 @@ predict.kernel.spline <- function(x,
         for(i in 1:nrow.z.unique) {
           zz <- ind == ind.vals[i]
           L <- prod.kernel(Z=z,z=z.unique[ind.vals[i],],lambda=lambda,kernel.type=kernel.type)
-          P <- prod.spline(x=x,K=K,tensor=tensor)
+          P <- prod.spline(x=x,K=K,basis=basis)
           k <- NCOL(P)
           model.z.unique <- lm(y~P,weights=L)
           model[[i]] <- model.z.unique
           htt[zz] <- hatvalues(model.z.unique)[zz]
-          P <- prod.spline(x=x,K=K,xeval=x[zz,,drop=FALSE],tensor=tensor)
+          P <- prod.spline(x=x,K=K,xeval=x[zz,,drop=FALSE],basis=basis)
           tmp <- predict(model.z.unique,newdata=data.frame(as.matrix(P)),interval="confidence",se.fit=TRUE)
           fit.spline[zz,] <- cbind(tmp[[1]],se=tmp[[2]])
           rm(tmp)
@@ -218,11 +227,11 @@ predict.kernel.spline <- function(x,
         for(i in 1:nrow.zeval.unique) {
           zz <- ind.zeval == ind.zeval.vals[i]
           L <- prod.kernel(Z=z,z=zeval.unique[ind.zeval.vals[i],],lambda=lambda,kernel.type=kernel.type)
-          P <- prod.spline(x=x,K=K,tensor=tensor)
+          P <- prod.spline(x=x,K=K,basis=basis)
           k <- NCOL(P)
           model.z.unique <- lm(y~P,weights=L)
           model[[i]] <- model.z.unique
-          P <- prod.spline(x=x,K=K,xeval=xeval[zz,,drop=FALSE],tensor=tensor)
+          P <- prod.spline(x=x,K=K,xeval=xeval[zz,,drop=FALSE],basis=basis)
           tmp <- predict(model.z.unique,newdata=data.frame(as.matrix(P)),interval="confidence",se.fit=TRUE)
           fit.spline[zz,] <- cbind(tmp[[1]],se=tmp[[2]])
           rm(tmp)
@@ -309,7 +318,7 @@ deriv.kernel.spline <- function(x,
                                 kernel.type=c("nominal","ordinal"),
                                 xeval=NULL,
                                 zeval=NULL,
-                                tensor=c("enabled","disabled","auto"),
+                                basis=c("additive-tensor","additive","tensor","auto"),
                                 deriv.index=1,
                                 deriv=0) {
 
@@ -317,7 +326,7 @@ deriv.kernel.spline <- function(x,
 
   if(missing(x) || missing(y) || missing (K)) stop(" must provide x, y and K")
 
-  tensor <- match.arg(tensor)
+  basis <- match.arg(basis)
   kernel.type <- match.arg(kernel.type)
 
   x <- as.matrix(x)
@@ -330,9 +339,9 @@ deriv.kernel.spline <- function(x,
 
     if(K[deriv.index]!=0) {
 
-      P <- prod.spline(x=x,K=K,tensor=tensor)      
+      P <- prod.spline(x=x,K=K,basis=basis)      
       model <- lm(y~P)
-      P.deriv <- prod.spline(x=x,K=K,xeval=xeval,tensor=tensor,deriv.index=deriv.index,deriv=deriv)
+      P.deriv <- prod.spline(x=x,K=K,xeval=xeval,basis=basis,deriv.index=deriv.index,deriv=deriv)
       dim.P.deriv <- K[deriv.index]
       dim.P.no.tensor <- attr(P.deriv,"dim.P.no.tensor")
       dim.P.tensor <- NCOL(P)
@@ -382,10 +391,10 @@ deriv.kernel.spline <- function(x,
         for(i in 1:nrow.z.unique) {
           zz <- ind == ind.vals[i]
           L <- prod.kernel(Z=z,z=z.unique[ind.vals[i],],lambda=lambda,kernel.type=kernel.type)
-          P <- prod.spline(x=x,K=K,tensor=tensor)          
+          P <- prod.spline(x=x,K=K,basis=basis)          
           k <- NCOL(P)
           model <- lm(y~P,weights=L)
-          P.deriv <- prod.spline(x=x,K=K,xeval=x[zz,,drop=FALSE],tensor=tensor,deriv.index=deriv.index,deriv=deriv)
+          P.deriv <- prod.spline(x=x,K=K,xeval=x[zz,,drop=FALSE],basis=basis,deriv.index=deriv.index,deriv=deriv)
           dim.P.deriv <- K[deriv.index]
           dim.P.no.tensor <- attr(P.deriv,"dim.P.no.tensor")
           dim.P.tensor <- NCOL(P)
@@ -417,10 +426,10 @@ deriv.kernel.spline <- function(x,
         for(i in 1:nrow.zeval.unique) {
           zz <- ind.zeval == ind.zeval.vals[i]
           L <- prod.kernel(Z=z,z=zeval.unique[ind.zeval.vals[i],],lambda=lambda,kernel.type=kernel.type)
-          P <- prod.spline(x=x,K=K,tensor=tensor)
+          P <- prod.spline(x=x,K=K,basis=basis)
           k <- NCOL(P)
           model <- lm(y~P,weights=L)
-          P.deriv <- prod.spline(x=x,K=K,xeval=xeval[zz,,drop=FALSE],tensor=tensor,deriv.index=deriv.index,deriv=deriv)
+          P.deriv <- prod.spline(x=x,K=K,xeval=xeval[zz,,drop=FALSE],basis=basis,deriv.index=deriv.index,deriv=deriv)
           dim.P.deriv <- K[deriv.index]
           dim.P.no.tensor <- attr(P.deriv,"dim.P.no.tensor")
           dim.P.tensor <- NCOL(P)
@@ -472,14 +481,14 @@ predict.factor.spline <- function(x,
                                   I=NULL,
                                   xeval=NULL,
                                   zeval=NULL,
-                                  tensor=c("enabled","disabled","auto"),
+                                  basis=c("additive-tensor","additive","tensor","auto"),
                                   prune=FALSE,
                                   prune.index=NULL,
                                   trace=0){
 
   if(missing(x) || missing(y) || missing (K)) stop(" must provide x, y and K")
 
-  tensor <- match.arg(tensor)
+  basis <- match.arg(basis)
 
   ## Cast in case input is not properly cast
 
@@ -495,7 +504,7 @@ predict.factor.spline <- function(x,
 
     ## Degree > 0
 
-    P <- prod.spline(x=x,z=z,K=K,I=I,tensor=tensor)
+    P <- prod.spline(x=x,z=z,K=K,I=I,basis=basis)
 
     if(prune && is.null(prune.index)) {
 
@@ -541,7 +550,7 @@ predict.factor.spline <- function(x,
     if(is.null(xeval)) {
       fit.spline <- predict(model,interval="confidence",se.fit=TRUE)
     } else {
-      P <- prod.spline(x=x,z=z,K=K,I=I,xeval=xeval,zeval=zeval,tensor=tensor)
+      P <- prod.spline(x=x,z=z,K=K,I=I,xeval=xeval,zeval=zeval,basis=basis)
       fit.spline <- predict(model,newdata=data.frame(as.matrix(P[,IND,drop=FALSE])),interval="confidence",se.fit=TRUE)
     }
 
@@ -592,7 +601,7 @@ deriv.factor.spline <- function(x,
                                 I=NULL,
                                 xeval=NULL,
                                 zeval=NULL,
-                                tensor=c("enabled","disabled","auto"),
+                                basis=c("additive-tensor","additive","tensor","auto"),
                                 deriv.index=1,
                                 deriv=0,
                                 prune.index=NULL) {
@@ -600,7 +609,7 @@ deriv.factor.spline <- function(x,
   if(missing(x) || missing(y) || missing (K)) stop(" must provide x, y and K")
   if(deriv == 0) stop(" derivative must be a positive integer")
 
-  tensor <- match.arg(tensor)
+  basis <- match.arg(basis)
 
   x <- as.matrix(x)
 
@@ -610,7 +619,7 @@ deriv.factor.spline <- function(x,
 
     ## Estimate model on training data.
     
-    P <- prod.spline(x=x,z=z,K=K,I=I,tensor=tensor)    
+    P <- prod.spline(x=x,z=z,K=K,I=I,basis=basis)    
     if(is.null(prune.index)) prune.index <- !logical(NCOL(P))
     model <- lm(y~P[,prune.index,drop=FALSE])
 
@@ -622,7 +631,7 @@ deriv.factor.spline <- function(x,
     coef.vec.model[prune.index] <- coef(model)[-1]
     vcov.mat.model[prune.index,prune.index] <- vcov(model)[-1,-1,drop=FALSE]
 
-    P.deriv <- prod.spline(x=x,z=z,K=K,I=I,xeval=xeval,zeval=zeval,tensor=tensor,deriv.index=deriv.index,deriv=deriv)
+    P.deriv <- prod.spline(x=x,z=z,K=K,I=I,xeval=xeval,zeval=zeval,basis=basis,deriv.index=deriv.index,deriv=deriv)
 
     dim.P.deriv <- K[deriv.index]
     dim.P.no.tensor <- attr(P.deriv,"dim.P.no.tensor")
@@ -674,19 +683,19 @@ cv.kernel.spline <- function(x,
                              ind.vals,
                              nrow.z.unique,
                              kernel.type=c("nominal","ordinal"),
-                             tensor=c("enabled","disabled","auto"),
+                             basis=c("additive-tensor","additive","tensor","auto"),
                              cv.norm=c("L2","L1")) {
 
   if(missing(x) || missing(y) || missing (K)) stop(" must provide x, y and K")
 
-  tensor <- match.arg(tensor)
+  basis <- match.arg(basis)
   kernel.type <- match.arg(kernel.type)
   cv.norm <- match.arg(cv.norm)
 
   if(is.null(z)) {
     ## No categorical predictors
     if(any(K > 0)) {
-      model <- lm(y~prod.spline(x=x,K=K,tensor=tensor))
+      model <- lm(y~prod.spline(x=x,K=K,basis=basis))
     } else {
       model <- lm(y~1)
     }
@@ -705,7 +714,7 @@ cv.kernel.spline <- function(x,
       for(i in 1:nrow.z.unique) {
         zz <- ind == ind.vals[i]
         L <- prod.kernel(Z=z,z=z.unique[ind.vals[i],],lambda=lambda,kernel.type=kernel.type)
-        model <- lm(y~prod.spline(x=x,K=K,tensor=tensor),weights=L)
+        model <- lm(y~prod.spline(x=x,K=K,basis=basis),weights=L)
         epsilon[zz] <- residuals(model)[zz]
         htt[zz] <- hatvalues(model)[zz]
       }
@@ -738,24 +747,24 @@ cv.factor.spline <- function(x,
                              K,
                              I=NULL,
                              kernel.type=c("nominal","ordinal"),
-                             tensor=c("enabled","disabled","auto"),
+                             basis=c("additive-tensor","additive","tensor","auto"),
                              cv.norm=c("L2","L1")) {
 
   if(missing(x) || missing(y) || missing (K)) stop(" must provide x, y and K")
 
-  tensor <- match.arg(tensor)
+  basis <- match.arg(basis)
   kernel.type <- match.arg(kernel.type)
   cv.norm <- match.arg(cv.norm)
 
   if(!is.null(z)) {
     if(any(K > 0)||any(I > 0)) {
-      model <- lm(y~prod.spline(x=x,z=z,K=K,I=I,tensor=tensor))
+      model <- lm(y~prod.spline(x=x,z=z,K=K,I=I,basis=basis))
     } else {
       model <- lm(y~1)
     }
   } else {
     if(any(K > 0)) {
-      model <- lm(y~prod.spline(x=x,z=z,K=K,I=I,tensor=tensor))
+      model <- lm(y~prod.spline(x=x,z=z,K=K,I=I,basis=basis))
     } else {
       model <- lm(y~1)
     }

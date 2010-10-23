@@ -1,7 +1,7 @@
 crscv <- function(K,
                   I,
-                  tensor,
-                  tensor.vec,
+                  basis,
+                  basis.vec,
                   max.K,
                   restarts,
                   K.mat,
@@ -12,8 +12,8 @@ crscv <- function(K,
   
   tregcv = list(K=K,
                 I=I,
-                tensor=tensor,
-                tensor.vec=tensor.vec,    
+                basis=basis,
+                basis.vec=basis.vec,    
                 max.K=max.K,
                 restarts=restarts,
                 K.mat=K.mat,
@@ -36,7 +36,7 @@ print.crscv <- function(x, ...){
     for(j in 1:length(x$lambda))
       cat(paste("\nOptimal bandwidth for z[", j, "]: ",format(x$lambda[j]),sep=""),sep="")
     cat(paste("\n\nMaximum Spline Degree for Search ", sQuote("max.K"), ": ",format(x$max.K),sep=""),sep="")
-    cat(paste("\nTensor = ", x$tensor,sep=""))
+    cat(paste("\nBasis = ", x$basis,sep=""))
     if(x$restarts>0) cat(paste("\nNumber of Restarts = ", format(x$restarts),sep=""),sep="")    
     cat("\n\n")
   } else if(!is.null(x$I)) {
@@ -47,7 +47,7 @@ print.crscv <- function(x, ...){
     for(j in 1:length(x$I))
       cat(paste("\nInclusion for z[", j, "]: ",format(x$I[j]),sep=""),sep="")
     cat(paste("\n\nMaximum Spline Degree for Search ", sQuote("max.K"), ": ",format(x$max.K),sep=""),sep="")
-    cat(paste("\nTensor = ", x$tensor,sep=""))
+    cat(paste("\nBasis = ", x$basis,sep=""))
     cat("\n\n")
   } else {
     cat("\nRegression Spline Cross-Validation",sep="")
@@ -55,7 +55,7 @@ print.crscv <- function(x, ...){
     for(j in 1:length(x$K))
       cat(paste("\nOptimal spline degree for x[", j, "]: ",format(x$K[j]),sep=""),sep="")
     cat(paste("\n\nMaximum Spline Degree for Search ", sQuote("max.K"), ": ",format(x$max.K),sep=""),sep="")
-    cat(paste("\nTensor = ", x$tensor,sep=""))
+    cat(paste("\nBasis = ", x$basis,sep=""))
     cat("\n\n")
   }
 }

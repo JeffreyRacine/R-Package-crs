@@ -17,7 +17,7 @@
 frscv(xz,
       y,
       max.K=10,
-      tensor = c("enabled","disabled","auto"),
+      basis = c("additive-tensor","additive","tensor","auto"),
       cv.norm = c("L2","L1"))
 }
 
@@ -36,10 +36,10 @@ frscv(xz,
     defaults to \code{10}
   }
 
-  \item{tensor}{ a character string (default \code{tensor="enabled"})
+  \item{basis}{ a character string (default \code{basis="additive-tensor"})
   indicating whether tensor product terms (i.e. interaction terms) are
   included in the model or not. Note this is automatically determined
-  when \code{tensor="auto"}, and is an \sQuote{all or none}
+  when \code{basis="auto"}, and is an \sQuote{all or none}
   proposition (i.e. interaction terms for all predictors or for no
   predictors) }
 

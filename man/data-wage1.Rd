@@ -59,14 +59,14 @@ model <- crs(lwage~married+
              exper+
              tenure,
              cv=TRUE,
-             tensor="auto",
+             basis="auto",
              data=wage1,
              deriv=1,
              degree.max=4)
 
 degree <- model$degree
 include <- model$include
-tensor <- model$tensor
+basis <- model$basis
 
 summary(model)
 
@@ -85,7 +85,7 @@ model <- crs(lwage~married+
              tenure,
              degree=degree,
              include=include,
-             tensor=tensor,
+             basis=basis,
              data=wage1,
              deriv=2)
 plot(model,deriv=TRUE)

@@ -11,7 +11,7 @@
 
 \usepackage{amsmath}
 \usepackage{enumitem}
-\usepackage[utf8x]{inputenc} 
+\usepackage[utf8]{inputenc} 
 
 \newcommand{\field}[1]{\mathbb{#1}}
 \newcommand{\R}{\field{R}}
@@ -155,7 +155,7 @@ omitted we have a semiparametric `additive' spline model, otherwise we
 have a fully nonparametric (with interaction among all variables)
 model. Whether to include the tensor product or not can be
 automatically determined via leave-line-out cross-validation (see the
-options for \code{tensor=} in \code{?crs}).
+options for \code{basis=} in \code{?crs}).
 
 We offer the option to use categorical kernel weighting
 (\code{lm(\dots,weights=L)}) to handle the presence of categorical
@@ -294,7 +294,7 @@ x <- runif(n)
 z <- rbinom(n,1,.5)
 y <- cos(2*pi*x) + z + rnorm(n,sd=1)
 z <- factor(z)
-model <- crs(y~x+z,cv=TRUE,tensor="auto",kernel=TRUE)
+model <- crs(y~x+z,cv=TRUE,basis="auto",kernel=TRUE)
 summary(model)
 @ 
 
@@ -338,7 +338,7 @@ z <- ifelse(x1>.5,1,0)
 dgp <- cos(2*pi*x1)+sin(2*pi*x2)+2*z
 z <- factor(z)
 y <- dgp + rnorm(n,sd=1)
-model <- crs(y~x1+x2+z,cv=TRUE,tensor="auto",degree.max=8)
+model <- crs(y~x1+x2+z,cv=TRUE,basis="auto",degree.max=8)
 summary(model)
 @ 
 
@@ -354,7 +354,7 @@ predictors).
 
 <<echo=TRUE,keep.source=TRUE>>=
 ## When kernel=FALSE, we could use the anova() function
-model.res <- crs(y~x1+x2+z,degree=model$degree,tensor=model$tensor,include=0)
+model.res <- crs(y~x1+x2+z,degree=model$degree,basis=model$basis,include=0)
 anova(model.res$model.lm,model$model.lm)
 ## As this only works with kernel=FALSE, we could also do this manually...
 F <- model$df.residual*(sum(residuals(model.res)^2)
@@ -367,7 +367,7 @@ P
 
 Note that \code{summary} supports the option \code{sigtest=TRUE} that
 conducts an F-test for significance for each predictor (though be
-warned that this can be fragile when \code{tensor="enabled"}).
+warned that this can be fragile when \code{basis="additive-tensor"}).
 
 <<echo=TRUE,keep.source=TRUE>>=
 summary(model,sigtest=TRUE)
