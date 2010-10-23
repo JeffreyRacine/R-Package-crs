@@ -113,7 +113,7 @@ krscv <- function(xz,
   k <- max.K^num.x + ifelse(basis!="additive",max.K*num.x,0)
   df <- n - k
   if(df <= 0) {
-    stop(paste(" maximum spline dimension (",k,") equals/exceeds sample size (",n,")\n   perhaps use basis=\"additive\" or else decrease degree.max",sep=""))
+    stop(paste(" maximum spline dimension (",k,") equals/exceeds sample size (",n,")\n   perhaps use basis=\"additive\" or else decrease basis.maxdim",sep=""))
   } else if(df <= 10) {
     warning(paste(" maximum spline dimension (",k,") and sample size (",n,") close",sep=""))
   }
@@ -304,9 +304,89 @@ krscv <- function(xz,
 
       lambda.mat[j,] <- output$par
 
+      ## Next, basis=="tensor"
+
+      output$convergence <- 42
+
+      while(output$convergence != 0) {
+
+        output <- optim(par=runif(num.z),
+                        cv.func,
+                        lower=rep(0,num.z),
+                        upper=rep(1,num.z),
+                        method="L-BFGS-B",
+                        x=x,
+                        y=y,
+                        z=z,
+                        K=K.mat[j,],
+                        max.K=max.K,
+                        restart=0,
+                        num.restarts=restarts,
+                        z.unique=z.unique,
+                        ind=ind,
+                        ind.vals=ind.vals,
+                        nrow.z.unique=nrow.z.unique,
+                        kernel.type=kernel.type,
+                        j=j,
+                        nrow.K.mat=nrow.K.mat,
+                        t2=t2,
+                        basis="tensor")
+
+      }
+
+      if(restarts > 0) {
+
+        for(r in 1:restarts) {
+
+          output.restart$convergence <- 42
+
+          while(output.restart$convergence != 0) {
+
+            output.restart <- optim(par=runif(num.z),
+                                    cv.func,
+                                    lower=rep(0,num.z),
+                                    upper=rep(1,num.z),
+                                    method="L-BFGS-B",
+                                    x=x,
+                                    y=y,
+                                    z=z,
+                                    K=K.mat[j,],
+                                    max.K=max.K,
+                                    restart=r,
+                                    num.restarts=restarts,
+                                    z.unique=z.unique,
+                                    ind=ind,
+                                    ind.vals=ind.vals,
+                                    nrow.z.unique=nrow.z.unique,
+                                    kernel.type=kernel.type,
+                                    j=j,
+                                    nrow.K.mat=nrow.K.mat,
+                                    t2=t2,
+                                    basis="tensor")
+
+          }
+
+          if(output.restart$value < output$value) output <- output.restart
+
+        }
+
+      } ## end restarts
+
+      if(output$value < cv.min) {
+        output.opt <- output
+        cv.min <- output$value
+        K.opt <- K.mat[j,]
+        lambda.opt <- output$par
+        basis.opt <- "tensor"
+        cv.min.vec[j] <- output$value
+        basis.vec[j] <- "tensor"
+      }
+
+      lambda.mat[j,] <- output$par
+
     } else { ## end auto
 
-      ## Either basis=="additive-tensor" or "additive"
+      ## Either basis=="additive-tensor" or "additive" or "tensor"
 
       output$convergence <- 42
 

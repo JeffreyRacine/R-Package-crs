@@ -62,7 +62,7 @@ model <- crs(lwage~married+
              basis="auto",
              data=wage1,
              deriv=1,
-             degree.max=4)
+             basis.maxdim=4)
 
 degree <- model$degree
 include <- model$include

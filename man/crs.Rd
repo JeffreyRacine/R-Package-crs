@@ -28,7 +28,7 @@ crs(\dots)
     data = list(),
     degree = NULL,
     include = NULL,
-    degree.max = 5,
+    basis.maxdim = 5,
     cv = NULL,
     cv.norm = c("L2", "L1"),
     kernel = FALSE,
@@ -80,8 +80,8 @@ crs(\dots)
   \item{kernel}{ a logical value (default \code{kernel=FALSE})
     indicating whether to use kernel smoothing or not }
 
-  \item{degree.max}{ the maximum degree of the spline in each dimension
-    for the continuous predictors (default \code{degree.max=5})}
+  \item{basis.maxdim}{ the maximum dimension of the spline for each
+    of the continuous predictors (default \code{basis.maxdim=5})}
 
   \item{basis}{ a character string (default \code{basis="additive-tensor"})
   indicating whether tensor product terms (i.e. interaction terms) are
@@ -153,12 +153,12 @@ crs(\dots)
   (see \code{\link{optim}} for details). The user may restart the
   algorithm as many times as desired via the \code{restarts} argument
   (default \code{restarts=0}). The approach ascends from \code{degree=0}
-  through \code{degree.max} and for each value of \code{degree} searches
+  through \code{basis.maxdim} and for each value of \code{degree} searches
   for the optimal bandwidths. After the most complex model has been
   searched then the optimal \code{degree}/\code{lambda} combination is
   selected. If any element of the optimal \code{degree} vector coincides
-  with \code{degree.max} a warning is produced and the user ought to
-  restart their search with a larger value of \code{degree.max}.
+  with \code{basis.maxdim} a warning is produced and the user ought to
+  restart their search with a larger value of \code{basis.maxdim}.
 
   Note that the default \code{plot} method for a \code{crs} object
   provides some diagnostic measures, in particular, a) residuals versus

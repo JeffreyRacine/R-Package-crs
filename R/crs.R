@@ -291,7 +291,7 @@ crs.formula <- function(formula,
                         data=list(),
                         degree=NULL,
                         include=NULL,
-                        degree.max=5,
+                        basis.maxdim=5,
                         cv=NULL,
                         cv.norm=c("L2","L1"),
                         kernel=FALSE,
@@ -328,7 +328,7 @@ crs.formula <- function(formula,
     if(!is.null(cv)) {
       cv <- frscv(xz=xz,
                   y=y,
-                  max.K=degree.max,
+                  max.K=basis.maxdim,
                   basis=basis,
                   cv.norm=cv.norm)
       degree <- cv$K
@@ -343,7 +343,7 @@ crs.formula <- function(formula,
     if(!is.null(cv)) {
       cv <- krscv(xz=xz,
                   y=y,
-                  max.K=degree.max,
+                  max.K=basis.maxdim,
                   basis=basis,
                   cv.norm=cv.norm)
       degree <- cv$K
@@ -664,7 +664,7 @@ summary.crs <- function(object,
   if(!is.null(object$lambda)) for(j in 1:length(object$lambda))
     cat(paste("\nBandwidth for ",format(object$znames[j]),": ",format(object$lambda[j]),sep=""),sep="")
   cat(paste("\nBasis interaction: ",format(object$basis),sep=""))
-  if(!object$kernel) cat(paste("\nPruning of final model: ",format(ifelse(object$prune,"additive-tensor","additive")),sep=""))
+  if(!object$kernel) cat(paste("\nPruning of final model: ",format(ifelse(object$prune,"TRUE","FALSE")),sep=""))
   cat(paste("\nTraining observations: ", format(object$nobs), sep=""))
   cat(paste("\nRank of model frame: ", format(object$k), sep=""))  
   cat(paste("\nResidual standard error: ", format(sqrt(sum(object$residuals^2)/object$df.residual),digits=4)," on ", format(object$df.residual)," degrees of freedom",sep=""))

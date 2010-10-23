@@ -233,7 +233,7 @@ indicator bases), the model is fit via least-squares. Alternatively,
 the degree and bandwidth can be jointly determined via leave-one-out
 cross-validation via the option \code{cv=TRUE}. This then evaluates
 the model for each unique combination of degree for each continuous
-predictor from \code{degree=0} through \code{degree=degree.max}
+predictor from \code{degree=0} through \code{degree=basis.maxdim}
 (default 5). For each unique combination of degree, the bandwidths
 ($\in[0,1]$) are obtained via numerical minimization (see
 \code{optim}) and restarting can be conducted via
@@ -338,7 +338,7 @@ z <- ifelse(x1>.5,1,0)
 dgp <- cos(2*pi*x1)+sin(2*pi*x2)+2*z
 z <- factor(z)
 y <- dgp + rnorm(n,sd=1)
-model <- crs(y~x1+x2+z,cv=TRUE,basis="auto",degree.max=8)
+model <- crs(y~x1+x2+z,cv=TRUE,basis="auto",basis.maxdim=8)
 summary(model)
 @ 
 

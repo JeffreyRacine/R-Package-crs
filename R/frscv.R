@@ -118,7 +118,7 @@ frscv <- function(xz,
   df <- n - k
 
   if(df <= 0) {
-    stop(paste(" maximum spline dimension (",k,") equals/exceeds sample size (",n,")\n   perhaps use basis=\"additive\" or else decrease degree.max",sep=""))
+    stop(paste(" maximum spline dimension (",k,") equals/exceeds sample size (",n,")\n   perhaps use basis=\"additive\" or else decrease basis.maxdim",sep=""))
   } else if(df <= 10) {
     warning(paste(" maximum spline dimension (",k,") and sample size (",n,") close",sep=""))
   }
@@ -181,9 +181,29 @@ frscv <- function(xz,
         if(!is.null(z)) I.opt <- KI.mat[j,(num.x+1):(num.x+num.z)]
       }
 
+      output <- cv.func(input=KI.mat[j,],
+                        x=x,
+                        y=y,
+                        z=z,
+                        max.K=max.K,
+                        restart=0,
+                        num.restarts=0,
+                        j=j,
+                        nrow.KI.mat=nrow.KI.mat,
+                        t2=Sys.time(),
+                        basis="tensor")
+
+      if(output < cv.min) {
+        cv.min <- output
+        K.opt <- KI.mat[j,1:num.x]
+        basis.opt <- "tensor"
+        basis.vec[j] <- "tensor"
+        if(!is.null(z)) I.opt <- KI.mat[j,(num.x+1):(num.x+num.z)]
+      }
+
     } else {
 
-      ## not auto, so use either "additive-tensor" or "additive"
+      ## not auto, so use either "additive-tensor" or "additive" or "tensor"
 
       output <- cv.func(input=KI.mat[j,],
                         x=x,

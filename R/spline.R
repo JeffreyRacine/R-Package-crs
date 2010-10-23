@@ -92,11 +92,15 @@ prod.spline <- function(x,
     ## (`functional anova') and tensor only.
 
     if(NROW(tp) > 1) {
+      ## First create all basis matrices for all continuous predictors
+      ## (in essence, additive by default)
       P <- tp[[1]]
       for(i in 2:NROW(tp)) P <- cbind(P,tp[[i]])
       dim.P.no.tensor <- NCOL(P)
-      ## Now add tensor if tensor==additive-tensor
+      ## Now append tensor to additive if basis==additive-tensor
       if(basis=="additive-tensor") P <- cbind(P,tensor.prod.model.matrix(tp))
+      ## Solely tensor if basis==tensor      
+      if(basis=="tensor") P <- tensor.prod.model.matrix(tp)
     } else {
       P <- tp[[1]]
       dim.P.no.tensor <- NCOL(P)
