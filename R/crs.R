@@ -328,7 +328,7 @@ crs.formula <- function(formula,
     if(!is.null(cv)) {
       cv <- frscv(xz=xz,
                   y=y,
-                  max.K=basis.maxdim,
+                  basis.maxdim=basis.maxdim,
                   basis=basis,
                   cv.norm=cv.norm)
       degree <- cv$K
@@ -343,7 +343,7 @@ crs.formula <- function(formula,
     if(!is.null(cv)) {
       cv <- krscv(xz=xz,
                   y=y,
-                  max.K=basis.maxdim,
+                  basis.maxdim=basis.maxdim,
                   basis=basis,
                   cv.norm=cv.norm)
       degree <- cv$K

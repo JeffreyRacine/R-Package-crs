@@ -1,6 +1,6 @@
 frscv <- function(xz,
                   y,
-                  max.K=10,
+                  basis.maxdim=10,
                   basis = c("additive-tensor","additive","tensor","auto"),
                   cv.norm=c("L2","L1")) {
 
@@ -15,14 +15,14 @@ frscv <- function(xz,
                       y,
                       restart,
                       num.restarts,
-                      max.K,
+                      basis.maxdim,
                       j=NULL,
                       nrow.KI.mat=NULL,
                       t2=NULL,
                       basis=basis,
                       cv.norm=cv.norm) {
 
-    if(missing(input) || missing(x) || missing(y) || missing(max.K)) stop(" you must provide input, x, y, and max.K")
+    if(missing(input) || missing(x) || missing(y) || missing(basis.maxdim)) stop(" you must provide input, x, y, and basis.maxdim")
 
     ## Presumes x (continuous predictors) exist, but z
     ## (ordinal/nominal factors) can be optional
@@ -105,14 +105,17 @@ frscv <- function(xz,
   ## This call will trap an error immediately rather than letting cv
   ## proceed only to be halted when this occurs
 
-  k <-  max.K*num.x
+  ## Oct 23 2010, CESG Vancouver... need to clean this up given
+  ## addition of "tensor"
+
+  k <-  basis.maxdim*num.x
   if(!is.null(num.z)) {
     num.bases.z <- numeric(length=num.z)
     for(i in 1:num.z) num.bases.z[i] <- (length(unique(as.numeric(z[,i])))-1)
     k <- k + sum(num.bases.z)    
-    k <- k + ifelse(basis!="additive",max.K^num.x*prod(num.bases.z),0)
+    k <- k + ifelse(basis!="additive",basis.maxdim^num.x*prod(num.bases.z),0)
   } else {
-    k <- k + ifelse(basis!="additive",max.K^num.x,0)
+    k <- k + ifelse(basis!="additive",basis.maxdim^num.x,0)
   }
 
   df <- n - k
@@ -123,13 +126,13 @@ frscv <- function(xz,
     warning(paste(" maximum spline dimension (",k,") and sample size (",n,") close",sep=""))
   }
 
-  if(max.K < 1) stop(" max.K must be greater than or equal to 1")
+  if(basis.maxdim < 1) stop(" basis.maxdim must be greater than or equal to 1")
 
   ## Need to append 0,1 for I (in, out)
   if(!is.null(z)) {
-    KI.mat <- matrix.combn(0:max.K,num.x,num.z)
+    KI.mat <- matrix.combn(0:basis.maxdim,num.x,num.z)
   } else {
-    KI.mat <- matrix.combn(0:max.K,num.x)
+    KI.mat <- matrix.combn(0:basis.maxdim,num.x)
   }
   nrow.KI.mat <- NROW(KI.mat)
   basis.vec <- character(nrow.KI.mat)
@@ -145,7 +148,7 @@ frscv <- function(xz,
                         x=x,
                         y=y,
                         z=z,
-                        max.K=max.K,
+                        basis.maxdim=basis.maxdim,
                         restart=0,
                         num.restarts=0,
                         j=j,
@@ -165,7 +168,7 @@ frscv <- function(xz,
                         x=x,
                         y=y,
                         z=z,
-                        max.K=max.K,
+                        basis.maxdim=basis.maxdim,
                         restart=0,
                         num.restarts=0,
                         j=j,
@@ -185,7 +188,7 @@ frscv <- function(xz,
                         x=x,
                         y=y,
                         z=z,
-                        max.K=max.K,
+                        basis.maxdim=basis.maxdim,
                         restart=0,
                         num.restarts=0,
                         j=j,
@@ -209,7 +212,7 @@ frscv <- function(xz,
                         x=x,
                         y=y,
                         z=z,
-                        max.K=max.K,
+                        basis.maxdim=basis.maxdim,
                         restart=0,
                         num.restarts=0,
                         j=j,
@@ -234,7 +237,7 @@ frscv <- function(xz,
   console <- printClear(console)
   console <- printPop(console)
 
-  if(any(K.opt==max.K)) warning(paste(" optimal K equals search maximum (", max.K,"): rerun with larger max.K",sep=""))
+  if(any(K.opt==basis.maxdim)) warning(paste(" optimal K equals search maximum (", basis.maxdim,"): rerun with larger basis.maxdim",sep=""))
 
   if(is.null(z)) I.opt <- NULL
 
@@ -242,7 +245,7 @@ frscv <- function(xz,
         I=I.opt,
         basis=basis.opt,
         basis.vec=basis.vec,
-        max.K=max.K,
+        basis.maxdim=basis.maxdim,
         K.mat=KI.mat,
         restarts=NULL,
         lambda=NULL,

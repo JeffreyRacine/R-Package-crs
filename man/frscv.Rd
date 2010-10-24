@@ -16,7 +16,7 @@
 \usage{
 frscv(xz,
       y,
-      max.K=10,
+      basis.maxdim=10,
       basis = c("additive-tensor","additive","tensor","auto"),
       cv.norm = c("L2","L1"))
 }
@@ -31,7 +31,7 @@ frscv(xz,
     continuous and/or ordinal/nominal predictors
   }
 
-  \item{max.K}{
+  \item{basis.maxdim}{
     integer specifying the maximum degree of the regression spline,
     defaults to \code{10}
   }
@@ -85,7 +85,7 @@ frscv(xz,
     predictor is included or not for each dimension of the
     ordinal/nominal factors }
     \item{K.mat}{ vector/matrix of values of \code{K} evaluated during search }  
-    \item{max.K}{ maximum degree of spline }
+    \item{basis.maxdim}{ maximum degree of spline }
     \item{cv.func}{ objective function value at optimum }
     \item{cv.func.vec}{ vector of objective function values at each degree
       of spline in \code{K.mat}}

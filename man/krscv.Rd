@@ -16,7 +16,7 @@
 \usage{
 krscv(xz,
       y,
-      max.K=10,
+      basis.maxdim=10,
       kernel.type=c("nominal","ordinal"),
       restarts=0,
       basis = c("additive-tensor","additive","tensor","auto"),
@@ -33,7 +33,7 @@ krscv(xz,
     continuous and/or ordinal/nominal predictors
   }
 
-  \item{max.K}{
+  \item{basis.maxdim}{
     integer specifying the maximum degree of the regression spline,
     defaults to \code{10}
   }
@@ -88,12 +88,12 @@ krscv(xz,
   box-constrained \code{L-BFGS-B} method (see \code{\link{optim}} for
   details). The user may restart the algorithm as many times as desired
   via the \code{restarts} argument. The approach ascends from \code{K=0}
-  through \code{max.K} and for each value of \code{K} searches for the
+  through \code{basis.maxdim} and for each value of \code{K} searches for the
   optimal bandwidths for this value of \code{K}. After the most complex
   model has been searched then the optimal \code{K}/\code{lambda}
   combination is selected. If any element of the optimal \code{K} vector
-  coincides with \code{max.K} a warning is produced and the user ought
-  to restart their search with a larger value of \code{max.K}.
+  coincides with \code{basis.maxdim} a warning is produced and the user ought
+  to restart their search with a larger value of \code{basis.maxdim}.
 
   Note that, since the approach is built on top of the regression spline
   for each unique \code{z} combination, the splines must be estimable
@@ -110,7 +110,7 @@ krscv(xz,
 
   \item{K}{ scalar/vector containing optimal degree(s) of spline }
   \item{K.mat}{ vector/matrix of values of \code{K} evaluated during search }  
-  \item{max.K}{ maximum degree of spline }
+  \item{basis.maxdim}{ maximum degree of spline }
   \item{restarts}{ number of restarts during search, if any }
   \item{lambda}{ optimal bandwidths for categorical predictors }
   \item{lambda.mat}{ vector/matrix of optimal bandwidths for each degree of spline }

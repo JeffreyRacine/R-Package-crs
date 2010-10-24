@@ -9,6 +9,8 @@ prod.spline <- function(x,
                         z=NULL,
                         K=NULL,
                         I=NULL,
+                        degree=3,
+                        nbreak=2,
                         xeval=NULL,
                         zeval=NULL,
                         basis=c("additive-tensor","additive","tensor","auto"),
@@ -60,9 +62,9 @@ prod.spline <- function(x,
     for(i in 1:num.x) {
       if(K[i] > 0) {
         if(i==deriv.index) {
-          tp[[j]] <- predict(gsl.bs(x[,i,drop=FALSE],degree=K[i],deriv=deriv,intercept=FALSE),newx=xeval[,i,drop=FALSE])
+          tp[[j]] <- predict(gsl.bs(x[,i,drop=FALSE],degree=K[i],nbreak=nbreak,deriv=deriv,intercept=FALSE),newx=xeval[,i,drop=FALSE])
         } else {
-          tp[[j]] <- predict(gsl.bs(x[,i,drop=FALSE],degree=K[i],intercept=FALSE),newx=xeval[,i,drop=FALSE])
+          tp[[j]] <- predict(gsl.bs(x[,i,drop=FALSE],degree=K[i],nbreak=nbreak,intercept=FALSE),newx=xeval[,i,drop=FALSE])
         }
         j <- j+1
       }
@@ -127,6 +129,8 @@ predict.kernel.spline <- function(x,
                                   y,
                                   z=NULL,
                                   K,
+                                  degree=3,
+                                  nbreak=2,
                                   lambda=NULL,
                                   kernel.type=c("nominal","ordinal"),
                                   xeval=NULL,
@@ -153,12 +157,12 @@ predict.kernel.spline <- function(x,
 
       ## Degree > 0
 
-      P <- prod.spline(x=x,K=K,basis=basis)
+      P <- prod.spline(x=x,K=K,degree=degree,nbreak=nbreak,basis=basis)
       model <- lm(y~P)
       if(is.null(xeval)) {
         fit.spline <- predict(model,interval="confidence",se.fit=TRUE)
       } else {
-        P <- prod.spline(x=x,K=K,xeval=xeval,basis=basis)
+        P <- prod.spline(x=x,K=K,degree=degree,nbreak=nbreak,xeval=xeval,basis=basis)
         fit.spline <- predict(model,newdata=data.frame(as.matrix(P)),interval="confidence",se.fit=TRUE)
       }
 
@@ -204,12 +208,12 @@ predict.kernel.spline <- function(x,
         for(i in 1:nrow.z.unique) {
           zz <- ind == ind.vals[i]
           L <- prod.kernel(Z=z,z=z.unique[ind.vals[i],],lambda=lambda,kernel.type=kernel.type)
-          P <- prod.spline(x=x,K=K,basis=basis)
+          P <- prod.spline(x=x,K=K,degree=degree,nbreak=nbreak,basis=basis)
           k <- NCOL(P)
           model.z.unique <- lm(y~P,weights=L)
           model[[i]] <- model.z.unique
           htt[zz] <- hatvalues(model.z.unique)[zz]
-          P <- prod.spline(x=x,K=K,xeval=x[zz,,drop=FALSE],basis=basis)
+          P <- prod.spline(x=x,K=K,degree=degree,nbreak=nbreak,xeval=x[zz,,drop=FALSE],basis=basis)
           tmp <- predict(model.z.unique,newdata=data.frame(as.matrix(P)),interval="confidence",se.fit=TRUE)
           fit.spline[zz,] <- cbind(tmp[[1]],se=tmp[[2]])
           rm(tmp)
@@ -231,11 +235,11 @@ predict.kernel.spline <- function(x,
         for(i in 1:nrow.zeval.unique) {
           zz <- ind.zeval == ind.zeval.vals[i]
           L <- prod.kernel(Z=z,z=zeval.unique[ind.zeval.vals[i],],lambda=lambda,kernel.type=kernel.type)
-          P <- prod.spline(x=x,K=K,basis=basis)
+          P <- prod.spline(x=x,K=K,degree=degree,nbreak=nbreak,basis=basis)
           k <- NCOL(P)
           model.z.unique <- lm(y~P,weights=L)
           model[[i]] <- model.z.unique
-          P <- prod.spline(x=x,K=K,xeval=xeval[zz,,drop=FALSE],basis=basis)
+          P <- prod.spline(x=x,K=K,degree=degree,nbreak=nbreak,xeval=xeval[zz,,drop=FALSE],basis=basis)
           tmp <- predict(model.z.unique,newdata=data.frame(as.matrix(P)),interval="confidence",se.fit=TRUE)
           fit.spline[zz,] <- cbind(tmp[[1]],se=tmp[[2]])
           rm(tmp)
@@ -318,6 +322,8 @@ deriv.kernel.spline <- function(x,
                                 y,
                                 z=NULL,
                                 K,
+                                degree=3,
+                                nbreak=2,
                                 lambda=NULL,
                                 kernel.type=c("nominal","ordinal"),
                                 xeval=NULL,
@@ -343,9 +349,9 @@ deriv.kernel.spline <- function(x,
 
     if(K[deriv.index]!=0) {
 
-      P <- prod.spline(x=x,K=K,basis=basis)      
+      P <- prod.spline(x=x,K=K,degree=degree,nbreak=nbreak,basis=basis)      
       model <- lm(y~P)
-      P.deriv <- prod.spline(x=x,K=K,xeval=xeval,basis=basis,deriv.index=deriv.index,deriv=deriv)
+      P.deriv <- prod.spline(x=x,K=K,degree=degree,nbreak=nbreak,xeval=xeval,basis=basis,deriv.index=deriv.index,deriv=deriv)
       dim.P.deriv <- K[deriv.index]
       dim.P.no.tensor <- attr(P.deriv,"dim.P.no.tensor")
       dim.P.tensor <- NCOL(P)
@@ -395,10 +401,10 @@ deriv.kernel.spline <- function(x,
         for(i in 1:nrow.z.unique) {
           zz <- ind == ind.vals[i]
           L <- prod.kernel(Z=z,z=z.unique[ind.vals[i],],lambda=lambda,kernel.type=kernel.type)
-          P <- prod.spline(x=x,K=K,basis=basis)          
+          P <- prod.spline(x=x,K=K,degree=degree,nbreak=nbreak,basis=basis)          
           k <- NCOL(P)
           model <- lm(y~P,weights=L)
-          P.deriv <- prod.spline(x=x,K=K,xeval=x[zz,,drop=FALSE],basis=basis,deriv.index=deriv.index,deriv=deriv)
+          P.deriv <- prod.spline(x=x,K=K,degree=degree,nbreak=nbreak,xeval=x[zz,,drop=FALSE],basis=basis,deriv.index=deriv.index,deriv=deriv)
           dim.P.deriv <- K[deriv.index]
           dim.P.no.tensor <- attr(P.deriv,"dim.P.no.tensor")
           dim.P.tensor <- NCOL(P)
@@ -430,10 +436,10 @@ deriv.kernel.spline <- function(x,
         for(i in 1:nrow.zeval.unique) {
           zz <- ind.zeval == ind.zeval.vals[i]
           L <- prod.kernel(Z=z,z=zeval.unique[ind.zeval.vals[i],],lambda=lambda,kernel.type=kernel.type)
-          P <- prod.spline(x=x,K=K,basis=basis)
+          P <- prod.spline(x=x,K=K,degree=degree,nbreak=nbreak,basis=basis)
           k <- NCOL(P)
           model <- lm(y~P,weights=L)
-          P.deriv <- prod.spline(x=x,K=K,xeval=xeval[zz,,drop=FALSE],basis=basis,deriv.index=deriv.index,deriv=deriv)
+          P.deriv <- prod.spline(x=x,K=K,degree=degree,nbreak=nbreak,xeval=xeval[zz,,drop=FALSE],basis=basis,deriv.index=deriv.index,deriv=deriv)
           dim.P.deriv <- K[deriv.index]
           dim.P.no.tensor <- attr(P.deriv,"dim.P.no.tensor")
           dim.P.tensor <- NCOL(P)
@@ -483,6 +489,8 @@ predict.factor.spline <- function(x,
                                   z=NULL,
                                   K=NULL,
                                   I=NULL,
+                                  degree=3,
+                                  nbreak=2,
                                   xeval=NULL,
                                   zeval=NULL,
                                   basis=c("additive-tensor","additive","tensor","auto"),
@@ -508,7 +516,7 @@ predict.factor.spline <- function(x,
 
     ## Degree > 0
 
-    P <- prod.spline(x=x,z=z,K=K,I=I,basis=basis)
+    P <- prod.spline(x=x,z=z,K=K,I=I,degree=degree,nbreak=nbreak,basis=basis)
 
     if(prune && is.null(prune.index)) {
 
@@ -554,7 +562,7 @@ predict.factor.spline <- function(x,
     if(is.null(xeval)) {
       fit.spline <- predict(model,interval="confidence",se.fit=TRUE)
     } else {
-      P <- prod.spline(x=x,z=z,K=K,I=I,xeval=xeval,zeval=zeval,basis=basis)
+      P <- prod.spline(x=x,z=z,K=K,I=I,degree=degree,nbreak=nbreak,xeval=xeval,zeval=zeval,basis=basis)
       fit.spline <- predict(model,newdata=data.frame(as.matrix(P[,IND,drop=FALSE])),interval="confidence",se.fit=TRUE)
     }
 
@@ -603,6 +611,8 @@ deriv.factor.spline <- function(x,
                                 z,
                                 K=NULL,
                                 I=NULL,
+                                degree=3,
+                                nbreak=2,
                                 xeval=NULL,
                                 zeval=NULL,
                                 basis=c("additive-tensor","additive","tensor","auto"),
@@ -623,7 +633,7 @@ deriv.factor.spline <- function(x,
 
     ## Estimate model on training data.
     
-    P <- prod.spline(x=x,z=z,K=K,I=I,basis=basis)    
+    P <- prod.spline(x=x,z=z,K=K,I=I,degree=degree,nbreak=nbreak,basis=basis)    
     if(is.null(prune.index)) prune.index <- !logical(NCOL(P))
     model <- lm(y~P[,prune.index,drop=FALSE])
 
@@ -635,7 +645,7 @@ deriv.factor.spline <- function(x,
     coef.vec.model[prune.index] <- coef(model)[-1]
     vcov.mat.model[prune.index,prune.index] <- vcov(model)[-1,-1,drop=FALSE]
 
-    P.deriv <- prod.spline(x=x,z=z,K=K,I=I,xeval=xeval,zeval=zeval,basis=basis,deriv.index=deriv.index,deriv=deriv)
+    P.deriv <- prod.spline(x=x,z=z,K=K,I=I,degree=degree,nbreak=nbreak,xeval=xeval,zeval=zeval,basis=basis,deriv.index=deriv.index,deriv=deriv)
 
     dim.P.deriv <- K[deriv.index]
     dim.P.no.tensor <- attr(P.deriv,"dim.P.no.tensor")
@@ -683,6 +693,8 @@ cv.kernel.spline <- function(x,
                              K,
                              lambda=NULL,
                              z.unique,
+                             degree=3,
+                             nbreak=2,
                              ind,
                              ind.vals,
                              nrow.z.unique,
@@ -699,7 +711,7 @@ cv.kernel.spline <- function(x,
   if(is.null(z)) {
     ## No categorical predictors
     if(any(K > 0)) {
-      model <- lm(y~prod.spline(x=x,K=K,basis=basis))
+      model <- lm(y~prod.spline(x=x,K=K,degree=degree,nbreak=nbreak,basis=basis))
     } else {
       model <- lm(y~1)
     }
@@ -718,7 +730,7 @@ cv.kernel.spline <- function(x,
       for(i in 1:nrow.z.unique) {
         zz <- ind == ind.vals[i]
         L <- prod.kernel(Z=z,z=z.unique[ind.vals[i],],lambda=lambda,kernel.type=kernel.type)
-        model <- lm(y~prod.spline(x=x,K=K,basis=basis),weights=L)
+        model <- lm(y~prod.spline(x=x,K=K,degree=degree,nbreak=nbreak,basis=basis),weights=L)
         epsilon[zz] <- residuals(model)[zz]
         htt[zz] <- hatvalues(model)[zz]
       }
@@ -750,6 +762,8 @@ cv.factor.spline <- function(x,
                              z=NULL,
                              K,
                              I=NULL,
+                             degree=3,
+                             nbreak=2,
                              kernel.type=c("nominal","ordinal"),
                              basis=c("additive-tensor","additive","tensor","auto"),
                              cv.norm=c("L2","L1")) {
@@ -762,13 +776,13 @@ cv.factor.spline <- function(x,
 
   if(!is.null(z)) {
     if(any(K > 0)||any(I > 0)) {
-      model <- lm(y~prod.spline(x=x,z=z,K=K,I=I,basis=basis))
+      model <- lm(y~prod.spline(x=x,z=z,K=K,I=I,degree=degree,nbreak=nbreak,basis=basis))
     } else {
       model <- lm(y~1)
     }
   } else {
     if(any(K > 0)) {
-      model <- lm(y~prod.spline(x=x,z=z,K=K,I=I,basis=basis))
+      model <- lm(y~prod.spline(x=x,z=z,K=K,I=I,degree=degree,nbreak=nbreak,basis=basis))
     } else {
       model <- lm(y~1)
     }

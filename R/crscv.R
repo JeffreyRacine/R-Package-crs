@@ -2,7 +2,7 @@ crscv <- function(K,
                   I,
                   basis,
                   basis.vec,
-                  max.K,
+                  basis.maxdim,
                   restarts,
                   K.mat,
                   lambda,
@@ -14,7 +14,7 @@ crscv <- function(K,
                 I=I,
                 basis=basis,
                 basis.vec=basis.vec,    
-                max.K=max.K,
+                basis.maxdim=basis.maxdim,
                 restarts=restarts,
                 K.mat=K.mat,
                 lambda=lambda,
@@ -35,7 +35,7 @@ print.crscv <- function(x, ...){
       cat(paste("\nOptimal spline degree for x[", j, "]: ",format(x$K[j]),sep=""),sep="")
     for(j in 1:length(x$lambda))
       cat(paste("\nOptimal bandwidth for z[", j, "]: ",format(x$lambda[j]),sep=""),sep="")
-    cat(paste("\n\nMaximum Spline Degree for Search ", sQuote("max.K"), ": ",format(x$max.K),sep=""),sep="")
+    cat(paste("\n\nMaximum Spline Degree for Search ", sQuote("basis.maxdim"), ": ",format(x$basis.maxdim),sep=""),sep="")
     cat(paste("\nBasis = ", x$basis,sep=""))
     if(x$restarts>0) cat(paste("\nNumber of Restarts = ", format(x$restarts),sep=""),sep="")    
     cat("\n\n")
@@ -46,7 +46,7 @@ print.crscv <- function(x, ...){
       cat(paste("\nOptimal spline degree for x[", j, "]: ",format(x$K[j]),sep=""),sep="")
     for(j in 1:length(x$I))
       cat(paste("\nInclusion for z[", j, "]: ",format(x$I[j]),sep=""),sep="")
-    cat(paste("\n\nMaximum Spline Degree for Search ", sQuote("max.K"), ": ",format(x$max.K),sep=""),sep="")
+    cat(paste("\n\nMaximum Spline Degree for Search ", sQuote("basis.maxdim"), ": ",format(x$basis.maxdim),sep=""),sep="")
     cat(paste("\nBasis = ", x$basis,sep=""))
     cat("\n\n")
   } else {
@@ -54,7 +54,7 @@ print.crscv <- function(x, ...){
     cat(paste("\n\nObjective Function Value : ",format(x$cv.func),sep=""),sep="")
     for(j in 1:length(x$K))
       cat(paste("\nOptimal spline degree for x[", j, "]: ",format(x$K[j]),sep=""),sep="")
-    cat(paste("\n\nMaximum Spline Degree for Search ", sQuote("max.K"), ": ",format(x$max.K),sep=""),sep="")
+    cat(paste("\n\nMaximum Spline Degree for Search ", sQuote("basis.maxdim"), ": ",format(x$basis.maxdim),sep=""),sep="")
     cat(paste("\nBasis = ", x$basis,sep=""))
     cat("\n\n")
   }

@@ -1,6 +1,6 @@
 krscv <- function(xz,
                   y,
-                  max.K=10,
+                  basis.maxdim=10,
                   kernel.type=c("nominal","ordinal"),
                   restarts=0,
                   basis = c("additive-tensor","additive","tensor","auto"),
@@ -20,7 +20,7 @@ krscv <- function(xz,
                       y,
                       z,
                       K,
-                      max.K,
+                      basis.maxdim,
                       restart,
                       num.restarts,
                       z.unique,
@@ -110,7 +110,7 @@ krscv <- function(xz,
 
   ## check whether tensor spline dimension results in zero/low df...
 
-  k <- max.K^num.x + ifelse(basis!="additive",max.K*num.x,0)
+  k <- basis.maxdim^num.x + ifelse(basis!="additive",basis.maxdim*num.x,0)
   df <- n - k
   if(df <= 0) {
     stop(paste(" maximum spline dimension (",k,") equals/exceeds sample size (",n,")\n   perhaps use basis=\"additive\" or else decrease basis.maxdim",sep=""))
@@ -118,9 +118,9 @@ krscv <- function(xz,
     warning(paste(" maximum spline dimension (",k,") and sample size (",n,") close",sep=""))
   }
 # 17/06/10 - really dig into what this tests and whether it is necessary or not (probably is!)
-#  if(min(table(ind)) <= k) stop(paste(" insufficient data for one or more unique combinations of z (",min(table(ind))," obs.)\n   in order to estimate spline at max.K (",k," bases):\n   either reduce max.K or collapse categories",sep=""))
+#  if(min(table(ind)) <= k) stop(paste(" insufficient data for one or more unique combinations of z (",min(table(ind))," obs.)\n   in order to estimate spline at basis.maxdim (",k," bases):\n   either reduce basis.maxdim or collapse categories",sep=""))
 
-  if(max.K < 1) stop(" max.K must be greater than or equal to 1")
+  if(basis.maxdim < 1) stop(" basis.maxdim must be greater than or equal to 1")
 
   console <- newLineConsole()
   console <- printPush("Working...",console = console)
@@ -128,7 +128,7 @@ krscv <- function(xz,
   ## Exhaustive evaluation over all combinations of K, search over
   ## lambda for each combination
 
-  K.mat <- matrix.combn(0:max.K,num.x)
+  K.mat <- matrix.combn(0:basis.maxdim,num.x)
   nrow.K.mat <- NROW(K.mat)
   cv.min.vec <- numeric(nrow.K.mat)
   basis.vec <- character(nrow.K.mat)
@@ -160,7 +160,7 @@ krscv <- function(xz,
                         y=y,
                         z=z,
                         K=K.mat[j,],
-                        max.K=max.K,
+                        basis.maxdim=basis.maxdim,
                         restart=0,
                         num.restarts=restarts,
                         z.unique=z.unique,
@@ -192,7 +192,7 @@ krscv <- function(xz,
                                     y=y,
                                     z=z,
                                     K=K.mat[j,],
-                                    max.K=max.K,
+                                    basis.maxdim=basis.maxdim,
                                     restart=r,
                                     num.restarts=restarts,
                                     z.unique=z.unique,
@@ -239,7 +239,7 @@ krscv <- function(xz,
                         y=y,
                         z=z,
                         K=K.mat[j,],
-                        max.K=max.K,
+                        basis.maxdim=basis.maxdim,
                         restart=0,
                         num.restarts=restarts,
                         z.unique=z.unique,
@@ -271,7 +271,7 @@ krscv <- function(xz,
                                     y=y,
                                     z=z,
                                     K=K.mat[j,],
-                                    max.K=max.K,
+                                    basis.maxdim=basis.maxdim,
                                     restart=r,
                                     num.restarts=restarts,
                                     z.unique=z.unique,
@@ -319,7 +319,7 @@ krscv <- function(xz,
                         y=y,
                         z=z,
                         K=K.mat[j,],
-                        max.K=max.K,
+                        basis.maxdim=basis.maxdim,
                         restart=0,
                         num.restarts=restarts,
                         z.unique=z.unique,
@@ -351,7 +351,7 @@ krscv <- function(xz,
                                     y=y,
                                     z=z,
                                     K=K.mat[j,],
-                                    max.K=max.K,
+                                    basis.maxdim=basis.maxdim,
                                     restart=r,
                                     num.restarts=restarts,
                                     z.unique=z.unique,
@@ -401,7 +401,7 @@ krscv <- function(xz,
                         y=y,
                         z=z,
                         K=K.mat[j,],
-                        max.K=max.K,
+                        basis.maxdim=basis.maxdim,
                         restart=0,
                         num.restarts=restarts,
                         z.unique=z.unique,
@@ -433,7 +433,7 @@ krscv <- function(xz,
                                     y=y,
                                     z=z,
                                     K=K.mat[j,],
-                                    max.K=max.K,
+                                    basis.maxdim=basis.maxdim,
                                     restart=r,
                                     num.restarts=restarts,
                                     z.unique=z.unique,
@@ -475,13 +475,13 @@ krscv <- function(xz,
   console <- printClear(console)
   console <- printPop(console)
 
-  if(any(K.opt==max.K)) warning(paste(" optimal K equals search maximum (", max.K,"): rerun with larger max.K",sep=""))
+  if(any(K.opt==basis.maxdim)) warning(paste(" optimal K equals search maximum (", basis.maxdim,"): rerun with larger basis.maxdim",sep=""))
 
   crscv(K=K.opt,
         I=NULL,
         basis=basis.opt,
         basis.vec=basis.vec,
-        max.K=max.K,
+        basis.maxdim=basis.maxdim,
         restarts=restarts,
         K.mat=K.mat,
         lambda=lambda.opt,
