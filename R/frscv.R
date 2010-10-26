@@ -2,7 +2,8 @@ frscv <- function(xz,
                   y,
                   basis.maxdim=10,
                   basis = c("additive-tensor","additive","tensor","auto"),
-                  cv.norm=c("L2","L1")) {
+                  cv.norm=c("L2","L1"),
+                  nbreak=nbreak) {
 
   basis <- match.arg(basis)
   cv.norm <- match.arg(cv.norm)  
@@ -19,6 +20,7 @@ frscv <- function(xz,
                       j=NULL,
                       nrow.KI.mat=NULL,
                       t2=NULL,
+                      nbreak=nbreak,
                       basis=basis,
                       cv.norm=cv.norm) {
 
@@ -44,6 +46,7 @@ frscv <- function(xz,
                            z=z,
                            K=K,
                            I=I,
+                           nbreak=nbreak,
                            basis=basis)
 
     ## Some i/o unless options(crs.messages=FALSE)
@@ -154,6 +157,7 @@ frscv <- function(xz,
                         j=j,
                         nrow.KI.mat=nrow.KI.mat,
                         t2=Sys.time(),
+                        nbreak=nbreak,
                         basis="additive-tensor")
 
       if(output < cv.min) {
@@ -174,6 +178,7 @@ frscv <- function(xz,
                         j=j,
                         nrow.KI.mat=nrow.KI.mat,
                         t2=Sys.time(),
+                        nbreak=nbreak,
                         basis="additive")
 
       if(output < cv.min) {
@@ -194,6 +199,7 @@ frscv <- function(xz,
                         j=j,
                         nrow.KI.mat=nrow.KI.mat,
                         t2=Sys.time(),
+                        nbreak=nbreak,
                         basis="tensor")
 
       if(output < cv.min) {
@@ -218,6 +224,7 @@ frscv <- function(xz,
                         j=j,
                         nrow.KI.mat=nrow.KI.mat,
                         t2=Sys.time(),
+                        nbreak=nbreak,
                         basis=basis)
 
       if(output < cv.min) {

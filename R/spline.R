@@ -5,6 +5,11 @@
 ## continuous variables of arbitrary order (issues warning when order
 ## exceeds degree of spline) with interaction if specified.
 
+## October 26 2010 - currently degree and nbreak are placeholders. The
+## work is done via K=... I will introduce a switch but first want to
+## ensure that nbreak can be modified successfully from the calling
+## function.
+
 prod.spline <- function(x,
                         z=NULL,
                         K=NULL,

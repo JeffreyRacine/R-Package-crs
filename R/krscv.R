@@ -4,7 +4,8 @@ krscv <- function(xz,
                   kernel.type=c("nominal","ordinal"),
                   restarts=0,
                   basis = c("additive-tensor","additive","tensor","auto"),
-                  cv.norm=c("L2","L1")) {
+                  cv.norm=c("L2","L1"),
+                  nbreak=nbreak) {
 
   basis <- match.arg(basis)
   cv.norm <- match.arg(cv.norm)  
@@ -31,6 +32,7 @@ krscv <- function(xz,
                       j=NULL,
                       nrow.K.mat=NULL,
                       t2=NULL,
+                      nbreak=nbreak,
                       basis=basis,
                       cv.norm=cv.norm) {
 
@@ -57,6 +59,7 @@ krscv <- function(xz,
                            ind.vals=ind.vals,
                            nrow.z.unique=nrow.z.unique,
                            kernel.type=kernel.type,
+                           nbreak=nbreak,
                            basis=basis)
 
     ## Some i/o unless options(crs.messages=FALSE)
@@ -171,6 +174,7 @@ krscv <- function(xz,
                         j=j,
                         nrow.K.mat=nrow.K.mat,
                         t2=t2,
+                        nbreak=nbreak,
                         basis="additive-tensor")
 
       }
@@ -203,6 +207,7 @@ krscv <- function(xz,
                                     j=j,
                                     nrow.K.mat=nrow.K.mat,
                                     t2=t2,
+                                    nbreak=nbreak,
                                     basis="additive-tensor")
 
           }
@@ -250,6 +255,7 @@ krscv <- function(xz,
                         j=j,
                         nrow.K.mat=nrow.K.mat,
                         t2=t2,
+                        nbreak=nbreak,
                         basis="additive")
 
       }
@@ -282,6 +288,7 @@ krscv <- function(xz,
                                     j=j,
                                     nrow.K.mat=nrow.K.mat,
                                     t2=t2,
+                                    nbreak=nbreak,
                                     basis="additive")
 
           }
@@ -330,6 +337,7 @@ krscv <- function(xz,
                         j=j,
                         nrow.K.mat=nrow.K.mat,
                         t2=t2,
+                        nbreak=nbreak,
                         basis="tensor")
 
       }
@@ -362,6 +370,7 @@ krscv <- function(xz,
                                     j=j,
                                     nrow.K.mat=nrow.K.mat,
                                     t2=t2,
+                                    nbreak=nbreak,
                                     basis="tensor")
 
           }
@@ -412,6 +421,7 @@ krscv <- function(xz,
                         j=j,
                         nrow.K.mat=nrow.K.mat,
                         t2=t2,
+                        nbreak=nbreak,
                         basis=basis)
 
       }
@@ -444,6 +454,7 @@ krscv <- function(xz,
                                     j=j,
                                     nrow.K.mat=nrow.K.mat,
                                     t2=t2,
+                                    nbreak=nbreak,
                                     basis=basis)
 
           }
