@@ -716,6 +716,7 @@ summary.crs <- function(object,
   }  else {
     cat(paste("\nThere are ",format(object$num.z), " categorical predictors",sep=""),sep="")
   }
+  cat(paste("\nModel complexity proxy: ", format(object$complexity), sep=""))
   if(object$complexity=="degree") {
     cat(paste("\nNumber of breakpoints: ", format(object$nbreak), sep=""))
     for(j in 1:object$num.x)
