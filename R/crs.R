@@ -359,8 +359,19 @@ crs.formula <- function(formula,
 
   ## Trap for no args and return warning
 
-  if(is.null(degree)&&is.null(include)&&is.null(cv)&&is.null(lambda)) warning(" no degree/include/cv/lambda arguments given: default model is degree=1")
+  if(is.null(degree)&&is.null(nbreak)) {
+    if(complexity=="degree") {
+      warning(" no break argument given: default model is nbreak=1")
+    } else {
+      warning(" no degree argument given: default model is degree=1")
+    }
+    if(is.null(degree)) degree <- 1
+    if(is.null(nbreak)) nbreak <- 1
+  }
 
+#  if(is.null(include)&&!is.null(z)&&!kernel) include <- rep(1,ncol(z))
+#  if(is.null(lambda)&&!is.null(z)&&kernel) lambda <- rep(0,ncol(z))
+  
   if(!is.null(cv)&&basis=="additive-tensor"&&NCOL(xz)>1) warning(" cv specified but basis set to additive-tensor: you might consider basis=\"auto\"")
 
   if(kernel==TRUE&&prune==TRUE) warning(" pruning cannot coexist with categorical kernel smoothing (pruning ignored)")
