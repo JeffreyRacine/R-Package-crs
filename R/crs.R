@@ -57,10 +57,10 @@ crsEst <- function(xz,
 
   if(complexity=="degree") {
     if(is.null(degree)&&!is.null(x)) degree <- rep(1,ncol(x))
-    if(is.null(nbreak)&&!is.null(x)) nbreak <- 2
+    if(is.null(nbreak)&&!is.null(x)) nbreak <- 1
   } else {
     if(is.null(degree)&&!is.null(x)) degree <- 1
-    if(is.null(nbreak)&&!is.null(x)) nbreak <- rep(2,ncol(x))
+    if(is.null(nbreak)&&!is.null(x)) nbreak <- rep(1,ncol(x))
   }
   if(is.null(include)&&!is.null(z)&&!kernel) include <- rep(1,ncol(z))
   if(is.null(lambda)&&!is.null(z)&&kernel) lambda <- rep(0,ncol(z))
@@ -247,6 +247,7 @@ crsEst <- function(xz,
               lwr=model$fitted.values[,2],
               upr=model$fitted.values[,3],
               df.residual=model$df.residual,
+              K=if(complexity=="degree") degree else nbreak,
               degree=degree,
               nbreak=nbreak,
               complexity=complexity,
