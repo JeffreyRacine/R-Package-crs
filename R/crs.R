@@ -1,4 +1,4 @@
-## 3/6/2010, (C) Jeffrey S. Racine (racinej@mcmaster.ca).
+# 3/6/2010, (C) Jeffrey S. Racine (racinej@mcmaster.ca).
 
 ## This function provides for a complete S3 implementation of
 ##  regression splines with categorical factors using two approaches,
@@ -18,11 +18,12 @@ crs <- function(...) UseMethod("crs")
 crsEst <- function(xz,
                    y,
                    degree=NULL,
-                   nbreak=2,
+                   nbreak=NULL,
                    include=NULL,
                    kernel=FALSE,
                    lambda=NULL,
                    kernel.type=c("nominal","ordinal"),
+                   complexity=c("degree","knots"),
                    basis=c("additive-tensor","additive","tensor","auto"),
                    deriv=0,
                    data.return=FALSE,
@@ -32,6 +33,7 @@ crsEst <- function(xz,
   ## Take data frame xz and parse into factors (z) and numeric (x).
 
   kernel.type <- match.arg(kernel.type)
+  complexity <- match.arg(complexity)
   basis <- match.arg(basis)
 
   if(!kernel) {
@@ -53,7 +55,13 @@ crsEst <- function(xz,
   ## If no degree nor include nor lambda, return linear model
   ## (identity bases) or non-smooth model (kernel).
 
-  if(is.null(degree)&&!is.null(x)) degree <- rep(1,ncol(x))
+  if(complexity=="degree") {
+    if(is.null(degree)&&!is.null(x)) degree <- rep(1,ncol(x))
+    if(is.null(nbreak)&&!is.null(x)) nbreak <- 2
+  } else {
+    if(is.null(degree)&&!is.null(x)) degree <- 1
+    if(is.null(nbreak)&&!is.null(x)) nbreak <- rep(2,ncol(x))
+  }
   if(is.null(include)&&!is.null(z)&&!kernel) include <- rep(1,ncol(z))
   if(is.null(lambda)&&!is.null(z)&&kernel) lambda <- rep(0,ncol(z))
 
@@ -64,9 +72,11 @@ crsEst <- function(xz,
     model <- predict.factor.spline(x=x,
                                    y=y,
                                    z=z,
-                                   K=degree,
+                                   K=if(complexity=="degree") degree else nbreak,
                                    I=include,
+                                   degree=degree,
                                    nbreak=nbreak,
+                                   complexity=complexity,
                                    basis=basis,
                                    prune=prune)
 
@@ -84,9 +94,11 @@ crsEst <- function(xz,
           tmp <- deriv.factor.spline(x=x,
                                      y=y,
                                      z=z,
-                                     K=degree,
+                                     K=if(complexity=="degree") degree else nbreak,
                                      I=include,
+                                     degree=degree,
                                      nbreak=nbreak,
+                                     complexity=complexity,
                                      basis=basis,
                                      deriv.index=m,
                                      deriv=deriv,
@@ -103,9 +115,11 @@ crsEst <- function(xz,
           zpred <- predict.factor.spline(x=x,
                                          y=y,
                                          z=z,
-                                         K=degree,
+                                         K=if(complexity=="degree") degree else nbreak,
                                          I=include,
+                                         degree=degree,
                                          nbreak=nbreak,
+                                         complexity=complexity,
                                          basis=basis,
                                          prune=prune,
                                          prune.index=prune.index)$fitted.values
@@ -113,11 +127,13 @@ crsEst <- function(xz,
           zpred.base <- predict.factor.spline(x=x,
                                               y=y,
                                               z=z,
-                                              K=degree,
+                                              K=if(complexity=="degree") degree else nbreak,
                                               I=include,
-                                              nbreak=nbreak,
                                               xeval=x,
                                               zeval=ztmp,
+                                              degree=degree,
+                                              nbreak=nbreak,
+                                              complexity=complexity,
                                               basis=basis,
                                               prune=prune,
                                               prune.index=prune.index)$fitted.values
@@ -141,10 +157,12 @@ crsEst <- function(xz,
     model <- predict.kernel.spline(x=x,
                                    y=y,
                                    z=z,
-                                   K=degree,
-                                   nbreak=nbreak,
+                                   K=if(complexity=="degree") degree else nbreak,
                                    lambda=lambda,
                                    kernel.type=kernel.type,
+                                   degree=degree,
+                                   nbreak=nbreak,
+                                   complexity=complexity,
                                    basis=basis)
 
     prune.index <- NULL
@@ -161,10 +179,12 @@ crsEst <- function(xz,
           tmp <- deriv.kernel.spline(x=x,
                                      y=y,
                                      z=z,
-                                     K=degree,
-                                     nbreak=nbreak,
+                                     K=if(complexity=="degree") degree else nbreak,
                                      lambda=lambda,
                                      kernel.type=kernel.type,
+                                     degree=degree,
+                                     nbreak=nbreak,
+                                     complexity=complexity,
                                      basis=basis,
                                      deriv.index=m,
                                      deriv=deriv)
@@ -181,21 +201,25 @@ crsEst <- function(xz,
           zpred <- predict.kernel.spline(x=x,
                                          y=y,
                                          z=z,
-                                         K=degree,
-                                         nbreak=nbreak,
+                                         K=if(complexity=="degree") degree else nbreak,
                                          lambda=lambda,
                                          kernel.type=kernel.type,
+                                         degree=degree,
+                                         nbreak=nbreak,
+                                         complexity=complexity,
                                          basis=basis)$fitted.values
 
           zpred.base <- predict.kernel.spline(x=x,
                                               y=y,
                                               z=z,
-                                              K=degree,
-                                              nbreak=nbreak,
+                                              K=if(complexity=="degree") degree else nbreak,
                                               lambda=lambda,
                                               kernel.type=kernel.type,
                                               xeval=x,
                                               zeval=ztmp,
+                                              degree=degree,
+                                              nbreak=nbreak,
+                                              complexity=complexity,
                                               basis=basis)$fitted.values
 
           deriv.mat[,i] <- zpred[,1]-zpred.base[,1]
@@ -225,6 +249,7 @@ crsEst <- function(xz,
               df.residual=model$df.residual,
               degree=degree,
               nbreak=nbreak,
+              complexity=complexity,
               include=include,
               lambda=lambda,
               kernel=kernel,
@@ -256,11 +281,12 @@ crsEst <- function(xz,
 crs.default <- function(xz,
                         y,
                         degree=NULL,
-                        nbreak=2,
+                        nbreak=NULL,
                         include=NULL,
                         kernel=FALSE,
                         lambda=NULL,
                         kernel.type=c("nominal","ordinal"),
+                        complexity=c("degree","knots"),
                         basis=c("additive-tensor","additive","tensor","auto"),
                         deriv=0,
                         data.return=FALSE,
@@ -268,6 +294,7 @@ crs.default <- function(xz,
                         ...) {
 
   kernel.type <- match.arg(kernel.type)
+  complexity <- match.arg(complexity)
   basis <- match.arg(basis)
 
   est <- crsEst(xz=xz,
@@ -278,6 +305,7 @@ crs.default <- function(xz,
                 kernel=kernel,
                 lambda=lambda,
                 kernel.type=kernel.type,
+                complexity=complexity,
                 basis=basis,
                 deriv=deriv,
                 data.return=data.return,
@@ -302,7 +330,7 @@ crs.default <- function(xz,
 crs.formula <- function(formula,
                         data=list(),
                         degree=NULL,
-                        nbreak=2,
+                        nbreak=NULL,
                         include=NULL,
                         basis.maxdim=5,
                         cv=NULL,
@@ -310,6 +338,7 @@ crs.formula <- function(formula,
                         kernel=FALSE,
                         lambda=NULL,
                         kernel.type=c("nominal","ordinal"),
+                        complexity=c("degree","knots"),
                         basis=c("additive-tensor","additive","tensor","auto"),
                         deriv=0,
                         data.return=FALSE,
@@ -318,6 +347,7 @@ crs.formula <- function(formula,
 
   cv.norm <- match.arg(cv.norm)
   kernel.type <- match.arg(kernel.type)
+  complexity <- match.arg(complexity)
   basis <- match.arg(basis)
 
   mf <- model.frame(formula=formula, data=data)
@@ -342,10 +372,12 @@ crs.formula <- function(formula,
       cv <- frscv(xz=xz,
                   y=y,
                   basis.maxdim=basis.maxdim,
+                  complexity=complexity,
                   basis=basis,
                   cv.norm=cv.norm,
+                  degree=degree,
                   nbreak=nbreak)
-      degree <- cv$K
+      K <- cv$K
       include <- cv$I
       basis <- cv$basis
     }
@@ -358,10 +390,12 @@ crs.formula <- function(formula,
       cv <- krscv(xz=xz,
                   y=y,
                   basis.maxdim=basis.maxdim,
+                  complexity=complexity,
                   basis=basis,
                   cv.norm=cv.norm,
+                  degree=degree,
                   nbreak=nbreak)
-      degree <- cv$K
+      K <- cv$K
       lambda <- cv$lambda
       basis <- cv$basis
     }
@@ -370,12 +404,13 @@ crs.formula <- function(formula,
 
   est <- crs.default(xz=xz,
                      y=y,
-                     degree=degree,
-                     nbreak=nbreak,
+                     degree=if(complexity=="degree") K else degree,
+                     nbreak=if(complexity=="degree") nbreak else K,
                      include=include,
                      kernel=kernel,
                      lambda=lambda,
                      kernel.type=kernel.type,
+                     complexity=complexity,
                      basis=basis,
                      deriv=deriv,
                      data.return=data.return,
@@ -681,9 +716,15 @@ summary.crs <- function(object,
   }  else {
     cat(paste("\nThere are ",format(object$num.z), " categorical predictors",sep=""),sep="")
   }
-  cat(paste("\nNumber of breakpoints: ", format(object$nbreak), sep=""))
-  for(j in 1:length(object$degree))
-    cat(paste("\nSpline degree for ",format(object$xnames[j]),": ",format(object$degree[j]),sep=""),sep="")
+  if(object$complexity=="degree") {
+    cat(paste("\nNumber of breakpoints: ", format(object$nbreak), sep=""))
+    for(j in 1:object$num.x)
+      cat(paste("\nSpline degree for ",format(object$xnames[j]),": ",format(object$degree[j]),sep=""),sep="")
+  } else {
+    cat(paste("\nSpline degree: ", format(object$degree), sep=""))
+    for(j in 1:object$num.x)
+      cat(paste("\nNumber of breakpoints for ",format(object$xnames[j]),": ",format(object$nbreak[j]),sep=""),sep="")
+  }
   if(!is.null(object$include)) for(j in 1:length(object$include))
     cat(paste("\nInclusion indicator for ",format(object$znames[j]),": ",format(object$include[j]),sep=""),sep="")
   if(!is.null(object$lambda)) for(j in 1:length(object$lambda))

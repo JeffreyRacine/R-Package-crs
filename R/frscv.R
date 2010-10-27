@@ -1,10 +1,13 @@
 frscv <- function(xz,
                   y,
                   basis.maxdim=10,
+                  complexity=c("degree","knots"),
                   basis = c("additive-tensor","additive","tensor","auto"),
                   cv.norm=c("L2","L1"),
-                  nbreak=nbreak) {
+                  degree=3,
+                  nbreak=2) {
 
+  complexity <- match.arg(complexity)
   basis <- match.arg(basis)
   cv.norm <- match.arg(cv.norm)  
 
@@ -20,7 +23,9 @@ frscv <- function(xz,
                       j=NULL,
                       nrow.KI.mat=NULL,
                       t2=NULL,
+                      degree=degree,
                       nbreak=nbreak,
+                      complexity=complexity,
                       basis=basis,
                       cv.norm=cv.norm) {
 
@@ -46,7 +51,9 @@ frscv <- function(xz,
                            z=z,
                            K=K,
                            I=I,
+                           degree=degree,
                            nbreak=nbreak,
+                           complexity=complexity,
                            basis=basis)
 
     ## Some i/o unless options(crs.messages=FALSE)
@@ -157,7 +164,9 @@ frscv <- function(xz,
                         j=j,
                         nrow.KI.mat=nrow.KI.mat,
                         t2=Sys.time(),
+                        degree=degree,
                         nbreak=nbreak,
+                        complexity=complexity,
                         basis="additive-tensor")
 
       if(output < cv.min) {
@@ -178,7 +187,9 @@ frscv <- function(xz,
                         j=j,
                         nrow.KI.mat=nrow.KI.mat,
                         t2=Sys.time(),
+                        degree=degree,
                         nbreak=nbreak,
+                        complexity=complexity,
                         basis="additive")
 
       if(output < cv.min) {
@@ -199,7 +210,9 @@ frscv <- function(xz,
                         j=j,
                         nrow.KI.mat=nrow.KI.mat,
                         t2=Sys.time(),
+                        degree=degree,
                         nbreak=nbreak,
+                        complexity=complexity,
                         basis="tensor")
 
       if(output < cv.min) {
@@ -224,7 +237,9 @@ frscv <- function(xz,
                         j=j,
                         nrow.KI.mat=nrow.KI.mat,
                         t2=Sys.time(),
+                        degree=degree,
                         nbreak=nbreak,
+                        complexity=complexity,
                         basis=basis)
 
       if(output < cv.min) {

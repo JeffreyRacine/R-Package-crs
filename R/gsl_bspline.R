@@ -14,7 +14,7 @@ gsl.bs.default <- function(x,
 
   if(degree <= 0) stop(" degree must be a positive integer")
   if(deriv < 0) stop(" deriv must be a non-negative integer")
-  if(nbreak < 2) stop(" nbreak must be at least 2")
+  if(nbreak <= 1) stop(" nbreak must be at least 2")
 
   ## For evaluation (newx) must use min/max for x unless otherwise
   ## specified

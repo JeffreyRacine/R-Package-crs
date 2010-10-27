@@ -3,10 +3,12 @@ krscv <- function(xz,
                   basis.maxdim=10,
                   kernel.type=c("nominal","ordinal"),
                   restarts=0,
+                  complexity=c("degree","knots"),
                   basis = c("additive-tensor","additive","tensor","auto"),
                   cv.norm=c("L2","L1"),
                   nbreak=nbreak) {
 
+  complexity <- match.arg(complexity)
   basis <- match.arg(basis)
   cv.norm <- match.arg(cv.norm)  
 
@@ -32,7 +34,9 @@ krscv <- function(xz,
                       j=NULL,
                       nrow.K.mat=NULL,
                       t2=NULL,
+                      degree=degree,
                       nbreak=nbreak,
+                      complexity=complexity,
                       basis=basis,
                       cv.norm=cv.norm) {
 
@@ -59,7 +63,9 @@ krscv <- function(xz,
                            ind.vals=ind.vals,
                            nrow.z.unique=nrow.z.unique,
                            kernel.type=kernel.type,
+                           degree=degree,
                            nbreak=nbreak,
+                           complexity=complexity,
                            basis=basis)
 
     ## Some i/o unless options(crs.messages=FALSE)
@@ -174,7 +180,9 @@ krscv <- function(xz,
                         j=j,
                         nrow.K.mat=nrow.K.mat,
                         t2=t2,
+                        degree=degree,
                         nbreak=nbreak,
+                        complexity=complexity,
                         basis="additive-tensor")
 
       }
@@ -208,6 +216,8 @@ krscv <- function(xz,
                                     nrow.K.mat=nrow.K.mat,
                                     t2=t2,
                                     nbreak=nbreak,
+                                    degree=degree,
+                                    complexity=complexity,
                                     basis="additive-tensor")
 
           }
@@ -256,6 +266,8 @@ krscv <- function(xz,
                         nrow.K.mat=nrow.K.mat,
                         t2=t2,
                         nbreak=nbreak,
+                        degree=degree,
+                        complexity=complexity,
                         basis="additive")
 
       }
@@ -289,6 +301,8 @@ krscv <- function(xz,
                                     nrow.K.mat=nrow.K.mat,
                                     t2=t2,
                                     nbreak=nbreak,
+                                    degree=degree,
+                                    complexity=complexity,
                                     basis="additive")
 
           }
@@ -338,6 +352,8 @@ krscv <- function(xz,
                         nrow.K.mat=nrow.K.mat,
                         t2=t2,
                         nbreak=nbreak,
+                        degree=degree,
+                        complexity=complexity,
                         basis="tensor")
 
       }
@@ -370,7 +386,9 @@ krscv <- function(xz,
                                     j=j,
                                     nrow.K.mat=nrow.K.mat,
                                     t2=t2,
+                                    degree=degree,
                                     nbreak=nbreak,
+                                    complexity=complexity,
                                     basis="tensor")
 
           }
@@ -421,7 +439,9 @@ krscv <- function(xz,
                         j=j,
                         nrow.K.mat=nrow.K.mat,
                         t2=t2,
+                        degree=degree,
                         nbreak=nbreak,
+                        complexity=complexity,
                         basis=basis)
 
       }
@@ -454,7 +474,9 @@ krscv <- function(xz,
                                     j=j,
                                     nrow.K.mat=nrow.K.mat,
                                     t2=t2,
+                                    degree=degree,
                                     nbreak=nbreak,
+                                    complexity=complexity,
                                     basis=basis)
 
           }
