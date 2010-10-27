@@ -4,8 +4,8 @@ frscv <- function(xz,
                   complexity=c("degree","knots"),
                   basis = c("additive-tensor","additive","tensor","auto"),
                   cv.norm=c("L2","L1"),
-                  degree=3,
-                  nbreak=2) {
+                  degree=degree,
+                  nbreak=degree) {
 
   complexity <- match.arg(complexity)
   basis <- match.arg(basis)

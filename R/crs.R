@@ -402,21 +402,40 @@ crs.formula <- function(formula,
 
   }
 
-  est <- crs.default(xz=xz,
-                     y=y,
-                     degree=if(complexity=="degree") K else degree,
-                     nbreak=if(complexity=="degree") nbreak else K,
-                     include=include,
-                     kernel=kernel,
-                     lambda=lambda,
-                     kernel.type=kernel.type,
-                     complexity=complexity,
-                     basis=basis,
-                     deriv=deriv,
-                     data.return=data.return,
-                     prune=prune,
-                     ...)
+  if(!is.null(cv)) {
 
+    est <- crs.default(xz=xz,
+                       y=y,
+                       degree=if(complexity=="degree") K else degree,
+                       nbreak=if(complexity=="degree") nbreak else K,
+                       include=include,
+                       kernel=kernel,
+                       lambda=lambda,
+                       kernel.type=kernel.type,
+                       complexity=complexity,
+                       basis=basis,
+                       deriv=deriv,
+                       data.return=data.return,
+                       prune=prune,
+                       ...)
+  } else {
+    
+    est <- crs.default(xz=xz,
+                       y=y,
+                       degree=degree,
+                       nbreak=nbreak,
+                       include=include,
+                       kernel=kernel,
+                       lambda=lambda,
+                       kernel.type=kernel.type,
+                       complexity=complexity,
+                       basis=basis,
+                       deriv=deriv,
+                       data.return=data.return,
+                       prune=prune,
+                       ...)
+  }
+  
   est$call <- match.call()
   est$formula <- formula
   est$terms <- mt
@@ -438,9 +457,14 @@ predict.crs <- function(object,
 
   if(is.null(newdata)) {
 
-    ## If No new data provided, return sample fit.
-    predicted.value <- fitted(object)
+    ## If no new data provided, return sample fit.
+    fitted.values <- fitted(object)
     deriv.mat <- object$deriv.mat
+
+    lwr <- NULL
+    upr <- NULL
+    deriv.mat.lwr <- NULL
+    deriv.mat.upr <- NULL    
 
   } else{
 
@@ -487,18 +511,23 @@ predict.crs <- function(object,
 
       ## Get degree vector and include vector.
 
+      complexity <- object$complexity
+      K <- object$K
       degree <- object$degree
+      nbreak <- object$nbreak
       include <- object$include
 
       tmp <- predict.factor.spline(x=x,
                                    y=y,
                                    z=z,
-                                   K=degree,
+                                   K=K,
+                                   degree=degree,
                                    nbreak=nbreak,
                                    I=include,
                                    xeval=xeval,
                                    zeval=zeval,
                                    basis=basis,
+                                   complexity=complexity,
                                    prune=prune,
                                    prune.index=prune.index)$fitted.values
 
@@ -519,11 +548,13 @@ predict.crs <- function(object,
             tmp <- deriv.factor.spline(x=x,
                                        y=y,
                                        z=z,
-                                       K=degree,
+                                       K=K,
+                                       degree=degree,
                                        nbreak=nbreak,
                                        I=include,
                                        xeval=xeval,
                                        zeval=zeval,
+                                       complexity=complexity,
                                        basis=basis,
                                        deriv.index=m,
                                        deriv=deriv,
@@ -539,11 +570,13 @@ predict.crs <- function(object,
             zpred <- predict.factor.spline(x=x,
                                            y=y,
                                            z=z,
-                                           K=degree,
+                                           K=K,
+                                           degree=degree,
                                            nbreak=nbreak,
                                            I=include,
                                            xeval=xeval,
                                            zeval=zeval,
+                                           complexity=complexity,
                                            basis=basis,
                                            prune=prune,
                                            prune.index=prune.index)$fitted.values
@@ -551,11 +584,13 @@ predict.crs <- function(object,
             zpred.base <- predict.factor.spline(x=x,
                                                 y=y,
                                                 z=z,
-                                                K=degree,
+                                                K=K,
+                                                degree=degree,
                                                 nbreak=nbreak,
                                                 I=include,
                                                 xeval=xeval,
                                                 zeval=zevaltmp,
+                                                complexity=complexity,
                                                 basis=basis,
                                                 prune=prune,
                                                 prune.index=prune.index)$fitted.values
@@ -578,6 +613,9 @@ predict.crs <- function(object,
 
       ## Get degree vector and lambda vector
 
+      complexity <- object$complexity
+      K <- object$K
+      nbreak <- object$nbreak
       degree <- object$degree
       lambda <- object$lambda
 
@@ -589,12 +627,14 @@ predict.crs <- function(object,
       tmp <- predict.kernel.spline(x=x,
                                    y=y,
                                    z=z,
-                                   K=degree,
+                                   K=K,
+                                   degree=degree,
                                    nbreak=nbreak,
                                    lambda=lambda,
                                    kernel.type=kernel.type,
                                    xeval=xeval,
                                    zeval=zeval,
+                                   complexity=complexity,
                                    basis=basis)$fitted.values
 
       fitted.values <- tmp[,1]
@@ -614,12 +654,14 @@ predict.crs <- function(object,
             tmp <- deriv.kernel.spline(x=x,
                                        y=y,
                                        z=z,
-                                       K=degree,
+                                       K=K,
+                                       degree=degree,
                                        nbreak=nbreak,
                                        lambda=lambda,
                                        kernel.type=kernel.type,
                                        xeval=xeval,
                                        zeval=zeval,
+                                       complexity=complexity,
                                        basis=basis,
                                        deriv.index=m,
                                        deriv=deriv)
@@ -634,23 +676,27 @@ predict.crs <- function(object,
             zpred <- predict.kernel.spline(x=x,
                                            y=y,
                                            z=z,
-                                           K=degree,
+                                           K=K,
+                                           degree=degree,
                                            nbreak=nbreak,
                                            lambda=lambda,
                                            kernel.type=kernel.type,
                                            xeval=xeval,
                                            zeval=zeval,
+                                           complexity=complexity,
                                            basis=basis)$fitted.values
 
             zpred.base <- predict.kernel.spline(x=x,
                                                 y=y,
                                                 z=z,
-                                                K=degree,
+                                                K=K,
+                                                degree=degree,
                                                 nbreak=nbreak,
                                                 lambda=lambda,
                                                 kernel.type=kernel.type,
                                                 xeval=xeval,
                                                 zeval=zevaltmp,
+                                                complexity=complexity,
                                                 basis=basis)$fitted.values
 
             deriv.mat[,i] <- zpred[,1]-zpred.base[,1]

@@ -71,13 +71,13 @@ prod.spline <- function(x,
       if(K[i] > 0) {
         if(i==deriv.index) {
           if(complexity=="degree") {
-            tp[[j]] <- predict(gsl.bs(x[,i,drop=FALSE],degree=K[i],nbreak=nbreak,deriv=deriv,intercept=FALSE),newx=xeval[,i,drop=FALSE])
+            tp[[j]] <- predict(gsl.bs(x[,i,drop=FALSE],degree=K[i],nbreak=nbreak+1,deriv=deriv,intercept=FALSE),newx=xeval[,i,drop=FALSE])
           } else {
             tp[[j]] <- predict(gsl.bs(x[,i,drop=FALSE],degree=degree,nbreak=K[i]+1,deriv=deriv,intercept=FALSE),newx=xeval[,i,drop=FALSE])
           }
         } else {
           if(complexity=="degree") {
-            tp[[j]] <- predict(gsl.bs(x[,i,drop=FALSE],degree=K[i],nbreak=nbreak,intercept=FALSE),newx=xeval[,i,drop=FALSE])
+            tp[[j]] <- predict(gsl.bs(x[,i,drop=FALSE],degree=K[i],nbreak=nbreak+1,intercept=FALSE),newx=xeval[,i,drop=FALSE])
           } else {
             tp[[j]] <- predict(gsl.bs(x[,i,drop=FALSE],degree=degree,nbreak=K[i]+1,intercept=FALSE),newx=xeval[,i,drop=FALSE])
           }

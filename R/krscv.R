@@ -6,6 +6,7 @@ krscv <- function(xz,
                   complexity=c("degree","knots"),
                   basis = c("additive-tensor","additive","tensor","auto"),
                   cv.norm=c("L2","L1"),
+                  degree=degree,
                   nbreak=nbreak) {
 
   complexity <- match.arg(complexity)
