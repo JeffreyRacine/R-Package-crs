@@ -14,10 +14,12 @@ crs(\dots)
 \method{crs}{default}(xz,
     y,
     degree,
+    nbreak,
     include = NULL,
     kernel = FALSE,
     lambda = NULL,
     kernel.type = c("nominal","ordinal"),
+    complexity = c("degree","knots"),
     basis = c("additive-tensor","additive","tensor","auto"),
     deriv = 0,
     data.return = FALSE,
@@ -27,6 +29,7 @@ crs(\dots)
 \method{crs}{formula}(formula,
     data = list(),
     degree = NULL,
+    nbreak = NULL,
     include = NULL,
     basis.maxdim = 5,
     cv = NULL,
@@ -34,6 +37,7 @@ crs(\dots)
     kernel = FALSE,
     lambda = NULL,
     kernel.type = c("nominal","ordinal"),
+    complexity = c("degree","knots"),
     basis = c("additive-tensor","additive","tensor","auto"),
     deriv = 0,
     data.return = FALSE,
@@ -49,6 +53,9 @@ crs(\dots)
   
   \item{degree}{ integer/vector specifying the degree of the regression
     spline for each dimension of the continuous \code{x}}
+  
+  \item{nbreak}{ integer/vector specifying the number of breakpoints of
+  the regression spline for each dimension of the continuous \code{x}}
   
   \item{include}{ integer/vector specifying whether each of the
   ordinal/nominal predictors in \code{x} are included or omitted from
@@ -82,6 +89,13 @@ crs(\dots)
 
   \item{basis.maxdim}{ the maximum dimension of the spline for each
     of the continuous predictors (default \code{basis.maxdim=5})}
+
+  \item{complexity}{a character string (default \code{complexity="degree"})
+  indicating whether model `complexity' is determined by the degree of
+  the spline or by the number of breakpoints (`knots'). This option
+  allows the user to use cross-validation to select either the spline
+  degree (number of knots held fixed) or the number of knots (spline
+  degree held fixed)}
 
   \item{basis}{ a character string (default \code{basis="additive-tensor"})
   indicating whether tensor product terms (i.e. interaction terms) are

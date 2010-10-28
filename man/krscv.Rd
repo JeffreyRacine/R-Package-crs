@@ -16,11 +16,14 @@
 \usage{
 krscv(xz,
       y,
-      basis.maxdim=10,
-      kernel.type=c("nominal","ordinal"),
-      restarts=0,
+      basis.maxdim = 10,
+      kernel.type = c("nominal","ordinal"),
+      restarts = 0,
+      complexity = c("degree","knots"),
       basis = c("additive-tensor","additive","tensor","auto"),
-      cv.norm = c("L2","L1"))
+      cv.norm = c("L2","L1"),
+      degree = 3,
+      nbreak = 1)
 }
 
 \arguments{
@@ -50,6 +53,13 @@ krscv(xz,
     values, defaults to \code{0}
   }
 
+  \item{complexity}{a character string (default \code{complexity="degree"})
+  indicating whether model `complexity' is determined by the degree of
+  the spline or by the number of breakpoints (`knots'). This option
+  allows the user to use cross-validation to select either the spline
+  degree (number of knots held fixed) or the number of knots (spline
+  degree held fixed)}
+
   \item{basis}{ a character string (default \code{basis="enabled"})
   indicating whether tensor product terms (i.e. interaction terms) are
   included in the model or not. Note this is automatically determined
@@ -61,6 +71,13 @@ krscv(xz,
   indicating whether the L2-norm is used (sum of squared delete-one
   residuals) or the L1-norm (sum of absolute delete-one-residuals) in
   the cross-validation function }
+
+  \item{degree}{ integer/vector specifying the degree of the regression
+    spline for each dimension of the continuous \code{x}}
+  
+  \item{nbreak}{ integer/vector specifying the number of breakpoints of
+  the regression spline for each dimension of the continuous \code{x}}
+
 }
 
 \details{
