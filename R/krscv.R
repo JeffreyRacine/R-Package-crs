@@ -118,15 +118,33 @@ krscv <- function(xz,
   num.x <- NCOL(x)
   n <- NROW(x)
 
-  ## check whether tensor spline dimension results in zero/low df...
+  ## For kernel regression spline, if there is only one continuous
+  ## predictor (i.e. num.x==1) disable auto, set to additive (which is
+  ## additive-tensor and tensor in this case, so don't waste time
+  ## doing all three).
 
-  k <- basis.maxdim^num.x + ifelse(basis!="additive",basis.maxdim*num.x,0)
-  df <- n - k
-  if(df <= 0) {
-    stop(paste(" maximum spline dimension (",k,") equals/exceeds sample size (",n,")\n   perhaps use basis=\"additive\" or else decrease basis.maxdim",sep=""))
-  } else if(df <= 10) {
-    warning(paste(" maximum spline dimension (",k,") and sample size (",n,") close",sep=""))
+  if(num.x==1 & basis == "auto") basis <- "additive"
+
+  ## This call will trap zero/negative degrees of freedom immediately
+  ## rather than letting cv proceed only to be halted after the lower
+  ## dimension models have been estimated when this occurs.
+
+  if(basis == "auto") {
+    k <- max(c(ncol(prod.spline(x=x,K=rep(basis.maxdim,num.x),degree=degree,nbreak=nbreak,complexity=complexity,basis="additive-tensor")),
+               ncol(prod.spline(x=x,K=rep(basis.maxdim,num.x),degree=degree,nbreak=nbreak,complexity=complexity,basis="additive")),
+               ncol(prod.spline(x=x,K=rep(basis.maxdim,num.x),degree=degree,nbreak=nbreak,complexity=complexity,basis="tensor"))))
+  } else {
+    k <- ncol(prod.spline(x=x,K=rep(basis.maxdim,num.x),degree=degree,nbreak=nbreak,complexity=complexity,basis=basis))
   }
+
+  df <- n - k
+
+  if(df <= 0) {
+    stop(paste(" maximum basis dimension (",k,") would equal/exceed sample size (",n,")\n   perhaps use basis=\"additive\" or else decrease basis.maxdim",sep=""))
+  } else if(df <= 10) {
+    warning(paste(" maximum basis dimension (",k,") and sample size (",n,") close",sep=""))
+  }
+
 # 17/06/10 - really dig into what this tests and whether it is necessary or not (probably is!)
 #  if(min(table(ind)) <= k) stop(paste(" insufficient data for one or more unique combinations of z (",min(table(ind))," obs.)\n   in order to estimate spline at basis.maxdim (",k," bases):\n   either reduce basis.maxdim or collapse categories",sep=""))
 
@@ -150,13 +168,6 @@ krscv <- function(xz,
 
   output <- list()
   output.restart <- list()
-
-  ## For kernel regression spline, if there is only one continuous
-  ## predictor (i.e. num.x==1) disable auto, set to additive (which is
-  ## additive-tensor and tensor in this case, so don't waste time
-  ## doing all three).
-
-  if(num.x==1 & basis == "auto") basis <- "additive"
 
   for(j in 1:nrow.K.mat) {
 

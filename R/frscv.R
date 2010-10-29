@@ -112,33 +112,37 @@ frscv <- function(xz,
 
   if(missing(x) || missing(y)) stop (" you must provide x and y")
 
-  ## This call will trap an error immediately rather than letting cv
-  ## proceed only to be halted when this occurs
+  ## For factor regression spline, if there is only one predictor
+  ## (i.e. num.x + num.z = 1) disable auto, set to additive (which is
+  ## additive-tensor and tensor in this case, so don't waste time
+  ## doing all three).
 
-  ## Oct 23 2010, CESG Vancouver... need to clean this up given
-  ## addition of "tensor"
+  if(num.x+num.z==1 & basis == "auto") basis <- "additive"
 
-  k <-  basis.maxdim*num.x
-  if(!is.null(num.z)) {
-    num.bases.z <- numeric(length=num.z)
-    for(i in 1:num.z) num.bases.z[i] <- (length(unique(as.numeric(z[,i])))-1)
-    k <- k + sum(num.bases.z)    
-    k <- k + ifelse(basis!="additive",basis.maxdim^num.x*prod(num.bases.z),0)
+  ## This call will trap zero/negative degrees of freedom immediately
+  ## rather than letting cv proceed only to be halted after the lower
+  ## dimension models have been estimated when this occurs.
+
+  if(basis == "auto") {
+    k <- max(c(ncol(prod.spline(x=x,z=z,K=rep(basis.maxdim,num.x),I=rep(1,num.z),degree=degree,nbreak=nbreak,complexity=complexity,basis="additive-tensor")),
+               ncol(prod.spline(x=x,z=z,K=rep(basis.maxdim,num.x),I=rep(1,num.z),degree=degree,nbreak=nbreak,complexity=complexity,basis="additive")),
+               ncol(prod.spline(x=x,z=z,K=rep(basis.maxdim,num.x),I=rep(1,num.z),degree=degree,nbreak=nbreak,complexity=complexity,basis="tensor"))))
   } else {
-    k <- k + ifelse(basis!="additive",basis.maxdim^num.x,0)
+    k <- ncol(prod.spline(x=x,z=z,K=rep(basis.maxdim,num.x),I=rep(1,num.z),degree=degree,nbreak=nbreak,complexity=complexity,basis=basis))
   }
 
   df <- n - k
 
   if(df <= 0) {
-    stop(paste(" maximum spline dimension (",k,") equals/exceeds sample size (",n,")\n   perhaps use basis=\"additive\" or else decrease basis.maxdim",sep=""))
+    stop(paste(" maximum basis dimension (",k,") would equal/exceed sample size (",n,")\n   perhaps use basis=\"additive\" or else decrease basis.maxdim",sep=""))
   } else if(df <= 10) {
-    warning(paste(" maximum spline dimension (",k,") and sample size (",n,") close",sep=""))
+    warning(paste(" maximum basis dimension (",k,") and sample size (",n,") close",sep=""))
   }
 
   if(basis.maxdim < 1) stop(" basis.maxdim must be greater than or equal to 1")
 
   ## Need to append 0,1 for I (in, out)
+
   if(!is.null(z)) {
     KI.mat <- matrix.combn(0:basis.maxdim,num.x,num.z)
   } else {
@@ -149,13 +153,6 @@ frscv <- function(xz,
   cv.min.vec <- numeric(nrow.KI.mat)
 
   cv.min <- .Machine$double.xmax
-
-  ## For factor regression spline, if there is only one predictor
-  ## (i.e. num.x + num.z = 1) disable auto, set to additive (which is
-  ## additive-tensor and tensor in this case, so don't waste time
-  ## doing all three).
-
-  if(num.x+num.z==1 & basis == "auto") basis <- "additive"
 
   for(j in 1:nrow.KI.mat) {
 
