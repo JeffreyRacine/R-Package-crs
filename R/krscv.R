@@ -151,6 +151,13 @@ krscv <- function(xz,
   output <- list()
   output.restart <- list()
 
+  ## For kernel regression spline, if there is only one continuous
+  ## predictor (i.e. num.x==1) disable auto, set to additive (which is
+  ## additive-tensor and tensor in this case, so don't waste time
+  ## doing all three).
+
+  if(num.x==1 & basis == "auto") basis <- "additive"
+
   for(j in 1:nrow.K.mat) {
 
     if(basis=="auto") {

@@ -97,13 +97,16 @@ crs(\dots)
   degree (number of knots held fixed) or the number of knots (spline
   degree held fixed)}
 
-  \item{basis}{ a character string (default \code{basis="additive-tensor"})
-  indicating whether tensor product terms (i.e. interaction terms) are
-  included in the model or not. Note this can be automatically
-  determined by cross-validation if \code{cv=TRUE} and
-  \code{basis="auto"}, and is an \sQuote{all or none} proposition
-  (i.e. interaction terms for all predictors or for no predictors given
-  the nature of \sQuote{tensor products}) }
+  \item{basis}{ a character string (default
+  \code{basis="additive-tensor"}) indicating whether tensor product
+  terms (i.e. interaction terms) are included in the model or not. Note
+  this can be automatically determined by cross-validation if
+  \code{cv=TRUE} and \code{basis="auto"}, and is an \sQuote{all or none}
+  proposition (i.e. interaction terms for all predictors or for no
+  predictors given the nature of \sQuote{tensor products}). Note also
+  that if there is only one predictor this defaults to
+  \code{basis="additive"} to avoid unnecessary computation as the spline
+  bases are equivalent in this case }
 
   \item{deriv}{ an integer \code{l} (default \code{deriv=0}) specifying
   whether to compute the univariate \code{l}th partial derivative for

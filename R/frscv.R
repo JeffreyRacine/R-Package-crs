@@ -102,7 +102,7 @@ frscv <- function(xz,
   z <- xztmp$z
   if(is.null(z)) {
     include <- NULL
-    num.z <- NULL
+    num.z <- 0
   } else {
     num.z <- NCOL(z)
   }
@@ -149,6 +149,13 @@ frscv <- function(xz,
   cv.min.vec <- numeric(nrow.KI.mat)
 
   cv.min <- .Machine$double.xmax
+
+  ## For factor regression spline, if there is only one predictor
+  ## (i.e. num.x + num.z = 1) disable auto, set to additive (which is
+  ## additive-tensor and tensor in this case, so don't waste time
+  ## doing all three).
+
+  if(num.x+num.z==1 & basis == "auto") basis <- "additive"
 
   for(j in 1:nrow.KI.mat) {
 

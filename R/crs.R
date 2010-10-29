@@ -376,6 +376,8 @@ crs.formula <- function(formula,
 
   if(kernel==TRUE&&prune==TRUE) warning(" pruning cannot coexist with categorical kernel smoothing (pruning ignored)")
 
+  cv.min <- NULL
+
   if(!kernel) {
 
     ## indicator bases and B-spline bases cross-validation
@@ -389,6 +391,7 @@ crs.formula <- function(formula,
                   cv.norm=cv.norm,
                   degree=degree,
                   nbreak=nbreak)
+      cv.min <- cv$cv.min
       K <- cv$K
       include <- cv$I
       basis <- cv$basis
@@ -407,6 +410,7 @@ crs.formula <- function(formula,
                   cv.norm=cv.norm,
                   degree=degree,
                   nbreak=nbreak)
+      cv.min <- cv$cv.min
       K <- cv$K
       lambda <- cv$lambda
       basis <- cv$basis
@@ -455,6 +459,7 @@ crs.formula <- function(formula,
   est$xz <- xz
   est$y <- y
   est$prune <- prune
+  est$cv.min <- cv.min
 
   return(est)
 
@@ -788,13 +793,14 @@ summary.crs <- function(object,
     cat(paste("\nInclusion indicator for ",format(object$znames[j]),": ",format(object$include[j]),sep=""),sep="")
   if(!is.null(object$lambda)) for(j in 1:length(object$lambda))
     cat(paste("\nBandwidth for ",format(object$znames[j]),": ",format(object$lambda[j]),sep=""),sep="")
-  cat(paste("\nBasis interaction: ",format(object$basis),sep=""))
+  cat(paste("\nBasis type: ",format(object$basis),sep=""))
   if(!object$kernel) cat(paste("\nPruning of final model: ",format(ifelse(object$prune,"TRUE","FALSE")),sep=""))
   cat(paste("\nTraining observations: ", format(object$nobs), sep=""))
   cat(paste("\nRank of model frame: ", format(object$k), sep=""))  
   cat(paste("\nResidual standard error: ", format(sqrt(sum(object$residuals^2)/object$df.residual),digits=4)," on ", format(object$df.residual)," degrees of freedom",sep=""))
   adjusted.r.squared <- 1-(1-object$r.squared)*(length(object$fitted.values)-1)/object$df.residual
   cat(paste("\nMultiple R-squared: ", format(object$r.squared,digits=4),",   Adjusted R-squared: ",format(adjusted.r.squared,digits=4), sep=""))
+  cat(paste("\nCross-validation score: ", format(object$cv,digits=8), sep=""))  
 
   if(sigtest&&!object$kernel) {
     cat("\n\nPredictor significance test:\n")
