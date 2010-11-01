@@ -154,9 +154,15 @@ crs(\dots)
   \code{\link{tensor.prod.model.matrix}} function in the \pkg{mgcv}
   package.
 
-  When \code{basis="additive"} the model becomes additive (additively
-  separable) in nature (i.e. no interaction terms thus semiparametric
-  not fully nonparametric).
+  When \code{basis="additive-tensor"} the model is of the functional
+  ANOVA class (i.e. additive bases plus tensor product)
+
+  When \code{basis="additive"} the model becomes additive in nature
+  (i.e. no interaction/tensor terms thus semiparametric not fully
+  nonparametric).
+
+  When \code{basis="tensor"} the model uses the multivariate tensor
+  product basis.
 
   When \code{kernel=FALSE} the model uses indicator basis functions for
   the ordinal/nominal predictors rather than kernel weighting.
@@ -170,12 +176,14 @@ crs(\dots)
   (see \code{\link{optim}} for details). The user may restart the
   algorithm as many times as desired via the \code{restarts} argument
   (default \code{restarts=0}). The approach ascends from \code{degree=0}
-  through \code{basis.maxdim} and for each value of \code{degree} searches
-  for the optimal bandwidths. After the most complex model has been
-  searched then the optimal \code{degree}/\code{lambda} combination is
-  selected. If any element of the optimal \code{degree} vector coincides
-  with \code{basis.maxdim} a warning is produced and the user ought to
-  restart their search with a larger value of \code{basis.maxdim}.
+  (or \code{nbreak=0}) through \code{basis.maxdim} and for each value of
+  \code{degree} (or \code{nbreak}) searches for the optimal
+  bandwidths. After the most complex model has been searched then the
+  optimal \code{degree}/\code{nbreak}/\code{lambda} combination is
+  selected. If any element of the optimal \code{degree} (or
+  \code{nbreak}) vector coincides with \code{basis.maxdim} a warning is
+  produced and the user ought to restart their search with a larger
+  value of \code{basis.maxdim}.
 
   Note that the default \code{plot} method for a \code{crs} object
   provides some diagnostic measures, in particular, a) residuals versus
@@ -225,6 +233,9 @@ crs(\dots)
   \item{degree}{ integer/vector specifying the degree of the regression
     spline for each dimension of the continuous \code{x}}
   
+  \item{nbreak}{ integer/vector specifying the number of breakpoints of
+  the regression spline for each dimension of the continuous \code{x}}
+
   \item{include}{ integer/vector specifying whether each of the
   ordinal/nominal predictors \code{z} are included or omitted from the
   resulting estimate if \code{kernel=FALSE} (see below)}

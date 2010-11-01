@@ -30,9 +30,9 @@
 \details{
 
   For the continuous predictors the regression spline model employs the
-  B-spline basis matrix and for interactions appends the tensor product
-  B-spline basis matrix for a multivariate polynomial spline via the
-  B-spline routines in the GNU Scientific Library and the
+  B-spline basis matrix and for interactions may append the tensor
+  product B-spline basis matrix for a multivariate polynomial spline via
+  the B-spline routines in the GNU Scientific Library and the
   \code{\link{tensor.prod.model.matrix}} function in the \pkg{mgcv}
   package. The B-spline function is the maximally differentiable
   interpolative basis function (B-spline stands for

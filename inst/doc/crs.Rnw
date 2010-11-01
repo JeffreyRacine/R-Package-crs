@@ -83,17 +83,24 @@ performance. In particular,
 
 \item the degree of the spline for each dimension of the continuous
   predictors can be manually specified or chosen by leave-one-out
-  cross-validation
+  cross-validation (holding the number of knots fixed at any user-set
+  value)
+
+\item the number of knots (`breakpoints') for each dimension of the
+  continuous predictors can be manually specified or chosen by
+  leave-one-out cross-validation (holding the degree of the spline
+  fixed at any user-set value)
 
 \item bandwidths for each dimension of the categorical predictors can
   be specified manually or chosen by leave-one-out cross-validation
   
-\item when the indicator basis functions are used instead, whether to
-  include each categorical predictor or not can be specified manually
-  or chosen via leave-one-out cross-validation
+\item when the indicator basis functions are used instead of kernel
+  smoothing, whether to include each categorical predictor or not can
+  be specified manually or chosen via leave-one-out cross-validation
   
-\item we allow the degree of the spline for each dimension of the
-  continuous predictors to include zero and when the degree is zero
+\item we allow the degree of the spline (alternatively, the number of
+  knots) for each dimension of the continuous predictors to include
+  zero and when the degree (alternatively, number of knots) is zero
   the variable is thereby excluded from the regression: in this
   manner, irrelevant variables, whether continuous or categorical, can
   be automatically removed negating the need for pre-testing and so
@@ -143,8 +150,9 @@ continuous predictor. We adopt the \code{intercept=FALSE} variants
 B-spline has $m+1$ columns and we drop the first as is often done) and
 include instead an intercept in the model. This allows multiple bases
 to coexist when there is more than one continuous predictor without
-introducing singularities. In addition to these bases we also allow
-for inclusion of their tensor product (interaction) defined by
+introducing singularities. In addition to these bases we also
+optionally allow for inclusion of their tensor product (interaction)
+defined by
 \begin{equation*}
 B_1\otimes B_2\otimes \dots \otimes B_p,
 \end{equation*}
@@ -153,9 +161,13 @@ column-wise and $B_j$ is the basis matrix for predictor $j$ as
 outlined above. When the tensor product of the $p$ B-spline bases is
 omitted we have a semiparametric `additive' spline model, otherwise we
 have a fully nonparametric (with interaction among all variables)
-model. Whether to include the tensor product or not can be
-automatically determined via leave-line-out cross-validation (see the
-options for \code{basis=} in \code{?crs}).
+model. As well, we include the option to use only the tensor product
+for the multivariate spline basis should the user so desire. Whether
+or not to include the tensor product bases only, the additive model
+bases only, or both the additive components and their tensor product
+(`functional ANOVA' bases) can be automatically determined via
+leave-line-out cross-validation (see the options for \code{basis=} in
+\code{?crs}).
 
 We offer the option to use categorical kernel weighting
 (\code{lm(\dots,weights=L)}) to handle the presence of categorical
