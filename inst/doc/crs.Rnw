@@ -83,13 +83,13 @@ performance. In particular,
 
 \item the degree of the spline for each dimension of the continuous
   predictors can be manually specified or chosen by leave-one-out
-  cross-validation (holding the number of knots fixed at any user-set
-  value)
-
-\item the number of knots (`breakpoints') for each dimension of the
-  continuous predictors can be manually specified or chosen by
-  leave-one-out cross-validation (holding the degree of the spline
+  cross-validation (holding the number of segments/knots minus one
   fixed at any user-set value)
+
+\item the number of segments (number of knots or breakpoints minus
+  one) for each dimension of the continuous predictors can be manually
+  specified or chosen by leave-one-out cross-validation (holding the
+  degree of the spline fixed at any user-set value)
 
 \item bandwidths for each dimension of the categorical predictors can
   be specified manually or chosen by leave-one-out cross-validation
@@ -99,14 +99,14 @@ performance. In particular,
   be specified manually or chosen via leave-one-out cross-validation
   
 \item we allow the degree of the spline (alternatively, the number of
-  knots) for each dimension of the continuous predictors to include
-  zero and when the degree (alternatively, number of knots) is zero
-  the variable is thereby excluded from the regression: in this
-  manner, irrelevant variables, whether continuous or categorical, can
-  be automatically removed negating the need for pre-testing and so
-  forth (\citeauthor{HALL_RACINE_LI:2004}
-  \citeyear{HALL_RACINE_LI:2004}, \citeauthor{HALL_LI_RACINE:2007}
-  \citeyear{HALL_LI_RACINE:2007})
+  segments/knots minus one) for each dimension of the continuous
+  predictors to include zero and when the degree (alternatively,
+  number of segments/knots minus one) is zero the variable is thereby
+  excluded from the regression: in this manner, irrelevant variables,
+  whether continuous or categorical, can be automatically removed
+  negating the need for pre-testing and so forth
+  (\citeauthor{HALL_RACINE_LI:2004} \citeyear{HALL_RACINE_LI:2004},
+  \citeauthor{HALL_LI_RACINE:2007} \citeyear{HALL_LI_RACINE:2007})
   
 \end{enumerate}
 

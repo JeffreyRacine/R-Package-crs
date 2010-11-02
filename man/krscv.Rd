@@ -23,7 +23,7 @@ krscv(xz,
       basis = c("additive-tensor","additive","tensor","auto"),
       cv.norm = c("L2","L1"),
       degree = 3,
-      nbreak = 1)
+      segments = 1)
 }
 
 \arguments{
@@ -55,7 +55,7 @@ krscv(xz,
 
   \item{complexity}{a character string (default \code{complexity="degree"})
   indicating whether model `complexity' is determined by the degree of
-  the spline or by the number of breakpoints (`knots'). This option
+  the spline or by the number of segments (`knots'). This option
   allows the user to use cross-validation to select either the spline
   degree (number of knots held fixed) or the number of knots (spline
   degree held fixed)}
@@ -75,7 +75,7 @@ krscv(xz,
   \item{degree}{ integer/vector specifying the degree of the regression
     spline for each dimension of the continuous \code{x}}
   
-  \item{nbreak}{ integer/vector specifying the number of breakpoints of
+  \item{segments}{ integer/vector specifying the number of segments of
   the regression spline for each dimension of the continuous \code{x}}
 
 }

@@ -5,7 +5,7 @@ frscv <- function(xz,
                   basis = c("additive-tensor","additive","tensor","auto"),
                   cv.norm=c("L2","L1"),
                   degree=3,
-                  nbreak=1) {
+                  segments=1) {
 
   complexity <- match.arg(complexity)
   basis <- match.arg(basis)
@@ -24,7 +24,7 @@ frscv <- function(xz,
                       nrow.KI.mat=NULL,
                       t2=NULL,
                       degree=degree,
-                      nbreak=nbreak,
+                      segments=segments,
                       complexity=complexity,
                       basis=basis,
                       cv.norm=cv.norm) {
@@ -52,7 +52,7 @@ frscv <- function(xz,
                            K=K,
                            I=I,
                            degree=degree,
-                           nbreak=nbreak,
+                           segments=segments,
                            complexity=complexity,
                            basis=basis)
 
@@ -124,11 +124,11 @@ frscv <- function(xz,
   ## dimension models have been estimated when this occurs.
 
   if(basis == "auto") {
-    k <- max(c(ncol(prod.spline(x=x,z=z,K=rep(basis.maxdim,num.x),I=rep(1,num.z),degree=degree,nbreak=nbreak,complexity=complexity,basis="additive-tensor")),
-               ncol(prod.spline(x=x,z=z,K=rep(basis.maxdim,num.x),I=rep(1,num.z),degree=degree,nbreak=nbreak,complexity=complexity,basis="additive")),
-               ncol(prod.spline(x=x,z=z,K=rep(basis.maxdim,num.x),I=rep(1,num.z),degree=degree,nbreak=nbreak,complexity=complexity,basis="tensor"))))
+    k <- max(c(ncol(prod.spline(x=x,z=z,K=rep(basis.maxdim,num.x),I=rep(1,num.z),degree=degree,segments=segments,complexity=complexity,basis="additive-tensor")),
+               ncol(prod.spline(x=x,z=z,K=rep(basis.maxdim,num.x),I=rep(1,num.z),degree=degree,segments=segments,complexity=complexity,basis="additive")),
+               ncol(prod.spline(x=x,z=z,K=rep(basis.maxdim,num.x),I=rep(1,num.z),degree=degree,segments=segments,complexity=complexity,basis="tensor"))))
   } else {
-    k <- ncol(prod.spline(x=x,z=z,K=rep(basis.maxdim,num.x),I=rep(1,num.z),degree=degree,nbreak=nbreak,complexity=complexity,basis=basis))
+    k <- ncol(prod.spline(x=x,z=z,K=rep(basis.maxdim,num.x),I=rep(1,num.z),degree=degree,segments=segments,complexity=complexity,basis=basis))
   }
 
   df <- n - k
@@ -169,7 +169,7 @@ frscv <- function(xz,
                         nrow.KI.mat=nrow.KI.mat,
                         t2=Sys.time(),
                         degree=degree,
-                        nbreak=nbreak,
+                        segments=segments,
                         complexity=complexity,
                         basis="additive-tensor")
 
@@ -192,7 +192,7 @@ frscv <- function(xz,
                         nrow.KI.mat=nrow.KI.mat,
                         t2=Sys.time(),
                         degree=degree,
-                        nbreak=nbreak,
+                        segments=segments,
                         complexity=complexity,
                         basis="additive")
 
@@ -215,7 +215,7 @@ frscv <- function(xz,
                         nrow.KI.mat=nrow.KI.mat,
                         t2=Sys.time(),
                         degree=degree,
-                        nbreak=nbreak,
+                        segments=segments,
                         complexity=complexity,
                         basis="tensor")
 
@@ -242,7 +242,7 @@ frscv <- function(xz,
                         nrow.KI.mat=nrow.KI.mat,
                         t2=Sys.time(),
                         degree=degree,
-                        nbreak=nbreak,
+                        segments=segments,
                         complexity=complexity,
                         basis=basis)
 

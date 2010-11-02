@@ -7,7 +7,7 @@ krscv <- function(xz,
                   basis = c("additive-tensor","additive","tensor","auto"),
                   cv.norm=c("L2","L1"),
                   degree=3,
-                  nbreak=1) {
+                  segments=1) {
 
   complexity <- match.arg(complexity)
   basis <- match.arg(basis)
@@ -36,7 +36,7 @@ krscv <- function(xz,
                       nrow.K.mat=NULL,
                       t2=NULL,
                       degree=degree,
-                      nbreak=nbreak,
+                      segments=segments,
                       complexity=complexity,
                       basis=basis,
                       cv.norm=cv.norm) {
@@ -65,7 +65,7 @@ krscv <- function(xz,
                            nrow.z.unique=nrow.z.unique,
                            kernel.type=kernel.type,
                            degree=degree,
-                           nbreak=nbreak,
+                           segments=segments,
                            complexity=complexity,
                            basis=basis)
 
@@ -130,11 +130,11 @@ krscv <- function(xz,
   ## dimension models have been estimated when this occurs.
 
   if(basis == "auto") {
-    k <- max(c(ncol(prod.spline(x=x,K=rep(basis.maxdim,num.x),degree=degree,nbreak=nbreak,complexity=complexity,basis="additive-tensor")),
-               ncol(prod.spline(x=x,K=rep(basis.maxdim,num.x),degree=degree,nbreak=nbreak,complexity=complexity,basis="additive")),
-               ncol(prod.spline(x=x,K=rep(basis.maxdim,num.x),degree=degree,nbreak=nbreak,complexity=complexity,basis="tensor"))))
+    k <- max(c(ncol(prod.spline(x=x,K=rep(basis.maxdim,num.x),degree=degree,segments=segments,complexity=complexity,basis="additive-tensor")),
+               ncol(prod.spline(x=x,K=rep(basis.maxdim,num.x),degree=degree,segments=segments,complexity=complexity,basis="additive")),
+               ncol(prod.spline(x=x,K=rep(basis.maxdim,num.x),degree=degree,segments=segments,complexity=complexity,basis="tensor"))))
   } else {
-    k <- ncol(prod.spline(x=x,K=rep(basis.maxdim,num.x),degree=degree,nbreak=nbreak,complexity=complexity,basis=basis))
+    k <- ncol(prod.spline(x=x,K=rep(basis.maxdim,num.x),degree=degree,segments=segments,complexity=complexity,basis=basis))
   }
 
   df <- n - k
@@ -200,7 +200,7 @@ krscv <- function(xz,
                         nrow.K.mat=nrow.K.mat,
                         t2=t2,
                         degree=degree,
-                        nbreak=nbreak,
+                        segments=segments,
                         complexity=complexity,
                         basis="additive-tensor")
 
@@ -234,7 +234,7 @@ krscv <- function(xz,
                                     j=j,
                                     nrow.K.mat=nrow.K.mat,
                                     t2=t2,
-                                    nbreak=nbreak,
+                                    segments=segments,
                                     degree=degree,
                                     complexity=complexity,
                                     basis="additive-tensor")
@@ -284,7 +284,7 @@ krscv <- function(xz,
                         j=j,
                         nrow.K.mat=nrow.K.mat,
                         t2=t2,
-                        nbreak=nbreak,
+                        segments=segments,
                         degree=degree,
                         complexity=complexity,
                         basis="additive")
@@ -319,7 +319,7 @@ krscv <- function(xz,
                                     j=j,
                                     nrow.K.mat=nrow.K.mat,
                                     t2=t2,
-                                    nbreak=nbreak,
+                                    segments=segments,
                                     degree=degree,
                                     complexity=complexity,
                                     basis="additive")
@@ -370,7 +370,7 @@ krscv <- function(xz,
                         j=j,
                         nrow.K.mat=nrow.K.mat,
                         t2=t2,
-                        nbreak=nbreak,
+                        segments=segments,
                         degree=degree,
                         complexity=complexity,
                         basis="tensor")
@@ -406,7 +406,7 @@ krscv <- function(xz,
                                     nrow.K.mat=nrow.K.mat,
                                     t2=t2,
                                     degree=degree,
-                                    nbreak=nbreak,
+                                    segments=segments,
                                     complexity=complexity,
                                     basis="tensor")
 
@@ -459,7 +459,7 @@ krscv <- function(xz,
                         nrow.K.mat=nrow.K.mat,
                         t2=t2,
                         degree=degree,
-                        nbreak=nbreak,
+                        segments=segments,
                         complexity=complexity,
                         basis=basis)
 
@@ -494,7 +494,7 @@ krscv <- function(xz,
                                     nrow.K.mat=nrow.K.mat,
                                     t2=t2,
                                     degree=degree,
-                                    nbreak=nbreak,
+                                    segments=segments,
                                     complexity=complexity,
                                     basis=basis)
 

@@ -14,7 +14,7 @@ crs(\dots)
 \method{crs}{default}(xz,
     y,
     degree,
-    nbreak,
+    segments,
     include = NULL,
     kernel = FALSE,
     lambda = NULL,
@@ -29,7 +29,7 @@ crs(\dots)
 \method{crs}{formula}(formula,
     data = list(),
     degree = NULL,
-    nbreak = NULL,
+    segments = NULL,
     include = NULL,
     basis.maxdim = 5,
     cv = NULL,
@@ -54,7 +54,7 @@ crs(\dots)
   \item{degree}{ integer/vector specifying the degree of the regression
     spline for each dimension of the continuous \code{x}}
   
-  \item{nbreak}{ integer/vector specifying the number of breakpoints of
+  \item{segments}{ integer/vector specifying the number of segments of
   the regression spline for each dimension of the continuous \code{x}}
   
   \item{include}{ integer/vector specifying whether each of the
@@ -90,12 +90,12 @@ crs(\dots)
   \item{basis.maxdim}{ the maximum dimension of the spline for each
     of the continuous predictors (default \code{basis.maxdim=5})}
 
-  \item{complexity}{a character string (default \code{complexity="degree"})
-  indicating whether model `complexity' is determined by the degree of
-  the spline or by the number of breakpoints (`knots'). This option
-  allows the user to use cross-validation to select either the spline
-  degree (number of knots held fixed) or the number of knots (spline
-  degree held fixed)}
+  \item{complexity}{a character string (default
+  \code{complexity="degree"}) indicating whether model `complexity' is
+  determined by the degree of the spline or by the number of segments
+  (i.e.~number of knots minus one). This option allows the user to use
+  cross-validation to select either the spline degree (number of knots
+  held fixed) or the number of knots (spline degree held fixed)}
 
   \item{basis}{ a character string (default
   \code{basis="additive-tensor"}) indicating whether tensor product
@@ -176,12 +176,12 @@ crs(\dots)
   (see \code{\link{optim}} for details). The user may restart the
   algorithm as many times as desired via the \code{restarts} argument
   (default \code{restarts=0}). The approach ascends from \code{degree=0}
-  (or \code{nbreak=0}) through \code{basis.maxdim} and for each value of
-  \code{degree} (or \code{nbreak}) searches for the optimal
+  (or \code{segments=0}) through \code{basis.maxdim} and for each value of
+  \code{degree} (or \code{segments}) searches for the optimal
   bandwidths. After the most complex model has been searched then the
-  optimal \code{degree}/\code{nbreak}/\code{lambda} combination is
+  optimal \code{degree}/\code{segments}/\code{lambda} combination is
   selected. If any element of the optimal \code{degree} (or
-  \code{nbreak}) vector coincides with \code{basis.maxdim} a warning is
+  \code{segments}) vector coincides with \code{basis.maxdim} a warning is
   produced and the user ought to restart their search with a larger
   value of \code{basis.maxdim}.
 
@@ -233,7 +233,7 @@ crs(\dots)
   \item{degree}{ integer/vector specifying the degree of the regression
     spline for each dimension of the continuous \code{x}}
   
-  \item{nbreak}{ integer/vector specifying the number of breakpoints of
+  \item{segments}{ integer/vector specifying the number of segments of
   the regression spline for each dimension of the continuous \code{x}}
 
   \item{include}{ integer/vector specifying whether each of the

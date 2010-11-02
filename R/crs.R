@@ -18,7 +18,7 @@ crs <- function(...) UseMethod("crs")
 crsEst <- function(xz,
                    y,
                    degree=NULL,
-                   nbreak=NULL,
+                   segments=NULL,
                    include=NULL,
                    kernel=FALSE,
                    lambda=NULL,
@@ -57,10 +57,10 @@ crsEst <- function(xz,
 
   if(complexity=="degree") {
     if(is.null(degree)&&!is.null(x)) degree <- rep(1,ncol(x))
-    if(is.null(nbreak)&&!is.null(x)) nbreak <- 1
+    if(is.null(segments)&&!is.null(x)) segments <- 1
   } else {
     if(is.null(degree)&&!is.null(x)) degree <- 1
-    if(is.null(nbreak)&&!is.null(x)) nbreak <- rep(1,ncol(x))
+    if(is.null(segments)&&!is.null(x)) segments <- rep(1,ncol(x))
   }
   if(is.null(include)&&!is.null(z)&&!kernel) include <- rep(1,ncol(z))
   if(is.null(lambda)&&!is.null(z)&&kernel) lambda <- rep(0,ncol(z))
@@ -72,10 +72,10 @@ crsEst <- function(xz,
     model <- predict.factor.spline(x=x,
                                    y=y,
                                    z=z,
-                                   K=if(complexity=="degree") degree else nbreak,
+                                   K=if(complexity=="degree") degree else segments,
                                    I=include,
                                    degree=degree,
-                                   nbreak=nbreak,
+                                   segments=segments,
                                    complexity=complexity,
                                    basis=basis,
                                    prune=prune)
@@ -94,10 +94,10 @@ crsEst <- function(xz,
           tmp <- deriv.factor.spline(x=x,
                                      y=y,
                                      z=z,
-                                     K=if(complexity=="degree") degree else nbreak,
+                                     K=if(complexity=="degree") degree else segments,
                                      I=include,
                                      degree=degree,
-                                     nbreak=nbreak,
+                                     segments=segments,
                                      complexity=complexity,
                                      basis=basis,
                                      deriv.index=m,
@@ -115,10 +115,10 @@ crsEst <- function(xz,
           zpred <- predict.factor.spline(x=x,
                                          y=y,
                                          z=z,
-                                         K=if(complexity=="degree") degree else nbreak,
+                                         K=if(complexity=="degree") degree else segments,
                                          I=include,
                                          degree=degree,
-                                         nbreak=nbreak,
+                                         segments=segments,
                                          complexity=complexity,
                                          basis=basis,
                                          prune=prune,
@@ -127,12 +127,12 @@ crsEst <- function(xz,
           zpred.base <- predict.factor.spline(x=x,
                                               y=y,
                                               z=z,
-                                              K=if(complexity=="degree") degree else nbreak,
+                                              K=if(complexity=="degree") degree else segments,
                                               I=include,
                                               xeval=x,
                                               zeval=ztmp,
                                               degree=degree,
-                                              nbreak=nbreak,
+                                              segments=segments,
                                               complexity=complexity,
                                               basis=basis,
                                               prune=prune,
@@ -157,11 +157,11 @@ crsEst <- function(xz,
     model <- predict.kernel.spline(x=x,
                                    y=y,
                                    z=z,
-                                   K=if(complexity=="degree") degree else nbreak,
+                                   K=if(complexity=="degree") degree else segments,
                                    lambda=lambda,
                                    kernel.type=kernel.type,
                                    degree=degree,
-                                   nbreak=nbreak,
+                                   segments=segments,
                                    complexity=complexity,
                                    basis=basis)
 
@@ -179,11 +179,11 @@ crsEst <- function(xz,
           tmp <- deriv.kernel.spline(x=x,
                                      y=y,
                                      z=z,
-                                     K=if(complexity=="degree") degree else nbreak,
+                                     K=if(complexity=="degree") degree else segments,
                                      lambda=lambda,
                                      kernel.type=kernel.type,
                                      degree=degree,
-                                     nbreak=nbreak,
+                                     segments=segments,
                                      complexity=complexity,
                                      basis=basis,
                                      deriv.index=m,
@@ -201,24 +201,24 @@ crsEst <- function(xz,
           zpred <- predict.kernel.spline(x=x,
                                          y=y,
                                          z=z,
-                                         K=if(complexity=="degree") degree else nbreak,
+                                         K=if(complexity=="degree") degree else segments,
                                          lambda=lambda,
                                          kernel.type=kernel.type,
                                          degree=degree,
-                                         nbreak=nbreak,
+                                         segments=segments,
                                          complexity=complexity,
                                          basis=basis)$fitted.values
 
           zpred.base <- predict.kernel.spline(x=x,
                                               y=y,
                                               z=z,
-                                              K=if(complexity=="degree") degree else nbreak,
+                                              K=if(complexity=="degree") degree else segments,
                                               lambda=lambda,
                                               kernel.type=kernel.type,
                                               xeval=x,
                                               zeval=ztmp,
                                               degree=degree,
-                                              nbreak=nbreak,
+                                              segments=segments,
                                               complexity=complexity,
                                               basis=basis)$fitted.values
 
@@ -247,9 +247,9 @@ crsEst <- function(xz,
               lwr=model$fitted.values[,2],
               upr=model$fitted.values[,3],
               df.residual=model$df.residual,
-              K=if(complexity=="degree") degree else nbreak,
+              K=if(complexity=="degree") degree else segments,
               degree=degree,
-              nbreak=nbreak,
+              segments=segments,
               complexity=complexity,
               include=include,
               lambda=lambda,
@@ -282,7 +282,7 @@ crsEst <- function(xz,
 crs.default <- function(xz,
                         y,
                         degree=NULL,
-                        nbreak=NULL,
+                        segments=NULL,
                         include=NULL,
                         kernel=FALSE,
                         lambda=NULL,
@@ -301,7 +301,7 @@ crs.default <- function(xz,
   est <- crsEst(xz=xz,
                 y=y,
                 degree=degree,
-                nbreak=nbreak,
+                segments=segments,
                 include=include,
                 kernel=kernel,
                 lambda=lambda,
@@ -331,7 +331,7 @@ crs.default <- function(xz,
 crs.formula <- function(formula,
                         data=list(),
                         degree=NULL,
-                        nbreak=NULL,
+                        segments=NULL,
                         include=NULL,
                         basis.maxdim=5,
                         cv=NULL,
@@ -359,14 +359,14 @@ crs.formula <- function(formula,
 
   ## Trap for no args and return warning
 
-  if(is.null(degree)&&is.null(nbreak)) {
+  if(is.null(degree)&&is.null(segments)) {
     if(complexity=="degree") {
-      warning(" no break argument given: default model is nbreak=1")
+      warning(" no break argument given: default model is segments=1")
     } else {
       warning(" no degree argument given: default model is degree=1")
     }
     if(is.null(degree)) degree <- 1
-    if(is.null(nbreak)) nbreak <- 1
+    if(is.null(segments)) segments <- 1
   }
 
 #  if(is.null(include)&&!is.null(z)&&!kernel) include <- rep(1,ncol(z))
@@ -390,7 +390,7 @@ crs.formula <- function(formula,
                   basis=basis,
                   cv.norm=cv.norm,
                   degree=degree,
-                  nbreak=nbreak)
+                  segments=segments)
       cv.min <- cv$cv.min
       K <- cv$K
       include <- cv$I
@@ -409,7 +409,7 @@ crs.formula <- function(formula,
                   basis=basis,
                   cv.norm=cv.norm,
                   degree=degree,
-                  nbreak=nbreak)
+                  segments=segments)
       cv.min <- cv$cv.min
       K <- cv$K
       lambda <- cv$lambda
@@ -423,7 +423,7 @@ crs.formula <- function(formula,
     est <- crs.default(xz=xz,
                        y=y,
                        degree=if(complexity=="degree") K else degree,
-                       nbreak=if(complexity=="degree") nbreak else K,
+                       segments=if(complexity=="degree") segments else K,
                        include=include,
                        kernel=kernel,
                        lambda=lambda,
@@ -439,7 +439,7 @@ crs.formula <- function(formula,
     est <- crs.default(xz=xz,
                        y=y,
                        degree=degree,
-                       nbreak=nbreak,
+                       segments=segments,
                        include=include,
                        kernel=kernel,
                        lambda=lambda,
@@ -531,7 +531,7 @@ predict.crs <- function(object,
       complexity <- object$complexity
       K <- object$K
       degree <- object$degree
-      nbreak <- object$nbreak
+      segments <- object$segments
       include <- object$include
 
       tmp <- predict.factor.spline(x=x,
@@ -539,7 +539,7 @@ predict.crs <- function(object,
                                    z=z,
                                    K=K,
                                    degree=degree,
-                                   nbreak=nbreak,
+                                   segments=segments,
                                    I=include,
                                    xeval=xeval,
                                    zeval=zeval,
@@ -567,7 +567,7 @@ predict.crs <- function(object,
                                        z=z,
                                        K=K,
                                        degree=degree,
-                                       nbreak=nbreak,
+                                       segments=segments,
                                        I=include,
                                        xeval=xeval,
                                        zeval=zeval,
@@ -589,7 +589,7 @@ predict.crs <- function(object,
                                            z=z,
                                            K=K,
                                            degree=degree,
-                                           nbreak=nbreak,
+                                           segments=segments,
                                            I=include,
                                            xeval=xeval,
                                            zeval=zeval,
@@ -603,7 +603,7 @@ predict.crs <- function(object,
                                                 z=z,
                                                 K=K,
                                                 degree=degree,
-                                                nbreak=nbreak,
+                                                segments=segments,
                                                 I=include,
                                                 xeval=xeval,
                                                 zeval=zevaltmp,
@@ -632,7 +632,7 @@ predict.crs <- function(object,
 
       complexity <- object$complexity
       K <- object$K
-      nbreak <- object$nbreak
+      segments <- object$segments
       degree <- object$degree
       lambda <- object$lambda
 
@@ -646,7 +646,7 @@ predict.crs <- function(object,
                                    z=z,
                                    K=K,
                                    degree=degree,
-                                   nbreak=nbreak,
+                                   segments=segments,
                                    lambda=lambda,
                                    kernel.type=kernel.type,
                                    xeval=xeval,
@@ -673,7 +673,7 @@ predict.crs <- function(object,
                                        z=z,
                                        K=K,
                                        degree=degree,
-                                       nbreak=nbreak,
+                                       segments=segments,
                                        lambda=lambda,
                                        kernel.type=kernel.type,
                                        xeval=xeval,
@@ -695,7 +695,7 @@ predict.crs <- function(object,
                                            z=z,
                                            K=K,
                                            degree=degree,
-                                           nbreak=nbreak,
+                                           segments=segments,
                                            lambda=lambda,
                                            kernel.type=kernel.type,
                                            xeval=xeval,
@@ -708,7 +708,7 @@ predict.crs <- function(object,
                                                 z=z,
                                                 K=K,
                                                 degree=degree,
-                                                nbreak=nbreak,
+                                                segments=segments,
                                                 lambda=lambda,
                                                 kernel.type=kernel.type,
                                                 xeval=xeval,
@@ -781,13 +781,13 @@ summary.crs <- function(object,
   }
   cat(paste("\nModel complexity proxy: ", format(object$complexity), sep=""))
   if(object$complexity=="degree") {
-    cat(paste("\nNumber of breakpoints: ", format(object$nbreak), sep=""))
+    cat(paste("\nNumber of segments: ", format(object$segments), sep=""))
     for(j in 1:object$num.x)
       cat(paste("\nSpline degree for ",format(object$xnames[j]),": ",format(object$degree[j]),sep=""),sep="")
   } else {
     cat(paste("\nSpline degree: ", format(object$degree), sep=""))
     for(j in 1:object$num.x)
-      cat(paste("\nNumber of breakpoints for ",format(object$xnames[j]),": ",format(object$nbreak[j]),sep=""),sep="")
+      cat(paste("\nNumber of segments for ",format(object$xnames[j]),": ",format(object$segments[j]),sep=""),sep="")
   }
   if(!is.null(object$include)) for(j in 1:length(object$include))
     cat(paste("\nInclusion indicator for ",format(object$znames[j]),": ",format(object$include[j]),sep=""),sep="")
