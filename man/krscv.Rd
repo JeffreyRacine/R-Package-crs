@@ -80,7 +80,7 @@ krscv(xz,
   
   \item{segments}{ integer/vector specifying the number of segments of
   the B-spline basis for each dimension of the continuous \code{x}
-  (i.e.~number of knots minus one)}
+  (i.e. number of knots minus one)}
 
 }
 

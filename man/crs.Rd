@@ -56,7 +56,7 @@ crs(\dots)
   
   \item{segments}{ integer/vector specifying the number of segments of
   the B-spline basis for each dimension of the continuous \code{x}
-  (i.e.~number of knots minus one)}
+  (i.e. number of knots minus one)}
   
   \item{include}{ integer/vector specifying whether each of the
   ordinal/nominal predictors in \code{x} are included or omitted from
@@ -94,7 +94,7 @@ crs(\dots)
   \item{complexity}{a character string (default
   \code{complexity="degree"}) indicating whether model `complexity' is
   determined by the degree of the spline or by the number of segments
-  (i.e.~number of knots minus one). This option allows the user to use
+  (i.e. number of knots minus one). This option allows the user to use
   cross-validation to select either the spline degree (number of knots
   held fixed) or the number of knots (spline degree held fixed)}
 
