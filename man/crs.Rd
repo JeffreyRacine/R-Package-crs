@@ -51,11 +51,12 @@ crs(\dots)
   
   \item{y}{ a numeric vector of responses. }
   
-  \item{degree}{ integer/vector specifying the degree of the regression
-    spline for each dimension of the continuous \code{x}}
+  \item{degree}{ integer/vector specifying the polynomial degree of the
+    B-spline basis for each dimension of the continuous \code{x}}
   
   \item{segments}{ integer/vector specifying the number of segments of
-  the regression spline for each dimension of the continuous \code{x}}
+  the B-spline basis for each dimension of the continuous \code{x}
+  (i.e.~number of knots minus one)}
   
   \item{include}{ integer/vector specifying whether each of the
   ordinal/nominal predictors in \code{x} are included or omitted from
@@ -87,8 +88,8 @@ crs(\dots)
   \item{kernel}{ a logical value (default \code{kernel=FALSE})
     indicating whether to use kernel smoothing or not }
 
-  \item{basis.maxdim}{ the maximum dimension of the spline for each
-    of the continuous predictors (default \code{basis.maxdim=5})}
+  \item{basis.maxdim}{ the maximum dimension of the B-spline basis for
+    each of the continuous predictors (default \code{basis.maxdim=5})}
 
   \item{complexity}{a character string (default
   \code{complexity="degree"}) indicating whether model `complexity' is
@@ -97,16 +98,24 @@ crs(\dots)
   cross-validation to select either the spline degree (number of knots
   held fixed) or the number of knots (spline degree held fixed)}
 
+  For the continuous predictors the regression spline model employs
+  either the additive, tensor product, or combined additive/tensor
+  product B-spline basis matrix for a multivariate polynomial spline via
+  the B-spline routines in the GNU Scientific Library and the
+  \code{\link{tensor.prod.model.matrix}} function in the \pkg{mgcv}
+  package.
+
   \item{basis}{ a character string (default
-  \code{basis="additive-tensor"}) indicating whether tensor product
-  terms (i.e. interaction terms) are included in the model or not. Note
-  this can be automatically determined by cross-validation if
-  \code{cv=TRUE} and \code{basis="auto"}, and is an \sQuote{all or none}
-  proposition (i.e. interaction terms for all predictors or for no
-  predictors given the nature of \sQuote{tensor products}). Note also
-  that if there is only one predictor this defaults to
-  \code{basis="additive"} to avoid unnecessary computation as the spline
-  bases are equivalent in this case }
+    \code{basis="additive-tensor"}) indicating whether the
+    additive/tensor, additive, or combined tensor product B-spline basis
+    matrix for a multivariate polynomial spline should be used. Note
+    this can be automatically determined by cross-validation if
+    \code{cv=TRUE} and \code{basis="auto"}, and is an \sQuote{all or
+    none} proposition (i.e. interaction terms for all predictors or for
+    no predictors given the nature of \sQuote{tensor products}). Note
+    also that if there is only one predictor this defaults to
+    \code{basis="additive"} to avoid unnecessary computation as the
+    spline bases are equivalent in this case }
 
   \item{deriv}{ an integer \code{l} (default \code{deriv=0}) specifying
   whether to compute the univariate \code{l}th partial derivative for
@@ -230,11 +239,11 @@ crs(\dots)
   \item{residuals}{ residuals computed at the sample points or
   evaluation points }
 
-  \item{degree}{ integer/vector specifying the degree of the regression
-    spline for each dimension of the continuous \code{x}}
+  \item{degree}{ integer/vector specifying the degree of the B-spline
+    basis for each dimension of the continuous \code{x}}
   
   \item{segments}{ integer/vector specifying the number of segments of
-  the regression spline for each dimension of the continuous \code{x}}
+  the B-spline basis for each dimension of the continuous \code{x}}
 
   \item{include}{ integer/vector specifying whether each of the
   ordinal/nominal predictors \code{z} are included or omitted from the

@@ -1,6 +1,6 @@
 frscv <- function(xz,
                   y,
-                  basis.maxdim=10,
+                  basis.maxdim=5,
                   complexity=c("degree","knots"),
                   basis = c("additive-tensor","additive","tensor","auto"),
                   cv.norm=c("L2","L1"),

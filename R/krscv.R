@@ -1,6 +1,6 @@
 krscv <- function(xz,
                   y,
-                  basis.maxdim=10,
+                  basis.maxdim=5,
                   kernel.type=c("nominal","ordinal"),
                   restarts=0,
                   complexity=c("degree","knots"),
