@@ -147,12 +147,12 @@ Heuristically, we conduct linear (in parameter) regression using the
 predictors with B-splines of potentially differing order for every
 continuous predictor. We adopt the \code{intercept=FALSE} variants
 (the B-splines will therefore not sum to one, i.e., an order $m$
-B-spline has $m+1$ columns and we drop the first as is often done) and
-include instead an intercept in the model. This allows multiple bases
-to coexist when there is more than one continuous predictor without
-introducing singularities. In addition to these bases we also
-optionally allow for inclusion of their tensor product (interaction)
-defined by
+B-spline with one segment (two knots/breakpoints) has $m+1$ columns
+and we drop the first as is often done) and include instead an
+intercept in the model. This allows multiple bases to coexist when
+there is more than one continuous predictor without introducing
+singularities. In addition to these bases we also optionally allow for
+inclusion of their tensor product (interaction) defined by
 \begin{equation*}
 B_1\otimes B_2\otimes \dots \otimes B_p,
 \end{equation*}
@@ -197,7 +197,8 @@ B <- gsl.bs(x,degree=degree,deriv=deriv,intercept=TRUE)
 matplot(x,B,type="l")
 @ 
 \caption{\label{gsl matplot}A degree-\Sexpr{degree} B-spline (left)
-  and its \Sexpr{deriv}-order derivative (right).}
+  with one segment (two knots) and its \Sexpr{deriv}-order derivative
+  (right).}
 \end{center}
 \end{figure}
 

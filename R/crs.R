@@ -361,7 +361,7 @@ crs.formula <- function(formula,
 
   if(is.null(degree)&&is.null(segments)) {
     if(complexity=="degree") {
-      warning(" no break argument given: default model is segments=1")
+      warning(" no segment argument given: default model is segments=1")
     } else {
       warning(" no degree argument given: default model is degree=1")
     }

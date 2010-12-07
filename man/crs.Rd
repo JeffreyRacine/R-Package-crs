@@ -215,6 +215,10 @@ crs(\dots)
   the original model then the original model is returned with a warning
   to this effect. Note also that this option can only be used when
   \code{kernel=FALSE}.
+
+  When \code{segments>1} we use uniform knots determined via the GSL
+  function \code{gsl_bspline_knots_uniform}. Note the number of
+  `breakpoints' (i.e. knots) is equal to the number of segments plus 1.
   
 }
 
