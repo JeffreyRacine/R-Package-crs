@@ -24,6 +24,7 @@ crsEst <- function(xz,
                    lambda=NULL,
                    kernel.type=c("nominal","ordinal"),
                    complexity=c("degree","knots"),
+                   knots=c("quantiles","uniform"),
                    basis=c("additive-tensor","additive","tensor","auto"),
                    deriv=0,
                    data.return=FALSE,
@@ -34,6 +35,7 @@ crsEst <- function(xz,
 
   kernel.type <- match.arg(kernel.type)
   complexity <- match.arg(complexity)
+  knots <- match.arg(knots)
   basis <- match.arg(basis)
 
   if(!kernel) {
@@ -77,6 +79,7 @@ crsEst <- function(xz,
                                    degree=degree,
                                    segments=segments,
                                    complexity=complexity,
+                                   knots=knots,
                                    basis=basis,
                                    prune=prune)
 
@@ -99,6 +102,7 @@ crsEst <- function(xz,
                                      degree=degree,
                                      segments=segments,
                                      complexity=complexity,
+                                     knots=knots,
                                      basis=basis,
                                      deriv.index=m,
                                      deriv=deriv,
@@ -120,6 +124,7 @@ crsEst <- function(xz,
                                          degree=degree,
                                          segments=segments,
                                          complexity=complexity,
+                                         knots=knots,
                                          basis=basis,
                                          prune=prune,
                                          prune.index=prune.index)$fitted.values
@@ -134,6 +139,7 @@ crsEst <- function(xz,
                                               degree=degree,
                                               segments=segments,
                                               complexity=complexity,
+                                              knots=knots,
                                               basis=basis,
                                               prune=prune,
                                               prune.index=prune.index)$fitted.values
@@ -163,6 +169,7 @@ crsEst <- function(xz,
                                    degree=degree,
                                    segments=segments,
                                    complexity=complexity,
+                                   knots=knots,
                                    basis=basis)
 
     prune.index <- NULL
@@ -185,6 +192,7 @@ crsEst <- function(xz,
                                      degree=degree,
                                      segments=segments,
                                      complexity=complexity,
+                                     knots=knots,
                                      basis=basis,
                                      deriv.index=m,
                                      deriv=deriv)
@@ -207,6 +215,7 @@ crsEst <- function(xz,
                                          degree=degree,
                                          segments=segments,
                                          complexity=complexity,
+                                         knots=knots,
                                          basis=basis)$fitted.values
 
           zpred.base <- predict.kernel.spline(x=x,
@@ -220,6 +229,7 @@ crsEst <- function(xz,
                                               degree=degree,
                                               segments=segments,
                                               complexity=complexity,
+                                              knots=knots,
                                               basis=basis)$fitted.values
 
           deriv.mat[,i] <- zpred[,1]-zpred.base[,1]
@@ -251,6 +261,7 @@ crsEst <- function(xz,
               degree=degree,
               segments=segments,
               complexity=complexity,
+              knots=knots,
               include=include,
               lambda=lambda,
               kernel=kernel,
@@ -288,6 +299,7 @@ crs.default <- function(xz,
                         lambda=NULL,
                         kernel.type=c("nominal","ordinal"),
                         complexity=c("degree","knots"),
+                        knots=c("quantiles","uniform"),
                         basis=c("additive-tensor","additive","tensor","auto"),
                         deriv=0,
                         data.return=FALSE,
@@ -296,6 +308,7 @@ crs.default <- function(xz,
 
   kernel.type <- match.arg(kernel.type)
   complexity <- match.arg(complexity)
+  knots <- match.arg(knots)
   basis <- match.arg(basis)
 
   est <- crsEst(xz=xz,
@@ -307,6 +320,7 @@ crs.default <- function(xz,
                 lambda=lambda,
                 kernel.type=kernel.type,
                 complexity=complexity,
+                knots=knots,
                 basis=basis,
                 deriv=deriv,
                 data.return=data.return,
@@ -340,6 +354,7 @@ crs.formula <- function(formula,
                         lambda=NULL,
                         kernel.type=c("nominal","ordinal"),
                         complexity=c("degree","knots"),
+                        knots=c("quantiles","uniform"),
                         basis=c("additive-tensor","additive","tensor","auto"),
                         deriv=0,
                         data.return=FALSE,
@@ -349,6 +364,7 @@ crs.formula <- function(formula,
   cv.norm <- match.arg(cv.norm)
   kernel.type <- match.arg(kernel.type)
   complexity <- match.arg(complexity)
+  knots <- match.arg(knots)
   basis <- match.arg(basis)
 
   mf <- model.frame(formula=formula, data=data)
@@ -387,6 +403,7 @@ crs.formula <- function(formula,
                   y=y,
                   basis.maxdim=basis.maxdim,
                   complexity=complexity,
+                  knots=knots,
                   basis=basis,
                   cv.norm=cv.norm,
                   degree=degree,
@@ -406,6 +423,7 @@ crs.formula <- function(formula,
                   y=y,
                   basis.maxdim=basis.maxdim,
                   complexity=complexity,
+                  knots=knots,
                   basis=basis,
                   cv.norm=cv.norm,
                   degree=degree,
@@ -429,6 +447,7 @@ crs.formula <- function(formula,
                        lambda=lambda,
                        kernel.type=kernel.type,
                        complexity=complexity,
+                       knots=knots,
                        basis=basis,
                        deriv=deriv,
                        data.return=data.return,
@@ -445,6 +464,7 @@ crs.formula <- function(formula,
                        lambda=lambda,
                        kernel.type=kernel.type,
                        complexity=complexity,
+                       knots=knots,
                        basis=basis,
                        deriv=deriv,
                        data.return=data.return,
@@ -529,6 +549,7 @@ predict.crs <- function(object,
       ## Get degree vector and include vector.
 
       complexity <- object$complexity
+      knots <- object$knots
       K <- object$K
       degree <- object$degree
       segments <- object$segments
@@ -545,6 +566,7 @@ predict.crs <- function(object,
                                    zeval=zeval,
                                    basis=basis,
                                    complexity=complexity,
+                                   knots=knots,
                                    prune=prune,
                                    prune.index=prune.index)$fitted.values
 
@@ -572,6 +594,7 @@ predict.crs <- function(object,
                                        xeval=xeval,
                                        zeval=zeval,
                                        complexity=complexity,
+                                       knots=knots,
                                        basis=basis,
                                        deriv.index=m,
                                        deriv=deriv,
@@ -594,6 +617,7 @@ predict.crs <- function(object,
                                            xeval=xeval,
                                            zeval=zeval,
                                            complexity=complexity,
+                                           knots=knots,
                                            basis=basis,
                                            prune=prune,
                                            prune.index=prune.index)$fitted.values
@@ -608,6 +632,7 @@ predict.crs <- function(object,
                                                 xeval=xeval,
                                                 zeval=zevaltmp,
                                                 complexity=complexity,
+                                                knots=knots,
                                                 basis=basis,
                                                 prune=prune,
                                                 prune.index=prune.index)$fitted.values
@@ -631,6 +656,7 @@ predict.crs <- function(object,
       ## Get degree vector and lambda vector
 
       complexity <- object$complexity
+      knots <- object$knots
       K <- object$K
       segments <- object$segments
       degree <- object$degree
@@ -652,6 +678,7 @@ predict.crs <- function(object,
                                    xeval=xeval,
                                    zeval=zeval,
                                    complexity=complexity,
+                                   knots=knots,
                                    basis=basis)$fitted.values
 
       fitted.values <- tmp[,1]
@@ -679,6 +706,7 @@ predict.crs <- function(object,
                                        xeval=xeval,
                                        zeval=zeval,
                                        complexity=complexity,
+                                       knots=knots,
                                        basis=basis,
                                        deriv.index=m,
                                        deriv=deriv)
@@ -701,6 +729,7 @@ predict.crs <- function(object,
                                            xeval=xeval,
                                            zeval=zeval,
                                            complexity=complexity,
+                                           knots=knots,
                                            basis=basis)$fitted.values
 
             zpred.base <- predict.kernel.spline(x=x,
@@ -714,6 +743,7 @@ predict.crs <- function(object,
                                                 xeval=xeval,
                                                 zeval=zevaltmp,
                                                 complexity=complexity,
+                                                knots=knots,
                                                 basis=basis)$fitted.values
 
             deriv.mat[,i] <- zpred[,1]-zpred.base[,1]
@@ -779,6 +809,7 @@ summary.crs <- function(object,
   }  else {
     cat(paste("\nThere are ",format(object$num.z), " categorical predictors",sep=""),sep="")
   }
+  cat(paste("\nKnot type: ", format(object$knots), sep=""))
   cat(paste("\nModel complexity proxy: ", format(object$complexity), sep=""))
   if(object$complexity=="degree") {
     cat(paste("\nNumber of segments: ", format(object$segments), sep=""))

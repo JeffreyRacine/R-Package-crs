@@ -7,13 +7,13 @@ gsl.bs.default <- function(x,
                            x.min=NULL,
                            x.max=NULL,
                            intercept=FALSE,
-                           knots=c("uniform","quantiles"),
+                           knots=c("quantiles","uniform"),
                            ...) {
 
   x <- as.vector(x)
   n <- length(x)
 
-  knots = match.arg(knots)
+  knots <- match.arg(knots)
 
   if(degree <= 0) stop(" degree must be a positive integer")
   if(deriv < 0) stop(" deriv must be a non-negative integer")

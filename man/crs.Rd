@@ -20,6 +20,7 @@ crs(\dots)
     lambda = NULL,
     kernel.type = c("nominal","ordinal"),
     complexity = c("degree","knots"),
+    knots = c("quantiles","uniform"),
     basis = c("additive-tensor","additive","tensor","auto"),
     deriv = 0,
     data.return = FALSE,
@@ -38,6 +39,7 @@ crs(\dots)
     lambda = NULL,
     kernel.type = c("nominal","ordinal"),
     complexity = c("degree","knots"),
+    knots = c("quantiles","uniform"),
     basis = c("additive-tensor","additive","tensor","auto"),
     deriv = 0,
     data.return = FALSE,
@@ -96,16 +98,21 @@ crs(\dots)
   determined by the degree of the spline or by the number of segments
   (i.e. number of knots minus one). This option allows the user to use
   cross-validation to select either the spline degree (number of knots
-  held fixed) or the number of knots (spline degree held fixed)}
+  held fixed) or the number of knots (spline degree held fixed).
 
   For the continuous predictors the regression spline model employs
   either the additive, tensor product, or combined additive/tensor
   product B-spline basis matrix for a multivariate polynomial spline via
   the B-spline routines in the GNU Scientific Library and the
   \code{\link{tensor.prod.model.matrix}} function in the \pkg{mgcv}
-  package.
+  package.}
 
-  \item{basis}{ a character string (default
+   \item{knots}{ a character string (default \code{knots="quantiles"})
+  specifying which type of knots to use. \sQuote{quantiles} specifies
+  \code{nbreak} quantile knots and \sQuote{uniform} specifies
+  \code{nbreak} uniform knots. }
+
+\item{basis}{ a character string (default
     \code{basis="additive-tensor"}) indicating whether the
     additive/tensor, additive, or combined tensor product B-spline basis
     matrix for a multivariate polynomial spline should be used. Note

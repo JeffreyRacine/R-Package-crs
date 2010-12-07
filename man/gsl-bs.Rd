@@ -16,6 +16,7 @@ gsl.bs(\dots)
        x.min = NULL,
        x.max = NULL,
        intercept = FALSE,
+       knots = c("quantiles","uniform"),
        \dots)
 }
 \arguments{
@@ -38,6 +39,11 @@ defaults to \code{max(x)}}
         
 \item{intercept}{ if \sQuote{TRUE}, an intercept is included in the
 basis; default is \sQuote{FALSE} }
+
+\item{knots}{ a character string (default \code{knots="quantiles"})
+  specifying which type of knots to use. \sQuote{quantiles} specifies
+  \code{nbreak} quantile knots and \sQuote{uniform} specifies
+  \code{nbreak} uniform knots. }
 
 \item{\dots}{ optional arguments }
   

@@ -20,6 +20,7 @@ krscv(xz,
       kernel.type = c("nominal","ordinal"),
       restarts = 0,
       complexity = c("degree","knots"),
+      knots = c("quantiles","uniform"),
       basis = c("additive-tensor","additive","tensor","auto"),
       cv.norm = c("L2","L1"),
       degree = 3,
@@ -51,12 +52,17 @@ krscv(xz,
     values, defaults to \code{0}
   }
 
-  \item{complexity}{a character string (default \code{complexity="degree"})
-  indicating whether model `complexity' is determined by the degree of
-  the spline or by the number of segments (`knots'). This option
-  allows the user to use cross-validation to select either the spline
-  degree (number of knots held fixed) or the number of knots (spline
-  degree held fixed)}
+  \item{complexity}{a character string (default
+  \code{complexity="degree"}) indicating whether model `complexity' is
+  determined by the degree of the spline or by the number of segments
+  (`knots'). This option allows the user to use cross-validation to
+  select either the spline degree (number of knots held fixed) or the
+  number of knots (spline degree held fixed)}
+
+   \item{knots}{ a character string (default \code{knots="quantiles"})
+  specifying which type of knots to use. \sQuote{quantiles} specifies
+  \code{nbreak} quantile knots and \sQuote{uniform} specifies
+  \code{nbreak} uniform knots. }
 
   \item{basis}{ a character string (default
     \code{basis="additive-tensor"}) indicating whether the

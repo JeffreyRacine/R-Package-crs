@@ -4,6 +4,7 @@ crscv <- function(K,
                   basis.vec,
                   basis.maxdim,
                   complexity,
+                  knots,
                   degree,
                   segments,
                   restarts,
@@ -19,6 +20,7 @@ crscv <- function(K,
                 basis.vec=basis.vec,    
                 basis.maxdim=basis.maxdim,
                 complexity=complexity,
+                knots=knots,
                 degree=degree,
                 segments=segments,
                 restarts=restarts,
@@ -38,6 +40,7 @@ print.crscv <- function(x, ...){
     cat("\nCategorical Regression Spline Cross-Validation",sep="")
     cat(paste("\n\nObjective function value : ",format(x$cv.func),sep=""),sep="")
 
+    cat(paste("\n\nKnot type: ", format(x$knots), sep=""))    
     cat(paste("\n\nModel complexity proxy: ", format(x$complexity), sep=""))
     if(x$complexity=="degree") {
       cat(paste("\nNumber of segments: ", format(x$segments), sep=""))
@@ -58,6 +61,7 @@ print.crscv <- function(x, ...){
   } else if(!is.null(x$I)) {
     cat("\nFactor Regression Spline Cross-Validation",sep="")
     cat(paste("\n\nObjective function value : ",format(x$cv.func),sep=""),sep="")
+    cat(paste("\n\nKnot type: ", format(x$knots), sep=""))    
     cat(paste("\n\nModel complexity proxy: ", format(x$complexity), sep=""))
     if(x$complexity=="degree") {
       cat(paste("\nNumber of segments: ", format(x$segments), sep=""))

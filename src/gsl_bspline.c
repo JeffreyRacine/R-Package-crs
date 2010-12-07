@@ -7,7 +7,10 @@
 /* Code to replicate bs() in splines package. Note that feeding in
    x_min and x_max is necessary if you want to replicate predict.bs()
    - use x_min/x_max for your training data and let x be the
-   evaluation data. */
+   evaluation data. 
+
+   knots_int is an integer (0=uniform knots, 1=quantile knots) and
+   quantile_vector a vector of knots.*/
 
 int gsl_bspline(double *x,
                 int *n,

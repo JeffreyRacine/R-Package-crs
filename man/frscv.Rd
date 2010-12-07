@@ -18,6 +18,7 @@ frscv(xz,
       y,
       basis.maxdim = 5,
       complexity = c("degree","knots"),
+      knots = c("quantiles","uniform"),
       basis = c("additive-tensor","additive","tensor","auto"),
       cv.norm = c("L2","L1"),
       degree = 3,
@@ -44,7 +45,12 @@ frscv(xz,
   degree (number of knots held fixed) or the number of knots (spline
   degree held fixed)}
 
-  \item{basis}{ a character string (default
+   \item{knots}{ a character string (default \code{knots="quantiles"})
+  specifying which type of knots to use. \sQuote{quantiles} specifies
+  \code{nbreak} quantile knots and \sQuote{uniform} specifies
+  \code{nbreak} uniform knots. }
+
+\item{basis}{ a character string (default
     \code{basis="additive-tensor"}) indicating whether the
     additive/tensor, additive, or combined tensor product B-spline basis
     matrix for a multivariate polynomial spline should be used. Note
