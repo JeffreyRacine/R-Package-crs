@@ -74,14 +74,18 @@ prod.spline <- function(x,
         if(i==deriv.index) {
           if(complexity=="degree") {
             tp[[j]] <- predict(gsl.bs(x[,i,drop=FALSE],degree=K[i],nbreak=segments+1,knots=knots,deriv=deriv,intercept=FALSE),newx=xeval[,i,drop=FALSE])
-          } else {
+          } else if(complexity=="knots") {
             tp[[j]] <- predict(gsl.bs(x[,i,drop=FALSE],degree=degree,nbreak=K[i]+1,knots=knots,deriv=deriv,intercept=FALSE),newx=xeval[,i,drop=FALSE])
+          } else if(complexity=="degree-knots") {
+            tp[[j]] <- predict(gsl.bs(x[,i,drop=FALSE],degree=K[i,1],nbreak=K[i,2]+1,knots=knots,deriv=deriv,intercept=FALSE),newx=xeval[,i,drop=FALSE])
           }
         } else {
           if(complexity=="degree") {
             tp[[j]] <- predict(gsl.bs(x[,i,drop=FALSE],degree=K[i],nbreak=segments+1,knots=knots,intercept=FALSE),newx=xeval[,i,drop=FALSE])
-          } else {
+          } else  if(complexity=="knots") {
             tp[[j]] <- predict(gsl.bs(x[,i,drop=FALSE],degree=degree,nbreak=K[i]+1,knots=knots,intercept=FALSE),newx=xeval[,i,drop=FALSE])
+          } else  if(complexity=="degree-knots") {
+            tp[[j]] <- predict(gsl.bs(x[,i,drop=FALSE],degree=K[i,1],nbreak=K[i,2]+1,knots=knots,intercept=FALSE),newx=xeval[,i,drop=FALSE])
           }
         }
         j <- j+1
