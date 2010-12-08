@@ -60,9 +60,10 @@ krscv(xz,
   number of knots (spline degree held fixed)}
 
    \item{knots}{ a character string (default \code{knots="quantiles"})
-  specifying which type of knots to use. \sQuote{quantiles} specifies
-  \code{nbreak} quantile knots and \sQuote{uniform} specifies
-  \code{nbreak} uniform knots. }
+  specifying where knots are to be placed. \sQuote{quantiles} specifies
+  knots placed at equally spaced quantiles (equal number of observations
+  lie in each segment) and \sQuote{uniform} specifies knots placed at
+  equally spaced intervals. }
 
   \item{basis}{ a character string (default
     \code{basis="additive-tensor"}) indicating whether the

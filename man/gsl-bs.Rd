@@ -40,10 +40,11 @@ defaults to \code{max(x)}}
 \item{intercept}{ if \sQuote{TRUE}, an intercept is included in the
 basis; default is \sQuote{FALSE} }
 
-\item{knots}{ a character string (default \code{knots="quantiles"})
-  specifying which type of knots to use. \sQuote{quantiles} specifies
-  \code{nbreak} quantile knots and \sQuote{uniform} specifies
-  \code{nbreak} uniform knots. }
+   \item{knots}{ a character string (default \code{knots="quantiles"})
+  specifying where knots are to be placed. \sQuote{quantiles} specifies
+  knots placed at equally spaced quantiles (equal number of observations
+  lie in each segment) and \sQuote{uniform} specifies knots placed at
+  equally spaced intervals. }
 
 \item{\dots}{ optional arguments }
   
