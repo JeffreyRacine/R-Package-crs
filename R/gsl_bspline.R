@@ -28,7 +28,7 @@ gsl.bs.default <- function(x,
   ## Construct quantiles in case they are requested (trivial, no
   ## overhead so may as well compute rather than test etc.)
   
-  q.vec <- quantile(x,seq(0,1,length=nbreak))
+  q.vec <- quantile(x,probs=seq(0,1,length=nbreak))
 
   ## Replace endpoints with x.min and x.max if overloaded, otherwise
   ## this has no effect (0 and 1 quantiles are sample min/max)
@@ -82,6 +82,7 @@ gsl.bs.default <- function(x,
   attr(B, "x.min") <- x.min
   attr(B, "x.max") <- x.max
   attr(B, "intercept") <- intercept
+  attr(B, "knots") <- knots
   attr(B, "class") <- c("gsl.bs","matrix")
 
   return(B)
@@ -118,6 +119,7 @@ predict.gsl.bs <- function(object,
                 nbreak=attr(object, "nbreak"),
                 deriv=attr(object, "deriv"),
                 intercept=attr(object, "intercept"),
+                knots=attr(object, "knots"),
                 x.min=x.min,
                 x.max=x.max)
 
