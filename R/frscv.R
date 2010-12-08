@@ -5,13 +5,13 @@ frscv <- function(xz,
                   knots=c("quantiles","uniform"),
                   basis=c("additive-tensor","additive","tensor","auto"),
                   cv.norm=c("L2","L1"),
-                  degree=3,
-                  segments=1) {
+                  degree=degree,
+                  segments=degree) {
 
   complexity <- match.arg(complexity)
   knots <- match.arg(knots)
   basis <- match.arg(basis)
-  cv.norm <- match.arg(cv.norm)  
+  cv.norm <- match.arg(cv.norm)
 
   t1 <- Sys.time()
 
@@ -25,8 +25,6 @@ frscv <- function(xz,
                       j=NULL,
                       nrow.KI.mat=NULL,
                       t2=NULL,
-                      degree=degree,
-                      segments=segments,
                       complexity=complexity,
                       knots=knots,
                       basis=basis,
@@ -39,11 +37,20 @@ frscv <- function(xz,
 
     n <- length(y)
     num.x <- NCOL(x)
+    
     if(NROW(y) != NROW(x)) stop(" x and y have differing numbers of observations")
-    K <- round(input[1:num.x])
+
+    ## K is a matrix, column 1 degree, column 2 segments, either or
+    ## both can be determined via cv so need to take care to allow
+    ## user to select knots (degree fixed), degree (knots fixed), or
+    ## both degree and knots. The values used to evaluate the cv
+    ## function are passed below.
+    
+    K <- round(cbind(input[1:num.x],input[(num.x+1):(2*num.x)]))
+
     if(!is.null(z)) {
       num.z <- NCOL(z)
-      I <- round(input[(num.x+1):(num.x+num.z)])
+      I <- round(input[(2*num.x+1):(2*num.x+num.z)])
     } else {
       num.z <- 0
       I <- NULL
@@ -54,31 +61,69 @@ frscv <- function(xz,
                            z=z,
                            K=K,
                            I=I,
-                           degree=degree,
-                           segments=segments,
-                           complexity=complexity,
                            knots=knots,
                            basis=basis)
 
     ## Some i/o unless options(crs.messages=FALSE)
 
+    ## Degree is first column of K K[,1], segments second column K[,2]
+    ## - could create a tmp vector for i/o, or could switch
+
     console <<- printClear(console)
 
+    ## Format function...
     fw.format.2 <- function(input) sapply(input,sprintf,fmt="%#.2f")
-    if(!is.null(j)) {
-      if(j==1) {
-        tmp.1 <- paste(j,"/",nrow.KI.mat,", k[1]=",K[1],sep="")
+
+    if(complexity=="degree") {
+      if(!is.null(j)) {
+        if(j==1) {
+          tmp.1 <- paste(j,"/",nrow.KI.mat,", d[1]=",K[1,1],sep="")
+        } else {
+          dt <- (t2-t1)*(nrow.KI.mat-j+1)/j
+          tmp.0 <- paste(", ",fw.format.2(as.numeric(dt,units="mins")),"/",
+                         fw.format.2(as.numeric((t2-t1),units="mins")),
+                         "m",sep="")
+          tmp.1 <- paste(j,"/",nrow.KI.mat,tmp.0,", d[1]=",K[1,1],sep="")
+        }
       } else {
-        dt <- (t2-t1)*(nrow.KI.mat-j+1)/j
-        tmp.0 <- paste(", ",fw.format.2(as.numeric(dt,units="mins")),"/",
-                       fw.format.2(as.numeric((t2-t1),units="mins")),
-                       "m",sep="")
-        tmp.1 <- paste(j,"/",nrow.KI.mat,tmp.0,", k[1]=",K[1],sep="")
+        tmp.1 <- paste("d[1]=", K[1,1],sep="")
       }
-    } else {
-      tmp.1 <- paste("k[1]=", K[1],sep="")
+      if(num.x > 1) for(i in 2:num.x) tmp.1 <- paste(tmp.1, ", d[", i, "]=", K[i,1],sep="")
+    } else if(complexity=="knots") {
+      if(!is.null(j)) {
+        if(j==1) {
+          tmp.1 <- paste(j,"/",nrow.KI.mat,", s[1]=",K[1,2],sep="")
+        } else {
+          dt <- (t2-t1)*(nrow.KI.mat-j+1)/j
+          tmp.0 <- paste(", ",fw.format.2(as.numeric(dt,units="mins")),"/",
+                         fw.format.2(as.numeric((t2-t1),units="mins")),
+                         "m",sep="")
+          tmp.1 <- paste(j,"/",nrow.KI.mat,tmp.0,", s[1]=",K[1,2],sep="")
+        }
+      } else {
+        tmp.1 <- paste("s[1]=", K[1,2],sep="")
+      }
+      if(num.x > 1) for(i in 2:num.x) tmp.1 <- paste(tmp.1, ", s[", i, "]=", K[i,2],sep="")
+    } else if(complexity=="degree-knots") {
+      if(!is.null(j)) {
+        if(j==1) {
+          tmp.1 <- paste(j,"/",nrow.KI.mat,", d[1]=",K[1,1],sep="")
+        } else {
+          dt <- (t2-t1)*(nrow.KI.mat-j+1)/j
+          tmp.0 <- paste(", ",fw.format.2(as.numeric(dt,units="mins")),"/",
+                         fw.format.2(as.numeric((t2-t1),units="mins")),
+                         "m",sep="")
+          tmp.1 <- paste(j,"/",nrow.KI.mat,tmp.0,", d[1]=",K[1,1],sep="")
+        }
+      } else {
+        tmp.1 <- paste("k[1]=", K[1,1],sep="")
+      }
+      if(num.x > 1) for(i in 2:num.x) tmp.1 <- paste(tmp.1, ", d[", i, "]=", K[i,1],sep="")
+      for(i in 1:num.x) tmp.1 <- paste(tmp.1, ", s[", i, "]=", K[i,2],sep="")      
     }
-    if(num.x > 1) for(i in 2:num.x) tmp.1 <- paste(tmp.1, ", k[", i, "]=", K[i],sep="")
+
+    ## For z variables...
+    
     if(num.z > 0) for(i in 1:num.z) tmp.1 <- paste(tmp.1, ", I[", i, "]=", I[i],sep="")
     tmp.3 <- paste(", cv=", format(cv,digits=6), sep="")
     if(num.restarts > 0) {
@@ -115,6 +160,8 @@ frscv <- function(xz,
   n <- nrow(x)
 
   if(missing(x) || missing(y)) stop (" you must provide x and y")
+  if(length(degree)!=num.x) stop(" degree vector must be the same length as x")
+  if(length(segments)!=num.x) stop(" segments vector must be the same length as x")  
 
   ## For factor regression spline, if there is only one predictor
   ## (i.e. num.x + num.z = 1) disable auto, set to additive (which is
@@ -127,12 +174,14 @@ frscv <- function(xz,
   ## rather than letting cv proceed only to be halted after the lower
   ## dimension models have been estimated when this occurs.
 
+  ## Complexity="degree-knots" - this is too large - ought to use rep(basis.maxdim and either degree or knots) XXX need to clean up
+
   if(basis == "auto") {
-    k <- max(c(ncol(prod.spline(x=x,z=z,K=rep(basis.maxdim,num.x),I=rep(1,num.z),degree=degree,segments=segments,complexity=complexity,knots=knots,basis="additive-tensor")),
-               ncol(prod.spline(x=x,z=z,K=rep(basis.maxdim,num.x),I=rep(1,num.z),degree=degree,segments=segments,complexity=complexity,knots=knots,basis="additive")),
-               ncol(prod.spline(x=x,z=z,K=rep(basis.maxdim,num.x),I=rep(1,num.z),degree=degree,segments=segments,complexity=complexity,knots=knots,basis="tensor"))))
+    k <- max(c(ncol(prod.spline(x=x,z=z,K=matrix(2*rep(basis.maxdim,num.x),num.x,2),I=rep(1,num.z),knots=knots,basis="additive-tensor")),
+               ncol(prod.spline(x=x,z=z,K=matrix(2*rep(basis.maxdim,num.x),num.x,2),I=rep(1,num.z),knots=knots,basis="additive")),
+               ncol(prod.spline(x=x,z=z,K=matrix(2*rep(basis.maxdim,num.x),num.x,2),I=rep(1,num.z),knots=knots,basis="tensor"))))
   } else {
-    k <- ncol(prod.spline(x=x,z=z,K=rep(basis.maxdim,num.x),I=rep(1,num.z),degree=degree,segments=segments,complexity=complexity,knots=knots,basis=basis))
+    k <- ncol(prod.spline(x=x,z=z,K=matrix(2*rep(basis.maxdim,num.x),num.x,2),I=rep(1,num.z),knots=knots,basis=basis))
   }
 
   df <- n - k
@@ -145,13 +194,25 @@ frscv <- function(xz,
 
   if(basis.maxdim < 1) stop(" basis.maxdim must be greater than or equal to 1")
 
-  ## Need to append 0,1 for I (in, out)
+  ## Need to append 0,1 for I (in, out). XXX Pad row to left with
+  ## degree vector or in between x and z with segment vector then
+  ## input remains a vector XXX need to do... this ought to be most
+  ## transparent and the remaining code will not need to be changed XXX
 
-  if(!is.null(z)) {
-    KI.mat <- matrix.combn(0:basis.maxdim,num.x,num.z)
+  if(complexity!="degree-knots") {
+    if(!is.null(z)) {
+      KI.mat <- matrix.combn(0:basis.maxdim,num.x,num.z)
+    } else {
+      KI.mat <- matrix.combn(0:basis.maxdim,num.x)
+    }
   } else {
-    KI.mat <- matrix.combn(0:basis.maxdim,num.x)
+    if(!is.null(z)) {
+      KI.mat <- matrix.combn(0:basis.maxdim,2*num.x,num.z)
+    } else {
+      KI.mat <- matrix.combn(0:basis.maxdim,2*num.x)
+    }
   }
+  
   nrow.KI.mat <- NROW(KI.mat)
   basis.vec <- character(nrow.KI.mat)
   cv.min.vec <- numeric(nrow.KI.mat)
@@ -160,9 +221,26 @@ frscv <- function(xz,
 
   for(j in 1:nrow.KI.mat) {
 
+    if(complexity=="degree") {
+      if(num.z==0) {
+        input.j <- c(KI.mat[j,1:num.x],segments)
+      } else {
+        input.j <- c(KI.mat[j,1:num.x],segments,KI.mat[j,(num.x+1):(num.x+num.z)])
+      }
+    } else if(complexity=="knots") {
+      if(num.z==0) {
+        input.j <- c(degree,KI.mat[j,1:num.x]+1) ## Need to check this + 1 hack
+      } else {
+        input.j <- c(degree,KI.mat[j,1:num.x]+1,KI.mat[j,(num.x+1):(num.x+num.z)])
+      }
+    } else if(complexity=="degree-knots") {
+      KI.mat[j,(num.x+1):(2*num.x)] <- KI.mat[j,(num.x+1):(2*num.x)]+1  ## Need to check this + 1 hack
+      input.j <- KI.mat[j,]
+    }
+
     if(basis=="auto") {
 
-      output <- cv.func(input=KI.mat[j,],
+      output <- cv.func(input=input.j,
                         x=x,
                         y=y,
                         z=z,
@@ -172,21 +250,19 @@ frscv <- function(xz,
                         j=j,
                         nrow.KI.mat=nrow.KI.mat,
                         t2=Sys.time(),
-                        degree=degree,
-                        segments=segments,
                         complexity=complexity,
                         knots=knots,
                         basis="additive-tensor")
 
       if(output < cv.min) {
         cv.min <- output
-        K.opt <- KI.mat[j,1:num.x]
         basis.opt <- "additive-tensor"
         basis.vec[j] <- "additive-tensor"
-        if(!is.null(z)) I.opt <- KI.mat[j,(num.x+1):(num.x+num.z)]
+        K.opt <- input.j[1:(2*num.x)]
+        if(!is.null(z)) I.opt <- input.j[(2*num.x+1):(2*num.x+num.z)]
       }
 
-      output <- cv.func(input=KI.mat[j,],
+      output <- cv.func(input=input.j,
                         x=x,
                         y=y,
                         z=z,
@@ -196,21 +272,19 @@ frscv <- function(xz,
                         j=j,
                         nrow.KI.mat=nrow.KI.mat,
                         t2=Sys.time(),
-                        degree=degree,
-                        segments=segments,
                         complexity=complexity,
                         knots=knots,
                         basis="additive")
 
       if(output < cv.min) {
         cv.min <- output
-        K.opt <- KI.mat[j,1:num.x]
         basis.opt <- "additive"
         basis.vec[j] <- "additive"
-        if(!is.null(z)) I.opt <- KI.mat[j,(num.x+1):(num.x+num.z)]
+        K.opt <- input.j[1:(2*num.x)]
+        if(!is.null(z)) I.opt <- input.j[(2*num.x+1):(2*num.x+num.z)]
       }
 
-      output <- cv.func(input=KI.mat[j,],
+      output <- cv.func(input=input.j,
                         x=x,
                         y=y,
                         z=z,
@@ -220,25 +294,23 @@ frscv <- function(xz,
                         j=j,
                         nrow.KI.mat=nrow.KI.mat,
                         t2=Sys.time(),
-                        degree=degree,
-                        segments=segments,
                         complexity=complexity,
                         knots=knots,
                         basis="tensor")
 
       if(output < cv.min) {
         cv.min <- output
-        K.opt <- KI.mat[j,1:num.x]
         basis.opt <- "tensor"
         basis.vec[j] <- "tensor"
-        if(!is.null(z)) I.opt <- KI.mat[j,(num.x+1):(num.x+num.z)]
+        K.opt <- input.j[1:(2*num.x)]
+        if(!is.null(z)) I.opt <- input.j[(2*num.x+1):(2*num.x+num.z)]
       }
 
     } else {
 
       ## not auto, so use either "additive-tensor" or "additive" or "tensor"
 
-      output <- cv.func(input=KI.mat[j,],
+      output <- cv.func(input=input.j,
                         x=x,
                         y=y,
                         z=z,
@@ -248,18 +320,16 @@ frscv <- function(xz,
                         j=j,
                         nrow.KI.mat=nrow.KI.mat,
                         t2=Sys.time(),
-                        degree=degree,
-                        segments=segments,
                         complexity=complexity,
                         knots=knots,
                         basis=basis)
 
       if(output < cv.min) {
         cv.min <- output
-        K.opt <- KI.mat[j,1:num.x]
         basis.opt <- basis
         basis.vec[j] <- basis
-        if(!is.null(z)) I.opt <- KI.mat[j,(num.x+1):(num.x+num.z)]
+        K.opt <- input.j[1:(2*num.x)]
+        if(!is.null(z)) I.opt <- input.j[(2*num.x+1):(2*num.x+num.z)]
       }
 
     }
@@ -275,6 +345,11 @@ frscv <- function(xz,
 
   if(is.null(z)) I.opt <- NULL
 
+  print(paste("K.opt=",K.opt))
+  print(paste("degree=",degree))
+  print(paste("segments=",segments))
+  stop()
+  
   crscv(K=K.opt,
         I=I.opt,
         basis=basis.opt,

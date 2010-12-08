@@ -1,4 +1,9 @@
-Changes from Version 0.13.5 to 0.13.6 [XXX-XXX-2010]
+Changes from Version 0.13.6 to 0.13.7 [XXX-XXX-XXXX]
+
+* added option to choose both degree and knots independently for each
+  predictor and (more importantly) cross-validate both
+
+Changes from Version 0.13.5 to 0.13.6 [8-Dec-2010]
 
 * added option to use either uniform knots (equally spaced segments)
   or quantile knots (equal number of observations in each segment)

@@ -14,35 +14,32 @@ prod.spline <- function(x,
                         z=NULL,
                         K=NULL,
                         I=NULL,
-                        degree=3,
-                        segments=1,
                         xeval=NULL,
                         zeval=NULL,
-                        complexity=c("degree","knots","degree-knots"),
                         knots=c("quantiles","uniform"),
                         basis=c("additive-tensor","additive","tensor","auto"),
                         deriv.index=1,
                         deriv=0) {
 
   basis <- match.arg(basis)
-  complexity <- match.arg(complexity)
   knots <- match.arg(knots)
 
   if(missing(x) || missing (K)) stop(" must provide x and K")
+  if(!is.matrix(K)) stop(" K must be a two-column matrix")  
 
-  ## Care in passing (extra cast) and ensure K is a vector of integers
-  ## (K contains the spline degree [integer] for each dimension or
-  ## segments-1 for each dimension).
+  ## Care in passing (extra cast) and ensure K is a matrix of integers
+  ## (K contains the spline degree [integer] for each dimension in
+  ## column 1 and segments-1 for each dimension in column 2).
 
   x <- as.matrix(x)
   K <- round(K) 
 
   n <- NROW(x)
   num.x <- NCOL(x)
-  num.K <- NROW(K)
+  num.K <- nrow(K)
 
   if(deriv < 0) stop(" deriv is invalid")
-  if(deriv > K[deriv.index]) warning(" deriv order too large, result will be zero")
+  if(deriv > K[deriv.index,1]) warning(" deriv order too large, result will be zero")
   if(deriv.index < 1 || deriv.index > num.x) stop(" deriv.index is invalid")
 
   if(!is.null(z)) {
@@ -64,29 +61,17 @@ prod.spline <- function(x,
   if(num.K != num.x) stop(paste(" dimension of x and K incompatible (",num.x,",",num.K,")",sep=""))
   if(!is.null(z) && (num.I != num.z)) stop(paste(" dimension of z and I incompatible (",num.z,",",num.I,")",sep=""))
 
-  if(any(K > 0)||any(I != 0)) {
+  if(any(K[,1] > 0)||any(I != 0)) {
 
     tp <- list()
 
     j <- 1
     for(i in 1:num.x) {
-      if(K[i] > 0) {
+      if(K[i,1] > 0) {
         if(i==deriv.index) {
-          if(complexity=="degree") {
-            tp[[j]] <- predict(gsl.bs(x[,i,drop=FALSE],degree=K[i],nbreak=segments+1,knots=knots,deriv=deriv,intercept=FALSE),newx=xeval[,i,drop=FALSE])
-          } else if(complexity=="knots") {
-            tp[[j]] <- predict(gsl.bs(x[,i,drop=FALSE],degree=degree,nbreak=K[i]+1,knots=knots,deriv=deriv,intercept=FALSE),newx=xeval[,i,drop=FALSE])
-          } else if(complexity=="degree-knots") {
-            tp[[j]] <- predict(gsl.bs(x[,i,drop=FALSE],degree=K[i,1],nbreak=K[i,2]+1,knots=knots,deriv=deriv,intercept=FALSE),newx=xeval[,i,drop=FALSE])
-          }
+          tp[[j]] <- predict(gsl.bs(x[,i,drop=FALSE],degree=K[i,1],nbreak=K[i,2]+1,knots=knots,deriv=deriv,intercept=FALSE),newx=xeval[,i,drop=FALSE])
         } else {
-          if(complexity=="degree") {
-            tp[[j]] <- predict(gsl.bs(x[,i,drop=FALSE],degree=K[i],nbreak=segments+1,knots=knots,intercept=FALSE),newx=xeval[,i,drop=FALSE])
-          } else  if(complexity=="knots") {
-            tp[[j]] <- predict(gsl.bs(x[,i,drop=FALSE],degree=degree,nbreak=K[i]+1,knots=knots,intercept=FALSE),newx=xeval[,i,drop=FALSE])
-          } else  if(complexity=="degree-knots") {
-            tp[[j]] <- predict(gsl.bs(x[,i,drop=FALSE],degree=K[i,1],nbreak=K[i,2]+1,knots=knots,intercept=FALSE),newx=xeval[,i,drop=FALSE])
-          }
+          tp[[j]] <- predict(gsl.bs(x[,i,drop=FALSE],degree=K[i,1],nbreak=K[i,2]+1,knots=knots,intercept=FALSE),newx=xeval[,i,drop=FALSE])
         }
         j <- j+1
       }
@@ -103,7 +88,7 @@ prod.spline <- function(x,
       }
     }
 
-    ## When more than one element of K > 0 or I > 0 take all bases
+    ## When more than one element of K[,1] > 0 or I > 0 take all bases
     ## plus tensor product (all interactions), otherwise just the
     ## original bases for the one variable.
 
@@ -151,20 +136,17 @@ predict.kernel.spline <- function(x,
                                   y,
                                   z=NULL,
                                   K,
-                                  degree=3,
-                                  segments=1,
                                   lambda=NULL,
                                   kernel.type=c("nominal","ordinal"),
                                   xeval=NULL,
                                   zeval=NULL,
-                                  complexity=c("degree","knots","degree-knots"),
                                   knots=c("quantiles","uniform"),
                                   basis=c("additive-tensor","additive","tensor","auto")){
 
   if(missing(x) || missing(y) || missing (K)) stop(" must provide x, y and K")
+  if(!is.matrix(K)) stop(" K must be a two-column matrix")  
 
   basis <- match.arg(basis)
-  complexity <- match.arg(complexity)
   knots <- match.arg(knots)
   kernel.type <- match.arg(kernel.type)
 
@@ -179,16 +161,16 @@ predict.kernel.spline <- function(x,
 
     ## First no categorical predictor case
 
-    if(any(K > 0)) {
+    if(any(K[,1] > 0)) {
 
       ## Degree > 0
 
-      P <- prod.spline(x=x,K=K,degree=degree,segments=segments,complexity=complexity,knots=knots,basis=basis)
+      P <- prod.spline(x=x,K=K,knots=knots,basis=basis)
       model <- lm(y~P)
       if(is.null(xeval)) {
         fit.spline <- predict(model,interval="confidence",se.fit=TRUE)
       } else {
-        P <- prod.spline(x=x,K=K,degree=degree,segments=segments,xeval=xeval,complexity=complexity,knots=knots,basis=basis)
+        P <- prod.spline(x=x,K=K,xeval=xeval,knots=knots,basis=basis)
         fit.spline <- predict(model,newdata=data.frame(as.matrix(P)),interval="confidence",se.fit=TRUE)
       }
 
@@ -224,7 +206,7 @@ predict.kernel.spline <- function(x,
     ind.vals <-  unique(ind)
     nrow.z.unique <- nrow(z.unique)
 
-    if(any(K > 0)) {
+    if(any(K[,1] > 0)) {
 
       ## Degree > 0, fitted
 
@@ -234,12 +216,12 @@ predict.kernel.spline <- function(x,
         for(i in 1:nrow.z.unique) {
           zz <- ind == ind.vals[i]
           L <- prod.kernel(Z=z,z=z.unique[ind.vals[i],],lambda=lambda,kernel.type=kernel.type)
-          P <- prod.spline(x=x,K=K,degree=degree,segments=segments,complexity=complexity,knots=knots,basis=basis)
+          P <- prod.spline(x=x,K=K,knots=knots,basis=basis)
           k <- NCOL(P)
           model.z.unique <- lm(y~P,weights=L)
           model[[i]] <- model.z.unique
           htt[zz] <- hatvalues(model.z.unique)[zz]
-          P <- prod.spline(x=x,K=K,degree=degree,segments=segments,xeval=x[zz,,drop=FALSE],complexity=complexity,knots=knots,basis=basis)
+          P <- prod.spline(x=x,K=K,xeval=x[zz,,drop=FALSE],knots=knots,basis=basis)
           tmp <- predict(model.z.unique,newdata=data.frame(as.matrix(P)),interval="confidence",se.fit=TRUE)
           fit.spline[zz,] <- cbind(tmp[[1]],se=tmp[[2]])
           rm(tmp)
@@ -261,11 +243,11 @@ predict.kernel.spline <- function(x,
         for(i in 1:nrow.zeval.unique) {
           zz <- ind.zeval == ind.zeval.vals[i]
           L <- prod.kernel(Z=z,z=zeval.unique[ind.zeval.vals[i],],lambda=lambda,kernel.type=kernel.type)
-          P <- prod.spline(x=x,K=K,degree=degree,segments=segments,complexity=complexity,knots=knots,basis=basis)
+          P <- prod.spline(x=x,K=K,knots=knots,basis=basis)
           k <- NCOL(P)
           model.z.unique <- lm(y~P,weights=L)
           model[[i]] <- model.z.unique
-          P <- prod.spline(x=x,K=K,degree=degree,segments=segments,xeval=xeval[zz,,drop=FALSE],complexity=complexity,knots=knots,basis=basis)
+          P <- prod.spline(x=x,K=K,xeval=xeval[zz,,drop=FALSE],knots=knots,basis=basis)
           tmp <- predict(model.z.unique,newdata=data.frame(as.matrix(P)),interval="confidence",se.fit=TRUE)
           fit.spline[zz,] <- cbind(tmp[[1]],se=tmp[[2]])
           rm(tmp)
@@ -348,13 +330,10 @@ deriv.kernel.spline <- function(x,
                                 y,
                                 z=NULL,
                                 K,
-                                degree=3,
-                                segments=1,
                                 lambda=NULL,
                                 kernel.type=c("nominal","ordinal"),
                                 xeval=NULL,
                                 zeval=NULL,
-                                complexity=c("degree","knots","degree-knots"),
                                 knots=c("quantiles","uniform"),
                                 basis=c("additive-tensor","additive","tensor","auto"),
                                 deriv.index=1,
@@ -363,9 +342,9 @@ deriv.kernel.spline <- function(x,
   if(deriv == 0) stop(" deriv must be greater than zero")
 
   if(missing(x) || missing(y) || missing (K)) stop(" must provide x, y and K")
+  if(!is.matrix(K)) stop(" K must be a two-column matrix")  
 
   basis <- match.arg(basis)
-  complexity <- match.arg(complexity)
   knots <- match.arg(knots)
   kernel.type <- match.arg(kernel.type)
 
@@ -377,17 +356,17 @@ deriv.kernel.spline <- function(x,
 
     ## First no categorical predictor case
 
-    if(K[deriv.index]!=0) {
+    if(K[deriv.index,1]!=0) {
 
-      P <- prod.spline(x=x,K=K,degree=degree,segments=segments,complexity=complexity,knots=knots,basis=basis)      
+      P <- prod.spline(x=x,K=K,knots=knots,basis=basis)      
       model <- lm(y~P)
-      P.deriv <- prod.spline(x=x,K=K,degree=degree,segments=segments,xeval=xeval,complexity=complexity,knots=knots,basis=basis,deriv.index=deriv.index,deriv=deriv)
-      dim.P.deriv <- K[deriv.index]
+      P.deriv <- prod.spline(x=x,K=K,xeval=xeval,knots=knots,basis=basis,deriv.index=deriv.index,deriv=deriv)
+      dim.P.deriv <- K[deriv.index,1]
       dim.P.no.tensor <- attr(P.deriv,"dim.P.no.tensor")
       dim.P.tensor <- NCOL(P)
 
-      deriv.start <- ifelse(deriv.index!=1,sum(K[1:(deriv.index-1)]),0)+1
-      deriv.end <- deriv.start+K[deriv.index]-1
+      deriv.start <- ifelse(deriv.index!=1,sum(K[1:(deriv.index-1),1]),0)+1
+      deriv.end <- deriv.start+K[deriv.index,1]-1
 
       if(dim.P.tensor > dim.P.deriv+dim.P.no.tensor) {
         deriv.ind.vec <- c(deriv.start:deriv.end, (dim.P.no.tensor+1):dim.P.tensor)
@@ -421,7 +400,7 @@ deriv.kernel.spline <- function(x,
     ind.vals <-  unique(ind)
     nrow.z.unique <- nrow(z.unique)
 
-    if(K[deriv.index]!=0) {
+    if(K[deriv.index,1]!=0) {
 
       ## Degree > 0, fitted
 
@@ -431,15 +410,15 @@ deriv.kernel.spline <- function(x,
         for(i in 1:nrow.z.unique) {
           zz <- ind == ind.vals[i]
           L <- prod.kernel(Z=z,z=z.unique[ind.vals[i],],lambda=lambda,kernel.type=kernel.type)
-          P <- prod.spline(x=x,K=K,degree=degree,segments=segments,complexity=complexity,knots=knots,basis=basis)          
+          P <- prod.spline(x=x,K=K,knots=knots,basis=basis)          
           k <- NCOL(P)
           model <- lm(y~P,weights=L)
-          P.deriv <- prod.spline(x=x,K=K,degree=degree,segments=segments,xeval=x[zz,,drop=FALSE],complexity=complexity,knots=knots,basis=basis,deriv.index=deriv.index,deriv=deriv)
-          dim.P.deriv <- K[deriv.index]
+          P.deriv <- prod.spline(x=x,K=K,xeval=x[zz,,drop=FALSE],knots=knots,basis=basis,deriv.index=deriv.index,deriv=deriv)
+          dim.P.deriv <- K[deriv.index,1]
           dim.P.no.tensor <- attr(P.deriv,"dim.P.no.tensor")
           dim.P.tensor <- NCOL(P)
-          deriv.start <- ifelse(deriv.index!=1,sum(K[1:(deriv.index-1)]),0)+1
-          deriv.end <- deriv.start+K[deriv.index]-1
+          deriv.start <- ifelse(deriv.index!=1,sum(K[1:(deriv.index-1),1]),0)+1
+          deriv.end <- deriv.start+K[deriv.index,1]-1
           if(dim.P.tensor > dim.P.deriv+dim.P.no.tensor) {
             deriv.ind.vec <- c(deriv.start:deriv.end, (dim.P.no.tensor+1):dim.P.tensor)
           } else {
@@ -466,15 +445,15 @@ deriv.kernel.spline <- function(x,
         for(i in 1:nrow.zeval.unique) {
           zz <- ind.zeval == ind.zeval.vals[i]
           L <- prod.kernel(Z=z,z=zeval.unique[ind.zeval.vals[i],],lambda=lambda,kernel.type=kernel.type)
-          P <- prod.spline(x=x,K=K,degree=degree,segments=segments,complexity=complexity,knots=knots,basis=basis)
+          P <- prod.spline(x=x,K=K,knots=knots,basis=basis)
           k <- NCOL(P)
           model <- lm(y~P,weights=L)
-          P.deriv <- prod.spline(x=x,K=K,degree=degree,segments=segments,xeval=xeval[zz,,drop=FALSE],complexity=complexity,knots=knots,basis=basis,deriv.index=deriv.index,deriv=deriv)
-          dim.P.deriv <- K[deriv.index]
+          P.deriv <- prod.spline(x=x,K=K,xeval=xeval[zz,,drop=FALSE],knots=knots,basis=basis,deriv.index=deriv.index,deriv=deriv)
+          dim.P.deriv <- K[deriv.index,1]
           dim.P.no.tensor <- attr(P.deriv,"dim.P.no.tensor")
           dim.P.tensor <- NCOL(P)
-          deriv.start <- ifelse(deriv.index!=1,sum(K[1:(deriv.index-1)]),0)+1
-          deriv.end <- deriv.start+K[deriv.index]-1
+          deriv.start <- ifelse(deriv.index!=1,sum(K[1:(deriv.index-1),1]),0)+1
+          deriv.end <- deriv.start+K[deriv.index,1]-1
           if(dim.P.tensor > dim.P.deriv+dim.P.no.tensor) {
             deriv.ind.vec <- c(deriv.start:deriv.end, (dim.P.no.tensor+1):dim.P.tensor)
           } else {
@@ -519,11 +498,8 @@ predict.factor.spline <- function(x,
                                   z=NULL,
                                   K=NULL,
                                   I=NULL,
-                                  degree=3,
-                                  segments=1,
                                   xeval=NULL,
                                   zeval=NULL,
-                                  complexity=c("degree","knots","degree-knots"),
                                   knots=c("quantiles","uniform"),
                                   basis=c("additive-tensor","additive","tensor","auto"),
                                   prune=FALSE,
@@ -531,9 +507,9 @@ predict.factor.spline <- function(x,
                                   trace=0){
 
   if(missing(x) || missing(y) || missing (K)) stop(" must provide x, y and K")
+  if(!is.matrix(K)) stop(" K must be a two-column matrix")  
 
   basis <- match.arg(basis)
-  complexity <- match.arg(complexity)
   knots <- match.arg(knots)
 
   ## Cast in case input is not properly cast
@@ -546,11 +522,11 @@ predict.factor.spline <- function(x,
   console <- newLineConsole()
   console <- printPush("Working...",console = console)
 
-  if(any(K > 0)||any(I>0)) {
+  if(any(K[,1] > 0)||any(I>0)) {
 
     ## Degree > 0
 
-    P <- prod.spline(x=x,z=z,K=K,I=I,degree=degree,segments=segments,complexity=complexity,knots=knots,basis=basis)
+    P <- prod.spline(x=x,z=z,K=K,I=I,knots=knots,basis=basis)
 
     if(prune && is.null(prune.index)) {
 
@@ -596,7 +572,7 @@ predict.factor.spline <- function(x,
     if(is.null(xeval)) {
       fit.spline <- predict(model,interval="confidence",se.fit=TRUE)
     } else {
-      P <- prod.spline(x=x,z=z,K=K,I=I,degree=degree,segments=segments,xeval=xeval,zeval=zeval,complexity=complexity,knots=knots,basis=basis)
+      P <- prod.spline(x=x,z=z,K=K,I=I,xeval=xeval,zeval=zeval,knots=knots,basis=basis)
       fit.spline <- predict(model,newdata=data.frame(as.matrix(P[,IND,drop=FALSE])),interval="confidence",se.fit=TRUE)
     }
 
@@ -645,11 +621,8 @@ deriv.factor.spline <- function(x,
                                 z,
                                 K=NULL,
                                 I=NULL,
-                                degree=3,
-                                segments=1,
                                 xeval=NULL,
                                 zeval=NULL,
-                                complexity=c("degree","knots","degree-knots"),
                                 knots=c("quantiles","uniform"),
                                 basis=c("additive-tensor","additive","tensor","auto"),
                                 deriv.index=1,
@@ -658,20 +631,20 @@ deriv.factor.spline <- function(x,
 
   if(missing(x) || missing(y) || missing (K)) stop(" must provide x, y and K")
   if(deriv == 0) stop(" derivative must be a positive integer")
+  if(!is.matrix(K)) stop(" K must be a two-column matrix")  
 
   basis <- match.arg(basis)
-  complexity <- match.arg(complexity)
   knots <- match.arg(knots)
 
   x <- as.matrix(x)
 
-  if(K[deriv.index]!=0) {
+  if(K[deriv.index,1]!=0) {
 
     ## Degree > 0
 
     ## Estimate model on training data.
     
-    P <- prod.spline(x=x,z=z,K=K,I=I,degree=degree,segments=segments,complexity=complexity,knots=knots,basis=basis)    
+    P <- prod.spline(x=x,z=z,K=K,I=I,knots=knots,basis=basis)    
     if(is.null(prune.index)) prune.index <- !logical(NCOL(P))
     model <- lm(y~P[,prune.index,drop=FALSE])
 
@@ -683,16 +656,16 @@ deriv.factor.spline <- function(x,
     coef.vec.model[prune.index] <- coef(model)[-1]
     vcov.mat.model[prune.index,prune.index] <- vcov(model)[-1,-1,drop=FALSE]
 
-    P.deriv <- prod.spline(x=x,z=z,K=K,I=I,degree=degree,segments=segments,xeval=xeval,zeval=zeval,complexity=complexity,knots=knots,basis=basis,deriv.index=deriv.index,deriv=deriv)
+    P.deriv <- prod.spline(x=x,z=z,K=K,I=I,xeval=xeval,zeval=zeval,knots=knots,basis=basis,deriv.index=deriv.index,deriv=deriv)
 
-    dim.P.deriv <- K[deriv.index]
+    dim.P.deriv <- K[deriv.index,1]
     dim.P.no.tensor <- attr(P.deriv,"dim.P.no.tensor")
     dim.P.tensor <- NCOL(P)
 
     deriv.ind.vec <- logical(length=NCOL(P)) ## All false
     
-    deriv.start <- ifelse(deriv.index!=1,sum(K[1:(deriv.index-1)]),0)+1
-    deriv.end <- deriv.start+K[deriv.index]-1
+    deriv.start <- ifelse(deriv.index!=1,sum(K[1:(deriv.index-1),1]),0)+1
+    deriv.end <- deriv.start+K[deriv.index,1]-1
 
     if(dim.P.tensor > dim.P.deriv+dim.P.no.tensor) {
       deriv.ind.vec[c(deriv.start:deriv.end, (dim.P.no.tensor+1):dim.P.tensor)] <- TRUE
@@ -731,29 +704,26 @@ cv.kernel.spline <- function(x,
                              K,
                              lambda=NULL,
                              z.unique,
-                             degree=3,
-                             segments=1,
                              ind,
                              ind.vals,
                              nrow.z.unique,
                              kernel.type=c("nominal","ordinal"),
-                             complexity=c("degree","knots","degree-knots"),
                              knots=c("quantiles","uniform"),
                              basis=c("additive-tensor","additive","tensor","auto"),
                              cv.norm=c("L2","L1")) {
 
   if(missing(x) || missing(y) || missing (K)) stop(" must provide x, y and K")
+  if(!is.matrix(K)) stop(" K must be a two-column matrix")  
 
   basis <- match.arg(basis)
   kernel.type <- match.arg(kernel.type)
-  complexity <- match.arg(complexity)
   knots <- match.arg(knots)
   cv.norm <- match.arg(cv.norm)
 
   if(is.null(z)) {
     ## No categorical predictors
-    if(any(K > 0)) {
-      model <- lm(y~prod.spline(x=x,K=K,degree=degree,segments=segments,complexity=complexity,knots=knots,basis=basis))
+    if(any(K[,1] > 0)) {
+      model <- lm(y~prod.spline(x=x,K=K,knots=knots,basis=basis))
     } else {
       model <- lm(y~1)
     }
@@ -768,11 +738,11 @@ cv.kernel.spline <- function(x,
     n <- NROW(y)
     epsilon <- numeric(length=n)
     htt <- numeric(length=n)
-    if(any(K > 0)) {
+    if(any(K[,1] > 0)) {
       for(i in 1:nrow.z.unique) {
         zz <- ind == ind.vals[i]
         L <- prod.kernel(Z=z,z=z.unique[ind.vals[i],],lambda=lambda,kernel.type=kernel.type)
-        model <- lm(y~prod.spline(x=x,K=K,degree=degree,segments=segments,complexity=complexity,knots=knots,basis=basis),weights=L)
+        model <- lm(y~prod.spline(x=x,K=K,knots=knots,basis=basis),weights=L)
         epsilon[zz] <- residuals(model)[zz]
         htt[zz] <- hatvalues(model)[zz]
       }
@@ -804,32 +774,29 @@ cv.factor.spline <- function(x,
                              z=NULL,
                              K,
                              I=NULL,
-                             degree=3,
-                             segments=1,
                              kernel.type=c("nominal","ordinal"),
-                             complexity=c("degree","knots","degree-knots"),
                              knots=c("quantiles","uniform"),
                              basis=c("additive-tensor","additive","tensor","auto"),
                              cv.norm=c("L2","L1")) {
 
   if(missing(x) || missing(y) || missing (K)) stop(" must provide x, y and K")
+  if(!is.matrix(K)) stop(" K must be a two-column matrix")  
 
   basis <- match.arg(basis)
   kernel.type <- match.arg(kernel.type)
-  complexity <- match.arg(complexity)
   knots <- match.arg(knots)
 
   cv.norm <- match.arg(cv.norm)
 
   if(!is.null(z)) {
-    if(any(K > 0)||any(I > 0)) {
-      model <- lm(y~prod.spline(x=x,z=z,K=K,I=I,degree=degree,segments=segments,complexity=complexity,knots=knots,basis=basis))
+    if(any(K[,1] > 0)||any(I > 0)) {
+      model <- lm(y~prod.spline(x=x,z=z,K=K,I=I,knots=knots,basis=basis))
     } else {
       model <- lm(y~1)
     }
   } else {
-    if(any(K > 0)) {
-      model <- lm(y~prod.spline(x=x,z=z,K=K,I=I,degree=degree,segments=segments,complexity=complexity,knots=knots,basis=basis))
+    if(any(K[,1] > 0)) {
+      model <- lm(y~prod.spline(x=x,z=z,K=K,I=I,knots=knots,basis=basis))
     } else {
       model <- lm(y~1)
     }
