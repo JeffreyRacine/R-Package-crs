@@ -74,6 +74,9 @@ frscv <- function(xz,
     ## Format function...
     fw.format.2 <- function(input) sapply(input,sprintf,fmt="%#.2f")
 
+    ## i/o depends on whether we are cross-validating degree, knots,
+    ## or both
+
     if(complexity=="degree") {
       if(!is.null(j)) {
         if(j==1) {
@@ -122,7 +125,7 @@ frscv <- function(xz,
       for(i in 1:num.x) tmp.1 <- paste(tmp.1, ", s[", i, "]=", K[i,2],sep="")      
     }
 
-    ## For z variables...
+    ## For i/o for z variables...
     
     if(num.z > 0) for(i in 1:num.z) tmp.1 <- paste(tmp.1, ", I[", i, "]=", I[i],sep="")
     tmp.3 <- paste(", cv=", format(cv,digits=6), sep="")
@@ -174,14 +177,30 @@ frscv <- function(xz,
   ## rather than letting cv proceed only to be halted after the lower
   ## dimension models have been estimated when this occurs.
 
-  ## Complexity="degree-knots" - this is too large - ought to use rep(basis.maxdim and either degree or knots) XXX need to clean up
-
-  if(basis == "auto") {
-    k <- max(c(ncol(prod.spline(x=x,z=z,K=matrix(2*rep(basis.maxdim,num.x),num.x,2),I=rep(1,num.z),knots=knots,basis="additive-tensor")),
-               ncol(prod.spline(x=x,z=z,K=matrix(2*rep(basis.maxdim,num.x),num.x,2),I=rep(1,num.z),knots=knots,basis="additive")),
-               ncol(prod.spline(x=x,z=z,K=matrix(2*rep(basis.maxdim,num.x),num.x,2),I=rep(1,num.z),knots=knots,basis="tensor"))))
-  } else {
-    k <- ncol(prod.spline(x=x,z=z,K=matrix(2*rep(basis.maxdim,num.x),num.x,2),I=rep(1,num.z),knots=knots,basis=basis))
+  if(complexity=="degree") {
+    if(basis == "auto") {
+      k <- max(c(ncol(prod.spline(x=x,z=z,K=cbind(rep(basis.maxdim,num.x),segments),I=rep(1,num.z),knots=knots,basis="additive-tensor")),
+                 ncol(prod.spline(x=x,z=z,K=cbind(rep(basis.maxdim,num.x),segments),I=rep(1,num.z),knots=knots,basis="additive")),
+                 ncol(prod.spline(x=x,z=z,K=cbind(rep(basis.maxdim,num.x),segments),I=rep(1,num.z),knots=knots,basis="tensor"))))
+    } else {
+      k <- ncol(prod.spline(x=x,z=z,K=cbind(rep(basis.maxdim,num.x),segments),I=rep(1,num.z),knots=knots,basis=basis))
+    }
+  } else if(complexity=="knots") {
+    if(basis == "auto") {
+      k <- max(c(ncol(prod.spline(x=x,z=z,K=cbind(degree,rep(basis.maxdim,num.x)),I=rep(1,num.z),knots=knots,basis="additive-tensor")),
+                 ncol(prod.spline(x=x,z=z,K=cbind(degree,rep(basis.maxdim,num.x)),I=rep(1,num.z),knots=knots,basis="additive")),
+                 ncol(prod.spline(x=x,z=z,K=cbind(degree,rep(basis.maxdim,num.x)),I=rep(1,num.z),knots=knots,basis="tensor"))))
+    } else {
+      k <- ncol(prod.spline(x=x,z=z,K=cbind(degree,rep(basis.maxdim,num.x)),I=rep(1,num.z),knots=knots,basis=basis))
+    }
+  } else if(complexity=="degree-knots"){
+    if(basis == "auto") {
+      k <- max(c(ncol(prod.spline(x=x,z=z,K=matrix(2*rep(basis.maxdim,num.x),num.x,2),I=rep(1,num.z),knots=knots,basis="additive-tensor")),
+                 ncol(prod.spline(x=x,z=z,K=matrix(2*rep(basis.maxdim,num.x),num.x,2),I=rep(1,num.z),knots=knots,basis="additive")),
+                 ncol(prod.spline(x=x,z=z,K=matrix(2*rep(basis.maxdim,num.x),num.x,2),I=rep(1,num.z),knots=knots,basis="tensor"))))
+    } else {
+      k <- ncol(prod.spline(x=x,z=z,K=matrix(2*rep(basis.maxdim,num.x),num.x,2),I=rep(1,num.z),knots=knots,basis=basis))
+    }
   }
 
   df <- n - k
@@ -345,11 +364,6 @@ frscv <- function(xz,
 
   if(is.null(z)) I.opt <- NULL
 
-  print(paste("K.opt=",K.opt))
-  print(paste("degree=",degree))
-  print(paste("segments=",segments))
-  stop()
-  
   crscv(K=K.opt,
         I=I.opt,
         basis=basis.opt,
@@ -357,8 +371,8 @@ frscv <- function(xz,
         basis.maxdim=basis.maxdim,
         complexity=complexity,
         knots=knots,
-        degree=degree,
-        segments=segments,
+        degree=K.opt[1:num.x],
+        segments=K.opt[(num.x+1):(2*num.x)],
         K.mat=KI.mat,
         restarts=NULL,
         lambda=NULL,
