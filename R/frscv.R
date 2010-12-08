@@ -364,7 +364,7 @@ frscv <- function(xz,
 
   if(is.null(z)) I.opt <- NULL
 
-  crscv(K=K.opt,
+  crscv(K=cbind(K.opt[1:num.x],K.opt[(num.x+1):(2*num.x)]),
         I=I.opt,
         basis=basis.opt,
         basis.vec=basis.vec,

@@ -369,7 +369,7 @@ crs.formula <- function(formula,
   if(!kernel) {
 
     ## indicator bases and B-spline bases cross-validation
-
+    
     if(!is.null(cv)) {
       cv <- frscv(xz=xz,
                   y=y,
