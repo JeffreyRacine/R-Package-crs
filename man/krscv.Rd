@@ -19,7 +19,7 @@ krscv(xz,
       basis.maxdim = 5,
       kernel.type = c("nominal","ordinal"),
       restarts = 0,
-      complexity = c("degree","knots"),
+      complexity = c("degree","knots","degree-knots"),
       knots = c("quantiles","uniform"),
       basis = c("additive-tensor","additive","tensor","auto"),
       cv.norm = c("L2","L1"),
@@ -57,13 +57,14 @@ krscv(xz,
   determined by the degree of the spline or by the number of segments
   (`knots'). This option allows the user to use cross-validation to
   select either the spline degree (number of knots held fixed) or the
-  number of knots (spline degree held fixed)}
+  number of knots (spline degree held fixed) or both the spline degree
+  and number of knots}
 
    \item{knots}{ a character string (default \code{knots="quantiles"})
   specifying where knots are to be placed. \sQuote{quantiles} specifies
   knots placed at equally spaced quantiles (equal number of observations
   lie in each segment) and \sQuote{uniform} specifies knots placed at
-  equally spaced intervals. }
+  equally spaced intervals }
 
   \item{basis}{ a character string (default
     \code{basis="additive-tensor"}) indicating whether the

@@ -1,3 +1,8 @@
+Changes from Version 0.13.5 to 0.13.6 [XXX-XXX-2010]
+
+* added option to use either uniform knots (equally spaced segments)
+  or quantile knots (equal number of observations in each segment)
+
 Changes from Version 0.13.4 to 0.13.5 [17-Apr-2010]
 
 * changed package and function names to `crs' as Lijian strictly

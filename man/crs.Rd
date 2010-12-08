@@ -19,7 +19,7 @@ crs(\dots)
     kernel = FALSE,
     lambda = NULL,
     kernel.type = c("nominal","ordinal"),
-    complexity = c("degree","knots"),
+    complexity = c("degree","knots","degree-knots"),
     knots = c("quantiles","uniform"),
     basis = c("additive-tensor","additive","tensor","auto"),
     deriv = 0,
@@ -38,7 +38,7 @@ crs(\dots)
     kernel = FALSE,
     lambda = NULL,
     kernel.type = c("nominal","ordinal"),
-    complexity = c("degree","knots"),
+    complexity = c("degree","knots","degree-knots"),
     knots = c("quantiles","uniform"),
     basis = c("additive-tensor","additive","tensor","auto"),
     deriv = 0,
@@ -98,20 +98,21 @@ crs(\dots)
   determined by the degree of the spline or by the number of segments
   (i.e. number of knots minus one). This option allows the user to use
   cross-validation to select either the spline degree (number of knots
-  held fixed) or the number of knots (spline degree held fixed).
+  held fixed) or the number of knots (spline degree held fixed) or both
+  the spline degree and number of knots
 
   For the continuous predictors the regression spline model employs
   either the additive, tensor product, or combined additive/tensor
   product B-spline basis matrix for a multivariate polynomial spline via
   the B-spline routines in the GNU Scientific Library and the
   \code{\link{tensor.prod.model.matrix}} function in the \pkg{mgcv}
-  package.}
+  package}
 
    \item{knots}{ a character string (default \code{knots="quantiles"})
   specifying where knots are to be placed. \sQuote{quantiles} specifies
   knots placed at equally spaced quantiles (equal number of observations
   lie in each segment) and \sQuote{uniform} specifies knots placed at
-  equally spaced intervals. }
+  equally spaced intervals }
 
 \item{basis}{ a character string (default
     \code{basis="additive-tensor"}) indicating whether the

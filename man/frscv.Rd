@@ -17,7 +17,7 @@
 frscv(xz,
       y,
       basis.maxdim = 5,
-      complexity = c("degree","knots"),
+      complexity = c("degree","knots","degree-knots"),
       knots = c("quantiles","uniform"),
       basis = c("additive-tensor","additive","tensor","auto"),
       cv.norm = c("L2","L1"),
@@ -38,12 +38,13 @@ frscv(xz,
   \item{basis.maxdim}{ the maximum dimension of the B-spline basis for
     each of the continuous predictors (default \code{basis.maxdim=5})}
 
-  \item{complexity}{a character string (default \code{complexity="degree"})
-  indicating whether model `complexity' is determined by the degree of
-  the spline or by the number of segments (`knots'). This option
-  allows the user to use cross-validation to select either the spline
-  degree (number of knots held fixed) or the number of knots (spline
-  degree held fixed)}
+  \item{complexity}{a character string (default
+  \code{complexity="degree"}) indicating whether model `complexity' is
+  determined by the degree of the spline or by the number of segments
+  (`knots'). This option allows the user to use cross-validation to
+  select either the spline degree (number of knots held fixed) or the
+  number of knots (spline degree held fixed) or both the spline degree
+  and number of knots}
 
    \item{knots}{ a character string (default \code{knots="quantiles"})
   specifying where knots are to be placed. \sQuote{quantiles} specifies
