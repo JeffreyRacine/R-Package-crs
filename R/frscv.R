@@ -6,7 +6,7 @@ frscv <- function(xz,
                   basis=c("additive-tensor","additive","tensor","auto"),
                   cv.norm=c("L2","L1"),
                   degree=degree,
-                  segments=degree) {
+                  segments=segments) {
 
   complexity <- match.arg(complexity)
   knots <- match.arg(knots)

@@ -57,11 +57,14 @@ crsEst <- function(xz,
   ## If no degree nor include nor lambda, return linear model
   ## (identity bases) or non-smooth model (kernel).
 
-  if(is.null(degree)&&!is.null(x)) degree <- rep(1,ncol(x))
-  if(is.null(segments)&&!is.null(x)) segments <- rep(1,ncol(x))
+  if(!is.null(degree)&&length(degree)!=num.x) stop(" degree vector must be the same length as x")
+  if(!is.null(segments)&&length(segments)!=num.x) stop(" segments vector must be the same length as x")    
 
-  if(is.null(include)&&!is.null(z)&&!kernel) include <- rep(1,ncol(z))
-  if(is.null(lambda)&&!is.null(z)&&kernel) lambda <- rep(0,ncol(z))
+  if(is.null(degree)&!is.null(x)) degree <- rep(3,num.x)
+  if(is.null(segments)&!is.null(x)) segments <- rep(1,num.x)
+
+  if(is.null(include)&!is.null(z)&!kernel) include <- rep(1,num.z)
+  if(is.null(lambda)&!is.null(z)&kernel) lambda <- rep(0,num.z)
 
   y <- as.numeric(y)
 
@@ -283,6 +286,8 @@ crs.default <- function(xz,
   knots <- match.arg(knots)
   basis <- match.arg(basis)
 
+  ## Does the following properly belong here or crsEst?
+
   est <- crsEst(xz=xz,
                 y=y,
                 degree=degree,
@@ -345,21 +350,6 @@ crs.formula <- function(formula,
   xz <- data.frame(mf[,-1,drop=FALSE])
   names(xz) <- names(mf)[-1] ## Case of one predictor has names clobbered
 
-  ## Trap for no args and return warning
-
-  if(is.null(degree)&&is.null(segments)) {
-    if(complexity=="degree") {
-      warning(" no segment argument given: default model is segments=1")
-    } else {
-      warning(" no degree argument given: default model is degree=1")
-    }
-    if(is.null(degree)) degree <- 1
-    if(is.null(segments)) segments <- 1
-  }
-
-#  if(is.null(include)&&!is.null(z)&&!kernel) include <- rep(1,ncol(z))
-#  if(is.null(lambda)&&!is.null(z)&&kernel) lambda <- rep(0,ncol(z))
-  
   if(!is.null(cv)&&basis=="additive-tensor"&&NCOL(xz)>1) warning(" cv specified but basis set to additive-tensor: you might consider basis=\"auto\"")
 
   if(kernel==TRUE&&prune==TRUE) warning(" pruning cannot coexist with categorical kernel smoothing (pruning ignored)")
@@ -775,7 +765,7 @@ summary.crs <- function(object,
   cat(paste("\nMultiple R-squared: ", format(object$r.squared,digits=4),",   Adjusted R-squared: ",format(adjusted.r.squared,digits=4), sep=""))
   cat(paste("\nCross-validation score: ", format(object$cv,digits=8), sep=""))  
 
-  if(sigtest&&!object$kernel) {
+  if(sigtest&!object$kernel) {
     cat("\n\nPredictor significance test:\n")
     crs.sigtest(object)
   }
@@ -809,7 +799,7 @@ plot.crs <- function(x,
 
   ## Default - basic residual plots
 
-  if(!mean&&!deriv) {
+  if(!mean&!deriv) {
 
     par(mfrow=c(2,2))
 

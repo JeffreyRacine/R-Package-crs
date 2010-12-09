@@ -21,8 +21,8 @@ frscv(xz,
       knots = c("quantiles","uniform"),
       basis = c("additive-tensor","additive","tensor","auto"),
       cv.norm = c("L2","L1"),
-      degree = 3,
-      segments = 1)
+      degree = degree,
+      segments = segments)
 }
 
 \arguments{
