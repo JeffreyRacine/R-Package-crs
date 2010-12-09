@@ -159,6 +159,14 @@ krscv <- function(xz,
   num.x <- NCOL(x)
   n <- NROW(x)
 
+  if(complexity=="degree") {
+    if(missing(segments)) stop("segments missing for cross-validation of spline degree")
+    if(length(segments)!=num.x) stop(" segments vector must be the same length as x")  
+  } else if(complexity=="knots") {
+    if(missing(degree)) stop("degree missing for cross-validation of number of spline knots")
+    if(length(degree)!=num.x) stop(" degree vector must be the same length as x")
+  }
+
   ## For kernel regression spline, if there is only one continuous
   ## predictor (i.e. num.x==1) disable auto, set to additive (which is
   ## additive-tensor and tensor in this case, so don't waste time

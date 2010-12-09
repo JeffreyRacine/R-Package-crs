@@ -54,11 +54,12 @@ crs(\dots)
   \item{y}{ a numeric vector of responses. }
   
   \item{degree}{ integer/vector specifying the polynomial degree of the
-    B-spline basis for each dimension of the continuous \code{x}}
+    B-spline basis for each dimension of the continuous \code{x}
+    (default = cubic spline)}
   
   \item{segments}{ integer/vector specifying the number of segments of
   the B-spline basis for each dimension of the continuous \code{x}
-  (i.e. number of knots minus one)}
+  (i.e. number of knots minus one) (default = one segment)}
   
   \item{include}{ integer/vector specifying whether each of the
   ordinal/nominal predictors in \code{x} are included or omitted from

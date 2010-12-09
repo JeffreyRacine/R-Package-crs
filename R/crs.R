@@ -54,18 +54,6 @@ crsEst <- function(xz,
     include <- NULL
   }
 
-  ## If no degree nor include nor lambda, return linear model
-  ## (identity bases) or non-smooth model (kernel).
-
-  if(!is.null(degree)&&length(degree)!=num.x) stop(" degree vector must be the same length as x")
-  if(!is.null(segments)&&length(segments)!=num.x) stop(" segments vector must be the same length as x")    
-
-  if(is.null(degree)&!is.null(x)) degree <- rep(3,num.x)
-  if(is.null(segments)&!is.null(x)) segments <- rep(1,num.x)
-
-  if(is.null(include)&!is.null(z)&!kernel) include <- rep(1,num.z)
-  if(is.null(lambda)&!is.null(z)&kernel) lambda <- rep(0,num.z)
-
   y <- as.numeric(y)
 
   if(!kernel) {
@@ -349,6 +337,36 @@ crs.formula <- function(formula,
   y <- model.response(mf)
   xz <- data.frame(mf[,-1,drop=FALSE])
   names(xz) <- names(mf)[-1] ## Case of one predictor has names clobbered
+
+  ### cv needs this? 9/12/2010
+
+  if(!kernel) {
+    xztmp <- splitFrame(xz)
+  } else {
+    xztmp <- splitFrame(xz,factor.to.numeric=TRUE)
+  }
+  x <- xztmp$x
+  xnames <- xztmp$xnames
+  num.x <- xztmp$num.x
+  z <- xztmp$z
+  znames <- xztmp$znames
+  num.z <- xztmp$num.z
+  rm(xztmp)
+  if(is.null(z)) {
+    include <- NULL
+  }
+
+  ## If no degree nor include nor lambda, return cubic spline
+  ## (identity bases) or non-smooth model (kernel).
+
+  if(!is.null(degree)&&length(degree)!=num.x) stop(" degree vector must be the same length as x")
+  if(!is.null(segments)&&length(segments)!=num.x) stop(" segments vector must be the same length as x")    
+
+  if(is.null(degree)&!is.null(x)) degree <- rep(3,num.x)
+  if(is.null(segments)&!is.null(x)) segments <- rep(1,num.x)
+
+  if(is.null(include)&!is.null(z)&!kernel) include <- rep(1,num.z)
+  if(is.null(lambda)&!is.null(z)&kernel) lambda <- rep(0,num.z)
 
   if(!is.null(cv)&&basis=="additive-tensor"&&NCOL(xz)>1) warning(" cv specified but basis set to additive-tensor: you might consider basis=\"auto\"")
 

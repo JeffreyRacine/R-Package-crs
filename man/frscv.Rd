@@ -163,9 +163,10 @@ y <- dgp + rnorm(n,sd=.1)
 
 xdata <- data.frame(x,z=factor(z))
 
-## Compute the optimal K and I
+## Compute the optimal K and I, determine optimal number of knots, set
+## spline degree for x to 3
 
-cv <- frscv(x=xdata,y=y)
+cv <- frscv(x=xdata,y=y,complexity="knots",degree=c(3))
 summary(cv)
 }
 \keyword{nonparametric}

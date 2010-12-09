@@ -163,8 +163,14 @@ frscv <- function(xz,
   n <- nrow(x)
 
   if(missing(x) || missing(y)) stop (" you must provide x and y")
-  if(length(degree)!=num.x) stop(" degree vector must be the same length as x")
-  if(length(segments)!=num.x) stop(" segments vector must be the same length as x")  
+
+  if(complexity=="degree") {
+    if(missing(segments)) stop("segments missing for cross-validation of spline degree")
+    if(length(segments)!=num.x) stop(" segments vector must be the same length as x")  
+  } else if(complexity=="knots") {
+    if(missing(degree)) stop("degree missing for cross-validation of number of spline knots")
+    if(length(degree)!=num.x) stop(" degree vector must be the same length as x")
+  }
 
   ## For factor regression spline, if there is only one predictor
   ## (i.e. num.x + num.z = 1) disable auto, set to additive (which is

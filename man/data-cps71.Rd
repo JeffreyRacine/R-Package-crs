@@ -33,7 +33,7 @@ data(cps71)
 attach(cps71)
 require(np)
 
-model.crs <- crs(logwage~age,cv=TRUE)
+model.crs <- crs(logwage~age,cv=TRUE,complexity="degree-knots")
 
 model.np <- npreg(logwage~age,regtype="ll",bwmethod="cv.aic")
 
