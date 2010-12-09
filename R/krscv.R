@@ -7,8 +7,8 @@ krscv <- function(xz,
                   knots=c("quantiles","uniform"),
                   basis = c("additive-tensor","additive","tensor","auto"),
                   cv.norm=c("L2","L1"),
-                  degree=3,
-                  segments=1) {
+                  degree=degree,
+                  segments=segments) {
 
   complexity <- match.arg(complexity)
   knots <- match.arg(knots)
@@ -37,21 +37,24 @@ krscv <- function(xz,
                       j=NULL,
                       nrow.K.mat=NULL,
                       t2=NULL,
-                      degree=degree,
-                      segments=segments,
                       complexity=complexity,
                       knots=knots,
                       basis=basis,
                       cv.norm=cv.norm) {
 
-    ## For model of given complexity search for optimal bandwidths
-
+    ## K is a matrix, column 1 degree, column 2 segments, either or
+    ## both can be determined via cv so need to take care to allow
+    ## user to select knots (degree fixed), degree (knots fixed), or
+    ## both degree and knots. The values used to evaluate the cv
+    ## function are passed below.
+    
     if(is.null(K)) {
       num.x <- NCOL(x)
       num.z <- NCOL(z)
-      K <- round(input[1:num.x])
-      lambda <- input[(num.x+1):(num.x+num.z)]
+      K <- round(cbind(input[1:num.x],input[(num.x+1):(2*num.x)]))
+      lambda <- input[(2*num.x+1):(2*num.x+num.z)]
     } else {
+      K <- round(cbind(K[1:num.x],K[(num.x+1):(2*num.x)]))      
       lambda <- input
     }
     ## When using weights= lambda of zero fails. Trivial to trap.
@@ -67,9 +70,6 @@ krscv <- function(xz,
                            ind.vals=ind.vals,
                            nrow.z.unique=nrow.z.unique,
                            kernel.type=kernel.type,
-                           degree=degree,
-                           segments=segments,
-                           complexity=complexity,
                            knots=knots,
                            basis=basis)
 
@@ -77,20 +77,57 @@ krscv <- function(xz,
 
     fw.format.3 <- function(input) sapply(input,sprintf,fmt="%#.3f")
     fw.format.2 <- function(input) sapply(input,sprintf,fmt="%#.2f")
-    if(!is.null(j)) {
-      if(j==1) {
-        tmp.1 <- paste(j,"/",nrow.K.mat,", k[1]=",K[1],sep="")
+
+    if(complexity=="degree") {
+      if(!is.null(j)) {
+        if(j==1) {
+          tmp.1 <- paste(j,"/",nrow.K.mat,", d[1]=",K[1,1],sep="")
+        } else {
+          dt <- (t2-t1)*(nrow.K.mat-j+1)/j
+          tmp.0 <- paste(", ",fw.format.2(as.numeric(dt,units="mins")),"/",
+                         fw.format.2(as.numeric((t2-t1),units="mins")),
+                         "m",sep="")
+          tmp.1 <- paste(j,"/",nrow.K.mat,tmp.0,", d[1]=",K[1,1],sep="")
+        }
       } else {
-        dt <- (t2-t1)*(nrow.K.mat-j+1)/j
-        tmp.0 <- paste(", ",fw.format.2(as.numeric(dt,units="mins")),"/",
-                       fw.format.2(as.numeric((t2-t1),units="mins")),
-                       "m",sep="")
-        tmp.1 <- paste(j,"/",nrow.K.mat,tmp.0,", k[1]=",K[1],sep="")
+        tmp.1 <- paste("d[1]=", K[1,1],sep="")
       }
-    } else {
-      tmp.1 <- paste("k[1]=", K[1],sep="")
+      if(num.x > 1) for(i in 2:num.x) tmp.1 <- paste(tmp.1, ", d[", i, "]=", K[i,1],sep="")
+    } else  if(complexity=="knots") {
+      if(!is.null(j)) {
+        if(j==1) {
+          tmp.1 <- paste(j,"/",nrow.K.mat,", s[1]=",K[1,2],sep="")
+        } else {
+          dt <- (t2-t1)*(nrow.K.mat-j+1)/j
+          tmp.0 <- paste(", ",fw.format.2(as.numeric(dt,units="mins")),"/",
+                         fw.format.2(as.numeric((t2-t1),units="mins")),
+                         "m",sep="")
+          tmp.1 <- paste(j,"/",nrow.K.mat,tmp.0,", s[1]=",K[1,2],sep="")
+        }
+      } else {
+        tmp.1 <- paste("s[1]=", K[1,2],sep="")
+      }
+      if(num.x > 1) for(i in 2:num.x) tmp.1 <- paste(tmp.1, ", s[", i, "]=", K[i,2],sep="")
+    } else  if(complexity=="degree-knots") {
+      if(!is.null(j)) {
+        if(j==1) {
+          tmp.1 <- paste(j,"/",nrow.K.mat,", d[1]=",K[1,1],sep="")
+        } else {
+          dt <- (t2-t1)*(nrow.K.mat-j+1)/j
+          tmp.0 <- paste(", ",fw.format.2(as.numeric(dt,units="mins")),"/",
+                         fw.format.2(as.numeric((t2-t1),units="mins")),
+                         "m",sep="")
+          tmp.1 <- paste(j,"/",nrow.K.mat,tmp.0,", d[1]=",K[1,1],sep="")
+        }
+      } else {
+        tmp.1 <- paste("d[1]=", K[1,1],sep="")
+      }
+      if(num.x > 1) for(i in 2:num.x) tmp.1 <- paste(tmp.1, ", d[", i, "]=", K[i,1],sep="")
+      for(i in 1:num.x) tmp.1 <- paste(tmp.1, ", s[", i, "]=", K[i,2],sep="")      
     }
-    if(num.x > 1) for(i in 2:num.x) tmp.1 <- paste(tmp.1, ", k[", i, "]=", K[i],sep="")
+
+    ## For i/o for z variables
+    
     tmp.2 <- paste(", rs=", restart, "/", num.restarts,sep="")
     tmp.3 <- ""
     for(i in 1:num.z) tmp.3 <- paste(tmp.3, ", l[", i, "]=", fw.format.3(lambda[i]),sep="")
@@ -133,12 +170,30 @@ krscv <- function(xz,
   ## rather than letting cv proceed only to be halted after the lower
   ## dimension models have been estimated when this occurs.
 
-  if(basis == "auto") {
-    k <- max(c(ncol(prod.spline(x=x,K=rep(basis.maxdim,num.x),degree=degree,segments=segments,complexity=complexity,knots=knots,basis="additive-tensor")),
-               ncol(prod.spline(x=x,K=rep(basis.maxdim,num.x),degree=degree,segments=segments,complexity=complexity,knots=knots,basis="additive")),
-               ncol(prod.spline(x=x,K=rep(basis.maxdim,num.x),degree=degree,segments=segments,complexity=complexity,knots=knots,basis="tensor"))))
-  } else {
-    k <- ncol(prod.spline(x=x,K=rep(basis.maxdim,num.x),degree=degree,segments=segments,complexity=complexity,knots=knots,basis=basis))
+  if(complexity=="degree") {
+    if(basis == "auto") {
+      k <- max(c(ncol(prod.spline(x=x,K=cbind(rep(basis.maxdim,num.x),segments),knots=knots,basis="additive-tensor")),
+                 ncol(prod.spline(x=x,K=cbind(rep(basis.maxdim,num.x),segments),knots=knots,basis="additive")),
+                 ncol(prod.spline(x=x,K=cbind(rep(basis.maxdim,num.x),segments),knots=knots,basis="tensor"))))
+    } else {
+      k <- ncol(prod.spline(x=x,K=cbind(rep(basis.maxdim,num.x),segments),knots=knots,basis=basis))
+    }
+  } else if(complexity=="knots") {
+    if(basis == "auto") {
+      k <- max(c(ncol(prod.spline(x=x,K=cbind(degree,rep(basis.maxdim,num.x)),knots=knots,basis="additive-tensor")),
+                 ncol(prod.spline(x=x,K=cbind(degree,rep(basis.maxdim,num.x)),knots=knots,basis="additive")),
+                 ncol(prod.spline(x=x,K=cbind(degree,rep(basis.maxdim,num.x)),knots=knots,basis="tensor"))))
+    } else {
+      k <- ncol(prod.spline(x=x,K=cbind(degree,rep(basis.maxdim,num.x)),knots=knots,basis=basis))
+    }
+  } else if(complexity=="degree-knots"){
+    if(basis == "auto") {
+      k <- max(c(ncol(prod.spline(x=x,K=matrix(2*rep(basis.maxdim,num.x),num.x,2),knots=knots,basis="additive-tensor")),
+                 ncol(prod.spline(x=x,K=matrix(2*rep(basis.maxdim,num.x),num.x,2),knots=knots,basis="additive")),
+                 ncol(prod.spline(x=x,K=matrix(2*rep(basis.maxdim,num.x),num.x,2),knots=knots,basis="tensor"))))
+    } else {
+      k <- ncol(prod.spline(x=x,K=matrix(2*rep(basis.maxdim,num.x),num.x,2),knots=knots,basis=basis))
+    }
   }
 
   df <- n - k
@@ -160,7 +215,12 @@ krscv <- function(xz,
   ## Exhaustive evaluation over all combinations of K, search over
   ## lambda for each combination
 
-  K.mat <- matrix.combn(0:basis.maxdim,num.x)
+  if(complexity!="degree-knots") {
+    K.mat <- matrix.combn(0:basis.maxdim,num.x)
+  } else {
+    K.mat <- matrix.combn(0:basis.maxdim,2*num.x)
+  }
+
   nrow.K.mat <- NROW(K.mat)
   cv.min.vec <- numeric(nrow.K.mat)
   basis.vec <- character(nrow.K.mat)
@@ -175,6 +235,15 @@ krscv <- function(xz,
 
   for(j in 1:nrow.K.mat) {
 
+    if(complexity=="degree") {
+      input.j <- c(K.mat[j,1:num.x],segments)
+    } else if(complexity=="knots") {
+      input.j <- c(degree,K.mat[j,1:num.x]+1) ## Need to check this + 1 hack
+    } else if(complexity=="degree-knots") {
+      K.mat[j,(num.x+1):(2*num.x)] <- K.mat[j,(num.x+1):(2*num.x)]+1  ## Need to check this + 1 hack
+      input.j <- K.mat[j,]
+    }
+
     if(basis=="auto") {
 
       ## First basis=="additive-tensor"
@@ -182,7 +251,6 @@ krscv <- function(xz,
       output$convergence <- 42
 
       while(output$convergence != 0) {
-
         output <- optim(par=runif(num.z),
                         cv.func,
                         lower=rep(0,num.z),
@@ -191,7 +259,7 @@ krscv <- function(xz,
                         x=x,
                         y=y,
                         z=z,
-                        K=K.mat[j,],
+                        K=input.j,
                         basis.maxdim=basis.maxdim,
                         restart=0,
                         num.restarts=restarts,
@@ -203,8 +271,6 @@ krscv <- function(xz,
                         j=j,
                         nrow.K.mat=nrow.K.mat,
                         t2=t2,
-                        degree=degree,
-                        segments=segments,
                         complexity=complexity,
                         knots=knots,
                         basis="additive-tensor")
@@ -227,7 +293,7 @@ krscv <- function(xz,
                                     x=x,
                                     y=y,
                                     z=z,
-                                    K=K.mat[j,],
+                                    K=input.j,
                                     basis.maxdim=basis.maxdim,
                                     restart=r,
                                     num.restarts=restarts,
@@ -239,8 +305,6 @@ krscv <- function(xz,
                                     j=j,
                                     nrow.K.mat=nrow.K.mat,
                                     t2=t2,
-                                    segments=segments,
-                                    degree=degree,
                                     complexity=complexity,
                                     knots=knots,
                                     basis="additive-tensor")
@@ -259,7 +323,7 @@ krscv <- function(xz,
       if(output$value < cv.min) {
         output.opt <- output
         cv.min <- output$value
-        K.opt <- K.mat[j,]
+        K.opt <- input.j[1:(2*num.x)]
         lambda.opt <- output$par
         basis.opt <- "additive-tensor"
       }
@@ -278,7 +342,7 @@ krscv <- function(xz,
                         x=x,
                         y=y,
                         z=z,
-                        K=K.mat[j,],
+                        K=input.j,
                         basis.maxdim=basis.maxdim,
                         restart=0,
                         num.restarts=restarts,
@@ -290,8 +354,6 @@ krscv <- function(xz,
                         j=j,
                         nrow.K.mat=nrow.K.mat,
                         t2=t2,
-                        segments=segments,
-                        degree=degree,
                         complexity=complexity,
                         knots=knots,
                         basis="additive")
@@ -314,7 +376,7 @@ krscv <- function(xz,
                                     x=x,
                                     y=y,
                                     z=z,
-                                    K=K.mat[j,],
+                                    K=input.j,
                                     basis.maxdim=basis.maxdim,
                                     restart=r,
                                     num.restarts=restarts,
@@ -326,8 +388,6 @@ krscv <- function(xz,
                                     j=j,
                                     nrow.K.mat=nrow.K.mat,
                                     t2=t2,
-                                    segments=segments,
-                                    degree=degree,
                                     complexity=complexity,
                                     knots=knots,
                                     basis="additive")
@@ -343,7 +403,7 @@ krscv <- function(xz,
       if(output$value < cv.min) {
         output.opt <- output
         cv.min <- output$value
-        K.opt <- K.mat[j,]
+        K.opt <- input.j[1:(2*num.x)]
         lambda.opt <- output$par
         basis.opt <- "additive"
         cv.min.vec[j] <- output$value
@@ -366,7 +426,7 @@ krscv <- function(xz,
                         x=x,
                         y=y,
                         z=z,
-                        K=K.mat[j,],
+                        K=input.j,
                         basis.maxdim=basis.maxdim,
                         restart=0,
                         num.restarts=restarts,
@@ -378,8 +438,6 @@ krscv <- function(xz,
                         j=j,
                         nrow.K.mat=nrow.K.mat,
                         t2=t2,
-                        segments=segments,
-                        degree=degree,
                         complexity=complexity,
                         knots=knots,
                         basis="tensor")
@@ -402,7 +460,7 @@ krscv <- function(xz,
                                     x=x,
                                     y=y,
                                     z=z,
-                                    K=K.mat[j,],
+                                    K=input.j,
                                     basis.maxdim=basis.maxdim,
                                     restart=r,
                                     num.restarts=restarts,
@@ -414,8 +472,6 @@ krscv <- function(xz,
                                     j=j,
                                     nrow.K.mat=nrow.K.mat,
                                     t2=t2,
-                                    degree=degree,
-                                    segments=segments,
                                     complexity=complexity,
                                     knots=knots,
                                     basis="tensor")
@@ -431,7 +487,7 @@ krscv <- function(xz,
       if(output$value < cv.min) {
         output.opt <- output
         cv.min <- output$value
-        K.opt <- K.mat[j,]
+        K.opt <- input.j[1:(2*num.x)]
         lambda.opt <- output$par
         basis.opt <- "tensor"
         cv.min.vec[j] <- output$value
@@ -456,7 +512,7 @@ krscv <- function(xz,
                         x=x,
                         y=y,
                         z=z,
-                        K=K.mat[j,],
+                        K=input.j,
                         basis.maxdim=basis.maxdim,
                         restart=0,
                         num.restarts=restarts,
@@ -468,8 +524,6 @@ krscv <- function(xz,
                         j=j,
                         nrow.K.mat=nrow.K.mat,
                         t2=t2,
-                        degree=degree,
-                        segments=segments,
                         complexity=complexity,
                         knots=knots,
                         basis=basis)
@@ -492,7 +546,7 @@ krscv <- function(xz,
                                     x=x,
                                     y=y,
                                     z=z,
-                                    K=K.mat[j,],
+                                    K=input.j,
                                     basis.maxdim=basis.maxdim,
                                     restart=r,
                                     num.restarts=restarts,
@@ -504,8 +558,6 @@ krscv <- function(xz,
                                     j=j,
                                     nrow.K.mat=nrow.K.mat,
                                     t2=t2,
-                                    degree=degree,
-                                    segments=segments,
                                     complexity=complexity,
                                     knots=knots,
                                     basis=basis)
@@ -521,7 +573,7 @@ krscv <- function(xz,
       if(output$value < cv.min) {
         output.opt <- output
         cv.min <- output$value
-        K.opt <- K.mat[j,]
+        K.opt <- input.j[1:(2*num.x)]
         lambda.opt <- output$par
         basis.opt <- basis
       }
@@ -541,15 +593,15 @@ krscv <- function(xz,
 
   if(any(K.opt==basis.maxdim)) warning(paste(" optimal K equals search maximum (", basis.maxdim,"): rerun with larger basis.maxdim",sep=""))
 
-  crscv(K=K.opt,
+  crscv(K=cbind(K.opt[1:num.x],K.opt[(num.x+1):(2*num.x)]),
         I=NULL,
         basis=basis.opt,
         basis.vec=basis.vec,
         basis.maxdim=basis.maxdim,
         complexity=complexity,
         knots=knots,
-        degree=degree,
-        segments=segments,
+        degree=K.opt[1:num.x],
+        segments=K.opt[(num.x+1):(2*num.x)],
         restarts=restarts,
         K.mat=K.mat,
         lambda=lambda.opt,

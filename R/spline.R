@@ -713,6 +713,7 @@ cv.kernel.spline <- function(x,
                              cv.norm=c("L2","L1")) {
 
   if(missing(x) || missing(y) || missing (K)) stop(" must provide x, y and K")
+
   if(!is.matrix(K)) stop(" K must be a two-column matrix")  
 
   basis <- match.arg(basis)

@@ -381,7 +381,8 @@ crs.formula <- function(formula,
                   degree=degree,
                   segments=segments)
       cv.min <- cv$cv.min
-      K <- cv$K
+      degree <- cv$degree
+      segments <- cv$segments
       include <- cv$I
       basis <- cv$basis
     }
@@ -401,7 +402,7 @@ crs.formula <- function(formula,
                   degree=degree,
                   segments=segments)
       cv.min <- cv$cv.min
-      K <- cv$K
+      K <- cv$K ## need to change XXX
       lambda <- cv$lambda
       basis <- cv$basis
     }
@@ -412,8 +413,8 @@ crs.formula <- function(formula,
 
     est <- crs.default(xz=xz,
                        y=y,
-                       degree=K[,1],
-                       segments=K[,2],
+                       degree=degree,
+                       segments=segments,
                        include=include,
                        kernel=kernel,
                        lambda=lambda,
