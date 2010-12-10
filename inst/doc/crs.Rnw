@@ -72,41 +72,42 @@ approach described in \citep{MA_RACINE_YANG:2010} when the option
 \code{kernel=TRUE} is selected as described below. As well, it
 implements related methods that the author is currently developing.
 
-
 Cross-validation (leave-out-out, \citeauthor{STONE:1974}
 \citeyear{STONE:1974}, \citeauthor{STONE:1977} \citeyear{STONE:1977})
-is relied on for selecting unknowns that impact on model
-performance. In particular,
+can be used for selecting unknowns that impact on model performance
+(spline degree, number of knots, bandwidths). Details of the
+implementation are as follows:
 
 \begin{enumerate}
   [label=(\roman{*}),ref=(\roman{*})]
 
-\item the degree of the spline for each dimension of the continuous
-  predictors can be manually specified or chosen by leave-one-out
-  cross-validation (holding the number of segments/knots minus one
-  fixed at any user-set value)
-
-\item the number of segments (number of knots or breakpoints minus
-  one) for each dimension of the continuous predictors can be manually
-  specified or chosen by leave-one-out cross-validation (holding the
-  degree of the spline fixed at any user-set value)
-
-\item bandwidths for each dimension of the categorical predictors can
-  be specified manually or chosen by leave-one-out cross-validation
+\item the degree of the spline and number of knots for each continuous
+  predictor can be set manually as can the bandwidths for each
+  categorical predictor (if appropriate)
   
-\item when the indicator basis functions are used instead of kernel
+\item alternatively, leave-one-out cross-validation can be used to
+  select either the degree of the spline (holding the number of
+  segments/knots minus one fixed at any user-set value) and bandwidths
+  for the categorical predictors (if appropriate), or the number of
+  segments (holding the degree of the spline fixed at any user-set
+  value) and bandwidths for the categorical predictors (if
+  appropriate), or the number of segments and the degree of the spline
+  for each continuous predictor and bandwidths for each categorical
+  predictor (if appropriate)
+  
+\item when indicator basis functions are used instead of kernel
   smoothing, whether to include each categorical predictor or not can
   be specified manually or chosen via leave-one-out cross-validation
   
 \item we allow the degree of the spline (alternatively, the number of
-  segments/knots minus one) for each dimension of the continuous
-  predictors to include zero and when the degree (alternatively,
-  number of segments/knots minus one) is zero the variable is thereby
-  excluded from the regression: in this manner, irrelevant variables,
-  whether continuous or categorical, can be automatically removed
-  negating the need for pre-testing and so forth
-  (\citeauthor{HALL_RACINE_LI:2004} \citeyear{HALL_RACINE_LI:2004},
-  \citeauthor{HALL_LI_RACINE:2007} \citeyear{HALL_LI_RACINE:2007})
+  segments/knots minus one) for each continuous predictor to include
+  zero and when the degree (alternatively, number of segments/knots
+  minus one) is zero the variable is thereby excluded from the
+  regression: in this manner, irrelevant variables, whether continuous
+  or categorical, can be automatically removed negating the need for
+  pre-testing and so forth (\citeauthor{HALL_RACINE_LI:2004}
+  \citeyear{HALL_RACINE_LI:2004}, \citeauthor{HALL_LI_RACINE:2007}
+  \citeyear{HALL_LI_RACINE:2007})
   
 \end{enumerate}
 
@@ -202,6 +203,20 @@ matplot(x,B,type="l")
 \end{center}
 \end{figure}
 
+\subsection*{Placement of Knots}
+
+The user can determine where knots are to be placed using one of two methods:
+
+\begin{enumerate}
+  [label=(\roman{*}),ref=(\roman{*})]
+  
+\item knots can be placed at equally spaced quantiles whereby an equal
+  number of observations lie in each segment (`quantile knots')
+  
+\item knots can be placed at equally spaced intervals (`uniform knots')
+  
+\end{enumerate}
+
 \subsection*{Kernel Weighting}
 
 Let $Z_i$ be an $r$-dimensional vector of categorical/discrete
@@ -240,10 +255,10 @@ the estimate.
 
 Estimating the model requires construction of the spline bases and
 their tensor product (if specified) along with the categorical kernel
-weighting function. Then, for a given degree for each dimension of the
-continuous predictors and bandwidth for the categorical predictors (or
-indicator bases), the model is fit via least-squares. Alternatively,
-the degree and bandwidth can be jointly determined via leave-one-out
+weighting function. Then, for a given degree for each continuous
+predictor and bandwidth for each categorical predictor (or indicator
+bases), the model is fit via least-squares. Alternatively, the degree
+and bandwidth can be jointly determined via leave-one-out
 cross-validation via the option \code{cv=TRUE}. This then evaluates
 the model for each unique combination of degree for each continuous
 predictor from \code{degree=0} through \code{degree=basis.maxdim}

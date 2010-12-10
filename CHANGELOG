@@ -1,4 +1,4 @@
-Changes from Version 0.13.6 to 0.13.7 [XXX-XXX-XXXX]
+Changes from Version 0.13.6 to 0.13.7 [9-Dec-2010]
 
 * added option to choose both degree and knots independently for each
   predictor and (more importantly) cross-validate both
