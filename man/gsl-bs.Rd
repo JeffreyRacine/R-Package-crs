@@ -16,7 +16,7 @@ gsl.bs(\dots)
        x.min = NULL,
        x.max = NULL,
        intercept = FALSE,
-       knots = c("quantiles","uniform"),
+       knots = NULL,
        \dots)
 }
 \arguments{
@@ -40,11 +40,8 @@ defaults to \code{max(x)}}
 \item{intercept}{ if \sQuote{TRUE}, an intercept is included in the
 basis; default is \sQuote{FALSE} }
 
-   \item{knots}{ a character string (default \code{knots="quantiles"})
-  specifying where knots are to be placed. \sQuote{quantiles} specifies
-  knots placed at equally spaced quantiles (equal number of observations
-  lie in each segment) and \sQuote{uniform} specifies knots placed at
-  equally spaced intervals. }
+\item{knots}{ a vector (default \code{knots="NULL"}) specifying knots
+  for spline basis. }
 
 \item{\dots}{ optional arguments }
   
