@@ -1,4 +1,4 @@
-## 3/6/2010, (C) Jeffrey S. Racine (racinej@mcmaster.ca).
+# 3/6/2010, (C) Jeffrey S. Racine (racinej@mcmaster.ca).
 
 ## This function provides for a complete S3 implementation of
 ##  regression splines with categorical factors using two approaches,

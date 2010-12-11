@@ -7,13 +7,11 @@ gsl.bs.default <- function(x,
                            x.min=NULL,
                            x.max=NULL,
                            intercept=FALSE,
-                           knots=c("quantiles","uniform"),
+                           knots=NULL,
                            ...) {
 
   x <- as.vector(x)
   n <- length(x)
-
-  knots <- match.arg(knots)
 
   if(degree <= 0) stop(" degree must be a positive integer")
   if(deriv < 0) stop(" deriv must be a non-negative integer")
@@ -26,21 +24,9 @@ gsl.bs.default <- function(x,
   if(is.null(x.min)) x.min <- min(x)
   if(is.null(x.max)) x.max <- max(x)
 
-  ## Construct quantiles in case they are requested (trivial, no
-  ## overhead so may as well compute rather than test etc.). If x.min
-  ## and x.max are set compute quantiles in their support only.
-  
-  q.vec <- quantile(x[(x >= x.min) & (x <= x.max)],probs=seq(0,1,length=nbreak))
+  ## 0 == don't use user supplied knots, 1 = use
 
-  ## Replace endpoints with x.min and x.max if overloaded, otherwise
-  ## this has no effect (0 and 1 quantiles are sample min/max)
-  
-  q.vec[1] <- x.min
-  q.vec[nbreak] <- x.max
-
-  ## Integer to pass to C code, 0 uniform, 1 quantile
-
-  knots.int <- ifelse(knots == "uniform", 0, 1)
+  knots.int <- ifelse(is.null(knots), 0, 1)
 
   ncol <- nbreak+degree-1;
 
@@ -53,7 +39,7 @@ gsl.bs.default <- function(x,
                 as.integer(nbreak),
                 as.double(x.min),
                 as.double(x.max),
-                as.double(q.vec),
+                as.double(knots),
                 as.integer(knots.int),
                 Bx = double(n*ncol),
                 PACKAGE="crs" )
@@ -68,7 +54,7 @@ gsl.bs.default <- function(x,
                 as.integer(deriv),
                 as.double(x.min),
                 as.double(x.max),
-                as.double(q.vec),                
+                as.double(knots),                
                 as.integer(knots.int),
                 Bx = double(n*ncol),
                 PACKAGE="crs" )
