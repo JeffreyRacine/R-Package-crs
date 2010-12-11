@@ -20,15 +20,17 @@ gsl.bs.default <- function(x,
   if(nbreak <= 1) stop(" nbreak must be at least 2")
 
   ## For evaluation (newx) must use min/max for x unless otherwise
-  ## specified
+  ## specified - check that mix < max
 
+  if(!is.null(x.min)&!is.null(x.max)) if(x.min >= x.max) stop(" x.min must be less than x.max")
   if(is.null(x.min)) x.min <- min(x)
   if(is.null(x.max)) x.max <- max(x)
 
   ## Construct quantiles in case they are requested (trivial, no
-  ## overhead so may as well compute rather than test etc.)
+  ## overhead so may as well compute rather than test etc.). If x.min
+  ## and x.max are set compute quantiles in their support only.
   
-  q.vec <- quantile(x,probs=seq(0,1,length=nbreak))
+  q.vec <- quantile(x[(x >= x.min) & (x <= x.max)],probs=seq(0,1,length=nbreak))
 
   ## Replace endpoints with x.min and x.max if overloaded, otherwise
   ## this has no effect (0 and 1 quantiles are sample min/max)

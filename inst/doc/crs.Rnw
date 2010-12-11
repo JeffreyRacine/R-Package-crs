@@ -72,11 +72,11 @@ approach described in \citep{MA_RACINE_YANG:2010} when the option
 \code{kernel=TRUE} is selected as described below. As well, it
 implements related methods that the author is currently developing.
 
-Cross-validation (leave-out-out, \citeauthor{STONE:1974}
-\citeyear{STONE:1974}, \citeauthor{STONE:1977} \citeyear{STONE:1977})
-can be used for selecting unknowns that impact on model performance
-(spline degree, number of knots, bandwidths). Details of the
-implementation are as follows:
+Data-driven methods (leave-out-out cross-validation,
+\citeauthor{STONE:1974} \citeyear{STONE:1974}, \citeauthor{STONE:1977}
+\citeyear{STONE:1977}) can be used for selecting the spline degree,
+number of knots, and bandwidths. Details of the implementation are as
+follows:
 
 \begin{enumerate}
   [label=(\roman{*}),ref=(\roman{*})]
