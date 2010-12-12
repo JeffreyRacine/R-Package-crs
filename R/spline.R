@@ -67,20 +67,18 @@ prod.spline <- function(x,
 
     j <- 1
     for(i in 1:num.x) {
-      if(knots=="uniform") {
-        knots.vec <- NULL
-      } else {
-        ## Construct quantiles. If x.min and x.max are set compute
-        ## quantiles in their support only.
-        knots.vec <- quantile(x[(x >= min(x)) & (x <= max(x))],probs=seq(0,1,length=K[i,2]+1)) ## nbreak
-        knots.vec[1] <- min(x)
-        knots.vec[K[i,2]+1] <- max(x) ## nbreak
-      }
       if(K[i,1] > 0) {
-        if(i==deriv.index) {
-          tp[[j]] <- predict(gsl.bs(x[,i,drop=FALSE],degree=K[i,1],nbreak=K[i,2]+1,knots=knots.vec,deriv=deriv,intercept=FALSE),newx=xeval[,i,drop=FALSE])
+        if(knots=="uniform") {
+          knots.vec <- NULL
         } else {
-          tp[[j]] <- predict(gsl.bs(x[,i,drop=FALSE],degree=K[i,1],nbreak=K[i,2]+1,knots=knots.vec,intercept=FALSE),newx=xeval[,i,drop=FALSE])
+          ## quantile knots
+          knots.vec <- as.numeric(quantile(x[,i,drop=FALSE],probs=seq(0,1,length=(K[i,2]+1)))) ## nbreak
+        }
+##        print(paste("x[",i,"]=",i,x[,i],sep=""))
+        if(i==deriv.index) {
+          tp[[j]] <- predict(gsl.bs(x[,i,drop=FALSE],degree=K[i,1],nbreak=(K[i,2]+1),knots=knots.vec,deriv=deriv,intercept=FALSE),newx=xeval[,i,drop=FALSE])
+        } else {
+          tp[[j]] <- predict(gsl.bs(x[,i,drop=FALSE],degree=K[i,1],nbreak=(K[i,2]+1),knots=knots.vec,intercept=FALSE),newx=xeval[,i,drop=FALSE])
         }
         j <- j+1
       }

@@ -28,6 +28,16 @@ gsl.bs.default <- function(x,
 
   knots.int <- ifelse(is.null(knots), 0, 1)
 
+  if(!is.null(knots)) {
+    knots <- unique(sort(knots)) ## unique not sufficient?
+    nbreak.unique <- length(knots)
+    if(nbreak.unique < nbreak) {
+      warning(" nbreak dynamically reduced due to non-uniqueness of quantile knot vector")
+      nbreak <- nbreak.unique
+    }
+    if(nbreak <= 1) stop(" dynamically adjusted nbreak for quantile knot vector must be at least 2")
+  }
+
   ncol <- nbreak+degree-1;
 
   if(deriv==0) {
@@ -83,12 +93,12 @@ predict.gsl.bs <- function(object,
 
   newx.ind <- NULL
 
-  if(is.null(newx))
+  if(is.null(newx)) {
 
     ## If No new data provided, return sample fit.
     B <- object
 
-  else{
+  } else {
 
     x.min <- attr(object, "x.min")
     x.max <- attr(object, "x.max")
@@ -96,6 +106,8 @@ predict.gsl.bs <- function(object,
     newx <- as.numeric(newx)
 
     if(min(newx)<x.min || max(newx)>x.max) {
+      ## This is not desirable nor optimal, but bs in spline seems to
+      ## handle this case while gsl.bs does not... need to revisit
       warning(" evaluation data lies beyond spline support: resetting those values to min/max")
       newx[newx < x.min] <- x.min
       newx[newx > x.max] <- x.max
