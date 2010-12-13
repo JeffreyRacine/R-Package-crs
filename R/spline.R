@@ -68,14 +68,26 @@ prod.spline <- function(x,
     j <- 1
     for(i in 1:num.x) {
       if(K[i,1] > 0) {
+         ## nbreak is K[i,2]+1
         if(knots=="uniform") {
           knots.vec <- NULL
         } else {
           ## quantile knots
-          knots.vec <- as.numeric(quantile(x[,i,drop=FALSE],probs=seq(0,1,length=(K[i,2]+1)))) ## nbreak
+          knots.vec <- as.numeric(quantile(x[,i,drop=FALSE],probs=seq(0,1,length=(K[i,2]+1))))
+#          if(length(unique(sort(knots.vec))) < length(knots.vec)) {
+            ## Correct issue of repeated knots points caused by point
+            ## mass data (e.g. knots will be c(0,0,0,1,5), repeated
+            ## knots will throw off gsl.bs). This adds a trivial
+            ## amount to each knot and is only needed by
+            ## gsl.bs(). Otherwise we retain only the unique points
+            ## but then the dimension of the spline changes which can
+            ## throw off predict etc. Note - there is something odd
+            ## about what is produced by quantile as unique does not
+            ## work as expected. 1e-20 is too small, 1e-10 works.
+            knots.vec <- knots.vec + seq(0,1e-10*(max(x[,i,drop=FALSE])-min(x[,i,drop=FALSE])),length=length(knots.vec))
+#          }
         }
-##        print(paste("x[",i,"]=",i,x[,i],sep=""))
-        if(i==deriv.index) {
+        if((i==deriv.index)&&(deriv!=0)) {
           tp[[j]] <- predict(gsl.bs(x[,i,drop=FALSE],degree=K[i,1],nbreak=(K[i,2]+1),knots=knots.vec,deriv=deriv,intercept=FALSE),newx=xeval[,i,drop=FALSE])
         } else {
           tp[[j]] <- predict(gsl.bs(x[,i,drop=FALSE],degree=K[i,1],nbreak=(K[i,2]+1),knots=knots.vec,intercept=FALSE),newx=xeval[,i,drop=FALSE])

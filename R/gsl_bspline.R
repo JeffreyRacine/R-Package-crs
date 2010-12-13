@@ -2,7 +2,7 @@ gsl.bs <- function(...) UseMethod("gsl.bs")
 
 gsl.bs.default <- function(x,
                            degree=3,
-                           nbreak=NULL,
+                           nbreak=2,
                            deriv=0,
                            x.min=NULL,
                            x.max=NULL,
@@ -17,13 +17,10 @@ gsl.bs.default <- function(x,
 
   if(degree <= 0) stop(" degree must be a positive integer")
   if(deriv < 0) stop(" deriv must be a non-negative integer")
-  if(!is.null(nbreak)&&(nbreak <= 1)) stop(" nbreak must be at least 2")
-  if(is.null(knots)&&is.null(nbreak)) stop(" either knots or nbreak must be provided")
+  if(nbreak <= 1) stop(" nbreak must be at least 2")
 
-  ## We may want to disable warnings as these things might be standard?
-
-  if(!is.null(knots)&&is.null(nbreak)) nbreak <- length(knots)
-  if(!is.null(knots)&!is.null(nbreak)&&length(knots)!=nbreak) {
+  if(!is.null(knots)) nbreak <- length(knots)
+  if(!is.null(knots)&&length(knots)!=nbreak) {
     nbreak <- length(knots)
     warning(paste(" nbreak and knots vector do not agree: resetting nbreak to", nbreak))
   }
@@ -35,47 +32,9 @@ gsl.bs.default <- function(x,
   if(is.null(x.min)) x.min <- min(x)
   if(is.null(x.max)) x.max <- max(x)
 
-  ## This appears to replicate the behaviour of bs() in the splines
-  ## package when knots are supplied but x lies outside of the knot
-  ## intervals.
-
-  if(!is.null(knots)) {
-    if(min(x) < min(knots)) {
-      knots <- c(x.min,knots)
-      nbreak <- length(knots)
-      warning(" x.min < min(knots): extending knot range for out-of-support evaluation")    
-    }
-    if(x.max > max(knots)) {
-      knots <- c(knots,x.max)
-      nbreak <- length(knots)
-      warning(" max(x) > max(knots): extending knot range for out-of-support evaluation")
-    }
-  }
-
-  if(is.null(knots)) {
-    if(x.min > min(x)) {
-      x.min <- min(x)
-      warning(" x.min > min(x): extending knot range for out-of-support evaluation")    
-    }
-    if(x.max < max(x)) {
-      x.max <- max(x)
-      warning(" x.max < max(x): extending knot range for out-of-support evaluation")
-    }
-  }
-
   ## 0 == don't use user supplied knots, 1 = use
 
   knots.int <- ifelse(is.null(knots), 0, 1)
-
-  if(!is.null(knots)) {
-    knots <- unique(sort(knots)) ## unique not sufficient?
-    nbreak.unique <- length(knots)
-    if(nbreak.unique < nbreak) {
-      warning(" nbreak dynamically reduced due to non-uniqueness of quantile knot vector")
-      nbreak <- nbreak.unique
-    }
-    if(nbreak <= 1) stop(" dynamically adjusted nbreak for quantile knot vector must be at least 2")
-  }
 
   ncol <- nbreak+degree-1;
 
@@ -130,17 +89,26 @@ predict.gsl.bs <- function(object,
                            newx=NULL,
                            ...) {
 
-  if(is.null(newx)) {
+  newx.ind <- NULL
+
+  if(is.null(newx))
 
     ## If No new data provided, return sample fit.
     B <- object
 
-  } else {
+  else{
 
     x.min <- attr(object, "x.min")
     x.max <- attr(object, "x.max")
 
     newx <- as.numeric(newx)
+
+    if(min(newx)<x.min || max(newx)>x.max) {
+      warning(" evaluation data lies beyond spline support: resetting those values to min/max")
+      newx[newx < x.min] <- x.min
+      newx[newx > x.max] <- x.max
+      newx.ind <- sort(c(which(newx < x.min),which(newx > x.max)))
+    }
 
     B <- gsl.bs(newx,
                 degree=attr(object, "degree"),
@@ -154,6 +122,7 @@ predict.gsl.bs <- function(object,
   }
 
   attr(B, "newx") <- newx
+  attr(B, "newx.trimmed") <- newx.ind
 
   return(B)
 
