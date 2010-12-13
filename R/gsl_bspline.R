@@ -2,7 +2,7 @@ gsl.bs <- function(...) UseMethod("gsl.bs")
 
 gsl.bs.default <- function(x,
                            degree=3,
-                           nbreak=2,
+                           nbreak=NULL,
                            deriv=0,
                            x.min=NULL,
                            x.max=NULL,
@@ -13,9 +13,20 @@ gsl.bs.default <- function(x,
   x <- as.vector(x)
   n <- length(x)
 
+  ## Some error checking
+
   if(degree <= 0) stop(" degree must be a positive integer")
   if(deriv < 0) stop(" deriv must be a non-negative integer")
-  if(nbreak <= 1) stop(" nbreak must be at least 2")
+  if(!is.null(nbreak)&&(nbreak <= 1)) stop(" nbreak must be at least 2")
+  if(is.null(knots)&&is.null(nbreak)) stop(" either knots or nbreak must be provided")
+
+  ## We may want to disable warnings as these things might be standard?
+
+  if(!is.null(knots)&&is.null(nbreak)) nbreak <- length(knots)
+  if(!is.null(knots)&!is.null(nbreak)&&length(knots)!=nbreak) {
+    nbreak <- length(knots)
+    warning(paste(" nbreak and knots vector do not agree: resetting nbreak to", nbreak))
+  }
 
   ## For evaluation (newx) must use min/max for x unless otherwise
   ## specified - check that mix < max
@@ -23,6 +34,34 @@ gsl.bs.default <- function(x,
   if(!is.null(x.min)&!is.null(x.max)) if(x.min >= x.max) stop(" x.min must be less than x.max")
   if(is.null(x.min)) x.min <- min(x)
   if(is.null(x.max)) x.max <- max(x)
+
+  ## This appears to replicate the behaviour of bs() in the splines
+  ## package when knots are supplied but x lies outside of the knot
+  ## intervals.
+
+  if(!is.null(knots)) {
+    if(min(x) < min(knots)) {
+      knots <- c(x.min,knots)
+      nbreak <- length(knots)
+      warning(" x.min < min(knots): extending knot range for out-of-support evaluation")    
+    }
+    if(x.max > max(knots)) {
+      knots <- c(knots,x.max)
+      nbreak <- length(knots)
+      warning(" max(x) > max(knots): extending knot range for out-of-support evaluation")
+    }
+  }
+
+  if(is.null(knots)) {
+    if(x.min > min(x)) {
+      x.min <- min(x)
+      warning(" x.min > min(x): extending knot range for out-of-support evaluation")    
+    }
+    if(x.max < max(x)) {
+      x.max <- max(x)
+      warning(" x.max < max(x): extending knot range for out-of-support evaluation")
+    }
+  }
 
   ## 0 == don't use user supplied knots, 1 = use
 
@@ -91,8 +130,6 @@ predict.gsl.bs <- function(object,
                            newx=NULL,
                            ...) {
 
-  newx.ind <- NULL
-
   if(is.null(newx)) {
 
     ## If No new data provided, return sample fit.
@@ -104,15 +141,6 @@ predict.gsl.bs <- function(object,
     x.max <- attr(object, "x.max")
 
     newx <- as.numeric(newx)
-
-    if(min(newx)<x.min || max(newx)>x.max) {
-      ## This is not desirable nor optimal, but bs in spline seems to
-      ## handle this case while gsl.bs does not... need to revisit
-      warning(" evaluation data lies beyond spline support: resetting those values to min/max")
-      newx[newx < x.min] <- x.min
-      newx[newx > x.max] <- x.max
-      newx.ind <- sort(c(which(newx < x.min),which(newx > x.max)))
-    }
 
     B <- gsl.bs(newx,
                 degree=attr(object, "degree"),
@@ -126,7 +154,6 @@ predict.gsl.bs <- function(object,
   }
 
   attr(B, "newx") <- newx
-  attr(B, "newx.trimmed") <- newx.ind
 
   return(B)
 
