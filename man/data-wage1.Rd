@@ -59,10 +59,10 @@ model <- crs(lwage~married+
              exper+
              tenure,
              cv=TRUE,
-             basis="auto",
+             basis="additive",
              data=wage1,
              deriv=1,
-             basis.maxdim=4)
+             basis.maxdim=5)
 
 degree <- model$degree
 include <- model$include

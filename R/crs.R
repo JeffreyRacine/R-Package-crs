@@ -410,7 +410,8 @@ crs.formula <- function(formula,
                   degree=degree,
                   segments=segments)
       cv.min <- cv$cv.min
-      K <- cv$K ## need to change XXX
+      degree <- cv$degree
+      segments <- cv$segments
       lambda <- cv$lambda
       basis <- cv$basis
     }
