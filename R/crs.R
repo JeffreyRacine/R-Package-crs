@@ -388,12 +388,13 @@ crs.formula <- function(formula,
                   cv.norm=cv.norm,
                   degree=degree,
                   segments=segments)
+
       cv.min <- cv$cv.min
       degree <- cv$degree
       segments <- cv$segments
       include <- cv$I
       basis <- cv$basis
-    }
+   }
 
   } else {
 
@@ -409,6 +410,7 @@ crs.formula <- function(formula,
                   cv.norm=cv.norm,
                   degree=degree,
                   segments=segments)
+
       cv.min <- cv$cv.min
       degree <- cv$degree
       segments <- cv$segments

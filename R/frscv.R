@@ -357,10 +357,25 @@ frscv <- function(xz,
   ocv.vec <- order(cv.vec)
 
   cv.min <- cv.vec[ocv.vec][1]
-  K.opt <- KI.mat[ocv.vec,,drop=FALSE][1,]
+  if(complexity=="degree") {
+    if(num.z==0) {
+      K.opt <- c(KI.mat[ocv.vec,1:num.x,drop=FALSE][1,],segments)
+    } else {
+      K.opt <- c(KI.mat[ocv.vec,1:num.x,drop=FALSE][1,],segments,KI.mat[ocv.vec,(num.x+1):(num.x+num.z),drop=FALSE][1,])
+    }
+  } else if(complexity=="knots") {
+    if(num.z==0) {
+      K.opt <- c(degree,KI.mat[ocv.vec,1:num.x,drop=FALSE][1,]+1)
+    } else {
+      K.opt <- c(degree,KI.mat[ocv.vec,1:num.x,drop=FALSE][1,]+1,KI.mat[ocv.vec,(num.x+1):(num.x+num.z),drop=FALSE][1,])
+    }
+  } else if(complexity=="degree-knots") {
+    K.opt <- KI.mat[ocv.vec,,drop=FALSE][1,]
+  }
   basis.opt <- basis.vec[ocv.vec][1]
   degree <- K.opt[1:num.x]
   segments <- K.opt[(num.x+1):(2*num.x)]
+
   if(!is.null(z)) I.opt <- K.opt[(2*num.x+1):(2*num.x+num.z)]
 
   console <- printClear(console)

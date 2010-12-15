@@ -580,7 +580,13 @@ krscv <- function(xz,
   ocv.vec <- order(cv.vec)
 
   cv.min <- cv.vec[ocv.vec][1]
-  K.opt <- K.mat[ocv.vec,][1,,drop=FALSE]
+  if(complexity=="degree") {
+    K.opt <- c(K.mat[ocv.vec,1:num.x,drop=FALSE][1,],segments)
+  } else if(complexity=="knots") {
+    K.opt <- c(degree,K.mat[ocv.vec,1:num.x,drop=FALSE][1,]+1) 
+  } else if(complexity=="degree-knots") {
+    K.opt <- K.mat[ocv.vec,,drop=FALSE][1,]
+  }
   lambda.opt <- lambda.mat[ocv.vec,,drop=FALSE][1,]
   basis.opt <- basis.vec[ocv.vec][1]
   degree <- K.opt[1:num.x]

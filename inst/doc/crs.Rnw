@@ -366,7 +366,7 @@ z <- ifelse(x1>.5,1,0)
 dgp <- cos(2*pi*x1)+sin(2*pi*x2)+2*z
 z <- factor(z)
 y <- dgp + rnorm(n,sd=1)
-model <- crs(y~x1+x2+z,cv=TRUE,basis="auto",basis.maxdim=8)
+model <- crs(y~x1+x2+z,cv=TRUE,complexity="degree",basis="auto",basis.maxdim=8)
 summary(model)
 @ 
 
