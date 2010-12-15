@@ -230,11 +230,9 @@ krscv <- function(xz,
   }
 
   nrow.K.mat <- NROW(K.mat)
-  cv.min.vec <- numeric(nrow.K.mat)
+  cv.vec <- numeric(nrow.K.mat)
   basis.vec <- character(nrow.K.mat)
   lambda.mat <- matrix(NA,nrow.K.mat,num.z)
-
-  cv.min <- .Machine$double.xmax
 
   t2 <- Sys.time() ## placeholder
 
@@ -243,12 +241,16 @@ krscv <- function(xz,
 
   for(j in 1:nrow.K.mat) {
 
+    ## Initialize    
+
+    cv.vec[j] <- .Machine$double.xmax
+
     if(complexity=="degree") {
       input.j <- c(K.mat[j,1:num.x],segments)
     } else if(complexity=="knots") {
-      input.j <- c(degree,K.mat[j,1:num.x]+1) ## Need to check this + 1 hack
+      input.j <- c(degree,K.mat[j,1:num.x]+1) 
     } else if(complexity=="degree-knots") {
-      K.mat[j,(num.x+1):(2*num.x)] <- K.mat[j,(num.x+1):(2*num.x)]+1  ## Need to check this + 1 hack
+      K.mat[j,(num.x+1):(2*num.x)] <- K.mat[j,(num.x+1):(2*num.x)]+1
       input.j <- K.mat[j,]
     }
 
@@ -325,15 +327,10 @@ krscv <- function(xz,
 
       } ## end restarts
 
-      cv.min.vec[j] <- output$value
-      basis.vec[j] <- "additive-tensor"
-
-      if(output$value < cv.min) {
-        output.opt <- output
-        cv.min <- output$value
-        K.opt <- input.j[1:(2*num.x)]
-        lambda.opt <- output$par
-        basis.opt <- "additive-tensor"
+      if(output$value < cv.vec[j]) {
+        cv.vec[j] <- output$value
+        basis.vec[j] <- "additive-tensor"
+        lambda.mat[j,] <- output$par
       }
 
       ## Next, basis=="additive"
@@ -408,17 +405,11 @@ krscv <- function(xz,
 
       } ## end restarts
 
-      if(output$value < cv.min) {
-        output.opt <- output
-        cv.min <- output$value
-        K.opt <- input.j[1:(2*num.x)]
-        lambda.opt <- output$par
-        basis.opt <- "additive"
-        cv.min.vec[j] <- output$value
+      if(output$value < cv.vec[j]) {
+        cv.vec[j] <- output$value
         basis.vec[j] <- "additive"
+        lambda.mat[j,] <- output$par
       }
-
-      lambda.mat[j,] <- output$par
 
       ## Next, basis=="tensor"
 
@@ -492,17 +483,11 @@ krscv <- function(xz,
 
       } ## end restarts
 
-      if(output$value < cv.min) {
-        output.opt <- output
-        cv.min <- output$value
-        K.opt <- input.j[1:(2*num.x)]
-        lambda.opt <- output$par
-        basis.opt <- "tensor"
-        cv.min.vec[j] <- output$value
+      if(output$value < cv.vec[j]) {
+        cv.vec[j] <- output$value
         basis.vec[j] <- "tensor"
+        lambda.mat[j,] <- output$par
       }
-
-      lambda.mat[j,] <- output$par
 
     } else { ## end auto
 
@@ -578,17 +563,11 @@ krscv <- function(xz,
 
       } ## end restarts
 
-      if(output$value < cv.min) {
-        output.opt <- output
-        cv.min <- output$value
-        K.opt <- input.j[1:(2*num.x)]
-        lambda.opt <- output$par
-        basis.opt <- basis
+      if(output$value < cv.vec[j]) {
+        cv.vec[j] <- output$value
+        basis.vec[j] <- basis
+        lambda.mat[j,] <- output$par
       }
-
-      basis.vec[j] <- basis
-      cv.min.vec[j] <- output$value
-      lambda.mat[j,] <- output$par
 
     }
 
@@ -596,25 +575,37 @@ krscv <- function(xz,
 
   }
 
+  ## Sort on cv.vec
+
+  ocv.vec <- order(cv.vec)
+
+  cv.min <- cv.vec[ocv.vec][1]
+  K.opt <- K.mat[ocv.vec,][1,,drop=FALSE]
+  lambda.opt <- lambda.mat[ocv.vec,,drop=FALSE][1,]
+  basis.opt <- basis.vec[ocv.vec][1]
+  degree <- K.opt[1:num.x]
+  segments <- K.opt[(num.x+1):(2*num.x)]
+  if(!is.null(z)) I.opt <- K.opt[(2*num.x+1):(2*num.x+num.z)]
+  
   console <- printClear(console)
   console <- printPop(console)
 
   if(any(K.opt==basis.maxdim)) warning(paste(" optimal K equals search maximum (", basis.maxdim,"): rerun with larger basis.maxdim",sep=""))
 
-  crscv(K=cbind(K.opt[1:num.x],K.opt[(num.x+1):(2*num.x)]),
+  crscv(K=K.opt,
         I=NULL,
         basis=basis.opt,
         basis.vec=basis.vec,
         basis.maxdim=basis.maxdim,
         complexity=complexity,
         knots=knots,
-        degree=K.opt[1:num.x],
-        segments=K.opt[(num.x+1):(2*num.x)],
+        degree=degree,
+        segments=segments,
         restarts=restarts,
         K.mat=K.mat,
         lambda=lambda.opt,
         lambda.mat=lambda.mat,
         cv.func=cv.min,
-        cv.func.vec=as.matrix(cv.min.vec))
+        cv.func.vec=as.matrix(cv.vec))
 
 }

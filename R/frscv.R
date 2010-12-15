@@ -256,12 +256,12 @@ frscv <- function(xz,
       }
     } else if(complexity=="knots") {
       if(num.z==0) {
-        input.j <- c(degree,KI.mat[j,1:num.x]+1) ## Need to check this + 1 hack
+        input.j <- c(degree,KI.mat[j,1:num.x]+1)
       } else {
         input.j <- c(degree,KI.mat[j,1:num.x]+1,KI.mat[j,(num.x+1):(num.x+num.z)])
       }
     } else if(complexity=="degree-knots") {
-      KI.mat[j,(num.x+1):(2*num.x)] <- KI.mat[j,(num.x+1):(2*num.x)]+1  ## Need to check this + 1 hack
+      KI.mat[j,(num.x+1):(2*num.x)] <- KI.mat[j,(num.x+1):(2*num.x)]+1
       input.j <- KI.mat[j,]
     }
 
@@ -357,7 +357,7 @@ frscv <- function(xz,
   ocv.vec <- order(cv.vec)
 
   cv.min <- cv.vec[ocv.vec][1]
-  K.opt <- KI.mat[ocv.vec,][1,]
+  K.opt <- KI.mat[ocv.vec,,drop=FALSE][1,]
   basis.opt <- basis.vec[ocv.vec][1]
   degree <- K.opt[1:num.x]
   segments <- K.opt[(num.x+1):(2*num.x)]
