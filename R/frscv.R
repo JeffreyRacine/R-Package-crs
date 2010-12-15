@@ -240,11 +240,13 @@ frscv <- function(xz,
   
   nrow.KI.mat <- NROW(KI.mat)
   basis.vec <- character(nrow.KI.mat)
-  cv.min.vec <- numeric(nrow.KI.mat)
-
-  cv.min <- .Machine$double.xmax
+  cv.vec <- numeric(nrow.KI.mat)
 
   for(j in 1:nrow.KI.mat) {
+
+    ## Initialize    
+
+    cv.vec[j] <- .Machine$double.xmax
 
     if(complexity=="degree") {
       if(num.z==0) {
@@ -279,13 +281,11 @@ frscv <- function(xz,
                         knots=knots,
                         basis="additive-tensor")
 
-      if(output < cv.min) {
-        cv.min <- output
-        basis.opt <- "additive-tensor"
+      if(output < cv.vec[j]) {
+        cv.vec[j] <- output
         basis.vec[j] <- "additive-tensor"
-        K.opt <- input.j[1:(2*num.x)]
-        if(!is.null(z)) I.opt <- input.j[(2*num.x+1):(2*num.x+num.z)]
       }
+
 
       output <- cv.func(input=input.j,
                         x=x,
@@ -301,13 +301,10 @@ frscv <- function(xz,
                         knots=knots,
                         basis="additive")
 
-      if(output < cv.min) {
-        cv.min <- output
-        basis.opt <- "additive"
+      if(output < cv.vec[j]) {
+        cv.vec[j] <- output
         basis.vec[j] <- "additive"
-        K.opt <- input.j[1:(2*num.x)]
-        if(!is.null(z)) I.opt <- input.j[(2*num.x+1):(2*num.x+num.z)]
-      }
+      }        
 
       output <- cv.func(input=input.j,
                         x=x,
@@ -323,12 +320,9 @@ frscv <- function(xz,
                         knots=knots,
                         basis="tensor")
 
-      if(output < cv.min) {
-        cv.min <- output
-        basis.opt <- "tensor"
+      if(output < cv.vec[j]) {
+        cv.vec[j] <- output
         basis.vec[j] <- "tensor"
-        K.opt <- input.j[1:(2*num.x)]
-        if(!is.null(z)) I.opt <- input.j[(2*num.x+1):(2*num.x+num.z)]
       }
 
     } else {
@@ -349,19 +343,25 @@ frscv <- function(xz,
                         knots=knots,
                         basis=basis)
 
-      if(output < cv.min) {
-        cv.min <- output
-        basis.opt <- basis
+      if(output < cv.vec[j]) {
+        cv.vec[j] <- output
         basis.vec[j] <- basis
-        K.opt <- input.j[1:(2*num.x)]
-        if(!is.null(z)) I.opt <- input.j[(2*num.x+1):(2*num.x+num.z)]
       }
 
     }
 
-    cv.min.vec[j] <- output
-
   }
+
+  ## Sort on cv.vec
+
+  ocv.vec <- order(cv.vec)
+
+  cv.min <- cv.vec[ocv.vec][1]
+  K.opt <- KI.mat[ocv.vec,][1,]
+  basis.opt <- basis.vec[ocv.vec][1]
+  degree <- K.opt[1:num.x]
+  segments <- K.opt[(num.x+1):(2*num.x)]
+  if(!is.null(z)) I.opt <- K.opt[(2*num.x+1):(2*num.x+num.z)]
 
   console <- printClear(console)
   console <- printPop(console)
@@ -370,20 +370,20 @@ frscv <- function(xz,
 
   if(is.null(z)) I.opt <- NULL
 
-  crscv(K=cbind(K.opt[1:num.x],K.opt[(num.x+1):(2*num.x)]),
+  crscv(K=K.opt,
         I=I.opt,
         basis=basis.opt,
         basis.vec=basis.vec,
         basis.maxdim=basis.maxdim,
         complexity=complexity,
         knots=knots,
-        degree=K.opt[1:num.x],
-        segments=K.opt[(num.x+1):(2*num.x)],
+        degree=degree,
+        segments=segments,
         K.mat=KI.mat,
         restarts=NULL,
         lambda=NULL,
         lambda.mat=NULL,
         cv.func=cv.min,
-        cv.func.vec=as.matrix(cv.min.vec))
+        cv.func.vec=as.matrix(cv.vec))
 
 }
