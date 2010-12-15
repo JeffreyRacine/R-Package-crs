@@ -36,24 +36,21 @@ crscv <- function(K,
 }
 
 print.crscv <- function(x, ...){
+
   if(!is.null(x$lambda)&&is.null(x$I)) {
     cat("\nCategorical Regression Spline Cross-Validation",sep="")
     cat(paste("\n\nObjective function value : ",format(x$cv.func),sep=""),sep="")
 
     cat(paste("\n\nKnot type: ", format(x$knots), sep=""))    
-    cat(paste("\n\nModel complexity proxy: ", format(x$complexity), sep=""))
-    if(x$complexity=="degree") {
-      cat(paste("\nNumber of segments: ", format(x$segments), sep=""))
-      for(j in 1:length(x$K))
-        cat(paste("\nOptimal spline degree for x[", j, "]: ",format(x$K[j]),sep=""),sep="")
-    } else {
-      cat(paste("\nSpline degree: ", format(x$degree), sep=""))
-      for(j in 1:length(x$K))
-        cat(paste("\nOptimal number of segments for x[", j, "]: ",format(x$K[j]),sep=""),sep="")
-    }
+    cat(paste("\nModel complexity proxy: ", format(x$complexity), sep=""))
 
-    for(j in 1:length(x$lambda))
-      cat(paste("\nOptimal bandwidth for z[", j, "]: ",format(x$lambda[j]),sep=""),sep="")
+    for(j in 1:length(x$degree))
+      cat(paste("\nSpline degree/number of segments for x[", j, "]: ", format(x$degree[j]),"/",format(x$segments[j]),sep=""),sep="")
+    if(!is.null(x$I)) for(j in 1:length(x$I))
+      cat(paste("\nInclusion indicator for z[", j, "]: ",format(x$I[j]),sep=""),sep="")
+    if(!is.null(x$lambda)) for(j in 1:length(x$lambda))
+      cat(paste("\nBandwidth for  z[", j, "]: ",format(x$lambda[j]),sep=""),sep="")
+
     cat(paste("\n\nMaximum spline degree for search: ",format(x$basis.maxdim),sep=""),sep="")
     cat(paste("\nBasis: ", x$basis,sep=""))
     if(x$restarts>0) cat(paste("\nNumber of restarts = ", format(x$restarts),sep=""),sep="")    
@@ -62,26 +59,32 @@ print.crscv <- function(x, ...){
     cat("\nFactor Regression Spline Cross-Validation",sep="")
     cat(paste("\n\nObjective function value : ",format(x$cv.func),sep=""),sep="")
     cat(paste("\n\nKnot type: ", format(x$knots), sep=""))    
-    cat(paste("\n\nModel complexity proxy: ", format(x$complexity), sep=""))
-    if(x$complexity=="degree") {
-      cat(paste("\nNumber of segments: ", format(x$segments), sep=""))
-      for(j in 1:length(x$K))
-        cat(paste("\nOptimal spline degree for x[", j, "]: ",format(x$K[j]),sep=""),sep="")
-    } else {
-      cat(paste("\nSpline degree: ", format(x$degree), sep=""))
-      for(j in 1:length(x$K))
-        cat(paste("\nOptimal number of segments for x[", j, "]: ",format(x$K[j]),sep=""),sep="")
-    }
-    for(j in 1:length(x$I))
-      cat(paste("\nInclusion for z[", j, "]: ",format(x$I[j]),sep=""),sep="")
+    cat(paste("\nModel complexity proxy: ", format(x$complexity), sep=""))
+
+    for(j in 1:length(x$degree))
+      cat(paste("\nSpline degree/number of segments for x[", j, "]: ", format(x$degree[j]),"/",format(x$segments[j]),sep=""),sep="")
+    if(!is.null(x$I)) for(j in 1:length(x$I))
+      cat(paste("\nInclusion indicator for z[", j, "]: ",format(x$I[j]),sep=""),sep="")
+    if(!is.null(x$lambda)) for(j in 1:length(x$lambda))
+      cat(paste("\nBandwidth for  z[", j, "]: ",format(x$lambda[j]),sep=""),sep="")
+
     cat(paste("\n\nMaximum spline degree for search: ",format(x$basis.maxdim),sep=""),sep="")
     cat(paste("\nBasis: ", x$basis,sep=""))
     cat("\n\n")
   } else {
     cat("\nRegression Spline Cross-Validation",sep="")
     cat(paste("\n\nObjective Function Value : ",format(x$cv.func),sep=""),sep="")
-    for(j in 1:length(x$K))
-      cat(paste("\nOptimal spline degree for x[", j, "]: ",format(x$K[j]),sep=""),sep="")
+
+    cat(paste("\n\nKnot type: ", format(x$knots), sep=""))    
+    cat(paste("\nModel complexity proxy: ", format(x$complexity), sep=""))
+
+    for(j in 1:x$num.x)
+      cat(paste("\nSpline degree/number of segments for x[", j, "]: ", format(x$degree[j]),"/",format(x$segments[j]),sep=""),sep="")
+    if(!is.null(x$I)) for(j in 1:length(x$I))
+      cat(paste("\nInclusion indicator for z[", j, "]: ",format(x$I[j]),sep=""),sep="")
+    if(!is.null(x$lambda)) for(j in 1:length(x$lambda))
+      cat(paste("\nBandwidth for  z[", j, "]: ",format(x$lambda[j]),sep=""),sep="")
+
     cat(paste("\n\nMaximum spline degree for search: ",format(x$basis.maxdim),sep=""),sep="")
     cat(paste("\nBasis: ", x$basis,sep=""))
     cat("\n\n")
