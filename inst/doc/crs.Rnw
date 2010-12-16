@@ -63,14 +63,19 @@ options(prompt = "R> ", crs.messages = FALSE, digits = 3)
 \section*{Introduction}
 
 The \pkg{crs} package implements a framework for nonparametric
-regression that admits both continuous and categorical predictors. The
-categorical predictors can be handled in two ways, namely 1) using
-kernel weighting where the kernel functions are tailored to the
+regression splines that admits both continuous and categorical
+predictors. The categorical predictors can be handled in two ways, (i)
+using kernel weighting where the kernel functions are tailored to the
 discrete support of the categorical predictors \citep{RACINE_LI:2004},
-and 2) using indicator basis functions. This package implements the
-approach described in \citep{MA_RACINE_YANG:2010} when the option
-\code{kernel=TRUE} is selected as described below. As well, it
-implements related methods that the author is currently developing.
+and (ii) using indicator basis functions. The practical difference
+between these two approaches is that the use of indicator basis
+functions consume degrees of freedom, while kernel weighting does
+not. 
+
+This package implements the approach described in
+\citep{MA_RACINE_YANG:2010} when the option \code{kernel=TRUE} is
+selected as described below. As well, this package implements related
+methods that the author is currently developing.
 
 Data-driven methods (leave-out-out cross-validation,
 \citeauthor{STONE:1974} \citeyear{STONE:1974}, \citeauthor{STONE:1977}
@@ -99,13 +104,14 @@ implementation are as follows:
   smoothing, whether to include each categorical predictor or not can
   be specified manually or chosen via leave-one-out cross-validation
   
-\item we allow the degree of the spline (alternatively, the number of
-  segments/knots minus one) for each continuous predictor to include
-  zero and when the degree (alternatively, number of segments/knots
-  minus one) is zero the variable is thereby excluded from the
-  regression: in this manner, irrelevant variables, whether continuous
-  or categorical, can be automatically removed negating the need for
-  pre-testing and so forth (\citeauthor{HALL_RACINE_LI:2004}
+\item we allow the degree of the spline for each continuous predictor
+  to include zero, the inclusion indicator for each categorical
+  predictor to equal zero, and the bandwidth for each categorical
+  predictor to equal one, and when the degree/inclusion indicator is
+  zero or the bandwidth is one, the variable is thereby removed from
+  the regression: in this manner, irrelevant predictors can be
+  automatically removed by cross-validation negating the need for
+  pre-testing (\citeauthor{HALL_RACINE_LI:2004}
   \citeyear{HALL_RACINE_LI:2004}, \citeauthor{HALL_LI_RACINE:2007}
   \citeyear{HALL_LI_RACINE:2007})
   
