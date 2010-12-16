@@ -75,15 +75,15 @@ implements related methods that the author is currently developing.
 Data-driven methods (leave-out-out cross-validation,
 \citeauthor{STONE:1974} \citeyear{STONE:1974}, \citeauthor{STONE:1977}
 \citeyear{STONE:1977}) can be used for selecting the spline degree,
-number of knots, and bandwidths. Details of the implementation are as
-follows:
+number of segments/knots, and bandwidths. Details of the
+implementation are as follows:
 
 \begin{enumerate}
   [label=(\roman{*}),ref=(\roman{*})]
 
-\item the degree of the spline and number of knots for each continuous
-  predictor can be set manually as can the bandwidths for each
-  categorical predictor (if appropriate)
+\item the degree of the spline and number of segments (i.e.~knots
+  minus one) for each continuous predictor can be set manually as can
+  the bandwidths for each categorical predictor (if appropriate)
   
 \item alternatively, leave-one-out cross-validation can be used to
   select either the degree of the spline (holding the number of
@@ -316,7 +316,7 @@ By way of illustration we consider a simple example involving one
 continuous and one discrete predictor.
 
 <<echo=TRUE,keep.source=TRUE>>=
-set.seed(1234)
+set.seed(42)
 n <- 1000
 x <- runif(n)
 z <- rbinom(n,1,.5)
