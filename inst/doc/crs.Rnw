@@ -198,7 +198,7 @@ B <- gsl.bs(x,degree=degree,deriv=deriv,intercept=TRUE)
 matplot(x,B,type="l")
 @ 
 \caption{\label{gsl matplot}A degree-\Sexpr{degree} B-spline (left)
-  with one segment (two knots) and its \Sexpr{deriv}-order derivative
+  with one segment (two knots) and its \Sexpr{deriv}st-order derivative
   (right).}
 \end{center}
 \end{figure}
@@ -287,22 +287,22 @@ computationally appealing, particularly for large data sets.
 \subsection*{Pruning}
 
 Once a model has been selected via cross-validation
-(i.e. \code{degree}, \code{include} or \code{lambda}), there is the
-opportunity to (potentially) further refine the model by adding the
-option \code{prune=TRUE} to the \code{crs} function call. Pruning
-is accomplished by conducting stepwise cross-validated variable
-selection using a modified version of the \code{stepAIC} function in
-the \proglang{R} \pkg{MASS} package where the function
-\code{extractAIC} is replaced with the function \code{extractCV} with
-additional modifications where necessary. Pruning of potentially
-superfluous bases is undertaken, however, the pruned model
-(potentially containing a subset of the bases) is returned \emph{only
-  if its cross-validation score is lower than the model being
-  pruned}. When this is not the case a warning is issued to this
-effect. A final pruning stage is commonplace in the spline framework
-and may positively impact on the finite-sample efficiency of the
-resulting estimator depending on the rank of the model being
-pruned. Note that this option can only be applied when
+(i.e.~\code{degree}, \code{segments}, \code{include} or \code{lambda}
+have been selected), there is the opportunity to (potentially) further
+refine the model by adding the option \code{prune=TRUE} to the
+\code{crs} function call. Pruning is accomplished by conducting
+stepwise cross-validated variable selection using a modified version
+of the \code{stepAIC} function in the \proglang{R} \pkg{MASS} package
+where the function \code{extractAIC} is replaced with the function
+\code{extractCV} with additional modifications where
+necessary. Pruning of potentially superfluous bases is undertaken,
+however, the pruned model (potentially containing a subset of the
+bases) is returned \emph{only if its cross-validation score is lower
+  than the model being pruned}. When this is not the case a warning is
+issued to this effect. A final pruning stage is commonplace in the
+spline framework and may positively impact on the finite-sample
+efficiency of the resulting estimator depending on the rank of the
+model being pruned. Note that this option can only be applied when
 \code{kernel=FALSE}.
 
 \section*{Illustrative Examples}
