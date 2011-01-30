@@ -1,5 +1,9 @@
 Changes from Version 0.13.7 to 0.13.8 [29-Jan-2011]
 
+* segments and degree hit different maxima (basis.maxdim+1,
+  basis.maxdim) but `degree equal to basis.maxdim' warning was only
+  being issued when equal to basis.maxdim
+
 * restarts was not being passed to krscv
 
 Changes from Version 0.13.6 to 0.13.7 [9-Dec-2010]
