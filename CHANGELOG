@@ -1,4 +1,6 @@
-Changes from Version 0.13.7 to 0.13.8 [29-Jan-2011]
+Changes from Version 0.13.7 to 0.13.8 [30-Jan-2011]
+
+* cv now default, increased basis.maxdim to 10
 
 * segments and degree hit different maxima (basis.maxdim+1,
   basis.maxdim) but `degree equal to basis.maxdim' warning was only

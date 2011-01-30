@@ -32,8 +32,8 @@ crs(\dots)
     degree = NULL,
     segments = NULL,
     include = NULL,
-    basis.maxdim = 5,
-    cv = NULL,
+    basis.maxdim = 10,
+    cv = TRUE,
     cv.norm = c("L2", "L1"),
     kernel = FALSE,
     lambda = NULL,
@@ -81,7 +81,7 @@ crs(\dots)
   \item{data}{ an optional data frame containing the variables in the
   model }
   
-  \item{cv}{ a logical value (default \code{cv=FALSE}) indicating
+  \item{cv}{ a logical value (default \code{cv=TRUE}) indicating
     whether to perform cross-validated model selection or not }
 
   \item{cv.norm}{ a character string (default \code{cv.norm="L2"})
@@ -93,7 +93,7 @@ crs(\dots)
     indicating whether to use kernel smoothing or not }
 
   \item{basis.maxdim}{ the maximum dimension of the B-spline basis for
-    each of the continuous predictors (default \code{basis.maxdim=5})}
+    each of the continuous predictors (default \code{basis.maxdim=10})}
 
   \item{complexity}{a character string (default
   \code{complexity="degree-knots"}) indicating whether model `complexity' is
@@ -159,12 +159,12 @@ crs(\dots)
   \preformatted{
     ## Categorical data should be cast before call (necessary for plot method)
     z <- factor(z) 
-    model <- crs(y~x+z,cv=TRUE,kernel=TRUE,basis="auto")
+    model <- crs(y~x+z,kernel=TRUE,basis="auto")
     
     ## Categorical data should be cast before call (necessary for plot method)
     z1 <- factor(z1)
     z2 <- factor(z2)
-    model <- crs(y~x1+x2+z1+z2,degree=c(3,4),lambda=c(.1,.2),kernel=TRUE)
+    model <- crs(y~x1+x2+z1+z2,cv=FALSE,degree=c(3,4),lambda=c(.1,.2),kernel=TRUE)
     }
     
   \code{crs} computes a regression spline estimate of a one (1)
@@ -358,7 +358,7 @@ z <- factor(z)
 y <- dgp + rnorm(n,sd=.5)
 
 ## Estimate a model with specified degree and bandwidth
-model <- crs(y~x1+x2+z,degree=c(5,5),lambda=c(0.1),kernel=TRUE)
+model <- crs(y~x1+x2+z,degree=c(5,5),lambda=c(0.1),cv=FALSE,kernel=TRUE)
 summary(model)
 
 ## Perspective plot

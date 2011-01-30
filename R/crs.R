@@ -241,7 +241,7 @@ crsEst <- function(xz,
               hatvalues=model$hatvalues,
               nobs=length(y),
               k=model$rank,
-              cv=mean((y-model$fitted.values[,1])^2/(1-model$hatvalues)^2),
+              cv.score=mean((y-model$fitted.values[,1])^2/(1-model$hatvalues)^2),
               x=x,
               z=z,
               prune=prune,
@@ -312,8 +312,8 @@ crs.formula <- function(formula,
                         degree=NULL,
                         segments=NULL,
                         include=NULL,
-                        basis.maxdim=5,
-                        cv=NULL,
+                        basis.maxdim=10,
+                        cv=TRUE,
                         cv.norm=c("L2","L1"),
                         kernel=FALSE,
                         lambda=NULL,
@@ -369,7 +369,7 @@ crs.formula <- function(formula,
   if(is.null(include)&!is.null(z)&!kernel) include <- rep(1,num.z)
   if(is.null(lambda)&!is.null(z)&kernel) lambda <- rep(0,num.z)
 
-  if(!is.null(cv)&&basis=="additive-tensor"&&NCOL(xz)>1) warning(" cv specified but basis set to additive-tensor: you might consider basis=\"auto\"")
+  if(cv==TRUE&&basis=="additive-tensor"&&NCOL(xz)>1) warning(" cv specified but basis set to additive-tensor: you might consider basis=\"auto\"")
 
   if(kernel==TRUE&&prune==TRUE) warning(" pruning cannot coexist with categorical kernel smoothing (pruning ignored)")
 
@@ -379,50 +379,50 @@ crs.formula <- function(formula,
 
     ## indicator bases and B-spline bases cross-validation
     
-    if(!is.null(cv)) {
-      cv <- frscv(xz=xz,
-                  y=y,
-                  basis.maxdim=basis.maxdim,
-                  complexity=complexity,
-                  knots=knots,
-                  basis=basis,
-                  cv.norm=cv.norm,
-                  degree=degree,
-                  segments=segments)
-
-      cv.min <- cv$cv.min
-      degree <- cv$degree
-      segments <- cv$segments
-      include <- cv$I
-      basis <- cv$basis
-   }
+    if(cv==TRUE) {
+      cv.return <- frscv(xz=xz,
+                         y=y,
+                         basis.maxdim=basis.maxdim,
+                         complexity=complexity,
+                         knots=knots,
+                         basis=basis,
+                         cv.norm=cv.norm,
+                         degree=degree,
+                         segments=segments)
+      
+      cv.min <- cv.return$cv.min
+      degree <- cv.return$degree
+      segments <- cv.return$segments
+      include <- cv.return$I
+      basis <- cv.return$basis
+    }
 
   } else {
 
     ## kernel smooth and B-spline bases cross-validation
 
-    if(!is.null(cv)) {
-      cv <- krscv(xz=xz,
-                  y=y,
-                  basis.maxdim=basis.maxdim,
-                  complexity=complexity,
-                  knots=knots,
-                  basis=basis,
-                  cv.norm=cv.norm,
-                  degree=degree,
-                  segments=segments,
-                  restarts=restarts)
+    if(cv==TRUE) {
+      cv.return <- krscv(xz=xz,
+                         y=y,
+                         basis.maxdim=basis.maxdim,
+                         complexity=complexity,
+                         knots=knots,
+                         basis=basis,
+                         cv.norm=cv.norm,
+                         degree=degree,
+                         segments=segments,
+                         restarts=restarts)
 
-      cv.min <- cv$cv.min
-      degree <- cv$degree
-      segments <- cv$segments
-      lambda <- cv$lambda
-      basis <- cv$basis
+      cv.min <- cv.return$cv.min
+      degree <- cv.return$degree
+      segments <- cv.return$segments
+      lambda <- cv.return$lambda
+      basis <- cv.return$basis
     }
 
   }
 
-  if(!is.null(cv)) {
+  if(cv==TRUE) {
 
     est <- crs.default(xz=xz,
                        y=y,
@@ -787,7 +787,7 @@ summary.crs <- function(object,
   cat(paste("\nResidual standard error: ", format(sqrt(sum(object$residuals^2)/object$df.residual),digits=4)," on ", format(object$df.residual)," degrees of freedom",sep=""))
   adjusted.r.squared <- 1-(1-object$r.squared)*(length(object$fitted.values)-1)/object$df.residual
   cat(paste("\nMultiple R-squared: ", format(object$r.squared,digits=4),",   Adjusted R-squared: ",format(adjusted.r.squared,digits=4), sep=""))
-  cat(paste("\nCross-validation score: ", format(object$cv,digits=8), sep=""))  
+  cat(paste("\nCross-validation score: ", format(object$cv.score,digits=8), sep=""))  
 
   if(sigtest&!object$kernel) {
     cat("\n\nPredictor significance test:\n")

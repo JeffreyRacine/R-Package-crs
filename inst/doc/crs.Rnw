@@ -328,7 +328,7 @@ x <- runif(n)
 z <- rbinom(n,1,.5)
 y <- cos(2*pi*x) + z + rnorm(n,sd=1)
 z <- factor(z)
-model <- crs(y~x+z,cv=TRUE,basis="auto",kernel=TRUE)
+model <- crs(y~x+z,basis="auto",kernel=TRUE)
 summary(model)
 @ 
 
@@ -372,7 +372,7 @@ z <- ifelse(x1>.5,1,0)
 dgp <- cos(2*pi*x1)+sin(2*pi*x2)+2*z
 z <- factor(z)
 y <- dgp + rnorm(n,sd=1)
-model <- crs(y~x1+x2+z,cv=TRUE,complexity="degree",basis="auto",basis.maxdim=8)
+model <- crs(y~x1+x2+z,complexity="degree",basis="auto",basis.maxdim=8)
 summary(model)
 @ 
 
@@ -388,7 +388,7 @@ predictors).
 
 <<echo=TRUE,keep.source=TRUE>>=
 ## When kernel=FALSE, we could use the anova() function
-model.res <- crs(y~x1+x2+z,degree=model$degree,basis=model$basis,include=0)
+model.res <- crs(y~x1+x2+z,cv=FALSE,degree=model$degree,basis=model$basis,include=0)
 anova(model.res$model.lm,model$model.lm)
 ## As this only works with kernel=FALSE, we could also do this manually...
 F <- model$df.residual*(sum(residuals(model.res)^2)

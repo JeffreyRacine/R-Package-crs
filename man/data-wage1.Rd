@@ -58,7 +58,6 @@ model <- crs(lwage~married+
              educ+
              exper+
              tenure,
-             cv=TRUE,
              basis="additive",
              data=wage1,
              deriv=1,
@@ -87,6 +86,7 @@ model <- crs(lwage~married+
              include=include,
              basis=basis,
              data=wage1,
+             cv=FALSE,
              deriv=2)
 plot(model,deriv=TRUE)
 \dontrun{

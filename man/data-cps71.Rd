@@ -33,9 +33,9 @@ data(cps71)
 attach(cps71)
 require(np)
 
-model.crs <- crs(logwage~age,cv=TRUE,complexity="degree-knots")
+model.crs <- crs(logwage~age,complexity="degree-knots")
 
-model.np <- npreg(logwage~age,regtype="ll",bwmethod="cv.aic")
+model.np <- npreg(logwage~age,regtype="ll")
 
 plot(age,logwage,cex=0.25,col="grey")
 lines(age,fitted(model.crs))
