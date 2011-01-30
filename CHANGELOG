@@ -1,3 +1,7 @@
+Changes from Version 0.13.7 to 0.13.8 [29-Jan-2011]
+
+* restarts was not being passed to krscv
+
 Changes from Version 0.13.6 to 0.13.7 [9-Dec-2010]
 
 * added option to choose both degree and knots independently for each

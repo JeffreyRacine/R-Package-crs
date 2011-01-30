@@ -324,6 +324,7 @@ crs.formula <- function(formula,
                         deriv=0,
                         data.return=FALSE,
                         prune=FALSE,
+                        restarts=0,
                         ...) {
 
   cv.norm <- match.arg(cv.norm)
@@ -409,7 +410,8 @@ crs.formula <- function(formula,
                   basis=basis,
                   cv.norm=cv.norm,
                   degree=degree,
-                  segments=segments)
+                  segments=segments,
+                  restarts=restarts)
 
       cv.min <- cv$cv.min
       degree <- cv$degree
@@ -464,6 +466,7 @@ crs.formula <- function(formula,
   est$y <- y
   est$prune <- prune
   est$cv.min <- cv.min
+  est$restarts <- restarts
 
   return(est)
 
