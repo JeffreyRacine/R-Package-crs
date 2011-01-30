@@ -144,9 +144,9 @@ crs(\dots)
    cross-validation criterion based upon a modified version of
    \code{\link[MASS]{stepAIC}} (see below for details) }
 
-  \item{restarts}{ integer number of times to restart the process of
-    finding extrema of the cross-validation function for the bandwidths
-    only from different (random) initial points }
+  \item{restarts}{ integer specifying the number of times to restart the
+    process of finding extrema of the cross-validation function (for the
+    bandwidths only) from different (random) initial points }
  
   \item{\dots}{ optional arguments }
   
