@@ -326,9 +326,9 @@ set.seed(42)
 n <- 1000
 x <- runif(n)
 z <- rbinom(n,1,.5)
-y <- cos(2*pi*x) + z + rnorm(n,sd=1)
+y <- cos(2*pi*x) + z + rnorm(n,sd=0.25)
 z <- factor(z)
-model <- crs(y~x+z,basis="auto",kernel=TRUE)
+model <- crs(y~x+z,basis="auto",basis.maxdim=5,kernel=TRUE)
 summary(model)
 @ 
 

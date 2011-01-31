@@ -1151,13 +1151,13 @@ crs.sigtest <- function(object,...) {
     if(!is.factor(object$xz[,i])) {
       degree <- object$degree
       degree[j.num.x] <- 0
-      model.res <- crs(object$formula,degree=degree,include=object$include,basis=object$basis,prune=object$prune,data=eval(object$call$data))
+      model.res <- crs(object$formula,cv=FALSE,degree=degree,include=object$include,basis=object$basis,prune=object$prune,data=eval(object$call$data))
       sg[[i]] <- anova(model.res$model.lm,object$model.lm)
       j.num.x <- j.num.x + 1
     } else {
       include <- object$include
       include[j.num.z] <- 0
-      model.res <- crs(object$formula,degree=object$degree,include=include,basis=object$basis,prune=object$prune,data=eval(object$call$data))
+      model.res <- crs(object$formula,cv=FALSE,degree=object$degree,include=include,basis=object$basis,prune=object$prune,data=eval(object$call$data))
       sg[[i]] <- anova(model.res$model.lm,object$model.lm)
       j.num.z <- j.num.z + 1      
     }
