@@ -59,6 +59,7 @@ model <- crs(lwage~married+
              exper+
              tenure,
              basis="additive",
+             complexity="degree",
              data=wage1,
              deriv=1,
              basis.maxdim=5)
