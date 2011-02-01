@@ -743,14 +743,15 @@ cv.kernel.spline <- function(x,
   if(is.null(z)) {
     ## No categorical predictors
     if(any(K[,1] > 0)) {
-      model <- lm(y~prod.spline(x=x,K=K,knots=knots,basis=basis))
+      epsilon <- residuals(lsfit(P <- prod.spline(x=x,K=K,knots=knots,basis=basis),y))
+      htt <- hat(P)
+      htt <- ifelse(htt == 1, 1-.Machine$double.eps, htt)      
     } else {
-      model <- lm(y~1)
+      n <- length(y)
+      htt <- rep(1/n,n)
+      epsilon <- y-mean(y)
     }
-    htt <- hatvalues(model)
-    htt <- ifelse(htt == 1, 1-.Machine$double.eps, htt)
-    epsilon <- residuals(model)
-    cv <- mean(epsilon^2/(1-htt)^2)
+    cv <- ifelse(cv.norm=="L2",mean(epsilon^2/(1-htt)^2),mean(abs(epsilon)/abs(1-htt)))
   } else {
     ## Categorical predictors
     z <- as.matrix(z)
