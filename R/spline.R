@@ -785,9 +785,10 @@ cv.kernel.spline <- function(x,
 
 }
 
-## We use the Sherman-Morrison-Woodbury decomposition to efficiently
-## calculate the leave-one-out cross-validation function for factor
-## splines.
+## Feb 1 2011 - replaced lm() and hatvalues() with lsfit and hat. On
+## large datasets makes a noticeable difference (1 predictor, n=10,000
+## drops from 17 secs to 13, n=100,000 drops 92 to to 71 seconds, so
+## cuts runtime to ~ 0.77 of original time)
 
 cv.factor.spline <- function(x,
                              y,
@@ -808,22 +809,16 @@ cv.factor.spline <- function(x,
 
   cv.norm <- match.arg(cv.norm)
 
-  if(!is.null(z)) {
-    if(any(K[,1] > 0)||any(I > 0)) {
-      model <- lm(y~prod.spline(x=x,z=z,K=K,I=I,knots=knots,basis=basis))
-    } else {
-      model <- lm(y~1)
-    }
+  if(any(K[,1] > 0)||any(I > 0)) {
+    epsilon <- residuals(lsfit(P <- prod.spline(x=x,z=z,K=K,I=I,knots=knots,basis=basis),y))
+    htt <- hat(P)
+    htt <- ifelse(htt == 1, 1-.Machine$double.eps, htt)      
   } else {
-    if(any(K[,1] > 0)) {
-      model <- lm(y~prod.spline(x=x,z=z,K=K,I=I,knots=knots,basis=basis))
-    } else {
-      model <- lm(y~1)
-    }
+    n <- length(y)
+    htt <- rep(1/n,n)
+    epsilon <- y-mean(y)
   }
-  htt <- hatvalues(model)
-  htt <- ifelse(htt == 1, 1-.Machine$double.eps, htt)
-  epsilon <- residuals(model)
+
   cv <- ifelse(cv.norm=="L2",mean(epsilon^2/(1-htt)^2),mean(abs(epsilon)/abs(1-htt)))
 
   return(cv)
