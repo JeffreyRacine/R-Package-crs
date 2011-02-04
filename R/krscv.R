@@ -256,20 +256,21 @@ krscv <- function(xz,
   output <- list()
   output.restart <- list()
 
+  ## First need to create KI mat outside loop and not - back to cbind issue...
+  
+  if(complexity=="degree") {
+    K.mat <- cbind(K.mat[,1:num.x],matrix(segments,nrow(K.mat),length(segments),byrow=TRUE))
+  } else if(complexity=="knots") {
+    K.mat <- cbind(matrix(degree,nrow(K.mat),length(degree),byrow=TRUE),K.mat[,1:num.x]+1) 
+  } else if(complexity=="degree-knots") {
+    K.mat[,(num.x+1):(2*num.x)] <- K.mat[,(num.x+1):(2*num.x)]+1
+  }
+
   for(j in 1:nrow.K.mat) {
 
     ## Initialize    
 
     cv.vec[j] <- .Machine$double.xmax
-
-    if(complexity=="degree") {
-      input.j <- c(K.mat[j,1:num.x],segments)
-    } else if(complexity=="knots") {
-      input.j <- c(degree,K.mat[j,1:num.x]+1) 
-    } else if(complexity=="degree-knots") {
-      K.mat[j,(num.x+1):(2*num.x)] <- K.mat[j,(num.x+1):(2*num.x)]+1
-      input.j <- K.mat[j,]
-    }
 
     if(basis=="auto") {
 
@@ -286,7 +287,7 @@ krscv <- function(xz,
                         x=x,
                         y=y,
                         z=z,
-                        K=input.j,
+                        K=K.mat[j,],
                         basis.maxdim=basis.maxdim,
                         restart=0,
                         num.restarts=restarts,
@@ -320,7 +321,7 @@ krscv <- function(xz,
                                     x=x,
                                     y=y,
                                     z=z,
-                                    K=input.j,
+                                    K=K.mat[j,],
                                     basis.maxdim=basis.maxdim,
                                     restart=r,
                                     num.restarts=restarts,
@@ -364,7 +365,7 @@ krscv <- function(xz,
                         x=x,
                         y=y,
                         z=z,
-                        K=input.j,
+                        K=K.mat[j,],
                         basis.maxdim=basis.maxdim,
                         restart=0,
                         num.restarts=restarts,
@@ -398,7 +399,7 @@ krscv <- function(xz,
                                     x=x,
                                     y=y,
                                     z=z,
-                                    K=input.j,
+                                    K=K.mat[j,],
                                     basis.maxdim=basis.maxdim,
                                     restart=r,
                                     num.restarts=restarts,
@@ -442,7 +443,7 @@ krscv <- function(xz,
                         x=x,
                         y=y,
                         z=z,
-                        K=input.j,
+                        K=K.mat[j,],
                         basis.maxdim=basis.maxdim,
                         restart=0,
                         num.restarts=restarts,
@@ -476,7 +477,7 @@ krscv <- function(xz,
                                     x=x,
                                     y=y,
                                     z=z,
-                                    K=input.j,
+                                    K=K.mat[j,],
                                     basis.maxdim=basis.maxdim,
                                     restart=r,
                                     num.restarts=restarts,
@@ -522,7 +523,7 @@ krscv <- function(xz,
                         x=x,
                         y=y,
                         z=z,
-                        K=input.j,
+                        K=K.mat[j,],
                         basis.maxdim=basis.maxdim,
                         restart=0,
                         num.restarts=restarts,
@@ -556,7 +557,7 @@ krscv <- function(xz,
                                     x=x,
                                     y=y,
                                     z=z,
-                                    K=input.j,
+                                    K=K.mat[j,],
                                     basis.maxdim=basis.maxdim,
                                     restart=r,
                                     num.restarts=restarts,

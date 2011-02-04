@@ -254,7 +254,29 @@ frscv <- function(xz,
       KI.mat <- matrix.combn(0:basis.maxdim,2*num.x)
     }
   }
+
+  ## For exhaustive search it might be ideal to strip off potentially
+  ## irrelevant rows (e.g. repeated degree all zero, and those with
+  ## negative degrees of freedom).
+
+  ## First need to create KI mat outside loop and not - back to cbind issue...
   
+  if(complexity=="degree") {
+    if(num.z==0) {
+      KI.mat <- cbind(KI.mat[,1:num.x],matrix(segments,nrow(KI.mat),length(segments),byrow=TRUE))
+    } else {
+      KI.mat <- cbind(KI.mat[,1:num.x],matrix(segments,nrow(KI.mat),length(segments),byrow=TRUE),KI.mat[,(num.x+1):(num.x+num.z)])
+    }
+  } else if(complexity=="knots") {
+    if(num.z==0) {
+      KI.mat <- cbind(matrix(degree,nrow(KI.mat),length(degree),byrow=TRUE),KI.mat[,1:num.x]+1)
+    } else {
+      KI.mat <- cbind(matrix(degree,nrow(KI.mat),length(degree),byrow=TRUE),KI.mat[,1:num.x]+1,KI.mat[,(num.x+1):(num.x+num.z)])
+    }
+  } else if(complexity=="degree-knots") {
+    KI.mat[,(num.x+1):(2*num.x)] <- KI.mat[,(num.x+1):(2*num.x)]+1
+  }
+
   nrow.KI.mat <- NROW(KI.mat)
   basis.vec <- character(nrow.KI.mat)
   cv.vec <- numeric(nrow.KI.mat)
@@ -265,26 +287,9 @@ frscv <- function(xz,
 
     cv.vec[j] <- .Machine$double.xmax
 
-    if(complexity=="degree") {
-      if(num.z==0) {
-        input.j <- c(KI.mat[j,1:num.x],segments)
-      } else {
-        input.j <- c(KI.mat[j,1:num.x],segments,KI.mat[j,(num.x+1):(num.x+num.z)])
-      }
-    } else if(complexity=="knots") {
-      if(num.z==0) {
-        input.j <- c(degree,KI.mat[j,1:num.x]+1)
-      } else {
-        input.j <- c(degree,KI.mat[j,1:num.x]+1,KI.mat[j,(num.x+1):(num.x+num.z)])
-      }
-    } else if(complexity=="degree-knots") {
-      KI.mat[j,(num.x+1):(2*num.x)] <- KI.mat[j,(num.x+1):(2*num.x)]+1
-      input.j <- KI.mat[j,]
-    }
-
     if(basis=="auto") {
 
-      output <- cv.func(input=input.j,
+      output <- cv.func(input=KI.mat[j,],
                         x=x,
                         y=y,
                         z=z,
@@ -304,7 +309,7 @@ frscv <- function(xz,
       }
 
 
-      output <- cv.func(input=input.j,
+      output <- cv.func(input=KI.mat[j,],
                         x=x,
                         y=y,
                         z=z,
@@ -323,7 +328,7 @@ frscv <- function(xz,
         basis.vec[j] <- "additive"
       }        
 
-      output <- cv.func(input=input.j,
+      output <- cv.func(input=KI.mat[j,],
                         x=x,
                         y=y,
                         z=z,
@@ -346,7 +351,7 @@ frscv <- function(xz,
 
       ## not auto, so use either "additive-tensor" or "additive" or "tensor"
 
-      output <- cv.func(input=input.j,
+      output <- cv.func(input=KI.mat[j,],
                         x=x,
                         y=y,
                         z=z,
