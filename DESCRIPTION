@@ -1,6 +1,6 @@
 Package: crs
-Version: 0.13-8
-Date: 2011-02-01
+Version: 0.13-9
+Date: 2011-02-03
 Depends: mgcv
 Suggests: np
 Title: Categorical Regression Splines
@@ -9,5 +9,4 @@ Maintainer: Jeffrey S. Racine <racinej@mcmaster.ca>
 Description: This package provides for estimating regression splines that handle a mix of continuous and categorical (discrete) data often encountered in applied settings. I would like to gratefully acknowledge support from  the Natural Sciences and Engineering Research Council of Canada (NSERC:www.nserc.ca), the Social Sciences and Humanities Research Council of Canada (SSHRC:www.sshrc.ca), and the Shared Hierarchical Academic Research Computing Network (SHARCNET:www.sharcnet.ca).
 License: GPL
 URL: 
-
-
+Packaged: 2011-02-03 14:16:15 UTC; jracine

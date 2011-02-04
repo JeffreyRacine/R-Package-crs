@@ -200,39 +200,39 @@ frscv <- function(xz,
   ## rather than letting cv proceed only to be halted after the lower
   ## dimension models have been estimated when this occurs.
 
-  if(complexity=="degree") {
-    if(basis == "auto") {
-      k <- max(c(ncol(prod.spline(x=x,z=z,K=cbind(rep(basis.maxdim,num.x),segments),I=rep(1,num.z),knots=knots,basis="additive-tensor")),
-                 ncol(prod.spline(x=x,z=z,K=cbind(rep(basis.maxdim,num.x),segments),I=rep(1,num.z),knots=knots,basis="additive")),
-                 ncol(prod.spline(x=x,z=z,K=cbind(rep(basis.maxdim,num.x),segments),I=rep(1,num.z),knots=knots,basis="tensor"))))
-    } else {
-      k <- ncol(prod.spline(x=x,z=z,K=cbind(rep(basis.maxdim,num.x),segments),I=rep(1,num.z),knots=knots,basis=basis))
-    }
-  } else if(complexity=="knots") {
-    if(basis == "auto") {
-      k <- max(c(ncol(prod.spline(x=x,z=z,K=cbind(degree,rep(basis.maxdim,num.x)),I=rep(1,num.z),knots=knots,basis="additive-tensor")),
-                 ncol(prod.spline(x=x,z=z,K=cbind(degree,rep(basis.maxdim,num.x)),I=rep(1,num.z),knots=knots,basis="additive")),
-                 ncol(prod.spline(x=x,z=z,K=cbind(degree,rep(basis.maxdim,num.x)),I=rep(1,num.z),knots=knots,basis="tensor"))))
-    } else {
-      k <- ncol(prod.spline(x=x,z=z,K=cbind(degree,rep(basis.maxdim,num.x)),I=rep(1,num.z),knots=knots,basis=basis))
-    }
-  } else if(complexity=="degree-knots"){
-    if(basis == "auto") {
-      k <- max(c(ncol(prod.spline(x=x,z=z,K=matrix(2*rep(basis.maxdim,num.x),num.x,2),I=rep(1,num.z),knots=knots,basis="additive-tensor")),
-                 ncol(prod.spline(x=x,z=z,K=matrix(2*rep(basis.maxdim,num.x),num.x,2),I=rep(1,num.z),knots=knots,basis="additive")),
-                 ncol(prod.spline(x=x,z=z,K=matrix(2*rep(basis.maxdim,num.x),num.x,2),I=rep(1,num.z),knots=knots,basis="tensor"))))
-    } else {
-      k <- ncol(prod.spline(x=x,z=z,K=matrix(2*rep(basis.maxdim,num.x),num.x,2),I=rep(1,num.z),knots=knots,basis=basis))
-    }
-  }
-
-  df <- n - k
-
-  if(df <= 0) {
-    stop(paste(" maximum basis dimension (",k,") would equal/exceed sample size (",n,")\n   perhaps use basis=\"additive\" or else decrease basis.maxdim",sep=""))
-  } else if(df <= 10) {
-    warning(paste(" maximum basis dimension (",k,") and sample size (",n,") close",sep=""))
-  }
+##  if(complexity=="degree") {
+##    if(basis == "auto") {
+##      k <- max(c(ncol(prod.spline(x=x,z=z,K=cbind(rep(basis.maxdim,num.x),segments),I=rep(1,num.z),knots=knots,basis="additive-tensor")),
+##                 ncol(prod.spline(x=x,z=z,K=cbind(rep(basis.maxdim,num.x),segments),I=rep(1,num.z),knots=knots,basis="additive")),
+##                 ncol(prod.spline(x=x,z=z,K=cbind(rep(basis.maxdim,num.x),segments),I=rep(1,num.z),knots=knots,basis="tensor"))))
+##    } else {
+##      k <- ncol(prod.spline(x=x,z=z,K=cbind(rep(basis.maxdim,num.x),segments),I=rep(1,num.z),knots=knots,basis=basis))
+##    }
+##  } else if(complexity=="knots") {
+##    if(basis == "auto") {
+##      k <- max(c(ncol(prod.spline(x=x,z=z,K=cbind(degree,rep(basis.maxdim,num.x)),I=rep(1,num.z),knots=knots,basis="additive-tensor")),
+##                 ncol(prod.spline(x=x,z=z,K=cbind(degree,rep(basis.maxdim,num.x)),I=rep(1,num.z),knots=knots,basis="additive")),
+##                 ncol(prod.spline(x=x,z=z,K=cbind(degree,rep(basis.maxdim,num.x)),I=rep(1,num.z),knots=knots,basis="tensor"))))
+##    } else {
+##      k <- ncol(prod.spline(x=x,z=z,K=cbind(degree,rep(basis.maxdim,num.x)),I=rep(1,num.z),knots=knots,basis=basis))
+##    }
+##  } else if(complexity=="degree-knots"){
+##    if(basis == "auto") {
+##      k <- max(c(ncol(prod.spline(x=x,z=z,K=matrix(2*rep(basis.maxdim,num.x),num.x,2),I=rep(1,num.z),knots=knots,basis="additive-tensor")),
+##                 ncol(prod.spline(x=x,z=z,K=matrix(2*rep(basis.maxdim,num.x),num.x,2),I=rep(1,num.z),knots=knots,basis="additive")),
+##                 ncol(prod.spline(x=x,z=z,K=matrix(2*rep(basis.maxdim,num.x),num.x,2),I=rep(1,num.z),knots=knots,basis="tensor"))))
+##    } else {
+##      k <- ncol(prod.spline(x=x,z=z,K=matrix(2*rep(basis.maxdim,num.x),num.x,2),I=rep(1,num.z),knots=knots,basis=basis))
+##    }
+##  }
+##
+##  df <- n - k
+##
+##  if(df <= 0) {
+##    stop(paste(" maximum basis dimension (",k,") would equal/exceed sample size (",n,")\n   perhaps use basis=\"additive\" or else decrease basis.maxdim",sep=""))
+##  } else if(df <= 10) {
+##    warning(paste(" maximum basis dimension (",k,") and sample size (",n,") close",sep=""))
+##  }
 
   if(basis.maxdim < 1) stop(" basis.maxdim must be greater than or equal to 1")
 

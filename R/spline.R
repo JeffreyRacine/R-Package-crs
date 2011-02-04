@@ -740,6 +740,19 @@ cv.kernel.spline <- function(x,
   knots <- match.arg(knots)
   cv.norm <- match.arg(cv.norm)
 
+  ## Without computing P, compute the number of columns that P would
+  ## be and if degrees of freedom is 1 or less, return a large penalty.
+
+  c.vec <- NULL
+  if(any(K[,1] > 0)) c.vec <- rowSums(K[K[,1]!=0,,drop=FALSE])-1
+  if(basis=="additive") ncol.P <- sum(c.vec)
+  if(basis=="tensor") ncol.P <- prod(c.vec)
+  if(basis=="additive-tensor") ncol.P <- sum(c.vec)+ifelse(length(c.vec)>1,prod(c.vec),0)
+
+  if(ncol.P >= (n-1)) return(.Machine$double.xmax)
+
+  ## Otherwise, compute the cross-validation function
+
   if(is.null(z)) {
     ## No categorical predictors
     if(any(K[,1] > 0)) {
@@ -760,10 +773,11 @@ cv.kernel.spline <- function(x,
     epsilon <- numeric(length=n)
     htt <- numeric(length=n)
     if(any(K[,1] > 0)) {
+      P <- prod.spline(x=x,K=K,knots=knots,basis=basis) ## moved outside loop Feb 3 2011
       for(i in 1:nrow.z.unique) {
         zz <- ind == ind.vals[i]
         L <- prod.kernel(Z=z,z=z.unique[ind.vals[i],],lambda=lambda,kernel.type=kernel.type)
-        model <- lm(y~prod.spline(x=x,K=K,knots=knots,basis=basis),weights=L)
+        model <- lm(y~P,weights=L)
         epsilon[zz] <- residuals(model)[zz]
         htt[zz] <- hatvalues(model)[zz]
       }
@@ -798,7 +812,7 @@ cv.factor.spline <- function(x,
                              I=NULL,
                              kernel.type=c("nominal","ordinal"),
                              knots=c("quantiles","uniform"),
-                             basis=c("additive-tensor","additive","tensor","auto"),
+                             basis=c("additive-tensor","additive","tensor"),
                              cv.norm=c("L2","L1")) {
 
   if(missing(x) || missing(y) || missing (K)) stop(" must provide x, y and K")
@@ -810,18 +824,48 @@ cv.factor.spline <- function(x,
 
   cv.norm <- match.arg(cv.norm)
 
+  n <- NROW(x)
+
+  ## Without computing P, compute the number of columns that P would
+  ## be and if degrees of freedom is 1 or less, return a large penalty.
+
+  c.vec <- NULL
+  i.vec <- NULL
+
+  if(any(K[,1] > 0)) c.vec <- rowSums(K[K[,1]!=0,,drop=FALSE])-1
+  if(any(I > 0)) {
+    i.vec <- numeric()
+    j <- 1
+    for(i in 1:ncol(z)) {
+      if(I[i] != 0) {
+        i.vec[j] <- length(unique(z[,i]))-1
+        j <- j + 1
+      }
+    }
+  }
+
+  prod.sv.dv <- ifelse((length(c.vec)>1 | length(i.vec)>1) | (length(c.vec)==1 && length(i.vec)==1),
+                       prod.sv.dv <- prod(c(c.vec,i.vec)),0)
+
+  if(basis=="additive") ncol.P <- sum(c(c.vec,i.vec))
+  if(basis=="tensor") ncol.P <- prod(c(c.vec,i.vec))
+  if(basis=="additive-tensor") ncol.P <- sum(c(c.vec,i.vec))+prod.sv.dv
+
+  if(ncol.P >= (n-1)) return(.Machine$double.xmax)
+
+  ## Otherwise, compute the cross-validation function
+
   if(any(K[,1] > 0)||any(I > 0)) {
     epsilon <- residuals(lsfit(P <- prod.spline(x=x,z=z,K=K,I=I,knots=knots,basis=basis),y))
     htt <- hat(P)
-    htt <- ifelse(htt == 1, 1-.Machine$double.eps, htt)      
+    htt <- ifelse(htt == 1, 1-.Machine$double.eps, htt)
+    ## print(ncol.P==ncol(P)) to verify that the computation of
+    ## dimension of P and actual dimension of P agree
+    return(ifelse(cv.norm=="L2",mean(epsilon^2/(1-htt)^2),mean(abs(epsilon)/abs(1-htt))))
   } else {
-    n <- length(y)
     htt <- rep(1/n,n)
     epsilon <- y-mean(y)
+    return(ifelse(cv.norm=="L2",mean(epsilon^2/(1-htt)^2),mean(abs(epsilon)/abs(1-htt))))
   }
-
-  cv <- ifelse(cv.norm=="L2",mean(epsilon^2/(1-htt)^2),mean(abs(epsilon)/abs(1-htt)))
-
-  return(cv)
 
 }
