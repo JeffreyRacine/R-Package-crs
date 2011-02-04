@@ -279,13 +279,10 @@ frscv <- function(xz,
 
   nrow.KI.mat <- NROW(KI.mat)
   basis.vec <- character(nrow.KI.mat)
-  cv.vec <- numeric(nrow.KI.mat)
+  ## Initialize    
+  cv.vec <- rep(.Machine$double.xmax,nrow.KI.mat)
 
   for(j in 1:nrow.KI.mat) {
-
-    ## Initialize    
-
-    cv.vec[j] <- .Machine$double.xmax
 
     if(basis=="auto") {
 

@@ -247,7 +247,8 @@ krscv <- function(xz,
   }
 
   nrow.K.mat <- NROW(K.mat)
-  cv.vec <- numeric(nrow.K.mat)
+  ## Initialize
+  cv.vec <- rep(.Machine$double.xmax,nrow.K.mat)
   basis.vec <- character(nrow.K.mat)
   lambda.mat <- matrix(NA,nrow.K.mat,num.z)
 
@@ -267,10 +268,6 @@ krscv <- function(xz,
   }
 
   for(j in 1:nrow.K.mat) {
-
-    ## Initialize    
-
-    cv.vec[j] <- .Machine$double.xmax
 
     if(basis=="auto") {
 
