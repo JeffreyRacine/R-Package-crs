@@ -246,19 +246,6 @@ krscv <- function(xz,
     K.mat <- matrix.combn(0:basis.maxdim,2*num.x)
   }
 
-  nrow.K.mat <- NROW(K.mat)
-  ## Initialize
-  cv.vec <- rep(.Machine$double.xmax,nrow.K.mat)
-  basis.vec <- character(nrow.K.mat)
-  lambda.mat <- matrix(NA,nrow.K.mat,num.z)
-
-  t2 <- Sys.time() ## placeholder
-
-  output <- list()
-  output.restart <- list()
-
-  ## First need to create KI mat outside loop and not - back to cbind issue...
-  
   if(complexity=="degree") {
     K.mat <- cbind(K.mat[,1:num.x],matrix(segments,nrow(K.mat),length(segments),byrow=TRUE))
   } else if(complexity=="knots") {
@@ -266,6 +253,28 @@ krscv <- function(xz,
   } else if(complexity=="degree-knots") {
     K.mat[,(num.x+1):(2*num.x)] <- K.mat[,(num.x+1):(2*num.x)]+1
   }
+
+  ## Strip off all (except one) rows with degree 0 for all continuous
+  ## predictors, only leave first row (avoid redundant computation,
+  ## this will be computed only once for all predictors having degree
+  ## 0, segments 1).
+
+  degree.zero.rows <- which(rowSums(K.mat[,1:num.x,drop=FALSE])==0)[-1]
+
+  if(length(degree.zero.rows) > 0) K.mat <- K.mat[-degree.zero.rows,,drop=FALSE]
+
+  nrow.K.mat <- NROW(K.mat)
+
+  ## Initialize
+
+  cv.vec <- rep(.Machine$double.xmax,nrow.K.mat)
+  basis.vec <- character(nrow.K.mat)
+  lambda.mat <- matrix(NA,nrow.K.mat,num.z)
+
+  output <- list()
+  output.restart <- list()
+
+  t2 <- Sys.time() ## placeholder
 
   for(j in 1:nrow.K.mat) {
 
@@ -595,13 +604,7 @@ krscv <- function(xz,
   ocv.vec <- order(cv.vec)
 
   cv.min <- cv.vec[ocv.vec][1]
-  if(complexity=="degree") {
-    K.opt <- c(K.mat[ocv.vec,1:num.x,drop=FALSE][1,],segments)
-  } else if(complexity=="knots") {
-    K.opt <- c(degree,K.mat[ocv.vec,1:num.x,drop=FALSE][1,]+1) 
-  } else if(complexity=="degree-knots") {
-    K.opt <- K.mat[ocv.vec,,drop=FALSE][1,]
-  }
+  K.opt <- K.mat[ocv.vec,,drop=FALSE][1,]
   lambda.opt <- lambda.mat[ocv.vec,,drop=FALSE][1,]
   basis.opt <- basis.vec[ocv.vec][1]
   degree <- K.opt[1:num.x]
@@ -628,6 +631,7 @@ krscv <- function(xz,
         lambda=lambda.opt,
         lambda.mat=lambda.mat,
         cv.func=cv.min,
-        cv.func.vec=as.matrix(cv.vec))
+        cv.func.vec=as.matrix(cv.vec),
+        num.x=num.x)
 
 }

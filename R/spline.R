@@ -756,7 +756,7 @@ cv.kernel.spline <- function(x,
   if(is.null(z)) {
     ## No categorical predictors
     if(any(K[,1] > 0)) {
-      epsilon <- residuals(lsfit(P <- prod.spline(x=x,K=K,knots=knots,basis=basis),y))
+      suppressWarnings(epsilon <- residuals(lsfit(P <- prod.spline(x=x,K=K,knots=knots,basis=basis),y)))
       htt <- hat(P)
       htt <- ifelse(htt == 1, 1-.Machine$double.eps, htt)      
     } else {
@@ -856,7 +856,7 @@ cv.factor.spline <- function(x,
   ## Otherwise, compute the cross-validation function
 
   if(any(K[,1] > 0)||any(I > 0)) {
-    epsilon <- residuals(lsfit(P <- prod.spline(x=x,z=z,K=K,I=I,knots=knots,basis=basis),y))
+    suppressWarnings(epsilon <- residuals(lsfit(P <- prod.spline(x=x,z=z,K=K,I=I,knots=knots,basis=basis),y)))
     htt <- hat(P)
     htt <- ifelse(htt == 1, 1-.Machine$double.eps, htt)
     ## print(ncol.P==ncol(P)) to verify that the computation of

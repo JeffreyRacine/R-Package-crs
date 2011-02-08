@@ -62,7 +62,7 @@ frscv <- function(xz,
     ## user to select knots (degree fixed), degree (knots fixed), or
     ## both degree and knots. The values used to evaluate the cv
     ## function are passed below.
-    
+
     K <- round(cbind(input[1:num.x],input[(num.x+1):(2*num.x)]))
 
     if(!is.null(z)) {
@@ -236,11 +236,6 @@ frscv <- function(xz,
 
   if(basis.maxdim < 1) stop(" basis.maxdim must be greater than or equal to 1")
 
-  ## Need to append 0,1 for I (in, out). XXX Pad row to left with
-  ## degree vector or in between x and z with segment vector then
-  ## input remains a vector XXX need to do... this ought to be most
-  ## transparent and the remaining code will not need to be changed XXX
-
   if(complexity!="degree-knots") {
     if(!is.null(z)) {
       KI.mat <- matrix.combn(0:basis.maxdim,num.x,num.z)
@@ -255,12 +250,6 @@ frscv <- function(xz,
     }
   }
 
-  ## For exhaustive search it might be ideal to strip off potentially
-  ## irrelevant rows (e.g. repeated degree all zero, and those with
-  ## negative degrees of freedom).
-
-  ## First need to create KI mat outside loop and not - back to cbind issue...
-  
   if(complexity=="degree") {
     if(num.z==0) {
       KI.mat <- cbind(KI.mat[,1:num.x],matrix(segments,nrow(KI.mat),length(segments),byrow=TRUE))
@@ -277,9 +266,49 @@ frscv <- function(xz,
     KI.mat[,(num.x+1):(2*num.x)] <- KI.mat[,(num.x+1):(2*num.x)]+1
   }
 
+  ## For exhaustive search, we avoid redundant computation of cv
+  ## function. Some rows will have all continuous predictors having
+  ## degree 0 but different segments - computation is redundant here.
+  ## Finally, if there are categorical predictors and we are using
+  ## factor splines, some of these rows having no continuous
+  ## predictors can differ in terms of their categorical predictors
+  ## (inclusion), so determine which are unique in this case
+
+  degree.zero.rows <- which(rowSums(KI.mat[,1:num.x,drop=FALSE])==0)
+
+  if(length(degree.zero.rows) > 0) {
+
+    degree.mat.zero.rows.unique <- numeric()
+    
+    if(num.z > 0) {
+      
+      KI.I.unique <- unique(KI.mat[degree.zero.rows,(2*num.x+1):(2*num.x+num.z),drop=FALSE])
+      
+      for(i in 1:nrow(KI.I.unique)) {
+        degree.mat.zero.rows.unique[i] <- which(KI.mat[degree.zero.rows,(2*num.x+1):(2*num.x+num.z),drop=FALSE]==KI.I.unique[i,])[1]
+      }
+      
+    } else {
+
+      KI.I.unique <- unique(KI.mat[degree.zero.rows,1:num.x,drop=FALSE])
+      
+      for(i in 1:nrow(KI.I.unique)) {
+        degree.mat.zero.rows.unique[i] <- which(KI.mat[degree.zero.rows,1:num.x,drop=FALSE]==KI.I.unique[i,])[1]
+      }
+      
+    }
+    
+    degree.zero.rows <- degree.zero.rows[-degree.mat.zero.rows.unique]
+      
+    if(length(degree.zero.rows) > 0) KI.mat <- KI.mat[-degree.zero.rows,,drop=FALSE]
+    
+  }
+
   nrow.KI.mat <- NROW(KI.mat)
   basis.vec <- character(nrow.KI.mat)
+
   ## Initialize    
+
   cv.vec <- rep(.Machine$double.xmax,nrow.KI.mat)
 
   for(j in 1:nrow.KI.mat) {
@@ -305,7 +334,6 @@ frscv <- function(xz,
         basis.vec[j] <- "additive-tensor"
       }
 
-
       output <- cv.func(input=KI.mat[j,],
                         x=x,
                         y=y,
@@ -323,8 +351,8 @@ frscv <- function(xz,
       if(output < cv.vec[j]) {
         cv.vec[j] <- output
         basis.vec[j] <- "additive"
-      }        
-
+      }
+      
       output <- cv.func(input=KI.mat[j,],
                         x=x,
                         y=y,
@@ -366,7 +394,7 @@ frscv <- function(xz,
         cv.vec[j] <- output
         basis.vec[j] <- basis
       }
-
+      
     }
 
   }
@@ -376,21 +404,7 @@ frscv <- function(xz,
   ocv.vec <- order(cv.vec)
 
   cv.min <- cv.vec[ocv.vec][1]
-  if(complexity=="degree") {
-    if(num.z==0) {
-      K.opt <- c(KI.mat[ocv.vec,1:num.x,drop=FALSE][1,],segments)
-    } else {
-      K.opt <- c(KI.mat[ocv.vec,1:num.x,drop=FALSE][1,],segments,KI.mat[ocv.vec,(num.x+1):(num.x+num.z),drop=FALSE][1,])
-    }
-  } else if(complexity=="knots") {
-    if(num.z==0) {
-      K.opt <- c(degree,KI.mat[ocv.vec,1:num.x,drop=FALSE][1,]+1)
-    } else {
-      K.opt <- c(degree,KI.mat[ocv.vec,1:num.x,drop=FALSE][1,]+1,KI.mat[ocv.vec,(num.x+1):(num.x+num.z),drop=FALSE][1,])
-    }
-  } else if(complexity=="degree-knots") {
-    K.opt <- KI.mat[ocv.vec,,drop=FALSE][1,]
-  }
+  K.opt <- KI.mat[ocv.vec,,drop=FALSE][1,]
   basis.opt <- basis.vec[ocv.vec][1]
   degree <- K.opt[1:num.x]
   segments <- K.opt[(num.x+1):(2*num.x)]
@@ -419,6 +433,7 @@ frscv <- function(xz,
         lambda=NULL,
         lambda.mat=NULL,
         cv.func=cv.min,
-        cv.func.vec=as.matrix(cv.vec))
+        cv.func.vec=as.matrix(cv.vec),
+        num.x=num.x)
 
 }

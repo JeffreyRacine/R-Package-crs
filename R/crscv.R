@@ -12,7 +12,8 @@ crscv <- function(K,
                   lambda,
                   lambda.mat,
                   cv.func,
-                  cv.func.vec) {
+                  cv.func.vec,
+                  num.x) {
   
   tregcv = list(K=K,
                 I=I,
@@ -28,7 +29,8 @@ crscv <- function(K,
                 lambda=lambda,
                 lambda.mat=lambda.mat,
                 cv.func=cv.func,
-                cv.func.vec=cv.func.vec)
+                cv.func.vec=cv.func.vec,
+                num.x=num.x)
 
   class(tregcv) <- "crscv"
 
@@ -80,6 +82,7 @@ print.crscv <- function(x, ...){
 
     for(j in 1:x$num.x)
       cat(paste("\nSpline degree/number of segments for x[", j, "]: ", format(x$degree[j]),"/",format(x$segments[j]),sep=""),sep="")
+
     if(!is.null(x$I)) for(j in 1:length(x$I))
       cat(paste("\nInclusion indicator for z[", j, "]: ",format(x$I[j]),sep=""),sep="")
     if(!is.null(x$lambda)) for(j in 1:length(x$lambda))

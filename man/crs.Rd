@@ -32,7 +32,7 @@ crs(\dots)
     degree = NULL,
     segments = NULL,
     include = NULL,
-    basis.maxdim = 10,
+    basis.maxdim = 5,
     cv = TRUE,
     cv.norm = c("L2", "L1"),
     kernel = FALSE,
@@ -92,8 +92,11 @@ crs(\dots)
   \item{kernel}{ a logical value (default \code{kernel=FALSE})
     indicating whether to use kernel smoothing or not }
 
-  \item{basis.maxdim}{ the maximum dimension of the B-spline basis for
-    each of the continuous predictors (default \code{basis.maxdim=10})}
+  \item{basis.maxdim}{ the maximum dimension of the spline degree or
+    number of knots for each of the continuous predictors (default
+    \code{basis.maxdim=5} meaning a maximum dimension of 5 or number of
+    knots of 5 (6 segments) indicating a maximum number of columns in
+    the B-spline of 10)}
 
   \item{complexity}{a character string (default
   \code{complexity="degree-knots"}) indicating whether model `complexity' is
