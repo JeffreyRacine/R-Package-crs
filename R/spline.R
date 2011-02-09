@@ -743,6 +743,7 @@ cv.kernel.spline <- function(x,
   ## Without computing P, compute the number of columns that P would
   ## be and if degrees of freedom is 1 or less, return a large penalty.
 
+  n <- length(y)
   c.vec <- NULL
   if(any(K[,1] > 0)) c.vec <- rowSums(K[K[,1]!=0,,drop=FALSE])-1
   if(basis=="additive") ncol.P <- sum(c.vec)
@@ -760,7 +761,6 @@ cv.kernel.spline <- function(x,
       htt <- hat(P)
       htt <- ifelse(htt == 1, 1-.Machine$double.eps, htt)      
     } else {
-      n <- length(y)
       htt <- rep(1/n,n)
       epsilon <- y-mean(y)
     }
@@ -769,7 +769,6 @@ cv.kernel.spline <- function(x,
     ## Categorical predictors
     z <- as.matrix(z)
     num.z <- NCOL(z)
-    n <- NROW(y)
     epsilon <- numeric(length=n)
     htt <- numeric(length=n)
     if(any(K[,1] > 0)) {
