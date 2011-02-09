@@ -22,7 +22,7 @@ krscv <- function(xz,
                   restarts=0,
                   complexity=c("degree-knots","degree","knots"),
                   knots=c("quantiles","uniform"),
-                  basis = c("additive-tensor","additive","tensor","auto"),
+                  basis=c("auto","additive-tensor","additive","tensor"),
                   cv.norm=c("L2","L1"),
                   degree=degree,
                   segments=segments) {
