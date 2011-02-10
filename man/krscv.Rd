@@ -67,8 +67,8 @@ krscv(xz,
   equally spaced intervals }
 
   \item{basis}{ a character string (default \code{basis="auto"})
-    indicating whether the additive/tensor (`functional ANOVA'),
-    additive, or combined tensor product B-spline basis matrix for a
+    indicating whether the combined additive/tensor (`functional
+    ANOVA'), additive, or tensor product B-spline basis matrix for a
     multivariate polynomial spline should be used. Note this can be
     automatically determined by cross-validation if \code{cv=TRUE} and
     \code{basis="auto"}, and is an \sQuote{all or none} proposition
@@ -106,10 +106,10 @@ krscv(xz,
 
   For the continuous predictors the regression spline model employs
   either the additive, tensor product, or combined additive/tensor
-  product B-spline basis matrix for a multivariate polynomial spline via
-  the B-spline routines in the GNU Scientific Library and the
-  \code{\link{tensor.prod.model.matrix}} function in the \pkg{mgcv}
-  package.
+  (`functional ANOVA') product B-spline basis matrix for a multivariate
+  polynomial spline via the B-spline routines in the GNU Scientific
+  Library and the \code{\link{tensor.prod.model.matrix}} function in the
+  \pkg{mgcv} package.
 
   For the discrete predictors the product kernel function is of the
   \sQuote{Li-Racine} type (see Li and Racine (2007) for details).
