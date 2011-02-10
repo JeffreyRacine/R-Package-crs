@@ -21,7 +21,7 @@ crs(\dots)
     kernel.type = c("nominal","ordinal"),
     complexity = c("degree-knots","degree","knots"),
     knots = c("quantiles","uniform"),
-    basis = c("additive-tensor","additive","tensor","auto"),
+    basis = c("auto","additive-tensor","additive","tensor"),
     deriv = 0,
     data.return = FALSE,
     prune = FALSE,
@@ -40,7 +40,7 @@ crs(\dots)
     kernel.type = c("nominal","ordinal"),
     complexity = c("degree-knots","degree","knots"),
     knots = c("quantiles","uniform"),
-    basis = c("additive-tensor","additive","tensor","auto"),
+    basis = c("auto","additive-tensor","additive","tensor"),
     deriv = 0,
     data.return = FALSE,
     prune = FALSE,
@@ -119,17 +119,17 @@ crs(\dots)
   lie in each segment) and \sQuote{uniform} specifies knots placed at
   equally spaced intervals }
 
-\item{basis}{ a character string (default
-    \code{basis="additive-tensor"}) indicating whether the
-    additive/tensor, additive, or combined tensor product B-spline basis
-    matrix for a multivariate polynomial spline should be used. Note
-    this can be automatically determined by cross-validation if
-    \code{cv=TRUE} and \code{basis="auto"}, and is an \sQuote{all or
-    none} proposition (i.e. interaction terms for all predictors or for
-    no predictors given the nature of \sQuote{tensor products}). Note
-    also that if there is only one predictor this defaults to
-    \code{basis="additive"} to avoid unnecessary computation as the
-    spline bases are equivalent in this case }
+\item{basis}{ a character string (default \code{basis="auto"})
+    indicating whether the additive/tensor (`functional ANOVA'),
+    additive, or combined tensor product B-spline basis matrix for a
+    multivariate polynomial spline should be used. Note this can be
+    automatically determined by cross-validation if \code{cv=TRUE} and
+    \code{basis="auto"}, and is an \sQuote{all or none} proposition
+    (i.e. interaction terms for all predictors or for no predictors
+    given the nature of \sQuote{tensor products}). Note also that if
+    there is only one predictor this defaults to \code{basis="additive"}
+    to avoid unnecessary computation as the spline bases are equivalent
+    in this case }
 
   \item{deriv}{ an integer \code{l} (default \code{deriv=0}) specifying
   whether to compute the univariate \code{l}th partial derivative for

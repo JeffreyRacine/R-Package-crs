@@ -17,7 +17,7 @@ prod.spline <- function(x,
                         xeval=NULL,
                         zeval=NULL,
                         knots=c("quantiles","uniform"),
-                        basis=c("additive-tensor","additive","tensor","auto"),
+                        basis=c("auto","additive-tensor","additive","tensor"),
                         deriv.index=1,
                         deriv=0) {
 
@@ -160,7 +160,7 @@ predict.kernel.spline <- function(x,
                                   xeval=NULL,
                                   zeval=NULL,
                                   knots=c("quantiles","uniform"),
-                                  basis=c("additive-tensor","additive","tensor","auto")){
+                                  basis=c("auto","additive-tensor","additive","tensor")){
 
   if(missing(x) || missing(y) || missing (K)) stop(" must provide x, y and K")
   if(!is.matrix(K)) stop(" K must be a two-column matrix")  
@@ -354,7 +354,7 @@ deriv.kernel.spline <- function(x,
                                 xeval=NULL,
                                 zeval=NULL,
                                 knots=c("quantiles","uniform"),
-                                basis=c("additive-tensor","additive","tensor","auto"),
+                                basis=c("auto","additive-tensor","additive","tensor"),
                                 deriv.index=1,
                                 deriv=0) {
 
@@ -520,7 +520,7 @@ predict.factor.spline <- function(x,
                                   xeval=NULL,
                                   zeval=NULL,
                                   knots=c("quantiles","uniform"),
-                                  basis=c("additive-tensor","additive","tensor","auto"),
+                                  basis=c("auto","additive-tensor","additive","tensor"),
                                   prune=FALSE,
                                   prune.index=NULL,
                                   trace=0){
@@ -643,7 +643,7 @@ deriv.factor.spline <- function(x,
                                 xeval=NULL,
                                 zeval=NULL,
                                 knots=c("quantiles","uniform"),
-                                basis=c("additive-tensor","additive","tensor","auto"),
+                                basis=c("auto","additive-tensor","additive","tensor"),
                                 deriv.index=1,
                                 deriv=0,
                                 prune.index=NULL) {
@@ -728,7 +728,7 @@ cv.kernel.spline <- function(x,
                              nrow.z.unique,
                              kernel.type=c("nominal","ordinal"),
                              knots=c("quantiles","uniform"),
-                             basis=c("additive-tensor","additive","tensor","auto"),
+                             basis=c("auto","additive-tensor","additive","tensor"),
                              cv.norm=c("L2","L1")) {
 
   if(missing(x) || missing(y) || missing (K)) stop(" must provide x, y and K")

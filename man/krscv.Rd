@@ -67,15 +67,16 @@ krscv(xz,
   equally spaced intervals }
 
   \item{basis}{ a character string (default \code{basis="auto"})
-    indicating whether the additive/tensor, additive, or combined tensor
-    product B-spline basis matrix for a multivariate polynomial spline
-    should be used. Note this can be automatically determined by
-    cross-validation if \code{cv=TRUE} and \code{basis="auto"}, and is
-    an \sQuote{all or none} proposition (i.e. interaction terms for all
-    predictors or for no predictors given the nature of \sQuote{tensor
-    products}). Note also that if there is only one predictor this
-    defaults to \code{basis="additive"} to avoid unnecessary computation
-    as the spline bases are equivalent in this case }
+    indicating whether the additive/tensor (`functional ANOVA'),
+    additive, or combined tensor product B-spline basis matrix for a
+    multivariate polynomial spline should be used. Note this can be
+    automatically determined by cross-validation if \code{cv=TRUE} and
+    \code{basis="auto"}, and is an \sQuote{all or none} proposition
+    (i.e. interaction terms for all predictors or for no predictors
+    given the nature of \sQuote{tensor products}). Note also that if
+    there is only one predictor this defaults to \code{basis="additive"}
+    to avoid unnecessary computation as the spline bases are equivalent
+    in this case }
 
   \item{cv.norm}{ a character string (default \code{cv.norm="L2"}
   indicating whether the L2-norm is used (sum of squared delete-one
