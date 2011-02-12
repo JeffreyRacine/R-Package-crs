@@ -72,11 +72,12 @@ between these two approaches is that the use of indicator basis
 functions consume degrees of freedom, while kernel weighting does
 not. 
 
-This package implements the approach described in
+This package implements the approaches described in
 \citep{MA_RACINE_YANG:2010} and \citep{MA_RACINE:2011} when the option
 \code{kernel=TRUE} is selected as described below. As well, this
-package implements related methods that the author is currently
-developing.
+package implements a range of related methods and has options that
+(hopefully) make it appealing for applied projects, research, and
+pedagogical purposes alike.
 
 Data-driven methods (leave-out-out cross-validation,
 \citeauthor{STONE:1974} \citeyear{STONE:1974}, \citeauthor{STONE:1977}

@@ -41,7 +41,8 @@ defaults to \code{max(x)}}
 basis; default is \sQuote{FALSE} }
 
 \item{knots}{ a vector (default \code{knots="NULL"}) specifying knots
-  for spline basis. }
+  for the spline basis (default enables uniform knots, otherwise those
+  provided are used)}
 
 \item{\dots}{ optional arguments }
   
