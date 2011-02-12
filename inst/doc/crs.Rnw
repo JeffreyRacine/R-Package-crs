@@ -73,9 +73,10 @@ functions consume degrees of freedom, while kernel weighting does
 not. 
 
 This package implements the approach described in
-\citep{MA_RACINE_YANG:2010} when the option \code{kernel=TRUE} is
-selected as described below. As well, this package implements related
-methods that the author is currently developing.
+\citep{MA_RACINE_YANG:2010} and \citep{MA_RACINE:2011} when the option
+\code{kernel=TRUE} is selected as described below. As well, this
+package implements related methods that the author is currently
+developing.
 
 Data-driven methods (leave-out-out cross-validation,
 \citeauthor{STONE:1974} \citeyear{STONE:1974}, \citeauthor{STONE:1977}
