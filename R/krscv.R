@@ -267,7 +267,12 @@ krscv <- function(xz,
 
   ## Initialize
 
-  cv.vec <- rep(.Machine$double.xmax,nrow.K.mat)
+##  cv.vec <- rep(.Machine$double.xmax,nrow.K.mat)
+
+  htt <- rep(1/n,n)
+  epsilon <- y-mean(y)
+  cv.vec <- rep(ifelse(cv.norm=="L2",mean(epsilon^2/(1-htt)^2)+.Machine$double.eps,mean(abs(epsilon)/abs(1-htt))+.Machine$double.eps),nrow.K.mat)
+  
   basis.vec <- character(nrow.K.mat)
   lambda.mat <- matrix(NA,nrow.K.mat,num.z)
 
