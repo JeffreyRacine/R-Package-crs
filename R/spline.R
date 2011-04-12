@@ -750,13 +750,13 @@ cv.kernel.spline <- function(x,
   if(basis=="tensor") ncol.P <- prod(c.vec)
   if(basis=="additive-tensor") ncol.P <- sum(c.vec)+ifelse(length(c.vec)>1,prod(c.vec),0)
 
-##  if(ncol.P >= (n-1)) return(.Machine$double.xmax)
+  if(ncol.P >= (n-1)) return(.Machine$double.xmax)
 
-  if(ncol.P >= (n-1)) {
-    htt <- rep(1/n,n)
-    epsilon <- y-mean(y)
-    return(ifelse(cv.norm=="L2",mean(epsilon^2/(1-htt)^2)+.Machine$double.eps,mean(abs(epsilon)/abs(1-htt))+.Machine$double.eps))
-  }
+#  if(ncol.P >= (n-1)) {
+#    htt <- rep(1/n,n)
+#    epsilon <- y-mean(y)
+#    return(ifelse(cv.norm=="L2",mean(epsilon^2/(1-htt)^2)+.Machine$double.eps,mean(abs(epsilon)/abs(1-htt))+.Machine$double.eps))
+#  }
 
   ## Otherwise, compute the cross-validation function
 
@@ -856,13 +856,13 @@ cv.factor.spline <- function(x,
   if(basis=="tensor") ncol.P <- prod(c(c.vec,i.vec))
   if(basis=="additive-tensor") ncol.P <- sum(c(c.vec,i.vec))+prod.sv.dv
 
-##  if(ncol.P >= (n-1)) return(.Machine$double.xmax)
+  if(ncol.P >= (n-1)) return(.Machine$double.xmax)
 
-  if(ncol.P >= (n-1)) {
-    htt <- rep(1/n,n)
-    epsilon <- y-mean(y)
-    return(ifelse(cv.norm=="L2",mean(epsilon^2/(1-htt)^2)+.Machine$double.eps,mean(abs(epsilon)/abs(1-htt))+.Machine$double.eps))
-  }
+#  if(ncol.P >= (n-1)) {
+#    htt <- rep(1/n,n)
+#    epsilon <- y-mean(y)
+#    return(ifelse(cv.norm=="L2",mean(epsilon^2/(1-htt)^2)+.Machine$double.eps,mean(abs(epsilon)/abs(1-htt))+.Machine$double.eps))
+#  }
 
   ## Otherwise, compute the cross-validation function
 

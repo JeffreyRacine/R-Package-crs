@@ -149,7 +149,8 @@ applied settings.
 For the continuous predictors the regression spline model employs the
 B-spline routines in the GNU Scientific Library. The B-spline function
 is the maximally differentiable interpolative basis function (B-spline
-stands for `basis-spline').
+stands for `basis-spline'), and a B-spline with no internal knots is a
+B\'ezier curve.
 
 Heuristically, we conduct linear (in parameter) regression using the
 \proglang{R} function \code{lm}. However, we replace the continuous

@@ -309,11 +309,11 @@ frscv <- function(xz,
 
   ## Initialize    
 
-##  cv.vec <- rep(.Machine$double.xmax,nrow.KI.mat)
+  cv.vec <- rep(.Machine$double.xmax,nrow.KI.mat)
 
-  htt <- rep(1/n,n)
-  epsilon <- y-mean(y)
-  cv.vec <- rep(ifelse(cv.norm=="L2",mean(epsilon^2/(1-htt)^2)+.Machine$double.eps,mean(abs(epsilon)/abs(1-htt))+.Machine$double.eps),nrow.KI.mat)
+#  htt <- rep(1/n,n)
+#  epsilon <- y-mean(y)
+#  cv.vec <- rep(ifelse(cv.norm=="L2",mean(epsilon^2/(1-htt)^2)+.Machine$double.eps,mean(abs(epsilon)/abs(1-htt))+.Machine$double.eps),nrow.KI.mat)
   
   for(j in 1:nrow.KI.mat) {
 
