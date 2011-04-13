@@ -558,7 +558,11 @@ predict.factor.spline <- function(x,
       ## P.
       P.df <- data.frame(P)
       names(P.df) <- paste("P",seq(1,NCOL(P.df)),sep="")
-      if(basis=="additive") {model <- lm(y~.,data=P.df)}else{model <- lm(y~.-1,data=P.df)}
+      if(basis=="additive") {
+        model <- lm(y~.,data=P.df)
+      } else {
+        model <- lm(y~.-1,data=P.df)
+      }
       cv <- mean(residuals(model)^2/(1-hatvalues(model))^2)
       console <- printClear(console)
       console <- printPush("Pruning...",console = console)
@@ -577,22 +581,38 @@ predict.factor.spline <- function(x,
       if(cv.pruned <= cv) {
         IND <- logical()
         for(i in 1:NCOL(P.df)) IND[i] <- any(names(P.df)[i]==names(model.pruned$model[,-1,drop=FALSE]))
-        if(basis=="additive") {model <- lm(y~P[,IND,drop=FALSE])}else{model <- lm(y~P[,IND,drop=FALSE]-1)}
+        if(basis=="additive") {
+          model <- lm(y~P[,IND,drop=FALSE])
+        } else {
+          model <- lm(y~P[,IND,drop=FALSE]-1)
+        }
       } else {
         warning(" pruned model did not lower cross-validation score, using non-pruned bases")
         IND <- !logical(length=NCOL(P))
-        if(basis=="additive") {model <- lm(y~P)}else{model <- lm(y~P-1)}
+        if(basis=="additive") {
+          model <- lm(y~P)
+        } else {
+          model <- lm(y~P-1)
+        }
       }
     } else if(prune) {
       ## Pruning, index passed in...
       IND <- prune.index
-      if(basis=="additive") {model <- lm(y~P[,IND,drop=FALSE])}else{model <- lm(y~P[,IND,drop=FALSE]-1)}
+      if(basis=="additive") {
+        model <- lm(y~P[,IND,drop=FALSE])
+      } else {
+        model <- lm(y~P[,IND,drop=FALSE]-1)
+      }
       cv <- NULL
       cv.pruned <- mean(residuals(model)^2/(1-hatvalues(model))^2)
     } else {
       ## No pruning
       IND <- !logical(length=NCOL(P))
-      if(basis=="additive") {model <- lm(y~P)}else{model <- lm(y~P-1)}
+      if(basis=="additive") {
+        model <- lm(y~P)
+      } else {
+        model <- lm(y~P-1)
+      }
       cv <- mean(residuals(model)^2/(1-hatvalues(model))^2)
       cv.pruned <- NULL
     }      
@@ -666,6 +686,14 @@ deriv.factor.spline <- function(x,
 
   x <- as.matrix(x)
 
+  ## Univariate additive spline bases have one less column than
+  ## univariate tensor spline bases
+  
+  if(basis=="additive") {
+    K.additive <- K
+    K.additive[,1] <- ifelse(K[,1]>0,K[,1]-1,K[,1])
+  }
+
   if(K[deriv.index,1]!=0) {
 
     ## Degree > 0
@@ -673,35 +701,38 @@ deriv.factor.spline <- function(x,
     ## Estimate model on training data.
     
     P <- prod.spline(x=x,z=z,K=K,I=I,knots=knots,basis=basis)    
+    P.deriv <- prod.spline(x=x,z=z,K=K,I=I,xeval=xeval,zeval=zeval,knots=knots,basis=basis,deriv.index=deriv.index,deriv=deriv)
+
+    dim.P.no.tensor <- attr(P.deriv,"dim.P.no.tensor")
+    dim.P.tensor <- NCOL(P)
+    deriv.ind.vec <- logical(length=NCOL(P)) ## All false
+
     if(is.null(prune.index)) prune.index <- !logical(NCOL(P))
-    model <- lm(y~P[,prune.index,drop=FALSE]-1)
 
     ## Pad the following for proper handling of pruning
 
     coef.vec.model <- numeric(length=NCOL(P))
     vcov.mat.model <- matrix(0,nrow=NCOL(P),ncol=NCOL(P))
 
-    coef.vec.model[prune.index] <- coef(model)[-1]
-    vcov.mat.model[prune.index,prune.index] <- vcov(model)[-1,-1,drop=FALSE]
-
-    P.deriv <- prod.spline(x=x,z=z,K=K,I=I,xeval=xeval,zeval=zeval,knots=knots,basis=basis,deriv.index=deriv.index,deriv=deriv)
-
-    dim.P.deriv <- K[deriv.index,1]
-    dim.P.no.tensor <- attr(P.deriv,"dim.P.no.tensor")
-    dim.P.tensor <- NCOL(P)
-
-    deriv.ind.vec <- logical(length=NCOL(P)) ## All false
-    
-    deriv.start <- ifelse(deriv.index!=1,sum(K[1:(deriv.index-1),1]),0)+1
-    deriv.end <- deriv.start+K[deriv.index,1]-1
-
-    if(dim.P.tensor > dim.P.deriv+dim.P.no.tensor) {
-      deriv.ind.vec[c(deriv.start:deriv.end, (dim.P.no.tensor+1):dim.P.tensor)] <- TRUE
-    } else {
+    if(basis=="additive") {
+      model <- lm(y~P[,prune.index,drop=FALSE])
+      coef.vec.model[prune.index] <- coef(model)[-1]
+      vcov.mat.model[prune.index,prune.index] <- vcov(model)[-1,-1,drop=FALSE]
+      dim.P.deriv <- sum(K.additive[deriv.index,])
+      deriv.start <- ifelse(deriv.index!=1,sum(K.additive[1:(deriv.index-1),])+1,1)      
+      deriv.end <- deriv.start+sum(K.additive[deriv.index,])-1
       deriv.ind.vec[deriv.start:deriv.end] <- TRUE
+      deriv.ind.vec <- ifelse(prune.index,deriv.ind.vec,FALSE)
+    } else {
+      model <- lm(y~P[,prune.index,drop=FALSE]-1)
+      coef.vec.model[prune.index] <- coef(model)
+      vcov.mat.model[prune.index,prune.index] <- vcov(model)
+      dim.P.deriv <- sum(K[deriv.index,])
+      deriv.start <- ifelse(deriv.index!=1,sum(K[1:(deriv.index-1),])+1,1)    
+      deriv.end <- deriv.start+sum(K[deriv.index,])-1
+      deriv.ind.vec[1:dim.P.tensor] <- TRUE            
+      deriv.ind.vec <- ifelse(prune.index,deriv.ind.vec,FALSE)
     }
-
-    deriv.ind.vec <- ifelse(prune.index,deriv.ind.vec,FALSE)
 
     deriv.spline <- P.deriv[,deriv.ind.vec,drop=FALSE]%*%coef.vec.model[deriv.ind.vec]
     se.deriv <- sapply(1:NROW(P.deriv[,deriv.ind.vec,drop=FALSE]), function(i){ sqrt(P.deriv[i,deriv.ind.vec,drop=FALSE]%*%vcov.mat.model[deriv.ind.vec,deriv.ind.vec]%*%t(P.deriv[i,deriv.ind.vec,drop=FALSE])) })
@@ -835,6 +866,9 @@ cv.factor.spline <- function(x,
 
   n <- NROW(x)
 
+  ## Additive spline regression models have an intercept in the lm()
+  ## model (though not in the gsl.bs function)
+
   lm.intercept <- ifelse(basis=="additive", TRUE, FALSE)
 
   ## Without computing P, compute the number of columns that P would
@@ -864,12 +898,8 @@ cv.factor.spline <- function(x,
 
   if(any(K[,1] > 0)||any(I > 0)) {
     suppressWarnings(epsilon <- residuals(lsfit(P <- prod.spline(x=x,z=z,K=K,I=I,knots=knots,basis=basis),y,intercept=lm.intercept)))
-#    P <- prod.spline(x=x,z=z,K=K,I=I,knots=knots,basis=basis)
-#    epsilon <- residuals(lm(y~P-1))
     htt <- hat(P)
     htt <- ifelse(htt == 1, 1-.Machine$double.eps, htt)
-    ## print(ncol.P==ncol(P)) to verify that the computation of
-    ## dimension of P and actual dimension of P agree
     return(ifelse(cv.norm=="L2",mean(epsilon^2/(1-htt)^2),mean(abs(epsilon)/abs(1-htt))))
   } else {
     htt <- rep(1/n,n)
