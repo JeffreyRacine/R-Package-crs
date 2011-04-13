@@ -380,14 +380,15 @@ deriv.kernel.spline <- function(x,
       P <- prod.spline(x=x,K=K,knots=knots,basis=basis)      
       model <- lm(y~P-1)
       P.deriv <- prod.spline(x=x,K=K,xeval=xeval,knots=knots,basis=basis,deriv.index=deriv.index,deriv=deriv)
-      dim.P.deriv <- K[deriv.index,1]
+
+      dim.P.deriv <- sum(K[deriv.index,])
       dim.P.no.tensor <- attr(P.deriv,"dim.P.no.tensor")
       dim.P.tensor <- NCOL(P)
 
-      deriv.start <- ifelse(deriv.index!=1,sum(K[1:(deriv.index-1),1]),0)+1
-#      deriv.end <- deriv.start+K[deriv.index,1]-1
-      deriv.end <- deriv.start+K[deriv.index,1]
+      deriv.start <- ifelse(deriv.index!=1,sum(K[1:(deriv.index-1),])+1,1)    
+      deriv.end <- deriv.start+sum(K[deriv.index,])-1
 
+      ## Not correct, need to revisit XXX
       if(dim.P.tensor > dim.P.deriv+dim.P.no.tensor) {
         deriv.ind.vec <- c(deriv.start:deriv.end, (dim.P.no.tensor+1):dim.P.tensor)
       } else {
@@ -434,12 +435,12 @@ deriv.kernel.spline <- function(x,
           k <- NCOL(P)
           model <- lm(y~P-1,weights=L)
           P.deriv <- prod.spline(x=x,K=K,xeval=x[zz,,drop=FALSE],knots=knots,basis=basis,deriv.index=deriv.index,deriv=deriv)
-          dim.P.deriv <- K[deriv.index,1]
+          dim.P.deriv <- sum(K[deriv.index,])
           dim.P.no.tensor <- attr(P.deriv,"dim.P.no.tensor")
           dim.P.tensor <- NCOL(P)
-          deriv.start <- ifelse(deriv.index!=1,sum(K[1:(deriv.index-1),1]),0)+1
-#          deriv.end <- deriv.start+K[deriv.index,1]-1
-          deriv.end <- deriv.start+K[deriv.index,1]          
+          deriv.start <- ifelse(deriv.index!=1,sum(K[1:(deriv.index-1),])+1,1)    
+          deriv.end <- deriv.start+sum(K[deriv.index,])-1
+          ## Not correct, revisit XXX
           if(dim.P.tensor > dim.P.deriv+dim.P.no.tensor) {
             deriv.ind.vec <- c(deriv.start:deriv.end, (dim.P.no.tensor+1):dim.P.tensor)
           } else {
@@ -470,12 +471,12 @@ deriv.kernel.spline <- function(x,
           k <- NCOL(P)
           model <- lm(y~P-1,weights=L)
           P.deriv <- prod.spline(x=x,K=K,xeval=xeval[zz,,drop=FALSE],knots=knots,basis=basis,deriv.index=deriv.index,deriv=deriv)
-          dim.P.deriv <- K[deriv.index,1]
+          dim.P.deriv <- sum(K[deriv.index,])
           dim.P.no.tensor <- attr(P.deriv,"dim.P.no.tensor")
           dim.P.tensor <- NCOL(P)
-          deriv.start <- ifelse(deriv.index!=1,sum(K[1:(deriv.index-1),1]),0)+1
-#          deriv.end <- deriv.start+K[deriv.index,1]-1
-          deriv.end <- deriv.start+K[deriv.index,1]          
+          deriv.start <- ifelse(deriv.index!=1,sum(K[1:(deriv.index-1),])+1,1)    
+          deriv.end <- deriv.start+sum(K[deriv.index,])-1
+          ## Not correct, need to revisit XXX
           if(dim.P.tensor > dim.P.deriv+dim.P.no.tensor) {
             deriv.ind.vec <- c(deriv.start:deriv.end, (dim.P.no.tensor+1):dim.P.tensor)
           } else {
