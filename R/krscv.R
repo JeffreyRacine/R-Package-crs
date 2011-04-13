@@ -191,47 +191,6 @@ krscv <- function(xz,
 
   if(num.x==1 & basis == "auto") basis <- "additive"
 
-  ## This call will trap zero/negative degrees of freedom immediately
-  ## rather than letting cv proceed only to be halted after the lower
-  ## dimension models have been estimated when this occurs.
-
-##  if(complexity=="degree") {
-##    if(basis == "auto") {
-##      k <- max(c(ncol(prod.spline(x=x,K=cbind(rep(basis.maxdim,num.x),segments),knots=knots,basis="additive-tensor")),
-##                 ncol(prod.spline(x=x,K=cbind(rep(basis.maxdim,num.x),segments),knots=knots,basis="additive")),
-##                 ncol(prod.spline(x=x,K=cbind(rep(basis.maxdim,num.x),segments),knots=knots,basis="tensor"))))
-##    } else {
-##      k <- ncol(prod.spline(x=x,K=cbind(rep(basis.maxdim,num.x),segments),knots=knots,basis=basis))
-##    }
-##  } else if(complexity=="knots") {
-##    if(basis == "auto") {
-##      k <- max(c(ncol(prod.spline(x=x,K=cbind(degree,rep(basis.maxdim,num.x)),knots=knots,basis="additive-tensor")),
-##                 ncol(prod.spline(x=x,K=cbind(degree,rep(basis.maxdim,num.x)),knots=knots,basis="additive")),
-##                 ncol(prod.spline(x=x,K=cbind(degree,rep(basis.maxdim,num.x)),knots=knots,basis="tensor"))))
-##    } else {
-##      k <- ncol(prod.spline(x=x,K=cbind(degree,rep(basis.maxdim,num.x)),knots=knots,basis=basis))
-##    }
-##  } else if(complexity=="degree-knots"){
-##    if(basis == "auto") {
-##      k <- max(c(ncol(prod.spline(x=x,K=matrix(2*rep(basis.maxdim,num.x),num.x,2),knots=knots,basis="additive-tensor")),
-##                 ncol(prod.spline(x=x,K=matrix(2*rep(basis.maxdim,num.x),num.x,2),knots=knots,basis="additive")),
-##                 ncol(prod.spline(x=x,K=matrix(2*rep(basis.maxdim,num.x),num.x,2),knots=knots,basis="tensor"))))
-##    } else {
-##      k <- ncol(prod.spline(x=x,K=matrix(2*rep(basis.maxdim,num.x),num.x,2),knots=knots,basis=basis))
-##    }
-##  }
-##
-##  df <- n - k
-##
-##  if(df <= 0) {
-##    stop(paste(" maximum basis dimension (",k,") would equal/exceed sample size (",n,")\n   perhaps use basis=\"additive\" or else decrease basis.maxdim",sep=""))
-##  } else if(df <= 10) {
-##    warning(paste(" maximum basis dimension (",k,") and sample size (",n,") close",sep=""))
-##  }
-
-# 17/06/10 - really dig into what this tests and whether it is necessary or not (probably is!)
-#  if(min(table(ind)) <= k) stop(paste(" insufficient data for one or more unique combinations of z (",min(table(ind))," obs.)\n   in order to estimate spline at basis.maxdim (",k," bases):\n   either reduce basis.maxdim or collapse categories",sep=""))
-
   if(basis.maxdim < 1) stop(" basis.maxdim must be greater than or equal to 1")
 
   console <- newLineConsole()
