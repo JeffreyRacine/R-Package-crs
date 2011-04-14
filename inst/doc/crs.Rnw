@@ -173,11 +173,9 @@ omitted we have a semiparametric `additive' spline model, otherwise we
 have a fully nonparametric (with interaction among all variables)
 model. As well, we include the option to use only the tensor product
 for the multivariate spline basis should the user so desire. Whether
-or not to include the tensor product bases only, the additive model
-bases only, or both the additive components and their tensor product
-(`functional ANOVA' bases) can be automatically determined via
-leave-line-out cross-validation (see the options for \code{basis=} in
-\code{?crs}).
+to use the additive or tensor product bases can be automatically
+determined via leave-line-out cross-validation (see the options for
+\code{basis=} in \code{?crs}).
 
 We offer the option to use categorical kernel weighting
 (\code{lm(\dots,weights=L)}) to handle the presence of categorical
@@ -403,8 +401,7 @@ P
 @ 
 
 Note that \code{summary} supports the option \code{sigtest=TRUE} that
-conducts an F-test for significance for each predictor (though be
-warned that this can be fragile when \code{basis="additive-tensor"}).
+conducts an F-test for significance for each predictor.
 
 <<echo=TRUE,keep.source=TRUE>>=
 summary(model,sigtest=TRUE)
