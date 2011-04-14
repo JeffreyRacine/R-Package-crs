@@ -40,7 +40,7 @@ crs(\dots)
     kernel.type = c("nominal","ordinal"),
     complexity = c("degree-knots","degree","knots"),
     knots = c("quantiles","uniform"),
-    basis = c("auto","additive","tensor"),
+    basis = c("additive","tensor","auto"),
     deriv = 0,
     data.return = FALSE,
     prune = FALSE,
