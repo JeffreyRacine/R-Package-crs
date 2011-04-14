@@ -88,7 +88,7 @@ prod.spline <- function(x,
             ## throw off predict etc. Note - there is something odd
             ## about what is produced by quantile as unique does not
             ## work as expected. 1e-20 is too small, 1e-10 works.
-            knots.vec <- knots.vec + seq(0,1e-10*(max(x[,i,drop=FALSE])-min(x[,i,drop=FALSE])),length=length(knots.vec))
+          knots.vec <- knots.vec + seq(0,1e-10*(max(x[,i,drop=FALSE])-min(x[,i,drop=FALSE])),length=length(knots.vec))
 #          }
         }
         if((i==deriv.index)&&(deriv!=0)) {

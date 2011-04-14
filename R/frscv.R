@@ -19,7 +19,7 @@ frscv <- function(xz,
                   basis.maxdim=5,
                   complexity=c("degree-knots","degree","knots"),
                   knots=c("quantiles","uniform"),
-                  basis=c("auto","additive","tensor"),
+                  basis=c("additive","tensor","auto"),
                   cv.norm=c("L2","L1"),
                   degree=degree,
                   segments=segments) {

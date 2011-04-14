@@ -19,7 +19,7 @@ frscv(xz,
       basis.maxdim = 5,
       complexity = c("degree-knots","degree","knots"),
       knots = c("quantiles","uniform"),
-      basis = c("auto","additive","tensor"),
+      basis = c("additive","tensor","auto"),
       cv.norm = c("L2","L1"),
       degree = degree,
       segments = segments)
@@ -52,7 +52,7 @@ frscv(xz,
   lie in each segment) and \sQuote{uniform} specifies knots placed at
   equally spaced intervals. }
 
-\item{basis}{ a character string (default \code{basis="auto"})
+\item{basis}{ a character string (default \code{basis="additive"})
     indicating whether the additive or tensor product B-spline basis
     matrix for a multivariate polynomial spline should be used. Note
     this can be automatically determined by cross-validation if
