@@ -1,6 +1,11 @@
-Changes from Version 0.13.8 to 0.14.0 [12-Apr-2011]
+Changes from Version 0.13.8 to 0.14.0 [14-Apr-2011]
 
-* trying intercept=TRUE and no constant in model (throughout)
+* tensor products now working properly (need gsl.bs intercept and no
+  intercept in lm()) so dumped "additive-tensor" option and had to
+  rework code to support additive (lm() has intercept, gsl.bs no
+  intercept here) etc. In the process realized derivatives were all
+  effed up and now for the first time they work (with segments being
+  any value at all etc.).
 
 Changes from Version 0.13.7 to 0.13.8 [30-Jan-2011]
 
