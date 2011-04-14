@@ -391,6 +391,15 @@ deriv.kernel.spline <- function(x,
 
   x <- as.matrix(x)
 
+  ## Univariate additive spline bases have one less column than
+  ## univariate tensor spline bases. This is used only for setting
+  ## appropriate columns for derivative computation.
+  
+  if(basis=="additive") {
+    K.additive <- K
+    K.additive[,1] <- ifelse(K[,1]>0,K[,1]-1,K[,1])
+  }
+
   if(!is.null(z)) z <- as.matrix(z)
 
   if(is.null(z)) {
@@ -400,29 +409,29 @@ deriv.kernel.spline <- function(x,
     if(K[deriv.index,1]!=0) {
 
       P <- prod.spline(x=x,K=K,knots=knots,basis=basis)      
-      if(basis=="additive") {
-        model <- lm(y~P)
-      } else {
-        model <- lm(y~P-1)
-      }
       P.deriv <- prod.spline(x=x,K=K,xeval=xeval,knots=knots,basis=basis,deriv.index=deriv.index,deriv=deriv)
-      dim.P.deriv <- K[deriv.index,1]
       dim.P.no.tensor <- attr(P.deriv,"dim.P.no.tensor")
       dim.P.tensor <- NCOL(P)
 
-      deriv.start <- ifelse(deriv.index!=1,sum(K[1:(deriv.index-1),1]),0)+1
-      deriv.end <- deriv.start+K[deriv.index,1]-1
-
-      if(dim.P.tensor > dim.P.deriv+dim.P.no.tensor) {
-        deriv.ind.vec <- c(deriv.start:deriv.end, (dim.P.no.tensor+1):dim.P.tensor)
+      if(basis=="additive") {
+        model <- lm(y~P)
+        dim.P.deriv <- sum(K.additive[deriv.index,])
+        deriv.start <- ifelse(deriv.index!=1,sum(K.additive[1:(deriv.index-1),])+1,1)      
+        deriv.end <- deriv.start+sum(K.additive[deriv.index,])-1
+        deriv.ind.vec <- deriv.start:deriv.end
+        deriv.spline <- P.deriv[,deriv.ind.vec,drop=FALSE]%*%(coef(model)[-1])[deriv.ind.vec]
+        vcov.model <- vcov(model)[-1,-1,drop=FALSE]
+        se.deriv <- sapply(1:NROW(P.deriv), function(i){ sqrt(P.deriv[i,deriv.ind.vec,drop=FALSE]%*%vcov.model[deriv.ind.vec,deriv.ind.vec]%*%t(P.deriv[i,deriv.ind.vec,drop=FALSE])) })
       } else {
-        deriv.ind.vec <- 1:dim.P.deriv
+        model <- lm(y~P-1)
+#        dim.P.deriv <- sum(K[deriv.index,])        
+#        deriv.start <- ifelse(deriv.index!=1,sum(K[1:(deriv.index-1),])+1,1)    
+#        deriv.end <- deriv.start+sum(K[deriv.index,])-1
+#        deriv.ind.vec <- 1:dim.P.deriv
+#        deriv.spline <- P.deriv[,deriv.ind.vec,drop=FALSE]%*%coef(model)[deriv.ind.vec]
+        deriv.spline <- P.deriv%*%coef(model)
+        se.deriv <- sapply(1:NROW(P.deriv), function(i){ sqrt(P.deriv[i,,drop=FALSE]%*%vcov(model)%*%t(P.deriv[i,,drop=FALSE])) })
       }
-
-      deriv.spline <- P.deriv[,deriv.ind.vec,drop=FALSE]%*%(coef(model)[-1])[deriv.ind.vec]
-
-      vcov.model <- vcov(model)[-1,-1,drop=FALSE]
-      se.deriv <- sapply(1:NROW(P.deriv), function(i){ sqrt(P.deriv[i,deriv.ind.vec,drop=FALSE]%*%vcov.model[deriv.ind.vec,deriv.ind.vec]%*%t(P.deriv[i,deriv.ind.vec,drop=FALSE])) })
 
     } else {
 
@@ -456,28 +465,34 @@ deriv.kernel.spline <- function(x,
           zz <- ind == ind.vals[i]
           L <- prod.kernel(Z=z,z=z.unique[ind.vals[i],],lambda=lambda,kernel.type=kernel.type)
           P <- prod.spline(x=x,K=K,knots=knots,basis=basis)          
-          k <- NCOL(P)
-          if(basis=="additive") {
-            model <- lm(y~P,weights=L)
-          } else {
-            model <- lm(y~P-1,weights=L)
-          }
           P.deriv <- prod.spline(x=x,K=K,xeval=x[zz,,drop=FALSE],knots=knots,basis=basis,deriv.index=deriv.index,deriv=deriv)
-          dim.P.deriv <- K[deriv.index,1]
+          k <- NCOL(P)
           dim.P.no.tensor <- attr(P.deriv,"dim.P.no.tensor")
           dim.P.tensor <- NCOL(P)
-          deriv.start <- ifelse(deriv.index!=1,sum(K[1:(deriv.index-1),1]),0)+1
-          deriv.end <- deriv.start+K[deriv.index,1]-1
-          if(dim.P.tensor > dim.P.deriv+dim.P.no.tensor) {
-            deriv.ind.vec <- c(deriv.start:deriv.end, (dim.P.no.tensor+1):dim.P.tensor)
+
+          if(basis=="additive") {
+            model <- lm(y~P)
+            dim.P.deriv <- sum(K.additive[deriv.index,])
+            deriv.start <- ifelse(deriv.index!=1,sum(K.additive[1:(deriv.index-1),])+1,1)      
+            deriv.end <- deriv.start+sum(K.additive[deriv.index,])-1
+            deriv.ind.vec <- deriv.start:deriv.end
+            deriv.spline[zz] <- P.deriv[,deriv.ind.vec,drop=FALSE]%*%(coef(model)[-1])[deriv.ind.vec]
+            vcov.model <- vcov(model)[-1,-1,drop=FALSE]
+            se.deriv[zz] <- sapply(1:NROW(P.deriv), function(i){ sqrt(P.deriv[i,deriv.ind.vec,drop=FALSE]%*%vcov.model[deriv.ind.vec,deriv.ind.vec]%*%t(P.deriv[i,deriv.ind.vec,drop=FALSE])) })            
           } else {
-            deriv.ind.vec <- 1:dim.P.deriv
+            model <- lm(y~P-1)
+#            dim.P.deriv <- sum(K[deriv.index,])        
+#            deriv.start <- ifelse(deriv.index!=1,sum(K[1:(deriv.index-1),])+1,1)    
+#            deriv.end <- deriv.start+sum(K[deriv.index,])-1
+#            deriv.ind.vec <- 1:dim.P.deriv
+#            deriv.ind.vec <- 1:dim.P.deriv            
+#            deriv.spline[zz] <- P.deriv[,deriv.ind.vec,drop=FALSE]%*%coef(model)[deriv.ind.vec]
+            deriv.spline[zz] <- P.deriv%*%coef(model)
+            se.deriv[zz] <- sapply(1:NROW(P.deriv), function(i){ sqrt(P.deriv[i,,drop=FALSE]%*%vcov(model)%*%t(P.deriv[i,,drop=FALSE])) })
           }
-          deriv.coef <- (coef(model)[-1])[deriv.ind.vec]
-          deriv.spline[zz] <- P.deriv[,deriv.ind.vec,drop=FALSE]%*%deriv.coef
-          vcov.model <- vcov(model)[-1,-1,drop=FALSE]
-          se.deriv[zz] <- sapply(1:NROW(P.deriv), function(i){ sqrt(P.deriv[i,deriv.ind.vec,drop=FALSE]%*%vcov.model[deriv.ind.vec,deriv.ind.vec]%*%t(P.deriv[i,deriv.ind.vec,drop=FALSE])) })
+
         }
+
       } else {
         ## Evaluation z information
 
@@ -495,27 +510,34 @@ deriv.kernel.spline <- function(x,
           zz <- ind.zeval == ind.zeval.vals[i]
           L <- prod.kernel(Z=z,z=zeval.unique[ind.zeval.vals[i],],lambda=lambda,kernel.type=kernel.type)
           P <- prod.spline(x=x,K=K,knots=knots,basis=basis)
-          k <- NCOL(P)
-          if(basis=="additive") {
-            model <- lm(y~P,weights=L)
-          } else {
-            model <- lm(y~P-1,weights=L)
-          }
           P.deriv <- prod.spline(x=x,K=K,xeval=xeval[zz,,drop=FALSE],knots=knots,basis=basis,deriv.index=deriv.index,deriv=deriv)
-          dim.P.deriv <- K[deriv.index,1]
+          k <- NCOL(P)
           dim.P.no.tensor <- attr(P.deriv,"dim.P.no.tensor")
           dim.P.tensor <- NCOL(P)
-          deriv.start <- ifelse(deriv.index!=1,sum(K[1:(deriv.index-1),1]),0)+1
-          deriv.end <- deriv.start+K[deriv.index,1]-1
-          if(dim.P.tensor > dim.P.deriv+dim.P.no.tensor) {
-            deriv.ind.vec <- c(deriv.start:deriv.end, (dim.P.no.tensor+1):dim.P.tensor)
+
+          if(basis=="additive") {
+            model <- lm(y~P,weights=L)
+            dim.P.deriv <- sum(K.additive[deriv.index,])
+            deriv.start <- ifelse(deriv.index!=1,sum(K.additive[1:(deriv.index-1),])+1,1)      
+            deriv.end <- deriv.start+sum(K.additive[deriv.index,])-1
+            deriv.ind.vec <- deriv.start:deriv.end
+            deriv.spline[zz] <- P.deriv[,deriv.ind.vec,drop=FALSE]%*%(coef(model)[-1])[deriv.ind.vec]
+            vcov.model <- vcov(model)[-1,-1,drop=FALSE]
+            se.deriv[zz] <- sapply(1:NROW(P.deriv), function(i){ sqrt(P.deriv[i,deriv.ind.vec,drop=FALSE]%*%vcov.model[deriv.ind.vec,deriv.ind.vec]%*%t(P.deriv[i,deriv.ind.vec,drop=FALSE])) })
           } else {
-            deriv.ind.vec <- 1:dim.P.deriv
+            model <- lm(y~P-1,weights=L)
+#            dim.P.deriv <- sum(K[deriv.index,])        
+#            deriv.start <- ifelse(deriv.index!=1,sum(K[1:(deriv.index-1),])+1,1)    
+#            deriv.end <- deriv.start+sum(K[deriv.index,])-1
+#            deriv.ind.vec <- 1:dim.P.deriv
+#            deriv.spline[zz] <- P.deriv[,deriv.ind.vec,drop=FALSE]%*%coef(model)[deriv.ind.vec]
+            deriv.spline[zz] <- P.deriv%*%coef(model)
+            se.deriv[zz] <- sapply(1:NROW(P.deriv), function(i){ sqrt(P.deriv[i,,drop=FALSE]%*%vcov(model)%*%t(P.deriv[i,,drop=FALSE])) })
+#            se.deriv[zz] <- sapply(1:NROW(P.deriv), function(i){ sqrt(P.deriv[i,deriv.ind.vec,drop=FALSE]%*%vcov.model[deriv.ind.vec,deriv.ind.vec]%*%t(P.deriv[i,deriv.ind.vec,drop=FALSE])) })            
           }
-          deriv.spline[zz] <- P.deriv[,deriv.ind.vec,drop=FALSE]%*%(coef(model)[-1])[deriv.ind.vec]
-          vcov.model <- vcov(model)[-1,-1,drop=FALSE]
-          se.deriv[zz] <- sapply(1:NROW(P.deriv), function(i){ sqrt(P.deriv[i,deriv.ind.vec,drop=FALSE]%*%vcov.model[deriv.ind.vec,deriv.ind.vec]%*%t(P.deriv[i,deriv.ind.vec,drop=FALSE])) })
+
         }
+
       }
 
     } else {
@@ -719,7 +741,8 @@ deriv.factor.spline <- function(x,
   x <- as.matrix(x)
 
   ## Univariate additive spline bases have one less column than
-  ## univariate tensor spline bases
+  ## univariate tensor spline bases. This is used only for setting
+  ## appropriate columns for derivative computation.
   
   if(basis=="additive") {
     K.additive <- K
