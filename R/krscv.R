@@ -4,9 +4,8 @@
 ## arguments can be provided, and one can do search on the bandwidths
 ## and both the degree and knots ("degree-knots") or the degree
 ## holding the number of knots (segments+1) constant or the number of
-## knots (segments+1) holding the degree constant. A variety of basis
-## types are supported (functional anova "additive-tensor",
-## "additive", or "tensor") and the argument "auto" will evaluate
+## knots (segments+1) holding the degree constant. Two basis types are
+## supported ("additive" or "tensor") and the argument "auto" will
 ## choose the basis type automatically.
 
 ## Currently search is exhaustive taking basis.maxdim as the maximum
@@ -22,7 +21,7 @@ krscv <- function(xz,
                   restarts=0,
                   complexity=c("degree-knots","degree","knots"),
                   knots=c("quantiles","uniform"),
-                  basis=c("auto","additive-tensor","additive","tensor"),
+                  basis=c("auto","additive","tensor"),
                   cv.norm=c("L2","L1"),
                   degree=degree,
                   segments=segments) {
@@ -186,8 +185,7 @@ krscv <- function(xz,
 
   ## For kernel regression spline, if there is only one continuous
   ## predictor (i.e. num.x==1) disable auto, set to additive (which is
-  ## additive-tensor and tensor in this case, so don't waste time
-  ## doing all three).
+  ## tensor in this case, so don't waste time doing both).
 
   if(num.x==1 & basis == "auto") basis <- "additive"
 
@@ -244,84 +242,7 @@ krscv <- function(xz,
 
     if(basis=="auto") {
 
-      ## First basis=="additive-tensor"
-
-      output$convergence <- 42
-
-      while(output$convergence != 0) {
-        output <- optim(par=runif(num.z),
-                        cv.func,
-                        lower=rep(0,num.z),
-                        upper=rep(1,num.z),
-                        method="L-BFGS-B",
-                        x=x,
-                        y=y,
-                        z=z,
-                        K=K.mat[j,],
-                        basis.maxdim=basis.maxdim,
-                        restart=0,
-                        num.restarts=restarts,
-                        z.unique=z.unique,
-                        ind=ind,
-                        ind.vals=ind.vals,
-                        nrow.z.unique=nrow.z.unique,
-                        kernel.type=kernel.type,
-                        j=j,
-                        nrow.K.mat=nrow.K.mat,
-                        t2=t2,
-                        complexity=complexity,
-                        knots=knots,
-                        basis="additive-tensor")
-
-      }
-
-      if(restarts > 0) {
-
-        for(r in 1:restarts) {
-          
-          output.restart$convergence <- 42
-          
-          while(output.restart$convergence != 0) {
-
-            output.restart <- optim(par=runif(num.z),
-                                    cv.func,
-                                    lower=rep(0,num.z),
-                                    upper=rep(1,num.z),
-                                    method="L-BFGS-B",
-                                    x=x,
-                                    y=y,
-                                    z=z,
-                                    K=K.mat[j,],
-                                    basis.maxdim=basis.maxdim,
-                                    restart=r,
-                                    num.restarts=restarts,
-                                    z.unique=z.unique,
-                                    ind=ind,
-                                    ind.vals=ind.vals,
-                                    nrow.z.unique=nrow.z.unique,
-                                    kernel.type=kernel.type,
-                                    j=j,
-                                    nrow.K.mat=nrow.K.mat,
-                                    t2=t2,
-                                    complexity=complexity,
-                                    knots=knots,
-                                    basis="additive-tensor")
-
-          }
-
-          if(output.restart$value < output$value) output <- output.restart
-
-        }
-
-      } ## end restarts
-
-      if(output$value < cv.vec[j]) {
-        cv.vec[j] <- output$value
-        basis.vec[j] <- "additive-tensor"
-        lambda.mat[j,] <- output$par
-      }
-
-      ## Next, basis=="additive"
+      ## First, basis=="additive"
 
       output$convergence <- 42
 
@@ -479,7 +400,7 @@ krscv <- function(xz,
 
     } else { ## end auto
 
-      ## Either basis=="additive-tensor" or "additive" or "tensor"
+      ## Either basis=="additive" or "tensor"
 
       output$convergence <- 42
 

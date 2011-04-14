@@ -25,7 +25,7 @@ crsEst <- function(xz,
                    kernel.type=c("nominal","ordinal"),
                    complexity=c("degree-knots","degree","knots"),
                    knots=c("quantiles","uniform"),
-                   basis=c("auto","additive-tensor","additive","tensor"),
+                   basis=c("auto","additive","tensor"),
                    deriv=0,
                    data.return=FALSE,
                    prune=FALSE,
@@ -263,7 +263,7 @@ crs.default <- function(xz,
                         kernel.type=c("nominal","ordinal"),
                         complexity=c("degree-knots","degree","knots"),
                         knots=c("quantiles","uniform"),
-                        basis=c("auto","additive-tensor","additive","tensor"),
+                        basis=c("auto","additive","tensor"),
                         deriv=0,
                         data.return=FALSE,
                         prune=FALSE,
@@ -320,7 +320,7 @@ crs.formula <- function(formula,
                         kernel.type=c("nominal","ordinal"),
                         complexity=c("degree-knots","degree","knots"),
                         knots=c("quantiles","uniform"),
-                        basis=c("auto","additive-tensor","additive","tensor"),
+                        basis=c("auto","additive","tensor"),
                         deriv=0,
                         data.return=FALSE,
                         prune=FALSE,
@@ -369,7 +369,7 @@ crs.formula <- function(formula,
   if(is.null(include)&!is.null(z)&!kernel) include <- rep(1,num.z)
   if(is.null(lambda)&!is.null(z)&kernel) lambda <- rep(0,num.z)
 
-  if(cv==TRUE&&basis=="additive-tensor"&&NCOL(xz)>1) warning(" cv specified but basis set to additive-tensor: you might consider basis=\"auto\"")
+  if(cv==TRUE&&basis=="tensor"&&NCOL(xz)>1) warning(" cv specified but basis set to tensor: you might consider basis=\"auto\"")
 
   if(kernel==TRUE&&prune==TRUE) warning(" pruning cannot coexist with categorical kernel smoothing (pruning ignored)")
 

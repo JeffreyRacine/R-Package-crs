@@ -4,10 +4,9 @@
 ## arguments can be provided, and one can do search on both the degree
 ## and knots ("degree-knots") or the degree holding the number of
 ## knots (segments+1) constant or the number of knots (segments+1)
-## holding the degree constant. A variety of basis types are supported
-## (functional anova "additive-tensor", "additive", or "tensor") and
-## the argument "auto" will evaluate choose the basis type
-## automatically.
+## holding the degree constant. Two basis types are supported
+## ("additive", or "tensor") and the argument "auto" will choose the
+## basis type automatically.
 
 ## Currently search is exhaustive taking basis.maxdim as the maximum
 ## number of the spline degree (0,1,...) and number of segments
@@ -20,7 +19,7 @@ frscv <- function(xz,
                   basis.maxdim=5,
                   complexity=c("degree-knots","degree","knots"),
                   knots=c("quantiles","uniform"),
-                  basis=c("auto","additive-tensor","additive","tensor"),
+                  basis=c("auto","additive","tensor"),
                   cv.norm=c("L2","L1"),
                   degree=degree,
                   segments=segments) {
@@ -190,9 +189,8 @@ frscv <- function(xz,
   }
 
   ## For factor regression spline, if there is only one predictor
-  ## (i.e. num.x + num.z = 1) disable auto, set to additive (which is
-  ## additive-tensor and tensor in this case, so don't waste time
-  ## doing all three).
+  ## (i.e. num.x + num.z = 1) disable auto, set to additive (tensor in
+  ## this case, so don't waste time doing both).
 
   if(num.x+num.z==1 & basis == "auto") basis <- "additive"
 
@@ -293,25 +291,6 @@ frscv <- function(xz,
                         t2=Sys.time(),
                         complexity=complexity,
                         knots=knots,
-                        basis="additive-tensor")
-
-      if(output < cv.vec[j]) {
-        cv.vec[j] <- output
-        basis.vec[j] <- "additive-tensor"
-      }
-
-      output <- cv.func(input=KI.mat[j,],
-                        x=x,
-                        y=y,
-                        z=z,
-                        basis.maxdim=basis.maxdim,
-                        restart=0,
-                        num.restarts=0,
-                        j=j,
-                        nrow.KI.mat=nrow.KI.mat,
-                        t2=Sys.time(),
-                        complexity=complexity,
-                        knots=knots,
                         basis="additive")
 
       if(output < cv.vec[j]) {
@@ -340,7 +319,7 @@ frscv <- function(xz,
 
     } else {
 
-      ## not auto, so use either "additive-tensor" or "additive" or "tensor"
+      ## not auto, so use either "additive" or "tensor"
 
       output <- cv.func(input=KI.mat[j,],
                         x=x,
