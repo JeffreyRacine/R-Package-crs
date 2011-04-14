@@ -187,7 +187,11 @@ predict.kernel.spline <- function(x,
       ## Degree > 0
 
       P <- prod.spline(x=x,K=K,knots=knots,basis=basis)
-      model <- lm(y~P-1)
+      if(basis=="additive") {
+        model <- lm(y~P)
+      } else {
+        model <- lm(y~P-1)
+      }
       if(is.null(xeval)) {
         fit.spline <- predict(model,interval="confidence",se.fit=TRUE)
       } else {
@@ -239,7 +243,11 @@ predict.kernel.spline <- function(x,
           L <- prod.kernel(Z=z,z=z.unique[ind.vals[i],],lambda=lambda,kernel.type=kernel.type)
           P <- prod.spline(x=x,K=K,knots=knots,basis=basis)
           k <- NCOL(P)
-          model.z.unique <- lm(y~P-1,weights=L)
+          if(basis=="additive") {
+            model.z.unique <- lm(y~P,weights=L)
+          } else {
+            model.z.unique <- lm(y~P-1,weights=L)
+          }
           model[[i]] <- model.z.unique
           htt[zz] <- hatvalues(model.z.unique)[zz]
           P <- prod.spline(x=x,K=K,xeval=x[zz,,drop=FALSE],knots=knots,basis=basis)
@@ -266,7 +274,11 @@ predict.kernel.spline <- function(x,
           L <- prod.kernel(Z=z,z=zeval.unique[ind.zeval.vals[i],],lambda=lambda,kernel.type=kernel.type)
           P <- prod.spline(x=x,K=K,knots=knots,basis=basis)
           k <- NCOL(P)
-          model.z.unique <- lm(y~P-1,weights=L)
+          if(basis=="additive") {
+            model.z.unique <- lm(y~P,weights=L)
+          } else {
+            model.z.unique <- lm(y~P-1,weights=L)
+          }
           model[[i]] <- model.z.unique
           P <- prod.spline(x=x,K=K,xeval=xeval[zz,,drop=FALSE],knots=knots,basis=basis)
           tmp <- predict(model.z.unique,newdata=data.frame(as.matrix(P)),interval="confidence",se.fit=TRUE)
@@ -293,7 +305,11 @@ predict.kernel.spline <- function(x,
         for(i in 1:nrow.z.unique) {
           zz <- ind == ind.vals[i]
           L <- prod.kernel(Z=z,z=z.unique[ind.vals[i],],lambda=lambda,kernel.type=kernel.type)
-          model.z.unique <- lm(y~.-1,weights=L,data=data.frame(y,z.factor))
+          if(basis=="additive") {
+            model.z.unique <- lm(y~.,weights=L,data=data.frame(y,z.factor))
+          } else {
+            model.z.unique <- lm(y~.-1,weights=L,data=data.frame(y,z.factor))
+          }
           model[[i]] <- model.z.unique
           htt[zz] <- hatvalues(model.z.unique)[zz]
           fit.spline[zz,] <- fitted(model.z.unique)[zz]
@@ -321,7 +337,11 @@ predict.kernel.spline <- function(x,
         for(i in 1:nrow.zeval.unique) {
           zz <- ind.zeval == ind.zeval.vals[i]
           L <- prod.kernel(Z=z,z=zeval.unique[ind.zeval.vals[i],],lambda=lambda,kernel.type=kernel.type)
-          model.z.unique <- lm(y~.-1,weights=L,data=data.frame(y,z.factor))
+          if(basis=="additive") {
+            model.z.unique <- lm(y~.,weights=L,data=data.frame(y,z.factor))
+          } else {
+            model.z.unique <- lm(y~.-1,weights=L,data=data.frame(y,z.factor))
+          }
           model[[i]] <- model.z.unique
           fit.spline[zz,] <- fitted(model.z.unique)[zz]
           k <- 0
@@ -380,7 +400,11 @@ deriv.kernel.spline <- function(x,
     if(K[deriv.index,1]!=0) {
 
       P <- prod.spline(x=x,K=K,knots=knots,basis=basis)      
-      model <- lm(y~P-1)
+      if(basis=="additive") {
+        model <- lm(y~P)
+      } else {
+        model <- lm(y~P-1)
+      }
       P.deriv <- prod.spline(x=x,K=K,xeval=xeval,knots=knots,basis=basis,deriv.index=deriv.index,deriv=deriv)
       dim.P.deriv <- K[deriv.index,1]
       dim.P.no.tensor <- attr(P.deriv,"dim.P.no.tensor")
@@ -433,7 +457,11 @@ deriv.kernel.spline <- function(x,
           L <- prod.kernel(Z=z,z=z.unique[ind.vals[i],],lambda=lambda,kernel.type=kernel.type)
           P <- prod.spline(x=x,K=K,knots=knots,basis=basis)          
           k <- NCOL(P)
-          model <- lm(y~P-1,weights=L)
+          if(basis=="additive") {
+            model <- lm(y~P,weights=L)
+          } else {
+            model <- lm(y~P-1,weights=L)
+          }
           P.deriv <- prod.spline(x=x,K=K,xeval=x[zz,,drop=FALSE],knots=knots,basis=basis,deriv.index=deriv.index,deriv=deriv)
           dim.P.deriv <- K[deriv.index,1]
           dim.P.no.tensor <- attr(P.deriv,"dim.P.no.tensor")
@@ -468,7 +496,11 @@ deriv.kernel.spline <- function(x,
           L <- prod.kernel(Z=z,z=zeval.unique[ind.zeval.vals[i],],lambda=lambda,kernel.type=kernel.type)
           P <- prod.spline(x=x,K=K,knots=knots,basis=basis)
           k <- NCOL(P)
-          model <- lm(y~P-1,weights=L)
+          if(basis=="additive") {
+            model <- lm(y~P,weights=L)
+          } else {
+            model <- lm(y~P-1,weights=L)
+          }
           P.deriv <- prod.spline(x=x,K=K,xeval=xeval[zz,,drop=FALSE],knots=knots,basis=basis,deriv.index=deriv.index,deriv=deriv)
           dim.P.deriv <- K[deriv.index,1]
           dim.P.no.tensor <- attr(P.deriv,"dim.P.no.tensor")
@@ -780,6 +812,11 @@ cv.kernel.spline <- function(x,
   knots <- match.arg(knots)
   cv.norm <- match.arg(cv.norm)
 
+  ## Additive spline regression models have an intercept in the lm()
+  ## model (though not in the gsl.bs function)
+
+  lm.intercept <- ifelse(basis=="additive", TRUE, FALSE)
+
   ## Without computing P, compute the number of columns that P would
   ## be and if degrees of freedom is 1 or less, return a large penalty.
 
@@ -796,9 +833,7 @@ cv.kernel.spline <- function(x,
   if(is.null(z)) {
     ## No categorical predictors
     if(any(K[,1] > 0)) {
-      suppressWarnings(epsilon <- residuals(lsfit(P <- prod.spline(x=x,K=K,knots=knots,basis=basis),y,intercept=FALSE)))
-#      P <- prod.spline(x=x,K=K,knots=knots,basis=basis)
-#      epsilon <- residuals(lm(y~P-1))
+      suppressWarnings(epsilon <- residuals(lsfit(P <- prod.spline(x=x,K=K,knots=knots,basis=basis),y,intercept=lm.intercept)))
       htt <- hat(P)
       htt <- ifelse(htt == 1, 1-.Machine$double.eps, htt)      
     } else {
@@ -817,7 +852,11 @@ cv.kernel.spline <- function(x,
       for(i in 1:nrow.z.unique) {
         zz <- ind == ind.vals[i]
         L <- prod.kernel(Z=z,z=z.unique[ind.vals[i],],lambda=lambda,kernel.type=kernel.type)
-        model <- lm(y~P-1,weights=L)
+        if(basis=="additive") {
+          model <- lm(y~P,weights=L)
+        } else {
+          model <- lm(y~P-1,weights=L)
+        }
         epsilon[zz] <- residuals(model)[zz]
         htt[zz] <- hatvalues(model)[zz]
       }
@@ -827,7 +866,11 @@ cv.kernel.spline <- function(x,
       for(i in 1:nrow.z.unique) {
         zz <- ind == ind.vals[i]
         L <- prod.kernel(Z=z,z=z.unique[ind.vals[i],],lambda=lambda,kernel.type=kernel.type)
-        model <- lm(y~.-1,weights=L,data=data.frame(y,z.factor))
+        if(basis=="additive") {
+          model <- lm(y~.,weights=L,data=data.frame(y,z.factor))
+        } else {
+          model <- lm(y~.-1,weights=L,data=data.frame(y,z.factor))
+        }
         epsilon[zz] <- residuals(model)[zz]
         htt[zz] <- hatvalues(model)[zz]
       }
