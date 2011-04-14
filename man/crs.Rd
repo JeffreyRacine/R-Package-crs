@@ -21,7 +21,7 @@ crs(\dots)
     kernel.type = c("nominal","ordinal"),
     complexity = c("degree-knots","degree","knots"),
     knots = c("quantiles","uniform"),
-    basis = c("auto","additive-tensor","additive","tensor"),
+    basis = c("auto","additive","tensor"),
     deriv = 0,
     data.return = FALSE,
     prune = FALSE,
@@ -40,7 +40,7 @@ crs(\dots)
     kernel.type = c("nominal","ordinal"),
     complexity = c("degree-knots","degree","knots"),
     knots = c("quantiles","uniform"),
-    basis = c("auto","additive-tensor","additive","tensor"),
+    basis = c("auto","additive","tensor"),
     deriv = 0,
     data.return = FALSE,
     prune = FALSE,
@@ -107,11 +107,10 @@ crs(\dots)
   the spline degree and number of knots
 
   For the continuous predictors the regression spline model employs
-  either the additive, tensor product, or combined additive/tensor
-  (`functional ANOVA') product B-spline basis matrix for a multivariate
-  polynomial spline via the B-spline routines in the GNU Scientific
-  Library and the \code{\link{tensor.prod.model.matrix}} function in the
-  \pkg{mgcv} package}
+  either the additive or tensor product B-spline basis matrix for a
+  multivariate polynomial spline via the B-spline routines in the GNU
+  Scientific Library and the \code{\link{tensor.prod.model.matrix}}
+  function in the \pkg{mgcv} package}
 
    \item{knots}{ a character string (default \code{knots="quantiles"})
   specifying where knots are to be placed. \sQuote{quantiles} specifies
@@ -120,16 +119,15 @@ crs(\dots)
   equally spaced intervals }
 
 \item{basis}{ a character string (default \code{basis="auto"})
-    indicating whether the combined additive/tensor (`functional
-    ANOVA'), additive, or tensor product B-spline basis matrix for a
-    multivariate polynomial spline should be used. Note this can be
-    automatically determined by cross-validation if \code{cv=TRUE} and
-    \code{basis="auto"}, and is an \sQuote{all or none} proposition
-    (i.e. interaction terms for all predictors or for no predictors
-    given the nature of \sQuote{tensor products}). Note also that if
-    there is only one predictor this defaults to \code{basis="additive"}
-    to avoid unnecessary computation as the spline bases are equivalent
-    in this case }
+    indicating whether the additive or tensor product B-spline basis
+    matrix for a multivariate polynomial spline should be used. Note
+    this can be automatically determined by cross-validation if
+    \code{cv=TRUE} and \code{basis="auto"}, and is an \sQuote{all or
+    none} proposition (i.e. interaction terms for all predictors or for
+    no predictors given the nature of \sQuote{tensor products}). Note
+    also that if there is only one predictor this defaults to
+    \code{basis="additive"} to avoid unnecessary computation as the
+    spline bases are equivalent in this case }
 
   \item{deriv}{ an integer \code{l} (default \code{deriv=0}) specifying
   whether to compute the univariate \code{l}th partial derivative for
@@ -180,9 +178,6 @@ crs(\dots)
   in the GNU Scientific Library and the
   \code{\link{tensor.prod.model.matrix}} function in the \pkg{mgcv}
   package.
-
-  When \code{basis="additive-tensor"} the model is of the functional
-  ANOVA class (i.e. additive bases plus tensor product)
 
   When \code{basis="additive"} the model becomes additive in nature
   (i.e. no interaction/tensor terms thus semiparametric not fully
@@ -323,8 +318,7 @@ crs(\dots)
   
   Note that \code{\link{summary}} supports the option
   \code{sigtest=TRUE} that conducts an F-test for significance for each
-  predictor (though be warned that this can be fragile when
-  \code{basis="additive-tensor"}).
+  predictor.
 
 }
 \references{
