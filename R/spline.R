@@ -115,14 +115,6 @@ prod.spline <- function(x,
     ## plus tensor product (all interactions), otherwise just the
     ## original bases for the one variable.
 
-    ## [Oct 23 2010, CESG Vancouver] Currently we have additive
-    ## splines with (additive) tensor product added via
-    ## cbind(P,tensor.prod.model.matrix(tp)) [`functional anova'
-    ## setup]. We might simply add a switch at this point to only
-    ## return the tensor product as in P<-tensor.prod.model.matrix(tp)
-    ## and we are done. Then we have additive, additive with tensor
-    ## (`functional anova') and tensor only.
-
     if(NROW(tp) > 1) {
       ## First create all basis matrices for all continuous predictors
       ## (in essence, additive by default)
@@ -424,11 +416,6 @@ deriv.kernel.spline <- function(x,
         se.deriv <- sapply(1:NROW(P.deriv), function(i){ sqrt(P.deriv[i,deriv.ind.vec,drop=FALSE]%*%vcov.model[deriv.ind.vec,deriv.ind.vec]%*%t(P.deriv[i,deriv.ind.vec,drop=FALSE])) })
       } else {
         model <- lm(y~P-1)
-#        dim.P.deriv <- sum(K[deriv.index,])        
-#        deriv.start <- ifelse(deriv.index!=1,sum(K[1:(deriv.index-1),])+1,1)    
-#        deriv.end <- deriv.start+sum(K[deriv.index,])-1
-#        deriv.ind.vec <- 1:dim.P.deriv
-#        deriv.spline <- P.deriv[,deriv.ind.vec,drop=FALSE]%*%coef(model)[deriv.ind.vec]
         deriv.spline <- P.deriv%*%coef(model)
         se.deriv <- sapply(1:NROW(P.deriv), function(i){ sqrt(P.deriv[i,,drop=FALSE]%*%vcov(model)%*%t(P.deriv[i,,drop=FALSE])) })
       }
@@ -481,12 +468,6 @@ deriv.kernel.spline <- function(x,
             se.deriv[zz] <- sapply(1:NROW(P.deriv), function(i){ sqrt(P.deriv[i,deriv.ind.vec,drop=FALSE]%*%vcov.model[deriv.ind.vec,deriv.ind.vec]%*%t(P.deriv[i,deriv.ind.vec,drop=FALSE])) })            
           } else {
             model <- lm(y~P-1)
-#            dim.P.deriv <- sum(K[deriv.index,])        
-#            deriv.start <- ifelse(deriv.index!=1,sum(K[1:(deriv.index-1),])+1,1)    
-#            deriv.end <- deriv.start+sum(K[deriv.index,])-1
-#            deriv.ind.vec <- 1:dim.P.deriv
-#            deriv.ind.vec <- 1:dim.P.deriv            
-#            deriv.spline[zz] <- P.deriv[,deriv.ind.vec,drop=FALSE]%*%coef(model)[deriv.ind.vec]
             deriv.spline[zz] <- P.deriv%*%coef(model)
             se.deriv[zz] <- sapply(1:NROW(P.deriv), function(i){ sqrt(P.deriv[i,,drop=FALSE]%*%vcov(model)%*%t(P.deriv[i,,drop=FALSE])) })
           }
@@ -526,14 +507,8 @@ deriv.kernel.spline <- function(x,
             se.deriv[zz] <- sapply(1:NROW(P.deriv), function(i){ sqrt(P.deriv[i,deriv.ind.vec,drop=FALSE]%*%vcov.model[deriv.ind.vec,deriv.ind.vec]%*%t(P.deriv[i,deriv.ind.vec,drop=FALSE])) })
           } else {
             model <- lm(y~P-1,weights=L)
-#            dim.P.deriv <- sum(K[deriv.index,])        
-#            deriv.start <- ifelse(deriv.index!=1,sum(K[1:(deriv.index-1),])+1,1)    
-#            deriv.end <- deriv.start+sum(K[deriv.index,])-1
-#            deriv.ind.vec <- 1:dim.P.deriv
-#            deriv.spline[zz] <- P.deriv[,deriv.ind.vec,drop=FALSE]%*%coef(model)[deriv.ind.vec]
             deriv.spline[zz] <- P.deriv%*%coef(model)
             se.deriv[zz] <- sapply(1:NROW(P.deriv), function(i){ sqrt(P.deriv[i,,drop=FALSE]%*%vcov(model)%*%t(P.deriv[i,,drop=FALSE])) })
-#            se.deriv[zz] <- sapply(1:NROW(P.deriv), function(i){ sqrt(P.deriv[i,deriv.ind.vec,drop=FALSE]%*%vcov.model[deriv.ind.vec,deriv.ind.vec]%*%t(P.deriv[i,deriv.ind.vec,drop=FALSE])) })            
           }
 
         }
@@ -782,9 +757,6 @@ deriv.factor.spline <- function(x,
       model <- lm(y~P[,prune.index,drop=FALSE]-1)
       coef.vec.model[prune.index] <- coef(model)
       vcov.mat.model[prune.index,prune.index] <- vcov(model)
-      dim.P.deriv <- sum(K[deriv.index,])
-      deriv.start <- ifelse(deriv.index!=1,sum(K[1:(deriv.index-1),])+1,1)    
-      deriv.end <- deriv.start+sum(K[deriv.index,])-1
       deriv.ind.vec[1:dim.P.tensor] <- TRUE            
       deriv.ind.vec <- ifelse(prune.index,deriv.ind.vec,FALSE)
     }
