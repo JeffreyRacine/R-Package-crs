@@ -817,9 +817,15 @@ cv.kernel.spline <- function(x,
 
   n <- length(y)
   c.vec <- NULL
-  if(any(K[,1] > 0)) c.vec <- rowSums(K[K[,1]!=0,,drop=FALSE])-1
-  if(basis=="additive") ncol.P <- sum(c.vec)
-  if(basis=="tensor") ncol.P <- prod(c.vec)
+
+  if(basis=="additive") {
+    if(any(K[,1] > 0)) c.vec <- rowSums(K[K[,1]!=0,,drop=FALSE])-1
+    ncol.P <- sum(c.vec)
+  }
+  if(basis=="tensor") {
+    if(any(K[,1] > 0)) c.vec <- rowSums(K[K[,1]!=0,,drop=FALSE])
+    ncol.P <- prod(c.vec)
+  }
 
   if(ncol.P >= (n-1)) return(.Machine$double.xmax)
 
@@ -915,7 +921,6 @@ cv.factor.spline <- function(x,
   c.vec <- NULL
   i.vec <- NULL
 
-  if(any(K[,1] > 0)) c.vec <- rowSums(K[K[,1]!=0,,drop=FALSE])-1
   if(any(I > 0)) {
     i.vec <- numeric()
     j <- 1
@@ -927,8 +932,14 @@ cv.factor.spline <- function(x,
     }
   }
 
-  if(basis=="additive") ncol.P <- sum(c(c.vec,i.vec))
-  if(basis=="tensor") ncol.P <- prod(c(c.vec,i.vec))
+  if(basis=="additive") {
+    if(any(K[,1] > 0)) c.vec <- rowSums(K[K[,1]!=0,,drop=FALSE])-1
+    ncol.P <- sum(c(c.vec,i.vec))
+  }
+  if(basis=="tensor") {
+    if(any(K[,1] > 0)) c.vec <- rowSums(K[K[,1]!=0,,drop=FALSE])
+    ncol.P <- prod(c(c.vec,i.vec))
+  }
 
   if(ncol.P >= (n-1)) return(.Machine$double.xmax)
 
