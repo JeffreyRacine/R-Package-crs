@@ -14,9 +14,6 @@ dgp <- sin(sqrt(x1^2+x2^2))/sqrt(x1^2+x2^2)
 
 y <- dgp + rnorm(n,sd=.1)
 
-y <- dgp + rnorm(n,sd=.5)
-
-
 model <- crs(y~x1+x2,
              basis="auto",
              cv=TRUE,
@@ -42,8 +39,6 @@ persp(x=x1.seq,y=x2.seq,z=z,
       main="Conditional Mean",
       theta=45,phi=45)
 
-dev.new()
-
 ## Perspective plot - derivative wrt x1
 x1.seq <- seq(min(x1),max(x1),length=num.eval)
 x2.seq <- seq(min(x2),max(x2),length=num.eval)
@@ -58,8 +53,6 @@ persp(x=x1.seq,y=x2.seq,z=z,
       border="red",
       main="d g(x1,x2)/dx1 (x2=med(x2))",
       theta=45,phi=45)
-
-dev.new()
 
 ## Perspective plot - derivative wrt x2
 x1.seq <- seq(min(x1),max(x1),length=num.eval)
