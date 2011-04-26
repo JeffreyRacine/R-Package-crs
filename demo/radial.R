@@ -4,7 +4,7 @@ library(crs)
 
 set.seed(42)
 
-n <- 100000
+n <- 1000000
 num.eval <- 50
 
 x1 <- runif(n,-5,5)
@@ -51,7 +51,7 @@ persp(x=x1.seq,y=x2.seq,z=z,
       xlab="x1",ylab="x2",zlab="y",
       ticktype="detailed",      
       border="red",
-      main="d g(x1,x2)/dx1 (x2=med(x2))",
+      main="d g(x1,x2)/d x1 (x2=med(x2))",
       theta=45,phi=45)
 
 ## Perspective plot - derivative wrt x2
@@ -65,5 +65,5 @@ persp(x=x1.seq,y=x2.seq,z=z,
       xlab="x1",ylab="x2",zlab="y",
       ticktype="detailed",      
       border="red",
-      main="d g(x1,x2)/dx2 (x1=med(x1))",
+      main="d g(x1,x2)/d x2 (x1=med(x1))",
       theta=45,phi=45)

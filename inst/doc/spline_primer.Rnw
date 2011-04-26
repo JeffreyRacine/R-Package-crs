@@ -1,0 +1,651 @@
+%% $Id: spline_primer.Rnw,v 1.18 2011/04/26 17:46:00 jracine Exp jracine $
+
+\documentclass[11pt,nogin]{amsart}
+
+\usepackage{setspace,graphicx,srcltx,enumitem,harvard}
+\usepackage[utf8]{inputenc} 
+
+\newcommand{\field}[1]{\mathbb{#1}}
+\newcommand{\R}{\field{R}}
+
+%% Create example environment
+
+\newcounter{Examplecount}
+\setcounter{Examplecount}{0}
+\newenvironment{example}[1]{
+  \stepcounter{Examplecount}
+  \begin{singlespacing}
+    \begin{center}
+      \begin{minipage}{0.85\textwidth}
+        {\bf Example \arabic{section}.\arabic{Examplecount}: #1}\em 
+      }{
+      \end{minipage}
+    \end{center}
+  \end{singlespacing}}
+
+%% Change the default page sizes.
+
+\setlength{\topmargin}{-0.25in}
+\setlength{\textheight}{8.5in}
+\setlength{\oddsidemargin}{.0in}
+\setlength{\evensidemargin}{.0in}
+\setlength{\textwidth}{6.5in}
+\setlength{\footskip}{.5in}
+
+\title{A Primer on Spline Regression}
+\author{Jeffrey S.~Racine}
+\date{\today}
+\thanks{These notes are culled from a variety of sources. I am solely
+  responsible for all errors. Suggestions are welcomed (racinej@mcmaster.ca).} 
+
+\begin{document}
+
+<<eval=TRUE,echo=FALSE,keep.source=TRUE,results=hide>>=
+library(crs)
+options(prompt = "R> ", crs.messages = FALSE, digits = 3)
+@ 
+
+\setkeys{Gin}{width=0.45\textwidth}
+
+\maketitle
+
+\onehalfspacing
+
+\section{Overview}
+
+B-splines constitute an appealing method for the nonparametric
+estimation of a range of statistical objects of interest. In this
+primer we focus our attention on the estimation of a conditional mean,
+i.e.\ the `regression function'.
+
+A `spline' is a function that is constructed piece-wise from polynomial
+functions. The term comes from the tool used by shipbuilders and
+drafters to construct smooth shapes having desired
+properties. Drafters have long made use of a bendable strip fixed in
+position at a number of points that relaxes to form a smooth curve
+passing through those points. The malleability of the spline material
+combined with the constraint of the control points would cause the
+strip to take the shape that minimized the energy required for bending
+it between the fixed points, this being the smoothest possible
+shape. We shall rely on a class of splines called `B-splines'
+(`basis-splines'). A B-spline function is the maximally differentiable
+interpolative basis function. The B-spline is a generalization of the
+B\'ezier curve (a B-spline with no `interior knots' is a B\'ezier
+curve). B-splines are defined by their `order' $m$ and number of
+interior `knots' $N$ (there are two `endpoints' which are themselves
+knots so the total number of knots will be $N+2$). The degree of the
+B-spline polynomial will be the spline order $m$ minus one (degree =
+$m-1$).
+
+To best appreciate the nature of B-splines, we shall first consider a
+simple type of spline, the B\'ezier function, and then move on to the
+more flexible and powerful generalization, the B-spline itself. We
+begin with the univariate case in Section \ref{sec:bezier} where we
+consider the univariate B\'ezier function. In Section
+\ref{sec:b-spline} we turn to the univariate B-spline function, and
+then in Section \ref{sec:mv spline} we turn to the multivariate case
+where we also briefly mention how one could handle the presence of
+categorical regressors.
+
+\section{\label{sec:bezier}B\'ezier Curves}
+
+We present an overview of B\'ezier curves which form the basis for the
+B-splines that follow. We begin with a simple illustration, that of a
+quadratic B\'ezier curve.
+
+\begin{example}{A quadratic B\'ezier curve.}
+
+  A quadratic B\'ezier curve is the path traced by the function
+  $B(x)$, given points $\beta_0$, $\beta_1$, and $\beta_2$, where
+  \begin{align*}
+    B(x)&=\beta_0(1-x^2)+2\beta_1(1-x)x+\beta_2x^2\cr
+    &=\sum_{i=0}^2 \beta_iB_i(x),\quad x\in [0,1].
+  \end{align*}
+  The terms $B_0(x)=(1-x^2)$, $B_1(x)=2(1-x)x$, and $B_2(x)=x^2$ are
+  the `bases' which is this case turn out to be `Bernstein
+  polynomials' (\citeasnoun{BERNSTEIN:1912}).  For our purposes the
+  `control points' $\beta_i$, $i=0,1,2$, will be parameters that could
+  be selected by least squares fitting in a regression setting, but
+  more on that later. Consider the following simple example where we
+  plot a quadratic B\'ezier curve with arbitrary control points:
+  
+\begin{center}
+<<fig=TRUE,echo=FALSE>>=
+B <- function(x,b0,b1,b2) { (1-x^2)*b0+(1-x)*b1+x^2*b2 }
+x <- seq(0,1,length=1000)
+b0 <- 0
+b1 <- 1
+b2 <- 2
+plot(x,B(x,b0,b1,b2),ylab="B(x)",type="l",lwd=2,cex.lab=1.25)
+@ 
+\end{center}
+\centerline{A quadratic B\'ezier curve.}
+
+For this simple illustration we set $\beta_0=\Sexpr{b0}$,
+$\beta_1=\Sexpr{b1}$, $\beta_2=\Sexpr{b2}$.
+  
+Note that the derivative of this curve is
+  \begin{equation*}
+    B'(x)=2(1-x)(\beta_1-\beta_0)+2x(\beta_2-\beta_1),
+  \end{equation*}
+  which is a polynomial of degree one. 
+  
+  This example of a B\'ezier curve will also be seen to be a
+  `second-degree B-spline with no interior knots' or, equivalently, `a
+  third-order B-spline with no interior knots'. Using the terminology
+  of B-splines, in this example we have a third-order B-spline ($m=3$)
+  which is of polynomial degree two ($m-1=2$) having highest
+  derivative of polynomial degree one ($m-2=1$).
+  
+\end{example}
+
+\subsection{The B\'ezier curve defined}
+
+More generally, a B\'ezier curve of degree $n$ (order $m$) is composed
+of $m=n+1$ terms and is given by
+\begin{align}
+  \label{eq:bezier}
+  B(x)&=\sum_{i=0}^n\beta_i{n\choose i}(1-x)^{n-i}x^i\cr
+  &=\sum_{i=0}^n\beta_iB_{i,n}(x),
+\end{align}
+where ${n\choose i}=\frac{n!}{(n-i)!i!}$, which can be expressed
+recursively as
+\begin{equation*}
+  B(x)=(1-x)\left(\sum_{i=0}^{n-1}\beta_iB_{i,n-1}(x)\right)+x\left(\sum_{i=1}^{n}\beta_iB_{i,n-1}(x)\right),
+\end{equation*}
+so a degree $n$ B\'ezier curve is a linear interpolation between two
+degree $n-1$ B\'ezier curves.
+
+\begin{example}{A quadratic B\'ezier curve is a linear interpolation
+    between two linear B\'ezier curves.}
+
+  The linear B\'ezier curve is given by $\beta_0(1-x)+\beta_1 x$, and
+  above we showed that the quadratic B\'ezier curve is given by
+  $\beta_0(1-x^2)+2\beta_1(1-x)x+\beta_2x^2$. So, when $n=2$
+  (quadratic), we have
+\begin{align*}
+B(x)
+&=(1-x)(\beta_0(1-x)+\beta_1 x)
++x(\beta_1(1-x)+\beta_2 x)\cr
+&=\beta_0(1-x^2)+2\beta_1(1-x)x+\beta_2x^2.
+\end{align*}
+
+\end{example}
+
+This is essentially a modified version of the idea of taking linear
+interpolations of linear interpolations of linear interpolations and
+so on. Note that the polynomials
+\begin{equation*}
+  B_{i,n}(x)={n\choose i}(1-x)^{n-i}x^i
+\end{equation*}
+are called `Bernstein basis polynomials of degree $n$' and are such
+that $\sum_{i=0}^nB_{i,n}(x)=1$, unlike raw
+polynomials.\footnote{Naturally we define $x^0=(1-x)^0=1$, and by
+  `raw' polynomials we simply mean $x^j$, $j=0,\dots,n$.} 
+
+The $m=n+1$ control points $\beta_i$, $i=0,\dots,n$, are somewhat
+ancillary to the discussion here, but will figure prominently when we
+turn to regression as in a regression setting they will be the
+coefficients of the regression model.
+
+\begin{example}{Quadratic B\'ezier curve basis functions
+  $B_{i,n}(X)$, $i=0,\dots,2$, $n=2$.}
+
+  The figure below presents the bases $B_{i,n}(x)$ underlying a B\'ezier
+  curve for $n=2$:
+
+\begin{center}
+<<fig=TRUE,echo=FALSE>>=
+Bernstein <- function(n,i,x) { factorial(n)/(factorial(n-i)*factorial(i))*(1-x)^{n-i}*x^i }
+x <- seq(0,1,length=100)
+degree <- 2
+plot(x,Bernstein(degree,0,x),type="l",lwd=2,ylab="B(x)")
+for(i in 1:degree) lines(x,Bernstein(degree,i,x),lty=i+1,lwd=2)
+@ 
+\end{center}
+\centerline{Bernstein polynomials of order \Sexpr{degree+1} (degree
+  \Sexpr{degree}).}
+
+These bases are $B_{0,2}(x)=(1-x^2)$, $B_{1,2}(x)=2(1-x)x$, and
+$B_{2,2}(x)=x^2$ and illustrate the foundation upon which the B\'ezier
+curves are built.
+
+\end{example}
+
+We now turn our attention to the B-spline function. This can be
+thought of as a generalization of the B\'ezier curve where we now
+allow for there to be additional breakpoints called `interior knots'
+(the B\'ezier curve has two `knots', the endpoints we denote $t_0=0$
+and $t_1=1$ and no interior knots).
+
+\section{\label{sec:b-spline}B-splines}
+
+\subsection{Knots}
+
+B-spline curves are composed from many polynomial pieces and are
+therefore more versatile than B\'ezier curves.  Consider $N+2$ real
+values $t_i$, called `knots' ($N\ge 0$ are called `interior knots' and
+there are always two endpoints, $t_0$ and $t_{N+1}$), with
+\begin{equation*}
+t_0 \le t_1 \le \cdots \le t_{N+1}.
+\end{equation*}
+When the knots are equidistant they are said to be `uniform',
+otherwise they are said to be `non-uniform'. One popular type of knot
+is the `quantile' knot sequence where the interior knots are the
+quantiles from the empirical distribution of the underlying
+variable. Quantile knots guarantee that an equal number of sample
+observations lie in each interval while the intervals will have
+different lengths (as opposed to different numbers of points lying in
+equal length intervals).
+
+B\'ezier curves possess only two endpoint knots, $t_0$ and $t_1$, and
+no interior knots ($N=0$) hence will be seen to be B-splines with no
+interior knots.
+
+\subsection{B-spline basis}
+
+Let $\boldsymbol{t}=\lbrace t_i\mid i\in \mathbb{Z}\rbrace$ be a
+sequence of non-decreasing real numbers ($t_i\le t_{i+1}$) such
+that\footnote{This description is based upon the discussion found at
+  http://planetmath.org/encyclopedia/BSpline.html.}
+\begin{equation*}
+t_0 \le t_1 \le \cdots \le t_{N+1}.
+\end{equation*}
+Define the augmented the knot set 
+\begin{equation*} 
+  t_{-\left( m-1\right)}=\cdots
+  =t_{0}<t_{1}<\cdots <t_{N}<t_{N+1}=\cdots=t_{N+m},
+\end{equation*} 
+where we have appended the lower and upper boundary knots $t_0$ and
+$t_1$ $n$ times (this is needed due to the recursive nature of the
+B-spline). If we wanted we could then reset the index for the first
+element of the augmented knot set (i.e.\ $t_{-(m-1)}$) so that the
+$N+2m$ augmented knots $t_i$ are now indexed by $i=0,\ldots,N+2m-1$
+(see the example below for an illustration).
+
+For each of the augmented knots $t_i$, $i=0,\ldots,N+2m-1$, we
+recursively define a set of real-valued functions $B_{i,j}$ (for
+$j=0,1,\ldots,n$, $n$ being the degree of the B-spline basis) as
+follows:
+\begin{align*}
+  B_{i,0}(x)&=\left\{ \begin{array}{ll} 1 & \mbox{ if } t_i\leq
+      x<t_{i+1}\\ 0 & \mbox{ otherwise. } \end{array}\right.\\ \\
+  B_{i,j+1}(x)&=\alpha_{i,j+1}(x) B_{i,j}(x) +
+  [1-\alpha_{i+1,j+1}(x)] B_{i+1,j}(x) ,
+\end{align*}
+where
+\begin{align*} \alpha_{i,j}(x) &= \left\{ \begin{array}{ll}
+      \displaystyle{\frac{x - t_i}{t_{i+j} - t_i}} & \mbox{ if }
+      t_{i+j}\ne t_i \\ 0 & \mbox{ otherwise. } \end{array}\right.
+\end{align*}
+For the above computation we define 0/0 as 0.
+
+\textbf{Definitions}.
+
+Using the notation above:
+
+\begin{enumerate}
+
+\item the sequence $\boldsymbol{t}$ is known as a \emph{knot
+    sequence}, and the individual term in the sequence is a
+  \emph{knot}.
+
+\item the functions $B_{i,j}$ are called the \emph{$i$-th B-spline
+    basis functions of order $j$}, and the recurrence relation is
+  called the \emph{de Boor recurrence relation}, after its discoverer
+  Carl de Boor (\citeasnoun{DE_BOOR:2001}).
+
+\item given any non-negative integer $j$, the vector space
+  $V_j(\boldsymbol{t})$ over $\mathbb{R}$, generated by the set of all
+  B-spline basis functions of order $j$ is called the \emph{B-spline
+    of order $j$}. In other words, the B-spline
+  $V_j(\boldsymbol{t})=\operatorname{span}\lbrace B_{i,j}(x)\mid
+  i=0,1,\ldots \rbrace$ over $\mathbb{R}$.
+
+\item Any element of $V_j(\boldsymbol{t})$ is a \emph{B-spline
+    function} of order $j$.
+
+\end{enumerate}
+
+The first term $B_{0,n}$ is often referred to as the `intercept'. In
+typical spline implementations the option \verb+intercept=FALSE+
+denotes dropping this term while \verb+intercept=TRUE+ denotes keeping
+it (recall that $\sum_{i=0}^nB_{i,n}(x)=1$ which can lead to perfect
+multicollinearity in a regression setting; also see
+\citeasnoun{ZHOU_WOLFE:2000} who instead apply shrinkage methods).
+
+\begin{example}{B-spline basis functions.}
+
+  Suppose there are $N=3$ interior knots given by $(0.25,0.5,0.75)$,
+  the boundary knots are $(0,1)$, and the degree of the spline is
+  $n=3$ hence the order is $m=4$. The set of all knot points needed to
+  construct the B-spline is
+  \begin{equation*}
+    (0, 0, 0, 0, 0.25, 0.5, 0.75, 1,1,1,1)
+  \end{equation*}
+  and the number of basis functions is $K=N+m=7$. The seven cubic
+  spline basis functions will be denoted $B_{0,3},\dots,B_{6,3}$.
+
+  The figure below presents this example of a third degree B-spline
+  with three interior knots along with its first derivative (the
+  spline derivatives would be required in order to compute derivatives
+  from the spline regression model).
+
+\begin{center}
+<<fig=TRUE,echo=FALSE,keep.source=TRUE>>=
+degree <- 3
+m <- degree+1
+## nbreak is the total number of knots (2 indicates 2 endpoints, 0 interior)
+nbreak <- 2+3
+## N is the number of interior knots
+N <- nbreak-2
+x <- seq(0,1,length=1000)
+B <- gsl.bs(x,degree=degree,nbreak=nbreak,intercept=TRUE)
+matplot(x,B,type="l")
+@ 
+<<fig=TRUE,echo=FALSE,keep.source=TRUE>>=
+deriv <- 1
+B.deriv <- gsl.bs(x,degree=degree,nbreak=nbreak,deriv=deriv,intercept=TRUE)
+matplot(x,B.deriv,type="l")
+@ 
+\end{center}
+
+To summarize, in this illustration we have an order $m=\Sexpr{m}$
+(degree = \Sexpr{degree}) B-spline (left) with \Sexpr{nbreak-1}
+sub-intervals (segments) using uniform knots ($N=\Sexpr{N}$ interior
+knots, $\Sexpr{N+2}$ knots in total (2 endpoint knots)) and its
+\Sexpr{deriv}st-order derivative (right). The dimension of $B(x)$ is
+$K=N+m=\Sexpr{ncol(B)}$.
+
+\end{example}
+
+See the appendix for R code (\citeasnoun{R}) that implements the
+B-spline basis function.
+
+\subsection{B-spline}
+
+A B-spline of degree $n$ (of spline order $m=n+1$) is a parametric
+curve composed of a linear combination of basis B-splines $B_{i,n}(x)$
+of degree $n$ given by
+\begin{equation}
+  \label{eq:bspline}
+  B(x)= \sum_{i=0}^{N+n} \beta_{i}B_{i,n}(x),\quad x \in [t_0,t_{N+1}].
+\end{equation}
+The $\beta_i$ are called `control points' or `de Boor points'.  For an
+order $m$ B-spline having $N$ interior knots there are $K=N+m=N+n+1$
+control points (one when $j=0$).
+
+The B-spline order $m$ must be at least 2 (hence at least linear,
+i.e.\ degree $n$ is at least 1) and the number of interior knots must
+be non-negative ($N\ge0$).
+
+See the appendix for R code (\citeasnoun{R}) that implements the
+B-spline function.
+
+\section{\label{sec:mv spline}Multivariate B-spline Regression}
+
+The functional form of parametric regression models must naturally be
+specified by the user. Typically practitioners rely on `raw'
+polynomials. For instance, letting the regressor be denoted $X$, a
+practitioner will use $X$ and may add higher order raw polynomial
+terms such as $X^2$ and so forth. But these raw polynomials are not
+sufficiently flexible for our purposes, particularly because they
+possess no interior knots which is where B-splines derive their unique
+properties. In a regression setting we typically encounter multiple
+regressors which can be continuous or categorical in nature. Below we
+briefly describe a multivariate kernel weighted tensor product
+B-spline regression method. This method is implemented in the R
+package `crs' (\citeasnoun{crs}).
+
+\subsection{Multivariate Knots, Intervals, and Spline Bases}
+
+In general we will have $q$ predictors,
+$\mathbf{X}=(X_1,\dots,X_q)^T$. We assume that each $X_{l}$, $1\leq
+l\leq q$, is distributed on a compact interval $\left[
+  a_{l},b_{l}\right] $, and without loss of generality, we take all
+intervals $ \left[ a_l,b_l\right] =\left[ 0,1\right] $. Let
+$G_{l}=G_{l}^{\left( m_{l}-2\right) }$ be the space of polynomial
+splines of order $m_{l}$. We note that $G_{l}$ consists of functions
+$\varpi $ satisfying (i) $\varpi $ is a polynomial of degree $m_{l}-1$
+on each of the sub-intervals $I_{j_{l},l},j_{l}=0,\ldots ,N_{l} $; (ii)
+for $m_{l}\geq 2$, $\varpi $ is $m_{l}-2$ times continuously
+differentiable on $[0,1]$.
+
+Pre-select an integer $N_{l}=N_{n,l}$. Divide $\left[
+  a_{l},b_{l}\right] =\left[ 0,1\right] $ into $\left( N_{l}+1\right)
+$ sub-intervals $I_{j_{l},l}=\left[ t_{j_{l},l},t_{j_{l}+1,l}\right) $,
+$ j_{l}=0,\ldots ,N_{l}-1$, $I_{N_{l},l}=\left[ t_{N_{l},l},1\right]
+$, where $ \left\{ t_{j_{l},l}\right\} _{j_{l}=1}^{N_{l}}$ \ is a
+sequence of equally-spaced points, called interior knots, given
+as
+\begin{equation*} 
+  t_{-\left( m_{l}-1\right),l }=\cdots
+  =t_{0,l}=0<t_{1,l}<\cdots <t_{N_{l},l}<1=t_{N_{l}+1,l}=\cdots
+  =t_{N_{l}+m_{l},l}, 
+\end{equation*} 
+in which $t_{j_{l},l}=j_{l}h_{l}$, $j_{l}=0,1\ldots ,N_{l}+1$,
+$h_{l}=1/\left( N_{l}+1\right) $ is the distance between neighboring
+knots.
+
+Let $K_{l}=K_{n,l}=N_{l}+m_{l}$, where $N_{l}$ is the number of
+interior knots and $m_{l}$ is the spline order, and let $B_{l}\left(
+  x_{l}\right) =\left\{ B_{j_{l},l}\left( x_{l}\right) :1-m_{l}\leq
+  j_{l}\leq N_{l}\right\} ^{\mathrm{T}}$ be a basis system of the
+space $G_{l}$.
+
+We define the space of tensor-product polynomial splines by
+$\mathcal{G} =\otimes _{l=1}^{q}G_{l}$. It is clear that $\mathcal{G}$
+is a linear space of dimension
+$\mathbf{K}_{n}=\prod\nolimits_{l=1}^{q}K_{l}$. Then\footnote{The notation here may throw off those used to sums of the
+  form $\sum_{i=1}^n$, $n>0$ (i.e.\ sum indices that are positive
+  integers), so consider a simple illustration that may defuse this
+  issue. Suppose there are no interior knots ($N=0$) and we consider a
+  quadratic (degree $n$ equal to two hence the `spline order' is
+  three). Then $\sum_{i=1-m}^{N}$ contains three terms having indices
+  $i=-2,-1,0$. In general the number of terms is the number the number
+  of interior knots $N$ plus the spline order $m$, which we denote
+  $K=N+m$.  We could alternatively sum from $1$ to $N+m$, or from $0$
+  to $N+m-1$ of from $0$ to $N+n$ (the latter being consistent with
+  the B\'ezier curve definition in \eqref{eq:bezier} and the B-spline
+  definition in \eqref{eq:bspline}).}
+\begin{equation*}
+  \mathcal{B}\left( \mathbf{x}\right) =\left[ \left\{ \mathcal{B}
+      _{j_{1},\ldots ,j_{q}}\left( \mathbf{x}\right) \right\}
+    _{j_{1}=1-m_{1},\ldots ,j_{q}=1-m_{q}}^{N_{1},\ldots ,N_{q}}\right] _{
+    \mathbf{K}_{n}\times 1}=B_{1}\left( x_{1}\right) \otimes \cdots \otimes
+  B_{q}\left( x_{q}\right)
+\end{equation*}
+is a basis system of the space $\mathcal{G}$, where $\mathbf{x=}\left(
+  x_{l}\right) _{l=1}^{q}$. Let $\mathbf{B=}\left[ \left\{
+    \mathcal{B}\left( \mathbf{X}_{1}\right) ,\ldots ,\mathcal{B}\left(
+      \mathbf{X}_{n}\right) \right\} ^{\mathrm{T}}\right] _{n\times
+  \mathbf{K}_{n}}$.
+
+\subsection{Spline Regression}
+
+In what follows we presume that the reader is interested in the
+unknown conditional mean in the following location-scale model,
+\begin{equation}
+  Y=g\left( \mathbf{X},\mathbf{Z}\right) +\sigma \left( \mathbf{X},\mathbf{Z}
+  \right) \varepsilon ,  \label{MOD:csm}
+\end{equation}
+where $g(\cdot )$ is an unknown function, $\mathbf{X=}\left(
+  X_{1},\ldots ,X_{q}\right) ^{\mathrm{T}}$ is a $q$-dimensional
+vector of continuous predictors, and $\mathbf{Z}=\left( Z_{1},\ldots
+  ,Z_{r}\right) ^{\mathrm{T}}$ is an $r$-dimensional vector of
+categorical predictors. Letting $\mathbf{z} =\left( z_{s}\right)
+_{s=1}^{r}$, we assume that $z_{s}$ takes $c_{s}$ different values in
+$D_{s}\equiv \left\{ 0,1,\ldots ,c_{s}-1\right\} $, $ s=1,\ldots ,r$,
+and let $c_{s}$ be a finite positive constant. Let $\left(
+  Y_{i},\mathbf{X}_{i}^{\mathrm{T}},\mathbf{Z}_{i}^{\mathrm{T}}\right)
+_{i=1}^{n}$ be an i.i.d copy of $\left(
+  Y,\mathbf{X}^{\mathrm{T}},\mathbf{Z}^{\mathrm{T}}\right) $. Assume
+for $1\leq l\leq q$, each $X_{l}$ is distributed on a compact interval
+$\left[ a_{l},b_{l}\right] $, and without loss of generality, we take
+all intervals $ \left[ a_l,b_l\right] =\left[ 0,1\right] $.
+
+In order to handle the presence of categorical predictors, we define
+\begin{align}
+  l\left( Z_{s},z_{s},\lambda _{s}\right) & =\left\{
+    \begin{array}{c}
+      1\text{,when~}Z_{s}=z_{s} \\
+      \lambda _{s}\text{, otherwise.\ \ }
+    \end{array}
+  \right. ,  \notag \\
+  L\left( \mathbf{Z},\mathbf{z},\mathbf{\lambda }\right) &
+  =\prod\limits_{s=1}^{r}l\left( Z_{s},z_{s},\lambda _{s}\right)
+  =\prod\limits_{s=1}^{r}\lambda _{s}^{1\left( Z_{s}\neq z_{s}\right)
+  },
+  \label{DEF:Lzs}
+\end{align}
+where $l(\cdot )$ is a variant of
+\possessivecite{AITCHISON_AITKEN:1976} univariate categorical kernel
+function, $L(\cdot )$ is a product categorical kernel function, and
+$\mathbf{\lambda }=(\lambda _{1},\lambda _{2},\dots ,\lambda
+_{r})^{\mathrm{T}}$ is the vector of bandwidths for each of the
+categorical predictors. See \citeasnoun{MA_RACINE_YANG:2011} and
+\citeasnoun{MA_RACINE:2011} for further details.
+
+We estimate $\beta \left( \mathbf{z}\right) $ by minimizing the
+following weighted least squares criterion,
+\begin{equation*}
+  \widehat{\beta }\left( \mathbf{z}\right) =\arg \min_{\beta \left( \mathbf{z}
+    \right) \in \mathbb{R}^{\mathbf{K}_{n}}}\sum\limits_{i=1}^{n}\left\{ Y_{i}-
+    \mathcal{B}\left( \mathbf{X}_{i}\right) ^{\mathrm{T}}\beta \left( \mathbf{z}\right) \right\} ^{2}L\left( \mathbf{Z}_{i},\mathbf{z},\mathbf{\lambda }
+  \right) .
+\end{equation*}
+
+Let $\mathcal{L}_{z}=\text{diag}\left\{ L\left(
+    \mathbf{Z}_{1},\mathbf{z}, \mathbf{\lambda }\right) ,\ldots
+  ,L\left( \mathbf{Z}_{n},\mathbf{z},\mathbf{ \lambda }\right)
+\right\} $ be a diagonal matrix with $L\left( \mathbf{Z}
+  _{i},\mathbf{z},\mathbf{\lambda }\right) $, $1\leq i\leq n$ as the
+diagonal entries. Then $\widehat{\beta }\left( \mathbf{z}\right) $ can
+be written as
+\begin{equation}
+  \widehat{\beta }\left( \mathbf{z}\right) =\left( n^{-1}\mathbf{B}^{\mathrm{T}
+    }\mathcal{L}_{z}\mathbf{B}\right) ^{-1}\left( n^{-1}\mathbf{B}^{\mathrm{T}}
+    \mathcal{L}_{z}\mathbf{Y}\right) ,  \label{EQ:betahat}
+\end{equation}
+where $\mathbf{Y=}\left( Y_{1},\ldots ,Y_{n}\right)
+^{\mathrm{T}}$. $g\left( \mathbf{x},\mathbf{z}\right) $ is estimated
+by $\widehat{g}\left( \mathbf{x}, \mathbf{z}\right) =\mathcal{B}\left(
+  \mathbf{x}\right) ^{\mathrm{T}}\widehat{ \beta }\left(
+  \mathbf{z}\right) $.
+
+See the appendix for R code (\citeasnoun{R}) that implements the
+B-spline basis function and then uses least squares to construct the
+regression model for a simulated data generating process.
+
+\singlespacing
+
+\bibliographystyle{agsm}
+\bibliography{spline_primer}
+
+\clearpage
+\appendix
+
+\onehalfspacing
+
+\section{Sample R Code for Constructing B-splines}
+
+The following code uses recursion to compute the B-spline basis and
+B-spline function. Then a simple illustration demonstrates how one
+could immediately compute a least-squares fit using the B-spline. In
+the spirit of recursion, a few quotes come to mind:
+
+\begin{quote}
+  
+  ``To err is human; to forgive is divine.''  (Alexander Pope)
+  
+\end{quote}
+
+\begin{quote}
+  
+  ``To iterate is human; to recurse divine.''  (L.~Peter Deutsch)
+  
+\end{quote}
+
+\subsection*{R Code for Implementing B-spline basis functions and the
+  B-spline itself}
+
+
+\singlespacing
+
+{\scriptsize
+\begin{verbatim}
+## $Id: spline_primer.Rnw,v 1.18 2011/04/26 17:46:00 jracine Exp jracine $
+
+## April 23 2011. The code below is based upon an illustration that
+## can be found in http://www.stat.tamu.edu/~sinha/research/note1.pdf
+## by Dr. Samiran Sinha (Department of Statistics, Texas A&M). I am
+## solely to blame for any errors and can be contacted at
+## racinej@mcmater.ca (Jeffrey S. Racine).
+
+## This function is a (simplified) R implementation of the bs()
+## function in the splines library and illustrates how the Cox-de Boor
+## recursion formula is used to construct B-splines.
+
+basis <- function(x, degree, i, knots) {
+  if(degree == 0){
+    B <- ifelse((x >= knots[i]) & (x < knots[i+1]), 1, 0)
+  } else {
+    if((knots[degree+i] - knots[i]) == 0) {
+      alpha1 <- 0
+    } else {
+      alpha1 <- (x - knots[i])/(knots[degree+i] - knots[i])
+    }
+    if((knots[i+degree+1] - knots[i+1]) == 0) {
+      alpha2 <- 0
+    } else {
+      alpha2 <- (knots[i+degree+1] - x)/(knots[i+degree+1] - knots[i+1])
+    }
+    B <- alpha1*basis(x, (degree-1), i, knots) + alpha2*basis(x, (degree-1), (i+1), knots)
+  }
+  return(B)
+}
+
+bs <- function(x, degree=3, interior.knots=NULL, intercept=FALSE, Boundary.knots = c(0,1)) {
+  if(missing(x)) stop("You must provide x")
+  if(degree < 1) stop("The spline degree must be at least 1")
+  Boundary.knots <- sort(Boundary.knots)
+  interior.knots.sorted <- NULL
+  if(!is.null(interior.knots)) interior.knots.sorted <- sort(interior.knots)
+  knots <- c(rep(Boundary.knots[1], (degree+1)), interior.knots.sorted, rep(Boundary.knots[2], (degree+1)))
+  K <- length(interior.knots) + degree + 1
+  B.mat <- matrix(0,length(x),K)
+  for(j in 1:K) B.mat[,j] <- basis(x, degree, j, knots)
+  if(any(x == Boundary.knots[2])) B.mat[x == Boundary.knots[2], K] <- 1
+  if(intercept == FALSE) {
+    return(B.mat[,-1])
+  } else {
+    return(B.mat)
+  }
+}
+
+## A simple illustration that computes and plots the B-spline bases.
+
+par(mfrow = c(2,1))
+
+n <- 1000
+x <- seq(0, 1, length=n)
+B <- bs(x, degree=5, intercept = TRUE, Boundary.knots=c(0, 1))
+matplot(x, B, type="l")
+
+## Next, simulate data then construct a regression spline with a
+## prespecified degree (in applied settings we would want to choose
+## the degree/knot vector using a sound statistical approach).
+
+dgp <- sin(2*pi*x)
+y <- dgp + rnorm(n, sd=.1)
+
+model <- lm(y~B-1)
+
+plot(x, y, cex=.25, col="grey")
+lines(x, fitted(model), lwd=2)
+lines(x, dgp, col="red", lty=2)
+\end{verbatim}
+}
+
+\end{document}
+
