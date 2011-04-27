@@ -796,7 +796,7 @@ cv.kernel.spline <- function(x,
                              kernel.type=c("nominal","ordinal"),
                              knots=c("quantiles","uniform"),
                              basis=c("additive","tensor"),
-                             cv.norm=c("L2","L1")) {
+                             cv.func=c("cv.ls","cv.gcv","cv.aic")) {
 
   if(missing(x) || missing(y) || missing (K)) stop(" must provide x, y and K")
 
@@ -805,7 +805,7 @@ cv.kernel.spline <- function(x,
   basis <- match.arg(basis)
   kernel.type <- match.arg(kernel.type)
   knots <- match.arg(knots)
-  cv.norm <- match.arg(cv.norm)
+  cv.func <- match.arg(cv.func)
 
   ## Additive spline regression models have an intercept in the lm()
   ## model (though not in the gsl.bs function)
@@ -841,7 +841,16 @@ cv.kernel.spline <- function(x,
       htt <- rep(1/n,n)
       epsilon <- y-mean(y)
     }
-    cv <- ifelse(cv.norm=="L2",mean(epsilon^2/(1-htt)^2),mean(abs(epsilon)/abs(1-htt)))
+    if(cv.func == "cv.ls") {
+      cv <- mean(epsilon^2/(1-htt)^2)
+    } else if(cv.func == "cv.gcc"){
+      cv <- mean(epsilon^2/(1-mean(htt))^2)
+    } else if(cv.func == "cv.aic"){
+      sigmasq <- mean(epsilon^2)
+      traceH <- sum(htt)
+      penalty <- (1+traceH/n)/(1-(traceH+2)/n)
+      cv <- ifelse(penalty < 0, .Machine$double.xmax, log(sigmasq)+penalty);
+    }
   } else {
     ## Categorical predictors
     z <- as.matrix(z)
@@ -876,8 +885,20 @@ cv.kernel.spline <- function(x,
         htt[zz] <- hatvalues(model)[zz]
       }
     }
+
     htt <- ifelse(htt == 1, 1-.Machine$double.eps, htt)
-    cv <- ifelse(cv.norm=="L2",mean(epsilon^2/(1-htt)^2),mean(abs(epsilon)/abs(1-htt)))
+
+    if(cv.func == "cv.ls") {
+      cv <- mean(epsilon^2/(1-htt)^2)
+    } else if(cv.func == "cv.gcc"){
+      cv <- mean(epsilon^2/(1-mean(htt))^2)
+    } else if(cv.func == "cv.aic"){
+      sigmasq <- mean(epsilon^2)
+      traceH <- sum(htt)
+      penalty <- (1+traceH/n)/(1-(traceH+2)/n)
+      cv <- ifelse(penalty < 0, .Machine$double.xmax, log(sigmasq)+penalty);
+    }
+
   }
 
   return(cv)
@@ -897,7 +918,7 @@ cv.factor.spline <- function(x,
                              kernel.type=c("nominal","ordinal"),
                              knots=c("quantiles","uniform"),
                              basis=c("additive","tensor"),
-                             cv.norm=c("L2","L1")) {
+                             cv.func=c("cv.ls","cv.gcv","cv.aic")) {
 
   if(missing(x) || missing(y) || missing (K)) stop(" must provide x, y and K")
   if(!is.matrix(K)) stop(" K must be a two-column matrix")  
@@ -906,7 +927,7 @@ cv.factor.spline <- function(x,
   kernel.type <- match.arg(kernel.type)
   knots <- match.arg(knots)
 
-  cv.norm <- match.arg(cv.norm)
+  cv.func <- match.arg(cv.func)
 
   n <- NROW(x)
 
@@ -949,11 +970,22 @@ cv.factor.spline <- function(x,
     suppressWarnings(epsilon <- residuals(lsfit(P <- prod.spline(x=x,z=z,K=K,I=I,knots=knots,basis=basis),y,intercept=lm.intercept)))
     htt <- hat(P)
     htt <- ifelse(htt == 1, 1-.Machine$double.eps, htt)
-    return(ifelse(cv.norm=="L2",mean(epsilon^2/(1-htt)^2),mean(abs(epsilon)/abs(1-htt))))
   } else {
     htt <- rep(1/n,n)
     epsilon <- y-mean(y)
-    return(ifelse(cv.norm=="L2",mean(epsilon^2/(1-htt)^2),mean(abs(epsilon)/abs(1-htt))))
   }
 
+  if(cv.func == "cv.ls") {
+    cv <- mean(epsilon^2/(1-htt)^2)
+  } else if(cv.func == "cv.gcc"){
+    cv <- mean(epsilon^2/(1-mean(htt))^2)
+  } else if(cv.func == "cv.aic"){
+    sigmasq <- mean(epsilon^2)
+    traceH <- sum(htt)
+    penalty <- (1+traceH/n)/(1-(traceH+2)/n)
+    cv <- ifelse(penalty < 0, .Machine$double.xmax, log(sigmasq)+penalty);
+  }
+
+  return(cv)
+  
 }

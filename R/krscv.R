@@ -22,14 +22,14 @@ krscv <- function(xz,
                   complexity=c("degree-knots","degree","knots"),
                   knots=c("quantiles","uniform"),
                   basis=c("additive","tensor","auto"),
-                  cv.norm=c("L2","L1"),
+                  cv.func=c("cv.ls","cv.gcv","cv.aic"),
                   degree=degree,
                   segments=segments) {
 
   complexity <- match.arg(complexity)
   knots <- match.arg(knots)
   basis <- match.arg(basis)
-  cv.norm <- match.arg(cv.norm)  
+  cv.func <- match.arg(cv.func)  
 
   ## First define the cv function to be fed to optim
 
@@ -37,7 +37,7 @@ krscv <- function(xz,
 
   t1 <- Sys.time()
 
-  cv.func <- function(input,
+  cv.objc <- function(input,
                       x,
                       y,
                       z,
@@ -56,7 +56,7 @@ krscv <- function(xz,
                       complexity=complexity,
                       knots=knots,
                       basis=basis,
-                      cv.norm=cv.norm) {
+                      cv.func=cv.func) {
 
     ## K is a matrix, column 1 degree, column 2 segments, either or
     ## both can be determined via cv so need to take care to allow
@@ -87,7 +87,8 @@ krscv <- function(xz,
                            nrow.z.unique=nrow.z.unique,
                            kernel.type=kernel.type,
                            knots=knots,
-                           basis=basis)
+                           basis=basis,
+                           cv.func=cv.func)
 
     ## Some i/o unless options(crs.messages=FALSE)
 
@@ -226,10 +227,6 @@ krscv <- function(xz,
 
   cv.vec <- rep(.Machine$double.xmax,nrow.K.mat)
 
-#  htt <- rep(1/n,n)
-#  epsilon <- y-mean(y)
-#  cv.vec <- rep(ifelse(cv.norm=="L2",mean(epsilon^2/(1-htt)^2)+.Machine$double.eps,mean(abs(epsilon)/abs(1-htt))+.Machine$double.eps),nrow.K.mat)
-  
   basis.vec <- character(nrow.K.mat)
   lambda.mat <- matrix(NA,nrow.K.mat,num.z)
 
@@ -249,7 +246,7 @@ krscv <- function(xz,
       while(output$convergence != 0) {
 
         output <- optim(par=runif(num.z),
-                        cv.func,
+                        cv.objc,
                         lower=rep(0,num.z),
                         upper=rep(1,num.z),
                         method="L-BFGS-B",
@@ -270,7 +267,8 @@ krscv <- function(xz,
                         t2=t2,
                         complexity=complexity,
                         knots=knots,
-                        basis="additive")
+                        basis="additive",
+                        cv.func=cv.func)
 
       }
 
@@ -283,7 +281,7 @@ krscv <- function(xz,
           while(output.restart$convergence != 0) {
 
             output.restart <- optim(par=runif(num.z),
-                                    cv.func,
+                                    cv.objc,
                                     lower=rep(0,num.z),
                                     upper=rep(1,num.z),
                                     method="L-BFGS-B",
@@ -304,7 +302,8 @@ krscv <- function(xz,
                                     t2=t2,
                                     complexity=complexity,
                                     knots=knots,
-                                    basis="additive")
+                                    basis="additive",
+                                    cv.func=cv.func)
 
           }
 
@@ -327,7 +326,7 @@ krscv <- function(xz,
       while(output$convergence != 0) {
 
         output <- optim(par=runif(num.z),
-                        cv.func,
+                        cv.objc,
                         lower=rep(0,num.z),
                         upper=rep(1,num.z),
                         method="L-BFGS-B",
@@ -348,7 +347,8 @@ krscv <- function(xz,
                         t2=t2,
                         complexity=complexity,
                         knots=knots,
-                        basis="tensor")
+                        basis="tensor",
+                        cv.func=cv.func)
 
       }
 
@@ -361,7 +361,7 @@ krscv <- function(xz,
           while(output.restart$convergence != 0) {
 
             output.restart <- optim(par=runif(num.z),
-                                    cv.func,
+                                    cv.objc,
                                     lower=rep(0,num.z),
                                     upper=rep(1,num.z),
                                     method="L-BFGS-B",
@@ -382,7 +382,8 @@ krscv <- function(xz,
                                     t2=t2,
                                     complexity=complexity,
                                     knots=knots,
-                                    basis="tensor")
+                                    basis="tensor",
+                                    cv.func=cv.func)
 
           }
 
@@ -407,7 +408,7 @@ krscv <- function(xz,
       while(output$convergence != 0) {
 
         output <- optim(par=runif(num.z),
-                        cv.func,
+                        cv.objc,
                         lower=rep(0,num.z),
                         upper=rep(1,num.z),
                         method="L-BFGS-B",
@@ -428,7 +429,8 @@ krscv <- function(xz,
                         t2=t2,
                         complexity=complexity,
                         knots=knots,
-                        basis=basis)
+                        basis=basis,
+                        cv.func=cv.func)
 
       }
 
@@ -441,7 +443,7 @@ krscv <- function(xz,
           while(output.restart$convergence != 0) {
 
             output.restart <- optim(par=runif(num.z),
-                                    cv.func,
+                                    cv.objc,
                                     lower=rep(0,num.z),
                                     upper=rep(1,num.z),
                                     method="L-BFGS-B",
@@ -462,7 +464,8 @@ krscv <- function(xz,
                                     t2=t2,
                                     complexity=complexity,
                                     knots=knots,
-                                    basis=basis)
+                                    basis=basis,
+                                    cv.func=cv.func)
 
           }
 
@@ -515,8 +518,9 @@ krscv <- function(xz,
         K.mat=K.mat,
         lambda=lambda.opt,
         lambda.mat=lambda.mat,
-        cv.func=cv.min,
-        cv.func.vec=as.matrix(cv.vec),
-        num.x=num.x)
+        cv.objc=cv.min,
+        cv.objc.vec=as.matrix(cv.vec),
+        num.x=num.x,
+        cv.func=cv.func)
 
 }

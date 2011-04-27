@@ -11,9 +11,10 @@ crscv <- function(K,
                   K.mat,
                   lambda,
                   lambda.mat,
-                  cv.func,
-                  cv.func.vec,
-                  num.x) {
+                  cv.objc,
+                  cv.objc.vec,
+                  num.x,
+                  cv.func) {
   
   tregcv = list(K=K,
                 I=I,
@@ -28,9 +29,10 @@ crscv <- function(K,
                 K.mat=K.mat,
                 lambda=lambda,
                 lambda.mat=lambda.mat,
-                cv.func=cv.func,
-                cv.func.vec=cv.func.vec,
-                num.x=num.x)
+                cv.objc=cv.objc,
+                cv.objc.vec=cv.objc.vec,
+                num.x=num.x,
+                cv.func=cv.func)
 
   class(tregcv) <- "crscv"
 
@@ -41,7 +43,8 @@ print.crscv <- function(x, ...){
 
   if(!is.null(x$lambda)&&is.null(x$I)) {
     cat("\nCategorical Regression Spline Cross-Validation",sep="")
-    cat(paste("\n\nObjective function value : ",format(x$cv.func),sep=""),sep="")
+    cat(paste("\n\nObjective function: ", format(x$cv.func), sep=""))        
+    cat(paste("\nObjective function value: ",format(x$cv.objc),sep=""),sep="")
 
     cat(paste("\n\nKnot type: ", format(x$knots), sep=""))    
     cat(paste("\nModel complexity proxy: ", format(x$complexity), sep=""))
@@ -59,7 +62,8 @@ print.crscv <- function(x, ...){
     cat("\n\n")
   } else if(!is.null(x$I)) {
     cat("\nFactor Regression Spline Cross-Validation",sep="")
-    cat(paste("\n\nObjective function value : ",format(x$cv.func),sep=""),sep="")
+    cat(paste("\n\nObjective function: ", format(x$cv.func), sep=""))        
+    cat(paste("\nObjective function value: ",format(x$cv.objc),sep=""),sep="")
     cat(paste("\n\nKnot type: ", format(x$knots), sep=""))    
     cat(paste("\nModel complexity proxy: ", format(x$complexity), sep=""))
 
@@ -75,7 +79,7 @@ print.crscv <- function(x, ...){
     cat("\n\n")
   } else {
     cat("\nRegression Spline Cross-Validation",sep="")
-    cat(paste("\n\nObjective Function Value : ",format(x$cv.func),sep=""),sep="")
+    cat(paste("\n\nObjective Function Value : ",format(x$cv.objc),sep=""),sep="")
 
     cat(paste("\n\nKnot type: ", format(x$knots), sep=""))    
     cat(paste("\nModel complexity proxy: ", format(x$complexity), sep=""))

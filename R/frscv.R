@@ -20,18 +20,18 @@ frscv <- function(xz,
                   complexity=c("degree-knots","degree","knots"),
                   knots=c("quantiles","uniform"),
                   basis=c("additive","tensor","auto"),
-                  cv.norm=c("L2","L1"),
+                  cv.func=c("cv.ls","cv.gcv","cv.aic"),
                   degree=degree,
                   segments=segments) {
 
   complexity <- match.arg(complexity)
   knots <- match.arg(knots)
   basis <- match.arg(basis)
-  cv.norm <- match.arg(cv.norm)
+  cv.func <- match.arg(cv.func)
 
   t1 <- Sys.time()
 
-  cv.func <- function(input,
+  cv.objc <- function(input,
                       x,
                       z=NULL,
                       y,
@@ -44,7 +44,7 @@ frscv <- function(xz,
                       complexity=complexity,
                       knots=knots,
                       basis=basis,
-                      cv.norm=cv.norm) {
+                      cv.func=cv.func) {
 
     if(missing(input) || missing(x) || missing(y) || missing(basis.maxdim)) stop(" you must provide input, x, y, and basis.maxdim")
 
@@ -78,7 +78,8 @@ frscv <- function(xz,
                            K=K,
                            I=I,
                            knots=knots,
-                           basis=basis)
+                           basis=basis,
+                           cv.func=cv.func)
 
     ## Some i/o unless options(crs.messages=FALSE)
 
@@ -271,15 +272,11 @@ frscv <- function(xz,
 
   cv.vec <- rep(.Machine$double.xmax,nrow.KI.mat)
 
-#  htt <- rep(1/n,n)
-#  epsilon <- y-mean(y)
-#  cv.vec <- rep(ifelse(cv.norm=="L2",mean(epsilon^2/(1-htt)^2)+.Machine$double.eps,mean(abs(epsilon)/abs(1-htt))+.Machine$double.eps),nrow.KI.mat)
-  
   for(j in 1:nrow.KI.mat) {
 
     if(basis=="auto") {
 
-      output <- cv.func(input=KI.mat[j,],
+      output <- cv.objc(input=KI.mat[j,],
                         x=x,
                         y=y,
                         z=z,
@@ -291,14 +288,15 @@ frscv <- function(xz,
                         t2=Sys.time(),
                         complexity=complexity,
                         knots=knots,
-                        basis="additive")
+                        basis="additive",
+                        cv.func=cv.func)
 
       if(output < cv.vec[j]) {
         cv.vec[j] <- output
         basis.vec[j] <- "additive"
       }
       
-      output <- cv.func(input=KI.mat[j,],
+      output <- cv.objc(input=KI.mat[j,],
                         x=x,
                         y=y,
                         z=z,
@@ -310,7 +308,8 @@ frscv <- function(xz,
                         t2=Sys.time(),
                         complexity=complexity,
                         knots=knots,
-                        basis="tensor")
+                        basis="tensor",
+                        cv.func=cv.func)
 
       if(output < cv.vec[j]) {
         cv.vec[j] <- output
@@ -321,7 +320,7 @@ frscv <- function(xz,
 
       ## not auto, so use either "additive" or "tensor"
 
-      output <- cv.func(input=KI.mat[j,],
+      output <- cv.objc(input=KI.mat[j,],
                         x=x,
                         y=y,
                         z=z,
@@ -333,7 +332,8 @@ frscv <- function(xz,
                         t2=Sys.time(),
                         complexity=complexity,
                         knots=knots,
-                        basis=basis)
+                        basis=basis,
+                        cv.func=cv.func)
 
       if(output < cv.vec[j]) {
         cv.vec[j] <- output
@@ -377,8 +377,9 @@ frscv <- function(xz,
         restarts=NULL,
         lambda=NULL,
         lambda.mat=NULL,
-        cv.func=cv.min,
-        cv.func.vec=as.matrix(cv.vec),
-        num.x=num.x)
+        cv.objc=cv.min,
+        cv.objc.vec=as.matrix(cv.vec),
+        num.x=num.x,
+        cv.func=cv.func)
 
 }

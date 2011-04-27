@@ -34,7 +34,7 @@ crs(\dots)
     include = NULL,
     basis.maxdim = 5,
     cv = TRUE,
-    cv.norm = c("L2", "L1"),
+    cv.func = c("cv.ls","cv.gcv","cv.aic"),
     kernel = FALSE,
     lambda = NULL,
     kernel.type = c("nominal","ordinal"),
@@ -84,11 +84,14 @@ crs(\dots)
   \item{cv}{ a logical value (default \code{cv=TRUE}) indicating
     whether to perform cross-validated model selection or not }
 
-  \item{cv.norm}{ a character string (default \code{cv.norm="L2"})
-  indicating whether the L2-norm is used (sum of squared delete-one
-  residuals) or the L1-norm (sum of absolute delete-one-residuals) in
-  the cross-validation function }
-
+  \item{cv.func}{a character string (default \code{cv.func="cv.ls"})
+    indicating which method to use to select smoothing
+    parameters. \code{cv.gcv} specifies generalized cross-validation
+    (Craven and Wahba (1979)), \code{cv.aic} specifies expected
+    Kullback-Leibler cross-validation (Hurvich, Simonoff, and Tsai
+    (1998)), and \code{cv.ls} specifies least-squares
+    cross-validation. Defaults to \code{cv.ls}.  }
+  
   \item{kernel}{ a logical value (default \code{kernel=FALSE})
     indicating whether to use kernel smoothing or not }
 
@@ -322,6 +325,14 @@ crs(\dots)
 
 }
 \references{
+
+  Craven, P. and G. Wahba. (1979), \dQuote{Smoothing noisy data with
+  spline functions}. Numerische Mathematik 13, 377–403.
+
+  Hurvich, C.M. and J.S. Simonoff and C.L. Tsai (1998),
+  \dQuote{Smoothing parameter selection in nonparametric regression
+    using an improved Akaike information criterion,} Journal of the
+  Royal Statistical Society B, 60, 271-293.
 
   Ma, S. and J.S. Racine and L. Yang (2010), \dQuote{Spline Regression
   in the Presence of Categorical Predictors,} manuscript.

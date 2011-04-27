@@ -314,7 +314,7 @@ crs.formula <- function(formula,
                         include=NULL,
                         basis.maxdim=5,
                         cv=TRUE,
-                        cv.norm=c("L2","L1"),
+                        cv.func=c("cv.ls","cv.aic"),
                         kernel=FALSE,
                         lambda=NULL,
                         kernel.type=c("nominal","ordinal"),
@@ -327,7 +327,7 @@ crs.formula <- function(formula,
                         restarts=0,
                         ...) {
 
-  cv.norm <- match.arg(cv.norm)
+  cv.func <- match.arg(cv.func)
   kernel.type <- match.arg(kernel.type)
   complexity <- match.arg(complexity)
   knots <- match.arg(knots)
@@ -386,7 +386,7 @@ crs.formula <- function(formula,
                          complexity=complexity,
                          knots=knots,
                          basis=basis,
-                         cv.norm=cv.norm,
+                         cv.func=cv.func,
                          degree=degree,
                          segments=segments)
       
@@ -408,7 +408,7 @@ crs.formula <- function(formula,
                          complexity=complexity,
                          knots=knots,
                          basis=basis,
-                         cv.norm=cv.norm,
+                         cv.func=cv.func,
                          degree=degree,
                          segments=segments,
                          restarts=restarts)
