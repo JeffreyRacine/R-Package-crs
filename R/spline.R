@@ -843,7 +843,7 @@ cv.kernel.spline <- function(x,
     }
     if(cv.func == "cv.ls") {
       cv <- mean(epsilon^2/(1-htt)^2)
-    } else if(cv.func == "cv.gcc"){
+    } else if(cv.func == "cv.gcv"){
       cv <- mean(epsilon^2/(1-mean(htt))^2)
     } else if(cv.func == "cv.aic"){
       sigmasq <- mean(epsilon^2)
@@ -890,7 +890,7 @@ cv.kernel.spline <- function(x,
 
     if(cv.func == "cv.ls") {
       cv <- mean(epsilon^2/(1-htt)^2)
-    } else if(cv.func == "cv.gcc"){
+    } else if(cv.func == "cv.gcv"){
       cv <- mean(epsilon^2/(1-mean(htt))^2)
     } else if(cv.func == "cv.aic"){
       sigmasq <- mean(epsilon^2)
@@ -977,7 +977,7 @@ cv.factor.spline <- function(x,
 
   if(cv.func == "cv.ls") {
     cv <- mean(epsilon^2/(1-htt)^2)
-  } else if(cv.func == "cv.gcc"){
+  } else if(cv.func == "cv.gcv"){
     cv <- mean(epsilon^2/(1-mean(htt))^2)
   } else if(cv.func == "cv.aic"){
     sigmasq <- mean(epsilon^2)
