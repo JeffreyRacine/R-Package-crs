@@ -4,7 +4,7 @@ library(crs)
 
 set.seed(42)
 
-n <- 1000000
+n <- 1000
 num.eval <- 50
 
 x1 <- runif(n,-5,5)
@@ -20,7 +20,8 @@ model <- crs(y~x1+x2,
              complexity="degree-knots",
              basis.maxdim=5,
              knots="uniform",
-             deriv=1)
+             deriv=1,
+             cv.func="cv.aic")
 
 summary(model)
 

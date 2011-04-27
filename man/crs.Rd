@@ -326,8 +326,8 @@ crs(\dots)
 }
 \references{
 
-  Craven, P. and G. Wahba. (1979), \dQuote{Smoothing noisy data with
-  spline functions}. Numerische Mathematik 13, 377–403.
+  Craven, P. and G. Wahba (1979), \dQuote{Smoothing noisy data with
+  spline functions,} Numerische Mathematik, 13, 377-403.
 
   Hurvich, C.M. and J.S. Simonoff and C.L. Tsai (1998),
   \dQuote{Smoothing parameter selection in nonparametric regression

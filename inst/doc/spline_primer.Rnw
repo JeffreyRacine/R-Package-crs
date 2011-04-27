@@ -1,5 +1,10 @@
 %% $Id: spline_primer.Rnw,v 1.26 2011/04/26 20:20:54 jracine Exp jracine $
 
+%\VignetteIndexEntry{A Primer on Spline Regression}
+%\VignetteDepends{crs}
+%\VignetteKeywords{nonparametric, spline, categorical}
+%\VignettePackage{crs}
+
 \documentclass[11pt,nogin]{amsart}
 
 \usepackage{setspace,graphicx,srcltx,enumitem,harvard,framed,xcolor}
