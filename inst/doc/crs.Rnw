@@ -291,6 +291,27 @@ computed along with (and hence as cheaply as) the vector of spline
 coefficients themselves. Thus leave-one-out cross-validation is
 computationally appealing, particularly for large data sets.
 
+The `generalized' cross-validation function is obtained by replacing
+$h_{ii}$ with its average value denoted $\text{tr}(H)/n$ (see below
+for the definition of $\text{tr}(H)$, \citep{CRAVEN_WAHBA:1979}).
+
+The information-based function proposed by
+\citep{HURVICH_SIMONOFF_TSAI:1998} is given by
+\begin{equation*}
+  \text{AIC}_c=\ln(\hat\sigma^2)+
+  \frac{1+\text{tr}(H)/n}{1-\{\text{tr}(H)+2\}/n},
+\end{equation*}
+where
+\begin{equation*}
+  \hat\sigma^2=\frac{1}{n}\sum_{i=1}^n\{Y_i-\hat g(X_i)\}^2
+  =Y'(I-H)'(I-H)Y/n
+\end{equation*}
+with $\hat g(X_i)$ being a nonparametric estimator and $H$ being an
+$n\times n$ weighting function (i.e., the matrix of kernel weights)
+with its $(i,j)$th element given by $H_{ij} = K_{h,ij}/\sum_{l=1}^n
+K_{h,il}$, $K_{h,ij} = \prod_{s=1}^q h_s^{-1}k((X_{is}-X_{js})/h_s)$,
+and where $\text{tr}(H)$ means the trace of $H$.
+
 \subsection*{Pruning}
 
 Once a model has been selected via cross-validation
