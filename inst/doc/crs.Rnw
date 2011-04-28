@@ -79,16 +79,16 @@ package implements a range of related methods and has options that
 (hopefully) make it appealing for applied projects, research, and
 pedagogical purposes alike.
 
-Data-driven methods (leave-out-out cross-validation (\code{cv.func =
-  "cv.ls"}) \citeauthor{STONE:1974} \citeyear{STONE:1974},
-\citeauthor{STONE:1977} \citeyear{STONE:1977}, generalized
-cross-validation (\code{cv.func = "cv.gcv"})
-  \citeauthor{CRAVEN_WAHBA:1979} \citeyear{CRAVEN_WAHBA:1979}, and the
-  information-based criterion (\code{cv.func = "cv.aic"}) proposed by
-    \citeauthor{HURVICH_SIMONOFF_TSAI:1998}
-    \citeyear{HURVICH_SIMONOFF_TSAI:1998}) can be used for selecting
-    the spline degree, number of segments/knots, and
-    bandwidths. Details of the implementation are as follows:
+Data-driven methods can be used for selecting the spline degree,
+number of segments/knots, and bandwidths (leave-out-out
+cross-validation (\code{cv.func = "cv.ls"}) \citeauthor{STONE:1974}
+\citeyear{STONE:1974}, \citeauthor{STONE:1977} \citeyear{STONE:1977},
+generalized cross-validation (\code{cv.func="cv.gcv"})
+\citeauthor{CRAVEN_WAHBA:1979} \citeyear{CRAVEN_WAHBA:1979}, and the
+information-based criterion (\code{cv.func="cv.aic"}) proposed by
+\citeauthor{HURVICH_SIMONOFF_TSAI:1998}
+\citeyear{HURVICH_SIMONOFF_TSAI:1998}). Details of the implementation
+are as follows:
 
 \begin{enumerate}
   [label=(\roman{*}),ref=(\roman{*})]
@@ -97,15 +97,15 @@ cross-validation (\code{cv.func = "cv.gcv"})
   minus one) for each continuous predictor can be set manually as can
   the bandwidths for each categorical predictor (if appropriate)
   
-\item alternatively, each \code{cv.func} method can be used to select
-  either the degree of the spline (holding the number of
-  segments/knots minus one fixed at any user-set value) and bandwidths
-  for the categorical predictors (if appropriate), or the number of
-  segments (holding the degree of the spline fixed at any user-set
-  value) and bandwidths for the categorical predictors (if
-  appropriate), or the number of segments and the degree of the spline
-  for each continuous predictor and bandwidths for each categorical
-  predictor (if appropriate)
+\item alternatively, any of the data-driven criteria (i.e.\
+  \code{cv.func=}) could be used to select either the degree of the
+  spline (holding the number of segments/knots minus one fixed at any
+  user-set value) and bandwidths for the categorical predictors (if
+  appropriate), or the number of segments (holding the degree of the
+  spline fixed at any user-set value) and bandwidths for the
+  categorical predictors (if appropriate), or the number of segments
+  and the degree of the spline for each continuous predictor and
+  bandwidths for each categorical predictor (if appropriate)
   
 \item when indicator basis functions are used instead of kernel
   smoothing, whether to include each categorical predictor or not can
@@ -150,6 +150,23 @@ efficient estimation approaches in such settings. The \pkg{crs}
 package considers two complementary approaches that seamlessly handles
 the mix of continuous and categorical predictors often encountered in
 applied settings.
+
+\subsection*{The Underlying Model}
+
+We presume the reader wishes to model the unknown conditional mean in
+the following location-scale model,
+\begin{equation*}
+  Y=g\left( \mathbf{X},\mathbf{Z}\right) +\sigma \left( \mathbf{X},\mathbf{Z}
+  \right) \varepsilon,
+\end{equation*}
+where $g(\cdot )$ is an unknown function, $\mathbf{X=}\left(
+  X_{1},\ldots ,X_{q}\right) ^{\mathrm{T}}$ is a $q$-dimensional
+vector of continuous predictors, and $\mathbf{Z}=\left( Z_{1},\ldots
+  ,Z_{r}\right) ^{\mathrm{T}}$ is an $r$-dimensional vector of
+categorical predictors. Letting $\mathbf{z} =\left( z_{s}\right)
+_{s=1}^{r}$, we assume that $z_{s}$ takes $c_{s}$ different values in
+$D_{s}\equiv \left\{ 0,1,\ldots ,c_{s}-1\right\} $, $ s=1,\ldots ,r$,
+and let $c_{s}$ be a finite positive constant.
 
 For the continuous predictors the regression spline model employs the
 B-spline routines in the GNU Scientific Library. The B-spline function
@@ -214,6 +231,17 @@ matplot(x,B,type="l")
   (right).}
 \end{center}
 \end{figure}
+
+\subsection*{Least-Squares Estimation of The Underlying Model}
+
+We estimate $\beta \left( \mathbf{z}\right) $ by minimizing the
+following weighted least squares criterion,
+\begin{equation*}
+  \widehat{\beta }\left( \mathbf{z}\right) =\arg \min_{\beta \left( \mathbf{z}
+    \right) \in \mathbb{R}^{\mathbf{K}_{n}}}\sum\limits_{i=1}^{n}\left\{ Y_{i}-
+    \mathcal{B}\left( \mathbf{X}_{i}\right) ^{\mathrm{T}}\beta \left( \mathbf{z}\right) \right\} ^{2}L\left( \mathbf{Z}_{i},\mathbf{z},\mathbf{\lambda }
+  \right) .
+\end{equation*}
 
 \subsection*{Placement of Knots}
 
@@ -288,12 +316,9 @@ cross-validation, generalized cross-validation, and an AIC method
 corrected for use in nonparametric settings.
 
 Let the fitted value from the spline regression model be denoted $\hat
-Y_i=B_{m}(X_i)^T\hat \beta_{-i}(Z_i)$ where $X$ denotes the continuous
-regressors and $Z$ the categorical regressors.
-
-Letting $\hat\varepsilon_i=Y_i-\hat Y_i$ denote the $i$th residual
-from the categorical regression spline model, the least-squares
-cross-validation function is given by
+Y_i=B_{m}(X_i)^T\hat \beta(Z_i)$.  Letting $\hat\varepsilon_i=Y_i-\hat
+Y_i$ denote the $i$th residual from the categorical regression spline
+model, the least-squares cross-validation function is given by
 \begin{equation*}
 CV=\frac{1}{n}\sum_{i=1}^n\frac{\hat\varepsilon_i^2}{(1-h_{ii})^2}
 \end{equation*}

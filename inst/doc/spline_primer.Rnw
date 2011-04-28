@@ -96,7 +96,7 @@ consider the univariate B\'ezier function. In Section
 \ref{sec:b-spline} we turn to the univariate B-spline function, and
 then in Section \ref{sec:mv spline} we turn to the multivariate case
 where we also briefly mention how one could handle the presence of
-categorical regressors.
+categorical predictors.
 
 \section{\label{sec:bezier}B\'ezier curves}
 
@@ -412,17 +412,17 @@ order of the polynomial for each predictor) in an ad-hoc
 manner. However, raw polynomials are not sufficiently flexible for our
 purposes, particularly because they possess no interior knots which is
 where B-splines derive their unique properties. Furthermore, in a
-regression setting we typically encounter multiple regressors which
+regression setting we typically encounter multiple predictors which
 can be continuous or categorical in nature, and traditional splines
-are for continuous regressors. Below we briefly describe a
+are for continuous predictors. Below we briefly describe a
 multivariate kernel weighted tensor product B-spline regression method
 (kernel weighting is used to handle the presence of the categorical
-regressors). This method is implemented in the R package `crs'
+predictors). This method is implemented in the R package `crs'
 (\citeasnoun{crs}).
 
 \subsection{Multivariate knots, intervals, and spline bases}
 
-In general we will have $q$ regressors,
+In general we will have $q$ predictors,
 $\mathbf{X}=(X_1,\dots,X_q)^T$. We assume that each $X_{l}$, $1\leq
 l\leq q$, is distributed on a compact interval $\left[
   a_{l},b_{l}\right] $, and without loss of generality, we take all
@@ -495,9 +495,9 @@ unknown conditional mean in the following location-scale model,
 \end{equation}
 where $g(\cdot )$ is an unknown function, $\mathbf{X=}\left(
   X_{1},\ldots ,X_{q}\right) ^{\mathrm{T}}$ is a $q$-dimensional
-vector of continuous regressors, and $\mathbf{Z}=\left( Z_{1},\ldots
+vector of continuous predictors, and $\mathbf{Z}=\left( Z_{1},\ldots
   ,Z_{r}\right) ^{\mathrm{T}}$ is an $r$-dimensional vector of
-categorical regressors. Letting $\mathbf{z} =\left( z_{s}\right)
+categorical predictors. Letting $\mathbf{z} =\left( z_{s}\right)
 _{s=1}^{r}$, we assume that $z_{s}$ takes $c_{s}$ different values in
 $D_{s}\equiv \left\{ 0,1,\ldots ,c_{s}-1\right\} $, $ s=1,\ldots ,r$,
 and let $c_{s}$ be a finite positive constant. Let $\left(
@@ -508,7 +508,7 @@ for $1\leq l\leq q$, each $X_{l}$ is distributed on a compact interval
 $\left[ a_{l},b_{l}\right] $, and without loss of generality, we take
 all intervals $ \left[ a_l,b_l\right] =\left[ 0,1\right] $.
 
-In order to handle the presence of categorical regressors, we define
+In order to handle the presence of categorical predictors, we define
 \begin{align}
   l\left( Z_{s},z_{s},\lambda _{s}\right) & =\left\{
     \begin{array}{c}
@@ -527,7 +527,7 @@ where $l(\cdot )$ is a variant of
 function, $L(\cdot )$ is a product categorical kernel function, and
 $\mathbf{\lambda }=(\lambda _{1},\lambda _{2},\dots ,\lambda
 _{r})^{\mathrm{T}}$ is the vector of bandwidths for each of the
-categorical regressors. See \citeasnoun{MA_RACINE_YANG:2011} and
+categorical predictors. See \citeasnoun{MA_RACINE_YANG:2011} and
 \citeasnoun{MA_RACINE:2011} for further details.
 
 We estimate $\beta \left( \mathbf{z}\right) $ by minimizing the
