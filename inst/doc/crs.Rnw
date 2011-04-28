@@ -35,7 +35,7 @@
 \Keywords{nonparametric, semiparametric, regression spline,
   categorical data}
 
-\Plainkeywords{Nonparametric, spline, econometrics, categorical}
+\Plainkeywords{Nonparametric, spline, Econometrics, categorical}
 
 \Address{Jeffrey S.~Racine\\
   Department of Economics\\
@@ -79,11 +79,16 @@ package implements a range of related methods and has options that
 (hopefully) make it appealing for applied projects, research, and
 pedagogical purposes alike.
 
-Data-driven methods (leave-out-out cross-validation,
-\citeauthor{STONE:1974} \citeyear{STONE:1974}, \citeauthor{STONE:1977}
-\citeyear{STONE:1977}) can be used for selecting the spline degree,
-number of segments/knots, and bandwidths. Details of the
-implementation are as follows:
+Data-driven methods (leave-out-out cross-validation (\code{cv.func =
+  "cv.ls"}) \citeauthor{STONE:1974} \citeyear{STONE:1974},
+\citeauthor{STONE:1977} \citeyear{STONE:1977}, generalized
+cross-validation (\code{cv.func = "cv.gcv"})
+  \citeauthor{CRAVEN_WAHBA:1979} \citeyear{CRAVEN_WAHBA:1979}, and the
+  information-based criterion (\code{cv.func = "cv.aic"}) proposed by
+    \citeauthor{HURVICH_SIMONOFF_TSAI:1998}
+    \citeyear{HURVICH_SIMONOFF_TSAI:1998}) can be used for selecting
+    the spline degree, number of segments/knots, and
+    bandwidths. Details of the implementation are as follows:
 
 \begin{enumerate}
   [label=(\roman{*}),ref=(\roman{*})]
@@ -92,8 +97,8 @@ implementation are as follows:
   minus one) for each continuous predictor can be set manually as can
   the bandwidths for each categorical predictor (if appropriate)
   
-\item alternatively, leave-one-out cross-validation can be used to
-  select either the degree of the spline (holding the number of
+\item alternatively, each \code{cv.func} method can be used to select
+  either the degree of the spline (holding the number of
   segments/knots minus one fixed at any user-set value) and bandwidths
   for the categorical predictors (if appropriate), or the number of
   segments (holding the degree of the spline fixed at any user-set
@@ -104,7 +109,7 @@ implementation are as follows:
   
 \item when indicator basis functions are used instead of kernel
   smoothing, whether to include each categorical predictor or not can
-  be specified manually or chosen via leave-one-out cross-validation
+  be specified manually or chosen via any \code{cv.func} method
   
 \item we allow the degree of the spline for each continuous predictor
   to include zero, the inclusion indicator for each categorical
@@ -112,8 +117,8 @@ implementation are as follows:
   predictor to equal one, and when the degree/inclusion indicator is
   zero or the bandwidth is one, the variable is thereby removed from
   the regression: in this manner, irrelevant predictors can be
-  automatically removed by cross-validation negating the need for
-  pre-testing (\citeauthor{HALL_RACINE_LI:2004}
+  automatically removed by any \code{cv.func} method negating the need
+  for pre-testing (\citeauthor{HALL_RACINE_LI:2004}
   \citeyear{HALL_RACINE_LI:2004}, \citeauthor{HALL_LI_RACINE:2007}
   \citeyear{HALL_LI_RACINE:2007})
   
@@ -174,7 +179,7 @@ have a fully nonparametric (with interaction among all variables)
 model. As well, we include the option to use only the tensor product
 for the multivariate spline basis should the user so desire. Whether
 to use the additive or tensor product bases can be automatically
-determined via leave-line-out cross-validation (see the options for
+determined via any \code{cv.func} method (see the options for
 \code{basis=} in \code{?crs}).
 
 We offer the option to use categorical kernel weighting
@@ -265,20 +270,29 @@ their tensor product (if specified) along with the categorical kernel
 weighting function. Then, for a given degree for each continuous
 predictor and bandwidth for each categorical predictor (or indicator
 bases), the model is fit via least-squares. Alternatively, the degree
-and bandwidth can be jointly determined via leave-one-out
-cross-validation via the option \code{cv=TRUE}. This then evaluates
-the model for each unique combination of degree for each continuous
-predictor from \code{degree=0} through \code{degree=basis.maxdim}
-(default 5). For each unique combination of degree, the bandwidths
-($\in[0,1]$) are obtained via numerical minimization (see
-\code{optim}) and restarting can be conducted via
-\code{restarts=}. The model possessing the lowest cross-validation
-criterion is then selected as the final model.
+and bandwidth can be jointly determined via any \code{cv.func} method
+by setting the option \code{cv=TRUE}. This then evaluates the model
+for each unique combination of degree for each continuous predictor
+from \code{degree=0} through \code{degree=basis.maxdim} (default
+5). For each unique combination of degree, the bandwidths ($\in[0,1]$)
+are obtained via numerical minimization (see \code{optim}) and
+restarting can be conducted via \code{restarts=}. The model possessing
+the lowest criterion function value is then selected as the final
+model.
 
-\subsection*{Cross-Validation}
+\subsection*{Data-Driven Smoothing Parameter Selection}
 
-Letting $\hat\varepsilon_i$ denote the $i$th residual from the
-categorical regression spline model, the leave-one-out
+We incorporate three popular approaches for setting the smoothing
+parameters of the regression spline model, namely least-squares
+cross-validation, generalized cross-validation, and an AIC method
+corrected for use in nonparametric settings.
+
+Let the fitted value from the spline regression model be denoted $\hat
+Y_i=B_{m}(X_i)^T\hat \beta_{-i}(Z_i)$ where $X$ denotes the continuous
+regressors and $Z$ the categorical regressors.
+
+Letting $\hat\varepsilon_i=Y_i-\hat Y_i$ denote the $i$th residual
+from the categorical regression spline model, the least-squares
 cross-validation function is given by
 \begin{equation*}
 CV=\frac{1}{n}\sum_{i=1}^n\frac{\hat\varepsilon_i^2}{(1-h_{ii})^2}
@@ -288,14 +302,17 @@ data set, where $h_{tt}$ denotes the $t$th diagonal element of the
 spline basis projection matrix. Since $h_{tt}$ is computed routinely
 for robust diagnostics by many statistics programs, this can be
 computed along with (and hence as cheaply as) the vector of spline
-coefficients themselves. Thus leave-one-out cross-validation is
+coefficients themselves. Thus least-squares cross-validation is
 computationally appealing, particularly for large data sets.
 
-The `generalized' cross-validation function is obtained by replacing
-$h_{ii}$ with its average value denoted $\text{tr}(H)/n$ (see below
-for the definition of $\text{tr}(H)$, \citep{CRAVEN_WAHBA:1979}).
+Let $H$ denote the $n\times n$ weighting matrix such that $\hat Y=HY$
+with its $i$th diagonal element given by $H_{ii}$ where $\text{tr}(H)$
+means the trace of $H$ which is equal to $\sum_{i=1}^n h_{ii}$.  The
+`generalized' cross-validation function is obtained by replacing
+$h_{ii}$ in the above formula with its average value denoted
+$\text{tr}(H)/n$ (\citep{CRAVEN_WAHBA:1979}).
 
-The information-based function proposed by
+The information-based criterion proposed by
 \citep{HURVICH_SIMONOFF_TSAI:1998} is given by
 \begin{equation*}
   \text{AIC}_c=\ln(\hat\sigma^2)+
@@ -303,14 +320,13 @@ The information-based function proposed by
 \end{equation*}
 where
 \begin{equation*}
-  \hat\sigma^2=\frac{1}{n}\sum_{i=1}^n\{Y_i-\hat g(X_i)\}^2
-  =Y'(I-H)'(I-H)Y/n
+  \hat\sigma^2=\frac{1}{n}\sum_{i=1}^n\hat\varepsilon_i^2
+  =Y'(I-H)'(I-H)Y/n.
 \end{equation*}
-with $\hat g(X_i)$ being a nonparametric estimator and $H$ being an
-$n\times n$ weighting function (i.e., the matrix of kernel weights)
-with its $(i,j)$th element given by $H_{ij} = K_{h,ij}/\sum_{l=1}^n
-K_{h,il}$, $K_{h,ij} = \prod_{s=1}^q h_s^{-1}k((X_{is}-X_{js})/h_s)$,
-and where $\text{tr}(H)$ means the trace of $H$.
+
+Each of these criterion functions can be minimized with respect to the
+unknown smoothing parameters either by numerical optimization
+procedures or by exhaustive search.
 
 \subsection*{Pruning}
 
