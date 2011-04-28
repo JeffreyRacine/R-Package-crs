@@ -7,14 +7,22 @@
 
 \documentclass[nojss]{jss}
 
-%% need no \usepackage{Sweave.sty}
-
-\usepackage{amsmath}
-\usepackage{enumitem}
+\usepackage{amsmath,amsfonts,enumitem}
 \usepackage[utf8]{inputenc} 
 
 \newcommand{\field}[1]{\mathbb{#1}}
 \newcommand{\R}{\field{R}}
+
+%% Change the default page sizes.
+
+\setlength{\topmargin}{-0.25in}
+\setlength{\textheight}{8.5in}
+\setlength{\oddsidemargin}{.0in}
+\setlength{\evensidemargin}{.0in}
+\setlength{\textwidth}{6.5in}
+\setlength{\footskip}{.5in}
+
+%% need no \usepackage{Sweave.sty}
 
 \author{Jeffrey S.~Racine\\McMaster University}
 
@@ -177,27 +185,29 @@ B\'ezier curve.
 Heuristically, we conduct linear (in parameter) regression using the
 \proglang{R} function \code{lm}. However, we replace the continuous
 predictors with B-splines of potentially differing order for every
-continuous predictor. We adopt the \code{intercept=FALSE} variants
+continuous predictor. For the tensor product bases we set
+\code{intercept=TRUE} for each univariate spline basis, while for the
+additive spline bases we adopt the \code{intercept=FALSE} variants
 (the B-splines will therefore not sum to one, i.e., an order $m$
 B-spline with one segment (two knots/breakpoints) has $m+1$ columns
 and we drop the first as is often done) and include instead an
 intercept in the model. This allows multiple bases to coexist when
 there is more than one continuous predictor without introducing
-singularities. In addition to these bases we also optionally allow for
-inclusion of their tensor product (interaction) defined by
+singularities. The tensor product basis is given by
 \begin{equation*}
 B_1\otimes B_2\otimes \dots \otimes B_p,
 \end{equation*}
 where $\otimes$ is the Kronecker product where the products operate
 column-wise and $B_j$ is the basis matrix for predictor $j$ as
-outlined above. When the tensor product of the $p$ B-spline bases is
-omitted we have a semiparametric `additive' spline model, otherwise we
-have a fully nonparametric (with interaction among all variables)
-model. As well, we include the option to use only the tensor product
-for the multivariate spline basis should the user so desire. Whether
-to use the additive or tensor product bases can be automatically
-determined via any \code{cv.func} method (see the options for
-\code{basis=} in \code{?crs}).
+outlined above. 
+
+When additive B-spline bases are employed we have a semiparametric
+`additive' spline model (no interaction among variables), otherwise
+when the tensor product is employed we have a fully nonparametric
+model (interaction among all variables).  Whether to use the additive
+or tensor product bases can be automatically determined via any
+\code{cv.func} method (see the options for \code{basis=} in
+\code{?crs}).
 
 We offer the option to use categorical kernel weighting
 (\code{lm(\dots,weights=L)}) to handle the presence of categorical
@@ -208,12 +218,13 @@ singularity given the presence of the intercept term in the
 model). These bases are then treated similar to the bases $B_j$ for
 continuous predictors described above.
 
-Figure \ref{gsl matplot} presents an example of a B-spline and its
-first derivative (the spline derivatives are required in order to
-compute derivatives from the spline regression model).
+\subsection*{Example: A B-spline and its First Derivative.}
+
+  The figure below presents an example of a B-spline and its first
+  derivative (the spline derivatives are required in order to compute
+  derivatives from the spline regression model).
 
 \setkeys{Gin}{width=0.45\textwidth}
-\begin{figure}[!ht]
 \begin{center}
 <<fig=TRUE,echo=FALSE,keep.source=TRUE>>=
 degree <- 5
@@ -226,13 +237,12 @@ deriv <- 1
 B <- gsl.bs(x,degree=degree,deriv=deriv,intercept=TRUE)
 matplot(x,B,type="l")
 @ 
-\caption{\label{gsl matplot}A degree-\Sexpr{degree} B-spline (left)
-  with one segment (two knots) and its \Sexpr{deriv}st-order derivative
-  (right).}
 \end{center}
-\end{figure}
 
-\subsection*{Least-Squares Estimation of The Underlying Model}
+Above we plot a degree-\Sexpr{degree} B-spline (left) with one segment
+(two knots) and its \Sexpr{deriv}st-order derivative (right).
+
+\subsection*{Least-Squares Estimation of the Underlying Model}
 
 We estimate $\beta \left( \mathbf{z}\right) $ by minimizing the
 following weighted least squares criterion,
@@ -291,7 +301,7 @@ variable $z_s$ is removed from the resulting estimate, while when
 $\lambda_s=0$ only observations lying in a given cell are used to form
 the estimate.
 
-\subsection*{Estimation}
+\subsection*{Estimation Details}
 
 Estimating the model requires construction of the spline bases and
 their tensor product (if specified) along with the categorical kernel
@@ -323,19 +333,21 @@ model, the least-squares cross-validation function is given by
 CV=\frac{1}{n}\sum_{i=1}^n\frac{\hat\varepsilon_i^2}{(1-h_{ii})^2}
 \end{equation*}
 and this computation can be done with effectively one pass through the
-data set, where $h_{tt}$ denotes the $t$th diagonal element of the
-spline basis projection matrix. Since $h_{tt}$ is computed routinely
-for robust diagnostics by many statistics programs, this can be
-computed along with (and hence as cheaply as) the vector of spline
-coefficients themselves. Thus least-squares cross-validation is
-computationally appealing, particularly for large data sets.
+data set, where $h_{ii}$ denotes the $i$th diagonal element of the
+spline basis projection matrix (see below for details). Since $h_{ii}$
+is computed routinely for robust diagnostics by many statistics
+programs, this can be computed along with (and hence as cheaply as)
+the vector of spline coefficients themselves. Thus least-squares
+cross-validation is computationally appealing, particularly for large
+data sets.
 
 Let $H$ denote the $n\times n$ weighting matrix such that $\hat Y=HY$
 with its $i$th diagonal element given by $H_{ii}$ where $\text{tr}(H)$
 means the trace of $H$ which is equal to $\sum_{i=1}^n h_{ii}$.  The
-`generalized' cross-validation function is obtained by replacing
-$h_{ii}$ in the above formula with its average value denoted
-$\text{tr}(H)/n$ (\citep{CRAVEN_WAHBA:1979}).
+matrix $H$ is often called the `hat matrix' or `smoother matrix' and
+depends on $X$ but not on $Y$. The `generalized' cross-validation
+function is obtained by replacing $h_{ii}$ in the above formula with
+its average value denoted $\text{tr}(H)/n$ \citep{CRAVEN_WAHBA:1979}.
 
 The information-based criterion proposed by
 \citep{HURVICH_SIMONOFF_TSAI:1998} is given by
@@ -352,6 +364,15 @@ where
 Each of these criterion functions can be minimized with respect to the
 unknown smoothing parameters either by numerical optimization
 procedures or by exhaustive search.
+
+Though each of the above criteria are asymptotically equivalent in
+terms of the bandwidths they deliver ($\text{tr}(H)/n\to 0$ as
+$n\to\infty$), they may differ in finite-sample settings for a small
+smoothing parameter (large $\text{tr}(H)/n$) with the AIC$_c$
+criterion penalizing more heavily when undersmoothing than either the
+least-squares cross-validation or generalized cross-validation
+criteria (the AIC$_c$ criterion effectively applies an infinite
+penalty for $\text{tr}(H)/n\ge 1/2$).
 
 \subsection*{Pruning}
 
@@ -379,7 +400,7 @@ model being pruned. Note that this option can only be applied when
 Next we provide a few illustrative examples that may be of interest to
 the reader.
 
-\subsection*{Example 1 - One Categorical/One Continuous Predictor}
+\subsection*{Example: One Categorical/One Continuous Predictor}
 
 By way of illustration we consider a simple example involving one
 continuous and one discrete predictor.
@@ -395,30 +416,27 @@ model <- crs(y~x+z,basis="auto",basis.maxdim=5,kernel=TRUE)
 summary(model)
 @ 
 
-The function \code{crs} called in this example returns a
-\code{crs} object.  The generic functions \code{fitted} and
-\code{residuals} extract (or generate) estimated values and
-residuals. Furthermore, the functions \code{summary}, \code{predict},
-and \code{plot} (options \code{mean=FALSE}, \code{deriv=FALSE},
-\code{ci=FALSE}, \code{plot.behavior} = \code{c("plot"},
-\code{"plot-data"}, \code{"data")}) support objects of this
-type. Figure \ref{crs plot} presents summary output in the form of
-partial regression surfaces (predictors not appearing on the axes are
-held constant at their medians/modes).
+The function \code{crs} called in this example returns a \code{crs}
+object.  The generic functions \code{fitted} and \code{residuals}
+extract (or generate) estimated values and residuals. Furthermore, the
+functions \code{summary}, \code{predict}, and \code{plot} (options
+\code{mean=FALSE}, \code{deriv=FALSE}, \code{ci=FALSE},
+\code{plot.behavior} = \code{c("plot"}, \code{"plot-data"},
+\code{"data")}) support objects of this type. Figure \ref{crs plot}
+presents summary output in the form of partial regression surfaces
+(predictors not appearing on the axes are held constant at their
+medians/modes). Note that for this simple example we used the option
+\code{plot(model,mean=TRUE)}.
 
 \setkeys{Gin}{width=0.75\textwidth}
-\begin{figure}[!ht]
 \begin{center}
 <<fig=TRUE,multifig=TRUE,echo=FALSE,keep.source=TRUE>>=
 options(SweaveHooks = list(multifig = function() par(mfrow=c(2,2))))
 plot(model,mean=TRUE)
 @ 
-\caption{\label{crs plot}A simple example using
-  \code{plot(model,mean=TRUE)}.}
 \end{center}
-\end{figure}
 
-\subsection*{Example 2 - Regression Discontinuity Design}
+\subsection*{Example: Regression Discontinuity Design}
 
 By way of illustration we consider a simple example involving two
 continuous predictors and one categorical predictor. In this example
@@ -439,7 +457,7 @@ model <- crs(y~x1+x2+z,complexity="degree",basis="auto",basis.maxdim=8)
 summary(model)
 @ 
 
-Figure \ref{rdd plot} plots the resulting estimate. The discontinuity
+The figure below plots the resulting estimate. The discontinuity
 occurs when $x_1>0.5$ but the nature of the discontinuity is unknown
 as is the functional form on either side of the potential
 discontinuity. The categorical regression spline is able to detect
@@ -470,7 +488,6 @@ summary(model,sigtest=TRUE)
 @ 
 
 \setkeys{Gin}{width=0.75\textwidth}
-\begin{figure}[!ht]
 \begin{center}
 <<fig=TRUE,echo=FALSE,keep.source=TRUE>>=
 num.eval <- 50
@@ -507,11 +524,7 @@ persp(x=x1.seq.1,y=x2.seq.1,z=z1,
       ticktype="detailed",
       border="blue")
 @ 
-\caption{\label{rdd plot}Regression discontinuity design estimated
-  by \code{crs}.}
 \end{center}
-\end{figure}
-
 
 \section*{Acknowledgements}
 
