@@ -3,7 +3,9 @@ import(stats)
 export(crs,
        krscv,
        frscv,
-       gsl.bs)
+       gsl.bs,
+       tensor.prod.model.matrix,
+       uniquecombs)
 
 S3method(crs, formula)
 S3method(crs, default)
