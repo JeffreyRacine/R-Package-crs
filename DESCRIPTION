@@ -1,7 +1,7 @@
 Package: crs
 Version: 0.14-1
 Date: 2011-04-28
-Depends: mgcv
+Depends: 
 Suggests: np
 Title: Categorical Regression Splines
 Author: Jeffrey S. Racine <racinej@mcmaster.ca>
