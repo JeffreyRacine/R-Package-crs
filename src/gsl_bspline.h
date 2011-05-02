@@ -51,7 +51,6 @@
 
 /* *********************************************************** */
 #define GSL_DBL_EPSILON        2.2204460492503131e-16
-#define GSL_SUCCESS true
 #define NULL_VECTOR_VIEW {{0,  0,  0,  0,  0}}
 #define NULL_VECTOR {0,  0,  0,  0,  0}
 

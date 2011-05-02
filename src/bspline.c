@@ -130,6 +130,7 @@ gsl_bspline_alloc (const size_t k, const size_t nbreak)
 
       return w;
     }
+	return NULL;
 }				/* gsl_bspline_alloc() */
 
 /*
@@ -186,6 +187,7 @@ gsl_bspline_deriv_alloc (const size_t k)
 
       return dw;
     }
+	return NULL;
 }				/* gsl_bspline_deriv_alloc() */
 
 /* Return number of coefficients */
@@ -302,6 +304,7 @@ gsl_bspline_knots (const gsl_vector * breakpts, gsl_bspline_workspace * w)
 
       return GSL_SUCCESS;
     }
+	return GSL_FAILURE;
 }				/* gsl_bspline_knots() */
 
 /*
@@ -404,6 +407,7 @@ gsl_bspline_eval (const double x, gsl_vector * B, gsl_bspline_workspace * w)
 
       return GSL_SUCCESS;
     }
+	return GSL_FAILURE;
 }				/* gsl_bspline_eval() */
 
 /*
@@ -464,6 +468,7 @@ gsl_bspline_eval_nonzero (const double x, gsl_vector * Bk, size_t * istart,
 
       return GSL_SUCCESS;
     }
+	return GSL_FAILURE;
 }				/* gsl_bspline_eval_nonzero() */
 
 /*
@@ -539,6 +544,7 @@ gsl_bspline_deriv_eval (const double x, const size_t nderiv, gsl_matrix * dB,
 
       return GSL_SUCCESS;
     }
+	return GSL_FAILURE;
 }				/* gsl_bspline_deriv_eval() */
 
 /*
@@ -635,6 +641,7 @@ gsl_bspline_deriv_eval_nonzero (const double x, const size_t nderiv,
 
       return GSL_SUCCESS;
     }
+	return GSL_FAILURE;
 }				/* gsl_bspline_deriv_eval_nonzero() */
 
 /****************************************
@@ -1268,7 +1275,7 @@ int gsl_matrix_get_col(gsl_vector * v,
       }
   }
 
-  return true;
+  return GSL_SUCCESS;
 }
 
 double gsl_matrix_get(const gsl_matrix * m, const size_t i, const size_t j)
