@@ -1,7 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <math.h>
-#include <gsl/gsl_bspline.h>
+#include "gsl_bspline.h"
 #include <R.h>
 
 /* Code to replicate bs() in splines package. Note that feeding in

@@ -1,2 +1,2 @@
-PKG_LIBS=-L/opt/sharcnet/gsl/current/lib -lgsl -lgslcblas -lm
-PKG_CFLAGS=-I/opt/sharcnet/gsl/current/include -L/opt/sharcnet/gsl/current/lib
+PKG_LIBS=-lm
+

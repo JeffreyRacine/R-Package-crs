@@ -1,3 +1,3 @@
 # -*- Makefile -*-
--O2 -I/opt/local/include -L/opt/local/lib -lgsl -lgslcblas -lm
+-O2 -lm
 

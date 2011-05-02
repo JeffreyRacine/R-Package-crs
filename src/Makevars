@@ -1,2 +1,1 @@
-PKG_LIBS=-L/opt/local/lib -lgsl -lgslcblas -lm
-PKG_CFLAGS=-I/opt/local/include -L/opt/local/lib
+PKG_LIBS= -O2 -lm

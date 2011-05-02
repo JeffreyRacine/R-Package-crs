@@ -171,7 +171,7 @@ krscv <- function(xz,
   num.z <- NCOL(z)
   z.unique <- uniquecombs(z)
   ind <-  attr(z.unique,"index")
-  ind.vals <-  unique(ind) #sort(unique(ind))
+  ind.vals <-  unique(ind)
   nrow.z.unique <- NROW(z.unique)
   num.x <- NCOL(x)
   n <- NROW(x)

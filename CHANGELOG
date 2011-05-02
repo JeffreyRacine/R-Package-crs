@@ -1,3 +1,18 @@
+Changes from Version 0.14.2 to 0.14.3 [01-May-2011]
+
+* Zhenghua migrated the necessary files from the gsl so that the crs
+  package is now standalone - furthermore, now he can add
+  out-of-sample support to the gsl routines...
+
+Changes from Version 0.14.0 to 0.14.2 [30-Apr-2011]
+
+* Zhenghua migrated the barebones code required for the mgcv functions
+  uniquecombs and tensor.prod.model.matrix, and I migrated the
+  associated manpages, modified NAMESPACE and now the package does not
+  require loading of mgcv which was sub-optimal.
+
+* dropped cv.norm and replaced with cv.func=c("cv.ls","cv.gcv","cv.aic")
+
 Changes from Version 0.13.8 to 0.14.0 [14-Apr-2011]
 
 * tensor products now working properly (need gsl.bs intercept and no
