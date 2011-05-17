@@ -45,6 +45,9 @@ crs(\dots)
     data.return = FALSE,
     prune = FALSE,
     restarts = 0,
+		nomad = FALSE,
+	  x0 = NULL, 
+		nb_mads_runs = 0, 
     \dots)
 }
 \arguments{
@@ -151,6 +154,13 @@ crs(\dots)
   \item{restarts}{ integer specifying the number of times to restart the
     process of finding extrema of the cross-validation function (for the
     bandwidths only) from different (random) initial points }
+
+  \item{nomad}{TBA}
+
+  \item{x0}{TBA}
+
+  \item{nb_mads_runs}{TBA}
+
  
   \item{\dots}{ optional arguments }
   

@@ -3,6 +3,10 @@ import(stats)
 export(crs,
        krscv,
        frscv,
+			 frscvNOMAD, 
+			 cv.factor.spline, 
+			 krscvNOMAD, 
+			 cv.kernel.spline, 
        gsl.bs,
        tensor.prod.model.matrix,
        uniquecombs)

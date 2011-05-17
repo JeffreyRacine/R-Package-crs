@@ -1,1 +1,3 @@
 radial        R code for plotting 3D perspective plot for the `radial' function
+test_nomad_factor    R code for testing NOMAD for factor regression splines
+test_nomad_kernel    R code for testing NOMAD for categorical regression splines
