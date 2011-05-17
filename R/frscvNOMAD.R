@@ -33,7 +33,6 @@ frscvNOMAD <- function(xz,
 
 		t1 <- Sys.time()
 
-
 		cv.nomad <- function(x,
 												 z=NULL,
 												 y,
@@ -76,7 +75,6 @@ frscvNOMAD <- function(xz,
 						basis <- params$basis
 
 						num.x <- NCOL(x)
-
 
 						if(complexity=="degree-knots") {
 								K <- round(cbind(input[1:num.x],input[(num.x+1):(2*num.x)]))
@@ -231,7 +229,6 @@ frscvNOMAD <- function(xz,
 
 		if(basis.maxdim < 1) stop(" basis.maxdim must be greater than or equal to 1")
 
-
 		## we use a globle variable to store basis.opt
 		## sovle by NOMAD
 
@@ -283,7 +280,6 @@ frscvNOMAD <- function(xz,
 				K.opt<-cbind(degree, segments)
 		}
 
-
 		console <- printClear(console)
 		console <- printPop(console)
 
@@ -293,7 +289,6 @@ frscvNOMAD <- function(xz,
 		cv.vec <- NULL
 		basis.vec <- NULL
 		KI.mat <- NULL
-
 
 		crscv(K=K.opt,
 					I=I.opt,

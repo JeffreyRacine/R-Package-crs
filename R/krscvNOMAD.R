@@ -87,7 +87,6 @@ krscvNOMAD <- function(xz,
 						nrow.z.unique <- params$nrow.z.unique
 						kernel.type <- params$kernel.type
 
-
 						num.x <- NCOL(x)
 						num.z <- NCOL(z)
 
@@ -160,7 +159,6 @@ krscvNOMAD <- function(xz,
 																			 basis=basis.opt,
 																			 cv.func=cv.func)
 						}
-
 
 						return(cv)
 				}
@@ -254,35 +252,35 @@ krscvNOMAD <- function(xz,
 		console <- newLineConsole()
 		console <- printPush("Solving by NOMAD...",console = console)
 
-
 		basis.opt<<- "additive"
-		## sovle by NOMAD
+
+		## solve by NOMAD
 
 		nomad.solution<-cv.nomad(x,
-												 y,
-												 z,
-												 basis.maxdim=basis.maxdim,
-												 restart=restart,
-												 num.restarts=num.restarts,
-												 z.unique=z.unique,
-												 ind=ind,
-												 ind.vals=ind.vals,
-												 nrow.z.unique=nrow.z.unique,
-												 kernel.type=kernel.type, 
-												 complexity=complexity,
-												 knots=knots,
-												 basis=basis,
-												 cv.func=cv.func, 
-												 x0=x0, 
-												 nb_mads_runs=nb_mads_runs) 
-
+                             y,
+                             z,
+                             basis.maxdim=basis.maxdim,
+                             restart=restart,
+                             num.restarts=num.restarts,
+                             z.unique=z.unique,
+                             ind=ind,
+                             ind.vals=ind.vals,
+                             nrow.z.unique=nrow.z.unique,
+                             kernel.type=kernel.type, 
+                             complexity=complexity,
+                             knots=knots,
+                             basis=basis,
+                             cv.func=cv.func, 
+                             x0=x0, 
+                             nb_mads_runs=nb_mads_runs) 
+    
 		t2 <- Sys.time()
 
 		##output
 
 		cv.min <- nomad.solution$objective
 		if(complexity=="degree-knots") {
-				K.opt <- as.integer(nomad.solution$solution[1:2*num.x])
+				K.opt <- as.integer(nomad.solution$solution[1:(2*num.x)])
 				lambda.opt <- as.numeric(nomad.solution$solution[(2*num.x+1):(2*num.x+num.z)])
 				degree <- K.opt[1:num.x]
 				segments <- K.opt[(num.x+1):(2*num.x)]
@@ -301,15 +299,21 @@ krscvNOMAD <- function(xz,
 				K.opt <-cbind(degree, segments)
 		}
 
-
-
 		console <- printClear(console)
 		console <- printPop(console)
 
-	#	if(any(degree==basis.maxdim)) warning(paste(" optimal degree equals search maximum (", basis.maxdim,"): rerun with larger basis.maxdim",sep=""))
-	#	if(any(segments==(basis.maxdim+1))) warning(paste(" optimal segment equals search maximum (", basis.maxdim+1,"): rerun with larger basis.maxdim",sep=""))  
+    print("here we are")
+    print(nomad.solution$solution)
+    print(segments)
+    print(degree)
+    print(basis.maxdim)
 
-  # we do not use the following parameters, so there may be errors if other functions will use them. 
+	if(any(degree==basis.maxdim)) warning(paste(" optimal degree equals search maximum (", basis.maxdim,"): rerun with larger basis.maxdim",sep=""))
+	if(any(segments==(basis.maxdim+1))) warning(paste(" optimal segment equals search maximum (", basis.maxdim+1,"): rerun with larger basis.maxdim",sep=""))  
+
+  ## We do not use the following parameters, so there may be errors if
+  ## other functions will use them.
+    
 		cv.vec <- NULL
 		lambda.mat <- NULL
 		basis.vec <- NULL
