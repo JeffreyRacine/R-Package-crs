@@ -25,9 +25,7 @@ model <- crs(y~x1+x2,
 
 summary(model)
 
-pdf(file="radial_plots.pdf")
-
-## Perspective plot
+# Perspective plot
 x1.seq <- seq(min(x1),max(x1),length=num.eval)
 x2.seq <- seq(min(x2),max(x2),length=num.eval)
 x.grid <- expand.grid(x1.seq,x2.seq)
