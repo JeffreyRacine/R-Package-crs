@@ -302,22 +302,16 @@ krscvNOMAD <- function(xz,
 		console <- printClear(console)
 		console <- printPop(console)
 
-    print("here we are")
-    print(nomad.solution$solution)
-    print(segments)
-    print(degree)
-    print(basis.maxdim)
-
-	if(any(degree==basis.maxdim)) warning(paste(" optimal degree equals search maximum (", basis.maxdim,"): rerun with larger basis.maxdim",sep=""))
-	if(any(segments==(basis.maxdim+1))) warning(paste(" optimal segment equals search maximum (", basis.maxdim+1,"): rerun with larger basis.maxdim",sep=""))  
-
-  ## We do not use the following parameters, so there may be errors if
-  ## other functions will use them.
+    if(any(degree==basis.maxdim)) warning(paste(" optimal degree equals search maximum (", basis.maxdim,"): rerun with larger basis.maxdim",sep=""))
+    if(any(segments==(basis.maxdim+1))) warning(paste(" optimal segment equals search maximum (", basis.maxdim+1,"): rerun with larger basis.maxdim",sep=""))  
+    
+    ## We do not use the following parameters, so there may be errors if
+    ## other functions will use them.
     
 		cv.vec <- NULL
 		lambda.mat <- NULL
 		basis.vec <- NULL
-		K.mat <- NULL  #We should check K.mat
+		K.mat <- NULL
 
 		crscv(K=K.opt,
 					I=NULL,
