@@ -4,7 +4,7 @@ library(crs)
 
 set.seed(42)
 
-n <- 1000
+n <- 10000
 num.eval <- 50
 
 x1 <- runif(n,-5,5)

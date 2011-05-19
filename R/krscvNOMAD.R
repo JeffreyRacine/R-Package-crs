@@ -125,6 +125,7 @@ krscvNOMAD <- function(xz,
 																			 knots=knots,
 																			 basis=basis.opt,
 																			 cv.func=cv.func)
+
 								cv.tensor <- cv.kernel.spline(x=x,
 																							y=y,
 																							z=z,
@@ -143,9 +144,9 @@ krscvNOMAD <- function(xz,
 										basis.opt <<-"tensor"
 								}
 
-						}
-						else {
-								cv <- cv.kernel.spline(x=x,
+						} else {
+
+              cv <- cv.kernel.spline(x=x,
 																			 y=y,
 																			 z=z,
 																			 K=K,
@@ -213,15 +214,13 @@ krscvNOMAD <- function(xz,
 				#no constraints
 				bbout <-c(0)
 
-				opts <-list("MAX_BB_EVAL"=500,
-                    "MIN_MESH_SIZE"=1.0e-10,
-                    "INITIAL_MESH_SIZE"=1.0e-02,
-                    "MIN_POLL_SIZE"=1.0e-10)
+        ## Manual says preceed by r means relative to up and lb... not
+        ## quite what I was looking for
 
-#				opts <-list("MAX_BB_EVAL"=500,
-#                    "MIN_MESH_SIZE"=1.0e-10,
-#                    "INITIAL_MESH_SIZE"=1.0e-01,
-#                    "MIN_POLL_SIZE"=1.0e-06)
+				opts <-list("MAX_BB_EVAL"=500,
+                    "MIN_MESH_SIZE"=1.0e-08,
+                    "INITIAL_MESH_SIZE"=1.0e-01,
+                    "MIN_POLL_SIZE"=1.0e-07)
 
 #				opts <-list("MAX_BB_EVAL"=500,
 #                    "MIN_MESH_SIZE"=0.00001,
@@ -320,6 +319,11 @@ krscvNOMAD <- function(xz,
 				lambda.opt <- as.numeric(nomad.solution$solution[(num.x+1):(num.x+num.z)])
 				K.opt <-cbind(degree, segments)
 		}
+
+    ## Check for lambda of zero (or less) as solution as lm() with
+    ## weights= will fail, so set to machine epsilon in this case
+
+    lambda.opt <- ifelse(lambda.opt <= 0, .Machine$double.eps, lambda.opt)
 
 		console <- printClear(console)
 		console <- printPop(console)

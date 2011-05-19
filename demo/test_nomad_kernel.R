@@ -2,7 +2,7 @@ rm(list=ls())
 
 library(crs)
 
-set.seed(123)
+set.seed(42)
 
 ## Example - simulated data
 

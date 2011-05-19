@@ -187,10 +187,13 @@ frscvNOMAD <- function(xz,
 
         ## This could be a passable parameter or set appropriately
 
+        ## Manual says preceed by r means relative to up and lb... not
+        ## quite what I was looking for
+
 				opts <-list("MAX_BB_EVAL"=500,
-                    "MIN_MESH_SIZE"=1.0e-10,
-                    "INITIAL_MESH_SIZE"=1.0e-02,
-                    "MIN_POLL_SIZE"=1.0e-10)
+                    "MIN_MESH_SIZE"=1.0e-08,
+                    "INITIAL_MESH_SIZE"=1.0e-01,
+                    "MIN_POLL_SIZE"=1.0e-07)
 
 #				opts <-list("MAX_BB_EVAL"=500,
 #                    "MIN_MESH_SIZE"=0.00001,
