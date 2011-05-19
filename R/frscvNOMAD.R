@@ -24,7 +24,7 @@ frscvNOMAD <- function(xz,
                        degree=degree,
                        segments=segments, 
                        x0=x0, 
-                       nb_mads_runs=0) {
+                       nmulti=0) {
 
 		complexity <- match.arg(complexity)
 		knots <- match.arg(knots)
@@ -44,7 +44,7 @@ frscvNOMAD <- function(xz,
 												 degree=degree, 
 												 segments=segments, 
 												 x0=x0, 
-												 nb_mads_runs=nb_mads_runs) {
+												 nmulti=nmulti) {
 
 				if( missing(x) || missing(y) ||missing(basis.maxdim) ) stop(" you must provide input, x, y, and basis.maxdim")
 
@@ -63,76 +63,76 @@ frscvNOMAD <- function(xz,
 				## function are passed below.
 
 				eval_cv <- function(input, params){
-
-						complexity <- params$complexity
-						segments <- params$segments
-						degree <- params$degree
-						x <- params$x
-						y <- params$y
-						z <- params$z
-						knots <- params$knots
-						cv.func <- params$cv.func
-						basis <- params$basis
-
-						num.x <- NCOL(x)
-
-						if(complexity=="degree-knots") {
-								K <- round(cbind(input[1:num.x],input[(num.x+1):(2*num.x)]))
-						}	
-						else if(complexity=="degree") {
-								K<-round(cbind(input[1:num.x],segments))
-						}	
-						else if(complexity=="knots")
+          
+          complexity <- params$complexity
+          segments <- params$segments
+          degree <- params$degree
+          x <- params$x
+          y <- params$y
+          z <- params$z
+          knots <- params$knots
+          cv.func <- params$cv.func
+          basis <- params$basis
+          
+          num.x <- NCOL(x)
+          
+          if(complexity=="degree-knots") {
+            K <- round(cbind(input[1:num.x],input[(num.x+1):(2*num.x)]))
+          }	
+          else if(complexity=="degree") {
+            K<-round(cbind(input[1:num.x],segments))
+          }	
+          else if(complexity=="knots")
 						{
-								K<-round(cbind(degree, input[1:num.x]))
+              K<-round(cbind(degree, input[1:num.x]))
 						}
-						if(!is.null(z)) {
-								num.z <- NCOL(z)
-								I <- round(input[(2*num.x+1):(2*num.x+num.z)])
-						} else {
-								num.z <- 0
-								I <- NULL
-						}
-
-						basis.opt <<-  basis;
-						if(basis=="auto"){
-								basis.opt<<-"additive"
-								cv <- cv.factor.spline(x=x,
-																			 y=y,
-																			 z=z,
-																			 K=K,
-																			 I=I,
-																			 knots=knots,
-																			 basis=basis.opt,
-																			 cv.func=cv.func)
-
-								cv.tensor <- cv.factor.spline(x=x,
-																							y=y,
-																							z=z,
-																							K=K,
-																							I=I,
-																							knots=knots,
-																							basis="tensor",
-																							cv.func=cv.func)
-								if(cv>cv.tensor){
-										cv <- cv.tensor
-										basis.opt <<-"tensor"
-								}
-						}
-						else {
-								cv <- cv.factor.spline(x=x,
-																			 y=y,
-																			 z=z,
-																			 K=K,
-																			 I=I,
-																			 knots=knots,
-																			 basis=basis.opt,
-																			 cv.func=cv.func)
-						}
-
-						return(cv)
+          if(!is.null(z)) {
+            num.z <- NCOL(z)
+            I <- round(input[(2*num.x+1):(2*num.x+num.z)])
+          } else {
+            num.z <- 0
+            I <- NULL
+          }
+          
+          basis.opt <<-  basis;
+          if(basis=="auto"){
+            basis.opt<<-"additive"
+            cv <- cv.factor.spline(x=x,
+                                   y=y,
+                                   z=z,
+                                   K=K,
+                                   I=I,
+                                   knots=knots,
+                                   basis=basis.opt,
+                                   cv.func=cv.func)
+            
+            cv.tensor <- cv.factor.spline(x=x,
+                                          y=y,
+                                          z=z,
+                                          K=K,
+                                          I=I,
+                                          knots=knots,
+                                          basis="tensor",
+                                          cv.func=cv.func)
+            if(cv>cv.tensor){
+              cv <- cv.tensor
+              basis.opt <<-"tensor"
+            }
+          }
+          else {
+            cv <- cv.factor.spline(x=x,
+                                   y=y,
+                                   z=z,
+                                   K=K,
+                                   I=I,
+                                   knots=knots,
+                                   basis=basis.opt,
+                                   cv.func=cv.func)
+          }
+          
+          return(cv)
 				}
-
+        
 				##generate params
 				params <- list()
 				params$complexity <- complexity
@@ -185,9 +185,28 @@ frscvNOMAD <- function(xz,
 				#no constraints
 				bbout <-c(0)
 
-				opts <-list("MAX_BB_EVAL"=500, "MIN_MESH_SIZE"=0.00001, "INITIAL_MESH_SIZE"="0.1", "MIN_POLL_SIZE"=0.00001)
+        ## This could be a passable parameter or set appropriately
 
-				solution<-snomadr(eval_f=eval_cv, n=length(x0),x0=as.numeric(x0), bbin=bbin, bbout=bbout, lb=lb, ub=ub, nb_mads_runs=as.integer(nb_mads_runs), opts=opts, params=params);
+				opts <-list("MAX_BB_EVAL"=500,
+                    "MIN_MESH_SIZE"=1.0e-10,
+                    "INITIAL_MESH_SIZE"=1.0e-02,
+                    "MIN_POLL_SIZE"=1.0e-10)
+
+#				opts <-list("MAX_BB_EVAL"=500,
+#                    "MIN_MESH_SIZE"=0.00001,
+#                    "INITIAL_MESH_SIZE"="0.1",
+#                    "MIN_POLL_SIZE"=0.00001)
+
+				solution<-snomadr(eval_f=eval_cv,
+                          n=length(x0),
+                          x0=as.numeric(x0),
+                          bbin=bbin,
+                          bbout=bbout,
+                          lb=lb,
+                          ub=ub,
+                          nmulti=as.integer(nmulti),
+                          opts=opts,
+                          params=params);
 
 		}
 
@@ -243,7 +262,7 @@ frscvNOMAD <- function(xz,
 															 degree=degree, 
 															 segments=segments, 
 															 x0=x0, 
-															 nb_mads_runs=nb_mads_runs) 
+															 nmulti=nmulti) 
 
 		t2 <- Sys.time()
 

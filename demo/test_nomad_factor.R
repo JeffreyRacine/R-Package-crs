@@ -14,17 +14,17 @@ dgp <- sin(sqrt(x1^2+x2^2))/sqrt(x1^2+x2^2)
 
 y <- dgp + rnorm(n,sd=.1)
 
-## no initial points, generate by sample
+## No initial points, generate by sample
 
 model_nomad <- crs(y~x1+x2,
                    basis="auto",
                    cv=TRUE,
+                   nomad=TRUE,
                    complexity="degree-knots",
                    basis.maxdim=5,
                    knots="uniform",
                    deriv=1,
-                   cv.func="cv.aic",
-                   nomad=TRUE)
+                   cv.func="cv.aic")
 
 summary(model_nomad)
 
@@ -39,12 +39,12 @@ x0<-c(3, 3, 2, 4)
 model_nomad <- crs(y~x1+x2,
                    basis="auto",
                    cv=TRUE,
+                   nomad=TRUE, 
                    complexity="degree-knots",
                    basis.maxdim=5,
                    knots="uniform",
                    deriv=1,
                    cv.func="cv.aic", 
-                   nomad=TRUE, 
                    x0=x0)
 
 summary(model_nomad)
@@ -56,27 +56,27 @@ summary(model_nomad)
 model_multi_nomad <- crs(y~x1+x2,
                          basis="auto",
                          cv=TRUE,
+                         nomad=TRUE,
                          complexity="degree-knots",
                          basis.maxdim=5,
                          knots="uniform",
                          deriv=1,
                          cv.func="cv.aic", 
-                         nomad=TRUE,
-                         x0 = x0, 
-                         nb_mads_runs=10)
+                         x0=x0, 
+                         nmulti=10)
 
 summary(model_multi_nomad)
 
-## Single inital point
+## Compare with exhaustive search (nomad=FALSE)
 
 model <- crs(y~x1+x2,
              basis="auto",
              cv=TRUE,
+             nomad=FALSE,
              complexity="degree-knots",
              basis.maxdim=5,
              knots="uniform",
              deriv=1,
-             cv.func="cv.aic",
-             nomad=FALSE)
+             cv.func="cv.aic")
 
 summary(model)

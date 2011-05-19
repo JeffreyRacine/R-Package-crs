@@ -24,13 +24,12 @@ model.kernel <- crs(y~x1+x2+z,
                     basis="additive",
                     comlexity="degree-knots",
                     cv=FALSE,
-                    kernel=TRUE,
-                    nomad=TRUE)
+                    nomad=TRUE,
+                    kernel=TRUE)
 
 summary(model.kernel)
 
-## Could you check the error, I guess the problem is that I do not
-## output K.mat which you will call it to do the calculation later.
+## Use initial value starting points
 
 x0<-c(1, 1, 1, 2, 0.5)
 
@@ -41,8 +40,8 @@ model.kernel.x0 <- crs(y~x1+x2+z,
                        basis="auto",
                        comlexity="degree-knots",
                        cv=TRUE,
-                       kernel=TRUE,
                        nomad=TRUE,
+                       kernel=TRUE,
                        x0=x0)
 
 summary(model.kernel.x0)
@@ -59,6 +58,22 @@ model.kernel.multiple <- crs(y~x1+x2+z,
                              kernel=TRUE,
                              nomad=TRUE,
                              x0=x0,
-                             nb_mads_runs=10)
+                             nmulti=10)
 
 summary(model.kernel.multiple)
+
+## We could compare with exhaustive search, but that takes some time
+## as numerical search is conducted for each degree/segment combination.
+
+#model.kernel.multiple <- crs(y~x1+x2+z,
+#                             degree=c(5,5),
+#                             lambda=c(0.1),
+#                             basis.maxdim=6,
+#                             basis="auto",
+#                             comlexity="degree-knots",
+#                             cv=TRUE,
+#                             nomad=FALSE,
+#                             kernel=TRUE,
+#                             x0=x0,
+#                             nmulti=10)
+

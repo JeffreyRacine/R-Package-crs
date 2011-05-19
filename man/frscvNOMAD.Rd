@@ -24,7 +24,7 @@ frscvNOMAD(xz,
            degree=degree,
            segments=segments, 
            x0=x0, 
-           nb_mads_runs=0)
+           nmulti=0)
 }
 
 \arguments{
@@ -82,7 +82,11 @@ frscvNOMAD(xz,
 
   \item{x0}{TBA}
 
-  \item{nb_mads_runs}{TBA}
+  \item{nmulti}{
+    integer number of times to restart the process of finding extrema of
+    the cross-validation function from different (random) initial
+    points. Defaults to \code{0}.
+  }
 
 }
 

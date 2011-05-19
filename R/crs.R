@@ -307,7 +307,7 @@ crs.default <- function(xz,
 ## Here we define the formula and split y (always first column of the
 ## model frame) from xz (the remaining continuous and ordinal/nominal).
 ## nomad::FLASE exhaustive search
-## nb_mads_runs is the number for multiple initial points.
+## nmulti is the number for multiple initial points.
 ## if it is bigger than 1,  when nomad is true,  it will call
 ## snomadRSolve,  otherwise,  it will call smultinomadRSolve
 ## See ?snomadr
@@ -332,7 +332,7 @@ crs.formula <- function(formula,
                         restarts=0,
 												nomad=FALSE, 
 											  x0=NULL, 
-												nb_mads_runs=0, 
+												nmulti=0, 
                         ...) {
 
   cv.func <- match.arg(cv.func)
@@ -400,7 +400,7 @@ crs.formula <- function(formula,
                          degree=degree,
                          segments=segments, 
 												 x0=x0, 
-												 nb_mads_runs=nb_mads_runs)
+												 nmulti=nmulti)
 				}
 				else {
       cv.return <- frscv(xz=xz,
@@ -426,34 +426,32 @@ crs.formula <- function(formula,
     ## kernel smooth and B-spline bases cross-validation
 
     if(cv==TRUE) {
-				if(nomad==TRUE)
-				{
-      cv.return <- krscvNOMAD(xz=xz,
-                         y=y,
-                         basis.maxdim=basis.maxdim,
-                         complexity=complexity,
-                         knots=knots,
-                         basis=basis,
-                         cv.func=cv.func,
-                         degree=degree,
-                         segments=segments,
-                         restarts=restarts, 
-												 x0=x0, 
-												 nb_mads_runs=nb_mads_runs)
-				}
-				else {
-      cv.return <- krscv(xz=xz,
-                         y=y,
-                         basis.maxdim=basis.maxdim,
-                         complexity=complexity,
-                         knots=knots,
-                         basis=basis,
-                         cv.func=cv.func,
-                         degree=degree,
-                         segments=segments,
-                         restarts=restarts)
-				}
-
+      if(nomad==TRUE) {
+        cv.return <- krscvNOMAD(xz=xz,
+                                y=y,
+                                basis.maxdim=basis.maxdim,
+                                complexity=complexity,
+                                knots=knots,
+                                basis=basis,
+                                cv.func=cv.func,
+                                degree=degree,
+                                segments=segments,
+                                restarts=restarts, 
+                                x0=x0, 
+                                nmulti=nmulti)
+      } else {
+        cv.return <- krscv(xz=xz,
+                           y=y,
+                           basis.maxdim=basis.maxdim,
+                           complexity=complexity,
+                           knots=knots,
+                           basis=basis,
+                           cv.func=cv.func,
+                           degree=degree,
+                           segments=segments,
+                           restarts=restarts)
+      }
+      
       cv.min <- cv.return$cv.min
       degree <- cv.return$degree
       segments <- cv.return$segments

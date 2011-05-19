@@ -26,7 +26,7 @@ krscvNOMAD <- function(xz,
                        degree=degree,
                        segments=segments, 
                        x0 = x0, 
-                       nb_mads_runs=0) {
+                       nmulti=0) {
 
 		complexity <- match.arg(complexity)
 		knots <- match.arg(knots)
@@ -53,7 +53,7 @@ krscvNOMAD <- function(xz,
 												 basis=basis,
 												 cv.func=cv.func, 
 												 x0=x0, 
-												 nb_mads_runs=nb_mads_runs) {
+												 nmulti=nmulti) {
 
 				if( missing(x) || missing(y) ||missing(basis.maxdim) ) stop(" you must provide input, x, y, and basis.maxdim")
 
@@ -213,9 +213,31 @@ krscvNOMAD <- function(xz,
 				#no constraints
 				bbout <-c(0)
 
-				opts <-list("MAX_BB_EVAL"=500, "MIN_MESH_SIZE"=0.00001, "INITIAL_MESH_SIZE"="0.1", "MIN_POLL_SIZE"=0.00001)
+				opts <-list("MAX_BB_EVAL"=500,
+                    "MIN_MESH_SIZE"=1.0e-10,
+                    "INITIAL_MESH_SIZE"=1.0e-02,
+                    "MIN_POLL_SIZE"=1.0e-10)
 
-				solution<-snomadr(eval_f=eval_cv, n=length(x0),x0=as.numeric(x0), bbin=bbin, bbout=bbout, lb=lb, ub=ub,nb_mads_runs=as.integer(nb_mads_runs),  opts=opts, params=params);
+#				opts <-list("MAX_BB_EVAL"=500,
+#                    "MIN_MESH_SIZE"=1.0e-10,
+#                    "INITIAL_MESH_SIZE"=1.0e-01,
+#                    "MIN_POLL_SIZE"=1.0e-06)
+
+#				opts <-list("MAX_BB_EVAL"=500,
+#                    "MIN_MESH_SIZE"=0.00001,
+#                    "INITIAL_MESH_SIZE"="0.1",
+#                    "MIN_POLL_SIZE"=0.00001)
+
+				solution<-snomadr(eval_f=eval_cv,
+                          n=length(x0),
+                          x0=as.numeric(x0),
+                          bbin=bbin,
+                          bbout=bbout,
+                          lb=lb,
+                          ub=ub,
+                          nmulti=as.integer(nmulti),
+                          opts=opts,
+                          params=params);
 
 		}
 
@@ -272,7 +294,7 @@ krscvNOMAD <- function(xz,
                              basis=basis,
                              cv.func=cv.func, 
                              x0=x0, 
-                             nb_mads_runs=nb_mads_runs) 
+                             nmulti=nmulti) 
     
 		t2 <- Sys.time()
 

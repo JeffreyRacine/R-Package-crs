@@ -47,7 +47,7 @@ crs(\dots)
     restarts = 0,
 		nomad = FALSE,
 	  x0 = NULL, 
-		nb_mads_runs = 0, 
+		nmulti = 0, 
     \dots)
 }
 \arguments{
@@ -159,7 +159,11 @@ crs(\dots)
 
   \item{x0}{TBA}
 
-  \item{nb_mads_runs}{TBA}
+  \item{nmulti}{
+    integer number of times to restart the process of finding extrema of
+    the cross-validation function from different (random) initial
+    points. Defaults to \code{0}.
+  }
 
  
   \item{\dots}{ optional arguments }
