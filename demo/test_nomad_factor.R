@@ -16,7 +16,7 @@ y <- dgp + rnorm(n,sd=.1)
 
 ## No initial points, generate by sample
 
-model_nomad <- crs(y~x1+x2,
+model.nomad <- crs(y~x1+x2,
                    basis="auto",
                    cv="nomad",
                    complexity="degree-knots",
@@ -25,7 +25,7 @@ model_nomad <- crs(y~x1+x2,
                    deriv=1,
                    cv.func="cv.aic")
 
-summary(model_nomad)
+summary(model.nomad)
 
 ## Initial points, please note that the length of x0 should be the
 ## same as the number of variables in nomad. This will depend on the
@@ -35,7 +35,7 @@ x0<-c(3, 3, 2, 4)
 
 ## Single inital point
 
-model_nomad <- crs(y~x1+x2,
+model.nomad <- crs(y~x1+x2,
                    basis="auto",
                    cv="nomad",
                    complexity="degree-knots",
@@ -45,13 +45,13 @@ model_nomad <- crs(y~x1+x2,
                    cv.func="cv.aic", 
                    x0=x0)
 
-summary(model_nomad)
+summary(model.nomad)
 
 ## Multiple initial points, x0 is not provided, if best_x.txt exists,
 ## it will be read in as the first inital point, otherwise, points
 ## will be generated randomly.
 
-model_multi_nomad <- crs(y~x1+x2,
+model.multi.nomad <- crs(y~x1+x2,
                          basis="auto",
                          cv="nomad",
                          complexity="degree-knots",
@@ -62,7 +62,7 @@ model_multi_nomad <- crs(y~x1+x2,
                          x0=x0, 
                          nmulti=10)
 
-summary(model_multi_nomad)
+summary(model.multi.nomad)
 
 ## Compare with exhaustive search (nomad=FALSE)
 

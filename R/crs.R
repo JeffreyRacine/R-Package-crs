@@ -20,7 +20,7 @@ crsEst <- function(xz,
                    degree=NULL,
                    segments=NULL,
                    include=NULL,
-                   kernel=FALSE,
+                   kernel=TRUE,
                    lambda=NULL,
                    kernel.type=c("nominal","ordinal"),
                    complexity=c("degree-knots","degree","knots"),
@@ -49,6 +49,9 @@ crsEst <- function(xz,
   z <- xztmp$z
   znames <- xztmp$znames
   num.z <- xztmp$num.z
+  ## The default is kernel==TRUE - this will throw an error with no
+  ## categorical predictors so first check
+  if(is.null(num.z) && kernel==TRUE) kernel <- FALSE
   rm(xztmp)
   if(is.null(z)) {
     include <- NULL
@@ -258,7 +261,7 @@ crs.default <- function(xz,
                         degree=NULL,
                         segments=NULL,
                         include=NULL,
-                        kernel=FALSE,
+                        kernel=TRUE,
                         lambda=NULL,
                         kernel.type=c("nominal","ordinal"),
                         complexity=c("degree-knots","degree","knots"),
@@ -320,7 +323,7 @@ crs.formula <- function(formula,
                         basis.maxdim=5,
                         cv=c("nomad","exhaustive","none"),
                         cv.func=c("cv.ls","cv.gcv","cv.aic"),
-                        kernel=FALSE,
+                        kernel=TRUE,
                         lambda=NULL,
                         kernel.type=c("nominal","ordinal"),
                         complexity=c("degree-knots","degree","knots"),
@@ -360,6 +363,9 @@ crs.formula <- function(formula,
   z <- xztmp$z
   znames <- xztmp$znames
   num.z <- xztmp$num.z
+  ## The default is kernel==TRUE - this will throw an error with no
+  ## categorical predictors so first check
+  if(is.null(num.z) && kernel==TRUE) kernel <- FALSE
   rm(xztmp)
   if(is.null(z)) {
     include <- NULL

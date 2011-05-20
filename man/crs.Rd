@@ -16,7 +16,7 @@ crs(\dots)
     degree,
     segments,
     include = NULL,
-    kernel = FALSE,
+    kernel = TRUE,
     lambda = NULL,
     kernel.type = c("nominal","ordinal"),
     complexity = c("degree-knots","degree","knots"),
@@ -35,7 +35,7 @@ crs(\dots)
     basis.maxdim = 5,
     cv = c("nomad","exhaustive","none"),
     cv.func = c("cv.ls","cv.gcv","cv.aic"),
-    kernel = FALSE,
+    kernel = TRUE,
     lambda = NULL,
     kernel.type = c("nominal","ordinal"),
     complexity = c("degree-knots","degree","knots"),
@@ -96,7 +96,7 @@ crs(\dots)
     (1998)), and \code{cv.ls} specifies least-squares
     cross-validation. Defaults to \code{cv.ls}.  }
   
-  \item{kernel}{ a logical value (default \code{kernel=FALSE})
+  \item{kernel}{ a logical value (default \code{kernel=TRUE})
     indicating whether to use kernel smoothing or not }
 
   \item{basis.maxdim}{ the maximum dimension of the spline degree or
@@ -208,19 +208,24 @@ crs(\dots)
   When \code{kernel=TRUE} the product kernel function for the discrete
   predictors is of the \sQuote{Li-Racine} type (see Li and Racine (2007)
   for details).
+
+  When \code{cv="nomad"}, numerical search is undertaken using Nonsmooth
+  Optimization by Mesh Adaptive Direct Search (Abramson, Audet, Couture,
+  Dennis, Jr., and Le Digabel (2011).
   
-  When \code{kernel=TRUE}, numerical search is undertaken using
-  \code{\link{optim}} and the box-constrained \code{L-BFGS-B} method
-  (see \code{\link{optim}} for details). The user may restart the
-  algorithm as many times as desired via the \code{restarts} argument
-  (default \code{restarts=0}). The approach ascends from \code{degree=0}
-  (or \code{segments=0}) through \code{basis.maxdim} and for each value of
-  \code{degree} (or \code{segments}) searches for the optimal
-  bandwidths. After the most complex model has been searched then the
-  optimal \code{degree}/\code{segments}/\code{lambda} combination is
+  When \code{kernel=TRUE} and \code{cv="exhaustive"}, numerical search
+  is undertaken using \code{\link{optim}} and the box-constrained
+  \code{L-BFGS-B} method (see \code{\link{optim}} for details). The user
+  may restart the algorithm as many times as desired via the
+  \code{restarts} argument (default \code{restarts=0}). The approach
+  ascends from \code{degree=0} (or \code{segments=0}) through
+  \code{basis.maxdim} and for each value of \code{degree} (or
+  \code{segments}) searches for the optimal bandwidths. After the most
+  complex model has been searched then the optimal
+  \code{degree}/\code{segments}/\code{lambda} combination is
   selected. If any element of the optimal \code{degree} (or
-  \code{segments}) vector coincides with \code{basis.maxdim} a warning is
-  produced and the user ought to restart their search with a larger
+  \code{segments}) vector coincides with \code{basis.maxdim} a warning
+  is produced and the user ought to restart their search with a larger
   value of \code{basis.maxdim}.
 
   Note that the default \code{plot} method for a \code{crs} object
@@ -339,6 +344,10 @@ crs(\dots)
 }
 \references{
 
+  M.A. Abramson, C. Audet, G. Couture, J.E. Dennis, Jr., and S. Le
+  Digabel (2011), \dQuote{The NOMAD project}. Software available at
+  http://www.gerad.ca/nomad.
+
   Craven, P. and G. Wahba (1979), \dQuote{Smoothing noisy data with
   spline functions,} Numerische Mathematik, 13, 377-403.
 
@@ -346,6 +355,10 @@ crs(\dots)
   \dQuote{Smoothing parameter selection in nonparametric regression
     using an improved Akaike information criterion,} Journal of the
   Royal Statistical Society B, 60, 271-293.
+
+  S. Le Digabel, (2011), \dQuote{Algorithm 909: NOMAD: Nonlinear
+  optimization with the MADS algorithm}. ACM Transactions on
+  Mathematical Software, 37(4):44:1–44:15.
 
   Ma, S. and J.S. Racine and L. Yang (2010), \dQuote{Spline Regression
   in the Presence of Categorical Predictors,} manuscript.
