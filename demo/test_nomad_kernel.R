@@ -23,8 +23,7 @@ model.kernel <- crs(y~x1+x2+z,
                     basis.maxdim=6,
                     basis="additive",
                     comlexity="degree-knots",
-                    cv=FALSE,
-                    nomad=TRUE,
+                    cv="none",
                     kernel=TRUE)
 
 summary(model.kernel)
@@ -39,8 +38,7 @@ model.kernel.x0 <- crs(y~x1+x2+z,
                        basis.maxdim=6,
                        basis="auto",
                        comlexity="degree-knots",
-                       cv=TRUE,
-                       nomad=TRUE,
+                       cv="nomad",
                        kernel=TRUE,
                        x0=x0)
 
@@ -54,9 +52,8 @@ model.kernel.multiple <- crs(y~x1+x2+z,
                              basis.maxdim=6,
                              basis="auto",
                              comlexity="degree-knots",
-                             cv=TRUE,
+                             cv="nomad",
                              kernel=TRUE,
-                             nomad=TRUE,
                              x0=x0,
                              nmulti=10)
 
@@ -71,8 +68,7 @@ summary(model.kernel.multiple)
 #                             basis.maxdim=6,
 #                             basis="auto",
 #                             comlexity="degree-knots",
-#                             cv=TRUE,
-#                             nomad=FALSE,
+#                             cv="exhaustive",
 #                             kernel=TRUE,
 #                             x0=x0,
 #                             nmulti=10)

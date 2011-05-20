@@ -33,7 +33,7 @@ crs(\dots)
     segments = NULL,
     include = NULL,
     basis.maxdim = 5,
-    cv = TRUE,
+    cv = c("nomad","exhaustive","none"),
     cv.func = c("cv.ls","cv.gcv","cv.aic"),
     kernel = FALSE,
     lambda = NULL,
@@ -45,7 +45,6 @@ crs(\dots)
     data.return = FALSE,
     prune = FALSE,
     restarts = 0,
-		nomad = FALSE,
 	  x0 = NULL, 
 		nmulti = 0, 
     \dots)
@@ -84,8 +83,10 @@ crs(\dots)
   \item{data}{ an optional data frame containing the variables in the
   model }
   
-  \item{cv}{ a logical value (default \code{cv=TRUE}) indicating
-    whether to perform cross-validated model selection or not }
+\item{cv}{ a character string (default \code{cv="nomad"}) indicating
+  whether to use nonsmooth mesh adaptive direct search, exhaustive
+  search, or no search (i.e. use user supplied values for \code{degree},
+  \code{segments}, and \code{lambda}) }
 
   \item{cv.func}{a character string (default \code{cv.func="cv.ls"})
     indicating which method to use to select smoothing
@@ -154,8 +155,6 @@ crs(\dots)
   \item{restarts}{ integer specifying the number of times to restart the
     process of finding extrema of the cross-validation function (for the
     bandwidths only) from different (random) initial points }
-
-  \item{nomad}{TBA}
 
   \item{x0}{TBA}
 
@@ -383,7 +382,7 @@ z <- factor(z)
 y <- dgp + rnorm(n,sd=.5)
 
 ## Estimate a model with specified degree and bandwidth
-model <- crs(y~x1+x2+z,degree=c(5,5),lambda=c(0.1),cv=FALSE,kernel=TRUE)
+model <- crs(y~x1+x2+z,degree=c(5,5),lambda=c(0.1),cv="none",kernel=TRUE)
 summary(model)
 
 ## Perspective plot

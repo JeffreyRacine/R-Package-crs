@@ -16,8 +16,7 @@ y <- dgp + rnorm(n,sd=.1)
 
 model <- crs(y~x1+x2,
              basis="auto",
-             cv=TRUE,
-             nomad=TRUE,             
+             cv="nomad",
              complexity="degree-knots",
              basis.maxdim=5,
              knots="uniform",

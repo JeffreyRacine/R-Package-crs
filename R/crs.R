@@ -318,7 +318,7 @@ crs.formula <- function(formula,
                         segments=NULL,
                         include=NULL,
                         basis.maxdim=5,
-                        cv=TRUE,
+                        cv=c("nomad","exhaustive","none"),
                         cv.func=c("cv.ls","cv.gcv","cv.aic"),
                         kernel=FALSE,
                         lambda=NULL,
@@ -330,11 +330,11 @@ crs.formula <- function(formula,
                         data.return=FALSE,
                         prune=FALSE,
                         restarts=0,
-												nomad=FALSE, 
 											  x0=NULL, 
 												nmulti=0, 
                         ...) {
 
+  cv <- match.arg(cv)  
   cv.func <- match.arg(cv.func)
   kernel.type <- match.arg(kernel.type)
   complexity <- match.arg(complexity)
@@ -377,7 +377,7 @@ crs.formula <- function(formula,
   if(is.null(include)&!is.null(z)&!kernel) include <- rep(1,num.z)
   if(is.null(lambda)&!is.null(z)&kernel) lambda <- rep(0,num.z)
 
-  if(cv==TRUE&&basis=="tensor"&&NCOL(xz)>1) warning(" cv specified but basis set to tensor: you might consider basis=\"auto\"")
+  if(cv!="none"&&basis=="tensor"&&NCOL(xz)>1) warning(" cv specified but basis set to tensor: you might consider basis=\"auto\"")
 
   if(kernel==TRUE&&prune==TRUE) warning(" pruning cannot coexist with categorical kernel smoothing (pruning ignored)")
 
@@ -387,22 +387,28 @@ crs.formula <- function(formula,
 
     ## indicator bases and B-spline bases cross-validation
     
-    if(cv==TRUE) {
-				if(nomad==TRUE)
-				{
+    if(cv=="nomad") {
+      
       cv.return <- frscvNOMAD(xz=xz,
-                         y=y,
-                         basis.maxdim=basis.maxdim,
-                         complexity=complexity,
-                         knots=knots,
-                         basis=basis,
-                         cv.func=cv.func,
-                         degree=degree,
-                         segments=segments, 
-												 x0=x0, 
-												 nmulti=nmulti)
-				}
-				else {
+                              y=y,
+                              basis.maxdim=basis.maxdim,
+                              complexity=complexity,
+                              knots=knots,
+                              basis=basis,
+                              cv.func=cv.func,
+                              degree=degree,
+                              segments=segments, 
+                              x0=x0, 
+                              nmulti=nmulti)
+      
+      cv.min <- cv.return$cv.min
+      degree <- cv.return$degree
+      segments <- cv.return$segments
+      include <- cv.return$I
+      basis <- cv.return$basis
+    
+    }	else if(cv=="exhaustive") {
+      
       cv.return <- frscv(xz=xz,
                          y=y,
                          basis.maxdim=basis.maxdim,
@@ -412,90 +418,78 @@ crs.formula <- function(formula,
                          cv.func=cv.func,
                          degree=degree,
                          segments=segments)
-				
-				}
+      
+      
       cv.min <- cv.return$cv.min
       degree <- cv.return$degree
       segments <- cv.return$segments
       include <- cv.return$I
       basis <- cv.return$basis
+    
     }
 
   } else {
 
     ## kernel smooth and B-spline bases cross-validation
+    
+    if(cv=="nomad") {
 
-    if(cv==TRUE) {
-      if(nomad==TRUE) {
-        cv.return <- krscvNOMAD(xz=xz,
-                                y=y,
-                                basis.maxdim=basis.maxdim,
-                                complexity=complexity,
-                                knots=knots,
-                                basis=basis,
-                                cv.func=cv.func,
-                                degree=degree,
-                                segments=segments,
-                                restarts=restarts, 
-                                x0=x0, 
-                                nmulti=nmulti)
-      } else {
-        cv.return <- krscv(xz=xz,
-                           y=y,
-                           basis.maxdim=basis.maxdim,
-                           complexity=complexity,
-                           knots=knots,
-                           basis=basis,
-                           cv.func=cv.func,
-                           degree=degree,
-                           segments=segments,
-                           restarts=restarts)
-      }
+      cv.return <- krscvNOMAD(xz=xz,
+                              y=y,
+                              basis.maxdim=basis.maxdim,
+                              complexity=complexity,
+                              knots=knots,
+                              basis=basis,
+                              cv.func=cv.func,
+                              degree=degree,
+                              segments=segments,
+                              restarts=restarts, 
+                              x0=x0, 
+                              nmulti=nmulti)
       
       cv.min <- cv.return$cv.min
       degree <- cv.return$degree
       segments <- cv.return$segments
-      lambda <- cv.return$lambda
+      include <- cv.return$I
       basis <- cv.return$basis
-    }
-
-  }
-
-  if(cv==TRUE) {
-
-    est <- crs.default(xz=xz,
-                       y=y,
-                       degree=degree,
-                       segments=segments,
-                       include=include,
-                       kernel=kernel,
-                       lambda=lambda,
-                       kernel.type=kernel.type,
-                       complexity=complexity,
-                       knots=knots,
-                       basis=basis,
-                       deriv=deriv,
-                       data.return=data.return,
-                       prune=prune,
-                       ...)
-  } else {
     
-    est <- crs.default(xz=xz,
-                       y=y,
-                       degree=degree,
-                       segments=segments,
-                       include=include,
-                       kernel=kernel,
-                       lambda=lambda,
-                       kernel.type=kernel.type,
-                       complexity=complexity,
-                       knots=knots,
-                       basis=basis,
-                       deriv=deriv,
-                       data.return=data.return,
-                       prune=prune,
-                       ...)
+    } else if(cv=="exhaustive") {
+      
+      cv.return <- krscv(xz=xz,
+                         y=y,
+                         basis.maxdim=basis.maxdim,
+                         complexity=complexity,
+                         knots=knots,
+                         basis=basis,
+                         cv.func=cv.func,
+                         degree=degree,
+                         segments=segments,
+                         restarts=restarts)
+      cv.min <- cv.return$cv.min
+      degree <- cv.return$degree
+      segments <- cv.return$segments
+      include <- cv.return$I
+      basis <- cv.return$basis
+    
+    }
+    
   }
+  
+  est <- crs.default(xz=xz,
+                     y=y,
+                     degree=degree,
+                     segments=segments,
+                     include=include,
+                     kernel=kernel,
+                     lambda=lambda,
+                     kernel.type=kernel.type,
+                     complexity=complexity,
+                     knots=knots,
+                     basis=basis,
+                     deriv=deriv,
+                     data.return=data.return,
+                     prune=prune,
+                     ...)
   
   est$call <- match.call()
   est$formula <- formula
@@ -506,7 +500,7 @@ crs.formula <- function(formula,
   est$prune <- prune
   est$cv.min <- cv.min
   est$restarts <- restarts
-
+  
   return(est)
 
 }
@@ -1190,13 +1184,13 @@ crs.sigtest <- function(object,...) {
     if(!is.factor(object$xz[,i])) {
       degree <- object$degree
       degree[j.num.x] <- 0
-      model.res <- crs(object$formula,cv=FALSE,degree=degree,include=object$include,basis=object$basis,prune=object$prune,data=eval(object$call$data))
+      model.res <- crs(object$formula,cv="none",degree=degree,include=object$include,basis=object$basis,prune=object$prune,data=eval(object$call$data))
       sg[[i]] <- anova(model.res$model.lm,object$model.lm)
       j.num.x <- j.num.x + 1
     } else {
       include <- object$include
       include[j.num.z] <- 0
-      model.res <- crs(object$formula,cv=FALSE,degree=object$degree,include=include,basis=object$basis,prune=object$prune,data=eval(object$call$data))
+      model.res <- crs(object$formula,cv="none",degree=object$degree,include=include,basis=object$basis,prune=object$prune,data=eval(object$call$data))
       sg[[i]] <- anova(model.res$model.lm,object$model.lm)
       j.num.z <- j.num.z + 1      
     }

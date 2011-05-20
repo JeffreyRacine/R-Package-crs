@@ -18,8 +18,7 @@ y <- dgp + rnorm(n,sd=.1)
 
 model_nomad <- crs(y~x1+x2,
                    basis="auto",
-                   cv=TRUE,
-                   nomad=TRUE,
+                   cv="nomad",
                    complexity="degree-knots",
                    basis.maxdim=5,
                    knots="uniform",
@@ -38,8 +37,7 @@ x0<-c(3, 3, 2, 4)
 
 model_nomad <- crs(y~x1+x2,
                    basis="auto",
-                   cv=TRUE,
-                   nomad=TRUE, 
+                   cv="nomad",
                    complexity="degree-knots",
                    basis.maxdim=5,
                    knots="uniform",
@@ -55,8 +53,7 @@ summary(model_nomad)
 
 model_multi_nomad <- crs(y~x1+x2,
                          basis="auto",
-                         cv=TRUE,
-                         nomad=TRUE,
+                         cv="nomad",
                          complexity="degree-knots",
                          basis.maxdim=5,
                          knots="uniform",
@@ -71,8 +68,7 @@ summary(model_multi_nomad)
 
 model <- crs(y~x1+x2,
              basis="auto",
-             cv=TRUE,
-             nomad=FALSE,
+             cv="exhaustive",
              complexity="degree-knots",
              basis.maxdim=5,
              knots="uniform",

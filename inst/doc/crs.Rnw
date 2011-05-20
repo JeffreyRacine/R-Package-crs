@@ -309,14 +309,15 @@ weighting function. Then, for a given degree for each continuous
 predictor and bandwidth for each categorical predictor (or indicator
 bases), the model is fit via least-squares. Alternatively, the degree
 and bandwidth can be jointly determined via any \code{cv.func} method
-by setting the option \code{cv=TRUE}. This then evaluates the model
-for each unique combination of degree for each continuous predictor
-from \code{degree=0} through \code{degree=basis.maxdim} (default
-5). For each unique combination of degree, the bandwidths ($\in[0,1]$)
-are obtained via numerical minimization (see \code{optim}) and
-restarting can be conducted via \code{restarts=}. The model possessing
-the lowest criterion function value is then selected as the final
-model.
+by setting the option \code{cv="nomad"} (nonsmooth mesh adaptive
+direct search) or \code{cv="exhaustive"} (exhaustive search). This
+then evaluates the model for each unique combination of degree for
+each continuous predictor from \code{degree=0} through
+\code{degree=basis.maxdim} (default 5). For each unique combination of
+degree, the bandwidths ($\in[0,1]$) are obtained via numerical
+minimization (see \code{optim}) and restarting can be conducted via
+\code{restarts=}. The model possessing the lowest criterion function
+value is then selected as the final model.
 
 \subsection*{Data-Driven Smoothing Parameter Selection}
 
@@ -469,7 +470,7 @@ predictors).
 
 <<echo=TRUE,keep.source=TRUE>>=
 ## When kernel=FALSE, we could use the anova() function
-model.res <- crs(y~x1+x2+z,cv=FALSE,degree=model$degree,basis=model$basis,include=0)
+model.res <- crs(y~x1+x2+z,cv="none",degree=model$degree,basis=model$basis,include=0)
 anova(model.res$model.lm,model$model.lm)
 ## As this only works with kernel=FALSE, we could also do this manually...
 F <- model$df.residual*(sum(residuals(model.res)^2)
