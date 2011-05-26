@@ -32,7 +32,7 @@ crs(\dots)
     degree = NULL,
     segments = NULL,
     include = NULL,
-    basis.maxdim = 5,
+    basis.maxdim = 10,
     cv = c("nomad","exhaustive","none"),
     cv.func = c("cv.ls","cv.gcv","cv.aic"),
     kernel = TRUE,
@@ -101,9 +101,9 @@ crs(\dots)
 
   \item{basis.maxdim}{ the maximum dimension of the spline degree or
     number of knots for each of the continuous predictors (default
-    \code{basis.maxdim=5} meaning a maximum dimension of 5 or number of
-    knots of 5 (6 segments) indicating a maximum number of columns in
-    the B-spline of 10)}
+    \code{basis.maxdim=10} meaning a maximum dimension of 10 or number of
+    knots of 10 (11 segments) indicating a maximum number of columns in
+    the B-spline of 21)}
 
   \item{complexity}{a character string (default
   \code{complexity="degree-knots"}) indicating whether model `complexity' is
@@ -395,7 +395,9 @@ z <- factor(z)
 y <- dgp + rnorm(n,sd=.5)
 
 ## Estimate a model with specified degree and bandwidth
-model <- crs(y~x1+x2+z,degree=c(5,5),lambda=c(0.1),cv="none",kernel=TRUE)
+#model <-
+#crs(y~x1+x2+z,degree=c(5,5),lambda=c(0.1),cv="none",kernel=TRUE)
+model <- crs(y~x1+x2+z)
 summary(model)
 
 ## Perspective plot
