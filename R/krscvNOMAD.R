@@ -26,6 +26,7 @@ krscvNOMAD <- function(xz,
                        degree=degree,
                        segments=segments, 
                        x0 = x0, 
+                       opts=list("MAX_BB_EVAL"=500,"MIN_MESH_SIZE"="r1.0e-08","INITIAL_MESH_SIZE"="r1.0e-01","MIN_POLL_SIZE"="r1.0e-07"),
                        nmulti=0) {
 
 		complexity <- match.arg(complexity)
@@ -52,7 +53,8 @@ krscvNOMAD <- function(xz,
 												 knots=knots,
 												 basis=basis,
 												 cv.func=cv.func, 
-												 x0=x0, 
+												 x0=x0,
+                         opts=opts,
 												 nmulti=nmulti) {
 
 				if( missing(x) || missing(y) ||missing(basis.maxdim) ) stop(" you must provide input, x, y, and basis.maxdim")
@@ -217,11 +219,6 @@ krscvNOMAD <- function(xz,
         ## Manual says preceed by r means relative to up and lb... not
         ## quite what I was looking for
 
-				opts <-list("MAX_BB_EVAL"=500,
-                    "MIN_MESH_SIZE"=1.0e-08,
-                    "INITIAL_MESH_SIZE"=1.0e-01,
-                    "MIN_POLL_SIZE"=1.0e-07)
-
 #				opts <-list("MAX_BB_EVAL"=500,
 #                    "MIN_MESH_SIZE"=0.00001,
 #                    "INITIAL_MESH_SIZE"="0.1",
@@ -292,7 +289,8 @@ krscvNOMAD <- function(xz,
                              knots=knots,
                              basis=basis,
                              cv.func=cv.func, 
-                             x0=x0, 
+                             x0=x0,
+                             opts=opts,
                              nmulti=nmulti) 
     
 		t2 <- Sys.time()

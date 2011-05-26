@@ -109,10 +109,10 @@ quadratic B\'ezier curve.
   A quadratic B\'ezier curve is the path traced by the function
   $B(x)$, given points $\beta_0$, $\beta_1$, and $\beta_2$, where
   \begin{align*}
-    B(x)&=\beta_0(1-x^2)+2\beta_1(1-x)x+\beta_2x^2\cr
+    B(x)&=\beta_0(1-x)^2+2\beta_1(1-x)x+\beta_2x^2\cr
     &=\sum_{i=0}^2 \beta_iB_i(x),\quad x\in [0,1].
   \end{align*}
-  The terms $B_0(x)=(1-x^2)$, $B_1(x)=2(1-x)x$, and $B_2(x)=x^2$ are
+  The terms $B_0(x)=(1-x)^2$, $B_1(x)=2(1-x)x$, and $B_2(x)=x^2$ are
   the `bases' which is this case turn out to be `Bernstein
   polynomials' (\citeasnoun{BERNSTEIN:1912}).  For our purposes the
   `control points' $\beta_i$, $i=0,1,2$, will be parameters that could
@@ -122,10 +122,10 @@ quadratic B\'ezier curve.
   
 \begin{center}
 <<fig=TRUE,echo=FALSE>>=
-B <- function(x,b0,b1,b2) { (1-x^2)*b0+(1-x)*b1+x^2*b2 }
+B <- function(x,b0,b1,b2) { (1-x)^2*b0+(1-x)*x*b1+x^2*b2 }
 x <- seq(0,1,length=1000)
-b0 <- 0
-b1 <- 1
+b0 <- 1
+b1 <- -1
 b2 <- 2
 plot(x,B(x,b0,b1,b2),ylab="B(x)",type="l",lwd=2,cex.lab=1.25)
 @ 
@@ -171,13 +171,13 @@ degree $n-1$ B\'ezier curves.
 
   The linear B\'ezier curve is given by $\beta_0(1-x)+\beta_1 x$, and
   above we showed that the quadratic B\'ezier curve is given by
-  $\beta_0(1-x^2)+2\beta_1(1-x)x+\beta_2x^2$. So, when $n=2$
+  $\beta_0(1-x)^2+2\beta_1(1-x)x+\beta_2x^2$. So, when $n=2$
   (quadratic), we have
 \begin{align*}
 B(x)
 &=(1-x)(\beta_0(1-x)+\beta_1 x)
 +x(\beta_1(1-x)+\beta_2 x)\cr
-&=\beta_0(1-x^2)+2\beta_1(1-x)x+\beta_2x^2.
+&=\beta_0(1-x)^2+2\beta_1(1-x)x+\beta_2x^2.
 \end{align*}
 
 \end{example}
@@ -213,7 +213,7 @@ for(i in 1:degree) lines(x,Bernstein(degree,i,x),lty=i+1,lwd=2,col=i+1)
 @ 
 \end{center}
 
-These bases are $B_{0,2}(x)=(1-x^2)$, $B_{1,2}(x)=2(1-x)x$, and
+These bases are $B_{0,2}(x)=(1-x)^2$, $B_{1,2}(x)=2(1-x)x$, and
 $B_{2,2}(x)=x^2$ and illustrate the foundation upon which the B\'ezier
 curves are built.
 
@@ -221,7 +221,7 @@ curves are built.
 
 \subsection{Derivatives of spline functions}
 
-From \citeasnoun{DE_BOOR:2001} we knot that the derivatives of spline
+From \citeasnoun{DE_BOOR:2001} we know that the derivatives of spline
 functions can be simply expressed in terms of lower order spline
 functions. In particular, for the B\'ezier curve we have
 \begin{equation*}
@@ -274,10 +274,10 @@ t_0 \le t_1 \le \cdots \le t_{N+1}.
 Define the augmented the knot set 
 \begin{equation*} 
   t_{-\left( m-1\right)}=\cdots
-  =t_{0}<t_{1}<\cdots <t_{N}<t_{N+1}=\cdots=t_{N+m},
+  =t_{0}\le t_{1}\le\cdots \le t_{N}\le t_{N+1}=\cdots=t_{N+m},
 \end{equation*} 
 where we have appended the lower and upper boundary knots $t_0$ and
-$t_1$ $n$ times (this is needed due to the recursive nature of the
+$t_1$ $n=m-1$ times (this is needed due to the recursive nature of the
 B-spline). If we wanted we could then reset the index for the first
 element of the augmented knot set (i.e.\ $t_{-(m-1)}$) so that the
 $N+2m$ augmented knots $t_i$ are now indexed by $i=0,\ldots,N+2m-1$

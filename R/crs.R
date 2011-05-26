@@ -308,12 +308,11 @@ crs.default <- function(xz,
 }
 
 ## Here we define the formula and split y (always first column of the
-## model frame) from xz (the remaining continuous and ordinal/nominal).
-## nomad::FLASE exhaustive search
-## nmulti is the number for multiple initial points.
-## if it is bigger than 1,  when nomad is true,  it will call
-## snomadRSolve,  otherwise,  it will call smultinomadRSolve
-## See ?snomadr
+## model frame) from xz (the remaining continuous and
+## ordinal/nominal).  nomad::FALSE exhaustive search nmulti is the
+## number for multiple initial points.  if it is bigger than 1, when
+## nomad is true, it will call snomadRSolve, otherwise, it will call
+## smultinomadRSolve See ?snomadr
 
 crs.formula <- function(formula,
                         data=list(),
@@ -333,7 +332,8 @@ crs.formula <- function(formula,
                         data.return=FALSE,
                         prune=FALSE,
                         restarts=0,
-											  x0=NULL, 
+											  x0=NULL,
+                       opts=list("MAX_BB_EVAL"=500,"MIN_MESH_SIZE"="r1.0e-10","INITIAL_MESH_SIZE"="r1.0e-02","MIN_POLL_SIZE"="r1.0e-10"),
 												nmulti=0, 
                         ...) {
 
@@ -347,8 +347,10 @@ crs.formula <- function(formula,
   mf <- model.frame(formula=formula, data=data)
   mt <- attr(mf, "terms")
   y <- model.response(mf)
-  xz <- data.frame(mf[,-1,drop=FALSE])
-  names(xz) <- names(mf)[-1] ## Case of one predictor has names clobbered
+#  xz <- data.frame(mf[,-1,drop=FALSE])
+  ## May 20 2011, trying alternative way for factors...
+  xz <- mf[, attr(attr(mf, "terms"),"term.labels"), drop = FALSE]
+#  names(xz) <- names(mf)[-1] ## Case of one predictor has names clobbered
 
   ### cv needs this? 9/12/2010
 
@@ -404,7 +406,8 @@ crs.formula <- function(formula,
                               cv.func=cv.func,
                               degree=degree,
                               segments=segments, 
-                              x0=x0, 
+                              x0=x0,
+                              opts=opts,
                               nmulti=nmulti)
       
       cv.min <- cv.return$cv.min
@@ -450,7 +453,8 @@ crs.formula <- function(formula,
                               degree=degree,
                               segments=segments,
                               restarts=restarts, 
-                              x0=x0, 
+                              x0=x0,
+                              opts=opts,
                               nmulti=nmulti)
       
       cv.min <- cv.return$cv.min
@@ -558,6 +562,9 @@ predict.crs <- function(object,
 
     Terms <- delete.response(terms(object))
     newdata <- model.frame(Terms,newdata,xlev=object$xlevels)
+
+    ## May 20 - this could be a solution of sorts... the issue is that xz does not have information
+    #newdata <- tmf[, attr(attr(tmf, "terms"),"term.labels"), drop = FALSE]
 
     if(!object$kernel) {
       xztmp <- splitFrame(data.frame(newdata))
@@ -975,7 +982,14 @@ plot.crs <- function(x,
       names(newdata) <- names(object$xz)
 
       if(!ci) {
+
+        ## May 20 - trying to debug plot - issue appears to be that
+        ## predict is barfing because formula was used and newdata
+        ## does not have similar objects...
         
+#    print("Here we are")
+#    print(class(newdata[,i]))
+
         mg[[i]] <- data.frame(newdata[,i],predict(object,newdata=newdata))
         names(mg[[i]]) <- c(names(newdata)[i],"deriv")
         
