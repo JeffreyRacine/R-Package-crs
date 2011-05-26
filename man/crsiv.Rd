@@ -28,7 +28,7 @@ crsiv(y,
       alpha.max = 1,
       p = 1,
       tol = .Machine$double.eps^0.25,
-      nmulti = 0)
+      ...)
 }
 
 \arguments{
@@ -76,10 +76,8 @@ crsiv(y,
     the search tolerance for \code{optimize} when solving for
     \eqn{\alpha}{alpha}, the Tikhonov regularization parameter.
   }
-  \item{nmulti}{
-    integer number of times to restart the process of finding extrema of
-    the cross-validation function from different (random) initial
-    points. Defaults to \code{0}.
+  \item{...}{
+    additional arguments supplied to \code{crs}.
   }
 }
 \details{

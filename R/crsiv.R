@@ -24,7 +24,7 @@
 ## phihat: the IV estimator of phi(y)
 ## alpha:  the Tikhonov regularization parameter
 
-crsiv <- function(y,z,w,yeval=NULL,zeval=NULL,weval=NULL,alpha.min=1.0e-10,alpha.max=1,p=1,tol=.Machine$double.eps^0.25,nmulti=0) {
+crsiv <- function(y,z,w,yeval=NULL,zeval=NULL,weval=NULL,alpha.min=1.0e-10,alpha.max=1,p=1,tol=.Machine$double.eps^0.25,...) {
 
   ## This function was constructed initially by Samuele Centorrino
   ## <samuele.centorrino@univ-tlse1.fr> to reproduce illustrations in
@@ -150,13 +150,13 @@ crsiv <- function(y,z,w,yeval=NULL,zeval=NULL,weval=NULL,alpha.min=1.0e-10,alpha
   console <- printClear(console)
   console <- printPop(console)
   console <- printPush("Computing model and weights for y on w...", console)
-  model <- crs(y~w,nmulti=nmulti)
+  model <- crs(y~w,...)
   B <- model.matrix(model$model.lm)
   KYWs <- B%*%solve(t(B)%*%B)%*%t(B)
   console <- printClear(console)
   console <- printPop(console)
   console <- printPush("Computing model and weights for z on w...", console)
-  model <- crs(z~w,nmulti=nmulti)
+  model <- crs(z~w,...)
   B <- model.matrix(model$model.lm)
   KZWs <- B%*%solve(t(B)%*%B)%*%t(B)
   
@@ -177,13 +177,13 @@ crsiv <- function(y,z,w,yeval=NULL,zeval=NULL,weval=NULL,alpha.min=1.0e-10,alpha
   console <- printClear(console)
   console <- printPop(console)
   console <- printPush("Computing model and weights for r on z...", console)
-  model <- crs(r~z,nmulti=nmulti)
+  model <- crs(r~z,...)
   B <- model.matrix(model$model.lm)
   KRZs <- B%*%solve(t(B)%*%B)%*%t(B)
   console <- printClear(console)
   console <- printPop(console)
   console <- printPush("Computing model and weights for w on z...", console)
-  model <- crs(w~z,nmulti=nmulti)
+  model <- crs(w~z,...)
   B <- model.matrix(model$model.lm)
   KWZs <- B%*%solve(t(B)%*%B)%*%t(B)
   
@@ -217,7 +217,7 @@ crsiv <- function(y,z,w,yeval=NULL,zeval=NULL,weval=NULL,alpha.min=1.0e-10,alpha
   console <- printClear(console)
   console <- printPop(console)
   console <- printPush("Computing model and weights for phi on w...", console)
-  model <- crs(mized~w,nmulti=nmulti)
+  model <- crs(mized~w,...)
   B <- model.matrix(model$model.lm)
   KPHWs <- B%*%solve(t(B)%*%B)%*%t(B)
   
@@ -230,7 +230,7 @@ crsiv <- function(y,z,w,yeval=NULL,zeval=NULL,weval=NULL,alpha.min=1.0e-10,alpha
   console <- printClear(console)
   console <- printPop(console)
   console <- printPush("Iterating and recomputing model and weights for w on z...", console)
-  model <- crs(as.vector(KPHWs%*%mized)~z,nmulti=nmulti)
+  model <- crs(as.vector(KPHWs%*%mized)~z,...)
   B <- model.matrix(model$model.lm)
   KWZ2s <- B%*%solve(t(B)%*%B)%*%t(B)
   
