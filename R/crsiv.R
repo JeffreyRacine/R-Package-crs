@@ -180,12 +180,6 @@ crsiv <- function(y,z,w,yeval=NULL,zeval=NULL,weval=NULL,alpha.min=1.0e-10,alpha
   model <- crs(r~z,...)
   B <- model.matrix(model$model.lm)
   KRZs <- B%*%solve(t(B)%*%B)%*%t(B)
-  console <- printClear(console)
-  console <- printPop(console)
-  console <- printPush("Computing model and weights for w on z...", console)
-  model <- crs(w~z,...)
-  B <- model.matrix(model$model.lm)
-  KWZs <- B%*%solve(t(B)%*%B)%*%t(B)
   
   ## Next, we minimize the function ittik to obtain the optimal value
   ## of alpha (here we use the iterated Tikhonov function) to
@@ -199,16 +193,16 @@ crsiv <- function(y,z,w,yeval=NULL,zeval=NULL,weval=NULL,alpha.min=1.0e-10,alpha
   console <- printClear(console)
   console <- printPop(console)
   console <- printPush("Numerically solving for alpha...", console)
-  alpha1 <- optimize(ittik, c(alpha.min,alpha.max), tol = tol, CZ = KZWs, CY = KWZs, Cr = KRZs, r = r)$minimum
+  alpha1 <- optimize(ittik, c(alpha.min,alpha.max), tol = tol, CZ = KZWs, CY = KRZs, Cr = KRZs, r = r)$minimum
   
   ## Finally, we conduct regularized Tikhonov regression using this
   ## optimal alpha.
   
-  mized <- as.vector(tikh(alpha1, CZ = KZWs, CY = KWZs, Cr=KRZs, r = r))
+  mized <- as.vector(tikh(alpha1, CZ = KZWs, CY = KRZs, Cr=KRZs, r = r))
 
-  ## KWZs and KZWS no longer used, save memory
+  ## KZWS no longer used, save memory
 
-  rm(KWZs,KZWs)
+  rm(KZWs)
   
   ## Here we need to generate the kernel weights for the local
   ## polynomial estimator. This corresponds to C_z below (3.8) in Feve &
@@ -229,10 +223,10 @@ crsiv <- function(y,z,w,yeval=NULL,zeval=NULL,weval=NULL,alpha.min=1.0e-10,alpha
   
   console <- printClear(console)
   console <- printPop(console)
-  console <- printPush("Iterating and recomputing model and weights for w on z...", console)
+  console <- printPush("Iterating and recomputing model and weights for phi on z...", console)
   model <- crs(as.vector(KPHWs%*%mized)~z,...)
   B <- model.matrix(model$model.lm)
-  KWZ2s <- B%*%solve(t(B)%*%B)%*%t(B)
+  KPHZs <- B%*%solve(t(B)%*%B)%*%t(B)
   
   ## Next, we minimize the function ittik to obtain the optimal value of
   ## alpha (here we use the iterated Tikhonov approach) to determine the
@@ -241,12 +235,12 @@ crsiv <- function(y,z,w,yeval=NULL,zeval=NULL,weval=NULL,alpha.min=1.0e-10,alpha
   console <- printClear(console)
   console <- printPop(console)
   console <- printPush("Iterating and recomputing the numerical solution for alpha...", console)
-  alpha2 <- optimize(ittik,c(alpha.min,alpha.max), tol = tol, CZ = KPHWs, CY = KWZ2s, Cr = KRZs, r = r)$minimum
+  alpha2 <- optimize(ittik,c(alpha.min,alpha.max), tol = tol, CZ = KPHWs, CY = KPHZs, Cr = KRZs, r = r)$minimum
   
   ## Finally, we conduct regularized Tikhonov regression using this
   ## optimal alpha.
 
-  mized2 <- as.vector(tikh(alpha2, CZ = KPHWs, CY = KWZ2s, Cr = KRZs, r = r))
+  mized2 <- as.vector(tikh(alpha2, CZ = KPHWs, CY = KPHZs, Cr = KRZs, r = r))
   
   console <- printClear(console)
   console <- printPop(console)
