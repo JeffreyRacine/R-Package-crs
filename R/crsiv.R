@@ -1,5 +1,3 @@
-## $Id: crsiv.R,v 1.2 2011/05/26 16:07:04 jracine Exp jracine $
-
 ## This functions accepts the following arguments:
 
 ## y: univariate outcome
@@ -77,8 +75,8 @@ crsiv <- function(y,z,w,yeval=NULL,zeval=NULL,weval=NULL,alpha.min=1.0e-10,alpha
   
   ## phi:   the vector of estimated values for the unknown function at the evaluation points
   
-  tikh <- function(alpha,CZ,CY,Cr,r){
-    return(solve(alpha*diag(length(r)) + CY%*%CZ) %*% (Cr %*% r))
+  tikh <- function(alpha,CZ,CY,Cr.r){
+    return(solve(alpha*diag(length(Cr.r)) + CY%*%CZ) %*% Cr.r)
   }
   
   ## This function applies the iterated Tikhonov approach which
@@ -109,15 +107,10 @@ crsiv <- function(y,z,w,yeval=NULL,zeval=NULL,weval=NULL,alpha.min=1.0e-10,alpha
   ## SSalpha: (scalar) value of the sum of square residuals criterion
   ## which is a function of alpha (see (3.10) of Feve & Florens (2010)
   
-  ittik <- function(alpha,CZ,CY,Cr,r) {
-    invmat <- solve(alpha*diag(length(r)) + CY%*%CZ)
-#    phi <- invmat %*% (Cr + alpha*invmat%*%Cr) %*% r
-    phi <- invmat %*% Cr %*% r + alpha * invmat %*% invmat %*% Cr %*% r        
+  ittik <- function(alpha,CZ,CY,Cr.r,r) {
+    invmat <- solve(alpha*diag(length(Cr.r)) + CY%*%CZ)
+    phi <- invmat %*% Cr.r + alpha * invmat %*% invmat %*% Cr.r        
     return(sum((CZ%*%phi - r)^2)/alpha)    
-#    return((1/alpha)*(crossprod((CZ%*%phi - r),(CZ%*%phi - r))))
-#    ssr <- (CZ %*% invmat %*% (Cr + alpha*invmat%*%Cr) %*% r) - r
-#    ssr <- CZ %*% invmat %*% Cr %*% r  + alpha * CZ %*% invmat %*% invmat %*% Cr %*% r - r    
-#    return(sum((CZ%*%phi - r)^2)/alpha)
   }
 
   console <- newLineConsole()
@@ -151,17 +144,15 @@ crsiv <- function(y,z,w,yeval=NULL,zeval=NULL,weval=NULL,alpha.min=1.0e-10,alpha
   console <- printClear(console)
   console <- printPop(console)
   console <- printPush("Computing E(y|w)...", console)
-  ## NOTE: in what follows E(y|w) is denoted r.
-  r <- fitted(crs(y~w,...))
-  
-  ## define E(r|z)=E(E(phi(z)|w)|z) 
+  E.y.w <- fitted(crs(y~w,...))
   
   ## Next, we conduct the regression spline of E(y|w) on z
   
   console <- printClear(console)
   console <- printPop(console)
   console <- printPush("Computing model and weights for E(E(y|w)|z)...", console)
-  model <- crs(r~z,...)
+  model <- crs(E.y.w~z,...)
+  E.E.y.w.z <- fitted(model)
   B <- model.matrix(model$model.lm)
   KRZs <- B%*%solve(t(B)%*%B)%*%t(B)
 
@@ -186,20 +177,18 @@ crsiv <- function(y,z,w,yeval=NULL,zeval=NULL,weval=NULL,alpha.min=1.0e-10,alpha
   console <- printClear(console)
   console <- printPop(console)
   console <- printPush("Numerically solving for alpha...", console)
-  alpha1 <- optimize(ittik, c(alpha.min,alpha.max), tol = tol, CZ = KZWs, CY = KRZs, Cr = KRZs, r = r)$minimum
+  alpha1 <- optimize(ittik, c(alpha.min,alpha.max), tol = tol, CZ = KZWs, CY = KRZs, Cr.r = E.E.y.w.z, r = E.y.w)$minimum
   
   ## Finally, we conduct regularized Tikhonov regression using this
   ## optimal alpha to get a first stage estimate of phihat
   
-  phihat <- as.vector(tikh(alpha1, CZ = KZWs, CY = KRZs, Cr = KRZs, r = r))
+  phihat <- as.vector(tikh(alpha1, CZ = KZWs, CY = KRZs, Cr.r = E.E.y.w.z))
 
   ## KZWS no longer used, save memory
 
   rm(KZWs)
-  
-  ## Here we need to generate the kernel weights for the local
-  ## polynomial estimator. This corresponds to C_z below (3.8) in Feve &
-  ## Florens (2010).
+
+  ## Conduct kernel regression of phi(z) on w  
   
   console <- printClear(console)
   console <- printPop(console)
@@ -207,19 +196,16 @@ crsiv <- function(y,z,w,yeval=NULL,zeval=NULL,weval=NULL,alpha.min=1.0e-10,alpha
   model <- crs(phihat~w,...)
   E.phiyat.w <- fitted(model)
   B <- model.matrix(model$model.lm)
-  KPHWs <- B%*%solve(t(B)%*%B)%*%t(B)
+  KPHIWs <- B%*%solve(t(B)%*%B)%*%t(B)
   
   ## Conduct kernel regression of E(phi(z)|w) on z
-  ## Here we need to generate the kernel weights for the local
-  ## polynomial estimator. This corresponds to C_y below (3.8) in Feve &
-  ## Florens (2010).
   
   console <- printClear(console)
   console <- printPop(console)
   console <- printPush("Iterating and recomputing model and weights for E(E(phi(z)|w)|z)...", console)
   model <- crs(E.phiyat.w~z,...)
   B <- model.matrix(model$model.lm)
-  KPHZs <- B%*%solve(t(B)%*%B)%*%t(B)
+  KPHIZs <- B%*%solve(t(B)%*%B)%*%t(B)
   
   ## Next, we minimize the function ittik to obtain the optimal value of
   ## alpha (here we use the iterated Tikhonov approach) to determine the
@@ -228,12 +214,12 @@ crsiv <- function(y,z,w,yeval=NULL,zeval=NULL,weval=NULL,alpha.min=1.0e-10,alpha
   console <- printClear(console)
   console <- printPop(console)
   console <- printPush("Iterating and recomputing the numerical solution for alpha...", console)
-  alpha2 <- optimize(ittik,c(alpha.min,alpha.max), tol = tol, CZ = KPHWs, CY = KPHZs, Cr = KRZs, r = r)$minimum
+  alpha2 <- optimize(ittik,c(alpha.min,alpha.max), tol = tol, CZ = KPHIWs, CY = KPHIZs, Cr.r = E.E.y.w.z, r = E.y.w)$minimum
   
   ## Finally, we conduct regularized Tikhonov regression using this
   ## optimal alpha.
 
-  phihat2 <- as.vector(tikh(alpha2, CZ = KPHWs, CY = KPHZs, Cr = KRZs, r = r))
+  phihat2 <- as.vector(tikh(alpha2, CZ = KPHIWs, CY = KPHIZs, Cr.r = E.E.y.w.z))
   
   console <- printClear(console)
   console <- printPop(console)
@@ -241,5 +227,3 @@ crsiv <- function(y,z,w,yeval=NULL,zeval=NULL,weval=NULL,alpha.min=1.0e-10,alpha
   return(list(phihat=phihat2,alpha=alpha2))
   
 }
-
-
