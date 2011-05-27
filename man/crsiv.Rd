@@ -15,7 +15,9 @@ problem and the estimation procedure is based on Tikhonov
 regularization.
 
 \code{crsiv} is an implementation of the approach of S. Darolles,
-Y. Fan, J.P. Florens and E. Renault (forthcoming, Econometrica).
+Y. Fan, J.P. Florens and E. Renault (forthcoming, Econometrica) modified
+for regression splines (Darolles et al use local constant kernel
+weighting).
 }
 \usage{
 crsiv(y,
