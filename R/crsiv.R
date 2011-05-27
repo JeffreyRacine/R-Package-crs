@@ -16,8 +16,7 @@
 ## alpha.max: maximum value when conducting 1-dimensional search for
 ##            optimal Tihhonov regularization parameter alpha
 
-## p: order of the local polynomial kernel estimator (p=0 is local
-##    constant, p=1 local linear etc.)
+## ... optional arguments for crs()
 
 ## This function returns a list with the following elements:
 
@@ -112,8 +111,13 @@ crsiv <- function(y,z,w,yeval=NULL,zeval=NULL,weval=NULL,alpha.min=1.0e-10,alpha
   
   ittik <- function(alpha,CZ,CY,Cr,r) {
     invmat <- solve(alpha*diag(length(r)) + CY%*%CZ)
-    phi <- invmat %*% (Cr + alpha*invmat%*%Cr) %*% r
-    return((1/alpha)*(crossprod((CZ%*%phi - r),(CZ%*%phi - r))))
+#    phi <- invmat %*% (Cr + alpha*invmat%*%Cr) %*% r
+    phi <- invmat %*% Cr %*% r + alpha * invmat %*% invmat %*% Cr %*% r        
+    return(sum((CZ%*%phi - r)^2)/alpha)    
+#    return((1/alpha)*(crossprod((CZ%*%phi - r),(CZ%*%phi - r))))
+#    ssr <- (CZ %*% invmat %*% (Cr + alpha*invmat%*%Cr) %*% r) - r
+#    ssr <- CZ %*% invmat %*% Cr %*% r  + alpha * CZ %*% invmat %*% invmat %*% Cr %*% r - r    
+#    return(sum((CZ%*%phi - r)^2)/alpha)
   }
 
   console <- newLineConsole()
@@ -142,44 +146,33 @@ crsiv <- function(y,z,w,yeval=NULL,zeval=NULL,weval=NULL,alpha.min=1.0e-10,alpha
   ## bandwidths, one for y on w and one for phi(z) on w (in the first
   ## step we use z on w).
   
+  ## First we conduct the regression spline estimator of y on w
+
+  console <- printClear(console)
+  console <- printPop(console)
+  console <- printPush("Computing E(y|w)...", console)
   ## NOTE: in what follows E(y|w) is denoted r.
-  
-  ## First we conduct local polynomial kernel regression of Y on Z to get
-  ## the bandwidths.
-
-  console <- printClear(console)
-  console <- printPop(console)
-  console <- printPush("Computing model and weights for y on w...", console)
-  model <- crs(y~w,...)
-  B <- model.matrix(model$model.lm)
-  KYWs <- B%*%solve(t(B)%*%B)%*%t(B)
-  console <- printClear(console)
-  console <- printPop(console)
-  console <- printPush("Computing model and weights for z on w...", console)
-  model <- crs(z~w,...)
-  B <- model.matrix(model$model.lm)
-  KZWs <- B%*%solve(t(B)%*%B)%*%t(B)
-  
-  ## r is the conditional expectation of y given w
-  
-  r <- KYWs%*%y
-
-  ## KYWS no longer used, save memory
-
-  rm(KYWs)
+  r <- fitted(crs(y~w,...))
   
   ## define E(r|z)=E(E(phi(z)|w)|z) 
   
-  ## We conduct the regression spline of Z on Y we require two
-  ## bandwidths, one for r onto z and one for the object in w space
-  ## onto z space
+  ## Next, we conduct the regression spline of E(y|w) on z
   
   console <- printClear(console)
   console <- printPop(console)
-  console <- printPush("Computing model and weights for r on z...", console)
+  console <- printPush("Computing model and weights for E(E(y|w)|z)...", console)
   model <- crs(r~z,...)
   B <- model.matrix(model$model.lm)
   KRZs <- B%*%solve(t(B)%*%B)%*%t(B)
+
+  ## Next, weights for E(z|w)
+  
+  console <- printClear(console)
+  console <- printPop(console)
+  console <- printPush("Computing model and weights for E(z|w) (first stage treat z as phi(z))...", console)
+  model <- crs(z~w,...)
+  B <- model.matrix(model$model.lm)
+  KZWs <- B%*%solve(t(B)%*%B)%*%t(B)
   
   ## Next, we minimize the function ittik to obtain the optimal value
   ## of alpha (here we use the iterated Tikhonov function) to
@@ -196,9 +189,9 @@ crsiv <- function(y,z,w,yeval=NULL,zeval=NULL,weval=NULL,alpha.min=1.0e-10,alpha
   alpha1 <- optimize(ittik, c(alpha.min,alpha.max), tol = tol, CZ = KZWs, CY = KRZs, Cr = KRZs, r = r)$minimum
   
   ## Finally, we conduct regularized Tikhonov regression using this
-  ## optimal alpha.
+  ## optimal alpha to get a first stage estimate of phihat
   
-  mized <- as.vector(tikh(alpha1, CZ = KZWs, CY = KRZs, Cr=KRZs, r = r))
+  phihat <- as.vector(tikh(alpha1, CZ = KZWs, CY = KRZs, Cr = KRZs, r = r))
 
   ## KZWS no longer used, save memory
 
@@ -210,21 +203,21 @@ crsiv <- function(y,z,w,yeval=NULL,zeval=NULL,weval=NULL,alpha.min=1.0e-10,alpha
   
   console <- printClear(console)
   console <- printPop(console)
-  console <- printPush("Computing model and weights for phi on w...", console)
-  model <- crs(mized~w,...)
+  console <- printPush("Computing model and weights for E(phi(z)|w)...", console)
+  model <- crs(phihat~w,...)
+  E.phiyat.w <- fitted(model)
   B <- model.matrix(model$model.lm)
   KPHWs <- B%*%solve(t(B)%*%B)%*%t(B)
   
   ## Conduct kernel regression of E(phi(z)|w) on z
-  
   ## Here we need to generate the kernel weights for the local
   ## polynomial estimator. This corresponds to C_y below (3.8) in Feve &
   ## Florens (2010).
   
   console <- printClear(console)
   console <- printPop(console)
-  console <- printPush("Iterating and recomputing model and weights for phi on z...", console)
-  model <- crs(as.vector(KPHWs%*%mized)~z,...)
+  console <- printPush("Iterating and recomputing model and weights for E(E(phi(z)|w)|z)...", console)
+  model <- crs(E.phiyat.w~z,...)
   B <- model.matrix(model$model.lm)
   KPHZs <- B%*%solve(t(B)%*%B)%*%t(B)
   
@@ -240,12 +233,12 @@ crsiv <- function(y,z,w,yeval=NULL,zeval=NULL,weval=NULL,alpha.min=1.0e-10,alpha
   ## Finally, we conduct regularized Tikhonov regression using this
   ## optimal alpha.
 
-  mized2 <- as.vector(tikh(alpha2, CZ = KPHWs, CY = KPHZs, Cr = KRZs, r = r))
+  phihat2 <- as.vector(tikh(alpha2, CZ = KPHWs, CY = KPHZs, Cr = KRZs, r = r))
   
   console <- printClear(console)
   console <- printPop(console)
 
-  return(list(phihat=mized2,alpha=alpha2))
+  return(list(phihat=phihat2,alpha=alpha2))
   
 }
 
