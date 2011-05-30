@@ -29,33 +29,8 @@ and 55 years. There are 1655 household-level observations in total.
   \dQuote{Semi-Nonparametric IV Estimation of Shape-Invariant Engel
   Curves,} Econometrica, 75, 1613–1669.
     
-  Carrasco, M. and J.P. Florens and E. Renault (2007), \dQuote{Linear
-  Inverse Problems in Structural Econometrics Estimation Based on
-  Spectral Decomposition and Regularization,} In: James J. Heckman and
-  Edward E. Leamer, Editor(s), Handbook of Econometrics, Elsevier, 2007,
-  Volume 6, Part 2, Chapter 77, Pages 5633-5751
-
-  Darolles, S. and Y. Fan and J.P. Florens and E. Renault (forthcoming),
-  \dQuote{Nonparametric Instrumental Regression,} Econometrica.
-
-  Landweber, L. (1951), \dQuote{An iterative formula for Fredholm
-  integral equations of the first kind,} American Journal of
-  Mathematics, 73, 615-24.
-
-  Feve, F. and J.P. Florens (2010), \dQuote{The practice of
-  non-parametric estimation by solving inverse problems: the example of
-  transformation models,} Econometrics Journal, 13, S1-S27.
-
-  Fridman, V. M. (1956), \dQuote{A Method of Successive Approximations
-  for Fredholm Integral Equations of the First Kind,} Uspeskhi,
-  Math. Nauk., 11, 233-334, in Russian..
-
-  Horowitz, J.L. (2011), \dQuote{Applied Nonparametric Instrumental
-  Variables Estimation,}, Econometrica, 79, 347-394.
-  
   Li, Q. and J.S. Racine (2007), \emph{Nonparametric Econometrics:
   Theory and Practice,} Princeton University Press.
-
   
 }
 
