@@ -57,9 +57,9 @@ Engel95 <- Engel95[order(Engel95$logexp),]
 
 attach(Engel95)
 
-phihat <- crsiv(y=food,z=logexp,w=logwages,method="Landweber-Fridman",nmulti=2)$phihat
+phihat <- crsiv(y=food,z=logexp,w=logwages,method="Landweber-Fridman",nmulti=5)$phihat
 
-ghat <- crs(food~logexp,nmulti=2)
+ghat <- crs(food~logexp,nmulti=5)
 
 plot(logexp,food,
      ylab="Food Budget Share",

@@ -14,10 +14,12 @@ function \eqn{\varphi}{phi} is the solution of an ill-posed inverse
 problem and the estimation procedure is based on Tikhonov
 regularization.
 
-\code{crsiv} is an implementation of the approach of S. Darolles,
-Y. Fan, J.P. Florens and E. Renault (forthcoming, Econometrica) modified
+When \code{method="Tikhonov"}, \code{crsiv} is an implementation of the
+approach of Darolles, Fan, Florens and Renault (forthcoming) modified
 for regression splines (Darolles et al use local constant kernel
-weighting).
+weighting). When \code{method="Landweber-Fridman"} is an implementation
+of the approach of Horowitz (2011) using categorical regression splines
+and the methodology contained in the \pkg{crs} package.
 }
 \usage{
 crsiv(y,
