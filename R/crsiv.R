@@ -249,7 +249,7 @@ crsiv <- function(y,
     
     console <- printClear(console)
     console <- printPop(console)
-    console <- printPush("Computing phi(z)...", console)
+    console <- printPush(paste("Computing phi(z) for iteration 1 of ", num.iterations,sep=""),console)
     phi.0 <- crs(y~z,...)
     phi.mat[,1] <- fitted(phi.0) + fitted(crs(fitted(crs(residuals(phi.0)~w,...))~z,...))
     
