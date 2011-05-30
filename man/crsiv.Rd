@@ -121,10 +121,6 @@ crsiv(y,
   Darolles, S. and Y. Fan and J.P. Florens and E. Renault (forthcoming),
   \dQuote{Nonparametric Instrumental Regression,} Econometrica.
 
-  Landweber, L. (1951), \dQuote{An iterative formula for Fredholm
-  integral equations of the first kind,} American Journal of
-  Mathematics, 73, 615-24.
-
   Feve, F. and J.P. Florens (2010), \dQuote{The practice of
   non-parametric estimation by solving inverse problems: the example of
   transformation models,} Econometrics Journal, 13, S1-S27.
@@ -136,6 +132,10 @@ crsiv(y,
   Horowitz, J.L. (2011), \dQuote{Applied Nonparametric Instrumental
   Variables Estimation,}, Econometrica, 79, 347-394.
   
+  Landweber, L. (1951), \dQuote{An iterative formula for Fredholm
+  integral equations of the first kind,} American Journal of
+  Mathematics, 73, 615-24.
+
   Li, Q. and J.S. Racine (2007), \emph{Nonparametric Econometrics:
   Theory and Practice,} Princeton University Press.
 

@@ -247,13 +247,22 @@ crsiv <- function(y,
     
     phi.mat <- matrix(NA,nrow=length(y),ncol=num.iterations)
     
+    console <- printClear(console)
+    console <- printPop(console)
+    console <- printPush("Computing phi(z)...", console)
     phi.0 <- crs(y~z,...)
     phi.mat[,1] <- fitted(phi.0) + fitted(crs(fitted(crs(residuals(phi.0)~w,...))~z,...))
     
     for(j in 2:num.iterations) {
+      console <- printClear(console)
+      console <- printPop(console)
+      console <- printPush(paste("Computing phi(z) for iteration ", j, " of ", num.iterations,sep=""),console)
       phi.mat[,j] <- phi.mat[,j-1] + constant*fitted(crs(fitted(crs((y-phi.mat[,j-1])~w,...))~z,...))
     }
     
+    console <- printClear(console)
+    console <- printPop(console)
+
     return(list(phihat=phi.mat[,num.iterations],num.iterations=num.iterations))
 
   }
