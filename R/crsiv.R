@@ -32,7 +32,7 @@ crsiv <- function(y,
                   tol=.Machine$double.eps^0.25,
                   num.iterations=10,
                   constant=0.5,
-                  method=c("Tikhonov","Landweber-Fridman"),
+                  method=c("Landweber-Fridman","Tikhonov"),
                   ...) {
 
   ## This function was constructed initially by Samuele Centorrino

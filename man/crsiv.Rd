@@ -11,15 +11,14 @@ restrictions stemming from a structural econometric model: \eqn{E [Y -
 \varphi (Z) | W ] = 0}{E [Y - phi (Z) | W ] = 0}, and involving
 endogenous variables \eqn{Y} and \eqn{Z} and instruments \eqn{W}. The
 function \eqn{\varphi}{phi} is the solution of an ill-posed inverse
-problem and the estimation procedure is based on Tikhonov
-regularization.
+problem.
 
-When \code{method="Tikhonov"}, \code{crsiv} is an implementation of the
-approach of Darolles, Fan, Florens and Renault (forthcoming) modified
-for regression splines (Darolles et al use local constant kernel
-weighting). When \code{method="Landweber-Fridman"} is an implementation
-of the approach of Horowitz (2011) using categorical regression splines
-and the methodology contained in the \pkg{crs} package.
+When \code{method="Tikhonov"}, \code{crsiv} uses the approach of
+Darolles, Fan, Florens and Renault (forthcoming) modified for regression
+splines (Darolles et al use local constant kernel weighting). When
+\code{method="Landweber-Fridman"}, \code{crsiv} uses the approach of
+Horowitz (2011) using the regression spline methodology implemented in
+the \pkg{crs} package.
 }
 \usage{
 crsiv(y,
@@ -33,7 +32,7 @@ crsiv(y,
       tol = .Machine$double.eps^0.25,
       num.iterations = 10,
       constant = 0.5,
-      method = c("Tikhonov","Landweber-Fridman"),
+      method = c("Landweber-Fridman","Tikhonov"),
       ...)
 }
 
@@ -67,7 +66,7 @@ crsiv(y,
     takes place on the data provided by \code{w}.
 }
   \item{alpha.min}{
-    mimimum of search range for \eqn{\alpha}{alpha}, the Tikhonov
+    minimum of search range for \eqn{\alpha}{alpha}, the Tikhonov
     regularization parameter, when using
     Tikhonov regularization.
 }
@@ -90,19 +89,26 @@ crsiv(y,
 }
 \item{method}{
   the regularization method employed (defaults to \code{"Tikhonov"}, see
-  Darolles, Fan, Florens and Renault (forthcoming)... see Horowitz
-  (2011) for details for \code{"Landweber-Fridman"})
+  Darolles, Fan, Florens and Renault (forthcoming); see Horowitz
+  (2011) for details for \code{"Landweber-Fridman"}).
 }
 \item{...}{
   additional arguments supplied to \code{crs}.
 }
 }
 \details{
-  TBA
+  Tikhonov regularization requires computation of weight matrices of
+  dimension \eqn{n\times n}{n x n} which can be computationally costly
+  in terms of memory requirements and may be unsuitable for large
+  datasets. Landweber-Fridman will be preferred in such settings as it
+  does not require construction and storage of these weight matrices
+  while it also avoids the need for numerical optimization methods to
+  determine \eqn{\alpha}{alpha}.
 }
 \value{
-  \code{crsiv} returns a list with components \code{phihat} and
-    \code{alpha}.
+  \code{crsiv} returns a list with components \code{phihat} and either
+  \code{alpha} when \code{method="Tikhonov"} or \code{num.iterations}
+  when \code{method="Landweber-Fridman"}.
 }
 \references{
   
@@ -125,7 +131,7 @@ crsiv(y,
 
   Fridman, V. M. (1956), \dQuote{A Method of Successive Approximations
   for Fredholm Integral Equations of the First Kind,} Uspeskhi,
-  Math. Nauk., 11, 233-334, in Russian..
+  Math. Nauk., 11, 233-334, in Russian.
 
   Horowitz, J.L. (2011), \dQuote{Applied Nonparametric Instrumental
   Variables Estimation,}, Econometrica, 79, 347-394.
