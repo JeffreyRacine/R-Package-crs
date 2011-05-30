@@ -94,8 +94,12 @@ crsiv(y,
   Darolles, S. and Y. Fan and J.P. Florens and E. Renault (forthcoming),
   \dQuote{Nonparametric Instrumental Regression,} Econometrica.
 
-  Li, Q. and J.S. Racine (2007), \emph{Nonparametric Econometrics: Theory
-  and Practice,} Princeton University Press.
+  Feve, F. and J.P. Florens (2010), \dQuote{The practice of
+  non-parametric estimation by solving inverse problems: the example of
+  transformation models,} Econometrics Journal, 13, S1-S27.
+
+  Li, Q. and J.S. Racine (2007), \emph{Nonparametric Econometrics:
+  Theory and Practice,} Princeton University Press.
 
   Li, Q. and J.S. Racine (2004), \dQuote{Cross-validated local linear
   nonparametric regression,} Statistica Sinica, 14, 485-512.
