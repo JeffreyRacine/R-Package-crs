@@ -48,23 +48,25 @@ crsiv(y,
     regressor.
   }
   \item{w}{
-    a one (1) dimensional numeric or integer vector for the instrument.
-}
+    a \eqn{q}-variate data frame of instruments. The data types may be
+    continuous, discrete (unordered and ordered factors), or some
+    combination thereof.
+  }
   \item{yeval}{
     a one (1) dimensional numeric or integer vector on which the
     regression will be estimated (evaluation data). By default, evaluation
     takes place on the data provided by \code{y}.
-}
+  }
   \item{zeval}{
     a one (1) dimensional numeric or integer vector on which the
     regression will be estimated (evaluation data). By default, evaluation
     takes place on the data provided by \code{z}.
-}
+  }
   \item{weval}{
-    a one (1) dimensional numeric or integer vector on which the
-    regression will be estimated (evaluation data). By default, evaluation
+    a \eqn{q}-variate data frame of instruments on which the regression
+    will be estimated (evaluation data).By default, evaluation
     takes place on the data provided by \code{w}.
-}
+  }
   \item{alpha.min}{
     minimum of search range for \eqn{\alpha}{alpha}, the Tikhonov
     regularization parameter, when using
@@ -190,13 +192,13 @@ z <- 0.4*w + v
 y1 <- fun1(z) + u
 y2 <- fun2(z) + u
 
-## You set y to be either y1 or y2 depending on which DGP you are
-## considering:
+## You set y to be either y1 or y2 (ditto for phi) depending on which
+## DGP you are considering:
 
 y <- y1
 phi <- fun1
 
-## sort on z
+## Sort on z (for plotting)
 
 ivdata <- data.frame(y,z,w)
 ivdata <- ivdata[order(ivdata$z),]

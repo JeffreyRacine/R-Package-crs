@@ -134,7 +134,6 @@ crsiv <- function(y,
   if(missing(w)) stop("You must provide w")
   if(NCOL(y) > 1) stop("y must be univariat")
   if(NCOL(z) > 1) stop("z must be univariate")
-  if(NCOL(w) > 1) stop("w must be univariate")  
   if(NROW(y) != NROW(z) || NROW(y) != NROW(w)) stop("y, z, and w have differing numbers of rows")
 
   ## Check for evaluation data
@@ -144,6 +143,19 @@ crsiv <- function(y,
   if(is.null(weval)) weval <- w
 
   method <- match.arg(method)
+
+  ## Set up formulas for multivariate W
+
+  W <- data.frame(w)
+  wnames <- paste("w", 1:NCOL(W), sep="")
+  names(W) <- wnames
+  attach(W)
+  rm(W)
+  formula.zw <- as.formula(paste("z ~ ", paste(wnames, collapse= "+")))
+  formula.yw <- as.formula(paste("y ~ ", paste(wnames, collapse= "+")))
+  formula.phihatw <- as.formula(paste("phihat ~ ", paste(wnames, collapse= "+")))  
+  formula.residw <- as.formula(paste("(y-phi.j.m.1) ~ ", paste(wnames, collapse= "+")))
+  formula.residphi.0 <- as.formula(paste("residuals(phi.0) ~ ", paste(wnames, collapse= "+")))    
 
   if(method=="Tikhonov") {
   
@@ -156,7 +168,7 @@ crsiv <- function(y,
     console <- printClear(console)
     console <- printPop(console)
     console <- printPush("Computing E(y|w)...", console)
-    E.y.w <- fitted(crs(y~w,...))
+    E.y.w <- fitted(crs(formula.yw,...))
     
     ## Next, we conduct the regression spline of E(y|w) on z
     
@@ -173,7 +185,7 @@ crsiv <- function(y,
     console <- printClear(console)
     console <- printPop(console)
     console <- printPush("Computing model and weights for E(z|w) (first stage treat z as phi(z))...", console)
-    model <- crs(z~w,...)
+    model <- crs(formula.zw,...)
     B <- model.matrix(model$model.lm)
     KZWs <- B%*%solve(t(B)%*%B)%*%t(B)
     
@@ -205,7 +217,7 @@ crsiv <- function(y,
     console <- printClear(console)
     console <- printPop(console)
     console <- printPush("Computing model and weights for E(phi(z)|w)...", console)
-    model <- crs(phihat~w,...)
+    model <- crs(formula.phihatw,...)
     E.phiyat.w <- fitted(model)
     B <- model.matrix(model$model.lm)
     KPHIWs <- B%*%solve(t(B)%*%B)%*%t(B)
@@ -236,7 +248,7 @@ crsiv <- function(y,
     console <- printClear(console)
     console <- printPop(console)
     
-    return(list(phihat=phihat2,ghat=ghat,alpha=alpha2))
+    return(list(phihat=phihat2,alpha=alpha2))
     
   } else {
     
@@ -249,21 +261,22 @@ crsiv <- function(y,
     
     console <- printClear(console)
     console <- printPop(console)
-    console <- printPush(paste("Computing phi(z) for iteration 1 of ", num.iterations,"...",sep=""),console)
+    console <- printPush(paste("Computing optimal smoothing and phi(z) for iteration 1 of ", num.iterations,"...",sep=""),console)
     phi.0 <- crs(y~z,...)
-    phi.mat[,1] <- fitted(phi.0) + fitted(crs(fitted(crs(residuals(phi.0)~w,...))~z,...))
+    phi.j.m.1 <- fitted(phi.0) + fitted(crs(fitted(crs(formula.residphi.0,...))~z,...))
     
     for(j in 2:num.iterations) {
       console <- printClear(console)
       console <- printPop(console)
-      console <- printPush(paste("Computing phi(z) for iteration ", j, " of ", num.iterations,"...",sep=""),console)
-      phi.mat[,j] <- phi.mat[,j-1] + constant*fitted(crs(fitted(crs((y-phi.mat[,j-1])~w,...))~z,...))
+      console <- printPush(paste("Computing optimal smoothing and phi(z) for iteration ", j, " of ", num.iterations,"...",sep=""),console)
+      phi.j <- phi.j.m.1 + constant*fitted(crs(fitted(crs(formula.residw,...))~z,...))
+      phi.j.m.1 <- phi.j
     }
     
     console <- printClear(console)
     console <- printPop(console)
 
-    return(list(phihat=phi.mat[,num.iterations],num.iterations=num.iterations))
+    return(list(phihat=phi.j,num.iterations=num.iterations))
 
   }
   
