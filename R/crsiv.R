@@ -303,7 +303,7 @@ crsiv <- function(y,
       j <- j+1
       console <- printClear(console)
       console <- printPop(console)
-      console <- printPush(paste("Computing optimal smoothing and phi(z) for iteration ", j, "of a maximum of ", max.iterations, "...",sep=""),console)
+      console <- printPush(paste("Computing optimal smoothing and phi(z) for iteration ", j, " of a maximum of ", max.iterations, "...",sep=""),console)
 
       phi.j <- phi.j.m.1 + constant*fitted(crs(fitted(crs(formula.residw,...))~z,...))
       phi.j.m.1 <- phi.j
@@ -311,7 +311,7 @@ crsiv <- function(y,
 
       console <- printClear(console)
       console <- printPop(console)
-      console <- printPush(paste("Computing stopping rule for iteration ", j, "of a maximum of ", max.iterations, "...",sep=""),console)
+      console <- printPush(paste("Computing stopping rule for iteration ", j, " of a maximum of ", max.iterations, "...",sep=""),console)
 
       ## For the stopping rule (use same smoothing as original)
       E.phi.w <- fitted(crs(formula.phihatw,cv="none",degree=model.E.phi.w$degree,segments=model.E.phi.w$segments,...))
