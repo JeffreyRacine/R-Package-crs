@@ -162,9 +162,9 @@ n <- 1500
 
 ## 1) y = phi(z) + u
 
-## 2) E(u|z) !=0 hence we have endogeneity
+## 2) E(u|z) != 0 (endogeneity present)
 
-## 3) Suppose there exists an instrument w such that z = beta w + v and
+## 3) Suppose there exists an instrument w such that z = f(w) + v and
 ## E(u|w) = 0
 
 ## 4) We generate v, w, and generate u such that u and z are
