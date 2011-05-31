@@ -59,7 +59,8 @@ Engel95 <- Engel95[order(Engel95$logexp),]
 
 attach(Engel95)
 
-phihat <- crsiv(y=food,z=logexp,w=logwages,method="Landweber-Fridman",nmulti=5)$phihat
+model.iv <- crsiv(y=food,z=logexp,w=logwages,method="Landweber-Fridman",nmulti=5)
+phihat <- model.iv$phihat
 
 ghat <- crs(food~logexp,nmulti=5)
 

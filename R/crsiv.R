@@ -30,7 +30,8 @@ crsiv <- function(y,
                   alpha.min=1.0e-10,
                   alpha.max=1,
                   tol=.Machine$double.eps^0.25,
-                  num.iterations=10,
+                  num.iterations=5,
+                  max.iterations=25,
                   constant=0.5,
                   method=c("Landweber-Fridman","Tikhonov"),
                   ...) {
@@ -135,6 +136,7 @@ crsiv <- function(y,
   if(NCOL(y) > 1) stop("y must be univariat")
   if(NCOL(z) > 1) stop("z must be univariate")
   if(NROW(y) != NROW(z) || NROW(y) != NROW(w)) stop("y, z, and w have differing numbers of rows")
+  if(num.iterations < 2) stop("num.iterations must be at least 2")
 
   ## Check for evaluation data
 
@@ -257,26 +259,71 @@ crsiv <- function(y,
     ## We begin the iteration computing phi.0 and phi.1 directly, then
     ## interate.
     
-    phi.mat <- matrix(NA,nrow=length(y),ncol=num.iterations)
-    
     console <- printClear(console)
     console <- printPop(console)
-    console <- printPush(paste("Computing optimal smoothing and phi(z) for iteration 1 of ", num.iterations,"...",sep=""),console)
+    console <- printPush(paste("Computing optimal smoothing and phi(z) for iteration 1 of at least ", num.iterations,"...",sep=""),console)
     phi.0 <- crs(y~z,...)
     phi.j.m.1 <- fitted(phi.0) + fitted(crs(fitted(crs(formula.residphi.0,...))~z,...))
-    
+
+    ## For the stopping rule
+
+    console <- printClear(console)
+    console <- printPop(console)
+    console <- printPush(paste("Computing smoothing for stopping rule...",sep=""),console)
+
+    norm.stop <- numeric()
+    model.E.y.w <- crs(formula.yw,...)
+    E.y.w <- fitted(model.E.y.w)
+    phihat <- phi.j.m.1
+    model.E.phi.w <- crs(formula.phihatw,...)
+    E.phi.w <- fitted(model.E.phi.w)
+    norm.stop[1] <- sum((E.y.w-E.phi.w)^2)
+
     for(j in 2:num.iterations) {
       console <- printClear(console)
       console <- printPop(console)
-      console <- printPush(paste("Computing optimal smoothing and phi(z) for iteration ", j, " of ", num.iterations,"...",sep=""),console)
+      console <- printPush(paste("Computing optimal smoothing and phi(z) for iteration ", j, " of at least ", num.iterations,"...",sep=""),console)
+
       phi.j <- phi.j.m.1 + constant*fitted(crs(fitted(crs(formula.residw,...))~z,...))
       phi.j.m.1 <- phi.j
+      phihat <- phi.j
+
+      console <- printClear(console)
+      console <- printPop(console)
+      console <- printPush(paste("Computing stopping rule for iteration ", j, " of at least ", num.iterations,"...",sep=""),console)
+
+      ## For the stopping rule (use same smoothing as original)
+      E.phi.w <- fitted(crs(formula.phihatw,cv="none",degree=model.E.phi.w$degree,segments=model.E.phi.w$segments,...))
+      norm.stop[j] <- sum((E.y.w-E.phi.w)^2)
+    }
+
+    ## If the last num.iterations normed differences are unchanged, stop
+
+    while((sum(norm.stop[(j-num.iterations+2):j]-norm.stop[(j-num.iterations+1):(j-1)]) != 0) && j < max.iterations) {
+      j <- j+1
+      console <- printClear(console)
+      console <- printPop(console)
+      console <- printPush(paste("Computing optimal smoothing and phi(z) for iteration ", j, "of a maximum of ", max.iterations, "...",sep=""),console)
+
+      phi.j <- phi.j.m.1 + constant*fitted(crs(fitted(crs(formula.residw,...))~z,...))
+      phi.j.m.1 <- phi.j
+      phihat <- phi.j
+
+      console <- printClear(console)
+      console <- printPop(console)
+      console <- printPush(paste("Computing stopping rule for iteration ", j, "of a maximum of ", max.iterations, "...",sep=""),console)
+
+      ## For the stopping rule (use same smoothing as original)
+      E.phi.w <- fitted(crs(formula.phihatw,cv="none",degree=model.E.phi.w$degree,segments=model.E.phi.w$segments,...))
+      norm.stop[j] <- sum((E.y.w-E.phi.w)^2)
     }
     
     console <- printClear(console)
     console <- printPop(console)
 
-    return(list(phihat=phi.j,num.iterations=num.iterations))
+    if(j == max.iterations) warning("max.iterations reached: increase max.iterations or inspect norm.stop vector")
+
+    return(list(phihat=phi.j, num.iterations=j, norm.stop=norm.stop))
 
   }
   
