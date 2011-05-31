@@ -358,7 +358,7 @@ crs(\dots)
 
   S. Le Digabel, (2011), \dQuote{Algorithm 909: NOMAD: Nonlinear
   optimization with the MADS algorithm}. ACM Transactions on
-  Mathematical Software, 37(4):44:1–44:15.
+  Mathematical Software, 37(4):44:1-44:15.
 
   Ma, S. and J.S. Racine and L. Yang (2010), \dQuote{Spline Regression
   in the Presence of Categorical Predictors,} manuscript.

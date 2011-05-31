@@ -20,7 +20,8 @@ total.
  \item{fares}{ expenditure share on fares, of type \code{numeric}}
  \item{leisure}{ expenditure share on leisure, of type \code{numeric}}
  \item{logexp}{ logarithm of total expenditure, of type \code{numeric}}
- \item{logwages}{ logarithm of total earnings, of type \code{numeric}}  
+ \item{logwages}{ logarithm of total earnings, of type \code{numeric}}
+ \item{nkids}{ number of children, of type \code{numeric}}  
   }
 }
 \source{ Richard Blundell and Dennis Kristensen }
@@ -28,7 +29,7 @@ total.
 
   Blundell, R. and X. Chen and D. Kristensen (2007),
   \dQuote{Semi-Nonparametric IV Estimation of Shape-Invariant Engel
-  Curves,} Econometrica, 75, 1613–1669.
+  Curves,} Econometrica, 75, 1613-1669.
     
   Li, Q. and J.S. Racine (2007), \emph{Nonparametric Econometrics:
   Theory and Practice,} Princeton University Press.
