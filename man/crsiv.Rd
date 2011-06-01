@@ -107,7 +107,7 @@ crsiv(y,
   (2011) for details for \code{"Landweber-Fridman"}).
 }
 \item{...}{
-  additional arguments supplied to \code{crs}.
+  additional arguments supplied to \code{\link{crs}}.
 }
 }
 \details{
