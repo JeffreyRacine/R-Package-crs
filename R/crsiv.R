@@ -280,6 +280,8 @@ crsiv <- function(y,
     E.phi.w <- fitted(model.E.phi.w)
     norm.stop[1] <- mean(((E.y.w-E.phi.w)/E.y.w)^2)
 
+    ascending <- FALSE
+
     for(j in 2:start.iterations) {
 
       console <- printClear(console)
@@ -301,7 +303,10 @@ crsiv <- function(y,
       E.phi.w <- fitted(crs(formula.phihatw,cv="none",degree=model.E.phi.w$degree,segments=model.E.phi.w$segments,...))
       norm.stop[j] <- mean(((E.y.w-E.phi.w)/E.y.w)^2)
 
-      if(norm.stop[j] > norm.stop[j-1]) break()
+      if(norm.stop[j] > norm.stop[j-1]) {
+        ascending <- TRUE
+        break()
+      }
 
     }
 
@@ -309,37 +314,39 @@ crsiv <- function(y,
     ## AND we have not reached max.iterations AND the stopping
     ## criterion is not ascending, stop.
 
-    while((sum(norm.stop[(j-start.iterations+2):j]-norm.stop[(j-start.iterations+1):(j-1)]) != 0) && (j < max.iterations)) {
-
-      j <- j+1
-
-      console <- printClear(console)
-      console <- printPop(console)
-
-      if(iterate.smoothing) {
-        console <- printPush(paste("Computing optimal smoothing and phi(z) for iteration ", j, " of a maximum of ", max.iterations, "...",sep=""),console)
-        model.residw <- crs(formula.residw,...)
-        model.fitted.residw.z <- crs(fitted(model.residw)~z,...)
-      } else {
-        console <- printPush(paste("Computing phi(z) for iteration ", j, " of a maximum of ", max.iterations, "...",sep=""),console)
-        model.residw <- crs(formula.residw,cv="none",degree=model.residw$degree,segments=model.residw$segments,...)
-        model.fitted.residw.z <- crs(fitted(model.residw)~z,cv="none",degree=model.fitted.residw.z$degree,segments=model.fitted.residw.z$segments,...)
+    if(!ascending) {
+      while((sum(norm.stop[(j-start.iterations+2):j]-norm.stop[(j-start.iterations+1):(j-1)]) != 0) && (j < max.iterations)) {
+        
+        j <- j+1
+        
+        console <- printClear(console)
+        console <- printPop(console)
+        
+        if(iterate.smoothing) {
+          console <- printPush(paste("Computing optimal smoothing and phi(z) for iteration ", j, " of a maximum of ", max.iterations, "...",sep=""),console)
+          model.residw <- crs(formula.residw,...)
+          model.fitted.residw.z <- crs(fitted(model.residw)~z,...)
+        } else {
+          console <- printPush(paste("Computing phi(z) for iteration ", j, " of a maximum of ", max.iterations, "...",sep=""),console)
+          model.residw <- crs(formula.residw,cv="none",degree=model.residw$degree,segments=model.residw$segments,...)
+          model.fitted.residw.z <- crs(fitted(model.residw)~z,cv="none",degree=model.fitted.residw.z$degree,segments=model.fitted.residw.z$segments,...)
+        }
+        
+        phi.j <- phi.j.m.1 + constant*fitted(model.fitted.residw.z)
+        phi.j.m.1 <- phi.j
+        phihat <- phi.j
+        
+        console <- printClear(console)
+        console <- printPop(console)
+        console <- printPush(paste("Computing stopping rule for iteration ", j, " of a maximum of ", max.iterations, "...",sep=""),console)
+        
+        ## For the stopping rule (use same smoothing as original)
+        E.phi.w <- fitted(crs(formula.phihatw,cv="none",degree=model.E.phi.w$degree,segments=model.E.phi.w$segments,...))
+        norm.stop[j] <- mean(((E.y.w-E.phi.w)/E.y.w)^2)
+        
+        if(norm.stop[j] > norm.stop[j-1]) break()
+        
       }
-
-      phi.j <- phi.j.m.1 + constant*fitted(model.fitted.residw.z)
-      phi.j.m.1 <- phi.j
-      phihat <- phi.j
-
-      console <- printClear(console)
-      console <- printPop(console)
-      console <- printPush(paste("Computing stopping rule for iteration ", j, " of a maximum of ", max.iterations, "...",sep=""),console)
-
-      ## For the stopping rule (use same smoothing as original)
-      E.phi.w <- fitted(crs(formula.phihatw,cv="none",degree=model.E.phi.w$degree,segments=model.E.phi.w$segments,...))
-      norm.stop[j] <- mean(((E.y.w-E.phi.w)/E.y.w)^2)
-
-      if(norm.stop[j] > norm.stop[j-1]) break()
-
     }
     
     console <- printClear(console)
