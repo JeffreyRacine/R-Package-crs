@@ -30,8 +30,9 @@ crsiv(y,
       alpha.min = 1e-10,
       alpha.max = 1,
       tol = .Machine$double.eps^0.25,
-      num.iterations = 5,
-      max.iterations = 25,
+      start.iterations = 10,
+      max.iterations = 100,
+      iterate.smoothing = TRUE,
       constant = 0.5,
       method = c("Landweber-Fridman","Tikhonov"),
       ...)
@@ -83,17 +84,20 @@ crsiv(y,
   \eqn{\alpha}{alpha}, the Tikhonov regularization parameter, when using
   Tikhonov regularization.
 }
-\item{num.iterations}{
-  an integer indicating both the minimum number of iterations to conduct
-  and the number of iterations for which
-  \eqn{||E(y|w)-\varphi_k(z)|w)||^2 }{||E(y|w)-E(phi(z)|w)||^2 } must
-  remain unchanged in order for iteration to terminate when using
-  Landweber-Fridman regularization.
+\item{start.iterations}{
+  an integer indicating the minimum number of iterations to conduct
+  when using Landweber-Fridman regularization (here at each iteration
+  the smoothing parameters are refined and optimized).
 }
-  \item{max.iterations}{
+\item{max.iterations}{
   an integer indicating the maximum number of iterations permitted
-    before termination occurs.
-  }
+  before termination occurs.
+}
+\item{iterate.smoothing}{
+  a logical value indicating whether, after the initial
+  \code{start.iterations} have been conducted, to continue to optimize the
+  smoothing parameters for each successive iteration.
+}
 \item{constant}{
   the constant to use when using Landweber-Fridman regularization.
 }
@@ -123,6 +127,13 @@ crsiv(y,
   and iteration may fail to terminate when \code{num.iterations} is
   large. To best guard against this eventuality set \code{nmulti} to a
   larger number than the default \code{nmulti=0} for \code{\link{crs}}.
+  
+  When using \code{method="Landweber-Fridman"}, iteration will terminate
+  when either \code{start.iterations} have passed with no change in the
+  value of \eqn{||E(y|w)-E(\varphi_k(z)|w)||^2
+  }{||E(y|w)-E(phi(z)|w)||^2 } or we hit \code{max.iterations} or
+  \eqn{||E(y|w)-E(\varphi_k(z)|w)||^2 }{||E(y|w)-E(phi(z)|w)||^2 } stops
+  falling in value and starts rising.
 }
 \value{
   \code{crsiv} returns a list with components \code{phihat} and either

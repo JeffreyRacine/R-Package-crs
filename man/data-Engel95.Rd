@@ -59,15 +59,25 @@ Engel95 <- Engel95[order(Engel95$logexp),]
 
 attach(Engel95)
 
-model.iv <- crsiv(y=food,z=logexp,w=logwages,method="Landweber-Fridman",nmulti=5)
+model.iv <- crsiv(y=food,z=logexp,w=logwages,method="Landweber-Fridman",nmulti=10)
 phihat <- model.iv$phihat
 
-ghat <- crs(food~logexp,nmulti=5)
+## Compute the non-IV regression (i.e. regress y on z)
+
+ghat <- crs(food~logexp,nmulti=10)
+
+## For the plots, restrict focal attention to the bulk of the data
+## (i.e. for the plotting area trim out 1/4 of one percent from each
+## tail of y and z)
+
+trim <- 0.0025
 
 plot(logexp,food,
      ylab="Food Budget Share",
      xlab="log(Total Expenditure)",
-     main="Iterated Nonparametric Instrumental Variables",
+     xlim=quantile(logexp,c(trim,1-trim)),
+     ylim=quantile(food,c(trim,1-trim)),
+     main="Nonparametric Instrumental Regression Splines",
      type="p",
      cex=.5,
      col="lightgrey")
