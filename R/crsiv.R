@@ -214,7 +214,7 @@ crsiv <- function(y,
     ## KYWZ and KZWS no longer used, save memory
     
     rm(KYW,KYWZ)
-    
+
     ## Conduct kernel regression of phi(z) on w  
     
     console <- printClear(console)
@@ -245,7 +245,7 @@ crsiv <- function(y,
     
     ## Finally, we conduct regularized Tikhonov regression using this
     ## optimal alpha.
-    
+
     phihat <- as.vector(tikh(alpha, CZ = KPHIW, CY = KPHIZ, Cr.r = E.E.y.w.z))
     
     console <- printClear(console)
