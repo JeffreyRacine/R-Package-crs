@@ -169,8 +169,9 @@ crsiv <- function(y,
   if(method=="Tikhonov") {
   
     ## Now y=phi(z) + u, hence E(y|w)=E(phi(z)|w) so we need two
-    ## bandwidths, one for y on w and one for phi(z) on w (in the first
-    ## step we use z on w).
+    ## bandwidths, one for y on w and one for phi(z) on w (in the
+    ## first step we use E(y|w) as a proxy for phi(z) and use
+    ## bandwidths for y on w).
     
     ## First we conduct the regression spline estimator of y on w
     
@@ -210,9 +211,9 @@ crsiv <- function(y,
 
     phihat <- as.vector(tikh(alpha1, CZ = KZWs, CY = KRZs, Cr.r = E.E.y.w.z))
 
-    ## KZWS no longer used, save memory
+    ## KRZs and KZWS no longer used, save memory
     
-    rm(KZWs)
+    rm(KZWs,KRZs)
     
     ## Conduct kernel regression of phi(z) on w  
     
