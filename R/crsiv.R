@@ -204,12 +204,12 @@ crsiv <- function(y,
     console <- printClear(console)
     console <- printPop(console)
     console <- printPush("Numerically solving for alpha...", console)
-    alpha1 <- optimize(ittik, c(alpha.min,alpha.max), tol = tol, CZ = KZWs, CY = KRZs, Cr.r = E.E.y.w.z, r = E.y.w)$minimum
+    alpha <- optimize(ittik, c(alpha.min,alpha.max), tol = tol, CZ = KZWs, CY = KRZs, Cr.r = E.E.y.w.z, r = E.y.w)$minimum
     
     ## Finally, we conduct regularized Tikhonov regression using this
     ## optimal alpha to get a first stage estimate of phihat
 
-    phihat <- as.vector(tikh(alpha1, CZ = KZWs, CY = KRZs, Cr.r = E.E.y.w.z))
+    phihat <- as.vector(tikh(alpha, CZ = KZWs, CY = KRZs, Cr.r = E.E.y.w.z))
 
     ## KRZs and KZWS no longer used, save memory
     
@@ -221,7 +221,7 @@ crsiv <- function(y,
     console <- printPop(console)
     console <- printPush("Computing model and weights for E(phi(z)|w)...", console)
     model <- crs(formula.phihatw,...)
-    E.phiyat.w <- fitted(model)
+    E.phihat.w <- fitted(model)
     B <- model.matrix(model$model.lm)
     KPHIWs <- B%*%solve(t(B)%*%B)%*%t(B)
     
@@ -230,7 +230,7 @@ crsiv <- function(y,
     console <- printClear(console)
     console <- printPop(console)
     console <- printPush("Iterating and recomputing model and weights for E(E(phi(z)|w)|z)...", console)
-    model <- crs(E.phiyat.w~z,...)
+    model <- crs(E.phihat.w~z,...)
     B <- model.matrix(model$model.lm)
     KPHIZs <- B%*%solve(t(B)%*%B)%*%t(B)
     
@@ -241,17 +241,17 @@ crsiv <- function(y,
     console <- printClear(console)
     console <- printPop(console)
     console <- printPush("Iterating and recomputing the numerical solution for alpha...", console)
-    alpha2 <- optimize(ittik,c(alpha.min,alpha.max), tol = tol, CZ = KPHIWs, CY = KPHIZs, Cr.r = E.E.y.w.z, r = E.y.w)$minimum
+    alpha <- optimize(ittik,c(alpha.min,alpha.max), tol = tol, CZ = KPHIWs, CY = KPHIZs, Cr.r = E.E.y.w.z, r = E.y.w)$minimum
     
     ## Finally, we conduct regularized Tikhonov regression using this
     ## optimal alpha.
     
-    phihat2 <- as.vector(tikh(alpha2, CZ = KPHIWs, CY = KPHIZs, Cr.r = E.E.y.w.z))
+    phihat <- as.vector(tikh(alpha, CZ = KPHIWs, CY = KPHIZs, Cr.r = E.E.y.w.z))
     
     console <- printClear(console)
     console <- printPop(console)
     
-    return(list(phihat=phihat2,alpha=alpha2))
+    return(list(phihat=phihat,alpha=alpha))
     
   } else {
     
