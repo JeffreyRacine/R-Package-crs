@@ -179,8 +179,8 @@ crsiv <- function(y,
     console <- printPop(console)
     console <- printPush("Computing E(y|w) (first stage approximate phi(z) by E(y|w))...", console)
     E.y.w <- fitted(model<-crs(formula.yw,...))
-    B.y.w <- model.matrix(model$model.lm)
-    KZWs <- B.y.w%*%solve(t(B.y.w)%*%B.y.w)%*%t(B.y.w)
+    B <- model.matrix(model$model.lm)
+    KYW <- B%*%solve(t(B)%*%B)%*%t(B)
    
     ## Next, we conduct the regression spline of E(y|w) on z
     
@@ -189,8 +189,8 @@ crsiv <- function(y,
     console <- printPush("Computing model and weights for E(E(y|w)|z)...", console)
     model <- crs(E.y.w~z,...)
     E.E.y.w.z <- fitted(model)
-    B.y.w.z <- model.matrix(model$model.lm)
-    KRZs <- B.y.w.z%*%solve(t(B.y.w.z)%*%B.y.w.z)%*%t(B.y.w.z)
+    B <- model.matrix(model$model.lm)
+    KYWZ <- B%*%solve(t(B)%*%B)%*%t(B)
     
     ## Next, we minimize the function ittik to obtain the optimal value
     ## of alpha (here we use the iterated Tikhonov function) to
@@ -204,16 +204,16 @@ crsiv <- function(y,
     console <- printClear(console)
     console <- printPop(console)
     console <- printPush("Numerically solving for alpha...", console)
-    alpha <- optimize(ittik, c(alpha.min,alpha.max), tol = tol, CZ = KZWs, CY = KRZs, Cr.r = E.E.y.w.z, r = E.y.w)$minimum
+    alpha <- optimize(ittik, c(alpha.min,alpha.max), tol = tol, CZ = KYW, CY = KYWZ, Cr.r = E.E.y.w.z, r = E.y.w)$minimum
     
     ## Finally, we conduct regularized Tikhonov regression using this
     ## optimal alpha to get a first stage estimate of phihat
 
-    phihat <- as.vector(tikh(alpha, CZ = KZWs, CY = KRZs, Cr.r = E.E.y.w.z))
+    phihat <- as.vector(tikh(alpha, CZ = KYW, CY = KYWZ, Cr.r = E.E.y.w.z))
 
-    ## KRZs and KZWS no longer used, save memory
+    ## KYWZ and KZWS no longer used, save memory
     
-    rm(KZWs,KRZs)
+    rm(KYW,KYWZ)
     
     ## Conduct kernel regression of phi(z) on w  
     
@@ -223,7 +223,7 @@ crsiv <- function(y,
     model <- crs(formula.phihatw,...)
     E.phihat.w <- fitted(model)
     B <- model.matrix(model$model.lm)
-    KPHIWs <- B%*%solve(t(B)%*%B)%*%t(B)
+    KPHIW <- B%*%solve(t(B)%*%B)%*%t(B)
     
     ## Conduct kernel regression of E(phi(z)|w) on z
     
@@ -232,7 +232,7 @@ crsiv <- function(y,
     console <- printPush("Iterating and recomputing model and weights for E(E(phi(z)|w)|z)...", console)
     model <- crs(E.phihat.w~z,...)
     B <- model.matrix(model$model.lm)
-    KPHIZs <- B%*%solve(t(B)%*%B)%*%t(B)
+    KPHIZ <- B%*%solve(t(B)%*%B)%*%t(B)
     
     ## Next, we minimize the function ittik to obtain the optimal value of
     ## alpha (here we use the iterated Tikhonov approach) to determine the
@@ -241,12 +241,12 @@ crsiv <- function(y,
     console <- printClear(console)
     console <- printPop(console)
     console <- printPush("Iterating and recomputing the numerical solution for alpha...", console)
-    alpha <- optimize(ittik,c(alpha.min,alpha.max), tol = tol, CZ = KPHIWs, CY = KPHIZs, Cr.r = E.E.y.w.z, r = E.y.w)$minimum
+    alpha <- optimize(ittik,c(alpha.min,alpha.max), tol = tol, CZ = KPHIW, CY = KPHIZ, Cr.r = E.E.y.w.z, r = E.y.w)$minimum
     
     ## Finally, we conduct regularized Tikhonov regression using this
     ## optimal alpha.
     
-    phihat <- as.vector(tikh(alpha, CZ = KPHIWs, CY = KPHIZs, Cr.r = E.E.y.w.z))
+    phihat <- as.vector(tikh(alpha, CZ = KPHIW, CY = KPHIZ, Cr.r = E.E.y.w.z))
     
     console <- printClear(console)
     console <- printPop(console)
