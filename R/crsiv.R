@@ -120,11 +120,18 @@ crsiv <- function(y,
   
   ## SSalpha: (scalar) value of the sum of square residuals criterion
   ## which is a function of alpha (see (3.10) of Feve & Florens (2010)
+
+  ## Cr.r is always E.E.y.w.z, r is always E.y.w
   
+  tikh <- function(alpha,CZ,CY,Cr.r){
+    return(solve(alpha*diag(length(Cr.r)) + CY%*%CZ) %*% Cr.r) ## This must be computable via ridge... step 1, step 2, same alpha...
+  }
+
   ittik <- function(alpha,CZ,CY,Cr.r,r) {
     invmat <- solve(alpha*diag(length(Cr.r)) + CY%*%CZ)
-    phi <- invmat %*% Cr.r + alpha * invmat %*% invmat %*% Cr.r        
-    return(sum((CZ%*%phi - r)^2)/alpha)    
+    tikh.val <- invmat %*% Cr.r
+    phi <- tikh.val + alpha * invmat %*% tikh.val ## Not sure about this...
+    return(sum((CZ%*%phi - r)^2)/alpha)     ## This is a sum of squared values so CZ%*%phi can be computed with fitted(crs())...
   }
 
   console <- newLineConsole()
@@ -154,7 +161,6 @@ crsiv <- function(y,
   names(W) <- wnames
   attach(W)
   rm(W)
-  formula.zw <- as.formula(paste("z ~ ", paste(wnames, collapse= "+")))
   formula.yw <- as.formula(paste("y ~ ", paste(wnames, collapse= "+")))
   formula.phihatw <- as.formula(paste("phihat ~ ", paste(wnames, collapse= "+")))  
   formula.residw <- as.formula(paste("(y-phi.j.m.1) ~ ", paste(wnames, collapse= "+")))
@@ -170,9 +176,11 @@ crsiv <- function(y,
     
     console <- printClear(console)
     console <- printPop(console)
-    console <- printPush("Computing E(y|w)...", console)
-    E.y.w <- fitted(crs(formula.yw,...))
-    
+    console <- printPush("Computing E(y|w) (first stage approximate phi(z) by E(y|w))...", console)
+    E.y.w <- fitted(model<-crs(formula.yw,...))
+    B <- model.matrix(model$model.lm)
+    KZWs <- B%*%solve(t(B)%*%B)%*%t(B)
+   
     ## Next, we conduct the regression spline of E(y|w) on z
     
     console <- printClear(console)
@@ -182,15 +190,6 @@ crsiv <- function(y,
     E.E.y.w.z <- fitted(model)
     B <- model.matrix(model$model.lm)
     KRZs <- B%*%solve(t(B)%*%B)%*%t(B)
-    
-    ## Next, weights for E(z|w)
-    
-    console <- printClear(console)
-    console <- printPop(console)
-    console <- printPush("Computing model and weights for E(z|w) (first stage treat z as phi(z))...", console)
-    model <- crs(formula.zw,...)
-    B <- model.matrix(model$model.lm)
-    KZWs <- B%*%solve(t(B)%*%B)%*%t(B)
     
     ## Next, we minimize the function ittik to obtain the optimal value
     ## of alpha (here we use the iterated Tikhonov function) to
