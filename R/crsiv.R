@@ -178,8 +178,8 @@ crsiv <- function(y,
     console <- printPop(console)
     console <- printPush("Computing E(y|w) (first stage approximate phi(z) by E(y|w))...", console)
     E.y.w <- fitted(model<-crs(formula.yw,...))
-    B <- model.matrix(model$model.lm)
-    KZWs <- B%*%solve(t(B)%*%B)%*%t(B)
+    B.y.w <- model.matrix(model$model.lm)
+    KZWs <- B.y.w%*%solve(t(B.y.w)%*%B.y.w)%*%t(B.y.w)
    
     ## Next, we conduct the regression spline of E(y|w) on z
     
@@ -188,8 +188,8 @@ crsiv <- function(y,
     console <- printPush("Computing model and weights for E(E(y|w)|z)...", console)
     model <- crs(E.y.w~z,...)
     E.E.y.w.z <- fitted(model)
-    B <- model.matrix(model$model.lm)
-    KRZs <- B%*%solve(t(B)%*%B)%*%t(B)
+    B.y.w.z <- model.matrix(model$model.lm)
+    KRZs <- B.y.w.z%*%solve(t(B.y.w.z)%*%B.y.w.z)%*%t(B.y.w.z)
     
     ## Next, we minimize the function ittik to obtain the optimal value
     ## of alpha (here we use the iterated Tikhonov function) to
@@ -207,9 +207,9 @@ crsiv <- function(y,
     
     ## Finally, we conduct regularized Tikhonov regression using this
     ## optimal alpha to get a first stage estimate of phihat
-    
+
     phihat <- as.vector(tikh(alpha1, CZ = KZWs, CY = KRZs, Cr.r = E.E.y.w.z))
-    
+
     ## KZWS no longer used, save memory
     
     rm(KZWs)

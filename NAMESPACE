@@ -9,7 +9,6 @@ export(crs,
        gsl.bs,
        krscv,
 			 krscvNOMAD,
-       lm.ridge,
        tensor.prod.model.matrix,
        uniquecombs)
 
