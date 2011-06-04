@@ -8,10 +8,10 @@ Nonparametric Instrumental Regression
 \code{crsiv} computes nonparametric estimation of an instrumental
 regression function \eqn{\varphi}{phi} defined by conditional moment
 restrictions stemming from a structural econometric model: \eqn{E [Y -
-\varphi (Z) | W ] = 0}{E [Y - phi (Z) | W ] = 0}, and involving
-endogenous variables \eqn{Y} and \eqn{Z} and instruments \eqn{W}. The
-function \eqn{\varphi}{phi} is the solution of an ill-posed inverse
-problem.
+\varphi (Z,X) | W ] = 0}{E [Y - phi (Z,X) | W ] = 0}, and involving
+endogenous variables \eqn{Y} and \eqn{Z} and exogenous variables
+\code{X} and instruments \eqn{W}. The function \eqn{\varphi}{phi} is the
+solution of an ill-posed inverse problem.
 
 When \code{method="Tikhonov"}, \code{crsiv} uses the approach of
 Darolles, Fan, Florens and Renault (forthcoming) modified for regression
@@ -24,11 +24,13 @@ the \pkg{crs} package.
 crsiv(y,
       z,
       w,
+      x = NULL,
       yeval = NULL,
       zeval = NULL,
       weval = NULL,
+      xeval = NULL,
       alpha.min = 1e-10,
-      alpha.max = 1,
+      alpha.max = 1e-01,
       tol = .Machine$double.eps^0.25,
       start.iterations = 10,
       max.iterations = 100,
@@ -46,13 +48,19 @@ crsiv(y,
   }
 
   \item{z}{
-    a one (1) dimensional numeric or integer vector for the endogenous
-    regressor.
+    a \eqn{p}-variate data frame of endogenous regressors. The data
+    types may be continuous, discrete (unordered and ordered factors),
+    or some combination thereof.
   }
   \item{w}{
     a \eqn{q}-variate data frame of instruments. The data types may be
     continuous, discrete (unordered and ordered factors), or some
     combination thereof.
+  }
+  \item{x}{
+    a \eqn{r}-variate data frame of exdogenous regressors. The data
+    types may be continuous, discrete (unordered and ordered factors),
+    or some combination thereof.
   }
   \item{yeval}{
     a one (1) dimensional numeric or integer vector on which the
@@ -60,7 +68,7 @@ crsiv(y,
     takes place on the data provided by \code{y}.
   }
   \item{zeval}{
-    a one (1) dimensional numeric or integer vector on which the
+    a \eqn{p}-variate data frame of endogenous predictors on which the
     regression will be estimated (evaluation data). By default, evaluation
     takes place on the data provided by \code{z}.
   }
@@ -68,6 +76,11 @@ crsiv(y,
     a \eqn{q}-variate data frame of instruments on which the regression
     will be estimated (evaluation data).By default, evaluation
     takes place on the data provided by \code{w}.
+  }
+  \item{xeval}{
+    a \eqn{r}-variate data frame of exogenous regressors on which the
+    regression will be estimated (evaluation data).By default,
+    evaluation takes place on the data provided by \code{x}.
   }
   \item{alpha.min}{
     minimum of search range for \eqn{\alpha}{alpha}, the Tikhonov
@@ -120,8 +133,8 @@ crsiv(y,
   determine \eqn{\alpha}{alpha}.
 
   \code{method="Landweber-Fridman"} uses an optimal stopping rule
-  whereby if \eqn{||E(y|w)-E(\varphi_k(z)|w)||^2
-  }{||E(y|w)-E(phi(z)|w)||^2 } is unchanged for at least
+  whereby if \eqn{||E(y|w)-E(\varphi_k(z,x)|w)||^2
+  }{||E(y|w)-E(phi(z,x)|w)||^2 } is unchanged for at least
   \code{num.iterations} then iteration terminates. However, if
   insufficient training is conducted the estimates can be overly noisy
   and iteration may fail to terminate when \code{num.iterations} is
@@ -130,9 +143,9 @@ crsiv(y,
   
   When using \code{method="Landweber-Fridman"}, iteration will terminate
   when either \code{start.iterations} have passed with no change in the
-  value of \eqn{||E(y|w)-E(\varphi_k(z)|w)||^2
-  }{||E(y|w)-E(phi(z)|w)||^2 } or we hit \code{max.iterations} or
-  \eqn{||E(y|w)-E(\varphi_k(z)|w)||^2 }{||E(y|w)-E(phi(z)|w)||^2 } stops
+  value of \eqn{||E(y|w)-E(\varphi_k(z,x)|w)||^2
+  }{||E(y|w)-E(phi(z,x)|w)||^2 } or we hit \code{max.iterations} or
+  \eqn{||E(y|w)-E(\varphi_k(z,x)|w)||^2 }{||E(y|w)-E(phi(z,x)|w)||^2 } stops
   falling in value and starts rising.
 }
 \value{
