@@ -50,7 +50,7 @@ curve(phi,min(z),max(z),
       ylab="Y",
       xlab="Z",
       main="Nonparametric Instrumental Spline Regression",
-      sub=paste("Tikhonov: alpha = ",formatC(model.iv$alpha,digits=4,format="f")),
+      sub=paste("Tikhonov: alpha = ",formatC(model.iv$alpha,digits=3,format="fg")),
       lwd=1,lty=1)
 
 points(z,y,type="p",cex=.25,col="grey")
