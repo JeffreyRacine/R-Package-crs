@@ -192,7 +192,7 @@ This function should be considered to be in `beta test' status until further not
 }
 
 \seealso{
-\code{\link{npreg}}
+\code{\link[np]{npreg}}
 }
 \examples{
 ## This illustration was made possible by Samuele Centorrino
