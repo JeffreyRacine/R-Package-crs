@@ -38,7 +38,7 @@ crsiv <- function(y,
                   ...) {
 
   ## This function was constructed initially by Samuele Centorrino
-  ## <samuele.centorrino@univ-tlse1.fr> to reproduce illustrations in
+  ## <samuele.centorrino@univ-tlse1.fr>
   ## the following papers:
   
   ## A) Econometrica (forthcoming, article date February 25 2011)
