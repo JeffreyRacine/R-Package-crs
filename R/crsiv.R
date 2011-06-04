@@ -36,9 +36,9 @@ crsiv <- function(y,
                   alpha.min=1.0e-10,
                   alpha.max=1.0e-01,
                   tol=.Machine$double.eps^0.25,
-                  start.iterations=10,
                   max.iterations=100,
                   iterate.smoothing=TRUE,
+                  iterate.tol=1.0e-05,
                   constant=0.5,
                   method=c("Landweber-Fridman","Tikhonov"),
                   ...) {
@@ -146,7 +146,7 @@ crsiv <- function(y,
   if(NCOL(y) > 1) stop("y must be univariate")
   if(NROW(y) != NROW(z) || NROW(y) != NROW(w)) stop("y, z, and w have differing numbers of rows")
   if(!is.null(x) && NROW(y) != NROW(x)) stop("y and x have differing numbers of rows")
-  if(start.iterations < 2) stop("start.iterations must be at least 2")
+  if(max.iterations < 2) stop("max.iterations must be at least 2")
 
   ## Check for evaluation data
 
@@ -342,9 +342,9 @@ crsiv <- function(y,
     console <- printClear(console)
     console <- printPop(console)
     if(is.null(x)) {
-      console <- printPush(paste("Computing optimal smoothing and phi(z) for iteration 1 of at least ", start.iterations,"...",sep=""),console)
+      console <- printPush(paste("Computing optimal smoothing and phi(z) for iteration 1 of maximum ", max.iterations,"...",sep=""),console)
     } else {
-      console <- printPush(paste("Computing optimal smoothing and phi(z,x) for iteration 1 of at least ", start.iterations,"...",sep=""),console)
+      console <- printPush(paste("Computing optimal smoothing and phi(z,x) for iteration 1 of maximum ", max.iterations,"...",sep=""),console)
     }
     phi.0 <- crs(formula.yz,...)
     model.residphi0 <- crs(formula.residphi0w,...)
@@ -367,14 +367,14 @@ crsiv <- function(y,
 
     ascending <- FALSE
 
-    for(j in 2:start.iterations) {
+    for(j in 2:max.iterations) {
 
       console <- printClear(console)
       console <- printPop(console)
       if(is.null(x)) {
-        console <- printPush(paste("Computing optimal smoothing and phi(z) for iteration ", j, " of at least ", start.iterations,"...",sep=""),console)
+        console <- printPush(paste("Computing optimal smoothing and phi(z) for iteration ", j, " of maximum ", max.iterations,"...",sep=""),console)
       } else {
-        console <- printPush(paste("Computing optimal smoothing and phi(z,x) for iteration ", j, " of at least ", start.iterations,"...",sep=""),console)
+        console <- printPush(paste("Computing optimal smoothing and phi(z,x) for iteration ", j, " of maximum ", max.iterations,"...",sep=""),console)
       }
 
       model.residw <- crs(formula.residw,...)
@@ -386,68 +386,19 @@ crsiv <- function(y,
 
       console <- printClear(console)
       console <- printPop(console)
-      console <- printPush(paste("Computing stopping rule for iteration ", j, " of at least ", start.iterations,"...",sep=""),console)
+      console <- printPush(paste("Computing stopping rule for iteration ", j, " of maximum ", max.iterations,"...",sep=""),console)
 
       ## For the stopping rule (use same smoothing as original)
       model.stop <- crs(formula.phihatw,cv="none",degree=model.E.phi.w$degree,segments=model.E.phi.w$segments,...)
       E.phi.w <- predict(model.stop,newdata=newdata)
       norm.stop[j] <- mean(((E.y.w-E.phi.w)/E.y.w)^2)
 
-      if(norm.stop[j] > norm.stop[j-1]) {
-        ascending <- TRUE
-        break()
-      }
+      ## If objective increases or we are below stopping tolerance then break
+
+      if((norm.stop[j] > norm.stop[j-1]) || ((norm.stop[j-1]-norm.stop[j]) < iterate.tol)) break()
 
     }
 
-    ## If the last start.iterations normed differences are unchanged,
-    ## AND we have not reached max.iterations AND the stopping
-    ## criterion is not ascending, stop.
-
-    if(!ascending) {
-      while((sum(norm.stop[(j-start.iterations+2):j]-norm.stop[(j-start.iterations+1):(j-1)]) != 0) && (j < max.iterations)) {
-        
-        j <- j+1
-        
-        console <- printClear(console)
-        console <- printPop(console)
-        
-        if(iterate.smoothing) {
-          if(is.null(x)) {
-            console <- printPush(paste("Computing optimal smoothing and phi(z) for iteration ", j, " of a maximum of ", max.iterations, "...",sep=""),console)
-          } else {
-            console <- printPush(paste("Computing optimal smoothing and phi(z,x) for iteration ", j, " of a maximum of ", max.iterations, "...",sep=""),console)
-          }
-          model.residw <- crs(formula.residw,...)
-          model.predict.residw.z <- crs(formula.predictmodelresidwz,...)
-        } else {
-          if(is.null(x)) {
-            console <- printPush(paste("Computing phi(z) for iteration ", j, " of a maximum of ", max.iterations, "...",sep=""),console)
-          } else {
-            console <- printPush(paste("Computing phi(z,x) for iteration ", j, " of a maximum of ", max.iterations, "...",sep=""),console)
-          }
-          model.residw <- crs(formula.residw,cv="none",degree=model.residw$degree,segments=model.residw$segments,...)
-          model.predict.residw.z <- crs(formula.predictmodelresidwz,cv="none",degree=model.predict.residw.z$degree,segments=model.predict.residw.z$segments,...)
-        }
-        
-        phi.j <- phi.j.m.1 + constant*predict(model.predict.residw.z,newdata=newdata)
-        phi.j.m.1 <- phi.j
-        phihat <- phi.j
-        
-        console <- printClear(console)
-        console <- printPop(console)
-        console <- printPush(paste("Computing stopping rule for iteration ", j, " of a maximum of ", max.iterations, "...",sep=""),console)
-        
-        ## For the stopping rule (use same smoothing as original)
-        model.stop <- crs(formula.phihatw,cv="none",degree=model.E.phi.w$degree,segments=model.E.phi.w$segments,...)
-        E.phi.w <- predict(model.stop,newdata=newdata)
-        norm.stop[j] <- mean(((E.y.w-E.phi.w)/E.y.w)^2)
-        
-        if(norm.stop[j] > norm.stop[j-1]) break()
-        
-      }
-    }
-    
     console <- printClear(console)
     console <- printPop(console)
 
