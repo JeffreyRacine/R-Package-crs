@@ -28,7 +28,7 @@ crsiv <- function(y,
                   zeval=NULL,
                   weval=NULL,
                   alpha.min=1.0e-10,
-                  alpha.max=1,
+                  alpha.max=1.0e-01,
                   tol=.Machine$double.eps^0.25,
                   start.iterations=10,
                   max.iterations=100,
@@ -177,8 +177,9 @@ crsiv <- function(y,
     
     console <- printClear(console)
     console <- printPop(console)
-    console <- printPush("Computing E(y|w) (first stage approximate phi(z) by E(y|w))...", console)
-    E.y.w <- fitted(model<-crs(formula.yw,...))
+    console <- printPush("Computing weights and optimal smoothing for E(y|w)...", console)
+    model<-crs(formula.yw,...)
+    E.y.w <- fitted(model)
     B <- model.matrix(model$model.lm)
     KYW <- B%*%solve(t(B)%*%B)%*%t(B)
    
@@ -186,7 +187,7 @@ crsiv <- function(y,
     
     console <- printClear(console)
     console <- printPop(console)
-    console <- printPush("Computing model and weights for E(E(y|w)|z)...", console)
+    console <- printPush("Computing weights and optimal smoothing for E(E(y|w)|z)...", console)
     model <- crs(E.y.w~z,...)
     E.E.y.w.z <- fitted(model)
     B <- model.matrix(model$model.lm)
@@ -209,6 +210,9 @@ crsiv <- function(y,
     ## Finally, we conduct regularized Tikhonov regression using this
     ## optimal alpha to get a first stage estimate of phihat
 
+    console <- printClear(console)
+    console <- printPop(console)
+    console <- printPush("Computing initial phi(z) estimate...", console)
     phihat <- as.vector(tikh(alpha, CZ = KYW, CY = KYWZ, Cr.r = E.E.y.w.z))
 
     ## KYWZ and KZWS no longer used, save memory
@@ -219,7 +223,7 @@ crsiv <- function(y,
     
     console <- printClear(console)
     console <- printPop(console)
-    console <- printPush("Computing model and weights for E(phi(z)|w)...", console)
+    console <- printPush("Computing optimal smoothing and weights for E(phi(z)|w)...", console)
     model <- crs(formula.phihatw,...)
     E.phihat.w <- fitted(model)
     B <- model.matrix(model$model.lm)
@@ -229,7 +233,7 @@ crsiv <- function(y,
     
     console <- printClear(console)
     console <- printPop(console)
-    console <- printPush("Iterating and recomputing model and weights for E(E(phi(z)|w)|z)...", console)
+    console <- printPush("Computing optimal smoothing and weights for E(E(phi(z)|w)|z)...", console)
     model <- crs(E.phihat.w~z,...)
     B <- model.matrix(model$model.lm)
     KPHIWZ <- B%*%solve(t(B)%*%B)%*%t(B)
@@ -240,16 +244,22 @@ crsiv <- function(y,
     
     console <- printClear(console)
     console <- printPop(console)
-    console <- printPush("Iterating and recomputing the numerical solution for alpha...", console)
+    console <- printPush("Iterating and computing the numerical solution for alpha...", console)
     alpha <- optimize(ittik,c(alpha.min,alpha.max), tol = tol, CZ = KPHIW, CY = KPHIWZ, Cr.r = E.E.y.w.z, r = E.y.w)$minimum
     
     ## Finally, we conduct regularized Tikhonov regression using this
     ## optimal alpha.
 
+    console <- printClear(console)
+    console <- printPop(console)
+    console <- printPush("Computing final phi(z) estimate...", console)
     phihat <- as.vector(tikh(alpha, CZ = KPHIW, CY = KPHIWZ, Cr.r = E.E.y.w.z))
     
     console <- printClear(console)
     console <- printPop(console)
+    
+    if((alpha-alpha.min)/alpha.min < 0.01) warning(paste("Tikhonov parameter alpha (",alpha,") is close to the search minimum (",alpha.min,")",sep=""))
+    if((alpha.max-alpha)/alpha.max < 0.01) warning(paste("Tikhonov parameter alpha (",alpha,") is close to the search maximum (",alpha.max,")",sep=""))
     
     return(list(phihat=phihat,alpha=alpha))
     
