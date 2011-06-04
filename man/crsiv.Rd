@@ -74,12 +74,12 @@ crsiv(y,
   }
   \item{weval}{
     a \eqn{q}-variate data frame of instruments on which the regression
-    will be estimated (evaluation data).By default, evaluation
+    will be estimated (evaluation data). By default, evaluation
     takes place on the data provided by \code{w}.
   }
   \item{xeval}{
     a \eqn{r}-variate data frame of exogenous regressors on which the
-    regression will be estimated (evaluation data).By default,
+    regression will be estimated (evaluation data). By default,
     evaluation takes place on the data provided by \code{x}.
   }
   \item{alpha.min}{

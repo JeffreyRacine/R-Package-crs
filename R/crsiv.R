@@ -152,6 +152,17 @@ crsiv <- function(y,
   if(is.null(yeval)) yeval <- y
   if(is.null(zeval)) zeval <- z
   if(is.null(weval)) weval <- w
+  if(!is.null(x) && is.null(xeval)) xeval <- x
+
+  ## Note - newdata not currently working, but for Tikhonov we will
+  ## have problems since the initial B needs to be for the evaluation
+  ## data and will need to be constructed
+
+  if(is.null(x)) {
+    newdata <- data.frame(z1=zeval,w1=weval)
+  } else {
+    newdata <- data.frame(z1=zeval,w1=weval,x1=xeval)
+  }
 
   method <- match.arg(method)
 
@@ -190,14 +201,14 @@ crsiv <- function(y,
     formula.yz <- as.formula(paste("y ~ ", paste(znames, collapse= "+")))
     formula.Eywz <- as.formula(paste("E.y.w ~ ", paste(znames, collapse= "+")))
     formula.Ephihatwz <- as.formula(paste("E.phihat.w ~ ", paste(znames, collapse= "+")))  
-    formula.fittedmodelresidphi0z <- as.formula(paste("fitted(model.residphi0) ~ ", paste(znames, collapse= "+")))
-    formula.fittedmodelresidwz <- as.formula(paste("fitted(model.residw) ~ ", paste(znames, collapse= "+")))
+    formula.predictmodelresidphi0z <- as.formula(paste("predict(model.residphi0,newdata=newdata) ~ ", paste(znames, collapse= "+")))
+    formula.predictmodelresidwz <- as.formula(paste("predict(model.residw,newdata=newdata) ~ ", paste(znames, collapse= "+")))
   } else {
     formula.yz <- as.formula(paste("y ~ ", paste(znames, collapse= "+"), " + ", paste(xnames, collapse= "+")))
     formula.Eywz <- as.formula(paste("E.y.w ~ ", paste(znames, collapse= "+"), " + ", paste(xnames, collapse= "+")))
     formula.Ephihatwz <- as.formula(paste("E.phihat.w ~ ", paste(znames, collapse= "+"), " + ", paste(xnames, collapse= "+")))  
-    formula.fittedmodelresidphi0z <- as.formula(paste("fitted(model.residphi0) ~ ", paste(znames, collapse= "+"), " + ", paste(xnames, collapse= "+")))
-    formula.fittedmodelresidwz <- as.formula(paste("fitted(model.residw) ~ ", paste(znames, collapse= "+"), " + ", paste(xnames, collapse= "+")))
+    formula.predictmodelresidphi0z <- as.formula(paste("predict(model.residphi0,newdata=newdata) ~ ", paste(znames, collapse= "+"), " + ", paste(xnames, collapse= "+")))
+    formula.predictmodelresidwz <- as.formula(paste("predict(model.residw,newdata=newdata) ~ ", paste(znames, collapse= "+"), " + ", paste(xnames, collapse= "+")))
   }
 
   if(method=="Tikhonov") {
@@ -213,7 +224,7 @@ crsiv <- function(y,
     console <- printPop(console)
     console <- printPush("Computing weights and optimal smoothing for E(y|w)...", console)
     model<-crs(formula.yw,...)
-    E.y.w <- fitted(model)
+    E.y.w <- predict(model,newdata=newdata)
     B <- model.matrix(model$model.lm)
     KYW <- B%*%solve(t(B)%*%B)%*%t(B)
    
@@ -227,7 +238,7 @@ crsiv <- function(y,
       console <- printPush("Computing weights and optimal smoothing for E(E(y|w)|z,x)...", console)
     }
     model <- crs(formula.Eywz,...)
-    E.E.y.w.z <- fitted(model)
+    E.E.y.w.z <- predict(model,newdata=newdata)
     B <- model.matrix(model$model.lm)
     KYWZ <- B%*%solve(t(B)%*%B)%*%t(B)
     
@@ -271,7 +282,7 @@ crsiv <- function(y,
       console <- printPush("Computing optimal smoothing and weights for E(phi(z,x)|w)...", console)
     }
     model <- crs(formula.phihatw,...)
-    E.phihat.w <- fitted(model)
+    E.phihat.w <- predict(model,newdata=newdata)
     B <- model.matrix(model$model.lm)
     KPHIW <- B%*%solve(t(B)%*%B)%*%t(B)
     
@@ -333,7 +344,8 @@ crsiv <- function(y,
     }
     phi.0 <- crs(formula.yz,...)
     model.residphi0 <- crs(formula.residphi0w,...)
-    phi.j.m.1 <- fitted(phi.0) + fitted(model.Eresidphi0.z <- crs(formula.fittedmodelresidphi0z,...))
+    model.Eresidphi0.z <- crs(formula.predictmodelresidphi0z,...)
+    phi.j.m.1 <- predict(phi.0,newdata=newdata) + predict(model.Eresidphi0.z,newdata=newdata)
 
     ## For the stopping rule
 
@@ -343,10 +355,10 @@ crsiv <- function(y,
 
     norm.stop <- numeric()
     model.E.y.w <- crs(formula.yw,...)
-    E.y.w <- fitted(model.E.y.w)
+    E.y.w <- predict(model.E.y.w,newdata=newdata)
     phihat <- phi.j.m.1
     model.E.phi.w <- crs(formula.phihatw,...)
-    E.phi.w <- fitted(model.E.phi.w)
+    E.phi.w <- predict(model.E.phi.w,newdata=newdata)
     norm.stop[1] <- mean(((E.y.w-E.phi.w)/E.y.w)^2)
 
     ascending <- FALSE
@@ -362,9 +374,9 @@ crsiv <- function(y,
       }
 
       model.residw <- crs(formula.residw,...)
-      model.fitted.residw.z <- crs(formula.fittedmodelresidwz,...)
+      model.predict.residw.z <- crs(formula.predictmodelresidwz,...)
 
-      phi.j <- phi.j.m.1 + constant*fitted(model.fitted.residw.z)
+      phi.j <- phi.j.m.1 + constant*predict(model.predict.residw.z,newdata=newdata)
       phi.j.m.1 <- phi.j
       phihat <- phi.j
 
@@ -373,7 +385,8 @@ crsiv <- function(y,
       console <- printPush(paste("Computing stopping rule for iteration ", j, " of at least ", start.iterations,"...",sep=""),console)
 
       ## For the stopping rule (use same smoothing as original)
-      E.phi.w <- fitted(crs(formula.phihatw,cv="none",degree=model.E.phi.w$degree,segments=model.E.phi.w$segments,...))
+      model.stop <- crs(formula.phihatw,cv="none",degree=model.E.phi.w$degree,segments=model.E.phi.w$segments,...)
+      E.phi.w <- predict(model.stop,newdata=newdata)
       norm.stop[j] <- mean(((E.y.w-E.phi.w)/E.y.w)^2)
 
       if(norm.stop[j] > norm.stop[j-1]) {
@@ -402,7 +415,7 @@ crsiv <- function(y,
             console <- printPush(paste("Computing optimal smoothing and phi(z,x) for iteration ", j, " of a maximum of ", max.iterations, "...",sep=""),console)
           }
           model.residw <- crs(formula.residw,...)
-          model.fitted.residw.z <- crs(fitted(model.residw)~z,...)
+          model.predict.residw.z <- crs(formula.predictmodelresidwz,...)
         } else {
           if(is.null(x)) {
             console <- printPush(paste("Computing phi(z) for iteration ", j, " of a maximum of ", max.iterations, "...",sep=""),console)
@@ -410,10 +423,10 @@ crsiv <- function(y,
             console <- printPush(paste("Computing phi(z,x) for iteration ", j, " of a maximum of ", max.iterations, "...",sep=""),console)
           }
           model.residw <- crs(formula.residw,cv="none",degree=model.residw$degree,segments=model.residw$segments,...)
-          model.fitted.residw.z <- crs(fitted(model.residw)~z,cv="none",degree=model.fitted.residw.z$degree,segments=model.fitted.residw.z$segments,...)
+          model.predict.residw.z <- crs(formula.predictmodelresidwz,cv="none",degree=model.predict.residw.z$degree,segments=model.predict.residw.z$segments,...)
         }
         
-        phi.j <- phi.j.m.1 + constant*fitted(model.fitted.residw.z)
+        phi.j <- phi.j.m.1 + constant*predict(model.predict.residw.z,newdata=newdata)
         phi.j.m.1 <- phi.j
         phihat <- phi.j
         
@@ -422,7 +435,8 @@ crsiv <- function(y,
         console <- printPush(paste("Computing stopping rule for iteration ", j, " of a maximum of ", max.iterations, "...",sep=""),console)
         
         ## For the stopping rule (use same smoothing as original)
-        E.phi.w <- fitted(crs(formula.phihatw,cv="none",degree=model.E.phi.w$degree,segments=model.E.phi.w$segments,...))
+        model.stop <- crs(formula.phihatw,cv="none",degree=model.E.phi.w$degree,segments=model.E.phi.w$segments,...)
+        E.phi.w <- predict(model.stop,newdata=newdata)
         norm.stop[j] <- mean(((E.y.w-E.phi.w)/E.y.w)^2)
         
         if(norm.stop[j] > norm.stop[j-1]) break()
