@@ -232,7 +232,7 @@ crsiv <- function(y,
     console <- printPush("Iterating and recomputing model and weights for E(E(phi(z)|w)|z)...", console)
     model <- crs(E.phihat.w~z,...)
     B <- model.matrix(model$model.lm)
-    KPHIZ <- B%*%solve(t(B)%*%B)%*%t(B)
+    KPHIWZ <- B%*%solve(t(B)%*%B)%*%t(B)
     
     ## Next, we minimize the function ittik to obtain the optimal value of
     ## alpha (here we use the iterated Tikhonov approach) to determine the
@@ -241,12 +241,12 @@ crsiv <- function(y,
     console <- printClear(console)
     console <- printPop(console)
     console <- printPush("Iterating and recomputing the numerical solution for alpha...", console)
-    alpha <- optimize(ittik,c(alpha.min,alpha.max), tol = tol, CZ = KPHIW, CY = KPHIZ, Cr.r = E.E.y.w.z, r = E.y.w)$minimum
+    alpha <- optimize(ittik,c(alpha.min,alpha.max), tol = tol, CZ = KPHIW, CY = KPHIWZ, Cr.r = E.E.y.w.z, r = E.y.w)$minimum
     
     ## Finally, we conduct regularized Tikhonov regression using this
     ## optimal alpha.
 
-    phihat <- as.vector(tikh(alpha, CZ = KPHIW, CY = KPHIZ, Cr.r = E.E.y.w.z))
+    phihat <- as.vector(tikh(alpha, CZ = KPHIW, CY = KPHIWZ, Cr.r = E.E.y.w.z))
     
     console <- printClear(console)
     console <- printPop(console)
