@@ -158,27 +158,23 @@ crsiv <- function(y,
   ## have problems since the initial B needs to be for the evaluation
   ## data and will need to be constructed
 
-  if(is.null(x)) {
-    newdata <- data.frame(z1=zeval,w1=weval)
-  } else {
-    newdata <- data.frame(z1=zeval,w1=weval,x1=xeval)
-  }
-
   method <- match.arg(method)
 
   ## Set up formulas for multivariate W and Z
 
   W <- data.frame(w)
+  Weval <- data.frame(weval)
   wnames <- paste("w", 1:NCOL(W), sep="")
   names(W) <- wnames
+  names(Weval) <- wnames  
   attach(W)
-  rm(W)
 
   Z <- data.frame(z)
+  Zeval <- data.frame(zeval)  
   znames <- paste("z", 1:NCOL(Z), sep="")
   names(Z) <- znames
+  names(Zeval) <- znames  
   attach(Z)
-  rm(Z)
 
   ## If there exist exogenous regressors X, append these to the
   ## formulas involving Z (can be manually added to W by the user if
@@ -186,10 +182,21 @@ crsiv <- function(y,
 
   if(!is.null(x)) {
     X <- data.frame(x)
+    Xeval <- data.frame(xeval)    
     xnames <- paste("x", 1:NCOL(X), sep="")
     names(X) <- xnames
+    names(Xeval) <- xnames    
     attach(X)
-    rm(X)
+  }
+
+  ## Now create evaluation data
+
+  if(is.null(x)) {
+    newdata <- data.frame(Zeval,Weval)
+    rm(W,Weval,Z,Zeval)
+  } else {
+    newdata <- data.frame(Zeval,Weval,Xeval)
+    rm(W,Weval,Z,Zeval,X,Xeval)
   }
 
   formula.yw <- as.formula(paste("y ~ ", paste(wnames, collapse= "+")))
