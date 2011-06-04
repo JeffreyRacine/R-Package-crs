@@ -154,14 +154,28 @@ crsiv <- function(y,
 
   method <- match.arg(method)
 
-  ## Set up formulas for multivariate W
+  ## Set up formulas for multivariate W and Z
 
   W <- data.frame(w)
   wnames <- paste("w", 1:NCOL(W), sep="")
   names(W) <- wnames
   attach(W)
   rm(W)
+
+  Z <- data.frame(z)
+  znames <- paste("z", 1:NCOL(Z), sep="")
+  names(Z) <- znames
+  attach(Z)
+  rm(Z)
+
   formula.yw <- as.formula(paste("y ~ ", paste(wnames, collapse= "+")))
+
+  formula.Eywz <- as.formula(paste("E.y.w ~ ", paste(znames, collapse= "+")))
+  formula.Ephihatwz <- as.formula(paste("E.phihat.w ~ ", paste(znames, collapse= "+")))  
+  formula.fittedmodelresidphi0z <- as.formula(paste("fitted(model.residphi0) ~ ", paste(znames, collapse= "+")))
+  formula.fittedmodelresidwz <- as.formula(paste("fitted(model.residw) ~ ", paste(znames, collapse= "+")))    
+
+  formula.yz <- as.formula(paste("y ~ ", paste(znames, collapse= "+")))
   formula.phihatw <- as.formula(paste("phihat ~ ", paste(wnames, collapse= "+")))  
   formula.residw <- as.formula(paste("(y-phi.j.m.1) ~ ", paste(wnames, collapse= "+")))
   formula.residphi.0 <- as.formula(paste("residuals(phi.0) ~ ", paste(wnames, collapse= "+")))    
@@ -188,7 +202,7 @@ crsiv <- function(y,
     console <- printClear(console)
     console <- printPop(console)
     console <- printPush("Computing weights and optimal smoothing for E(E(y|w)|z)...", console)
-    model <- crs(E.y.w~z,...)
+    model <- crs(formula.Eywz,...)
     E.E.y.w.z <- fitted(model)
     B <- model.matrix(model$model.lm)
     KYWZ <- B%*%solve(t(B)%*%B)%*%t(B)
@@ -234,7 +248,7 @@ crsiv <- function(y,
     console <- printClear(console)
     console <- printPop(console)
     console <- printPush("Computing optimal smoothing and weights for E(E(phi(z)|w)|z)...", console)
-    model <- crs(E.phihat.w~z,...)
+    model <- crs(formula.Ephihatwz,...)
     B <- model.matrix(model$model.lm)
     KPHIWZ <- B%*%solve(t(B)%*%B)%*%t(B)
     
@@ -273,8 +287,9 @@ crsiv <- function(y,
     console <- printClear(console)
     console <- printPop(console)
     console <- printPush(paste("Computing optimal smoothing and phi(z) for iteration 1 of at least ", start.iterations,"...",sep=""),console)
-    phi.0 <- crs(y~z,...)
-    phi.j.m.1 <- fitted(phi.0) + fitted(model.Eresidphi0.z<-crs(fitted(model.residphi0<-crs(formula.residphi.0,...))~z,...))
+    phi.0 <- crs(formula.yz,...)
+    model.residphi0 <- crs(formula.residphi0w,...)
+    phi.j.m.1 <- fitted(phi.0) + fitted(model.Eresidphi0.z <- crs(formula.fittedmodelresidphi0z,...))
 
     ## For the stopping rule
 
@@ -299,7 +314,7 @@ crsiv <- function(y,
       console <- printPush(paste("Computing optimal smoothing and phi(z) for iteration ", j, " of at least ", start.iterations,"...",sep=""),console)
 
       model.residw <- crs(formula.residw,...)
-      model.fitted.residw.z <- crs(fitted(model.residw)~z,...)
+      model.fitted.residw.z <- crs(formula.fittedmodelresidwz,...)
 
       phi.j <- phi.j.m.1 + constant*fitted(model.fitted.residw.z)
       phi.j.m.1 <- phi.j
