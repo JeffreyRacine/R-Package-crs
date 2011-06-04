@@ -145,6 +145,7 @@ crsiv <- function(y,
   if(missing(w)) stop("You must provide w")
   if(NCOL(y) > 1) stop("y must be univariate")
   if(NROW(y) != NROW(z) || NROW(y) != NROW(w)) stop("y, z, and w have differing numbers of rows")
+  if(!is.null(x) && NROW(y) != NROW(x)) stop("y and x have differing numbers of rows")
   if(start.iterations < 2) stop("start.iterations must be at least 2")
 
   ## Check for evaluation data
@@ -154,13 +155,9 @@ crsiv <- function(y,
   if(is.null(weval)) weval <- w
   if(!is.null(x) && is.null(xeval)) xeval <- x
 
-  ## Note - newdata not currently working, but for Tikhonov we will
-  ## have problems since the initial B needs to be for the evaluation
-  ## data and will need to be constructed
-
   method <- match.arg(method)
 
-  ## Set up formulas for multivariate W and Z
+  ## Set up formulas for multivariate W, Z, and X is provided
 
   W <- data.frame(w)
   Weval <- data.frame(weval)
