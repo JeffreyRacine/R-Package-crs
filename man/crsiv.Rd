@@ -249,22 +249,24 @@ curve(phi,min(z),max(z),
       ylim=quantile(y,c(trim,1-trim)),
       ylab="Y",
       xlab="Z",
-      main="Nonparametric Instrumental Regression Splines",
-      lwd=2,lty=1)
+      main="Nonparametric Instrumental Spline Regression",
+      sub=paste("Landweber-Fridman: iterations = ", model.iv$num.iterations,sep=""),
+      lwd=1,lty=1)
 
 points(z,y,type="p",cex=.25,col="grey")
+
+lines(z,z^2 -0.325*z,lwd=1,lty=1)
 
 lines(z,phihat.iv,col="blue",lwd=2,lty=2)
 
 lines(z,crs.mean,col="red",lwd=2,lty=4)
 
 legend(quantile(z,trim),quantile(y,1-trim),
-       c(expression(paste(varphi(z))),
+       c(expression(paste(varphi(z),", E(y|z)",sep="")),
          expression(paste("Nonparametric ",hat(varphi)(z))),
          "Nonparametric E(y|z)"),
        lty=c(1,2,4),
        col=c("black","blue","red"),
-       lwd=c(2,2,2))
-
+       lwd=c(1,2,2))
 }
 \keyword{ instrument }
