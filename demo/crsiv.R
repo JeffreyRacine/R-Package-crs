@@ -12,7 +12,7 @@ v  <- rnorm(n,mean=0,sd=.27)
 eps <- rnorm(n,mean=0,sd=0.05)
 u <- -0.5*v + eps
 w <- rnorm(n,mean=0,sd=1)
-z <- 0.2*w + v
+z <- 0.3*w + v
 
 ## In Darolles et al (2011) there exist two DGPs. The first is
 ## phi(z)=z^2.

@@ -25,16 +25,14 @@ crsiv(y,
       z,
       w,
       x = NULL,
-      yeval = NULL,
       zeval = NULL,
       weval = NULL,
       xeval = NULL,
       alpha.min = 1e-10,
       alpha.max = 1e-01,
-      tol = .Machine$double.eps^0.25,
-      start.iterations = 10,
-      max.iterations = 100,
-      iterate.smoothing = TRUE,
+      alpha.tol = .Machine$double.eps^0.25,
+      iterate.max = 100,
+      iterate.tol = 1.0e-05,
       constant = 0.5,
       method = c("Landweber-Fridman","Tikhonov"),
       ...)
@@ -62,11 +60,6 @@ crsiv(y,
     types may be continuous, discrete (unordered and ordered factors),
     or some combination thereof.
   }
-  \item{yeval}{
-    a one (1) dimensional numeric or integer vector on which the
-    regression will be estimated (evaluation data). By default, evaluation
-    takes place on the data provided by \code{y}.
-  }
   \item{zeval}{
     a \eqn{p}-variate data frame of endogenous predictors on which the
     regression will be estimated (evaluation data). By default, evaluation
@@ -84,40 +77,32 @@ crsiv(y,
   }
   \item{alpha.min}{
     minimum of search range for \eqn{\alpha}{alpha}, the Tikhonov
-    regularization parameter, when using
-    Tikhonov regularization.
+    regularization parameter, when using \code{method="Tikhonov"}.
 }
   \item{alpha.max}{
     maximum of search range for \eqn{\alpha}{alpha}, the Tikhonov
-    regularization parameter, when using
-    Tikhonov regularization.
+    regularization parameter, when using  \code{method="Tikhonov"}.
   }
-\item{tol}{
+\item{alpha.tol}{
   the search tolerance for \code{optimize} when solving for
   \eqn{\alpha}{alpha}, the Tikhonov regularization parameter, when using
-  Tikhonov regularization.
+  when using \code{method="Tikhonov"}.
 }
-\item{start.iterations}{
-  an integer indicating the minimum number of iterations to conduct
-  when using Landweber-Fridman regularization (here at each iteration
-  the smoothing parameters are refined and optimized).
-}
-\item{max.iterations}{
+\item{iterate.max}{
   an integer indicating the maximum number of iterations permitted
-  before termination occurs.
+  before termination occurs when using \code{method="Landweber-Fridman"}.
 }
-\item{iterate.smoothing}{
-  a logical value indicating whether, after the initial
-  \code{start.iterations} have been conducted, to continue to optimize the
-  smoothing parameters for each successive iteration.
+\item{iterate.tol}{
+  the search tolerance for the stopping rule when using \code{method="Landweber-Fridman"}.
 }
 \item{constant}{
-  the constant to use when using Landweber-Fridman regularization.
+  the constant to use when using  \code{method="Landweber-Fridman"}.
 }
 \item{method}{
-  the regularization method employed (defaults to \code{"Tikhonov"}, see
-  Darolles, Fan, Florens and Renault (forthcoming); see Horowitz
-  (2011) for details for \code{"Landweber-Fridman"}).
+  the regularization method employed (defaults to
+   \code{"Landweber-Fridman"}, see see Horowitz (2011); see Darolles,
+   Fan, Florens and Renault (forthcoming) for details for
+   \code{"Tikhonov"}).
 }
 \item{...}{
   additional arguments supplied to \code{\link{crs}}.

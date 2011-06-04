@@ -5,7 +5,6 @@
 ## w: instruments
 ## x: exogenous predictors
 
-## yeval: optional evaluation data for the univariate outcome
 ## zeval: optional evaluation data for the endogenous predictors
 ## weval: optional evaluation data for the instruments
 ## xeval: optional evaluation data for the exogenous predictors
@@ -29,15 +28,13 @@ crsiv <- function(y,
                   z,
                   w,
                   x=NULL,
-                  yeval=NULL,
                   zeval=NULL,
                   weval=NULL,
                   xeval=NULL,
                   alpha.min=1.0e-10,
                   alpha.max=1.0e-01,
-                  tol=.Machine$double.eps^0.25,
-                  max.iterations=100,
-                  iterate.smoothing=TRUE,
+                  alpha.tol=.Machine$double.eps^0.25,
+                  iterate.max=100,
                   iterate.tol=1.0e-05,
                   constant=0.5,
                   method=c("Landweber-Fridman","Tikhonov"),
@@ -146,11 +143,10 @@ crsiv <- function(y,
   if(NCOL(y) > 1) stop("y must be univariate")
   if(NROW(y) != NROW(z) || NROW(y) != NROW(w)) stop("y, z, and w have differing numbers of rows")
   if(!is.null(x) && NROW(y) != NROW(x)) stop("y and x have differing numbers of rows")
-  if(max.iterations < 2) stop("max.iterations must be at least 2")
+  if(iterate.max < 2) stop("iterate.max must be at least 2")
 
   ## Check for evaluation data
 
-  if(is.null(yeval)) yeval <- y
   if(is.null(zeval)) zeval <- z
   if(is.null(weval)) weval <- w
   if(!is.null(x) && is.null(xeval)) xeval <- x
@@ -258,7 +254,7 @@ crsiv <- function(y,
     console <- printClear(console)
     console <- printPop(console)
     console <- printPush("Numerically solving for alpha...", console)
-    alpha <- optimize(ittik, c(alpha.min,alpha.max), tol = tol, CZ = KYW, CY = KYWZ, Cr.r = E.E.y.w.z, r = E.y.w)$minimum
+    alpha <- optimize(ittik, c(alpha.min,alpha.max), tol = alpha.tol, CZ = KYW, CY = KYWZ, Cr.r = E.E.y.w.z, r = E.y.w)$minimum
     
     ## Finally, we conduct regularized Tikhonov regression using this
     ## optimal alpha to get a first stage estimate of phihat
@@ -310,7 +306,7 @@ crsiv <- function(y,
     console <- printClear(console)
     console <- printPop(console)
     console <- printPush("Iterating and computing the numerical solution for alpha...", console)
-    alpha <- optimize(ittik,c(alpha.min,alpha.max), tol = tol, CZ = KPHIW, CY = KPHIWZ, Cr.r = E.E.y.w.z, r = E.y.w)$minimum
+    alpha <- optimize(ittik,c(alpha.min,alpha.max), tol = alpha.tol, CZ = KPHIW, CY = KPHIWZ, Cr.r = E.E.y.w.z, r = E.y.w)$minimum
     
     ## Finally, we conduct regularized Tikhonov regression using this
     ## optimal alpha.
@@ -342,9 +338,9 @@ crsiv <- function(y,
     console <- printClear(console)
     console <- printPop(console)
     if(is.null(x)) {
-      console <- printPush(paste("Computing optimal smoothing and phi(z) for iteration 1 of maximum ", max.iterations,"...",sep=""),console)
+      console <- printPush(paste("Computing optimal smoothing and phi(z) for iteration 1 of maximum ", iterate.max,"...",sep=""),console)
     } else {
-      console <- printPush(paste("Computing optimal smoothing and phi(z,x) for iteration 1 of maximum ", max.iterations,"...",sep=""),console)
+      console <- printPush(paste("Computing optimal smoothing and phi(z,x) for iteration 1 of maximum ", iterate.max,"...",sep=""),console)
     }
     phi.0 <- crs(formula.yz,...)
     model.residphi0 <- crs(formula.residphi0w,...)
@@ -367,14 +363,14 @@ crsiv <- function(y,
 
     ascending <- FALSE
 
-    for(j in 2:max.iterations) {
+    for(j in 2:iterate.max) {
 
       console <- printClear(console)
       console <- printPop(console)
       if(is.null(x)) {
-        console <- printPush(paste("Computing optimal smoothing and phi(z) for iteration ", j, " of maximum ", max.iterations,"...",sep=""),console)
+        console <- printPush(paste("Computing optimal smoothing and phi(z) for iteration ", j, " of maximum ", iterate.max,"...",sep=""),console)
       } else {
-        console <- printPush(paste("Computing optimal smoothing and phi(z,x) for iteration ", j, " of maximum ", max.iterations,"...",sep=""),console)
+        console <- printPush(paste("Computing optimal smoothing and phi(z,x) for iteration ", j, " of maximum ", iterate.max,"...",sep=""),console)
       }
 
       model.residw <- crs(formula.residw,...)
@@ -386,7 +382,7 @@ crsiv <- function(y,
 
       console <- printClear(console)
       console <- printPop(console)
-      console <- printPush(paste("Computing stopping rule for iteration ", j, " of maximum ", max.iterations,"...",sep=""),console)
+      console <- printPush(paste("Computing stopping rule for iteration ", j, " of maximum ", iterate.max,"...",sep=""),console)
 
       ## For the stopping rule (use same smoothing as original)
       model.stop <- crs(formula.phihatw,cv="none",degree=model.E.phi.w$degree,segments=model.E.phi.w$segments,...)
@@ -402,7 +398,7 @@ crsiv <- function(y,
     console <- printClear(console)
     console <- printPop(console)
 
-    if(j == max.iterations) warning("max.iterations reached: increase max.iterations or inspect norm.stop vector")
+    if(j == iterate.max) warning("iterate.max reached: increase iterate.max or inspect norm.stop vector")
 
     return(list(phihat=phi.j, num.iterations=j, norm.stop=norm.stop))
 
