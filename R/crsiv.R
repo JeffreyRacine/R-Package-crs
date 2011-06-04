@@ -1,12 +1,14 @@
 ## This functions accepts the following arguments:
 
 ## y: univariate outcome
-## z: endogenous predictor
-## w: instrument
+## z: endogenous predictors
+## w: instruments
+## x: exogenous predictors
 
 ## yeval: optional evaluation data for the univariate outcome
-## zeval: optional evaluation data for the endogenous predictor
-## weval: optional evaluation data for the instrument
+## zeval: optional evaluation data for the endogenous predictors
+## weval: optional evaluation data for the instruments
+## xeval: optional evaluation data for the exogenous predictors
 
 ## alpha.min: minimum value when conducting 1-dimensional search for
 ##            optimal Tihhonov regularization parameter alpha
@@ -20,13 +22,17 @@
 
 ## phihat: the IV estimator of phi(y)
 ## alpha:  the Tikhonov regularization parameter
+## num.iterations:  the number of Landweber-Fridman iterations
+## norm.stop: the vector of values of the objective function used for stopping
 
 crsiv <- function(y,
                   z,
                   w,
+                  x=NULL,
                   yeval=NULL,
                   zeval=NULL,
                   weval=NULL,
+                  xeval=NULL,
                   alpha.min=1.0e-10,
                   alpha.max=1.0e-01,
                   tol=.Machine$double.eps^0.25,
@@ -90,9 +96,9 @@ crsiv <- function(y,
   ## phi:   the vector of estimated values for the unknown function at the evaluation points
   
   tikh <- function(alpha,CZ,CY,Cr.r){
-    return(solve(alpha*diag(length(Cr.r)) + CY%*%CZ) %*% Cr.r)
+    return(solve(alpha*diag(length(Cr.r)) + CY%*%CZ) %*% Cr.r) ## This must be computable via ridge... step 1, step 2, same alpha...
   }
-  
+
   ## This function applies the iterated Tikhonov approach which
   ## corresponds to (3.10) in Feve & Florens (2010).
   
@@ -123,10 +129,6 @@ crsiv <- function(y,
 
   ## Cr.r is always E.E.y.w.z, r is always E.y.w
   
-  tikh <- function(alpha,CZ,CY,Cr.r){
-    return(solve(alpha*diag(length(Cr.r)) + CY%*%CZ) %*% Cr.r) ## This must be computable via ridge... step 1, step 2, same alpha...
-  }
-
   ittik <- function(alpha,CZ,CY,Cr.r,r) {
     invmat <- solve(alpha*diag(length(Cr.r)) + CY%*%CZ)
     tikh.val <- invmat %*% Cr.r
@@ -141,8 +143,7 @@ crsiv <- function(y,
   if(missing(y)) stop("You must provide y")
   if(missing(z)) stop("You must provide z")
   if(missing(w)) stop("You must provide w")
-  if(NCOL(y) > 1) stop("y must be univariat")
-  if(NCOL(z) > 1) stop("z must be univariate")
+  if(NCOL(y) > 1) stop("y must be univariate")
   if(NROW(y) != NROW(z) || NROW(y) != NROW(w)) stop("y, z, and w have differing numbers of rows")
   if(start.iterations < 2) stop("start.iterations must be at least 2")
 
@@ -168,17 +169,36 @@ crsiv <- function(y,
   attach(Z)
   rm(Z)
 
+  ## If there exist exogenous regressors X, append these to the
+  ## formulas involving Z (can be manually added to W by the user if
+  ## desired)
+
+  if(!is.null(x)) {
+    X <- data.frame(x)
+    xnames <- paste("x", 1:NCOL(X), sep="")
+    names(X) <- xnames
+    attach(X)
+    rm(X)
+  }
+
   formula.yw <- as.formula(paste("y ~ ", paste(wnames, collapse= "+")))
-
-  formula.Eywz <- as.formula(paste("E.y.w ~ ", paste(znames, collapse= "+")))
-  formula.Ephihatwz <- as.formula(paste("E.phihat.w ~ ", paste(znames, collapse= "+")))  
-  formula.fittedmodelresidphi0z <- as.formula(paste("fitted(model.residphi0) ~ ", paste(znames, collapse= "+")))
-  formula.fittedmodelresidwz <- as.formula(paste("fitted(model.residw) ~ ", paste(znames, collapse= "+")))    
-
-  formula.yz <- as.formula(paste("y ~ ", paste(znames, collapse= "+")))
   formula.phihatw <- as.formula(paste("phihat ~ ", paste(wnames, collapse= "+")))  
   formula.residw <- as.formula(paste("(y-phi.j.m.1) ~ ", paste(wnames, collapse= "+")))
-  formula.residphi.0 <- as.formula(paste("residuals(phi.0) ~ ", paste(wnames, collapse= "+")))    
+  formula.residphi0w <- as.formula(paste("residuals(phi.0) ~ ", paste(wnames, collapse= "+")))    
+
+  if(is.null(x)) {
+    formula.yz <- as.formula(paste("y ~ ", paste(znames, collapse= "+")))
+    formula.Eywz <- as.formula(paste("E.y.w ~ ", paste(znames, collapse= "+")))
+    formula.Ephihatwz <- as.formula(paste("E.phihat.w ~ ", paste(znames, collapse= "+")))  
+    formula.fittedmodelresidphi0z <- as.formula(paste("fitted(model.residphi0) ~ ", paste(znames, collapse= "+")))
+    formula.fittedmodelresidwz <- as.formula(paste("fitted(model.residw) ~ ", paste(znames, collapse= "+")))
+  } else {
+    formula.yz <- as.formula(paste("y ~ ", paste(znames, collapse= "+"), " + ", paste(xnames, collapse= "+")))
+    formula.Eywz <- as.formula(paste("E.y.w ~ ", paste(znames, collapse= "+"), " + ", paste(xnames, collapse= "+")))
+    formula.Ephihatwz <- as.formula(paste("E.phihat.w ~ ", paste(znames, collapse= "+"), " + ", paste(xnames, collapse= "+")))  
+    formula.fittedmodelresidphi0z <- as.formula(paste("fitted(model.residphi0) ~ ", paste(znames, collapse= "+"), " + ", paste(xnames, collapse= "+")))
+    formula.fittedmodelresidwz <- as.formula(paste("fitted(model.residw) ~ ", paste(znames, collapse= "+"), " + ", paste(xnames, collapse= "+")))
+  }
 
   if(method=="Tikhonov") {
   
@@ -201,7 +221,11 @@ crsiv <- function(y,
     
     console <- printClear(console)
     console <- printPop(console)
-    console <- printPush("Computing weights and optimal smoothing for E(E(y|w)|z)...", console)
+    if(is.null(x)) {
+      console <- printPush("Computing weights and optimal smoothing for E(E(y|w)|z)...", console)
+    } else {
+      console <- printPush("Computing weights and optimal smoothing for E(E(y|w)|z,x)...", console)
+    }
     model <- crs(formula.Eywz,...)
     E.E.y.w.z <- fitted(model)
     B <- model.matrix(model$model.lm)
@@ -226,7 +250,11 @@ crsiv <- function(y,
 
     console <- printClear(console)
     console <- printPop(console)
-    console <- printPush("Computing initial phi(z) estimate...", console)
+    if(is.null(x)) {
+      console <- printPush("Computing initial phi(z) estimate...", console)
+    } else {
+      console <- printPush("Computing initial phi(z,x) estimate...", console)
+    }
     phihat <- as.vector(tikh(alpha, CZ = KYW, CY = KYWZ, Cr.r = E.E.y.w.z))
 
     ## KYWZ and KZWS no longer used, save memory
@@ -237,7 +265,11 @@ crsiv <- function(y,
     
     console <- printClear(console)
     console <- printPop(console)
-    console <- printPush("Computing optimal smoothing and weights for E(phi(z)|w)...", console)
+    if(is.null(x)) {
+      console <- printPush("Computing optimal smoothing and weights for E(phi(z)|w)...", console)
+    } else {
+      console <- printPush("Computing optimal smoothing and weights for E(phi(z,x)|w)...", console)
+    }
     model <- crs(formula.phihatw,...)
     E.phihat.w <- fitted(model)
     B <- model.matrix(model$model.lm)
@@ -247,7 +279,11 @@ crsiv <- function(y,
     
     console <- printClear(console)
     console <- printPop(console)
-    console <- printPush("Computing optimal smoothing and weights for E(E(phi(z)|w)|z)...", console)
+    if(is.null(x)) {
+      console <- printPush("Computing optimal smoothing and weights for E(E(phi(z)|w)|z)...", console)
+    } else {
+      console <- printPush("Computing optimal smoothing and weights for E(E(phi(z,x)|w)|z,x)...", console)
+    }
     model <- crs(formula.Ephihatwz,...)
     B <- model.matrix(model$model.lm)
     KPHIWZ <- B%*%solve(t(B)%*%B)%*%t(B)
@@ -266,7 +302,11 @@ crsiv <- function(y,
 
     console <- printClear(console)
     console <- printPop(console)
-    console <- printPush("Computing final phi(z) estimate...", console)
+    if(is.null(x)) {
+      console <- printPush("Computing final phi(z) estimate...", console)
+    } else {
+      console <- printPush("Computing final phi(z,x) estimate...", console)
+    }
     phihat <- as.vector(tikh(alpha, CZ = KPHIW, CY = KPHIWZ, Cr.r = E.E.y.w.z))
     
     console <- printClear(console)
@@ -286,7 +326,11 @@ crsiv <- function(y,
     
     console <- printClear(console)
     console <- printPop(console)
-    console <- printPush(paste("Computing optimal smoothing and phi(z) for iteration 1 of at least ", start.iterations,"...",sep=""),console)
+    if(is.null(x)) {
+      console <- printPush(paste("Computing optimal smoothing and phi(z) for iteration 1 of at least ", start.iterations,"...",sep=""),console)
+    } else {
+      console <- printPush(paste("Computing optimal smoothing and phi(z,x) for iteration 1 of at least ", start.iterations,"...",sep=""),console)
+    }
     phi.0 <- crs(formula.yz,...)
     model.residphi0 <- crs(formula.residphi0w,...)
     phi.j.m.1 <- fitted(phi.0) + fitted(model.Eresidphi0.z <- crs(formula.fittedmodelresidphi0z,...))
@@ -311,7 +355,11 @@ crsiv <- function(y,
 
       console <- printClear(console)
       console <- printPop(console)
-      console <- printPush(paste("Computing optimal smoothing and phi(z) for iteration ", j, " of at least ", start.iterations,"...",sep=""),console)
+      if(is.null(x)) {
+        console <- printPush(paste("Computing optimal smoothing and phi(z) for iteration ", j, " of at least ", start.iterations,"...",sep=""),console)
+      } else {
+        console <- printPush(paste("Computing optimal smoothing and phi(z,x) for iteration ", j, " of at least ", start.iterations,"...",sep=""),console)
+      }
 
       model.residw <- crs(formula.residw,...)
       model.fitted.residw.z <- crs(formula.fittedmodelresidwz,...)
@@ -348,11 +396,19 @@ crsiv <- function(y,
         console <- printPop(console)
         
         if(iterate.smoothing) {
-          console <- printPush(paste("Computing optimal smoothing and phi(z) for iteration ", j, " of a maximum of ", max.iterations, "...",sep=""),console)
+          if(is.null(x)) {
+            console <- printPush(paste("Computing optimal smoothing and phi(z) for iteration ", j, " of a maximum of ", max.iterations, "...",sep=""),console)
+          } else {
+            console <- printPush(paste("Computing optimal smoothing and phi(z,x) for iteration ", j, " of a maximum of ", max.iterations, "...",sep=""),console)
+          }
           model.residw <- crs(formula.residw,...)
           model.fitted.residw.z <- crs(fitted(model.residw)~z,...)
         } else {
-          console <- printPush(paste("Computing phi(z) for iteration ", j, " of a maximum of ", max.iterations, "...",sep=""),console)
+          if(is.null(x)) {
+            console <- printPush(paste("Computing phi(z) for iteration ", j, " of a maximum of ", max.iterations, "...",sep=""),console)
+          } else {
+            console <- printPush(paste("Computing phi(z,x) for iteration ", j, " of a maximum of ", max.iterations, "...",sep=""),console)
+          }
           model.residw <- crs(formula.residw,cv="none",degree=model.residw$degree,segments=model.residw$segments,...)
           model.fitted.residw.z <- crs(fitted(model.residw)~z,cv="none",degree=model.fitted.residw.z$degree,segments=model.fitted.residw.z$segments,...)
         }
