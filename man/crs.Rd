@@ -141,12 +141,13 @@ crs(\dots)
     indicating whether the additive or tensor product B-spline basis
     matrix for a multivariate polynomial spline should be used. Note
     this can be automatically determined by cross-validation if
-    \code{cv=TRUE} and \code{basis="auto"}, and is an \sQuote{all or
-    none} proposition (i.e. interaction terms for all predictors or for
-    no predictors given the nature of \sQuote{tensor products}). Note
-    also that if there is only one predictor this defaults to
-    \code{basis="additive"} to avoid unnecessary computation as the
-    spline bases are equivalent in this case }
+    \code{cv="nomad"} or \code{cv="exhaustive"} and \code{basis="auto"},
+    and is an \sQuote{all or none} proposition (i.e. interaction terms
+    for all predictors or for no predictors given the nature of
+    \sQuote{tensor products}). Note also that if there is only one
+    predictor this defaults to \code{basis="additive"} to avoid
+    unnecessary computation as the spline bases are equivalent in this
+    case }
 
   \item{deriv}{ an integer \code{l} (default \code{deriv=0}) specifying
   whether to compute the univariate \code{l}th partial derivative for
@@ -195,7 +196,7 @@ crs(\dots)
     ## Categorical data should be cast before call (necessary for plot method)
     z1 <- factor(z1)
     z2 <- factor(z2)
-    model <- crs(y~x1+x2+z1+z2,cv=FALSE,degree=c(3,4),lambda=c(.1,.2),kernel=TRUE)
+    model <- crs(y~x1+x2+z1+z2,cv="none",degree=c(3,4),lambda=c(.1,.2),kernel=TRUE)
     }
     
   \code{crs} computes a regression spline estimate of a one (1)

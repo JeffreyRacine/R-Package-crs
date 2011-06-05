@@ -62,7 +62,7 @@ model <- crs(lwage~married+
              complexity="degree",
              data=wage1,
              deriv=1,
-             basis.maxdim=5)
+             segments=c(1,1,1))
 
 degree <- model$degree
 include <- model$include
@@ -87,7 +87,7 @@ model <- crs(lwage~married+
              include=include,
              basis=basis,
              data=wage1,
-             cv=FALSE,
+             cv="none",
              deriv=2)
 plot(model,deriv=TRUE)
 \dontrun{

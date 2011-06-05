@@ -12,7 +12,6 @@
   predictors.
   
 }
-
 \usage{
 krscvNOMAD(xz,
       y,
@@ -30,6 +29,7 @@ krscvNOMAD(xz,
 			segments = segments,
 			lambda = lambda, 
 			fit.z = fit.z, 
+      opts = list("MAX_BB_EVAL"=500,"MIN_MESH_SIZE"="r1.0e-08","INITIAL_MESH_SIZE"="r0.1","MIN_POLL_SIZE"="r1.0e-07"),
 			nmulti = 0)
 }
 
@@ -111,6 +111,10 @@ krscvNOMAD(xz,
 	values for the categroical predictors. If "include" or "lambda" is NULL, 
 	fit.z will be TRUE. The default value is FALSE.}
 
+\item{opts}{
+  arguments passed to the NOMAD solver.
+  }
+  
   \item{nmulti}{
     integer number of times to restart the process of finding extrema of
     the cross-validation function from different (random) initial
