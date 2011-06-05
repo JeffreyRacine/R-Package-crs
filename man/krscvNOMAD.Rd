@@ -29,7 +29,7 @@ krscvNOMAD(xz,
 			segments = segments,
 			lambda = lambda, 
 			fit.z = fit.z, 
-      opts = list("MAX_BB_EVAL"=500,"MIN_MESH_SIZE"="r1.0e-08","INITIAL_MESH_SIZE"="r0.1","MIN_POLL_SIZE"="r1.0e-07"),
+      opts=list("MAX_BB_EVAL"=500,"MIN_MESH_SIZE"="r1.0e-10","INITIAL_MESH_SIZE"="r1.0e-02","MIN_POLL_SIZE"="r1.0e-10"),
 			nmulti = 0)
 }
 

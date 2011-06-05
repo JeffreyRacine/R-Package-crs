@@ -27,7 +27,8 @@ frscvNOMAD(xz,
 					 degree=degree,
 					 segments=segments, 
 					 include=include, 
-					 fit.z=fit.z, 
+					 fit.z=fit.z,
+           opts=list("MAX_BB_EVAL"=500,"MIN_MESH_SIZE"="r1.0e-10","INITIAL_MESH_SIZE"="r1.0e-02","MIN_POLL_SIZE"="r1.0e-10"),
 					 nmulti=0)
 }
 
@@ -98,6 +99,10 @@ we will not fit include.}
 	values for the categroical predictors. If "include" or "lambda" is NULL, 
 	fit.z will be TRUE. The default value is FALSE.}
 
+\item{opts}{
+  arguments passed to the NOMAD solver.
+  }
+  
   \item{nmulti}{
     integer number of times to restart the process of finding extrema of
     the cross-validation function from different (random) initial

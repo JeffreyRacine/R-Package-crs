@@ -85,6 +85,8 @@ crs.mean <- fitted(crs(y~z,nmulti=nmulti))
 
 trim <- 0.0025
 
+dev.new()
+
 curve(phi,min(z),max(z),
       xlim=quantile(z,c(trim,1-trim)),
       ylim=quantile(y,c(trim,1-trim)),

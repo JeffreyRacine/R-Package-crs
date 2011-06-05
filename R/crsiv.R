@@ -323,8 +323,8 @@ crsiv <- function(y,
     console <- printClear(console)
     console <- printPop(console)
     
-    if((alpha-alpha.min)/alpha.min < 0.01) warning(paste("Tikhonov parameter alpha (",alpha,") is close to the search minimum (",alpha.min,")",sep=""))
-    if((alpha.max-alpha)/alpha.max < 0.01) warning(paste("Tikhonov parameter alpha (",alpha,") is close to the search maximum (",alpha.max,")",sep=""))
+    if((alpha-alpha.min)/alpha.min < 0.01) warning(paste("Tikhonov parameter alpha (",formatC(alpha,digits=4,format="f"),") is close to the search minimum (",alpha.min,")",sep=""))
+    if((alpha.max-alpha)/alpha.max < 0.01) warning(paste("Tikhonov parameter alpha (",formatC(alpha,digits=4,format="f"),") is close to the search maximum (",alpha.max,")",sep=""))
     
     return(list(phihat=phihat,alpha=alpha))
     
@@ -338,9 +338,9 @@ crsiv <- function(y,
     console <- printClear(console)
     console <- printPop(console)
     if(is.null(x)) {
-      console <- printPush(paste("Computing optimal smoothing and phi(z) for iteration 1 of maximum ", iterate.max,"...",sep=""),console)
+      console <- printPush(paste("Computing optimal smoothing and phi(z) for iteration 1...",sep=""),console)
     } else {
-      console <- printPush(paste("Computing optimal smoothing and phi(z,x) for iteration 1 of maximum ", iterate.max,"...",sep=""),console)
+      console <- printPush(paste("Computing optimal smoothing and phi(z,x) for iteration 1...",sep=""),console)
     }
     phi.0 <- crs(formula.yz,...)
     model.residphi0 <- crs(formula.residphi0w,...)
@@ -366,9 +366,9 @@ crsiv <- function(y,
       console <- printClear(console)
       console <- printPop(console)
       if(is.null(x)) {
-        console <- printPush(paste("Computing optimal smoothing and phi(z) for iteration ", j, " of maximum ", iterate.max,"...",sep=""),console)
+        console <- printPush(paste("Computing optimal smoothing and phi(z) for iteration ", j,"...",sep=""),console)
       } else {
-        console <- printPush(paste("Computing optimal smoothing and phi(z,x) for iteration ", j, " of maximum ", iterate.max,"...",sep=""),console)
+        console <- printPush(paste("Computing optimal smoothing and phi(z,x) for iteration ", j,"...",sep=""),console)
       }
 
       model.residw <- crs(formula.residw,...)
@@ -380,7 +380,7 @@ crsiv <- function(y,
 
       console <- printClear(console)
       console <- printPop(console)
-      console <- printPush(paste("Computing stopping rule for iteration ", j, " of maximum ", iterate.max,"...",sep=""),console)
+      console <- printPush(paste("Computing stopping rule for iteration ", j,"...",sep=""),console)
 
       ## For the stopping rule (use same smoothing as original)
       model.stop <- crs(formula.phihatw,cv="none",degree=model.E.phi.w$degree,segments=model.E.phi.w$segments,...)
