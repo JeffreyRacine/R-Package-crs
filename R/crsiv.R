@@ -361,8 +361,6 @@ crsiv <- function(y,
     E.phi.w <- predict(model.E.phi.w,newdata=newdata)
     norm.stop[1] <- mean(((E.y.w-E.phi.w)/E.y.w)^2)
 
-    ascending <- FALSE
-
     for(j in 2:iterate.max) {
 
       console <- printClear(console)

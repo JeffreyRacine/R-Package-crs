@@ -20,7 +20,7 @@ model.nomad <- crs(y~x1+x2,
                    basis="auto",
                    cv="nomad",
                    complexity="degree-knots",
-                   basis.maxdim=5,
+                   basis.maxdim=5,  # the argument "basis.maxdim" will not be used when cv is "nomad".
                    knots="uniform",
                    deriv=1,
                    cv.func="cv.aic")
@@ -47,8 +47,8 @@ model.nomad <- crs(y~x1+x2,
 
 summary(model.nomad)
 
-## Multiple initial points, x0 is not provided, if best_x.txt exists,
-## it will be read in as the first inital point, otherwise, points
+## Multiple initial points, if x0 is not provided and  best_x.txt exists,
+## best_x.txt will be read in as the first inital point, otherwise, points
 ## will be generated randomly.
 
 model.multi.nomad <- crs(y~x1+x2,
@@ -64,7 +64,7 @@ model.multi.nomad <- crs(y~x1+x2,
 
 summary(model.multi.nomad)
 
-## Compare with exhaustive search (nomad=FALSE)
+## Compare with exhaustive search (cv="exhaustive")
 
 model <- crs(y~x1+x2,
              basis="auto",

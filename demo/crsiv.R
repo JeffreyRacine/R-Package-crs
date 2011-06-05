@@ -5,7 +5,7 @@ library(crs)
 ## <samuele.centorrino@univ-tlse1.fr>
 
 set.seed(42)
-n <- 1500
+n <- as.numeric(readline(prompt="Input the number of observations desired: "))
 nmulti <- 5
 
 v  <- rnorm(n,mean=0,sd=.27)

@@ -32,41 +32,45 @@ crs(\dots)
     degree = NULL,
     segments = NULL,
     include = NULL,
-    basis.maxdim = 10,
-    cv = c("nomad","exhaustive","none"),
-    cv.func = c("cv.ls","cv.gcv","cv.aic"),
-    kernel = TRUE,
-    lambda = NULL,
-    kernel.type = c("nominal","ordinal"),
-    complexity = c("degree-knots","degree","knots"),
-    knots = c("quantiles","uniform"),
-    basis = c("additive","tensor","auto"),
-    deriv = 0,
-    data.return = FALSE,
-    prune = FALSE,
-    restarts = 0,
-	  x0 = NULL, 
+		basis.maxdim = 5,
+		degree.max=5, 
+		segments.max=5, 
+		degree.min=0, 
+		segments.min=1, 
+		cv = c("nomad","exhaustive","none"),
+		cv.func = c("cv.ls","cv.gcv","cv.aic"),
+		kernel = TRUE,
+		lambda = NULL,
+		kernel.type = c("nominal","ordinal"),
+		complexity = c("degree-knots","degree","knots"),
+		knots = c("quantiles","uniform"),
+		basis = c("additive","tensor","auto"),
+		deriv = 0,
+		data.return = FALSE,
+		prune = FALSE,
+		restarts = 0,
+		fit.z = FALSE, 
 		nmulti = 0, 
-    \dots)
+		\dots)
 }
 \arguments{
-  
-  \item{xz}{ numeric (\code{x}) and or ordinal/nominal factor predictors
-    (\code{z}) }
-  
-  \item{y}{ a numeric vector of responses. }
-  
-  \item{degree}{ integer/vector specifying the polynomial degree of the
-    B-spline basis for each dimension of the continuous \code{x}
-    (default = cubic spline)}
-  
-  \item{segments}{ integer/vector specifying the number of segments of
-  the B-spline basis for each dimension of the continuous \code{x}
-  (i.e. number of knots minus one) (default = one segment)}
-  
-  \item{include}{ integer/vector specifying whether each of the
-  ordinal/nominal predictors in \code{x} are included or omitted from
-  the resulting estimate }
+
+		\item{xz}{ numeric (\code{x}) and or ordinal/nominal factor predictors
+				(\code{z}) }
+
+		\item{y}{ a numeric vector of responses. }
+
+		\item{degree}{ integer/vector specifying the polynomial degree of the
+				B-spline basis for each dimension of the continuous \code{x}
+				(default = cubic spline)}
+
+		\item{segments}{ integer/vector specifying the number of segments of
+				the B-spline basis for each dimension of the continuous \code{x}
+				(i.e. number of knots minus one) (default = one segment)}
+
+		\item{include}{ integer/vector specifying whether each of the
+				ordinal/nominal predictors in \code{x} are included or omitted from
+				the resulting estimate }
 
   \item{kernel.type}{
     a character string indicating whether the kernel
@@ -101,9 +105,17 @@ crs(\dots)
 
   \item{basis.maxdim}{ the maximum dimension of the spline degree or
     number of knots for each of the continuous predictors (default
-    \code{basis.maxdim=10} meaning a maximum dimension of 10 or number of
-    knots of 10 (11 segments) indicating a maximum number of columns in
-    the B-spline of 21)}
+    \code{basis.maxdim=5} meaning a maximum dimension of 5 or number of
+    knots of 5 (6 segments) indicating a maximum number of columns in
+    the B-spline of 10)}
+  \item{degree.max}{ the maximum degree of the B-spline basis for
+    each of the continuous predictors (default \code{degree.max=5})}
+  \item{segments.max}{ the maximum segments of the B-spline basis for
+    each of the continuous predictors (default \code{segments.max=5})}
+  \item{degree.min}{ the minimum degree of the B-spline basis for
+    each of the continuous predictors (default \code{degree.min=0})}
+  \item{segments.min}{ the minimum segments of the B-spline basis for
+    each of the continuous predictors (default \code{segments.min=1})}
 
   \item{complexity}{a character string (default
   \code{complexity="degree-knots"}) indicating whether model `complexity' is
@@ -156,7 +168,9 @@ crs(\dots)
     process of finding extrema of the cross-validation function (for the
     bandwidths only) from different (random) initial points }
 
-  \item{x0}{TBA}
+  \item{fit.z}{ If it is TRUE, "include" or "lambda" will be the initial
+	values for the categroical predictors. If "include" or "lambda" is NULL, 
+	fit.z will be TRUE. The default value is FALSE.}
 
   \item{nmulti}{
     integer number of times to restart the process of finding extrema of
@@ -358,7 +372,7 @@ crs(\dots)
 
   S. Le Digabel, (2011), \dQuote{Algorithm 909: NOMAD: Nonlinear
   optimization with the MADS algorithm}. ACM Transactions on
-  Mathematical Software, 37(4):44:1-44:15.
+  Mathematical Software, 37(4):44:1–44:15.
 
   Ma, S. and J.S. Racine and L. Yang (2010), \dQuote{Spline Regression
   in the Presence of Categorical Predictors,} manuscript.
@@ -395,9 +409,7 @@ z <- factor(z)
 y <- dgp + rnorm(n,sd=.5)
 
 ## Estimate a model with specified degree and bandwidth
-#model <-
-#crs(y~x1+x2+z,degree=c(5,5),lambda=c(0.1),cv="none",kernel=TRUE)
-model <- crs(y~x1+x2+z)
+model <- crs(y~x1+x2+z,degree=c(5,5),lambda=c(0.1),cv="none",kernel=TRUE)
 summary(model)
 
 ## Perspective plot

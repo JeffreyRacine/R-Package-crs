@@ -16,15 +16,19 @@
 \usage{
 frscvNOMAD(xz,
            y,
-           basis.maxdim=5,
-           complexity=c("degree-knots","degree","knots"),
-           knots=c("quantiles","uniform"),
-           basis=c("additive","tensor","auto"),
-           cv.func=c("cv.ls","cv.gcv","cv.aic"),
-           degree=degree,
-           segments=segments, 
-           x0=x0, 
-           nmulti=0)
+					 degree.max=5, 
+					 segments.max=5, 
+					 degree.min=0, 
+					 segments.min=1, 
+					 complexity=c("degree-knots","degree","knots"),
+					 knots=c("quantiles","uniform"),
+					 basis=c("additive","tensor","auto"),
+					 cv.func=c("cv.ls","cv.gcv","cv.aic"),
+					 degree=degree,
+					 segments=segments, 
+					 include=include, 
+					 fit.z=fit.z, 
+					 nmulti=0)
 }
 
 \arguments{
@@ -37,8 +41,14 @@ frscvNOMAD(xz,
     continuous and/or ordinal/nominal predictors
   }
 
-  \item{basis.maxdim}{ the maximum dimension of the B-spline basis for
-    each of the continuous predictors (default \code{basis.maxdim=5})}
+  \item{degree.max}{ the maximum degree of the B-spline basis for
+    each of the continuous predictors (default \code{degree.max=5})}
+  \item{segments.max}{ the maximum segments of the B-spline basis for
+    each of the continuous predictors (default \code{segments.max=5})}
+  \item{degree.min}{ the minimum degree of the B-spline basis for
+    each of the continuous predictors (default \code{degree.min=0})}
+  \item{segments.min}{ the minimum segments of the B-spline basis for
+    each of the continuous predictors (default \code{segments.min=1})}
 
   \item{complexity}{a character string (default
   \code{complexity="degree-knots"}) indicating whether model `complexity' is
@@ -80,7 +90,13 @@ frscvNOMAD(xz,
     the B-spline basis for each dimension of the continuous \code{x}
     (i.e. number of knots minus one)}
 
-  \item{x0}{TBA}
+\item{include}{ integer/vector for the categorical predictors. If fit.z
+is TRUE,  it will be the initial value for the fitting,  otherwise, 
+we will not fit include.}
+
+  \item{fit.z}{ If it is TRUE, "include" or "lambda" will be the initial
+	values for the categroical predictors. If "include" or "lambda" is NULL, 
+	fit.z will be TRUE. The default value is FALSE.}
 
   \item{nmulti}{
     integer number of times to restart the process of finding extrema of
@@ -149,7 +165,7 @@ frscvNOMAD(xz,
 
   S. Le Digabel, (2011), \dQuote{Algorithm 909: NOMAD: Nonlinear
   optimization with the MADS algorithm}. ACM Transactions on
-  Mathematical Software, 37(4):44:1-44:15.
+  Mathematical Software, 37(4):44:1–44:15.
   
   Ma, S. and J.S. Racine and L. Yang (2010), \dQuote{Spline Regression
   in the Presence of Categorical Predictors,} manuscript.
@@ -196,7 +212,7 @@ xdata <- data.frame(x,z=factor(z))
 ## Compute the optimal K and I, determine optimal number of knots, set
 ## spline degree for x to 3
 
-cv <- frscvNOMAD(x=xdata,y=y,complexity="knots",degree=c(3),basis.maxdim=10)
+cv <- frscvNOMAD(x=xdata,y=y,complexity="knots",degree=c(3),segments=c(5), segments.max=10)
 summary(cv)
 }
 \keyword{nonparametric}
