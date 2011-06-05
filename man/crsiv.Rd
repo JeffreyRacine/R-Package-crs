@@ -28,6 +28,7 @@ crsiv(y,
       zeval = NULL,
       weval = NULL,
       xeval = NULL,
+      alpha = NULL,
       alpha.min = 1e-10,
       alpha.max = 1e-01,
       alpha.tol = .Machine$double.eps^0.25,
@@ -75,6 +76,10 @@ crsiv(y,
     regression will be estimated (evaluation data). By default,
     evaluation takes place on the data provided by \code{x}.
   }
+  \item{alpha}{
+    a numeric scaler that, if supplied, is used rather than numerically
+    solving for \code{alpha}, when using \code{method="Tikhonov"}.
+    }
   \item{alpha.min}{
     minimum of search range for \eqn{\alpha}{alpha}, the Tikhonov
     regularization parameter, when using \code{method="Tikhonov"}.
