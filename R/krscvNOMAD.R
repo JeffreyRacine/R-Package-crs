@@ -11,8 +11,8 @@
 
 krscvNOMAD <- function(xz,
 											 y,
-											 degree.max=5, 
-											 segments.max=5, 
+											 degree.max=10, 
+											 segments.max=10, 
 											 degree.min=0, 
 											 segments.min=1, 
 											 kernel.type=c("nominal","ordinal"),

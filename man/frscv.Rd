@@ -16,7 +16,7 @@
 \usage{
 frscv(xz,
       y,
-      basis.maxdim = 5,
+      basis.maxdim = 10,
       complexity = c("degree-knots","degree","knots"),
       knots = c("quantiles","uniform"),
       basis = c("additive","tensor","auto"),
@@ -36,7 +36,7 @@ frscv(xz,
   }
 
   \item{basis.maxdim}{ the maximum dimension of the B-spline basis for
-    each of the continuous predictors (default \code{basis.maxdim=5})}
+    each of the continuous predictors (default \code{basis.maxdim=10})}
 
   \item{complexity}{a character string (default
   \code{complexity="degree-knots"}) indicating whether model `complexity' is

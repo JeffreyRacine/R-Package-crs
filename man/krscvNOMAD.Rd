@@ -15,8 +15,8 @@
 \usage{
 krscvNOMAD(xz,
       y,
-			degree.max=5, 
-			segments.max=5, 
+			degree.max=10, 
+			segments.max=10, 
 			degree.min=0, 
 			segments.min=1, 
 			kernel.type = c("nominal","ordinal"),
@@ -44,9 +44,9 @@ krscvNOMAD(xz,
   }
 
   \item{degree.max}{ the maximum degree of the B-spline basis for
-    each of the continuous predictors (default \code{degree.max=5})}
+    each of the continuous predictors (default \code{degree.max=10})}
   \item{segments.max}{ the maximum segments of the B-spline basis for
-    each of the continuous predictors (default \code{segments.max=5})}
+    each of the continuous predictors (default \code{segments.max=10})}
   \item{degree.min}{ the minimum degree of the B-spline basis for
     each of the continuous predictors (default \code{degree.min=0})}
   \item{segments.min}{ the minimum segments of the B-spline basis for

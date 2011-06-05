@@ -16,7 +16,7 @@
 \usage{
 krscv(xz,
       y,
-      basis.maxdim = 5,
+      basis.maxdim = 10,
       kernel.type = c("nominal","ordinal"),
       restarts = 0,
       complexity = c("degree-knots","degree","knots"),
@@ -38,7 +38,7 @@ krscv(xz,
   }
 
   \item{basis.maxdim}{ the maximum dimension of the B-spline basis for
-    each of the continuous predictors (default \code{basis.maxdim=5})}
+    each of the continuous predictors (default \code{basis.maxdim=10})}
 
   \item{kernel.type}{
     a character string indicating whether the kernel

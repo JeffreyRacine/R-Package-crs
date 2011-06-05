@@ -32,9 +32,9 @@ crs(\dots)
     degree = NULL,
     segments = NULL,
     include = NULL,
-		basis.maxdim = 5,
-		degree.max=5, 
-		segments.max=5, 
+		basis.maxdim = 10,
+		degree.max=10, 
+		segments.max=10, 
 		degree.min=0, 
 		segments.min=1, 
 		cv = c("nomad","exhaustive","none"),
@@ -105,13 +105,13 @@ crs(\dots)
 
   \item{basis.maxdim}{ the maximum dimension of the spline degree or
     number of knots for each of the continuous predictors (default
-    \code{basis.maxdim=5} meaning a maximum dimension of 5 or number of
-    knots of 5 (6 segments) indicating a maximum number of columns in
-    the B-spline of 10)}
+    \code{basis.maxdim=10} meaning a maximum dimension of 10 or number of
+    knots of 10 (11 segments) indicating a maximum number of columns in
+    the B-spline of 20)}
   \item{degree.max}{ the maximum degree of the B-spline basis for
-    each of the continuous predictors (default \code{degree.max=5})}
+    each of the continuous predictors (default \code{degree.max=10})}
   \item{segments.max}{ the maximum segments of the B-spline basis for
-    each of the continuous predictors (default \code{segments.max=5})}
+    each of the continuous predictors (default \code{segments.max=10})}
   \item{degree.min}{ the minimum degree of the B-spline basis for
     each of the continuous predictors (default \code{degree.min=0})}
   \item{segments.min}{ the minimum segments of the B-spline basis for
