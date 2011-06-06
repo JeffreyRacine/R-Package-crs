@@ -1,5 +1,5 @@
-## This demo considers a setting with one endogenous regressor and one
-## instrument.
+## This demo considers a setting with one endogenous regressor, one
+## exogenous regressor, and one instrument.
 
 rm(list=ls())
 library(crs)
@@ -18,14 +18,15 @@ eps <- rnorm(n,mean=0,sd=0.05)
 u <- -0.5*v + eps
 w <- rnorm(n,mean=0,sd=1)
 z <- 0.2*w + v
+x <- rnorm(n)
 
 ## In Darolles et al (2011) there exist two DGPs. The first is
-## phi(z)=z^2.
+## phi(z)=z^2. Here we add an exogenous regressor.
 
 phi <- function(z) { z^2 }
 eyz <- function(z) { z^2 -0.325*z }
 
-y <- phi(z) + u
+y <- phi(z) + 0.2*x u
 
 ## Sort on z (for plotting)
 
@@ -34,14 +35,18 @@ ivdata <- ivdata[order(ivdata$z),]
 rm(y,z,w)
 attach(ivdata)
 
-## Sort on z (for plotting)
+## Note that, for plotting purposes, we need to control the value of x
+## (hold non-axis variables constant). We set the value of x to its
+## mean for evaluation purposes (though naturally the sample x are
+## used for estimation)
 
-model.iv <- crsiv(y=y,z=z,w=w,nmulti=nmulti,method=method)
+model.iv <- crsiv(y=y,z=z,w=w,x=x,xeval=rep(median(x),length(x)),nmulti=nmulti,method="Landweber-Fridman")
 phihat.iv <- model.iv$phihat
 
-## Now the non-iv regression spline estimator of E(y|z)
+## Now the non-iv regression spline estimator of E(y|z), again
+## controlling for the evaluation value of x.
 
-crs.mean <- fitted(crs(y~z,nmulti=nmulti))
+crs.mean <- predict(crs(y~z+x,nmulti=nmulti),newdata=data.frame(z,x=rep(median(x),length(x))))
 
 ## For the plots, restrict focal attention to the bulk of the data
 ## (i.e. for the plotting area trim out 1/4 of one percent from each
@@ -80,9 +85,9 @@ lines(z,crs.mean,col="red",lwd=2,lty=4)
 
 
 legend(quantile(z,trim),quantile(y,1-trim),
-       c(expression(paste(varphi(z),", E(y|z)",sep="")),
-         expression(paste("Nonparametric ",hat(varphi)(z))),
-         "Nonparametric E(y|z)"),
+       c(expression(paste(varphi(z,x),", E(y|z, x)",sep="")),
+         expression(paste("Nonparametric ",hat(varphi)(z,x))),
+         "Nonparametric E(y|z, x)"),
        lty=c(1,2,4),
        col=c("black","blue","red"),
        lwd=c(1,2,2))
