@@ -26,7 +26,7 @@ x <- rnorm(n)
 phi <- function(z) { z^2 }
 eyz <- function(z) { z^2 -0.325*z }
 
-y <- phi(z) + 0.2*x u
+y <- phi(z) + 0.2*x + u
 
 ## Sort on z (for plotting)
 
