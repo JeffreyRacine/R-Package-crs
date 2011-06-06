@@ -358,7 +358,7 @@ crsiv <- function(y,
 
     console <- printClear(console)
     console <- printPop(console)
-    console <- printPush(paste("Computing optimal smoothing for stopping rule...",sep=""),console)
+    console <- printPush(paste("Computing optimal smoothing for the stopping rule...",sep=""),console)
 
     norm.stop <- numeric()
     model.E.y.w <- crs(formula.yw,...)
