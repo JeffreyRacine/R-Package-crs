@@ -6,13 +6,15 @@ library(crs)
 
 set.seed(42)
 n <- as.numeric(readline(prompt="Input the number of observations desired: "))
-nmulti <- 5
+method <- as.numeric(readline(prompt="Input the method (0=Landweber-Fridman, 1=Tikhonov): "))
+method <- ifelse(method==0,"Landweber-Fridman","Tikhonov")
+nmulti <- as.numeric(readline(prompt="Input the number of multistarts desired (e.g. 10): "))
 
 v  <- rnorm(n,mean=0,sd=.27)
 eps <- rnorm(n,mean=0,sd=0.05)
 u <- -0.5*v + eps
 w <- rnorm(n,mean=0,sd=1)
-z <- 0.3*w + v
+z <- 0.2*w + v
 
 ## In Darolles et al (2011) there exist two DGPs. The first is
 ## phi(z)=z^2.
@@ -31,7 +33,7 @@ attach(ivdata)
 
 ## Sort on z (for plotting)
 
-model.iv <- crsiv(y=y,z=z,w=w,nmulti=nmulti,method="Tikhonov")
+model.iv <- crsiv(y=y,z=z,w=w,nmulti=nmulti,method=method)
 phihat.iv <- model.iv$phihat
 
 ## Now the non-iv local linear estimator of E(y|z)
@@ -44,13 +46,25 @@ crs.mean <- fitted(crs(y~z,nmulti=nmulti))
 
 trim <- 0.0025
 
+if(method=="Tikhonov")  {
+
+  subtext <- paste("Tikhonov: alpha = ",
+                   formatC(model.iv$alpha,digits=3,format="fg"),sep="")
+
+} else {
+
+  subtext <- paste("Landweber-Fridman: iterations = ",
+                   model.iv$num.iterations,sep="")
+
+}
+
 curve(phi,min(z),max(z),
       xlim=quantile(z,c(trim,1-trim)),
       ylim=quantile(y,c(trim,1-trim)),
       ylab="Y",
       xlab="Z",
       main="Nonparametric Instrumental Spline Regression",
-      sub=paste("Tikhonov: alpha = ",formatC(model.iv$alpha,digits=3,format="fg")),
+      sub=subtext,
       lwd=1,lty=1)
 
 points(z,y,type="p",cex=.25,col="grey")
@@ -70,44 +84,3 @@ legend(quantile(z,trim),quantile(y,1-trim),
        col=c("black","blue","red"),
        lwd=c(1,2,2))
 
-## 
-
-model.iv <- crsiv(y=y,z=z,w=w,nmulti=nmulti,method="Landweber-Fridman")
-phihat.iv <- model.iv$phihat
-
-## Now the non-iv local linear estimator of E(y|z)
-
-crs.mean <- fitted(crs(y~z,nmulti=nmulti))
-
-## For the plots, restrict focal attention to the bulk of the data
-## (i.e. for the plotting area trim out 1/4 of one percent from each
-## tail of y and z)
-
-trim <- 0.0025
-
-dev.new()
-
-curve(phi,min(z),max(z),
-      xlim=quantile(z,c(trim,1-trim)),
-      ylim=quantile(y,c(trim,1-trim)),
-      ylab="Y",
-      xlab="Z",
-      main="Nonparametric Instrumental Spline Regression",
-      sub=paste("Landweber-Fridman: iterations = ", model.iv$num.iterations,sep=""),
-      lwd=1,lty=1)
-
-points(z,y,type="p",cex=.25,col="grey")
-
-lines(z,eyz(z),lwd=1,lty=1)
-
-lines(z,phihat.iv,col="blue",lwd=2,lty=2)
-
-lines(z,crs.mean,col="red",lwd=2,lty=4)
-
-legend(quantile(z,trim),quantile(y,1-trim),
-       c(expression(paste(varphi(z),", E(y|z)",sep="")),
-         expression(paste("Nonparametric ",hat(varphi)(z))),
-         "Nonparametric E(y|z)"),
-       lty=c(1,2,4),
-       col=c("black","blue","red"),
-       lwd=c(1,2,2))
