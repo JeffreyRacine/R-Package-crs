@@ -47,7 +47,7 @@ crsiv(y,
   }
 
   \item{z}{
-    a \eqn{p}-variate data frame of endogenous regressors. The data
+    a \eqn{p}-variate data frame of endogenous predictors. The data
     types may be continuous, discrete (unordered and ordered factors),
     or some combination thereof.
   }
@@ -57,7 +57,7 @@ crsiv(y,
     combination thereof.
   }
   \item{x}{
-    a \eqn{r}-variate data frame of exdogenous regressors. The data
+    a \eqn{r}-variate data frame of exdogenous predictors. The data
     types may be continuous, discrete (unordered and ordered factors),
     or some combination thereof.
   }
@@ -72,7 +72,7 @@ crsiv(y,
     takes place on the data provided by \code{w}.
   }
   \item{xeval}{
-    a \eqn{r}-variate data frame of exogenous regressors on which the
+    a \eqn{r}-variate data frame of exogenous predictors on which the
     regression will be estimated (evaluation data). By default,
     evaluation takes place on the data provided by \code{x}.
   }
