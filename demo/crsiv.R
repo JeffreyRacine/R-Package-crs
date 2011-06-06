@@ -51,13 +51,15 @@ trim <- 0.0025
 
 if(method=="Tikhonov")  {
 
-  subtext <- paste("Tikhonov: alpha = ",
-                   formatC(model.iv$alpha,digits=3,format="fg"),sep="")
+  subtext <- paste("Tikhonov alpha = ",
+                   formatC(model.iv$alpha,digits=3,format="fg"),
+                   ", n = ", n, sep="")
 
 } else {
 
-  subtext <- paste("Landweber-Fridman: iterations = ",
-                   model.iv$num.iterations,sep="")
+  subtext <- paste("Landweber-Fridman iterations = ",
+                   model.iv$num.iterations,
+                   ", n = ", n,sep="")
 
 }
 
