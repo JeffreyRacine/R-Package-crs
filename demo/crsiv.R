@@ -80,8 +80,7 @@ lines(z,phihat.iv,col="blue",lwd=2,lty=2)
 
 lines(z,crs.mean,col="red",lwd=2,lty=4)
 
-
-legend(quantile(z,trim),quantile(y,1-trim),
+legend(x="top",inset=c(.01,.01),
        c(expression(paste(varphi(z),", E(y|z)",sep="")),
          expression(paste("Nonparametric ",hat(varphi)(z))),
          "Nonparametric E(y|z)"),
@@ -89,4 +88,3 @@ legend(quantile(z,trim),quantile(y,1-trim),
        col=c("black","blue","red"),
        lwd=c(1,2,2))
 
-detach(ivdata)

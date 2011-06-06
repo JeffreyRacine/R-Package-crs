@@ -38,9 +38,9 @@ attach(ivdata)
 ## Note that, for plotting purposes, we need to control the value of x
 ## (hold non-axis variables constant). We set the value of x to its
 ## mean for evaluation purposes (though naturally the sample x are
-## used for estimation)
+## used for estimation).
 
-model.iv <- crsiv(y=y,z=z,w=w,x=x,xeval=rep(median(x),length(x)),nmulti=nmulti,method="Landweber-Fridman")
+model.iv <- crsiv(y=y,z=z,w=data.frame(w,x),x=x,xeval=rep(median(x),length(x)),nmulti=nmulti,method="Landweber-Fridman")
 phihat.iv <- model.iv$phihat
 
 ## Now the non-iv regression spline estimator of E(y|z), again
@@ -85,13 +85,10 @@ lines(z,phihat.iv,col="blue",lwd=2,lty=2)
 
 lines(z,crs.mean,col="red",lwd=2,lty=4)
 
-
-legend(quantile(z,trim),quantile(y,1-trim),
+legend(x="top",inset=c(.01,.01),
        c(expression(paste(varphi(z,x),", E(y|z, x)",sep="")),
          expression(paste("Nonparametric ",hat(varphi)(z,x))),
          "Nonparametric E(y|z, x)"),
        lty=c(1,2,4),
        col=c("black","blue","red"),
        lwd=c(1,2,2))
-
-detach(ivdata)
