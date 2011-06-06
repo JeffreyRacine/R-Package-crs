@@ -77,7 +77,7 @@ crsiv(y,
     evaluation takes place on the data provided by \code{x}.
   }
   \item{alpha}{
-    a numeric scaler that, if supplied, is used rather than numerically
+    a numeric scalar that, if supplied, is used rather than numerically
     solving for \code{alpha}, when using \code{method="Tikhonov"}.
     }
   \item{alpha.min}{
