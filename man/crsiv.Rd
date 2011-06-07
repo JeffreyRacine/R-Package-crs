@@ -133,7 +133,7 @@ crsiv(y,
   when either the change in the value of
   \eqn{||(E(y|w)-E(\varphi_k(z,x)|w))/E(y|w)||^2
   }{||(E(y|w)-E(phi(z,x)|w))/E(y|w)||^2 } from iteration to iteration is
-  less than \code{iterate.tol} or we hit \code{max.iterations} or
+  less than \code{iterate.tol} or we hit \code{iterate.max} or
   \eqn{||E((y|w)-E(\varphi_k(z,x)|w))/E(y|w)||^2
   }{||(E(y|w)-E(phi(z,x)|w))/E(y|w)||^2 } stops falling in value and
   starts rising.  } \value{ \code{crsiv} returns a list with
