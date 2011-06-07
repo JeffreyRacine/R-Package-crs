@@ -16,7 +16,10 @@
 \usage{
 krscv(xz,
       y,
-      basis.maxdim = 10,
+      degree.max=10, 
+      segments.max=10,
+      degree.min=0,
+      segments.min=1, 
       kernel.type = c("nominal","ordinal"),
       restarts = 0,
       complexity = c("degree-knots","degree","knots"),
@@ -37,8 +40,17 @@ krscv(xz,
     continuous and/or ordinal/nominal predictors
   }
 
-  \item{basis.maxdim}{ the maximum dimension of the B-spline basis for
-    each of the continuous predictors (default \code{basis.maxdim=10})}
+  \item{degree.max}{ the maximum degree of the B-spline basis for
+    each of the continuous predictors (default \code{degree.max=10})}
+  
+  \item{segments.max}{ the maximum segments of the B-spline basis for
+    each of the continuous predictors (default \code{segments.max=10})}
+  
+  \item{degree.min}{ the minimum degree of the B-spline basis for
+    each of the continuous predictors (default \code{degree.min=0})}
+  
+  \item{segments.min}{ the minimum segments of the B-spline basis for
+    each of the continuous predictors (default \code{segments.min=1})}
 
   \item{kernel.type}{
     a character string indicating whether the kernel
@@ -119,12 +131,12 @@ krscv(xz,
   box-constrained \code{L-BFGS-B} method (see \code{\link{optim}} for
   details). The user may restart the algorithm as many times as desired
   via the \code{restarts} argument. The approach ascends from \code{K=0}
-  through \code{basis.maxdim} and for each value of \code{K} searches for the
+  through \code{degree.max} and for each value of \code{K} searches for the
   optimal bandwidths for this value of \code{K}. After the most complex
   model has been searched then the optimal \code{K}/\code{lambda}
   combination is selected. If any element of the optimal \code{K} vector
-  coincides with \code{basis.maxdim} a warning is produced and the user ought
-  to restart their search with a larger value of \code{basis.maxdim}.
+  coincides with \code{degree.max} a warning is produced and the user ought
+  to restart their search with a larger value of \code{degree.max}.
 
   Note that, since the approach is built on top of the regression spline
   for each unique \code{z} combination, the splines must be estimable
@@ -142,7 +154,6 @@ krscv(xz,
   \item{K}{ scalar/vector containing optimal degree(s) of spline or
   number of segments }
   \item{K.mat}{ vector/matrix of values of \code{K} evaluated during search }  
-  \item{basis.maxdim}{ maximum degree of B-spline basis }
   \item{restarts}{ number of restarts during search, if any }
   \item{lambda}{ optimal bandwidths for categorical predictors }
   \item{lambda.mat}{ vector/matrix of optimal bandwidths for each degree of spline }

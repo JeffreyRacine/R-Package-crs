@@ -13,8 +13,8 @@
 crs(\dots)
 \method{crs}{default}(xz,
     y,
-    degree,
-    segments,
+    degree = NULL,
+    segments = NULL,
     include = NULL,
     kernel = TRUE,
     lambda = NULL,
@@ -25,7 +25,6 @@ crs(\dots)
     deriv = 0,
     data.return = FALSE,
     prune = FALSE,
-    prune.index = NULL,
     \dots)
 
 \method{crs}{formula}(formula,

@@ -16,7 +16,10 @@
 \usage{
 frscv(xz,
       y,
-      basis.maxdim = 10,
+      degree.max=10, 
+      segments.max=10,
+      degree.min=0,
+      segments.min=1, 
       complexity = c("degree-knots","degree","knots"),
       knots = c("quantiles","uniform"),
       basis = c("additive","tensor","auto"),
@@ -35,8 +38,17 @@ frscv(xz,
     continuous and/or ordinal/nominal predictors
   }
 
-  \item{basis.maxdim}{ the maximum dimension of the B-spline basis for
-    each of the continuous predictors (default \code{basis.maxdim=10})}
+  \item{degree.max}{ the maximum degree of the B-spline basis for
+    each of the continuous predictors (default \code{degree.max=10})}
+  
+  \item{segments.max}{ the maximum segments of the B-spline basis for
+    each of the continuous predictors (default \code{segments.max=10})}
+  
+  \item{degree.min}{ the minimum degree of the B-spline basis for
+    each of the continuous predictors (default \code{degree.min=0})}
+  
+  \item{segments.min}{ the minimum segments of the B-spline basis for
+    each of the continuous predictors (default \code{segments.min=1})}
 
   \item{complexity}{a character string (default
   \code{complexity="degree-knots"}) indicating whether model `complexity' is
@@ -116,7 +128,6 @@ frscv(xz,
     predictor is included or not for each dimension of the
     ordinal/nominal factors }
   \item{K.mat}{ vector/matrix of values of \code{K} evaluated during search }  
-  \item{basis.maxdim}{ maximum degree of B-spline basis }
   \item{cv.func}{ objective function value at optimum }
   \item{cv.func.vec}{ vector of objective function values at each degree
     of spline or number of segments in \code{K.mat}}
