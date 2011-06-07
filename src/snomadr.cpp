@@ -703,6 +703,8 @@ extern "C" {
 								NOMAD::Mads mads ( param , &ev );
 								status = mads.run();
 
+                if (((int) status)== 3 ) return(solution);
+
 								bbe += mads.get_cache().size();
 
 								// displays and remember the best point:

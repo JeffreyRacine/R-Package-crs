@@ -1,7 +1,7 @@
 # In order to test snomadr,  the source code of NOMAD is copied into the package snomadr, 
 # this is only for test.
 NOMAD_SRC           = ./nomad_src
-OBJECTS             = snomadr.o $(NOMAD_SRC)/Barrier.o $(NOMAD_SRC)/Cache.o $(NOMAD_SRC)/Cache_File_Point.o $(NOMAD_SRC)/Cache_Point.o \
+OBJECTS             = RuniqueCombs.o bspline.o gsl_bspline.o snomadr.o $(NOMAD_SRC)/Barrier.o $(NOMAD_SRC)/Cache.o $(NOMAD_SRC)/Cache_File_Point.o $(NOMAD_SRC)/Cache_Point.o \
                          $(NOMAD_SRC)/Cache_Search.o $(NOMAD_SRC)/Clock.o $(NOMAD_SRC)/Direction.o $(NOMAD_SRC)/Directions.o $(NOMAD_SRC)/Display.o \
                          $(NOMAD_SRC)/Double.o $(NOMAD_SRC)/Eval_Point.o $(NOMAD_SRC)/Evaluator.o $(NOMAD_SRC)/Evaluator_Control.o \
                          $(NOMAD_SRC)/Exception.o $(NOMAD_SRC)/Extended_Poll.o $(NOMAD_SRC)/L_Curve.o $(NOMAD_SRC)/LH_Search.o $(NOMAD_SRC)/Mads.o \

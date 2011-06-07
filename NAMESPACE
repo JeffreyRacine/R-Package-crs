@@ -1,6 +1,6 @@
+useDynLib(crs)
 useDynLib(crs, snomadRSolve)
 useDynLib(crs, smultinomadRSolve)
-useDynLib(crs)
 import(stats)
 export(crs,
        crsiv,
