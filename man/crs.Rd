@@ -32,44 +32,44 @@ crs(\dots)
     degree = NULL,
     segments = NULL,
     include = NULL,
-		degree.max = 10, 
-		segments.max = 10, 
-		degree.min = 0, 
-		segments.min = 1, 
-		cv = c("nomad","exhaustive","none"),
-		cv.func = c("cv.ls","cv.gcv","cv.aic"),
-		kernel = TRUE,
-		lambda = NULL,
-		kernel.type = c("nominal","ordinal"),
-		complexity = c("degree-knots","degree","knots"),
-		knots = c("quantiles","uniform"),
-		basis = c("additive","tensor","auto"),
-		deriv = 0,
-		data.return = FALSE,
-		prune = FALSE,
-		restarts = 0,
+    degree.max = 10, 
+    segments.max = 10, 
+    degree.min = 0, 
+    segments.min = 1, 
+    cv = c("nomad","exhaustive","none"),
+    cv.func = c("cv.ls","cv.gcv","cv.aic"),
+    kernel = TRUE,
+    lambda = NULL,
+    kernel.type = c("nominal","ordinal"),
+    complexity = c("degree-knots","degree","knots"),
+    knots = c("quantiles","uniform"),
+    basis = c("additive","tensor","auto"),
+    deriv = 0,
+    data.return = FALSE,
+    prune = FALSE,
+    restarts = 0,
     opts = list("MAX_BB_EVAL"=500,"MIN_MESH_SIZE"="r1.0e-10","INITIAL_MESH_SIZE"="r1.0e-02","MIN_POLL_SIZE"="r1.0e-10","DISPLAY_DEGREE"=0),
-		nmulti = 0, 
-		\dots)
+    nmulti = 0, 
+    \dots)
 }
 \arguments{
 
-		\item{xz}{ numeric (\code{x}) and or ordinal/nominal factor predictors
-				(\code{z}) }
+\item{xz}{ numeric (\code{x}) and or ordinal/nominal factor predictors
+(\code{z}) }
 
-		\item{y}{ a numeric vector of responses. }
+\item{y}{ a numeric vector of responses. }
 
-		\item{degree}{ integer/vector specifying the polynomial degree of the
-				B-spline basis for each dimension of the continuous \code{x}
-				(default = cubic spline)}
+\item{degree}{ integer/vector specifying the polynomial degree of the
+B-spline basis for each dimension of the continuous \code{x}
+(default = cubic spline)}
 
-		\item{segments}{ integer/vector specifying the number of segments of
-				the B-spline basis for each dimension of the continuous \code{x}
-				(i.e. number of knots minus one) (default = one segment)}
+\item{segments}{ integer/vector specifying the number of segments of
+the B-spline basis for each dimension of the continuous \code{x}
+(i.e. number of knots minus one) (default = one segment)}
 
-		\item{include}{ integer/vector specifying whether each of the
-				ordinal/nominal predictors in \code{x} are included or omitted from
-				the resulting estimate }
+\item{include}{ integer/vector specifying whether each of the
+ordinal/nominal predictors in \code{x} are included or omitted from
+the resulting estimate }
 
   \item{kernel.type}{
     a character string indicating whether the kernel
@@ -379,7 +379,7 @@ crs(\dots)
   With Irrelevant Categorical and Continuous Regressors,} manuscript.
 
   Li, Q. and J.S. Racine (2007), \emph{Nonparametric Econometrics:
-		Theory and Practice,} Princeton University Press.
+  Theory and Practice,} Princeton University Press.
 
 }
 

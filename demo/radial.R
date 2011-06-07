@@ -4,8 +4,9 @@ library(crs)
 
 set.seed(42)
 
-n <- 10000
-num.eval <- 50
+n <- as.numeric(readline(prompt="Input the number of observations desired: "))
+nmulti <- as.numeric(readline(prompt="Input the number of multistarts desired (e.g. 2): "))
+num.eval <- as.numeric(readline(prompt="Input the number of evaluation observations desired (e.g. 50): "))
 
 x1 <- runif(n,-5,5)
 x2 <- runif(n,-5,5)
@@ -20,7 +21,8 @@ model <- crs(y~x1+x2,
              complexity="degree-knots",
              knots="uniform",
              deriv=1,
-             cv.func="cv.aic")
+             cv.func="cv.aic",
+             nmulti=nmulti)
 
 summary(model)
 
