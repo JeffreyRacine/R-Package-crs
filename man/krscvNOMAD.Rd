@@ -15,21 +15,21 @@
 \usage{
 krscvNOMAD(xz,
       y,
-			degree.max=10, 
-			segments.max=10, 
-			degree.min=0, 
-			segments.min=1, 
-			kernel.type = c("nominal","ordinal"),
-			restarts = 0,
-			complexity = c("degree-knots","degree","knots"),
-			knots = c("quantiles","uniform"),
-			basis = c("additive","tensor","auto"),
-			cv.func = c("cv.ls","cv.gcv","cv.aic"),
-			degree = degree,
-			segments = segments,
-			lambda = lambda, 
+      degree.max=10, 
+      segments.max=10, 
+      degree.min=0, 
+      segments.min=1, 
+      kernel.type = c("nominal","ordinal"),
+      restarts = 0,
+      complexity = c("degree-knots","degree","knots"),
+      knots = c("quantiles","uniform"),
+      basis = c("additive","tensor","auto"),
+      cv.func = c("cv.ls","cv.gcv","cv.aic"),
+      degree = degree,
+      segments = segments,
+      lambda = lambda, 
       opts=list("MAX_BB_EVAL"=500,"MIN_MESH_SIZE"="r1.0e-10","INITIAL_MESH_SIZE"="r1.0e-02","MIN_POLL_SIZE"="r1.0e-10"),
-			nmulti = 0)
+      nmulti = 0)
 }
 
 \arguments{
@@ -107,7 +107,7 @@ krscvNOMAD(xz,
   (i.e. number of knots minus one)}
 
   \item{lambda}{ real/vector for the categorical predictors. If it is not
-	NULL,  it will be a starting value of lambd}
+  NULL,  it will be a starting value of lambd}
 
 \item{opts}{
   arguments passed to the NOMAD solver.
@@ -213,7 +213,7 @@ krscvNOMAD(xz,
   With Irrelevant Categorical and Continuous Regressors,} manuscript.
 
   Li, Q. and J.S. Racine (2007), \emph{Nonparametric Econometrics:
-		Theory and Practice,} Princeton University Press.
+    Theory and Practice,} Princeton University Press.
 
 }
 

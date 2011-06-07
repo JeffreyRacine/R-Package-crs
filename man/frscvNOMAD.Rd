@@ -16,19 +16,19 @@
 \usage{
 frscvNOMAD(xz,
            y,
-					 degree.max=10, 
-					 segments.max=10, 
-					 degree.min=0, 
-					 segments.min=1, 
-					 complexity=c("degree-knots","degree","knots"),
-					 knots=c("quantiles","uniform"),
-					 basis=c("additive","tensor","auto"),
-					 cv.func=c("cv.ls","cv.gcv","cv.aic"),
-					 degree=degree,
-					 segments=segments, 
-					 include=include, 
+           degree.max=10, 
+           segments.max=10, 
+           degree.min=0, 
+           segments.min=1, 
+           complexity=c("degree-knots","degree","knots"),
+           knots=c("quantiles","uniform"),
+           basis=c("additive","tensor","auto"),
+           cv.func=c("cv.ls","cv.gcv","cv.aic"),
+           degree=degree,
+           segments=segments, 
+           include=include, 
            opts=list("MAX_BB_EVAL"=500,"MIN_MESH_SIZE"="r1.0e-10","INITIAL_MESH_SIZE"="r1.0e-02","MIN_POLL_SIZE"="r1.0e-10"),
-					 nmulti=0)
+           nmulti=0)
 }
 
 \arguments{
@@ -94,7 +94,7 @@ frscvNOMAD(xz,
     (i.e. number of knots minus one)}
 
 \item{include}{ integer/vector for the categorical predictors. If it 
-	 is not NULL, 	it will be the initial value for the fitting.}
+   is not NULL,   it will be the initial value for the fitting.}
 
 \item{opts}{
   arguments passed to the NOMAD solver.
@@ -185,7 +185,7 @@ frscvNOMAD(xz,
   With Irrelevant Categorical and Continuous Regressors,} manuscript.
 
   Li, Q. and J.S. Racine (2007), \emph{Nonparametric Econometrics:
-		Theory and Practice,} Princeton University Press.
+    Theory and Practice,} Princeton University Press.
 
 }
 

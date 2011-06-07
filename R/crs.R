@@ -1208,7 +1208,11 @@ plot.crs <- function(x,
     }
     
   }
+
+  ## Reset par to 1,1 (can be modified above)
   
+  par(mfrow=c(1,1))
+
 }
 
 crs.sigtest <- function(object,...) {
