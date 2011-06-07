@@ -309,13 +309,13 @@ weighting function. Then, for a given degree for each continuous
 predictor and bandwidth for each categorical predictor (or indicator
 bases), the model is fit via least-squares. Alternatively, the degree
 and bandwidth can be jointly determined via any \code{cv.func} method
-by setting the option \code{cv="nomad"} (nonsmooth mesh adaptive
-direct search) or \code{cv="exhaustive"} (exhaustive search). This
-then evaluates the model for each unique combination of degree for
-each continuous predictor from \code{degree=degree.min} through
-\code{degree=degree.max} (default 0 and 10, respectively) and from
-\code{segments=segments.min} through \code{segments=segments.max}
-(default 1 and 10, respectively). 
+by setting the option \code{cv="nomad"} (`nonsmooth mesh adaptive
+direct search', see \citep{NOMAD}) or \code{cv="exhaustive"}
+(exhaustive search). This then evaluates the model for each unique
+combination of degree for each continuous predictor from
+\code{degree=degree.min} through \code{degree=degree.max} (default 0
+and 10, respectively) and from \code{segments=segments.min} through
+\code{segments=segments.max} (default 1 and 10, respectively).
 
 When conducting exhaustive search, for each unique combination of
 degree, the bandwidths ($\in[0,1]$) are obtained via numerical
