@@ -36,6 +36,7 @@ crsiv(y,
       iterate.tol = 1.0e-05,
       constant = 0.5,
       method = c("Landweber-Fridman","Tikhonov"),
+      opts=list("MAX_BB_EVAL"=500,"MIN_MESH_SIZE"="r1.0e-10","INITIAL_MESH_SIZE"="r1.0e-02","MIN_POLL_SIZE"="r1.0e-10","DISPLAY_DEGREE"=0),
       ...)
 }
 
@@ -109,6 +110,10 @@ crsiv(y,
    Fan, Florens and Renault (forthcoming) for details for
    \code{"Tikhonov"}).
 }
+  \item{opts}{
+    arguments passed to the NOMAD solver (see \code{\link{snomadr}} for
+    further details).
+  }
 \item{...}{
   additional arguments supplied to \code{\link{crs}}.
 }

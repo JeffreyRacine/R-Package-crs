@@ -167,9 +167,9 @@ the resulting estimate }
     bandwidths only) from different (random) initial points }
 
   \item{opts}{
-    arguments passed to the NOMAD solver.
+    arguments passed to the NOMAD solver (see \code{\link{snomadr}} for
+    further details).
   }
-
   \item{nmulti}{
     integer number of times to restart the process of finding extrema of
     the cross-validation function from different (random) initial

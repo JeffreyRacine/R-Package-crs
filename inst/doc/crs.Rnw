@@ -312,12 +312,20 @@ and bandwidth can be jointly determined via any \code{cv.func} method
 by setting the option \code{cv="nomad"} (nonsmooth mesh adaptive
 direct search) or \code{cv="exhaustive"} (exhaustive search). This
 then evaluates the model for each unique combination of degree for
-each continuous predictor from \code{degree=0} through
-\code{degree=degree.max} (default 5). For each unique combination of
+each continuous predictor from \code{degree=degree.min} through
+\code{degree=degree.max} (default 0 and 10, respectively) and from
+\code{segments=segments.min} through \code{segments=segments.max}
+(default 1 and 10, respectively). 
+
+When conducting exhaustive search, for each unique combination of
 degree, the bandwidths ($\in[0,1]$) are obtained via numerical
 minimization (see \code{optim}) and restarting can be conducted via
 \code{restarts=}. The model possessing the lowest criterion function
 value is then selected as the final model.
+
+When conducting \code{cv="nomad"} (nonsmooth mesh adaptive direct
+search) the number of multiple starts can be controlled by
+\code{nmulti=}.
 
 \subsection*{Data-Driven Smoothing Parameter Selection}
 
@@ -413,7 +421,7 @@ x <- runif(n)
 z <- rbinom(n,1,.5)
 y <- cos(2*pi*x) + z + rnorm(n,sd=0.25)
 z <- factor(z)
-model <- crs(y~x+z,basis="auto",kernel=TRUE)
+model <- crs(y~x+z)
 summary(model)
 @ 
 
@@ -454,7 +462,7 @@ z <- ifelse(x1>.5,1,0)
 dgp <- cos(2*pi*x1)+sin(2*pi*x2)+2*z
 z <- factor(z)
 y <- dgp + rnorm(n,sd=1)
-model <- crs(y~x1+x2+z,complexity="degree",segments=c(1,1),basis="auto")
+model <- crs(y~x1+x2+z)
 summary(model)
 @ 
 
