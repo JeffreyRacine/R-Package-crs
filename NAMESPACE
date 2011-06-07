@@ -1,3 +1,5 @@
+useDynLib(crs, snomadRSolve)
+useDynLib(crs, smultinomadRSolve)
 useDynLib(crs)
 import(stats)
 export(crs,
@@ -7,6 +9,7 @@ export(crs,
        gsl.bs,
        krscv,
 			 krscvNOMAD,
+       snomadr,
        tensor.prod.model.matrix,
        uniquecombs)
 
@@ -23,3 +26,5 @@ S3method(plot, crs)
 
 S3method(gsl.bs, default)
 S3method(predict, gsl.bs)
+
+S3method(print, snomadr)
