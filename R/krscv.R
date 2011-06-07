@@ -16,7 +16,10 @@
 
 krscv <- function(xz,
                   y,
-                  basis.maxdim=10,
+									degree.max=10, 
+									segments.max=10, 
+									degree.min=0, 
+									segments.min=1, 
                   kernel.type=c("nominal","ordinal"),
                   restarts=0,
                   complexity=c("degree-knots","degree","knots"),
@@ -42,9 +45,12 @@ krscv <- function(xz,
                       y,
                       z,
                       K,
-                      basis.maxdim,
                       restart,
                       num.restarts,
+											degree.max=degree.max, 
+											segments.max=segments.max, 
+											degree.min=degree.min, 
+											segments.min=segments.min, 
                       z.unique,
                       ind,
                       ind.vals,
@@ -190,27 +196,27 @@ krscv <- function(xz,
 
   if(num.x==1 & basis == "auto") basis <- "additive"
 
-  if(basis.maxdim < 1) stop(" basis.maxdim must be greater than or equal to 1")
+	if(degree.min < 0 ) degree.min <- 0
+	if(segments.min < 1 ) segments.min <- 1
+	if(degree.max < degree.min) degree.max <- (degree.min + 1)
+	if(segments.max < segments.min) segments.max <- (segments.min + 1)
+
+	if(degree.max < 1 || segments.max < 1 ) stop(" degree.max or segments.max must be greater than or equal to 1")
 
   console <- newLineConsole()
   console <- printPush("Working...",console = console)
 
   ## Exhaustive evaluation over all combinations of K, search over
   ## lambda for each combination
-
-  if(complexity!="degree-knots") {
-    K.mat <- matrix.combn(0:basis.maxdim,num.x)
-  } else {
-    K.mat <- matrix.combn(0:basis.maxdim,2*num.x)
-  }
-
-  if(complexity=="degree") {
-    K.mat <- cbind(K.mat[,1:num.x],matrix(segments,nrow(K.mat),length(segments),byrow=TRUE))
-  } else if(complexity=="knots") {
-    K.mat <- cbind(matrix(degree,nrow(K.mat),length(degree),byrow=TRUE),K.mat[,1:num.x]+1) 
-  } else if(complexity=="degree-knots") {
-    K.mat[,(num.x+1):(2*num.x)] <- K.mat[,(num.x+1):(2*num.x)]+1
-  }
+  if(complexity == "degree-knots") {
+      K.mat <- matrix.combn(K.vec1=degree.min:degree.max, K.vec2=segments.min:segments.max,num.x=num.x)
+  } else if(complexity == "degree") {
+      K.mat <- matrix.combn(K.vec1=degree.min:degree.max,num.x=num.x)
+      K.mat <- cbind(K.mat[,1:num.x],matrix(segments,nrow(K.mat),length(segments),byrow=TRUE))
+  } else if (complexity == "knots"){
+      K.mat <- matrix.combn(K.vec1=segments.min:segments.max,num.x=num.x)
+      K.mat <- cbind(matrix(degree,nrow(K.mat),length(degree),byrow=TRUE),K.mat[,1:num.x])
+	}
 
   ## Strip off all (except one) rows with degree 0 for all continuous
   ## predictors, only leave first row (avoid redundant computation,
@@ -253,22 +259,25 @@ krscv <- function(xz,
                         x=x,
                         y=y,
                         z=z,
-                        K=K.mat[j,],
-                        basis.maxdim=basis.maxdim,
-                        restart=0,
-                        num.restarts=restarts,
-                        z.unique=z.unique,
-                        ind=ind,
-                        ind.vals=ind.vals,
-                        nrow.z.unique=nrow.z.unique,
-                        kernel.type=kernel.type,
-                        j=j,
-                        nrow.K.mat=nrow.K.mat,
-                        t2=t2,
-                        complexity=complexity,
-                        knots=knots,
-                        basis="additive",
-                        cv.func=cv.func)
+												K=K.mat[j,],
+												degree.max=degree.max, 
+												segments.max=segments.max, 
+												degree.min=degree.min, 
+												segments.min=segments.min, 
+												restart=0,
+												num.restarts=restarts,
+												z.unique=z.unique,
+												ind=ind,
+												ind.vals=ind.vals,
+												nrow.z.unique=nrow.z.unique,
+												kernel.type=kernel.type,
+												j=j,
+												nrow.K.mat=nrow.K.mat,
+												t2=t2,
+												complexity=complexity,
+												knots=knots,
+												basis="additive",
+												cv.func=cv.func)
 
       }
 
@@ -288,22 +297,25 @@ krscv <- function(xz,
                                     x=x,
                                     y=y,
                                     z=z,
-                                    K=K.mat[j,],
-                                    basis.maxdim=basis.maxdim,
-                                    restart=r,
-                                    num.restarts=restarts,
-                                    z.unique=z.unique,
-                                    ind=ind,
-                                    ind.vals=ind.vals,
-                                    nrow.z.unique=nrow.z.unique,
-                                    kernel.type=kernel.type,
-                                    j=j,
-                                    nrow.K.mat=nrow.K.mat,
-                                    t2=t2,
-                                    complexity=complexity,
-                                    knots=knots,
-                                    basis="additive",
-                                    cv.func=cv.func)
+																		K=K.mat[j,],
+																		degree.max=degree.max, 
+																		segments.max=segments.max, 
+																		degree.min=degree.min, 
+																		segments.min=segments.min, 
+																		restart=r,
+																		num.restarts=restarts,
+																		z.unique=z.unique,
+																		ind=ind,
+																		ind.vals=ind.vals,
+																		nrow.z.unique=nrow.z.unique,
+																		kernel.type=kernel.type,
+																		j=j,
+																		nrow.K.mat=nrow.K.mat,
+																		t2=t2,
+																		complexity=complexity,
+																		knots=knots,
+																		basis="additive",
+																		cv.func=cv.func)
 
           }
 
@@ -333,22 +345,25 @@ krscv <- function(xz,
                         x=x,
                         y=y,
                         z=z,
-                        K=K.mat[j,],
-                        basis.maxdim=basis.maxdim,
-                        restart=0,
-                        num.restarts=restarts,
-                        z.unique=z.unique,
-                        ind=ind,
-                        ind.vals=ind.vals,
-                        nrow.z.unique=nrow.z.unique,
-                        kernel.type=kernel.type,
-                        j=j,
-                        nrow.K.mat=nrow.K.mat,
-                        t2=t2,
-                        complexity=complexity,
-                        knots=knots,
-                        basis="tensor",
-                        cv.func=cv.func)
+												K=K.mat[j,],
+												degree.max=degree.max, 
+												segments.max=segments.max, 
+												degree.min=degree.min, 
+												segments.min=segments.min, 
+												restart=0,
+												num.restarts=restarts,
+												z.unique=z.unique,
+												ind=ind,
+												ind.vals=ind.vals,
+												nrow.z.unique=nrow.z.unique,
+												kernel.type=kernel.type,
+												j=j,
+												nrow.K.mat=nrow.K.mat,
+												t2=t2,
+												complexity=complexity,
+												knots=knots,
+												basis="tensor",
+												cv.func=cv.func)
 
       }
 
@@ -368,22 +383,25 @@ krscv <- function(xz,
                                     x=x,
                                     y=y,
                                     z=z,
-                                    K=K.mat[j,],
-                                    basis.maxdim=basis.maxdim,
-                                    restart=r,
-                                    num.restarts=restarts,
-                                    z.unique=z.unique,
-                                    ind=ind,
-                                    ind.vals=ind.vals,
-                                    nrow.z.unique=nrow.z.unique,
-                                    kernel.type=kernel.type,
-                                    j=j,
-                                    nrow.K.mat=nrow.K.mat,
-                                    t2=t2,
-                                    complexity=complexity,
-                                    knots=knots,
-                                    basis="tensor",
-                                    cv.func=cv.func)
+																		K=K.mat[j,],
+																		degree.max=degree.max, 
+																		segments.max=segments.max, 
+																		degree.min=degree.min, 
+																		segments.min=segments.min, 
+																		restart=r,
+																		num.restarts=restarts,
+																		z.unique=z.unique,
+																		ind=ind,
+																		ind.vals=ind.vals,
+																		nrow.z.unique=nrow.z.unique,
+																		kernel.type=kernel.type,
+																		j=j,
+																		nrow.K.mat=nrow.K.mat,
+																		t2=t2,
+																		complexity=complexity,
+																		knots=knots,
+																		basis="tensor",
+																		cv.func=cv.func)
 
           }
 
@@ -416,21 +434,24 @@ krscv <- function(xz,
                         y=y,
                         z=z,
                         K=K.mat[j,],
-                        basis.maxdim=basis.maxdim,
-                        restart=0,
-                        num.restarts=restarts,
-                        z.unique=z.unique,
-                        ind=ind,
-                        ind.vals=ind.vals,
-                        nrow.z.unique=nrow.z.unique,
-                        kernel.type=kernel.type,
-                        j=j,
-                        nrow.K.mat=nrow.K.mat,
-                        t2=t2,
-                        complexity=complexity,
-                        knots=knots,
-                        basis=basis,
-                        cv.func=cv.func)
+												degree.max=degree.max, 
+												segments.max=segments.max, 
+												degree.min=degree.min, 
+												segments.min=segments.min, 
+												restart=0,
+												num.restarts=restarts,
+												z.unique=z.unique,
+												ind=ind,
+												ind.vals=ind.vals,
+												nrow.z.unique=nrow.z.unique,
+												kernel.type=kernel.type,
+												j=j,
+												nrow.K.mat=nrow.K.mat,
+												t2=t2,
+												complexity=complexity,
+												knots=knots,
+												basis=basis,
+												cv.func=cv.func)
 
       }
 
@@ -451,21 +472,24 @@ krscv <- function(xz,
                                     y=y,
                                     z=z,
                                     K=K.mat[j,],
-                                    basis.maxdim=basis.maxdim,
-                                    restart=r,
-                                    num.restarts=restarts,
-                                    z.unique=z.unique,
-                                    ind=ind,
-                                    ind.vals=ind.vals,
-                                    nrow.z.unique=nrow.z.unique,
-                                    kernel.type=kernel.type,
-                                    j=j,
-                                    nrow.K.mat=nrow.K.mat,
-                                    t2=t2,
-                                    complexity=complexity,
-                                    knots=knots,
-                                    basis=basis,
-                                    cv.func=cv.func)
+																		degree.max=degree.max, 
+																		segments.max=segments.max, 
+																		degree.min=degree.min, 
+																		segments.min=segments.min, 
+																		restart=r,
+																		num.restarts=restarts,
+																		z.unique=z.unique,
+																		ind=ind,
+																		ind.vals=ind.vals,
+																		nrow.z.unique=nrow.z.unique,
+																		kernel.type=kernel.type,
+																		j=j,
+																		nrow.K.mat=nrow.K.mat,
+																		t2=t2,
+																		complexity=complexity,
+																		knots=knots,
+																		basis=basis,
+																		cv.func=cv.func)
 
           }
 
@@ -502,25 +526,28 @@ krscv <- function(xz,
   console <- printClear(console)
   console <- printPop(console)
 
-  if(any(degree==basis.maxdim)) warning(paste(" optimal degree equals search maximum (", basis.maxdim,"): rerun with larger basis.maxdim",sep=""))
-  if(any(segments==(basis.maxdim+1))) warning(paste(" optimal segment equals search maximum (", basis.maxdim+1,"): rerun with larger basis.maxdim",sep=""))  
+  if(any(degree==degree.max)) warning(paste(" optimal degree equals search maximum (", degree.max,"): rerun with larger degree.max",sep=""))
+  if(any(segments==(segments.max))) warning(paste(" optimal segment equals search maximum (", segments.max,"): rerun with larger segments.max",sep=""))  
 
   crscv(K=K.opt,
         I=NULL,
         basis=basis.opt,
         basis.vec=basis.vec,
-        basis.maxdim=basis.maxdim,
-        complexity=complexity,
-        knots=knots,
-        degree=degree,
-        segments=segments,
-        restarts=restarts,
-        K.mat=K.mat,
-        lambda=lambda.opt,
-        lambda.mat=lambda.mat,
-        cv.objc=cv.min,
-        cv.objc.vec=as.matrix(cv.vec),
-        num.x=num.x,
-        cv.func=cv.func)
+				degree.max=degree.max, 
+				segments.max=segments.max, 
+				degree.min=degree.min, 
+				segments.min=segments.min, 
+				complexity=complexity,
+				knots=knots,
+				degree=degree,
+				segments=segments,
+				restarts=restarts,
+				K.mat=K.mat,
+				lambda=lambda.opt,
+				lambda.mat=lambda.mat,
+				cv.objc=cv.min,
+				cv.objc.vec=as.matrix(cv.vec),
+				num.x=num.x,
+				cv.func=cv.func)
 
 }

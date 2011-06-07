@@ -18,7 +18,6 @@ model <- crs(y~x1+x2,
              basis="auto",
              cv="nomad",
              complexity="degree-knots",
-             basis.maxdim=10,
              knots="uniform",
              deriv=1,
              cv.func="cv.aic")

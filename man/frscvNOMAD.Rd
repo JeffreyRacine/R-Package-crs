@@ -27,7 +27,6 @@ frscvNOMAD(xz,
 					 degree=degree,
 					 segments=segments, 
 					 include=include, 
-					 fit.z=fit.z,
            opts=list("MAX_BB_EVAL"=500,"MIN_MESH_SIZE"="r1.0e-10","INITIAL_MESH_SIZE"="r1.0e-02","MIN_POLL_SIZE"="r1.0e-10"),
 					 nmulti=0)
 }
@@ -91,13 +90,8 @@ frscvNOMAD(xz,
     the B-spline basis for each dimension of the continuous \code{x}
     (i.e. number of knots minus one)}
 
-\item{include}{ integer/vector for the categorical predictors. If fit.z
-is TRUE,  it will be the initial value for the fitting,  otherwise, 
-we will not fit include.}
-
-  \item{fit.z}{ If it is TRUE, "include" or "lambda" will be the initial
-	values for the categroical predictors. If "include" or "lambda" is NULL, 
-	fit.z will be TRUE. The default value is FALSE.}
+\item{include}{ integer/vector for the categorical predictors. If it 
+	 is not NULL, 	it will be the initial value for the fitting.}
 
 \item{opts}{
   arguments passed to the NOMAD solver.
@@ -147,7 +141,16 @@ we will not fit include.}
     predictor is included or not for each dimension of the
     ordinal/nominal factors }
   \item{K.mat}{ vector/matrix of values of \code{K} evaluated during search }  
-  \item{basis.maxdim}{ maximum degree of B-spline basis }
+  \item{degree.max}{ the maximum degree of the B-spline basis for
+    each of the continuous predictors (default \code{degree.max=10})}
+  \item{segments.max}{ the maximum segments of the B-spline basis for
+    each of the continuous predictors (default \code{segments.max=10})}
+  \item{degree.min}{ the minimum degree of the B-spline basis for
+    each of the continuous predictors (default \code{degree.min=0})}
+  \item{segments.min}{ the minimum segments of the B-spline basis for
+    each of the continuous predictors (default \code{segments.min=1})}
+
+
   \item{cv.func}{ objective function value at optimum }
   \item{cv.func.vec}{ vector of objective function values at each degree
     of spline or number of segments in \code{K.mat}}

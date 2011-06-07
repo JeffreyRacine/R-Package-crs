@@ -25,6 +25,7 @@ crs(\dots)
     deriv = 0,
     data.return = FALSE,
     prune = FALSE,
+    prune.index = NULL,
     \dots)
 
 \method{crs}{formula}(formula,
@@ -32,11 +33,10 @@ crs(\dots)
     degree = NULL,
     segments = NULL,
     include = NULL,
-		basis.maxdim = 10,
-		degree.max=10, 
-		segments.max=10, 
-		degree.min=0, 
-		segments.min=1, 
+		degree.max = 10, 
+		segments.max = 10, 
+		degree.min = 0, 
+		segments.min = 1, 
 		cv = c("nomad","exhaustive","none"),
 		cv.func = c("cv.ls","cv.gcv","cv.aic"),
 		kernel = TRUE,
@@ -49,7 +49,7 @@ crs(\dots)
 		data.return = FALSE,
 		prune = FALSE,
 		restarts = 0,
-		fit.z = FALSE, 
+    opts = list("MAX_BB_EVAL"=500,"MIN_MESH_SIZE"="r1.0e-10","INITIAL_MESH_SIZE"="r1.0e-02","MIN_POLL_SIZE"="r1.0e-10","DISPLAY_DEGREE"=0),
 		nmulti = 0, 
 		\dots)
 }
@@ -103,27 +103,25 @@ crs(\dots)
   \item{kernel}{ a logical value (default \code{kernel=TRUE})
     indicating whether to use kernel smoothing or not }
 
-  \item{basis.maxdim}{ the maximum dimension of the spline degree or
-    number of knots for each of the continuous predictors (default
-    \code{basis.maxdim=10} meaning a maximum dimension of 10 or number of
-    knots of 10 (11 segments) indicating a maximum number of columns in
-    the B-spline of 20)}
   \item{degree.max}{ the maximum degree of the B-spline basis for
     each of the continuous predictors (default \code{degree.max=10})}
+  
   \item{segments.max}{ the maximum segments of the B-spline basis for
     each of the continuous predictors (default \code{segments.max=10})}
+
   \item{degree.min}{ the minimum degree of the B-spline basis for
     each of the continuous predictors (default \code{degree.min=0})}
+
   \item{segments.min}{ the minimum segments of the B-spline basis for
     each of the continuous predictors (default \code{segments.min=1})}
 
   \item{complexity}{a character string (default
-  \code{complexity="degree-knots"}) indicating whether model `complexity' is
-  determined by the degree of the spline or by the number of segments
-  (i.e. number of knots minus one). This option allows the user to use
-  cross-validation to select either the spline degree (number of knots
-  held fixed) or the number of knots (spline degree held fixed) or both
-  the spline degree and number of knots
+  \code{complexity="degree-knots"}) indicating whether model
+  `complexity' is determined by the degree of the spline or by the
+  number of segments (i.e. number of knots minus one). This option
+  allows the user to use cross-validation to select either the spline
+  degree (number of knots held fixed) or the number of knots (spline
+  degree held fixed) or both the spline degree and number of knots
 
   For the continuous predictors the regression spline model employs
   either the additive or tensor product B-spline basis matrix for a
@@ -169,9 +167,9 @@ crs(\dots)
     process of finding extrema of the cross-validation function (for the
     bandwidths only) from different (random) initial points }
 
-  \item{fit.z}{ If it is TRUE, "include" or "lambda" will be the initial
-	values for the categroical predictors. If "include" or "lambda" is NULL, 
-	fit.z will be TRUE. The default value is FALSE.}
+  \item{opts}{
+    arguments passed to the NOMAD solver.
+  }
 
   \item{nmulti}{
     integer number of times to restart the process of finding extrema of
@@ -234,14 +232,14 @@ crs(\dots)
   may restart the algorithm as many times as desired via the
   \code{restarts} argument (default \code{restarts=0}). The approach
   ascends from \code{degree=0} (or \code{segments=0}) through
-  \code{basis.maxdim} and for each value of \code{degree} (or
+  \code{degree.max} and for each value of \code{degree} (or
   \code{segments}) searches for the optimal bandwidths. After the most
   complex model has been searched then the optimal
   \code{degree}/\code{segments}/\code{lambda} combination is
   selected. If any element of the optimal \code{degree} (or
-  \code{segments}) vector coincides with \code{basis.maxdim} a warning
+  \code{segments}) vector coincides with \code{degree.max} (or \code{segments.max}) a warning
   is produced and the user ought to restart their search with a larger
-  value of \code{basis.maxdim}.
+  value of \code{degree.max} (or \code{segments.max}).
 
   Note that the default \code{plot} method for a \code{crs} object
   provides some diagnostic measures, in particular, a) residuals versus

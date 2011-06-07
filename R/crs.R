@@ -314,8 +314,8 @@ crs.default <- function(xz,
 ## nomad is true, it will call snomadRSolve, otherwise, it will call
 ## smultinomadRSolve See ?snomadr
 # Jun 4,  2011
-#1) degree.max (currently basis.maxdim)
-#2) segments.max (currently basis.maxdim)
+#1) degree.max (we have removed  basis.maxdim)
+#2) segments.max (we have removed  basis.maxdim)
 #3) degree.min (currently 0)
 #4) segments.min (currently 1)
 
@@ -324,7 +324,6 @@ crs.formula <- function(formula,
                         degree=NULL,
                         segments=NULL,
                         include=NULL,
-                        basis.maxdim=10,
 												degree.max=10, 
 												segments.max=10, 
 												degree.min=0, 
@@ -335,7 +334,6 @@ crs.formula <- function(formula,
                         lambda=NULL,
                         kernel.type=c("nominal","ordinal"),
                         complexity=c("degree-knots","degree","knots"),
-												fit.z=FALSE,    #whether fit "include" or "lambda"
                         knots=c("quantiles","uniform"),
                         basis=c("additive","tensor","auto"),
                         deriv=0,
@@ -380,7 +378,6 @@ crs.formula <- function(formula,
   rm(xztmp)
   if(is.null(z)) {
     include <- NULL
-	  fit.z <- FALSE  # no need to fit 
   }
 
   ## If no degree nor include nor lambda, return cubic spline
@@ -422,7 +419,6 @@ crs.formula <- function(formula,
 															degree=degree,
 															segments=segments, 
 															include=include, 
-															fit.z=fit.z, 
 															opts=opts,
 															nmulti=nmulti)
 
@@ -435,23 +431,26 @@ crs.formula <- function(formula,
 		}	else if(cv=="exhaustive") {
 
       cv.return <- frscv(xz=xz,
-                         y=y,
-                         basis.maxdim=basis.maxdim,
-                         complexity=complexity,
-                         knots=knots,
-                         basis=basis,
-                         cv.func=cv.func,
-                         degree=degree,
-                         segments=segments)
-      
-      
-      cv.min <- cv.return$cv.min
-      degree <- cv.return$degree
-      segments <- cv.return$segments
-      include <- cv.return$I
-      basis <- cv.return$basis
-    
-    }
+												 y=y,
+												 degree.max=degree.max, 
+												 segments.max=segments.max, 
+												 degree.min=degree.min, 
+												 segments.min=segments.min, 
+												 complexity=complexity,
+												 knots=knots,
+												 basis=basis,
+												 cv.func=cv.func,
+												 degree=degree,
+												 segments=segments)
+
+
+	cv.min <- cv.return$cv.min
+	degree <- cv.return$degree
+	segments <- cv.return$segments
+	include <- cv.return$I
+	basis <- cv.return$basis
+
+		}
 
   } else {
 
@@ -472,7 +471,6 @@ crs.formula <- function(formula,
                               degree=degree,
                               segments=segments,
 															lambda=lambda, 
-															fit.z=fit.z, 
                               restarts=restarts, 
                               opts=opts,
                               nmulti=nmulti)
@@ -488,7 +486,10 @@ crs.formula <- function(formula,
       
       cv.return <- krscv(xz=xz,
                          y=y,
-                         basis.maxdim=basis.maxdim,
+												 degree.max=degree.max, 
+												 segments.max=segments.max, 
+												 degree.min=degree.min, 
+												 segments.min=segments.min, 
                          complexity=complexity,
                          knots=knots,
                          basis=basis,

@@ -22,8 +22,7 @@ frscvNOMAD <- function(xz,
 											 degree=degree,
 											 segments=segments, 
 											 include=include, 
-											 fit.z=fit.z, 
-                       opts=list("MAX_BB_EVAL"=500,"MIN_MESH_SIZE"="r1.0e-10","INITIAL_MESH_SIZE"="r1.0e-02","MIN_POLL_SIZE"="r1.0e-10"),
+											 opts=list("MAX_BB_EVAL"=500,"MIN_MESH_SIZE"="r1.0e-10","INITIAL_MESH_SIZE"="r1.0e-02","MIN_POLL_SIZE"="r1.0e-10"),
 											 nmulti=0) {
 
 		complexity <- match.arg(complexity)
@@ -31,15 +30,15 @@ frscvNOMAD <- function(xz,
 		basis <- match.arg(basis)
 		cv.func <- match.arg(cv.func)
 
-		if( missing(fit.z) || is.null(fit.z) ) fit.z <- FALSE 
 		if ( missing(include) || is.null(include)) {
 				include <- NULL
-				fit.z <- TRUE
 		}
 		if(degree.min < 0 ) degree.min <- 0
 		if(segments.min < 1 ) segments.min <- 1
 		if(degree.max < degree.min) degree.max <- (degree.min + 1)
 		if(segments.max < segments.min) segments.max <- (segments.min + 1)
+		if(missing(degree)) degree <- NULL
+		if(missing(segments)) segments <- NULL
 
 
 		t1 <- Sys.time()
@@ -58,7 +57,6 @@ frscvNOMAD <- function(xz,
 												 degree=degree, 
 												 segments=segments,
 												 include=include, 
-												 fit.z=fit.z, 
 												 opts=opts,
 												 print.output=print.output, 
 												 nmulti=nmulti) {
@@ -91,7 +89,6 @@ frscvNOMAD <- function(xz,
 						knots <- params$knots
 						cv.func <- params$cv.func
 						basis <- params$basis
-						fit.z <- params$fit.z
 
 						num.x <- NCOL(x)
 						num.z <- 0
@@ -99,14 +96,14 @@ frscvNOMAD <- function(xz,
 
 						if(complexity=="degree-knots") {
 								K <- round(cbind(input[1:num.x],input[(num.x+1):(2*num.x)]))
-								if(!is.null(z) &&  fit.z  ) {
+								if(!is.null(z)  ) {
 										num.z <- NCOL(z)
 										I <- round(input[(2*num.x+1):(2*num.x+num.z)])
 								} 
 						}	
 						else if(complexity=="degree") {
 								K<-round(cbind(input[1:num.x],segments))
-								if(!is.null(z) &&  fit.z  ) {
+								if(!is.null(z)  ) {
 										num.z <- NCOL(z)
 										I <- round(input[(num.x+1):(num.x+num.z)])
 								} 
@@ -114,16 +111,15 @@ frscvNOMAD <- function(xz,
 						else if(complexity=="knots")
 						{
 								K<-round(cbind(degree, input[1:num.x]))
-								if(!is.null(z) && fit.z  ) {
+								if(!is.null(z)  ) {
 										num.z <- NCOL(z)
 										I <- round(input[(num.x+1):(num.x+num.z)])
 								} 
 						}
 
-
-						basis.opt <<-  basis;
+						basis.opt <-  basis;
 						if(basis=="auto"){
-								basis.opt<<-"additive"
+								basis.opt <-"additive"
 								cv <- cv.factor.spline(x=x,
 																			 y=y,
 																			 z=z,
@@ -143,7 +139,7 @@ frscvNOMAD <- function(xz,
 																							cv.func=cv.func)
 								if(cv>cv.tensor){
 										cv <- cv.tensor
-										basis.opt <<-"tensor"
+										basis.opt <-"tensor"
 								}
 						}
 						else {
@@ -156,6 +152,7 @@ frscvNOMAD <- function(xz,
 																			 basis=basis.opt,
 																			 cv.func=cv.func)
 						}
+						attr(cv, "basis.opt")<-basis.opt
 
 						return(cv)
 				}
@@ -180,7 +177,6 @@ frscvNOMAD <- function(xz,
 				else {
 						num.z <-0
 						include <- NULL
-						fit.z <- TRUE  
 				}
 
 				xsegments <- segments
@@ -189,65 +185,30 @@ frscvNOMAD <- function(xz,
 
 				if(is.null(xdegree)) xdegree <- sample(degree.min:degree.max, num.x, replace=T)
 				if(is.null(xsegments)) xsegments <- sample(segments.min:segments.max, num.x, replace=T)
-				if(is.null(xinclude)) {
-						fit.z <- TRUE
-						xinclude <- sample(0:1, num.z, replace=T)
-				}
+				if(is.null(xinclude)) xinclude <- sample(0:1, num.z, replace=T)
+				
 
-				params$fit.z <- fit.z
-
-				if(fit.z)
+				if(complexity =="degree-knots") {
+						x0 <- c(xdegree, xsegments, xinclude)
+						bbin <-rep(1, num.x*2+num.z)
+						#bounds segments cannot be samller than 2
+						lb <- c(rep(degree.min,num.x), rep(segments.min, num.x), rep(0, num.z) )
+						ub <- c(rep(degree.max, num.x), rep(segments.max,num.x), rep(1, num.z))
+				}	
+				else if(complexity=="degree") {
+						x0 <- c(xdegree, xinclude)
+						bbin <-rep(1, num.x+num.z)
+						lb <- c(rep(degree.min, num.x),  rep(0, num.z) )
+						ub <- c(rep(degree.max, num.x), rep(1, num.z))
+				}	
+				else if(complexity=="knots")
 				{
-						if(complexity =="degree-knots") {
-								x0 <- c(xdegree, xsegments, xinclude)
-
-								bbin <-rep(1, num.x*2+num.z)
-								#bounds segments cannot be samller than 2
-								lb <- c(rep(degree.min,num.x), rep(segments.min, num.x), rep(0, num.z) )
-								ub <- c(rep(degree.max, num.x), rep(segments.max,num.x), rep(1, num.z))
-						}	
-						else if(complexity=="degree") {
-								x0 <- c(xdegree,  xinclude)
-
-								bbin <-rep(1, num.x+num.z)
-								lb <- c(rep(degree.min, num.x),  rep(0, num.z) )
-								ub <- c(rep(degree.max, num.x), rep(1, num.z))
-						}	
-						else if(complexity=="knots")
-						{
-								x0 <- c(xsegments,  xinclude)
-								bbin <-rep(1, num.x+num.z)
-								#bounds segments cannot be samller than 2
-								lb <- c(rep(segments.min, num.x),  rep(0, num.z) )
-								ub <- c(rep(segments.max, num.x), rep(1, num.z))
-						}
+						x0 <- c(xsegments, xinclude)
+						bbin <-rep(1, num.x+num.z)
+						#bounds segments cannot be samller than 2
+						lb <- c(rep(segments.min, num.x),  rep(0, num.z) )
+						ub <- c(rep(segments.max, num.x), rep(1, num.z))
 				}
-				else {
-						if(complexity =="degree-knots") {
-								x0 <- c(xdegree, xsegments)
-
-								bbin <-rep(1, num.x*2)
-								#bounds segments cannot be samller than 2
-								lb <- c(rep(degree.min,num.x), rep(segments.min, num.x) )
-								ub <- c(rep(degree.max,num.x), rep(segments.max, num.x) )
-						}	
-						else if(complexity=="degree") {
-								x0 <- c(xdegree)
-								bbin <-rep(1, num.x)
-								#bounds segments cannot be samller than 2
-								lb <- c(rep(degree.min, num.x) )
-								ub <- c(rep(degree.max, num.x))
-						}	
-						else if(complexity=="knots")
-						{
-								x0 <- c(xsegments)
-								bbin <-rep(1, num.x)
-								#bounds segments cannot be samller than 2
-								lb <- c(rep(segments.min, num.x) )
-								ub <- c(rep(segments.max, num.x))
-						}
-				}
-
 
 				if(length(x0) != length(lb)) stop(" x0 and bounds have differing numbers of variables")
 
@@ -271,6 +232,10 @@ frscvNOMAD <- function(xz,
 													print.output=print.output, 
 													params=params);
 
+				if(basis == "auto") 
+				attr(solution, "basis.opt") <- attributes(eval.cv(solution$solution, params))$basis.opt
+
+				return(solution)
 		}
 
 		console <- newLineConsole()
@@ -313,7 +278,10 @@ frscvNOMAD <- function(xz,
 				if(missing(segments)||is.null(segments)) stop("segments missing for cross-validation of spline degree")
 				if(length(segments)!=num.x) stop(" segments vector must be the same length as x")  
 				if(!is.null(degree) && length(degree) == num.x) { #check initial values should be in the bounds
-						if(any(degree < degree.min)||any(degree>degree.max)) degree <- NULL
+						if(any(degree < degree.min)||any(degree>degree.max)) {
+								warning(paste(" The provided initial values for the degree are not in the bounds.", sep=""))
+								degree <- NULL
+						}
 				}
 				else
 						degree <- NULL
@@ -321,22 +289,32 @@ frscvNOMAD <- function(xz,
 				if(missing(degree)||is.null(degree)) stop("degree missing for cross-validation of number of spline knots")
 				if(length(degree)!=num.x) stop(" degree vector must be the same length as x")
 				if(!is.null(segments) && length(segments) == num.x) {
-						if(any(segments < segments.min)||any(segments > segments.max)) segments <- NULL
+						if(any(segments < segments.min)||any(segments > segments.max)) {
+								warning(paste(" The provided initial values for the semgents are not in the bounds.", sep=""))
+								segments <- NULL
+						}
 				}
 				else
 						segments <- NULL
 		}
 		else {
 				if(!is.null(degree) && length(degree) == num.x) { #check initial values should be in the bounds
-						if(any(degree < degree.min)||any(degree>degree.max)) degree <- NULL
+						if(any(degree < degree.min)||any(degree>degree.max)) {
+								warning(paste(" The provided initial values for the degree are not in the bounds.", sep=""))
+								degree <- NULL
+						}
+				}
+				else {
+						degree <- NULL
+				}
+				if(!is.null(segments) && length(segments) == num.x) {
+						if(any(segments < segments.min)||any(segments > segments.max)) {
+								warning(paste(" The provided initial values for the semgents are not in the bounds.", sep=""))
+								segments <- NULL
+						}
 				}
 				else
-						degree <- NULL
-						if(!is.null(segments) && length(segments) == num.x) {
-						if(any(segments < segments.min)||any(segments > segments.max)) segments <- NULL
-						}
-						else
-								segments <- NULL
+						segments <- NULL
 		}
 
 		## For factor regression spline, if there is only one predictor
@@ -347,9 +325,7 @@ frscvNOMAD <- function(xz,
 
 		if(degree.max < 1 || segments.max < 1 ) stop(" degree.max or segments.max must be greater than or equal to 1")
 
-		## we use a globle variable to store basis.opt
 		## sovle by NOMAD
-
 		nomad.solution <- cv.nomad(x,
 															 z,
 															 y,
@@ -364,36 +340,34 @@ frscvNOMAD <- function(xz,
 															 degree=degree, 
 															 segments=segments, 
 															 include=include, 
-															 fit.z=fit.z, 
 															 opts=opts,
 															 print.output=print.output, 
 															 nmulti=nmulti) 
 
 		# in crs,  we do not need the file best_x.txt
-		if(nmulti > 1) file.remove("best_x.txt")
+		if(nmulti > 0) file.remove("best_x.txt")
 
 		t2 <- Sys.time()
 
 		##output
 
-		I.opt <- include
+		I.opt <- NULL 
 		cv.min <- nomad.solution$objective
+		basis.opt <- basis
 		if(complexity=="degree-knots") {
 				K.opt <- as.integer(nomad.solution$solution)
 				degree <- K.opt[1:num.x]
 				segments <- K.opt[(num.x+1):(2*num.x)]
-				if((!is.null(z) && is.null(include))||fit.z) I.opt <- K.opt[(2*num.x+1):(2*num.x+num.z)]
+				if(!is.null(z) ) I.opt <- K.opt[(2*num.x+1):(2*num.x+num.z)]
 		}	
 		else if(complexity=="degree") {
 				degree <- as.integer(nomad.solution$solution[1:num.x])
-				if((!is.null(z) && is.null(include)) || fit.z) {I.opt <- as.integer(nomad.solution$solution[(num.x+1):(num.x+num.z)])
-				}
+				if(!is.null(z) ) {I.opt <- as.integer(nomad.solution$solution[(num.x+1):(num.x+num.z)])}
 		}	
 		else if(complexity=="knots")
 		{
 				segments <- as.integer(nomad.solution$solution[1:num.x])
-				if((!is.null(z) && is.null(include))||fit.z) {I.opt <- as.integer(nomad.solution$solution[(num.x+1):(num.x+num.z)])
-				}
+				if(!is.null(z) ) {I.opt <- as.integer(nomad.solution$solution[(num.x+1):(num.x+num.z)])}
 		}
 
 		if(!is.null(z))
@@ -411,6 +385,9 @@ frscvNOMAD <- function(xz,
 		if(any(degree==degree.max)) warning(paste(" optimal degree equals search maximum (", degree.max,"): rerun with larger degree.max",sep=""))
 		if(any(segments==(segments.max+1))) warning(paste(" optimal segment equals search maximum (", segments.max+1,"): rerun with larger segments.max",sep=""))  
 
+		basis.opt <- basis
+		if(basis == "auto") basis.opt <- attributes(nomad.solution)$basis.opt
+		
 		cv.vec <- NULL
 		basis.vec <- NULL
 		KI.mat <- NULL
@@ -419,7 +396,10 @@ frscvNOMAD <- function(xz,
 					I=I.opt,
 					basis=basis.opt,
 					basis.vec=basis.vec,
-					basis.maxdim=max(degree.max, segments.max),
+					degree.max=degree.max, 
+					segments.max=segments.max, 
+					degree.min=degree.min, 
+					segments.min=segments.min, 
 					complexity=complexity,
 					knots=knots,
 					degree=degree,

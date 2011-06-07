@@ -2,8 +2,6 @@ useDynLib(crs)
 import(stats)
 export(crs,
        crsiv,
-			 cv.factor.spline, 
-			 cv.kernel.spline, 
        frscv,
 			 frscvNOMAD, 
        gsl.bs,

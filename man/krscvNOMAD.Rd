@@ -28,7 +28,6 @@ krscvNOMAD(xz,
 			degree = degree,
 			segments = segments,
 			lambda = lambda, 
-			fit.z = fit.z, 
       opts=list("MAX_BB_EVAL"=500,"MIN_MESH_SIZE"="r1.0e-10","INITIAL_MESH_SIZE"="r1.0e-02","MIN_POLL_SIZE"="r1.0e-10"),
 			nmulti = 0)
 }
@@ -105,11 +104,7 @@ krscvNOMAD(xz,
   (i.e. number of knots minus one)}
 
   \item{lambda}{ real/vector for the categorical predictors. If it is not
-	NULL and fit.z is FALSE,  we will not fit lambda.}
-
-  \item{fit.z}{ If it is TRUE, "include" or "lambda" will be the initial
-	values for the categroical predictors. If "include" or "lambda" is NULL, 
-	fit.z will be TRUE. The default value is FALSE.}
+	NULL,  it will be a starting value of lambd}
 
 \item{opts}{
   arguments passed to the NOMAD solver.
@@ -148,12 +143,12 @@ krscvNOMAD(xz,
   box-constrained \code{L-BFGS-B} method (see \code{\link{optim}} for
   details). The user may restart the algorithm as many times as desired
   via the \code{restarts} argument. The approach ascends from \code{K=0}
-  through \code{basis.maxdim} and for each value of \code{K} searches for the
+  through \code{degree.max} and for each value of \code{K} searches for the
   optimal bandwidths for this value of \code{K}. After the most complex
   model has been searched then the optimal \code{K}/\code{lambda}
   combination is selected. If any element of the optimal \code{K} vector
-  coincides with \code{basis.maxdim} a warning is produced and the user ought
-  to restart their search with a larger value of \code{basis.maxdim}.
+  coincides with \code{degree.max} a warning is produced and the user ought
+  to restart their search with a larger value of \code{degree.max}.
 
   Note that, since the approach is built on top of the regression spline
   for each unique \code{z} combination, the splines must be estimable
@@ -171,7 +166,16 @@ krscvNOMAD(xz,
   \item{K}{ scalar/vector containing optimal degree(s) of spline or
   number of segments }
   \item{K.mat}{ vector/matrix of values of \code{K} evaluated during search }  
-  \item{basis.maxdim}{ maximum degree of B-spline basis }
+  \item{degree.max}{ the maximum degree of the B-spline basis for
+    each of the continuous predictors (default \code{degree.max=10})}
+  \item{segments.max}{ the maximum segments of the B-spline basis for
+    each of the continuous predictors (default \code{segments.max=10})}
+  \item{degree.min}{ the minimum degree of the B-spline basis for
+    each of the continuous predictors (default \code{degree.min=0})}
+  \item{segments.min}{ the minimum segments of the B-spline basis for
+    each of the continuous predictors (default \code{segments.min=1})}
+
+
   \item{restarts}{ number of restarts during search, if any }
   \item{lambda}{ optimal bandwidths for categorical predictors }
   \item{lambda.mat}{ vector/matrix of optimal bandwidths for each degree of spline }
