@@ -57,7 +57,7 @@ crsiv(y,
     combination thereof.
   }
   \item{x}{
-    an \eqn{r}-variate data frame of exdogenous predictors. The data
+    an \eqn{r}-variate data frame of exogenous predictors. The data
     types may be continuous, discrete (unordered and ordered factors),
     or some combination thereof.
   }
