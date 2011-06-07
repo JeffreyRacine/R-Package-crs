@@ -1,8 +1,7 @@
 ## This demo considers a setting with one endogenous regressor and one
 ## instrument.
 
-rm(list=ls())
-library(crs)
+require(crs)
 
 ## This illustration was made possible by Samuele Centorrino
 ## <samuele.centorrino@univ-tlse1.fr>

@@ -1,6 +1,4 @@
-rm(list=ls())
-
-library(crs)
+require(crs)
 
 set.seed(42)
 
