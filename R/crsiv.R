@@ -227,7 +227,7 @@ crsiv <- function(y,
     console <- printClear(console)
     console <- printPop(console)
     console <- printPush("Computing weights and optimal smoothing for E(y|w)...", console)
-    model<-crs(formula.yw,...)
+    model<-crs(formula.yw,opts=opts,...)
     E.y.w <- predict(model,newdata=newdata)
     B <- model.matrix(model$model.lm)
     KYW <- B%*%solve(t(B)%*%B)%*%t(B)
@@ -241,7 +241,7 @@ crsiv <- function(y,
     } else {
       console <- printPush("Computing weights and optimal smoothing for E(E(y|w)|z,x)...", console)
     }
-    model <- crs(formula.Eywz,...)
+    model <- crs(formula.Eywz,opts=opts,...)
     E.E.y.w.z <- predict(model,newdata=newdata)
     B <- model.matrix(model$model.lm)
     KYWZ <- B%*%solve(t(B)%*%B)%*%t(B)
@@ -287,7 +287,7 @@ crsiv <- function(y,
     } else {
       console <- printPush("Computing optimal smoothing and weights for E(phi(z,x)|w)...", console)
     }
-    model <- crs(formula.phihatw,...)
+    model <- crs(formula.phihatw,opts=opts,...)
     E.phihat.w <- predict(model,newdata=newdata)
     B <- model.matrix(model$model.lm)
     KPHIW <- B%*%solve(t(B)%*%B)%*%t(B)
@@ -301,7 +301,7 @@ crsiv <- function(y,
     } else {
       console <- printPush("Computing optimal smoothing and weights for E(E(phi(z,x)|w)|z,x)...", console)
     }
-    model <- crs(formula.Ephihatwz,...)
+    model <- crs(formula.Ephihatwz,opts=opts,...)
     B <- model.matrix(model$model.lm)
     KPHIWZ <- B%*%solve(t(B)%*%B)%*%t(B)
     
@@ -350,9 +350,9 @@ crsiv <- function(y,
     } else {
       console <- printPush(paste("Computing optimal smoothing and phi(z,x) for iteration 1...",sep=""),console)
     }
-    phi.0 <- crs(formula.yz,...)
-    model.residphi0 <- crs(formula.residphi0w,...)
-    model.Eresidphi0.z <- crs(formula.predictmodelresidphi0z,...)
+    phi.0 <- crs(formula.yz,opts=opts,...)
+    model.residphi0 <- crs(formula.residphi0w,opts=opts,...)
+    model.Eresidphi0.z <- crs(formula.predictmodelresidphi0z,opts=opts,...)
     phi.j.m.1 <- predict(phi.0,newdata=newdata) + predict(model.Eresidphi0.z,newdata=newdata)
 
     ## For the stopping rule
@@ -362,10 +362,10 @@ crsiv <- function(y,
     console <- printPush(paste("Computing optimal smoothing for the stopping rule...",sep=""),console)
 
     norm.stop <- numeric()
-    model.E.y.w <- crs(formula.yw,...)
+    model.E.y.w <- crs(formula.yw,opts=opts,...)
     E.y.w <- predict(model.E.y.w,newdata=newdata)
     phihat <- phi.j.m.1
-    model.E.phi.w <- crs(formula.phihatw,...)
+    model.E.phi.w <- crs(formula.phihatw,opts=opts,...)
     E.phi.w <- predict(model.E.phi.w,newdata=newdata)
     norm.stop[1] <- mean(((E.y.w-E.phi.w)/E.y.w)^2)
 
@@ -379,8 +379,8 @@ crsiv <- function(y,
         console <- printPush(paste("Computing optimal smoothing and phi(z,x) for iteration ", j,"...",sep=""),console)
       }
 
-      model.residw <- crs(formula.residw,...)
-      model.predict.residw.z <- crs(formula.predictmodelresidwz,...)
+      model.residw <- crs(formula.residw,opts=opts,...)
+      model.predict.residw.z <- crs(formula.predictmodelresidwz,opts=opts,...)
 
       phi.j <- phi.j.m.1 + constant*predict(model.predict.residw.z,newdata=newdata)
       phi.j.m.1 <- phi.j
@@ -391,7 +391,7 @@ crsiv <- function(y,
       console <- printPush(paste("Computing stopping rule for iteration ", j,"...",sep=""),console)
 
       ## For the stopping rule (use same smoothing as original)
-      model.stop <- crs(formula.phihatw,cv="none",degree=model.E.phi.w$degree,segments=model.E.phi.w$segments,...)
+      model.stop <- crs(formula.phihatw,cv="none",degree=model.E.phi.w$degree,segments=model.E.phi.w$segments,opts=opts,...)
       E.phi.w <- predict(model.stop,newdata=newdata)
       norm.stop[j] <- mean(((E.y.w-E.phi.w)/E.y.w)^2)
 
