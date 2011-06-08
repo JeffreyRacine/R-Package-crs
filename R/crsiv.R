@@ -390,8 +390,19 @@ crsiv <- function(y,
       console <- printPop(console)
       console <- printPush(paste("Computing stopping rule for iteration ", j,"...",sep=""),console)
 
-      ## For the stopping rule (use same smoothing as original)
-      model.stop <- crs(formula.phihatw,cv="none",degree=model.E.phi.w$degree,segments=model.E.phi.w$segments,opts=opts,basis=model.E.phi.w$basis,...)
+      ## For the stopping rule (use same smoothing as original,
+      ## cv="none" so no ... args allowed hence pass all relevant args)
+      model.stop <- crs(formula.phihatw,
+                        cv="none",
+                        degree=model.E.phi.w$degree,
+                        segments=model.E.phi.w$segments,
+                        lambda=model.E.phi.w$lambda,
+                        include=model.E.phi.w$include,
+                        kernel=model.E.phi.w$kernel, 
+                        basis=model.E.phi.w$basis,
+                        kernel.type=model.E.phi.w$kernel.type,
+                        knots=model.E.phi.w$knots)
+      
       E.phi.w <- predict(model.stop,newdata=newdata)
       norm.stop[j] <- mean(((E.y.w-E.phi.w)/E.y.w)^2)
 
