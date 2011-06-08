@@ -1,6 +1,5 @@
 \name{crs-package}
 \alias{crs-package}
-\alias{crs-package}
 \docType{package}
 \title{Categorical Regression Splines}
 \description{

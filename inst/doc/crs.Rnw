@@ -64,6 +64,7 @@
 <<eval=TRUE,echo=FALSE,keep.source=TRUE,results=hide>>=
 library(crs)
 options(prompt = "R> ", crs.messages = FALSE, digits = 3)
+n <- 10000
 @ 
 
 %% <<fig=TRUE,eval=TRUE, height=, width=>>=
@@ -434,7 +435,6 @@ continuous and one discrete predictor.
 
 <<echo=TRUE,keep.source=TRUE>>=
 set.seed(42)
-n <- 1000
 x <- runif(n)
 z <- rbinom(n,1,.5)
 y <- cos(2*pi*x) + z + rnorm(n,sd=0.25)
@@ -472,7 +472,6 @@ demarcated by the discrete predictor.
 
 <<echo=TRUE,keep.source=TRUE>>=
 set.seed(1234)
-n <- 10000
 x1 <- runif(n)
 x2 <- runif(n)
 dgp <- numeric(n)
