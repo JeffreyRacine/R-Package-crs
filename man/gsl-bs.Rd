@@ -68,7 +68,7 @@ basis; default is \sQuote{FALSE} }
   
 \references{
 
-  Ma, S. and J.S. Racine and L. Yang (2010), \dQuote{Spline Regression
+  Ma, S. and J.S. Racine and L. Yang (2011), \dQuote{Spline Regression
   in the Presence of Categorical Predictors,} manuscript.
 
   Ma, S. and J.S. Racine (2011), \dQuote{Additive Regression Splines
