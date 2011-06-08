@@ -305,29 +305,47 @@ the estimate.
 
 Estimating the model requires construction of the spline bases and
 their tensor product (if specified) along with the categorical kernel
-weighting function. Then, for a given degree for each continuous
-predictor and bandwidth for each categorical predictor (or indicator
-bases), the model is fit via least-squares. Alternatively, the degree
-and bandwidth can be jointly determined via any \code{cv.func} method
-by setting the option \code{cv="nomad"} (`nonsmooth mesh adaptive
-direct search', see \citep{NOMAD}) or \code{cv="exhaustive"}
-(exhaustive search). This then evaluates the model for each unique
-combination of degree for each continuous predictor from
-\code{degree=degree.min} through \code{degree=degree.max} (default 0
-and 10, respectively) and from \code{segments=segments.min} through
-\code{segments=segments.max} (default 1 and 10, respectively).
+weighting function. Then, for a given degree and number of segments
+for each continuous predictor and bandwidth for each categorical
+predictor (or indicator bases if \code{kernel=FALSE}), the model is
+fit via least-squares.
 
-When conducting exhaustive search, for each unique combination of
-degree, the bandwidths ($\in[0,1]$) are obtained via numerical
-minimization (see \code{optim}) and restarting can be conducted via
-\code{restarts=}. The model possessing the lowest criterion function
-value is then selected as the final model.
+All smoothing parameters can be set manually by the user if so
+desired.  You must use the option \code{cv="none"} otherwise the
+values specified manually will become the starting points for search
+when \code{cv="nomad"} (`nonsmooth mesh adaptive direct search', see
+\citep{NOMAD} and \citep{LEDIGABEL:2011} and the references therein).
 
-When conducting \code{cv="nomad"} (nonsmooth mesh adaptive direct
-search) the number of multiple starts can be controlled by
-\code{nmulti=}.
+The degree and bandwidth vector can be jointly determined via any
+\code{cv.func} method by setting the option \code{cv="nomad"} or
+\code{cv="exhaustive"} (exhaustive search).
 
-\subsection*{Data-Driven Smoothing Parameter Selection}
+Setting the option \code{cv="nomad"} computes NOMAD-based
+cross-validation directed search while setting \code{cv="exhaustive"}
+computes exhaustive cross-validation directed search for each unique
+combination of the degree and segment vector for each continuous
+predictor from \code{degree=degree.min} through
+\code{degree=degree.max} (default 0 and 10, respectively) and from
+\code{segments=segments.min} through \code{segments=segments.max}
+(default 1 and 10, respectively).
+
+When \code{kernel=TRUE} setting the option \code{cv="exhaustive"}
+computes bandwidths ($\in[0,1]$) obtained via numerical minimization
+(see \code{\link{optim}}) for each unique combination of the degree
+and segment vectors (restarting can be conducted via
+\code{restarts=}). When conducting \code{cv="nomad"} the number of
+multiple starts can be controlled by \code{nmulti=}. The model
+possessing the lowest criterion function value is then selected as the
+final model.
+
+Note that \code{cv="exhaustive"} is often unfeasible (this
+combinatoric problem can become impossibly large to compute in finite
+time) hence \code{cv="nomad"} is the default. However, with
+\code{cv="nomad"} one should set \code{nmulti=} to some sensible value
+greater than zero (say, 10 or larger) to avoid becoming trapped in
+local minima.
+
+\subsection*{Data-Driven Smoothing Parameter Criteria}
 
 We incorporate three popular approaches for setting the smoothing
 parameters of the regression spline model, namely least-squares

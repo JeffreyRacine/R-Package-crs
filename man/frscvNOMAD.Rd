@@ -5,10 +5,11 @@
 \title{Categorical Factor Regression Spline Cross-Validation}
 
 \description{
-  
-  \code{frscvNOMAD} computes cross-validation for a regression spline
-  estimate of a one (1) dimensional dependent variable on an
-  \code{r}-dimensional vector of continuous predictors and
+   
+  \code{frscvNOMAD} computes NOMAD-based (Nonsmooth Optimization by Mesh
+  Adaptive Direct Search) cross-validation directed search for a
+  regression spline estimate of a one (1) dimensional dependent variable
+  on an \code{r}-dimensional vector of continuous predictors and
   ordinal/nominal factor predictors.
   
 }

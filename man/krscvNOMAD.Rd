@@ -6,10 +6,11 @@
 
 \description{
   
-  \code{krscvNOMAD} computes cross-validation for regression spline
-  estimate of a one (1) dimensional dependent variable on an
-  \code{r}-dimensional vector of continuous and ordinal/nominal factor
-  predictors.
+  \code{krscvNOMAD} computes computes NOMAD-based (Nonsmooth
+  Optimization by Mesh Adaptive Direct Search) cross-validation directed
+  search for a regression spline estimate of a one (1) dimensional
+  dependent variable on an \code{r}-dimensional vector of continuous and
+  ordinal/nominal factor predictors.
   
 }
 \usage{

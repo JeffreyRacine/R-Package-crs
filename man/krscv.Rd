@@ -6,10 +6,10 @@
 
 \description{
   
-  \code{krscv} computes cross-validation for regression spline
-  estimate of a one (1) dimensional dependent variable on an
-  \code{r}-dimensional vector of continuous and ordinal/nominal factor
-  predictors.
+  \code{krscv} computes exhaustive cross-validation directed search for
+  a regression spline estimate of a one (1) dimensional dependent
+  variable on an \code{r}-dimensional vector of continuous and
+  ordinal/nominal factor predictors.
   
 }
 

@@ -6,10 +6,10 @@
 
 \description{
   
-  \code{frscv} computes cross-validation for a regression spline
-  estimate of a one (1) dimensional dependent variable on an
-  \code{r}-dimensional vector of continuous predictors and
-  ordinal/nominal factor predictors.
+  \code{frscv} computes exhaustive cross-validation directed search for
+  a regression spline estimate of a one (1) dimensional dependent
+  variable on an \code{r}-dimensional vector of continuous predictors
+  and ordinal/nominal factor predictors.
   
 }
 
