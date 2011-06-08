@@ -64,7 +64,6 @@
 <<eval=TRUE,echo=FALSE,keep.source=TRUE,results=hide>>=
 library(crs)
 options(prompt = "R> ", crs.messages = FALSE, digits = 3)
-n <- 10000
 @ 
 
 %% <<fig=TRUE,eval=TRUE, height=, width=>>=
@@ -435,6 +434,7 @@ continuous and one discrete predictor.
 
 <<echo=TRUE,keep.source=TRUE>>=
 set.seed(42)
+n <- 10000
 x <- runif(n)
 z <- rbinom(n,1,.5)
 y <- cos(2*pi*x) + z + rnorm(n,sd=0.25)
@@ -449,7 +449,7 @@ extract (or generate) estimated values and residuals. Furthermore, the
 functions \code{summary}, \code{predict}, and \code{plot} (options
 \code{mean=FALSE}, \code{deriv=FALSE}, \code{ci=FALSE},
 \code{plot.behavior} = \code{c("plot"}, \code{"plot-data"},
-\code{"data")}) support objects of this type. Figure \ref{crs plot}
+\code{"data")}) support objects of this type. The figure below
 presents summary output in the form of partial regression surfaces
 (predictors not appearing on the axes are held constant at their
 medians/modes). Note that for this simple example we used the option
@@ -472,6 +472,7 @@ demarcated by the discrete predictor.
 
 <<echo=TRUE,keep.source=TRUE>>=
 set.seed(1234)
+n <- 10000
 x1 <- runif(n)
 x2 <- runif(n)
 dgp <- numeric(n)

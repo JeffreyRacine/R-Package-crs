@@ -92,8 +92,7 @@ snomadr(eval.f,
 
     \item{snomadr.environment}{
         environment that is used to evaluate the functions. Use this to pass 
-        additional data or parameters to a function. See the example in 
-        \code{parameters.R} in the \code{tests} directory.
+        additional data or parameters to a function.
     }
     \item{...}{
       arguments that will be passed to the user-defined objective and

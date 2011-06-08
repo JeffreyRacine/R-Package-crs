@@ -76,7 +76,8 @@
 }
 
 \author{
-  Jeffrey S. Racine  <racinej@mcmaster.ca>
+  
+  Jeffrey S. Racine <racinej@mcmaster.ca> and Zhenghua Nie <niez@mcmaster.ca>
 
   Maintainer: Jeffrey S. Racine <racinej@mcmaster.ca>
 
