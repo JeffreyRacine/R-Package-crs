@@ -394,7 +394,7 @@ crs.formula <- function(formula,
 	}
 
 
-  if(cv!="none"&&basis!="auto"&&NCOL(xz)>1) warning(paste(" cv specified but basis ", basis, ": you might consider basis=\"auto\"",sep=""))
+  if(cv!="none"&&basis!="auto"&&NCOL(xz)>1) warning(paste(" cv specified but basis is ", basis, ": you might consider basis=\"auto\"",sep=""))
 
   if(kernel==TRUE&&prune==TRUE) warning(" pruning cannot coexist with categorical kernel smoothing (pruning ignored)")
 
