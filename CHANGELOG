@@ -1,3 +1,8 @@
+Changes from Version 0.14.6 to 0.14.7 [XXX]
+
+* Checking for non-auto basis corrected, modify crsiv to use auto
+  basis.
+
 Changes from Version 0.14.3 to 0.14.6 [08-Jun-2011]
 
 * Initial release of the crs package on CRAN.

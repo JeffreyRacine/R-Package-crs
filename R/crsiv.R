@@ -391,7 +391,7 @@ crsiv <- function(y,
       console <- printPush(paste("Computing stopping rule for iteration ", j,"...",sep=""),console)
 
       ## For the stopping rule (use same smoothing as original)
-      model.stop <- crs(formula.phihatw,cv="none",degree=model.E.phi.w$degree,segments=model.E.phi.w$segments,opts=opts,...)
+      model.stop <- crs(formula.phihatw,cv="none",degree=model.E.phi.w$degree,segments=model.E.phi.w$segments,opts=opts,basis=model.E.phi.w$basis,...)
       E.phi.w <- predict(model.stop,newdata=newdata)
       norm.stop[j] <- mean(((E.y.w-E.phi.w)/E.y.w)^2)
 
