@@ -1,17 +1,38 @@
+Changes from Version 0.14.3 to 0.14.6 [08-Jun-2011]
+
+* Initial release of the crs package on CRAN.
+
+* Added internal support for NOMAD via snomadr (Zhenghua's simple
+  NOMAD interface). Ideally in the future Sebastien Le Digabel will be
+  releasing an R package for NOMAD and we will be able to dump our
+  internal code and rely on his R package. In the meantime this allows
+  us to proceed with an R package.
+
+* Numerous internal changes incorporated, most noteworthy additional
+  flexibility in search provided by degree.min, degree.max,
+  segments.min, and segments.max. Replaces basis.maxdim.
+
+* Default now search via NOMAD, kernel=TRUE.
+
+* crsiv implemented.
+
+* Engel95 data added.
+
+* Demos added.
+
 Changes from Version 0.14.2 to 0.14.3 [01-May-2011]
 
 * Zhenghua migrated the necessary files from the gsl so that the crs
-  package is now standalone - furthermore, now he can add
-  out-of-sample support to the gsl routines...
+  package is now standalone with the exception of NOMAD.
 
 Changes from Version 0.14.0 to 0.14.2 [30-Apr-2011]
 
-* Zhenghua migrated the barebones code required for the mgcv functions
+* Zhenghua migrated the bare-bones code required for the mgcv functions
   uniquecombs and tensor.prod.model.matrix, and I migrated the
   associated manpages, modified NAMESPACE and now the package does not
   require loading of mgcv which was sub-optimal.
 
-* dropped cv.norm and replaced with cv.func=c("cv.ls","cv.gcv","cv.aic")
+* dropped cv.norm and replaced with cv.func=c("cv.ls","cv.gcv","cv.aic").
 
 Changes from Version 0.13.8 to 0.14.0 [14-Apr-2011]
 
@@ -28,7 +49,7 @@ Changes from Version 0.13.7 to 0.13.8 [30-Jan-2011]
 
 * segments and degree hit different maxima (basis.maxdim+1,
   basis.maxdim) but `degree equal to basis.maxdim' warning was only
-  being issued when equal to basis.maxdim
+  being issued when equal to basis.maxdim.
 
 * restarts was not being passed to krscv
 
@@ -232,7 +253,7 @@ Changes from Version 0.10-4 to 0.10-5 [27-Feb-2010]
 Changes from Version 0.10-3 to 0.10-4 [27-Feb-2010]
 
 * implementing tensor product splines in function to facilitate
-  multivariate x and make codebase easier to handle - handle base case
+  multivariate x and make code base easier to handle - handle base case
   of zero in this function so use intercept=TRUE
 
 * revisiting search with discrete K

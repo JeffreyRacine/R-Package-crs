@@ -331,7 +331,7 @@ predictor from \code{degree=degree.min} through
 
 When \code{kernel=TRUE} setting the option \code{cv="exhaustive"}
 computes bandwidths ($\in[0,1]$) obtained via numerical minimization
-(see \code{\link{optim}}) for each unique combination of the degree
+(see \code{optim}) for each unique combination of the degree
 and segment vectors (restarting can be conducted via
 \code{restarts=}). When conducting \code{cv="nomad"} the number of
 multiple starts can be controlled by \code{nmulti=}. The model
