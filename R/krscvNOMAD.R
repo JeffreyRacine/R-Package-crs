@@ -411,6 +411,10 @@ krscvNOMAD <- function(xz,
 		console <- printClear(console)
 		console <- printPop(console)
 
+    ## Set number of segments when degree==0 to 1 (or NA)
+
+    segments[degree==0] <- 1
+
 		if(any(degree==degree.max)) warning(paste(" optimal degree equals search maximum (", degree.max,"): rerun with larger degree.max",sep=""))
 		if(any(segments==(segments.max+1))) warning(paste(" optimal segment equals search maximum (", segments.max+1,"): rerun with larger segments.max",sep=""))  
 
