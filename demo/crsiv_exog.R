@@ -25,7 +25,7 @@ x <- rnorm(n)
 phi <- function(z) { z^2 }
 eyz <- function(z) { z^2 -0.325*z }
 
-y <- phi(z) + 0.25*x + u
+y <- phi(z) + 0.2*x + u
 
 ## Sort on z (for plotting)
 
@@ -41,7 +41,7 @@ attach(ivdata)
 
 evaldata <- data.frame(z,x=rep(median(x),length(x)))
 
-model.iv <- crsiv(y=y,z=z,w=w,x=x,nmulti=nmulti,method="Landweber-Fridman")
+model.iv <- crsiv(y=y,z=z,w=data.frame(w,x),x=x,nmulti=nmulti,method="Landweber-Fridman")
 phihat.iv <- predict(model.iv,newdata=evaldata)
 
 ## Now the non-iv regression spline estimator of E(y|z), again
