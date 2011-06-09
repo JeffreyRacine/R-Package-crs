@@ -148,6 +148,12 @@ crsiv <- function(y,
   if(!is.null(x) && NROW(y) != NROW(x)) stop("y and x have differing numbers of rows")
   if(iterate.max < 2) stop("iterate.max must be at least 2")
 
+  ## Cast as data frames
+
+  w <- data.frame(w)
+  z <- data.frame(z)
+  if(!is.null(x)) x <- data.frame(x)
+
   ## Check for evaluation data
 
   if(is.null(zeval)) zeval <- z
@@ -158,43 +164,30 @@ crsiv <- function(y,
 
   if(!is.null(alpha) && alpha <= 0) stop("alpha must be positive")
 
-  ## Set up formulas for multivariate W, Z, and X is provided
+  ## Set up formulas for multivariate w, z, and x if provided
 
-  W <- data.frame(w)
-  Weval <- data.frame(weval)
-  wnames <- paste("w", 1:NCOL(W), sep="")
-  names(W) <- wnames
-  names(Weval) <- wnames  
-  attach(W)
-
-  Z <- data.frame(z)
-  Zeval <- data.frame(zeval)  
-  znames <- paste("z", 1:NCOL(Z), sep="")
-  names(Z) <- znames
-  names(Zeval) <- znames  
-  attach(Z)
+  wnames <- names(w)
+  znames <- names(z)
+  names(weval) <- wnames  
+  names(zeval) <- znames  
 
   ## If there exist exogenous regressors X, append these to the
   ## formulas involving Z (can be manually added to W by the user if
   ## desired)
 
   if(!is.null(x)) {
-    X <- data.frame(x)
-    Xeval <- data.frame(xeval)    
-    xnames <- paste("x", 1:NCOL(X), sep="")
-    names(X) <- xnames
-    names(Xeval) <- xnames    
-    attach(X)
+    xnames <- names(x)
+    names(xeval) <- xnames    
   }
 
   ## Now create evaluation data
 
   if(is.null(x)) {
-    newdata <- data.frame(Zeval,Weval)
-    rm(W,Weval,Z,Zeval)
+    traindata <- data.frame(y,z,w)
+    evaldata <- data.frame(zeval,weval)
   } else {
-    newdata <- data.frame(Zeval,Weval,Xeval)
-    rm(W,Weval,Z,Zeval,X,Xeval)
+    traindata <- data.frame(y,z,w,x)    
+    evaldata <- data.frame(zeval,weval,xeval)
   }
 
   formula.yw <- as.formula(paste("y ~ ", paste(wnames, collapse= "+")))
@@ -206,14 +199,14 @@ crsiv <- function(y,
     formula.yz <- as.formula(paste("y ~ ", paste(znames, collapse= "+")))
     formula.Eywz <- as.formula(paste("E.y.w ~ ", paste(znames, collapse= "+")))
     formula.Ephihatwz <- as.formula(paste("E.phihat.w ~ ", paste(znames, collapse= "+")))  
-    formula.predictmodelresidphi0z <- as.formula(paste("predict(model.residphi0,newdata=newdata) ~ ", paste(znames, collapse= "+")))
-    formula.predictmodelresidwz <- as.formula(paste("predict(model.residw,newdata=newdata) ~ ", paste(znames, collapse= "+")))
+    formula.predictmodelresidphi0z <- as.formula(paste("predict(model.residphi0,newdata=evaldata) ~ ", paste(znames, collapse= "+")))
+    formula.predictmodelresidwz <- as.formula(paste("predict(model.residw,newdata=evaldata) ~ ", paste(znames, collapse= "+")))
   } else {
     formula.yz <- as.formula(paste("y ~ ", paste(znames, collapse= "+"), " + ", paste(xnames, collapse= "+")))
     formula.Eywz <- as.formula(paste("E.y.w ~ ", paste(znames, collapse= "+"), " + ", paste(xnames, collapse= "+")))
     formula.Ephihatwz <- as.formula(paste("E.phihat.w ~ ", paste(znames, collapse= "+"), " + ", paste(xnames, collapse= "+")))  
-    formula.predictmodelresidphi0z <- as.formula(paste("predict(model.residphi0,newdata=newdata) ~ ", paste(znames, collapse= "+"), " + ", paste(xnames, collapse= "+")))
-    formula.predictmodelresidwz <- as.formula(paste("predict(model.residw,newdata=newdata) ~ ", paste(znames, collapse= "+"), " + ", paste(xnames, collapse= "+")))
+    formula.predictmodelresidphi0z <- as.formula(paste("predict(model.residphi0,newdata=evaldata) ~ ", paste(znames, collapse= "+"), " + ", paste(xnames, collapse= "+")))
+    formula.predictmodelresidwz <- as.formula(paste("predict(model.residw,newdata=evaldata) ~ ", paste(znames, collapse= "+"), " + ", paste(xnames, collapse= "+")))
   }
 
   if(method=="Tikhonov") {
@@ -228,8 +221,8 @@ crsiv <- function(y,
     console <- printClear(console)
     console <- printPop(console)
     console <- printPush("Computing weights and optimal smoothing for E(y|w)...", console)
-    model<-crs(formula.yw,opts=opts,...)
-    E.y.w <- predict(model,newdata=newdata)
+    model<-crs(formula.yw,opts=opts,data=traindata,...)
+    E.y.w <- predict(model,newdata=evaldata)
     B <- model.matrix(model$model.lm)
     KYW <- B%*%solve(t(B)%*%B)%*%t(B)
    
@@ -242,8 +235,8 @@ crsiv <- function(y,
     } else {
       console <- printPush("Computing weights and optimal smoothing for E(E(y|w)|z,x)...", console)
     }
-    model <- crs(formula.Eywz,opts=opts,...)
-    E.E.y.w.z <- predict(model,newdata=newdata)
+    model <- crs(formula.Eywz,opts=opts,data=traindata,...)
+    E.E.y.w.z <- predict(model,newdata=evaldata)
     B <- model.matrix(model$model.lm)
     KYWZ <- B%*%solve(t(B)%*%B)%*%t(B)
     
@@ -288,8 +281,8 @@ crsiv <- function(y,
     } else {
       console <- printPush("Computing optimal smoothing and weights for E(phi(z,x)|w)...", console)
     }
-    model <- crs(formula.phihatw,opts=opts,...)
-    E.phihat.w <- predict(model,newdata=newdata)
+    model <- crs(formula.phihatw,opts=opts,data=traindata,...)
+    E.phihat.w <- predict(model,newdata=evaldata)
     B <- model.matrix(model$model.lm)
     KPHIW <- B%*%solve(t(B)%*%B)%*%t(B)
     
@@ -302,7 +295,7 @@ crsiv <- function(y,
     } else {
       console <- printPush("Computing optimal smoothing and weights for E(E(phi(z,x)|w)|z,x)...", console)
     }
-    model <- crs(formula.Ephihatwz,opts=opts,...)
+    model <- crs(formula.Ephihatwz,opts=opts,data=traindata,...)
     B <- model.matrix(model$model.lm)
     KPHIWZ <- B%*%solve(t(B)%*%B)%*%t(B)
     
@@ -343,10 +336,10 @@ crsiv <- function(y,
     ## phihat and the fitted values from this approach are _identical_
     ## (I expected approximately equal).
 
-    phi.0 <- crs(formula.yz,opts=opts,...)
+    phi.0 <- crs(formula.yz,opts=opts,data=traindata,...)
 
-    residuals.phihat <- y-phihat
-    y <- y - (fitted(phi.0)-phihat)
+    residuals.phihat <- traindata$y-phihat
+    traindata$y <- traindata$y - (fitted(phi.0)-phihat)
 
     model <- crs(formula.yz,
                  cv="none",
@@ -358,9 +351,9 @@ crsiv <- function(y,
                  basis=phi.0$basis,
                  kernel.type=phi.0$kernel.type,
                  knots=phi.0$knots,
-                 deriv=deriv)
+                 deriv=deriv,
+                 data=traindata)
 
-    model$y <- y
     model$residuals <- residuals.phihat
     model$phihat <- phihat
     model$alpha <- alpha
@@ -381,10 +374,10 @@ crsiv <- function(y,
     } else {
       console <- printPush(paste("Computing optimal smoothing and phi(z,x) for iteration 1...",sep=""),console)
     }
-    phi.0 <- crs(formula.yz,opts=opts,...)
-    model.residphi0 <- crs(formula.residphi0w,opts=opts,...)
-    model.Eresidphi0.z <- crs(formula.predictmodelresidphi0z,opts=opts,...)
-    phi.j.m.1 <- predict(phi.0,newdata=newdata) + predict(model.Eresidphi0.z,newdata=newdata)
+    phi.0 <- crs(formula.yz,opts=opts,data=traindata,...)
+    model.residphi0 <- crs(formula.residphi0w,opts=opts,data=traindata,...)
+    model.Eresidphi0.z <- crs(formula.predictmodelresidphi0z,opts=opts,data=traindata,...)
+    phi.j.m.1 <- predict(phi.0,newdata=evaldata) + predict(model.Eresidphi0.z,newdata=evaldata)
 
     ## For the stopping rule
 
@@ -393,11 +386,11 @@ crsiv <- function(y,
     console <- printPush(paste("Computing optimal smoothing for the stopping rule...",sep=""),console)
 
     norm.stop <- numeric()
-    model.E.y.w <- crs(formula.yw,opts=opts,...)
-    E.y.w <- predict(model.E.y.w,newdata=newdata)
+    model.E.y.w <- crs(formula.yw,opts=opts,data=traindata,...)
+    E.y.w <- predict(model.E.y.w,newdata=evaldata)
     phihat <- phi.j.m.1
-    model.E.phi.w <- crs(formula.phihatw,opts=opts,...)
-    E.phi.w <- predict(model.E.phi.w,newdata=newdata)
+    model.E.phi.w <- crs(formula.phihatw,opts=opts,data=traindata,...)
+    E.phi.w <- predict(model.E.phi.w,newdata=evaldata)
     norm.stop[1] <- mean(((E.y.w-E.phi.w)/E.y.w)^2)
 
     for(j in 2:iterate.max) {
@@ -410,10 +403,10 @@ crsiv <- function(y,
         console <- printPush(paste("Computing optimal smoothing and phi(z,x) for iteration ", j,"...",sep=""),console)
       }
 
-      model.residw <- crs(formula.residw,opts=opts,...)
-      model.predict.residw.z <- crs(formula.predictmodelresidwz,opts=opts,...)
+      model.residw <- crs(formula.residw,opts=opts,data=traindata,...)
+      model.predict.residw.z <- crs(formula.predictmodelresidwz,opts=opts,data=traindata,...)
 
-      phi.j <- phi.j.m.1 + constant*predict(model.predict.residw.z,newdata=newdata)
+      phi.j <- phi.j.m.1 + constant*predict(model.predict.residw.z,newdata=evaldata)
       phi.j.m.1 <- phi.j
       phihat <- phi.j
 
@@ -432,9 +425,10 @@ crsiv <- function(y,
                         kernel=model.E.phi.w$kernel, 
                         basis=model.E.phi.w$basis,
                         kernel.type=model.E.phi.w$kernel.type,
-                        knots=model.E.phi.w$knots)
+                        knots=model.E.phi.w$knots,
+                        data=traindata)
       
-      E.phi.w <- predict(model.stop,newdata=newdata)
+      E.phi.w <- predict(model.stop,newdata=evaldata)
       norm.stop[j] <- mean(((E.y.w-E.phi.w)/E.y.w)^2)
 
       ## If objective increases or we are below stopping tolerance then break
@@ -451,8 +445,8 @@ crsiv <- function(y,
     ## phihat and the fitted values from this approach are _identical_
     ## (I expected approximately equal).
 
-    residuals.phihat <- y-phihat
-    y <- y - (fitted(phi.0)-phihat)
+    residuals.phihat <- traindata$y-phihat
+    traindata$y <- traindata$y - (fitted(phi.0)-phihat)
 
     model <- crs(formula.yz,
                  cv="none",
@@ -464,9 +458,9 @@ crsiv <- function(y,
                  basis=phi.0$basis,
                  kernel.type=phi.0$kernel.type,
                  knots=phi.0$knots,
-                 deriv=deriv)
+                 deriv=deriv,
+                 data=traindata)
 
-    model$y <- y ## Not sure if this helps...
     model$residuals <- residuals.phihat
     model$phihat <- phihat
     model$num.iterations <- j

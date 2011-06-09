@@ -545,11 +545,6 @@ predict.crs <- function(object,
                         deriv=0,
                         ...) {
 
-  ## Test for crsiv object and throw a warning about the use of
-  ## predict
-
-  if(!is.null(object$phihat)) warning("Make sure you have followed the guidelines and example in ?crsiv when using plot() and predict() with crsiv objects...")
-
   if(is.null(newdata)) {
 
     ## If no new data provided, return sample fit.
