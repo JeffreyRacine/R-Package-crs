@@ -144,10 +144,29 @@ crsiv(y,
   starts rising.
 }
 \value{
-  \code{crsiv} returns a list with components \code{phihat} and either
-  \code{alpha} when \code{method="Tikhonov"} or \code{num.iterations}
-   and \code{norm.stop} when \code{method="Landweber-Fridman"}.
+  
+  \code{crs} returns a \code{crs} object.  The generic functions
+    \code{\link{fitted}} and \code{\link{residuals}} extract (or
+    generate) estimated values and residuals. Furthermore, the functions
+    \code{\link{summary}}, and \code{\link{plot}}
+    (options \code{mean=FALSE}, \code{deriv=FALSE}, \code{ci=FALSE},
+    \code{plot.behavior=c("plot","plot-data","data")}) support objects
+    of this type.
+
+    Warning: \code{\link{predict}} does not function properly with this
+    object given the nature of the interface used for this function
+    (i.e. non-formula based) though \code{\link{fitted}} works as
+    expected.
+
+    See \code{\link{crs}} for details on the return object components.
+
+    In addition to the standard components, \code{crsiv} returns
+    components \code{phihat} and either \code{alpha} when
+    \code{method="Tikhonov"} or \code{num.iterations} and
+    \code{norm.stop} when \code{method="Landweber-Fridman"}.
+    
 }
+  
 \references{
   
   Carrasco, M. and J.P. Florens and E. Renault (2007), \dQuote{Linear
@@ -234,19 +253,28 @@ y2 <- fun2(z) + u
 y <- y1
 phi <- fun1
 
-## Sort on z (for plotting)
+## Create an evaluation dataset by sorting on z (for plotting)
 
-ivdata <- data.frame(y,z,w)
-ivdata <- ivdata[order(ivdata$z),]
+evaldata <- data.frame(y,z,w)
+evaldata <- evaldata[order(evaldata$z),]
+
 rm(y,z,w)
-attach(ivdata)
+
+attach(evaldata)
+
+## Compute the non-iv regression spline estimator of E(y|z)
+
+model.noniv <- crs(y~z,nmulti=5)
+mean.noniv <- fitted(model.noniv)
+
+## Compute the iv-regression spline estimator of E(y|z)
+
+## Note - in order for predict to function properly we need to use the
+## transformed y in traindata
 
 model.iv <- crsiv(y=y,z=z,w=w,nmulti=5)
-phihat.iv <- model.iv$phihat
 
-## Now the non-iv regression spline estimator of E(y|z)
-
-crs.mean <- fitted(crs(y~z,nmulti=5))
+phi.iv <- fitted(model.iv)
 
 ## For the plots, restrict focal attention to the bulk of the data
 ## (i.e. for the plotting area trim out 1/4 of one percent from each
@@ -267,9 +295,9 @@ points(z,y,type="p",cex=.25,col="grey")
 
 lines(z,z^2 -0.325*z,lwd=1,lty=1)
 
-lines(z,phihat.iv,col="blue",lwd=2,lty=2)
+lines(z,phi.iv,col="blue",lwd=2,lty=2)
 
-lines(z,crs.mean,col="red",lwd=2,lty=4)
+lines(z,mean.noniv,col="red",lwd=2,lty=4)
 
 legend(quantile(z,trim),quantile(y,1-trim),
        c(expression(paste(varphi(z),", E(y|z)",sep="")),

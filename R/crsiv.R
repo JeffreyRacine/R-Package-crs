@@ -40,6 +40,7 @@ crsiv <- function(y,
                   constant=0.5,
                   method=c("Landweber-Fridman","Tikhonov"),
 									opts=list("MAX_BB_EVAL"=500,"MIN_MESH_SIZE"="r1.0e-10","INITIAL_MESH_SIZE"="r1.0e-02","MIN_POLL_SIZE"="r1.0e-10","DISPLAY_DEGREE"=0),
+                  deriv=0,
                   ...) {
 
   ## This function was constructed initially by Samuele Centorrino
@@ -334,7 +335,37 @@ crsiv <- function(y,
     if((alpha-alpha.min)/alpha.min < 0.01) warning(paste("Tikhonov parameter alpha (",formatC(alpha,digits=4,format="f"),") is close to the search minimum (",alpha.min,")",sep=""))
     if((alpha.max-alpha)/alpha.max < 0.01) warning(paste("Tikhonov parameter alpha (",formatC(alpha,digits=4,format="f"),") is close to the search maximum (",alpha.max,")",sep=""))
     
-    return(list(phihat=phihat,alpha=alpha))
+    ## phi.0 is the conditional mean model. We compute lambda =
+    ## fitted(phi.0)-phihat then transform y via
+    ## y.lambda=y-lambda. Here we overwrite y so that we can reuse the
+    ## formula. Before that, save the proper residuals and then push
+    ## these into the model. June 9 2011 - I am concerned because
+    ## phihat and the fitted values from this approach are _identical_
+    ## (I expected approximately equal).
+
+    phi.0 <- crs(formula.yz,opts=opts,...)
+
+    residuals.phihat <- y-phihat
+    y <- y - (fitted(phi.0)-phihat)
+
+    model <- crs(formula.yz,
+                 cv="none",
+                 degree=phi.0$degree,
+                 segments=phi.0$segments,
+                 lambda=phi.0$lambda,
+                 include=phi.0$include,
+                 kernel=phi.0$kernel, 
+                 basis=phi.0$basis,
+                 kernel.type=phi.0$kernel.type,
+                 knots=phi.0$knots,
+                 deriv=deriv)
+
+    model$y <- y
+    model$residuals <- residuals.phihat
+    model$phihat <- phihat
+    model$alpha <- alpha
+
+    return(model)
     
   } else {
     
@@ -412,12 +443,41 @@ crsiv <- function(y,
 
     }
 
+    ## phi.0 is the conditional mean model. We compute lambda =
+    ## fitted(phi.0)-phihat then transform y via
+    ## y.lambda=y-lambda. Here we overwrite y so that we can reuse the
+    ## formula. Before that, save the proper residuals and then push
+    ## these into the model. June 9 2011 - I am concerned because
+    ## phihat and the fitted values from this approach are _identical_
+    ## (I expected approximately equal).
+
+    residuals.phihat <- y-phihat
+    y <- y - (fitted(phi.0)-phihat)
+
+    model <- crs(formula.yz,
+                 cv="none",
+                 degree=phi.0$degree,
+                 segments=phi.0$segments,
+                 lambda=phi.0$lambda,
+                 include=phi.0$include,
+                 kernel=phi.0$kernel, 
+                 basis=phi.0$basis,
+                 kernel.type=phi.0$kernel.type,
+                 knots=phi.0$knots,
+                 deriv=deriv)
+
+    model$y <- y
+    model$residuals <- residuals.phihat
+    model$phihat <- phihat
+    model$num.iterations <- j
+    model$norm.stop <- norm.stop
+
     console <- printClear(console)
     console <- printPop(console)
 
     if(j == iterate.max) warning("iterate.max reached: increase iterate.max or inspect norm.stop vector")
 
-    return(list(phihat=phi.j, num.iterations=j, norm.stop=norm.stop))
+    return(model)
 
   }
   
