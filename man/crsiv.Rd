@@ -37,6 +37,7 @@ crsiv(y,
       constant = 0.5,
       method = c("Landweber-Fridman","Tikhonov"),
       opts=list("MAX_BB_EVAL"=500,"MIN_MESH_SIZE"="r1.0e-10","INITIAL_MESH_SIZE"="r1.0e-02","MIN_POLL_SIZE"="r1.0e-10","DISPLAY_DEGREE"=0),
+      deriv=0,
       ...)
 }
 
@@ -114,6 +115,14 @@ crsiv(y,
     arguments passed to the NOMAD solver (see \code{\link{snomadr}} for
     further details).
   }
+  \item{deriv}{ an integer \code{l} (default \code{deriv=0}) specifying
+  whether to compute the univariate \code{l}th partial derivative for
+  each continuous predictor (and difference in levels for each
+  categorical predictor) or not and if so what order. Note that if
+  \code{deriv} is higher than the spline degree of the associated
+  continuous predictor then the derivative will be zero and a warning
+  issued to this effect
+  }
 \item{...}{
   additional arguments supplied to \code{\link{crs}}.
 }
@@ -153,26 +162,26 @@ crsiv(y,
     \code{plot.behavior=c("plot","plot-data","data")}) support objects
     of this type.
 
-    IMPORTANT WARNING: in order for \code{\link{predict}} to function
-    properly you must first have computed the non-iv model called, say,
-    `model.noniv' and then after running \code{crsiv} and computing the
-    iv model, say, `model.iv', you MUST issue the command
+    IMPORTANT WARNING: in order for \code{\link{plot}} and
+    \code{\link{predict}} to function properly you must first have
+    computed the non-iv model called, say, `model.noniv' by regressing
+    \eqn{Y} on \eqn{Z} and \eqn{X} using \code{\link{crs}} and then
+    after running \code{crsiv} and computing the iv model called, say,
+    `model.iv', you MUST issue the commands
 
     model.iv$terms <- model.noniv$terms
-
-    if predict is to function properly. But once you have done this all
-    works as expected. See the example below for details. Furthermore,
-    if you wish a more informative \code{\link{summary}} you can also so
-    the same for $call, $formula, and $xnames as in
     
     model.iv$call <- model.noniv$call
     
     model.iv$formula <- model.noniv$formula
     
-    model.iv$xnames <- model.noniv$xnames    
+    model.iv$xnames <- model.noniv$xnames
 
-    But simply modifying $terms is sufficient for \code{\link{predict}}
-    to function.
+    model.iv$xz <- model.noniv$xz
+    
+    But once you have done this \code{\link{plot}} and
+    \code{\link{predict}} ought to work as expected. See the example
+    below for details and also the demo \code{demo(crsiv_exog_plot)}.
     
     See \code{\link{crs}} for details on the return object components.
 
@@ -284,13 +293,18 @@ mean.noniv <- predict(model.noniv,newdata=evaldata)
 model.iv <- crsiv(y=y,z=z,w=w,nmulti=5)
 
 ## IMPORTANT NOTE: in order for predict to function properly you must
-## first have computed the non-IV model called, say, `model.noniv' and
-## then after running crsiv() and computing the IV model, say,
-## `model.iv', you MUST issue the command model.iv$terms <-
-## model.noniv$terms IF PREDICT IS TO FUNCTION PROPERLY. But once you
+## first have computed the non-IV model regressing Y on X and Z called,
+## say, `model.noniv' and then after running crsiv() and computing the
+## IV model, say, `model.iv', you MUST issue the commands outlined above
+## in value IF PLOT AND PREDICT ARE TO FUNCTION PROPERLY. But once you
 ## have done this all works as expected.
 
 model.iv$terms <- model.noniv$terms
+model.iv$call <- model.noniv$call
+model.iv$formula <- model.noniv$formula
+model.iv$xnames <- model.noniv$xnames
+model.iv$xz <- model.noniv$xz
+
 phi.iv <- predict(model.iv,newdata=evaldata)
 
 ## For the plots, restrict focal attention to the bulk of the data

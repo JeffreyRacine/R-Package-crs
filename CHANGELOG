@@ -1,4 +1,12 @@
-Changes from Version 0.14.6 to 0.14.7 [XXX]
+Changes from Version 0.14.6 to 0.14.7 [09-Jun-2011]
+
+* crsiv now returns a crs model object - note that in order for
+  predict to function properly with crsiv objects you must first
+  estimate the conditional mean model on the same data then copy the
+  terms component from the conditional mean crs object into the crsiv
+  object. See ?crsiv for details and an illustration.
+
+Changes from Version 0.14.6 to 0.14.7 [09-Jun-2011]
 
 * Checking for non-auto basis corrected, modify crsiv to use auto
   basis.
