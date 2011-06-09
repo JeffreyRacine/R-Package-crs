@@ -315,11 +315,11 @@ trim <- 0.0025
 
 ## Use evaluation data for plots
 
-z <- evaldata$z
-y <- evaldata$y
+zev <- evaldata$z
+yev <- evaldata$y
 
-curve(phi,min(z),max(z),
-      xlim=quantile(z,c(trim,1-trim)),
+curve(phi,min(zev),max(zev),
+      xlim=quantile(zev,c(trim,1-trim)),
       ylim=quantile(y,c(trim,1-trim)),
       ylab="Y",
       xlab="Z",
@@ -327,15 +327,15 @@ curve(phi,min(z),max(z),
       sub=paste("Landweber-Fridman: iterations = ", model.iv$num.iterations,sep=""),
       lwd=1,lty=1)
 
-points(z,y,type="p",cex=.25,col="grey")
+points(zev,yev,type="p",cex=.25,col="grey")
 
-lines(z,z^2 -0.325*z,lwd=1,lty=1)
+lines(zev,zev^2 -0.325*zev,lwd=1,lty=1)
 
-lines(z,phi.iv,col="blue",lwd=2,lty=2)
+lines(zev,phi.iv,col="blue",lwd=2,lty=2)
 
-lines(z,mean.noniv,col="red",lwd=2,lty=4)
+lines(zev,mean.noniv,col="red",lwd=2,lty=4)
 
-legend(quantile(z,trim),quantile(y,1-trim),
+legend(quantile(zev,trim),quantile(yev,1-trim),
        c(expression(paste(varphi(z),", E(y|z)",sep="")),
          expression(paste("Nonparametric ",hat(varphi)(z))),
          "Nonparametric E(y|z)"),
