@@ -40,7 +40,7 @@ attach(ivdata)
 ## used for estimation).
 
 model.iv <- crsiv(y=y,z=z,w=data.frame(w,x),x=x,xeval=rep(median(x),length(x)),nmulti=nmulti,method="Landweber-Fridman")
-phihat.iv <- model.iv$phihat
+phihat.iv <- fitted(model.iv)
 
 ## Now the non-iv regression spline estimator of E(y|z), again
 ## controlling for the evaluation value of x.

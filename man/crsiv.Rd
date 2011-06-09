@@ -145,25 +145,41 @@ crsiv(y,
 }
 \value{
   
-  \code{crs} returns a \code{crs} object.  The generic functions
-    \code{\link{fitted}} and \code{\link{residuals}} extract (or
-    generate) estimated values and residuals. Furthermore, the functions
-    \code{\link{summary}}, and \code{\link{plot}}
-    (options \code{mean=FALSE}, \code{deriv=FALSE}, \code{ci=FALSE},
+  \code{crsiv} returns a \code{\link{crs}} object.  The generic
+    functions \code{\link{fitted}} and \code{\link{residuals}} extract
+    (or generate) estimated values and residuals. Furthermore, the
+    functions \code{\link{summary}}, and \code{\link{plot}} (options
+    \code{mean=FALSE}, \code{deriv=FALSE}, \code{ci=FALSE},
     \code{plot.behavior=c("plot","plot-data","data")}) support objects
     of this type.
 
-    Warning: \code{\link{predict}} does not function properly with this
-    object given the nature of the interface used for this function
-    (i.e. non-formula based) though \code{\link{fitted}} works as
-    expected.
+    IMPORTANT WARNING: in order for \code{\link{predict}} to function
+    properly you must first have computed the non-iv model called, say,
+    `model.noniv' and then after running \code{crsiv} and computing the
+    iv model, say, `model.iv', you MUST issue the command
 
+    model.iv$terms <- model.noniv$terms
+
+    if predict is to function properly. But once you have done this all
+    works as expected. See the example below for details. Furthermore,
+    if you wish a more informative \code{\link{summary}} you can also so
+    the same for $call, $formula, and $xnames as in
+    
+    model.iv$call <- model.noniv$call
+    
+    model.iv$formula <- model.noniv$formula
+    
+    model.iv$xnames <- model.noniv$xnames    
+
+    But simply modifying $terms is sufficient for \code{\link{predict}}
+    to function.
+    
     See \code{\link{crs}} for details on the return object components.
 
-    In addition to the standard components, \code{crsiv} returns
-    components \code{phihat} and either \code{alpha} when
-    \code{method="Tikhonov"} or \code{num.iterations} and
-    \code{norm.stop} when \code{method="Landweber-Fridman"}.
+    In addition to the standard \code{\link{crs}} components,
+    \code{crsiv} returns components \code{phihat} and either
+    \code{alpha} when \code{method="Tikhonov"} or \code{num.iterations}
+    and \code{norm.stop} when \code{method="Landweber-Fridman"}.
     
 }
   
@@ -258,29 +274,35 @@ phi <- fun1
 evaldata <- data.frame(y,z,w)
 evaldata <- evaldata[order(evaldata$z),]
 
-rm(y,z,w)
-
-attach(evaldata)
-
-## Compute the non-iv regression spline estimator of E(y|z)
+## Compute the non-IV regression spline estimator of E(y|z)
 
 model.noniv <- crs(y~z,nmulti=5)
-mean.noniv <- fitted(model.noniv)
+mean.noniv <- predict(model.noniv,newdata=evaldata)
 
-## Compute the iv-regression spline estimator of E(y|z)
-
-## Note - in order for predict to function properly we need to use the
-## transformed y in traindata
+## Compute the IV-regression spline estimator of phi(z)
 
 model.iv <- crsiv(y=y,z=z,w=w,nmulti=5)
 
-phi.iv <- fitted(model.iv)
+## IMPORTANT NOTE: in order for predict to function properly you must
+## first have computed the non-IV model called, say, `model.noniv' and
+## then after running crsiv() and computing the IV model, say,
+## `model.iv', you MUST issue the command model.iv$terms <-
+## model.noniv$terms IF PREDICT IS TO FUNCTION PROPERLY. But once you
+## have done this all works as expected.
+
+model.iv$terms <- model.noniv$terms
+phi.iv <- predict(model.iv,newdata=evaldata)
 
 ## For the plots, restrict focal attention to the bulk of the data
 ## (i.e. for the plotting area trim out 1/4 of one percent from each
 ## tail of y and z)
 
 trim <- 0.0025
+
+## Use evaluation data for plots
+
+z <- evaldata$z
+y <- evaldata$y
 
 curve(phi,min(z),max(z),
       xlim=quantile(z,c(trim,1-trim)),

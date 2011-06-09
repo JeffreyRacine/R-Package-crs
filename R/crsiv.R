@@ -466,7 +466,7 @@ crsiv <- function(y,
                  knots=phi.0$knots,
                  deriv=deriv)
 
-    model$y <- y
+    model$y <- y ## Not sure if this helps...
     model$residuals <- residuals.phihat
     model$phihat <- phihat
     model$num.iterations <- j

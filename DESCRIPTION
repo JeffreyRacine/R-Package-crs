@@ -1,6 +1,6 @@
 Package: crs
-Version: 0.14-7
-Date: 2011-06-08
+Version: 0.14-8
+Date: 2011-06-09
 Depends:
 Suggests: np
 Title: Categorical Regression Splines
