@@ -154,34 +154,13 @@ crsiv(y,
 }
 \value{
   
-  \code{crsiv} returns a \code{\link{crs}} object.  The generic
-    functions \code{\link{fitted}} and \code{\link{residuals}} extract
-    (or generate) estimated values and residuals. Furthermore, the
-    functions \code{\link{summary}}, and \code{\link{plot}} (options
-    \code{mean=FALSE}, \code{deriv=FALSE}, \code{ci=FALSE},
+  \code{crsiv} returns a \code{\link{crs}} object.  The generic functions
+    \code{\link{fitted}} and \code{\link{residuals}} extract (or
+    generate) estimated values and residuals. Furthermore, the functions
+    \code{\link{summary}}, \code{\link{predict}}, and \code{\link{plot}}
+    (options \code{mean=FALSE}, \code{deriv=FALSE}, \code{ci=FALSE},
     \code{plot.behavior=c("plot","plot-data","data")}) support objects
     of this type.
-
-    IMPORTANT WARNING: in order for \code{\link{plot}} and
-    \code{\link{predict}} to function properly you must first have
-    computed the non-iv model called, say, `model.noniv' by regressing
-    \eqn{Y} on \eqn{Z} and \eqn{X} using \code{\link{crs}} and then
-    after running \code{crsiv} and computing the iv model called, say,
-    `model.iv', you MUST issue the commands
-
-    model.iv$terms <- model.noniv$terms
-    
-    model.iv$call <- model.noniv$call
-    
-    model.iv$formula <- model.noniv$formula
-    
-    model.iv$xnames <- model.noniv$xnames
-
-    model.iv$xz <- model.noniv$xz
-    
-    But once you have done this \code{\link{plot}} and
-    \code{\link{predict}} ought to work as expected. See the example
-    below for details and also the demo \code{demo(crsiv_exog_plot)}.
     
     See \code{\link{crs}} for details on the return object components.
 
@@ -291,19 +270,6 @@ mean.noniv <- predict(model.noniv,newdata=evaldata)
 ## Compute the IV-regression spline estimator of phi(z)
 
 model.iv <- crsiv(y=y,z=z,w=w,nmulti=5)
-
-## IMPORTANT NOTE: in order for predict to function properly you must
-## first have computed the non-IV model regressing Y on X and Z called,
-## say, `model.noniv' and then after running crsiv() and computing the
-## IV model, say, `model.iv', you MUST issue the commands outlined above
-## in value IF PLOT AND PREDICT ARE TO FUNCTION PROPERLY. But once you
-## have done this all works as expected.
-
-model.iv$terms <- model.noniv$terms
-model.iv$call <- model.noniv$call
-model.iv$formula <- model.noniv$formula
-model.iv$xnames <- model.noniv$xnames
-model.iv$xz <- model.noniv$xz
 
 phi.iv <- predict(model.iv,newdata=evaldata)
 

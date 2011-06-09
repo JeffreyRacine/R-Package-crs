@@ -25,7 +25,7 @@ x <- rnorm(n)
 phi <- function(z) { z^2 }
 eyz <- function(z) { z^2 -0.325*z }
 
-y <- phi(z) + 0.2*x + u
+y <- phi(z) + 0.25*x + u
 
 ## Sort on z (for plotting)
 
@@ -39,13 +39,15 @@ attach(ivdata)
 ## mean for evaluation purposes (though naturally the sample x are
 ## used for estimation).
 
-model.iv <- crsiv(y=y,z=z,w=data.frame(w,x),x=x,xeval=rep(median(x),length(x)),nmulti=nmulti,method="Landweber-Fridman")
-phihat.iv <- fitted(model.iv)
+evaldata <- data.frame(z,x=rep(median(x),length(x)))
+
+model.iv <- crsiv(y=y,z=z,w=w,x=x,nmulti=nmulti,method="Landweber-Fridman")
+phihat.iv <- predict(model.iv,newdata=evaldata)
 
 ## Now the non-iv regression spline estimator of E(y|z), again
 ## controlling for the evaluation value of x.
 
-crs.mean <- predict(crs(y~z+x,nmulti=nmulti),newdata=data.frame(z,x=rep(median(x),length(x))))
+crs.mean <- predict(crs(y~z+x,nmulti=nmulti),newdata=evaldata)
 
 ## For the plots, restrict focal attention to the bulk of the data
 ## (i.e. for the plotting area trim out 1/4 of one percent from each
