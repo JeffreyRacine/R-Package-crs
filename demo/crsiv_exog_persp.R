@@ -6,6 +6,10 @@
 
 require(crs)
 
+## Turn off screen I/O for crs()
+
+opts <- list("DISPLAY_DEGREE"=0)
+
 set.seed(42)
 
 n <- as.numeric(readline(prompt="Input the number of observations desired: "))
@@ -34,7 +38,7 @@ y <- phi(z) + 0.1*x^3 + u
 
 model.iv <- crsiv(y=y,z=z,w=w,x=x,nmulti=nmulti,method="Landweber-Fridman",deriv=1)
 
-model.noniv <- crs(y~z+x,nmulti=nmulti,deriv=1)
+model.noniv <- crs(y~z+x,nmulti=nmulti,deriv=1,opts=opts)
 
 summary(model.iv)
 

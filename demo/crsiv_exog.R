@@ -3,6 +3,10 @@
 
 require(crs)
 
+## Turn off screen I/O for crs()
+
+opts <- list("DISPLAY_DEGREE"=0)
+
 ## This illustration was made possible by Samuele Centorrino
 ## <samuele.centorrino@univ-tlse1.fr>
 
@@ -38,7 +42,7 @@ phihat.iv <- predict(model.iv,newdata=evaldata)
 ## Now the non-iv regression spline estimator of E(y|z), again
 ## controlling for the evaluation value of x.
 
-crs.mean <- predict(crs(y~z+x,nmulti=nmulti),newdata=evaldata)
+crs.mean <- predict(crs(y~z+x,nmulti=nmulti,opts=opts),newdata=evaldata)
 
 ## For the plots, restrict focal attention to the bulk of the data
 ## (i.e. for the plotting area trim out 1/4 of one percent from each
