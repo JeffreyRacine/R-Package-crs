@@ -220,7 +220,7 @@ set.seed(42)
 n <- 1500
 nmulti <- 10
 
-## Turn off display i/o for crs()
+## Turn off display I/O for crs() NOMAD search...
 
 opts <- list("DISPLAY_DEGREE"=0)
 
