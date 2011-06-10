@@ -220,6 +220,10 @@ set.seed(42)
 n <- 1500
 nmulti <- 10
 
+## Turn off display i/o for crs()
+
+opts <- list("DISPLAY_DEGREE"=0)
+
 ## The DGP is as follows:
 
 ## 1) y = phi(z) + u
@@ -265,7 +269,7 @@ evaldata <- evaldata[order(evaldata$z),]
 
 ## Compute the non-IV regression spline estimator of E(y|z)
 
-model.noniv <- crs(y~z,nmulti=nmulti)
+model.noniv <- crs(y~z,nmulti=nmulti,opts=opts)
 mean.noniv <- predict(model.noniv,newdata=evaldata)
 
 ## Compute the IV-regression spline estimator of phi(z)
@@ -278,8 +282,6 @@ phi.iv <- predict(model.iv,newdata=evaldata)
 ## tail of y and z)
 
 trim <- 0.0025
-
-## Use evaluation data for plots
 
 curve(phi,min(z),max(z),
       xlim=quantile(z,c(trim,1-trim)),
