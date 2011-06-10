@@ -1,2 +1,0 @@
-PKG_LIBS= -O2 -lm
-PKG_FLAGS= -arch x86_64

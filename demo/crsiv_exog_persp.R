@@ -50,7 +50,8 @@ newdata <- data.frame(z=x.grid[,1],x=x.grid[,2])
 z <- matrix(predict(model.iv,newdata=newdata),num.eval,num.eval)
 persp(x=z.seq,y=x.seq,z=z,
       xlab="z",ylab="x",zlab="y",
-      ticktype="detailed",      
+      ticktype="detailed",
+      col=FALSE,
       border="red",
       main="phi(z,x)",
       theta=45,phi=45)
@@ -58,27 +59,46 @@ par(new=TRUE)
 z <- matrix(predict(model.noniv,newdata=newdata),num.eval,num.eval)
 persp(x=z.seq,y=x.seq,z=z,
       xlab="z",ylab="x",zlab="y",
-      ticktype="detailed",      
+      ticktype="detailed",
+      col=FALSE,
       border="blue",
       main="E(Y|z,x)",
       theta=45,phi=45)
 
 ## Perspective plot - derivative wrt z
 z <- matrix(attr(predict(model.iv,newdata=newdata),"deriv.mat")[,1],num.eval,num.eval)
-
 persp(x=z.seq,y=x.seq,z=z,
       xlab="z",ylab="x",zlab="y",
       ticktype="detailed",      
       border="red",
+      col=FALSE,
+      main="d g(z,x)/d z (x=med(x))",
+      theta=45,phi=45)
+par(new=TRUE)
+z <- matrix(attr(predict(model.noniv,newdata=newdata),"deriv.mat")[,1],num.eval,num.eval)
+persp(x=z.seq,y=x.seq,z=z,
+      xlab="z",ylab="x",zlab="y",
+      ticktype="detailed",      
+      border="blue",
+      col=FALSE,
       main="d g(z,x)/d z (x=med(x))",
       theta=45,phi=45)
 
 ## Perspective plot - derivative wrt x
 z <- matrix(attr(predict(model.iv,newdata=newdata),"deriv.mat")[,2],num.eval,num.eval)
-
 persp(x=z.seq,y=x.seq,z=z,
       xlab="z",ylab="x",zlab="y",
       ticktype="detailed",      
       border="red",
+      col=FALSE,
+      main="d g(z,x)/d x (z=med(z))",
+      theta=45,phi=45)
+par(new=TRUE)
+z <- matrix(attr(predict(model.noniv,newdata=newdata),"deriv.mat")[,2],num.eval,num.eval)
+persp(x=z.seq,y=x.seq,z=z,
+      xlab="z",ylab="x",zlab="y",
+      ticktype="detailed",      
+      border="blue",
+      col=FALSE,
       main="d g(z,x)/d x (z=med(z))",
       theta=45,phi=45)

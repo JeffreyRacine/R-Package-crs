@@ -9,9 +9,9 @@ Nonparametric Instrumental Regression
 regression function \eqn{\varphi}{phi} defined by conditional moment
 restrictions stemming from a structural econometric model: \eqn{E [Y -
 \varphi (Z,X) | W ] = 0}{E [Y - phi (Z,X) | W ] = 0}, and involving
-endogenous variables \eqn{Y} and \eqn{Z} and exogenous variables
-\eqn{X} and instruments \eqn{W}. The function \eqn{\varphi}{phi} is the
-solution of an ill-posed inverse problem.
+endogenous variables \eqn{Y} and \eqn{Z}, exogenous variables \eqn{X},
+and instruments \eqn{W}. The function \eqn{\varphi}{phi} is the solution
+of an ill-posed inverse problem.
 
 When \code{method="Tikhonov"}, \code{crsiv} uses the approach of
 Darolles, Fan, Florens and Renault (forthcoming) modified for regression

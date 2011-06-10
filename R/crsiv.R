@@ -406,9 +406,7 @@ crsiv <- function(y,
       model.residw <- crs(formula.residw,opts=opts,data=traindata,...)
       model.predict.residw.z <- crs(formula.predictmodelresidwz,opts=opts,data=traindata,...)
 
-      phi.j <- phi.j.m.1 + constant*predict(model.predict.residw.z,newdata=evaldata)
-      phi.j.m.1 <- phi.j
-      phihat <- phi.j
+      phihat <- phi.j.m.1 + constant*predict(model.predict.residw.z,newdata=evaldata)
 
       console <- printClear(console)
       console <- printPop(console)
@@ -431,9 +429,21 @@ crsiv <- function(y,
       E.phi.w <- predict(model.stop,newdata=evaldata)
       norm.stop[j] <- mean(((E.y.w-E.phi.w)/E.y.w)^2)
 
-      ## If objective increases or we are below stopping tolerance then break
+      ## If we are below stopping tolerance then break
 
-      if((norm.stop[j] > norm.stop[j-1]) || ((norm.stop[j-1]-norm.stop[j]) < iterate.tol)) break()
+      if((norm.stop[j-1]-norm.stop[j]) < iterate.tol) break()
+
+      ## If objective increases then break, but in this case phihat
+      ## ought to be phij.m.1
+
+      if(norm.stop[j] > norm.stop[j-1]) {
+        phihat <- phi.j.m.1
+        break()
+      }
+
+      ## For next iteration phi.j
+
+      phi.j.m.1 <- phihat
 
     }
 
