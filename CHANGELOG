@@ -1,4 +1,4 @@
-Changes from Version 0.14.6 to 0.14.7 [09-Jun-2011]
+Changes from Version 0.14.7 to 0.14.8 [10-Jun-2011]
 
 * crsiv now returns a crs model object that supports residuals,
   fitted, predict and other generic functions. Note that this approach

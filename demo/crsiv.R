@@ -26,21 +26,18 @@ eyz <- function(z) { z^2 -0.325*z }
 
 y <- phi(z) + u
 
-## Sort on z (for plotting)
+## In evaluation data sort z for plotting and hold x constant at its
+## median
 
-ivdata <- data.frame(y,z,w)
-ivdata <- ivdata[order(ivdata$z),]
-rm(y,z,w)
-attach(ivdata)
-
-## Sort on z (for plotting)
+evaldata <- data.frame(z=sort(z))
 
 model.iv <- crsiv(y=y,z=z,w=w,nmulti=nmulti,method=method)
-phihat.iv <- model.iv$phihat
+phihat.iv <- predict(model.iv,newdata=evaldata)
 
 ## Now the non-iv regression spline estimator of E(y|z)
 
-crs.mean <- fitted(crs(y~z,nmulti=nmulti))
+model.noniv <- crs(y~z,nmulti=nmulti)
+crs.mean <- predict(model.noniv,newdata=evaldata)
 
 ## For the plots, restrict focal attention to the bulk of the data
 ## (i.e. for the plotting area trim out 1/4 of one percent from each
@@ -73,11 +70,11 @@ curve(phi,min(z),max(z),
 
 points(z,y,type="p",cex=.25,col="grey")
 
-lines(z,eyz(z),lwd=1,lty=1)
+lines(evaldata$z,eyz(evaldata$z),lwd=1,lty=1)
 
-lines(z,phihat.iv,col="blue",lwd=2,lty=2)
+lines(evaldata$z,phihat.iv,col="blue",lwd=2,lty=2)
 
-lines(z,crs.mean,col="red",lwd=2,lty=4)
+lines(evaldata$z,crs.mean,col="red",lwd=2,lty=4)
 
 legend(x="top",inset=c(.01,.01),
        c(expression(paste(varphi(z),", E(y|z)",sep="")),

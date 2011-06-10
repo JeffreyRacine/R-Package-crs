@@ -218,6 +218,7 @@ This function should be considered to be in `beta test' status until further not
 
 set.seed(42)
 n <- 1500
+nmulti <- 10
 
 ## The DGP is as follows:
 
@@ -257,20 +258,19 @@ y2 <- fun2(z) + u
 y <- y1
 phi <- fun1
 
-## Create an evaluation dataset by sorting on z (for plotting)
+## Create an evaluation dataset sorting on z (for plotting)
 
 evaldata <- data.frame(y,z,w)
 evaldata <- evaldata[order(evaldata$z),]
 
 ## Compute the non-IV regression spline estimator of E(y|z)
 
-model.noniv <- crs(y~z,nmulti=5)
+model.noniv <- crs(y~z,nmulti=nmulti)
 mean.noniv <- predict(model.noniv,newdata=evaldata)
 
 ## Compute the IV-regression spline estimator of phi(z)
 
-model.iv <- crsiv(y=y,z=z,w=w,nmulti=5)
-
+model.iv <- crsiv(y=y,z=z,w=w,nmulti=nmulti)
 phi.iv <- predict(model.iv,newdata=evaldata)
 
 ## For the plots, restrict focal attention to the bulk of the data
@@ -281,11 +281,8 @@ trim <- 0.0025
 
 ## Use evaluation data for plots
 
-zev <- evaldata$z
-yev <- evaldata$y
-
-curve(phi,min(zev),max(zev),
-      xlim=quantile(zev,c(trim,1-trim)),
+curve(phi,min(z),max(z),
+      xlim=quantile(z,c(trim,1-trim)),
       ylim=quantile(y,c(trim,1-trim)),
       ylab="Y",
       xlab="Z",
@@ -293,15 +290,15 @@ curve(phi,min(zev),max(zev),
       sub=paste("Landweber-Fridman: iterations = ", model.iv$num.iterations,sep=""),
       lwd=1,lty=1)
 
-points(zev,yev,type="p",cex=.25,col="grey")
+points(z,y,type="p",cex=.25,col="grey")
 
-lines(zev,zev^2 -0.325*zev,lwd=1,lty=1)
+lines(evaldata$z,evaldata$z^2 -0.325*evaldata$z,lwd=1,lty=1)
 
-lines(zev,phi.iv,col="blue",lwd=2,lty=2)
+lines(evaldata$z,phi.iv,col="blue",lwd=2,lty=2)
 
-lines(zev,mean.noniv,col="red",lwd=2,lty=4)
+lines(evaldata$z,mean.noniv,col="red",lwd=2,lty=4)
 
-legend(quantile(zev,trim),quantile(yev,1-trim),
+legend(quantile(z,trim),quantile(y,1-trim),
        c(expression(paste(varphi(z),", E(y|z)",sep="")),
          expression(paste("Nonparametric ",hat(varphi)(z))),
          "Nonparametric E(y|z)"),
