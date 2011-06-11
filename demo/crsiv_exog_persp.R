@@ -38,8 +38,6 @@ y <- phi(z) + 0.1*x^3 + u
 
 model.iv <- crsiv(y=y,z=z,w=w,x=x,nmulti=nmulti,method="Landweber-Fridman",deriv=1)
 
-model.noniv <- crs(y~z+x,nmulti=nmulti,deriv=1,opts=opts)
-
 summary(model.iv)
 
 # Perspective plot
@@ -55,15 +53,6 @@ persp(x=z.seq,y=x.seq,z=z,
       border="red",
       main="phi(z,x)",
       theta=45,phi=45)
-par(new=TRUE)
-z <- matrix(predict(model.noniv,newdata=newdata),num.eval,num.eval)
-persp(x=z.seq,y=x.seq,z=z,
-      xlab="z",ylab="x",zlab="y",
-      ticktype="detailed",
-      col=FALSE,
-      border="blue",
-      main="E(Y|z,x)",
-      theta=45,phi=45)
 
 ## Perspective plot - derivative wrt z
 z <- matrix(attr(predict(model.iv,newdata=newdata),"deriv.mat")[,1],num.eval,num.eval)
@@ -74,15 +63,6 @@ persp(x=z.seq,y=x.seq,z=z,
       col=FALSE,
       main="d g(z,x)/d z (x=med(x))",
       theta=45,phi=45)
-par(new=TRUE)
-z <- matrix(attr(predict(model.noniv,newdata=newdata),"deriv.mat")[,1],num.eval,num.eval)
-persp(x=z.seq,y=x.seq,z=z,
-      xlab="z",ylab="x",zlab="y",
-      ticktype="detailed",      
-      border="blue",
-      col=FALSE,
-      main="d g(z,x)/d z (x=med(x))",
-      theta=45,phi=45)
 
 ## Perspective plot - derivative wrt x
 z <- matrix(attr(predict(model.iv,newdata=newdata),"deriv.mat")[,2],num.eval,num.eval)
@@ -90,15 +70,6 @@ persp(x=z.seq,y=x.seq,z=z,
       xlab="z",ylab="x",zlab="y",
       ticktype="detailed",      
       border="red",
-      col=FALSE,
-      main="d g(z,x)/d x (z=med(z))",
-      theta=45,phi=45)
-par(new=TRUE)
-z <- matrix(attr(predict(model.noniv,newdata=newdata),"deriv.mat")[,2],num.eval,num.eval)
-persp(x=z.seq,y=x.seq,z=z,
-      xlab="z",ylab="x",zlab="y",
-      ticktype="detailed",      
-      border="blue",
       col=FALSE,
       main="d g(z,x)/d x (z=med(z))",
       theta=45,phi=45)

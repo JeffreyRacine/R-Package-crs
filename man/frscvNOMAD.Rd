@@ -28,7 +28,7 @@ frscvNOMAD(xz,
            degree=degree,
            segments=segments, 
            include=include, 
-           opts=list("MAX_BB_EVAL"=500,"MIN_MESH_SIZE"="r1.0e-10","INITIAL_MESH_SIZE"="r1.0e-02","MIN_POLL_SIZE"="r1.0e-10"),
+           opts=list("MAX_BB_EVAL"=500,"MIN_MESH_SIZE"="r1.0e-10","INITIAL_MESH_SIZE"="r1.0e-01","MIN_POLL_SIZE"="r1.0e-10"),
            nmulti=0)
 }
 
