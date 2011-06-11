@@ -36,7 +36,10 @@ crsiv(y,
       iterate.tol = 1.0e-05,
       constant = 0.5,
       method = c("Landweber-Fridman","Tikhonov"),
-      opts=list(),
+      opts=list("MAX_BB_EVAL"=10000,
+                "INITIAL_MESH_SIZE"="r1.0e-01",
+                "MIN_MESH_SIZE"="r1.0e-10",
+                "MIN_POLL_SIZE"="r1.0e-10"),
       deriv=0,
       ...)
 }
@@ -141,7 +144,7 @@ crsiv(y,
   }{||E(y|w)-E(phi(z,x)|w)||^2 }. However, if insufficient training is
   conducted the estimates can be overly noisy. To best guard against
   this eventuality set \code{nmulti} to a larger number than the default
-  \code{nmulti=0} for \code{\link{crs}}.
+  \code{nmulti=5} for \code{\link{crs}}.
 
   When using \code{method="Landweber-Fridman"}, iteration will terminate
   when either the change in the value of

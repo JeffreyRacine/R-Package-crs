@@ -92,8 +92,8 @@ snomadr(eval.f,
       
       \code{"MIN_POLL_SIZE"="r1.0e-10"}
 
-      Note that the "r..." denotes relative measurement (relative to
-      \code{degree.min} and \code{degree.max} and \code{segments.min}
+      Note that the \code{"r..."} denotes relative measurement (relative
+      to \code{degree.min} and \code{degree.max} and \code{segments.min}
       and \code{segments.max}.
 
       Note that decreasing the maximum number of black box evaluations
@@ -183,7 +183,7 @@ opts <-list("MAX_BB_EVAL"=500,
             "INITIAL_MESH_SIZE"="0.1",
             "MIN_POLL_SIZE"=0.0001)
 
-snomadr(eval.f=eval.f,n=5,  x0=x0, bbin=bbin, bbout=bbout, lb=lb, ub=ub, opts=opts)
+snomadr(eval.f=eval.f, n=5, x0=x0, bbin=bbin, bbout=bbout, lb=lb, ub=ub, opts=opts)
 
 
 # how to transfer other parameters into eval.f
@@ -294,10 +294,10 @@ eval.f.ex1 <- function(x, params) {
 }
 
 # define parameters that we want to use
-params<-list()
+params <- list()
 NBC <- 5
 M <- 2
-n<-2*NBC-3
+n <- 2*NBC-3
 
 params$NBC<-NBC
 params$M<-M
@@ -307,9 +307,9 @@ ub<-rep(4.5, n)
 
 eval.f.ex1(x0, params)
 
-bbout<-c(2, 2, 0)
-nmulti=5
-bbin<-rep(0, n)
+bbout <- c(2, 2, 0)
+nmulti <- 5
+bbin <- rep(0, n)
 # define initial value of the optimzation problem
 
 # solve using snomadRSolve
