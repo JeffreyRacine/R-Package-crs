@@ -36,11 +36,11 @@ crsiv(y,
       iterate.tol = 1.0e-05,
       constant = 0.5,
       method = c("Landweber-Fridman","Tikhonov"),
-      opts=list("MAX_BB_EVAL"=10000,
-                "INITIAL_MESH_SIZE"="r1.0e-01",
-                "MIN_MESH_SIZE"="r1.0e-10",
-                "MIN_POLL_SIZE"="r1.0e-10"),
-      deriv=0,
+      opts = list("MAX_BB_EVAL"=10000,
+                  "INITIAL_MESH_SIZE"="r1.0e-01",
+                  "MIN_MESH_SIZE"="r1.0e-10",
+                  "MIN_POLL_SIZE"="r1.0e-10"),
+      deriv = 0,
       ...)
 }
 
@@ -221,7 +221,6 @@ This function should be considered to be in `beta test' status until further not
 
 set.seed(42)
 n <- 1500
-nmulti <- 10
 
 ## Turn off display I/O for crs() NOMAD search...
 
@@ -272,12 +271,12 @@ evaldata <- evaldata[order(evaldata$z),]
 
 ## Compute the non-IV regression spline estimator of E(y|z)
 
-model.noniv <- crs(y~z,nmulti=nmulti,opts=opts)
+model.noniv <- crs(y~z,opts=opts)
 mean.noniv <- predict(model.noniv,newdata=evaldata)
 
 ## Compute the IV-regression spline estimator of phi(z)
 
-model.iv <- crsiv(y=y,z=z,w=w,nmulti=nmulti)
+model.iv <- crsiv(y=y,z=z,w=w)
 phi.iv <- predict(model.iv,newdata=evaldata)
 
 ## For the plots, restrict focal attention to the bulk of the data

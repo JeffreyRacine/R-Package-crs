@@ -17,19 +17,19 @@
 \usage{
 frscvNOMAD(xz,
            y,
-           degree.max=10, 
-           segments.max=10, 
-           degree.min=0, 
-           segments.min=1, 
-           complexity=c("degree-knots","degree","knots"),
-           knots=c("quantiles","uniform"),
-           basis=c("additive","tensor","auto"),
-           cv.func=c("cv.ls","cv.gcv","cv.aic"),
-           degree=degree,
-           segments=segments, 
-           include=include, 
-           opts=list(),
-           nmulti=0)
+           degree.max = 10, 
+           segments.max = 10, 
+           degree.min = 0, 
+           segments.min = 1, 
+           complexity = c("degree-knots","degree","knots"),
+           knots = c("quantiles","uniform"),
+           basis = c("additive","tensor","auto"),
+           cv.func = c("cv.ls","cv.gcv","cv.aic"),
+           degree = degree,
+           segments = segments, 
+           include = include, 
+           opts = list(),
+           nmulti = 0)
 }
 
 \arguments{

@@ -48,10 +48,10 @@ crs(\dots)
     data.return = FALSE,
     prune = FALSE,
     restarts = 0,
-    opts=list("MAX_BB_EVAL"=10000,
-              "INITIAL_MESH_SIZE"="r1.0e-01",
-              "MIN_MESH_SIZE"="r1.0e-10",
-              "MIN_POLL_SIZE"="r1.0e-10"),
+    opts = list("MAX_BB_EVAL"=10000,
+                "INITIAL_MESH_SIZE"="r1.0e-01",
+                "MIN_MESH_SIZE"="r1.0e-10",
+                "MIN_POLL_SIZE"="r1.0e-10"),
     nmulti = 5, 
     \dots)
 }

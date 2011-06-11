@@ -59,12 +59,12 @@ Engel95 <- Engel95[order(Engel95$logexp),]
 
 attach(Engel95)
 
-model.iv <- crsiv(y=food,z=logexp,w=logwages,method="Landweber-Fridman",nmulti=10)
+model.iv <- crsiv(y=food,z=logexp,w=logwages,method="Landweber-Fridman")
 phihat <- model.iv$phihat
 
 ## Compute the non-IV regression (i.e. regress y on z)
 
-ghat <- crs(food~logexp,nmulti=10)
+ghat <- crs(food~logexp)
 
 ## For the plots, restrict focal attention to the bulk of the data
 ## (i.e. for the plotting area trim out 1/4 of one percent from each
