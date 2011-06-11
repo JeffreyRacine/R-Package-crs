@@ -1,3 +1,9 @@
+Changes from Version 0.14.8 to 0.14.9 [14-Jun-2011]
+
+* Changed initial mesh size to r1.0e-00 from r1.0e-02 (made a
+  difference for some datasets in terms of how quickly NOMAD found a
+  solution)
+
 Changes from Version 0.14.7 to 0.14.8 [10-Jun-2011]
 
 * crsiv now returns a crs model object that supports residuals,
