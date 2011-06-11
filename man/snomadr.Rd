@@ -77,18 +77,40 @@ snomadr(eval.f,
         \code{smultinomadRSolve} will be called.
       }
     \item{opts}{
+      
       list of options for NOMAD, see the NOMAD user guide
       \url{http://www.gerad.ca/NOMAD/Downloads/user_guide.pdf}.  Options
       can also be set by nomad.opt which should be in the folder where R
-      (\code{sonmadr}) is executed.
-    }
+      (\code{sonmadr}) is executed. Options that affect the solution and
+      their defaults and some potential values are
+      
+      \code{"MAX_BB_EVAL"=10000}
+
+      \code{"INITIAL_MESH_SIZE"=1}
+
+      \code{"MIN_MESH_SIZE"="r1.0e-10"}
+      
+      \code{"MIN_POLL_SIZE"="r1.0e-10"}
+
+      Note that the "r..." denotes relative measurement (relative to
+      \code{degree.min} and \code{degree.max} and \code{segments.min}
+      and \code{segments.max}.
+
+      Note that decreasing the maximum number of black box evaluations
+      (\code{"MAX_BB_EVAL"} will terminate search sooner and may result
+      in a less accurate solution. For complicated problems you may want
+      to increase this value. When experimenting it is desirable to set
+      \code{"DISPLAY_DEGREE"=1} (or a larger integer) to get some sense
+      for how the algorithm is progressing.
+
+      }
 
     \item{print.output}{
       when it is FALSE, no output from \code{snomadr} is displayed on
-      the screen. If DISPLAY_DEGREE=0, the
-        option of NOMAD, there will be no output from NOMAD. Higher
-      integer values provide successively more detail.
-      }
+      the screen. If DISPLAY_DEGREE=0, the option of NOMAD, there will
+      be no output from NOMAD. Higher integer values provide
+      successively more detail.
+    }
 
     \item{snomadr.environment}{
         environment that is used to evaluate the functions. Use this to pass 
@@ -156,7 +178,10 @@ ub <- c(5.0, 6.0, 7.0, 1000000, 100000)
 
 bbout <-c(0, 2, 1)
 #options
-opts <-list("MAX_BB_EVAL"=500, "MIN_MESH_SIZE"=0.001, "INITIAL_MESH_SIZE"="0.1", "MIN_POLL_SIZE"=0.0001)
+opts <-list("MAX_BB_EVAL"=500,
+            "MIN_MESH_SIZE"=0.001,
+            "INITIAL_MESH_SIZE"="0.1",
+            "MIN_POLL_SIZE"=0.0001)
 
 snomadr(eval.f=eval.f,n=5,  x0=x0, bbin=bbin, bbout=bbout, lb=lb, ub=ub, opts=opts)
 
