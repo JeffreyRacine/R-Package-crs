@@ -329,6 +329,66 @@ SEXP print_solution(double obj_value, double *x, int n, int iter, int nmulti, NO
 
 		return(R_result_list);
 }
+
+//Following function will return the information and help about NOMAD.
+//This is based on the program "nomad.cpp".
+extern "C" {
+
+		SEXP snomadRInfo( SEXP args )
+		{
+				R_CheckUserInterrupt();
+
+				SEXP solution;
+
+				NOMAD::Display out(std::cout);
+
+				//showArgs1(args);
+
+				PROTECT(solution=args);
+
+				SEXP sinfo = getListElement(args,"info");
+				SEXP sversion = getListElement(args,"version");
+				SEXP shelp = getListElement(args,"help");
+
+				string strinfo =  isNull(sinfo) ? "" : CHAR(STRING_ELT(sinfo, 0));
+				string strversion = isNull(sversion) ? "" : CHAR(STRING_ELT(sversion, 0));
+				if(strinfo[0]=='-' && (strinfo[1]=='i' || strinfo[1]=='I')) display_info ( out );
+				if(strversion[0]=='-' && (strversion[1]=='v' || strversion[1]=='V')) display_version ( out );
+
+				string strhelp = isNull(shelp) ? "" : CHAR(STRING_ELT(shelp, 0));
+
+				if(strhelp.c_str()[0]=='-'&& (strhelp.c_str()[1]=='h'||strhelp.c_str()[1]=='H'))
+				{
+						NOMAD::Parameters param(out);
+						char **argv;
+						argv = new char*[5];
+						argv[0] = new char[200];
+						argv[1] = new char[200];
+						argv[2] = new char[200];
+						strcpy(argv[0], "nomad"); /* this is for matching the function param.help */
+						strcpy(argv[1], "-h");
+						int i = 3;
+						while(strhelp[i] !='\0' && strhelp[i]==' ') i++;
+						if(strhelp[i]!='\0') {
+								strcpy(argv[2], &CHAR(STRING_ELT(shelp, 0))[i]);
+								i=0;  /* delete space at the end of the string. */
+								while(argv[2][i] != ' ') i++;
+								argv[2][i] = '\0';
+						}
+						else 
+								strcpy(argv[2], "all");
+
+						param.help(3, argv);
+						delete(argv);
+				}
+
+				NOMAD::end();
+
+				UNPROTECT(1);
+
+				return(solution);
+		}
+}
 // we want this function to be available in R, so we put extern around it.
 extern "C" {
 

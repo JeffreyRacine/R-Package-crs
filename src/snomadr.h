@@ -38,6 +38,7 @@
 #include <iomanip> 
 #include <iostream> 
 #include <fstream> 
+#include <sstream>
 #include <stdio.h> 
 #include <string.h> 
 #include <string> 

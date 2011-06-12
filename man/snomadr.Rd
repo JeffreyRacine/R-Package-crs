@@ -38,6 +38,7 @@ snomadr(eval.f,
         nmulti = 0, 
         opts = list(),
         print.output = TRUE, 
+        information = list(), 
         snomadr.environment = new.env(), 
         ... ) 
 }
@@ -63,7 +64,7 @@ snomadr(eval.f,
     \item{x0}{
       vector with starting values for the optimization. If it is
         provided and nmulti is bigger than 1, x0 will be the first
-        inital point for multiple initial points.
+        initial point for multiple initial points.
       }
     \item{lb}{
         vector with lower bounds of the controls (use -1.0e19 for controls without lower bound).
@@ -112,6 +113,19 @@ snomadr(eval.f,
       successively more detail.
     }
 
+		\item{information}{
+			is a list. \code{snomadr} will call \code{snomadRInfo} to return
+			the information about NOMAD according to the values of "info",
+			"version" and "help".
+
+			{"info"="-i"}: display the usage and copyright of NOMAD. 
+
+			{"version"="-v"}: display the version of NOMAD you are using.
+
+			{"help"="-h"}: display all options. You also can display a specific option, 
+			for example, {"help"="-h X0"},  this will tell you how to set X0.
+		}
+
     \item{snomadr.environment}{
         environment that is used to evaluate the functions. Use this to pass 
         additional data or parameters to a function.
@@ -125,7 +139,7 @@ snomadr(eval.f,
     Note that for simple problems involving one predictor exhaustive
     search may be faster and more accurate, so bear in mind that
     \code{cv="exhaustive"} can be useful in addition to verifying 
-    solutions returned by \code{snomoadr}.
+    solutions returned by \code{snomadr}.
 }
 \value{
     The return value contains a list with the inputs, and additional elements
@@ -157,6 +171,18 @@ snomadr(eval.f,
     \code{\link{nlminb}}
 }
 \examples{
+# list all options
+snomadr(information=list("help"="-h"))
+
+# print given option,  for example,  MESH_SIZE
+snomadr(information=list("help"="-h MESH_SIZE"))
+
+#print the version of NOMAD
+snomadr(information=list("version"="-v"))
+
+#print usage and copyright
+snomadr(information=list("info"="-i"))
+
 # This is the example found in
 #  NOMAD/examples/basic/library/single_obj/basic_lib.cpp
 
@@ -186,10 +212,10 @@ bbout <-c(0, 2, 1)
 #options
 opts <-list("MAX_BB_EVAL"=500,
             "MIN_MESH_SIZE"=0.001,
-            "INITIAL_MESH_SIZE"="0.1",
+            "INITIAL_MESH_SIZE"=0.1,
             "MIN_POLL_SIZE"=0.0001)
 
-snomadr(eval.f=eval.f, n=5, x0=x0, bbin=bbin, bbout=bbout, lb=lb, ub=ub, opts=opts)
+snomadr(eval.f=eval.f,n=5,  x0=x0, bbin=bbin, bbout=bbout, lb=lb, ub=ub, opts=opts)
 
 
 # how to transfer other parameters into eval.f
@@ -205,7 +231,7 @@ eval.f.ex1 <- function(x, params) {
 # define parameters that we want to use
 params <- c(1,2,3)
 
-# define initial value of the optimzation problem
+# define initial value of the optimization problem
 x0 <- 0
 
 # solve using snomadr 
@@ -225,7 +251,7 @@ eval.f.ex2 <- function(x) {
     return( params[1]*x^2 + params[2]*x + params[3] ) 
 }
 
-# define initial value of the optimzation problem
+# define initial value of the optimization problem
 x0 <- 0
 
 # define a new environment that contains params
@@ -300,10 +326,10 @@ eval.f.ex1 <- function(x, params) {
 }
 
 # define parameters that we want to use
-params <- list()
+params<-list()
 NBC <- 5
 M <- 2
-n <- 2*NBC-3
+n<-2*NBC-3
 
 params$NBC<-NBC
 params$M<-M
@@ -313,10 +339,10 @@ ub<-rep(4.5, n)
 
 eval.f.ex1(x0, params)
 
-bbout <- c(2, 2, 0)
-nmulti <- 5
-bbin <- rep(0, n)
-# define initial value of the optimzation problem
+bbout<-c(2, 2, 0)
+nmulti=5
+bbin<-rep(0, n)
+# define initial value of the optimization problem
 
 # solve using snomadRSolve
 snomadr(n            = as.integer(n), 
@@ -344,8 +370,6 @@ snomadr(n            = as.integer(n),
         nmulti = as.integer(nmulti), 
         print.output = TRUE, 
         params       = params )
-
-
 }
 % Add one or more standard keywords, see file 'KEYWORDS' in the
 % R documentation directory.
