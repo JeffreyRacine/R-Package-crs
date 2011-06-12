@@ -13,19 +13,24 @@ constrained optimization of blackbox functions.
 NOMAD is designed to find (local) solutions of mathematical optimization
 problems of the form
 
+  \preformatted{
    min     f(x)
 x in R^n
 
 s.t.       g(x) <= 0 
            x_L <=  x   <= x_U
+}           
+           
+where \eqn{f(x)\colon R^n --> R^k}{f(x): R^n --> R^k} is the objective
+function, and \eqn{g(x)\colon R^n --> R^m}{g(x): R^n --> R^m} are
+the constraint functions. The vectors \eqn{x_L}{x_L} and \eqn{x_U}{x_U}
+are the bounds on the variables \eqn{x}. The functions \eqn{f(x)} and
+\eqn{g(x)} can be nonlinear and nonconvex. The variables can be integer,
+continuous real number, binary, and categorical.
 
-where f(x): R^n --> R^k is the objective function, and g(x): R^n --> R^m
-are the constraint functions. The vectors x_L and x_U are the bounds on
-the variables x. The functions f(x) and g(x) can be nonlinear and
-nonconvex. The variables can be integer, continuous real number, binary,
-and categorical. Kindly see
-\url{http://www.gerad.ca/nomad/Project/Home.html} and the references
-below for details.
+Kindly see \url{http://www.gerad.ca/nomad/Project/Home.html} and the
+references below for details.
+
 }
 
 \usage{
@@ -58,13 +63,13 @@ snomadr(eval.f,
     }
     
     \item{bbout}{
-      types of output of eval.f.  See the NOMAD User Guide
+      types of output of \code{eval.f}.  See the NOMAD User Guide
       \url{http://www.gerad.ca/NOMAD/Downloads/user_guide.pdf}.
     }
     
     \item{x0}{
       vector with starting values for the optimization. If it is
-        provided and nmulti is bigger than 1, x0 will be the first
+        provided and nmulti is bigger than 1, \code{x0} will be the first
         initial point for multiple initial points.
       }
     \item{lb}{
@@ -74,7 +79,7 @@ snomadr(eval.f,
         vector with upper bounds of the controls (use  1.0e19 for controls without upper bound).
     }
     \item{nmulti}{
-      when it is missing, or it is equal to 0 and x0 is provided,
+      when it is missing, or it is equal to 0 and \code{x0} is provided,
         \code{snomadRSolve} will be called to solve the problem. Otherwise,
         \code{smultinomadRSolve} will be called.
       }
@@ -109,22 +114,22 @@ snomadr(eval.f,
 
     \item{print.output}{
       when it is FALSE, no output from \code{snomadr} is displayed on
-      the screen. If DISPLAY_DEGREE=0, the option of NOMAD, there will
+      the screen. If \code{"DISPLAY_DEGREE"=0,} the option of NOMAD, there will
       be no output from NOMAD. Higher integer values provide
       successively more detail.
     }
 
 		\item{information}{
 			is a list. \code{snomadr} will call \code{snomadRInfo} to return
-			the information about NOMAD according to the values of "info",
-			"version" and "help".
+			the information about NOMAD according to the values of \code{"info"},
+			\code{"version"} and \code{"help"}.
 
-			{"info"="-i"}: display the usage and copyright of NOMAD. 
+			\code{"info"="-i"}: display the usage and copyright of NOMAD. 
 
-			{"version"="-v"}: display the version of NOMAD you are using.
+			\code{"version"="-v"}: display the version of NOMAD you are using.
 
-			{"help"="-h"}: display all options. You also can display a specific option, 
-			for example, {"help"="-h X0"},  this will tell you how to set X0.
+			\code{"help"="-h"}: display all options. You also can display a specific option, 
+			for example, \code{"help"="-h X0"},  this will tell you how to set X0.
 		}
 
     \item{snomadr.environment}{
