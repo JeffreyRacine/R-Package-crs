@@ -162,6 +162,11 @@ crsiv(y,
   \code{degree.max} and \code{segments.max} not overly large). This will
   guarantee an exact solution for each iteration (i.e. there will be no
   errors arising due to numerical search).
+
+  \code{demo(crsiv)}, \code{demo(crsiv_exog)}, and
+  \code{demo(crsiv_exog_perspective)} provide flexible interactive
+  demonstrations similar to the example below that allow you to modify
+  parameters in an interactive session.
   
 }
 \value{

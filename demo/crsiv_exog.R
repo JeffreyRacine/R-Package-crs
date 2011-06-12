@@ -5,7 +5,12 @@ require(crs)
 
 ## Turn off screen I/O for crs()
 
-opts <- list("DISPLAY_DEGREE"=0)
+opts <- list("MAX_BB_EVAL"=10000,
+             "EPSILON"=.Machine$double.eps,
+             "INITIAL_MESH_SIZE"="r1.0e-01",
+             "MIN_MESH_SIZE"=sqrt(.Machine$double.eps),
+             "MIN_POLL_SIZE"=sqrt(.Machine$double.eps),
+             "DISPLAY_DEGREE"=0)
 
 ## This illustration was made possible by Samuele Centorrino
 ## <samuele.centorrino@univ-tlse1.fr>
@@ -14,7 +19,9 @@ set.seed(42)
 n <- as.numeric(readline(prompt="Input the number of observations desired: "))
 method <- as.numeric(readline(prompt="Input the method (0=Landweber-Fridman, 1=Tikhonov): "))
 method <- ifelse(method==0,"Landweber-Fridman","Tikhonov")
-nmulti <- as.numeric(readline(prompt="Input the number of multistarts desired (e.g. 10): "))
+cv <- as.numeric(readline(prompt="Input the cv method (0=nomad, 1=exhaustive): "))
+cv <- ifelse(method==0,"nomad","exhaustive")
+if(cv==0) nmulti <- as.numeric(readline(prompt="Input the number of multistarts desired (e.g. 10): "))
 
 v  <- rnorm(n,mean=0,sd=.27)
 eps <- rnorm(n,mean=0,sd=0.05)
@@ -36,13 +43,15 @@ y <- phi(z) + 0.2*x + u
 
 evaldata <- data.frame(z=sort(z),x=rep(median(x),length(x)))
 
-model.iv <- crsiv(y=y,z=z,w=w,x=x,nmulti=nmulti,method=method)
+model.iv <- crsiv(y=y,z=z,w=w,x=x,cv=cv,nmulti=nmulti,method=method,deriv=1)
 phihat.iv <- predict(model.iv,newdata=evaldata)
 
 ## Now the non-iv regression spline estimator of E(y|z), again
 ## controlling for the evaluation value of x.
 
-crs.mean <- predict(crs(y~z+x,nmulti=nmulti,opts=opts),newdata=evaldata)
+model.noniv <- crs(y~z+x,cv=cv,nmulti=nmulti,deriv=1,opts=opts)
+
+crs.mean <- predict(model.noniv,newdata=evaldata)
 
 ## For the plots, restrict focal attention to the bulk of the data
 ## (i.e. for the plotting area trim out 1/4 of one percent from each

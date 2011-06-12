@@ -130,6 +130,9 @@ frscvNOMAD(xz,
   for each unique ordinal/nominal combination, the splines must be
   estimable for every such unique combination. When this is not the case
   the user must combine data in a manner such that this is achieved.
+
+  \code{demo(nomad_factor)} will provide a demonstration similar to the
+  example below.
   
 }
 

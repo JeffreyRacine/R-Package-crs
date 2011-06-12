@@ -8,14 +8,21 @@ require(crs)
 
 ## Turn off screen I/O for crs()
 
-opts <- list("DISPLAY_DEGREE"=0)
+opts <- list("MAX_BB_EVAL"=10000,
+             "EPSILON"=.Machine$double.eps,
+             "INITIAL_MESH_SIZE"="r1.0e-01",
+             "MIN_MESH_SIZE"=sqrt(.Machine$double.eps),
+             "MIN_POLL_SIZE"=sqrt(.Machine$double.eps),
+             "DISPLAY_DEGREE"=0)
 
 set.seed(42)
 
 n <- as.numeric(readline(prompt="Input the number of observations desired: "))
 method <- as.numeric(readline(prompt="Input the method (0=Landweber-Fridman, 1=Tikhonov): "))
 method <- ifelse(method==0,"Landweber-Fridman","Tikhonov")
-nmulti <- as.numeric(readline(prompt="Input the number of multistarts desired (e.g. 10): "))
+cv <- as.numeric(readline(prompt="Input the cv method (0=nomad, 1=exhaustive): "))
+cv <- ifelse(method==0,"nomad","exhaustive")
+if(cv==0) nmulti <- as.numeric(readline(prompt="Input the number of multistarts desired (e.g. 10): "))
 num.eval <- as.numeric(readline(prompt="Input the number of evaluation observations desired (e.g. 50): "))
 
 v  <- rnorm(n,mean=0,sd=.27)
@@ -36,9 +43,9 @@ y <- phi(z) + 0.1*x^3 + u
 ## In evaluation data sort z for plotting and hold x constant at its
 ## median
 
-model.iv <- crsiv(y=y,z=z,w=w,x=x,nmulti=nmulti,method=method,deriv=1)
+model.iv <- crsiv(y=y,z=z,w=w,x=x,cv=cv,nmulti=nmulti,method=method,deriv=1)
 
-model.noniv <- crs(y~z+x,deriv=1)
+model.noniv <- crs(y~z+x,cv=cv,nmulti=nmulti,deriv=1,opts=opts)
 
 summary(model.iv)
 

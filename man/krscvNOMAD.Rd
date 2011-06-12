@@ -108,7 +108,7 @@ krscvNOMAD(xz,
   (i.e. number of knots minus one)}
 
   \item{lambda}{ real/vector for the categorical predictors. If it is not
-  NULL,  it will be a starting value of lambd}
+  NULL,  it will be a starting value of lambda}
 
 \item{opts}{
   arguments passed to the NOMAD solver.
@@ -159,6 +159,8 @@ krscvNOMAD(xz,
   for all every unique \code{z} combination. When this is not the case
   the user must combine data in a manner such that this is achieved.
   
+  \code{demo(nomad_kernel)} will provide a demonstration similar to the
+  example below.
 }
 
 \value{
