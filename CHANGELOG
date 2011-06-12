@@ -1,15 +1,15 @@
 Changes from Version 0.14.8 to 0.14.9 [14-Jun-2011]
 
 * Increased default MAX_BB_EVAL from 500 to 10000 (makes a difference
-  for difficult problems) and INITIAL_MESH_SIZE from "r1.0e-02" to
-  "r1.0e-01"
+  for difficult problems) and modified default EPSILON in NOMAD along
+  with other parameters (MIN_MESH_SIZE, MIN_POLL_SIZE)
 
 * Now default number of restarts in crs is 5 (zero is not reliaable
   and I want sensible defaults in this package - higher is better but
   for many problems this ought to suffice)
 
 * Corrected glitches in interactive demos where options were not being
-  passed
+  passed, updated docs to reflect demos
 
 Changes from Version 0.14.7 to 0.14.8 [10-Jun-2011]
 
