@@ -2,9 +2,13 @@ require(crs)
 
 set.seed(42)
 
+## Interactively request number of observations, whether to do NOMAD
+## or exhaustive search, and if NOMAD the number of multistarts
+
 n <- as.numeric(readline(prompt="Input the number of observations desired: "))
-nmulti <- as.numeric(readline(prompt="Input the number of multistarts desired (e.g. 2): "))
-num.eval <- as.numeric(readline(prompt="Input the number of evaluation observations desired (e.g. 50): "))
+cv <- as.numeric(readline(prompt="Input the cv method (0=nomad, 1=exhaustive): "))
+cv <- ifelse(method==0,"nomad","exhaustive")
+if(cv==0) nmulti <- as.numeric(readline(prompt="Input the number of multistarts desired (e.g. 10): "))
 
 x1 <- runif(n,-5,5)
 x2 <- runif(n,-5,5)
@@ -15,7 +19,7 @@ y <- dgp + rnorm(n,sd=.1)
 
 model <- crs(y~x1+x2,
              basis="auto",
-             cv="nomad",
+             cv=cv,
              complexity="degree-knots",
              knots="uniform",
              deriv=1,

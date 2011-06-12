@@ -17,6 +17,10 @@ opts <- list("MAX_BB_EVAL"=10000,
 
 set.seed(42)
 
+## Interactively request number of observations, the method, whether
+## to do NOMAD or exhaustive search, and if NOMAD the number of
+## multistarts
+
 n <- as.numeric(readline(prompt="Input the number of observations desired: "))
 method <- as.numeric(readline(prompt="Input the method (0=Landweber-Fridman, 1=Tikhonov): "))
 method <- ifelse(method==0,"Landweber-Fridman","Tikhonov")
