@@ -344,7 +344,7 @@ crs.formula <- function(formula,
                                   "EPSILON"=.Machine$double.eps,
                                   "INITIAL_MESH_SIZE"="r1.0e-01",
                                   "MIN_MESH_SIZE"=paste("r",sqrt(.Machine$double.eps),sep=""),
-                                  "MIN_POLL_SIZE"=paste("r",sqrt(.Machine$double.eps),sep=""))
+                                  "MIN_POLL_SIZE"=paste("r",sqrt(.Machine$double.eps),sep="")),
 												nmulti=5,
 												...) {
 
