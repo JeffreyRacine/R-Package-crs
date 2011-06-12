@@ -7,7 +7,7 @@ set.seed(42)
 
 n <- as.numeric(readline(prompt="Input the number of observations desired: "))
 cv <- as.numeric(readline(prompt="Input the cv method (0=nomad, 1=exhaustive): "))
-cv <- ifelse(method==0,"nomad","exhaustive")
+cv <- ifelse(cv==0,"nomad","exhaustive")
 if(cv=="nomad") nmulti <- as.numeric(readline(prompt="Input the number of multistarts desired (e.g. 10): "))
 
 x1 <- runif(n,-5,5)
