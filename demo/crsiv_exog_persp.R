@@ -36,9 +36,9 @@ y <- phi(z) + 0.1*x^3 + u
 ## In evaluation data sort z for plotting and hold x constant at its
 ## median
 
-model.iv <- crsiv(y=y,z=z,w=w,x=x,nmulti=nmulti,method="Landweber-Fridman",deriv=1,basis="tensor")
+model.iv <- crsiv(y=y,z=z,w=w,x=x,nmulti=nmulti,method=method,deriv=1)
 
-model.noniv <- crs(y~z+x,deriv=1,basis="tensor")
+model.noniv <- crs(y~z+x,deriv=1)
 
 summary(model.iv)
 
