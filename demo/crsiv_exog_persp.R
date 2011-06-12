@@ -42,7 +42,7 @@ x <- rnorm(n)
 phi <- function(z) { z^2 }
 eyz <- function(z) { z^2 -0.325*z }
 
-y <- phi(z) + 0.1*x^3 + u
+y <- phi(z) + 0.05*x^3 + u
 
 ## In evaluation data sort z for plotting and hold x constant at its
 ## median
