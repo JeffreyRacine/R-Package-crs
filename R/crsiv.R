@@ -42,7 +42,8 @@ crsiv <- function(y,
   								opts=list("MAX_BB_EVAL"=10000,
                             "INITIAL_MESH_SIZE"="r1.0e-01",
                             "MIN_MESH_SIZE"="r1.0e-10",
-                            "MIN_POLL_SIZE"="r1.0e-10"),
+                            "MIN_POLL_SIZE"="r1.0e-10",
+                            "DISPLAY_DEGREE"=0),
                   deriv=0,
                   ...) {
 

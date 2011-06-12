@@ -120,6 +120,12 @@ snomadr(eval.f,
       arguments that will be passed to the user-defined objective and
       constraints functions. See the examples below.
     }
+  }
+  \details{
+    Note that for simple problems involving one predictor exhaustive
+    search may be faster and more accurate, so bear in mind that
+    \code{cv="exhaustive"} can be useful in addition to verifying 
+    solutions returned by \code{snomoadr}.
 }
 \value{
     The return value contains a list with the inputs, and additional elements

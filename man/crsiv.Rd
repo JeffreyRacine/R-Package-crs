@@ -39,7 +39,8 @@ crsiv(y,
       opts = list("MAX_BB_EVAL"=10000,
                   "INITIAL_MESH_SIZE"="r1.0e-01",
                   "MIN_MESH_SIZE"="r1.0e-10",
-                  "MIN_POLL_SIZE"="r1.0e-10"),
+                  "MIN_POLL_SIZE"="r1.0e-10",
+                  "DISPLAY_DEGREE"=0),
       deriv = 0,
       ...)
 }
@@ -141,10 +142,10 @@ crsiv(y,
 
   \code{method="Landweber-Fridman"} uses an optimal stopping rule based
   upon \eqn{||E(y|w)-E(\varphi_k(z,x)|w)||^2
-  }{||E(y|w)-E(phi(z,x)|w)||^2 }. However, if insufficient training is
-  conducted the estimates can be overly noisy. To best guard against
-  this eventuality set \code{nmulti} to a larger number than the default
-  \code{nmulti=5} for \code{\link{crs}}.
+  }{||E(y|w)-E(phi(z,x)|w)||^2 }. However, if local optima are
+  encountered the resulting estimates can be overly noisy. To best guard
+  against this eventuality set \code{nmulti} to a larger number than the
+  default \code{nmulti=5} for \code{\link{crs}}.
 
   When using \code{method="Landweber-Fridman"}, iteration will terminate
   when either the change in the value of
@@ -154,6 +155,14 @@ crsiv(y,
   \eqn{||E((y|w)-E(\varphi_k(z,x)|w))/E(y|w)||^2
   }{||(E(y|w)-E(phi(z,x)|w))/E(y|w)||^2 } stops falling in value and
   starts rising.
+
+  When your problem is a simple one (e.g. univariate \eqn{Z}, \eqn{W},
+  and \eqn{X}) you might want to avoid \code{cv="nomad"} and instead use
+  \code{cv="exhaustive"} since exhaustive search may be feasible (for
+  \code{degree.max} and \code{segments.max} not overly large). This will
+  guarantee an exact solution for each iteration (i.e. there will be no
+  errors arising due to numerical search).
+  
 }
 \value{
   

@@ -599,7 +599,7 @@ extern "C" {
 						//				param.set_MIN_POLL_SIZE(0.001);
 						//				param.set_MIN_MESH_SIZE(0.001);
 						//	  		param.set_INITIAL_MESH_SIZE(0.01);
-						param.set_MAX_BB_EVAL(100);
+						param.set_MAX_BB_EVAL(10000);
 
 
 						vector<NOMAD::bb_input_type> bbin(N);

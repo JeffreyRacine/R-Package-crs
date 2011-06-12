@@ -36,7 +36,9 @@ y <- phi(z) + 0.1*x^3 + u
 ## In evaluation data sort z for plotting and hold x constant at its
 ## median
 
-model.iv <- crsiv(y=y,z=z,w=w,x=x,nmulti=nmulti,method="Landweber-Fridman",deriv=1)
+model.iv <- crsiv(y=y,z=z,w=w,x=x,nmulti=nmulti,method="Landweber-Fridman",deriv=1,basis="tensor")
+
+model.noniv <- crs(y~z+x,deriv=1,basis="tensor")
 
 summary(model.iv)
 
@@ -45,31 +47,67 @@ z.seq <- seq(min(z),max(z),length=num.eval)
 x.seq <- seq(min(x),max(x),length=num.eval)
 x.grid <- expand.grid(z.seq,x.seq)
 newdata <- data.frame(z=x.grid[,1],x=x.grid[,2])
-z <- matrix(predict(model.iv,newdata=newdata),num.eval,num.eval)
-persp(x=z.seq,y=x.seq,z=z,
+z.iv <- matrix(predict(model.iv,newdata=newdata),num.eval,num.eval)
+z.noniv <- matrix(predict(model.noniv,newdata=newdata),num.eval,num.eval)
+zlim <- c(min(z.iv,z.noniv),max(z.iv,z.noniv))
+persp(x=z.seq,y=x.seq,z=z.iv,
       xlab="z",ylab="x",zlab="y",
+      zlim=zlim,
       ticktype="detailed",
       col=FALSE,
       border="red",
       main="phi(z,x)",
       theta=45,phi=45)
+par(new=TRUE)
+persp(x=z.seq,y=x.seq,z=z.noniv,
+      xlab="z",ylab="x",zlab="y",
+      zlim=zlim,
+      ticktype="detailed",
+      col=FALSE,
+      border="blue",
+      main="phi(z,x)",
+      theta=45,phi=45)
 
 ## Perspective plot - derivative wrt z
-z <- matrix(attr(predict(model.iv,newdata=newdata),"deriv.mat")[,1],num.eval,num.eval)
-persp(x=z.seq,y=x.seq,z=z,
+z.iv <- matrix(attr(predict(model.iv,newdata=newdata),"deriv.mat")[,1],num.eval,num.eval)
+z.noniv <- matrix(attr(predict(model.noniv,newdata=newdata),"deriv.mat")[,1],num.eval,num.eval)
+zlim <- c(min(z.iv,z.noniv),max(z.iv,z.noniv))
+persp(x=z.seq,y=x.seq,z=z.iv,
       xlab="z",ylab="x",zlab="y",
+      zlim=zlim,
       ticktype="detailed",      
       border="red",
       col=FALSE,
       main="d g(z,x)/d z (x=med(x))",
       theta=45,phi=45)
+par(new=TRUE)
+persp(x=z.seq,y=x.seq,z=z.noniv,
+      xlab="z",ylab="x",zlab="y",
+      zlim=zlim,
+      ticktype="detailed",      
+      border="blue",
+      col=FALSE,
+      main="d g(z,x)/d z (x=med(x))",
+      theta=45,phi=45)
 
 ## Perspective plot - derivative wrt x
-z <- matrix(attr(predict(model.iv,newdata=newdata),"deriv.mat")[,2],num.eval,num.eval)
-persp(x=z.seq,y=x.seq,z=z,
+z.iv <- matrix(attr(predict(model.iv,newdata=newdata),"deriv.mat")[,2],num.eval,num.eval)
+z.noniv <- matrix(attr(predict(model.noniv,newdata=newdata),"deriv.mat")[,2],num.eval,num.eval)
+zlim <- c(min(z.iv,z.noniv),max(z.iv,z.noniv))
+persp(x=z.seq,y=x.seq,z=z.iv,
       xlab="z",ylab="x",zlab="y",
+      zlim=zlim,
       ticktype="detailed",      
       border="red",
+      col=FALSE,
+      main="d g(z,x)/d x (z=med(z))",
+      theta=45,phi=45)
+par(new=TRUE)
+persp(x=z.seq,y=x.seq,z=z.noniv,
+      xlab="z",ylab="x",zlab="y",
+      zlim=zlim,
+      ticktype="detailed",      
+      border="blue",
       col=FALSE,
       main="d g(z,x)/d x (z=med(z))",
       theta=45,phi=45)
