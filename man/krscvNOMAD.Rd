@@ -205,7 +205,7 @@ krscvNOMAD(xz,
     using an improved Akaike information criterion,} Journal of the
   Royal Statistical Society B, 60, 271-293.
 
-  S. Le Digabel, (2011), \dQuote{Algorithm 909: NOMAD: Nonlinear
+  S. Le Digabel (2011), \dQuote{Algorithm 909: NOMAD: Nonlinear
   optimization with the MADS algorithm}. ACM Transactions on
   Mathematical Software, 37(4):44:1-44:15.
   

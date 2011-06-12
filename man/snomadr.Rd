@@ -5,8 +5,9 @@ R interface to NOMAD
 }
 \description{
 \code{snomadr} is an R interface to NOMAD (Nonsmooth Optimization by
-Mesh Adaptive Direct Search), an open source software C++ implementation
-of the Mesh Adaptive Direct Search (Mads) algorithm designed for
+Mesh Adaptive Direct Search, Abramson, Audet, Couture and Le Digabel
+(2011)), an open source software C++ implementation of the Mesh Adaptive
+Direct Search (MADS, Le Digabel (2011)) algorithm designed for
 constrained optimization of blackbox functions.
 
 NOMAD is designed to find (local) solutions of mathematical optimization
@@ -82,7 +83,7 @@ snomadr(eval.f,
       list of options for NOMAD, see the NOMAD user guide
       \url{http://www.gerad.ca/NOMAD/Downloads/user_guide.pdf}.  Options
       can also be set by nomad.opt which should be in the folder where R
-      (\code{sonmadr}) is executed. Options that affect the solution and
+      (\code{snomadr}) is executed. Options that affect the solution and
       their defaults and some potential values are
       
       \code{"MAX_BB_EVAL"=10000}
@@ -95,10 +96,10 @@ snomadr(eval.f,
 
       Note that the \code{"r..."} denotes relative measurement (relative
       to \code{degree.min} and \code{degree.max} and \code{segments.min}
-      and \code{segments.max}.
+      and \code{segments.max}).
 
       Note that decreasing the maximum number of black box evaluations
-      (\code{"MAX_BB_EVAL"} will terminate search sooner and may result
+      (\code{"MAX_BB_EVAL"}) will terminate search sooner and may result
       in a less accurate solution. For complicated problems you may want
       to increase this value. When experimenting it is desirable to set
       \code{"DISPLAY_DEGREE"=1} (or a larger integer) to get some sense
@@ -152,15 +153,14 @@ snomadr(eval.f,
     \item{solution}{optimal value of the controls}
 }
 \references{
-  
   M.A. Abramson, C. Audet, G. Couture, J.E. Dennis, Jr., and S. Le
-  Digabel. The NOMAD
-  project. \url{http://www.gerad.ca/nomad/Project/Home.html}.
+  Digabel (2011), \dQuote{The NOMAD project}. Software available at
+  http://www.gerad.ca/nomad.
 
-  S. Le Digabel. Algorithm 909: \dQuote{NOMAD: Nonlinear optimization
-  with the MADS algorithm. ACM Transactions on Mathematical Software},
-  37(4):44:1-44:15, 2011.
-    
+  S. Le Digabel (2011), \dQuote{Algorithm 909: NOMAD: Nonlinear
+  optimization with the MADS algorithm}. ACM Transactions on
+  Mathematical Software, 37(4):44:1-44:15.
+  
 }
 \author{
   Zhenghua Nie <niez@mcmaster.ca>
