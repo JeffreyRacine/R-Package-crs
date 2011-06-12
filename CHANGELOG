@@ -8,6 +8,9 @@ Changes from Version 0.14.8 to 0.14.9 [14-Jun-2011]
   and I want sensible defaults in this package - higher is better but
   for many problems this ought to suffice)
 
+* Corrected glitches in interactive demos where options were not being
+  passed
+
 Changes from Version 0.14.7 to 0.14.8 [10-Jun-2011]
 
 * crsiv now returns a crs model object that supports residuals,

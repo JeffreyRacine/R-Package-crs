@@ -37,9 +37,10 @@ crsiv(y,
       constant = 0.5,
       method = c("Landweber-Fridman","Tikhonov"),
       opts = list("MAX_BB_EVAL"=10000,
+                  "EPSILON"=.Machine$double.eps,
                   "INITIAL_MESH_SIZE"="r1.0e-01",
-                  "MIN_MESH_SIZE"="r1.0e-10",
-                  "MIN_POLL_SIZE"="r1.0e-10",
+                  "MIN_MESH_SIZE"=paste("r",sqrt(.Machine$double.eps),sep=""),
+                  "MIN_POLL_SIZE"=paste("r",sqrt(.Machine$double.eps),sep=""),
                   "DISPLAY_DEGREE"=0),
       deriv = 0,
       ...)
@@ -238,7 +239,12 @@ n <- 1500
 
 ## Turn off display I/O for crs() NOMAD search...
 
-opts <- list("DISPLAY_DEGREE"=0)
+opts <- list("MAX_BB_EVAL"=10000,
+             "EPSILON"=.Machine$double.eps,
+             "INITIAL_MESH_SIZE"="r1.0e-01",
+             "MIN_MESH_SIZE"=paste("r",sqrt(.Machine$double.eps),sep=""),
+             "MIN_POLL_SIZE"=paste("r",sqrt(.Machine$double.eps),sep=""),
+             "DISPLAY_DEGREE"=0)
 
 ## The DGP is as follows:
 

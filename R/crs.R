@@ -340,10 +340,11 @@ crs.formula <- function(formula,
                         data.return=FALSE,
                         prune=FALSE,
 												restarts=0,
-												opts=list("MAX_BB_EVAL"=10000,
-                          "INITIAL_MESH_SIZE"="r1.0e-01",
-                          "MIN_MESH_SIZE"="r1.0e-10",
-                          "MIN_POLL_SIZE"="r1.0e-10"),
+                        opts=list("MAX_BB_EVAL"=10000,
+                                  "EPSILON"=.Machine$double.eps,
+                                  "INITIAL_MESH_SIZE"="r1.0e-01",
+                                  "MIN_MESH_SIZE"=paste("r",sqrt(.Machine$double.eps),sep=""),
+                                  "MIN_POLL_SIZE"=paste("r",sqrt(.Machine$double.eps),sep=""))
 												nmulti=5,
 												...) {
 
