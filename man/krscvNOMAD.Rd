@@ -15,22 +15,22 @@ predictors.
 }
 \usage{
 krscvNOMAD(xz,
-      y,
-      degree.max = 10, 
-      segments.max = 10, 
-      degree.min = 0, 
-      segments.min = 1, 
-      kernel.type = c("nominal","ordinal"),
-      restarts = 0,
-      complexity = c("degree-knots","degree","knots"),
-      knots = c("quantiles","uniform"),
-      basis = c("additive","tensor","auto"),
-      cv.func = c("cv.ls","cv.gcv","cv.aic"),
-      degree = degree,
-      segments = segments,
-      lambda = lambda, 
-      opts = list(),
-      nmulti = 0)
+           y,
+           degree.max = 10, 
+           segments.max = 10, 
+           degree.min = 0, 
+           segments.min = 1, 
+           kernel.type = c("nominal","ordinal"),
+           restarts = 0,
+           complexity = c("degree-knots","degree","knots"),
+           knots = c("quantiles","uniform"),
+           basis = c("additive","tensor","auto"),
+           cv.func = c("cv.ls","cv.gcv","cv.aic"),
+           degree = degree,
+           segments = segments,
+           lambda = lambda, 
+           opts = list(),
+           nmulti = 0)
 }
 
 \arguments{
