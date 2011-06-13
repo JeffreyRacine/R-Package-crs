@@ -19,40 +19,24 @@ model.kernel <- crs(y~x1+x2+z,
                     degree=c(5,5),
                     lambda=c(0.1),
                     basis="additive",
-                    comlexity="degree-knots",
+                    complexity="degree-knots",
                     cv="none",
                     kernel=TRUE)
 
 summary(model.kernel)
 
-## Use initial value starting points
+## Use initial value starting points in degree, segments, and lambda
 
-x0<-c(1, 1, 1, 2, 0.5)
+model.kernel <- crs(y~x1+x2+z,
+                    degree=c(5,5),
+                    segments=c(1,1),
+                    lambda=c(0.1),
+                    basis="auto",
+                    complexity="degree-knots",
+                    cv="nomad",
+                    kernel=TRUE)
 
-model.kernel.x0 <- crs(y~x1+x2+z,
-                       degree=c(5,5),
-                       lambda=c(0.1),
-                       basis="auto",
-                       comlexity="degree-knots",
-                       cv="nomad",
-                       kernel=TRUE,
-                       x0=x0)
-
-summary(model.kernel.x0)
-
-## Multiple initial points - x0 will be the first inital point
-
-model.kernel.multiple <- crs(y~x1+x2+z,
-                             degree=c(5,5),
-                             lambda=c(0.1),
-                             basis="auto",
-                             comlexity="degree-knots",
-                             cv="nomad",
-                             kernel=TRUE,
-                             x0=x0,
-                             nmulti=10)
-
-summary(model.kernel.multiple)
+summary(model.kernel)
 
 ## We could compare with exhaustive search, but that takes some time
 ## as numerical search is conducted for each degree/segment combination.
@@ -61,7 +45,7 @@ summary(model.kernel.multiple)
 #                             degree=c(5,5),
 #                             lambda=c(0.1),
 #                             basis="auto",
-#                             comlexity="degree-knots",
+#                             complexity="degree-knots",
 #                             cv="exhaustive",
 #                             kernel=TRUE,
 #                             x0=x0,
