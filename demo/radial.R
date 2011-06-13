@@ -9,6 +9,7 @@ n <- as.numeric(readline(prompt="Input the number of observations desired: "))
 cv <- as.numeric(readline(prompt="Input the cv method (0=nomad, 1=exhaustive): "))
 cv <- ifelse(cv==0,"nomad","exhaustive")
 if(cv=="nomad") nmulti <- as.numeric(readline(prompt="Input the number of multistarts desired (e.g. 10): "))
+num.eval <- as.numeric(readline(prompt="Input the number of evaluation observations desired (e.g. 50): "))
 
 x1 <- runif(n,-5,5)
 x2 <- runif(n,-5,5)
