@@ -42,12 +42,9 @@ summary(model.kernel)
 ## as numerical search is conducted for each degree/segment combination.
 
 #model.kernel.multiple <- crs(y~x1+x2+z,
-#                             degree=c(5,5),
-#                             lambda=c(0.1),
 #                             basis="auto",
 #                             complexity="degree-knots",
 #                             cv="exhaustive",
 #                             kernel=TRUE,
-#                             x0=x0,
 #                             nmulti=10)
 
