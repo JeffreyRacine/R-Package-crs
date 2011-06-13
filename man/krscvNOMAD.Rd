@@ -157,8 +157,6 @@ krscvNOMAD(xz,
   for all every unique \code{z} combination. When this is not the case
   the user must combine data in a manner such that this is achieved.
   
-  \code{demo(nomad_kernel)} will provide a demonstration similar to the
-  example below.
 }
 
 \value{
