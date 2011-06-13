@@ -6,11 +6,12 @@
 
 \description{
    
-  \code{frscvNOMAD} computes NOMAD-based (Nonsmooth Optimization by Mesh
-  Adaptive Direct Search) cross-validation directed search for a
-  regression spline estimate of a one (1) dimensional dependent variable
-  on an \code{r}-dimensional vector of continuous predictors and
-  ordinal/nominal factor predictors.
+  \code{frscvNOMAD} computes NOMAD-based NOMAD (Nonsmooth Optimization
+by Mesh Adaptive Direct Search, Abramson, Audet, Couture and Le Digabel
+(2011)) cross-validation directed search for a regression spline
+estimate of a one (1) dimensional dependent variable on an
+\code{r}-dimensional vector of continuous predictors and ordinal/nominal
+factor predictors.
   
 }
 
@@ -194,7 +195,7 @@ frscvNOMAD(xz,
 }
 
 \author{
-  Jeffrey S. Racine \email{racinej@mcmaster.ca}
+  Jeffrey S. Racine \email{racinej@mcmaster.ca},   Zhenghua Nie <niez@mcmaster.ca>
 }
 
 %\section{Usage Issues}{

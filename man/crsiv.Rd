@@ -97,7 +97,7 @@ crsiv(y,
   }
 \item{alpha.tol}{
   the search tolerance for \code{optimize} when solving for
-  \eqn{\alpha}{alpha}, the Tikhonov regularization parameter, when using
+  \eqn{\alpha}{alpha}, the Tikhonov regularization parameter, 
   when using \code{method="Tikhonov"}.
 }
 \item{iterate.max}{
@@ -143,10 +143,10 @@ crsiv(y,
 
   \code{method="Landweber-Fridman"} uses an optimal stopping rule based
   upon \eqn{||E(y|w)-E(\varphi_k(z,x)|w)||^2
-  }{||E(y|w)-E(phi(z,x)|w)||^2 }. However, if local optima are
-  encountered the resulting estimates can be overly noisy. To best guard
-  against this eventuality set \code{nmulti} to a larger number than the
-  default \code{nmulti=5} for \code{\link{crs}}.
+  }{||E(y|w)-E(phi(z,x)|w)||^2 }. However, if local rather than global
+  optima are encountered the resulting estimates can be overly noisy. To
+  best guard against this eventuality set \code{nmulti} to a larger
+  number than the default \code{nmulti=5} for \code{\link{crs}}.
 
   When using \code{method="Landweber-Fridman"}, iteration will terminate
   when either the change in the value of
@@ -165,7 +165,7 @@ crsiv(y,
   errors arising due to numerical search).
 
   \code{demo(crsiv)}, \code{demo(crsiv_exog)}, and
-  \code{demo(crsiv_exog_perspective)} provide flexible interactive
+  \code{demo(crsiv_exog_persp)} provide flexible interactive
   demonstrations similar to the example below that allow you to modify
   parameters in an interactive session.
   
