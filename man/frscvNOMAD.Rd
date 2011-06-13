@@ -145,7 +145,8 @@ frscvNOMAD(xz,
   \item{I}{ scalar/vector containing an indicator of whether the
     predictor is included or not for each dimension of the
     ordinal/nominal factors }
-  \item{K.mat}{ vector/matrix of values of \code{K} evaluated during search }  
+  \item{K.mat}{ vector/matrix of values of \code{K} evaluated during
+    search }  
   \item{degree.max}{ the maximum degree of the B-spline basis for
     each of the continuous predictors (default \code{degree.max=10})}
   \item{segments.max}{ the maximum segments of the B-spline basis for
