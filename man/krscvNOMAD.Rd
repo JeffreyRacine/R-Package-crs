@@ -5,13 +5,11 @@
 \title{Categorical Kernel Regression Spline Cross-Validation}
 
 \description{
-  \code{krscvNOMAD} computes computes NOMAD-based (Nonsmooth
-Optimization by Mesh Adaptive Direct Search, Abramson, Audet, Couture
-and Le Digabel (2011)) cross-validation directed search for a regression
-spline estimate of a one (1) dimensional dependent variable on an
-\code{r}-dimensional vector of continuous and ordinal/nominal factor
-predictors.
-  
+  \code{krscvNOMAD} computes NOMAD-based (Nonsmooth Optimization by Mesh
+Adaptive Direct Search, Abramson, Audet, Couture and Le Digabel (2011))
+cross-validation directed search for a regression spline estimate of a
+one (1) dimensional dependent variable on an \code{r}-dimensional vector
+of continuous and ordinal/nominal factor predictors.
 }
 \usage{
 krscvNOMAD(xz,
