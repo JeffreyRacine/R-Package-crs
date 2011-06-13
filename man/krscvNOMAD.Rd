@@ -5,7 +5,6 @@
 \title{Categorical Kernel Regression Spline Cross-Validation}
 
 \description{
-  
   \code{krscvNOMAD} computes computes NOMAD-based (Nonsmooth
 Optimization by Mesh Adaptive Direct Search, Abramson, Audet, Couture
 and Le Digabel (2011)) cross-validation directed search for a regression
