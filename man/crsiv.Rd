@@ -111,11 +111,10 @@ crsiv(y,
   the constant to use when using  \code{method="Landweber-Fridman"}.
 }
 \item{method}{
-  the regularization method employed (defaults to
-   \code{"Landweber-Fridman"}, see Horowitz (2011); see Darolles,
-   Fan, Florens and Renault (forthcoming) for details for
-   \code{"Tikhonov"}).
-}
+  the regularization method employed (default
+   \code{"Landweber-Fridman"}, see Horowitz (2011); see Darolles, Fan,
+   Florens and Renault (forthcoming) for details for \code{"Tikhonov"}).
+ }
   \item{opts}{
     arguments passed to the NOMAD solver (see \code{\link{snomadr}} for
     further details).

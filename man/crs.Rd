@@ -78,7 +78,7 @@ the resulting estimate }
   \item{kernel.type}{
     a character string indicating whether the kernel
     for the discrete predictors \code{z} should be unordered
-    (\dQuote{\code{nominal}}, default) or ordered
+    (default \dQuote{\code{nominal}}) or ordered
     (\dQuote{\code{ordinal}}) - see \code{\link{crs}} for details
   }
   
@@ -101,7 +101,7 @@ the resulting estimate }
     (Craven and Wahba (1979)), \code{cv.aic} specifies expected
     Kullback-Leibler cross-validation (Hurvich, Simonoff, and Tsai
     (1998)), and \code{cv.ls} specifies least-squares
-    cross-validation. Defaults to \code{cv.ls}.  }
+    cross-validation. }
   
   \item{kernel}{ a logical value (default \code{kernel=TRUE})
     indicating whether to use kernel smoothing or not }
@@ -177,7 +177,7 @@ the resulting estimate }
   \item{nmulti}{
     integer number of times to restart the process of finding extrema of
     the cross-validation function from different (random) initial
-    points. Defaults to \code{5}.
+    points. Defaults to \code{nmulti=5}.
   }
 
  

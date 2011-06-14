@@ -56,13 +56,13 @@ krscvNOMAD(xz,
   \item{kernel.type}{
     a character string indicating whether the kernel
     for the discrete predictors \code{z} should be unordered
-    (\dQuote{\code{nominal}}, default) or ordered
+    (default \dQuote{\code{nominal}}) or ordered
     (\dQuote{\code{ordinal}}) - see \code{\link{crs}} for details
   }
   
 \item{restarts}{
     number of times to restart search from different initial random
-    values, defaults to \code{0}
+    values (default \code{restarts=0})
   }
 
   \item{complexity}{a character string (default
