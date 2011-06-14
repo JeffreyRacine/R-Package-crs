@@ -65,11 +65,12 @@ crs(\dots)
 
 \item{degree}{ integer/vector specifying the polynomial degree of the
 B-spline basis for each dimension of the continuous \code{x}
-(default = cubic spline)}
+(default \code{degree=3}, i.e. cubic spline)}
 
-\item{segments}{ integer/vector specifying the number of segments of
-the B-spline basis for each dimension of the continuous \code{x}
-(i.e. number of knots minus one) (default = one segment)}
+\item{segments}{ integer/vector specifying the number of segments of the
+B-spline basis for each dimension of the continuous \code{x}
+(i.e. number of knots minus one) (default \code{segments=1}, i.e. Bezier
+curve)}
 
 \item{include}{ integer/vector specifying whether each of the
 ordinal/nominal predictors in \code{x} are included or omitted from
@@ -172,12 +173,12 @@ the resulting estimate }
 
   \item{opts}{
     arguments passed to the NOMAD solver (see \code{\link{snomadr}} for
-    further details).
+    further details)
   }
   \item{nmulti}{
     integer number of times to restart the process of finding extrema of
     the cross-validation function from different (random) initial
-    points. Defaults to \code{nmulti=5}.
+    points (default \code{nmulti=5})
   }
 
  

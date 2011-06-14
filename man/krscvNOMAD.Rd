@@ -96,7 +96,7 @@ krscvNOMAD(xz,
     (Craven and Wahba (1979)), \code{cv.aic} specifies expected
     Kullback-Leibler cross-validation (Hurvich, Simonoff, and Tsai
     (1998)), and \code{cv.ls} specifies least-squares
-    cross-validation. Defaults to \code{cv.ls}.  }
+    cross-validation.  }
   
   \item{degree}{ integer/vector specifying the degree of the B-spline
   basis for each dimension of the continuous \code{x}}
@@ -115,7 +115,7 @@ krscvNOMAD(xz,
   \item{nmulti}{
     integer number of times to restart the process of finding extrema of
     the cross-validation function from different (random) initial
-    points. Defaults to \code{0}.
+    points (default \code{nmulti=0}).
   }
 
 }
