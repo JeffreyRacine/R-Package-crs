@@ -130,7 +130,7 @@ the resulting estimate }
   either the additive or tensor product B-spline basis matrix for a
   multivariate polynomial spline via the B-spline routines in the GNU
   Scientific Library and the \code{\link{tensor.prod.model.matrix}}
-  function in the \pkg{mgcv} package}
+  function }
 
    \item{knots}{ a character string (default \code{knots="quantiles"})
   specifying where knots are to be placed. \sQuote{quantiles} specifies
@@ -208,8 +208,7 @@ the resulting estimate }
   The regression spline model employs the tensor product B-spline basis
   matrix for a multivariate polynomial spline via the B-spline routines
   in the GNU Scientific Library and the
-  \code{\link{tensor.prod.model.matrix}} function in the \pkg{mgcv}
-  package.
+  \code{\link{tensor.prod.model.matrix}} function.
 
   When \code{basis="additive"} the model becomes additive in nature
   (i.e. no interaction/tensor terms thus semiparametric not fully

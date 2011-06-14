@@ -119,7 +119,7 @@ frscvNOMAD(xz,
   either the additive or tensor product B-spline basis matrix for a
   multivariate polynomial spline via the B-spline routines in the GNU
   Scientific Library and the \code{\link{tensor.prod.model.matrix}}
-  function in the \pkg{mgcv} package.
+  function.
 
   For the ordinal/nominal predictors the regression spline model uses
   indicator basis functions.

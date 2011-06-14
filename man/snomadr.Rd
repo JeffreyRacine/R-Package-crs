@@ -21,8 +21,8 @@ s.t.       g(x) <= 0
            x_L <=  x   <= x_U
 }           
            
-where \eqn{f(x)\colon R^n --> R^k}{f(x): R^n --> R^k} is the objective
-function, and \eqn{g(x)\colon R^n --> R^m}{g(x): R^n --> R^m} are
+where \eqn{f(x)\colon R^n \to R^k}{f(x): R^n --> R^k} is the objective
+function, and \eqn{g(x)\colon R^n \to R^m}{g(x): R^n --> R^m} are
 the constraint functions. The vectors \eqn{x_L}{x_L} and \eqn{x_U}{x_U}
 are the bounds on the variables \eqn{x}. The functions \eqn{f(x)} and
 \eqn{g(x)} can be nonlinear and nonconvex. The variables can be integer,
@@ -59,7 +59,8 @@ snomadr(eval.f,
     }
 
     \item{bbin}{
-        types of variables. 0:CONTINUOUS,  1:INTEGER,  2:CATEGORICAL, 3:BINARY.
+        types of variables. 0 (CONTINUOUS),  1 (INTEGER),  2 (CATEGORICAL),
+        3 (BINARY).
     }
     
     \item{bbout}{
@@ -113,7 +114,7 @@ snomadr(eval.f,
       }
 
     \item{print.output}{
-      when it is FALSE, no output from \code{snomadr} is displayed on
+      when FALSE, no output from \code{snomadr} is displayed on
       the screen. If \code{"DISPLAY_DEGREE"=0,} the option of NOMAD, there will
       be no output from NOMAD. Higher integer values provide
       successively more detail.
@@ -129,7 +130,7 @@ snomadr(eval.f,
 			\code{"version"="-v"}: display the version of NOMAD you are using.
 
 			\code{"help"="-h"}: display all options. You also can display a specific option, 
-			for example, \code{"help"="-h X0"},  this will tell you how to set X0.
+			for example, \code{"help"="-h x0"},  this will tell you how to set \code{x0}.
 		}
 
     \item{snomadr.environment}{
@@ -147,7 +148,7 @@ snomadr(eval.f,
     number of knots, and optionally the kernel bandwidths when using
     \code{\link{crs}} with the option \code{cv="nomad"} (default). See
     \code{\link{frscvNOMAD}} and \code{\link{krscvNOMAD}} for the
-    functions called when \code{cv="nomad"} when using
+    functions called when \code{cv="nomad"} while using
     \code{\link{crs}}.
 
     However, note that for simple problems involving one predictor
@@ -156,7 +157,7 @@ snomadr(eval.f,
     \code{\link{crs}}. Naturally, exhaustive search is also useful for
     verifying solutions returned by \code{snomadr}. See
     \code{\link{frscv}} and \code{\link{krscv}} for the functions called
-    when \code{cv="exhaustive"} when using \code{\link{crs}}.
+    when \code{cv="exhaustive"} while using \code{\link{crs}}.
   }
 \value{
     The return value contains a list with the inputs, and additional elements

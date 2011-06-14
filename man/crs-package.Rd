@@ -32,10 +32,9 @@
   B-spline basis matrix and for interactions may append the tensor
   product B-spline basis matrix for a multivariate polynomial spline via
   the B-spline routines in the GNU Scientific Library and the
-  \code{\link{tensor.prod.model.matrix}} function in the \pkg{mgcv}
-  package. The B-spline function is the maximally differentiable
-  interpolative basis function (B-spline stands for
-  \dQuote{basis}-spline).
+  \code{\link{tensor.prod.model.matrix}} function. The B-spline function
+  is the maximally differentiable interpolative basis function (B-spline
+  stands for \dQuote{basis}-spline).
   
   For the discrete predictors the product kernel function is of the
   `Li-Racine' type (see Li and Racine (2007) for details) which is
