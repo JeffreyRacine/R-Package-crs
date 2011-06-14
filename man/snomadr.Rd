@@ -142,17 +142,22 @@ snomadr(eval.f,
     }
   }
   \details{
-    \code{snomadr} is used in \pkg{crs} to numerically minimize an
-        objective function with respect to the spline degree, number of
-        knots, and optionally the kernel bandwidths when using
-        \code{\link{crs}}.
+    \code{snomadr} is used in the \pkg{crs} package to numerically
+    minimize an objective function with respect to the spline degree,
+    number of knots, and optionally the kernel bandwidths when using
+    \code{\link{crs}} with the option \code{cv="nomad"} (default). See
+    \code{\link{frscvNOMAD}} and \code{\link{krscvNOMAD}} for the
+    functions called when \code{cv="nomad"} when using
+    \code{\link{crs}}.
 
-        However, note that for simple problems involving one predictor
-        exhaustive search may be faster and more accurate, so bear in
-        mind that \code{cv="exhaustive"} can be useful when using
-        \code{\link{crs}}. Naturally, exhaustive search is also useful
-        for verifying solutions returned by \code{snomadr}.
-}
+    However, note that for simple problems involving one predictor
+    exhaustive search may be faster and more accurate, so bear in mind
+    that \code{cv="exhaustive"} can be useful when using
+    \code{\link{crs}}. Naturally, exhaustive search is also useful for
+    verifying solutions returned by \code{snomadr}. See
+    \code{\link{frscv}} and \code{\link{krscv}} for the functions called
+    when \code{cv="exhaustive"} when using \code{\link{crs}}.
+  }
 \value{
     The return value contains a list with the inputs, and additional elements
     \item{call}{the call that was made to solve}
