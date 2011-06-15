@@ -34,13 +34,12 @@ attach(cps71)
 require(np)
 
 model.crs <- crs(logwage~age,complexity="degree-knots")
-
 model.np <- npreg(logwage~age,regtype="ll")
 
 plot(age,logwage,cex=0.25,col="grey")
-lines(age,fitted(model.crs))
-lines(age,fitted(model.np),col="red",lty=2)
-legend(22.5,15,c("Regression Spline","Local Linear"),lty=c(1,2),col=c("black","red"))
+lines(age,fitted(model.crs),lty=1,col=1)
+lines(age,fitted(model.np),lty=2,col=2)
+legend(22.5,15,c("Regression Spline","Local Linear"),lty=c(1,2),col=c(1,2))
 
 summary(model.crs)
 summary(model.np)

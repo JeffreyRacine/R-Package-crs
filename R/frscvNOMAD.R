@@ -21,7 +21,8 @@ frscvNOMAD <- function(xz,
 											 cv.func=c("cv.ls","cv.gcv","cv.aic"),
 											 degree=degree,
 											 segments=segments, 
-											 include=include, 
+											 include=include,
+                       random.seed=42,
 											 opts=list(),
 											 nmulti=0) {
 
@@ -183,10 +184,24 @@ frscvNOMAD <- function(xz,
 				xdegree <- degree
 				xinclude <- include
 
+        ## Save seed prior to setting
+
+        if(exists(".Random.seed", .GlobalEnv)) {
+          save.seed <- get(".Random.seed", .GlobalEnv)
+          exists.seed = TRUE
+        } else {
+          exists.seed = FALSE
+        }
+
+        set.seed(random.seed)
+
 				if(is.null(xdegree)) xdegree <- sample(degree.min:degree.max, num.x, replace=T)
 				if(is.null(xsegments)) xsegments <- sample(segments.min:segments.max, num.x, replace=T)
 				if(is.null(xinclude)) xinclude <- sample(0:1, num.z, replace=T)
 				
+        ## Restore seed
+
+        if(exists.seed) assign(".Random.seed", save.seed, .GlobalEnv)
 
 				if(complexity =="degree-knots") {
 						x0 <- c(xdegree, xsegments, xinclude)
