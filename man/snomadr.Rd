@@ -52,37 +52,37 @@ snomadr(eval.f,
 %- maybe also 'usage' for other objects documented here.
 \arguments{
     \item{eval.f}{
-        function that returns the value of the objective function.
+        function that returns the value of the objective function
     }
     \item{n}{ 
-        the number of variables.
+        the number of variables
     }
 
     \item{bbin}{
-        types of variables. 0 (CONTINUOUS),  1 (INTEGER),  2 (CATEGORICAL),
-        3 (BINARY).
-    }
+      types of variables. Variable types are 0 (CONTINUOUS), 1
+        (INTEGER), 2 (CATEGORICAL), 3 (BINARY)
+      }
     
     \item{bbout}{
       types of output of \code{eval.f}.  See the NOMAD User Guide
-      \url{http://www.gerad.ca/NOMAD/Downloads/user_guide.pdf}.
+      \url{http://www.gerad.ca/NOMAD/Downloads/user_guide.pdf}
     }
     
     \item{x0}{
       vector with starting values for the optimization. If it is
         provided and nmulti is bigger than 1, \code{x0} will be the first
-        initial point for multiple initial points.
+        initial point for multiple initial points
       }
     \item{lb}{
-        vector with lower bounds of the controls (use -1.0e19 for controls without lower bound).
+        vector with lower bounds of the controls (use -1.0e19 for controls without lower bound)
     }
     \item{ub}{
-        vector with upper bounds of the controls (use  1.0e19 for controls without upper bound).
+        vector with upper bounds of the controls (use  1.0e19 for controls without upper bound)
     }
     \item{nmulti}{
       when it is missing, or it is equal to 0 and \code{x0} is provided,
         \code{snomadRSolve} will be called to solve the problem. Otherwise,
-        \code{smultinomadRSolve} will be called.
+        \code{smultinomadRSolve} will be called
       }
     \item{opts}{
       
@@ -101,15 +101,14 @@ snomadr(eval.f,
       \code{"MIN_POLL_SIZE"="r1.0e-10"}
 
       Note that the \code{"r..."} denotes relative measurement (relative
-      to \code{degree.min} and \code{degree.max} and \code{segments.min}
-      and \code{segments.max}).
+      to \code{lb} and \code{ub})
 
       Note that decreasing the maximum number of black box evaluations
       (\code{"MAX_BB_EVAL"}) will terminate search sooner and may result
       in a less accurate solution. For complicated problems you may want
       to increase this value. When experimenting it is desirable to set
       \code{"DISPLAY_DEGREE"=1} (or a larger integer) to get some sense
-      for how the algorithm is progressing.
+      for how the algorithm is progressing
 
       }
 
@@ -117,7 +116,7 @@ snomadr(eval.f,
       when FALSE, no output from \code{snomadr} is displayed on
       the screen. If \code{"DISPLAY_DEGREE"=0,} the option of NOMAD, there will
       be no output from NOMAD. Higher integer values provide
-      successively more detail.
+      successively more detail
     }
 
 		\item{information}{
@@ -135,13 +134,14 @@ snomadr(eval.f,
 
     \item{snomadr.environment}{
         environment that is used to evaluate the functions. Use this to pass 
-        additional data or parameters to a function.
+        additional data or parameters to a function
     }
     \item{...}{
       arguments that will be passed to the user-defined objective and
-      constraints functions. See the examples below.
+      constraints functions. See the examples below
     }
   }
+
   \details{
     \code{snomadr} is used in the \pkg{crs} package to numerically
     minimize an objective function with respect to the spline degree,
@@ -183,9 +183,7 @@ snomadr(eval.f,
   Zhenghua Nie <niez@mcmaster.ca>
 }
 \seealso{
-    \code{\link{optim}}
-    \code{\link{nlm}}
-    \code{\link{nlminb}}
+    \code{\link{optim}}, \code{\link{nlm}}, \code{\link{nlminb}}
 }
 \examples{
 # list all options

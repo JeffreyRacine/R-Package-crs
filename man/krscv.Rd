@@ -95,7 +95,7 @@ krscv(xz,
     (Craven and Wahba (1979)), \code{cv.aic} specifies expected
     Kullback-Leibler cross-validation (Hurvich, Simonoff, and Tsai
     (1998)), and \code{cv.ls} specifies least-squares
-    cross-validation.  }
+    cross-validation  }
   
   \item{degree}{ integer/vector specifying the degree of the B-spline
   basis for each dimension of the continuous \code{x}}

@@ -64,7 +64,7 @@ frscvNOMAD(xz,
   specifying where knots are to be placed. \sQuote{quantiles} specifies
   knots placed at equally spaced quantiles (equal number of observations
   lie in each segment) and \sQuote{uniform} specifies knots placed at
-  equally spaced intervals. }
+  equally spaced intervals }
 
 \item{basis}{ a character string (default \code{basis="additive"})
     indicating whether the additive or tensor product B-spline basis
@@ -83,7 +83,7 @@ frscvNOMAD(xz,
     (Craven and Wahba (1979)), \code{cv.aic} specifies expected
     Kullback-Leibler cross-validation (Hurvich, Simonoff, and Tsai
     (1998)), and \code{cv.ls} specifies least-squares
-    cross-validation.  }
+    cross-validation  }
   
   \item{degree}{ integer/vector specifying the degree of the B-spline
     basis for each dimension of the continuous \code{x}}
@@ -93,16 +93,16 @@ frscvNOMAD(xz,
     (i.e. number of knots minus one)}
 
 \item{include}{ integer/vector for the categorical predictors. If it 
-   is not NULL,   it will be the initial value for the fitting.}
+   is not NULL,   it will be the initial value for the fitting}
 
 \item{opts}{
-  arguments passed to the NOMAD solver.
+  arguments passed to the NOMAD solver
   }
   
   \item{nmulti}{
     integer number of times to restart the process of finding extrema of
     the cross-validation function from different (random) initial
-    points (default \code{nmulti=0}).
+    points (default \code{nmulti=0})
   }
 
 }

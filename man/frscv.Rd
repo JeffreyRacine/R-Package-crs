@@ -62,7 +62,7 @@ frscv(xz,
   specifying where knots are to be placed. \sQuote{quantiles} specifies
   knots placed at equally spaced quantiles (equal number of observations
   lie in each segment) and \sQuote{uniform} specifies knots placed at
-  equally spaced intervals. }
+  equally spaced intervals }
 
 \item{basis}{ a character string (default \code{basis="additive"})
     indicating whether the additive or tensor product B-spline basis
@@ -81,7 +81,7 @@ frscv(xz,
     (Craven and Wahba (1979)), \code{cv.aic} specifies expected
     Kullback-Leibler cross-validation (Hurvich, Simonoff, and Tsai
     (1998)), and \code{cv.ls} specifies least-squares
-    cross-validation. }
+    cross-validation }
   
   \item{degree}{ integer/vector specifying the degree of the B-spline
   basis for each dimension of the continuous \code{x}}

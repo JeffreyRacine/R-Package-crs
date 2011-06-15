@@ -50,74 +50,74 @@ crsiv(y,
   \item{y}{
     a one (1) dimensional numeric or integer vector of dependent data, each
     element \eqn{i} corresponding to each observation (row) \eqn{i} of
-    \code{z}.
+    \code{z}
   }
 
   \item{z}{
     a \eqn{p}-variate data frame of endogenous predictors. The data
     types may be continuous, discrete (unordered and ordered factors),
-    or some combination thereof.
+    or some combination thereof
   }
   \item{w}{
     a \eqn{q}-variate data frame of instruments. The data types may be
     continuous, discrete (unordered and ordered factors), or some
-    combination thereof.
+    combination thereof
   }
   \item{x}{
     an \eqn{r}-variate data frame of exogenous predictors. The data
     types may be continuous, discrete (unordered and ordered factors),
-    or some combination thereof.
+    or some combination thereof
   }
   \item{zeval}{
     a \eqn{p}-variate data frame of endogenous predictors on which the
     regression will be estimated (evaluation data). By default, evaluation
-    takes place on the data provided by \code{z}.
+    takes place on the data provided by \code{z}
   }
   \item{weval}{
     a \eqn{q}-variate data frame of instruments on which the regression
     will be estimated (evaluation data). By default, evaluation
-    takes place on the data provided by \code{w}.
+    takes place on the data provided by \code{w}
   }
   \item{xeval}{
     an \eqn{r}-variate data frame of exogenous predictors on which the
     regression will be estimated (evaluation data). By default,
-    evaluation takes place on the data provided by \code{x}.
+    evaluation takes place on the data provided by \code{x}
   }
   \item{alpha}{
     a numeric scalar that, if supplied, is used rather than numerically
-    solving for \code{alpha}, when using \code{method="Tikhonov"}.
+    solving for \code{alpha}, when using \code{method="Tikhonov"}
     }
   \item{alpha.min}{
     minimum of search range for \eqn{\alpha}{alpha}, the Tikhonov
-    regularization parameter, when using \code{method="Tikhonov"}.
+    regularization parameter, when using \code{method="Tikhonov"}
 }
   \item{alpha.max}{
     maximum of search range for \eqn{\alpha}{alpha}, the Tikhonov
-    regularization parameter, when using  \code{method="Tikhonov"}.
+    regularization parameter, when using  \code{method="Tikhonov"}
   }
 \item{alpha.tol}{
   the search tolerance for \code{optimize} when solving for
   \eqn{\alpha}{alpha}, the Tikhonov regularization parameter, 
-  when using \code{method="Tikhonov"}.
+  when using \code{method="Tikhonov"}
 }
 \item{iterate.max}{
   an integer indicating the maximum number of iterations permitted
-  before termination occurs when using \code{method="Landweber-Fridman"}.
+  before termination occurs when using \code{method="Landweber-Fridman"}
 }
 \item{iterate.tol}{
-  the search tolerance for the stopping rule when using \code{method="Landweber-Fridman"}.
+  the search tolerance for the stopping rule when using \code{method="Landweber-Fridman"}
 }
 \item{constant}{
-  the constant to use when using  \code{method="Landweber-Fridman"}.
+  the constant to use when using  \code{method="Landweber-Fridman"}
 }
 \item{method}{
   the regularization method employed (default
    \code{"Landweber-Fridman"}, see Horowitz (2011); see Darolles, Fan,
-   Florens and Renault (forthcoming) for details for \code{"Tikhonov"}).
+   Florens and Renault (forthcoming) for details for \code{"Tikhonov"})
  }
   \item{opts}{
     arguments passed to the NOMAD solver (see \code{\link{snomadr}} for
-    further details).
+    further details)
   }
   \item{deriv}{ an integer \code{l} (default \code{deriv=0}) specifying
   whether to compute the univariate \code{l}th partial derivative for
@@ -128,7 +128,7 @@ crsiv(y,
   issued to this effect
   }
 \item{...}{
-  additional arguments supplied to \code{\link{crs}}.
+  additional arguments supplied to \code{\link{crs}}
 }
 }
 \details{

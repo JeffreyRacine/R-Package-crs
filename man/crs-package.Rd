@@ -37,9 +37,6 @@
   and uses additive B-splines otherwise (i.e. when
   \code{basis="additive"}).
 
-  The B-spline function is the maximally differentiable interpolative
-  basis function (B-spline stands for \dQuote{basis}-spline).
-  
   For the discrete predictors the product kernel function is of the
   `Li-Racine' type (see Li and Racine (2007) for details) which is
   formed by constructing products of one of the following univariate

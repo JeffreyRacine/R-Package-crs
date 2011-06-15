@@ -102,7 +102,7 @@ the resulting estimate }
     (Craven and Wahba (1979)), \code{cv.aic} specifies expected
     Kullback-Leibler cross-validation (Hurvich, Simonoff, and Tsai
     (1998)), and \code{cv.ls} specifies least-squares
-    cross-validation. }
+    cross-validation }
   
   \item{kernel}{ a logical value (default \code{kernel=TRUE})
     indicating whether to use kernel smoothing or not }
