@@ -243,6 +243,7 @@ frscvNOMAD <- function(xz,
 													lb=lb,
 													ub=ub,
 													nmulti=as.integer(nmulti),
+													random.seed=random.seed, 
 													opts=opts,
 													print.output=print.output, 
 													params=params);
@@ -403,6 +404,10 @@ frscvNOMAD <- function(xz,
 
 		if(any(degree==degree.max)) warning(paste(" optimal degree equals search maximum (", degree.max,"): rerun with larger degree.max",sep=""))
 		if(any(segments==(segments.max+1))) warning(paste(" optimal segment equals search maximum (", segments.max+1,"): rerun with larger segments.max",sep=""))  
+		if(!is.null(opts$MAX_BB_EVAL)){
+				if(nmulti>0) {if(nmulti*opts$MAX_BB_EVAL <= nomad.solution$bbe) warning(paste(" MAX_BB_EVAL reached in NOMAD: perhaps use a larger value...", sep=""))} 
+				if(nmulti==0) {if(opts$MAX_BB_EVAL <= nomad.solution$bbe) warning(paste(" MAX_BB_EVAL reached in NOMAD: perhaps use a larger value...", sep="")) }
+		}
 
 		basis.opt <- basis
 		if(basis == "auto") basis.opt <- attributes(nomad.solution)$basis.opt

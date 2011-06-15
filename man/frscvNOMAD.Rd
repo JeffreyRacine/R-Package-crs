@@ -26,6 +26,7 @@ frscvNOMAD(xz,
            degree = degree,
            segments = segments, 
            include = include, 
+           random.seed = 42,
            opts = list(),
            nmulti = 0)
 }
@@ -95,6 +96,11 @@ frscvNOMAD(xz,
 \item{include}{ integer/vector for the categorical predictors. If it 
    is not NULL,   it will be the initial value for the fitting}
 
+\item{random.seed}{
+  when it is not missing and not equal to 0, the initial points  will 
+ be generated using this seed when \code{nmulti > 0}
+}
+      
 \item{opts}{
   arguments passed to the NOMAD solver
   }

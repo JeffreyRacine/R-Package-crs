@@ -33,7 +33,8 @@ print.snomadr <- function(x, show.controls=TRUE, ...) {
 	else
 	{
 			cat( unlist(strsplit(paste( "nomad solver status:", x$status, "(", x$message, ")\n" ),' ')), fill=TRUE )
-			cat( paste( "Number of blackbox evaluations.....:", x$iterations, "\n" ) )
+			cat( paste( "Number of blackbox evaluations.....:", x$bbe, "\n" ) )
+			cat( paste( "Number of iterations...............:", x$iterations, "\n" ) )
 
 			# if show.controls is TRUE or FALSE, show all or none of the controls
 			if ( is.logical( show.controls ) ) {

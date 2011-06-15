@@ -27,6 +27,7 @@ krscvNOMAD(xz,
            degree = degree,
            segments = segments,
            lambda = lambda, 
+           random.seed = 42,
            opts = list(),
            nmulti = 0)
 }
@@ -108,6 +109,11 @@ krscvNOMAD(xz,
   \item{lambda}{ real/vector for the categorical predictors. If it is not
   NULL,  it will be a starting value of lambda}
 
+\item{random.seed}{
+  when it is not missing and not equal to 0, the initial points  will 
+  be generated using this seed when \code{nmulti > 0}
+}
+      
 \item{opts}{
   arguments passed to the NOMAD solver
   }

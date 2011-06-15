@@ -258,9 +258,9 @@ class RMy_Evaluator : public NOMAD::Evaluator {
 				}
 };
 
-SEXP print_solution(double obj_value, double *x, int n, int iter, int nmulti, NOMAD::stop_type status)
+SEXP print_solution(double obj_value, double *x, int n, int bbe, int iter, int nmulti, NOMAD::stop_type status)
 {
-		int num_return_elements = 5;
+		int num_return_elements = 6;
 		SEXP R_result_list;
 
 		// R_result_list is a member object, which has been protected in the constructor
@@ -273,9 +273,10 @@ SEXP print_solution(double obj_value, double *x, int n, int iter, int nmulti, NO
 
 		SET_STRING_ELT(names, 0, mkChar("status"));
 		SET_STRING_ELT(names, 1, mkChar("message"));
-		SET_STRING_ELT(names, 2, mkChar("iterations"));
+		SET_STRING_ELT(names, 2, mkChar("bbe"));
 		SET_STRING_ELT(names, 3, mkChar("objective"));
 		SET_STRING_ELT(names, 4, mkChar("solution"));
+		SET_STRING_ELT(names, 5, mkChar("iterations"));
 		setAttrib(R_result_list, R_NamesSymbol, names);
 
 		// convert status to an R object
@@ -312,18 +313,23 @@ SEXP print_solution(double obj_value, double *x, int n, int iter, int nmulti, NO
 				REAL(R_solution)[i] = x[i];
 		}
 
-		// convert number of iterations to an R object and add to the result_list
+		// convert number of bbe to an R object and add to the result_list
+		SEXP R_num_bbe;
+		PROTECT(R_num_bbe = allocVector(INTSXP,1));
+		INTEGER(R_num_bbe)[0] = bbe;
+
+		// convert number of iter to an R object and add to the result_list
 		SEXP R_num_iterations;
 		PROTECT(R_num_iterations = allocVector(INTSXP,1));
 		INTEGER(R_num_iterations)[0] = iter;
 
-
 		// add elements to the list
 		SET_VECTOR_ELT(R_result_list, 0, R_status);
 		SET_VECTOR_ELT(R_result_list, 1, R_status_message);
-		SET_VECTOR_ELT(R_result_list, 2, R_num_iterations);
+		SET_VECTOR_ELT(R_result_list, 2, R_num_bbe);
 		SET_VECTOR_ELT(R_result_list, 3, R_objective);
 		SET_VECTOR_ELT(R_result_list, 4, R_solution);
+		SET_VECTOR_ELT(R_result_list, 5, R_num_iterations);
 
 		UNPROTECT(num_return_elements+2);
 
@@ -529,7 +535,7 @@ extern "C" {
 								sol_x[i]= best_x[i].value();
 						}
 
-						solution = print_solution(obj_value.value(), sol_x, N, mads.get_cache().size(), 0,  status);
+						solution = print_solution(obj_value.value(), sol_x, N, mads.get_cache().size(), stats.get_iterations(),  0,  status);
 
 						free(sol_x);
 
@@ -635,8 +641,16 @@ extern "C" {
 				theenv = getListElement(args, "snomadr.environment");
 				thefun = getListElement(args, "eval.f");
 
-				srand(unsigned(time(NULL)));
-				rand();
+				unsigned int seed;
+				SEXP rseed = getListElement(args, "random.seed");
+				if(isNull(rseed)) 
+						seed = unsigned(time(NULL));
+				else
+						seed = INTEGER(rseed)[0];
+
+				if(seed == 0) seed = unsigned(time(NULL));
+
+				srand(seed);
 
 				try{
 						R_CheckUserInterrupt();
@@ -772,6 +786,7 @@ extern "C" {
 						// MADS runs:
 						// ----------
 						int bbe = 0;
+						int iter = 0;
 						i = 0;
 						NOMAD::stop_type status ;
 
@@ -786,7 +801,8 @@ extern "C" {
 								if ( status == NOMAD::CTRL_C ) R_Interrupt();  //)exit(-1);
 
 
-								bbe += mads.get_cache().size();
+								bbe += mads.get_cache().size();  /* the number of evaluations of the objectibve function. */
+								iter += mads.get_stats().get_iterations();
 
 								// displays and remember the best point:
 								if( print_output > 0 ) 
@@ -859,7 +875,7 @@ extern "C" {
 								sol_x[i]= best_x[i].value();
 						}
 
-						solution = print_solution(obj_value, sol_x, N, bbe, nmulti, status);
+						solution = print_solution(obj_value, sol_x, N, bbe, iter, nmulti, status);
 
 						free(sol_x);
 

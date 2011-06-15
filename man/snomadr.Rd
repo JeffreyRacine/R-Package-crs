@@ -41,7 +41,8 @@ snomadr(eval.f,
         x0 = NULL, 
         lb = NULL, 
         ub = NULL, 
-        nmulti = 0, 
+        nmulti = 0,
+        random.seed = 0,
         opts = list(),
         print.output = TRUE, 
         information = list(), 
@@ -84,8 +85,11 @@ snomadr(eval.f,
         \code{snomadRSolve} will be called to solve the problem. Otherwise,
         \code{smultinomadRSolve} will be called
       }
+    \item{random.seed}{
+      when it is not missing and not equal to 0, the initial points  will 
+      be generated using this seed when \code{nmulti > 0}
+      }
     \item{opts}{
-      
       list of options for NOMAD, see the NOMAD user guide
       \url{http://www.gerad.ca/NOMAD/Downloads/user_guide.pdf}.  Options
       can also be set by nomad.opt which should be in the folder where R
@@ -119,18 +123,18 @@ snomadr(eval.f,
       successively more detail
     }
 
-		\item{information}{
-			is a list. \code{snomadr} will call \code{snomadRInfo} to return
-			the information about NOMAD according to the values of \code{"info"},
-			\code{"version"} and \code{"help"}.
+    \item{information}{
+      is a list. \code{snomadr} will call \code{snomadRInfo} to return
+      the information about NOMAD according to the values of \code{"info"},
+      \code{"version"} and \code{"help"}.
 
-			\code{"info"="-i"}: display the usage and copyright of NOMAD. 
+      \code{"info"="-i"}: display the usage and copyright of NOMAD. 
 
-			\code{"version"="-v"}: display the version of NOMAD you are using.
+      \code{"version"="-v"}: display the version of NOMAD you are using.
 
-			\code{"help"="-h"}: display all options. You also can display a specific option, 
-			for example, \code{"help"="-h x0"},  this will tell you how to set \code{x0}.
-		}
+      \code{"help"="-h"}: display all options. You also can display a specific option, 
+      for example, \code{"help"="-h x0"},  this will tell you how to set \code{x0}.
+    }
 
     \item{snomadr.environment}{
         environment that is used to evaluate the functions. Use this to pass 
