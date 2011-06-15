@@ -56,36 +56,47 @@ function( eval.f,
           snomadr.environment = new.env(),
           ... ) {
 
-		if(length(information) > 0) {
-				sinfo <- NULL
-				sversion <- NULL
-				shelp <- NULL
-				if(!is.null(information$info)) sinfo <-information$info
-				if(!is.null(information$version)) sversion <- information$version
-				if(!is.null(information$help)) shelp <- information$help
+  ## Save seed prior to setting
+  
+  if(exists(".Random.seed", .GlobalEnv)) {
+    save.seed <- get(".Random.seed", .GlobalEnv)
+    exists.seed = TRUE
+  } else {
+    exists.seed = FALSE
+  }
+  
+  set.seed(random.seed)
 
-				ret <- list( info=sinfo, version=sversion, help=shelp, snomadr.environment)
-
-				attr(ret, "class") <- "snomadr"
-
-				# add the current call to the list
-				ret$call <- match.call()
-
-				# pass snomadr object to C code
-				solution <- .Call( snomadRInfo, ret )
-				# remove the environment from the return object
-				ret$environment <- NULL
-				# we have not implemented the following output from snomadRInfo
-				#ret$Info<-solution$Info
-				#ret$Version<-solution$Version
-				#ret$Help<-solution$Help
-
-				return(ret)
-
-		}
-		
-		information <- NULL  # we will check whether it is NULL in print.snomadr.
-
+  if(length(information) > 0) {
+    sinfo <- NULL
+    sversion <- NULL
+    shelp <- NULL
+    if(!is.null(information$info)) sinfo <-information$info
+    if(!is.null(information$version)) sversion <- information$version
+    if(!is.null(information$help)) shelp <- information$help
+    
+    ret <- list( info=sinfo, version=sversion, help=shelp, snomadr.environment)
+    
+    attr(ret, "class") <- "snomadr"
+    
+    ## add the current call to the list
+    ret$call <- match.call()
+    
+    ## pass snomadr object to C code
+    solution <- .Call( snomadRInfo, ret )
+    ## remove the environment from the return object
+    ret$environment <- NULL
+    ## we have not implemented the following output from snomadRInfo
+    ##ret$Info<-solution$Info
+    ##ret$Version<-solution$Version
+    ##ret$Help<-solution$Help
+    
+    return(ret)
+    
+  }
+  
+  information <- NULL  # we will check whether it is NULL in print.snomadr.
+  
 		# the number of variables should not be null.
 		if (missing(n ) || missing(eval.f)) stop("Must provide the objective function and the number of variables")  
 		if(missing(nmulti)||nmulti < 0) nmulti <- 0
@@ -201,5 +212,9 @@ function( eval.f,
 		ret$objective <- solution$objective
 		ret$solution <- solution$solution
 
-		return( ret )
+  ## Restore seed
+
+  if(exists.seed) assign(".Random.seed", save.seed, .GlobalEnv)
+
+	return( ret )
 }
