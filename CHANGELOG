@@ -1,5 +1,8 @@
 Changes from Version 0.14.8 to 0.14.9 [14-Jun-2011]
 
+* Setting seed in snomadr.cpp via snomadr.R for starting points when
+  nmulti > 0
+
 * Increased default MAX_BB_EVAL from 500 to 10000 (makes a difference
   for difficult problems) and modified default EPSILON in NOMAD along
   with other parameters (MIN_MESH_SIZE, MIN_POLL_SIZE) to reflect
