@@ -340,6 +340,7 @@ crs.formula <- function(formula,
                         data.return=FALSE,
                         prune=FALSE,
 												restarts=0,
+                        random.seed=42,
                         opts=list("MAX_BB_EVAL"=10000,
                                   "EPSILON"=.Machine$double.eps,
                                   "INITIAL_MESH_SIZE"="r1.0e-01",
@@ -423,6 +424,7 @@ crs.formula <- function(formula,
 															degree=degree,
 															segments=segments, 
 															include=include, 
+                              random.seed=random.seed,
 															opts=opts,
 															nmulti=nmulti)
 
@@ -476,6 +478,7 @@ crs.formula <- function(formula,
                               segments=segments,
 															lambda=lambda, 
                               restarts=restarts, 
+                              random.seed=random.seed,
                               opts=opts,
                               nmulti=nmulti)
       

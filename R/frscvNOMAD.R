@@ -199,10 +199,6 @@ frscvNOMAD <- function(xz,
 				if(is.null(xsegments)) xsegments <- sample(segments.min:segments.max, num.x, replace=T)
 				if(is.null(xinclude)) xinclude <- sample(0:1, num.z, replace=T)
 				
-        ## Restore seed
-
-        if(exists.seed) assign(".Random.seed", save.seed, .GlobalEnv)
-
 				if(complexity =="degree-knots") {
 						x0 <- c(xdegree, xsegments, xinclude)
 						bbin <-rep(1, num.x*2+num.z)
@@ -250,6 +246,10 @@ frscvNOMAD <- function(xz,
 
 				if(basis == "auto") 
 				attr(solution, "basis.opt") <- attributes(eval.cv(solution$solution, params))$basis.opt
+
+        ## Restore seed
+
+        if(exists.seed) assign(".Random.seed", save.seed, .GlobalEnv)
 
 				return(solution)
 		}
