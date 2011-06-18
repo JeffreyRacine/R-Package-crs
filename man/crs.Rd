@@ -48,6 +48,7 @@ crs(\dots)
     data.return = FALSE,
     prune = FALSE,
     restarts = 0,
+    random.seed = 42,
     opts = list("MAX_BB_EVAL"=10000,
                 "EPSILON"=.Machine$double.eps,
                 "INITIAL_MESH_SIZE"="r1.0e-01",
@@ -171,6 +172,11 @@ in \code{x} are included or omitted from the resulting estimate }
     process of finding extrema of the cross-validation function (for the
     bandwidths only) from different (random) initial points }
 
+  \item{random.seed}{ when it is not missing and not equal to 0, the
+    initial points will be generated using this seed when using
+    \code{\link{frscvNOMDAD}} or \code{\link{krscvNOMDAD}} and
+    \code{nmulti > 0} }
+      
   \item{opts}{
     arguments passed to the NOMAD solver (see \code{\link{snomadr}} for
     further details)
