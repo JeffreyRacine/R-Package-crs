@@ -174,7 +174,7 @@ in \code{x} are included or omitted from the resulting estimate }
 
   \item{random.seed}{ when it is not missing and not equal to 0, the
     initial points will be generated using this seed when using
-    \code{\link{frscvNOMDAD}} or \code{\link{krscvNOMDAD}} and
+    \code{\link{frscvNOMAD}} or \code{\link{krscvNOMAD}} and
     \code{nmulti > 0} }
       
   \item{opts}{
