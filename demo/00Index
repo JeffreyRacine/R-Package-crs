@@ -1,4 +1,4 @@
-radial               R code for fitting and plotting a 3D perspective plot for the `radial' function
+radial_persp         R code for fitting and plotting a 3D perspective plot for the `radial' function
 radial_rgl           R code for fitting and generating a 3D real-time rendering plot for the `radial' function using OpenGL
 nomad_factor         R code for testing NOMAD for factor regression splines
 nomad_kernel         R code for testing NOMAD for categorical regression splines
