@@ -21,6 +21,9 @@
   For a listing of all routines in the \pkg{crs} package type:
   \sQuote{\code{library(help="crs")}}.
 
+  For a listing of all demos in the \pkg{crs} package type:
+  \sQuote{\code{demo(package="crs")}}.
+
   For a \sQuote{\code{\link{vignette}}} that presents an overview of the
   \pkg{crs} package type: \sQuote{\code{vignette("crs")}}.
   
