@@ -134,18 +134,23 @@ crsiv(y,
 \details{
   Tikhonov regularization requires computation of weight matrices of
   dimension \eqn{n\times n}{n x n} which can be computationally costly
-  in terms of memory requirements and may be unsuitable for large
-  datasets. Landweber-Fridman will be preferred in such settings as it
-  does not require construction and storage of these weight matrices
-  while it also avoids the need for numerical optimization methods to
-  determine \eqn{\alpha}{alpha}.
+  in terms of memory requirements and may be unsuitable
+  (i.e. unfeasible) for large datasets. Landweber-Fridman will be
+  preferred in such settings as it does not require construction and
+  storage of these weight matrices while it also avoids the need for
+  numerical optimization methods to determine \eqn{\alpha}{alpha},
+  though it does require iteration that may be equally or even more
+  computationally demanding in terms of total computation time.
 
-  \code{method="Landweber-Fridman"} uses an optimal stopping rule based
-  upon \eqn{||E(y|w)-E(\varphi_k(z,x)|w)||^2
-  }{||E(y|w)-E(phi(z,x)|w)||^2 }. However, if local rather than global
-  optima are encountered the resulting estimates can be overly noisy. To
-  best guard against this eventuality set \code{nmulti} to a larger
-  number than the default \code{nmulti=5} for \code{\link{crs}}.
+  When using \code{method="Landweber-Fridman"}, an optimal stopping rule
+  based upon \eqn{||E(y|w)-E(\varphi_k(z,x)|w)||^2
+  }{||E(y|w)-E(phi(z,x)|w)||^2 } is used to terminate
+  iteration. However, if local rather than global optima are encountered
+  the resulting estimates can be overly noisy. To best guard against
+  this eventuality set \code{nmulti} to a larger number than the default
+  \code{nmulti=5} for \code{\link{crs}} when using \code{cv="nomad"} or
+  instead use \code{cv="exhaustive"} if possible (this may not be
+  feasible for non-trivial problems).
 
   When using \code{method="Landweber-Fridman"}, iteration will terminate
   when either the change in the value of
@@ -166,7 +171,8 @@ crsiv(y,
   \code{demo(crsiv)}, \code{demo(crsiv_exog)}, and
   \code{demo(crsiv_exog_persp)} provide flexible interactive
   demonstrations similar to the example below that allow you to modify
-  parameters in an interactive session.
+  and experiment with parameters such as the sample size, method, and so
+  forth in an interactive session.
   
 }
 \value{
@@ -236,7 +242,8 @@ This function should be considered to be in `beta test' status until further not
 set.seed(42)
 n <- 1500
 
-## Turn off display I/O for crs() NOMAD search...
+## Turn off display I/O for crs() NOMAD search (i.e. keep the standard
+## defaults and add "DISPLAY_DEGREE"=0)...
 
 opts <- list("MAX_BB_EVAL"=10000,
              "EPSILON"=.Machine$double.eps,
