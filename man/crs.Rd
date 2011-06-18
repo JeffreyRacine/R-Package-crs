@@ -199,12 +199,12 @@ in \code{x} are included or omitted from the resulting estimate }
   \preformatted{
     ## Categorical data should be cast before call (necessary for plot method)
     z <- factor(z) 
-    model <- crs(y~x+z,kernel=TRUE,basis="auto")
+    model <- crs(y~x+z,basis="auto")
     
     ## Categorical data should be cast before call (necessary for plot method)
     z1 <- factor(z1)
     z2 <- factor(z2)
-    model <- crs(y~x1+x2+z1+z2,cv="none",degree=c(3,4),lambda=c(.1,.2),kernel=TRUE)
+    model <- crs(y~x1+x2+z1+z2,cv="none",degree=c(3,4),lambda=c(.1,.2))
     }
     
   \code{crs} computes a regression spline estimate of a one (1)
@@ -357,9 +357,9 @@ in \code{x} are included or omitted from the resulting estimate }
   categorical predictors prior to listing them in the
   \code{\link{formula}} interface.
   
-  Note that \code{\link{summary}} supports the option
-  \code{sigtest=TRUE} that conducts an F-test for significance for each
-  predictor.
+  Note that when \code{kernel=FALSE} \code{\link{summary}} supports the
+  option \code{sigtest=TRUE} that conducts an F-test for significance
+  for each predictor.
 
 }
 \references{
