@@ -151,7 +151,9 @@ krscvNOMAD(xz,
   For the discrete predictors the product kernel function is of the
   \sQuote{Li-Racine} type (see Li and Racine (2007) for details).
   
-  Numerical search is undertaken using \code{\link{snomadr}}.
+  Numerical search for the optimal
+  \code{degree}/\code{segments}/\code{lambda} is undertaken using
+  \code{\link{snomadr}}.
   
   Note that, since the approach is built on top of the regression spline
   for each unique \code{z} combination, the splines must be estimable

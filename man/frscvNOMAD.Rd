@@ -131,6 +131,10 @@ frscvNOMAD(xz,
   For the nominal/ordinal (\code{\link{factor}}/\code{\link{ordered}})
   predictors the regression spline model uses indicator basis functions.
 
+  Numerical search for the optimal
+  \code{degree}/\code{segments}/\code{I} is undertaken using
+  \code{\link{snomadr}}.
+  
   Note that, since the approach is built on top of the regression spline
   for each unique nominal/ordinal
   (\code{\link{factor}}/\code{\link{ordered}}) combination, the splines
