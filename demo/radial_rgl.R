@@ -1,3 +1,6 @@
+## This illustration considers the `radial function' and plots the
+## results by construct a 3D real-time rendering plot.
+
 require(crs)
 require(rgl)
 
@@ -31,29 +34,40 @@ model <- crs(y~x1+x2,
 
 summary(model)
 
-# Perspective plot via rgl (need to also assign colors)
+## Create a 3D rgl perspective plot (need to also assign colors)
+
 x1.seq <- seq(min(x1),max(x1),length=num.eval)
 x2.seq <- seq(min(x2),max(x2),length=num.eval)
 x.grid <- expand.grid(x1.seq,x2.seq)
 newdata <- data.frame(x1=x.grid[,1],x2=x.grid[,2])
 z <- matrix(predict(model,newdata=newdata),num.eval,num.eval)
+
 ## For rgl you may want to amplify/reduce the relief (z-magnification)
 ## and choose a color palette
+
 z <- relief*z
 zlim <- range(z)
 zlen <- zlim[2] - zlim[1] + 1
 colorlut <- topo.colors(zlen) 
 col <- colorlut[ z-zlim[1]+1 ]
+
 ## Open an rgl 3d window and use `persp3d', a high-level function for
 ## 3D surfaces
+
 open3d()
 persp3d(x=x1.seq,y=x2.seq,z=z,
         xlab="x1",ylab="x2",zlab="y",
         ticktype="detailed",      
         border="red",
         color=col,
+        alpha=.7,
         back="lines",
         main="Conditional Mean")
-## Animate the results spinning for 15 seconds... you can manually
-## rotate the figure by dragging the plot via your mouse/keypad
-## play3d(spin3d(axis=c(0,0,1), rpm=5), duration=15)
+
+## Add a grid to the plot (note alpha adds transparency)
+grid3d(c("x", "y+", "z"))
+
+## You could animate the results for 15 seconds using the line
+## below... by default you can manually rotate the figure by dragging
+## the plot via your mouse/keypad play3d(spin3d(axis=c(0,0,1), rpm=5),
+## duration=15)

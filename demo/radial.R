@@ -1,4 +1,5 @@
-## This illustration considers the `radial function'
+## This illustration considers the `radial function' and plots the
+## results in a 3D perspective plot.
 
 require(crs)
 
