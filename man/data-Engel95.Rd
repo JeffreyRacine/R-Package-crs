@@ -39,7 +39,7 @@ total.
 \keyword{datasets}
 
 \examples{
-## Example - we compute nonparametric instrumental regression of and
+## Example - we compute nonparametric instrumental regression of an
 ## Engel curve for food expenditure shares using Landweber-Fridman
 ## iteration of Fredholm integral equations of the first kind.
 

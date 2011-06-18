@@ -5,12 +5,13 @@
 \title{Categorical Factor Regression Spline Cross-Validation}
 
 \description{
-  \code{frscvNOMAD} computes NOMAD-based (Nonsmooth Optimization by Mesh
-Adaptive Direct Search, Abramson, Audet, Couture and Le Digabel (2011))
-cross-validation directed search for a regression spline estimate of a
-one (1) dimensional dependent variable on an \code{r}-dimensional vector
-of continuous predictors and ordinal/nominal factor predictors.
-}
+  \code{frscvNOMAD} computes NOMAD-based (Nonsmooth
+  Optimization by Mesh Adaptive Direct Search, Abramson, Audet, Couture
+  and Le Digabel (2011)) cross-validation directed search for a
+  regression spline estimate of a one (1) dimensional dependent variable
+  on an \code{r}-dimensional vector of continuous predictors and
+  nominal/ordinal (\code{\link{factor}}/\code{\link{ordered}})
+  predictors.  }
 
 \usage{
 frscvNOMAD(xz,
@@ -37,9 +38,8 @@ frscvNOMAD(xz,
     continuous univariate vector
   }
   
-  \item{xz}{
-    continuous and/or ordinal/nominal predictors
-  }
+  \item{xz}{ continuous and/or nominal/ordinal
+    (\code{\link{factor}}/\code{\link{ordered}}) predictors }
 
   \item{degree.max}{ the maximum degree of the B-spline basis for
     each of the continuous predictors (default \code{degree.max=10})}
@@ -117,9 +117,10 @@ frscvNOMAD(xz,
 
   \code{frscvNOMAD} computes cross-validation for a regression spline
   estimate of a one (1) dimensional dependent variable on an
-  \code{r}-dimensional vector of continuous and ordinal/nominal factor
-  predictors. The optimal \code{K}/\code{I} combination is returned
-  along with other results (see below for return values).
+  \code{r}-dimensional vector of continuous and nominal/ordinal
+  (\code{\link{factor}}/\code{\link{ordered}}) predictors. The optimal
+  \code{K}/\code{I} combination is returned along with other results
+  (see below for return values).
 
   For the continuous predictors the regression spline model employs
   either the additive or tensor product B-spline basis matrix for a
@@ -127,13 +128,15 @@ frscvNOMAD(xz,
   Scientific Library and the \code{\link{tensor.prod.model.matrix}}
   function.
 
-  For the ordinal/nominal predictors the regression spline model uses
-  indicator basis functions.
+  For the nominal/ordinal (\code{\link{factor}}/\code{\link{ordered}})
+  predictors the regression spline model uses indicator basis functions.
 
   Note that, since the approach is built on top of the regression spline
-  for each unique ordinal/nominal combination, the splines must be
-  estimable for every such unique combination. When this is not the case
-  the user must combine data in a manner such that this is achieved.
+  for each unique nominal/ordinal
+  (\code{\link{factor}}/\code{\link{ordered}}) combination, the splines
+  must be estimable for every such unique combination. When this is not
+  the case the user must combine data in a manner such that this is
+  achieved.
 
 }
 
@@ -147,7 +150,8 @@ frscvNOMAD(xz,
     number of segments }
   \item{I}{ scalar/vector containing an indicator of whether the
     predictor is included or not for each dimension of the
-    ordinal/nominal factors }
+    nominal/ordinal
+  (\code{\link{factor}}/\code{\link{ordered}}) predictors }
   \item{K.mat}{ vector/matrix of values of \code{K} evaluated during
     search }  
   \item{degree.max}{ the maximum degree of the B-spline basis for

@@ -58,8 +58,8 @@ crs(\dots)
 }
 \arguments{
 
-\item{xz}{ numeric (\code{x}) and or ordinal/nominal factor predictors
-(\code{z}) }
+  \item{xz}{ numeric (\code{x}) and or nominal/ordinal
+  (\code{\link{factor}}/\code{\link{ordered}}) predictors (\code{z}) }
 
 \item{y}{ a numeric vector of responses. }
 
@@ -73,8 +73,8 @@ B-spline basis for each dimension of the continuous \code{x}
 curve)}
 
 \item{include}{ integer/vector specifying whether each of the
-ordinal/nominal predictors in \code{x} are included or omitted from
-the resulting estimate }
+nominal/ordinal (\code{\link{factor}}/\code{\link{ordered}}) predictors
+in \code{x} are included or omitted from the resulting estimate }
 
   \item{kernel.type}{
     a character string indicating whether the kernel
@@ -219,7 +219,8 @@ the resulting estimate }
   product basis.
 
   When \code{kernel=FALSE} the model uses indicator basis functions for
-  the ordinal/nominal predictors rather than kernel weighting.
+  the nominal/ordinal (\code{\link{factor}}/\code{\link{ordered}})
+  predictors rather than kernel weighting.
 
   When \code{kernel=TRUE} the product kernel function for the discrete
   predictors is of the \sQuote{Li-Racine} type (see Li and Racine (2007)
@@ -296,8 +297,9 @@ the resulting estimate }
   the B-spline basis for each dimension of the continuous \code{x}}
 
   \item{include}{ integer/vector specifying whether each of the
-  ordinal/nominal predictors \code{z} are included or omitted from the
-  resulting estimate if \code{kernel=FALSE} (see below)}
+  nominal/ordinal (\code{\link{factor}}/\code{\link{ordered}})
+  predictors \code{z} are included or omitted from the resulting
+  estimate if \code{kernel=FALSE} (see below)}
 
   \item{kernel}{ a logical value indicating whether kernel smoothing was
   used (\code{kernel=TRUE}) or not }

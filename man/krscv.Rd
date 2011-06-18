@@ -9,7 +9,8 @@
   \code{krscv} computes exhaustive cross-validation directed search for
   a regression spline estimate of a one (1) dimensional dependent
   variable on an \code{r}-dimensional vector of continuous and
-  ordinal/nominal factor predictors.
+  nominal/ordinal (\code{\link{factor}}/\code{\link{ordered}})
+  predictors.
   
 }
 
@@ -36,9 +37,8 @@ krscv(xz,
     continuous univariate vector
   }
   
-  \item{xz}{
-    continuous and/or ordinal/nominal predictors
-  }
+  \item{xz}{ continuous and/or nominal/ordinal
+    (\code{\link{factor}}/\code{\link{ordered}}) predictors }
 
   \item{degree.max}{ the maximum degree of the B-spline basis for
     each of the continuous predictors (default \code{degree.max=10})}
@@ -110,13 +110,15 @@ krscv(xz,
 
   \code{krscv} computes cross-validation for a regression spline
   estimate of a one (1) dimensional dependent variable on an
-  \code{r}-dimensional vector of continuous and ordinal/nominal factor
-  predictors. The optimal \code{K}/\code{lambda} combination is returned
-  along with other results (see below for return values). The method
-  uses kernel functions appropriate for categorical (ordinal/nominal)
-  predictors which avoids the loss in efficiency associated with
-  sample-splitting procedures that are typically used when faced with a
-  mix of continuous and ordinal/nominal factor predictors.
+  \code{r}-dimensional vector of continuous and nominal/ordinal
+  (\code{\link{factor}}/\code{\link{ordered}}) predictors. The optimal
+  \code{K}/\code{lambda} combination is returned along with other
+  results (see below for return values). The method uses kernel
+  functions appropriate for categorical (ordinal/nominal) predictors
+  which avoids the loss in efficiency associated with sample-splitting
+  procedures that are typically used when faced with a mix of continuous
+  and nominal/ordinal (\code{\link{factor}}/\code{\link{ordered}})
+  predictors.
 
   For the continuous predictors the regression spline model employs
   either the additive or tensor product B-spline basis matrix for a
