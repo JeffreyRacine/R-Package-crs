@@ -56,4 +56,4 @@ persp3d(x=x1.seq,y=x2.seq,z=z,
         main="Conditional Mean")
 ## Animate the results spinning for 15 seconds... you can manually
 ## rotate the figure by dragging the plot via your mouse/keypad
-play3d(spin3d(axis=c(0,0,1), rpm=5), duration=15)
+## play3d(spin3d(axis=c(0,0,1), rpm=5), duration=15)
