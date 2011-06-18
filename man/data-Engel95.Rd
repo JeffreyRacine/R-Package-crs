@@ -39,10 +39,9 @@ total.
 \keyword{datasets}
 
 \examples{
-
-## Example - compute nonparametric instrumental regression using
-## Landweber-Fridman iteration of Fredholm integral equations of the
-## first kind.
+## Example - we compute nonparametric instrumental regression of and
+## Engel curve for food expenditure shares using Landweber-Fridman
+## iteration of Fredholm integral equations of the first kind.
 
 ## We consider an equation with an endogenous predictor (`z') and an
 ## instrument (`w'). Let y = phi(z) + u where phi(z) is the function of
@@ -54,6 +53,7 @@ total.
 data(Engel95)
 
 ## Sort on logexp (the endogenous predictor) for plotting purposes
+## (i.e. so we can plot a curve for the fitted values versus logexp)
 
 Engel95 <- Engel95[order(Engel95$logexp),] 
 
@@ -66,9 +66,11 @@ phihat <- model.iv$phihat
 
 ghat <- crs(food~logexp)
 
-## For the plots, restrict focal attention to the bulk of the data
+## For the plots, we restrict focal attention to the bulk of the data
 ## (i.e. for the plotting area trim out 1/4 of one percent from each
-## tail of y and z)
+## tail of y and z). This is often helpful as estimates in the tails of
+## the support are less reliable (i.e. more variable) so we are
+## interested in examining the relationship `where the action is'.
 
 trim <- 0.0025
 

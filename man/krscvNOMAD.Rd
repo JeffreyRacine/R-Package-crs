@@ -147,17 +147,8 @@ krscvNOMAD(xz,
   For the discrete predictors the product kernel function is of the
   \sQuote{Li-Racine} type (see Li and Racine (2007) for details).
   
-  Numerical search is undertaken using \code{\link{optim}} and the
-  box-constrained \code{L-BFGS-B} method (see \code{\link{optim}} for
-  details). The user may restart the algorithm as many times as desired
-  via the \code{restarts} argument. The approach ascends from \code{K=0}
-  through \code{degree.max} and for each value of \code{K} searches for the
-  optimal bandwidths for this value of \code{K}. After the most complex
-  model has been searched then the optimal \code{K}/\code{lambda}
-  combination is selected. If any element of the optimal \code{K} vector
-  coincides with \code{degree.max} a warning is produced and the user ought
-  to restart their search with a larger value of \code{degree.max}.
-
+  Numerical search is undertaken using \code{\link{snomadr}}.
+  
   Note that, since the approach is built on top of the regression spline
   for each unique \code{z} combination, the splines must be estimable
   for all every unique \code{z} combination. When this is not the case

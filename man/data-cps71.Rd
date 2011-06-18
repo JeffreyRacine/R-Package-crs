@@ -4,7 +4,7 @@
 \alias{cps71}
 \title{ Canadian High School Graduate Earnings  }
 \description{
-	Canadian cross-section wage data consisting of a random sample taken
+  Canadian cross-section wage data consisting of a random sample taken
   from the 1971 Canadian Census Public Use Tapes for male individuals
   having common education (grade 13). There are 205 observations in total.
 }
@@ -19,15 +19,17 @@
 \references{
   
   Pagan, A. and A. Ullah (1999), \emph{Nonparametric Econometrics,}
-  Cambridge	University Press.
+  Cambridge University Press.
   
 }
 
 \keyword{datasets}
 
 \examples{
-## Example - compare local linear  smooth and regression spline for
-## cps71 data
+## Example - we compare the nonparametric local linear kernel regression
+## method with the regression spline for the cps71 data. Note that there
+## are no categorical predictors in this dataset so we are merely
+## comparing and contrasting the two nonparametric estimates.
 
 data(cps71)
 attach(cps71)
