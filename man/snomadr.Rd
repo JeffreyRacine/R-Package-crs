@@ -50,7 +50,6 @@ snomadr(eval.f,
         ... ) 
 }
 
-%- maybe also 'usage' for other objects documented here.
 \arguments{
     \item{eval.f}{
         function that returns the value of the objective function
@@ -190,20 +189,20 @@ snomadr(eval.f,
     \code{\link{optim}}, \code{\link{nlm}}, \code{\link{nlminb}}
 }
 \examples{
-# list all options
+## List all options
 snomadr(information=list("help"="-h"))
 
-# print given option,  for example,  MESH_SIZE
+## Print given option,  for example,  MESH_SIZE
 snomadr(information=list("help"="-h MESH_SIZE"))
 
-#print the version of NOMAD
+## Print the version of NOMAD
 snomadr(information=list("version"="-v"))
 
-#print usage and copyright
+## Print usage and copyright
 snomadr(information=list("info"="-i"))
 
-# This is the example found in
-#  NOMAD/examples/basic/library/single_obj/basic_lib.cpp
+## This is the example found in
+## NOMAD/examples/basic/library/single_obj/basic_lib.cpp
 
 eval.f <- function ( x ) {
 
@@ -219,16 +218,16 @@ eval.f <- function ( x ) {
     return ( as.double(f) );
 }
 
-# initial value
+## Initial values
 x0 <- rep(0.0, 5 )
 
 bbin <-c(1, 1, 1, 1, 1)
-#bounds
+## Bounds
 lb <- rep(-6.0,5 )
 ub <- c(5.0, 6.0, 7.0, 1000000, 100000)
 
 bbout <-c(0, 2, 1)
-#options
+## Options
 opts <-list("MAX_BB_EVAL"=500,
             "MIN_MESH_SIZE"=0.001,
             "INITIAL_MESH_SIZE"=0.1,
@@ -237,60 +236,60 @@ opts <-list("MAX_BB_EVAL"=500,
 snomadr(eval.f=eval.f,n=5,  x0=x0, bbin=bbin, bbout=bbout, lb=lb, ub=ub, opts=opts)
 
 
-# how to transfer other parameters into eval.f
-#
-# First example: supply additional arguments in user-defined functions
-#
+## How to transfer other parameters into eval.f
+##
+## First example: supply additional arguments in user-defined functions
+##
 
-# objective function and gradient in terms of parameters
+## objective function and gradient in terms of parameters
 eval.f.ex1 <- function(x, params) { 
     return( params[1]*x^2 + params[2]*x + params[3] ) 
 }
 
-# define parameters that we want to use
+## Define parameters that we want to use
 params <- c(1,2,3)
 
-# define initial value of the optimization problem
+## Define initial value of the optimization problem
 x0 <- 0
 
-# solve using snomadr 
+## solve using snomadr 
 snomadr( n          =1, 
         x0          = x0, 
         eval.f      = eval.f.ex1, 
         params      = params )
 
 
-#
-# Second example: define an environment that contains extra parameters
-#
+##
+## Second example: define an environment that contains extra parameters
+##
 
-# objective function and gradient in terms of parameters
-# without supplying params as an argument
+## Objective function and gradient in terms of parameters
+## without supplying params as an argument
 eval.f.ex2 <- function(x) { 
     return( params[1]*x^2 + params[2]*x + params[3] ) 
 }
 
-# define initial value of the optimization problem
+## Define initial value of the optimization problem
 x0 <- 0
 
-# define a new environment that contains params
+## Define a new environment that contains params
 auxdata        <- new.env()
 auxdata$params <- c(1,2,3)
 
-# pass the environment that should be used to evaluate functions to snomadr 
-snomadr( n                 =1, 
+## pass The environment that should be used to evaluate functions to snomadr 
+snomadr(n                  =1, 
         x0                 = x0, 
         eval.f             = eval.f.ex2, 
         snomadr.environment = auxdata )
 
-# solve using algebra
+## Solve using algebra
 cat( paste( "Minimizing f(x) = ax^2 + bx + c\n" ) )
 cat( paste( "Optimal value of control is -b/(2a) = ", -params[2]/(2*params[1]), "\n" ) )
 cat( paste( "With value of the objective function f(-b/(2a)) = ", eval.f.ex1( -params[2]/(2*params[1]), params ), "\n" ) )
 
 
-# The following example is NOMAD/examples/advanced/multi_start/multi.cpp
-# This will call smultinomadRSolve to resolve the problem.  
+## The following example is NOMAD/examples/advanced/multi_start/multi.cpp
+## This will call smultinomadRSolve to resolve the problem.  
 eval.f.ex1 <- function(x, params) { 
     M<-as.numeric(params$M)
     NBC<-as.numeric(params$NBC)
@@ -344,7 +343,7 @@ eval.f.ex1 <- function(x, params) {
     return(as.numeric(f) ) 
 }
 
-# define parameters that we want to use
+## Define parameters that we want to use
 params<-list()
 NBC <- 5
 M <- 2
@@ -361,9 +360,9 @@ eval.f.ex1(x0, params)
 bbout<-c(2, 2, 0)
 nmulti=5
 bbin<-rep(0, n)
-# define initial value of the optimization problem
+## Define initial value of the optimization problem
 
-# solve using snomadRSolve
+## Solve using snomadRSolve
 snomadr(n            = as.integer(n), 
         x0           = x0, 
         eval.f       = eval.f.ex1, 
@@ -373,13 +372,13 @@ snomadr(n            = as.integer(n),
         ub           = ub, 
         params       = params )
 
-# solve using smultinomadRSolve, if x0 is provided,  x0 will
-# be the first initial point,  otherwise,  the program will
-# check best_x.txt,  if it exists,  it will be read in as
-# the first initial point. Other initial points will be
-# generated by uniform distribution.
-# nmulti represents the number of mads will run.
-#
+## Solve using smultinomadRSolve, if x0 is provided,  x0 will
+## be the first initial point,  otherwise,  the program will
+## check best_x.txt,  if it exists,  it will be read in as
+## the first initial point. Other initial points will be
+## generated by uniform distribution.
+## nmulti represents the number of mads will run.
+##
 snomadr(n            = as.integer(n), 
         eval.f       = eval.f.ex1, 
         bbin         = bbin, 
@@ -390,8 +389,6 @@ snomadr(n            = as.integer(n),
         print.output = TRUE, 
         params       = params )
 }
-% Add one or more standard keywords, see file 'KEYWORDS' in the
-% R documentation directory.
 \keyword{ optimize }
 \keyword{ interface }
 
