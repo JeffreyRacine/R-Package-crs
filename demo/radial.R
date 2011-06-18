@@ -1,3 +1,5 @@
+## This illustration considers the `radial function'
+
 require(crs)
 
 set.seed(42)

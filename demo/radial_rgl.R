@@ -31,18 +31,29 @@ model <- crs(y~x1+x2,
 
 summary(model)
 
-# Perspective plot
+# Perspective plot via rgl (need to also assign colors)
 x1.seq <- seq(min(x1),max(x1),length=num.eval)
 x2.seq <- seq(min(x2),max(x2),length=num.eval)
 x.grid <- expand.grid(x1.seq,x2.seq)
 newdata <- data.frame(x1=x.grid[,1],x2=x.grid[,2])
 z <- matrix(predict(model,newdata=newdata),num.eval,num.eval)
-
-z <- relief*z ##  # Exaggerate the relief
+## For rgl you may want to amplify/reduce the relief (z-magnification)
+## and choose a color palette
+z <- relief*z
 zlim <- range(z)
 zlen <- zlim[2] - zlim[1] + 1
-#colorlut <- terrain.colors(zlen) # height color lookup table
-colorlut <- heat.colors(zlen) # height color lookup table
-col <- colorlut[ z-zlim[1]+1 ] # assign colors to heights for each point
+colorlut <- topo.colors(zlen) 
+col <- colorlut[ z-zlim[1]+1 ]
+## Open an rgl 3d window and use `persp3d', a high-level function for
+## 3D surfaces
 open3d()
-surface3d(x1.seq, x2.seq, z, color=col, back="lines")
+persp3d(x=x1.seq,y=x2.seq,z=z,
+        xlab="x1",ylab="x2",zlab="y",
+        ticktype="detailed",      
+        border="red",
+        color=col,
+        back="lines",
+        main="Conditional Mean")
+## Animate the results spinning for 15 seconds... you can manually
+## rotate the figure by dragging the plot via your mouse/keypad
+play3d(spin3d(axis=c(0,0,1), rpm=5), duration=15)

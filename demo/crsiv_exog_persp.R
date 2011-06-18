@@ -1,5 +1,6 @@
-## This demo considers a setting with one endogenous regressor, one
-## exogenous regressor, and one instrument.
+## This demo considers nonparametric instrumental regression in a
+## setting with one endogenous regressor, one exogenous regressor, and
+## one instrument.
 
 ## This illustration was made possible by Samuele Centorrino
 ## <samuele.centorrino@univ-tlse1.fr>
