@@ -1,4 +1,6 @@
-Changes from Version 0.14.8 to 0.14.9 [xx-xxx-2011]
+Changes from Version 0.14.8 to 0.14.9 [20-Jun-2011]
+
+* Cleaned up issues for creating binary for windows
 
 * Setting seed in crs -> frscvNOMAD/krscvNOMAD fed to snomadr.cpp via
   snomadr.R for starting points when nmulti > 0
@@ -16,7 +18,7 @@ Changes from Version 0.14.8 to 0.14.9 [xx-xxx-2011]
 
 * Zhenghua added help functionality for retrieving help via snomadr
 
-* Now default number of restarts in crs is 5 (zero is not reliaable
+* Now default number of restarts in crs is 5 (zero is not reliable
   and I want sensible defaults in this package - higher is better but
   for many problems this ought to suffice)
 

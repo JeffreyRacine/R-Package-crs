@@ -12,4 +12,4 @@ OBJECTS             = RuniqueCombs.o bspline.o gsl_bspline.o snomadr.o $(NOMAD_S
                          $(NOMAD_SRC)/Random_Pickup.o $(NOMAD_SRC)/Signature.o $(NOMAD_SRC)/Slave.o $(NOMAD_SRC)/Speculative_Search.o \
                          $(NOMAD_SRC)/Stats.o $(NOMAD_SRC)/utils.o $(NOMAD_SRC)/Variable_Group.o $(NOMAD_SRC)/VNS_Search.o
 
-PKG_CXXFLAGS= -I$(NOMAD_SRC)
+PKG_CXXFLAGS= -I$(NOMAD_SRC) -DWINDOWS

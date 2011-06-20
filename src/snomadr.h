@@ -52,7 +52,6 @@
 
 #include <R.h>
 #include <Rdefines.h>
-#include <Rinterface.h>
 #include <R_ext/Utils.h>
 
 typedef union UNION_VARIABLE

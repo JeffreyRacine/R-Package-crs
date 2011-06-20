@@ -1,7 +1,7 @@
 \name{crs-package}
 \alias{crs-package}
 \docType{package}
-\title{Categorical Regression Splines}
+\title{Nonparametric Regression Splines with Continuous and Categorical Predictors}
 \description{
 
 	This package provides a method for nonparametric regression that

@@ -42,24 +42,6 @@ bool file_exists(const char*path)
 		return stat(path,&sbuf)==0;
 }
 
-/* The following code is modified from  R_CheckUserInterrupt */
- void R_Interrupt(void)  
- { 
-// R_CheckStack();		 
- /* This is the point where GUI systems need to do enough event 
- processing to determine whether there is a user interrupt event 
- pending. Need to be careful not to do too much event 
- processing though: if event handlers written in R are allowed 
- to run at this point then we end up with concurrent R 
- evaluations and that can cause problems until we have proper 
- concurrency support. LT */ 
-//#if ( defined(HAVE_AQUA) || defined(Win32) ) 
-// R_ProcessEvents(); 
-// #else 
- onintr(); 
-// #endif /* Win32 */ 
- } 
-
 //
 // Extracts element with name 'str' from R object 'list'
 // and returns that element.
@@ -508,7 +490,7 @@ extern "C" {
 						NOMAD::Mads mads(param,&ev);
 						NOMAD::stop_type status = mads.run();
 
-						if ( status == NOMAD::CTRL_C ) R_Interrupt();  //)exit(-1);
+						if ( status == NOMAD::CTRL_C ) R_CheckUserInterrupt(); //)exit(-1);
 
 						/* output the results of statistics, we may need to learn more about Stats */
 						NOMAD::Stats &stats = mads.get_stats();
@@ -798,7 +780,7 @@ extern "C" {
 								NOMAD::Mads mads ( param , &ev );
 								status = mads.run();
 
-								if ( status == NOMAD::CTRL_C ) R_Interrupt();  //)exit(-1);
+								if ( status == NOMAD::CTRL_C ) R_CheckUserInterrupt(); //)exit(-1);
 
 
 								bbe += mads.get_cache().size();  /* the number of evaluations of the objectibve function. */
