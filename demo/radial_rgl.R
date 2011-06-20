@@ -68,6 +68,11 @@ persp3d(x=x1.seq,y=x2.seq,z=z,
 grid3d(c("x", "y+", "z"))
 
 ## You could animate the results for 15 seconds using the line
-## below... by default you can manually rotate the figure by dragging
-## the plot via your mouse/keypad play3d(spin3d(axis=c(0,0,1), rpm=5),
-## duration=15)
+## play3d(spin3d(axis=c(0,0,1), rpm=5), duration=15)
+## By default you can manually rotate the figure by dragging the plot
+## via your mouse/keypad
+
+## Note - to plot an rgl figure first get it oriented how you want
+## (i.e. resize, rotate etc.) and then call rgl.postscript to create,
+## i.e., a PDF of your graphic as in
+## rgl.postscript("persp3db.pdf","pdf")
