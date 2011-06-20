@@ -52,9 +52,10 @@ colorlut <- topo.colors(zlen)
 col <- colorlut[ z-zlim[1]+1 ]
 
 ## Open an rgl 3d window and use `persp3d', a high-level function for
-## 3D surfaces
+## 3D surfaces (and define the size of the window to be 800x800)
 
 open3d()
+par3d(windowRect=c(900,100,900+800,100+800))
 persp3d(x=x1.seq,y=x2.seq,z=z,
         xlab="x1",ylab="x2",zlab="y",
         ticktype="detailed",      
