@@ -14,7 +14,6 @@ cv <- as.numeric(readline(prompt="Input the cv method (0=nomad, 1=exhaustive): "
 cv <- ifelse(cv==0,"nomad","exhaustive")
 if(cv=="nomad") nmulti <- as.numeric(readline(prompt="Input the number of multistarts desired (e.g. 10): "))
 num.eval <- as.numeric(readline(prompt="Input the number of evaluation observations desired (e.g. 50): "))
-relief <- as.numeric(readline(prompt="Input the relief exaggeration (e.g. 5): "))
 
 x1 <- runif(n,-5,5)
 x2 <- runif(n,-5,5)
@@ -42,20 +41,16 @@ x.grid <- expand.grid(x1.seq,x2.seq)
 newdata <- data.frame(x1=x.grid[,1],x2=x.grid[,2])
 z <- matrix(predict(model,newdata=newdata),num.eval,num.eval)
 
-## For rgl you may want to amplify/reduce the relief (z-magnification)
-## and choose a color palette
-
-z <- relief*z
-zlim <- range(z)
-zlen <- zlim[2] - zlim[1] + 1
-colorlut <- topo.colors(zlen) 
-col <- colorlut[ z-zlim[1]+1 ]
+## Number of colors from color palette
+num.colors <- 1000
+colorlut <- topo.colors(num.colors) 
+col <- colorlut[ (num.colors-1)*(z-min(z))/(max(z)-min(z)) + 1 ]
 
 ## Open an rgl 3d window and use `persp3d', a high-level function for
-## 3D surfaces (and define the size of the window to be 800x800)
+## 3D surfaces (and define the size of the window to be 640x640)
 
 open3d()
-par3d(windowRect=c(900,100,900+800,100+800))
+par3d(windowRect=c(900,100,900+640,100+640))
 persp3d(x=x1.seq,y=x2.seq,z=z,
         xlab="x1",ylab="x2",zlab="y",
         ticktype="detailed",      
