@@ -46,11 +46,19 @@ num.colors <- 1000
 colorlut <- topo.colors(num.colors) 
 col <- colorlut[ (num.colors-1)*(z-min(z))/(max(z)-min(z)) + 1 ]
 
-## Open an rgl 3d window and use `persp3d', a high-level function for
-## 3D surfaces (and define the size of the window to be 640x640)
+## Open an rgl 3d window and use `persp3d()', a high-level function
+## for 3D surfaces (and define the size of the window to be
+## 640x640). The function par3d() passes in a window size (the default
+## is 256x256 which is quite small), the function rgl.viewpoint()
+## allows you to modify the `field of view' to get more of a
+## `perspective' feel to the plot, while the function grid3d() adds a
+## grid to the plot.
 
 open3d()
+
 par3d(windowRect=c(900,100,900+640,100+640))
+rgl.viewpoint(theta = 0, phi = -70, fov = 80)
+
 persp3d(x=x1.seq,y=x2.seq,z=z,
         xlab="x1",ylab="x2",zlab="y",
         ticktype="detailed",      
@@ -60,8 +68,12 @@ persp3d(x=x1.seq,y=x2.seq,z=z,
         back="lines",
         main="Conditional Mean")
 
-## Add a grid to the plot (note alpha adds transparency)
 grid3d(c("x", "y+", "z"))
+
+## You can also add other surfaces to the plot (e.g. error bounds) via
+## rgl.surface(x, y, z.ub, color="grey", alpha=.7, back="lines")
+## rgl.surface(x, y, z.lb, color="grey", alpha=.7, back="lines")
+## where z.up and z.lb are the lower and upper bounds
 
 ## You could animate the results for 15 seconds using the line
 ## play3d(spin3d(axis=c(0,0,1), rpm=5), duration=15)
