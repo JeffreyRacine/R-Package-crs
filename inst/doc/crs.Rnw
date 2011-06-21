@@ -434,7 +434,7 @@ continuous and one discrete predictor.
 
 <<echo=TRUE,keep.source=TRUE>>=
 set.seed(42)
-n <- 10000
+n <- 1000
 x <- runif(n)
 z <- rbinom(n,1,.5)
 y <- cos(2*pi*x) + z + rnorm(n,sd=0.25)
@@ -472,7 +472,7 @@ demarcated by the discrete predictor.
 
 <<echo=TRUE,keep.source=TRUE>>=
 set.seed(1234)
-n <- 10000
+n <- 1000
 x1 <- runif(n)
 x2 <- runif(n)
 dgp <- numeric(n)
