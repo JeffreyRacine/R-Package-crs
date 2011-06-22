@@ -477,7 +477,6 @@ crs.formula <- function(formula,
                               degree=degree,
                               segments=segments,
 															lambda=lambda, 
-                              restarts=restarts, 
                               random.seed=random.seed,
                               opts=opts,
                               nmulti=nmulti)
