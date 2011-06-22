@@ -18,7 +18,7 @@ uniquecombs(x)
 }
 \details{ Models with more parameters than unique combinations of
   covariates are not identifiable. This routine provides a means of
-  evaluating the number of unique combinations of coavariates in a
+  evaluating the number of unique combinations of covariates in a
   model. The routine calls compiled C code.
    
 }
