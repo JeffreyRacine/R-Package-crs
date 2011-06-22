@@ -30,7 +30,7 @@ Generalized Additive Mixed Models. Biometrics 62(4):1025-1036
 }
 \author{ Simon N. Wood \email{simon.wood@r-project.org}} 
 
-\seealso{  \code{\link{te}}, \code{\link{smooth.construct.tensor.smooth.spec}}  }
+\seealso{  \code{\link[mgcv]{te}}, \code{\link[mgcv]{smooth.construct.tensor.smooth.spec}}  }
 
 \examples{
 X <- list(matrix(1:4,2,2),matrix(5:10,2,3))

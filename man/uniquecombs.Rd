@@ -30,8 +30,9 @@ matrix that contains row i of the original matrix.
  
 }
 
-\seealso{\code{\link{unique}} can do the same thing, including for non-numeric matrices, but more 
-         slowly and without returning the index.}
+\seealso{\code{\link{unique}} can do the same thing, including for
+         non-numeric matrices, but more slowly and without returning the
+         index.}
 
 \author{ Simon N. Wood \email{simon.wood@r-project.org}}
 
