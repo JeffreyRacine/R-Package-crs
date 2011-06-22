@@ -98,8 +98,9 @@ frscv(xz,
   estimate of a one (1) dimensional dependent variable on an
   \code{r}-dimensional vector of continuous and nominal/ordinal
   (\code{\link{factor}}/\code{\link{ordered}}) predictors. The optimal
-  \code{K}/\code{I} combination is returned along with other results
-  (see below for return values).
+  \code{K}/\code{I} combination (i.e.\
+  \code{degree}/\code{segments}/\code{I}) is returned along with other
+  results (see below for return values).
 
   For the continuous predictors the regression spline model employs
   either the additive or tensor product B-spline basis matrix for a
