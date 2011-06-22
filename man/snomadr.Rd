@@ -153,8 +153,8 @@ snomadr(eval.f,
     minimize an objective function with respect to the spline degree,
     number of knots, and optionally the kernel bandwidths when using
     \code{\link{crs}} with the option \code{cv="nomad"} (default). This
-    is a mixed integer combinatoric problem and is known to be
-    computationally `hard'. See \code{\link{frscvNOMAD}} and
+    is a constrained mixed integer combinatoric problem and is known to
+    be computationally `hard'. See \code{\link{frscvNOMAD}} and
     \code{\link{krscvNOMAD}} for the functions called when
     \code{cv="nomad"} while using \code{\link{crs}}.
 

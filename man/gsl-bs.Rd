@@ -64,7 +64,10 @@ basis; default is \sQuote{FALSE} }
   \sQuote{c(length(x), degree)}.
 
   A primary use is in modelling formulas to directly specify a piecewise
-     polynomial term in a model.  }
+  polynomial term in a model. See \url{http://www.gnu.org/software/gsl/}
+  for further details.
+  
+}
   
 \references{
 

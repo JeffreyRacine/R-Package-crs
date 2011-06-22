@@ -104,8 +104,8 @@ frscv(xz,
   For the continuous predictors the regression spline model employs
   either the additive or tensor product B-spline basis matrix for a
   multivariate polynomial spline via the B-spline routines in the GNU
-  Scientific Library and the \code{\link{tensor.prod.model.matrix}}
-  function.
+  Scientific Library (\url{http://www.gnu.org/software/gsl/}) and the
+  \code{\link{tensor.prod.model.matrix}} function.
 
   For the nominal/ordinal (\code{\link{factor}}/\code{\link{ordered}})
   predictors the regression spline model uses indicator basis functions.
