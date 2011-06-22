@@ -203,7 +203,7 @@ krscv(xz,
 \examples{
 set.seed(123)
 ## Simulated data
-n <- 10000
+n <- 1000
 
 x <- runif(n)
 z <- round(runif(n,min=-0.5,max=1.5))

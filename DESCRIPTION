@@ -1,8 +1,8 @@
 Package: crs
-Version: 0.14-9
+Version: 0.15-0
 Date: 2011-06-20
 Depends:
-Suggests: np
+Suggests: np, rgl
 Title: Categorical Regression Splines
 Author: Jeffrey S. Racine <racinej@mcmaster.ca> and Zhenghua Nie <niez@mcmaster.ca>
 Maintainer: Jeffrey S. Racine <racinej@mcmaster.ca> 

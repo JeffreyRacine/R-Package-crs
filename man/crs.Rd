@@ -405,7 +405,7 @@ in \code{x} are included or omitted from the resulting estimate }
 \examples{
 set.seed(123)
 ## Example - simulated data
-n <- 10000
+n <- 1000
 num.eval <- 50
 x1 <- runif(n)
 x2 <- runif(n)
