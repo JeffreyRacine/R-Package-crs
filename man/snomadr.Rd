@@ -116,10 +116,10 @@ snomadr(eval.f,
       }
 
     \item{print.output}{
-      when FALSE, no output from \code{snomadr} is displayed on
-      the screen. If \code{"DISPLAY_DEGREE"=0,} the option of NOMAD, there will
-      be no output from NOMAD. Higher integer values provide
-      successively more detail
+      when FALSE, no output from \code{snomadr} is displayed on the
+      screen. If the NOMAD option \code{"DISPLAY_DEGREE"=0,} is set,
+      there will also be no output from NOMAD. Higher integer values for
+      \code{"DISPLAY_DEGREE"=} provide successively more detail
     }
 
     \item{information}{
@@ -127,12 +127,14 @@ snomadr(eval.f,
       the information about NOMAD according to the values of \code{"info"},
       \code{"version"} and \code{"help"}.
 
-      \code{"info"="-i"}: display the usage and copyright of NOMAD. 
+      \code{"info"="-i"}: display the usage and copyright of NOMAD
 
-      \code{"version"="-v"}: display the version of NOMAD you are using.
+      \code{"version"="-v"}: display the version of NOMAD you are using
 
-      \code{"help"="-h"}: display all options. You also can display a specific option, 
-      for example, \code{"help"="-h x0"},  this will tell you how to set \code{x0}.
+      \code{"help"="-h"}: display all options
+
+      You also can display a specific option, for example,
+      \code{"help"="-h x0"}, this will tell you how to set \code{x0}
     }
 
     \item{snomadr.environment}{
@@ -146,21 +148,26 @@ snomadr(eval.f,
   }
 
   \details{
+    
     \code{snomadr} is used in the \pkg{crs} package to numerically
     minimize an objective function with respect to the spline degree,
     number of knots, and optionally the kernel bandwidths when using
-    \code{\link{crs}} with the option \code{cv="nomad"} (default). See
-    \code{\link{frscvNOMAD}} and \code{\link{krscvNOMAD}} for the
-    functions called when \code{cv="nomad"} while using
-    \code{\link{crs}}.
+    \code{\link{crs}} with the option \code{cv="nomad"} (default). This
+    is a mixed integer combinatoric problem and is known to be
+    computationally `hard'. See \code{\link{frscvNOMAD}} and
+    \code{\link{krscvNOMAD}} for the functions called when
+    \code{cv="nomad"} while using \code{\link{crs}}.
 
-    However, note that for simple problems involving one predictor
-    exhaustive search may be faster and more accurate, so bear in mind
-    that \code{cv="exhaustive"} can be useful when using
-    \code{\link{crs}}. Naturally, exhaustive search is also useful for
-    verifying solutions returned by \code{snomadr}. See
-    \code{\link{frscv}} and \code{\link{krscv}} for the functions called
-    when \code{cv="exhaustive"} while using \code{\link{crs}}.
+    However, the user should note that for simple problems involving one
+    predictor exhaustive search may be faster and potentially more
+    accurate, so please bear in mind that \code{cv="exhaustive"} can be
+    useful when using \code{\link{crs}}.
+
+    Naturally, exhaustive search is also useful for verifying solutions
+    returned by \code{snomadr}. See \code{\link{frscv}} and
+    \code{\link{krscv}} for the functions called when
+    \code{cv="exhaustive"} while using \code{\link{crs}}.
+    
   }
 \value{
     The return value contains a list with the inputs, and additional elements
@@ -189,6 +196,7 @@ snomadr(eval.f,
     \code{\link{optim}}, \code{\link{nlm}}, \code{\link{nlminb}}
 }
 \examples{
+\dontrun{
 ## List all options
 snomadr(information=list("help"="-h"))
 
@@ -388,6 +396,7 @@ snomadr(n            = as.integer(n),
         nmulti = as.integer(nmulti), 
         print.output = TRUE, 
         params       = params )
+} %% End dontrun
 }
 \keyword{ optimize }
 \keyword{ interface }

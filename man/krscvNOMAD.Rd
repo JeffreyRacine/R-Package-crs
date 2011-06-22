@@ -22,7 +22,6 @@ krscvNOMAD(xz,
            degree.min = 0, 
            segments.min = 1, 
            kernel.type = c("nominal","ordinal"),
-           restarts = 0,
            complexity = c("degree-knots","degree","knots"),
            knots = c("quantiles","uniform"),
            basis = c("additive","tensor","auto"),
@@ -63,11 +62,6 @@ krscvNOMAD(xz,
     (\dQuote{\code{ordinal}}) - see \code{\link{crs}} for details
   }
   
-\item{restarts}{
-    number of times to restart search from different initial random
-    values (default \code{restarts=0})
-  }
-
   \item{complexity}{a character string (default
   \code{complexity="degree-knots"}) indicating whether model `complexity' is
   determined by the degree of the spline or by the number of segments
