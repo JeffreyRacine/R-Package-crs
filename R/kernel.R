@@ -32,7 +32,7 @@ prod.kernel <- function(Z,
 
   num.z <- NCOL(Z)
 
-  if(num.z != NROW(z) || num.z != NROW(lambda)) stop(paste(" incompatable dimensions for Z, z, and lambda (",num.z,",",NROW(z),",",NROW(lambda),")",sep=""))
+  if(num.z != NROW(z) || num.z != NROW(lambda)) stop(paste(" incompatible dimensions for Z, z, and lambda (",num.z,",",NROW(z),",",NROW(lambda),")",sep=""))
   
   return(apply(sapply(1:num.z, function(j) {kernel(Z=Z[,j],z=z[j],lambda=lambda[j],kernel.type=kernel.type)}),1,prod))
 

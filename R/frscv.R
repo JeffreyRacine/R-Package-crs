@@ -15,17 +15,17 @@
 ## solver. Currently in R there is no such beast.
 
 frscv <- function(xz,
-									y,
-									degree.max=10, 
-									segments.max=10, 
-									degree.min=0, 
-									segments.min=1, 
-									complexity=c("degree-knots","degree","knots"),
-									knots=c("quantiles","uniform"),
-									basis=c("additive","tensor","auto"),
-									cv.func=c("cv.ls","cv.gcv","cv.aic"),
-									degree=degree,
-									segments=segments) {
+                  y,
+                  degree.max=10, 
+                  segments.max=10, 
+                  degree.min=0, 
+                  segments.min=1, 
+                  complexity=c("degree-knots","degree","knots"),
+                  knots=c("quantiles","uniform"),
+                  basis=c("additive","tensor","auto"),
+                  cv.func=c("cv.ls","cv.gcv","cv.aic"),
+                  degree=degree,
+                  segments=segments) {
 
   complexity <- match.arg(complexity)
   knots <- match.arg(knots)
@@ -40,17 +40,17 @@ frscv <- function(xz,
                       y,
                       restart,
                       num.restarts,
-											degree.max=degree.max, 
-											segments.max=segments.max, 
-											degree.min=degree.min, 
-											segments.min=segments.min, 
-											j=NULL,
-											nrow.KI.mat=NULL,
-											t2=NULL,
-											complexity=complexity,
-											knots=knots,
-											basis=basis,
-											cv.func=cv.func) {
+                      degree.max=degree.max, 
+                      segments.max=segments.max, 
+                      degree.min=degree.min, 
+                      segments.min=segments.min, 
+                      j=NULL,
+                      nrow.KI.mat=NULL,
+                      t2=NULL,
+                      complexity=complexity,
+                      knots=knots,
+                      basis=basis,
+                      cv.func=cv.func) {
 
     if(missing(input) || missing(x) || missing(y)) stop(" you must provide input, x, y")
 
@@ -187,13 +187,13 @@ frscv <- function(xz,
 
   if(missing(x) || missing(y)) stop (" you must provide x and y")
 
-	if(complexity=="degree") {
-			if(missing(segments)||is.null(segments)) stop("segments missing for cross-validation of spline degree")
-			if(length(segments)!=num.x) stop(" segments vector must be the same length as x")  
-	} else if(complexity=="knots") {
-			if(missing(degree)||is.null(degree)) stop("degree missing for cross-validation of number of spline knots")
-			if(length(degree)!=num.x) stop(" degree vector must be the same length as x")
-	}
+  if(complexity=="degree") {
+      if(missing(segments)||is.null(segments)) stop("segments missing for cross-validation of spline degree")
+      if(length(segments)!=num.x) stop(" segments vector must be the same length as x")  
+  } else if(complexity=="knots") {
+      if(missing(degree)||is.null(degree)) stop("degree missing for cross-validation of number of spline knots")
+      if(length(degree)!=num.x) stop(" degree vector must be the same length as x")
+  }
 
   ## For factor regression spline, if there is only one predictor
   ## (i.e. num.x + num.z = 1) disable auto, set to additive (tensor in
@@ -201,12 +201,12 @@ frscv <- function(xz,
 
   if(num.x+num.z==1 & basis == "auto") basis <- "additive"
 
-	if(degree.min < 0 ) degree.min <- 0
-	if(segments.min < 1 ) segments.min <- 1
-	if(degree.max < degree.min) degree.max <- (degree.min + 1)
-	if(segments.max < segments.min) segments.max <- (segments.min + 1)
+  if(degree.min < 0 ) degree.min <- 0
+  if(segments.min < 1 ) segments.min <- 1
+  if(degree.max < degree.min) degree.max <- (degree.min + 1)
+  if(segments.max < segments.min) segments.max <- (segments.min + 1)
 
-	if(degree.max < 1 || segments.max < 1 ) stop(" degree.max or segments.max must be greater than or equal to 1")
+  if(degree.max < 1 || segments.max < 1 ) stop(" degree.max or segments.max must be greater than or equal to 1")
 
   if(complexity == "degree-knots") {
     if(!is.null(z)) {
@@ -232,7 +232,7 @@ frscv <- function(xz,
       KI.mat <- matrix.combn(K.vec1=segments.min:segments.max,num.x=num.x)
       KI.mat <- cbind(matrix(degree,nrow(KI.mat),length(degree),byrow=TRUE),KI.mat[,1:num.x])
     }
-	}
+  }
 
   ## For exhaustive search, we avoid redundant computation of cv
   ## function. Some rows will have all continuous predictors having
@@ -286,20 +286,20 @@ frscv <- function(xz,
       output <- cv.objc(input=KI.mat[j,],
                         x=x,
                         y=y,
-												z=z,
-												degree.max=degree.max, 
-												segments.max=segments.max, 
-												degree.min=degree.min, 
-												segments.min=segments.min, 
-												restart=0,
-												num.restarts=0,
-												j=j,
-												nrow.KI.mat=nrow.KI.mat,
-												t2=Sys.time(),
-												complexity=complexity,
-												knots=knots,
-												basis="additive",
-												cv.func=cv.func)
+                        z=z,
+                        degree.max=degree.max, 
+                        segments.max=segments.max, 
+                        degree.min=degree.min, 
+                        segments.min=segments.min, 
+                        restart=0,
+                        num.restarts=0,
+                        j=j,
+                        nrow.KI.mat=nrow.KI.mat,
+                        t2=Sys.time(),
+                        complexity=complexity,
+                        knots=knots,
+                        basis="additive",
+                        cv.func=cv.func)
 
       if(output < cv.vec[j]) {
         cv.vec[j] <- output
@@ -310,10 +310,10 @@ frscv <- function(xz,
                         x=x,
                         y=y,
                         z=z,
-												degree.max=degree.max, 
-												segments.max=segments.max, 
-												degree.min=degree.min, 
-												segments.min=segments.min, 
+                        degree.max=degree.max, 
+                        segments.max=segments.max, 
+                        degree.min=degree.min, 
+                        segments.min=segments.min, 
                         restart=0,
                         num.restarts=0,
                         j=j,
@@ -337,10 +337,10 @@ frscv <- function(xz,
                         x=x,
                         y=y,
                         z=z,
-												degree.max=degree.max, 
-												segments.max=segments.max, 
-												degree.min=degree.min, 
-												segments.min=segments.min, 
+                        degree.max=degree.max, 
+                        segments.max=segments.max, 
+                        degree.min=degree.min, 
+                        segments.min=segments.min, 
                         restart=0,
                         num.restarts=0,
                         j=j,
@@ -387,22 +387,22 @@ frscv <- function(xz,
   crscv(K=K.opt,
         I=I.opt,
         basis=basis.opt,
-				basis.vec=basis.vec,
-				degree.max=degree.max, 
-				segments.max=segments.max, 
-				degree.min=degree.min, 
-				segments.min=segments.min, 
-				complexity=complexity,
-				knots=knots,
-				degree=degree,
-				segments=segments,
-				K.mat=KI.mat,
-				restarts=NULL,
-				lambda=NULL,
-				lambda.mat=NULL,
-				cv.objc=cv.min,
-				cv.objc.vec=as.matrix(cv.vec),
-				num.x=num.x,
-				cv.func=cv.func)
+        basis.vec=basis.vec,
+        degree.max=degree.max, 
+        segments.max=segments.max, 
+        degree.min=degree.min, 
+        segments.min=segments.min, 
+        complexity=complexity,
+        knots=knots,
+        degree=degree,
+        segments=segments,
+        K.mat=KI.mat,
+        restarts=NULL,
+        lambda=NULL,
+        lambda.mat=NULL,
+        cv.objc=cv.min,
+        cv.objc.vec=as.matrix(cv.vec),
+        num.x=num.x,
+        cv.func=cv.func)
 
 }

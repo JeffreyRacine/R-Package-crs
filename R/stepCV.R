@@ -258,7 +258,7 @@ stepCV <-
     if(trace) {
         cat("Start:  CV=", format(bCV), "\n",
             cut.string(deparse(as.vector(formula(fit)))), "\n\n", sep='')
-	utils::flush.console()
+  utils::flush.console()
     }
     models[[nm]] <- list(deviance = mydeviance(fit), df.resid = n - edf,
                          change = "", CV = bCV)
@@ -315,9 +315,9 @@ stepCV <-
             nc <- nc[!is.na(nc)][1L]
             o <- order(aod[, nc])
             if(trace) {
-		print(aod[o,  ])
-		utils::flush.console()
-	    }
+    print(aod[o,  ])
+    utils::flush.console()
+      }
             if(o[1L] == 1) break
             change <- rownames(aod)[o[1L]]
         }
@@ -337,8 +337,8 @@ stepCV <-
         if(trace) {
             cat("\nStep:  CV=", format(bCV), "\n",
                 cut.string(deparse(as.vector(formula(fit)))), "\n\n", sep='')
-	    utils::flush.console()
-	}
+      utils::flush.console()
+  }
         ## add a tolerance as dropping 0-df terms might increase CV slightly
         if(bCV >= CV + 1e-7) break
         nm <- nm + 1
@@ -431,13 +431,13 @@ addterm.default <-
     for(i in seq(ns)) {
         tt <- scope[i]
         if(trace) {
-	    message("trying +", tt)
-	    utils::flush.console()
+      message("trying +", tt)
+      utils::flush.console()
         }
         nfit <- update(object, as.formula(paste("~ . +", tt)),
                        evaluate = FALSE)
-	nfit <- eval(nfit, envir=env) # was  eval.parent(nfit)
-	ans[i+1L, ] <- extractCV(nfit, scale, k = k, ...)
+  nfit <- eval(nfit, envir=env) # was  eval.parent(nfit)
+  ans[i+1L, ] <- extractCV(nfit, scale, k = k, ...)
         if(length(nfit$residuals) != n0)
             stop("number of rows in use has changed: remove missing values?")
     }
@@ -447,12 +447,12 @@ addterm.default <-
     o <- if(sorted) order(aod$CV) else seq_along(aod$CV)
     test <- match.arg(test)
     if(test == "Chisq") {
-	dev <- ans[, 2L] - k*ans[, 1L]
-	dev <- dev[1L] - dev; dev[1L] <- NA
-	nas <- !is.na(dev)
-	P <- dev
-	P[nas] <- safe_pchisq(dev[nas], dfs[nas], lower.tail=FALSE)
-	aod[, c("LRT", "Pr(Chi)")] <- list(dev, P)
+  dev <- ans[, 2L] - k*ans[, 1L]
+  dev <- dev[1L] - dev; dev[1L] <- NA
+  nas <- !is.na(dev)
+  P <- dev
+  P[nas] <- safe_pchisq(dev[nas], dfs[nas], lower.tail=FALSE)
+  aod[, c("LRT", "Pr(Chi)")] <- list(dev, P)
     }
     aod <- aod[o, ]
     head <- c("Single term additions", "\nModel:",
@@ -476,7 +476,7 @@ addterm.lm <-
         Fs[df < 1e-4] <- NA
         P <- Fs
         nnas <- !is.na(Fs)
-	P[nnas] <- pf(Fs[nnas], df[nnas], rdf - df[nnas], lower.tail=FALSE)
+  P[nnas] <- pf(Fs[nnas], df[nnas], rdf - df[nnas], lower.tail=FALSE)
         list(Fs=Fs, P=P)
     }
 
@@ -577,8 +577,8 @@ addterm.glm <- function(object, scope, scale = 0, test = c("none", "Chisq", "F")
                    function(x) paste(sort(x), collapse=":"))
   for(tt in scope) {
     if(trace) {
-	    message("trying +", tt)
-	    utils::flush.console()
+      message("trying +", tt)
+      utils::flush.console()
     }
     stt <- paste(sort(strsplit(tt, ":")[[1L]]), collapse=":")
     usex <- match(asgn, match(stt, sTerms), 0L) > 0L
@@ -657,13 +657,13 @@ dropterm.default <-
     for(i in seq(ns)) {
         tt <- scope[i]
         if(trace) {
-	    message("trying -", tt)
-	    utils::flush.console()
-	}
+      message("trying -", tt)
+      utils::flush.console()
+  }
         nfit <- update(object, as.formula(paste("~ . -", tt)),
                        evaluate = FALSE)
-	nfit <- eval(nfit, envir=env) # was  eval.parent(nfit)
-	ans[i+1, ] <- extractCV(nfit, scale, k = k, ...)
+  nfit <- eval(nfit, envir=env) # was  eval.parent(nfit)
+  ans[i+1, ] <- extractCV(nfit, scale, k = k, ...)
         if(length(nfit$residuals) != n0)
             stop("number of rows in use has changed: remove missing values?")
     }
@@ -708,15 +708,15 @@ dropterm.lm <-
         dev[nas] <- safe_pchisq(dev[nas]/scale, aod$Df[nas], lower.tail = FALSE)
         aod[, "Pr(Chi)"] <- dev
     } else if(test == "F") {
-	dev <- aod$"Sum of Sq"
-	dfs <- aod$Df
-	rdf <- object$df.residual
-	rms <- aod$RSS[1L]/rdf
-	Fs <- (dev/dfs)/rms
-	Fs[dfs < 1e-4] <- NA
-	P <- Fs
-	nas <- !is.na(Fs)
-	P[nas] <- safe_pf(Fs[nas], dfs[nas], rdf, lower.tail=FALSE)
+  dev <- aod$"Sum of Sq"
+  dfs <- aod$Df
+  rdf <- object$df.residual
+  rms <- aod$RSS[1L]/rdf
+  Fs <- (dev/dfs)/rms
+  Fs[dfs < 1e-4] <- NA
+  P <- Fs
+  nas <- !is.na(Fs)
+  P[nas] <- safe_pf(Fs[nas], dfs[nas], rdf, lower.tail=FALSE)
         aod[, c("F Value", "Pr(F)")] <- list(Fs, P)
     }
     aod <- aod[o, ]
@@ -762,9 +762,9 @@ dropterm.glm <-
     if(is.null(wt)) wt <- rep.int(1, n)
     for(i in 1L:ns) {
         if(trace) {
-	    message("trying -", scope[i])
-	    utils::flush.console()
-	}
+      message("trying -", scope[i])
+      utils::flush.console()
+  }
         ii <- seq_along(asgn)[asgn == ndrop[i]]
         jj <- setdiff(seq(ncol(x)), ii)
         z <-  glm.fit(x[, jj, drop = FALSE], y, wt, offset=object$offset,
@@ -776,7 +776,7 @@ dropterm.glm <-
     dfs <- c(object$rank, dfs)
     dev <- c(chisq, dev)
     dispersion <- if (is.null(scale) || scale == 0)
-	summary(object, dispersion = NULL)$dispersion
+  summary(object, dispersion = NULL)$dispersion
     else scale
     fam <- object$family$family
     loglik <-
@@ -804,17 +804,17 @@ dropterm.glm <-
         if(fam == "binomial" || fam == "poisson")
             warning(gettextf("F test assumes 'quasi%s' family", fam),
                     domain = NA)
-	dev <- aod$Deviance
-	rms <- dev[1L]/rdf
+  dev <- aod$Deviance
+  rms <- dev[1L]/rdf
         dev <- pmax(0, dev - dev[1L])
-	dfs <- aod$Df
-	rdf <- object$df.residual
-	Fs <- (dev/dfs)/rms
-	Fs[dfs < 1e-4] <- NA
-	P <- Fs
-	nas <- !is.na(Fs)
-	P[nas] <- safe_pf(Fs[nas], dfs[nas], rdf, lower.tail=FALSE)
-	aod[, c("F value", "Pr(F)")] <- list(Fs, P)
+  dfs <- aod$Df
+  rdf <- object$df.residual
+  Fs <- (dev/dfs)/rms
+  Fs[dfs < 1e-4] <- NA
+  P <- Fs
+  nas <- !is.na(Fs)
+  P[nas] <- safe_pf(Fs[nas], dfs[nas], rdf, lower.tail=FALSE)
+  aod[, c("F value", "Pr(F)")] <- list(Fs, P)
     }
     aod <- aod[o, ]
     head <- c("Single term deletions", "\nModel:",

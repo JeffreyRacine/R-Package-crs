@@ -324,10 +324,10 @@ crs.formula <- function(formula,
                         degree=NULL,
                         segments=NULL,
                         include=NULL,
-												degree.max=10, 
-												segments.max=10, 
-												degree.min=0, 
-												segments.min=1, 
+                        degree.max=10, 
+                        segments.max=10, 
+                        degree.min=0, 
+                        segments.min=1, 
                         cv=c("nomad","exhaustive","none"),
                         cv.func=c("cv.ls","cv.gcv","cv.aic"),
                         kernel=TRUE,
@@ -339,15 +339,15 @@ crs.formula <- function(formula,
                         deriv=0,
                         data.return=FALSE,
                         prune=FALSE,
-												restarts=0,
+                        restarts=0,
                         random.seed=42,
                         opts=list("MAX_BB_EVAL"=10000,
                                   "EPSILON"=.Machine$double.eps,
                                   "INITIAL_MESH_SIZE"="r1.0e-01",
                                   "MIN_MESH_SIZE"=paste("r",sqrt(.Machine$double.eps),sep=""),
                                   "MIN_POLL_SIZE"=paste("r",sqrt(.Machine$double.eps),sep="")),
-												nmulti=5,
-												...) {
+                        nmulti=5,
+                        ...) {
 
   cv <- match.arg(cv)  
   cv.func <- match.arg(cv.func)
@@ -391,12 +391,12 @@ crs.formula <- function(formula,
   if(!is.null(degree)&&length(degree)!=num.x) stop(" degree vector must be the same length as x")
   if(!is.null(segments)&&length(segments)!=num.x) stop(" segments vector must be the same length as x")    
 
-	if(cv=="none"){
-			if(is.null(degree)&!is.null(x)) degree <- rep(3,num.x)
-			if(is.null(segments)&!is.null(x)) segments <- rep(1,num.x)
-			if(is.null(include)&!is.null(z)&!kernel) include <- rep(1,num.z)
-			if(is.null(lambda)&!is.null(z)&kernel) lambda <- rep(0,num.z)
-	}
+  if(cv=="none"){
+      if(is.null(degree)&!is.null(x)) degree <- rep(3,num.x)
+      if(is.null(segments)&!is.null(x)) segments <- rep(1,num.x)
+      if(is.null(include)&!is.null(z)&!kernel) include <- rep(1,num.z)
+      if(is.null(lambda)&!is.null(z)&kernel) lambda <- rep(0,num.z)
+  }
 
 
   if(cv!="none"&&basis!="auto"&&NCOL(xz)>1) warning(paste(" cv specified but basis is ", basis, ": you might consider basis=\"auto\"",sep=""))
@@ -413,50 +413,50 @@ crs.formula <- function(formula,
       
       cv.return <- frscvNOMAD(xz=xz,
                               y=y,
-															degree.max=degree.max, 
-															segments.max=segments.max, 
-															degree.min=degree.min, 
-															segments.min=segments.min, 
-															complexity=complexity,
-															knots=knots,
-															basis=basis,
-															cv.func=cv.func,
-															degree=degree,
-															segments=segments, 
-															include=include, 
+                              degree.max=degree.max, 
+                              segments.max=segments.max, 
+                              degree.min=degree.min, 
+                              segments.min=segments.min, 
+                              complexity=complexity,
+                              knots=knots,
+                              basis=basis,
+                              cv.func=cv.func,
+                              degree=degree,
+                              segments=segments, 
+                              include=include, 
                               random.seed=random.seed,
-															opts=opts,
-															nmulti=nmulti)
+                              opts=opts,
+                              nmulti=nmulti)
 
-	cv.min <- cv.return$cv.min
-	degree <- cv.return$degree
-	segments <- cv.return$segments
-	include <- cv.return$I
-	basis <- cv.return$basis
+  cv.min <- cv.return$cv.min
+  degree <- cv.return$degree
+  segments <- cv.return$segments
+  include <- cv.return$I
+  basis <- cv.return$basis
 
-		}	else if(cv=="exhaustive") {
+    }  else if(cv=="exhaustive") {
 
       cv.return <- frscv(xz=xz,
-												 y=y,
-												 degree.max=degree.max, 
-												 segments.max=segments.max, 
-												 degree.min=degree.min, 
-												 segments.min=segments.min, 
-												 complexity=complexity,
-												 knots=knots,
-												 basis=basis,
-												 cv.func=cv.func,
-												 degree=degree,
-												 segments=segments)
+                         y=y,
+                         degree.max=degree.max, 
+                         segments.max=segments.max, 
+                         degree.min=degree.min, 
+                         segments.min=segments.min, 
+                         complexity=complexity,
+                         knots=knots,
+                         basis=basis,
+                         cv.func=cv.func,
+                         degree=degree,
+                         segments=segments)
 
 
-	cv.min <- cv.return$cv.min
-	degree <- cv.return$degree
-	segments <- cv.return$segments
-	include <- cv.return$I
-	basis <- cv.return$basis
+  cv.min <- cv.return$cv.min
+  degree <- cv.return$degree
+  segments <- cv.return$segments
+  include <- cv.return$I
+  basis <- cv.return$basis
 
-		}
+    }
 
   } else {
 
@@ -466,17 +466,17 @@ crs.formula <- function(formula,
 
       cv.return <- krscvNOMAD(xz=xz,
                               y=y,
-															degree.max=degree.max, 
-															segments.max=segments.max, 
-															degree.min=degree.min, 
-															segments.min=segments.min, 
+                              degree.max=degree.max, 
+                              segments.max=segments.max, 
+                              degree.min=degree.min, 
+                              segments.min=segments.min, 
                               complexity=complexity,
                               knots=knots,
                               basis=basis,
                               cv.func=cv.func,
                               degree=degree,
                               segments=segments,
-															lambda=lambda, 
+                              lambda=lambda, 
                               random.seed=random.seed,
                               opts=opts,
                               nmulti=nmulti)
@@ -492,10 +492,10 @@ crs.formula <- function(formula,
       
       cv.return <- krscv(xz=xz,
                          y=y,
-												 degree.max=degree.max, 
-												 segments.max=segments.max, 
-												 degree.min=degree.min, 
-												 segments.min=segments.min, 
+                         degree.max=degree.max, 
+                         segments.max=segments.max, 
+                         degree.min=degree.min, 
+                         segments.min=segments.min, 
                          complexity=complexity,
                          knots=knots,
                          basis=basis,
@@ -507,7 +507,7 @@ crs.formula <- function(formula,
       degree <- cv.return$degree
       segments <- cv.return$segments
       include <- cv.return$I
-			lambda <- cv.return$lambda
+      lambda <- cv.return$lambda
       basis <- cv.return$basis
     
     }

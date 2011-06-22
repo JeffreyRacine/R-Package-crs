@@ -10,10 +10,10 @@
 ## xeval: optional evaluation data for the exogenous predictors
 
 ## alpha.min: minimum value when conducting 1-dimensional search for
-##            optimal Tihhonov regularization parameter alpha
+##            optimal Tikhonov regularization parameter alpha
 
 ## alpha.max: maximum value when conducting 1-dimensional search for
-##            optimal Tihhonov regularization parameter alpha
+##            optimal Tikhonov regularization parameter alpha
 
 ## ... optional arguments for crs()
 
@@ -370,7 +370,7 @@ crsiv <- function(y,
     ## Landweber-Fridman
 
     ## We begin the iteration computing phi.0 and phi.1 directly, then
-    ## interate.
+    ## iterate.
     
     console <- printClear(console)
     console <- printPop(console)
