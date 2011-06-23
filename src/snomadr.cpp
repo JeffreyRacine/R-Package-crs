@@ -210,6 +210,7 @@ class RMy_Evaluator : public NOMAD::Evaluator {
 						NOMAD::Evaluator ( p ) {};
 
 				~RMy_Evaluator ( void ) {};
+using NOMAD::Evaluator::eval_x;
 
 				bool eval_x ( NOMAD::Eval_Point   & x          ,
 								const NOMAD::Double & h_max      ,

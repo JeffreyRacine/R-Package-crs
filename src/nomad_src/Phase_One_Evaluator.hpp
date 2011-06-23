@@ -86,6 +86,7 @@ namespace NOMAD {
                          or not -- \b OUT.
        \return A boolean equal to \c false if the evaluation failed.
      */
+using NOMAD::Evaluator::eval_x;   /*zhenghua nie*/
     virtual bool eval_x ( NOMAD::Eval_Point   & x          ,
 			  const NOMAD::Double & h_max      ,
 			  bool                & count_eval   ) const

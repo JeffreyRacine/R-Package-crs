@@ -46,6 +46,8 @@
 
 namespace NOMAD {
 
+using namespace std;
+
   /// Clock class.
   /**
      Time measurement.\n\n

@@ -46,6 +46,8 @@
 
 namespace NOMAD {
 
+using namespace std;
+
   /// Class describing a polling direction.
   class Direction : public NOMAD::Point {
 

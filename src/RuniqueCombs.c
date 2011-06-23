@@ -253,12 +253,12 @@ int *Xd_strip(matrix *Xd)
 */
 
 { int *yxindex,start,stop,ok,i;
-  long Xdor;
+  /*  long Xdor;*/
   double xi,**dum;
   yxindex = (int *)calloc((size_t)Xd->r,sizeof(int));
   dum = (double **)calloc((size_t)Xd->r,sizeof(double *));
   msort(*Xd);
-  Xdor=Xd->r; /* keep record of original length of Xd */
+  /*  Xdor=Xd->r;  keep record of original length of Xd */
   start=stop=0;ok=1;
   while(ok)
   { /* look for start of run of equal rows ..... */

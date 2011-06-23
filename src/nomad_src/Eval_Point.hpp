@@ -519,6 +519,9 @@ namespace NOMAD {
        \param in_block If \c true, the point is displayed into an indented block
                        -- \b IN -- \b optional (default = \c true ).
     */
+using NOMAD::Point::operator*;
+using NOMAD::Point::operator<;
+using NOMAD::Point::display;   /*zhenghua nie for avoiding Warning: hiden virtual functions*/
     virtual void display ( const NOMAD::Display & out , bool in_block = true ) const;
   };
   

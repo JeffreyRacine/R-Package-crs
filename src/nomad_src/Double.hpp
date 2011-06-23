@@ -456,7 +456,7 @@ namespace NOMAD {
   */
   inline bool operator == ( const Double & d1 , const Double & d2 )
   {
-    return fabs ( d1.value() - d2.value() ) < NOMAD::Double::get_epsilon();
+    return std::abs ( d1.value() - d2.value() ) < NOMAD::Double::get_epsilon();
   }
 
   /// Comparison operator \c !=.

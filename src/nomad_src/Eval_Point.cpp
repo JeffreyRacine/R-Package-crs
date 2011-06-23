@@ -478,7 +478,7 @@ bool NOMAD::Eval_Point::check_nan ( void ) const
     if ( isnan ( _bb_outputs[i].value() ) )
       return true;
 #else
-    if ( std::isnan ( _bb_outputs[i].value() ) )
+    if ( isnan ( _bb_outputs[i].value() ) )
       return true;
 #endif
   return false;

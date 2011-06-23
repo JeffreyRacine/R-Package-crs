@@ -41,6 +41,7 @@
 */
 #include "Double.hpp"
 
+using namespace std;
 /*-----------------------------------*/
 /*   static members initialization   */
 /*-----------------------------------*/
