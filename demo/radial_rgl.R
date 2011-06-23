@@ -1,5 +1,5 @@
 ## This illustration considers the `radial function' and plots the
-## results by construct a 3D real-time rendering plot using OpenGL.
+## results by constructing a 3D real-time rendering plot using OpenGL.
 
 require(crs)
 require(rgl)
