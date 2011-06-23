@@ -1,4 +1,4 @@
-Changes from Version 0.14-9 to 0.15-0 [22-Jun-2011]
+Changes from Version 0.14-9 to 0.15-0 [23-Jun-2011]
 
 * Thanks to Professor Brian Ripley, compile on Solaris system issues
   are resolved, and check/examples are reduced in run time to
