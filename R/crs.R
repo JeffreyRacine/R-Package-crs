@@ -4,16 +4,17 @@
 ##  regression splines with categorical factors using two approaches,
 ##  (i) kernel smoothing, and (ii) indicator function
 ##  bases. Cross-validation (leave-one-out) can be used to select (i)
-##  the degree of the basis spline for each continuous predictor, (ii)
-##  bandwidth for each ordinal/nominal predictor, or (iii) whether or
-##  not to include each ordinal/nominal predictor's indicator basis.
+##  the degree and number of knots (`segments'+1) of the basis spline
+##  for each continuous predictor, (ii) bandwidth for each
+##  ordinal/nominal predictor, or (iii) whether or not to include each
+##  ordinal/nominal predictor's indicator basis.
 
 crs <- function(...) UseMethod("crs")
 
 ## This function computes the fit and returns the fit, degree
-## (vector), and include (vector) for categorical predictors. Note
-## that degree of zero and include of zero drop the variable from the
-## resulting fit.
+## (vector), segments (vector), and include (vector) for categorical
+## predictors. Note that degree of zero and include of zero drop the
+## variable from the resulting fit.
 
 crsEst <- function(xz,
                    y,
@@ -313,11 +314,11 @@ crs.default <- function(xz,
 ## number for multiple initial points.  if it is bigger than 1, when
 ## nomad is true, it will call snomadRSolve, otherwise, it will call
 ## smultinomadRSolve See ?snomadr
-# Jun 4,  2011
-#1) degree.max (we have removed  basis.maxdim)
-#2) segments.max (we have removed  basis.maxdim)
-#3) degree.min (currently 0)
-#4) segments.min (currently 1)
+## Jun 4,  2011
+##1) degree.max (we have removed  basis.maxdim)
+##2) segments.max (we have removed  basis.maxdim)
+##3) degree.min (currently 0)
+##4) segments.min (currently 1)
 
 crs.formula <- function(formula,
                         data=list(),
