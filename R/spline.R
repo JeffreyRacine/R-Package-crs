@@ -784,6 +784,13 @@ deriv.factor.spline <- function(x,
 ## calculate the leave-one-out cross-validation function for
 ## categorical kernel splines.
 
+## June 24 2011 - replaced lm() with model <- lm.fit/lm.wfit and
+## hat(model$qr) both here and in cv.factor.spline. Here it reduces
+## runtime by 20-30%. But more importantly lm.fit is more `robust'
+## than lsfit (lm.fit is the `workhorse' of lm, lsfit calls LAPACK
+## code). Note that it is noticable as it returns a larger cv value
+## for more complicated problems which is naturally desirable.
+
 cv.kernel.spline <- function(x,
                              y,
                              z=NULL,
@@ -971,6 +978,7 @@ cv.factor.spline <- function(x,
     } else {
       model <- lm.fit(prod.spline(x=x,z=z,K=K,I=I,knots=knots,basis=basis),y)
     }
+    epsilon <- residuals(model)
     htt <- hat(model$qr)
     htt <- ifelse(htt == 1, 1-.Machine$double.eps, htt)
   } else {
@@ -979,11 +987,11 @@ cv.factor.spline <- function(x,
   }
 
   if(cv.func == "cv.ls") {
-    cv <- mean((residuals(model)/(1-htt))^2)
+    cv <- mean((/(1-htt))^2)
   } else if(cv.func == "cv.gcv"){
-    cv <- mean((residuals(model)/(1-mean(htt)))^2)
+    cv <- mean((epsilon/(1-mean(htt)))^2)
   } else if(cv.func == "cv.aic"){
-    sigmasq <- mean(residuals(model)^2)
+    sigmasq <- mean(epsilon^2)
     traceH <- sum(htt)
     penalty <- (1+traceH/n)/(1-(traceH+2)/n)
     cv <- ifelse(penalty < 0, .Machine$double.xmax, log(sigmasq)+penalty);
