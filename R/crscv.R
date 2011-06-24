@@ -82,7 +82,7 @@ print.crscv <- function(x, ...){
 
     cat(paste("\n\nMaximum spline degree for search: ",format(x$degree.max),sep=""),sep="")
     cat(paste("\nBasis: ", x$basis,sep=""))
-    if(x$restarts>0) cat(paste("\nNumber of restarts = ", format(x$restarts),sep=""),sep="")    
+    if(!is.null(x$restarts) && (x$restarts > 0)) cat(paste("\nNumber of restarts = ", format(x$restarts),sep=""),sep="")    
     cat("\n\n")
   } else {
     cat("\nRegression Spline Cross-Validation",sep="")
@@ -101,7 +101,7 @@ print.crscv <- function(x, ...){
 
     cat(paste("\n\nMaximum spline degree for search: ",format(x$degree.max),sep=""),sep="")
     cat(paste("\nBasis: ", x$basis,sep=""))
-    if(x$restarts>0) cat(paste("\nNumber of restarts = ", format(x$restarts),sep=""),sep="")    
+    if(!is.null(x$restarts) && (x$restarts > 0)) cat(paste("\nNumber of restarts = ", format(x$restarts),sep=""),sep="")    
     cat("\n\n")
   }
 }
