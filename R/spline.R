@@ -852,20 +852,22 @@ cv.kernel.spline <- function(x,
       cv <- ifelse(penalty < 0, .Machine$double.xmax, log(sigmasq)+penalty);
     }
   } else {
-    ## Categorical predictors
+    ## Categorical predictors - this is the workhorse
     z <- as.matrix(z)
     num.z <- NCOL(z)
     epsilon <- numeric(length=n)
     htt <- numeric(length=n)
     if(any(K[,1] > 0)) {
-      P <- prod.spline(x=x,K=K,knots=knots,basis=basis) ## moved outside loop Feb 3 2011
+      P <- prod.spline(x=x,K=K,knots=knots,basis=basis)
       for(i in 1:nrow.z.unique) {
         zz <- ind == ind.vals[i]
         L <- prod.kernel(Z=z,z=z.unique[ind.vals[i],],lambda=lambda,kernel.type=kernel.type)
         if(basis=="additive") {
-          model <- lsfit(P,y,L,intercept=TRUE)
+          ## Additive spline regression models have an intercept in the lm()
+          ## model (though not in the gsl.bs function)
+          model <- lm.wfit(cbind(1,P),y,L)
         } else {
-          model <- lsfit(P,y,L,intercept=FALSE)
+          model <- lm.wfit(P,y,L)
         }
         epsilon[zz] <- residuals(model)[zz]
         htt[zz] <- hat(model$qr)[zz]
@@ -931,11 +933,6 @@ cv.factor.spline <- function(x,
 
   n <- NROW(x)
 
-  ## Additive spline regression models have an intercept in the lm()
-  ## model (though not in the gsl.bs function)
-
-  lm.intercept <- ifelse(basis=="additive", TRUE, FALSE)
-
   ## Without computing P, compute the number of columns that P would
   ## be and if degrees of freedom is 1 or less, return a large penalty.
 
@@ -967,8 +964,14 @@ cv.factor.spline <- function(x,
   ## Otherwise, compute the cross-validation function
 
   if(any(K[,1] > 0)||any(I > 0)) {
-    suppressWarnings(epsilon <- residuals(lsfit(P <- prod.spline(x=x,z=z,K=K,I=I,knots=knots,basis=basis),y,intercept=lm.intercept)))
-    htt <- hat(P)
+    if(basis=="additive") {
+      ## Additive spline regression models have an intercept in the lm()
+      ## model (though not in the gsl.bs function)
+      model <- lm.fit(cbind(1,prod.spline(x=x,z=z,K=K,I=I,knots=knots,basis=basis)),y)
+    } else {
+      model <- lm.fit(prod.spline(x=x,z=z,K=K,I=I,knots=knots,basis=basis),y)
+    }
+    htt <- hat(model$qr)
     htt <- ifelse(htt == 1, 1-.Machine$double.eps, htt)
   } else {
     htt <- rep(1/n,n)
@@ -976,11 +979,11 @@ cv.factor.spline <- function(x,
   }
 
   if(cv.func == "cv.ls") {
-    cv <- mean(epsilon^2/(1-htt)^2)
+    cv <- mean((residuals(model)/(1-htt))^2)
   } else if(cv.func == "cv.gcv"){
-    cv <- mean(epsilon^2/(1-mean(htt))^2)
+    cv <- mean((residuals(model)/(1-mean(htt)))^2)
   } else if(cv.func == "cv.aic"){
-    sigmasq <- mean(epsilon^2)
+    sigmasq <- mean(residuals(model)^2)
     traceH <- sum(htt)
     penalty <- (1+traceH/n)/(1-(traceH+2)/n)
     cv <- ifelse(penalty < 0, .Machine$double.xmax, log(sigmasq)+penalty);
