@@ -978,16 +978,16 @@ cv.factor.spline <- function(x,
     } else {
       model <- lm.fit(prod.spline(x=x,z=z,K=K,I=I,knots=knots,basis=basis),y)
     }
-    epsilon <- residuals(model)
     htt <- hat(model$qr)
     htt <- ifelse(htt == 1, 1-.Machine$double.eps, htt)
+    epsilon <- residuals(model)
   } else {
     htt <- rep(1/n,n)
     epsilon <- y-mean(y)
   }
 
   if(cv.func == "cv.ls") {
-    cv <- mean((/(1-htt))^2)
+    cv <- mean((epsilon/(1-htt))^2)
   } else if(cv.func == "cv.gcv"){
     cv <- mean((epsilon/(1-mean(htt)))^2)
   } else if(cv.func == "cv.aic"){
