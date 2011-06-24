@@ -75,13 +75,12 @@ regression splines that admits both continuous and categorical
 predictors. The categorical predictors can be handled in two ways, (i)
 using kernel weighting where the kernel functions are tailored to the
 discrete support of the categorical predictors \citep{RACINE_LI:2004},
-and (ii) using indicator basis functions. The practical difference
+and (ii) using indicator basis functions. The fundamental difference
 between these two approaches is that the use of indicator basis
-functions consume degrees of freedom, while kernel weighting does
-not. 
+functions consume degrees of freedom, while kernel weighting does not.
 
 This package implements the approaches described in
-\citep{MA_RACINE_YANG:2010} and \citep{MA_RACINE:2011} when the option
+\citep{MA_RACINE_YANG:2011} and \citep{MA_RACINE:2011} when the option
 \code{kernel=TRUE} is selected as described below. As well, this
 package implements a range of related methods and has options that
 (hopefully) make it appealing for applied projects, research, and
@@ -155,7 +154,7 @@ predictors lying in each cell. Though consistent, this `frequency'
 approach can be inefficient. Recent developments in the kernel
 smoothing of categorical data \citep{LI_RACINE:2007} suggest more
 efficient estimation approaches in such settings. The \pkg{crs}
-package considers two complementary approaches that seamlessly handles
+package considers two complementary approaches that seamlessly handle
 the mix of continuous and categorical predictors often encountered in
 applied settings.
 
@@ -177,9 +176,10 @@ $D_{s}\equiv \left\{ 0,1,\ldots ,c_{s}-1\right\} $, $ s=1,\ldots ,r$,
 and let $c_{s}$ be a finite positive constant.
 
 For the continuous predictors the regression spline model employs the
-B-spline routines in the GNU Scientific Library. The B-spline function
-is the maximally differentiable interpolative basis function (B-spline
-stands for `basis-spline'), and a B-spline with no internal knots is a
+B-spline routines in the GNU Scientific Library
+(\url{http://www.gnu.org/software/gsl/}). The B-spline function is the
+maximally differentiable interpolative basis function (B-spline stands
+for `basis-spline'), and a B-spline with no internal knots is a
 B\'ezier curve.
 
 Heuristically, we conduct linear (in parameter) regression using the
@@ -190,10 +190,12 @@ continuous predictor. For the tensor product bases we set
 additive spline bases we adopt the \code{intercept=FALSE} variants
 (the B-splines will therefore not sum to one, i.e., an order $m$
 B-spline with one segment (two knots/breakpoints) has $m+1$ columns
-and we drop the first as is often done) and include instead an
-intercept in the model. This allows multiple bases to coexist when
-there is more than one continuous predictor without introducing
-singularities. The tensor product basis is given by
+and we drop the first as is often done, though see
+\citep{ZHOU_WOLFE:2000} for an alternative approach based upon
+shrinkage methods) and include instead an intercept in the model. This
+allows multiple bases to coexist when there is more than one
+continuous predictor without introducing singularities. The tensor
+product basis is given by
 \begin{equation*}
 B_1\otimes B_2\otimes \dots \otimes B_p,
 \end{equation*}
@@ -342,8 +344,8 @@ Note that \code{cv="exhaustive"} is often unfeasible (this
 combinatoric problem can become impossibly large to compute in finite
 time) hence \code{cv="nomad"} is the default. However, with
 \code{cv="nomad"} one should set \code{nmulti=} to some sensible value
-greater than zero (say, 10 or larger) to avoid becoming trapped in
-local minima.
+greater than zero (say, 10 or larger) to strive to avoid becoming
+trapped in local minima.
 
 \subsection*{Data-Driven Smoothing Parameter Criteria}
 
