@@ -863,12 +863,12 @@ cv.kernel.spline <- function(x,
         zz <- ind == ind.vals[i]
         L <- prod.kernel(Z=z,z=z.unique[ind.vals[i],],lambda=lambda,kernel.type=kernel.type)
         if(basis=="additive") {
-          model <- lm(y~P,weights=L)
+          model <- lsfit(P,y,L,intercept=TRUE)
         } else {
-          model <- lm(y~P-1,weights=L)
+          model <- lsfit(P,y,L,intercept=FALSE)
         }
         epsilon[zz] <- residuals(model)[zz]
-        htt[zz] <- hatvalues(model)[zz]
+        htt[zz] <- hat(model$qr)[zz]
       }
     } else {
       z.factor <- data.frame(factor(z[,1]))
@@ -889,9 +889,9 @@ cv.kernel.spline <- function(x,
     htt <- ifelse(htt == 1, 1-.Machine$double.eps, htt)
 
     if(cv.func == "cv.ls") {
-      cv <- mean(epsilon^2/(1-htt)^2)
+      cv <- mean((epsilon/(1-htt))^2)
     } else if(cv.func == "cv.gcv"){
-      cv <- mean(epsilon^2/(1-mean(htt))^2)
+      cv <- mean((epsilon/(1-mean(htt)))^2)
     } else if(cv.func == "cv.aic"){
       sigmasq <- mean(epsilon^2)
       traceH <- sum(htt)
