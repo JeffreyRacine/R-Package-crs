@@ -9,3 +9,4 @@ sine_rgl                           R code for fitting and generating a 3D real-t
 radial_constrained_mean            R code for constrained radial function estimation (constrain the mean to lie between 0 and 1/2)
 radial_constrained_first_partial   R code for constrained radial function estimation (constrain the first derivatives to lie between -0.1 and 0.1)
 radial_constrained_second_partial  R code for constrained radial function estimation (constrain the second derivatives to be non-negative)
+spline.R                           R code from the package with low-level functions needed for constrained estimation

@@ -22,4 +22,6 @@ sed -i.bak -e 's/version [0-9.][0-9.]*-[0-9][0-9]*/'"version $maver-$miver/" zzz
 
 rm zzz.R.bak
 
+cp spline.R ../demo
+
 cd ..

@@ -85,7 +85,8 @@ dvec <- as.vector(p)
 
 ## B <- model.matrix(model.unres$model.lm)
 
-source("~/R/crs/R/spline.R")
+spline.path <- path.package('crs')
+source(paste(spline.path,"/demo/spline.R", sep="")) 
 
 B <- prod.spline(x=data.train[,-1],
                  K=cbind(model.unres$degree,model.unres$segments),
@@ -167,13 +168,29 @@ ylim <- c(min(fitted(model.unres),max(fitted(model.unres))))
 
 zlim <- c(min(fitted(model.unres)),max(fitted(model.unres)))
 
-pdf(file="unres.pdf")
-persp(x1.seq, x2.seq, fitted.unres, col="lightblue", ticktype="detailed", 
-           ylab="X2", xlab="X1", zlim=zlim, zlab="Conditional Expectation", theta=300, phi=30)
-dev.off()
+par(mfrow=c(1,2))
 
-pdf(file="res.pdf")
-persp(x1.seq, x2.seq, fitted.res, col="lightblue", ticktype="detailed", 
-           ylab="X2", xlab="X1", zlim=zlim, zlab="Conditional Expectation", theta=300, phi=30)
-dev.off()
+persp(x1.seq, x2.seq,
+      fitted.unres,
+      main="Unconstrained Regression Spline",
+      col="lightblue",
+      ticktype="detailed", 
+      ylab="X2",
+      xlab="X1",
+      zlim=zlim,
+      zlab="Conditional Expectation",
+      theta=300,
+      phi=30)
+
+persp(x1.seq, x2.seq,
+      fitted.res,
+      main="Constrained Regression Spline",
+      col="lightblue",
+      ticktype="detailed", 
+      ylab="X2",
+      xlab="X1",
+      zlim=zlim,
+      zlab="Conditional Expectation",
+      theta=300,
+      phi=30)
 
