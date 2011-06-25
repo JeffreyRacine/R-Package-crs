@@ -85,7 +85,8 @@ dvec <- as.vector(p)
 
 ## B <- model.matrix(model.unres$model.lm)
 
-source("~/R/crs/R/spline.R")
+spline.path <- path.package('crs')
+source(paste(spline.path,"/demo/spline.R", sep="")) 
 
 B <- prod.spline(x=data.train[,-1],
                  K=cbind(model.unres$degree,model.unres$segments),
