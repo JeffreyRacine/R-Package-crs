@@ -85,7 +85,7 @@ dvec <- as.vector(p)
 
 ## B <- model.matrix(model.unres$model.lm)
 
-source(paste(path.package('crs'),"/demo/spline.R", sep="")) 
+source(paste(path.package("crs"),"/demo/spline.R", sep="")) 
 
 B <- prod.spline(x=data.train[,-1],
                  K=cbind(model.unres$degree,model.unres$segments),
@@ -184,6 +184,7 @@ persp(x1.seq, x2.seq,
 persp(x1.seq, x2.seq,
       fitted.res,
       main="Constrained Regression Spline",
+      sub="-0.1 <= g'(x) <= 0.1",
       col="lightblue",
       ticktype="detailed", 
       ylab="X2",
