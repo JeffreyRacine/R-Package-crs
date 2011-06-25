@@ -1,0 +1,201 @@
+## $Id: radial_constrained_mean.R,v 1.1 2011/06/25 15:09:36 jracine Exp jracine $
+
+rm(list=ls())
+
+## Here we conduct a hypothesis test using a nonparametric bootstrap
+## and the constrained model. num.boot is the number of bootstrap
+## replications. D is the test statistic. This code to conduct
+## restricted regression splines on evaluation data. Presumes
+## continuous regressors, accepts an arbitrary number of regressors,
+## and accepts arbitrary derivative restrictions.
+
+num.boot <- 399
+set.seed(42)
+
+n <- 500
+
+## Test statistic
+
+D <- function(p) {
+  n <- length(p)
+  ## Smallest weights returned are 6.938894e-18
+  if(isTRUE(all.equal(rep(1/n,n),p))) {
+    return(0)
+  } else {
+    return(mean((p-rep(1/n,n))^2))
+  }
+}
+
+D.boot <- numeric(num.boot)
+
+## Parameters to be set.
+
+x.min <- -5
+x.max <- 5
+
+## These will need to be modified if/when you modify Amat and bvec
+
+lower <- -0.00
+upper <- 1.00
+
+## Load libraries
+
+library(crs)
+library(quadprog)
+
+## IMPORTANT - you must be careful to NOT read data from environment -
+## this appears to work - create a data frame.
+
+## IMPORTANT - code that follows presumes y is the first variable in
+## the data frame and all remaining variables are regressors used for
+## the estimation.
+
+## Generate a DGP, or read in your own data and create y, x1,
+## etc. When you change this by adding or removing variables you need
+## to change `data', `rm(...)', and `bw <- ...'. After that all code
+## will need no modification.
+
+x1 <- runif(n,x.min,x.max)
+x2 <- runif(n,x.min,x.max)
+
+y <- sin(sqrt(x1^2+x2^2))/sqrt(x1^2+x2^2) + rnorm(n,sd=.1)
+
+data.train <- data.frame(y,x1,x2)
+
+rm(y,x1,x2)
+
+model.unres <- crs(y~x1+x2,
+                   basis="auto",
+                   data=data.train,
+                   nmulti=5)
+
+## Start from uniform weights equal to 1/n. If constraints are
+## non-binding these are optimal.
+
+p <- rep(1/n,n)
+Dmat <- diag(1,n,n)
+dvec <- as.vector(p)
+
+## If you wish to alter the constraints, you need to modify Amat and
+## bvec.
+
+## Create Aymat for jth regressor calling the Aymat.R code and
+## function
+
+B <- model.matrix(model.unres$model.lm)
+Aymat.res <- n*t(t(B%*%solve(t(B)%*%B)%*%t(B))*data.train$y)
+
+## Here is Amat
+
+Amat <- t(rbind(rep(1,n),
+                Aymat.res,
+                -Aymat.res))
+
+rm(Aymat.res)
+
+## Here is bvec
+
+bvec <- c(0,
+          (rep(lower,n)-fitted(model.unres)),
+          (fitted(model.unres)-rep(upper,n)))
+
+## Solve the quadratic programming problem
+
+QP.output <- solve.QP(Dmat=Dmat,dvec=dvec,Amat=Amat,bvec=bvec,meq=1)
+
+## No longer needed...
+
+rm(Amat,bvec)
+
+## Get the solution and update the uniform weights
+
+w.hat <- QP.output$solution
+
+p.updated <- p + w.hat
+
+D.stat <- D(p.updated)
+
+if(D.stat > 0) {
+  
+  ## Generate fitted values and data from constrained model
+  
+  data.trans <- data.frame(y=p.updated*n*data.train$y,data.train[,2:ncol(data.train)])
+  names(data.trans) <- names(data.train) ## Necessary when there is only 1 regressor
+  model.res <- crs(y~x1+x2,cv="none",
+                   degree=model.unres$degree,
+                   segments=model.unres$segments,
+                   basis=model.unres$basis,                                  
+                   data=data.trans)
+  
+  yhat <- fitted(model.res)
+  model.resid <- data.train$y - fitted(model.unres)
+  
+  for(b in 1:num.boot) {
+
+    print(b)
+    
+    ## Draw a bootstrap resample from the constrained model
+    
+    y.star <- yhat + sample(model.resid,replace=TRUE)
+    
+    ## Now compute model for bootstrap resample...
+    
+    data.boot <- data.frame(y=y.star,data.train[,2:ncol(data.train)])
+    names(data.boot) <- names(data.train) ## Necessary when there is only 1 regressor
+    model.boot <- crs(y~x1+x2,cv="none",
+                      degree=model.unres$degree,
+                      segments=model.unres$segments,
+                      basis=model.unres$basis,                                  
+                      data=data.boot)
+
+    B <- model.matrix(model.boot$model.lm)
+    Aymat.res <- n*t(t(B%*%solve(t(B)%*%B)%*%t(B))*data.boot$y)
+
+    ## Here is Amat
+    
+    Amat <- t(rbind(rep(1,n),
+                    Aymat.res,
+                    -Aymat.res))
+    
+    ## Here is bvec
+    
+    bvec <- c(0,
+              (rep(lower,n)-fitted(model.boot)),
+              (fitted(model.boot)-rep(upper,n)))
+    
+    ## Solve the quadratic programming problem
+    
+    QP.output <- solve.QP(Dmat=Dmat,dvec=dvec,Amat=Amat,bvec=bvec,meq=1)
+
+    ## Get the solution and update the uniform weights
+    
+    w.hat <- QP.output$solution
+    
+    p.updated <- p + w.hat
+    
+    D.boot[b] <- D(p.updated)
+    
+  }
+  
+  D.boot <- sort(D.boot)
+  
+}
+
+if(D.stat > 0 ) {
+  
+  P <- mean(ifelse(D.boot > D.stat, 1, 0))
+  ## Check for degenerate case (all bootstrap D statistics identical)
+  if(length(unique(D.boot))==1) P <- runif(1) 
+
+} else {
+  
+  ## When restrictions are non-binding, p is draw from uniform (case
+  ## definitely degenerate)
+  P <- runif(1)
+  
+}
+
+plot(density(D.boot),
+     main="Null Distribution",
+     sub=paste("Test statistic: ", formatC(D.stat,digits=3,format="g"),
+       ", P-value = ", formatC(P,digits=2,format="f"),sep=""))

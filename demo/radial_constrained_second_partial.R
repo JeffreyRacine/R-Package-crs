@@ -74,10 +74,8 @@ dvec <- as.vector(p)
 ## Create Aymat for jth regressor calling the Aymat.R code and
 ## function
 
-## Evaluation data...
-
-## Generate the estimated model computed for the evaluation data. Note
-## - we need to premultiply the weights by n and each column must be
+## Generate the estimated model computed for the training data. Note -
+## we need to premultiply the weights by n and each column must be
 ## multiplied by y
 
 ## For mean the following works and is identical to that below, but
@@ -123,10 +121,10 @@ rm(B,B.x1,B.x2,Aymat.res.x1,Aymat.res.x2)
 ## Here is bvec
 
 bvec <- c(0,
-          (rep(lower,n.eval)-model.gradient.unres[,1]),
-          (model.gradient.unres[,1]-rep(upper,n.eval)),
-          (rep(lower,n.eval)-model.gradient.unres[,2]),
-          (model.gradient.unres[,2]-rep(upper,n.eval)))
+          (rep(lower,n)-model.gradient.unres[,1]),
+          (model.gradient.unres[,1]-rep(upper,n)),
+          (rep(lower,n)-model.gradient.unres[,2]),
+          (model.gradient.unres[,2]-rep(upper,n)))
 
 
 ## Solve the quadratic programming problem

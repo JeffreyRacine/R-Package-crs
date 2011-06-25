@@ -73,10 +73,8 @@ dvec <- as.vector(p)
 ## Create Aymat for jth regressor calling the Aymat.R code and
 ## function
 
-## Evaluation data...
-
-## Generate the estimated model computed for the evaluation data. Note
-## - we need to premultiply the weights by n and each column must be
+## Generate the estimated model computed for the training data. Note -
+## we need to premultiply the weights by n and each column must be
 ## multiplied by y
 
 B <- model.matrix(model.unres$model.lm)
@@ -93,8 +91,8 @@ rm(Aymat.res)
 ## Here is bvec
 
 bvec <- c(0,
-          (rep(lower,n.eval)-fitted(model.unres)),
-          (fitted(model.unres)-rep(upper,n.eval)))
+          (rep(lower,n)-fitted(model.unres)),
+          (fitted(model.unres)-rep(upper,n)))
 
 ## Solve the quadratic programming problem
 
