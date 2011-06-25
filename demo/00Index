@@ -1,8 +1,11 @@
-radial_persp         R code for fitting and plotting a 3D perspective plot for the `radial' function
-radial_rgl           R code for fitting and generating a 3D real-time rendering plot for the `radial' function using OpenGL
-nomad_factor         R code for testing NOMAD for factor regression splines
-nomad_kernel         R code for testing NOMAD for categorical regression splines
-crsiv                R code for testing crsiv with one endogenous predictor, no exogenous predictors
-crsiv_exog           R code for testing crsiv with one endogenous and one exogenous predictor
-crsiv_exog_persp     R code for testing crsiv with one endogenous and one exogenous predictor then plotting results in a perspective plot
-sine_rgl.R           R code for fitting and generating a 3D real-time rendering plot for a product sine function using OpenGL
+radial_persp                       R code for fitting and plotting a 3D perspective plot for the `radial' function
+radial_rgl                         R code for fitting and generating a 3D real-time rendering plot for the `radial' function using OpenGL
+nomad_factor                       R code for testing NOMAD for factor regression splines
+nomad_kernel                       R code for testing NOMAD for categorical regression splines
+crsiv                              R code for testing crsiv with one endogenous predictor, no exogenous predictors
+crsiv_exog                         R code for testing crsiv with one endogenous and one exogenous predictor
+crsiv_exog_persp                   R code for testing crsiv with one endogenous and one exogenous predictor then plotting results in a perspective plot
+sine_rgl                           R code for fitting and generating a 3D real-time rendering plot for a product sine function using OpenGL
+radial_constrained_mean            R code for constrained radial function estimation (constrain the mean to lie between 0 and 1/2)
+radial_constrained_first_partial   R code for constrained radial function estimation (constrain the first derivatives to lie between -0.1 and 0.1)
+radial_constrained_second_partial  R code for constrained radial function estimation (constrain the second derivatives to be non-negative)
