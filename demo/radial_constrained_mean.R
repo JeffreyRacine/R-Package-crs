@@ -8,7 +8,7 @@ rm(list=ls())
 
 ## Parameters to be set.
 
-set.seed(12345)
+set.seed(42)
 
 n <- 1000
 n.eval <- 50
@@ -121,14 +121,13 @@ model.res <- crs(y~x1+x2,cv="none",
                  data=data.trans,
                  deriv=1)
 
-## That's it.
+## That's it!
 
-## Plot the unrestricted and restricted fits
+## Create a 3D perspective plot of the constrained and unconstrained
+## surfaces
 
 fitted.unres <- matrix(predict(model.unres,newdata=data.eval), n.eval, n.eval)
 fitted.res <- matrix(predict(model.res,newdata=data.eval), n.eval, n.eval)
-
-## Next, create a 3D perspective plot of the PDF f
 
 ylim <- c(min(fitted(model.unres),max(fitted(model.unres))))
 
