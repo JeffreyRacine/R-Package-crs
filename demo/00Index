@@ -5,3 +5,4 @@ nomad_kernel         R code for testing NOMAD for categorical regression splines
 crsiv                R code for testing crsiv with one endogenous predictor, no exogenous predictors
 crsiv_exog           R code for testing crsiv with one endogenous and one exogenous predictor
 crsiv_exog_persp     R code for testing crsiv with one endogenous and one exogenous predictor then plotting results in a perspective plot
+sine_rgl.R           R code for fitting and generating a 3D real-time rendering plot for a product sine function using OpenGL
