@@ -18,8 +18,8 @@ x.max <- 5
 
 ## These will need to be modified if/when you modify Amat and bvec
 
-lower <- -0.00
-upper <- 0.50
+lower <- 0
+upper <- 0.5
 
 ## Load libraries
 
@@ -52,11 +52,9 @@ x2.seq <- seq(x.min,x.max,length=n.eval)
 data.eval <- data.frame(y=0,expand.grid(x1=x2.seq,x2=x2.seq))
 
 model.unres <- crs(y~x1+x2,
-                   deriv=1,
                    basis="auto",
                    data=data.train,
                    nmulti=5)
-model.gradient.unres <- model.unres$deriv.mat
 
 summary(model.unres)
 

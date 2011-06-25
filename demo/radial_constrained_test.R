@@ -9,7 +9,7 @@ rm(list=ls())
 ## continuous regressors, accepts an arbitrary number of regressors,
 ## and accepts arbitrary derivative restrictions.
 
-num.boot <- 399
+num.boot <- 999
 set.seed(42)
 
 n <- 500
@@ -33,9 +33,19 @@ D.boot <- numeric(num.boot)
 x.min <- -5
 x.max <- 5
 
-## These will need to be modified if/when you modify Amat and bvec
+## These will need to be modified if/when you modify Amat and
+## bvec. Note the true function lies in the range -0.217 to 1.00. So
+## restricting the function to lie strictly within this range is
+## imposing an incorrect constraint (for instance, set lower to 0 and
+## upper to 0.5 and you would expect to reject the null, while setting
+## lower and upper to those below and you would expect to fail to
+## reject the null). Note also that imposing nonbinding constraints
+## can be checked by inspecting p.updated prior to conducting the
+## bootstrap... if they are all equal to 1/n then you have imposed a
+## non-binding constraint and in this case the null distribution is
+## degenerate.
 
-lower <- -0.00
+lower <- -0.217
 upper <- 1.00
 
 ## Load libraries
@@ -132,8 +142,6 @@ if(D.stat > 0) {
   
   for(b in 1:num.boot) {
 
-    print(b)
-    
     ## Draw a bootstrap resample from the constrained model
     
     y.star <- yhat + sample(model.resid,replace=TRUE)
@@ -187,15 +195,14 @@ if(D.stat > 0 ) {
   ## Check for degenerate case (all bootstrap D statistics identical)
   if(length(unique(D.boot))==1) P <- runif(1) 
 
+  plot(density(D.boot),
+       main="Null Distribution",
+       sub=paste("Test statistic: ", formatC(D.stat,digits=3,format="g"),
+         ", P-value = ", formatC(P,digits=2,format="f"),sep=""))
+
 } else {
   
-  ## When restrictions are non-binding, p is draw from uniform (case
-  ## definitely degenerate)
-  P <- runif(1)
+  warning("The test statistic is 0 and the constraints are non-binding")
   
 }
 
-plot(density(D.boot),
-     main="Null Distribution",
-     sub=paste("Test statistic: ", formatC(D.stat,digits=3,format="g"),
-       ", P-value = ", formatC(P,digits=2,format="f"),sep=""))
