@@ -2,7 +2,10 @@
 ## data. Presumes continuous regressors, accepts an arbitrary number
 ## of regressors, and accepts arbitrary derivative restrictions.
 
-rm(list=ls())
+## Load libraries
+
+require(crs)
+require(quadprog)
 
 ## Parameters to be set.
 
@@ -18,11 +21,6 @@ x.max <- 5
 
 lower <- -0.1
 upper <- 0.1
-
-## Load libraries
-
-require(crs)
-require(quadprog)
 
 ## IMPORTANT - you must be careful to NOT read data from environment -
 ## this appears to work - create a data frame.

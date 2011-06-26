@@ -5,12 +5,15 @@
 ## continuous regressors, accepts an arbitrary number of regressors,
 ## and accepts arbitrary derivative restrictions.
 
-rm(list=ls())
+## Load libraries
+
+require(crs)
+require(quadprog)
 
 num.boot <- 999
 set.seed(42)
 
-n <- 500
+n <- 250
 
 ## Test statistic
 
@@ -45,11 +48,6 @@ x.max <- 5
 
 lower <- -0.217
 upper <- 1.00
-
-## Load libraries
-
-require(crs)
-require(quadprog)
 
 ## IMPORTANT - you must be careful to NOT read data from environment -
 ## this appears to work - create a data frame.
