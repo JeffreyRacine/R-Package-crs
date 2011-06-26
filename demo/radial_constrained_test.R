@@ -201,8 +201,11 @@ if(D.stat > 0 ) {
          ", P-value = ", formatC(P,digits=2,format="f"),sep=""))
 
 } else {
+
+  ## If the D statistic is zero then the constraints are non-binding
+  ## and the test is degenerate, so issue a warning to this effect
   
-  warning("The test statistic is 0 and the constraints are non-binding")
+  warning("The test statistic is 0, the bootstrap is degenerate, and the constraints are non-binding")
   
 }
 

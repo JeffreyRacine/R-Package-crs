@@ -6,10 +6,10 @@ import(stats)
 export(crs,
        crsiv,
        frscv,
-			 frscvNOMAD, 
+       frscvNOMAD, 
        gsl.bs,
        krscv,
-			 krscvNOMAD,
+       krscvNOMAD,
        snomadr,
        tensor.prod.model.matrix,
        uniquecombs)

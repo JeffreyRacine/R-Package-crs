@@ -1,6 +1,6 @@
 #
 # File:   snomadr.R
-# Author: Zhenghua nie 
+# Author: Zhenghua Nie 
 # Date:   Mon 16 May 2011 
 #
 # We use ipoptr developed by Jelmer Ypma as the prototype of this package.

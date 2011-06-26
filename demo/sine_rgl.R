@@ -81,6 +81,6 @@ grid3d(c("x", "y+", "z"))
 ## via your mouse/keypad
 
 ## Note - to plot an rgl figure first get it oriented how you want
-## (i.e. resize, rotate etc.) and then call rgl.postscript to create,
+## (i.e. re-size, rotate etc.) and then call rgl.postscript to create,
 ## i.e., a PDF of your graphic as in
 ## rgl.postscript("persp3db.pdf","pdf")
