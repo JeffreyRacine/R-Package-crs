@@ -539,7 +539,7 @@ deriv.kernel.spline <- function(x,
 ## This function returns the fitted/predicted values using Friedman's
 ## MARS idea of indicator function bases for categorical variables
 ## (though Friedman's MARS is much more restrictive than the setup we
-## consider here as it uses piecewise linear splines). My additional
+## consider here as it uses piece-wise linear splines). My additional
 ## twist is, as for the basis splines, that we allow a variable to not
 ## enter via a basis of zero length.
 
@@ -580,7 +580,7 @@ predict.factor.spline <- function(x,
 
     if(prune && is.null(prune.index)) {
 
-      ## Pruning via stepwise CV but returning the pruned model only
+      ## Pruning via step-wise CV but returning the pruned model only
       ## if the cross-validation score is improved (lower). We create
       ## a data frame so that we can readily determine columns that
       ## have been removed and assign logical values to all columns in
@@ -689,7 +689,7 @@ predict.factor.spline <- function(x,
 ## This function returns the fitted/predicted values using Friedman's
 ## MARS idea of indicator function bases for categorical variables
 ## (though Friedman's MARS is much more restrictive than the setup we
-## consider here as it uses piecewise linear splines). My additional
+## consider here as it uses piece-wise linear splines). My additional
 ## twist is, as for the basis splines, that we allow a variable to not
 ## enter via a basis of zero length.
 
@@ -788,7 +788,7 @@ deriv.factor.spline <- function(x,
 ## hat(model$qr) both here and in cv.factor.spline. Here it reduces
 ## runtime by 20-30%. But more importantly lm.fit is more `robust'
 ## than lsfit (lm.fit is the `workhorse' of lm, lsfit calls LAPACK
-## code). Note that it is noticable as it returns a larger cv value
+## code). Note that it is noticeable as it returns a larger cv value
 ## for more complicated problems which is naturally desirable.
 
 cv.kernel.spline <- function(x,

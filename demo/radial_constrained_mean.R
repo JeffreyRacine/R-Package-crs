@@ -23,8 +23,8 @@ upper <- 0.5
 
 ## Load libraries
 
-library(crs)
-library(quadprog)
+require(crs)
+require(quadprog)
 
 ## IMPORTANT - you must be careful to NOT read data from environment -
 ## this appears to work - create a data frame.
@@ -67,9 +67,6 @@ dvec <- as.vector(p)
 
 ## If you wish to alter the constraints, you need to modify Amat and
 ## bvec.
-
-## Create Aymat for jth regressor calling the Aymat.R code and
-## function
 
 ## Generate the estimated model computed for the training data. Note -
 ## we need to premultiply the weights by n and each column must be

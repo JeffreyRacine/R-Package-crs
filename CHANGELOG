@@ -1,7 +1,7 @@
 Changes from Version 0.15-0 to 0.15-1 [xx-Jun-2011]
 
 * Added additional demos for constrained estimation (Du, Parmeter, and
-  Racine (2011)) and a sine-based function
+  Racine (2011)), inference, and a sine-based function
 
 * Moved from lsfit to lm.fit and from lm to lm.wfit/lm.fit in
   cv.kernel.spline and cv.factor.spline (compute objective function

@@ -50,8 +50,8 @@ upper <- 1.00
 
 ## Load libraries
 
-library(crs)
-library(quadprog)
+require(crs)
+require(quadprog)
 
 ## IMPORTANT - you must be careful to NOT read data from environment -
 ## this appears to work - create a data frame.
@@ -88,9 +88,6 @@ dvec <- as.vector(p)
 
 ## If you wish to alter the constraints, you need to modify Amat and
 ## bvec.
-
-## Create Aymat for jth regressor calling the Aymat.R code and
-## function
 
 B <- model.matrix(model.unres$model.lm)
 Aymat.res <- n*t(t(B%*%solve(t(B)%*%B)%*%t(B))*data.train$y)
