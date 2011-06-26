@@ -1,5 +1,3 @@
-## $Id: radial_constrained_second_partial.R,v 1.1 2011/06/25 14:14:00 jracine Exp jracine $
-
 ## Code to conduct restricted regression splines on evaluation
 ## data. Presumes continuous regressors, accepts an arbitrary number
 ## of regressors, and accepts arbitrary derivative restrictions.

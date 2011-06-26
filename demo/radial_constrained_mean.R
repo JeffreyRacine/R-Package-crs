@@ -1,5 +1,3 @@
-## $Id: radial_constrained_mean.R,v 1.1 2011/06/25 15:09:36 jracine Exp jracine $
-
 ## Code to conduct restricted regression splines on evaluation
 ## data. Presumes continuous regressors, accepts an arbitrary number
 ## of regressors, and accepts arbitrary derivative restrictions.

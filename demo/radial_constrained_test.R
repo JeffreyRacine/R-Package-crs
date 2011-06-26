@@ -1,13 +1,11 @@
-## $Id: radial_constrained_mean.R,v 1.1 2011/06/25 15:09:36 jracine Exp jracine $
-
-rm(list=ls())
-
 ## Here we conduct a hypothesis test using a nonparametric bootstrap
 ## and the constrained model. num.boot is the number of bootstrap
 ## replications. D is the test statistic. This code to conduct
 ## restricted regression splines on evaluation data. Presumes
 ## continuous regressors, accepts an arbitrary number of regressors,
 ## and accepts arbitrary derivative restrictions.
+
+rm(list=ls())
 
 num.boot <- 999
 set.seed(42)
