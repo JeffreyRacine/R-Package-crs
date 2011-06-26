@@ -27,7 +27,6 @@ model <- crs(y~x1+x2,
              cv=cv,
              complexity="degree-knots",
              knots="uniform",
-             deriv=1,
              cv.func="cv.aic",
              nmulti=nmulti)
 

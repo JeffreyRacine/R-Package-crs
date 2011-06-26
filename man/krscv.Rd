@@ -146,11 +146,6 @@ krscv(xz,
   user ought to restart their search with a larger value of
   \code{degree.max}/\code{segments.max}.
 
-  Note that, since the approach is built on top of the regression spline
-  for each unique \code{z} combination, the splines must be estimable
-  for all every unique \code{z} combination. When this is not the case
-  the user must combine data in a manner such that this is achieved.
-  
 }
 
 \value{

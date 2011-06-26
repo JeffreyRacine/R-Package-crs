@@ -135,13 +135,6 @@ frscvNOMAD(xz,
   \code{degree}/\code{segments}/\code{I} is undertaken using
   \code{\link{snomadr}}.
   
-  Note that, since the approach is built on top of the regression spline
-  for each unique nominal/ordinal
-  (\code{\link{factor}}/\code{\link{ordered}}) combination, the splines
-  must be estimable for every such unique combination. When this is not
-  the case the user must combine data in a manner such that this is
-  achieved.
-
 }
 
 \value{
