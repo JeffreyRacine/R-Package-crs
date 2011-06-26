@@ -1,13 +1,18 @@
-## 3/6/2010, (C) Jeffrey S. Racine (racinej@mcmaster.ca).
-
 ## This function provides for a complete S3 implementation of
-##  regression splines with categorical factors using two approaches,
-##  (i) kernel smoothing, and (ii) indicator function
-##  bases. Cross-validation (leave-one-out) can be used to select (i)
-##  the degree and number of knots (`segments'+1) of the basis spline
-##  for each continuous predictor, (ii) bandwidth for each
-##  ordinal/nominal predictor, or (iii) whether or not to include each
-##  ordinal/nominal predictor's indicator basis.
+## regression splines with categorical factors using two approaches,
+## (i) kernel smoothing, and (ii) indicator function bases. Both
+## additive and tensor product bases are supported (default is
+## additive, but also see the option basis="auto" that computes both
+## and uses that with the smallest cross-validation
+## score). Cross-validation (leave-one-out, generalized, and the AIC_c
+## method of Hurvich, Simonoff, and Tsai (1998, JRSS B)) can be used
+## to select (i) the degree and number of knots (`segments'+1) of the
+## basis spline for each continuous predictor, (ii) bandwidth for each
+## ordinal/nominal predictor, or (iii) whether or not to include each
+## ordinal/nominal predictor's indicator basis. S3 methods include
+## fitted, predict, residuals, plot and so forth.
+
+## 2010 (C) Jeffrey S. Racine (racinej@mcmaster.ca).
 
 crs <- function(...) UseMethod("crs")
 
