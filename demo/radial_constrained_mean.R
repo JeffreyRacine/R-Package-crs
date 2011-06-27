@@ -149,4 +149,6 @@ persp(x1.seq, x2.seq,
       theta=300,
       phi=30)
 
+par(mfrow=c(1,1))
+
 
