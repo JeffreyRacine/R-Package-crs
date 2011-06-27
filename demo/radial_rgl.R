@@ -59,7 +59,7 @@ par3d(windowRect=c(900,100,900+640,100+640))
 rgl.viewpoint(theta = 0, phi = -70, fov = 80)
 
 persp3d(x=x1.seq,y=x2.seq,z=z,
-        xlab="x1",ylab="x2",zlab="y",
+        xlab="X1",ylab="X2",zlab="Y",
         ticktype="detailed",      
         border="red",
         color=col,

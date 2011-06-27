@@ -39,7 +39,7 @@ x.grid <- expand.grid(x1.seq,x2.seq)
 newdata <- data.frame(x1=x.grid[,1],x2=x.grid[,2])
 z <- matrix(predict(model,newdata=newdata),num.eval,num.eval)
 persp(x=x1.seq,y=x2.seq,z=z,
-      xlab="x1",ylab="x2",zlab="y",
+      xlab="X1",ylab="X2",zlab="Y",
       ticktype="detailed",      
       border="red",
       main="Conditional Mean",
@@ -49,7 +49,7 @@ persp(x=x1.seq,y=x2.seq,z=z,
 z <- matrix(attr(predict(model,newdata=newdata),"deriv.mat")[,1],num.eval,num.eval)
 
 persp(x=x1.seq,y=x2.seq,z=z,
-      xlab="x1",ylab="x2",zlab="y",
+      xlab="X1",ylab="X2",zlab="Y",
       ticktype="detailed",      
       border="red",
       main="d g(x1,x2)/d x1 (x2=med(x2))",
@@ -59,7 +59,7 @@ persp(x=x1.seq,y=x2.seq,z=z,
 z <- matrix(attr(predict(model,newdata=newdata),"deriv.mat")[,2],num.eval,num.eval)
 
 persp(x=x1.seq,y=x2.seq,z=z,
-      xlab="x1",ylab="x2",zlab="y",
+      xlab="X1",ylab="X2",zlab="Y",
       ticktype="detailed",      
       border="red",
       main="d g(x1,x2)/d x2 (x1=med(x1))",

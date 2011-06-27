@@ -63,7 +63,7 @@ z.iv <- matrix(predict(model.iv,newdata=newdata),num.eval,num.eval)
 z.noniv <- matrix(predict(model.noniv,newdata=newdata),num.eval,num.eval)
 zlim <- c(min(z.iv,z.noniv),max(z.iv,z.noniv))
 persp(x=z.seq,y=x.seq,z=z.iv,
-      xlab="z",ylab="x",zlab="y",
+      xlab="Z",ylab="X",zlab="Y",
       zlim=zlim,
       ticktype="detailed",
       col=FALSE,
@@ -72,7 +72,7 @@ persp(x=z.seq,y=x.seq,z=z.iv,
       theta=45,phi=45)
 par(new=TRUE)
 persp(x=z.seq,y=x.seq,z=z.noniv,
-      xlab="z",ylab="x",zlab="y",
+      xlab="Z",ylab="X",zlab="Y",
       zlim=zlim,
       ticktype="detailed",
       col=FALSE,
@@ -85,7 +85,7 @@ z.iv <- matrix(attr(predict(model.iv,newdata=newdata),"deriv.mat")[,1],num.eval,
 z.noniv <- matrix(attr(predict(model.noniv,newdata=newdata),"deriv.mat")[,1],num.eval,num.eval)
 zlim <- c(min(z.iv,z.noniv),max(z.iv,z.noniv))
 persp(x=z.seq,y=x.seq,z=z.iv,
-      xlab="z",ylab="x",zlab="y",
+      xlab="Z",ylab="X",zlab="Y",
       zlim=zlim,
       ticktype="detailed",      
       border="red",
@@ -94,7 +94,7 @@ persp(x=z.seq,y=x.seq,z=z.iv,
       theta=45,phi=45)
 par(new=TRUE)
 persp(x=z.seq,y=x.seq,z=z.noniv,
-      xlab="z",ylab="x",zlab="y",
+      xlab="Z",ylab="X",zlab="Y",
       zlim=zlim,
       ticktype="detailed",      
       border="blue",
@@ -107,7 +107,7 @@ z.iv <- matrix(attr(predict(model.iv,newdata=newdata),"deriv.mat")[,2],num.eval,
 z.noniv <- matrix(attr(predict(model.noniv,newdata=newdata),"deriv.mat")[,2],num.eval,num.eval)
 zlim <- c(min(z.iv,z.noniv),max(z.iv,z.noniv))
 persp(x=z.seq,y=x.seq,z=z.iv,
-      xlab="z",ylab="x",zlab="y",
+      xlab="Z",ylab="X",zlab="Y",
       zlim=zlim,
       ticktype="detailed",      
       border="red",
@@ -116,7 +116,7 @@ persp(x=z.seq,y=x.seq,z=z.iv,
       theta=45,phi=45)
 par(new=TRUE)
 persp(x=z.seq,y=x.seq,z=z.noniv,
-      xlab="z",ylab="x",zlab="y",
+      xlab="Z",ylab="X",zlab="Y",
       zlim=zlim,
       ticktype="detailed",      
       border="blue",
