@@ -1,13 +1,23 @@
 Changes from Version 0.15-0 to 0.15-1 [xx-Jun-2011]
 
 * Added additional demos for constrained estimation (Du, Parmeter, and
-  Racine (2011)), inference, and a sine-based function
+  Racine (2011)), inference, and a sine-based function.
 
-* Moved from lsfit to lm.fit and from lm to lm.wfit/lm.fit in
+* Substantial reductions in run-time realized.
+
+  - Product kernel computation modified for improved run-time of
+  kernel-based cross-validation and estimation.
+
+  - Moved from lsfit to lm.fit and from lm to lm.wfit/lm.fit in
   cv.kernel.spline and cv.factor.spline (compute objective function
   values). Two effects - R devel indicates lm.fit/lm.wfit are more
   robust (confirmed for large number of predictors) and much faster
   cv.kernel.spline function emerges (run-time cut 20-30%).
+
+  - The combined effects of these changes are noticeable. For instance,
+  run-time for wage1 with 7 predictor cross-validation goes from 510
+  seconds in 0.15-0 to 304 seconds due to use of lm.fit/lm.wfit
+  described below to 148 seconds due to the modified kernel function.
 
 Changes from Version 0.14-9 to 0.15-0 [23-Jun-2011]
 
