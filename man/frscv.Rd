@@ -94,8 +94,8 @@ frscv(xz,
 
 \details{
 
-  \code{frscv} computes cross-validation for a regression spline
-  estimate of a one (1) dimensional dependent variable on an
+  \code{frscv} computes exhaustive cross-validation for a regression
+  spline estimate of a one (1) dimensional dependent variable on an
   \code{r}-dimensional vector of continuous and nominal/ordinal
   (\code{\link{factor}}/\code{\link{ordered}}) predictors. The optimal
   \code{K}/\code{I} combination (i.e.\

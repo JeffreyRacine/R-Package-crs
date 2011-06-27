@@ -110,8 +110,8 @@ krscv(xz,
 
 \details{
 
-  \code{krscv} computes cross-validation for a regression spline
-  estimate of a one (1) dimensional dependent variable on an
+  \code{krscv} computes exhaustive cross-validation for a regression
+  spline estimate of a one (1) dimensional dependent variable on an
   \code{r}-dimensional vector of continuous and nominal/ordinal
   (\code{\link{factor}}/\code{\link{ordered}}) predictors. The optimal
   \code{K}/\code{lambda} combination is returned along with other

@@ -124,12 +124,15 @@ krscvNOMAD(xz,
 
 \details{
 
-  \code{krscvNOMAD} computes cross-validation for a regression spline
-  estimate of a one (1) dimensional dependent variable on an
-  \code{r}-dimensional vector of continuous and nominal/ordinal
-  (\code{\link{factor}}/\code{\link{ordered}}) predictors. The optimal
-  \code{K}/\code{lambda} combination is returned along with other
-  results (see below for return values). The method uses kernel
+  \code{krscvNOMAD} computes NOMAD-based cross-validation for a
+  regression spline estimate of a one (1) dimensional dependent variable
+  on an \code{r}-dimensional vector of continuous and nominal/ordinal
+  (\code{\link{factor}}/\code{\link{ordered}}) predictors.  Numerical
+  search for the optimal \code{degree}/\code{segments}/\code{lambda} is
+  undertaken using \code{\link{snomadr}}.
+  
+  The optimal \code{K}/\code{lambda} combination is returned along with
+  other results (see below for return values). The method uses kernel
   functions appropriate for categorical (ordinal/nominal) predictors
   which avoids the loss in efficiency associated with sample-splitting
   procedures that are typically used when faced with a mix of continuous
@@ -144,10 +147,6 @@ krscvNOMAD(xz,
 
   For the discrete predictors the product kernel function is of the
   \sQuote{Li-Racine} type (see Li and Racine (2007) for details).
-  
-  Numerical search for the optimal
-  \code{degree}/\code{segments}/\code{lambda} is undertaken using
-  \code{\link{snomadr}}.
   
 }
 
