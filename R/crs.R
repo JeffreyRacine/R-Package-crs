@@ -395,8 +395,8 @@ crs.formula <- function(formula,
   ## Check for dynamic cv and if number of combinations is not overly
   ## large use exhaustive search
 
-  if(cv=="nomad" && kernel==FALSE && (degree.max-degree.min)*(segments.max-segments.min)**num.x <= cv.threshold) {
-    warning(" Dynamically changing search from nomad to exhaustive (if this is not desired set cv.threshold to 0)",immediate.=TRUE)
+  if(cv=="nomad" && is.null(num.z) && (degree.max-degree.min)*(segments.max-segments.min)**num.x <= cv.threshold) {
+    warning(" Dynamically changing search from nomad to exhaustive (if unwanted set cv.threshold to 0)",immediate.=TRUE)
     cv <- "exhaustive"
     if(nmulti > 0) warning(" Exhaustive search, nmulti ignored...",immediate.=TRUE)
   }

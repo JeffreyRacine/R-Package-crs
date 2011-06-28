@@ -99,7 +99,8 @@ in \code{x} are included or omitted from the resulting estimate }
   \code{segments}, and \code{lambda}) }
 
 \item{cv.threshold}{ an integer (default \code{cv.threshold=1000}) for
-  simple problems where \code{kernel=FALSE} (otherwise
+  simple problems with no categorical predictors
+  (i.e. \code{kernel=FALSE} otherwise
   \code{\link{optim}}/\code{\link{snomadr}} search is necessary) such
   that, if the number of combinations of \code{degree}/\code{segments}
   is less than the threshold and \code{cv="nomad"}, instead use
