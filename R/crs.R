@@ -335,6 +335,7 @@ crs.formula <- function(formula,
                         degree.min=0, 
                         segments.min=1, 
                         cv=c("nomad","exhaustive","none"),
+                        cv.threshold=1000,
                         cv.func=c("cv.ls","cv.gcv","cv.aic"),
                         kernel=TRUE,
                         lambda=NULL,
@@ -391,6 +392,15 @@ crs.formula <- function(formula,
     include <- NULL
   }
 
+  ## Check for dynamic cv and if number of combinations is not overly
+  ## large use exhaustive search
+
+  if(cv=="nomad" && is.null(num.z) && num.x == 1 && (degree.max-degree.min)*(segments.max-segments.min) <= cv.threshold) {
+    warning(" Dynamically changing nomad search to exhaustive search (if this is not desired decrease cv.threshold to e.g. 0)")
+    cv <- "exhaustive"
+    if(nmulti > 0) warning(" Dynamically setting search to exhaustive, nmulti ignored...")
+  }
+
   ## If no degree nor include nor lambda, return cubic spline
   ## (identity bases) or non-smooth model (kernel).
 
@@ -408,6 +418,12 @@ crs.formula <- function(formula,
   if(cv!="none"&&basis!="auto"&&NCOL(xz)>1) warning(paste(" cv specified but basis is ", basis, ": you might consider basis=\"auto\"",sep=""))
 
   if(kernel==TRUE&&prune==TRUE) warning(" pruning cannot coexist with categorical kernel smoothing (pruning ignored)")
+
+  ## Check for cv="nomad" and complexity="degree-knots" but
+  ## degree.min==degree.max or segments==segmenst.max
+
+  if((cv=="nomad" && complexity=="degree-knots") && (segments.min==segments.max)) stop("NOMAD search selected with complexity degree-knots but segments.min and segments.max are equal")
+  if((cv=="nomad" && complexity=="degree-knots") && (degree.min==degree.max)) stop("NOMAD search selected with complexity degree-knots but degree.min and degree.max are equal")
 
   cv.min <- NULL
 

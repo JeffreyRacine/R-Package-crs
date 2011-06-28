@@ -330,8 +330,8 @@ crsiv <- function(y,
     console <- printClear(console)
     console <- printPop(console)
     
-    if((alpha-alpha.min)/alpha.min < 0.01) warning(paste("Tikhonov parameter alpha (",formatC(alpha,digits=4,format="f"),") is close to the search minimum (",alpha.min,")",sep=""))
-    if((alpha.max-alpha)/alpha.max < 0.01) warning(paste("Tikhonov parameter alpha (",formatC(alpha,digits=4,format="f"),") is close to the search maximum (",alpha.max,")",sep=""))
+    if((alpha-alpha.min)/alpha.min < 0.01) warning(paste(" Tikhonov parameter alpha (",formatC(alpha,digits=4,format="f"),") is close to the search minimum (",alpha.min,")",sep=""))
+    if((alpha.max-alpha)/alpha.max < 0.01) warning(paste(" Tikhonov parameter alpha (",formatC(alpha,digits=4,format="f"),") is close to the search maximum (",alpha.max,")",sep=""))
     
     ## phi.0 is the conditional mean model. We compute lambda =
     ## fitted(phi.0)-phihat then transform y via
@@ -484,7 +484,7 @@ crsiv <- function(y,
     console <- printClear(console)
     console <- printPop(console)
 
-    if(j == iterate.max) warning("iterate.max reached: increase iterate.max or inspect norm.stop vector")
+    if(j == iterate.max) warning(" iterate.max reached: increase iterate.max or inspect norm.stop vector")
 
     return(model)
 

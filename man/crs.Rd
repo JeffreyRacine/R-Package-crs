@@ -37,6 +37,7 @@ crs(\dots)
     degree.min = 0, 
     segments.min = 1, 
     cv = c("nomad","exhaustive","none"),
+    cv.threshold=1000,
     cv.func = c("cv.ls","cv.gcv","cv.aic"),
     kernel = TRUE,
     lambda = NULL,
@@ -96,6 +97,14 @@ in \code{x} are included or omitted from the resulting estimate }
   whether to use nonsmooth mesh adaptive direct search, exhaustive
   search, or no search (i.e. use user supplied values for \code{degree},
   \code{segments}, and \code{lambda}) }
+
+\item{cv.threshold}{ an integer (default \code{cv.threshold=1000}) for
+  simple problems involving one continuous and no categorical predictors
+  such that, if the number of combinations of
+  \code{degree}/\code{segments} is less than the threshold and
+  \code{cv="nomad"}, instead use exhaustive search
+  (\code{cv="exhaustive"})
+}
 
   \item{cv.func}{a character string (default \code{cv.func="cv.ls"})
     indicating which method to use to select smoothing
