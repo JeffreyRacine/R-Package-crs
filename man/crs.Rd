@@ -99,12 +99,11 @@ in \code{x} are included or omitted from the resulting estimate }
   \code{segments}, and \code{lambda}) }
 
 \item{cv.threshold}{ an integer (default \code{cv.threshold=1000}) for
-  simple problems involving one continuous and no categorical predictors
-  such that, if the number of combinations of
-  \code{degree}/\code{segments} is less than the threshold and
-  \code{cv="nomad"}, instead use exhaustive search
-  (\code{cv="exhaustive"})
-}
+  simple problems where \code{kernel=FALSE} (otherwise
+  \code{\link{optim}}/\code{\link{snomadr}} search is necessary) such
+  that, if the number of combinations of \code{degree}/\code{segments}
+  is less than the threshold and \code{cv="nomad"}, instead use
+  exhaustive search (\code{cv="exhaustive"}) }
 
   \item{cv.func}{a character string (default \code{cv.func="cv.ls"})
     indicating which method to use to select smoothing

@@ -395,10 +395,10 @@ crs.formula <- function(formula,
   ## Check for dynamic cv and if number of combinations is not overly
   ## large use exhaustive search
 
-  if(cv=="nomad" && is.null(num.z) && num.x == 1 && (degree.max-degree.min)*(segments.max-segments.min) <= cv.threshold) {
+  if(cv=="nomad" && kernel==FALSE && (degree.max-degree.min)*(segments.max-segments.min)**num.x <= cv.threshold) {
     warning(" Dynamically changing nomad search to exhaustive search (if this is not desired decrease cv.threshold to e.g. 0)")
     cv <- "exhaustive"
-    if(nmulti > 0) warning(" Dynamically setting search to exhaustive, nmulti ignored...")
+    if(nmulti > 0) warning(" Dynamically changed search to exhaustive, nmulti ignored...")
   }
 
   ## If no degree nor include nor lambda, return cubic spline
