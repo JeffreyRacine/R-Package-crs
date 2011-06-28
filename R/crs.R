@@ -395,10 +395,10 @@ crs.formula <- function(formula,
   ## Check for dynamic cv and if number of combinations is not overly
   ## large use exhaustive search
 
-  if(cv=="nomad" && is.null(num.z) && (degree.max-degree.min)*(segments.max-segments.min)**num.x <= cv.threshold) {
-    warning(" Dynamically changing search from nomad to exhaustive (if unwanted set cv.threshold to 0)",immediate.=TRUE)
+  if(cv=="nomad" && is.null(num.z) && ((degree.max-degree.min)*(segments.max-segments.min))**num.x <= cv.threshold) {
+    warning(" Dynamically changing search from nomad to exhaustive (if unwanted set cv.threshold to 0)")
     cv <- "exhaustive"
-    if(nmulti > 0) warning(" Exhaustive search, nmulti ignored...",immediate.=TRUE)
+    if(nmulti > 0) warning(" Exhaustive search, nmulti ignored...")
   }
 
   ## If no degree nor include nor lambda, return cubic spline
@@ -415,9 +415,9 @@ crs.formula <- function(formula,
   }
 
 
-  if(cv!="none"&&basis!="auto"&&NCOL(xz)>1) warning(paste(" cv specified but basis is ", basis, ": you might consider basis=\"auto\"",sep=""),immediate.=TRUE)
+  if(cv!="none"&&basis!="auto"&&NCOL(xz)>1) warning(paste(" cv specified but basis is ", basis, ": you might consider basis=\"auto\"",sep=""))
 
-  if(kernel==TRUE&&prune==TRUE) warning(" pruning cannot coexist with categorical kernel smoothing (pruning ignored)",immediate.=TRUE)
+  if(kernel==TRUE&&prune==TRUE) warning(" pruning cannot coexist with categorical kernel smoothing (pruning ignored)")
 
   ## Check for cv="nomad" and complexity="degree-knots" but
   ## degree.min==degree.max or segments==segmenst.max
