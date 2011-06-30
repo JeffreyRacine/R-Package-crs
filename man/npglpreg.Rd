@@ -36,7 +36,6 @@ npglpreg(\dots)
          exdat = NULL,
          bws = NULL,
          degree = NULL,
-         degree.max = 5,
          leave.one.out = FALSE,
          ukertype = c("liracine", "aitchisonaitken"),
          okertype = c("liracine", "wangvanryzin"),
@@ -50,6 +49,10 @@ npglpreg(\dots)
            MIN_POLL_SIZE = paste("r", sqrt(.Machine$double.eps), sep = "")),
          nmulti = 5,
          random.seed = 42,
+         degree.max = 10,
+         degree.min = 0,
+         bandwidth.max = 1.0e+04,
+         bandwidth.min = 1.0e-01,
          raw = TRUE,
          \dots)
 
@@ -81,9 +84,6 @@ npglpreg(\dots)
   \item{degree}{
 %%     ~~Describe \code{degree} here~~
 }
-  \item{degree.max}{
-%%     ~~Describe \code{degree.max} here~~
-}
   \item{leave.one.out}{
 %%     ~~Describe \code{leave.one.out} here~~
 }
@@ -109,6 +109,18 @@ npglpreg(\dots)
 %%     ~~Describe \code{nmulti} here~~
 }
   \item{random.seed}{
+%%     ~~Describe \code{random.seed} here~~
+}
+  \item{degree.max}{
+%%     ~~Describe \code{random.seed} here~~
+}
+  \item{degree.min}{
+%%     ~~Describe \code{random.seed} here~~
+}
+  \item{bandwidth.max}{
+%%     ~~Describe \code{random.seed} here~~
+}
+  \item{bandwidth.min}{
 %%     ~~Describe \code{random.seed} here~~
 }
 \item{raw}{

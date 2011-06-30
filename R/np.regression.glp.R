@@ -261,7 +261,6 @@ npglpreg.formula <- function(formula,
                              exdat=NULL,
                              bws=NULL,
                              degree=NULL,
-                             degree.max=5,
                              leave.one.out=FALSE,
                              ukertype=c("liracine","aitchisonaitken"),
                              okertype=c("liracine","wangvanryzin"),
@@ -275,6 +274,10 @@ npglpreg.formula <- function(formula,
                                "MIN_POLL_SIZE"=paste("r",sqrt(.Machine$double.eps),sep="")),
                              nmulti=5,
                              random.seed=42,
+                             degree.max=10,
+                             degree.min=0,
+                             bandwidth.max=1.0e+04,
+                             bandwidth.min=1.0e-01,
                              raw=TRUE,
                              ...) {
 
@@ -300,11 +303,14 @@ npglpreg.formula <- function(formula,
                           cv=cv,
                           degree=degree,
                           bandwidth=bws,
-                          degree.max=degree.max,
                           bwmethod=cv.func,
                           bwtype=bwtype,
                           nmulti=nmulti,
-                          raw=raw)
+                          raw=raw,
+                          degree.max=degree.max,
+                          degree.min=degree.min,
+                          bandwidth.max=bandwidth.max,
+                          bandwidth.min=bandwidth.min)
     degree <- model.cv$degree
     bws <- model.cv$bw
     fv <- model.cv$fv
