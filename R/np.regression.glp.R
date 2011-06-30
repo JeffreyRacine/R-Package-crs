@@ -162,6 +162,7 @@ summary.npglpreg <- function(object,
   cat("Call:\n")
   print(object$call)
   cat("\nGeneralized Local Polynomial Kernel Regression\n",sep="")
+  
   if(object$num.x==1){
     cat(paste("\nThere is ",format(object$num.x), " continuous predictor",sep=""),sep="")
   } else if(object$num.x > 1) {
@@ -177,6 +178,8 @@ summary.npglpreg <- function(object,
   for(j in 1:object$num.x)
     cat(paste("\nDegree for ",format(object$xnames[j]),": ",format(object$degree[j]),sep=""),sep="")  
 
+  if(object$raw==TRUE) cat(paste("\nPolynomial: raw",sep=""),sep="")
+  if(object$raw==FALSE) cat(paste("\nPolynomial: orthogonal",sep=""),sep="")  
   cat(paste("\nTraining observations: ", format(object$nobs), sep=""))
   cat(paste("\nMultiple R-squared: ", format(object$r.squared,digits=4), sep=""))
   if(!is.null(object$fv)) cat(paste("\nCross-validation score: ", format(object$fv,digits=8), sep=""))  
@@ -220,16 +223,16 @@ predict.npglpreg <- function(object,
 
     ## Return the predicted values.
 
-    est <- glpregEst(tydat=tydat,
-                     txdat=txdat,
-                     exdat=newdata,
-                     bws=bws,
-                     degree=degree,
-                     ukertype=ukertype,
-                     okertype=okertype,
-                     bwtype=bwtype,
-                     raw=raw,
-                     ...)
+    est <- npglpreg.default(tydat=tydat,
+                            txdat=txdat,
+                            exdat=newdata,
+                            bws=bws,
+                            degree=degree,
+                            ukertype=ukertype,
+                            okertype=okertype,
+                            bwtype=bwtype,
+                            raw=raw,
+                            ...)
     
     fitted.values <- est$fitted.values
     grad <- est$grad
@@ -1182,6 +1185,7 @@ glpcvNOMAD <- function(ydat=NULL,
     ukertype <- params$ukertype
     okertype <- params$okertype
     bwtype <- params$bwtype    
+    raw <- params$raw
 
     bw.gamma <- input[1:num.bw]
     if(cv=="degree-bandwidth")
@@ -1218,7 +1222,8 @@ glpcvNOMAD <- function(ydat=NULL,
     cv <- params$cv
     ukertype <- params$ukertype
     okertype <- params$okertype
-    bwtype <- params$bwtype    
+    bwtype <- params$bwtype
+    raw <- params$raw
 
     bw.gamma <- input[1:num.bw]
     if(cv=="degree-bandwidth")
@@ -1257,6 +1262,7 @@ glpcvNOMAD <- function(ydat=NULL,
   params$ukertype <- ukertype
   params$okertype <- okertype
   params$bwtype <- bwtype
+  params$raw <- raw
 
   if(cv=="degree-bandwidth") {
     bbin <- c(rep(0, num.bw), rep(1, num.numeric))
