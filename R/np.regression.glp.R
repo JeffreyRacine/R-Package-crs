@@ -1,0 +1,1287 @@
+## $Id: glp_lib.R,v 1.20 2011/06/30 14:15:05 jracine Exp jracine $
+
+## This file contains code for multivariate generalized local
+## polynomial kernel regression with mixed datatypes. It relies on
+## functions in the np package and on snomadr which currently resides
+## in the crs package (June 29 2011).
+
+## Note that the approach taken here is computationally efficient and
+## relies on expressing the local polynomial method in slightly
+## different form purely for computational simplicity. Both approaches
+## are identical though.
+
+mypoly <- function(x,degree,raw=TRUE) {
+
+  if(missing(x)) stop(" Error: x required")
+  if(missing(degree)) stop(" Error: degree required")
+  if(degree < 1) stop(" Error: degree must be a positive integer")
+
+  if(raw) {
+    Z <- outer(x,1L:degree,"^")
+  } else {
+    if (degree >= length(unique(x))) 
+      stop("'degree' must be less than number of unique points")
+    xbar <- mean(x)
+    x <- x - xbar
+    X <- outer(x, seq_len(n) - 1, "^")
+    QR <- qr(X)
+    if (QR$rank < degree) 
+      stop("'degree' must be less than number of unique points")
+    z <- QR$qr
+    z <- z * (row(z) == col(z))
+    raw <- qr.qy(QR, z)
+    norm2 <- colSums(raw^2)
+    alpha <- (colSums(x * raw^2)/norm2 + xbar)[1L:degree]
+    Z <- raw/rep(sqrt(norm2), each = length(x))
+    colnames(Z) <- 1L:n - 1L
+    Z <- Z[, -1, drop = FALSE]
+  }
+
+  return(as.matrix(Z))
+
+}
+
+## W.glp is a modified version of the polym() function (stats). The
+## function accepts a vector of degrees and provides a generalized
+## polynomial with varying polynomial order.
+
+W.glp <- function(xdat = NULL,
+                  degree = NULL) {
+
+  if(is.null(xdat)) stop(" Error: You must provide data")
+  if(is.null(degree) | any(degree < 0)) stop(paste(" Error: degree vector must contain non-negative integers\ndegree is (", degree, ")\n",sep=""))
+
+  xdat <- as.data.frame(xdat)
+
+  xdat.col.numeric <- sapply(1:ncol(xdat),function(i){is.numeric(xdat[,i])})
+
+  k <- ncol(as.data.frame(xdat[,xdat.col.numeric]))
+
+  if(k > 0) {
+    xdat.numeric <- as.data.frame(xdat[,xdat.col.numeric])
+  }
+
+  if(length(degree) != ncol(xdat.numeric)) stop(" Error: degree vector and number of numeric predictors incompatible")
+
+  if(all(degree == 0) | k == 0) {
+
+    ## Local constant OR no continuous variables
+
+    return(matrix(1,nrow=nrow(xdat.numeric),ncol=1))
+
+  } else {
+
+    degree.list <- list()
+    for(i in 1:k) degree.list[[i]] <- 0:degree[i]
+    z <- do.call("expand.grid", degree.list, k)
+    s <- rowSums(z)
+    ind <- (s > 0) & (s <= max(degree))
+    z <- z[ind, ,drop=FALSE]
+    if(!all(degree==max(degree))) {
+      for(j in 1:length(degree)) {
+        d <- degree[j]
+        if((d < max(degree)) & (d > 0)) {
+          s <- rowSums(z)
+          d <- (s > d) & (z[,j,drop=FALSE]==matrix(d,nrow(z),1,byrow=TRUE))
+          z <- z[!d, ]
+        }
+      }
+    }
+    res <- rep.int(1,nrow(xdat.numeric))
+    if(degree[1] > 0) res <- cbind(1, mypoly(xdat.numeric[,1], degree[1]))[, 1 + z[, 1]]
+    if(k > 1) for (i in 2:k) if(degree[i] > 0) res <- res * cbind(1, mypoly(xdat.numeric[,i], degree[i]))[, 1 + z[, i]]
+    res <- as.matrix(res)
+    colnames(res) <- apply(z, 1L, function(x) paste(x, collapse = "."))
+    return(as.matrix(cbind(1,res)))
+
+  }
+
+}
+
+npglpreg <- function(...) UseMethod("npglpreg")
+
+npglpreg.default <- function(tydat=NULL,
+                             txdat=NULL,
+                             eydat=NULL,
+                             exdat=NULL,
+                             bws=NULL,
+                             degree=NULL,
+                             leave.one.out=FALSE,
+                             ukertype=c("liracine","aitchisonaitken"),
+                             okertype=c("liracine","wangvanryzin"),
+                             bwtype = c("fixed","generalized_nn","adaptive_nn"),
+                             ...) {
+
+
+  ukertype <- match.arg(ukertype)
+  okertype <- match.arg(okertype)
+  bwtype <- match.arg(bwtype)
+
+  est <- glpregEst(tydat=tydat,
+                   txdat=txdat,
+                   eydat=eydat,
+                   exdat=exdat,
+                   bws=bws,
+                   degree=degree,
+                   leave.one.out=leave.one.out,
+                   ukertype=ukertype,
+                   okertype=okertype,
+                   bwtype = bwtype,
+                   ...)
+  
+
+  ## Add results to estimated object.
+
+  est$residuals <- y - est$mean
+  est$r.squared <- RSQfunc(y,est$mean)
+  est$call <- match.call()
+  class(est) <- "glpreg"
+
+  ## Return object of type glpreg
+
+  return(est)
+
+}
+
+npglpreg.formula <- function(formula,
+                             data=list(),
+                             tydat=NULL,
+                             txdat=NULL,
+                             eydat=NULL,
+                             exdat=NULL,
+                             bws=NULL,
+                             degree=NULL,
+                             degree.max=5,
+                             leave.one.out=FALSE,
+                             ukertype=c("liracine","aitchisonaitken"),
+                             okertype=c("liracine","wangvanryzin"),
+                             bwtype = c("fixed","generalized_nn","adaptive_nn"),
+                             cv=c("degree-bandwidth","bandwidth","none"),
+                             cv.func=c("cv.ls","cv.gcv","cv.aic"),
+                             opts=list("MAX_BB_EVAL"=10000,
+                               "EPSILON"=.Machine$double.eps,
+                               "INITIAL_MESH_SIZE"="1.0e-01",
+                               "MIN_MESH_SIZE"=paste("r",sqrt(.Machine$double.eps),sep=""),
+                               "MIN_POLL_SIZE"=paste("r",sqrt(.Machine$double.eps),sep="")),
+                             nmulti=5,
+                             random.seed=42,
+                             ...) {
+
+  require(np)
+
+  ukertype <- match.arg(ukertype)
+  okertype <- match.arg(okertype)
+  bwtype <- match.arg(bwtype)
+  cv <- match.arg(cv)
+  cv.func <- match.arg(cv.func)
+
+  mf <- model.frame(formula=formula, data=data)
+  mt <- attr(mf, "terms")
+  tydat <- model.response(mf)
+  txdat <- mf[, attr(attr(mf, "terms"),"term.labels"), drop = FALSE]
+
+  if(cv!="none") {
+    model.cv <-glpcvNOMAD(ydat=tydat,
+                          xdat=txdat,
+                          opts=opts,
+                          cv=cv,
+                          degree=degree,
+                          bandwidth=bws,
+                          degree.max=degree.max,
+                          bwmethod=cv.func,
+                          bwtype=bwtype,
+                          nmulti=1)
+    degree <- model.cv$degree
+    bws <- model.cv$bw
+  }
+
+  est <- npglpreg.default(tydat=tydat,
+                          txdat=txdat,
+                          eydat=eydat,
+                          exdat=exdat,
+                          bws=bws,
+                          degree=degree,
+                          leave.one.out=leave.one.out,
+                          ukertype=ukertype,
+                          okertype=okertype,
+                          bwtype=bwtype,
+                          ...)
+  
+  est$call <- match.call()
+  est$formula <- formula
+  est$terms <- mt
+  est$xlevels <- .getXlevels(mt, mf)
+  est$x <- txdat
+  est$y <- tydat
+  
+  return(est)
+
+}
+
+glpregEst <- function(tydat=NULL,
+                      txdat=NULL,
+                      eydat=NULL,
+                      exdat=NULL,
+                      bws=NULL,
+                      degree=NULL,
+                      leave.one.out=FALSE,
+                      ukertype=c("liracine","aitchisonaitken"),
+                      okertype=c("liracine","wangvanryzin"),
+                      bwtype = c("fixed","generalized_nn","adaptive_nn"),
+                      ...) {
+
+  ## Don't think this error checking is robust
+
+  ukertype <- match.arg(ukertype)
+  okertype <- match.arg(okertype)
+  bwtype <- match.arg(bwtype)  
+
+  if(is.null(tydat)) stop(" Error: You must provide y data")
+  if(is.null(txdat)) stop(" Error: You must provide X data")
+  if(is.null(bws)) stop(" Error: You must provide a bandwidth object")
+  if(is.null(degree) | any(degree < 0)) stop(paste(" Error: degree vector must contain non-negative integers\ndegree is (", degree, ")\n",sep=""))
+
+  miss.ex = is.null(exdat)
+  miss.ey = is.null(eydat)
+
+  if (miss.ex){
+    exdat <- txdat
+  }
+
+  txdat <- as.data.frame(txdat)
+  exdat <- as.data.frame(exdat)
+
+  maxPenalty <- sqrt(.Machine$double.xmax)
+
+  n.train <- nrow(txdat)
+  n.eval <- nrow(exdat)
+
+  ## Check whether it appears that training and evaluation data are
+  ## conformable
+
+  if(ncol(txdat)!=ncol(exdat))
+    stop(" Error: training and evaluation data have unequal number of columns\n")
+
+  if(all(degree == 0)) {
+
+    ## Local constant using only one call to npksum
+
+    if(leave.one.out == TRUE) {
+
+      ## exdat not supported with leave.one.out, but this is only used
+      ## for cross-validation hence no exdat
+
+      tww <- npksum(txdat = txdat,
+                    weights = as.matrix(data.frame(1,tydat)),
+                    tydat = rep(1,length(tydat)),
+                    bws = bws,
+                    bandwidth.divide = TRUE,
+                    leave.one.out = leave.one.out,
+                    ukertype=ukertype,
+                    okertype=okertype,
+                    bwtype=bwtype,                    
+                    ...)$ksum
+
+    } else {
+
+      tww <- npksum(txdat = txdat,
+                    exdat = exdat,
+                    weights = as.matrix(data.frame(1,tydat)),
+                    tydat = rep(1,length(tydat)),
+                    bws = bws,
+                    bandwidth.divide = TRUE,
+                    leave.one.out = leave.one.out,
+                    ukertype=ukertype,
+                    okertype=okertype,
+                    bwtype=bwtype,                    
+                    ...)$ksum
+    }
+
+    ## Note that as bandwidth approaches zero the local constant
+    ## estimator undersmooths and approaches each sample realization,
+    ## so use the convention that when the sum of the kernel weights
+    ## equals 0, return y. This is unique to this code.
+
+    mhat <- ifelse(abs(tww[1,]) > .Machine$double.eps, tww[2,]/tww[1,], tydat)
+
+    return(list(mean = mhat))
+
+  } else {
+
+    W <- W.glp(txdat,degree)
+    W.eval <- W.glp(exdat,degree)
+
+    ## Local polynomial via smooth coefficient formulation and one
+    ## call to npksum
+
+    if(leave.one.out == TRUE) {
+
+      ## exdat not supported with leave.one.out, but this is only used
+      ## for cross-validation hence no exdat
+
+      tww <- npksum(txdat = txdat,
+                    tydat = as.matrix(cbind(tydat,W)),
+                    weights = W,
+                    bws = bws,
+                    bandwidth.divide = TRUE,
+                    leave.one.out = leave.one.out,
+                    ukertype=ukertype,
+                    okertype=okertype,
+                    bwtype=bwtype,                    
+                    ...)$ksum
+
+    } else {
+
+      tww <- npksum(txdat = txdat,
+                    exdat = exdat,
+                    tydat = as.matrix(cbind(tydat,W)),
+                    weights = W,
+                    bws = bws,
+                    bandwidth.divide = TRUE,
+                    leave.one.out = leave.one.out,
+                    ukertype=ukertype,
+                    okertype=okertype,
+                    bwtype=bwtype,                    
+                    ...)$ksum
+
+    }
+
+    tyw <- array(tww,dim = c(ncol(W)+1,ncol(W),n.eval))[1,,]
+    tww <- array(tww,dim = c(ncol(W)+1,ncol(W),n.eval))[-1,,]
+
+    coef.mat <- matrix(maxPenalty,ncol(W),n.eval)
+    epsilon <- 1.0/n.eval
+    ridge <- double(n.eval)
+    doridge <- !logical(n.eval)
+
+    nc <- ncol(tww[,,1])
+
+    ## Test for singularity of the generalized local polynomial
+    ## estimator, shrink the mean towards the local constant mean.
+
+    ridger <- function(i) {
+      doridge[i] <<- FALSE
+      ridge.val <- ridge[i]*tyw[1,i][1]/
+        (ifelse(tww[,,i][1,1]>=0,1,-1)*max(.Machine$double.eps,abs(tww[,,i][1,1])))
+      tryCatch(solve(tww[,,i]+diag(rep(ridge[i],nc)),
+                     tyw[,i]+c(ridge.val,rep(0,nc-1))),
+               error = function(e){
+                 ridge[i] <<- ridge[i]+epsilon
+                 doridge[i] <<- TRUE
+                 return(rep(maxPenalty,nc))
+               })
+    }
+
+    while(any(doridge)){
+      iloo <- (1:n.eval)[doridge]
+      coef.mat[,iloo] <- sapply(iloo, ridger)
+    }
+
+    if(any(doridge)) warning(" Ridging occurring...",immediate.=TRUE)
+
+    mhat <- sapply(1:n.eval, function(i) {
+      W.eval[i,, drop = FALSE] %*% coef.mat[,i]
+    })
+
+    return(list(mean = mhat,
+                grad = t(coef.mat[-1,]),
+                bwtype = bwtype,
+                ukertype = ukertype,
+                okertype = okertype,
+                bw = bws))
+
+  }
+
+}
+
+minimand.cv.ls <- function(bws=NULL,
+                           ydat=NULL,
+                           xdat=NULL,
+                           degree=NULL,
+                           W=NULL,
+                           ukertype=c("liracine","aitchisonaitken"),
+                           okertype=c("liracine","wangvanryzin"),
+                           bwtype = c("fixed","generalized_nn","adaptive_nn"),
+                           ...) {
+
+  ## Don't think this error checking is robust
+
+  ukertype <- match.arg(ukertype)
+  okertype <- match.arg(okertype)
+  bwtype <- match.arg(bwtype)  
+
+  if(is.null(ydat)) stop(" Error: You must provide y data")
+  if(is.null(xdat)) stop(" Error: You must provide X data")
+  if(is.null(W)) stop(" Error: You must provide a weighting matrix W")
+  if(is.null(bws)) stop(" Error: You must provide a bandwidth object")
+  if(is.null(degree) | any(degree < 0)) stop(paste(" Error: degree vector must contain non-negative integers\ndegree is (", degree, ")\n",sep=""))
+
+  xdat <- as.data.frame(xdat)
+
+  n <- length(ydat)
+
+  maxPenalty <- sqrt(.Machine$double.xmax)
+
+  if(any(bws<=0)) {
+
+    return(maxPenalty)
+
+  } else {
+
+    if(all(degree == 0)) {
+
+      ## Local constant via one call to npksum
+
+      tww <- npksum(txdat = xdat,
+                    weights = as.matrix(data.frame(1,ydat)),
+                    tydat = rep(1,n),
+                    bws = bws,
+                    leave.one.out = TRUE,
+                    bandwidth.divide = TRUE,
+                    ukertype=ukertype,
+                    okertype=okertype,
+                    bwtype=bwtype,                    
+                    ...)$ksum
+
+      mean.loo <- ifelse(abs(tww[1,]) > .Machine$double.eps, tww[2,]/tww[1,], maxPenalty)
+
+      if (!any(mean.loo == maxPenalty)){
+        fv <- mean((ydat-mean.loo)^2)
+      } else {
+        fv <- maxPenalty
+      }
+
+      return(ifelse(is.finite(fv),fv,maxPenalty))
+
+    } else {
+
+      ## Generalized local polynomial via smooth coefficient
+      ## formulation and one call to npksum
+
+      tww <- npksum(txdat = xdat,
+                    tydat = as.matrix(cbind(ydat,W)),
+                    weights = W,
+                    bws = bws,
+                    leave.one.out = TRUE,
+                    bandwidth.divide = TRUE,
+                    ukertype=ukertype,
+                    okertype=okertype,
+                    bwtype=bwtype,                    
+                    ...)$ksum
+
+      tyw <- array(tww,dim = c(ncol(W)+1,ncol(W),n))[1,,]
+      tww <- array(tww,dim = c(ncol(W)+1,ncol(W),n))[-1,,]
+
+      mean.loo <- rep(maxPenalty,n)
+      epsilon <- 1.0/n
+      ridge <- double(n)
+      doridge <- !logical(n)
+
+      nc <- ncol(tww[,,1])
+
+      ## Test for singularity of the generalized local polynomial
+      ## estimator, shrink the mean towards the local constant mean.
+
+      ridger <- function(i) {
+        doridge[i] <<- FALSE
+        ridge.val <- ridge[i]*tyw[1,i][1]/
+          (ifelse(tww[,,i][1,1]>=0,1,-1)*max(.Machine$double.eps,abs(tww[,,i][1,1])))
+        W[i,, drop = FALSE] %*% tryCatch(solve(tww[,,i]+diag(rep(ridge[i],nc)),
+                tyw[,i]+c(ridge.val,rep(0,nc-1))),
+                error = function(e){
+                  ridge[i] <<- ridge[i]+epsilon
+                  doridge[i] <<- TRUE
+                  return(rep(maxPenalty,nc))
+                })
+      }
+
+      while(any(doridge)){
+        iloo <- (1:n)[doridge]
+        mean.loo[iloo] <- sapply(iloo, ridger)
+      }
+
+      if(any(doridge)) warning(" Ridging occurring...",immediate.=TRUE)
+
+      if (!any(mean.loo == maxPenalty)){
+        fv <- mean((ydat-mean.loo)^2)
+      } else {
+        fv <- maxPenalty
+      }
+
+      return(ifelse(is.finite(fv),fv,maxPenalty))
+
+    }
+
+  }
+
+}
+
+minimand.cv.aic <- function(bws=NULL,
+                            ydat=NULL,
+                            xdat=NULL,
+                            degree=NULL,
+                            W=NULL,
+                            ukertype=c("liracine","aitchisonaitken"),
+                            okertype=c("liracine","wangvanryzin"),
+                            bwtype = c("fixed","generalized_nn","adaptive_nn"),
+                            ...) {
+
+  ## Don't think this error checking is robust
+
+  ukertype <- match.arg(ukertype)
+  okertype <- match.arg(okertype)
+  bwtype <- match.arg(bwtype)  
+
+  if(is.null(ydat)) stop(" Error: You must provide y data")
+  if(is.null(xdat)) stop(" Error: You must provide X data")
+  if(!all(degree==0)) if(is.null(W)) stop(" Error: You must provide a weighting matrix W")
+  if(is.null(bws)) stop(" Error: You must provide a bandwidth object")
+  if(is.null(degree) | any(degree < 0)) stop(paste(" Error: degree vector must contain non-negative integers\ndegree is (", degree, ")\n",sep=""))
+
+  xdat <- as.data.frame(xdat)
+
+  n <- length(ydat)
+
+  maxPenalty <- sqrt(.Machine$double.xmax)
+
+  if(any(bws<=0)) {
+
+    return(maxPenalty)
+
+  } else {
+
+    ## This computes the kernel function when i=j (i.e., K(0))
+
+    kernel.i.eq.j <- npksum(txdat = xdat[1,],
+                            weights = as.matrix(data.frame(1,ydat)[1,]),
+                            tydat = 1,
+                            bws = bws,
+                            bandwidth.divide = TRUE,
+                            ukertype=ukertype,
+                            okertype=okertype,
+                            bwtype=bwtype,                    
+                            ...)$ksum[1,1]
+
+    if(all(degree == 0)) {
+
+      ## Local constant via one call to npksum
+
+      tww <- npksum(txdat = xdat,
+                    weights = as.matrix(data.frame(1,ydat)),
+                    tydat = rep(1,n),
+                    bws = bws,
+                    bandwidth.divide = TRUE,
+                    ukertype=ukertype,
+                    okertype=okertype,
+                    bwtype=bwtype,                    
+                    ...)$ksum
+
+      ghat <- ifelse(abs(tww[1,]) > .Machine$double.eps, tww[2,]/tww[1,], maxPenalty)
+
+      trH <- kernel.i.eq.j*sum(ifelse(abs(tww[1,]) > .Machine$double.eps, 1/tww[1,], maxPenalty))
+
+      aic.penalty <- (1+trH/n)/(1-(trH+2)/n)
+
+      if (!any(ghat == maxPenalty) & (aic.penalty > 0)){
+        fv <- log(mean((ydat-ghat)^2)) + aic.penalty
+      } else {
+        fv <- maxPenalty
+      }
+
+      return(ifelse(is.finite(fv),fv,maxPenalty))
+
+    } else {
+
+      ## Generalized local polynomial via smooth coefficient
+      ## formulation and one call to npksum
+
+      tww <- npksum(txdat = xdat,
+                    tydat = as.matrix(cbind(ydat,W)),
+                    weights = W,
+                    bws = bws,
+                    bandwidth.divide = TRUE,
+                    ukertype=ukertype,
+                    okertype=okertype,
+                    bwtype=bwtype,                    
+                    ...)$ksum
+
+      tyw <- array(tww,dim = c(ncol(W)+1,ncol(W),n))[1,,]
+      tww <- array(tww,dim = c(ncol(W)+1,ncol(W),n))[-1,,]
+
+      ghat <- rep(maxPenalty,n)
+      epsilon <- 1.0/n
+      ridge <- double(n)
+      doridge <- !logical(n)
+
+      nc <- ncol(tww[,,1])
+
+      ## Test for singularity of the generalized local polynomial
+      ## estimator, shrink the mean towards the local constant mean.
+
+      ridger <- function(i) {
+        doridge[i] <<- FALSE
+        ridge.val <- ridge[i]*tyw[1,i][1]/
+          (ifelse(tww[,,i][1,1]>=0,1,-1)*max(.Machine$double.eps,abs(tww[,,i][1,1])))
+        W[i,, drop = FALSE] %*% tryCatch(solve(tww[,,i]+diag(rep(ridge[i],nc)),
+                tyw[,i]+c(ridge.val,rep(0,nc-1))),
+                error = function(e){
+                  ridge[i] <<- ridge[i]+epsilon
+                  doridge[i] <<- TRUE
+                  return(rep(maxPenalty,nc))
+                })
+      }
+
+      while(any(doridge)){
+        ii <- (1:n)[doridge]
+        ghat[ii] <- sapply(ii, ridger)
+      }
+
+      if(any(doridge)) warning(" Ridging occurring...",immediate.=TRUE)
+
+      trH <- kernel.i.eq.j*sum(sapply(1:n,function(i){
+        W[i,, drop = FALSE] %*% solve(tww[,,i]+diag(rep(ridge[i],nc))) %*% t(W[i,, drop = FALSE])
+      }))
+
+      if (!any(ghat == maxPenalty)){
+        fv <- log(mean((ydat-ghat)^2)) + (1+trH/n)/(1-(trH+2)/n)
+      } else {
+        fv <- maxPenalty
+      }
+
+      return(ifelse(is.finite(fv),fv,maxPenalty))
+
+    }
+
+  }
+
+}
+
+glpcv <- function(ydat=NULL,
+                  xdat=NULL,
+                  degree=NULL,
+                  bwmethod=c("cv.ls","cv.aic"),
+                  ukertype=c("liracine","aitchisonaitken"),
+                  okertype=c("liracine","wangvanryzin"),
+                  bwtype = c("fixed","generalized_nn","adaptive_nn"),
+                  nmulti=NULL,
+                  random.seed=42,
+                  optim.maxattempts = 10,
+                  optim.method=c("Nelder-Mead", "BFGS", "CG"),
+                  optim.reltol=sqrt(.Machine$double.eps),
+                  optim.abstol=.Machine$double.eps,
+                  optim.maxit=500,
+                  debug=FALSE,
+                  ...) {
+
+  ## Save seed prior to setting
+
+  if(exists(".Random.seed", .GlobalEnv)) {
+    save.seed <- get(".Random.seed", .GlobalEnv)
+    exists.seed = TRUE
+  } else {
+    exists.seed = FALSE
+  }
+
+  set.seed(random.seed)
+
+  if(debug) system("rm optim.debug bandwidth.out optim.out")
+
+  ## Don't think this error checking is robust
+
+  if(is.null(ydat)) stop(" Error: You must provide y data")
+  if(is.null(xdat)) stop(" Error: You must provide X data")
+  if(is.null(degree) | any(degree < 0)) stop(paste(" Error: degree vector must contain non-negative integers\ndegree is (", degree, ")\n",sep=""))
+  if(!is.null(nmulti) && nmulti < 1) stop(paste(" Error: nmulti must be a positive integer (minimum 1)\nnmulti is (", nmulti, ")\n",sep=""))
+
+  bwmethod <- match.arg(bwmethod)
+
+  ukertype <- match.arg(ukertype)
+  okertype <- match.arg(okertype)
+  bwtype <- match.arg(bwtype)  
+
+  optim.method <- match.arg(optim.method)
+  optim.control <- list(abstol = optim.abstol,
+                        reltol = optim.reltol,
+                        maxit = optim.maxit)
+
+  maxPenalty <- sqrt(.Machine$double.xmax)
+
+  xdat <- as.data.frame(xdat)
+
+  num.bw <- ncol(xdat)
+
+  if(is.null(nmulti)) nmulti <- min(5,num.bw)
+
+  ## Which variables are categorical, which are discrete...
+
+  xdat.numeric <- sapply(1:ncol(xdat),function(i){is.numeric(xdat[,i])})
+
+  ## First initialize initial search values of the vector of
+  ## bandwidths to lie in [0,1]
+
+  if(debug) write(c("cv",paste(rep("x",num.bw),seq(1:num.bw),sep="")),file="optim.debug",ncol=(num.bw+1))
+
+  ## Pass in the local polynomial weight matrix rather than
+  ## recomputing with each iteration.
+
+  W <- W.glp(xdat,degree)
+
+  sum.lscv <- function(bw.gamma,...) {
+
+    ## Note - we set the kernel for unordered and ordered regressors
+    ## to the liracine kernel (0<=lambda<=1) and test for proper
+    ## bounds in sum.lscv.
+
+    if(all(bw.gamma>=0)&&all(bw.gamma[!xdat.numeric]<=1)) {
+      lscv <- minimand.cv.ls(bws=bw.gamma,
+                             ydat=ydat,
+                             xdat=xdat,
+                             ukertype=ukertype,
+                             okertype=okertype,
+                             bwtype=bwtype,                    
+                             ...)
+    } else {
+      lscv <- maxPenalty
+    }
+
+    if(debug) write(c(lscv,bw.gamma),file="optim.debug",ncol=(num.bw+1),append=TRUE)
+    return(lscv)
+  }
+
+  sum.aicc <- function(bw.gamma,...) {
+
+    ## Note - we set the kernel for unordered and ordered regressors
+    ## to the liracine kernel (0<=lambda<=1) and test for proper
+    ## bounds in sum.lscv.
+
+    if(all(bw.gamma>=0)&&all(bw.gamma[!xdat.numeric]<=1)) {
+      aicc <- minimand.cv.aic(bws=bw.gamma,
+                              ydat=ydat,
+                              xdat=xdat,
+                              ukertype=ukertype,
+                              okertype=okertype,
+                              bwtype=bwtype,                    
+                              ...)
+    } else {
+      aicc <- maxPenalty
+    }
+
+    if(debug) write(c(aicc,bw.gamma),file="optim.debug",ncol=(num.bw+1),append=TRUE)
+    return(aicc)
+  }
+
+  ## Multistarting
+
+  fv.vec <- numeric(nmulti)
+
+  ## Pass in the W matrix rather than recomputing it each time
+
+  for(iMulti in 1:nmulti) {
+
+    num.numeric <- ncol(as.data.frame(xdat[,xdat.numeric]))
+
+    ## First initialize to values for factors (`liracine' kernel)
+
+    init.search.vals <- runif(ncol(xdat),0,1)
+
+    for(i in 1:ncol(xdat)) {
+      if(xdat.numeric[i]==TRUE) {
+        init.search.vals[i] <- runif(1,.5,1.5)*(IQR(xdat[,i])/1.349)*nrow(xdat)^{-1/(4+num.numeric)}
+      }
+    }
+
+    ## Initialize `best' values prior to search
+
+    if(iMulti == 1) {
+      fv <- maxPenalty
+      numimp <- 0
+      bw.opt <- init.search.vals
+      best <- 1
+    }
+
+    if(bwmethod == "cv.ls" ) {
+
+      suppressWarnings(optim.return <- optim(init.search.vals,
+                                             fn=sum.lscv,
+                                             method=optim.method,
+                                             control=optim.control,
+                                             degree=degree,
+                                             W=W,
+                                             ukertype=ukertype,
+                                             okertype=okertype,
+                                             bwtype=bwtype,                    
+                                             ...))
+
+      attempts <- 0
+      while((optim.return$convergence != 0) && (attempts <= optim.maxattempts)) {
+        init.search.vals <- runif(ncol(xdat),0,1)
+        if(xdat.numeric[i]==TRUE) {
+          init.search.vals[i] <- runif(1,.5,1.5)*(IQR(xdat[,i])/1.349)*nrow(xdat)^{-1/(4+num.numeric)}
+        }
+        attempts <- attempts + 1
+        optim.control$abstol <- optim.control$abstol * 10.0
+        optim.control$reltol <- optim.control$reltol * 10.0
+        suppressWarnings(optim.return <- optim(init.search.vals,
+                                               fn=sum.lscv,
+                                               method=optim.method,
+                                               control=optim.control,
+                                               degree=degree,
+                                               W=W,
+                                               ukertype=ukertype,
+                                               okertype=okertype,
+                                               bwtype=bwtype,                    
+                                               ...))
+      }
+
+    } else {
+
+      suppressWarnings(optim.return <- optim(init.search.vals,
+                                             fn=sum.aicc,
+                                             method=optim.method,
+                                             control=optim.control,
+                                             degree=degree,
+                                             W=W,
+                                             ukertype=ukertype,
+                                             okertype=okertype,
+                                             bwtype=bwtype,                    
+                                             ...))
+
+      attempts <- 0
+      while((optim.return$convergence != 0) && (attempts <= optim.maxattempts)) {
+        init.search.vals <- runif(ncol(xdat),0,1)
+        if(xdat.numeric[i]==TRUE) {
+          init.search.vals[i] <- runif(1,.5,1.5)*(IQR(xdat[,i])/1.349)*nrow(xdat)^{-1/(4+num.numeric)}
+        }
+        attempts <- attempts + 1
+        optim.control$abstol <- optim.control$abstol * 10.0
+        optim.control$reltol <- optim.control$reltol * 10.0
+        suppressWarnings(optim.return <- optim(init.search.vals,
+                                               fn = sum.aicc,
+                                               method=optim.method,
+                                               control = optim.control,
+                                               W=W,
+                                               ukertype=ukertype,
+                                               okertype=okertype,
+                                               bwtype=bwtype,                    
+                                               ...))
+      }
+    }
+
+    if(optim.return$convergence != 0) warning(" optim failed to converge")
+
+    fv.vec[iMulti] <- optim.return$value
+
+    if(optim.return$value < fv) {
+      bw.opt <- optim.return$par
+      fv <- optim.return$value
+      numimp <- numimp + 1
+      best <- iMulti
+      if(debug) {
+        if(iMulti==1) {
+          write(cbind(iMulti,t(bw.opt)),"bandwidth.out",ncol=(1+length(bw.opt)))
+          write(cbind(iMulti,fv),"optim.out",ncol=2)
+        } else {
+          write(cbind(iMulti,t(bw.opt)),"bandwidth.out",ncol=(1+length(bw.opt)),append=TRUE)
+          write(cbind(iMulti,fv),"optim.out",ncol=2,append=TRUE)
+        }
+      }
+    }
+
+  }
+
+  ## Restore seed
+
+  if(exists.seed) assign(".Random.seed", save.seed, .GlobalEnv)
+
+  return(list(bw=bw.opt,fv=fv,numimp=numimp,best=best,fv.vec=fv.vec))
+
+}
+
+## Note bws differ dramatically for numeric/categorical predictors and
+## lower bounds need to also be different... can be 0 for categorical,
+## but not for numeric...
+
+## Note for scaling used for initial bandwidths may need to adjust
+## bandwidth.min (now fraction of sd) by n^{-1/(2p+1)} etc.
+
+## Note - numeric.scale=TRUE rescales numeric predictors (not a robust
+## rescaling which we could achieve via sweep
+
+## If the degree or bandwidth are fed in they are used as initial values
+## for search where appropriate.
+
+## set bandwidth.max to be ten thousand times the standard deviation
+## set bandwidth.min minimum bw is 1/10 standard deviation
+
+glpcvNOMAD <- function(ydat=NULL,
+                       xdat=NULL,
+                       degree=NULL,
+                       bandwidth=NULL,
+                       bwmethod=c("cv.ls","cv.aic"),
+                       ukertype=c("liracine","aitchisonaitken"),
+                       okertype=c("liracine","wangvanryzin"),
+                       bwtype = c("fixed","generalized_nn","adaptive_nn"),
+                       cv=c("degree-bandwidth", "bandwidth"),
+                       nmulti=NULL,
+                       numeric.scale=TRUE,
+                       random.seed=42,
+                       degree.max=10,
+                       degree.min=0,
+                       bandwidth.max=1.0e+04,
+                       bandwidth.min=1.0e-01,
+                       opts=list(),
+                       ...) {
+
+  ## Save the seed prior to setting
+
+  if(exists(".Random.seed", .GlobalEnv)) {
+    save.seed <- get(".Random.seed", .GlobalEnv)
+    exists.seed = TRUE
+  } else {
+    exists.seed = FALSE
+  }
+
+  set.seed(random.seed)
+
+  ukertype <- match.arg(ukertype)
+  okertype <- match.arg(okertype)
+  bwtype <- match.arg(bwtype)  
+  bwmethod <- match.arg(bwmethod)
+  cv <- match.arg(cv)
+
+  if(is.null(ydat)) stop(" Error: You must provide y data")
+  if(is.null(xdat)) stop(" Error: You must provide X data")
+  if(!is.null(nmulti) && nmulti < 1) stop(paste(" Error: nmulti must be a positive integer (minimum 1)\nnmulti is (", nmulti, ")\n",sep=""))
+
+  if(!is.null(degree) && any(degree < 0)) stop(paste(" Error: degree vector must contain non-negative integers\ndegree is (", degree, ")\n",sep=""))
+
+  if(is.null(bandwidth.max)) bandwidth.max <- .Machine$double.xmax
+
+  if(degree.min < 0 ) degree.min <- 0
+  if(degree.max < degree.min) degree.max <- (degree.min + 1)
+
+  if(bandwidth.min < 0) bandwidth.min <-0
+  if(bandwidth.max < bandwidth.min) bandwidth.max <- (bandwidth.min + 1)
+
+  if(cv=="degree-bandwidth") {
+    if(!is.null(degree) && any(degree>degree.max)) stop(" Error: degree supplied but exceeds degree.max")
+    if(!is.null(degree) && any(degree<degree.min)) stop(" Error: degree supplied but less than degree.min")
+  }
+  
+  maxPenalty <- sqrt(.Machine$double.xmax)
+
+  ## For nearest neighbor bandwidths override default bandwidth.min
+  ## and bandwidth.max and use sample size information.
+
+  num.bw <- ncol(xdat)
+  num.obs <- nrow(xdat)
+  
+  if(bwtype!="fixed") {
+    bandwidth.min <- 1
+    bandwidth.max <- num.obs-1
+  }
+
+  xdat <- as.data.frame(xdat)
+  
+  if(!is.null(bandwidth) && (length(bandwidth) != num.bw)) stop(" Error: bandwidth supplied but length not compatible with X data")
+
+  if(is.null(nmulti)) nmulti <- min(5,num.bw)
+
+  ## Determine which predictors are categorical and which are
+  ## discrete... we care about unordered categorical kernels if the
+  ## Aitchison & Aitken kernel is used since its bandwidth bounds are
+  ## [0,(c-1)/c] and not 0/1 as are the rest of the unordered and
+  ## ordered kernel bandwidth bounds.
+
+  xdat.numeric <- sapply(1:num.bw,function(i){is.numeric(xdat[,i])})
+  num.numeric <- ncol(as.data.frame(xdat[,xdat.numeric]))
+
+  xdat.unordered <- sapply(1:num.bw,function(i){is.factor(xdat[,i])&&!is.ordered(xdat[,i])})
+  num.unordered <- ncol(as.data.frame(xdat[,xdat.unordered]))
+
+  if(numeric.scale==TRUE) {
+    xdat.numeric.orig <- xdat[,xdat.numeric]
+    xdat.scale <- attr(scale(xdat[,xdat.numeric]),"scaled:scale")
+    xdat[,xdat.numeric] <- scale(xdat[,xdat.numeric])
+    ## Note that scale() returns a matrix as the variable when there
+    ## is only one variable. Check for this case and set variable to
+    ## type numeric when this occurs.
+    if(num.numeric==1) xdat[,xdat.numeric] <- as.numeric(xdat[,xdat.numeric])
+  }
+
+  ## Use degree for initial values if provided
+
+  if(is.null(degree)) {
+    if(cv == "degree-bandwidth") {
+      degree <- sample(degree.min:degree.max, num.numeric, replace=T)
+    }
+    else {
+      stop(paste(" Error: degree must be given when optimizing only bandwidth"))
+    }
+  }
+
+  ## Use bandwidth for initial values if provided
+
+  if(is.null(bandwidth)) {
+    init.search.vals <- runif(num.bw,0,1)
+    for(i in 1:num.bw) {
+      if(xdat.numeric[i]==TRUE && bwtype=="fixed") {
+        init.search.vals[i] <- runif(1,.5,1.5)*(IQR(xdat[,i])/1.349)*nrow(xdat)^{-1/(4+num.numeric)}
+      } 
+      if(xdat.numeric[i]==TRUE && bwtype!="fixed") {
+        init.search.vals[i] <- round(runif(1,2,sqrt(num.obs)))
+      }
+      if(xdat.unordered[i]==TRUE && ukertype=="aitchisonaitken") {
+        c.num <- length(unique(xdat[,i]))
+        init.search.vals[i] <- runif(1,0,(c.num-1)/c.num)
+      }
+    }
+  } else {
+    init.search.vals <- bandwidth
+  }
+
+  ## Create the function wrappers to be fed to the snomadr solver for
+  ## leave-one-out cross-validation and Hurvich, Simonoff, and Tsai's
+  ## AIC_c approach
+
+  eval.lscv <- function(input, params){
+
+    ydat <- params$ydat
+    xdat <- params$xdat
+    xdat.numeric <- params$xdat.numeric
+    num.bw <- params$num.bw
+    num.numeric <- params$num.numeric
+    maxPenalty <- params$maxPenalty
+    degree <- params$degree
+    cv <- params$cv
+    ukertype <- params$ukertype
+    okertype <- params$okertype
+    bwtype <- params$bwtype    
+
+    bw.gamma <- input[1:num.bw]
+    if(cv=="degree-bandwidth")
+      degree <- round(input[(num.bw+1):(num.bw+num.numeric)])
+
+    W <- W.glp(xdat,degree)
+
+    if(all(bw.gamma>=0)&&all(bw.gamma[!xdat.numeric]<=1)) {
+      lscv <- minimand.cv.ls(bws=bw.gamma,
+                             ydat=ydat,
+                             xdat=xdat,
+                             degree=degree,
+                             W=W,
+                             ukertype=ukertype,
+                             okertype=okertype,
+                             bwtype=bwtype,                    
+                             ...)
+    } else {
+      lscv <- maxPenalty
+    }
+
+    return(lscv)
+  }
+
+  eval.aicc <- function(input, params){
+
+    ydat <- params$ydat
+    xdat <- params$xdat
+    xdat.numeric <- params$xdat.numeric
+    num.bw <- params$num.bw
+    num.numeric <- params$num.numeric
+    maxPenalty <- params$maxPenalty
+    degree <- params$degree
+    cv <- params$cv
+    ukertype <- params$ukertype
+    okertype <- params$okertype
+    bwtype <- params$bwtype    
+
+    bw.gamma <- input[1:num.bw]
+    if(cv=="degree-bandwidth")
+      degree <- round(input[(num.bw+1):(num.bw+num.numeric)])
+
+    W <- W.glp(xdat,degree)
+
+    if(all(bw.gamma>=0)&&all(bw.gamma[!xdat.numeric]<=1)) {
+      aicc <- minimand.cv.aic(bws=bw.gamma,
+                              ydat=ydat,
+                              xdat=xdat,
+                              degree=degree,
+                              W=W,
+                              ukertype=ukertype,
+                              okertype=okertype,
+                              bwtype=bwtype,                    
+                              ...)
+    } else {
+      aicc <- maxPenalty
+    }
+
+    return(aicc)
+  }
+
+  ## Generate the params fed to the snomadr solver
+
+  params <- list()
+  params$xdat <- xdat
+  params$ydat <- ydat
+  params$xdat.numeric <- xdat.numeric
+  params$num.bw <- num.bw
+  params$num.numeric <- num.numeric
+  params$maxPenalty <- maxPenalty
+  params$cv <- cv
+  params$degree <- degree
+  params$ukertype <- ukertype
+  params$okertype <- okertype
+  params$bwtype <- bwtype
+
+  if(cv=="degree-bandwidth") {
+    bbin <- c(rep(0, num.bw), rep(1, num.numeric))
+    lb <- c(rep(bandwidth.min, num.bw), rep(degree.min, num.numeric))
+    ub <- c(rep(bandwidth.max, num.bw), rep(degree.max, num.numeric))
+  } else {
+    bbin <- c(rep(0, num.bw))
+    lb <- c(rep(bandwidth.min, num.bw))
+    ub <- c(rep(bandwidth.max, num.bw))
+  }
+
+  for(i in 1:num.bw) {
+    ## Need to do integer search for numeric predictors when bwtype is
+    ## a nearest-neighbor, so set bbin appropriately.
+    if(xdat.numeric[i]==TRUE && bwtype!="fixed") {
+      bbin[i] <- 1
+    }
+    if(xdat.numeric[i]!=TRUE) {
+      lb[i] <- 0.0
+      ub[i] <- 1.0
+    }
+    ## Check for unordered and Aitchison/Aitken kernel
+    if(xdat.unordered[i]==TRUE && ukertype=="aitchisonaitken") {
+      c.num <- length(unique(xdat[,i]))
+      ub[i] <- (c.num-1)/c.num
+    }
+  }
+
+  ## No constraints
+
+  bbout <-c(0)
+
+  ## Multistarting
+
+  fv.vec <- numeric(nmulti)
+
+  ## Whether or not to display the information in snomadr
+  print.output <- FALSE
+  console <- newLineConsole()
+  if(!is.null(opts$DISPLAY_DEGREE)){
+    if(opts$DISPLAY_DEGREE>0){
+      print.output <-TRUE
+      console <- printPush("Being Solved by NOMAD...\n",console = console)
+    }
+  } else {
+    print.output <-TRUE
+    console <- printPush("Being Solved by NOMAD...\n",console = console)
+  }
+
+  degree.opt <- degree
+
+  for(iMulti in 1:nmulti) {
+
+    ## First initialize to values for factors (`liracine' kernel)
+
+    if(iMulti != 1) {
+      init.search.vals <- runif(num.bw,0,1)
+      for(i in 1:num.bw) {
+        if(xdat.numeric[i]==TRUE && bwtype=="fixed") {
+          init.search.vals[i] <- runif(1,.5,1.5)*(IQR(xdat[,i])/1.349)*nrow(xdat)^{-1/(4+num.numeric)}
+        }
+        if(xdat.numeric[i]==TRUE && bwtype!="fixed") {
+          init.search.vals[i] <- round(runif(1,2,sqrt(num.obs)))
+        }
+        if(xdat.unordered[i]==TRUE && ukertype=="aitchisonaitken") {
+          c.num <- length(unique(xdat[,i]))
+          init.search.vals[i] <- runif(1,0,(c.num-1)/c.num)
+        }
+      }
+    }
+
+    ## Initialize `best' values prior to search
+
+    if(iMulti == 1) {
+      fv <- maxPenalty
+      numimp <- 0
+      bw.opt <- init.search.vals
+      degree.opt <- degree
+      best <- 1
+    }
+
+    if(cv == "degree-bandwidth" && iMulti != 1)
+      degree <- sample(degree.min:degree.max, num.numeric, replace=T)
+
+    if(cv =="degree-bandwidth")
+      x0 <- c(init.search.vals, degree)
+    else
+      x0 <- c(init.search.vals)
+
+    if(bwmethod == "cv.ls" ) {
+      solution<-snomadr(eval.f=eval.lscv,
+                        n=length(x0),
+                        x0=as.numeric(x0),
+                        bbin=bbin,
+                        bbout=bbout,
+                        lb=lb,
+                        ub=ub,
+                        nmulti=0,
+                        random.seed=random.seed,
+                        opts=opts,
+                        print.output=print.output,
+                        params=params);
+
+    } else {
+      solution<-snomadr(eval.f=eval.aicc,
+                        n=length(x0),
+                        x0=as.numeric(x0),
+                        bbin=bbin,
+                        bbout=bbout,
+                        lb=lb,
+                        ub=ub,
+                        nmulti=0,
+                        random.seed=random.seed,
+                        opts=opts,
+                        print.output=print.output,
+                        params=params);
+    }
+
+    fv.vec[iMulti] <- solution$objective
+    
+    if(solution$objective < fv) {
+      bw.opt <- solution$solution[1:num.bw]
+      if(numeric.scale==TRUE && bwtype=="fixed") {
+        bw.opt[xdat.numeric] <- bw.opt[xdat.numeric]*xdat.scale
+      }
+      if(cv == "degree-bandwidth") {
+        degree.opt <- solution$solution[(num.bw+1):(num.bw+num.numeric)]
+      }
+      fv <- solution$objective
+      numimp <- numimp + 1
+      best <- iMulti
+    }
+
+  }
+
+  console <- printClear(console)
+  console <- printPop(console)
+
+  ## Restore seed
+
+  if(exists.seed) assign(".Random.seed", save.seed, .GlobalEnv)
+
+  return(list(bw=bw.opt,
+              fv=fv,
+              numimp=numimp,
+              best=best,
+              fv.vec=fv.vec,
+              degree=degree.opt,
+              bwtype=bwtype,
+              ukertype=ukertype,
+              okertype=okertype))
+
+}

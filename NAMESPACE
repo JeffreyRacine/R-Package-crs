@@ -10,6 +10,7 @@ export(crs,
        gsl.bs,
        krscv,
        krscvNOMAD,
+       npglpreg,
        snomadr,
        tensor.prod.model.matrix,
        uniquecombs)
@@ -29,3 +30,6 @@ S3method(gsl.bs, default)
 S3method(predict, gsl.bs)
 
 S3method(print, snomadr)
+
+S3method(npglpreg, formula)
+S3method(npglpreg, default)
