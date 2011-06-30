@@ -148,11 +148,40 @@ npglpreg.default <- function(tydat=NULL,
 
 print.npglpreg <- function(x,
                            ...) {
-
   cat("Call:\n")
   print(x$call)
 
 }
+
+summary.npglpreg <- function(object,
+                             ...) {
+
+  cat("Call:\n")
+  print(object$call)
+  cat("\nGeneralized Local Polynomial Kernel Regression\n",sep="")
+  if(object$num.x==1){
+    cat(paste("\nThere is ",format(object$num.x), " continuous predictor",sep=""),sep="")
+  } else if(object$num.x > 1) {
+    cat(paste("\nThere are ",format(object$num.x), " continuous predictors",sep=""),sep="")
+  }
+  if(object$num.z==1) {
+    cat(paste("\nThere is ",format(object$num.z), " categorical predictor",sep=""),sep="")
+  } else if(object$num.z > 1) {
+    cat(paste("\nThere are ",format(object$num.z), " categorical predictors",sep=""),sep="")
+  }
+  for(j in 1:object$num.x)
+    cat(paste("\nBandwidth for ",format(object$xnames[j]),": ",format(object$bw[j]),sep=""),sep="")
+  for(j in 1:object$num.x)
+    cat(paste("\nDegree for ",format(object$xnames[j]),": ",format(object$bw[j]),sep=""),sep="")  
+
+  cat(paste("\nTraining observations: ", format(object$nobs), sep=""))
+  cat(paste("\nMultiple R-squared: ", format(object$r.squared,digits=4), sep=""))
+  if(!is.null(object$fv)) cat(paste("\nCross-validation score: ", format(object$fv,digits=8), sep=""))  
+
+  cat("\n\n")
+
+}
+
 
 ## Method for predicting given a new data frame.
 
@@ -245,6 +274,8 @@ npglpreg.formula <- function(formula,
   tydat <- model.response(mf)
   txdat <- mf[, attr(attr(mf, "terms"),"term.labels"), drop = FALSE]
 
+  fv <- NULL
+
   if(cv!="none") {
     model.cv <-glpcvNOMAD(ydat=tydat,
                           xdat=txdat,
@@ -258,6 +289,7 @@ npglpreg.formula <- function(formula,
                           nmulti=1)
     degree <- model.cv$degree
     bws <- model.cv$bw
+    fv <- model.cv$fv
   }
 
   est <- npglpreg.default(tydat=tydat,
@@ -278,6 +310,7 @@ npglpreg.formula <- function(formula,
   est$xlevels <- .getXlevels(mt, mf)
   est$x <- txdat
   est$y <- tydat
+  est$fv <- fv
   
   return(est)
 
@@ -455,6 +488,9 @@ glpregEst <- function(tydat=NULL,
       W.eval[i,, drop = FALSE] %*% coef.mat[,i]
     })
 
+    num.numeric <- sum(sapply(1:NCOL(txdat),function(i){is.numeric(txdat[,i])})==TRUE)
+    num.categorical <- num.numeric-NCOL(txdat)
+
     return(list(fitted.values = mhat,
                 grad = t(coef.mat[-1,]),
                 bwtype = bwtype,
@@ -462,6 +498,9 @@ glpregEst <- function(tydat=NULL,
                 okertype = okertype,
                 degree = degree,
                 bw = bws,
+                nobs = n.train,
+                num.x = num.numeric,
+                num.z = num.categorical,
                 xnames = names(txdat)))
 
   }
