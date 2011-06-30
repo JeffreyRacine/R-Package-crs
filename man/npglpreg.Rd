@@ -25,6 +25,7 @@ npglpreg(\dots)
          ukertype = c("liracine", "aitchisonaitken"),
          okertype = c("liracine", "wangvanryzin"),
          bwtype = c("fixed", "generalized_nn", "adaptive_nn"),
+         raw = TRUE,
          \dots)
 
 \method{npglpreg}{formula}(formula,
@@ -49,6 +50,7 @@ npglpreg(\dots)
            MIN_POLL_SIZE = paste("r", sqrt(.Machine$double.eps), sep = "")),
          nmulti = 5,
          random.seed = 42,
+         raw = TRUE,
          \dots)
 
 
@@ -109,6 +111,11 @@ npglpreg(\dots)
   \item{random.seed}{
 %%     ~~Describe \code{random.seed} here~~
 }
+\item{raw}{
+  when TRUE evaluate raw polynomials of degree 1 to ‘degree’ over the
+  specified set of points ‘x’ otherwise evaluate orthogonal polynomials
+  (orthogonal to the constant polynomial of degree 0)
+}
   \item{\dots}{
 %%     ~~Describe \code{\dots} here~~
 }
@@ -142,7 +149,11 @@ x1 <- runif(n)
 x2 <- runif(n)
 y <- x1^3 + rnorm(n,sd=.1)
 
-model.glp <- npglpreg(y~x1+x2)
+## Ideally the method should choose large bandwidths for x1 and x2 and a
+## generalized polynomial that is a cubic for x1 and degree 0 for x2.
+
+model <- npglpreg(y~x1+x2)
+summary(model)
 }
 \keyword{ nonparametric }
 \keyword{ regression }

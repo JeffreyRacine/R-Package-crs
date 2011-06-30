@@ -47,7 +47,8 @@ mypoly <- function(x,degree,raw=TRUE) {
 ## polynomial with varying polynomial order.
 
 W.glp <- function(xdat = NULL,
-                  degree = NULL) {
+                  degree = NULL,
+                  raw = TRUE) {
 
   if(is.null(xdat)) stop(" Error: You must provide data")
   if(is.null(degree) | any(degree < 0)) stop(paste(" Error: degree vector must contain non-negative integers\ndegree is (", degree, ")\n",sep=""))
@@ -89,8 +90,8 @@ W.glp <- function(xdat = NULL,
       }
     }
     res <- rep.int(1,nrow(xdat.numeric))
-    if(degree[1] > 0) res <- cbind(1, mypoly(xdat.numeric[,1], degree[1]))[, 1 + z[, 1]]
-    if(k > 1) for (i in 2:k) if(degree[i] > 0) res <- res * cbind(1, mypoly(xdat.numeric[,i], degree[i]))[, 1 + z[, i]]
+    if(degree[1] > 0) res <- cbind(1, mypoly(xdat.numeric[,1], degree[1],raw=raw))[, 1 + z[, 1]]
+    if(k > 1) for (i in 2:k) if(degree[i] > 0) res <- res * cbind(1, mypoly(xdat.numeric[,i], degree[i],raw=raw))[, 1 + z[, i]]
     res <- matrix(res,nrow=NROW(xdat))
     colnames(res) <- apply(z, 1L, function(x) paste(x, collapse = "."))
     return(as.matrix(cbind(1,res)))
@@ -111,6 +112,7 @@ npglpreg.default <- function(tydat=NULL,
                              ukertype=c("liracine","aitchisonaitken"),
                              okertype=c("liracine","wangvanryzin"),
                              bwtype = c("fixed","generalized_nn","adaptive_nn"),
+                             raw=TRUE,
                              ...) {
 
 
@@ -127,7 +129,8 @@ npglpreg.default <- function(tydat=NULL,
                    leave.one.out=leave.one.out,
                    ukertype=ukertype,
                    okertype=okertype,
-                   bwtype = bwtype,
+                   bwtype=bwtype,
+                   raw=raw,
                    ...)
   
 
@@ -172,7 +175,7 @@ summary.npglpreg <- function(object,
   for(j in 1:object$num.x)
     cat(paste("\nBandwidth for ",format(object$xnames[j]),": ",format(object$bw[j]),sep=""),sep="")
   for(j in 1:object$num.x)
-    cat(paste("\nDegree for ",format(object$xnames[j]),": ",format(object$bw[j]),sep=""),sep="")  
+    cat(paste("\nDegree for ",format(object$xnames[j]),": ",format(object$degree[j]),sep=""),sep="")  
 
   cat(paste("\nTraining observations: ", format(object$nobs), sep=""))
   cat(paste("\nMultiple R-squared: ", format(object$r.squared,digits=4), sep=""))
@@ -207,6 +210,7 @@ predict.npglpreg <- function(object,
     bwtype <- object$bwtype
     ukertype <- object$ukertype
     okertype <- object$okertype
+    raw <- object$raw
     
     txdat <- object$x
     tydat <- object$y
@@ -224,6 +228,7 @@ predict.npglpreg <- function(object,
                      ukertype=ukertype,
                      okertype=okertype,
                      bwtype=bwtype,
+                     raw=raw,
                      ...)
     
     fitted.values <- est$fitted.values
@@ -259,6 +264,7 @@ npglpreg.formula <- function(formula,
                                "MIN_POLL_SIZE"=paste("r",sqrt(.Machine$double.eps),sep="")),
                              nmulti=5,
                              random.seed=42,
+                             raw=TRUE,
                              ...) {
 
   require(np)
@@ -286,7 +292,8 @@ npglpreg.formula <- function(formula,
                           degree.max=degree.max,
                           bwmethod=cv.func,
                           bwtype=bwtype,
-                          nmulti=1)
+                          nmulti=1,
+                          raw=raw)
     degree <- model.cv$degree
     bws <- model.cv$bw
     fv <- model.cv$fv
@@ -302,6 +309,7 @@ npglpreg.formula <- function(formula,
                           ukertype=ukertype,
                           okertype=okertype,
                           bwtype=bwtype,
+                          raw=raw,
                           ...)
   
   est$call <- match.call()
@@ -326,6 +334,7 @@ glpregEst <- function(tydat=NULL,
                       ukertype=c("liracine","aitchisonaitken"),
                       okertype=c("liracine","wangvanryzin"),
                       bwtype = c("fixed","generalized_nn","adaptive_nn"),
+                      raw=TRUE,
                       ...) {
 
   ## Don't think this error checking is robust
@@ -407,8 +416,8 @@ glpregEst <- function(tydat=NULL,
 
   } else {
 
-    W <- W.glp(txdat,degree)
-    W.eval <- W.glp(exdat,degree)
+    W <- W.glp(txdat,degree,raw=raw)
+    W.eval <- W.glp(exdat,degree,raw=raw)
 
     ## Local polynomial via smooth coefficient formulation and one
     ## call to npksum
@@ -501,7 +510,8 @@ glpregEst <- function(tydat=NULL,
                 nobs = n.train,
                 num.x = num.numeric,
                 num.z = num.categorical,
-                xnames = names(txdat)))
+                xnames = names(txdat),
+                raw = raw))
 
   }
 
@@ -784,6 +794,7 @@ glpcv <- function(ydat=NULL,
                   optim.abstol=.Machine$double.eps,
                   optim.maxit=500,
                   debug=FALSE,
+                  raw=TRUE,
                   ...) {
 
   ## Save seed prior to setting
@@ -837,7 +848,7 @@ glpcv <- function(ydat=NULL,
   ## Pass in the local polynomial weight matrix rather than
   ## recomputing with each iteration.
 
-  W <- W.glp(xdat,degree)
+  W <- W.glp(xdat,degree,raw=raw)
 
   sum.lscv <- function(bw.gamma,...) {
 
@@ -1043,6 +1054,7 @@ glpcvNOMAD <- function(ydat=NULL,
                        bandwidth.max=1.0e+04,
                        bandwidth.min=1.0e-01,
                        opts=list(),
+                       raw=TRUE,
                        ...) {
 
   ## Save the seed prior to setting
@@ -1175,7 +1187,7 @@ glpcvNOMAD <- function(ydat=NULL,
     if(cv=="degree-bandwidth")
       degree <- round(input[(num.bw+1):(num.bw+num.numeric)])
 
-    W <- W.glp(xdat,degree)
+    W <- W.glp(xdat,degree,raw=raw)
 
     if(all(bw.gamma>=0)&&all(bw.gamma[!xdat.numeric]<=1)) {
       lscv <- minimand.cv.ls(bws=bw.gamma,
@@ -1212,7 +1224,7 @@ glpcvNOMAD <- function(ydat=NULL,
     if(cv=="degree-bandwidth")
       degree <- round(input[(num.bw+1):(num.bw+num.numeric)])
 
-    W <- W.glp(xdat,degree)
+    W <- W.glp(xdat,degree,raw=raw)
 
     if(all(bw.gamma>=0)&&all(bw.gamma[!xdat.numeric]<=1)) {
       aicc <- minimand.cv.aic(bws=bw.gamma,
