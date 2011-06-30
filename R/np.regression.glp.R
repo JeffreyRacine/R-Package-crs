@@ -15,6 +15,7 @@ mypoly <- function(x,degree,raw=TRUE) {
   if(missing(x)) stop(" Error: x required")
   if(missing(degree)) stop(" Error: degree required")
   if(degree < 1) stop(" Error: degree must be a positive integer")
+  n <- degree + 1
 
   if(raw) {
     Z <- outer(x,1L:degree,"^")
@@ -132,8 +133,8 @@ npglpreg.default <- function(tydat=NULL,
 
   ## Add results to estimated object.
 
-  est$residuals <- y - est$mean
-  est$r.squared <- RSQfunc(y,est$mean)
+  est$residuals <- tydat - est$mean
+  est$r.squared <- RSQfunc(tydat,est$mean)
   est$call <- match.call()
   class(est) <- "glpreg"
 

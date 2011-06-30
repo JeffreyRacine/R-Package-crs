@@ -16,40 +16,40 @@
 npglpreg(\dots)
 
 \method{npglpreg}{default}(tydat = NULL,
-                 txdat = NULL,
-                 eydat = NULL,
-                 exdat = NULL,
-                 bws = NULL,
-                 degree = NULL,
-                 leave.one.out = FALSE,
-                 ukertype = c("liracine", "aitchisonaitken"),
-                 okertype = c("liracine", "wangvanryzin"),
-                 bwtype = c("fixed", "generalized_nn", "adaptive_nn"),
-                 \dots)
+         txdat = NULL,
+         eydat = NULL,
+         exdat = NULL,
+         bws = NULL,
+         degree = NULL,
+         leave.one.out = FALSE,
+         ukertype = c("liracine", "aitchisonaitken"),
+         okertype = c("liracine", "wangvanryzin"),
+         bwtype = c("fixed", "generalized_nn", "adaptive_nn"),
+         \dots)
 
 \method{npglpreg}{formula}(formula,
-                 data = list(),
-                 tydat = NULL,
-                 txdat = NULL,
-                 eydat = NULL,
-                 exdat = NULL,
-                 bws = NULL,
-                 degree = NULL,
-                 degree.max = 5,
-                 leave.one.out = FALSE,
-                 ukertype = c("liracine", "aitchisonaitken"),
-                 okertype = c("liracine", "wangvanryzin"),
-                 bwtype = c("fixed", "generalized_nn", "adaptive_nn"),
-                 cv = c("degree-bandwidth", "bandwidth", "none"),
-                 cv.func = c("cv.ls", "cv.gcv", "cv.aic"),
-                 opts = list(MAX_BB_EVAL = 10000,
-                   EPSILON = .Machine$double.eps,
-                   INITIAL_MESH_SIZE = "1.0e-01",
-                   MIN_MESH_SIZE = paste("r", sqrt(.Machine$double.eps), sep = ""),
-                   MIN_POLL_SIZE = paste("r", sqrt(.Machine$double.eps), sep = "")),
-                 nmulti = 5,
-                 random.seed = 42,
-                 \dots)
+         data = list(),
+         tydat = NULL,
+         txdat = NULL,
+         eydat = NULL,
+         exdat = NULL,
+         bws = NULL,
+         degree = NULL,
+         degree.max = 5,
+         leave.one.out = FALSE,
+         ukertype = c("liracine", "aitchisonaitken"),
+         okertype = c("liracine", "wangvanryzin"),
+         bwtype = c("fixed", "generalized_nn", "adaptive_nn"),
+         cv = c("degree-bandwidth", "bandwidth", "none"),
+         cv.func = c("cv.ls", "cv.gcv", "cv.aic"),
+         opts = list(MAX_BB_EVAL = 10000,
+           EPSILON = .Machine$double.eps,
+           INITIAL_MESH_SIZE = "1.0e-01",
+           MIN_MESH_SIZE = paste("r", sqrt(.Machine$double.eps), sep = ""),
+           MIN_POLL_SIZE = paste("r", sqrt(.Machine$double.eps), sep = "")),
+         nmulti = 5,
+         random.seed = 42,
+         \dots)
 
 
 }
@@ -114,29 +114,23 @@ npglpreg(\dots)
 }
 }
 \details{
-%%  ~~ If necessary, more details than the description above ~~
+This function is in beta status until further notice.
 }
 \value{
-%%  ~Describe the value returned
-%%  If it is a LIST, use
-%%  \item{comp1 }{Description of 'comp1'}
-%%  \item{comp2 }{Description of 'comp2'}
-%% ...
+TBA
 }
 \references{
-%% ~put references to the literature/web site here ~
+TBA
 }
 \author{
-%%  ~~who you are~~
+  Jeffrey S. Racine \email{racinej@mcmaster.ca}
 }
 \note{
-%%  ~~further notes~~
+TBA
 }
 
-%% ~Make other sections like Warning with \section{Warning }{....} ~
-
 \seealso{
-%% ~~objects to See Also as \code{\link{help}}, ~~~
+\code{\link[np]{npreg}}
 }
 \examples{
 set.seed(42)
