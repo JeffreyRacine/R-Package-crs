@@ -182,7 +182,10 @@ summary.npglpreg <- function(object,
   if(object$raw==FALSE) cat(paste("\nPolynomial: orthogonal",sep=""),sep="")  
   cat(paste("\nTraining observations: ", format(object$nobs), sep=""))
   cat(paste("\nMultiple R-squared: ", format(object$r.squared,digits=4), sep=""))
-  if(!is.null(object$fv)) cat(paste("\nCross-validation score: ", format(object$fv,digits=8), sep=""))  
+  if(!is.null(object$fv)) {
+    cat(paste("\nCross-validation score: ", format(object$fv,digits=8), sep=""))
+    cat(paste("\nNumber of multistarts: ", format(object$nmulti), sep=""))
+  }
 
   cat("\n\n")
 
@@ -201,7 +204,7 @@ predict.npglpreg <- function(object,
     
     ## If no new data provided, return sample fit.
     fitted.values <- fitted(object)
-    grad <- object$grad
+    coef.mat <- object$coef.mat
     
   } else{
     
@@ -235,11 +238,11 @@ predict.npglpreg <- function(object,
                             ...)
     
     fitted.values <- est$fitted.values
-    grad <- est$grad
+    coef.mat <- est$coef.mat
     
   }
 
-  attr(fitted.values, "grad") <- grad
+  attr(fitted.values, "coef.mat") <- coef.mat
 
   return(fitted.values)
 
@@ -295,7 +298,7 @@ npglpreg.formula <- function(formula,
                           degree.max=degree.max,
                           bwmethod=cv.func,
                           bwtype=bwtype,
-                          nmulti=1,
+                          nmulti=nmulti,
                           raw=raw)
     degree <- model.cv$degree
     bws <- model.cv$bw
@@ -322,6 +325,7 @@ npglpreg.formula <- function(formula,
   est$x <- txdat
   est$y <- tydat
   est$fv <- fv
+  est$nmulti <- nmulti
   
   return(est)
 
@@ -504,7 +508,7 @@ glpregEst <- function(tydat=NULL,
     num.categorical <- num.numeric-NCOL(txdat)
 
     return(list(fitted.values = mhat,
-                grad = t(coef.mat[-1,]),
+                coef.mat = t(coef.mat[-1,]),
                 bwtype = bwtype,
                 ukertype = ukertype,
                 okertype = okertype,
