@@ -112,8 +112,8 @@ npglpreg(\dots)
 %%     ~~Describe \code{random.seed} here~~
 }
 \item{raw}{
-  when TRUE evaluate raw polynomials of degree 1 to ‘degree’ over the
-  specified set of points ‘x’ otherwise evaluate orthogonal polynomials
+  when TRUE evaluate raw polynomials of degree 1 to \code{degree} over the
+  specified set of points \code{x} otherwise evaluate orthogonal polynomials
   (orthogonal to the constant polynomial of degree 0)
 }
   \item{\dots}{

@@ -10,6 +10,11 @@
 ## different form purely for computational simplicity. Both approaches
 ## are identical though.
 
+NZD <- function(a) {
+  sapply(1:NROW(a), function(i) {if(a[i] < 0) min(-.Machine$double.xmin,a[i]) else max(.Machine$double.xmin,a[i])})
+}
+
+
 mypoly <- function(x,degree,raw=TRUE) {
 
   if(missing(x)) stop(" Error: x required")
@@ -417,7 +422,7 @@ glpregEst <- function(tydat=NULL,
     ## so use the convention that when the sum of the kernel weights
     ## equals 0, return y. This is unique to this code.
 
-    mhat <- ifelse(abs(tww[1,]) > .Machine$double.eps, tww[2,]/tww[1,], tydat)
+    mhat <- tww[2,]/NZD(tww[1,])
 
     return(list(mean = mhat))
 
@@ -479,8 +484,7 @@ glpregEst <- function(tydat=NULL,
 
     ridger <- function(i) {
       doridge[i] <<- FALSE
-      ridge.val <- ridge[i]*tyw[1,i][1]/
-        (ifelse(tww[,,i][1,1]>=0,1,-1)*max(.Machine$double.eps,abs(tww[,,i][1,1])))
+      ridge.val <- ridge[i]*tyw[1,i][1]/NZD(tww[,,i][1,1])
       tryCatch(solve(tww[,,i]+diag(rep(ridge[i],nc)),
                      tyw[,i]+c(ridge.val,rep(0,nc-1))),
                error = function(e){
@@ -573,8 +577,8 @@ minimand.cv.ls <- function(bws=NULL,
                     bwtype=bwtype,                    
                     ...)$ksum
 
-      mean.loo <- ifelse(abs(tww[1,]) > .Machine$double.eps, tww[2,]/tww[1,], maxPenalty)
-
+      mean.loo <- tww[2,]/NZD(tww[1,])
+      
       if (!any(mean.loo == maxPenalty)){
         fv <- mean((ydat-mean.loo)^2)
       } else {
@@ -614,8 +618,7 @@ minimand.cv.ls <- function(bws=NULL,
 
       ridger <- function(i) {
         doridge[i] <<- FALSE
-        ridge.val <- ridge[i]*tyw[1,i][1]/
-          (ifelse(tww[,,i][1,1]>=0,1,-1)*max(.Machine$double.eps,abs(tww[,,i][1,1])))
+        ridge.val <- ridge[i]*tyw[1,i][1]/NZD(tww[,,i][1,1])
         W[i,, drop = FALSE] %*% tryCatch(solve(tww[,,i]+diag(rep(ridge[i],nc)),
                 tyw[,i]+c(ridge.val,rep(0,nc-1))),
                 error = function(e){
@@ -706,9 +709,9 @@ minimand.cv.aic <- function(bws=NULL,
                     bwtype=bwtype,                    
                     ...)$ksum
 
-      ghat <- ifelse(abs(tww[1,]) > .Machine$double.eps, tww[2,]/tww[1,], maxPenalty)
+      ghat <- tww[2,]/NZD(tww[1,])
 
-      trH <- kernel.i.eq.j*sum(ifelse(abs(tww[1,]) > .Machine$double.eps, 1/tww[1,], maxPenalty))
+      trH <- kernel.i.eq.j*sum(1/NZD(tww[1,]))
 
       aic.penalty <- (1+trH/n)/(1-(trH+2)/n)
 
@@ -750,8 +753,7 @@ minimand.cv.aic <- function(bws=NULL,
 
       ridger <- function(i) {
         doridge[i] <<- FALSE
-        ridge.val <- ridge[i]*tyw[1,i][1]/
-          (ifelse(tww[,,i][1,1]>=0,1,-1)*max(.Machine$double.eps,abs(tww[,,i][1,1])))
+        ridge.val <- ridge[i]*tyw[1,i][1]/NZD(tww[,,i][1,1])
         W[i,, drop = FALSE] %*% tryCatch(solve(tww[,,i]+diag(rep(ridge[i],nc)),
                 tyw[,i]+c(ridge.val,rep(0,nc-1))),
                 error = function(e){
