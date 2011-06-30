@@ -114,7 +114,10 @@ npglpreg(\dots)
 }
 }
 \details{
-This function is in beta status until further notice.
+  This function is in beta status until further notice.
+
+  Important note - prediction with newdata only works if there exists
+  more than one row in the newdata data frame.
 }
 \value{
 TBA

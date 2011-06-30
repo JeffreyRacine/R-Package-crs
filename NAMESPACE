@@ -33,3 +33,4 @@ S3method(print, snomadr)
 
 S3method(npglpreg, formula)
 S3method(npglpreg, default)
+S3method(predict, npglpreg)

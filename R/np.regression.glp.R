@@ -91,7 +91,7 @@ W.glp <- function(xdat = NULL,
     res <- rep.int(1,nrow(xdat.numeric))
     if(degree[1] > 0) res <- cbind(1, mypoly(xdat.numeric[,1], degree[1]))[, 1 + z[, 1]]
     if(k > 1) for (i in 2:k) if(degree[i] > 0) res <- res * cbind(1, mypoly(xdat.numeric[,i], degree[i]))[, 1 + z[, i]]
-    res <- as.matrix(res)
+    res <- matrix(res,nrow=NROW(xdat))
     colnames(res) <- apply(z, 1L, function(x) paste(x, collapse = "."))
     return(as.matrix(cbind(1,res)))
 
@@ -133,14 +133,78 @@ npglpreg.default <- function(tydat=NULL,
 
   ## Add results to estimated object.
 
-  est$residuals <- tydat - est$mean
-  est$r.squared <- RSQfunc(tydat,est$mean)
+  est$residuals <- tydat - est$fitted.values
+  est$r.squared <- RSQfunc(tydat,est$fitted.values)
   est$call <- match.call()
-  class(est) <- "glpreg"
+  class(est) <- "npglpreg"
 
   ## Return object of type glpreg
 
   return(est)
+
+}
+
+## Basic print method.
+
+print.npglpreg <- function(x,
+                           ...) {
+
+  cat("Call:\n")
+  print(x$call)
+
+}
+
+## Method for predicting given a new data frame.
+
+predict.npglpreg <- function(object,
+                             newdata=NULL,
+                             ...) {
+
+  if(nrow(newdata)==1) stop(" Error: newdata must have more than one row")
+  
+  if(is.null(newdata)) {
+    
+    ## If no new data provided, return sample fit.
+    fitted.values <- fitted(object)
+    grad <- object$grad
+    
+  } else{
+    
+    ## Get training data from object (xz and y) and parse into factors
+    ## and numeric.
+    
+    degree <- object$degree
+    bws <- object$bw
+    bwtype <- object$bwtype
+    ukertype <- object$ukertype
+    okertype <- object$okertype
+    
+    txdat <- object$x
+    tydat <- object$y
+    
+    Terms <- delete.response(terms(object))
+    newdata <- model.frame(Terms,newdata,xlev=object$xlevels)
+
+    ## Return the predicted values.
+
+    est <- glpregEst(tydat=tydat,
+                     txdat=txdat,
+                     exdat=newdata,
+                     bws=bws,
+                     degree=degree,
+                     ukertype=ukertype,
+                     okertype=okertype,
+                     bwtype=bwtype,
+                     ...)
+    
+    fitted.values <- est$fitted.values
+    grad <- est$grad
+    
+  }
+
+  attr(fitted.values, "grad") <- grad
+
+  return(fitted.values)
 
 }
 
@@ -235,7 +299,7 @@ glpregEst <- function(tydat=NULL,
 
   ukertype <- match.arg(ukertype)
   okertype <- match.arg(okertype)
-  bwtype <- match.arg(bwtype)  
+  bwtype <- match.arg(bwtype)
 
   if(is.null(tydat)) stop(" Error: You must provide y data")
   if(is.null(txdat)) stop(" Error: You must provide X data")
@@ -296,6 +360,7 @@ glpregEst <- function(tydat=NULL,
                     okertype=okertype,
                     bwtype=bwtype,                    
                     ...)$ksum
+
     }
 
     ## Note that as bandwidth approaches zero the local constant
@@ -348,6 +413,12 @@ glpregEst <- function(tydat=NULL,
     }
 
     tyw <- array(tww,dim = c(ncol(W)+1,ncol(W),n.eval))[1,,]
+    ## June 30 2011... spent hours trying to track down an issue with
+    ## this code. When there is only one row in the evaluation data
+    ## this array becomes a matrix and things break. Should be simple
+    ## to fix but not so simple it appears... this needs attention for
+    ## a robust package, but for now I trap this in predict.glpregEst
+    ## and throw an error to avoid issues in the future...
     tww <- array(tww,dim = c(ncol(W)+1,ncol(W),n.eval))[-1,,]
 
     coef.mat <- matrix(maxPenalty,ncol(W),n.eval)
@@ -356,9 +427,6 @@ glpregEst <- function(tydat=NULL,
     doridge <- !logical(n.eval)
 
     nc <- ncol(tww[,,1])
-
-    ## Test for singularity of the generalized local polynomial
-    ## estimator, shrink the mean towards the local constant mean.
 
     ridger <- function(i) {
       doridge[i] <<- FALSE
@@ -373,6 +441,9 @@ glpregEst <- function(tydat=NULL,
                })
     }
 
+    ## Test for singularity of the generalized local polynomial
+    ## estimator, shrink the mean towards the local constant mean.
+
     while(any(doridge)){
       iloo <- (1:n.eval)[doridge]
       coef.mat[,iloo] <- sapply(iloo, ridger)
@@ -384,12 +455,14 @@ glpregEst <- function(tydat=NULL,
       W.eval[i,, drop = FALSE] %*% coef.mat[,i]
     })
 
-    return(list(mean = mhat,
+    return(list(fitted.values = mhat,
                 grad = t(coef.mat[-1,]),
                 bwtype = bwtype,
                 ukertype = ukertype,
                 okertype = okertype,
-                bw = bws))
+                degree = degree,
+                bw = bws,
+                xnames = names(txdat)))
 
   }
 
