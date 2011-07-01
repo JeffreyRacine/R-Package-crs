@@ -238,6 +238,7 @@ summary.npglpreg <- function(object,
 
 predict.npglpreg <- function(object,
                              newdata=NULL,
+                             gradient.vec=NULL,
                              ...) {
 
   if(nrow(newdata)==1) stop(" Error: newdata must have more than one row")
@@ -259,7 +260,9 @@ predict.npglpreg <- function(object,
     ukertype <- object$ukertype
     okertype <- object$okertype
     raw <- object$raw
-    gradient.vec <- object$gradient.vec
+    if(is.null(gradient.vec)) {
+      gradient.vec <- object$gradient.vec
+    } 
     
     txdat <- object$x
     tydat <- object$y
@@ -1574,13 +1577,6 @@ plot.npglpreg <- function(x,
 
       if(!ci) {
 
-        ## May 20 - trying to debug plot - issue appears to be that
-        ## predict is barfing because formula was used and newdata
-        ## does not have similar objects...
-        
-#    print("Here we are")
-#    print(class(newdata[,i]))
-
         mg[[i]] <- data.frame(newdata[,i],predict(object,newdata=newdata))
         names(mg[[i]]) <- c(names(newdata)[i],"deriv")
         
@@ -1653,7 +1649,7 @@ plot.npglpreg <- function(x,
 
   if(deriv) {
 
-    if(object$deriv > 0) {
+    if(deriv > 0) {
 
       if(!is.null(object$num.z)||(object$num.x>1)) par(mfrow=dim.plot(NCOL(object$x)))
 
@@ -1664,6 +1660,9 @@ plot.npglpreg <- function(x,
       ## later - but this works)
 
       for(i in 1:NCOL(object$x)) {
+
+        gradient.vec <- rep(0,NCOL(object$x))
+        gradient.vec[i] <- deriv
 
         if(!is.factor(object$x[,i])) {
           newdata <- matrix(NA,nrow=num.eval,ncol=NCOL(object$x))
@@ -1694,16 +1693,16 @@ plot.npglpreg <- function(x,
 
         if(!ci) {
           
-          rg[[i]] <- data.frame(newdata[,i],attr(predict(object,newdata=newdata),"deriv.mat")[,i])
+          rg[[i]] <- data.frame(newdata[,i],attr(predict(object,newdata=newdata,gradient.vec=gradient.vec),"gradient"))
           names(rg[[i]]) <- c(names(newdata)[i],"deriv")
           
         } else {
           
-          fitted.values <- predict(object,newdata=newdata)
+          fitted.values <- predict(object,newdata=newdata,gradient.vec=gradient.vec)
           rg[[i]] <- data.frame(newdata[,i],
-                                attr(predict(object,newdata=newdata),"deriv.mat")[,i],
-                                attr(predict(object,newdata=newdata),"deriv.mat.lwr")[,i],
-                                attr(predict(object,newdata=newdata),"deriv.mat.upr")[,i])
+                                attr(predict(object,newdata=newdata,gradient.vec=gradient.vec),"gradient"),
+                                attr(predict(object,newdata=newdata,gradient.vec=gradient.vec),"deriv.mat.lwr")[,i],
+                                attr(predict(object,newdata=newdata,gradient.vec=gradient.vec),"deriv.mat.upr")[,i])
           names(rg[[i]]) <- c(names(newdata)[i],"deriv","lwr","upr")
           
         }
@@ -1723,7 +1722,7 @@ plot.npglpreg <- function(x,
     
     ## Can now add common scale for mean if desired.
     
-    if(object$deriv > 0) {
+    if(deriv > 0) {
 
       if(plot.behavior!="data") {
 
