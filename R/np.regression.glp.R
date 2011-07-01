@@ -214,7 +214,7 @@ summary.npglpreg <- function(object,
   } else if(object$num.z > 1) {
     cat(paste("\nThere are ",format(object$num.z), " categorical predictors",sep=""),sep="")
   }
-  for(j in 1:object$num.x)
+  for(j in 1:(object$num.x+object$num.z))
     cat(paste("\nBandwidth for ",format(object$xnames[j]),": ",format(object$bw[j]),sep=""),sep="")
   for(j in 1:object$num.x)
     cat(paste("\nDegree for ",format(object$xnames[j]),": ",format(object$degree[j]),sep=""),sep="")  
@@ -346,10 +346,9 @@ npglpreg.formula <- function(formula,
   txdat <- mf[, attr(attr(mf, "terms"),"term.labels"), drop = FALSE]
 
   fv <- NULL
-  ptm <- NULL
 
   if(cv!="none") {
-    ptm <- system.time(model.cv <-glpcvNOMAD(ydat=tydat,
+    ptm.cv <- system.time(model.cv <-glpcvNOMAD(ydat=tydat,
                                              xdat=txdat,
                                              opts=opts,
                                              cv=cv,
@@ -369,20 +368,22 @@ npglpreg.formula <- function(formula,
     fv <- model.cv$fv
   }
 
-  ptm <- ptm + system.time(est <- npglpreg.default(tydat=tydat,
-                                                   txdat=txdat,
-                                                   eydat=eydat,
-                                                   exdat=exdat,
-                                                   bws=bws,
-                                                   degree=degree,
-                                                   leave.one.out=leave.one.out,
-                                                   ukertype=ukertype,
-                                                   okertype=okertype,
-                                                   bwtype=bwtype,
-                                                   raw=raw,
-                                                   gradient.vec=gradient.vec,
-                                                   ...))
-
+  ptm <- system.time(est <- npglpreg.default(tydat=tydat,
+                                             txdat=txdat,
+                                             eydat=eydat,
+                                             exdat=exdat,
+                                             bws=bws,
+                                             degree=degree,
+                                             leave.one.out=leave.one.out,
+                                             ukertype=ukertype,
+                                             okertype=okertype,
+                                             bwtype=bwtype,
+                                             raw=raw,
+                                             gradient.vec=gradient.vec,
+                                             ...))
+  
+  if(cv!="none") ptm <- ptm.cv + ptm
+  
   est$call <- match.call()
   est$formula <- formula
   est$terms <- mt
@@ -580,7 +581,7 @@ glpregEst <- function(tydat=NULL,
     }
 
     num.numeric <- sum(sapply(1:NCOL(txdat),function(i){is.numeric(txdat[,i])})==TRUE)
-    num.categorical <- num.numeric-NCOL(txdat)
+    num.categorical <- NCOL(txdat)-num.numeric
 
     return(list(fitted.values = mhat,
                 gradient = gradient,
