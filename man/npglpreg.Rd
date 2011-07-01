@@ -26,6 +26,7 @@ npglpreg(\dots)
          okertype = c("liracine", "wangvanryzin"),
          bwtype = c("fixed", "generalized_nn", "adaptive_nn"),
          raw = TRUE,
+         gradient.vec = NULL,
          \dots)
 
 \method{npglpreg}{formula}(formula,
@@ -55,6 +56,7 @@ npglpreg(\dots)
          bandwidth.max = 1.0e+05,
          bandwidth.min = 1.0e-03,
          raw = TRUE,
+         gradient.vec = NULL,
          \dots)
 }
 
@@ -126,6 +128,9 @@ npglpreg(\dots)
   when TRUE evaluate raw polynomials of degree 1 to \code{degree} over the
   specified set of points \code{x} otherwise evaluate orthogonal polynomials
   (orthogonal to the constant polynomial of degree 0)
+}
+\item{gradient.vec}{
+%%
 }
   \item{\dots}{
 %%     ~~Describe \code{\dots} here~~

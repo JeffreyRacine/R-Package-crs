@@ -716,10 +716,10 @@ minimand.cv.ls <- function(bws=NULL,
 
       fv <- ifelse(is.finite(fv),fv,maxPenalty)
 
-      console <<- newLineConsole()
-      console <<- printClear(console)
-      console <<- printPop(console)
-      console <<- printPush(paste("\rfv = ",format(fv),sep=""),console = console)
+      console <- newLineConsole()
+      console <- printClear(console)
+      console <- printPop(console)
+      console <- printPush(paste("\rfv = ",format(fv),sep=""),console = console)
 
       return(fv)
 
@@ -862,10 +862,10 @@ minimand.cv.aic <- function(bws=NULL,
 
       fv <- ifelse(is.finite(fv),fv,maxPenalty)
 
-      console <<- newLineConsole()
-      console <<- printClear(console)
-      console <<- printPop(console)
-      console <<- printPush(paste("\rfv = ",format(fv),sep=""),console = console)
+      console <- newLineConsole()
+      console <- printClear(console)
+      console <- printPop(console)
+      console <- printPush(paste("\rfv = ",format(fv),sep=""),console = console)
 
       return(fv)
 
@@ -1716,7 +1716,7 @@ plot.npglpreg <- function(x,
 
       ## If no deriv given (default=0) issue warning and return
 
-      warning(paste(" gradient plot requested but gradient order is", object$deriv),": specify `deriv=' in crs call",sep="")
+      warning(paste(" gradient plot requested but gradient order is", deriv),": specify `deriv=' in crs call",sep="")
 
     }
     
@@ -1731,7 +1731,7 @@ plot.npglpreg <- function(x,
           if(!ci) {
             plot(rg[[i]][,1],rg[[i]][,2],
                  xlab=names(newdata)[i],
-                 ylab=ifelse(!is.factor(newdata[,i]), paste("Order", object$deriv,"Gradient"), "Difference in Levels"),
+                 ylab=ifelse(!is.factor(newdata[,i]), paste("Order", deriv,"Gradient"), "Difference in Levels"),
                  type="l",
                  ...)
             
@@ -1739,7 +1739,7 @@ plot.npglpreg <- function(x,
             ylim <- c(min(rg[[i]][,-1]),max(rg[[i]][,-1]))
             plot(rg[[i]][,1],rg[[i]][,2],
                  xlab=names(newdata)[i],
-                 ylab=ifelse(!is.factor(newdata[,i]), paste("Order", object$deriv,"Gradient"), "Difference in Levels"),
+                 ylab=ifelse(!is.factor(newdata[,i]), paste("Order", deriv,"Gradient"), "Difference in Levels"),
                  ylim=ylim,
                  type="l",
                  ...)
