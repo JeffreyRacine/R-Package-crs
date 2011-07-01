@@ -7,6 +7,11 @@ dim.plot = function(x) {
   c(a1,a2)
 }
 
+succeedWithResponse <- function(tt, frame){
+  !any(class(try(eval(expr = attr(tt, "variables"),
+                      envir = frame, encl = NULL), silen = TRUE)) == "try-error")
+}
+
 ## Utility function to divide explanatory variables into
 ## factors/numeric, strip off names etc.
 

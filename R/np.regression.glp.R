@@ -196,6 +196,7 @@ summary.npglpreg <- function(object,
     cat(paste("\nNumber of multistarts: ", format(object$nmulti), sep=""))
   }
 
+  cat(paste("\nEstimation time: ", formatC(object$ptm[1],digits=1,format="f"), " seconds",sep=""))
   cat("\n\n")
 
 }
@@ -307,41 +308,42 @@ npglpreg.formula <- function(formula,
   txdat <- mf[, attr(attr(mf, "terms"),"term.labels"), drop = FALSE]
 
   fv <- NULL
+  ptm <- NULL
 
   if(cv!="none") {
-    model.cv <-glpcvNOMAD(ydat=tydat,
-                          xdat=txdat,
-                          opts=opts,
-                          cv=cv,
-                          degree=degree,
-                          bandwidth=bws,
-                          bwmethod=cv.func,
-                          bwtype=bwtype,
-                          nmulti=nmulti,
-                          raw=raw,
-                          random.seed=random.seed,
-                          degree.max=degree.max,
-                          degree.min=degree.min,
-                          bandwidth.max=bandwidth.max,
-                          bandwidth.min=bandwidth.min)
+    ptm <- system.time(model.cv <-glpcvNOMAD(ydat=tydat,
+                                             xdat=txdat,
+                                             opts=opts,
+                                             cv=cv,
+                                             degree=degree,
+                                             bandwidth=bws,
+                                             bwmethod=cv.func,
+                                             bwtype=bwtype,
+                                             nmulti=nmulti,
+                                             raw=raw,
+                                             random.seed=random.seed,
+                                             degree.max=degree.max,
+                                             degree.min=degree.min,
+                                             bandwidth.max=bandwidth.max,
+                                             bandwidth.min=bandwidth.min))
     degree <- model.cv$degree
     bws <- model.cv$bw
     fv <- model.cv$fv
   }
 
-  est <- npglpreg.default(tydat=tydat,
-                          txdat=txdat,
-                          eydat=eydat,
-                          exdat=exdat,
-                          bws=bws,
-                          degree=degree,
-                          leave.one.out=leave.one.out,
-                          ukertype=ukertype,
-                          okertype=okertype,
-                          bwtype=bwtype,
-                          raw=raw,
-                          ...)
-  
+  ptm <- ptm + system.time(est <- npglpreg.default(tydat=tydat,
+                                                   txdat=txdat,
+                                                   eydat=eydat,
+                                                   exdat=exdat,
+                                                   bws=bws,
+                                                   degree=degree,
+                                                   leave.one.out=leave.one.out,
+                                                   ukertype=ukertype,
+                                                   okertype=okertype,
+                                                   bwtype=bwtype,
+                                                   raw=raw,
+                                                   ...))
+
   est$call <- match.call()
   est$formula <- formula
   est$terms <- mt
@@ -350,6 +352,7 @@ npglpreg.formula <- function(formula,
   est$y <- tydat
   est$fv <- fv
   est$nmulti <- nmulti
+  est$ptm <- ptm
   
   return(est)
 
@@ -660,7 +663,14 @@ minimand.cv.ls <- function(bws=NULL,
         fv <- maxPenalty
       }
 
-      return(ifelse(is.finite(fv),fv,maxPenalty))
+      fv <- ifelse(is.finite(fv),fv,maxPenalty)
+
+      console <<- newLineConsole()
+      console <<- printClear(console)
+      console <<- printPop(console)
+      console <<- printPush(paste("\rfv = ",format(fv),sep=""),console = console)
+
+      return(fv)
 
     }
 
@@ -799,7 +809,14 @@ minimand.cv.aic <- function(bws=NULL,
         fv <- maxPenalty
       }
 
-      return(ifelse(is.finite(fv),fv,maxPenalty))
+      fv <- ifelse(is.finite(fv),fv,maxPenalty)
+
+      console <<- newLineConsole()
+      console <<- printClear(console)
+      console <<- printPop(console)
+      console <<- printPush(paste("\rfv = ",format(fv),sep=""),console = console)
+
+      return(fv)
 
     }
 
@@ -1427,6 +1444,7 @@ glpcvNOMAD <- function(ydat=NULL,
 
   if(any(bw.opt==bandwidth.min)) warning(paste(" an optimal bandwidth equals search maximum (", bandwidth.min,"): rerun with smaller bandwidth.min",sep=""))
 
+  console <- printPush("\r                        ",console = console)
   console <- printClear(console)
   console <- printPop(console)
 

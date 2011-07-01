@@ -171,7 +171,7 @@ function( eval.f,
 
 
     # build snomadr object
-    ret <- list( "eval.f"=eval.f.wrapper, 
+    ret <- list("eval.f"=eval.f.wrapper, 
                 "n"=as.integer(n ), 
                 "bbin"=as.integer(bbin), 
                 "bbout"=as.integer(bbout), 
