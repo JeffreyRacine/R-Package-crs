@@ -147,6 +147,7 @@ npglpreg.default <- function(tydat=NULL,
                              okertype=c("liracine","wangvanryzin"),
                              bwtype = c("fixed","generalized_nn","adaptive_nn"),
                              raw=TRUE,
+                             gradient.vec=NULL,
                              ...) {
 
 
@@ -165,6 +166,7 @@ npglpreg.default <- function(tydat=NULL,
                    okertype=okertype,
                    bwtype=bwtype,
                    raw=raw,
+                   gradient.vec=gradient.vec,
                    ...)
   
 
@@ -244,7 +246,7 @@ predict.npglpreg <- function(object,
     
     ## If no new data provided, return sample fit.
     fitted.values <- fitted(object)
-    coef.mat <- object$coef.mat
+    gradient <- object$gradient
     
   } else{
     
@@ -257,6 +259,7 @@ predict.npglpreg <- function(object,
     ukertype <- object$ukertype
     okertype <- object$okertype
     raw <- object$raw
+    gradient.vec <- object$gradient.vec
     
     txdat <- object$x
     tydat <- object$y
@@ -282,14 +285,15 @@ predict.npglpreg <- function(object,
                             okertype=okertype,
                             bwtype=bwtype,
                             raw=raw,
+                            gradient.vec=gradient.vec,
                             ...)
     
     fitted.values <- est$fitted.values
-    coef.mat <- est$coef.mat
+    gradient <- est$gradient
     
   }
 
-  attr(fitted.values, "coef.mat") <- coef.mat
+  attr(fitted.values, "gradient") <- gradient
 
   return(fitted.values)
 
@@ -587,7 +591,8 @@ glpregEst <- function(tydat=NULL,
                 num.x = num.numeric,
                 num.z = num.categorical,
                 xnames = names(txdat),
-                raw = raw))
+                raw = raw,
+                gradient.vec = gradient.vec))
 
   }
 
