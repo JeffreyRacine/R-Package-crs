@@ -142,7 +142,11 @@ npglpreg.default <- function(tydat=NULL,
   ## Add results to estimated object.
 
   est$residuals <- tydat - est$fitted.values
-  est$r.squared <- RSQfunc(tydat,est$fitted.values)
+  if(!is.null(eydat)) {
+    est$r.squared <- RSQfunc(eydat,est$fitted.values)
+  } else {
+    est$r.squared <- RSQfunc(tydat,est$fitted.values)
+  }
   est$call <- match.call()
   class(est) <- "npglpreg"
 
@@ -225,15 +229,22 @@ predict.npglpreg <- function(object,
     
     txdat <- object$x
     tydat <- object$y
-    
-    Terms <- delete.response(terms(object))
-    newdata <- model.frame(Terms,newdata,xlev=object$xlevels)
+
+    tt <- terms(object)
+    has.ey <- succeedWithResponse(tt, newdata)
+    if (has.ey) {
+      eydat <- model.response(model.frame(tt,newdata))
+    } else {
+      eydat <- NULL
+    }      
+    exdat <- model.frame(delete.response(tt),newdata,xlev=object$xlevels)
 
     ## Return the predicted values.
 
     est <- npglpreg.default(tydat=tydat,
                             txdat=txdat,
-                            exdat=newdata,
+                            exdat=exdat,
+                            eydat=eydat,
                             bws=bws,
                             degree=degree,
                             ukertype=ukertype,
@@ -276,8 +287,8 @@ npglpreg.formula <- function(formula,
                              random.seed=42,
                              degree.max=10,
                              degree.min=0,
-                             bandwidth.max=1.0e+04,
-                             bandwidth.min=1.0e-01,
+                             bandwidth.max=1.0e+05,
+                             bandwidth.min=1.0e-03,
                              raw=TRUE,
                              ...) {
 
@@ -1066,8 +1077,8 @@ glpcvNOMAD <- function(ydat=NULL,
                        random.seed=42,
                        degree.max=10,
                        degree.min=0,
-                       bandwidth.max=1.0e+04,
-                       bandwidth.min=1.0e-01,
+                       bandwidth.max=1.0e+05,
+                       bandwidth.min=1.0e-03,
                        opts=list(),
                        raw=TRUE,
                        ...) {
@@ -1409,6 +1420,10 @@ glpcvNOMAD <- function(ydat=NULL,
     }
 
   }
+
+  if(any(degree.opt==degree.max)) warning(paste(" an optimal degree equals search maximum (", degree.max,"): rerun with larger degree.max",sep=""))
+
+  if(any(bw.opt==bandwidth.min)) warning(paste(" an optimal bandwidth equals search maximum (", bandwidth.min,"): rerun with smaller bandwidth.min",sep=""))
 
   console <- printClear(console)
   console <- printPop(console)
