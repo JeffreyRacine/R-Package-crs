@@ -49,14 +49,12 @@ npglpreg(\dots)
            MIN_POLL_SIZE = paste("r", sqrt(.Machine$double.eps), sep = "")),
          nmulti = 5,
          random.seed = 42,
-         degree.max = 10,
+         degree.max = 5,
          degree.min = 0,
-         bandwidth.max = 1.0e+04,
-         bandwidth.min = 1.0e-01,
+         bandwidth.max = 1.0e+05,
+         bandwidth.min = 1.0e-03,
          raw = TRUE,
          \dots)
-
-
 }
 
 \arguments{
