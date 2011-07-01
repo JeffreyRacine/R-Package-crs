@@ -15,34 +15,52 @@ NZD <- function(a) {
 }
 
 
-mypoly <- function(x,degree,raw=TRUE) {
+mypoly <- function(x,degree,raw=TRUE,gradient.compute=FALSE,r=0) {
 
   if(missing(x)) stop(" Error: x required")
   if(missing(degree)) stop(" Error: degree required")
   if(degree < 1) stop(" Error: degree must be a positive integer")
   n <- degree + 1
 
-  if(raw) {
-    Z <- outer(x,1L:degree,"^")
-  } else {
-    if (degree >= length(unique(x))) 
-      stop("'degree' must be less than number of unique points")
-    xbar <- mean(x)
-    x <- x - xbar
-    X <- outer(x, seq_len(n) - 1, "^")
-    QR <- qr(X)
-    if (QR$rank < degree) 
-      stop("'degree' must be less than number of unique points")
-    z <- QR$qr
-    z <- z * (row(z) == col(z))
-    raw <- qr.qy(QR, z)
-    norm2 <- colSums(raw^2)
-    alpha <- (colSums(x * raw^2)/norm2 + xbar)[1L:degree]
-    Z <- raw/rep(sqrt(norm2), each = length(x))
-    colnames(Z) <- 1L:n - 1L
-    Z <- Z[, -1, drop = FALSE]
-  }
+  ## Support derivatives for raw polynomials only at the moment
 
+  if(gradient.compute) {
+    Z <- NULL
+    for(i in 1:degree) {
+      if((i-r) >= 0) {
+        tmp <- (factorial(i)/factorial(i-r))*x^max(0,i-r)
+      } else {
+        tmp <- rep(0,length(x))
+      }
+      Z <- cbind(Z,tmp)
+    }
+    ## If we want to send back matrix of zeros (i.e will not count in
+    ## computation of derivative) return this baby.
+    if(r == -1) Z <- matrix(0,NROW(Z),NCOL(Z))
+  } else {
+    if(raw) {
+      Z <- outer(x,1L:degree,"^")
+    } else {
+      if (degree >= length(unique(x))) 
+        stop("'degree' must be less than number of unique points")
+      xbar <- mean(x)
+      x <- x - xbar
+      X <- outer(x, seq_len(n) - 1, "^")
+      QR <- qr(X)
+      if (QR$rank < degree) 
+        stop("'degree' must be less than number of unique points")
+      z <- QR$qr
+      z <- z * (row(z) == col(z))
+      raw <- qr.qy(QR, z)
+      norm2 <- colSums(raw^2)
+      alpha <- (colSums(x * raw^2)/norm2 + xbar)[1L:degree]
+      Z <- raw/rep(sqrt(norm2), each = length(x))
+      colnames(Z) <- 1L:n - 1L
+      Z <- Z[, -1, drop = FALSE]
+    }
+    
+  }
+  
   return(as.matrix(Z))
 
 }
@@ -53,12 +71,23 @@ mypoly <- function(x,degree,raw=TRUE) {
 
 W.glp <- function(xdat = NULL,
                   degree = NULL,
+                  gradient.vec = NULL,
                   raw = TRUE) {
 
   if(is.null(xdat)) stop(" Error: You must provide data")
   if(is.null(degree) | any(degree < 0)) stop(paste(" Error: degree vector must contain non-negative integers\ndegree is (", degree, ")\n",sep=""))
 
   xdat <- as.data.frame(xdat)
+
+  if(!is.null(gradient.vec) && (length(gradient.vec) != NCOL(xdat))) stop(paste(" Error: gradient vector and xdat must be conformable\n",sep=""))
+  if(!is.null(gradient.vec) && any(gradient.vec < 0)) stop(paste(" Error: gradient vector must contain non-negative integers\n",sep=""))
+  if(!is.null(gradient.vec)) gradient.vec[gradient.vec==0] <- -1
+  if(!is.null(gradient.vec)) {
+    gradient.compute <- TRUE
+  } else {
+    gradient.compute <- FALSE
+    gradient.vec <- rep(NA,NCOL(xdat))
+  }
 
   xdat.col.numeric <- sapply(1:ncol(xdat),function(i){is.numeric(xdat[,i])})
 
@@ -95,8 +124,8 @@ W.glp <- function(xdat = NULL,
       }
     }
     res <- rep.int(1,nrow(xdat.numeric))
-    if(degree[1] > 0) res <- cbind(1, mypoly(xdat.numeric[,1], degree[1],raw=raw))[, 1 + z[, 1]]
-    if(k > 1) for (i in 2:k) if(degree[i] > 0) res <- res * cbind(1, mypoly(xdat.numeric[,i], degree[i],raw=raw))[, 1 + z[, i]]
+    if(degree[1] > 0) res <- cbind(1, mypoly(xdat.numeric[,1], degree[1],raw=raw,gradient.compute=gradient.compute,r=gradient.vec[1]))[, 1 + z[, 1]]
+    if(k > 1) for (i in 2:k) if(degree[i] > 0) res <- res * cbind(1, mypoly(xdat.numeric[,i], degree[i],raw=raw,gradient.compute=gradient.compute,r=gradient.vec[i]))[, 1 + z[, i]]
     res <- matrix(res,nrow=NROW(xdat))
     colnames(res) <- apply(z, 1L, function(x) paste(x, collapse = "."))
     return(as.matrix(cbind(1,res)))
@@ -293,6 +322,7 @@ npglpreg.formula <- function(formula,
                              bandwidth.max=1.0e+05,
                              bandwidth.min=1.0e-03,
                              raw=TRUE,
+                             gradient.vec=NULL,
                              ...) {
 
   require(np)
@@ -343,6 +373,7 @@ npglpreg.formula <- function(formula,
                                                    okertype=okertype,
                                                    bwtype=bwtype,
                                                    raw=raw,
+                                                   gradient.vec=gradient.vec,
                                                    ...))
 
   est$call <- match.call()
@@ -370,6 +401,7 @@ glpregEst <- function(tydat=NULL,
                       okertype=c("liracine","wangvanryzin"),
                       bwtype = c("fixed","generalized_nn","adaptive_nn"),
                       raw=TRUE,
+                      gradient.vec=NULL,
                       ...) {
 
   ## Don't think this error checking is robust
@@ -453,6 +485,7 @@ glpregEst <- function(tydat=NULL,
 
     W <- W.glp(txdat,degree,raw=raw)
     W.eval <- W.glp(exdat,degree,raw=raw)
+    if(!is.null(gradient.vec)) W.eval.deriv <- W.glp(exdat,degree,raw=raw,gradient.vec=gradient.vec)
 
     ## Local polynomial via smooth coefficient formulation and one
     ## call to npksum
@@ -531,10 +564,19 @@ glpregEst <- function(tydat=NULL,
       W.eval[i,, drop = FALSE] %*% coef.mat[,i]
     })
 
+    if(!is.null(gradient.vec)) {
+      gradient <- sapply(1:n.eval, function(i) {
+        W.eval.deriv[i,-1, drop = FALSE] %*% coef.mat[-1,i]
+      })
+    } else {
+      gradient <- NULL
+    }
+
     num.numeric <- sum(sapply(1:NCOL(txdat),function(i){is.numeric(txdat[,i])})==TRUE)
     num.categorical <- num.numeric-NCOL(txdat)
 
     return(list(fitted.values = mhat,
+                gradient = gradient,
                 coef.mat = t(coef.mat[-1,]),
                 bwtype = bwtype,
                 ukertype = ukertype,
@@ -1670,7 +1712,7 @@ plot.npglpreg <- function(x,
 
       ## If no deriv given (default=0) issue warning and return
 
-      warning(paste(" derivative plot requested but derivative order is", object$deriv),": specify `deriv=' in crs call",sep="")
+      warning(paste(" gradient plot requested but gradient order is", object$deriv),": specify `deriv=' in crs call",sep="")
 
     }
     
@@ -1685,7 +1727,7 @@ plot.npglpreg <- function(x,
           if(!ci) {
             plot(rg[[i]][,1],rg[[i]][,2],
                  xlab=names(newdata)[i],
-                 ylab=ifelse(!is.factor(newdata[,i]), paste("Order", object$deriv,"Derivative"), "Difference in Levels"),
+                 ylab=ifelse(!is.factor(newdata[,i]), paste("Order", object$deriv,"Gradient"), "Difference in Levels"),
                  type="l",
                  ...)
             
@@ -1693,7 +1735,7 @@ plot.npglpreg <- function(x,
             ylim <- c(min(rg[[i]][,-1]),max(rg[[i]][,-1]))
             plot(rg[[i]][,1],rg[[i]][,2],
                  xlab=names(newdata)[i],
-                 ylab=ifelse(!is.factor(newdata[,i]), paste("Order", object$deriv,"Derivative"), "Difference in Levels"),
+                 ylab=ifelse(!is.factor(newdata[,i]), paste("Order", object$deriv,"Gradient"), "Difference in Levels"),
                  ylim=ylim,
                  type="l",
                  ...)
