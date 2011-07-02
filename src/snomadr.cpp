@@ -789,7 +789,7 @@ extern "C" {
 
 								// displays and remember the best point:
 								if( print_output > 0 ) 
-										out << "run #" << setw(2) << i << ": ";
+										out << "\rrun #" << setw(2) << i << ": ";
 								cur_x = mads.get_best_feasible();
 								if ( cur_x ) {
 
