@@ -1188,7 +1188,7 @@ glpcvNOMAD <- function(ydat=NULL,
   
   maxPenalty <- sqrt(.Machine$double.xmax)
 
-  ## For nearest neighbor bandwidths override default bandwidth.min
+  ## For nearest neighbour bandwidths override default bandwidth.min
   ## and bandwidth.max and use sample size information.
 
   num.bw <- ncol(xdat)
@@ -1366,7 +1366,7 @@ glpcvNOMAD <- function(ydat=NULL,
 
   for(i in 1:num.bw) {
     ## Need to do integer search for numeric predictors when bwtype is
-    ## a nearest-neighbor, so set bbin appropriately.
+    ## a nearest-neighbour, so set bbin appropriately.
     if(xdat.numeric[i]==TRUE && bwtype!="fixed") {
       bbin[i] <- 1
     }
@@ -1404,38 +1404,36 @@ glpcvNOMAD <- function(ydat=NULL,
 
   degree.opt <- degree
 
-# generate all inital points for the multiple restarting
+  ## Generate all initial points for the multiple restarting
 	x0.pts <- matrix(numeric(1), nmulti, length(bbin))
 	for(iMulti in 1:nmulti) {
-
-			## First initialize to values for factors (`liracine' kernel)
-
-			if(iMulti != 1) {
-					init.search.vals <- runif(num.bw,0,1)
-					for(i in 1:num.bw) {
-							if(xdat.numeric[i]==TRUE && bwtype=="fixed") {
-									init.search.vals[i] <- runif(1,.5,1.5)*(IQR(xdat[,i])/1.349)*nrow(xdat)^{-1/(4+num.numeric)}
-							}
-							if(xdat.numeric[i]==TRUE && bwtype!="fixed") {
-									init.search.vals[i] <- round(runif(1,2,sqrt(num.obs)))
-							}
-							if(xdat.unordered[i]==TRUE && ukertype=="aitchisonaitken") {
-									c.num <- length(unique(xdat[,i]))
-									init.search.vals[i] <- runif(1,0,(c.num-1)/c.num)
-							}
-					}
-			}
-
+    ## First initialize to values for factors (`liracine' kernel)
+    if(iMulti != 1) {
+      init.search.vals <- runif(num.bw,0,1)
+      for(i in 1:num.bw) {
+        if(xdat.numeric[i]==TRUE && bwtype=="fixed") {
+          init.search.vals[i] <- runif(1,.5,1.5)*(IQR(xdat[,i])/1.349)*nrow(xdat)^{-1/(4+num.numeric)}
+        }
+        if(xdat.numeric[i]==TRUE && bwtype!="fixed") {
+          init.search.vals[i] <- round(runif(1,2,sqrt(num.obs)))
+        }
+        if(xdat.unordered[i]==TRUE && ukertype=="aitchisonaitken") {
+          c.num <- length(unique(xdat[,i]))
+          init.search.vals[i] <- runif(1,0,(c.num-1)/c.num)
+        }
+      }
+    }
+    
     if(cv == "degree-bandwidth" && iMulti != 1)
       degree <- sample(degree.min:degree.max, num.numeric, replace=T)
-
+    
     if(cv =="degree-bandwidth"){
       x0.pts[iMulti, ] <- c(init.search.vals, degree)
 		}
     else {
       x0.pts[iMulti, ] <- c(init.search.vals)
 		}
-
+    
 	}
 	if(bwmethod == "cv.ls" ) {
 			solution<-snomadr(eval.f=eval.lscv,
@@ -1480,10 +1478,8 @@ glpcvNOMAD <- function(ydat=NULL,
 	}
 	fv <- solution$objective
 
-#please check whether they are correct.
 	best <- NULL
 	numimp <- 0   
-
 
   if(any(degree.opt==degree.max)) warning(paste(" an optimal degree equals search maximum (", degree.max,"): rerun with larger degree.max",sep=""))
 
@@ -1657,7 +1653,7 @@ plot.npglpreg <- function(x,
     if(!require(rgl)) stop(" Error: you must first install the rgl package")
 
     if(object$num.z != 0) stop(" Error: persp3d is for continuous predictors only")
-    if(object$num.x != 2) stop(" Error: persp3d is for cases incolving two continuous predictors only")
+    if(object$num.x != 2) stop(" Error: persp3d is for cases involving two continuous predictors only")
     
     newdata <- matrix(NA,nrow=num.eval,ncol=2)
     newdata <- data.frame(newdata)
