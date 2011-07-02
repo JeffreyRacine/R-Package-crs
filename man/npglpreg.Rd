@@ -220,13 +220,11 @@ for each dimension of the continuous \code{x}}
 }
 \references{
   
-  Hall, P. and J.S. Racine (2011), \dQuote{\title{Cross-Validated
-  Generalized Local Polynomial Regression,}} Manuscript.
+  Hall, P. and J.S. Racine (2011), \dQuote{Cross-Validated
+  Generalized Local Polynomial Regression,} Manuscript.
 
   Li, Q. and J.S. Racine (2007), \emph{Nonparametric Econometrics:
   Theory and Practice,} Princeton University Press.
-
-    
 
 }
 \author{
