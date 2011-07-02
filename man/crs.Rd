@@ -291,6 +291,7 @@ in \code{x} are included or omitted from the resulting estimate }
     generate) estimated values and residuals. Furthermore, the functions
     \code{\link{summary}}, \code{\link{predict}}, and \code{\link{plot}}
     (options \code{mean=FALSE}, \code{deriv=FALSE}, \code{ci=FALSE},
+    \code{persp.rgl=FALSE},
     \code{plot.behavior=c("plot","plot-data","data")}) support objects
     of this type. The returned object has the following components:
 

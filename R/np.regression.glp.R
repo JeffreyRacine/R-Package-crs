@@ -14,7 +14,6 @@ NZD <- function(a) {
   sapply(1:NROW(a), function(i) {if(a[i] < 0) min(-.Machine$double.xmin,a[i]) else max(.Machine$double.xmin,a[i])})
 }
 
-
 mypoly <- function(x,degree,raw=TRUE,gradient.compute=FALSE,r=0) {
 
   if(missing(x)) stop(" Error: x required")
@@ -150,7 +149,6 @@ npglpreg.default <- function(tydat=NULL,
                              gradient.vec=NULL,
                              ...) {
 
-
   ukertype <- match.arg(ukertype)
   okertype <- match.arg(okertype)
   bwtype <- match.arg(bwtype)
@@ -232,7 +230,6 @@ summary.npglpreg <- function(object,
   cat("\n\n")
 
 }
-
 
 ## Method for predicting given a new data frame.
 
@@ -320,8 +317,7 @@ npglpreg.formula <- function(formula,
                                "EPSILON"=.Machine$double.eps,
                                "INITIAL_MESH_SIZE"="1.0e-01",
                                "MIN_MESH_SIZE"=paste("r",sqrt(.Machine$double.eps),sep=""),
-                               "MIN_POLL_SIZE"=paste("r",sqrt(.Machine$double.eps),sep=""),
-                               "DISPLAY_DEGREE"=1),
+                               "MIN_POLL_SIZE"=paste("r",sqrt(.Machine$double.eps),sep="")),
                              nmulti=5,
                              random.seed=42,
                              degree.max=5,
@@ -1408,89 +1404,86 @@ glpcvNOMAD <- function(ydat=NULL,
 
   degree.opt <- degree
 
-  for(iMulti in 1:nmulti) {
+# generate all inital points for the multiple restarting
+	x0.pts <- matrix(numeric(1), nmulti, length(bbin))
+	for(iMulti in 1:nmulti) {
 
-    ## First initialize to values for factors (`liracine' kernel)
+			## First initialize to values for factors (`liracine' kernel)
 
-    if(iMulti != 1) {
-      init.search.vals <- runif(num.bw,0,1)
-      for(i in 1:num.bw) {
-        if(xdat.numeric[i]==TRUE && bwtype=="fixed") {
-          init.search.vals[i] <- runif(1,.5,1.5)*(IQR(xdat[,i])/1.349)*nrow(xdat)^{-1/(4+num.numeric)}
-        }
-        if(xdat.numeric[i]==TRUE && bwtype!="fixed") {
-          init.search.vals[i] <- round(runif(1,2,sqrt(num.obs)))
-        }
-        if(xdat.unordered[i]==TRUE && ukertype=="aitchisonaitken") {
-          c.num <- length(unique(xdat[,i]))
-          init.search.vals[i] <- runif(1,0,(c.num-1)/c.num)
-        }
-      }
-    }
-
-    ## Initialize `best' values prior to search
-
-    if(iMulti == 1) {
-      fv <- maxPenalty
-      numimp <- 0
-      bw.opt <- init.search.vals
-      degree.opt <- degree
-      best <- 1
-    }
+			if(iMulti != 1) {
+					init.search.vals <- runif(num.bw,0,1)
+					for(i in 1:num.bw) {
+							if(xdat.numeric[i]==TRUE && bwtype=="fixed") {
+									init.search.vals[i] <- runif(1,.5,1.5)*(IQR(xdat[,i])/1.349)*nrow(xdat)^{-1/(4+num.numeric)}
+							}
+							if(xdat.numeric[i]==TRUE && bwtype!="fixed") {
+									init.search.vals[i] <- round(runif(1,2,sqrt(num.obs)))
+							}
+							if(xdat.unordered[i]==TRUE && ukertype=="aitchisonaitken") {
+									c.num <- length(unique(xdat[,i]))
+									init.search.vals[i] <- runif(1,0,(c.num-1)/c.num)
+							}
+					}
+			}
 
     if(cv == "degree-bandwidth" && iMulti != 1)
       degree <- sample(degree.min:degree.max, num.numeric, replace=T)
 
-    if(cv =="degree-bandwidth")
-      x0 <- c(init.search.vals, degree)
-    else
-      x0 <- c(init.search.vals)
+    if(cv =="degree-bandwidth"){
+      x0.pts[iMulti, ] <- c(init.search.vals, degree)
+		}
+    else {
+      x0.pts[iMulti, ] <- c(init.search.vals)
+		}
 
-    if(bwmethod == "cv.ls" ) {
-      solution<-snomadr(eval.f=eval.lscv,
-                        n=length(x0),
-                        x0=as.numeric(x0),
-                        bbin=bbin,
-                        bbout=bbout,
-                        lb=lb,
-                        ub=ub,
-                        nmulti=0,
-                        random.seed=random.seed,
-                        opts=opts,
-                        print.output=print.output,
-                        params=params);
+	}
+	if(bwmethod == "cv.ls" ) {
+			solution<-snomadr(eval.f=eval.lscv,
+												n=length(bbin),
+												x0=as.numeric(x0.pts),
+												bbin=bbin,
+												bbout=bbout,
+												lb=lb,
+												ub=ub,
+												nmulti=nmulti,
+												random.seed=random.seed,
+												opts=opts,
+												print.output=print.output,
+												params=params);
 
-    } else {
-      solution<-snomadr(eval.f=eval.aicc,
-                        n=length(x0),
-                        x0=as.numeric(x0),
-                        bbin=bbin,
-                        bbout=bbout,
-                        lb=lb,
-                        ub=ub,
-                        nmulti=0,
-                        random.seed=random.seed,
-                        opts=opts,
-                        print.output=print.output,
-                        params=params);
-    }
+	} else {
+			solution<-snomadr(eval.f=eval.aicc,
+												n=length(bbin),
+												x0=as.numeric(x0.pts),
+												bbin=bbin,
+												bbout=bbout,
+												lb=lb,
+												ub=ub,
+												nmulti=nmulti,
+												random.seed=random.seed,
+												opts=opts,
+												print.output=print.output,
+												params=params);
+	}
 
-    fv.vec[iMulti] <- solution$objective
-    
-    if(solution$objective < fv) {
-      bw.opt <- solution$solution[1:num.bw]
-      if(numeric.scale==TRUE && bwtype=="fixed") {
-        bw.opt[xdat.numeric] <- bw.opt[xdat.numeric]*xdat.scale
-      }
-      if(cv == "degree-bandwidth") {
-        degree.opt <- solution$solution[(num.bw+1):(num.bw+num.numeric)]
-      }
-      fv <- solution$objective
-      numimp <- numimp + 1
-      best <- iMulti
-    }
+	# in crs,  we do not need the file best_x.txt
+	if(file.exists("best_x.txt")) file.remove("best_x.txt")
 
-  }
+	fv.vec[1] <- solution$objective
+
+	bw.opt <- solution$solution[1:num.bw]
+	if(numeric.scale==TRUE && bwtype=="fixed") {
+			bw.opt[xdat.numeric] <- bw.opt[xdat.numeric]*xdat.scale
+	}
+	if(cv == "degree-bandwidth") {
+			degree.opt <- solution$solution[(num.bw+1):(num.bw+num.numeric)]
+	}
+	fv <- solution$objective
+
+#please check whether they are correct.
+	best <- NULL
+	numimp <- 0   
+
 
   if(any(degree.opt==degree.max)) warning(paste(" an optimal degree equals search maximum (", degree.max,"): rerun with larger degree.max",sep=""))
 
