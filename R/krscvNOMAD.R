@@ -178,6 +178,11 @@ krscvNOMAD <- function(xz,
 
             attr(cv, "basis.opt")<-basis.opt
 
+            console <- newLineConsole()
+            console <- printClear(console)
+            console <- printPop(console)
+            console <- printPush(paste("\rfv = ",format(cv),sep=""),console = console)
+
             return(cv)
         }
 
