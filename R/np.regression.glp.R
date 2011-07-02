@@ -716,7 +716,7 @@ minimand.cv.ls <- function(bws=NULL,
       console <- newLineConsole()
       console <- printClear(console)
       console <- printPop(console)
-      console <- printPush(paste("\r                                                ",format(fv)," ",sep=""),console = console)      
+      console <- printPush("\r                                                ",console = console)
       console <- printPush(paste("\rfv = ",format(fv)," ",sep=""),console = console)
 
       return(fv)
@@ -863,7 +863,7 @@ minimand.cv.aic <- function(bws=NULL,
       console <- newLineConsole()
       console <- printClear(console)
       console <- printPop(console)
-      console <- printPush(paste("\r                                                ",format(fv)," ",sep=""),console = console)      
+      console <- printPush("\r                                                ",console = console)
       console <- printPush(paste("\rfv = ",format(fv)," ",sep=""),console = console)
 
       return(fv)
