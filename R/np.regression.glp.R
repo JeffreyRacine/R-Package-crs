@@ -1595,8 +1595,6 @@ plot.npglpreg <- function(x,
 
     }
     
-    ## Can now add common scale for mean if desired.
-
     if(common.scale) {
       min.mg <- Inf
       max.mg <- -Inf
@@ -1734,8 +1732,6 @@ plot.npglpreg <- function(x,
       warning(paste(" gradient plot requested but gradient order is", deriv),": specify `deriv=' in crs call",sep="")
 
     }
-    
-    ## Can now add common scale for mean if desired.
     
     if(common.scale) {
       min.rg <- Inf
