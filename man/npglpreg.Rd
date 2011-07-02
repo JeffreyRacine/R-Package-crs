@@ -228,7 +228,7 @@ for each dimension of the continuous \code{x}}
 
 }
 \author{
-  Jeffrey S. Racine \email{racinej@mcmaster.ca}
+  Jeffrey S. Racine \email{racinej@mcmaster.ca} and Zhenghua Nie <niez@mcmaster.ca>
 }
 \note{
 TBA
