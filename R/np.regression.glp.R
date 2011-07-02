@@ -332,7 +332,7 @@ npglpreg.formula <- function(formula,
                              gradient.vec=NULL,
                              ...) {
 
-  require(np)
+  if(!require(np)) stop(" Error: you must install the np package to use this function")
 
   ukertype <- match.arg(ukertype)
   okertype <- match.arg(okertype)
@@ -1523,6 +1523,7 @@ plot.npglpreg <- function(x,
                           num.eval=100,
                           common.scale=TRUE,
                           plot.behavior = c("plot","plot-data","data"),
+                          persp.rgl=FALSE,
                           ...) {
   
   plot.behavior <- match.arg(plot.behavior)
@@ -1538,7 +1539,7 @@ plot.npglpreg <- function(x,
 
 ## Mean
 
-  if(mean) {
+  if(mean && !persp.rgl) {
 
     if(!is.null(object$num.z)||(object$num.x>1)) par(mfrow=dim.plot(NCOL(object$x)))
 
@@ -1658,6 +1659,46 @@ plot.npglpreg <- function(x,
       
   }
     
+  if(mean && persp.rgl) {
+
+    if(!require(rgl)) stop(" Error: you must first install the rgl package")
+
+    if(object$num.z != 0) stop(" Error: persp3d is for continuous predictors only")
+    if(object$num.x != 2) stop(" Error: persp3d is for cases incolving two continuous predictors only")
+    
+    newdata <- matrix(NA,nrow=num.eval,ncol=2)
+    newdata <- data.frame(newdata)
+    
+    x1.seq <- seq(min(object$x[,1]),max(object$x[,1]),length=num.eval)
+    x2.seq <- seq(min(object$x[,2]),max(object$x[,2]),length=num.eval)    
+    x.grid <- expand.grid(x1.seq,x2.seq)
+    newdata <- data.frame(x.grid[,1],x.grid[,2])
+    names(newdata) <- names(object$x)
+    
+    z <- matrix(predict(object,newdata=newdata),num.eval,num.eval)
+    
+    num.colors <- 1000
+    colorlut <- topo.colors(num.colors) 
+    col <- colorlut[ (num.colors-1)*(z-min(z))/(max(z)-min(z)) + 1 ]
+    
+    open3d()
+    
+    par3d(windowRect=c(900,100,900+640,100+640))
+    rgl.viewpoint(theta = 0, phi = -70, fov = 80)
+    
+    persp3d(x=x1.seq,y=x2.seq,z=z,
+            xlab=names(object$x)[1],ylab=names(object$x)[2],zlab="Y",
+            ticktype="detailed",      
+            border="red",
+            color=col,
+            alpha=.7,
+            back="lines",
+            main="Conditional Mean")
+    
+    grid3d(c("x", "y+", "z"))
+    
+  }
+  
   ## deriv
 
   if(deriv) {
@@ -1802,6 +1843,6 @@ plot.npglpreg <- function(x,
 
   ## Reset par to 1,1 (can be modified above)
   
-  par(mfrow=c(1,1))
+  if(!persp.rgl) par(mfrow=c(1,1))
 
 }
