@@ -905,6 +905,7 @@ plot.crs <- function(x,
                        "Scale-Location",
                        "Cook's Distance"),
                      plot.behavior = c("plot","plot-data","data"),
+                     common.scale=TRUE,
                      ...) {
 
   plot.behavior <- match.arg(plot.behavior)
@@ -1057,8 +1058,18 @@ plot.crs <- function(x,
 
     }
     
-    ## Can now add common scale for mean if desired.
-    
+    if(common.scale) {
+      min.mg <- Inf
+      max.mg <- -Inf
+      for(i in 1:length(mg)) {
+        min.mg <- min(min.mg,min(mg[[i]][,-1]))
+        max.mg <- max(max.mg,max(mg[[i]][,-1]))
+      }
+      ylim <- c(min.mg,max.mg)
+    } else {
+      ylim <- NULL
+    }
+
     if(plot.behavior!="data") {
       
       for(i in 1:NCOL(object$xz)) {
@@ -1067,11 +1078,12 @@ plot.crs <- function(x,
           plot(mg[[i]][,1],mg[[i]][,2],
                xlab=names(newdata)[i],
                ylab="Conditional Mean",
+               ylim=ylim,
                type="l",
                ...)
           
         } else {
-          ylim <- c(min(mg[[i]][,-1]),max(mg[[i]][,-1]))
+          if(!common.scale) ylim <- c(min(mg[[i]][,-1]),max(mg[[i]][,-1]))
           plot(mg[[i]][,1],mg[[i]][,2],
                xlab=names(newdata)[i],
                ylab="Conditional Mean",
@@ -1181,9 +1193,19 @@ plot.crs <- function(x,
 
     }
     
-    ## Can now add common scale for mean if desired.
-    
     if(object$deriv > 0) {
+
+      if(common.scale) {
+        min.rg <- Inf
+        max.rg <- -Inf
+        for(i in 1:length(rg)) {
+          min.rg <- min(min.rg,min(rg[[i]][,-1]))
+          max.rg <- max(max.rg,max(rg[[i]][,-1]))
+        }
+        ylim <- c(min.rg,max.rg)
+      } else {
+        ylim <- NULL
+      }
 
       if(plot.behavior!="data") {
 
@@ -1193,11 +1215,12 @@ plot.crs <- function(x,
             plot(rg[[i]][,1],rg[[i]][,2],
                  xlab=names(newdata)[i],
                  ylab=ifelse(!is.factor(newdata[,i]), paste("Order", object$deriv,"Derivative"), "Difference in Levels"),
+                 ylim=ylim,
                  type="l",
                  ...)
             
           } else {
-            ylim <- c(min(rg[[i]][,-1]),max(rg[[i]][,-1]))
+            if(!common.scale) ylim <- c(min(rg[[i]][,-1]),max(rg[[i]][,-1]))
             plot(rg[[i]][,1],rg[[i]][,2],
                  xlab=names(newdata)[i],
                  ylab=ifelse(!is.factor(newdata[,i]), paste("Order", object$deriv,"Derivative"), "Difference in Levels"),
