@@ -1528,168 +1528,180 @@ plot.npglpreg <- function(x,
   console <- printClear(console)
   console <- printPop(console)
 
-## Mean
+  ## Mean
 
-  if(mean && !persp.rgl) {
-
-    if(!is.null(object$num.z)||(object$num.x>1)) par(mfrow=dim.plot(NCOL(object$x)))
-
-    mg <- list()
-
-    ## Drawback - data must be first cast outside formula for plot to
-    ## work properly (Tristen figured this out so can hunt down issue
-    ## later - but this works)
-
-    for(i in 1:NCOL(object$x)) {
-
-      if(!is.factor(object$x[,i])) {
-        newdata <- matrix(NA,nrow=num.eval,ncol=NCOL(object$x))
-        neval <- num.eval
-      } else {
-        newdata <- matrix(NA,nrow=length(levels(object$x[,i])),ncol=NCOL(object$x))
-        neval <- length(levels(object$x[,i]))
-      }
-
-      newdata <- data.frame(newdata)
-
-      if(!is.factor(object$x[,i])) {
-        newdata[,i] <- seq(min(object$x[,i]),max(object$x[,i]),length=neval)
-      } else {
-        newdata[,i] <- factor(levels(object$x[,i]),levels=levels(object$x[,i]))
-      }
-
-      for(j in (1:NCOL(object$x))[-i]) {
-        if(!is.factor(object$x[,j])) {
-          newdata[,j] <- rep(uocquantile(object$x[,j],.5),neval)
-        } else {
-          newdata[,j] <- factor(rep(uocquantile(object$x[,j],.5),neval),levels=levels(object$x[,j]))
-        }
-      }
-
-      newdata <- data.frame(newdata)
-      names(newdata) <- names(object$x)
-
-      if(!ci) {
-
-        mg[[i]] <- data.frame(newdata[,i],predict(object,newdata=newdata))
-        names(mg[[i]]) <- c(names(newdata)[i],"deriv")
-        
-      } else {
-        
-        fitted.values <- predict(object,newdata=newdata)
-        mg[[i]] <- data.frame(newdata[,i],fitted.values,attr(fitted.values,"lwr"),attr(fitted.values,"upr"))
-        names(mg[[i]]) <- c(names(newdata)[i],"mean","lwr","upr")
-        
-      }
-      
-      console <- printClear(console)
-      console <- printPop(console)
-
-    }
+  if(mean) {
     
-    if(common.scale) {
-      min.mg <- Inf
-      max.mg <- -Inf
-      for(i in 1:length(mg)) {
-        min.mg <- min(min.mg,min(mg[[i]][,-1]))
-        max.mg <- max(max.mg,max(mg[[i]][,-1]))
-      }
-      ylim <- c(min.mg,max.mg)
-    } else {
-      ylim <- NULL
-    }
-
-    if(plot.behavior!="data") {
+    if(!persp.rgl) {
+      
+      if(!is.null(object$num.z)||(object$num.x>1)) par(mfrow=dim.plot(NCOL(object$x)))
+      
+      mg <- list()
+      
+      ## Drawback - data must be first cast outside formula for plot to
+      ## work properly (Tristen figured this out so can hunt down issue
+      ## later - but this works)
       
       for(i in 1:NCOL(object$x)) {
         
+        if(!is.factor(object$x[,i])) {
+          newdata <- matrix(NA,nrow=num.eval,ncol=NCOL(object$x))
+          neval <- num.eval
+        } else {
+          newdata <- matrix(NA,nrow=length(levels(object$x[,i])),ncol=NCOL(object$x))
+          neval <- length(levels(object$x[,i]))
+        }
+        
+        newdata <- data.frame(newdata)
+        
+        if(!is.factor(object$x[,i])) {
+          newdata[,i] <- seq(min(object$x[,i]),max(object$x[,i]),length=neval)
+        } else {
+          newdata[,i] <- factor(levels(object$x[,i]),levels=levels(object$x[,i]))
+        }
+        
+        for(j in (1:NCOL(object$x))[-i]) {
+          if(!is.factor(object$x[,j])) {
+            newdata[,j] <- rep(uocquantile(object$x[,j],.5),neval)
+          } else {
+            newdata[,j] <- factor(rep(uocquantile(object$x[,j],.5),neval),levels=levels(object$x[,j]))
+          }
+        }
+        
+        newdata <- data.frame(newdata)
+        names(newdata) <- names(object$x)
+        
         if(!ci) {
-          plot(mg[[i]][,1],mg[[i]][,2],
-               xlab=names(newdata)[i],
-               ylab="Conditional Mean",
-               ylim=ylim,
-               type="l",
-               ...)
+          
+          mg[[i]] <- data.frame(newdata[,i],predict(object,newdata=newdata))
+          names(mg[[i]]) <- c(names(newdata)[i],"deriv")
           
         } else {
-          if(!common.scale) ylim <- c(min(mg[[i]][,-1]),max(mg[[i]][,-1]))
-          plot(mg[[i]][,1],mg[[i]][,2],
-               xlab=names(newdata)[i],
-               ylab="Conditional Mean",
-               ylim=ylim,
-               type="l",
-               ...)
-          ## Need to overlay for proper plotting of factor errorbars
-          par(new=TRUE)
-          plot(mg[[i]][,1],mg[[i]][,3],
-               xlab="",
-               ylab="",
-               ylim=ylim,
-               type="l",
-               axes=FALSE,
-               lty=2,
-               col=2,
-               ...)
-          par(new=TRUE)
-          plot(mg[[i]][,1],mg[[i]][,4],
-               xlab="",
-               ylab="",
-               ylim=ylim,
-               type="l",
-               axes=FALSE,
-               lty=2,
-               col=2,
-               ...)
+          
+          fitted.values <- predict(object,newdata=newdata)
+          mg[[i]] <- data.frame(newdata[,i],fitted.values,attr(fitted.values,"lwr"),attr(fitted.values,"upr"))
+          names(mg[[i]]) <- c(names(newdata)[i],"mean","lwr","upr")
+          
         }
+        
+        console <- printClear(console)
+        console <- printPop(console)
+        
+      }
+      
+      if(common.scale) {
+        min.mg <- Inf
+        max.mg <- -Inf
+        for(i in 1:length(mg)) {
+          min.mg <- min(min.mg,min(mg[[i]][,-1]))
+          max.mg <- max(max.mg,max(mg[[i]][,-1]))
+        }
+        ylim <- c(min.mg,max.mg)
+      } else {
+        ylim <- NULL
+      }
+      
+      if(plot.behavior!="data") {
+        
+        for(i in 1:NCOL(object$x)) {
+          
+          if(!ci) {
+            plot(mg[[i]][,1],mg[[i]][,2],
+                 xlab=names(newdata)[i],
+                 ylab="Conditional Mean",
+                 ylim=ylim,
+                 type="l",
+                 ...)
+            
+          } else {
+            if(!common.scale) ylim <- c(min(mg[[i]][,-1]),max(mg[[i]][,-1]))
+            plot(mg[[i]][,1],mg[[i]][,2],
+                 xlab=names(newdata)[i],
+                 ylab="Conditional Mean",
+                 ylim=ylim,
+                 type="l",
+                 ...)
+            ## Need to overlay for proper plotting of factor errorbars
+            par(new=TRUE)
+            plot(mg[[i]][,1],mg[[i]][,3],
+                 xlab="",
+                 ylab="",
+                 ylim=ylim,
+                 type="l",
+                 axes=FALSE,
+                 lty=2,
+                 col=2,
+                 ...)
+            par(new=TRUE)
+            plot(mg[[i]][,1],mg[[i]][,4],
+                 xlab="",
+                 ylab="",
+                 ylim=ylim,
+                 type="l",
+                 axes=FALSE,
+                 lty=2,
+                 col=2,
+                 ...)
+          }
+          
+        }
+        
+      }
+      
+    } else {
+      
+      if(!require(rgl)) stop(" Error: you must first install the rgl package")
+      
+      if(object$num.z != 0) stop(" Error: persp3d is for continuous predictors only")
+      if(object$num.x != 2) stop(" Error: persp3d is for cases involving two continuous predictors only")
+      
+      newdata <- matrix(NA,nrow=num.eval,ncol=2)
+      newdata <- data.frame(newdata)
+      
+      x1.seq <- seq(min(object$x[,1]),max(object$x[,1]),length=num.eval)
+      x2.seq <- seq(min(object$x[,2]),max(object$x[,2]),length=num.eval)    
+      x.grid <- expand.grid(x1.seq,x2.seq)
+      newdata <- data.frame(x.grid[,1],x.grid[,2])
+      names(newdata) <- names(object$x)
+      
+      z <- matrix(predict(object,newdata=newdata),num.eval,num.eval)
+
+      mg <- list()
+
+      mg[[1]] <- data.frame(newdata,z)
+      
+      if(plot.behavior!="data") {
+        
+        num.colors <- 1000
+        colorlut <- topo.colors(num.colors) 
+        col <- colorlut[ (num.colors-1)*(z-min(z))/(max(z)-min(z)) + 1 ]
+        
+        open3d()
+        
+        par3d(windowRect=c(900,100,900+640,100+640))
+        rgl.viewpoint(theta = 0, phi = -70, fov = 80)
+        
+        persp3d(x=x1.seq,y=x2.seq,z=z,
+                xlab=names(object$x)[1],ylab=names(object$x)[2],zlab="Y",
+                ticktype="detailed",      
+                border="red",
+                color=col,
+                alpha=.7,
+                back="lines",
+                main="Conditional Mean")
+        
+        grid3d(c("x", "y+", "z"))
+        
+        play3d(spin3d(axis=c(0,0,1), rpm=5), duration=15)
         
       }
 
     }
-      
+    
     if(plot.behavior!="plot") return(mg)
       
   }
     
-  if(mean && persp.rgl) {
-
-    if(!require(rgl)) stop(" Error: you must first install the rgl package")
-
-    if(object$num.z != 0) stop(" Error: persp3d is for continuous predictors only")
-    if(object$num.x != 2) stop(" Error: persp3d is for cases involving two continuous predictors only")
-    
-    newdata <- matrix(NA,nrow=num.eval,ncol=2)
-    newdata <- data.frame(newdata)
-    
-    x1.seq <- seq(min(object$x[,1]),max(object$x[,1]),length=num.eval)
-    x2.seq <- seq(min(object$x[,2]),max(object$x[,2]),length=num.eval)    
-    x.grid <- expand.grid(x1.seq,x2.seq)
-    newdata <- data.frame(x.grid[,1],x.grid[,2])
-    names(newdata) <- names(object$x)
-    
-    z <- matrix(predict(object,newdata=newdata),num.eval,num.eval)
-    
-    num.colors <- 1000
-    colorlut <- topo.colors(num.colors) 
-    col <- colorlut[ (num.colors-1)*(z-min(z))/(max(z)-min(z)) + 1 ]
-    
-    open3d()
-    
-    par3d(windowRect=c(900,100,900+640,100+640))
-    rgl.viewpoint(theta = 0, phi = -70, fov = 80)
-    
-    persp3d(x=x1.seq,y=x2.seq,z=z,
-            xlab=names(object$x)[1],ylab=names(object$x)[2],zlab="Y",
-            ticktype="detailed",      
-            border="red",
-            color=col,
-            alpha=.7,
-            back="lines",
-            main="Conditional Mean")
-    
-    grid3d(c("x", "y+", "z"))
-    
-  }
-  
   ## deriv
 
   if(deriv) {
