@@ -213,7 +213,7 @@ summary.npglpreg <- function(object,
     cat(paste("\nThere are ",format(object$num.z), " categorical predictors",sep=""),sep="")
   }
   for(j in 1:(object$num.x+object$num.z))
-    cat(paste("\nBandwidth for ",format(object$xnames[j]),": ",format(object$bw[j]),sep=""),sep="")
+    cat(paste("\nBandwidth for ",format(object$xnames[j]),": ",format(object$bws[j]),sep=""),sep="")
   for(j in 1:object$num.x)
     cat(paste("\nDegree for ",format(object$xnames[j]),": ",format(object$degree[j]),sep=""),sep="")  
 
@@ -252,7 +252,7 @@ predict.npglpreg <- function(object,
     ## and numeric.
     
     degree <- object$degree
-    bws <- object$bw
+    bws <- object$bws
     bwtype <- object$bwtype
     ukertype <- object$ukertype
     okertype <- object$okertype
@@ -360,7 +360,7 @@ npglpreg.formula <- function(formula,
                                              bandwidth.max=bandwidth.max,
                                              bandwidth.min=bandwidth.min))
     degree <- model.cv$degree
-    bws <- model.cv$bw
+    bws <- model.cv$bws
     fv <- model.cv$fv
   }
 
@@ -1112,7 +1112,7 @@ glpcv <- function(ydat=NULL,
 
   if(exists.seed) assign(".Random.seed", save.seed, .GlobalEnv)
 
-  return(list(bw=bw.opt,fv=fv,numimp=numimp,best=best,fv.vec=fv.vec))
+  return(list(bws=bw.opt,fv=fv,numimp=numimp,best=best,fv.vec=fv.vec))
 
 }
 
@@ -1495,7 +1495,7 @@ glpcvNOMAD <- function(ydat=NULL,
 
   if(exists.seed) assign(".Random.seed", save.seed, .GlobalEnv)
 
-  return(list(bw=bw.opt,
+  return(list(bws=bw.opt,
               fv=fv,
               numimp=numimp,
               best=best,
