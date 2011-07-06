@@ -1560,7 +1560,7 @@ plot.npglpreg <- function(x,
   
   ## Mean
   
-  if(mean) {
+  if(mean==TRUE && deriv==FALSE) {
     
     if(!persp.rgl) {
       
