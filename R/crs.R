@@ -1000,7 +1000,6 @@ plot.crs <- function(x,
     ## Information required to compute predictions
 
     basis <- object$basis
-    deriv <- object$deriv
     prune <- object$prune
     prune.index <- object$prune.index
     
