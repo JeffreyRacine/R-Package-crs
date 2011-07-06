@@ -395,9 +395,6 @@ krscvNOMAD <- function(xz,
                              print.output=print.output, 
                              nmulti=nmulti) 
 
-    # in crs,  we do not need the file best_x.txt
-    if(nmulti > 1) file.remove("best_x.txt")
-
     t2 <- Sys.time()
 
     ##output

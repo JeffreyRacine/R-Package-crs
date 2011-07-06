@@ -848,10 +848,10 @@ extern "C" {
 								out << endl << endl;
 						}
 
-						ofstream fout ( "best_x.txt" );
-						fout << setprecision(32);
-						best_x.display ( fout , " " , -1 , -1 );
-						fout.close();
+						//ofstream fout ( "best_x.txt" );
+						//fout << setprecision(32);
+						//best_x.display ( fout , " " , -1 , -1 );
+						//fout.close();
 
 						// delete x0 points:
 						for ( i = 0 ; i < nmulti ; ++i )

@@ -1487,9 +1487,6 @@ glpcvNOMAD <- function(ydat=NULL,
 												params=params);
 	}
 
-	# in crs,  we do not need the file best_x.txt
-	if(file.exists("best_x.txt")) file.remove("best_x.txt")
-
 	fv.vec[1] <- solution$objective
 
 	bw.opt <- solution$solution[1:num.bw]
