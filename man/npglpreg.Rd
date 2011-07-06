@@ -97,7 +97,7 @@ npglpreg(\dots)
   }
   
   \item{degree}{ integer/vector specifying the polynomial degree of the
-for each dimension of the continuous \code{x}}
+for each dimension of the continuous \code{x} in \code{txdat}}
 
   \item{leave.one.out}{
     a logical value to specify whether or not to compute the leave one
@@ -108,13 +108,13 @@ for each dimension of the continuous \code{x}}
   \item{ukertype}{
     character string used to specify the unordered categorical kernel type.
     Can be set as \code{aitchisonaitken} or \code{liracine}. Defaults to
-    \code{aitchisonaitken}.
+    \code{liracine}.
   }
 
   \item{okertype}{
     character string used to specify the ordered categorical kernel type.
     Can be set as \code{wangvanryzin} or \code{liracine}. Defaults to
-    \code{wangvanryzin}.
+    \code{liracine}.
   }
 
   \item{bwtype}{
@@ -129,7 +129,7 @@ for each dimension of the continuous \code{x}}
   }
   \item{cv}{
   a character string (default \code{cv="nomad"}) indicating whether to
-  use nonsmooth mesh adaptive direct search, or no search (i.e. use user
+  use nonsmooth mesh adaptive direct search, or no search (i.e. use 
   supplied values for \code{degree} and \code{bws})
 }
   \item{cv.func}{a character string (default \code{cv.func="cv.ls"})
@@ -210,8 +210,12 @@ for each dimension of the continuous \code{x}}
     used (\code{kernel=TRUE}) or not }
 
   \item{gradient}{ the estimated gradient corresponding to the vector \code{gradient.vec}}
+
+  \item{gradient.vec}{ the supplied \code{gradient.vec}}
   
   \item{bws}{ vector of bandwidths }
+
+  \item{bwtype}{ the supplied \code{bwtype}}
   
   \item{call}{ a symbolic description of the model  }
   

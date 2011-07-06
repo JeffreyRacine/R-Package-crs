@@ -201,8 +201,8 @@ summary.npglpreg <- function(object,
   cat("Call:\n")
   print(object$call)
   cat("\nGeneralized Local Polynomial Kernel Regression\n",sep="")
-  
-  if(object$num.x==1){
+
+  if(object$num.x == 1){
     cat(paste("\nThere is ",format(object$num.x), " continuous predictor",sep=""),sep="")
   } else if(object$num.x > 1) {
     cat(paste("\nThere are ",format(object$num.x), " continuous predictors",sep=""),sep="")
@@ -345,20 +345,20 @@ npglpreg.formula <- function(formula,
 
   if(cv!="none") {
     ptm.cv <- system.time(model.cv <-glpcvNOMAD(ydat=tydat,
-                                             xdat=txdat,
-                                             opts=opts,
-                                             cv=cv,
-                                             degree=degree,
-                                             bandwidth=bws,
-                                             bwmethod=cv.func,
-                                             bwtype=bwtype,
-                                             nmulti=nmulti,
-                                             raw=raw,
-                                             random.seed=random.seed,
-                                             degree.max=degree.max,
-                                             degree.min=degree.min,
-                                             bandwidth.max=bandwidth.max,
-                                             bandwidth.min=bandwidth.min))
+                                                xdat=txdat,
+                                                opts=opts,
+                                                cv=cv,
+                                                degree=degree,
+                                                bandwidth=bws,
+                                                bwmethod=cv.func,
+                                                bwtype=bwtype,
+                                                nmulti=nmulti,
+                                                raw=raw,
+                                                random.seed=random.seed,
+                                                degree.max=degree.max,
+                                                degree.min=degree.min,
+                                                bandwidth.max=bandwidth.max,
+                                                bandwidth.min=bandwidth.min))
     degree <- model.cv$degree
     bws <- model.cv$bws
     fv <- model.cv$fv
@@ -434,6 +434,9 @@ glpregEst <- function(tydat=NULL,
   n.train <- nrow(txdat)
   n.eval <- nrow(exdat)
 
+  num.numeric <- sum(sapply(1:NCOL(txdat),function(i){is.numeric(txdat[,i])})==TRUE)
+  num.categorical <- NCOL(txdat)-num.numeric
+  
   ## Check whether it appears that training and evaluation data are
   ## conformable
 
@@ -483,8 +486,21 @@ glpregEst <- function(tydat=NULL,
 
     mhat <- tww[2,]/NZD(tww[1,])
 
-    return(list(mean = mhat))
-
+    return(list(fitted.values = mhat,
+                gradient = NULL,
+                coef.mat = NULL,
+                bwtype = bwtype,
+                ukertype = ukertype,
+                okertype = okertype,
+                degree = degree,
+                bws = bws,
+                nobs = n.train,
+                num.x = num.numeric,
+                num.z = num.categorical,
+                xnames = names(txdat),
+                raw = raw,
+                gradient.vec = gradient.vec))
+    
   } else {
 
     W <- W.glp(txdat,degree,raw=raw)
@@ -576,9 +592,6 @@ glpregEst <- function(tydat=NULL,
       gradient <- NULL
     }
 
-    num.numeric <- sum(sapply(1:NCOL(txdat),function(i){is.numeric(txdat[,i])})==TRUE)
-    num.categorical <- NCOL(txdat)-num.numeric
-
     return(list(fitted.values = mhat,
                 gradient = gradient,
                 coef.mat = t(coef.mat[-1,]),
@@ -593,7 +606,7 @@ glpregEst <- function(tydat=NULL,
                 xnames = names(txdat),
                 raw = raw,
                 gradient.vec = gradient.vec))
-
+    
   }
 
 }
@@ -655,7 +668,15 @@ minimand.cv.ls <- function(bws=NULL,
         fv <- maxPenalty
       }
 
-      return(ifelse(is.finite(fv),fv,maxPenalty))
+      fv <- ifelse(is.finite(fv),fv,maxPenalty)
+
+      console <- newLineConsole()
+      console <- printClear(console)
+      console <- printPop(console)
+      console <- printPush("\r                                                ",console = console)
+      console <- printPush(paste("\rfv = ",format(fv)," ",sep=""),console = console)
+
+      return(fv)
 
     } else {
 
@@ -1177,11 +1198,11 @@ glpcvNOMAD <- function(ydat=NULL,
 
   if(is.null(bandwidth.max)) bandwidth.max <- .Machine$double.xmax
 
-  if(degree.min < 0 ) degree.min <- 0
-  if(degree.max < degree.min) degree.max <- (degree.min + 1)
+  if(degree.min < 0 ) stop(" Error: degree.min must be a non-negative integer")
+  if(degree.max < degree.min) stop(" Error: degree.max must exceed degree.min")
 
-  if(bandwidth.min < 0) bandwidth.min <-0
-  if(bandwidth.max < bandwidth.min) bandwidth.max <- (bandwidth.min + 1)
+  if(bandwidth.min < 0) stop(" Error: bandwidth.min must be non-negative")
+  if(bandwidth.max < bandwidth.min) stop(" Error: bandwidth.max must exceed bandwidth.min")
 
   if(cv=="degree-bandwidth") {
     if(!is.null(degree) && any(degree>degree.max)) stop(" Error: degree supplied but exceeds degree.max")
