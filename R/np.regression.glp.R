@@ -1557,9 +1557,6 @@ plot.npglpreg <- function(x,
   ukertype <- object$ukertype
   okertype <- object$okertype
   raw <- object$raw
-#  if(is.null(gradient.vec)) {
-#    gradient.vec <- object$gradient.vec
-#  } 
   
   txdat <- object$x
   tydat <- object$y
@@ -1744,85 +1741,75 @@ plot.npglpreg <- function(x,
     
   ## deriv
 
-  if(deriv) {
-
-    if(deriv > 0) {
-
-      if(!is.null(object$num.z)||(object$num.x>1)) par(mfrow=dim.plot(NCOL(object$x)))
-
-      rg <- list()
+  if(deriv > 0) {
+    
+    if(!is.null(object$num.z)||(object$num.x>1)) par(mfrow=dim.plot(NCOL(object$x)))
+    
+    rg <- list()
+    
+    iz <- 1
+    
+    for(i in 1:NCOL(object$x)) {
       
-      iz <- 1
+      gradient.vec <- rep(0,NCOL(object$x))
+      gradient.vec[i] <- deriv
       
-      for(i in 1:NCOL(object$x)) {
-        
-        gradient.vec <- rep(0,NCOL(object$x))
-        gradient.vec[i] <- deriv
-
-        if(!is.factor(object$x[,i])) {
-          newdata <- matrix(NA,nrow=num.eval,ncol=NCOL(object$x))
-          neval <- num.eval
-        } else {
-          neval <- length(unique(object$x[,i]))
-          newdata <- matrix(NA,nrow=neval,ncol=NCOL(object$x))
-          iz <- iz + 1
-        }
-        
-        newdata <- data.frame(newdata)
-        
-        if(!is.factor(object$x[,i])) {
-          newdata[,i] <- seq(min(object$x[,i]),max(object$x[,i]),length=neval)
-        } else {
-          newdata[,i] <- sort(unique(object$x[,i]))
-        }
-        
-        for(j in (1:NCOL(object$x))[-i]) {
-          newdata[,j] <- rep(uocquantile(object$x[,j],.5),neval)
-        }
-
-        names(newdata) <- object$xnames
-        
-        est <- npglpreg.default(tydat=tydat,
-                                txdat=txdat,
-                                exdat=newdata,
-                                bws=bws,
-                                degree=degree,
-                                ukertype=ukertype,
-                                okertype=okertype,
-                                bwtype=bwtype,
-                                raw=raw,
-                                gradient.vec=gradient.vec,
-                                ...)
-
-        fitted.values <- est$gradient
-
-
-        if(!ci) {
-          
-          rg[[i]] <- data.frame(newdata[,i],fitted.values)
-          names(rg[[i]]) <- c(names(newdata)[i],"deriv")
-          
-        } else {
-          
-          rg[[i]] <- data.frame(newdata[,i],
-                                fitted.values,
-                                attr(fitted.values,"deriv.mat.lwr")[,i],
-                                attr(fitted.values,"deriv.mat.upr")[,i])
-          names(rg[[i]]) <- c(names(newdata)[i],"deriv","lwr","upr")
-          
-        }
-      
-        console <- printClear(console)
-        console <- printPop(console)
-
+      if(!is.factor(object$x[,i])) {
+        newdata <- matrix(NA,nrow=num.eval,ncol=NCOL(object$x))
+        neval <- num.eval
+      } else {
+        neval <- length(unique(object$x[,i]))
+        newdata <- matrix(NA,nrow=neval,ncol=NCOL(object$x))
+        iz <- iz + 1
       }
-
-    } else {
-
-      ## If no deriv given (default=0) issue warning and return
-
-      warning(paste(" gradient plot requested but gradient order is", deriv),": specify `deriv=' in crs call",sep="")
-
+      
+      newdata <- data.frame(newdata)
+      
+      if(!is.factor(object$x[,i])) {
+        newdata[,i] <- seq(min(object$x[,i]),max(object$x[,i]),length=neval)
+      } else {
+        newdata[,i] <- sort(unique(object$x[,i]))
+      }
+      
+      for(j in (1:NCOL(object$x))[-i]) {
+        newdata[,j] <- rep(uocquantile(object$x[,j],.5),neval)
+      }
+      
+      names(newdata) <- object$xnames
+      
+      est <- npglpreg.default(tydat=tydat,
+                              txdat=txdat,
+                              exdat=newdata,
+                              bws=bws,
+                              degree=degree,
+                              ukertype=ukertype,
+                              okertype=okertype,
+                              bwtype=bwtype,
+                              raw=raw,
+                              gradient.vec=gradient.vec,
+                              ...)
+      
+      fitted.values <- est$gradient
+      
+      
+      if(!ci) {
+        
+        rg[[i]] <- data.frame(newdata[,i],fitted.values)
+        names(rg[[i]]) <- c(names(newdata)[i],"deriv")
+        
+      } else {
+        
+        rg[[i]] <- data.frame(newdata[,i],
+                              fitted.values,
+                              attr(fitted.values,"deriv.mat.lwr")[,i],
+                              attr(fitted.values,"deriv.mat.upr")[,i])
+        names(rg[[i]]) <- c(names(newdata)[i],"deriv","lwr","upr")
+        
+      }
+      
+      console <- printClear(console)
+      console <- printPop(console)
+      
     }
     
     if(common.scale) {
@@ -1837,59 +1824,55 @@ plot.npglpreg <- function(x,
       ylim <- NULL
     }
     
-    if(deriv > 0) {
-
-      if(plot.behavior!="data") {
-
-        for(i in 1:NCOL(object$x)) {
+    if(plot.behavior!="data") {
+      
+      for(i in 1:NCOL(object$x)) {
+        
+        if(!ci) {
+          plot(rg[[i]][,1],rg[[i]][,2],
+               xlab=names(newdata)[i],
+               ylab=ifelse(!is.factor(newdata[,i]), paste("Order", deriv,"Gradient"), "Difference in Levels"),
+               ylim=ylim,
+               type="l")
           
-          if(!ci) {
-            plot(rg[[i]][,1],rg[[i]][,2],
-                 xlab=names(newdata)[i],
-                 ylab=ifelse(!is.factor(newdata[,i]), paste("Order", deriv,"Gradient"), "Difference in Levels"),
-                 ylim=ylim,
-                 type="l")
-            
-          } else {
-            if(!common.scale) ylim <- c(min(rg[[i]][,-1]),max(rg[[i]][,-1]))
-            plot(rg[[i]][,1],rg[[i]][,2],
-                 xlab=names(newdata)[i],
-                 ylab=ifelse(!is.factor(newdata[,i]), paste("Order", deriv,"Gradient"), "Difference in Levels"),
-                 ylim=ylim,
-                 type="l")
-            ## Need to overlay for proper plotting of factor errorbars
-            par(new=TRUE)
-            plot(rg[[i]][,1],rg[[i]][,3],
-                 xlab="",
-                 ylab="",
-                 ylim=ylim,
-                 type="l",
-                 axes=FALSE,
-                 lty=2,
-                 col=2)
-            par(new=TRUE)
-            plot(rg[[i]][,1],rg[[i]][,4],
-                 xlab="",
-                 ylab="",
-                 ylim=ylim,
-                 type="l",
-                 axes=FALSE,
-                 lty=2,
-                 col=2)
-          }
-          
+        } else {
+          if(!common.scale) ylim <- c(min(rg[[i]][,-1]),max(rg[[i]][,-1]))
+          plot(rg[[i]][,1],rg[[i]][,2],
+               xlab=names(newdata)[i],
+               ylab=ifelse(!is.factor(newdata[,i]), paste("Order", deriv,"Gradient"), "Difference in Levels"),
+               ylim=ylim,
+               type="l")
+          ## Need to overlay for proper plotting of factor errorbars
+          par(new=TRUE)
+          plot(rg[[i]][,1],rg[[i]][,3],
+               xlab="",
+               ylab="",
+               ylim=ylim,
+               type="l",
+               axes=FALSE,
+               lty=2,
+               col=2)
+          par(new=TRUE)
+          plot(rg[[i]][,1],rg[[i]][,4],
+               xlab="",
+               ylab="",
+               ylim=ylim,
+               type="l",
+               axes=FALSE,
+               lty=2,
+               col=2)
         }
         
       }
       
-      if(plot.behavior!="plot") return(rg)
-      
     }
     
+    if(plot.behavior!="plot") return(rg)
+    
   }
-
+  
   ## Reset par to 1,1 (can be modified above)
   
   if(!persp.rgl) par(mfrow=c(1,1))
-
+  
 }
