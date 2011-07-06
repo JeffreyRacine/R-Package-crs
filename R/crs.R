@@ -997,15 +997,45 @@ plot.crs <- function(x,
 
   if(mean) {
 
+    ## Information required to compute predictions
+
+    basis <- object$basis
+    deriv <- object$deriv
+    prune <- object$prune
+    prune.index <- object$prune.index
+    
+    xz <- object$xz
+    y <- object$y
+    
+    ## Divide into factors and numeric
+    
+    if(!object$kernel) {
+      xztmp <- splitFrame(xz)
+    } else {
+      xztmp <- splitFrame(xz,factor.to.numeric=TRUE)
+    }
+    x <- xztmp$x
+    z <- xztmp$z
+    rm(xztmp)
+
+    ## Get degree vector and lambda vector
+          
+    complexity <- object$complexity
+    knots <- object$knots
+    K <- object$K
+    degree <- object$degree
+    segments <- object$segments
+    include <- object$include
+    lambda <- object$lambda
+    kernel.type <- object$kernel.type
+
+    ## End information required to compute predictions
+        
     if(!persp.rgl) {
 
       if(!is.null(object$num.z)||(object$num.x>1)) par(mfrow=dim.plot(NCOL(object$xz)))
       
       mg <- list()
-      
-      ## Drawback - data must be first cast outside formula for plot to
-      ## work properly (Tristen figured this out so can hunt down issue
-      ## later - but this works)
       
       for(i in 1:NCOL(object$xz)) {
         
@@ -1035,25 +1065,68 @@ plot.crs <- function(x,
         
         newdata <- data.frame(newdata)
         names(newdata) <- names(object$xz)
+
+        if(!object$kernel) {
+          xztmp <- splitFrame(data.frame(newdata))
+        } else {
+          xztmp <- splitFrame(data.frame(newdata),factor.to.numeric=TRUE)
+        }
+        xeval <- xztmp$x
+        zeval <- xztmp$z
+        rm(xztmp)
+        
+        ## Compute the predicted values.
+        
+        if(!object$kernel) {
+          
+          tmp <- predict.factor.spline(x=x,
+                                       y=y,
+                                       z=z,
+                                       K=K,
+                                       I=include,
+                                       xeval=xeval,
+                                       zeval=zeval,
+                                       basis=basis,
+                                       knots=knots,
+                                       prune=prune,
+                                       prune.index=prune.index)$fitted.values
+          
+          fitted.values <- tmp[,1]
+          lwr <- tmp[,2]
+          upr <- tmp[,3]
+          rm(tmp)
+          
+        } else {
+                
+          z <- as.matrix(z)
+          zeval <- as.matrix(zeval)
+          
+          tmp <- predict.kernel.spline(x=x,
+                                       y=y,
+                                       z=z,
+                                       K=K,
+                                       lambda=lambda,
+                                       kernel.type=kernel.type,
+                                       xeval=xeval,
+                                       zeval=zeval,
+                                       knots=knots,
+                                       basis=basis)$fitted.values
+          
+          fitted.values <- tmp[,1]
+          lwr <- tmp[,2]
+          upr <- tmp[,3]
+          rm(tmp)
+          
+        }
         
         if(!ci) {
           
-          ## May 20 - trying to debug plot - issue appears to be that
-          ## predict is barfing because formula was used and newdata
-          ## does not have similar objects...
-          
-          ##    print("Here we are")
-          ##    print(class(newdata[,i]))
-          
-          mg[[i]] <- data.frame(newdata[,i],predict(object,newdata=newdata))
-          names(mg[[i]]) <- c(names(newdata)[i],"deriv")
+          mg[[i]] <- data.frame(newdata[,i],fitted.values)
+          names(mg[[i]]) <- c(names(newdata)[i],"mean")
           
         } else {
-          
-          fitted.values <- predict(object,newdata=newdata)
-          mg[[i]] <- data.frame(newdata[,i],fitted.values,attr(fitted.values,"lwr"),attr(fitted.values,"upr"))
+          mg[[i]] <- data.frame(newdata[,i],fitted.values,lwr,upr)
           names(mg[[i]]) <- c(names(newdata)[i],"mean","lwr","upr")
-          
         }
         
         console <- printClear(console)
@@ -1179,15 +1252,45 @@ plot.crs <- function(x,
 
   if(deriv) {
 
+    ## Information required to compute predictions
+
+    basis <- object$basis
+    deriv <- object$deriv
+    prune <- object$prune
+    prune.index <- object$prune.index
+    
+    xz <- object$xz
+    y <- object$y
+    
+    ## Divide into factors and numeric
+    
+    if(!object$kernel) {
+      xztmp <- splitFrame(xz)
+    } else {
+      xztmp <- splitFrame(xz,factor.to.numeric=TRUE)
+    }
+    x <- xztmp$x
+    z <- xztmp$z
+    rm(xztmp)
+
+    ## Get degree vector and lambda vector
+          
+    complexity <- object$complexity
+    knots <- object$knots
+    K <- object$K
+    degree <- object$degree
+    segments <- object$segments
+    include <- object$include
+    lambda <- object$lambda
+    kernel.type <- object$kernel.type
+
+    ## End information required to compute predictions
+        
     if(object$deriv > 0) {
 
       if(!is.null(object$num.z)||(object$num.x>1)) par(mfrow=dim.plot(NCOL(object$xz)))
 
       rg <- list()
-
-      ## Drawback - data must be first cast outside formula for plot to
-      ## work properly (Tristen figured this out so can hunt down issue
-      ## later - but this works)
 
       for(i in 1:NCOL(object$xz)) {
 
@@ -1218,18 +1321,150 @@ plot.crs <- function(x,
         newdata <- data.frame(newdata)
         names(newdata) <- names(object$xz)
 
-        if(!ci) {
+        if(!object$kernel) {
+          xztmp <- splitFrame(data.frame(newdata))
+        } else {
+          xztmp <- splitFrame(data.frame(newdata),factor.to.numeric=TRUE)
+        }
+        xeval <- xztmp$x
+        zeval <- xztmp$z
+        rm(xztmp)
+        
+        ## Compute the predicted values.
+        
+        if(!object$kernel) {
           
-          rg[[i]] <- data.frame(newdata[,i],attr(predict(object,newdata=newdata),"deriv.mat")[,i])
+          deriv.mat <- matrix(NA,nrow=NROW(newdata),ncol=NCOL(newdata))
+          deriv.mat.lwr <- deriv.mat
+          deriv.mat.upr <- deriv.mat
+          l <- 1 ## num.z
+          m <- 1 ## num.x
+          for(ii in 1:ncol(newdata)) {
+            if(!is.factor(newdata[,ii])) {
+              tmp <- deriv.factor.spline(x=x,
+                                         y=y,
+                                         z=z,
+                                         K=K,
+                                         I=include,
+                                         xeval=xeval,
+                                         zeval=zeval,
+                                         knots=knots,
+                                         basis=basis,
+                                         deriv.index=m,
+                                         deriv=deriv,
+                                         prune.index=prune.index)
+              deriv.mat[,ii] <- tmp[,1]
+              deriv.mat.lwr[,ii] <- tmp[,2]
+              deriv.mat.upr[,ii] <- tmp[,3]
+              rm(tmp) 
+              m <- m + 1
+            } else {
+              zevaltmp <- zeval
+              zevaltmp[,l] <- factor(rep(levels(newdata[,ii])[1],NROW(newdata)),levels=levels(newdata[,ii]))
+              zpred <- predict.factor.spline(x=x,
+                                             y=y,
+                                             z=z,
+                                             K=K,
+                                             I=include,
+                                             xeval=xeval,
+                                             zeval=zeval,
+                                             knots=knots,
+                                             basis=basis,
+                                             prune=prune,
+                                             prune.index=prune.index)$fitted.values
+              
+              zpred.base <- predict.factor.spline(x=x,
+                                                  y=y,
+                                                  z=z,
+                                                  K=K,
+                                                  I=include,
+                                                  xeval=xeval,
+                                                  zeval=zevaltmp,
+                                                  knots=knots,
+                                                  basis=basis,
+                                                  prune=prune,
+                                                  prune.index=prune.index)$fitted.values
+              
+              deriv.mat[,ii] <- zpred[,1]-zpred.base[,1]
+              deriv.mat.lwr[,ii] <- deriv.mat[,ii] - qnorm(0.975)*sqrt(zpred[,4]^2+zpred.base[,4]^2)
+              deriv.mat.upr[,ii] <- deriv.mat[,ii] + qnorm(0.975)*sqrt(zpred[,4]^2+zpred.base[,4]^2)
+              
+              l <- l + 1
+            }
+          }          
+          
+        } else {
+          
+          deriv.mat <- matrix(NA,nrow=NROW(newdata),ncol=NCOL(newdata))
+          deriv.mat.lwr <- deriv.mat
+          deriv.mat.upr <- deriv.mat
+          l <- 1 ## num.z
+          m <- 1 ## num.x
+          for(ii in 1:ncol(newdata)) {
+            if(!is.factor(newdata[,ii])) {
+              tmp <- deriv.kernel.spline(x=x,
+                                         y=y,
+                                         z=z,
+                                         K=K,
+                                         lambda=lambda,
+                                         kernel.type=kernel.type,
+                                         xeval=xeval,
+                                         zeval=zeval,
+                                         knots=knots,
+                                         basis=basis,
+                                         deriv.index=m,
+                                         deriv=deriv)
+              deriv.mat[,ii] <- tmp[,1]
+              deriv.mat.lwr[,ii] <- tmp[,2]
+              deriv.mat.upr[,ii] <- tmp[,3]
+              rm(tmp) 
+              m <- m + 1
+            } else {
+              zevaltmp <- zeval
+              zevaltmp[,l] <- as.numeric(factor(rep(levels(newdata[,ii])[1],NROW(newdata)),levels=levels(newdata[,ii])))
+              zpred <- predict.kernel.spline(x=x,
+                                             y=y,
+                                             z=z,
+                                             K=K,
+                                             lambda=lambda,
+                                             kernel.type=kernel.type,
+                                             xeval=xeval,
+                                             zeval=zeval,
+                                             knots=knots,
+                                             basis=basis)$fitted.values
+              
+              zpred.base <- predict.kernel.spline(x=x,
+                                                  y=y,
+                                                  z=z,
+                                                  K=K,
+                                                  lambda=lambda,
+                                                  kernel.type=kernel.type,
+                                                  xeval=xeval,
+                                                  zeval=zevaltmp,
+                                                  knots=knots,
+                                                  basis=basis)$fitted.values
+              
+              deriv.mat[,ii] <- zpred[,1]-zpred.base[,1]
+              deriv.mat.lwr[,ii] <- deriv.mat[,ii] - qnorm(0.975)*sqrt(zpred[,4]^2+zpred.base[,4]^2)
+              deriv.mat.upr[,ii] <- deriv.mat[,ii] + qnorm(0.975)*sqrt(zpred[,4]^2+zpred.base[,4]^2)
+              
+              l <- l + 1
+            }
+          }
+          
+        }
+        
+        if(!ci) {
+            
+          rg[[i]] <- data.frame(newdata[,i],deriv.mat[,i])
           names(rg[[i]]) <- c(names(newdata)[i],"deriv")
           
         } else {
           
-          fitted.values <- predict(object,newdata=newdata)
           rg[[i]] <- data.frame(newdata[,i],
-                                attr(predict(object,newdata=newdata),"deriv.mat")[,i],
-                                attr(predict(object,newdata=newdata),"deriv.mat.lwr")[,i],
-                                attr(predict(object,newdata=newdata),"deriv.mat.upr")[,i])
+                                deriv.mat[,i],
+                                deriv.mat.lwr[,i],
+                                deriv.mat.upr[,i])
           names(rg[[i]]) <- c(names(newdata)[i],"deriv","lwr","upr")
           
         }
