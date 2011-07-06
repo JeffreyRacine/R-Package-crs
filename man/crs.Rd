@@ -362,11 +362,6 @@ in \code{x} are included or omitted from the resulting estimate }
   
 \section{Usage Issues}{
 
-  In order for \code{\link{plot}} to function properly with the options
-  \code{mean=TRUE} and \code{deriv=TRUE}, you need to properly cast your
-  categorical predictors prior to listing them in the
-  \code{\link{formula}} interface.
-  
   Note that when \code{kernel=FALSE} \code{\link{summary}} supports the
   option \code{sigtest=TRUE} that conducts an F-test for significance
   for each predictor.
