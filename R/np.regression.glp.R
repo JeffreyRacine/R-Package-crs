@@ -1549,8 +1549,23 @@ plot.npglpreg <- function(x,
   console <- printClear(console)
   console <- printPop(console)
 
-  ## Mean
+  ## Needed for correctly obtaining predictions
 
+  degree <- object$degree
+  bws <- object$bws
+  bwtype <- object$bwtype
+  ukertype <- object$ukertype
+  okertype <- object$okertype
+  raw <- object$raw
+#  if(is.null(gradient.vec)) {
+#    gradient.vec <- object$gradient.vec
+#  } 
+  
+  txdat <- object$x
+  tydat <- object$y
+  
+  ## Mean
+  
   if(mean) {
     
     if(!persp.rgl) {
@@ -1559,9 +1574,7 @@ plot.npglpreg <- function(x,
       
       mg <- list()
       
-      ## Drawback - data must be first cast outside formula for plot to
-      ## work properly (Tristen figured this out so can hunt down issue
-      ## later - but this works)
+      iz <- 1
       
       for(i in 1:NCOL(object$x)) {
         
@@ -1569,8 +1582,9 @@ plot.npglpreg <- function(x,
           newdata <- matrix(NA,nrow=num.eval,ncol=NCOL(object$x))
           neval <- num.eval
         } else {
-          newdata <- matrix(NA,nrow=length(levels(object$x[,i])),ncol=NCOL(object$x))
-          neval <- length(levels(object$x[,i]))
+          neval <- length(unique(object$x[,i]))
+          newdata <- matrix(NA,nrow=neval,ncol=NCOL(object$x))
+          iz <- iz + 1
         }
         
         newdata <- data.frame(newdata)
@@ -1578,24 +1592,32 @@ plot.npglpreg <- function(x,
         if(!is.factor(object$x[,i])) {
           newdata[,i] <- seq(min(object$x[,i]),max(object$x[,i]),length=neval)
         } else {
-          newdata[,i] <- factor(levels(object$x[,i]),levels=levels(object$x[,i]))
+          newdata[,i] <- sort(unique(object$x[,i]))
         }
         
         for(j in (1:NCOL(object$x))[-i]) {
-          if(!is.factor(object$x[,j])) {
-            newdata[,j] <- rep(uocquantile(object$x[,j],.5),neval)
-          } else {
-            newdata[,j] <- factor(rep(uocquantile(object$x[,j],.5),neval),levels=levels(object$x[,j]))
-          }
+          newdata[,j] <- rep(uocquantile(object$x[,j],.5),neval)
         }
+
+        names(newdata) <- object$xnames
         
-        newdata <- data.frame(newdata)
-        names(newdata) <- names(object$x)
+        est <- npglpreg.default(tydat=tydat,
+                                txdat=txdat,
+                                exdat=newdata,
+                                bws=bws,
+                                degree=degree,
+                                ukertype=ukertype,
+                                okertype=okertype,
+                                bwtype=bwtype,
+                                raw=raw,
+                                ...)
+
+        fitted.values <- est$fitted.values
         
         if(!ci) {
           
-          mg[[i]] <- data.frame(newdata[,i],predict(object,newdata=newdata))
-          names(mg[[i]]) <- c(names(newdata)[i],"deriv")
+          mg[[i]] <- data.frame(newdata[,i],fitted.values)
+          names(mg[[i]]) <- c(names(newdata)[i],"mean")
           
         } else {
           
@@ -1604,7 +1626,7 @@ plot.npglpreg <- function(x,
           names(mg[[i]]) <- c(names(newdata)[i],"mean","lwr","upr")
           
         }
-        
+
         console <- printClear(console)
         console <- printPop(console)
         
@@ -1623,16 +1645,16 @@ plot.npglpreg <- function(x,
       }
       
       if(plot.behavior!="data") {
-        
+
         for(i in 1:NCOL(object$x)) {
           
           if(!ci) {
+        
             plot(mg[[i]][,1],mg[[i]][,2],
                  xlab=names(newdata)[i],
                  ylab="Conditional Mean",
                  ylim=ylim,
-                 type="l",
-                 ...)
+                 type="l")
             
           } else {
             if(!common.scale) ylim <- c(min(mg[[i]][,-1]),max(mg[[i]][,-1]))
@@ -1640,8 +1662,7 @@ plot.npglpreg <- function(x,
                  xlab=names(newdata)[i],
                  ylab="Conditional Mean",
                  ylim=ylim,
-                 type="l",
-                 ...)
+                 type="l")
             ## Need to overlay for proper plotting of factor errorbars
             par(new=TRUE)
             plot(mg[[i]][,1],mg[[i]][,3],
@@ -1651,8 +1672,7 @@ plot.npglpreg <- function(x,
                  type="l",
                  axes=FALSE,
                  lty=2,
-                 col=2,
-                 ...)
+                 col=2)
             par(new=TRUE)
             plot(mg[[i]][,1],mg[[i]][,4],
                  xlab="",
@@ -1661,8 +1681,7 @@ plot.npglpreg <- function(x,
                  type="l",
                  axes=FALSE,
                  lty=2,
-                 col=2,
-                 ...)
+                 col=2)
           }
           
         }
@@ -1732,13 +1751,11 @@ plot.npglpreg <- function(x,
       if(!is.null(object$num.z)||(object$num.x>1)) par(mfrow=dim.plot(NCOL(object$x)))
 
       rg <- list()
-
-      ## Drawback - data must be first cast outside formula for plot to
-      ## work properly (Tristen figured this out so can hunt down issue
-      ## later - but this works)
-
+      
+      iz <- 1
+      
       for(i in 1:NCOL(object$x)) {
-
+        
         gradient.vec <- rep(0,NCOL(object$x))
         gradient.vec[i] <- deriv
 
@@ -1746,41 +1763,51 @@ plot.npglpreg <- function(x,
           newdata <- matrix(NA,nrow=num.eval,ncol=NCOL(object$x))
           neval <- num.eval
         } else {
-          newdata <- matrix(NA,nrow=length(levels(object$x[,i])),ncol=NCOL(object$x))
-          neval <- length(levels(object$x[,i]))
+          neval <- length(unique(object$x[,i]))
+          newdata <- matrix(NA,nrow=neval,ncol=NCOL(object$x))
+          iz <- iz + 1
         }
-
+        
         newdata <- data.frame(newdata)
-
+        
         if(!is.factor(object$x[,i])) {
           newdata[,i] <- seq(min(object$x[,i]),max(object$x[,i]),length=neval)
         } else {
-          newdata[,i] <- factor(levels(object$x[,i]),levels=levels(object$x[,i]))
+          newdata[,i] <- sort(unique(object$x[,i]))
         }
-
+        
         for(j in (1:NCOL(object$x))[-i]) {
-          if(!is.factor(object$x[,j])) {
-            newdata[,j] <- rep(uocquantile(object$x[,j],.5),neval)
-          } else {
-            newdata[,j] <- factor(rep(uocquantile(object$x[,j],.5),neval),levels=levels(object$x[,j]))
-          }
+          newdata[,j] <- rep(uocquantile(object$x[,j],.5),neval)
         }
 
-        newdata <- data.frame(newdata)
-        names(newdata) <- names(object$x)
+        names(newdata) <- object$xnames
+        
+        est <- npglpreg.default(tydat=tydat,
+                                txdat=txdat,
+                                exdat=newdata,
+                                bws=bws,
+                                degree=degree,
+                                ukertype=ukertype,
+                                okertype=okertype,
+                                bwtype=bwtype,
+                                raw=raw,
+                                gradient.vec=gradient.vec,
+                                ...)
+
+        fitted.values <- est$gradient
+
 
         if(!ci) {
           
-          rg[[i]] <- data.frame(newdata[,i],attr(predict(object,newdata=newdata,gradient.vec=gradient.vec),"gradient"))
+          rg[[i]] <- data.frame(newdata[,i],fitted.values)
           names(rg[[i]]) <- c(names(newdata)[i],"deriv")
           
         } else {
           
-          fitted.values <- predict(object,newdata=newdata,gradient.vec=gradient.vec)
           rg[[i]] <- data.frame(newdata[,i],
-                                attr(predict(object,newdata=newdata,gradient.vec=gradient.vec),"gradient"),
-                                attr(predict(object,newdata=newdata,gradient.vec=gradient.vec),"deriv.mat.lwr")[,i],
-                                attr(predict(object,newdata=newdata,gradient.vec=gradient.vec),"deriv.mat.upr")[,i])
+                                fitted.values,
+                                attr(fitted.values,"deriv.mat.lwr")[,i],
+                                attr(fitted.values,"deriv.mat.upr")[,i])
           names(rg[[i]]) <- c(names(newdata)[i],"deriv","lwr","upr")
           
         }
@@ -1821,8 +1848,7 @@ plot.npglpreg <- function(x,
                  xlab=names(newdata)[i],
                  ylab=ifelse(!is.factor(newdata[,i]), paste("Order", deriv,"Gradient"), "Difference in Levels"),
                  ylim=ylim,
-                 type="l",
-                 ...)
+                 type="l")
             
           } else {
             if(!common.scale) ylim <- c(min(rg[[i]][,-1]),max(rg[[i]][,-1]))
@@ -1830,8 +1856,7 @@ plot.npglpreg <- function(x,
                  xlab=names(newdata)[i],
                  ylab=ifelse(!is.factor(newdata[,i]), paste("Order", deriv,"Gradient"), "Difference in Levels"),
                  ylim=ylim,
-                 type="l",
-                 ...)
+                 type="l")
             ## Need to overlay for proper plotting of factor errorbars
             par(new=TRUE)
             plot(rg[[i]][,1],rg[[i]][,3],
@@ -1841,8 +1866,7 @@ plot.npglpreg <- function(x,
                  type="l",
                  axes=FALSE,
                  lty=2,
-                 col=2,
-                 ...)
+                 col=2)
             par(new=TRUE)
             plot(rg[[i]][,1],rg[[i]][,4],
                  xlab="",
@@ -1851,8 +1875,7 @@ plot.npglpreg <- function(x,
                  type="l",
                  axes=FALSE,
                  lty=2,
-                 col=2,
-                 ...)
+                 col=2)
           }
           
         }
