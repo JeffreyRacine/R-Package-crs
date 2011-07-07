@@ -28,7 +28,7 @@ npglpreg(\dots)
          bwtype = c("fixed", "generalized_nn", "adaptive_nn"),
          raw = TRUE,
          gradient.vec = NULL,
-         gradient.categorical=FALSE,
+         gradient.categorical = FALSE,
          \dots)
 
 \method{npglpreg}{formula}(formula,
@@ -58,7 +58,7 @@ npglpreg(\dots)
          bandwidth.min = 1.0e-03,
          raw = TRUE,
          gradient.vec = NULL,
-         gradient.categorical=FALSE,
+         gradient.categorical = FALSE,
          \dots)
 }
 
