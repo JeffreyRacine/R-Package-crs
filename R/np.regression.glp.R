@@ -147,6 +147,7 @@ npglpreg.default <- function(tydat=NULL,
                              bwtype = c("fixed","generalized_nn","adaptive_nn"),
                              raw=TRUE,
                              gradient.vec=NULL,
+                             gradient.categorical=FALSE,
                              ...) {
 
   ukertype <- match.arg(ukertype)
@@ -166,6 +167,52 @@ npglpreg.default <- function(tydat=NULL,
                    raw=raw,
                    gradient.vec=gradient.vec,
                    ...)
+
+  ## Gradients for categorical predictors XXX
+
+  est$gradient.categorical.mat <- NULL
+
+  if(gradient.categorical) {
+
+    xdat.numeric <- sapply(1:ncol(txdat),function(i){is.numeric(txdat[,i])})
+    num.numeric <- sum(xdat.numeric==TRUE)
+    num.categorical <- NCOL(txdat)-num.numeric
+
+    if(num.categorical > 0) {
+      num.eval <- ifelse(is.null(exdat),nrow(txdat),nrow(exdat))
+      if(is.null(exdat)) {
+        exdat.base <- txdat
+      } else {
+        exdat.base <- exdat
+      }
+      gradient.categorical.mat <- matrix(NA,nrow=num.eval,ncol=num.categorical)
+      for(i in 1:num.categorical) {
+        categorical.index <- which(xdat.numeric==FALSE)[i]
+        eval.base <- levels(txdat[,categorical.index])[1]
+        eval.levels <- levels(txdat[,categorical.index])
+        exdat.base[,categorical.index] <- factor(rep(eval.base,num.eval),levels=eval.levels)
+        est.base <- glpregEst(tydat=tydat,
+                              txdat=txdat,
+                              eydat=eydat,
+                              exdat=exdat.base,
+                              bws=bws,
+                              degree=degree,
+                              leave.one.out=leave.one.out,
+                              ukertype=ukertype,
+                              okertype=okertype,
+                              bwtype=bwtype,
+                              raw=raw,
+                              gradient.vec=gradient.vec,
+                              ...)
+
+        gradient.categorical.mat[,i] <- est$fitted.values - est.base$fitted.values
+        
+      }
+    }
+
+    est$gradient.categorical.mat <- gradient.categorical.mat
+
+  }
   
 
   ## Add results to estimated object.
