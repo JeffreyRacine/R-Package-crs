@@ -225,10 +225,14 @@ npglpreg.default <- function(tydat=NULL,
   if(!is.null(eydat)) {
     est$r.squared <- RSQfunc(eydat,est$fitted.values)
     est$residuals <- eydat - est$fitted.values
-  } else {
+  } else if(is.null(eydat)&&is.null(exdat)) {
     est$r.squared <- RSQfunc(tydat,est$fitted.values)
     est$residuals <- tydat - est$fitted.values
+  } else {
+    est$r.squared <- NULL
+    est$residuals <- NULL
   }
+    
   est$call <- match.call()
 
   ## Return object of type npglpreg

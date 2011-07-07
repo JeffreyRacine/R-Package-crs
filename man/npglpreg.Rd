@@ -28,6 +28,7 @@ npglpreg(\dots)
          bwtype = c("fixed", "generalized_nn", "adaptive_nn"),
          raw = TRUE,
          gradient.vec = NULL,
+         gradient.categorical=FALSE,
          \dots)
 
 \method{npglpreg}{formula}(formula,
@@ -57,6 +58,7 @@ npglpreg(\dots)
          bandwidth.min = 1.0e-03,
          raw = TRUE,
          gradient.vec = NULL,
+         gradient.categorical=FALSE,
          \dots)
 }
 
@@ -175,6 +177,11 @@ for each dimension of the continuous \code{x} in \code{txdat}}
   a vector corresponding to the order of the partial (or cross-partial)
   and which variable the partial (or cross-partial) derivative(s) are required
 }
+\item{gradient.categorical}{
+  a logical value indicating whether discrete gradients
+  (i.e. differences in the response from the base value for each
+  categorical predictor) are to be computed
+}
   \item{\dots}{
     additional arguments supplied to specify the regression type,
     bandwidth type, kernel types, training data, and so on, detailed
@@ -209,7 +216,11 @@ for each dimension of the continuous \code{x} in \code{txdat}}
   \item{kernel}{ a logical value indicating whether kernel smoothing was
     used (\code{kernel=TRUE}) or not }
 
-  \item{gradient}{ the estimated gradient corresponding to the vector \code{gradient.vec}}
+  \item{gradient}{ the estimated gradient (vector) corresponding to the vector
+    \code{gradient.vec}}
+
+  \item{gradient.categorical.mat}{ the estimated gradient (matrix) for
+  the categorical predictors }
 
   \item{gradient.vec}{ the supplied \code{gradient.vec}}
   
