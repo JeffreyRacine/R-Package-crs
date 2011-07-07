@@ -1290,35 +1290,43 @@ plot.crs <- function(x,
       if(!is.null(object$num.z)||(object$num.x>1)) par(mfrow=dim.plot(NCOL(object$xz)))
 
       rg <- list()
+      m <- 0
 
       for(i in 1:NCOL(object$xz)) {
 
         if(!is.factor(object$xz[,i])) {
           newdata <- matrix(NA,nrow=num.eval,ncol=NCOL(object$xz))
           neval <- num.eval
+          m <- m + 1
         } else {
           newdata <- matrix(NA,nrow=length(levels(object$xz[,i])),ncol=NCOL(object$xz))
           neval <- length(levels(object$xz[,i]))
         }
 
         newdata <- data.frame(newdata)
+        newdata.base <- data.frame(newdata)
 
         if(!is.factor(object$xz[,i])) {
           newdata[,i] <- seq(min(object$xz[,i]),max(object$xz[,i]),length=neval)
         } else {
           newdata[,i] <- factor(levels(object$xz[,i]),levels=levels(object$xz[,i]))
+          newdata.base[,i] <- factor(rep(levels(object$xz[,i])[1],neval),levels=levels(object$xz[,i]))
         }
 
         for(j in (1:NCOL(object$xz))[-i]) {
           if(!is.factor(object$xz[,j])) {
             newdata[,j] <- rep(uocquantile(object$xz[,j],.5),neval)
+            newdata.base[,j] <- rep(uocquantile(object$xz[,j],.5),neval)
           } else {
             newdata[,j] <- factor(rep(uocquantile(object$xz[,j],.5),neval),levels=levels(object$xz[,j]))
+            newdata.base[,j] <- factor(rep(uocquantile(object$xz[,j],.5),neval),levels=levels(object$xz[,j]))            
           }
         }
 
         newdata <- data.frame(newdata)
         names(newdata) <- names(object$xz)
+        newdata.base <- data.frame(newdata.base)
+        names(newdata.base) <- names(object$xz)
 
         if(!object$kernel) {
           xztmp <- splitFrame(data.frame(newdata))
@@ -1329,141 +1337,128 @@ plot.crs <- function(x,
         zeval <- xztmp$z
         rm(xztmp)
         
+        if(!object$kernel) {
+          xztmp <- splitFrame(data.frame(newdata.base))
+        } else {
+          xztmp <- splitFrame(data.frame(newdata.base),factor.to.numeric=TRUE)
+        }
+        xeval.base <- xztmp$x
+        zeval.base <- xztmp$z
+        rm(xztmp)
+        
         ## Compute the predicted values.
         
         if(!object$kernel) {
-          
-          deriv.mat <- matrix(NA,nrow=NROW(newdata),ncol=NCOL(newdata))
-          deriv.mat.lwr <- deriv.mat
-          deriv.mat.upr <- deriv.mat
-          l <- 1 ## num.z
-          m <- 1 ## num.x
-          for(ii in 1:ncol(newdata)) {
-            if(!is.factor(newdata[,ii])) {
-              tmp <- deriv.factor.spline(x=x,
-                                         y=y,
-                                         z=z,
-                                         K=K,
-                                         I=include,
-                                         xeval=xeval,
-                                         zeval=zeval,
-                                         knots=knots,
-                                         basis=basis,
-                                         deriv.index=m,
-                                         deriv=deriv,
-                                         prune.index=prune.index)
-              deriv.mat[,ii] <- tmp[,1]
-              deriv.mat.lwr[,ii] <- tmp[,2]
-              deriv.mat.upr[,ii] <- tmp[,3]
-              rm(tmp) 
-              m <- m + 1
-            } else {
-              zevaltmp <- zeval
-              zevaltmp[,l] <- factor(rep(levels(newdata[,ii])[1],NROW(newdata)),levels=levels(newdata[,ii]))
-              zpred <- predict.factor.spline(x=x,
-                                             y=y,
-                                             z=z,
-                                             K=K,
-                                             I=include,
-                                             xeval=xeval,
-                                             zeval=zeval,
-                                             knots=knots,
-                                             basis=basis,
-                                             prune=prune,
-                                             prune.index=prune.index)$fitted.values
-              
-              zpred.base <- predict.factor.spline(x=x,
-                                                  y=y,
-                                                  z=z,
-                                                  K=K,
-                                                  I=include,
-                                                  xeval=xeval,
-                                                  zeval=zevaltmp,
-                                                  knots=knots,
-                                                  basis=basis,
-                                                  prune=prune,
-                                                  prune.index=prune.index)$fitted.values
-              
-              deriv.mat[,ii] <- zpred[,1]-zpred.base[,1]
-              deriv.mat.lwr[,ii] <- deriv.mat[,ii] - qnorm(0.975)*sqrt(zpred[,4]^2+zpred.base[,4]^2)
-              deriv.mat.upr[,ii] <- deriv.mat[,ii] + qnorm(0.975)*sqrt(zpred[,4]^2+zpred.base[,4]^2)
-              
-              l <- l + 1
-            }
+
+          if(!is.factor(newdata[,i])) {
+            tmp <- deriv.factor.spline(x=x,
+                                       y=y,
+                                       z=z,
+                                       K=K,
+                                       I=include,
+                                       xeval=xeval,
+                                       zeval=zeval,
+                                       knots=knots,
+                                       basis=basis,
+                                       deriv.index=m,
+                                       deriv=deriv,
+                                       prune.index=prune.index)
+            deriv.est <- tmp[,1]
+            deriv.lwr <- tmp[,2]
+            deriv.upr <- tmp[,3]
+            rm(tmp) 
+          } else {
+            zpred <- predict.factor.spline(x=x,
+                                           y=y,
+                                           z=z,
+                                           K=K,
+                                           I=include,
+                                           xeval=xeval,
+                                           zeval=zeval,
+                                           knots=knots,
+                                           basis=basis,
+                                           prune=prune,
+                                           prune.index=prune.index)$fitted.values
+            
+            zpred.base <- predict.factor.spline(x=x,
+                                                y=y,
+                                                z=z,
+                                                K=K,
+                                                I=include,
+                                                xeval=xeval.base,
+                                                zeval=zeval.base,
+                                                knots=knots,
+                                                basis=basis,
+                                                prune=prune,
+                                                prune.index=prune.index)$fitted.values
+            
+            deriv.est <- zpred[,1]-zpred.base[,1]
+            deriv.lwr <- deriv.est - qnorm(0.975)*sqrt(zpred[,4]^2+zpred.base[,4]^2)
+            deriv.upr <- deriv.est + qnorm(0.975)*sqrt(zpred[,4]^2+zpred.base[,4]^2)
+            
           }          
           
         } else {
           
-          deriv.mat <- matrix(NA,nrow=NROW(newdata),ncol=NCOL(newdata))
-          deriv.mat.lwr <- deriv.mat
-          deriv.mat.upr <- deriv.mat
-          l <- 1 ## num.z
-          m <- 1 ## num.x
-          for(ii in 1:ncol(newdata)) {
-            if(!is.factor(newdata[,ii])) {
-              tmp <- deriv.kernel.spline(x=x,
-                                         y=y,
-                                         z=z,
-                                         K=K,
-                                         lambda=lambda,
-                                         kernel.type=kernel.type,
-                                         xeval=xeval,
-                                         zeval=zeval,
-                                         knots=knots,
-                                         basis=basis,
-                                         deriv.index=m,
-                                         deriv=deriv)
-              deriv.mat[,ii] <- tmp[,1]
-              deriv.mat.lwr[,ii] <- tmp[,2]
-              deriv.mat.upr[,ii] <- tmp[,3]
-              rm(tmp) 
-              m <- m + 1
-            } else {
-              zevaltmp <- zeval
-              zevaltmp[,l] <- as.numeric(factor(rep(levels(newdata[,ii])[1],NROW(newdata)),levels=levels(newdata[,ii])))
-              zpred <- predict.kernel.spline(x=x,
-                                             y=y,
-                                             z=z,
-                                             K=K,
-                                             lambda=lambda,
-                                             kernel.type=kernel.type,
-                                             xeval=xeval,
-                                             zeval=zeval,
-                                             knots=knots,
-                                             basis=basis)$fitted.values
-              
-              zpred.base <- predict.kernel.spline(x=x,
-                                                  y=y,
-                                                  z=z,
-                                                  K=K,
-                                                  lambda=lambda,
-                                                  kernel.type=kernel.type,
-                                                  xeval=xeval,
-                                                  zeval=zevaltmp,
-                                                  knots=knots,
-                                                  basis=basis)$fitted.values
-              
-              deriv.mat[,ii] <- zpred[,1]-zpred.base[,1]
-              deriv.mat.lwr[,ii] <- deriv.mat[,ii] - qnorm(0.975)*sqrt(zpred[,4]^2+zpred.base[,4]^2)
-              deriv.mat.upr[,ii] <- deriv.mat[,ii] + qnorm(0.975)*sqrt(zpred[,4]^2+zpred.base[,4]^2)
-              
-              l <- l + 1
-            }
+          if(!is.factor(newdata[,i])) {
+            tmp <- deriv.kernel.spline(x=x,
+                                       y=y,
+                                       z=z,
+                                       K=K,
+                                       lambda=lambda,
+                                       kernel.type=kernel.type,
+                                       xeval=xeval,
+                                       zeval=zeval,
+                                       knots=knots,
+                                       basis=basis,
+                                       deriv.index=m,
+                                       deriv=deriv)
+            deriv.est <- tmp[,1]
+            deriv.lwr <- tmp[,2]
+            deriv.upr <- tmp[,3]
+            rm(tmp) 
+          } else {
+            zpred <- predict.kernel.spline(x=x,
+                                           y=y,
+                                           z=z,
+                                           K=K,
+                                           lambda=lambda,
+                                           kernel.type=kernel.type,
+                                           xeval=xeval,
+                                           zeval=zeval,
+                                           knots=knots,
+                                           basis=basis)$fitted.values
+            
+            zpred.base <- predict.kernel.spline(x=x,
+                                                y=y,
+                                                z=z,
+                                                K=K,
+                                                lambda=lambda,
+                                                kernel.type=kernel.type,
+                                                xeval=xeval.base,
+                                                zeval=zeval.base,
+                                                knots=knots,
+                                                basis=basis)$fitted.values
+            
+            deriv.est <- zpred[,1]-zpred.base[,1]
+            deriv.lwr <- deriv.est - qnorm(0.975)*sqrt(zpred[,4]^2+zpred.base[,4]^2)
+            deriv.upr <- deriv.est + qnorm(0.975)*sqrt(zpred[,4]^2+zpred.base[,4]^2)
+            
           }
           
         }
         
         if(!ci) {
-            
-          rg[[i]] <- data.frame(newdata[,i],deriv.mat[,i])
+          
+          rg[[i]] <- data.frame(newdata[,i],deriv.est)
           names(rg[[i]]) <- c(names(newdata)[i],"deriv")
           
         } else {
           
           rg[[i]] <- data.frame(newdata[,i],
-                                deriv.mat[,i],
-                                deriv.mat.lwr[,i],
-                                deriv.mat.upr[,i])
+                                deriv.est,
+                                deriv.lwr,
+                                deriv.upr)
           names(rg[[i]]) <- c(names(newdata)[i],"deriv","lwr","upr")
           
         }
