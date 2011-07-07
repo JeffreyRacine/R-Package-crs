@@ -168,7 +168,9 @@ npglpreg.default <- function(tydat=NULL,
                    gradient.vec=gradient.vec,
                    ...)
 
-  ## Gradients for categorical predictors XXX
+  ## Gradients for categorical predictors (here we just compute them
+  ## all though gradient for continuous predictors given above
+  ## requires specific variables to be selected)
 
   est$gradient.categorical.mat <- NULL
 
@@ -179,18 +181,23 @@ npglpreg.default <- function(tydat=NULL,
     num.categorical <- NCOL(txdat)-num.numeric
 
     if(num.categorical > 0) {
+
       num.eval <- ifelse(is.null(exdat),nrow(txdat),nrow(exdat))
+      gradient.categorical.mat <- matrix(NA,nrow=num.eval,ncol=num.categorical)
+
       if(is.null(exdat)) {
         exdat.base <- txdat
       } else {
         exdat.base <- exdat
       }
-      gradient.categorical.mat <- matrix(NA,nrow=num.eval,ncol=num.categorical)
+
       for(i in 1:num.categorical) {
+
         categorical.index <- which(xdat.numeric==FALSE)[i]
         eval.base <- levels(txdat[,categorical.index])[1]
         eval.levels <- levels(txdat[,categorical.index])
         exdat.base[,categorical.index] <- factor(rep(eval.base,num.eval),levels=eval.levels)
+
         est.base <- glpregEst(tydat=tydat,
                               txdat=txdat,
                               eydat=eydat,
@@ -208,9 +215,10 @@ npglpreg.default <- function(tydat=NULL,
         gradient.categorical.mat[,i] <- est$fitted.values - est.base$fitted.values
         
       }
-    }
 
-    est$gradient.categorical.mat <- gradient.categorical.mat
+      est$gradient.categorical.mat <- gradient.categorical.mat
+
+    }
 
   }
   
@@ -225,9 +233,10 @@ npglpreg.default <- function(tydat=NULL,
     est$residuals <- tydat - est$fitted.values
   }
   est$call <- match.call()
-  class(est) <- "npglpreg"
 
-  ## Return object of type glpreg
+  ## Return object of type npglpreg
+
+  class(est) <- "npglpreg"
 
   return(est)
 
