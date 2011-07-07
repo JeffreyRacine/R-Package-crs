@@ -1,5 +1,3 @@
-## $Id: glp_lib.R,v 1.20 2011/06/30 14:15:05 jracine Exp jracine $
-
 ## This file contains code for multivariate generalized local
 ## polynomial kernel regression with mixed datatypes. It relies on
 ## functions in the np package and on snomadr which currently resides
@@ -213,7 +211,7 @@ npglpreg.default <- function(tydat=NULL,
                               ...)
 
         gradient.categorical.mat[,i] <- est$fitted.values - est.base$fitted.values
-        
+
       }
 
       est$gradient.categorical.mat <- gradient.categorical.mat
@@ -221,7 +219,6 @@ npglpreg.default <- function(tydat=NULL,
     }
 
   }
-  
 
   ## Add results to estimated object.
 
@@ -382,6 +379,7 @@ npglpreg.formula <- function(formula,
                              bandwidth.min=1.0e-03,
                              raw=TRUE,
                              gradient.vec=NULL,
+                             gradient.categorical=FALSE,
                              ...) {
 
   if(!require(np)) stop(" Error: you must install the np package to use this function")
@@ -432,6 +430,7 @@ npglpreg.formula <- function(formula,
                                              bwtype=bwtype,
                                              raw=raw,
                                              gradient.vec=gradient.vec,
+                                             gradient.categorical=gradient.categorical,
                                              ...))
   
   if(cv!="none") ptm <- ptm.cv + ptm
@@ -445,7 +444,7 @@ npglpreg.formula <- function(formula,
   est$fv <- fv
   est$nmulti <- nmulti
   est$ptm <- ptm
-  
+
   return(est)
 
 }
@@ -1813,7 +1812,6 @@ plot.npglpreg <- function(x,
       } else {
         neval <- length(unique(object$x[,i]))
         newdata <- matrix(NA,nrow=neval,ncol=NCOL(object$x))
-        iz <- iz + 1
       }
       
       newdata <- data.frame(newdata)
@@ -1840,11 +1838,17 @@ plot.npglpreg <- function(x,
                               bwtype=bwtype,
                               raw=raw,
                               gradient.vec=gradient.vec,
+                              gradient.categorical=TRUE,
                               ...)
-      
-      fitted.values <- est$gradient
-      
-      
+
+      if(!is.factor(object$x[,i])) {
+        fitted.values <- est$gradient
+      } else {
+        fitted.values <- est$gradient.categorical.mat[,iz]
+        iz <- iz + 1
+      }
+        
+
       if(!ci) {
         
         rg[[i]] <- data.frame(newdata[,i],fitted.values)
