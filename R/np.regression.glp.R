@@ -194,7 +194,11 @@ npglpreg.default <- function(tydat=NULL,
         categorical.index <- which(xdat.numeric==FALSE)[i]
         eval.base <- levels(txdat[,categorical.index])[1]
         eval.levels <- levels(txdat[,categorical.index])
-        exdat.base[,categorical.index] <- factor(rep(eval.base,num.eval),levels=eval.levels)
+        if(is.ordered(txdat[,categorical.index])) {
+          exdat.base[,categorical.index] <- ordered(rep(eval.base,num.eval),levels=eval.levels)
+        } else {
+          exdat.base[,categorical.index] <- factor(rep(eval.base,num.eval),levels=eval.levels)
+        }
 
         est.base <- glpregEst(tydat=tydat,
                               txdat=txdat,
@@ -304,7 +308,7 @@ predict.npglpreg <- function(object,
     gradient <- object$gradient
     
   } else{
-    
+
     ## Get training data from object (xz and y) and parse into factors
     ## and numeric.
     
@@ -462,7 +466,7 @@ glpregEst <- function(tydat=NULL,
                       leave.one.out=FALSE,
                       ukertype=c("liracine","aitchisonaitken"),
                       okertype=c("liracine","wangvanryzin"),
-                      bwtype = c("fixed","generalized_nn","adaptive_nn"),
+                      bwtype=c("fixed","generalized_nn","adaptive_nn"),
                       raw=TRUE,
                       gradient.vec=NULL,
                       ...) {
@@ -495,7 +499,7 @@ glpregEst <- function(tydat=NULL,
 
   num.numeric <- sum(sapply(1:NCOL(txdat),function(i){is.numeric(txdat[,i])})==TRUE)
   num.categorical <- NCOL(txdat)-num.numeric
-  
+
   ## Check whether it appears that training and evaluation data are
   ## conformable
 
@@ -517,9 +521,9 @@ glpregEst <- function(tydat=NULL,
                     bws = bws,
                     bandwidth.divide = TRUE,
                     leave.one.out = leave.one.out,
-                    ukertype=ukertype,
-                    okertype=okertype,
-                    bwtype=bwtype,                    
+                    ukertype = ukertype,
+                    okertype = okertype,
+                    bwtype = bwtype,                    
                     ...)$ksum
 
     } else {
@@ -531,9 +535,9 @@ glpregEst <- function(tydat=NULL,
                     bws = bws,
                     bandwidth.divide = TRUE,
                     leave.one.out = leave.one.out,
-                    ukertype=ukertype,
-                    okertype=okertype,
-                    bwtype=bwtype,                    
+                    ukertype = ukertype,
+                    okertype = okertype,
+                    bwtype = bwtype,                    
                     ...)$ksum
 
     }
@@ -580,9 +584,9 @@ glpregEst <- function(tydat=NULL,
                     bws = bws,
                     bandwidth.divide = TRUE,
                     leave.one.out = leave.one.out,
-                    ukertype=ukertype,
-                    okertype=okertype,
-                    bwtype=bwtype,                    
+                    ukertype = ukertype,
+                    okertype = okertype,
+                    bwtype = bwtype,                    
                     ...)$ksum
 
     } else {
@@ -594,9 +598,9 @@ glpregEst <- function(tydat=NULL,
                     bws = bws,
                     bandwidth.divide = TRUE,
                     leave.one.out = leave.one.out,
-                    ukertype=ukertype,
-                    okertype=okertype,
-                    bwtype=bwtype,                    
+                    ukertype = ukertype,
+                    okertype = okertype,
+                    bwtype = bwtype,                    
                     ...)$ksum
 
     }
@@ -714,9 +718,9 @@ minimand.cv.ls <- function(bws=NULL,
                     bws = bws,
                     leave.one.out = TRUE,
                     bandwidth.divide = TRUE,
-                    ukertype=ukertype,
-                    okertype=okertype,
-                    bwtype=bwtype,                    
+                    ukertype = ukertype,
+                    okertype = okertype,
+                    bwtype = bwtype,                    
                     ...)$ksum
 
       mean.loo <- tww[2,]/NZD(tww[1,])
@@ -748,9 +752,9 @@ minimand.cv.ls <- function(bws=NULL,
                     bws = bws,
                     leave.one.out = TRUE,
                     bandwidth.divide = TRUE,
-                    ukertype=ukertype,
-                    okertype=okertype,
-                    bwtype=bwtype,                    
+                    ukertype = ukertype,
+                    okertype = okertype,
+                    bwtype = bwtype,                    
                     ...)$ksum
 
       tyw <- array(tww,dim = c(ncol(W)+1,ncol(W),n))[1,,]
@@ -848,9 +852,9 @@ minimand.cv.aic <- function(bws=NULL,
                             tydat = 1,
                             bws = bws,
                             bandwidth.divide = TRUE,
-                            ukertype=ukertype,
-                            okertype=okertype,
-                            bwtype=bwtype,                    
+                            ukertype = ukertype,
+                            okertype = okertype,
+                            bwtype = bwtype,                    
                             ...)$ksum[1,1]
 
     if(all(degree == 0)) {
@@ -862,9 +866,9 @@ minimand.cv.aic <- function(bws=NULL,
                     tydat = rep(1,n),
                     bws = bws,
                     bandwidth.divide = TRUE,
-                    ukertype=ukertype,
-                    okertype=okertype,
-                    bwtype=bwtype,                    
+                    ukertype = ukertype,
+                    okertype = okertype,
+                    bwtype = bwtype,                    
                     ...)$ksum
 
       ghat <- tww[2,]/NZD(tww[1,])
@@ -891,9 +895,9 @@ minimand.cv.aic <- function(bws=NULL,
                     weights = W,
                     bws = bws,
                     bandwidth.divide = TRUE,
-                    ukertype=ukertype,
-                    okertype=okertype,
-                    bwtype=bwtype,                    
+                    ukertype = ukertype,
+                    okertype = okertype,
+                    bwtype = bwtype,                    
                     ...)$ksum
 
       tyw <- array(tww,dim = c(ncol(W)+1,ncol(W),n))[1,,]
@@ -1552,6 +1556,7 @@ glpcvNOMAD <- function(ydat=NULL,
 	if(numeric.scale==TRUE && bwtype=="fixed") {
 			bw.opt[xdat.numeric] <- bw.opt[xdat.numeric]*xdat.scale
 	}
+
 	if(cv == "degree-bandwidth") {
 			degree.opt <- solution$solution[(num.bw+1):(num.bw+num.numeric)]
 	}
@@ -1616,47 +1621,44 @@ plot.npglpreg <- function(x,
   
   txdat <- object$x
   tydat <- object$y
-  
+
   ## Mean
   
   if(mean==TRUE && deriv==FALSE) {
-    
+
     if(!persp.rgl) {
       
       if(!is.null(object$num.z)||(object$num.x>1)) par(mfrow=dim.plot(NCOL(object$x)))
       
       mg <- list()
       
-      iz <- 1
-      
       for(i in 1:NCOL(object$x)) {
         
         if(!is.factor(object$x[,i])) {
-          newdata <- matrix(NA,nrow=num.eval,ncol=NCOL(object$x))
+          exdat <- matrix(NA,nrow=num.eval,ncol=NCOL(object$x))
           neval <- num.eval
         } else {
           neval <- length(unique(object$x[,i]))
-          newdata <- matrix(NA,nrow=neval,ncol=NCOL(object$x))
-          iz <- iz + 1
+          exdat <- matrix(NA,nrow=neval,ncol=NCOL(object$x))
         }
         
-        newdata <- data.frame(newdata)
+        exdat <- data.frame(exdat)
         
         if(!is.factor(object$x[,i])) {
-          newdata[,i] <- seq(min(object$x[,i]),max(object$x[,i]),length=neval)
+          exdat[,i] <- seq(min(object$x[,i]),max(object$x[,i]),length=neval)
         } else {
-          newdata[,i] <- sort(unique(object$x[,i]))
+          exdat[,i] <- sort(unique(object$x[,i]))
         }
         
         for(j in (1:NCOL(object$x))[-i]) {
-          newdata[,j] <- rep(uocquantile(object$x[,j],.5),neval)
+          exdat[,j] <- rep(uocquantile(object$x[,j],.5),neval)
         }
 
-        names(newdata) <- object$xnames
-        
+        names(exdat) <- object$xnames
+
         est <- npglpreg.default(tydat=tydat,
                                 txdat=txdat,
-                                exdat=newdata,
+                                exdat=exdat,
                                 bws=bws,
                                 degree=degree,
                                 ukertype=ukertype,
@@ -1666,17 +1668,16 @@ plot.npglpreg <- function(x,
                                 ...)
 
         fitted.values <- est$fitted.values
-        
+
         if(!ci) {
           
-          mg[[i]] <- data.frame(newdata[,i],fitted.values)
-          names(mg[[i]]) <- c(names(newdata)[i],"mean")
+          mg[[i]] <- data.frame(exdat[,i],fitted.values)
+          names(mg[[i]]) <- c(names(exdat)[i],"mean")
           
         } else {
           
-          fitted.values <- predict(object,newdata=newdata)
-          mg[[i]] <- data.frame(newdata[,i],fitted.values,attr(fitted.values,"lwr"),attr(fitted.values,"upr"))
-          names(mg[[i]]) <- c(names(newdata)[i],"mean","lwr","upr")
+          mg[[i]] <- data.frame(exdat[,i],fitted.values,attr(fitted.values,"lwr"),attr(fitted.values,"upr"))
+          names(mg[[i]]) <- c(names(exdat)[i],"mean","lwr","upr")
           
         }
 
@@ -1704,7 +1705,7 @@ plot.npglpreg <- function(x,
           if(!ci) {
         
             plot(mg[[i]][,1],mg[[i]][,2],
-                 xlab=names(newdata)[i],
+                 xlab=names(exdat)[i],
                  ylab="Conditional Mean",
                  ylim=ylim,
                  type="l")
@@ -1712,7 +1713,7 @@ plot.npglpreg <- function(x,
           } else {
             if(!common.scale) ylim <- c(min(mg[[i]][,-1]),max(mg[[i]][,-1]))
             plot(mg[[i]][,1],mg[[i]][,2],
-                 xlab=names(newdata)[i],
+                 xlab=names(exdat)[i],
                  ylab="Conditional Mean",
                  ylim=ylim,
                  type="l")

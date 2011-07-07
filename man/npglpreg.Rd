@@ -72,30 +72,30 @@ npglpreg(\dots)
     a one (1) dimensional numeric or integer vector of dependent data, each
     element \eqn{i} corresponding to each observation (row) \eqn{i} of
     \code{txdat}. Defaults to the training data used to
-    compute the bandwidth object.
+    compute the bandwidth object
   }
 
   \item{txdat}{
     a \eqn{p}-variate data frame of explanatory data (training data) used to
     calculate the regression estimators. Defaults to the training data used to
-    compute the bandwidth object.
+    compute the bandwidth object
   }
 
   \item{eydat}{
     a one (1) dimensional numeric or integer vector of the true values
     of the dependent variable. Optional, and used only to calculate the
-    true errors. 
+    true errors
   }
 
   \item{exdat}{
     a \eqn{p}-variate data frame of points on which the regression will be
     estimated (evaluation data). By default,
-    evaluation takes place on the data provided by \code{txdat}.
+    evaluation takes place on the data provided by \code{txdat}
   }
 
   \item{bws}{
     a  vector of bandwidths, with each element \eqn{i} corresponding
-    to the bandwidth for column \eqn{i} in \code{txdat}.
+    to the bandwidth for column \eqn{i} in \code{txdat}
   }
   
   \item{degree}{ integer/vector specifying the polynomial degree of the
@@ -104,19 +104,19 @@ for each dimension of the continuous \code{x} in \code{txdat}}
   \item{leave.one.out}{
     a logical value to specify whether or not to compute the leave one
     out sums. Will not work if \code{exdat} is specified. Defaults to
-    \code{FALSE}.
+    \code{FALSE}
   }
 
   \item{ukertype}{
     character string used to specify the unordered categorical kernel type.
     Can be set as \code{aitchisonaitken} or \code{liracine}. Defaults to
-    \code{liracine}.
+    \code{liracine}
   }
 
   \item{okertype}{
     character string used to specify the ordered categorical kernel type.
     Can be set as \code{wangvanryzin} or \code{liracine}. Defaults to
-    \code{liracine}.
+    \code{liracine}
   }
 
   \item{bwtype}{
@@ -185,7 +185,7 @@ for each dimension of the continuous \code{x} in \code{txdat}}
   \item{\dots}{
     additional arguments supplied to specify the regression type,
     bandwidth type, kernel types, training data, and so on, detailed
-    below. 
+    below
   }
 }
 \details{
