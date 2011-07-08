@@ -404,44 +404,43 @@ npglpreg.formula <- function(formula,
   txdat <- mf[, attr(attr(mf, "terms"),"term.labels"), drop = FALSE]
 
   fv <- NULL
+  ptm <- system.time("")
 
   if(cv!="none") {
-    ptm.cv <- system.time(model.cv <-glpcvNOMAD(ydat=tydat,
-                                                xdat=txdat,
-                                                opts=opts,
-                                                cv=cv,
-                                                degree=degree,
-                                                bandwidth=bws,
-                                                bwmethod=cv.func,
-                                                bwtype=bwtype,
-                                                nmulti=nmulti,
-                                                raw=raw,
-                                                random.seed=random.seed,
-                                                degree.max=degree.max,
-                                                degree.min=degree.min,
-                                                bandwidth.max=bandwidth.max,
-                                                bandwidth.min=bandwidth.min))
+    ptm <- ptm + system.time(model.cv <-glpcvNOMAD(ydat=tydat,
+                                                   xdat=txdat,
+                                                   opts=opts,
+                                                   cv=cv,
+                                                   degree=degree,
+                                                   bandwidth=bws,
+                                                   bwmethod=cv.func,
+                                                   bwtype=bwtype,
+                                                   nmulti=nmulti,
+                                                   raw=raw,
+                                                   random.seed=random.seed,
+                                                   degree.max=degree.max,
+                                                   degree.min=degree.min,
+                                                   bandwidth.max=bandwidth.max,
+                                                   bandwidth.min=bandwidth.min))
     degree <- model.cv$degree
     bws <- model.cv$bws
     fv <- model.cv$fv
   }
-
-  ptm <- system.time(est <- npglpreg.default(tydat=tydat,
-                                             txdat=txdat,
-                                             eydat=eydat,
-                                             exdat=exdat,
-                                             bws=bws,
-                                             degree=degree,
-                                             leave.one.out=leave.one.out,
-                                             ukertype=ukertype,
-                                             okertype=okertype,
-                                             bwtype=bwtype,
-                                             raw=raw,
-                                             gradient.vec=gradient.vec,
-                                             gradient.categorical=gradient.categorical,
-                                             ...))
   
-  if(cv!="none") ptm <- ptm.cv + ptm
+  ptm <- ptm + system.time(est <- npglpreg.default(tydat=tydat,
+                                                   txdat=txdat,
+                                                   eydat=eydat,
+                                                   exdat=exdat,
+                                                   bws=bws,
+                                                   degree=degree,
+                                                   leave.one.out=leave.one.out,
+                                                   ukertype=ukertype,
+                                                   okertype=okertype,
+                                                   bwtype=bwtype,
+                                                   raw=raw,
+                                                   gradient.vec=gradient.vec,
+                                                   gradient.categorical=gradient.categorical,
+                                                   ...))
   
   est$call <- match.call()
   est$formula <- formula
