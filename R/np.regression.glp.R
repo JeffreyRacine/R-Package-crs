@@ -12,14 +12,12 @@ NZD <- function(a) {
   sapply(1:NROW(a), function(i) {if(a[i] < 0) min(-.Machine$double.xmin,a[i]) else max(.Machine$double.xmin,a[i])})
 }
 
-mypoly <- function(x,degree,raw=TRUE,gradient.compute=FALSE,r=0) {
+mypoly <- function(x,degree,gradient.compute=FALSE,r=0) {
 
   if(missing(x)) stop(" Error: x required")
   if(missing(degree)) stop(" Error: degree required")
   if(degree < 1) stop(" Error: degree must be a positive integer")
   n <- degree + 1
-
-  ## Support derivatives for raw polynomials only at the moment
 
   if(gradient.compute) {
     Z <- NULL
@@ -35,27 +33,7 @@ mypoly <- function(x,degree,raw=TRUE,gradient.compute=FALSE,r=0) {
     ## computation of derivative) return this baby.
     if(r == -1) Z <- matrix(0,NROW(Z),NCOL(Z))
   } else {
-    if(raw) {
       Z <- outer(x,1L:degree,"^")
-    } else {
-      if (degree >= length(unique(x))) 
-        stop("'degree' must be less than number of unique points")
-      xbar <- mean(x)
-      x <- x - xbar
-      X <- outer(x, seq_len(n) - 1, "^")
-      QR <- qr(X)
-      if (QR$rank < degree) 
-        stop("'degree' must be less than number of unique points")
-      z <- QR$qr
-      z <- z * (row(z) == col(z))
-      raw <- qr.qy(QR, z)
-      norm2 <- colSums(raw^2)
-      alpha <- (colSums(x * raw^2)/norm2 + xbar)[1L:degree]
-      Z <- raw/rep(sqrt(norm2), each = length(x))
-      colnames(Z) <- 1L:n - 1L
-      Z <- Z[, -1, drop = FALSE]
-    }
-    
   }
   
   return(as.matrix(Z))
@@ -68,8 +46,7 @@ mypoly <- function(x,degree,raw=TRUE,gradient.compute=FALSE,r=0) {
 
 W.glp <- function(xdat = NULL,
                   degree = NULL,
-                  gradient.vec = NULL,
-                  raw = TRUE) {
+                  gradient.vec = NULL) {
 
   if(is.null(xdat)) stop(" Error: You must provide data")
   if(is.null(degree) | any(degree < 0)) stop(paste(" Error: degree vector must contain non-negative integers\ndegree is (", degree, ")\n",sep=""))
@@ -121,8 +98,8 @@ W.glp <- function(xdat = NULL,
       }
     }
     res <- rep.int(1,nrow(xdat.numeric))
-    if(degree[1] > 0) res <- cbind(1, mypoly(xdat.numeric[,1], degree[1],raw=raw,gradient.compute=gradient.compute,r=gradient.vec[1]))[, 1 + z[, 1]]
-    if(k > 1) for (i in 2:k) if(degree[i] > 0) res <- res * cbind(1, mypoly(xdat.numeric[,i], degree[i],raw=raw,gradient.compute=gradient.compute,r=gradient.vec[i]))[, 1 + z[, i]]
+    if(degree[1] > 0) res <- cbind(1, mypoly(xdat.numeric[,1], degree[1],gradient.compute=gradient.compute,r=gradient.vec[1]))[, 1 + z[, 1]]
+    if(k > 1) for (i in 2:k) if(degree[i] > 0) res <- res * cbind(1, mypoly(xdat.numeric[,i], degree[i],gradient.compute=gradient.compute,r=gradient.vec[i]))[, 1 + z[, i]]
     res <- matrix(res,nrow=NROW(xdat))
     colnames(res) <- apply(z, 1L, function(x) paste(x, collapse = "."))
     return(as.matrix(cbind(1,res)))
@@ -143,7 +120,6 @@ npglpreg.default <- function(tydat=NULL,
                              ukertype=c("liracine","aitchisonaitken"),
                              okertype=c("liracine","wangvanryzin"),
                              bwtype = c("fixed","generalized_nn","adaptive_nn"),
-                             raw=TRUE,
                              gradient.vec=NULL,
                              gradient.categorical=FALSE,
                              ...) {
@@ -162,7 +138,6 @@ npglpreg.default <- function(tydat=NULL,
                    ukertype=ukertype,
                    okertype=okertype,
                    bwtype=bwtype,
-                   raw=raw,
                    gradient.vec=gradient.vec,
                    ...)
 
@@ -210,7 +185,6 @@ npglpreg.default <- function(tydat=NULL,
                               ukertype=ukertype,
                               okertype=okertype,
                               bwtype=bwtype,
-                              raw=raw,
                               gradient.vec=gradient.vec,
                               ...)
 
@@ -285,8 +259,6 @@ summary.npglpreg <- function(object,
 
   ## Summary statistics
 
-  if(object$raw==TRUE) cat(paste("\nPolynomial: raw",sep=""),sep="")
-  if(object$raw==FALSE) cat(paste("\nPolynomial: orthogonal",sep=""),sep="")  
   cat(paste("\nTraining observations: ", format(object$nobs), sep=""))
   cat(paste("\nMultiple R-squared: ", format(object$r.squared,digits=4), sep=""))
   if(!is.null(object$fv)) {
@@ -323,7 +295,6 @@ predict.npglpreg <- function(object,
     bwtype <- object$bwtype
     ukertype <- object$ukertype
     okertype <- object$okertype
-    raw <- object$raw
     if(is.null(gradient.vec)) {
       gradient.vec <- object$gradient.vec
     } 
@@ -351,7 +322,6 @@ predict.npglpreg <- function(object,
                             ukertype=ukertype,
                             okertype=okertype,
                             bwtype=bwtype,
-                            raw=raw,
                             gradient.vec=gradient.vec,
                             ...)
     
@@ -393,7 +363,6 @@ npglpreg.formula <- function(formula,
                              degree.min=0,
                              bandwidth.max=1.0e+05,
                              bandwidth.min=1.0e-03,
-                             raw=TRUE,
                              gradient.vec=NULL,
                              gradient.categorical=FALSE,
                              ...) {
@@ -424,7 +393,6 @@ npglpreg.formula <- function(formula,
                                                    bwmethod=cv.func,
                                                    bwtype=bwtype,
                                                    nmulti=nmulti,
-                                                   raw=raw,
                                                    random.seed=random.seed,
                                                    degree.max=degree.max,
                                                    degree.min=degree.min,
@@ -445,7 +413,6 @@ npglpreg.formula <- function(formula,
                                                    ukertype=ukertype,
                                                    okertype=okertype,
                                                    bwtype=bwtype,
-                                                   raw=raw,
                                                    gradient.vec=gradient.vec,
                                                    gradient.categorical=gradient.categorical,
                                                    ...))
@@ -474,7 +441,6 @@ glpregEst <- function(tydat=NULL,
                       ukertype=c("liracine","aitchisonaitken"),
                       okertype=c("liracine","wangvanryzin"),
                       bwtype=c("fixed","generalized_nn","adaptive_nn"),
-                      raw=TRUE,
                       gradient.vec=NULL,
                       ...) {
 
@@ -566,14 +532,13 @@ glpregEst <- function(tydat=NULL,
                 num.x = num.numeric,
                 num.z = num.categorical,
                 xnames = names(txdat),
-                raw = raw,
                 gradient.vec = gradient.vec))
     
   } else {
 
-    W <- W.glp(txdat,degree,raw=raw)
-    W.eval <- W.glp(exdat,degree,raw=raw)
-    if(!is.null(gradient.vec)) W.eval.deriv <- W.glp(exdat,degree,raw=raw,gradient.vec=gradient.vec)
+    W <- W.glp(txdat,degree)
+    W.eval <- W.glp(exdat,degree)
+    if(!is.null(gradient.vec)) W.eval.deriv <- W.glp(exdat,degree,gradient.vec=gradient.vec)
 
     ## Local polynomial via smooth coefficient formulation and one
     ## call to npksum
@@ -672,7 +637,6 @@ glpregEst <- function(tydat=NULL,
                 num.x = num.numeric,
                 num.z = num.categorical,
                 xnames = names(txdat),
-                raw = raw,
                 gradient.vec = gradient.vec))
     
   }
@@ -974,7 +938,6 @@ glpcv <- function(ydat=NULL,
                   optim.abstol=.Machine$double.eps,
                   optim.maxit=500,
                   debug=FALSE,
-                  raw=TRUE,
                   ...) {
 
   ## Save seed prior to setting
@@ -1026,7 +989,7 @@ glpcv <- function(ydat=NULL,
   ## Pass in the local polynomial weight matrix rather than
   ## recomputing with each iteration.
 
-  W <- W.glp(xdat,degree,raw=raw)
+  W <- W.glp(xdat,degree)
 
   sum.lscv <- function(bw.gamma,...) {
 
@@ -1232,7 +1195,6 @@ glpcvNOMAD <- function(ydat=NULL,
                        bandwidth.max=1.0e+05,
                        bandwidth.min=1.0e-03,
                        opts=list(),
-                       raw=TRUE,
                        ...) {
 
   ## Save the seed prior to setting
@@ -1360,13 +1322,12 @@ glpcvNOMAD <- function(ydat=NULL,
     ukertype <- params$ukertype
     okertype <- params$okertype
     bwtype <- params$bwtype    
-    raw <- params$raw
 
     bw.gamma <- input[1:num.bw]
     if(cv=="degree-bandwidth")
       degree <- round(input[(num.bw+1):(num.bw+num.numeric)])
 
-    W <- W.glp(xdat,degree,raw=raw)
+    W <- W.glp(xdat,degree)
 
     if(all(bw.gamma>=0)&&all(bw.gamma[!xdat.numeric]<=1)) {
       lscv <- minimand.cv.ls(bws=bw.gamma,
@@ -1398,13 +1359,12 @@ glpcvNOMAD <- function(ydat=NULL,
     ukertype <- params$ukertype
     okertype <- params$okertype
     bwtype <- params$bwtype
-    raw <- params$raw
 
     bw.gamma <- input[1:num.bw]
     if(cv=="degree-bandwidth")
       degree <- round(input[(num.bw+1):(num.bw+num.numeric)])
 
-    W <- W.glp(xdat,degree,raw=raw)
+    W <- W.glp(xdat,degree)
 
     if(all(bw.gamma>=0)&&all(bw.gamma[!xdat.numeric]<=1)) {
       aicc <- minimand.cv.aic(bws=bw.gamma,
@@ -1437,7 +1397,6 @@ glpcvNOMAD <- function(ydat=NULL,
   params$ukertype <- ukertype
   params$okertype <- okertype
   params$bwtype <- bwtype
-  params$raw <- raw
 
   if(cv=="degree-bandwidth") {
     bbin <- c(rep(0, num.bw), rep(1, num.numeric))
@@ -1612,7 +1571,6 @@ plot.npglpreg <- function(x,
   bwtype <- object$bwtype
   ukertype <- object$ukertype
   okertype <- object$okertype
-  raw <- object$raw
   
   txdat <- object$x
   tydat <- object$y
@@ -1664,7 +1622,6 @@ plot.npglpreg <- function(x,
                                 ukertype=ukertype,
                                 okertype=okertype,
                                 bwtype=bwtype,
-                                raw=raw,
                                 ...)
 
         fitted.values <- est$fitted.values
@@ -1838,7 +1795,6 @@ plot.npglpreg <- function(x,
                               ukertype=ukertype,
                               okertype=okertype,
                               bwtype=bwtype,
-                              raw=raw,
                               gradient.vec=gradient.vec,
                               gradient.categorical=TRUE,
                               ...)

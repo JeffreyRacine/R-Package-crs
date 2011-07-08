@@ -26,7 +26,6 @@ npglpreg(\dots)
          ukertype = c("liracine", "aitchisonaitken"),
          okertype = c("liracine", "wangvanryzin"),
          bwtype = c("fixed", "generalized_nn", "adaptive_nn"),
-         raw = TRUE,
          gradient.vec = NULL,
          gradient.categorical = FALSE,
          \dots)
@@ -56,7 +55,6 @@ npglpreg(\dots)
          degree.min = 0,
          bandwidth.max = 1.0e+05,
          bandwidth.min = 1.0e-03,
-         raw = TRUE,
          gradient.vec = NULL,
          gradient.categorical = FALSE,
          \dots)
@@ -168,11 +166,6 @@ for each dimension of the continuous \code{x} in \code{txdat}}
     standard deviations) for each of the continuous predictors (default
     \code{bandwidth.min=0.001})}
   
-  \item{raw}{
-  when TRUE evaluate raw polynomials of degree 1 to \code{degree} over the
-  specified set of points \code{x} otherwise evaluate orthogonal polynomials
-  (orthogonal to the constant polynomial of degree 0)
-}
 \item{gradient.vec}{
   a vector corresponding to the order of the partial (or cross-partial)
   and which variable the partial (or cross-partial) derivative(s) are required
