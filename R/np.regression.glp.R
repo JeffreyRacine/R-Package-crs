@@ -1605,10 +1605,6 @@ plot.npglpreg <- function(x,
 
   object <- x
 
-  console <- newLineConsole()
-  console <- printClear(console)
-  console <- printPop(console)
-
   ## Needed for correctly obtaining predictions
 
   degree <- object$degree
@@ -1620,6 +1616,11 @@ plot.npglpreg <- function(x,
   
   txdat <- object$x
   tydat <- object$y
+
+  console <- newLineConsole()
+  console <- printClear(console)
+  console <- printPop(console)
+  console <- printPush("Working...",console = console)
 
   ## Mean
   
@@ -1680,9 +1681,6 @@ plot.npglpreg <- function(x,
           
         }
 
-        console <- printClear(console)
-        console <- printPop(console)
-        
       }
       
       if(common.scale) {
@@ -1868,9 +1866,6 @@ plot.npglpreg <- function(x,
         
       }
       
-      console <- printClear(console)
-      console <- printPop(console)
-      
     }
     
     if(common.scale) {
@@ -1932,6 +1927,10 @@ plot.npglpreg <- function(x,
     
   }
   
+      
+  console <- printClear(console)
+  console <- printPop(console)
+
   ## Reset par to 1,1 (can be modified above)
   
   if(!persp.rgl) par(mfrow=c(1,1))
