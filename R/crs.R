@@ -559,6 +559,7 @@ crs.formula <- function(formula,
   est$cv.min <- cv.min
   est$restarts <- restarts
   est$ptm <- ptm
+  est$nmulti <- nmulti
   
   return(est)
 
@@ -883,6 +884,7 @@ summary.crs <- function(object,
   adjusted.r.squared <- 1-(1-object$r.squared)*(length(object$fitted.values)-1)/object$df.residual
   cat(paste("\nMultiple R-squared: ", format(object$r.squared,digits=4),",   Adjusted R-squared: ",format(adjusted.r.squared,digits=4), sep=""))
   cat(paste("\nCross-validation score: ", format(object$cv.score,digits=8), sep=""))  
+  cat(paste("\nNumber of multistarts: ", format(object$nmulti), sep=""))
 
   if(sigtest&!object$kernel) {
     cat("\n\nPredictor significance test:\n")

@@ -263,6 +263,8 @@ summary.npglpreg <- function(object,
   print(object$call)
   cat("\nGeneralized Local Polynomial Kernel Regression\n",sep="")
 
+  ## Summarize predictors
+
   if(object$num.x == 1){
     cat(paste("\nThere is ",format(object$num.x), " continuous predictor",sep=""),sep="")
   } else if(object$num.x > 1) {
@@ -273,10 +275,15 @@ summary.npglpreg <- function(object,
   } else if(object$num.z > 1) {
     cat(paste("\nThere are ",format(object$num.z), " categorical predictors",sep=""),sep="")
   }
+
+  ## Summarize bandwidths and degree
+  
   for(j in 1:(object$num.x+object$num.z))
     cat(paste("\nBandwidth for ",format(object$xnames[j]),": ",format(object$bws[j]),sep=""),sep="")
   for(j in 1:object$num.x)
-    cat(paste("\nDegree for ",format(object$xnames[j]),": ",format(object$degree[j]),sep=""),sep="")  
+    cat(paste("\nDegree for ",format(object$xnames[j]),": ",format(object$degree[j]),sep=""),sep="")
+
+  ## Summary statistics
 
   if(object$raw==TRUE) cat(paste("\nPolynomial: raw",sep=""),sep="")
   if(object$raw==FALSE) cat(paste("\nPolynomial: orthogonal",sep=""),sep="")  
@@ -286,7 +293,6 @@ summary.npglpreg <- function(object,
     cat(paste("\nCross-validation score: ", format(object$fv,digits=8), sep=""))
     cat(paste("\nNumber of multistarts: ", format(object$nmulti), sep=""))
   }
-
   cat(paste("\nEstimation time: ", formatC(object$ptm[1],digits=1,format="f"), " seconds",sep=""))
   cat("\n\n")
 
@@ -351,10 +357,12 @@ predict.npglpreg <- function(object,
     
     fitted.values <- est$fitted.values
     gradient <- est$gradient
+    gradient.categorical.mat <- est$gradient.categorical.mat
     
   }
 
   attr(fitted.values, "gradient") <- gradient
+  attr(fitted.values, "gradient.categorical.mat") <- gradient.categorical.mat
 
   return(fitted.values)
 
@@ -469,8 +477,6 @@ glpregEst <- function(tydat=NULL,
                       raw=TRUE,
                       gradient.vec=NULL,
                       ...) {
-
-  ## Don't think this error checking is robust
 
   ukertype <- match.arg(ukertype)
   okertype <- match.arg(okertype)
@@ -683,8 +689,6 @@ minimand.cv.ls <- function(bws=NULL,
                            bwtype = c("fixed","generalized_nn","adaptive_nn"),
                            ...) {
 
-  ## Don't think this error checking is robust
-
   ukertype <- match.arg(ukertype)
   okertype <- match.arg(okertype)
   bwtype <- match.arg(bwtype)  
@@ -819,8 +823,6 @@ minimand.cv.aic <- function(bws=NULL,
                             okertype=c("liracine","wangvanryzin"),
                             bwtype = c("fixed","generalized_nn","adaptive_nn"),
                             ...) {
-
-  ## Don't think this error checking is robust
 
   ukertype <- match.arg(ukertype)
   okertype <- match.arg(okertype)
@@ -987,8 +989,6 @@ glpcv <- function(ydat=NULL,
   set.seed(random.seed)
 
   if(debug) system("rm optim.debug bandwidth.out optim.out")
-
-  ## Don't think this error checking is robust
 
   if(is.null(ydat)) stop(" Error: You must provide y data")
   if(is.null(xdat)) stop(" Error: You must provide X data")
