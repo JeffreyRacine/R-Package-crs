@@ -83,5 +83,5 @@ grid3d(c("x", "y+", "z"))
 ## (i.e. resize, rotate etc.) and then call rgl.postscript to create,
 ## i.e., a PDF of your graphic as in
 ## rgl.postscript("foo.pdf","pdf"). Or better still,
-## rgl.snapshot("foo.pdf") for a png that can be called directly in
+## rgl.snapshot("foo.png") for a png that can be called directly in
 ## LaTeX via \includegraphics[scale=.6]{foo.png}
