@@ -184,8 +184,8 @@ for each dimension of the continuous \code{x} in \code{txdat}}
 \details{
   This function is in beta status until further notice.
 
-  Important note - prediction with newdata only works if there exists
-  more than one row in the newdata data frame.
+  Eventually it will be rolled into the np/npRmpi packages after the
+  final status of snomadr/NOMAD gets sorted out.
 }
 \value{
   \code{npglpreg} returns a \code{npglpreg} object.  The generic
