@@ -158,17 +158,18 @@ npglpreg.default <- function(tydat=NULL,
       num.eval <- ifelse(is.null(exdat),nrow(txdat),nrow(exdat))
       gradient.categorical.mat <- matrix(NA,nrow=num.eval,ncol=num.categorical)
 
-      if(is.null(exdat)) {
-        exdat.base <- txdat
-      } else {
-        exdat.base <- exdat
-      }
-
       for(i in 1:num.categorical) {
+
+        if(is.null(exdat)) {
+          exdat.base <- txdat
+        } else {
+          exdat.base <- exdat
+        }
 
         categorical.index <- which(xdat.numeric==FALSE)[i]
         eval.base <- levels(txdat[,categorical.index])[1]
         eval.levels <- levels(txdat[,categorical.index])
+
         if(is.ordered(txdat[,categorical.index])) {
           exdat.base[,categorical.index] <- ordered(rep(eval.base,num.eval),levels=eval.levels)
         } else {
@@ -185,7 +186,7 @@ npglpreg.default <- function(tydat=NULL,
                               ukertype=ukertype,
                               okertype=okertype,
                               bwtype=bwtype,
-                              gradient.vec=gradient.vec,
+                              gradient.vec=NULL,
                               ...)
 
         gradient.categorical.mat[,i] <- est$fitted.values - est.base$fitted.values
@@ -1786,7 +1787,7 @@ plot.npglpreg <- function(x,
       }
       
       names(newdata) <- object$xnames
-      
+
       est <- npglpreg.default(tydat=tydat,
                               txdat=txdat,
                               exdat=newdata,
