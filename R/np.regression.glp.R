@@ -1548,6 +1548,93 @@ glpcvNOMAD <- function(ydat=NULL,
 
 }
 
+compute.bootstrap.errors <- function(tydat,
+                                     txdat,
+                                     exdat,
+                                     eydat,
+                                     bws,
+                                     degree,
+                                     ukertype,
+                                     okertype,
+                                     bwtype,boot.object=c("fitted","gradient","gradient.categorical"),
+                                     plot.errors.boot.num=99,
+                                     plot.errors.type=c("standard","quantiles"),
+                                     plot.errors.quantiles=c(.025,.975),
+                                     alpha=0.05,
+                                     gradient.vec=NULL,
+                                     gradient.categorical=FALSE,
+                                     gradient.categorical.index=NULL,                                     
+                                     ...){
+  
+  plot.errors.type <- match.arg(plot.errors.type)
+  boot.object <- match.arg(boot.object)
+
+  if(missing(exdat)) {
+    neval <- nrow(txdat)
+    exdat <- txdat
+  } else {
+    neval <- nrow(exdat)
+  }
+
+  boot.err <- matrix(data = NA, nrow = neval, ncol = 2)
+
+  ## Conduct simple iid residual bootstrap
+
+  boot.func.mean <- function(model.fitted,indices){
+    est.boot <- npglpreg(tydat=model.fitted+(tydat-model.fitted)[indices],
+                         txdat=txdat,
+                         exdat=exdat,
+                         bws=bws,
+                         degree=degree,
+                         ukertype=ukertype,
+                         okertype=okertype,
+                         bwtype=bwtype,
+                         gradient.vec=gradient.vec,
+                         gradient.categorical=gradient.categorical,
+                         gradient.categorical.index=gradient.categorical.index,
+                         ...)
+    if(boot.object=="fitted") {
+      return(est.boot$fitted.values)
+    } else if(boot.object=="gradient") {
+      return(est.boot$gradient)
+    } else if(boot.object=="gradient.categorical") {
+      return(est.boot$gradient.categorical.mat[,gradient.categorical.index])
+    }
+  }
+  
+  ## Fitted values for the training data required
+  
+  est <- npglpreg(tydat=tydat,
+                  txdat=txdat,
+                  bws=bws,
+                  degree=degree,
+                  ukertype=ukertype,
+                  okertype=okertype,
+                  bwtype=bwtype,
+                  ...)
+  
+  model.fitted <- est$fitted.values
+  
+  boot.out <- boot(data = model.fitted,
+                   statistic = boot.func.mean,
+                   R = plot.errors.boot.num)
+  
+  if (plot.errors.type == "standard") {
+    boot.err[,1:2] <- qnorm(1-alpha/2)*sqrt(diag(cov(boot.out$t)))
+    boot.err[,1] <- boot.out$t0 - boot.err[,1]
+    boot.err[,2] <- boot.out$t0 + boot.err[,2]
+  }
+  else if (plot.errors.type == "quantiles") {
+    boot.err[,1:2] <- t(sapply(as.data.frame(boot.out$t),
+                               function (y) {
+                                 quantile(y,probs = plot.errors.quantiles)
+                               }))
+  }
+  
+  return(cbind(boot.out$t0,boot.err))
+
+}
+
 plot.npglpreg <- function(x,
                           mean=TRUE,
                           deriv=FALSE,
@@ -1633,8 +1720,21 @@ plot.npglpreg <- function(x,
           names(mg[[i]]) <- c(names(exdat)[i],"mean")
           
         } else {
+
+          ci.out <- compute.bootstrap.errors(tydat=tydat,
+                                             txdat=txdat,
+                                             exdat=exdat,
+                                             bws=bws,
+                                             degree=degree,
+                                             ukertype=ukertype,
+                                             okertype=okertype,
+                                             bwtype=bwtype,
+                                             boot.object="fitted",
+                                             plot.errors.boot.num=99,
+                                             plot.errors.type="standard",
+                                             plot.errors.quantiles=c(.025,.975))
           
-          mg[[i]] <- data.frame(exdat[,i],fitted.values,attr(fitted.values,"lwr"),attr(fitted.values,"upr"))
+          mg[[i]] <- data.frame(exdat[,i],ci.out)
           names(mg[[i]]) <- c(names(exdat)[i],"mean","lwr","upr")
           
         }
@@ -1804,7 +1904,6 @@ plot.npglpreg <- function(x,
         fitted.values <- est$gradient
       } else {
         fitted.values <- est$gradient.categorical.mat[,iz]
-        iz <- iz + 1
       }
         
 
@@ -1815,11 +1914,43 @@ plot.npglpreg <- function(x,
         
       } else {
         
-        rg[[i]] <- data.frame(newdata[,i],
-                              fitted.values,
-                              attr(fitted.values,"deriv.mat.lwr")[,i],
-                              attr(fitted.values,"deriv.mat.upr")[,i])
+        if(!is.factor(object$x[,i])) {
+          ci.out <- compute.bootstrap.errors(tydat=tydat,
+                                             txdat=txdat,
+                                             exdat=newdata,
+                                             bws=bws,
+                                             degree=degree,
+                                             ukertype=ukertype,
+                                             okertype=okertype,
+                                             bwtype=bwtype,
+                                             boot.object="gradient",
+                                             plot.errors.boot.num=99,
+                                             plot.errors.type="standard",
+                                             plot.errors.quantiles=c(.025,.975),
+                                             gradient.vec=gradient.vec)
+        } else {
+          ci.out <- compute.bootstrap.errors(tydat=tydat,
+                                             txdat=txdat,
+                                             exdat=newdata,
+                                             bws=bws,
+                                             degree=degree,
+                                             ukertype=ukertype,
+                                             okertype=okertype,
+                                             bwtype=bwtype,
+                                             boot.object="gradient.categorical",
+                                             plot.errors.boot.num=99,
+                                             plot.errors.type="standard",
+                                             plot.errors.quantiles=c(.025,.975),
+                                             gradient.categorical=TRUE,                                
+                                             gradient.categorical.index=iz)
+        }
+        
+        rg[[i]] <- data.frame(newdata[,i],ci.out)
         names(rg[[i]]) <- c(names(newdata)[i],"deriv","lwr","upr")
+        
+        if(is.factor(object$x[,i])) {
+          iz <- iz + 1
+        }
         
       }
       
