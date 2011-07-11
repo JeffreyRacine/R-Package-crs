@@ -188,14 +188,19 @@ for each dimension of the continuous \code{x} in \code{txdat}}
   final status of snomadr/NOMAD gets sorted out.
 }
 \value{
+  
   \code{npglpreg} returns a \code{npglpreg} object.  The generic
     functions \code{\link{fitted}} and \code{\link{residuals}} extract
     (or generate) estimated values and residuals. Furthermore, the
     functions \code{\link{summary}}, \code{\link{predict}}, and
-    \code{\link{plot}} (options \code{deriv=0}, \code{ci=FALSE},
+    \code{\link{plot}} (options \code{deriv=0}, \code{ci=FALSE}
+    [\code{ci=TRUE} produces pointwise bootstrap error bounds],
     \code{persp.rgl=FALSE},
-    \code{plot.behavior=c("plot","plot-data","data")}) support objects
-    of this type. The returned object has the following components:
+    \code{plot.behavior=c("plot","plot-data","data")},
+    \code{plot.errors.boot.num=99},
+    \code{plot.errors.type=c("standard","quantiles")},
+    \code{plot.errors.quantiles=c(.025,.975)}) support objects of this
+    type. The returned object has the following components:
 
   \item{fitted.values}{ estimates of the regression function
     (conditional mean) at the sample points or evaluation points }

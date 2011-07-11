@@ -1642,10 +1642,14 @@ plot.npglpreg <- function(x,
                           num.eval=100,
                           common.scale=TRUE,
                           plot.behavior = c("plot","plot-data","data"),
+                          plot.errors.boot.num=99,
+                          plot.errors.type=c("standard","quantiles"),
+                          plot.errors.quantiles=c(.025,.975),
                           persp.rgl=FALSE,
                           ...) {
   
   plot.behavior <- match.arg(plot.behavior)
+  plot.errors.type <- match.arg(plot.errors.type)
 
   ## We use object below as x is used for data but plot wants
   ## function(x,..)
@@ -1730,9 +1734,9 @@ plot.npglpreg <- function(x,
                                              okertype=okertype,
                                              bwtype=bwtype,
                                              boot.object="fitted",
-                                             plot.errors.boot.num=99,
-                                             plot.errors.type="standard",
-                                             plot.errors.quantiles=c(.025,.975))
+                                             plot.errors.boot.num=plot.errors.boot.num,
+                                             plot.errors.type=plot.errors.type,
+                                             plot.errors.quantiles=plot.errors.quantiles)
           
           mg[[i]] <- data.frame(exdat[,i],ci.out)
           names(mg[[i]]) <- c(names(exdat)[i],"mean","lwr","upr")
@@ -1924,9 +1928,9 @@ plot.npglpreg <- function(x,
                                              okertype=okertype,
                                              bwtype=bwtype,
                                              boot.object="gradient",
-                                             plot.errors.boot.num=99,
-                                             plot.errors.type="standard",
-                                             plot.errors.quantiles=c(.025,.975),
+                                             plot.errors.boot.num=plot.errors.boot.num,
+                                             plot.errors.type=plot.errors.type,
+                                             plot.errors.quantiles=plot.errors.quantiles,
                                              gradient.vec=gradient.vec)
         } else {
           ci.out <- compute.bootstrap.errors(tydat=tydat,
@@ -1938,9 +1942,9 @@ plot.npglpreg <- function(x,
                                              okertype=okertype,
                                              bwtype=bwtype,
                                              boot.object="gradient.categorical",
-                                             plot.errors.boot.num=99,
-                                             plot.errors.type="standard",
-                                             plot.errors.quantiles=c(.025,.975),
+                                             plot.errors.boot.num=plot.errors.boot.num,
+                                             plot.errors.type=plot.errors.type,
+                                             plot.errors.quantiles=plot.errors.quantiles,
                                              gradient.categorical=TRUE,                                
                                              gradient.categorical.index=iz)
         }
