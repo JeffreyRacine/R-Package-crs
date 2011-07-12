@@ -1735,7 +1735,7 @@ plot.npglpreg <- function(x,
 
           console <- printClear(console)
           console <- printPop(console)
-          console <- printPush(paste("Conducting ",plot.errors.boot.num," bootstrap resamples...",sep=""),console = console)
+          console <- printPush(paste("Conducting ",plot.errors.boot.num," bootstrap resamples for predictor ",i,"...",sep=""),console = console)
           
           ci.out <- compute.bootstrap.errors(tydat=tydat,
                                              txdat=txdat,
@@ -1934,7 +1934,7 @@ plot.npglpreg <- function(x,
         
         console <- printClear(console)
         console <- printPop(console)
-        console <- printPush(paste("Conducting ",plot.errors.boot.num," bootstrap resamples...",sep=""),console = console)
+        console <- printPush(paste("Conducting ",plot.errors.boot.num," bootstrap resamples for predictor ",i,"...",sep=""),console = console)
           
         if(!is.factor(object$x[,i])) {
           ci.out <- compute.bootstrap.errors(tydat=tydat,
@@ -1970,14 +1970,14 @@ plot.npglpreg <- function(x,
         rg[[i]] <- data.frame(newdata[,i],ci.out)
         names(rg[[i]]) <- c(names(newdata)[i],"deriv","lwr","upr")
         
-        if(!is.factor(object$x[,i])) {
-          i.numeric <- i.numeric + 1
-        } else {
-          i.categorical <- i.categorical + 1
-        }          
-        
       }
       
+      if(!is.factor(object$x[,i])) {
+        i.numeric <- i.numeric + 1
+      } else {
+        i.categorical <- i.categorical + 1
+      }          
+        
     }
     
     if(common.scale) {
