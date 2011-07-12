@@ -1658,7 +1658,7 @@ compute.bootstrap.errors <- function(tydat,
 
 }
 
-plot.npglpreg <- function(x,
+plot.npglpreg <- function(object,
                           mean=TRUE,
                           deriv=FALSE,
                           ci=FALSE,
@@ -1675,11 +1675,6 @@ plot.npglpreg <- function(x,
   
   plot.behavior <- match.arg(plot.behavior)
   plot.errors.type <- match.arg(plot.errors.type)
-
-  ## We use object below as x is used for data but plot wants
-  ## function(x,..)
-
-  object <- x
 
   ## Needed for correctly obtaining predictions
 
