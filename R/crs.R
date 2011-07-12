@@ -898,7 +898,7 @@ summary.crs <- function(object,
 
 }
 
-plot.crs <- function(object,
+plot.crs <- function(x,
                      mean=FALSE,
                      deriv=FALSE,
                      ci=FALSE,
@@ -915,6 +915,8 @@ plot.crs <- function(object,
                      ...) {
 
   plot.behavior <- match.arg(plot.behavior)
+
+  object <- x
 
   console <- newLineConsole()
   console <- printClear(console)

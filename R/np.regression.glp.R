@@ -1659,7 +1659,7 @@ compute.bootstrap.errors <- function(tydat,
 
 }
 
-plot.npglpreg <- function(object,
+plot.npglpreg <- function(x,
                           mean=TRUE,
                           deriv=FALSE,
                           ci=FALSE,
@@ -1676,6 +1676,8 @@ plot.npglpreg <- function(object,
   
   plot.behavior <- match.arg(plot.behavior)
   plot.errors.type <- match.arg(plot.errors.type)
+
+  object <- x
 
   ## Needed for correctly obtaining predictions
 
