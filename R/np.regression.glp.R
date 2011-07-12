@@ -1558,7 +1558,7 @@ compute.bootstrap.errors <- function(tydat,
                                      okertype,
                                      bwtype,boot.object=c("fitted","gradient","gradient.categorical"),
                                      plot.errors.boot.num=99,
-                                     plot.errors.type=c("standard","quantiles"),
+                                     plot.errors.type=c("quantiles","standard"),
                                      plot.errors.quantiles=c(.025,.975),
                                      alpha=0.05,
                                      gradient.vec=NULL,
@@ -1643,7 +1643,7 @@ plot.npglpreg <- function(x,
                           common.scale=TRUE,
                           plot.behavior = c("plot","plot-data","data"),
                           plot.errors.boot.num=99,
-                          plot.errors.type=c("standard","quantiles"),
+                          plot.errors.type=c("quantiles","standard"),
                           plot.errors.quantiles=c(.025,.975),
                           persp.rgl=FALSE,
                           ...) {
@@ -1723,7 +1723,6 @@ plot.npglpreg <- function(x,
           
         } else {
 
-          console <- newLineConsole()
           console <- printClear(console)
           console <- printPop(console)
           console <- printPush(paste("Conducting ",plot.errors.boot.num," bootstrap resamples...",sep=""),console = console)
@@ -1921,7 +1920,6 @@ plot.npglpreg <- function(x,
         
       } else {
         
-        console <- newLineConsole()
         console <- printClear(console)
         console <- printPop(console)
         console <- printPush(paste("Conducting ",plot.errors.boot.num," bootstrap resamples...",sep=""),console = console)
