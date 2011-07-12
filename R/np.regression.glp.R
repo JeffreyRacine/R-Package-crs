@@ -372,7 +372,7 @@ npglpreg.formula <- function(formula,
                              bandwidth.min=1.0e-03,
                              gradient.vec=NULL,
                              gradient.categorical=FALSE,
-                             ridge.warning=FALSE
+                             ridge.warning=FALSE,
                              ...) {
 
   if(!require(np)) stop(" Error: you must install the np package to use this function")
