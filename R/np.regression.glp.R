@@ -1665,6 +1665,7 @@ plot.npglpreg <- function(x,
                           num.eval=100,
                           common.scale=TRUE,
                           xtrim = 0.0,
+                          xq = 0.5,
                           plot.behavior = c("plot","plot-data","data"),
                           plot.errors.boot.num=99,
                           plot.errors.type=c("quantiles","standard"),
@@ -1690,6 +1691,8 @@ plot.npglpreg <- function(x,
   
   txdat <- object$x
   tydat <- object$y
+
+  xq <- double(ncol(txdat)) + xq
 
   console <- newLineConsole()
   console <- printClear(console)
@@ -1724,7 +1727,7 @@ plot.npglpreg <- function(x,
         }
         
         for(j in (1:NCOL(object$x))[-i]) {
-          exdat[,j] <- rep(uocquantile(object$x[,j],.5),neval)
+          exdat[,j] <- rep(uocquantile(object$x[,j],prob=xq[j]),neval)
         }
 
         names(exdat) <- object$xnames
@@ -1920,7 +1923,7 @@ plot.npglpreg <- function(x,
       }
       
       for(j in (1:NCOL(object$x))[-i]) {
-        newdata[,j] <- rep(uocquantile(object$x[,j],.5),neval)
+        newdata[,j] <- rep(uocquantile(object$x[,j],prob=xq[j]),neval)
       }
       
       names(newdata) <- object$xnames

@@ -287,9 +287,9 @@ in \code{x} are included or omitted from the resulting estimate }
     \code{\link{summary}}, \code{\link{predict}}, and \code{\link{plot}}
     (options \code{mean=FALSE}, \code{deriv=FALSE}, \code{ci=FALSE},
     \code{persp.rgl=FALSE},
-    \code{plot.behavior=c("plot","plot-data","data")}, \code{xtrim=0.0})
-    support objects of this type. The returned object has the following
-    components:
+    \code{plot.behavior=c("plot","plot-data","data")},
+    \code{xtrim=0.0},\code{xq=0.5}) support objects of this type. The
+    returned object has the following components:
 
   \item{fitted.values}{ estimates of the regression function
     (conditional mean) at the sample points or evaluation points }

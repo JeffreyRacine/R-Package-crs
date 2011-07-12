@@ -908,6 +908,7 @@ plot.crs <- function(x,
                        "Scale-Location",
                        "Cook's Distance"),
                      xtrim = 0.0,
+                     xq = 0.5,
                      plot.behavior = c("plot","plot-data","data"),
                      common.scale=TRUE,
                      persp.rgl=FALSE,
@@ -923,6 +924,8 @@ plot.crs <- function(x,
   console <- newLineConsole()
   console <- printClear(console)
   console <- printPop(console)
+
+  xq <- double(ncol(object$xz)) + xq
 
   ## Default - basic residual plots
 
@@ -1059,9 +1062,9 @@ plot.crs <- function(x,
         
         for(j in (1:NCOL(object$xz))[-i]) {
           if(!is.factor(object$xz[,j])) {
-            newdata[,j] <- rep(uocquantile(object$xz[,j],.5),neval)
+            newdata[,j] <- rep(uocquantile(object$xz[,j],prob=xq[j]),neval)
           } else {
-            newdata[,j] <- factor(rep(uocquantile(object$xz[,j],.5),neval),levels=levels(object$xz[,j]))
+            newdata[,j] <- factor(rep(uocquantile(object$xz[,j],prob=xq[j]),neval),levels=levels(object$xz[,j]))
           }
         }
         
@@ -1323,11 +1326,11 @@ plot.crs <- function(x,
 
         for(j in (1:NCOL(object$xz))[-i]) {
           if(!is.factor(object$xz[,j])) {
-            newdata[,j] <- rep(uocquantile(object$xz[,j],.5),neval)
-            newdata.base[,j] <- rep(uocquantile(object$xz[,j],.5),neval)
+            newdata[,j] <- rep(uocquantile(object$xz[,j],prob=xq[j]),neval)
+            newdata.base[,j] <- rep(uocquantile(object$xz[,j],prob=xq[j]),neval)
           } else {
-            newdata[,j] <- factor(rep(uocquantile(object$xz[,j],.5),neval),levels=levels(object$xz[,j]))
-            newdata.base[,j] <- factor(rep(uocquantile(object$xz[,j],.5),neval),levels=levels(object$xz[,j]))            
+            newdata[,j] <- factor(rep(uocquantile(object$xz[,j],prob=xq[j]),neval),levels=levels(object$xz[,j]))
+            newdata.base[,j] <- factor(rep(uocquantile(object$xz[,j],prob=xq[j]),neval),levels=levels(object$xz[,j]))            
           }
         }
 

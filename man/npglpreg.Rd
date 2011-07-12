@@ -209,9 +209,9 @@ for each dimension of the continuous \code{x} in \code{txdat}}
     [\code{"quantiles"} produces percentiles determined by
     \code{plot.errors.quantiles} below, \code{"standard"} produces error
     bounds given by +/- 1.96 bootstrap standard deviations],
-    \code{plot.errors.quantiles=c(.025,.975)}, \code{xtrim=0.0}) support
-    objects of this type. The returned object has the following
-    components:
+    \code{plot.errors.quantiles=c(.025,.975)}, \code{xtrim=0.0},
+    \code{xq=0.5}) support objects of this type. The returned object has
+    the following components:
 
   \item{fitted.values}{ estimates of the regression function
     (conditional mean) at the sample points or evaluation points }
