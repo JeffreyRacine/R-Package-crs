@@ -57,6 +57,7 @@ npglpreg(\dots)
          bandwidth.min = 1.0e-03,
          gradient.vec = NULL,
          gradient.categorical = FALSE,
+         ridge.warning = FALSE,
          \dots)
 }
 
@@ -175,7 +176,11 @@ for each dimension of the continuous \code{x} in \code{txdat}}
   (i.e. differences in the response from the base value for each
   categorical predictor) are to be computed
 }
-  \item{\dots}{
+\item{ridge.warning}{ a logical value indicating whether to issue an
+  immediate warning message when ridging is required for inversion
+  (default \code{ridge.warning=FALSE})
+}
+\item{\dots}{
     additional arguments supplied to specify the regression type,
     bandwidth type, kernel types, training data, and so on, detailed
     below

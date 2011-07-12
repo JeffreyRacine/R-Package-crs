@@ -246,11 +246,11 @@ summary.npglpreg <- function(object,
     cat(paste("\nThere are ",format(object$num.numeric), " continuous predictors",sep=""),sep="")
   }
 
-  if(object$num.numeric > 1) for(j in 1:(object$num.numeric)) 
-      cat(paste("\nBandwidth for ",format(object$xnames[-object$categorical.index][j]),": ",format(object$bws[-object$categorical.index][j]),sep=""),sep="")
+  if(object$num.numeric > 1) for(j in 1:object$num.numeric) 
+      cat(paste("\nBandwidth for ",format(object$xnames[object$numeric.index][j]),": ",format(object$bws[object$numeric.index][j]),sep=""),sep="")
 
   for(j in 1:object$num.numeric)
-    cat(paste("\nDegree for ",format(object$xnames[-object$categorical.index][j]),": ",format(object$degree[j]),sep=""),sep="")
+    cat(paste("\nDegree for ",format(object$xnames[object$numeric.index][j]),": ",format(object$degree[j]),sep=""),sep="")
 
   ## Summarize categorical predictors  
     
@@ -372,6 +372,7 @@ npglpreg.formula <- function(formula,
                              bandwidth.min=1.0e-03,
                              gradient.vec=NULL,
                              gradient.categorical=FALSE,
+                             ridge.warning=FALSE
                              ...) {
 
   if(!require(np)) stop(" Error: you must install the np package to use this function")
@@ -404,7 +405,8 @@ npglpreg.formula <- function(formula,
                                                    degree.max=degree.max,
                                                    degree.min=degree.min,
                                                    bandwidth.max=bandwidth.max,
-                                                   bandwidth.min=bandwidth.min))
+                                                   bandwidth.min=bandwidth.min,
+                                                   ...))
     degree <- model.cv$degree
     bws <- model.cv$bws
     fv <- model.cv$fv
@@ -449,6 +451,7 @@ glpregEst <- function(tydat=NULL,
                       okertype=c("liracine","wangvanryzin"),
                       bwtype=c("fixed","generalized_nn","adaptive_nn"),
                       gradient.vec=NULL,
+                      ridge.warning=FALSE,
                       ...) {
 
   ukertype <- match.arg(ukertype)
@@ -477,14 +480,20 @@ glpregEst <- function(tydat=NULL,
 
   xdat.numeric <- sapply(1:ncol(txdat),function(i){is.numeric(txdat[,i])})
   categorical.index <- which(xdat.numeric==FALSE)
+  numeric.index <- which(xdat.numeric==TRUE)  
   num.numeric <- sum(sapply(1:NCOL(txdat),function(i){is.numeric(txdat[,i])})==TRUE)
   num.categorical <- NCOL(txdat)-num.numeric
 
   ## Check whether it appears that training and evaluation data are
   ## conformable
 
+  console <- newLineConsole()
+  console <- printClear(console)
+  console <- printPop(console)
+
   if(ncol(txdat)!=ncol(exdat))
     stop(" Error: training and evaluation data have unequal number of columns\n")
+
 
   if(all(degree == 0)) {
 
@@ -542,6 +551,7 @@ glpregEst <- function(tydat=NULL,
                 num.categorical = num.categorical,
                 xnames = names(txdat),
                 categorical.index = categorical.index,
+                numeric.index = numeric.index,
                 gradient.vec = gradient.vec))
     
   } else {
@@ -609,6 +619,8 @@ glpregEst <- function(tydat=NULL,
                error = function(e){
                  ridge[i] <<- ridge[i]+epsilon
                  doridge[i] <<- TRUE
+                 if(ridge.warning)
+                   console <- printPush(paste("\rWarning: ridging required for inversion at obs. = ", i, ", ridge = ",formatC(ridge[i],digits=4,format="f"),"        ",sep=""),console = console)
                  return(rep(maxPenalty,nc))
                })
     }
@@ -620,8 +632,6 @@ glpregEst <- function(tydat=NULL,
       iloo <- (1:n.eval)[doridge]
       coef.mat[,iloo] <- sapply(iloo, ridger)
     }
-
-    if(any(doridge)) warning(" Ridging occurring...",immediate.=TRUE)
 
     mhat <- sapply(1:n.eval, function(i) {
       W.eval[i,, drop = FALSE] %*% coef.mat[,i]
@@ -648,6 +658,7 @@ glpregEst <- function(tydat=NULL,
                 num.categorical = num.categorical,
                 xnames = names(txdat),
                 categorical.index = categorical.index,
+                numeric.index = numeric.index,
                 gradient.vec = gradient.vec))
     
   }
@@ -662,6 +673,7 @@ minimand.cv.ls <- function(bws=NULL,
                            ukertype=c("liracine","aitchisonaitken"),
                            okertype=c("liracine","wangvanryzin"),
                            bwtype = c("fixed","generalized_nn","adaptive_nn"),
+                           ridge.warning=FALSE,
                            ...) {
 
   ukertype <- match.arg(ukertype)
@@ -721,6 +733,11 @@ minimand.cv.ls <- function(bws=NULL,
 
     } else {
 
+      console <- newLineConsole()
+      console <- printClear(console)
+      console <- printPop(console)
+      console <- printPush("\r                                                ",console = console)
+
       ## Generalized local polynomial via smooth coefficient
       ## formulation and one call to npksum
 
@@ -756,6 +773,8 @@ minimand.cv.ls <- function(bws=NULL,
                 error = function(e){
                   ridge[i] <<- ridge[i]+epsilon
                   doridge[i] <<- TRUE
+                  if(ridge.warning)
+                    console <- printPush(paste("\rWarning: ridging required for inversion at obs. = ", i, ", ridge = ",formatC(ridge[i],digits=4,format="f"),"        ",sep=""),console = console)
                   return(rep(maxPenalty,nc))
                 })
       }
@@ -765,8 +784,6 @@ minimand.cv.ls <- function(bws=NULL,
         mean.loo[iloo] <- sapply(iloo, ridger)
       }
 
-      if(any(doridge)) warning(" Ridging occurring...",immediate.=TRUE)
-
       if (!any(mean.loo == maxPenalty)){
         fv <- mean((ydat-mean.loo)^2)
       } else {
@@ -775,9 +792,6 @@ minimand.cv.ls <- function(bws=NULL,
 
       fv <- ifelse(is.finite(fv),fv,maxPenalty)
 
-      console <- newLineConsole()
-      console <- printClear(console)
-      console <- printPop(console)
       console <- printPush("\r                                                ",console = console)
       console <- printPush(paste("\rfv = ",format(fv)," ",sep=""),console = console)
 
@@ -797,6 +811,7 @@ minimand.cv.aic <- function(bws=NULL,
                             ukertype=c("liracine","aitchisonaitken"),
                             okertype=c("liracine","wangvanryzin"),
                             bwtype = c("fixed","generalized_nn","adaptive_nn"),
+                            ridge.warning=FALSE,
                             ...) {
 
   ukertype <- match.arg(ukertype)
@@ -863,6 +878,10 @@ minimand.cv.aic <- function(bws=NULL,
 
     } else {
 
+      console <- newLineConsole()
+      console <- printClear(console)
+      console <- printPop(console)
+
       ## Generalized local polynomial via smooth coefficient
       ## formulation and one call to npksum
 
@@ -897,6 +916,8 @@ minimand.cv.aic <- function(bws=NULL,
                 error = function(e){
                   ridge[i] <<- ridge[i]+epsilon
                   doridge[i] <<- TRUE
+                  if(ridge.warning)
+                    console <- printPush(paste("\rWarning: ridging required for inversion at obs. = ", i, ", ridge = ",formatC(ridge[i],digits=4,format="f"),"        ",sep=""),console = console)
                   return(rep(maxPenalty,nc))
                 })
       }
@@ -905,8 +926,6 @@ minimand.cv.aic <- function(bws=NULL,
         ii <- (1:n)[doridge]
         ghat[ii] <- sapply(ii, ridger)
       }
-
-      if(any(doridge)) warning(" Ridging occurring...",immediate.=TRUE)
 
       trH <- kernel.i.eq.j*sum(sapply(1:n,function(i){
         W[i,, drop = FALSE] %*% solve(tww[,,i]+diag(rep(ridge[i],nc))) %*% t(W[i,, drop = FALSE])
@@ -920,9 +939,6 @@ minimand.cv.aic <- function(bws=NULL,
 
       fv <- ifelse(is.finite(fv),fv,maxPenalty)
 
-      console <- newLineConsole()
-      console <- printClear(console)
-      console <- printPop(console)
       console <- printPush("\r                                                ",console = console)
       console <- printPush(paste("\rfv = ",format(fv)," ",sep=""),console = console)
 
