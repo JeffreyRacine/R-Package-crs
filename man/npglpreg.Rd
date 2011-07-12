@@ -198,7 +198,10 @@ for each dimension of the continuous \code{x} in \code{txdat}}
     \code{persp.rgl=FALSE},
     \code{plot.behavior=c("plot","plot-data","data")},
     \code{plot.errors.boot.num=99},
-    \code{plot.errors.type=c("standard","quantiles")},
+    \code{plot.errors.type=c("quantiles","standard")}
+    [\code{"quantiles"} produces percentiles determined by
+    \code{plot.errors.quantiles} below, \code{"standard"} produces error
+    bounds given by +/- 1.96 bootstrap standard deviations],
     \code{plot.errors.quantiles=c(.025,.975)}) support objects of this
     type. The returned object has the following components:
 
