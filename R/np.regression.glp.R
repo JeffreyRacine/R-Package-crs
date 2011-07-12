@@ -1664,6 +1664,7 @@ plot.npglpreg <- function(x,
                           ci=FALSE,
                           num.eval=100,
                           common.scale=TRUE,
+                          xtrim = 0.0,
                           plot.behavior = c("plot","plot-data","data"),
                           plot.errors.boot.num=99,
                           plot.errors.type=c("quantiles","standard"),
@@ -1705,6 +1706,8 @@ plot.npglpreg <- function(x,
       
       for(i in 1:NCOL(object$x)) {
         
+        if(!is.factor(object$x[,i])) xlim <- trim.quantiles(object$x[,i],xtrim)
+          
         if(!is.factor(object$x[,i])) {
           exdat <- matrix(NA,nrow=num.eval,ncol=NCOL(object$x))
           neval <- num.eval
@@ -1716,7 +1719,7 @@ plot.npglpreg <- function(x,
         exdat <- data.frame(exdat)
         
         if(!is.factor(object$x[,i])) {
-          exdat[,i] <- seq(min(object$x[,i]),max(object$x[,i]),length=neval)
+          exdat[,i] <- seq(xlim[1],xlim[2],length=neval)
         } else {
           exdat[,i] <- sort(unique(object$x[,i]))
         }
@@ -1787,7 +1790,7 @@ plot.npglpreg <- function(x,
         if(!is.null(object$num.categorical)||(object$num.numeric>1)) par(mfrow=dim.plot(NCOL(object$x)))
       
         for(i in 1:NCOL(object$x)) {
-          
+
           if(!ci) {
         
             plot(mg[[i]][,1],mg[[i]][,2],
@@ -1838,8 +1841,11 @@ plot.npglpreg <- function(x,
       newdata <- matrix(NA,nrow=num.eval,ncol=2)
       newdata <- data.frame(newdata)
       
-      x1.seq <- seq(min(object$x[,1]),max(object$x[,1]),length=num.eval)
-      x2.seq <- seq(min(object$x[,2]),max(object$x[,2]),length=num.eval)    
+      xlim <- trim.quantiles(object$x[,1],xtrim)
+      ylim <- trim.quantiles(object$x[,2],xtrim)      
+      
+      x1.seq <- seq(xlim[1],xlim[2],length=num.eval)
+      x2.seq <- seq(ylim[1],ylim[2],length=num.eval)    
       x.grid <- expand.grid(x1.seq,x2.seq)
       newdata <- data.frame(x.grid[,1],x.grid[,2])
       names(newdata) <- names(object$x)
@@ -1849,7 +1855,7 @@ plot.npglpreg <- function(x,
       mg <- list()
 
       mg[[1]] <- data.frame(newdata,z)
-      
+
       if(plot.behavior!="data") {
         
         num.colors <- 1000
@@ -1893,6 +1899,8 @@ plot.npglpreg <- function(x,
     
     for(i in 1:NCOL(object$x)) {
 
+      if(!is.factor(object$x[,i])) xlim <- trim.quantiles(object$x[,i],xtrim)
+
       gradient.vec <- NULL
       
       if(!is.factor(object$x[,i])) {
@@ -1908,7 +1916,7 @@ plot.npglpreg <- function(x,
       newdata <- data.frame(newdata)
       
       if(!is.factor(object$x[,i])) {
-        newdata[,i] <- seq(min(object$x[,i]),max(object$x[,i]),length=neval)
+        newdata[,i] <- seq(xlim[1],xlim[2],length=neval)
       } else {
         newdata[,i] <- sort(unique(object$x[,i]))
       }
@@ -2011,7 +2019,7 @@ plot.npglpreg <- function(x,
     
       for(i in 1:NCOL(object$x)) {
         
-        if(!ci) {
+          if(!ci) {
           plot(rg[[i]][,1],rg[[i]][,2],
                xlab=names(newdata)[i],
                ylab=ifelse(!is.factor(newdata[,i]), paste("Order", deriv,"Gradient"), "Difference in Levels"),

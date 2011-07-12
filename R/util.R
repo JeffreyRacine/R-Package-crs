@@ -69,6 +69,18 @@ splitFrame <- function(xz, factor.to.numeric=FALSE) {
   
 }
 
+trim.quantiles = function(dat, trim){
+  if (sign(trim) == sign(-1)){
+    trim = abs(trim)
+    tq = quantile(dat, probs = c(0.0, 0.0+trim, 1.0-trim,1.0))
+    tq = c(2.0*tq[1]-tq[2], 2.0*tq[4]-tq[3])
+  }
+  else {
+    tq = quantile(dat, probs = c(0.0+trim, 1.0-trim))
+  }
+  tq
+}
+
 uocquantile = function(x, prob) {
   if (is.ordered(x)){
     tq = unclass(table(x))
