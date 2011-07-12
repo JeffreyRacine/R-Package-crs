@@ -206,14 +206,9 @@ in \code{x} are included or omitted from the resulting estimate }
   Typical usages are (see below for a  list of options and also
   the examples at the end of this help file)
   \preformatted{
-    ## Categorical data should be cast before call (necessary for plot method)
-    z <- factor(z) 
-    model <- crs(y~x+z,basis="auto")
+    model <- crs(y~x1+x2,basis="auto")
     
-    ## Categorical data should be cast before call (necessary for plot method)
-    z1 <- factor(z1)
-    z2 <- factor(z2)
-    model <- crs(y~x1+x2+z1+z2,cv="none",degree=c(3,4),lambda=c(.1,.2))
+    model <- crs(y~x1+factor(x2),cv="none",degree=3,segments=1,lambda=.1)
     }
     
   \code{crs} computes a regression spline estimate of a one (1)
@@ -292,8 +287,9 @@ in \code{x} are included or omitted from the resulting estimate }
     \code{\link{summary}}, \code{\link{predict}}, and \code{\link{plot}}
     (options \code{mean=FALSE}, \code{deriv=FALSE}, \code{ci=FALSE},
     \code{persp.rgl=FALSE},
-    \code{plot.behavior=c("plot","plot-data","data")}) support objects
-    of this type. The returned object has the following components:
+    \code{plot.behavior=c("plot","plot-data","data")}, \code{xtrim=0.0})
+    support objects of this type. The returned object has the following
+    components:
 
   \item{fitted.values}{ estimates of the regression function
     (conditional mean) at the sample points or evaluation points }

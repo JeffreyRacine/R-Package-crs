@@ -1706,8 +1706,6 @@ plot.npglpreg <- function(x,
       
       for(i in 1:NCOL(object$x)) {
         
-        if(!is.factor(object$x[,i])) xlim <- trim.quantiles(object$x[,i],xtrim)
-          
         if(!is.factor(object$x[,i])) {
           exdat <- matrix(NA,nrow=num.eval,ncol=NCOL(object$x))
           neval <- num.eval
@@ -1719,6 +1717,7 @@ plot.npglpreg <- function(x,
         exdat <- data.frame(exdat)
         
         if(!is.factor(object$x[,i])) {
+          xlim <- trim.quantiles(object$x[,i],xtrim)          
           exdat[,i] <- seq(xlim[1],xlim[2],length=neval)
         } else {
           exdat[,i] <- sort(unique(object$x[,i]))
@@ -1899,8 +1898,6 @@ plot.npglpreg <- function(x,
     
     for(i in 1:NCOL(object$x)) {
 
-      if(!is.factor(object$x[,i])) xlim <- trim.quantiles(object$x[,i],xtrim)
-
       gradient.vec <- NULL
       
       if(!is.factor(object$x[,i])) {
@@ -1916,6 +1913,7 @@ plot.npglpreg <- function(x,
       newdata <- data.frame(newdata)
       
       if(!is.factor(object$x[,i])) {
+        xlim <- trim.quantiles(object$x[,i],xtrim)        
         newdata[,i] <- seq(xlim[1],xlim[2],length=neval)
       } else {
         newdata[,i] <- sort(unique(object$x[,i]))

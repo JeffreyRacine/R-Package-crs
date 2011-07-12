@@ -907,6 +907,7 @@ plot.crs <- function(x,
                        "Normal Q-Q Plot",
                        "Scale-Location",
                        "Cook's Distance"),
+                     xtrim = 0.0,
                      plot.behavior = c("plot","plot-data","data"),
                      common.scale=TRUE,
                      persp.rgl=FALSE,
@@ -1038,7 +1039,7 @@ plot.crs <- function(x,
       mg <- list()
       
       for(i in 1:NCOL(object$xz)) {
-        
+
         if(!is.factor(object$xz[,i])) {
           newdata <- matrix(NA,nrow=num.eval,ncol=NCOL(object$xz))
           neval <- num.eval
@@ -1050,7 +1051,8 @@ plot.crs <- function(x,
         newdata <- data.frame(newdata)
         
         if(!is.factor(object$xz[,i])) {
-          newdata[,i] <- seq(min(object$xz[,i]),max(object$xz[,i]),length=neval)
+          xlim <- trim.quantiles(object$xz[,i],xtrim)
+          newdata[,i] <- seq(xlim[1],xlim[2],length=neval)
         } else {
           newdata[,i] <- factor(levels(object$xz[,i]),levels=levels(object$xz[,i]))
         }
@@ -1206,8 +1208,12 @@ plot.crs <- function(x,
       newdata <- matrix(NA,nrow=num.eval,ncol=2)
       newdata <- data.frame(newdata)
       
-      x1.seq <- seq(min(object$xz[,1]),max(object$xz[,1]),length=num.eval)
-      x2.seq <- seq(min(object$xz[,2]),max(object$xz[,2]),length=num.eval)    
+      xlim <- trim.quantiles(object$xz[,1],xtrim)
+      ylim <- trim.quantiles(object$xz[,2],xtrim)      
+      
+      x1.seq <- seq(xlim[1],xlim[2],length=num.eval)
+      x2.seq <- seq(ylim[1],ylim[2],length=num.eval)    
+
       x.grid <- expand.grid(x1.seq,x2.seq)
       newdata <- data.frame(x.grid[,1],x.grid[,2])
       names(newdata) <- names(object$xz)
@@ -1308,7 +1314,8 @@ plot.crs <- function(x,
         newdata.base <- data.frame(newdata)
 
         if(!is.factor(object$xz[,i])) {
-          newdata[,i] <- seq(min(object$xz[,i]),max(object$xz[,i]),length=neval)
+          xlim <- trim.quantiles(object$xz[,i],xtrim)
+          newdata[,i] <- seq(xlim[1],xlim[2],length=neval)
         } else {
           newdata[,i] <- factor(levels(object$xz[,i]),levels=levels(object$xz[,i]))
           newdata.base[,i] <- factor(rep(levels(object$xz[,i])[1],neval),levels=levels(object$xz[,i]))
