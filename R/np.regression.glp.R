@@ -53,7 +53,16 @@ W.glp <- function(xdat = NULL,
 
   xdat <- as.data.frame(xdat)
 
-  if(!is.null(gradient.vec) && (length(gradient.vec) != NCOL(xdat))) stop(paste(" Error: gradient vector and xdat must be conformable\n",sep=""))
+  xdat.col.numeric <- sapply(1:ncol(xdat),function(i){is.numeric(xdat[,i])})
+  k <- ncol(as.data.frame(xdat[,xdat.col.numeric]))
+
+  if(k > 0) {
+    xdat.numeric <- as.data.frame(xdat[,xdat.col.numeric])
+  }
+
+  num.numeric <- ncol(xdat.numeric)
+
+  if(!is.null(gradient.vec) && (length(gradient.vec) != num.numeric)) stop(paste(" Error: gradient vector and number of numeric predictors must be conformable\n",sep=""))
   if(!is.null(gradient.vec) && any(gradient.vec < 0)) stop(paste(" Error: gradient vector must contain non-negative integers\n",sep=""))
   if(!is.null(gradient.vec)) gradient.vec[gradient.vec==0] <- -1
   if(!is.null(gradient.vec)) {
@@ -63,15 +72,7 @@ W.glp <- function(xdat = NULL,
     gradient.vec <- rep(NA,NCOL(xdat))
   }
 
-  xdat.col.numeric <- sapply(1:ncol(xdat),function(i){is.numeric(xdat[,i])})
-
-  k <- ncol(as.data.frame(xdat[,xdat.col.numeric]))
-
-  if(k > 0) {
-    xdat.numeric <- as.data.frame(xdat[,xdat.col.numeric])
-  }
-
-  if(length(degree) != ncol(xdat.numeric)) stop(" Error: degree vector and number of numeric predictors incompatible")
+  if(length(degree) != num.numeric) stop(" Error: degree vector and number of numeric predictors incompatible")
 
   if(all(degree == 0) | k == 0) {
 
@@ -149,9 +150,8 @@ npglpreg.default <- function(tydat=NULL,
 
   if(gradient.categorical) {
 
-    xdat.numeric <- sapply(1:ncol(txdat),function(i){is.numeric(txdat[,i])})
-    num.numeric <- sum(xdat.numeric==TRUE)
-    num.categorical <- NCOL(txdat)-num.numeric
+    num.numeric <- est$num.numeric
+    num.categorical <- est$num.categorical
 
     if(num.categorical > 0) {
 
@@ -166,14 +166,14 @@ npglpreg.default <- function(tydat=NULL,
           exdat.base <- exdat
         }
 
-        categorical.index <- which(xdat.numeric==FALSE)[i]
-        eval.base <- levels(txdat[,categorical.index])[1]
-        eval.levels <- levels(txdat[,categorical.index])
+        categorical.index <- est$categorical.index
+        eval.base <- levels(txdat[,categorical.index[i]])[1]
+        eval.levels <- levels(txdat[,categorical.index[i]])
 
-        if(is.ordered(txdat[,categorical.index])) {
-          exdat.base[,categorical.index] <- ordered(rep(eval.base,num.eval),levels=eval.levels)
+        if(is.ordered(txdat[,categorical.index[i]])) {
+          exdat.base[,categorical.index[i]] <- ordered(rep(eval.base,num.eval),levels=eval.levels)
         } else {
-          exdat.base[,categorical.index] <- factor(rep(eval.base,num.eval),levels=eval.levels)
+          exdat.base[,categorical.index[i]] <- factor(rep(eval.base,num.eval),levels=eval.levels)
         }
 
         est.base <- glpregEst(tydat=tydat,
@@ -1874,17 +1874,19 @@ plot.npglpreg <- function(x,
   if(deriv > 0) {
     
     rg <- list()
-    
-    iz <- 1
+
+    i.numeric <- 1
+    i.categorical <- 1
     
     for(i in 1:NCOL(object$x)) {
-      
-      gradient.vec <- rep(0,NCOL(object$x))
-      gradient.vec[i] <- deriv
+
+      gradient.vec <- NULL
       
       if(!is.factor(object$x[,i])) {
         newdata <- matrix(NA,nrow=num.eval,ncol=NCOL(object$x))
         neval <- num.eval
+        gradient.vec <- rep(0,object$num.numeric)
+        gradient.vec[i.numeric] <- deriv
       } else {
         neval <- length(unique(object$x[,i]))
         newdata <- matrix(NA,nrow=neval,ncol=NCOL(object$x))
@@ -1919,7 +1921,7 @@ plot.npglpreg <- function(x,
       if(!is.factor(object$x[,i])) {
         fitted.values <- est$gradient
       } else {
-        fitted.values <- est$gradient.categorical.mat[,iz]
+        fitted.values <- est$gradient.categorical.mat[,i.categorical]
       }
         
 
@@ -1962,15 +1964,17 @@ plot.npglpreg <- function(x,
                                              plot.errors.type=plot.errors.type,
                                              plot.errors.quantiles=plot.errors.quantiles,
                                              gradient.categorical=TRUE,                                
-                                             gradient.categorical.index=iz)
+                                             gradient.categorical.index=i.categorical)
         }
         
         rg[[i]] <- data.frame(newdata[,i],ci.out)
         names(rg[[i]]) <- c(names(newdata)[i],"deriv","lwr","upr")
         
-        if(is.factor(object$x[,i])) {
-          iz <- iz + 1
-        }
+        if(!is.factor(object$x[,i])) {
+          i.numeric <- i.numeric + 1
+        } else {
+          i.categorical <- i.categorical + 1
+        }          
         
       }
       
