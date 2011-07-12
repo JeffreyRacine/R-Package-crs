@@ -1678,8 +1678,6 @@ plot.npglpreg <- function(x,
 
     if(!persp.rgl) {
       
-      if(!is.null(object$num.z)||(object$num.x>1)) par(mfrow=dim.plot(NCOL(object$x)))
-      
       mg <- list()
       
       for(i in 1:NCOL(object$x)) {
@@ -1725,6 +1723,11 @@ plot.npglpreg <- function(x,
           
         } else {
 
+          console <- newLineConsole()
+          console <- printClear(console)
+          console <- printPop(console)
+          console <- printPush(paste("Conducting ",plot.errors.boot.num," bootstrap resamples...",sep=""),console = console)
+          
           ci.out <- compute.bootstrap.errors(tydat=tydat,
                                              txdat=txdat,
                                              exdat=exdat,
@@ -1759,6 +1762,8 @@ plot.npglpreg <- function(x,
       
       if(plot.behavior!="data") {
 
+        if(!is.null(object$num.z)||(object$num.x>1)) par(mfrow=dim.plot(NCOL(object$x)))
+      
         for(i in 1:NCOL(object$x)) {
           
           if(!ci) {
@@ -1859,8 +1864,6 @@ plot.npglpreg <- function(x,
 
   if(deriv > 0) {
     
-    if(!is.null(object$num.z)||(object$num.x>1)) par(mfrow=dim.plot(NCOL(object$x)))
-    
     rg <- list()
     
     iz <- 1
@@ -1918,6 +1921,11 @@ plot.npglpreg <- function(x,
         
       } else {
         
+        console <- newLineConsole()
+        console <- printClear(console)
+        console <- printPop(console)
+        console <- printPush(paste("Conducting ",plot.errors.boot.num," bootstrap resamples...",sep=""),console = console)
+          
         if(!is.factor(object$x[,i])) {
           ci.out <- compute.bootstrap.errors(tydat=tydat,
                                              txdat=txdat,
@@ -1974,6 +1982,8 @@ plot.npglpreg <- function(x,
     
     if(plot.behavior!="data") {
       
+      if(!is.null(object$num.z)||(object$num.x>1)) par(mfrow=dim.plot(NCOL(object$x)))
+    
       for(i in 1:NCOL(object$x)) {
         
         if(!ci) {

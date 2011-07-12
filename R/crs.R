@@ -1035,8 +1035,6 @@ plot.crs <- function(x,
         
     if(!persp.rgl) {
 
-      if(!is.null(object$num.z)||(object$num.x>1)) par(mfrow=dim.plot(NCOL(object$xz)))
-      
       mg <- list()
       
       for(i in 1:NCOL(object$xz)) {
@@ -1150,6 +1148,8 @@ plot.crs <- function(x,
       
       if(plot.behavior!="data") {
         
+        if(!is.null(object$num.z)||(object$num.x>1)) par(mfrow=dim.plot(NCOL(object$xz)))
+      
         for(i in 1:NCOL(object$xz)) {
           
           if(!ci) {
@@ -1289,8 +1289,6 @@ plot.crs <- function(x,
     ## End information required to compute predictions
         
     if(object$deriv > 0) {
-
-      if(!is.null(object$num.z)||(object$num.x>1)) par(mfrow=dim.plot(NCOL(object$xz)))
 
       rg <- list()
       m <- 0
@@ -1494,6 +1492,8 @@ plot.crs <- function(x,
       }
 
       if(plot.behavior!="data") {
+
+        if(!is.null(object$num.z)||(object$num.x>1)) par(mfrow=dim.plot(NCOL(object$xz)))
 
         for(i in 1:NCOL(object$xz)) {
           

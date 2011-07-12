@@ -1,4 +1,7 @@
-Changes from Version 0.15-0 to 0.15-1 [xx-Jun-2011]
+Changes from Version 0.15-0 to 0.15-1 [xx-Jul-2011]
+
+* Corrected issue with plot when variables were cast as factors in the
+  model formula
 
 * Fixed glitch with return object and i/o when cv="bandwidth" and
   degree=c(0,0,...,0)
