@@ -176,10 +176,12 @@ for each dimension of the continuous \code{x} in \code{txdat}}
   (i.e. differences in the response from the base value for each
   categorical predictor) are to be computed
 }
+
 \item{ridge.warning}{ a logical value indicating whether to issue an
-  immediate warning message when ridging is required for inversion
-  (default \code{ridge.warning=FALSE})
+  immediate warning message when ridging (Seifert and Gasser (2000)) is
+  required for inversion (default \code{ridge.warning=FALSE})
 }
+
 \item{\dots}{
     additional arguments supplied to specify the regression type,
     bandwidth type, kernel types, training data, and so on, detailed
@@ -246,6 +248,11 @@ for each dimension of the continuous \code{x} in \code{txdat}}
 
   Li, Q. and J.S. Racine (2007), \emph{Nonparametric Econometrics:
   Theory and Practice,} Princeton University Press.
+
+  Seifert, B. and T. Gasser (2000), \dQuote{Data Adaptive Ridging in
+  Local Polynomial Regression,} Journal of Computational and Graphical
+  Statistics, 9(2), 338-360.
+  
 
 }
 \author{
