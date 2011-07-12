@@ -278,6 +278,14 @@ y <- x1^3 + rnorm(n,sd=.1)
 
 model <- npglpreg(y~x1+x2)
 summary(model)
+\dontrun{
+## Plot the partial means and percentile confidence intervals
+plot(model,ci=T)
+## Extract the data from the plot object and plot it separately
+myplot.dat <- plot(model,plot.behavior="data",ci=T)
+matplot(myplot.dat[[1]][,1],myplot.dat[[1]][,-1],type="l")
+matplot(myplot.dat[[2]][,1],myplot.dat[[2]][,-1],type="l")
+}
 }
 \keyword{ nonparametric }
 \keyword{ regression }
