@@ -692,6 +692,10 @@ minimand.cv.ls <- function(bws=NULL,
 
   maxPenalty <- sqrt(.Machine$double.xmax)
 
+  console <- newLineConsole()
+  console <- printClear(console)
+  console <- printPop(console)
+
   if(any(bws<=0)) {
 
     return(maxPenalty)
@@ -723,9 +727,6 @@ minimand.cv.ls <- function(bws=NULL,
 
       fv <- ifelse(is.finite(fv),fv,maxPenalty)
 
-      console <- newLineConsole()
-      console <- printClear(console)
-      console <- printPop(console)
       console <- printPush("\r                                                ",console = console)
       console <- printPush(paste("\rfv = ",format(fv)," ",sep=""),console = console)
 
@@ -733,10 +734,6 @@ minimand.cv.ls <- function(bws=NULL,
 
     } else {
 
-      console <- newLineConsole()
-      console <- printClear(console)
-      console <- printPop(console)
-      console <- printPush("\r                                                ",console = console)
 
       ## Generalized local polynomial via smooth coefficient
       ## formulation and one call to npksum
@@ -830,6 +827,10 @@ minimand.cv.aic <- function(bws=NULL,
 
   maxPenalty <- sqrt(.Machine$double.xmax)
 
+  console <- newLineConsole()
+  console <- printClear(console)
+  console <- printPop(console)
+
   if(any(bws<=0)) {
 
     return(maxPenalty)
@@ -877,10 +878,6 @@ minimand.cv.aic <- function(bws=NULL,
       return(ifelse(is.finite(fv),fv,maxPenalty))
 
     } else {
-
-      console <- newLineConsole()
-      console <- printClear(console)
-      console <- printPop(console)
 
       ## Generalized local polynomial via smooth coefficient
       ## formulation and one call to npksum
