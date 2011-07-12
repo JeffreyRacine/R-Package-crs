@@ -240,27 +240,27 @@ summary.npglpreg <- function(object,
 
   ## Summarize continuous predictors
 
-  if(object$num.x == 1){
-    cat(paste("\nThere is ",format(object$num.x), " continuous predictor",sep=""),sep="")
-  } else if(object$num.x > 1) {
-    cat(paste("\nThere are ",format(object$num.x), " continuous predictors",sep=""),sep="")
+  if(object$num.numeric == 1){
+    cat(paste("\nThere is ",format(object$num.numeric), " continuous predictor",sep=""),sep="")
+  } else if(object$num.numeric > 1) {
+    cat(paste("\nThere are ",format(object$num.numeric), " continuous predictors",sep=""),sep="")
   }
 
-  if(object$num.x > 1) for(j in 1:(object$num.x)) 
+  if(object$num.numeric > 1) for(j in 1:(object$num.numeric)) 
       cat(paste("\nBandwidth for ",format(object$xnames[-object$categorical.index][j]),": ",format(object$bws[-object$categorical.index][j]),sep=""),sep="")
 
-  for(j in 1:object$num.x)
+  for(j in 1:object$num.numeric)
     cat(paste("\nDegree for ",format(object$xnames[-object$categorical.index][j]),": ",format(object$degree[j]),sep=""),sep="")
 
   ## Summarize categorical predictors  
     
-  if(object$num.z==1) {
-    cat(paste("\nThere is ",format(object$num.z), " categorical predictor",sep=""),sep="")
-  } else if(object$num.z > 1) {
-    cat(paste("\nThere are ",format(object$num.z), " categorical predictors",sep=""),sep="")
+  if(object$num.categorical==1) {
+    cat(paste("\nThere is ",format(object$num.categorical), " categorical predictor",sep=""),sep="")
+  } else if(object$num.categorical > 1) {
+    cat(paste("\nThere are ",format(object$num.categorical), " categorical predictors",sep=""),sep="")
   }
 
-  if(object$num.z > 1) for(j in 1:(object$num.z)) 
+  if(object$num.categorical > 1) for(j in 1:(object$num.categorical)) 
     cat(paste("\nBandwidth for ",format(object$xnames[object$categorical.index][j]),": ",format(object$bws[object$categorical.index][j]),sep=""),sep="")
 
 
@@ -538,8 +538,8 @@ glpregEst <- function(tydat=NULL,
                 degree = degree,
                 bws = bws,
                 nobs = n.train,
-                num.x = num.numeric,
-                num.z = num.categorical,
+                num.numeric = num.numeric,
+                num.categorical = num.categorical,
                 xnames = names(txdat),
                 categorical.index = categorical.index,
                 gradient.vec = gradient.vec))
@@ -644,8 +644,8 @@ glpregEst <- function(tydat=NULL,
                 degree = degree,
                 bws = bws,
                 nobs = n.train,
-                num.x = num.numeric,
-                num.z = num.categorical,
+                num.numeric = num.numeric,
+                num.categorical = num.categorical,
                 xnames = names(txdat),
                 categorical.index = categorical.index,
                 gradient.vec = gradient.vec))
@@ -1771,7 +1771,7 @@ plot.npglpreg <- function(x,
       
       if(plot.behavior!="data") {
 
-        if(!is.null(object$num.z)||(object$num.x>1)) par(mfrow=dim.plot(NCOL(object$x)))
+        if(!is.null(object$num.categorical)||(object$num.numeric>1)) par(mfrow=dim.plot(NCOL(object$x)))
       
         for(i in 1:NCOL(object$x)) {
           
@@ -1819,8 +1819,8 @@ plot.npglpreg <- function(x,
       
       if(!require(rgl)) stop(" Error: you must first install the rgl package")
       
-      if(object$num.z != 0) stop(" Error: persp3d is for continuous predictors only")
-      if(object$num.x != 2) stop(" Error: persp3d is for cases involving two continuous predictors only")
+      if(object$num.categorical != 0) stop(" Error: persp3d is for continuous predictors only")
+      if(object$num.numeric != 2) stop(" Error: persp3d is for cases involving two continuous predictors only")
       
       newdata <- matrix(NA,nrow=num.eval,ncol=2)
       newdata <- data.frame(newdata)
@@ -1990,7 +1990,7 @@ plot.npglpreg <- function(x,
     
     if(plot.behavior!="data") {
       
-      if(!is.null(object$num.z)||(object$num.x>1)) par(mfrow=dim.plot(NCOL(object$x)))
+      if(!is.null(object$num.categorical)||(object$num.numeric>1)) par(mfrow=dim.plot(NCOL(object$x)))
     
       for(i in 1:NCOL(object$x)) {
         
