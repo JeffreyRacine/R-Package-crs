@@ -238,25 +238,31 @@ summary.npglpreg <- function(object,
   print(object$call)
   cat("\nGeneralized Local Polynomial Kernel Regression\n",sep="")
 
-  ## Summarize predictors
+  ## Summarize continuous predictors
 
   if(object$num.x == 1){
     cat(paste("\nThere is ",format(object$num.x), " continuous predictor",sep=""),sep="")
   } else if(object$num.x > 1) {
     cat(paste("\nThere are ",format(object$num.x), " continuous predictors",sep=""),sep="")
   }
+
+  if(object$num.x > 1) for(j in 1:(object$num.x)) 
+      cat(paste("\nBandwidth for ",format(object$xnames[-object$categorical.index][j]),": ",format(object$bws[-object$categorical.index][j]),sep=""),sep="")
+
+  for(j in 1:object$num.x)
+    cat(paste("\nDegree for ",format(object$xnames[-object$categorical.index][j]),": ",format(object$degree[j]),sep=""),sep="")
+
+  ## Summarize categorical predictors  
+    
   if(object$num.z==1) {
     cat(paste("\nThere is ",format(object$num.z), " categorical predictor",sep=""),sep="")
   } else if(object$num.z > 1) {
     cat(paste("\nThere are ",format(object$num.z), " categorical predictors",sep=""),sep="")
   }
 
-  ## Summarize bandwidths and degree
-  
-  for(j in 1:(object$num.x+object$num.z))
-    cat(paste("\nBandwidth for ",format(object$xnames[j]),": ",format(object$bws[j]),sep=""),sep="")
-  for(j in 1:object$num.x)
-    cat(paste("\nDegree for ",format(object$xnames[j]),": ",format(object$degree[j]),sep=""),sep="")
+  if(object$num.z > 1) for(j in 1:(object$num.z)) 
+    cat(paste("\nBandwidth for ",format(object$xnames[object$categorical.index][j]),": ",format(object$bws[object$categorical.index][j]),sep=""),sep="")
+
 
   ## Summary statistics
 
@@ -469,6 +475,8 @@ glpregEst <- function(tydat=NULL,
   n.train <- nrow(txdat)
   n.eval <- nrow(exdat)
 
+  xdat.numeric <- sapply(1:ncol(txdat),function(i){is.numeric(txdat[,i])})
+  categorical.index <- which(xdat.numeric==FALSE)
   num.numeric <- sum(sapply(1:NCOL(txdat),function(i){is.numeric(txdat[,i])})==TRUE)
   num.categorical <- NCOL(txdat)-num.numeric
 
@@ -533,6 +541,7 @@ glpregEst <- function(tydat=NULL,
                 num.x = num.numeric,
                 num.z = num.categorical,
                 xnames = names(txdat),
+                categorical.index = categorical.index,
                 gradient.vec = gradient.vec))
     
   } else {
@@ -638,6 +647,7 @@ glpregEst <- function(tydat=NULL,
                 num.x = num.numeric,
                 num.z = num.categorical,
                 xnames = names(txdat),
+                categorical.index = categorical.index,
                 gradient.vec = gradient.vec))
     
   }
