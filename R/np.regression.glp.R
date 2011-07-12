@@ -284,13 +284,14 @@ predict.npglpreg <- function(object,
                              gradient.vec=NULL,
                              ...) {
 
-  if(nrow(newdata)==1) stop(" Error: newdata must have more than one row")
+  if(!is.null(newdata)&&nrow(newdata)==1) stop(" Error: newdata must have more than one row")
   
   if(is.null(newdata)) {
     
     ## If no new data provided, return sample fit.
     fitted.values <- fitted(object)
     gradient <- object$gradient
+    gradient.categorical.mat <- object$gradient.categorical.mat
     
   } else{
 
