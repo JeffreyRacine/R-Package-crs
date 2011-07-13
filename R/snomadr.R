@@ -166,11 +166,11 @@ function( eval.f,
 
   ## Write wrappers around user-defined functions to pass additional
   ## arguments
-  eval.f.wrapper = function(x){ eval.f(x, ...) }
+  eval.f.wrapper <- function(x){ eval.f(x,...) }
 
   ## Build snomadr object
   ret <- list("eval.f"=eval.f.wrapper,
-              "n"=as.integer(n ),
+              "n"=as.integer(n),
               "bbin"=as.integer(bbin),
               "bbout"=as.integer(bbout),
               "x0"=x0,
@@ -180,15 +180,12 @@ function( eval.f,
               "random.seed"=as.integer(random.seed),
               "options"=get.option.types(opts),
               "print.output"=print.output,
-              "snomadr.environment"=snomadr.environment )
+              "snomadr.environment"=snomadr.environment)
 
   attr(ret, "class") <- "snomadr"
 
   ## Add the current call to the list
   ret$call <- match.call()
-
-  ## Check whether we have a correctly formed snomadr object
-  is.snomadr( ret )
 
   ## Pass snomadr object to C code
   if(nmulti == 0){
