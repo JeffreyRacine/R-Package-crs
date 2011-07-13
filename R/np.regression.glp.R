@@ -455,8 +455,6 @@ glpregEst <- function(tydat=NULL,
                       ridge.warning=FALSE,
                       ...) {
 
-  print("Here we are entering")          
-
   ukertype <- match.arg(ukertype)
   okertype <- match.arg(okertype)
   bwtype <- match.arg(bwtype)
@@ -584,8 +582,6 @@ glpregEst <- function(tydat=NULL,
 
     } else {
 
-      print("Here we are about to npksum")
-      save(txdat,exdat,tydat,W,bws,file="debug.rda")
       tww <- npksum(txdat = txdat,
                     exdat = exdat,
                     tydat = as.matrix(cbind(tydat,W)),
@@ -1469,11 +1465,11 @@ glpcvNOMAD <- function(ydat=NULL,
   if(!is.null(opts$DISPLAY_DEGREE)){
     if(opts$DISPLAY_DEGREE>0){
       print.output <-TRUE
-      console <- printPush("Calling NOMAD (Nonsmooth Optimization by Mesh Adaptive Direct Search)\n",console = console)
+      console <- printPush("\rCalling NOMAD (Nonsmooth Optimization by Mesh Adaptive Direct Search)\n",console = console)
     }
   } else {
     print.output <-TRUE
-    console <- printPush("Calling NOMAD (Nonsmooth Optimization by Mesh Adaptive Direct Search)\n",console = console)
+    console <- printPush("\rCalling NOMAD (Nonsmooth Optimization by Mesh Adaptive Direct Search)\n",console = console)
   }
 
   degree.opt <- degree
@@ -1700,7 +1696,7 @@ plot.npglpreg <- function(x,
   console <- newLineConsole()
   console <- printClear(console)
   console <- printPop(console)
-  console <- printPush("Working...",console = console)
+  console <- printPush("\rWorking...",console = console)
 
   ## Mean
   
@@ -1756,7 +1752,7 @@ plot.npglpreg <- function(x,
 
           console <- printClear(console)
           console <- printPop(console)
-          console <- printPush(paste("Conducting ",plot.errors.boot.num," bootstrap resamples for predictor ",i,"...",sep=""),console = console)
+          console <- printPush(paste("\rConducting ",plot.errors.boot.num," bootstrap resamples for predictor ",i,"...",sep=""),console = console)
           
           ci.out <- compute.bootstrap.errors(tydat=tydat,
                                              txdat=txdat,
@@ -1889,7 +1885,11 @@ plot.npglpreg <- function(x,
 
     }
     
-    if(plot.behavior!="plot") return(mg)
+    if(plot.behavior!="plot") {
+      console <- printClear(console)
+      console <- printPop(console)
+      return(mg)
+    }
       
   }
     
@@ -1959,7 +1959,7 @@ plot.npglpreg <- function(x,
         
         console <- printClear(console)
         console <- printPop(console)
-        console <- printPush(paste("Conducting ",plot.errors.boot.num," bootstrap resamples for predictor ",i,"...",sep=""),console = console)
+        console <- printPush(paste("\rConducting ",plot.errors.boot.num," bootstrap resamples for predictor ",i,"...",sep=""),console = console)
           
         if(!is.factor(object$x[,i])) {
           ci.out <- compute.bootstrap.errors(tydat=tydat,
@@ -2062,11 +2062,14 @@ plot.npglpreg <- function(x,
       
     }
     
-    if(plot.behavior!="plot") return(rg)
+    if(plot.behavior!="plot") {
+      console <- printClear(console)
+      console <- printPop(console)
+      return(rg)
+    }
     
   }
-  
-      
+
   console <- printClear(console)
   console <- printPop(console)
 

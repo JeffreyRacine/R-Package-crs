@@ -934,7 +934,7 @@ plot.crs <- function(x,
 
     console <- printClear(console)
     console <- printPop(console)
-    console <- printPush("Working...",console = console)
+    console <- printPush("\rWorking...",console = console)
 
     plot(fitted(object),
          residuals(object),
@@ -947,7 +947,7 @@ plot.crs <- function(x,
 
     console <- printClear(console)
     console <- printPop(console)
-    console <- printPush("Working...",console = console)
+    console <- printPush("\rWorking...",console = console)
 
     std.res <- residuals(object)/sqrt(mean(residuals(object)^2))
 
@@ -960,7 +960,7 @@ plot.crs <- function(x,
 
     console <- printClear(console)
     console <- printPop(console)
-    console <- printPush("Working...",console = console)
+    console <- printPush("\rWorking...",console = console)
 
     plot(fitted(object),
          sqrt(abs(residuals(object,"pearson"))),
@@ -979,7 +979,7 @@ plot.crs <- function(x,
       
       console <- printClear(console)
       console <- printPop(console)
-      console <- printPush("Working...",console = console)
+      console <- printPush("\rWorking...",console = console)
 
       sigmasq <- sum(residuals(object)^2)/object$df.residual
       cook <- (residuals(object)^2*object$hatvalues)/(sigmasq*(1-object$hatvalues)^2*object$k)
