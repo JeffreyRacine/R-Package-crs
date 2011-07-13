@@ -1252,7 +1252,11 @@ plot.crs <- function(x,
       
     }
     
-    if(plot.behavior!="plot") return(mg)
+    if(plot.behavior!="plot") {
+      console <- printClear(console)
+      console <- printPop(console)
+      return(mg)
+    }
       
   }
     
@@ -1547,7 +1551,11 @@ plot.crs <- function(x,
         
       }
       
-      if(plot.behavior!="plot") return(rg)
+      if(plot.behavior!="plot") {
+        console <- printClear(console)
+        console <- printPop(console)
+        return(rg)
+      }
       
     }
     
@@ -1555,6 +1563,9 @@ plot.crs <- function(x,
 
   ## Reset par to 1,1 (can be modified above)
   
+  console <- printClear(console)
+  console <- printPop(console)
+
   if(!persp.rgl) par(mfrow=c(1,1))
 
 }
