@@ -26,7 +26,7 @@ krscvNOMAD <- function(xz,
                        random.seed=42,
                        opts=list(),
                        nmulti=0) {
-
+  
     complexity <- match.arg(complexity)
     knots <- match.arg(knots)
     basis <- match.arg(basis)
