@@ -264,12 +264,12 @@ frscvNOMAD <- function(xz,
     if(!is.null(opts$DISPLAY_DEGREE)){
         if(opts$DISPLAY_DEGREE>0){
             print.output <- TRUE
-            console <- printPush("Being Solved by NOMAD...\n",console = console)
+            console <- printPush("Calling NOMAD (Nonsmooth Optimization by Mesh Adaptive Direct Search)\n",console = console)
         }
     }
     else {
         print.output <- TRUE
-        console <- printPush("Being Solved by NOMAD...\n",console = console)
+        console <- printPush("Calling NOMAD (Nonsmooth Optimization by Mesh Adaptive Direct Search)\n",console = console)
     }
     ## Take data frame x and parse into factors (z) and numeric (x)
 

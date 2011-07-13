@@ -455,6 +455,8 @@ glpregEst <- function(tydat=NULL,
                       ridge.warning=FALSE,
                       ...) {
 
+  print("Here we are entering")          
+
   ukertype <- match.arg(ukertype)
   okertype <- match.arg(okertype)
   bwtype <- match.arg(bwtype)
@@ -495,7 +497,6 @@ glpregEst <- function(tydat=NULL,
   if(ncol(txdat)!=ncol(exdat))
     stop(" Error: training and evaluation data have unequal number of columns\n")
 
-
   if(all(degree == 0)) {
 
     ## Local constant using only one call to npksum
@@ -531,6 +532,7 @@ glpregEst <- function(tydat=NULL,
                     ...)$ksum
 
     }
+
 
     ## Note that as bandwidth approaches zero the local constant
     ## estimator undersmooths and approaches each sample realization,
@@ -582,6 +584,8 @@ glpregEst <- function(tydat=NULL,
 
     } else {
 
+      print("Here we are about to npksum")
+      save(txdat,exdat,tydat,W,bws,file="debug.rda")
       tww <- npksum(txdat = txdat,
                     exdat = exdat,
                     tydat = as.matrix(cbind(tydat,W)),
@@ -597,6 +601,7 @@ glpregEst <- function(tydat=NULL,
     }
 
     tyw <- array(tww,dim = c(ncol(W)+1,ncol(W),n.eval))[1,,]
+
     ## June 30 2011... spent hours trying to track down an issue with
     ## this code. When there is only one row in the evaluation data
     ## this array becomes a matrix and things break. Should be simple
@@ -1464,11 +1469,11 @@ glpcvNOMAD <- function(ydat=NULL,
   if(!is.null(opts$DISPLAY_DEGREE)){
     if(opts$DISPLAY_DEGREE>0){
       print.output <-TRUE
-      console <- printPush("Being Solved by NOMAD...\n",console = console)
+      console <- printPush("Calling NOMAD (Nonsmooth Optimization by Mesh Adaptive Direct Search)\n",console = console)
     }
   } else {
     print.output <-TRUE
-    console <- printPush("Being Solved by NOMAD...\n",console = console)
+    console <- printPush("Calling NOMAD (Nonsmooth Optimization by Mesh Adaptive Direct Search)\n",console = console)
   }
 
   degree.opt <- degree
