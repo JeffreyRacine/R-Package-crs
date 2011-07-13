@@ -278,6 +278,7 @@ y <- x1^3 + rnorm(n,sd=.1)
 
 model <- npglpreg(y~x1+x2)
 summary(model)
+
 \dontrun{
 ## Plot the partial means and percentile confidence intervals
 plot(model,ci=T)

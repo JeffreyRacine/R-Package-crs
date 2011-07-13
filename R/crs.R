@@ -430,21 +430,21 @@ crs.formula <- function(formula,
     if(cv=="nomad") {
       
       ptm <- ptm + system.time(cv.return <- frscvNOMAD(xz=xz,
-                                                 y=y,
-                                                 degree.max=degree.max, 
-                                                 segments.max=segments.max, 
-                                                 degree.min=degree.min, 
-                                                 segments.min=segments.min, 
-                                                 complexity=complexity,
-                                                 knots=knots,
-                                                 basis=basis,
-                                                 cv.func=cv.func,
-                                                 degree=degree,
-                                                 segments=segments, 
-                                                 include=include, 
-                                                 random.seed=random.seed,
-                                                 opts=opts,
-                                                 nmulti=nmulti))
+                                                       y=y,
+                                                       degree.max=degree.max, 
+                                                       segments.max=segments.max, 
+                                                       degree.min=degree.min, 
+                                                       segments.min=segments.min, 
+                                                       complexity=complexity,
+                                                       knots=knots,
+                                                       basis=basis,
+                                                       cv.func=cv.func,
+                                                       degree=degree,
+                                                       segments=segments, 
+                                                       include=include, 
+                                                       random.seed=random.seed,
+                                                       opts=opts,
+                                                       nmulti=nmulti))
 
       cv.min <- cv.return$cv.min
       degree <- cv.return$degree
