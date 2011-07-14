@@ -285,8 +285,8 @@ in \code{x} are included or omitted from the resulting estimate }
     \code{\link{fitted}} and \code{\link{residuals}} extract (or
     generate) estimated values and residuals. Furthermore, the functions
     \code{\link{summary}}, \code{\link{predict}}, and \code{\link{plot}}
-    (options \code{mean=FALSE}, \code{deriv=FALSE}, \code{ci=FALSE},
-    \code{persp.rgl=FALSE},
+    (options \code{mean=FALSE}, \code{deriv=i} where \eqn{i} is an
+    integer, \code{ci=FALSE}, \code{persp.rgl=FALSE},
     \code{plot.behavior=c("plot","plot-data","data")},
     \code{xtrim=0.0},\code{xq=0.5}) support objects of this type. The
     returned object has the following components:

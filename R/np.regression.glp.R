@@ -1668,7 +1668,7 @@ compute.bootstrap.errors <- function(tydat,
 
 plot.npglpreg <- function(x,
                           mean=TRUE,
-                          deriv=FALSE,
+                          deriv=0,
                           ci=FALSE,
                           num.eval=100,
                           common.scale=TRUE,
@@ -1706,7 +1706,7 @@ plot.npglpreg <- function(x,
 
   ## Mean
   
-  if(mean==TRUE && deriv==FALSE) {
+  if(mean==TRUE && deriv==0) {
 
     if(!persp.rgl) {
       

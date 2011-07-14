@@ -177,11 +177,12 @@ crsiv(y,
 }
 \value{
   
-  \code{crsiv} returns a \code{\link{crs}} object.  The generic functions
-    \code{\link{fitted}} and \code{\link{residuals}} extract (or
-    generate) estimated values and residuals. Furthermore, the functions
-    \code{\link{summary}}, \code{\link{predict}}, and \code{\link{plot}}
-    (options \code{mean=FALSE}, \code{deriv=FALSE}, \code{ci=FALSE},
+  \code{crsiv} returns a \code{\link{crs}} object.  The generic
+    functions \code{\link{fitted}} and \code{\link{residuals}} extract
+    (or generate) estimated values and residuals. Furthermore, the
+    functions \code{\link{summary}}, \code{\link{predict}}, and
+    \code{\link{plot}} (options \code{mean=FALSE}, \code{deriv=i} where
+    \eqn{i} is an integer, \code{ci=FALSE},
     \code{plot.behavior=c("plot","plot-data","data")}) support objects
     of this type.
     
