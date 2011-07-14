@@ -404,7 +404,7 @@ in \code{x} are included or omitted from the resulting estimate }
 }
 
 \examples{
-set.seed(123)
+set.seed(42)
 ## Example - simulated data
 n <- 1000
 num.eval <- 50

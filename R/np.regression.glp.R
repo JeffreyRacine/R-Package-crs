@@ -558,7 +558,13 @@ glpregEst <- function(tydat=NULL,
   } else {
 
     W <- W.glp(txdat,degree)
-    W.eval <- W.glp(exdat,degree)
+
+    if(miss.ex) {
+      W.eval <- W
+    } else {
+      W.eval <- W.glp(exdat,degree)
+    }
+    
     if(!is.null(gradient.vec)) W.eval.deriv <- W.glp(exdat,degree,gradient.vec=gradient.vec)
 
     ## Local polynomial via smooth coefficient formulation and one

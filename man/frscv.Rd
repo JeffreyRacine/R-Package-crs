@@ -167,7 +167,7 @@ frscv(xz,
 }
 
 \examples{
-set.seed(123)
+set.seed(42)
 ## Simulated data
 n <- 1000
 
