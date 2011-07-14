@@ -1301,10 +1301,12 @@ plot.crs <- function(x,
 
       rg <- list()
       m <- 0
+      i.numeric <- 0
 
       for(i in 1:NCOL(object$xz)) {
 
         if(!is.factor(object$xz[,i])) {
+          i.numeric <- i.numeric + 1
           newdata <- matrix(NA,nrow=num.eval,ncol=NCOL(object$xz))
           neval <- num.eval
           m <- m + 1
@@ -1363,7 +1365,7 @@ plot.crs <- function(x,
 
           if(!is.factor(newdata[,i])) {
 
-            if(deriv < degree[i]) {
+            if(deriv < degree[i.numeric]) {
               tmp <- deriv.factor.spline(x=x,
                                          y=y,
                                          z=z,
@@ -1417,7 +1419,7 @@ plot.crs <- function(x,
         } else {
           
           if(!is.factor(newdata[,i])) {
-            if(deriv < degree[i]) {
+            if(deriv < degree[i.numeric]) {
               tmp <- deriv.kernel.spline(x=x,
                                          y=y,
                                          z=z,
