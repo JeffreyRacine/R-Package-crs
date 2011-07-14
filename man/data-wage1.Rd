@@ -61,7 +61,6 @@ model <- crs(lwage~married+
              basis="additive",
              complexity="degree",
              data=wage1,
-             deriv=1,
              segments=c(1,1,1))
 
 degree <- model$degree
@@ -75,21 +74,9 @@ plot(model)
 ## Partial mean plots (control for non axis predictors)
 plot(model,mean=TRUE)
 ## First derivative plots (control for non axis predictors)
-plot(model,deriv=TRUE)
+plot(model,deriv=1)
 ## Second derivative plots (control for non axis predictors)
-model <- crs(lwage~married+
-             female+
-             nonwhite+                
-             educ+
-             exper+
-             tenure,
-             degree=degree,
-             include=include,
-             basis=basis,
-             data=wage1,
-             cv="none",
-             deriv=2)
-plot(model,deriv=TRUE)
+plot(model,deriv=2)
 \dontrun{
 ## Compare with local linear kernel regression
 require(np)

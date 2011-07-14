@@ -72,9 +72,9 @@
 \section{Usage Issues}{
 
   In order for \code{\link{plot}} to function properly with the options
-  \code{mean=TRUE}, \code{deriv=TRUE}, and \code{ci=TRUE} you need to
-  properly cast your categorical predictors prior to listing them in the
-  \code{\link{formula}} interface.
+  \code{mean=TRUE}, \code{deriv=i} where \eqn{i} is an integer, and
+  \code{ci=TRUE} you need to properly cast your categorical predictors
+  prior to listing them in the \code{\link{formula}} interface.
   
 }
 
