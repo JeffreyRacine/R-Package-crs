@@ -900,7 +900,7 @@ summary.crs <- function(object,
 
 plot.crs <- function(x,
                      mean=FALSE,
-                     deriv=FALSE,
+                     deriv=0,
                      ci=FALSE,
                      num.eval=100,
                      caption=list("Residuals vs Fitted",
@@ -1262,12 +1262,11 @@ plot.crs <- function(x,
     
   ## deriv
 
-  if(deriv) {
+  if(deriv > 0) {
 
     ## Information required to compute predictions
 
     basis <- object$basis
-    deriv <- object$deriv
     prune <- object$prune
     prune.index <- object$prune.index
     
@@ -1298,7 +1297,7 @@ plot.crs <- function(x,
 
     ## End information required to compute predictions
         
-    if(object$deriv > 0) {
+    if(deriv > 0) {
 
       rg <- list()
       m <- 0
@@ -1480,15 +1479,9 @@ plot.crs <- function(x,
 
       }
 
-    } else {
-
-      ## If no deriv given (default=0) issue warning and return
-
-      warning(paste(" derivative plot requested but derivative order is", object$deriv),": specify `deriv=' in crs call",sep="")
-
-    }
+    } 
     
-    if(object$deriv > 0) {
+    if(deriv > 0) {
 
       if(common.scale) {
         min.rg <- Inf
@@ -1511,7 +1504,7 @@ plot.crs <- function(x,
           if(!ci) {
             plot(rg[[i]][,1],rg[[i]][,2],
                  xlab=names(newdata)[i],
-                 ylab=ifelse(!is.factor(newdata[,i]), paste("Order", object$deriv,"Derivative"), "Difference in Levels"),
+                 ylab=ifelse(!is.factor(newdata[,i]), paste("Order", deriv,"Derivative"), "Difference in Levels"),
                  ylim=ylim,
                  type="l",
                  ...)
@@ -1520,7 +1513,7 @@ plot.crs <- function(x,
             if(!common.scale) ylim <- c(min(rg[[i]][,-1]),max(rg[[i]][,-1]))
             plot(rg[[i]][,1],rg[[i]][,2],
                  xlab=names(newdata)[i],
-                 ylab=ifelse(!is.factor(newdata[,i]), paste("Order", object$deriv,"Derivative"), "Difference in Levels"),
+                 ylab=ifelse(!is.factor(newdata[,i]), paste("Order", deriv,"Derivative"), "Difference in Levels"),
                  ylim=ylim,
                  type="l",
                  ...)

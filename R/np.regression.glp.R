@@ -99,8 +99,8 @@ W.glp <- function(xdat = NULL,
       }
     }
     res <- rep.int(1,nrow(xdat.numeric))
-    if(degree[1] > 0) res <- cbind(1, mypoly(xdat.numeric[,1], degree[1],gradient.compute=gradient.compute,r=gradient.vec[1]))[, 1 + z[, 1]]
-    if(k > 1) for (i in 2:k) if(degree[i] > 0) res <- res * cbind(1, mypoly(xdat.numeric[,i], degree[i],gradient.compute=gradient.compute,r=gradient.vec[i]))[, 1 + z[, i]]
+    if(degree[1] > 0) res <- cbind(1, mypoly(xdat.numeric[,1],degree[1],gradient.compute=gradient.compute,r=gradient.vec[1]))[, 1 + z[, 1]]
+    if(k > 1) for (i in 2:k) if(degree[i] > 0) res <- res * cbind(1, mypoly(xdat.numeric[,i],degree[i],gradient.compute=gradient.compute,r=gradient.vec[i]))[, 1 + z[, i]]
     res <- matrix(res,nrow=NROW(xdat))
     colnames(res) <- apply(z, 1L, function(x) paste(x, collapse = "."))
     return(as.matrix(cbind(1,res)))
