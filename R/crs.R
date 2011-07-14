@@ -51,13 +51,13 @@ crsEst <- function(xz,
   }
   x <- xztmp$x
   xnames <- xztmp$xnames
-  num.x <- xztmp$num.x
+  num.numeric <- xztmp$num.numeric
   z <- xztmp$z
   znames <- xztmp$znames
-  num.z <- xztmp$num.z
+  num.categorical <- xztmp$num.categorical
   ## The default is kernel==TRUE - this will throw an error with no
   ## categorical predictors so first check
-  if(is.null(num.z) && kernel==TRUE) kernel <- FALSE
+  if(is.null(num.categorical) && kernel==TRUE) kernel <- FALSE
   rm(xztmp)
   if(is.null(z)) {
     include <- NULL
@@ -83,20 +83,24 @@ crsEst <- function(xz,
       deriv.mat <- xz ## copy for dimension only
       deriv.mat.lwr <- deriv.mat
       deriv.mat.upr <- deriv.mat
-      l <- 1 ## num.z
-      m <- 1 ## num.x
+      l <- 1 ## num.categorical
+      m <- 1 ## num.numeric
       for(i in 1:ncol(xz)) {
         if(!is.factor(xz[,i])) {
-          tmp <- deriv.factor.spline(x=x,
-                                     y=y,
-                                     z=z,
-                                     K=cbind(degree,segments),
-                                     I=include,
-                                     knots=knots,
-                                     basis=basis,
-                                     deriv.index=m,
-                                     deriv=deriv,
-                                     prune.index=prune.index)
+          if(deriv < degree[m]) {
+            tmp <- deriv.factor.spline(x=x,
+                                       y=y,
+                                       z=z,
+                                       K=cbind(degree,segments),
+                                       I=include,
+                                       knots=knots,
+                                       basis=basis,
+                                       deriv.index=m,
+                                       deriv=deriv,
+                                       prune.index=prune.index)
+          } else {
+            tmp <- matrix(0,length(y),3)
+          }
           deriv.mat[,i] <- tmp[,1]
           deriv.mat.lwr[,i] <- tmp[,2]
           deriv.mat.upr[,i] <- tmp[,3]
@@ -160,20 +164,24 @@ crsEst <- function(xz,
       deriv.mat <- xz ## copy for dimension only
       deriv.mat.lwr <- deriv.mat
       deriv.mat.upr <- deriv.mat
-      l <- 1 ## num.z
-      m <- 1 ## num.x
+      l <- 1 ## num.categorical
+      m <- 1 ## num.numeric
       for(i in 1:ncol(xz)) {
         if(!is.factor(xz[,i])) {
-          tmp <- deriv.kernel.spline(x=x,
-                                     y=y,
-                                     z=z,
-                                     K=cbind(degree,segments),
-                                     lambda=lambda,
-                                     kernel.type=kernel.type,
-                                     knots=knots,
-                                     basis=basis,
-                                     deriv.index=m,
-                                     deriv=deriv)
+          if(deriv < degree[m]) {
+            tmp <- deriv.kernel.spline(x=x,
+                                       y=y,
+                                       z=z,
+                                       K=cbind(degree,segments),
+                                       lambda=lambda,
+                                       kernel.type=kernel.type,
+                                       knots=knots,
+                                       basis=basis,
+                                       deriv.index=m,
+                                       deriv=deriv)
+          } else {
+            tmp <- matrix(0,length(y),3)
+          }
 
           deriv.mat[,i] <- tmp[,1]
           deriv.mat.lwr[,i] <- tmp[,2]
@@ -238,8 +246,8 @@ crsEst <- function(xz,
               lambda=lambda,
               kernel=kernel,
               basis=basis,
-              num.x=num.x,
-              num.z=num.z,
+              num.numeric=num.numeric,
+              num.categorical=num.categorical,
               xnames=xnames,
               znames=znames,
               deriv=deriv,
@@ -375,13 +383,13 @@ crs.formula <- function(formula,
   }
   x <- xztmp$x
   xnames <- xztmp$xnames
-  num.x <- xztmp$num.x
+  num.numeric <- xztmp$num.numeric
   z <- xztmp$z
   znames <- xztmp$znames
-  num.z <- xztmp$num.z
+  num.categorical <- xztmp$num.categorical
   ## The default is kernel==TRUE - this will throw an error with no
   ## categorical predictors so first check
-  if(is.null(num.z) && kernel==TRUE) kernel <- FALSE
+  if(is.null(num.categorical) && kernel==TRUE) kernel <- FALSE
   rm(xztmp)
   if(is.null(z)) {
     include <- NULL
@@ -390,7 +398,7 @@ crs.formula <- function(formula,
   ## Check for dynamic cv and if number of combinations is not overly
   ## large use exhaustive search
 
-  if(cv=="nomad" && is.null(num.z) && ((degree.max-degree.min)*(segments.max-segments.min))**num.x <= cv.threshold) {
+  if(cv=="nomad" && is.null(num.categorical) && ((degree.max-degree.min)*(segments.max-segments.min))**num.numeric <= cv.threshold) {
     warning(" Dynamically changing search from nomad to exhaustive (if unwanted set cv.threshold to 0)")
     cv <- "exhaustive"
     if(nmulti > 0) warning(" Exhaustive search, nmulti ignored...")
@@ -399,14 +407,14 @@ crs.formula <- function(formula,
   ## If no degree nor include nor lambda, return cubic spline
   ## (identity bases) or non-smooth model (kernel).
 
-  if(!is.null(degree)&&length(degree)!=num.x) stop(" degree vector must be the same length as x")
-  if(!is.null(segments)&&length(segments)!=num.x) stop(" segments vector must be the same length as x")    
+  if(!is.null(degree)&&length(degree)!=num.numeric) stop(" degree vector must be the same length as x")
+  if(!is.null(segments)&&length(segments)!=num.numeric) stop(" segments vector must be the same length as x")    
 
   if(cv=="none"){
-      if(is.null(degree)&!is.null(x)) degree <- rep(3,num.x)
-      if(is.null(segments)&!is.null(x)) segments <- rep(1,num.x)
-      if(is.null(include)&!is.null(z)&!kernel) include <- rep(1,num.z)
-      if(is.null(lambda)&!is.null(z)&kernel) lambda <- rep(0,num.z)
+      if(is.null(degree)&!is.null(x)) degree <- rep(3,num.numeric)
+      if(is.null(segments)&!is.null(x)) segments <- rep(1,num.numeric)
+      if(is.null(include)&!is.null(z)&!kernel) include <- rep(1,num.categorical)
+      if(is.null(lambda)&!is.null(z)&kernel) lambda <- rep(0,num.categorical)
   }
 
 
@@ -661,8 +669,8 @@ predict.crs <- function(object,
         deriv.mat <- matrix(NA,nrow=NROW(newdata),ncol=NCOL(newdata))
         deriv.mat.lwr <- deriv.mat
         deriv.mat.upr <- deriv.mat
-        l <- 1 ## num.z
-        m <- 1 ## num.x
+        l <- 1 ## num.categorical
+        m <- 1 ## num.numeric
         for(i in 1:ncol(newdata)) {
           if(!is.factor(newdata[,i])) {
             tmp <- deriv.factor.spline(x=x,
@@ -760,8 +768,8 @@ predict.crs <- function(object,
         deriv.mat <- matrix(NA,nrow=NROW(newdata),ncol=NCOL(newdata))
         deriv.mat.lwr <- deriv.mat
         deriv.mat.upr <- deriv.mat
-        l <- 1 ## num.z
-        m <- 1 ## num.x
+        l <- 1 ## num.categorical
+        m <- 1 ## num.numeric
         for(i in 1:ncol(newdata)) {
           if(!is.factor(newdata[,i])) {
             tmp <- deriv.kernel.spline(x=x,
@@ -859,19 +867,19 @@ summary.crs <- function(object,
   } else {
     cat("\nKernel Weighting/B-spline Bases Regression Spline\n",sep="")
   }
-  if(object$num.x==1){
-    cat(paste("\nThere is ",format(object$num.x), " continuous predictor",sep=""),sep="")
+  if(object$num.numeric==1){
+    cat(paste("\nThere is ",format(object$num.numeric), " continuous predictor",sep=""),sep="")
   } else {
-    cat(paste("\nThere are ",format(object$num.x), " continuous predictors",sep=""),sep="")
+    cat(paste("\nThere are ",format(object$num.numeric), " continuous predictors",sep=""),sep="")
   }
-  if(!is.null(object$num.z)) if(object$num.z==1) {
-    cat(paste("\nThere is ",format(object$num.z), " categorical predictor",sep=""),sep="")
+  if(!is.null(object$num.categorical)) if(object$num.categorical==1) {
+    cat(paste("\nThere is ",format(object$num.categorical), " categorical predictor",sep=""),sep="")
   }  else {
-    cat(paste("\nThere are ",format(object$num.z), " categorical predictors",sep=""),sep="")
+    cat(paste("\nThere are ",format(object$num.categorical), " categorical predictors",sep=""),sep="")
   }
   cat(paste("\nKnot type: ", format(object$knots), sep=""))
   cat(paste("\nModel complexity proxy: ", format(object$complexity), sep=""))
-    for(j in 1:object$num.x)
+    for(j in 1:object$num.numeric)
       cat(paste("\nSpline degree/number of segments for ",format(object$xnames[j]),": ",format(object$degree[j]),"/",format(object$segments[j]),sep=""),sep="")
   if(!is.null(object$include)) for(j in 1:length(object$include))
     cat(paste("\nInclusion indicator for ",format(object$znames[j]),": ",format(object$include[j]),sep=""),sep="")
@@ -1150,7 +1158,7 @@ plot.crs <- function(x,
       
       if(plot.behavior!="data") {
         
-        if(!is.null(object$num.z)||(object$num.x>1)) par(mfrow=dim.plot(NCOL(object$xz)))
+        if(!is.null(object$num.categorical)||(object$num.numeric>1)) par(mfrow=dim.plot(NCOL(object$xz)))
       
         for(i in 1:NCOL(object$xz)) {
           
@@ -1202,8 +1210,8 @@ plot.crs <- function(x,
       
       if(!require(rgl)) stop(" Error: you must first install the rgl package")
       
-      if(!is.null(object$num.z)) stop(" Error: persp3d is for continuous predictors only")
-      if(object$num.x != 2) stop(" Error: persp3d is for cases incolving two continuous predictors only")
+      if(!is.null(object$num.categorical)) stop(" Error: persp3d is for continuous predictors only")
+      if(object$num.numeric != 2) stop(" Error: persp3d is for cases incolving two continuous predictors only")
       
       newdata <- matrix(NA,nrow=num.eval,ncol=2)
       newdata <- data.frame(newdata)
@@ -1508,7 +1516,7 @@ plot.crs <- function(x,
 
       if(plot.behavior!="data") {
 
-        if(!is.null(object$num.z)||(object$num.x>1)) par(mfrow=dim.plot(NCOL(object$xz)))
+        if(!is.null(object$num.categorical)||(object$num.numeric>1)) par(mfrow=dim.plot(NCOL(object$xz)))
 
         for(i in 1:NCOL(object$xz)) {
           
@@ -1582,23 +1590,23 @@ crs.sigtest <- function(object,...) {
 
   ## Conduct the significance test in order variable by variable
 
-  j.num.x <- 1
-  j.num.z <- 1  
+  j.num.numeric <- 1
+  j.num.categorical <- 1  
 
   for(i in 1:NCOL(object$xz)) {
     
     if(!is.factor(object$xz[,i])) {
       degree <- object$degree
-      degree[j.num.x] <- 0
+      degree[j.num.numeric] <- 0
       model.res <- crs(object$formula,cv="none",degree=degree,include=object$include,basis=object$basis,prune=object$prune,data=eval(object$call$data))
       sg[[i]] <- anova(model.res$model.lm,object$model.lm)
-      j.num.x <- j.num.x + 1
+      j.num.numeric <- j.num.numeric + 1
     } else {
       include <- object$include
-      include[j.num.z] <- 0
+      include[j.num.categorical] <- 0
       model.res <- crs(object$formula,cv="none",degree=object$degree,include=include,basis=object$basis,prune=object$prune,data=eval(object$call$data))
       sg[[i]] <- anova(model.res$model.lm,object$model.lm)
-      j.num.z <- j.num.z + 1      
+      j.num.categorical <- j.num.categorical + 1      
     }
 
     cat(paste("Predictor ", format(names(object$xz)[i]), ": Df = ", sg[[i]]$Df[2], ", F = ", format(sg[[i]]$F[2],digits=4), ", Pr(>F) = ", format(sg[[i]][[6]][2],digits=4), "\n", sep=""))
