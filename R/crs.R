@@ -1362,18 +1362,23 @@ plot.crs <- function(x,
         if(!object$kernel) {
 
           if(!is.factor(newdata[,i])) {
-            tmp <- deriv.factor.spline(x=x,
-                                       y=y,
-                                       z=z,
-                                       K=K,
-                                       I=include,
-                                       xeval=xeval,
-                                       zeval=zeval,
-                                       knots=knots,
-                                       basis=basis,
-                                       deriv.index=m,
-                                       deriv=deriv,
-                                       prune.index=prune.index)
+
+            if(deriv < degree[i]) {
+              tmp <- deriv.factor.spline(x=x,
+                                         y=y,
+                                         z=z,
+                                         K=K,
+                                         I=include,
+                                         xeval=xeval,
+                                         zeval=zeval,
+                                         knots=knots,
+                                         basis=basis,
+                                         deriv.index=m,
+                                         deriv=deriv,
+                                         prune.index=prune.index)
+            } else {
+              tmp <- matrix(0,nrow(newdata),3)
+            }
             deriv.est <- tmp[,1]
             deriv.lwr <- tmp[,2]
             deriv.upr <- tmp[,3]
@@ -1412,18 +1417,22 @@ plot.crs <- function(x,
         } else {
           
           if(!is.factor(newdata[,i])) {
-            tmp <- deriv.kernel.spline(x=x,
-                                       y=y,
-                                       z=z,
-                                       K=K,
-                                       lambda=lambda,
-                                       kernel.type=kernel.type,
-                                       xeval=xeval,
-                                       zeval=zeval,
-                                       knots=knots,
-                                       basis=basis,
-                                       deriv.index=m,
-                                       deriv=deriv)
+            if(deriv < degree[i]) {
+              tmp <- deriv.kernel.spline(x=x,
+                                         y=y,
+                                         z=z,
+                                         K=K,
+                                         lambda=lambda,
+                                         kernel.type=kernel.type,
+                                         xeval=xeval,
+                                         zeval=zeval,
+                                         knots=knots,
+                                         basis=basis,
+                                         deriv.index=m,
+                                         deriv=deriv)
+            } else {
+              tmp <- matrix(0,nrow(newdata),3)
+            }
             deriv.est <- tmp[,1]
             deriv.lwr <- tmp[,2]
             deriv.upr <- tmp[,3]
@@ -1457,7 +1466,7 @@ plot.crs <- function(x,
             
           }
           
-        }
+        } 
         
         if(!ci) {
           
