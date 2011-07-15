@@ -103,13 +103,13 @@ frscv <- function(xz,
     if(complexity=="degree") {
       if(!is.null(j)) {
         if(j==1) {
-          tmp.1 <- paste(j,"/",nrow.KI.mat,", d[1]=",K[1,1],sep="")
+          tmp.1 <- paste("\r",j,"/",nrow.KI.mat,", d[1]=",K[1,1],sep="")
         } else {
           dt <- (t2-t1)*(nrow.KI.mat-j+1)/j
           tmp.0 <- paste(", ",fw.format.2(as.numeric(dt,units="mins")),"/",
                          fw.format.2(as.numeric((t2-t1),units="mins")),
                          "m",sep="")
-          tmp.1 <- paste(j,"/",nrow.KI.mat,tmp.0,", d[1]=",K[1,1],sep="")
+          tmp.1 <- paste("\r",j,"/",nrow.KI.mat,tmp.0,", d[1]=",K[1,1],sep="")
         }
       } else {
         tmp.1 <- paste("d[1]=", K[1,1],sep="")
@@ -118,13 +118,13 @@ frscv <- function(xz,
     } else if(complexity=="knots") {
       if(!is.null(j)) {
         if(j==1) {
-          tmp.1 <- paste(j,"/",nrow.KI.mat,", s[1]=",K[1,2],sep="")
+          tmp.1 <- paste("\r",j,"/",nrow.KI.mat,", s[1]=",K[1,2],sep="")
         } else {
           dt <- (t2-t1)*(nrow.KI.mat-j+1)/j
           tmp.0 <- paste(", ",fw.format.2(as.numeric(dt,units="mins")),"/",
                          fw.format.2(as.numeric((t2-t1),units="mins")),
                          "m",sep="")
-          tmp.1 <- paste(j,"/",nrow.KI.mat,tmp.0,", s[1]=",K[1,2],sep="")
+          tmp.1 <- paste("\r",j,"/",nrow.KI.mat,tmp.0,", s[1]=",K[1,2],sep="")
         }
       } else {
         tmp.1 <- paste("s[1]=", K[1,2],sep="")
@@ -133,13 +133,13 @@ frscv <- function(xz,
     } else if(complexity=="degree-knots") {
       if(!is.null(j)) {
         if(j==1) {
-          tmp.1 <- paste(j,"/",nrow.KI.mat,", d[1]=",K[1,1],sep="")
+          tmp.1 <- paste("\r",j,"/",nrow.KI.mat,", d[1]=",K[1,1],sep="")
         } else {
           dt <- (t2-t1)*(nrow.KI.mat-j+1)/j
           tmp.0 <- paste(", ",fw.format.2(as.numeric(dt,units="mins")),"/",
                          fw.format.2(as.numeric((t2-t1),units="mins")),
                          "m",sep="")
-          tmp.1 <- paste(j,"/",nrow.KI.mat,tmp.0,", d[1]=",K[1,1],sep="")
+          tmp.1 <- paste("\r",j,"/",nrow.KI.mat,tmp.0,", d[1]=",K[1,1],sep="")
         }
       } else {
         tmp.1 <- paste("k[1]=", K[1,1],sep="")
