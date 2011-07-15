@@ -238,7 +238,7 @@ in \code{x} are included or omitted from the resulting estimate }
 
   When \code{cv="nomad"}, numerical search is undertaken using Nonsmooth
   Optimization by Mesh Adaptive Direct Search (Abramson, Audet, Couture,
-  Dennis, Jr., and Le Digabel (2011).
+  Dennis, Jr., and Le Digabel (2011)).
   
   When \code{kernel=TRUE} and \code{cv="exhaustive"}, numerical search
   is undertaken using \code{\link{optim}} and the box-constrained

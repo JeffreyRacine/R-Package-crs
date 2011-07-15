@@ -1,4 +1,3 @@
-% $ID$
 \name{krscvNOMAD}
 \alias{krscvNOMAD}
 

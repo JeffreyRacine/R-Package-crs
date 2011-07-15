@@ -246,7 +246,7 @@ summary.npglpreg <- function(object,
     cat(paste("\nThere are ",format(object$num.numeric), " continuous predictors",sep=""),sep="")
   }
 
-  if(object$num.numeric > 1) for(j in 1:object$num.numeric) 
+  if(object$num.numeric >= 1) for(j in 1:object$num.numeric) 
       cat(paste("\nBandwidth for ",format(object$xnames[object$numeric.index][j]),": ",format(object$bws[object$numeric.index][j]),sep=""),sep="")
 
   for(j in 1:object$num.numeric)
@@ -260,7 +260,7 @@ summary.npglpreg <- function(object,
     cat(paste("\nThere are ",format(object$num.categorical), " categorical predictors",sep=""),sep="")
   }
 
-  if(object$num.categorical > 1) for(j in 1:(object$num.categorical)) 
+  if(object$num.categorical >= 1) for(j in 1:(object$num.categorical)) 
     cat(paste("\nBandwidth for ",format(object$xnames[object$categorical.index][j]),": ",format(object$bws[object$categorical.index][j]),sep=""),sep="")
 
 

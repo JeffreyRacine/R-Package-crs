@@ -1,4 +1,3 @@
-% $ID$
 \name{krscv}
 \alias{krscv}
 

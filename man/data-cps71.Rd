@@ -1,4 +1,3 @@
-% $ID$
 \name{cps71}
 \docType{data}
 \alias{cps71}

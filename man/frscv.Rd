@@ -1,4 +1,3 @@
-% $ID$
 \name{frscv}
 \alias{frscv}
 
