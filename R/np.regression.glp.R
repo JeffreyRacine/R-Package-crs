@@ -284,8 +284,6 @@ predict.npglpreg <- function(object,
                              gradient.vec=NULL,
                              ...) {
 
-  if(!is.null(newdata)&&nrow(newdata)==1) stop(" Error: newdata must have more than one row")
-  
   if(is.null(newdata)) {
     
     ## If no new data provided, return sample fit.
@@ -603,14 +601,15 @@ glpregEst <- function(tydat=NULL,
     }
 
     tyw <- array(tww,dim = c(ncol(W)+1,ncol(W),n.eval))[1,,]
-
-    ## June 30 2011... spent hours trying to track down an issue with
-    ## this code. When there is only one row in the evaluation data
-    ## this array becomes a matrix and things break. Should be simple
-    ## to fix but not so simple it appears... this needs attention for
-    ## a robust package, but for now I trap this in predict.glpregEst
-    ## and throw an error to avoid issues in the future...
     tww <- array(tww,dim = c(ncol(W)+1,ncol(W),n.eval))[-1,,]
+
+    ## This traps the case with one evaluation point where we need to
+    ## keep the extra dimension.
+
+    if(!is.matrix(tyw)) {
+      tyw <- matrix(tyw)
+      tww <- array(tww,dim = c(ncol(W),ncol(W),n.eval))
+    }
 
     coef.mat <- matrix(maxPenalty,ncol(W),n.eval)
     epsilon <- 1.0/n.eval
