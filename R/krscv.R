@@ -194,7 +194,7 @@ krscv <- function(xz,
   ## predictor (i.e. num.x==1) disable auto, set to additive (which is
   ## tensor in this case, so don't waste time doing both).
 
-  if(num.x==1 & basis == "auto") basis <- "additive"
+  if((num.x==1) && (basis == "auto")) basis <- "additive"
 
   if(degree.min < 0 ) degree.min <- 0
   if(segments.min < 1 ) segments.min <- 1

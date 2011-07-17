@@ -49,7 +49,7 @@ W.glp <- function(xdat = NULL,
                   gradient.vec = NULL) {
 
   if(is.null(xdat)) stop(" Error: You must provide data")
-  if(is.null(degree) | any(degree < 0)) stop(paste(" Error: degree vector must contain non-negative integers\ndegree is (", degree, ")\n",sep=""))
+  if(is.null(degree) || any(degree < 0)) stop(paste(" Error: degree vector must contain non-negative integers\ndegree is (", degree, ")\n",sep=""))
 
   xdat <- as.data.frame(xdat)
 
@@ -74,7 +74,7 @@ W.glp <- function(xdat = NULL,
 
   if(length(degree) != num.numeric) stop(" Error: degree vector and number of numeric predictors incompatible")
 
-  if(all(degree == 0) | k == 0) {
+  if(all(degree == 0) || (k == 0)) {
 
     ## Local constant OR no continuous variables
 
@@ -460,7 +460,7 @@ glpregEst <- function(tydat=NULL,
   if(is.null(tydat)) stop(" Error: You must provide y data")
   if(is.null(txdat)) stop(" Error: You must provide X data")
   if(is.null(bws)) stop(" Error: You must provide a bandwidth object")
-  if(is.null(degree) | any(degree < 0)) stop(paste(" Error: degree vector must contain non-negative integers\ndegree is (", degree, ")\n",sep=""))
+  if(is.null(degree) || any(degree < 0)) stop(paste(" Error: degree vector must contain non-negative integers\ndegree is (", degree, ")\n",sep=""))
 
   miss.ex = is.null(exdat)
   miss.ey = is.null(eydat)
@@ -482,6 +482,18 @@ glpregEst <- function(tydat=NULL,
   numeric.index <- which(xdat.numeric==TRUE)  
   num.numeric <- sum(sapply(1:NCOL(txdat),function(i){is.numeric(txdat[,i])})==TRUE)
   num.categorical <- NCOL(txdat)-num.numeric
+
+  ## Test for invalid knn values
+
+  if(bwtype!="fixed" && !is.null(bws) && num.numeric > 0) {
+    for(i in 1:num.numeric) {
+      non.unique <- length(unique(txdat[,numeric.index[i]])) != length(txdat[,numeric.index[i]])
+      if(non.unique) {
+        knn.max <- floor(length(unique(txdat[,numeric.index[i]]))/2)
+        if(bws[numeric.index[i]] > knn.max) stop(paste("Error: invalid knn provided... maximum knn for predictor ",numeric.index[i]," is ",knn.max,sep=""))
+      }
+    }
+  }
 
   ## Check whether it appears that training and evaluation data are
   ## conformable
@@ -691,7 +703,7 @@ minimand.cv.ls <- function(bws=NULL,
   if(is.null(xdat)) stop(" Error: You must provide X data")
   if(is.null(W)) stop(" Error: You must provide a weighting matrix W")
   if(is.null(bws)) stop(" Error: You must provide a bandwidth object")
-  if(is.null(degree) | any(degree < 0)) stop(paste(" Error: degree vector must contain non-negative integers\ndegree is (", degree, ")\n",sep=""))
+  if(is.null(degree) || any(degree < 0)) stop(paste(" Error: degree vector must contain non-negative integers\ndegree is (", degree, ")\n",sep=""))
 
   xdat <- as.data.frame(xdat)
 
@@ -826,7 +838,7 @@ minimand.cv.aic <- function(bws=NULL,
   if(is.null(xdat)) stop(" Error: You must provide X data")
   if(!all(degree==0)) if(is.null(W)) stop(" Error: You must provide a weighting matrix W")
   if(is.null(bws)) stop(" Error: You must provide a bandwidth object")
-  if(is.null(degree) | any(degree < 0)) stop(paste(" Error: degree vector must contain non-negative integers\ndegree is (", degree, ")\n",sep=""))
+  if(is.null(degree) || any(degree < 0)) stop(paste(" Error: degree vector must contain non-negative integers\ndegree is (", degree, ")\n",sep=""))
 
   xdat <- as.data.frame(xdat)
 
@@ -876,7 +888,7 @@ minimand.cv.aic <- function(bws=NULL,
 
       aic.penalty <- (1+trH/n)/(1-(trH+2)/n)
 
-      if (!any(ghat == maxPenalty) & (aic.penalty > 0)){
+      if (!any(ghat == maxPenalty) && (aic.penalty > 0)){
         fv <- log(mean((ydat-ghat)^2)) + aic.penalty
       } else {
         fv <- maxPenalty
@@ -986,7 +998,7 @@ glpcv <- function(ydat=NULL,
 
   if(is.null(ydat)) stop(" Error: You must provide y data")
   if(is.null(xdat)) stop(" Error: You must provide X data")
-  if(is.null(degree) | any(degree < 0)) stop(paste(" Error: degree vector must contain non-negative integers\ndegree is (", degree, ")\n",sep=""))
+  if(is.null(degree) || any(degree < 0)) stop(paste(" Error: degree vector must contain non-negative integers\ndegree is (", degree, ")\n",sep=""))
   if(!is.null(nmulti) && nmulti < 1) stop(paste(" Error: nmulti must be a positive integer (minimum 1)\nnmulti is (", nmulti, ")\n",sep=""))
 
   bwmethod <- match.arg(bwmethod)
@@ -1291,6 +1303,7 @@ glpcvNOMAD <- function(ydat=NULL,
 
   xdat.numeric <- sapply(1:num.bw,function(i){is.numeric(xdat[,i])})
   num.numeric <- ncol(as.data.frame(xdat[,xdat.numeric]))
+  numeric.index <- which(xdat.numeric==TRUE)  
 
   xdat.unordered <- sapply(1:num.bw,function(i){is.factor(xdat[,i])&&!is.ordered(xdat[,i])})
   num.unordered <- ncol(as.data.frame(xdat[,xdat.unordered]))
@@ -1314,26 +1327,6 @@ glpcvNOMAD <- function(ydat=NULL,
     else {
       stop(paste(" Error: degree must be given when optimizing only bandwidth"))
     }
-  }
-
-  ## Use bandwidth for initial values if provided
-
-  if(is.null(bandwidth)) {
-    init.search.vals <- runif(num.bw,0,1)
-    for(i in 1:num.bw) {
-      if(xdat.numeric[i]==TRUE && bwtype=="fixed") {
-        init.search.vals[i] <- runif(1,.5,1.5)*(IQR(xdat[,i])/1.349)*nrow(xdat)^{-1/(4+num.numeric)}
-      } 
-      if(xdat.numeric[i]==TRUE && bwtype!="fixed") {
-        init.search.vals[i] <- round(runif(1,2,sqrt(num.obs)))
-      }
-      if(xdat.unordered[i]==TRUE && ukertype=="aitchisonaitken") {
-        c.num <- length(unique(xdat[,i]))
-        init.search.vals[i] <- runif(1,0,(c.num-1)/c.num)
-      }
-    }
-  } else {
-    init.search.vals <- bandwidth
   }
 
   ## Create the function wrappers to be fed to the snomadr solver for
@@ -1439,6 +1432,16 @@ glpcvNOMAD <- function(ydat=NULL,
     ub <- c(rep(bandwidth.max, num.bw))
   }
 
+  if(bwtype!="fixed" && num.numeric > 0) {
+    for(i in 1:num.numeric) {
+      non.unique <- length(unique(xdat[,numeric.index[i]])) != length(xdat[,numeric.index[i]])
+      if(non.unique) {
+        knn.max <- floor(length(unique(xdat[,numeric.index[i]]))/2)
+        if(ub[numeric.index[i]] > knn.max) ub[numeric.index[i]] <- knn.max
+      }
+    }
+  }
+
   for(i in 1:num.bw) {
     ## Need to do integer search for numeric predictors when bwtype is
     ## a nearest-neighbour, so set bbin appropriately.
@@ -1479,6 +1482,26 @@ glpcvNOMAD <- function(ydat=NULL,
 
   degree.opt <- degree
 
+  ## Use bandwidth for initial values if provided
+
+  if(is.null(bandwidth)) {
+    init.search.vals <- runif(num.bw,0,1)
+    for(i in 1:num.bw) {
+      if(xdat.numeric[i]==TRUE && bwtype=="fixed") {
+        init.search.vals[i] <- runif(1,.5,1.5)*(IQR(xdat[,i])/1.349)*nrow(xdat)^{-1/(4+num.numeric)}
+      } 
+      if(xdat.numeric[i]==TRUE && bwtype!="fixed") {
+        init.search.vals[i] <- round(runif(1,2,sqrt(ub[i])))
+      }
+      if(xdat.unordered[i]==TRUE && ukertype=="aitchisonaitken") {
+        c.num <- length(unique(xdat[,i]))
+        init.search.vals[i] <- runif(1,0,(c.num-1)/c.num)
+      }
+    }
+  } else {
+    init.search.vals <- bandwidth
+  }
+
   ## Generate all initial points for the multiple restarting
 	x0.pts <- matrix(numeric(1), nmulti, length(bbin))
 	for(iMulti in 1:nmulti) {
@@ -1490,7 +1513,7 @@ glpcvNOMAD <- function(ydat=NULL,
           init.search.vals[i] <- runif(1,.5,1.5)*(IQR(xdat[,i])/1.349)*nrow(xdat)^{-1/(4+num.numeric)}
         }
         if(xdat.numeric[i]==TRUE && bwtype!="fixed") {
-          init.search.vals[i] <- round(runif(1,2,sqrt(num.obs)))
+          init.search.vals[i] <- round(runif(1,2,sqrt(ub[i])))
         }
         if(xdat.unordered[i]==TRUE && ukertype=="aitchisonaitken") {
           c.num <- length(unique(xdat[,i]))

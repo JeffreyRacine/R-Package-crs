@@ -199,7 +199,7 @@ frscv <- function(xz,
   ## (i.e. num.x + num.z = 1) disable auto, set to additive (tensor in
   ## this case, so don't waste time doing both).
 
-  if(num.x+num.z==1 & basis == "auto") basis <- "additive"
+  if((num.x+num.z==1) && (basis == "auto")) basis <- "additive"
 
   if(degree.min < 0 ) degree.min <- 0
   if(segments.min < 1 ) segments.min <- 1

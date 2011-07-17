@@ -354,7 +354,7 @@ krscvNOMAD <- function(xz,
     ## predictor (i.e. num.x==1) disable auto, set to additive (which is
     ## tensor in this case, so don't waste time doing both).
 
-    if(num.x==1 & basis == "auto") basis <- "additive"
+    if((num.x==1) && (basis == "auto")) basis <- "additive"
 
     if(degree.max < 1 || segments.max < 1 ) stop(" degree.max or segments.max must be greater than or equal to 1")
 
