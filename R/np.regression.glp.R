@@ -109,6 +109,34 @@ W.glp <- function(xdat = NULL,
 
 }
 
+## This function determines the maximum value for k for
+## k-nearest-neighbor-based estimation. This is necessary as data can
+## contain repeated values or contain whole numbers both of which
+## reduce the maximum value of k but this cannot be determined without
+## actually computing all distances. This function will be numerically
+## intensive for large datasets, however, it ensures that search for
+## instance would take place over the largest permissable range. It
+## gets called one time for each numeric predictor. It is redundant
+## for draws from a continuous distribution.
+
+## Since the distance are symmetric there are naturally savings to be
+## achieved (currently we take a brute force approach).
+
+knn.max <- function(x) {
+
+  k.max <- length(x)-1
+  non.unique <- length(unique(x)) != length(x)
+  if(non.unique) x <- unique(x)
+  for(i in 1:length(x)) {
+    x.diff.unique <- sort(unique(abs(x[i]-x[-i])))
+    if(length(x.diff.unique) < k.max)
+      if(length(x.diff.unique)-1 < k.max) k.max <- length(x.diff.unique)-1
+  }
+
+  return(k.max)
+
+}
+
 npglpreg <- function(...) UseMethod("npglpreg")
 
 npglpreg.default <- function(tydat=NULL,
@@ -246,8 +274,15 @@ summary.npglpreg <- function(object,
     cat(paste("\nThere are ",format(object$num.numeric), " continuous predictors",sep=""),sep="")
   }
 
-  if(object$num.numeric >= 1) for(j in 1:object$num.numeric) 
-      cat(paste("\nBandwidth for ",format(object$xnames[object$numeric.index][j]),": ",format(object$bws[object$numeric.index][j]),sep=""),sep="")
+  if(object$num.numeric >= 1) {
+    for(j in 1:object$num.numeric) {
+      if(object$bwtype=="fixed") {
+        cat(paste("\nBandwidth for ",format(object$xnames[object$numeric.index][j]),": ",format(object$bws[object$numeric.index][j]),sep=""),sep="")
+      } else {
+        cat(paste("\nKth nearest neighbor for ",format(object$xnames[object$numeric.index][j]),": ",format(object$bws[object$numeric.index][j]),sep=""),sep="")
+      }
+    }
+  }
 
   for(j in 1:object$num.numeric)
     cat(paste("\nDegree for ",format(object$xnames[object$numeric.index][j]),": ",format(object$degree[j]),sep=""),sep="")
@@ -405,6 +440,7 @@ npglpreg.formula <- function(formula,
                                                    degree.min=degree.min,
                                                    bandwidth.max=bandwidth.max,
                                                    bandwidth.min=bandwidth.min,
+                                                   ridge.warning=ridge.warning,
                                                    ...))
     degree <- model.cv$degree
     bws <- model.cv$bws
@@ -423,6 +459,7 @@ npglpreg.formula <- function(formula,
                                                    bwtype=bwtype,
                                                    gradient.vec=gradient.vec,
                                                    gradient.categorical=gradient.categorical,
+                                                   ridge.warning=ridge.warning,
                                                    ...))
   
   est$call <- match.call()
@@ -485,13 +522,15 @@ glpregEst <- function(tydat=NULL,
 
   ## Test for invalid knn values
 
+  ## Below is the worst case scenario where
+  ## all(txdat[,numeric.index[i]]%%1==0). Otherwise, we would have to
+  ## compute all distances and then take the smalled integer for which
+  ## the distance is defined.
+
   if(bwtype!="fixed" && !is.null(bws) && num.numeric > 0) {
     for(i in 1:num.numeric) {
-      non.unique <- length(unique(txdat[,numeric.index[i]])) != length(txdat[,numeric.index[i]])
-      if(non.unique) {
-        knn.max <- floor(length(unique(txdat[,numeric.index[i]]))/2)
-        if(bws[numeric.index[i]] > knn.max) stop(paste("Error: invalid knn provided... maximum knn for predictor ",numeric.index[i]," is ",knn.max,sep=""))
-      }
+      k.max <- knn.max(txdat[,numeric.index[i]])
+      if(bws[numeric.index[i]] > k.max) stop(paste("Error: invalid knn provided for predictor ",numeric.index[i],": max is ",k.max,sep=""))
     }
   }
 
@@ -634,12 +673,11 @@ glpregEst <- function(tydat=NULL,
       doridge[i] <<- FALSE
       ridge.val <- ridge[i]*tyw[1,i][1]/NZD(tww[,,i][1,1])
       tryCatch(solve(tww[,,i]+diag(rep(ridge[i],nc)),
-                     tyw[,i]+c(ridge.val,rep(0,nc-1))),
+                     tyw[,i]+c(ridge.val,rep(0,nc-1)),tol=sqrt(.Machine$double.xmin)),
                error = function(e){
                  ridge[i] <<- ridge[i]+epsilon
                  doridge[i] <<- TRUE
-                 if(ridge.warning)
-                   console <- printPush(paste("\rWarning: ridging required for inversion at obs. = ", i, ", ridge = ",formatC(ridge[i],digits=4,format="f"),"        ",sep=""),console = console)
+                 if(ridge.warning) console <- printPush(paste("\rWarning: ridging required for inversion at obs. ", i, ", ridge = ",formatC(ridge[i],digits=4,format="f"),"        ",sep=""),console = console)
                  return(rep(maxPenalty,nc))
                })
     }
@@ -785,12 +823,11 @@ minimand.cv.ls <- function(bws=NULL,
         doridge[i] <<- FALSE
         ridge.val <- ridge[i]*tyw[1,i][1]/NZD(tww[,,i][1,1])
         W[i,, drop = FALSE] %*% tryCatch(solve(tww[,,i]+diag(rep(ridge[i],nc)),
-                tyw[,i]+c(ridge.val,rep(0,nc-1))),
+                tyw[,i]+c(ridge.val,rep(0,nc-1)),tol=sqrt(.Machine$double.xmin)),
                 error = function(e){
                   ridge[i] <<- ridge[i]+epsilon
                   doridge[i] <<- TRUE
-                  if(ridge.warning)
-                    console <- printPush(paste("\rWarning: ridging required for inversion at obs. = ", i, ", ridge = ",formatC(ridge[i],digits=4,format="f"),"        ",sep=""),console = console)
+                  if(ridge.warning) console <- printPush(paste("\rWarning: ridging required for inversion at obs. ", i, ", ridge = ",formatC(ridge[i],digits=4,format="f"),"        ",sep=""),console = console)
                   return(rep(maxPenalty,nc))
                 })
       }
@@ -928,12 +965,11 @@ minimand.cv.aic <- function(bws=NULL,
         doridge[i] <<- FALSE
         ridge.val <- ridge[i]*tyw[1,i][1]/NZD(tww[,,i][1,1])
         W[i,, drop = FALSE] %*% tryCatch(solve(tww[,,i]+diag(rep(ridge[i],nc)),
-                tyw[,i]+c(ridge.val,rep(0,nc-1))),
+                tyw[,i]+c(ridge.val,rep(0,nc-1)),tol=sqrt(.Machine$double.xmin)),
                 error = function(e){
                   ridge[i] <<- ridge[i]+epsilon
                   doridge[i] <<- TRUE
-                  if(ridge.warning)
-                    console <- printPush(paste("\rWarning: ridging required for inversion at obs. = ", i, ", ridge = ",formatC(ridge[i],digits=4,format="f"),"        ",sep=""),console = console)
+                  if(ridge.warning) console <- printPush(paste("\rWarning: ridging required for inversion at obs. ", i, ", ridge = ",formatC(ridge[i],digits=4,format="f"),"        ",sep=""),console = console)
                   return(rep(maxPenalty,nc))
                 })
       }
@@ -944,7 +980,7 @@ minimand.cv.aic <- function(bws=NULL,
       }
 
       trH <- kernel.i.eq.j*sum(sapply(1:n,function(i){
-        W[i,, drop = FALSE] %*% solve(tww[,,i]+diag(rep(ridge[i],nc))) %*% t(W[i,, drop = FALSE])
+        W[i,, drop = FALSE] %*% solve(tww[,,i]+diag(rep(ridge[i],nc)),tol=sqrt(.Machine$double.xmin)) %*% t(W[i,, drop = FALSE])
       }))
 
       if (!any(ghat == maxPenalty)){
@@ -1212,9 +1248,6 @@ glpcv <- function(ydat=NULL,
 ## Note for scaling used for initial bandwidths may need to adjust
 ## bandwidth.min (now fraction of sd) by n^{-1/(2p+1)} etc.
 
-## Note - numeric.scale=TRUE rescales numeric predictors (not a robust
-## rescaling which we could achieve via sweep
-
 ## If the degree or bandwidth are fed in they are used as initial values
 ## for search where appropriate.
 
@@ -1231,13 +1264,13 @@ glpcvNOMAD <- function(ydat=NULL,
                        bwtype = c("fixed","generalized_nn","adaptive_nn"),
                        cv=c("degree-bandwidth", "bandwidth"),
                        nmulti=NULL,
-                       numeric.scale=TRUE,
                        random.seed=42,
                        degree.max=5,
                        degree.min=0,
                        bandwidth.max=1.0e+05,
                        bandwidth.min=1.0e-03,
                        opts=list(),
+                       ridge.warning=FALSE,
                        ...) {
 
   ## Save the seed prior to setting
@@ -1262,8 +1295,6 @@ glpcvNOMAD <- function(ydat=NULL,
   if(!is.null(nmulti) && nmulti < 1) stop(paste(" Error: nmulti must be a positive integer (minimum 1)\nnmulti is (", nmulti, ")\n",sep=""))
 
   if(!is.null(degree) && any(degree < 0)) stop(paste(" Error: degree vector must contain non-negative integers\ndegree is (", degree, ")\n",sep=""))
-
-  if(is.null(bandwidth.max)) bandwidth.max <- .Machine$double.xmax
 
   if(degree.min < 0 ) stop(" Error: degree.min must be a non-negative integer")
   if(degree.max < degree.min) stop(" Error: degree.max must exceed degree.min")
@@ -1303,25 +1334,57 @@ glpcvNOMAD <- function(ydat=NULL,
 
   xdat.numeric <- sapply(1:num.bw,function(i){is.numeric(xdat[,i])})
   num.numeric <- ncol(as.data.frame(xdat[,xdat.numeric]))
-  numeric.index <- which(xdat.numeric==TRUE)  
+  numeric.index <- which(xdat.numeric==TRUE)
 
   xdat.unordered <- sapply(1:num.bw,function(i){is.factor(xdat[,i])&&!is.ordered(xdat[,i])})
   num.unordered <- ncol(as.data.frame(xdat[,xdat.unordered]))
 
-  if(numeric.scale==TRUE) {
-    xdat.numeric.orig <- xdat[,xdat.numeric]
-    xdat.scale <- attr(scale(xdat[,xdat.numeric]),"scaled:scale")
-    xdat[,xdat.numeric] <- scale(xdat[,xdat.numeric])
-    ## Note that scale() returns a matrix as the variable when there
-    ## is only one variable. Check for this case and set variable to
-    ## type numeric when this occurs.
-    if(num.numeric==1) xdat[,xdat.numeric] <- as.numeric(xdat[,xdat.numeric])
+  if(cv=="degree-bandwidth") {
+    bbin <- c(rep(0, num.bw), rep(1, num.numeric))
+    lb <- c(rep(bandwidth.min, num.bw), rep(degree.min, num.numeric))
+    ub <- c(rep(bandwidth.max, num.bw), rep(degree.max, num.numeric))
+  } else {
+    bbin <- c(rep(0, num.bw))
+    lb <- c(rep(bandwidth.min, num.bw))
+    ub <- c(rep(bandwidth.max, num.bw))
+  }
+
+  if(bwtype!="fixed" && num.numeric > 0) {
+    for(i in 1:num.numeric) {
+      k.max <- knn.max(xdat[,numeric.index[i]])
+      if(ub[numeric.index[i]] > k.max) ub[numeric.index[i]] <- k.max
+    }
+  }
+
+  if(bwtype=="fixed" && num.numeric > 0) {
+    for(i in 1:num.numeric) {
+      sd.xdat <- sd(xdat[,numeric.index[i]])
+      lb[numeric.index[i]] <- lb[numeric.index[i]]*sd.xdat      
+      ub[numeric.index[i]] <- ub[numeric.index[i]]*sd.xdat
+    }
+  }
+
+  for(i in 1:num.bw) {
+    ## Need to do integer search for numeric predictors when bwtype is
+    ## a nearest-neighbour, so set bbin appropriately.
+    if(xdat.numeric[i]==TRUE && bwtype!="fixed") {
+      bbin[i] <- 1
+    }
+    if(xdat.numeric[i]!=TRUE) {
+      lb[i] <- 0.0
+      ub[i] <- 1.0
+    }
+    ## Check for unordered and Aitchison/Aitken kernel
+    if(xdat.unordered[i]==TRUE && ukertype=="aitchisonaitken") {
+      c.num <- length(unique(xdat[,i]))
+      ub[i] <- (c.num-1)/c.num
+    }
   }
 
   ## Use degree for initial values if provided
 
   if(is.null(degree)) {
-    if(cv == "degree-bandwidth") {
+   if(cv == "degree-bandwidth") {
       degree <- sample(degree.min:degree.max, num.numeric, replace=T)
     }
     else {
@@ -1345,7 +1408,8 @@ glpcvNOMAD <- function(ydat=NULL,
     cv <- params$cv
     ukertype <- params$ukertype
     okertype <- params$okertype
-    bwtype <- params$bwtype    
+    bwtype <- params$bwtype
+    ridge.warning <- params$ridge.warning
 
     bw.gamma <- input[1:num.bw]
     if(cv=="degree-bandwidth")
@@ -1361,7 +1425,8 @@ glpcvNOMAD <- function(ydat=NULL,
                              W=W,
                              ukertype=ukertype,
                              okertype=okertype,
-                             bwtype=bwtype,                    
+                             bwtype=bwtype,
+                             ridge.warning=ridge.warning,
                              ...)
     } else {
       lscv <- maxPenalty
@@ -1383,7 +1448,8 @@ glpcvNOMAD <- function(ydat=NULL,
     ukertype <- params$ukertype
     okertype <- params$okertype
     bwtype <- params$bwtype
-
+    ridge.warning <- params$ridge.warning
+    
     bw.gamma <- input[1:num.bw]
     if(cv=="degree-bandwidth")
       degree <- round(input[(num.bw+1):(num.bw+num.numeric)])
@@ -1398,7 +1464,8 @@ glpcvNOMAD <- function(ydat=NULL,
                               W=W,
                               ukertype=ukertype,
                               okertype=okertype,
-                              bwtype=bwtype,                    
+                              bwtype=bwtype,
+                              ridge.warning=ridge.warning,
                               ...)
     } else {
       aicc <- maxPenalty
@@ -1421,43 +1488,7 @@ glpcvNOMAD <- function(ydat=NULL,
   params$ukertype <- ukertype
   params$okertype <- okertype
   params$bwtype <- bwtype
-
-  if(cv=="degree-bandwidth") {
-    bbin <- c(rep(0, num.bw), rep(1, num.numeric))
-    lb <- c(rep(bandwidth.min, num.bw), rep(degree.min, num.numeric))
-    ub <- c(rep(bandwidth.max, num.bw), rep(degree.max, num.numeric))
-  } else {
-    bbin <- c(rep(0, num.bw))
-    lb <- c(rep(bandwidth.min, num.bw))
-    ub <- c(rep(bandwidth.max, num.bw))
-  }
-
-  if(bwtype!="fixed" && num.numeric > 0) {
-    for(i in 1:num.numeric) {
-      non.unique <- length(unique(xdat[,numeric.index[i]])) != length(xdat[,numeric.index[i]])
-      if(non.unique) {
-        knn.max <- floor(length(unique(xdat[,numeric.index[i]]))/2)
-        if(ub[numeric.index[i]] > knn.max) ub[numeric.index[i]] <- knn.max
-      }
-    }
-  }
-
-  for(i in 1:num.bw) {
-    ## Need to do integer search for numeric predictors when bwtype is
-    ## a nearest-neighbour, so set bbin appropriately.
-    if(xdat.numeric[i]==TRUE && bwtype!="fixed") {
-      bbin[i] <- 1
-    }
-    if(xdat.numeric[i]!=TRUE) {
-      lb[i] <- 0.0
-      ub[i] <- 1.0
-    }
-    ## Check for unordered and Aitchison/Aitken kernel
-    if(xdat.unordered[i]==TRUE && ukertype=="aitchisonaitken") {
-      c.num <- length(unique(xdat[,i]))
-      ub[i] <- (c.num-1)/c.num
-    }
-  }
+  params$ridge.warning <- ridge.warning
 
   ## No constraints
 
@@ -1533,6 +1564,7 @@ glpcvNOMAD <- function(ydat=NULL,
 		}
     
 	}
+
 	if(bwmethod == "cv.ls" ) {
 			solution<-snomadr(eval.f=eval.lscv,
 												n=length(bbin),
@@ -1565,9 +1597,7 @@ glpcvNOMAD <- function(ydat=NULL,
 	fv.vec[1] <- solution$objective
 
 	bw.opt <- solution$solution[1:num.bw]
-	if(numeric.scale==TRUE && bwtype=="fixed") {
-			bw.opt[xdat.numeric] <- bw.opt[xdat.numeric]*xdat.scale
-	}
+
 
 	if(cv == "degree-bandwidth") {
 			degree.opt <- solution$solution[(num.bw+1):(num.bw+num.numeric)]
