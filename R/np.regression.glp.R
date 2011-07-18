@@ -12,6 +12,10 @@ NZD <- function(a) {
   sapply(1:NROW(a), function(i) {if(a[i] < 0) min(-.Machine$double.xmin,a[i]) else max(.Machine$double.xmin,a[i])})
 }
 
+sd.robust <- function(x) {
+  min(sd(x),IQR(x)/1.34898)
+}
+
 mypoly <- function(x,degree,gradient.compute=FALSE,r=0) {
 
   if(missing(x)) stop(" Error: x required")
@@ -673,7 +677,7 @@ glpregEst <- function(tydat=NULL,
       doridge[i] <<- FALSE
       ridge.val <- ridge[i]*tyw[1,i][1]/NZD(tww[,,i][1,1])
       tryCatch(solve(tww[,,i]+diag(rep(ridge[i],nc)),
-                     tyw[,i]+c(ridge.val,rep(0,nc-1)),tol=sqrt(.Machine$double.xmin)),
+                     tyw[,i]+c(ridge.val,rep(0,nc-1)),tol=.Machine$double.eps),
                error = function(e){
                  ridge[i] <<- ridge[i]+epsilon
                  doridge[i] <<- TRUE
@@ -823,7 +827,7 @@ minimand.cv.ls <- function(bws=NULL,
         doridge[i] <<- FALSE
         ridge.val <- ridge[i]*tyw[1,i][1]/NZD(tww[,,i][1,1])
         W[i,, drop = FALSE] %*% tryCatch(solve(tww[,,i]+diag(rep(ridge[i],nc)),
-                tyw[,i]+c(ridge.val,rep(0,nc-1)),tol=sqrt(.Machine$double.xmin)),
+                tyw[,i]+c(ridge.val,rep(0,nc-1)),tol=.Machine$double.eps),
                 error = function(e){
                   ridge[i] <<- ridge[i]+epsilon
                   doridge[i] <<- TRUE
@@ -965,7 +969,7 @@ minimand.cv.aic <- function(bws=NULL,
         doridge[i] <<- FALSE
         ridge.val <- ridge[i]*tyw[1,i][1]/NZD(tww[,,i][1,1])
         W[i,, drop = FALSE] %*% tryCatch(solve(tww[,,i]+diag(rep(ridge[i],nc)),
-                tyw[,i]+c(ridge.val,rep(0,nc-1)),tol=sqrt(.Machine$double.xmin)),
+                tyw[,i]+c(ridge.val,rep(0,nc-1)),tol=.Machine$double.eps),
                 error = function(e){
                   ridge[i] <<- ridge[i]+epsilon
                   doridge[i] <<- TRUE
@@ -980,7 +984,7 @@ minimand.cv.aic <- function(bws=NULL,
       }
 
       trH <- kernel.i.eq.j*sum(sapply(1:n,function(i){
-        W[i,, drop = FALSE] %*% solve(tww[,,i]+diag(rep(ridge[i],nc)),tol=sqrt(.Machine$double.xmin)) %*% t(W[i,, drop = FALSE])
+        W[i,, drop = FALSE] %*% solve(tww[,,i]+diag(rep(ridge[i],nc)),tol=.Machine$double.eps) %*% t(W[i,, drop = FALSE])
       }))
 
       if (!any(ghat == maxPenalty)){
@@ -1130,7 +1134,7 @@ glpcv <- function(ydat=NULL,
 
     for(i in 1:ncol(xdat)) {
       if(xdat.numeric[i]==TRUE) {
-        init.search.vals[i] <- runif(1,.5,1.5)*(IQR(xdat[,i])/1.349)*nrow(xdat)^{-1/(4+num.numeric)}
+        init.search.vals[i] <- runif(1,.5,1.5)*sd.robust(xdat[,i])*nrow(xdat)^{-1/(4+num.numeric)}
       }
     }
 
@@ -1160,7 +1164,7 @@ glpcv <- function(ydat=NULL,
       while((optim.return$convergence != 0) && (attempts <= optim.maxattempts)) {
         init.search.vals <- runif(ncol(xdat),0,1)
         if(xdat.numeric[i]==TRUE) {
-          init.search.vals[i] <- runif(1,.5,1.5)*(IQR(xdat[,i])/1.349)*nrow(xdat)^{-1/(4+num.numeric)}
+          init.search.vals[i] <- runif(1,.5,1.5)*sd.robust(xdat[,i])*nrow(xdat)^{-1/(4+num.numeric)}
         }
         attempts <- attempts + 1
         optim.control$abstol <- optim.control$abstol * 10.0
@@ -1194,7 +1198,7 @@ glpcv <- function(ydat=NULL,
       while((optim.return$convergence != 0) && (attempts <= optim.maxattempts)) {
         init.search.vals <- runif(ncol(xdat),0,1)
         if(xdat.numeric[i]==TRUE) {
-          init.search.vals[i] <- runif(1,.5,1.5)*(IQR(xdat[,i])/1.349)*nrow(xdat)^{-1/(4+num.numeric)}
+          init.search.vals[i] <- runif(1,.5,1.5)*sd.robust(xdat[,i])*nrow(xdat)^{-1/(4+num.numeric)}
         }
         attempts <- attempts + 1
         optim.control$abstol <- optim.control$abstol * 10.0
@@ -1358,7 +1362,7 @@ glpcvNOMAD <- function(ydat=NULL,
 
   if(bwtype=="fixed" && num.numeric > 0) {
     for(i in 1:num.numeric) {
-      sd.xdat <- sd(xdat[,numeric.index[i]])
+      sd.xdat <- sd.robust(xdat[,numeric.index[i]])
       lb[numeric.index[i]] <- lb[numeric.index[i]]*sd.xdat      
       ub[numeric.index[i]] <- ub[numeric.index[i]]*sd.xdat
     }
@@ -1519,7 +1523,7 @@ glpcvNOMAD <- function(ydat=NULL,
     init.search.vals <- runif(num.bw,0,1)
     for(i in 1:num.bw) {
       if(xdat.numeric[i]==TRUE && bwtype=="fixed") {
-        init.search.vals[i] <- runif(1,.5,1.5)*(IQR(xdat[,i])/1.349)*nrow(xdat)^{-1/(4+num.numeric)}
+        init.search.vals[i] <- runif(1,.5,1.5)*sd.robust(xdat[,i])*nrow(xdat)^{-1/(4+num.numeric)}
       } 
       if(xdat.numeric[i]==TRUE && bwtype!="fixed") {
         init.search.vals[i] <- round(runif(1,2,sqrt(ub[i])))
@@ -1541,7 +1545,7 @@ glpcvNOMAD <- function(ydat=NULL,
       init.search.vals <- runif(num.bw,0,1)
       for(i in 1:num.bw) {
         if(xdat.numeric[i]==TRUE && bwtype=="fixed") {
-          init.search.vals[i] <- runif(1,.5,1.5)*(IQR(xdat[,i])/1.349)*nrow(xdat)^{-1/(4+num.numeric)}
+          init.search.vals[i] <- runif(1,.5,1.5)*sd.robust(xdat[,i])*nrow(xdat)^{-1/(4+num.numeric)}
         }
         if(xdat.numeric[i]==TRUE && bwtype!="fixed") {
           init.search.vals[i] <- round(runif(1,2,sqrt(ub[i])))
