@@ -119,12 +119,15 @@ W.glp <- function(xdat = NULL,
 ## reduce the maximum value of k but this cannot be determined without
 ## actually computing all distances. This function will be numerically
 ## intensive for large datasets, however, it ensures that search for
-## instance would take place over the largest permissable range. It
+## instance would take place over the largest permissible range. It
 ## gets called one time for each numeric predictor. It is redundant
 ## for draws from a continuous distribution.
 
-## Since the distance are symmetric there are naturally savings to be
+## Since the distances are symmetric there are naturally savings to be
 ## achieved (currently we take a brute force approach).
+
+## Note this can suffer from comparison of floating point numbers and
+## needs to be improved (re-scaling may not be kind).
 
 knn.max <- function(x) {
 
@@ -138,6 +141,41 @@ knn.max <- function(x) {
   }
 
   return(k.max)
+
+}
+
+## This function will check whether the raw polynomial for a given predictor is ill conditioned
+
+check.max.degree <- function(xdat,degree.max) {
+
+  xdat <- as.data.frame(xdat)
+
+  ill.conditioned <- FALSE
+
+  xdat.numeric <- sapply(1:ncol(xdat),function(i){is.numeric(xdat[,i])})
+  numeric.index <- which(xdat.numeric==TRUE)  
+  num.numeric <- sum(sapply(1:NCOL(xdat),function(i){is.numeric(xdat[,i])})==TRUE)
+  d <- numeric(num.numeric)
+
+  if(num.numeric > 0) {
+  
+    for(i in 1:num.numeric) {
+      X <- mypoly(xdat[,numeric.index[i]],degree=degree.max)
+      d[i] <- degree.max
+      while(rcond(t(X)%*%X)<.Machine$double.eps) {
+        d[i] <- d[i] - 1
+        X <- mypoly(xdat[,numeric.index[i]],degree=d[i])
+      }
+      if(d[i] < degree.max) {
+#       warning(paste("\r Predictor ",i," polynomial is ill-conditioned beyond degree ",d,": see note in ?npglpreg",sep=""),immediate.=TRUE)
+        ill.conditioned <- TRUE
+      }
+    }
+
+  }
+
+  attr(ill.conditioned, "degree.max.vec") <- d
+  return(ill.conditioned)
 
 }
 
@@ -426,6 +464,13 @@ npglpreg.formula <- function(formula,
   tydat <- model.response(mf)
   txdat <- mf[, attr(attr(mf, "terms"),"term.labels"), drop = FALSE]
 
+  ill.conditioned <- check.max.degree(txdat,degree.max)
+  degree.max.vec <- attr(ill.conditioned, "degree.max.vec")
+  if(!is.null(degree) && ill.conditioned)    {
+    if(ill.conditioned) warning("\r Ill-conditioned polynomial bases detected, degree vector adjusted", immediate.=TRUE)
+    degree <- ifelse(degree > degree.max.vec, degree.max.vec, degree)
+  }
+
   fv <- NULL
   ptm <- system.time("")
 
@@ -528,7 +573,7 @@ glpregEst <- function(tydat=NULL,
 
   ## Below is the worst case scenario where
   ## all(txdat[,numeric.index[i]]%%1==0). Otherwise, we would have to
-  ## compute all distances and then take the smalled integer for which
+  ## compute all distances and then take the smallest integer for which
   ## the distance is defined.
 
   if(bwtype!="fixed" && !is.null(bws) && num.numeric > 0) {
@@ -1396,6 +1441,15 @@ glpcvNOMAD <- function(ydat=NULL,
     }
   }
 
+  ill.conditioned <- check.max.degree(xdat,degree.max)
+  degree.max.vec <- attr(ill.conditioned, "degree.max.vec")
+  if(ill.conditioned) warning("\r Ill-conditioned polynomial bases detected, search range adjusted", immediate.=TRUE)
+
+  if(cv == "degree-bandwidth") {
+    degree <- ifelse(degree > degree.max.vec, degree.max.vec, degree)
+    ub[(num.bw+1):(num.bw+num.numeric)] <- ifelse(ub[(num.bw+1):(num.bw+num.numeric)] > degree.max.vec, degree.max.vec, ub[(num.bw+1):(num.bw+num.numeric)])
+  }
+
   ## Create the function wrappers to be fed to the snomadr solver for
   ## leave-one-out cross-validation and Hurvich, Simonoff, and Tsai's
   ## AIC_c approach
@@ -1557,8 +1611,10 @@ glpcvNOMAD <- function(ydat=NULL,
       }
     }
     
-    if(cv == "degree-bandwidth" && iMulti != 1)
+    if(cv == "degree-bandwidth" && iMulti != 1) {
       degree <- sample(degree.min:degree.max, num.numeric, replace=T)
+      degree <- ifelse(degree > degree.max.vec, degree.max.vec, degree)
+    }
     
     if(cv =="degree-bandwidth"){
       x0.pts[iMulti, ] <- c(init.search.vals, degree)

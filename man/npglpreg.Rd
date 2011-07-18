@@ -189,10 +189,12 @@ for each dimension of the continuous \code{x} in \code{txdat}}
   }
 }
 \details{
+  
   This function is in beta status until further notice.
 
   Eventually it will be rolled into the np/npRmpi packages after the
   final status of snomadr/NOMAD gets sorted out.
+  
 }
 \value{
   
@@ -260,7 +262,61 @@ for each dimension of the continuous \code{x} in \code{txdat}}
   Jeffrey S. Racine \email{racinej@mcmaster.ca} and Zhenghua Nie <niez@mcmaster.ca>
 }
 \note{
-TBA
+  
+  Note that the use of polynomials for approximation is appealing as
+  they can be computed and differentiated easily, however, they can be
+  unstable (their inversion can be ill conditioned) which can cause
+  problems in some instances as the order of the polynomial
+  increases. This can hamper search when excessive reliance on ridging
+  to overcome ill conditioned inversion becomes computationally
+  burdensome. If you suspect that this might be an issue for your
+  specific problem you are encouraged to investigate this by setting
+  \code{ridge.warning=TRUE} and limit \code{degree.max} to value less
+  than the default value (say \code{3}). Alternatively, you might
+  consider re-scaling your \code{numeric} predictors to lie in
+  \eqn{[0,1]} using \code{\link{scale}}.
+
+  For a given predictor \eqn{x} you can readily determine if this is an
+  issue by considering the following: Suppose \eqn{x} is given by
+
+  \preformatted{
+    x <- runif(100,10000,11000)
+    y <- x + rnorm(100,sd=1000)
+  }
+
+  so that a polynomial of order, say, \eqn{5} would be ill
+  conditioned. This would be apparent if you considered
+
+  \preformatted{
+    X <- poly(x,degree=5,raw=TRUE)
+    solve(t(X)%*%X)
+  }
+  
+  which will throw an error when the polynomial is ill conditioned,
+  or
+  
+  \preformatted{
+    X <- poly(x,degree=5,raw=TRUE)
+    lm(y~X)
+  }
+
+  which will return \code{NA} for one or more coefficients when this is
+  an issue.
+
+  In such cases you might consider transforming your \code{numeric}
+  predictors along the lines of the following:
+  \preformatted{
+    x <- as.numeric(scale(x))
+    X <- poly(x,degree=5,raw=TRUE)
+    solve(t(X)%*%X)
+    lm(y~X)    
+  }
+
+  Note that now your least squares coefficients (i.e. first derivative
+  of \eqn{y} with respect to \eqn{x}) represent the effect of a one
+  standard deviation change in \eqn{x} and not a one unit change.
+  
+  
 }
 
 \seealso{
