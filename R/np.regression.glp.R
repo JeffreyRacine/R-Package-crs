@@ -167,7 +167,7 @@ check.max.degree <- function(xdat,degree.max) {
         X <- mypoly(xdat[,numeric.index[i]],degree=d[i])
       }
       if(d[i] < degree.max) {
-#       warning(paste("\r Predictor ",i," polynomial is ill-conditioned beyond degree ",d,": see note in ?npglpreg",sep=""),immediate.=TRUE)
+       warning(paste("\r Predictor ",i," polynomial is ill-conditioned beyond degree ",d,": see note in ?npglpreg",sep=""))
         ill.conditioned <- TRUE
       }
     }
@@ -442,7 +442,7 @@ npglpreg.formula <- function(formula,
                                "MIN_POLL_SIZE"=paste("r",sqrt(.Machine$double.eps),sep="")),
                              nmulti=5,
                              random.seed=42,
-                             degree.max=5,
+                             degree.max=100,
                              degree.min=0,
                              bandwidth.max=1.0e+05,
                              bandwidth.min=1.0e-03,
@@ -467,7 +467,7 @@ npglpreg.formula <- function(formula,
   ill.conditioned <- check.max.degree(txdat,degree.max)
   degree.max.vec <- attr(ill.conditioned, "degree.max.vec")
   if(!is.null(degree) && ill.conditioned)    {
-    if(ill.conditioned) warning("\r Ill-conditioned polynomial bases detected, degree vector adjusted", immediate.=TRUE)
+    if(ill.conditioned) warning("\r Ill-conditioned polynomial bases detected, degree vector adjusted")
     degree <- ifelse(degree > degree.max.vec, degree.max.vec, degree)
   }
 
@@ -1314,7 +1314,7 @@ glpcvNOMAD <- function(ydat=NULL,
                        cv=c("degree-bandwidth", "bandwidth"),
                        nmulti=NULL,
                        random.seed=42,
-                       degree.max=5,
+                       degree.max=100,
                        degree.min=0,
                        bandwidth.max=1.0e+05,
                        bandwidth.min=1.0e-03,
@@ -1434,7 +1434,7 @@ glpcvNOMAD <- function(ydat=NULL,
 
   ill.conditioned <- check.max.degree(xdat,degree.max)
   degree.max.vec <- attr(ill.conditioned, "degree.max.vec")
-  if(ill.conditioned) warning("\r Ill-conditioned polynomial bases detected, search range adjusted", immediate.=TRUE)
+  if(ill.conditioned) warning("\r Ill-conditioned polynomial bases detected, search range adjusted")
 
   if(cv == "degree-bandwidth") {
     ub[(num.bw+1):(num.bw+num.numeric)] <- ifelse(ub[(num.bw+1):(num.bw+num.numeric)] > degree.max.vec, degree.max.vec, ub[(num.bw+1):(num.bw+num.numeric)])

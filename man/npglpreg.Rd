@@ -51,7 +51,7 @@ npglpreg(\dots)
            MIN_POLL_SIZE = paste("r", sqrt(.Machine$double.eps), sep = "")),
          nmulti = 5,
          random.seed = 42,
-         degree.max = 5,
+         degree.max = 100,
          degree.min = 0,
          bandwidth.max = 1.0e+05,
          bandwidth.min = 1.0e-03,
@@ -154,7 +154,7 @@ for each dimension of the continuous \code{x} in \code{txdat}}
     \code{\link{snomadr}} }
       
   \item{degree.max}{ the maximum degree of the polynomial for
-    each of the continuous predictors (default \code{degree.max=5})}
+    each of the continuous predictors (default \code{degree.max=100})}
   
   \item{degree.min}{ the minimum degree of the polynomial for
     each of the continuous predictors (default \code{degree.min=0})}
