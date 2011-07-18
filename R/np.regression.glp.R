@@ -1432,22 +1432,24 @@ glpcvNOMAD <- function(ydat=NULL,
 
   ## Use degree for initial values if provided
 
-  if(is.null(degree)) {
-   if(cv == "degree-bandwidth") {
-      degree <- sample(degree.min:degree.max, num.numeric, replace=T)
-    }
-    else {
-      stop(paste(" Error: degree must be given when optimizing only bandwidth"))
-    }
-  }
-
   ill.conditioned <- check.max.degree(xdat,degree.max)
   degree.max.vec <- attr(ill.conditioned, "degree.max.vec")
   if(ill.conditioned) warning("\r Ill-conditioned polynomial bases detected, search range adjusted", immediate.=TRUE)
 
   if(cv == "degree-bandwidth") {
-    degree <- ifelse(degree > degree.max.vec, degree.max.vec, degree)
     ub[(num.bw+1):(num.bw+num.numeric)] <- ifelse(ub[(num.bw+1):(num.bw+num.numeric)] > degree.max.vec, degree.max.vec, ub[(num.bw+1):(num.bw+num.numeric)])
+  }
+
+  if(is.null(degree)) {
+    if(cv == "degree-bandwidth") {
+      degree <- numeric(num.numeric)
+      for(i in 1:num.numeric) {
+        degree[i] <- sample(degree.min:ub[(num.bw+1):(num.bw+num.numeric)][i], 1)
+      }
+    }
+    else {
+      stop(paste(" Error: degree must be given when optimizing only bandwidth"))
+    }
   }
 
   ## Create the function wrappers to be fed to the snomadr solver for
@@ -1612,8 +1614,9 @@ glpcvNOMAD <- function(ydat=NULL,
     }
     
     if(cv == "degree-bandwidth" && iMulti != 1) {
-      degree <- sample(degree.min:degree.max, num.numeric, replace=T)
-      degree <- ifelse(degree > degree.max.vec, degree.max.vec, degree)
+      for(i in 1:num.numeric) {
+        degree[i] <- sample(degree.min:ub[(num.bw+1):(num.bw+num.numeric)][i], 1)
+      }
     }
     
     if(cv =="degree-bandwidth"){
