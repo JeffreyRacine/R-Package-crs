@@ -269,12 +269,19 @@ for each dimension of the continuous \code{x} in \code{txdat}}
   problems in some instances as the order of the polynomial
   increases. This can hamper search when excessive reliance on ridging
   to overcome ill conditioned inversion becomes computationally
-  burdensome. If you suspect that this might be an issue for your
-  specific problem you are encouraged to investigate this by setting
-  \code{ridge.warning=TRUE} and limit \code{degree.max} to value less
-  than the default value (say \code{3}). Alternatively, you might
-  consider re-scaling your \code{numeric} predictors to lie in
-  \eqn{[0,1]} using \code{\link{scale}}.
+  burdensome.
+
+  \code{npglpreg} tries to detect whether this is an issue or not for
+  each \code{numeric} predictor and will adjust the search range for
+  \code{\link{snomadr}} and the degree fed to \code{npglpreg} if
+  appropriate.
+
+  However, if you suspect that this might be an issue for your specific
+  problem you are encouraged to investigate this by limiting
+  \code{degree.max} to value less than the default value (say
+  \code{3}). Alternatively, you might consider re-scaling your
+  \code{numeric} predictors to lie in \eqn{[0,1]} using
+  \code{\link{scale}}.
 
   For a given predictor \eqn{x} you can readily determine if this is an
   issue by considering the following: Suppose \eqn{x} is given by
@@ -289,7 +296,7 @@ for each dimension of the continuous \code{x} in \code{txdat}}
 
   \preformatted{
     X <- poly(x,degree=5,raw=TRUE)
-    solve(t(X)%*%X)
+    solve(t(X)\%*\%X)
   }
   
   which will throw an error when the polynomial is ill conditioned,
@@ -308,7 +315,7 @@ for each dimension of the continuous \code{x} in \code{txdat}}
   \preformatted{
     x <- as.numeric(scale(x))
     X <- poly(x,degree=5,raw=TRUE)
-    solve(t(X)%*%X)
+    solve(t(X)\%*\%X)
     lm(y~X)    
   }
 
