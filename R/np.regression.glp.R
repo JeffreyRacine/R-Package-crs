@@ -166,7 +166,7 @@ check.max.degree <- function(xdat=NULL,degree=NULL,issue.warning=FALSE) {
       if(degree[i]>0) {
         X <- mypoly(xdat[,numeric.index[i]],degree=degree[i])
         d[i] <- degree[i]
-        while(rcond(t(X)%*%X)<.Machine$double.eps) {
+        while(rcond(t(X)%*%X)<.Machine$double.eps && d[i] > 1) {
           d[i] <- d[i] - 1
           X <- mypoly(xdat[,numeric.index[i]],degree=d[i])
         }

@@ -23,7 +23,7 @@ check.max.spline.degree <- function(xdat=NULL,degree=NULL,nbreak.max=NULL) {
       if(degree[i]>0) {
         X <- gsl.bs(xdat[,numeric.index[i]],degree=degree[i],nbreak=nbreak.max)
         d[i] <- degree[i]
-        while(rcond(t(X)%*%X)<.Machine$double.eps) {
+        while(rcond(t(X)%*%X)<.Machine$double.eps && d[i] > 1) {
           d[i] <- d[i] - 1
           X <- gsl.bs(xdat[,numeric.index[i]],degree=d[i],nbreak=nbreak.max)
         }
