@@ -146,7 +146,10 @@ knn.max <- function(x) {
 
 ## This function will check whether the raw polynomial for a given predictor is ill conditioned
 
-check.max.degree <- function(xdat,degree.max) {
+check.max.degree <- function(xdat=NULL,degree=NULL,issue.warning=FALSE) {
+
+  if(is.null(xdat)) stop(" xdat must be provided")
+  if(is.null(degree)) stop(" degree vector must be provided")
 
   xdat <- as.data.frame(xdat)
 
@@ -160,14 +163,14 @@ check.max.degree <- function(xdat,degree.max) {
   if(num.numeric > 0) {
   
     for(i in 1:num.numeric) {
-      X <- mypoly(xdat[,numeric.index[i]],degree=degree.max)
-      d[i] <- degree.max
+      X <- mypoly(xdat[,numeric.index[i]],degree=degree[i])
+      d[i] <- degree[i]
       while(rcond(t(X)%*%X)<.Machine$double.eps) {
         d[i] <- d[i] - 1
         X <- mypoly(xdat[,numeric.index[i]],degree=d[i])
       }
-      if(d[i] < degree.max) {
-       warning(paste("\r Predictor ",i," polynomial is ill-conditioned beyond degree ",d,": see note in ?npglpreg",sep=""))
+      if(d[i] < degree[i]) {
+       if(issue.warning) warning(paste("\r Predictor ",i," polynomial is ill-conditioned beyond degree ",d[i],": see note in ?npglpreg",sep=""))
         ill.conditioned <- TRUE
       }
     }
@@ -437,9 +440,9 @@ npglpreg.formula <- function(formula,
                              cv.func=c("cv.ls","cv.gcv","cv.aic"),
                              opts=list("MAX_BB_EVAL"=10000,
                                "EPSILON"=.Machine$double.eps,
-                               "INITIAL_MESH_SIZE"="1.0e-01",
-                               "MIN_MESH_SIZE"=paste("r",sqrt(.Machine$double.eps),sep=""),
-                               "MIN_POLL_SIZE"=paste("r",sqrt(.Machine$double.eps),sep="")),
+                               "INITIAL_MESH_SIZE"="1.0e-03",
+                               "MIN_MESH_SIZE"=sqrt(.Machine$double.eps),
+                               "MIN_POLL_SIZE"=sqrt(.Machine$double.eps)),
                              nmulti=5,
                              random.seed=42,
                              degree.max=100,
@@ -463,13 +466,6 @@ npglpreg.formula <- function(formula,
   mt <- attr(mf, "terms")
   tydat <- model.response(mf)
   txdat <- mf[, attr(attr(mf, "terms"),"term.labels"), drop = FALSE]
-
-  ill.conditioned <- check.max.degree(txdat,degree.max)
-  degree.max.vec <- attr(ill.conditioned, "degree.max.vec")
-  if(!is.null(degree) && ill.conditioned)    {
-    if(ill.conditioned) warning("\r Ill-conditioned polynomial bases detected, degree vector adjusted")
-    degree <- ifelse(degree > degree.max.vec, degree.max.vec, degree)
-  }
 
   fv <- NULL
   ptm <- system.time("")
@@ -496,6 +492,12 @@ npglpreg.formula <- function(formula,
     fv <- model.cv$fv
   }
   
+  if(!is.null(degree))    {
+    ill.conditioned <- check.max.degree(txdat,degree,issue.warning=TRUE)
+    degree.max.vec <- attr(ill.conditioned, "degree.max.vec")
+    degree <- ifelse(degree > degree.max.vec, degree.max.vec, degree)
+  }
+
   ptm <- ptm + system.time(est <- npglpreg.default(tydat=tydat,
                                                    txdat=txdat,
                                                    eydat=eydat,
@@ -1432,9 +1434,8 @@ glpcvNOMAD <- function(ydat=NULL,
 
   ## Use degree for initial values if provided
 
-  ill.conditioned <- check.max.degree(xdat,degree.max)
+  ill.conditioned <- check.max.degree(xdat,rep(degree.max,num.numeric))
   degree.max.vec <- attr(ill.conditioned, "degree.max.vec")
-  if(ill.conditioned) warning("\r Ill-conditioned polynomial bases detected, search range adjusted")
 
   if(cv == "degree-bandwidth") {
     ub[(num.bw+1):(num.bw+num.numeric)] <- ifelse(ub[(num.bw+1):(num.bw+num.numeric)] > degree.max.vec, degree.max.vec, ub[(num.bw+1):(num.bw+num.numeric)])

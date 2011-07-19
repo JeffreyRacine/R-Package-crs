@@ -1,3 +1,44 @@
+###
+
+check.max.spline.degree <- function(xdat=NULL,degree=NULL,nbreak.max=NULL) {
+
+  if(is.null(xdat)) stop(" xdat must be provided")
+  if(is.null(degree)) stop(" degree vector must be provided")
+  if(is.null(nbreak.max)) stop(" nbreak.max must be provided")  
+
+  xdat <- as.data.frame(xdat)
+
+  if(missing(degree)) stop(" degree vector must be provided")
+
+  ill.conditioned <- FALSE
+
+  xdat.numeric <- sapply(1:ncol(xdat),function(i){is.numeric(xdat[,i])})
+  numeric.index <- which(xdat.numeric==TRUE)  
+  num.numeric <- sum(sapply(1:NCOL(xdat),function(i){is.numeric(xdat[,i])})==TRUE)
+  d <- numeric(num.numeric)
+
+  if(num.numeric > 0) {
+  
+    for(i in 1:num.numeric) {
+      X <- gsl.bs(xdat[,numeric.index[i]],degree=degree[i],nbreak=nbreak.max)
+      d[i] <- degree[i]
+      while(rcond(t(X)%*%X)<.Machine$double.eps) {
+        d[i] <- d[i] - 1
+        X <- gsl.bs(xdat[,numeric.index[i]],degree=d[i],nbreak=nbreak.max)
+      }
+      if(d[i] < degree[i]) {
+       warning(paste("\r Predictor ",i," polynomial is ill-conditioned beyond degree ",d[i]," (nbreak = ", nbreak.max,"): see note in ?npglpreg",sep=""),immediate.=TRUE)
+        ill.conditioned <- TRUE
+      }
+    }
+
+  }
+
+  attr(ill.conditioned, "degree.max.vec") <- d
+  return(ill.conditioned)
+
+}
+
 ## Utility function for dimension of par(mfrow=c(,)) for multiple
 ## plots on the same device
 
