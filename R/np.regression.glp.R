@@ -163,15 +163,17 @@ check.max.degree <- function(xdat=NULL,degree=NULL,issue.warning=FALSE) {
   if(num.numeric > 0) {
   
     for(i in 1:num.numeric) {
-      X <- mypoly(xdat[,numeric.index[i]],degree=degree[i])
-      d[i] <- degree[i]
-      while(rcond(t(X)%*%X)<.Machine$double.eps) {
-        d[i] <- d[i] - 1
-        X <- mypoly(xdat[,numeric.index[i]],degree=d[i])
-      }
-      if(d[i] < degree[i]) {
-       if(issue.warning) warning(paste("\r Predictor ",i," polynomial is ill-conditioned beyond degree ",d[i],": see note in ?npglpreg",sep=""))
-        ill.conditioned <- TRUE
+      if(degree[i]>0) {
+        X <- mypoly(xdat[,numeric.index[i]],degree=degree[i])
+        d[i] <- degree[i]
+        while(rcond(t(X)%*%X)<.Machine$double.eps) {
+          d[i] <- d[i] - 1
+          X <- mypoly(xdat[,numeric.index[i]],degree=d[i])
+        }
+        if(d[i] < degree[i]) {
+          if(issue.warning) warning(paste("\r Predictor ",i," polynomial is ill-conditioned beyond degree ",d[i],": see note in ?npglpreg",sep=""))
+          ill.conditioned <- TRUE
+        }
       }
     }
 
@@ -445,7 +447,7 @@ npglpreg.formula <- function(formula,
                                "MIN_POLL_SIZE"=sqrt(.Machine$double.eps)),
                              nmulti=5,
                              random.seed=42,
-                             degree.max=100,
+                             degree.max=25,
                              degree.min=0,
                              bandwidth.max=1.0e+05,
                              bandwidth.min=1.0e-03,
@@ -1316,7 +1318,7 @@ glpcvNOMAD <- function(ydat=NULL,
                        cv=c("degree-bandwidth", "bandwidth"),
                        nmulti=NULL,
                        random.seed=42,
-                       degree.max=100,
+                       degree.max=25,
                        degree.min=0,
                        bandwidth.max=1.0e+05,
                        bandwidth.min=1.0e-03,

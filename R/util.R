@@ -20,15 +20,17 @@ check.max.spline.degree <- function(xdat=NULL,degree=NULL,nbreak.max=NULL) {
   if(num.numeric > 0) {
   
     for(i in 1:num.numeric) {
-      X <- gsl.bs(xdat[,numeric.index[i]],degree=degree[i],nbreak=nbreak.max)
-      d[i] <- degree[i]
-      while(rcond(t(X)%*%X)<.Machine$double.eps) {
-        d[i] <- d[i] - 1
-        X <- gsl.bs(xdat[,numeric.index[i]],degree=d[i],nbreak=nbreak.max)
-      }
-      if(d[i] < degree[i]) {
-       warning(paste("\r Predictor ",i," polynomial is ill-conditioned beyond degree ",d[i]," (nbreak = ", nbreak.max,"): see note in ?npglpreg",sep=""),immediate.=TRUE)
-        ill.conditioned <- TRUE
+      if(degree[i]>0) {
+        X <- gsl.bs(xdat[,numeric.index[i]],degree=degree[i],nbreak=nbreak.max)
+        d[i] <- degree[i]
+        while(rcond(t(X)%*%X)<.Machine$double.eps) {
+          d[i] <- d[i] - 1
+          X <- gsl.bs(xdat[,numeric.index[i]],degree=d[i],nbreak=nbreak.max)
+        }
+        if(d[i] < degree[i]) {
+          warning(paste("\r Predictor ",i," polynomial is ill-conditioned beyond degree ",d[i]," (nbreak = ", nbreak.max,"): see note in ?npglpreg",sep=""),immediate.=TRUE)
+          ill.conditioned <- TRUE
+        }
       }
     }
 

@@ -46,12 +46,12 @@ npglpreg(\dots)
          cv.func = c("cv.ls", "cv.gcv", "cv.aic"),
          opts = list(MAX_BB_EVAL = 10000,
            EPSILON = .Machine$double.eps,
-           INITIAL_MESH_SIZE = "1.0e-01",
-           MIN_MESH_SIZE = paste("r", sqrt(.Machine$double.eps), sep = ""),
-           MIN_POLL_SIZE = paste("r", sqrt(.Machine$double.eps), sep = "")),
+           INITIAL_MESH_SIZE = "1.0e-03",
+           MIN_MESH_SIZE = sqrt(.Machine$double.eps),
+           MIN_POLL_SIZE = sqrt(.Machine$double.eps)),
          nmulti = 5,
          random.seed = 42,
-         degree.max = 100,
+         degree.max = 25,
          degree.min = 0,
          bandwidth.max = 1.0e+05,
          bandwidth.min = 1.0e-03,
@@ -154,7 +154,7 @@ for each dimension of the continuous \code{x} in \code{txdat}}
     \code{\link{snomadr}} }
       
   \item{degree.max}{ the maximum degree of the polynomial for
-    each of the continuous predictors (default \code{degree.max=100})}
+    each of the continuous predictors (default \code{degree.max=25})}
   
   \item{degree.min}{ the minimum degree of the polynomial for
     each of the continuous predictors (default \code{degree.min=0})}
