@@ -443,15 +443,15 @@ npglpreg.formula <- function(formula,
                              cv.func=c("cv.ls","cv.gcv","cv.aic"),
                              opts=list("MAX_BB_EVAL"=10000,
                                "EPSILON"=.Machine$double.eps,
-                               "INITIAL_MESH_SIZE"=paste("r",1.0e-10,sep=""),
-                               "MIN_MESH_SIZE"=paste("r",1.0e-10,sep=""),
-                               "MIN_POLL_SIZE"=paste("r",1.0e-10,sep="")),
+                               "INITIAL_MESH_SIZE"=paste("r",1.0e-04,sep=""),
+                               "MIN_MESH_SIZE"=paste("r",1.0e-04,sep=""),
+                               "MIN_POLL_SIZE"=paste("r",1.0e-04,sep="")),
                              nmulti=5,
                              random.seed=42,
                              degree.max=25,
                              degree.min=0,
-                             bandwidth.max=1.0e+09,
-                             bandwidth.min=1.0e-02,
+                             bandwidth.max=1.0e+03,
+                             bandwidth.min=1.0e-01,
                              gradient.vec=NULL,
                              gradient.categorical=FALSE,
                              ridge.warning=FALSE,
@@ -1321,13 +1321,13 @@ glpcvNOMAD <- function(ydat=NULL,
                        random.seed=42,
                        degree.max=25,
                        degree.min=0,
-                       bandwidth.max=1.0e+09,
-                       bandwidth.min=1.0e-02,
+                       bandwidth.max=1.0e+03,
+                       bandwidth.min=1.0e-01,
                        opts=list("MAX_BB_EVAL"=10000,
                          "EPSILON"=.Machine$double.eps,
-                         "INITIAL_MESH_SIZE"=paste("r",1.0e-10,sep=""),
-                         "MIN_MESH_SIZE"=paste("r",1.0e-10,sep=""),
-                         "MIN_POLL_SIZE"=paste("r",1.0e-10,sep="")),
+                         "INITIAL_MESH_SIZE"=paste("r",1.0e-04,sep=""),
+                         "MIN_MESH_SIZE"=paste("r",1.0e-04,sep=""),
+                         "MIN_POLL_SIZE"=paste("r",1.0e-04,sep="")),
                        ridge.warning=FALSE,
                        ...) {
 
@@ -1671,16 +1671,19 @@ glpcvNOMAD <- function(ydat=NULL,
 
 
 	if(cv == "degree-bandwidth") {
-			degree.opt <- solution$solution[(num.bw+1):(num.bw+num.numeric)]
+    degree.opt <- solution$solution[(num.bw+1):(num.bw+num.numeric)]
+    for(i in num.numeric){
+      if(isTRUE(all.equal(degree.opt[i],ub[num.bw+i]))) warning(paste(" optimal degree for numeric predictor ",i," equals search upper bound (", ub[num.bw+i],")",sep=""))
+    }
 	}
 	fv <- solution$objective
 
 	best <- NULL
-	numimp <- 0   
+	numimp <- 0
 
-  if(any(degree.opt==degree.max)) warning(paste(" an optimal degree equals search maximum (", degree.max,"): rerun with larger degree.max",sep=""))
-
-  if(any(bw.opt==bandwidth.min)) warning(paste(" an optimal bandwidth equals search maximum (", bandwidth.min,"): rerun with smaller bandwidth.min",sep=""))
+  for(i in num.bw) {
+    if(isTRUE(all.equal(bw.opt[i],lb[i]))) warning(paste(" optimal bandwidth for predictor ",i," equals search lower bound (", formatC(lb[i],digits=3,format="g"),"): rerun with smaller bandwidth.min",sep=""))
+  }
 
   console <- printPush("\r                        ",console = console)
   console <- printClear(console)
