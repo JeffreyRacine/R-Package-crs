@@ -44,17 +44,17 @@ npglpreg(\dots)
          bwtype = c("fixed", "generalized_nn", "adaptive_nn"),
          cv = c("degree-bandwidth", "bandwidth", "none"),
          cv.func = c("cv.ls", "cv.gcv", "cv.aic"),
-         opts = list(MAX_BB_EVAL = 10000,
-           EPSILON = .Machine$double.eps,
-           INITIAL_MESH_SIZE = "1.0e-03",
-           MIN_MESH_SIZE = sqrt(.Machine$double.eps),
-           MIN_POLL_SIZE = sqrt(.Machine$double.eps)),
+         opts=list("MAX_BB_EVAL"=10000,
+                   "EPSILON"=.Machine$double.eps,
+                   "INITIAL_MESH_SIZE"=paste("r",1.0e-10,sep=""),
+                   "MIN_MESH_SIZE"=paste("r",1.0e-10,sep=""),
+                   "MIN_POLL_SIZE"=paste("r",1.0e-10,sep="")),
          nmulti = 5,
          random.seed = 42,
          degree.max = 25,
          degree.min = 0,
-         bandwidth.max = 1.0e+05,
-         bandwidth.min = 1.0e-03,
+         bandwidth.max = 1.0e+09,
+         bandwidth.min = 1.0e-02,
          gradient.vec = NULL,
          gradient.categorical = FALSE,
          ridge.warning = FALSE,
@@ -161,11 +161,11 @@ for each dimension of the continuous \code{x} in \code{txdat}}
   
     \item{bandwidth.max}{ the maximum bandwidth scale (i.e. number of
     standard deviations) for each of the continuous predictors (default
-    \code{bandwidth.max=10000})}
+    \code{bandwidth.max=1.0e+09} standard deviations)}
   
   \item{bandwidth.min}{ the minimum bandwidth scale (i.e. number of
     standard deviations) for each of the continuous predictors (default
-    \code{bandwidth.min=0.001})}
+    \code{bandwidth.min=1.0e-02} standard deviations)}
   
 \item{gradient.vec}{
   a vector corresponding to the order of the partial (or cross-partial)
