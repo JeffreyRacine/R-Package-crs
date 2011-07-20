@@ -332,7 +332,11 @@ summary.npglpreg <- function(object,
 
   ## Summarize continuous predictors
 
-  if(object$Bernstein) cat("\nPolynomial type: Bernstein")
+  if(object$Bernstein) {
+    cat("\nPolynomial type: Bernstein")
+  } else {
+    cat("\nPolynomial type: raw")
+  }
 
   if(object$num.numeric == 1){
     cat(paste("\nThere is ",format(object$num.numeric), " continuous predictor",sep=""),sep="")

@@ -287,13 +287,13 @@ for each dimension of the continuous \code{x} in \code{txdat}}
 }
 \note{
   
-  Note that the use of raw polynomials for approximation is appealing as
-  they can be computed and differentiated easily, however, they can be
-  unstable (their inversion can be ill conditioned) which can cause
-  problems in some instances as the order of the polynomial
-  increases. This can hamper search when excessive reliance on ridging
-  to overcome ill conditioned inversion becomes computationally
-  burdensome.
+  Note that the use of raw polynomials (\code{Bernstein=FALSE}) for
+  approximation is appealing as they can be computed and differentiated
+  easily, however, they can be unstable (their inversion can be ill
+  conditioned) which can cause problems in some instances as the order
+  of the polynomial increases. This can hamper search when excessive
+  reliance on ridging to overcome ill conditioned inversion becomes
+  computationally burdensome.
 
   \code{npglpreg} tries to detect whether this is an issue or not when
   \code{Bernstein=FALSE} for each \code{numeric} predictor and will
