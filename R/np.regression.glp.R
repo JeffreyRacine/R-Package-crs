@@ -16,30 +16,43 @@ sd.robust <- function(x) {
   min(sd(x),IQR(x)/1.34898)
 }
 
-mypoly <- function(x,degree,gradient.compute=FALSE,r=0) {
+mypoly <- function(x,
+                   degree,
+                   gradient.compute = FALSE,
+                   r=0,
+                   Bernstein = FALSE) {
 
   if(missing(x)) stop(" Error: x required")
   if(missing(degree)) stop(" Error: degree required")
   if(degree < 1) stop(" Error: degree must be a positive integer")
-  n <- degree + 1
 
-  if(gradient.compute) {
-    Z <- NULL
-    for(i in 1:degree) {
-      if((i-r) >= 0) {
-        tmp <- (factorial(i)/factorial(i-r))*x^max(0,i-r)
-      } else {
-        tmp <- rep(0,length(x))
+  if(!Bernstein) {
+
+    if(gradient.compute) {
+      Z <- NULL
+      for(i in 1:degree) {
+        if((i-r) >= 0) {
+          tmp <- (factorial(i)/factorial(i-r))*x^max(0,i-r)
+        } else {
+          tmp <- rep(0,length(x))
+        }
+        Z <- cbind(Z,tmp)
       }
-      Z <- cbind(Z,tmp)
-    }
-    ## If we want to send back matrix of zeros (i.e will not count in
-    ## computation of derivative) return this baby.
-    if(r == -1) Z <- matrix(0,NROW(Z),NCOL(Z))
-  } else {
+      ## If we want to send back matrix of zeros (i.e will not count in
+      ## computation of derivative) return this baby.
+      if(r == -1) Z <- matrix(0,NROW(Z),NCOL(Z))
+    } else {
       Z <- outer(x,1L:degree,"^")
+    }
+    
+  } else {
+    if(gradient.compute) {
+      Z <- gsl.bs(x,degree=degree,deriv=r)
+    } else {
+      Z <- gsl.bs(x,degree=degree)
+    }
   }
-  
+
   return(as.matrix(Z))
 
 }
@@ -50,7 +63,8 @@ mypoly <- function(x,degree,gradient.compute=FALSE,r=0) {
 
 W.glp <- function(xdat = NULL,
                   degree = NULL,
-                  gradient.vec = NULL) {
+                  gradient.vec = NULL,
+                  Bernstein = FALSE) {
 
   if(is.null(xdat)) stop(" Error: You must provide data")
   if(is.null(degree) || any(degree < 0)) stop(paste(" Error: degree vector must contain non-negative integers\ndegree is (", degree, ")\n",sep=""))
@@ -103,8 +117,8 @@ W.glp <- function(xdat = NULL,
       }
     }
     res <- rep.int(1,nrow(xdat.numeric))
-    if(degree[1] > 0) res <- cbind(1, mypoly(xdat.numeric[,1],degree[1],gradient.compute=gradient.compute,r=gradient.vec[1]))[, 1 + z[, 1]]
-    if(k > 1) for (i in 2:k) if(degree[i] > 0) res <- res * cbind(1, mypoly(xdat.numeric[,i],degree[i],gradient.compute=gradient.compute,r=gradient.vec[i]))[, 1 + z[, i]]
+    if(degree[1] > 0) res <- cbind(1, mypoly(xdat.numeric[,1],degree[1],gradient.compute=gradient.compute,r=gradient.vec[1],Bernstein=Bernstein))[, 1 + z[, 1]]
+    if(k > 1) for (i in 2:k) if(degree[i] > 0) res <- res * cbind(1, mypoly(xdat.numeric[,i],degree[i],gradient.compute=gradient.compute,r=gradient.vec[i],Bernstein=Bernstein))[, 1 + z[, i]]
     res <- matrix(res,nrow=NROW(xdat))
     colnames(res) <- apply(z, 1L, function(x) paste(x, collapse = "."))
     return(as.matrix(cbind(1,res)))
@@ -146,7 +160,7 @@ knn.max <- function(x) {
 
 ## This function will check whether the raw polynomial for a given predictor is ill conditioned
 
-check.max.degree <- function(xdat=NULL,degree=NULL,issue.warning=FALSE) {
+check.max.degree <- function(xdat=NULL,degree=NULL,issue.warning=FALSE,Bernstein=FALSE) {
 
   if(is.null(xdat)) stop(" xdat must be provided")
   if(is.null(degree)) stop(" degree vector must be provided")
@@ -164,11 +178,11 @@ check.max.degree <- function(xdat=NULL,degree=NULL,issue.warning=FALSE) {
   
     for(i in 1:num.numeric) {
       if(degree[i]>0) {
-        X <- mypoly(xdat[,numeric.index[i]],degree=degree[i])
+        X <- mypoly(xdat[,numeric.index[i]],degree=degree[i],Bernstein=Bernstein)
         d[i] <- degree[i]
         while(rcond(t(X)%*%X)<.Machine$double.eps && d[i] > 1) {
           d[i] <- d[i] - 1
-          X <- mypoly(xdat[,numeric.index[i]],degree=d[i])
+          X <- mypoly(xdat[,numeric.index[i]],degree=d[i],Bernstein=Bernstein)
         }
         if(d[i] < degree[i]) {
           if(issue.warning) warning(paste("\r Predictor ",i," polynomial is ill-conditioned beyond degree ",d[i],": see note in ?npglpreg",sep=""))
@@ -198,6 +212,7 @@ npglpreg.default <- function(tydat=NULL,
                              bwtype = c("fixed","generalized_nn","adaptive_nn"),
                              gradient.vec=NULL,
                              gradient.categorical=FALSE,
+                             Bernstein=FALSE,
                              ...) {
 
   ukertype <- match.arg(ukertype)
@@ -215,6 +230,7 @@ npglpreg.default <- function(tydat=NULL,
                    okertype=okertype,
                    bwtype=bwtype,
                    gradient.vec=gradient.vec,
+                   Bernstein=Bernstein,
                    ...)
 
   ## Gradients for categorical predictors (here we just compute them
@@ -262,6 +278,7 @@ npglpreg.default <- function(tydat=NULL,
                               okertype=okertype,
                               bwtype=bwtype,
                               gradient.vec=NULL,
+                              Bernstein=Bernstein,
                               ...)
 
         gradient.categorical.mat[,i] <- est$fitted.values - est.base$fitted.values
@@ -314,6 +331,8 @@ summary.npglpreg <- function(object,
   cat("\nGeneralized Local Polynomial Kernel Regression\n",sep="")
 
   ## Summarize continuous predictors
+
+  if(object$Bernstein) cat("\nPolynomial type: Bernstein")
 
   if(object$num.numeric == 1){
     cat(paste("\nThere is ",format(object$num.numeric), " continuous predictor",sep=""),sep="")
@@ -383,6 +402,7 @@ predict.npglpreg <- function(object,
     bwtype <- object$bwtype
     ukertype <- object$ukertype
     okertype <- object$okertype
+    Bernstein <- object$Bernstein
     if(is.null(gradient.vec)) {
       gradient.vec <- object$gradient.vec
     } 
@@ -411,6 +431,7 @@ predict.npglpreg <- function(object,
                             okertype=okertype,
                             bwtype=bwtype,
                             gradient.vec=gradient.vec,
+                            Bernstein=Bernstein,
                             ...)
     
     fitted.values <- est$fitted.values
@@ -448,16 +469,20 @@ npglpreg.formula <- function(formula,
                                "MIN_POLL_SIZE"=paste("r",1.0e-04,sep="")),
                              nmulti=5,
                              random.seed=42,
-                             degree.max=25,
+                             degree.max=10,
                              degree.min=0,
                              bandwidth.max=1.0e+03,
                              bandwidth.min=1.0e-01,
                              gradient.vec=NULL,
                              gradient.categorical=FALSE,
                              ridge.warning=FALSE,
+                             Bernstein=FALSE,
                              ...) {
 
   if(!require(np)) stop(" Error: you must install the np package to use this function")
+  if(!logical(Bernstein)) stop(" Error: Berstein must be logical (TRUE/FALSE)")
+  if(!logical(gradient.categorical)) stop(" Error: gradient.categorical must be logical (TRUE/FALSE)")
+  if(!logical(ridge.warning)) stop(" Error: ridge.warning must be logical (TRUE/FALSE)")  
 
   ukertype <- match.arg(ukertype)
   okertype <- match.arg(okertype)
@@ -489,6 +514,7 @@ npglpreg.formula <- function(formula,
                                                    bandwidth.max=bandwidth.max,
                                                    bandwidth.min=bandwidth.min,
                                                    ridge.warning=ridge.warning,
+                                                   Bernstein=Bernstein,
                                                    ...))
     degree <- model.cv$degree
     bws <- model.cv$bws
@@ -496,7 +522,7 @@ npglpreg.formula <- function(formula,
   }
   
   if(!is.null(degree))    {
-    ill.conditioned <- check.max.degree(txdat,degree,issue.warning=TRUE)
+    ill.conditioned <- check.max.degree(txdat,degree,issue.warning=TRUE,Bernstein=Bernstein)
     degree.max.vec <- attr(ill.conditioned, "degree.max.vec")
     degree <- ifelse(degree > degree.max.vec, degree.max.vec, degree)
   }
@@ -514,6 +540,7 @@ npglpreg.formula <- function(formula,
                                                    gradient.vec=gradient.vec,
                                                    gradient.categorical=gradient.categorical,
                                                    ridge.warning=ridge.warning,
+                                                   Bernstein=Bernstein,
                                                    ...))
   
   est$call <- match.call()
@@ -542,6 +569,7 @@ glpregEst <- function(tydat=NULL,
                       bwtype=c("fixed","generalized_nn","adaptive_nn"),
                       gradient.vec=NULL,
                       ridge.warning=FALSE,
+                      Bernstein=FALSE,
                       ...) {
 
   ukertype <- match.arg(ukertype)
@@ -660,15 +688,15 @@ glpregEst <- function(tydat=NULL,
     
   } else {
 
-    W <- W.glp(txdat,degree)
+    W <- W.glp(txdat,degree,Bernstein=Bernstein)
 
     if(miss.ex) {
       W.eval <- W
     } else {
-      W.eval <- W.glp(exdat,degree)
+      W.eval <- W.glp(exdat,degree,Bernstein=Bernstein)
     }
     
-    if(!is.null(gradient.vec)) W.eval.deriv <- W.glp(exdat,degree,gradient.vec=gradient.vec)
+    if(!is.null(gradient.vec)) W.eval.deriv <- W.glp(exdat,degree,gradient.vec=gradient.vec,Bernstein=Bernstein)
 
     ## Local polynomial via smooth coefficient formulation and one
     ## call to npksum
@@ -770,7 +798,8 @@ glpregEst <- function(tydat=NULL,
                 xnames = names(txdat),
                 categorical.index = categorical.index,
                 numeric.index = numeric.index,
-                gradient.vec = gradient.vec))
+                gradient.vec = gradient.vec,
+                Bernstein = Bernstein))
     
   }
 
@@ -1071,6 +1100,7 @@ glpcv <- function(ydat=NULL,
                   optim.abstol=.Machine$double.eps,
                   optim.maxit=500,
                   debug=FALSE,
+                  Bernstein=FALSE,
                   ...) {
 
   ## Save seed prior to setting
@@ -1122,7 +1152,7 @@ glpcv <- function(ydat=NULL,
   ## Pass in the local polynomial weight matrix rather than
   ## recomputing with each iteration.
 
-  W <- W.glp(xdat,degree)
+  W <- W.glp(xdat,degree,Bernstein=Bernstein)
 
   sum.lscv <- function(bw.gamma,...) {
 
@@ -1319,7 +1349,7 @@ glpcvNOMAD <- function(ydat=NULL,
                        cv=c("degree-bandwidth", "bandwidth"),
                        nmulti=NULL,
                        random.seed=42,
-                       degree.max=25,
+                       degree.max=10,
                        degree.min=0,
                        bandwidth.max=1.0e+03,
                        bandwidth.min=1.0e-01,
@@ -1329,6 +1359,7 @@ glpcvNOMAD <- function(ydat=NULL,
                          "MIN_MESH_SIZE"=paste("r",1.0e-04,sep=""),
                          "MIN_POLL_SIZE"=paste("r",1.0e-04,sep="")),
                        ridge.warning=FALSE,
+                       Bernstein=FALSE,
                        ...) {
 
   ## Save the seed prior to setting
@@ -1441,7 +1472,7 @@ glpcvNOMAD <- function(ydat=NULL,
 
   ## Use degree for initial values if provided
 
-  ill.conditioned <- check.max.degree(xdat,rep(degree.max,num.numeric))
+  ill.conditioned <- check.max.degree(xdat,rep(degree.max,num.numeric),Bernstein=Bernstein)
   degree.max.vec <- attr(ill.conditioned, "degree.max.vec")
 
   if(cv == "degree-bandwidth") {
@@ -1478,12 +1509,13 @@ glpcvNOMAD <- function(ydat=NULL,
     okertype <- params$okertype
     bwtype <- params$bwtype
     ridge.warning <- params$ridge.warning
+    Bernstein <- params$Bernstein
 
     bw.gamma <- input[1:num.bw]
     if(cv=="degree-bandwidth")
       degree <- round(input[(num.bw+1):(num.bw+num.numeric)])
 
-    W <- W.glp(xdat,degree)
+    W <- W.glp(xdat,degree,Bernstein=Bernstein)
 
     if(all(bw.gamma>=0)&&all(bw.gamma[!xdat.numeric]<=1)) {
       lscv <- minimand.cv.ls(bws=bw.gamma,
@@ -1517,12 +1549,13 @@ glpcvNOMAD <- function(ydat=NULL,
     okertype <- params$okertype
     bwtype <- params$bwtype
     ridge.warning <- params$ridge.warning
+    Bernstein <- params$Bernstein
     
     bw.gamma <- input[1:num.bw]
     if(cv=="degree-bandwidth")
       degree <- round(input[(num.bw+1):(num.bw+num.numeric)])
 
-    W <- W.glp(xdat,degree)
+    W <- W.glp(xdat,degree,Bernstein=Bernstein)
 
     if(all(bw.gamma>=0)&&all(bw.gamma[!xdat.numeric]<=1)) {
       aicc <- minimand.cv.aic(bws=bw.gamma,
@@ -1557,6 +1590,7 @@ glpcvNOMAD <- function(ydat=NULL,
   params$okertype <- okertype
   params$bwtype <- bwtype
   params$ridge.warning <- ridge.warning
+  params$Bernstein <- Bernstein
 
   ## No constraints
 
@@ -1720,7 +1754,8 @@ compute.bootstrap.errors <- function(tydat,
                                      alpha=0.05,
                                      gradient.vec=NULL,
                                      gradient.categorical=FALSE,
-                                     gradient.categorical.index=NULL,                                     
+                                     gradient.categorical.index=NULL,
+                                     Bernstein=FALSE,
                                      ...){
   
   plot.errors.type <- match.arg(plot.errors.type)
@@ -1749,6 +1784,7 @@ compute.bootstrap.errors <- function(tydat,
                          gradient.vec=gradient.vec,
                          gradient.categorical=gradient.categorical,
                          gradient.categorical.index=gradient.categorical.index,
+                         Bernstein=Bernstein,
                          ...)
     if(boot.object=="fitted") {
       return(est.boot$fitted.values)
@@ -1768,6 +1804,7 @@ compute.bootstrap.errors <- function(tydat,
                   ukertype=ukertype,
                   okertype=okertype,
                   bwtype=bwtype,
+                  Bernstein=Bernstein,
                   ...)
   
   model.fitted <- est$fitted.values
@@ -1819,6 +1856,7 @@ plot.npglpreg <- function(x,
   bwtype <- object$bwtype
   ukertype <- object$ukertype
   okertype <- object$okertype
+  Bernstein <- object$Bernstein
   
   txdat <- object$x
   tydat <- object$y
@@ -1871,6 +1909,7 @@ plot.npglpreg <- function(x,
                                 ukertype=ukertype,
                                 okertype=okertype,
                                 bwtype=bwtype,
+                                Bernstein=Bernstein,
                                 ...)
 
         fitted.values <- est$fitted.values
@@ -2073,6 +2112,7 @@ plot.npglpreg <- function(x,
                               bwtype=bwtype,
                               gradient.vec=gradient.vec,
                               gradient.categorical=TRUE,
+                              Bernstein=Bernstein,
                               ...)
 
       if(!is.factor(object$x[,i])) {

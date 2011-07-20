@@ -28,6 +28,7 @@ npglpreg(\dots)
          bwtype = c("fixed", "generalized_nn", "adaptive_nn"),
          gradient.vec = NULL,
          gradient.categorical = FALSE,
+         Bernstein = FALSE,
          \dots)
 
 \method{npglpreg}{formula}(formula,
@@ -51,13 +52,14 @@ npglpreg(\dots)
                    "MIN_POLL_SIZE"=paste("r",1.0e-04,sep="")),
          nmulti = 5,
          random.seed = 42,
-         degree.max = 25,
+         degree.max = 10,
          degree.min = 0,
          bandwidth.max = 1.0e+03,
          bandwidth.min = 1.0e-01,
          gradient.vec = NULL,
          gradient.categorical = FALSE,
          ridge.warning = FALSE,
+         Bernstein = FALSE,
          \dots)
 }
 
@@ -154,7 +156,7 @@ for each dimension of the continuous \code{x} in \code{txdat}}
     \code{\link{snomadr}} }
       
   \item{degree.max}{ the maximum degree of the polynomial for
-    each of the continuous predictors (default \code{degree.max=25})}
+    each of the continuous predictors (default \code{degree.max=10})}
   
   \item{degree.min}{ the minimum degree of the polynomial for
     each of the continuous predictors (default \code{degree.min=0})}
@@ -180,6 +182,11 @@ for each dimension of the continuous \code{x} in \code{txdat}}
 \item{ridge.warning}{ a logical value indicating whether to issue an
   immediate warning message when ridging (Seifert and Gasser (2000)) is
   required for inversion (default \code{ridge.warning=FALSE})
+}
+
+\item{Bernstein}{ a logical value indicating whether to use raw
+  polynomials (default) or Bernstein polynomials (i.e. Bezier curve aka
+  B-spline with no interior knots)
 }
 
 \item{\dots}{
