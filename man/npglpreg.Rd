@@ -55,7 +55,7 @@ npglpreg(\dots)
          degree.max = 10,
          degree.min = 0,
          bandwidth.max = 1.0e+03,
-         bandwidth.min = 1.0e-01,
+         bandwidth.min = 1.0e-02,
          gradient.vec = NULL,
          gradient.categorical = FALSE,
          ridge.warning = FALSE,
@@ -167,7 +167,7 @@ for each dimension of the continuous \code{x} in \code{txdat}}
   
   \item{bandwidth.min}{ the minimum bandwidth scale (i.e. number of
     standard deviations) for each of the continuous predictors (default
-    \code{bandwidth.min=1.0e-01} standard deviations)}
+    \code{bandwidth.min=1.0e-02} standard deviations)}
   
 \item{gradient.vec}{
   a vector corresponding to the order of the partial (or cross-partial)
@@ -216,7 +216,7 @@ for each dimension of the continuous \code{x} in \code{txdat}}
                  "MIN_POLL_SIZE"=paste("r",1.0e-12,sep=""))
              
              bandwidth.max <- 1.0e+04
-             bandwidth.min <- 1.0e-01
+             bandwidth.min <- 1.0e-03
   }
   
 }
