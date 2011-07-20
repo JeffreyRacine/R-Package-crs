@@ -480,9 +480,9 @@ npglpreg.formula <- function(formula,
                              ...) {
 
   if(!require(np)) stop(" Error: you must install the np package to use this function")
-  if(!logical(Bernstein)) stop(" Error: Berstein must be logical (TRUE/FALSE)")
-  if(!logical(gradient.categorical)) stop(" Error: gradient.categorical must be logical (TRUE/FALSE)")
-  if(!logical(ridge.warning)) stop(" Error: ridge.warning must be logical (TRUE/FALSE)")  
+  if(!is.logical(Bernstein)) stop(" Error: Bernstein must be logical (TRUE/FALSE)")
+  if(!is.logical(gradient.categorical)) stop(" Error: gradient.categorical must be logical (TRUE/FALSE)")
+  if(!is.logical(ridge.warning)) stop(" Error: ridge.warning must be logical (TRUE/FALSE)")  
 
   ukertype <- match.arg(ukertype)
   okertype <- match.arg(okertype)

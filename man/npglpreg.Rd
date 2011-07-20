@@ -270,7 +270,7 @@ for each dimension of the continuous \code{x} in \code{txdat}}
 }
 \note{
   
-  Note that the use of polynomials for approximation is appealing as
+  Note that the use of raw polynomials for approximation is appealing as
   they can be computed and differentiated easily, however, they can be
   unstable (their inversion can be ill conditioned) which can cause
   problems in some instances as the order of the polynomial
@@ -329,6 +329,9 @@ for each dimension of the continuous \code{x} in \code{txdat}}
   Note that now your least squares coefficients (i.e. first derivative
   of \eqn{y} with respect to \eqn{x}) represent the effect of a one
   standard deviation change in \eqn{x} and not a one unit change.
+
+  Alternatively, you can use Bernstein polynomials by setting
+  \code{Bernstein=TRUE}.
   
   
 }
