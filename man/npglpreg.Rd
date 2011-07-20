@@ -359,9 +359,9 @@ for each dimension of the continuous \code{x} in \code{txdat}}
 \examples{
 set.seed(42)
 n <- 100
-x1 <- runif(n)
-x2 <- runif(n)
-y <- x1^3 + rnorm(n,sd=.1)
+x1 <- runif(n,-2,2)
+x2 <- runif(n,-2,2)
+y <- x1^3 + rnorm(n,sd=1)
 
 ## Ideally the method should choose large bandwidths for x1 and x2 and a
 ## generalized polynomial that is a cubic for x1 and degree 0 for x2.

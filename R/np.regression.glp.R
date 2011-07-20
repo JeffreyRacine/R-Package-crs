@@ -348,6 +348,8 @@ summary.npglpreg <- function(object,
     for(j in 1:object$num.numeric) {
       if(object$bwtype=="fixed") {
         cat(paste("\nBandwidth for ",format(object$xnames[object$numeric.index][j]),": ",format(object$bws[object$numeric.index][j]),sep=""),sep="")
+        if(!is.null(object$bws.sf))
+        cat(paste("\nScale factor for ",format(object$xnames[object$numeric.index][j]),": ",format(object$bws.sf[object$numeric.index][j]),sep=""),sep="")          
       } else {
         cat(paste("\nKth nearest neighbor for ",format(object$xnames[object$numeric.index][j]),": ",format(object$bws[object$numeric.index][j]),sep=""),sep="")
       }
@@ -476,7 +478,7 @@ npglpreg.formula <- function(formula,
                              degree.max=10,
                              degree.min=0,
                              bandwidth.max=1.0e+03,
-                             bandwidth.min=1.0e-01,
+                             bandwidth.min=1.0e-02,
                              gradient.vec=NULL,
                              gradient.categorical=FALSE,
                              ridge.warning=FALSE,
@@ -486,7 +488,8 @@ npglpreg.formula <- function(formula,
   if(!require(np)) stop(" Error: you must install the np package to use this function")
   if(!is.logical(Bernstein)) stop(" Error: Bernstein must be logical (TRUE/FALSE)")
   if(!is.logical(gradient.categorical)) stop(" Error: gradient.categorical must be logical (TRUE/FALSE)")
-  if(!is.logical(ridge.warning)) stop(" Error: ridge.warning must be logical (TRUE/FALSE)")  
+  if(!is.logical(ridge.warning)) stop(" Error: ridge.warning must be logical (TRUE/FALSE)")
+  if(!is.logical(leave.one.out)) stop(" Error: leave.one.out must be logical (TRUE/FALSE)")    
 
   ukertype <- match.arg(ukertype)
   okertype <- match.arg(okertype)
@@ -501,6 +504,8 @@ npglpreg.formula <- function(formula,
 
   fv <- NULL
   ptm <- system.time("")
+
+  bws.sf <- NULL
 
   if(cv!="none") {
     ptm <- ptm + system.time(model.cv <-glpcvNOMAD(ydat=tydat,
@@ -522,6 +527,7 @@ npglpreg.formula <- function(formula,
                                                    ...))
     degree <- model.cv$degree
     bws <- model.cv$bws
+    bws.sf <- model.cv$bws.sf
     fv <- model.cv$fv
   }
   
@@ -556,6 +562,7 @@ npglpreg.formula <- function(formula,
   est$fv <- fv
   est$nmulti <- nmulti
   est$ptm <- ptm
+  est$bws.sf <- bws.sf
 
   return(est)
 
@@ -1329,19 +1336,6 @@ glpcv <- function(ydat=NULL,
 
 }
 
-## Note bws differ dramatically for numeric/categorical predictors and
-## lower bounds need to also be different... can be 0 for categorical,
-## but not for numeric...
-
-## Note for scaling used for initial bandwidths may need to adjust
-## bandwidth.min (now fraction of sd) by n^{-1/(2p+1)} etc.
-
-## If the degree or bandwidth are fed in they are used as initial values
-## for search where appropriate.
-
-## set bandwidth.max to be ten thousand times the standard deviation
-## set bandwidth.min minimum bw is 1/10 standard deviation
-
 glpcvNOMAD <- function(ydat=NULL,
                        xdat=NULL,
                        degree=NULL,
@@ -1356,7 +1350,7 @@ glpcvNOMAD <- function(ydat=NULL,
                        degree.max=10,
                        degree.min=0,
                        bandwidth.max=1.0e+03,
-                       bandwidth.min=1.0e-01,
+                       bandwidth.min=1.0e-02,
                        opts=list("MAX_BB_EVAL"=10000,
                          "EPSILON"=.Machine$double.eps,
                          "INITIAL_MESH_SIZE"=paste("r",1.0e-04,sep=""),
@@ -1449,10 +1443,12 @@ glpcvNOMAD <- function(ydat=NULL,
     }
   }
 
+  ## Scale lb appropriately by n, don't want this for ub.
+
   if(bwtype=="fixed" && num.numeric > 0) {
     for(i in 1:num.numeric) {
       sd.xdat <- sd.robust(xdat[,numeric.index[i]])
-      lb[numeric.index[i]] <- lb[numeric.index[i]]*sd.xdat      
+      lb[numeric.index[i]] <- lb[numeric.index[i]]*sd.xdat*length(ydat)^{-1/(num.numeric+4)}
       ub[numeric.index[i]] <- ub[numeric.index[i]]*sd.xdat
     }
   }
@@ -1706,7 +1702,14 @@ glpcvNOMAD <- function(ydat=NULL,
 	fv.vec[1] <- solution$objective
 
 	bw.opt <- solution$solution[1:num.bw]
-
+  bw.opt.sf <- NULL
+  if(bwtype=="fixed") {
+    bw.opt.sf <- bw.opt
+    for(i in 1:num.numeric) {
+      sd.xdat <- sd.robust(xdat[,numeric.index[i]])
+      bw.opt.sf[numeric.index[i]] <- bw.opt[numeric.index[i]]/sd.xdat*length(ydat)^{1/(num.numeric+4)}
+    }
+  }
 
 	if(cv == "degree-bandwidth") {
     degree.opt <- solution$solution[(num.bw+1):(num.bw+num.numeric)]
@@ -1732,6 +1735,7 @@ glpcvNOMAD <- function(ydat=NULL,
   if(exists.seed) assign(".Random.seed", save.seed, .GlobalEnv)
 
   return(list(bws=bw.opt,
+              bws.sf=bw.opt.sf,
               fv=fv,
               numimp=numimp,
               best=best,
