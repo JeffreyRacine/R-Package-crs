@@ -279,10 +279,10 @@ for each dimension of the continuous \code{x} in \code{txdat}}
   to overcome ill conditioned inversion becomes computationally
   burdensome.
 
-  \code{npglpreg} tries to detect whether this is an issue or not for
-  each \code{numeric} predictor and will adjust the search range for
-  \code{\link{snomadr}} and the degree fed to \code{npglpreg} if
-  appropriate.
+  \code{npglpreg} tries to detect whether this is an issue or not when
+  \code{Bernstein=FALSE} for each \code{numeric} predictor and will
+  adjust the search range for \code{\link{snomadr}} and the degree fed
+  to \code{npglpreg} if appropriate.
 
   However, if you suspect that this might be an issue for your specific
   problem you are encouraged to investigate this by limiting
