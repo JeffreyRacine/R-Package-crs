@@ -48,8 +48,8 @@ npglpreg(\dots)
          opts=list("MAX_BB_EVAL"=10000,
                    "EPSILON"=.Machine$double.eps,
                    "INITIAL_MESH_SIZE"=paste("r",1.0e-04,sep=""),
-                   "MIN_MESH_SIZE"=paste("r",1.0e-04,sep=""),
-                   "MIN_POLL_SIZE"=paste("r",1.0e-04,sep="")),
+                   "MIN_MESH_SIZE"=paste("r",1.0e-05,sep=""),
+                   "MIN_POLL_SIZE"=paste("r",1.0e-05,sep="")),
          nmulti = 5,
          random.seed = 42,
          degree.max = 10,
@@ -202,6 +202,22 @@ for each dimension of the continuous \code{x} in \code{txdat}}
 
   Eventually it will be rolled into the np/npRmpi packages after the
   final status of snomadr/NOMAD gets sorted out.
+
+  Note that setting opts and bandwidths to the following will results in
+  more refined optimization of the objective function than the default
+  though at the cost of longer optimization times.
+
+  \preformatted{
+
+    opts <- list("MAX_BB_EVAL"=10000,
+                 "EPSILON"=.Machine$double.eps,
+                 "INITIAL_MESH_SIZE"=paste("r",1.0e-08,sep=""),
+                 "MIN_MESH_SIZE"=paste("r",1.0e-12,sep=""),
+                 "MIN_POLL_SIZE"=paste("r",1.0e-12,sep=""))
+             
+             bandwidth.max <- 1.0e+04
+             bandwidth.min <- 1.0e-01
+  }
   
 }
 \value{
