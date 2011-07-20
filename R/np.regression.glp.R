@@ -20,7 +20,7 @@ mypoly <- function(x,
                    degree,
                    gradient.compute = FALSE,
                    r=0,
-                   Bernstein = FALSE) {
+                   Bernstein = TRUE) {
 
   if(missing(x)) stop(" Error: x required")
   if(missing(degree)) stop(" Error: degree required")
@@ -64,7 +64,7 @@ mypoly <- function(x,
 W.glp <- function(xdat = NULL,
                   degree = NULL,
                   gradient.vec = NULL,
-                  Bernstein = FALSE) {
+                  Bernstein = TRUE) {
 
   if(is.null(xdat)) stop(" Error: You must provide data")
   if(is.null(degree) || any(degree < 0)) stop(paste(" Error: degree vector must contain non-negative integers\ndegree is (", degree, ")\n",sep=""))
@@ -160,7 +160,7 @@ knn.max <- function(x) {
 
 ## This function will check whether the raw polynomial for a given predictor is ill conditioned
 
-check.max.degree <- function(xdat=NULL,degree=NULL,issue.warning=FALSE,Bernstein=FALSE) {
+check.max.degree <- function(xdat=NULL,degree=NULL,issue.warning=FALSE,Bernstein=TRUE) {
 
   if(is.null(xdat)) stop(" xdat must be provided")
   if(is.null(degree)) stop(" degree vector must be provided")
@@ -212,7 +212,7 @@ npglpreg.default <- function(tydat=NULL,
                              bwtype = c("fixed","generalized_nn","adaptive_nn"),
                              gradient.vec=NULL,
                              gradient.categorical=FALSE,
-                             Bernstein=FALSE,
+                             Bernstein=TRUE,
                              ...) {
 
   ukertype <- match.arg(ukertype)
@@ -476,7 +476,7 @@ npglpreg.formula <- function(formula,
                              gradient.vec=NULL,
                              gradient.categorical=FALSE,
                              ridge.warning=FALSE,
-                             Bernstein=FALSE,
+                             Bernstein=TRUE,
                              ...) {
 
   if(!require(np)) stop(" Error: you must install the np package to use this function")
@@ -569,7 +569,7 @@ glpregEst <- function(tydat=NULL,
                       bwtype=c("fixed","generalized_nn","adaptive_nn"),
                       gradient.vec=NULL,
                       ridge.warning=FALSE,
-                      Bernstein=FALSE,
+                      Bernstein=TRUE,
                       ...) {
 
   ukertype <- match.arg(ukertype)
@@ -1100,7 +1100,7 @@ glpcv <- function(ydat=NULL,
                   optim.abstol=.Machine$double.eps,
                   optim.maxit=500,
                   debug=FALSE,
-                  Bernstein=FALSE,
+                  Bernstein=TRUE,
                   ...) {
 
   ## Save seed prior to setting
@@ -1359,7 +1359,7 @@ glpcvNOMAD <- function(ydat=NULL,
                          "MIN_MESH_SIZE"=paste("r",1.0e-04,sep=""),
                          "MIN_POLL_SIZE"=paste("r",1.0e-04,sep="")),
                        ridge.warning=FALSE,
-                       Bernstein=FALSE,
+                       Bernstein=TRUE,
                        ...) {
 
   ## Save the seed prior to setting
@@ -1755,7 +1755,7 @@ compute.bootstrap.errors <- function(tydat,
                                      gradient.vec=NULL,
                                      gradient.categorical=FALSE,
                                      gradient.categorical.index=NULL,
-                                     Bernstein=FALSE,
+                                     Bernstein=TRUE,
                                      ...){
   
   plot.errors.type <- match.arg(plot.errors.type)

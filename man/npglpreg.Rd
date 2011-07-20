@@ -28,7 +28,7 @@ npglpreg(\dots)
          bwtype = c("fixed", "generalized_nn", "adaptive_nn"),
          gradient.vec = NULL,
          gradient.categorical = FALSE,
-         Bernstein = FALSE,
+         Bernstein = TRUE,
          \dots)
 
 \method{npglpreg}{formula}(formula,
@@ -59,7 +59,7 @@ npglpreg(\dots)
          gradient.vec = NULL,
          gradient.categorical = FALSE,
          ridge.warning = FALSE,
-         Bernstein = FALSE,
+         Bernstein = TRUE,
          \dots)
 }
 
@@ -185,7 +185,8 @@ for each dimension of the continuous \code{x} in \code{txdat}}
 }
 
 \item{Bernstein}{ a logical value indicating whether to use raw
-  polynomials (default) or Bernstein polynomials (i.e. Bezier curve aka
+  polynomials or Bernstein polynomials (default) (note that a Bernstein
+  polynomial is also know as a Bezier curve which is also a
   B-spline with no interior knots)
 }
 
