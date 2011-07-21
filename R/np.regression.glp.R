@@ -740,7 +740,8 @@ glpregEst <- function(tydat=NULL,
                 xnames = names(txdat),
                 categorical.index = categorical.index,
                 numeric.index = numeric.index,
-                gradient.vec = gradient.vec))
+                gradient.vec = gradient.vec,
+                Bernstein = Bernstein))
     
   } else {
 
