@@ -203,9 +203,10 @@ for each dimension of the continuous \code{x} in \code{txdat}}
   Eventually it will be rolled into the np/npRmpi packages after the
   final status of snomadr/NOMAD gets sorted out.
 
-  Note that setting opts and bandwidths to the following will results in
-  more refined optimization of the objective function than the default
-  though at the cost of longer optimization times.
+  Note that setting \code{opts}, \code{bandwidth.max}, and
+  \code{bandwidth.min} to the following will result in more refined
+  optimization of the objective function than the default though at the
+  cost of longer optimization times.
 
   \preformatted{
 
@@ -215,8 +216,9 @@ for each dimension of the continuous \code{x} in \code{txdat}}
                  "MIN_MESH_SIZE"=paste("r",1.0e-12,sep=""),
                  "MIN_POLL_SIZE"=paste("r",1.0e-12,sep=""))
              
-             bandwidth.max <- 1.0e+04
-             bandwidth.min <- 1.0e-03
+    bandwidth.max <- 1.0e+04
+    bandwidth.min <- 1.0e-03
+    
   }
   
 }
@@ -301,11 +303,11 @@ for each dimension of the continuous \code{x} in \code{txdat}}
   to \code{npglpreg} if appropriate.
 
   However, if you suspect that this might be an issue for your specific
-  problem you are encouraged to investigate this by limiting
-  \code{degree.max} to value less than the default value (say
-  \code{3}). Alternatively, you might consider re-scaling your
-  \code{numeric} predictors to lie in \eqn{[0,1]} using
-  \code{\link{scale}}.
+  problem and you are using raw polynomials (\code{Bernstein=FALSE}),
+  you are encouraged to investigate this by limiting \code{degree.max}
+  to value less than the default value (say \code{3}). Alternatively,
+  you might consider re-scaling your \code{numeric} predictors to lie in
+  \eqn{[0,1]} using \code{\link{scale}}.
 
   For a given predictor \eqn{x} you can readily determine if this is an
   issue by considering the following: Suppose \eqn{x} is given by
@@ -347,8 +349,8 @@ for each dimension of the continuous \code{x} in \code{txdat}}
   of \eqn{y} with respect to \eqn{x}) represent the effect of a one
   standard deviation change in \eqn{x} and not a one unit change.
 
-  Alternatively, you can use Bernstein polynomials by setting
-  \code{Bernstein=TRUE}.
+  Alternatively, you can use Bernstein polynomials by not setting
+  \code{Bernstein=FALSE}.
   
   
 }

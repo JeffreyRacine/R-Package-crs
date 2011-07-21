@@ -414,7 +414,7 @@ summary.npglpreg <- function(object,
       if(object$bwtype=="fixed") {
         cat(paste("\nBandwidth for ",format(object$xnames[object$numeric.index][j]),": ",format(object$bws[object$numeric.index][j]),sep=""),sep="")
         if(!is.null(object$bws.sf))
-        cat(paste("\nScale factor for ",format(object$xnames[object$numeric.index][j]),": ",format(object$bws.sf[object$numeric.index][j]),sep=""),sep="")          
+          cat(paste(" (scale factor = ", format(object$bws.sf[object$numeric.index][j]),")",sep=""),sep="")          
       } else {
         cat(paste("\nKth nearest neighbor for ",format(object$xnames[object$numeric.index][j]),": ",format(object$bws[object$numeric.index][j]),sep=""),sep="")
       }
