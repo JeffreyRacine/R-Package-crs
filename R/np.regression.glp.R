@@ -17,6 +17,7 @@ sd.robust <- function(x) {
 }
 
 mypoly <- function(x,
+                   ex=NULL,
                    degree,
                    gradient.compute = FALSE,
                    r=0,
@@ -27,6 +28,8 @@ mypoly <- function(x,
   if(degree < 1) stop(" Error: degree must be a positive integer")
 
   if(!Bernstein) {
+
+    if(!is.null(ex)) x <- ex
 
     if(gradient.compute) {
       Z <- NULL
@@ -46,10 +49,18 @@ mypoly <- function(x,
     }
     
   } else {
-    if(gradient.compute) {
-      Z <- gsl.bs(x,degree=degree,deriv=r)
+    if(is.null(ex)) {
+      if(gradient.compute) {
+        Z <- gsl.bs(x,degree=degree,deriv=r)
+      } else {
+        Z <- gsl.bs(x,degree=degree)
+      }
     } else {
-      Z <- gsl.bs(x,degree=degree)
+      if(gradient.compute) {
+        Z <- predict(gsl.bs(x,degree=degree,deriv=r),newx=ex)
+      } else {
+        Z <- predict(gsl.bs(x,degree=degree),newx=ex)
+      }
     }
   }
 
@@ -62,6 +73,7 @@ mypoly <- function(x,
 ## polynomial with varying polynomial order.
 
 W.glp <- function(xdat = NULL,
+                  exdat = NULL,
                   degree = NULL,
                   gradient.vec = NULL,
                   Bernstein = TRUE) {
@@ -76,6 +88,11 @@ W.glp <- function(xdat = NULL,
 
   if(k > 0) {
     xdat.numeric <- as.data.frame(xdat[,xdat.col.numeric])
+    if(!is.null(exdat)) {
+      exdat.numeric <- as.data.frame(exdat[,xdat.col.numeric])
+    } else {
+      exdat.numeric <- NULL
+    }
   }
 
   num.numeric <- ncol(xdat.numeric)
@@ -96,7 +113,11 @@ W.glp <- function(xdat = NULL,
 
     ## Local constant OR no continuous variables
 
-    return(matrix(1,nrow=nrow(xdat.numeric),ncol=1))
+    if(is.null(exdat)) {
+      return(matrix(1,nrow=nrow(xdat.numeric),ncol=1))
+    } else {
+      return(matrix(1,nrow=nrow(exdat.numeric),ncol=1))
+    }
 
   } else {
 
@@ -116,10 +137,28 @@ W.glp <- function(xdat = NULL,
         }
       }
     }
-    res <- rep.int(1,nrow(xdat.numeric))
-    if(degree[1] > 0) res <- cbind(1, mypoly(xdat.numeric[,1],degree[1],gradient.compute=gradient.compute,r=gradient.vec[1],Bernstein=Bernstein))[, 1 + z[, 1]]
-    if(k > 1) for (i in 2:k) if(degree[i] > 0) res <- res * cbind(1, mypoly(xdat.numeric[,i],degree[i],gradient.compute=gradient.compute,r=gradient.vec[i],Bernstein=Bernstein))[, 1 + z[, i]]
-    res <- matrix(res,nrow=NROW(xdat))
+    if(is.null(exdat)) {
+      res <- rep.int(1,nrow(xdat.numeric))
+    } else {
+      res <- rep.int(1,nrow(exdat.numeric))
+    }
+    if(degree[1] > 0) res <- cbind(1, mypoly(x=xdat.numeric[,1],
+                                             ex=exdat.numeric[,1],
+                                             degree=degree[1],
+                                             gradient.compute=gradient.compute,
+                                             r=gradient.vec[1],
+                                             Bernstein=Bernstein))[, 1 + z[, 1]]
+    if(k > 1) for (i in 2:k) if(degree[i] > 0) res <- res * cbind(1, mypoly(x=xdat.numeric[,i],
+                                                                            ex=exdat.numeric[,i],
+                                                                            degree=degree[i],
+                                                                            gradient.compute=gradient.compute,
+                                                                            r=gradient.vec[i],
+                                                                            Bernstein=Bernstein))[, 1 + z[, i]]
+    if(is.null(exdat)) {
+      res <- matrix(res,nrow=NROW(xdat))
+    } else {
+      res <- matrix(res,nrow=NROW(exdat))
+    }
     colnames(res) <- apply(z, 1L, function(x) paste(x, collapse = "."))
     return(as.matrix(cbind(1,res)))
 
@@ -178,11 +217,17 @@ check.max.degree <- function(xdat=NULL,degree=NULL,issue.warning=FALSE,Bernstein
   
     for(i in 1:num.numeric) {
       if(degree[i]>0) {
-        X <- mypoly(xdat[,numeric.index[i]],degree=degree[i],Bernstein=Bernstein)
+        X <- mypoly(x=xdat[,numeric.index[i]],
+                    ex=NULL,
+                    degree=degree[i],
+                    Bernstein=Bernstein)
         d[i] <- degree[i]
         while(rcond(t(X)%*%X)<.Machine$double.eps && d[i] > 1) {
           d[i] <- d[i] - 1
-          X <- mypoly(xdat[,numeric.index[i]],degree=d[i],Bernstein=Bernstein)
+          X <- mypoly(x=xdat[,numeric.index[i]],
+                      ex=NULL,
+                      degree=d[i],
+                      Bernstein=Bernstein)
         }
         if(d[i] < degree[i]) {
           if(issue.warning) warning(paste("\r Predictor ",i," polynomial is ill-conditioned beyond degree ",d[i],": see note in ?npglpreg",sep=""))
@@ -699,16 +744,30 @@ glpregEst <- function(tydat=NULL,
     
   } else {
 
-    W <- W.glp(txdat,degree,Bernstein=Bernstein)
+    W <- W.glp(xdat=txdat,
+               degree=degree,
+               Bernstein=Bernstein)
 
     if(miss.ex) {
       W.eval <- W
+
+      if(!is.null(gradient.vec)) W.eval.deriv <- W.glp(xdat=txdat,
+                                                       degree=degree,
+                                                       gradient.vec=gradient.vec,
+                                                       Bernstein=Bernstein)
     } else {
-      W.eval <- W.glp(exdat,degree,Bernstein=Bernstein)
+      W.eval <- W.glp(xdat=txdat,
+                      exdat=exdat,
+                      degree=degree,
+                      Bernstein=Bernstein)
+
+      if(!is.null(gradient.vec)) W.eval.deriv <- W.glp(xdat=txdat,
+                                                       exdat=exdat,
+                                                       degree=degree,
+                                                       gradient.vec=gradient.vec,
+                                                       Bernstein=Bernstein)
     }
     
-    if(!is.null(gradient.vec)) W.eval.deriv <- W.glp(exdat,degree,gradient.vec=gradient.vec,Bernstein=Bernstein)
-
     ## Local polynomial via smooth coefficient formulation and one
     ## call to npksum
 
@@ -1163,7 +1222,9 @@ glpcv <- function(ydat=NULL,
   ## Pass in the local polynomial weight matrix rather than
   ## recomputing with each iteration.
 
-  W <- W.glp(xdat,degree,Bernstein=Bernstein)
+  W <- W.glp(xdat=xdat,
+             degree=degree,
+             Bernstein=Bernstein)
 
   sum.lscv <- function(bw.gamma,...) {
 
@@ -1515,7 +1576,9 @@ glpcvNOMAD <- function(ydat=NULL,
     if(cv=="degree-bandwidth")
       degree <- round(input[(num.bw+1):(num.bw+num.numeric)])
 
-    W <- W.glp(xdat,degree,Bernstein=Bernstein)
+    W <- W.glp(xdat=xdat,
+               degree=degree,
+               Bernstein=Bernstein)
 
     if(all(bw.gamma>=0)&&all(bw.gamma[!xdat.numeric]<=1)) {
       lscv <- minimand.cv.ls(bws=bw.gamma,
@@ -1555,7 +1618,9 @@ glpcvNOMAD <- function(ydat=NULL,
     if(cv=="degree-bandwidth")
       degree <- round(input[(num.bw+1):(num.bw+num.numeric)])
 
-    W <- W.glp(xdat,degree,Bernstein=Bernstein)
+    W <- W.glp(xdat=xdat,
+               degree=degree,
+               Bernstein=Bernstein)
 
     if(all(bw.gamma>=0)&&all(bw.gamma[!xdat.numeric]<=1)) {
       aicc <- minimand.cv.aic(bws=bw.gamma,
