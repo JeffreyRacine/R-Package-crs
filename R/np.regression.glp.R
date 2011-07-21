@@ -113,6 +113,9 @@ W.glp <- function(xdat = NULL,
 
   if(!is.null(gradient.vec) && (length(gradient.vec) != num.numeric)) stop(paste(" Error: gradient vector and number of numeric predictors must be conformable\n",sep=""))
   if(!is.null(gradient.vec) && any(gradient.vec < 0)) stop(paste(" Error: gradient vector must contain non-negative integers\n",sep=""))
+  ## Variables that do not enter the gradient computation will have a
+  ## polynomial basis of zeros (but otherwise conformable with its
+  ## actual basis)
   if(!is.null(gradient.vec)) gradient.vec[gradient.vec==0] <- -1
   if(!is.null(gradient.vec)) {
     gradient.compute <- TRUE
@@ -211,7 +214,10 @@ knn.max <- function(x) {
 
 }
 
-## This function will check whether the raw polynomial for a given predictor is ill conditioned
+## This function will check whether the polynomial for a given
+## predictor is ill conditioned, return TRUE if it is but also pass
+## (as an attribute) a vector containing the maximum well-conditioned
+## polynomial degree for each numeric predictor in xdat
 
 check.max.degree <- function(xdat=NULL,degree=NULL,issue.warning=FALSE,Bernstein=TRUE) {
 
