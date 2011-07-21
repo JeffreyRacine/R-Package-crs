@@ -51,13 +51,27 @@ mypoly <- function(x,
   } else {
     if(is.null(ex)) {
       if(gradient.compute) {
-        Z <- gsl.bs(x,degree=degree,deriv=r)
+        if(r == -1) {
+          Z <- gsl.bs(x,degree=degree,deriv=0)
+          ## If we want to send back matrix of zeros (i.e will not
+          ## count in computation of derivative) return this baby.
+          Z <- matrix(0,NROW(Z),NCOL(Z))          
+        } else {
+          Z <- gsl.bs(x,degree=degree,deriv=r)
+        }
       } else {
         Z <- gsl.bs(x,degree=degree)
       }
     } else {
       if(gradient.compute) {
-        Z <- predict(gsl.bs(x,degree=degree,deriv=r),newx=ex)
+        if(r == -1) {
+          Z <- predict(gsl.bs(x,degree=degree,deriv=0),newx=ex)
+          ## If we want to send back matrix of zeros (i.e will not
+          ## count in computation of derivative) return this baby.
+          Z <- matrix(0,NROW(Z),NCOL(Z))
+        } else {
+          Z <- predict(gsl.bs(x,degree=degree,deriv=r),newx=ex)
+        }
       } else {
         Z <- predict(gsl.bs(x,degree=degree),newx=ex)
       }
