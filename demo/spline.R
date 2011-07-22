@@ -16,7 +16,7 @@ prod.spline <- function(x,
                         xeval=NULL,
                         zeval=NULL,
                         knots=c("quantiles","uniform"),
-                        basis=c("additive","tensor"),
+                        basis=c("additive","tensor","glp"),
                         deriv.index=1,
                         deriv=0) {
 
@@ -26,10 +26,10 @@ prod.spline <- function(x,
   if(missing(x) || missing (K)) stop(" must provide x and K")
   if(!is.matrix(K)) stop(" K must be a two-column matrix")
 
-  ## Additive models have intercept=FALSE in gsl.bs but intercept=TRUE
-  ## in lm()
+  ## Additive and glp models have intercept=FALSE in gsl.bs but
+  ## intercept=TRUE in lm()
 
-  gsl.intercept <- ifelse(basis=="additive", FALSE, TRUE)
+  gsl.intercept <- ifelse(basis=="additive" || basis=="glp", FALSE, TRUE)
 
   ## Care in passing (extra cast) and ensure K is a matrix of integers
   ## (K contains the spline degree [integer] for each dimension in
@@ -96,6 +96,7 @@ prod.spline <- function(x,
         } else {
           tp[[j]] <- predict(gsl.bs(x[,i,drop=FALSE],degree=K[i,1],nbreak=(K[i,2]+1),knots=knots.vec,intercept=gsl.intercept),newx=xeval[,i,drop=FALSE])
         }
+        if((i!=deriv.index)&&(deriv!=0)&&(basis=="glp")) tp[[j]] <- matrix(0,nrow(tp[[j]]),ncol(tp[[j]]))
         j <- j+1
       }
     }
@@ -123,6 +124,7 @@ prod.spline <- function(x,
       dim.P.no.tensor <- NCOL(P)
       ## Solely tensor if basis==tensor      
       if(basis=="tensor") P <- tensor.prod.model.matrix(tp)
+      if(basis=="glp") P <- glp.model.matrix(tp)      
     } else {
       P <- tp[[1]]
       dim.P.no.tensor <- NCOL(P)
@@ -154,7 +156,7 @@ predict.kernel.spline <- function(x,
                                   xeval=NULL,
                                   zeval=NULL,
                                   knots=c("quantiles","uniform"),
-                                  basis=c("additive","tensor")){
+                                  basis=c("additive","tensor","glp")){
 
   if(missing(x) || missing(y) || missing (K)) stop(" must provide x, y and K")
   if(!is.matrix(K)) stop(" K must be a two-column matrix")  
@@ -179,7 +181,8 @@ predict.kernel.spline <- function(x,
       ## Degree > 0
 
       P <- prod.spline(x=x,K=K,knots=knots,basis=basis)
-      if(basis=="additive") {
+
+      if(basis=="additive" || basis=="glp") {
         model <- lm(y~P)
       } else {
         model <- lm(y~P-1)
@@ -235,7 +238,7 @@ predict.kernel.spline <- function(x,
           L <- prod.kernel(Z=z,z=z.unique[ind.vals[i],],lambda=lambda,kernel.type=kernel.type)
           P <- prod.spline(x=x,K=K,knots=knots,basis=basis)
           k <- NCOL(P)
-          if(basis=="additive") {
+          if(basis=="additive" || basis=="glp") {
             model.z.unique <- lm(y~P,weights=L)
           } else {
             model.z.unique <- lm(y~P-1,weights=L)
@@ -266,7 +269,7 @@ predict.kernel.spline <- function(x,
           L <- prod.kernel(Z=z,z=zeval.unique[ind.zeval.vals[i],],lambda=lambda,kernel.type=kernel.type)
           P <- prod.spline(x=x,K=K,knots=knots,basis=basis)
           k <- NCOL(P)
-          if(basis=="additive") {
+          if(basis=="additive" || basis=="glp") {
             model.z.unique <- lm(y~P,weights=L)
           } else {
             model.z.unique <- lm(y~P-1,weights=L)
@@ -297,7 +300,7 @@ predict.kernel.spline <- function(x,
         for(i in 1:nrow.z.unique) {
           zz <- ind == ind.vals[i]
           L <- prod.kernel(Z=z,z=z.unique[ind.vals[i],],lambda=lambda,kernel.type=kernel.type)
-          if(basis=="additive") {
+          if(basis=="additive" || basis=="glp") {
             model.z.unique <- lm(y~.,weights=L,data=data.frame(y,z.factor))
           } else {
             model.z.unique <- lm(y~.-1,weights=L,data=data.frame(y,z.factor))
@@ -329,7 +332,7 @@ predict.kernel.spline <- function(x,
         for(i in 1:nrow.zeval.unique) {
           zz <- ind.zeval == ind.zeval.vals[i]
           L <- prod.kernel(Z=z,z=zeval.unique[ind.zeval.vals[i],],lambda=lambda,kernel.type=kernel.type)
-          if(basis=="additive") {
+          if(basis=="additive" || basis=="glp") {
             model.z.unique <- lm(y~.,weights=L,data=data.frame(y,z.factor))
           } else {
             model.z.unique <- lm(y~.-1,weights=L,data=data.frame(y,z.factor))
@@ -368,7 +371,7 @@ deriv.kernel.spline <- function(x,
                                 xeval=NULL,
                                 zeval=NULL,
                                 knots=c("quantiles","uniform"),
-                                basis=c("additive","tensor"),
+                                basis=c("additive","tensor","glp"),
                                 deriv.index=1,
                                 deriv=0) {
 
@@ -387,7 +390,7 @@ deriv.kernel.spline <- function(x,
   ## univariate tensor spline bases. This is used only for setting
   ## appropriate columns for derivative computation.
   
-  if(basis=="additive") {
+  if(basis=="additive" || basis=="glp") {
     K.additive <- K
     K.additive[,1] <- ifelse(K[,1]>0,K[,1]-1,K[,1])
   }
@@ -405,7 +408,7 @@ deriv.kernel.spline <- function(x,
       dim.P.no.tensor <- attr(P.deriv,"dim.P.no.tensor")
       dim.P.tensor <- NCOL(P)
 
-      if(basis=="additive") {
+      if(basis=="additive" || basis=="glp") {
         model <- lm(y~P)
         dim.P.deriv <- sum(K.additive[deriv.index,])
         deriv.start <- ifelse(deriv.index!=1,sum(K.additive[1:(deriv.index-1),])+1,1)      
@@ -457,7 +460,7 @@ deriv.kernel.spline <- function(x,
           dim.P.no.tensor <- attr(P.deriv,"dim.P.no.tensor")
           dim.P.tensor <- NCOL(P)
 
-          if(basis=="additive") {
+          if(basis=="additive" || basis=="glp") {
             model <- lm(y~P)
             dim.P.deriv <- sum(K.additive[deriv.index,])
             deriv.start <- ifelse(deriv.index!=1,sum(K.additive[1:(deriv.index-1),])+1,1)      
@@ -496,7 +499,7 @@ deriv.kernel.spline <- function(x,
           dim.P.no.tensor <- attr(P.deriv,"dim.P.no.tensor")
           dim.P.tensor <- NCOL(P)
 
-          if(basis=="additive") {
+          if(basis=="additive" || basis=="glp") {
             model <- lm(y~P,weights=L)
             dim.P.deriv <- sum(K.additive[deriv.index,])
             deriv.start <- ifelse(deriv.index!=1,sum(K.additive[1:(deriv.index-1),])+1,1)      
@@ -551,7 +554,7 @@ predict.factor.spline <- function(x,
                                   xeval=NULL,
                                   zeval=NULL,
                                   knots=c("quantiles","uniform"),
-                                  basis=c("additive","tensor"),
+                                  basis=c("additive","tensor","glp"),
                                   prune=FALSE,
                                   prune.index=NULL,
                                   trace=0){
@@ -587,7 +590,7 @@ predict.factor.spline <- function(x,
       ## P.
       P.df <- data.frame(P)
       names(P.df) <- paste("P",seq(1,NCOL(P.df)),sep="")
-      if(basis=="additive") {
+      if(basis=="additive" || basis=="glp") {
         model <- lm(y~.,data=P.df)
       } else {
         model <- lm(y~.-1,data=P.df)
@@ -595,7 +598,7 @@ predict.factor.spline <- function(x,
       cv <- mean(residuals(model)^2/(1-hatvalues(model))^2)
       console <- printClear(console)
       console <- printPush("Pruning...",console = console)
-      if(basis=="additive") {
+      if(basis=="additive" || basis=="glp") {
         model.pruned <- stepCV(lm(y~.,data=P.df),
                                scope=list(upper=~.,lower=~1),
                                k=log(length(y)),
@@ -610,7 +613,7 @@ predict.factor.spline <- function(x,
       if(cv.pruned <= cv) {
         IND <- logical()
         for(i in 1:NCOL(P.df)) IND[i] <- any(names(P.df)[i]==names(model.pruned$model[,-1,drop=FALSE]))
-        if(basis=="additive") {
+        if(basis=="additive" || basis=="glp") {
           model <- lm(y~P[,IND,drop=FALSE])
         } else {
           model <- lm(y~P[,IND,drop=FALSE]-1)
@@ -618,7 +621,7 @@ predict.factor.spline <- function(x,
       } else {
         warning(" pruned model did not lower cross-validation score, using non-pruned bases")
         IND <- !logical(length=NCOL(P))
-        if(basis=="additive") {
+        if(basis=="additive" || basis=="glp") {
           model <- lm(y~P)
         } else {
           model <- lm(y~P-1)
@@ -627,7 +630,7 @@ predict.factor.spline <- function(x,
     } else if(prune) {
       ## Pruning, index passed in...
       IND <- prune.index
-      if(basis=="additive") {
+      if(basis=="additive" || basis=="glp") {
         model <- lm(y~P[,IND,drop=FALSE])
       } else {
         model <- lm(y~P[,IND,drop=FALSE]-1)
@@ -637,7 +640,7 @@ predict.factor.spline <- function(x,
     } else {
       ## No pruning
       IND <- !logical(length=NCOL(P))
-      if(basis=="additive") {
+      if(basis=="additive" || basis=="glp") {
         model <- lm(y~P)
       } else {
         model <- lm(y~P-1)
@@ -701,7 +704,7 @@ deriv.factor.spline <- function(x,
                                 xeval=NULL,
                                 zeval=NULL,
                                 knots=c("quantiles","uniform"),
-                                basis=c("additive","tensor"),
+                                basis=c("additive","tensor","glp"),
                                 deriv.index=1,
                                 deriv=0,
                                 prune.index=NULL) {
@@ -719,7 +722,7 @@ deriv.factor.spline <- function(x,
   ## univariate tensor spline bases. This is used only for setting
   ## appropriate columns for derivative computation.
   
-  if(basis=="additive") {
+  if(basis=="additive" || basis=="glp") {
     K.additive <- K
     K.additive[,1] <- ifelse(K[,1]>0,K[,1]-1,K[,1])
   }
@@ -744,7 +747,7 @@ deriv.factor.spline <- function(x,
     coef.vec.model <- numeric(length=NCOL(P))
     vcov.mat.model <- matrix(0,nrow=NCOL(P),ncol=NCOL(P))
 
-    if(basis=="additive") {
+    if(basis=="additive" || basis=="glp") {
       model <- lm(y~P[,prune.index,drop=FALSE])
       coef.vec.model[prune.index] <- coef(model)[-1]
       vcov.mat.model[prune.index,prune.index] <- vcov(model)[-1,-1,drop=FALSE]
@@ -802,7 +805,7 @@ cv.kernel.spline <- function(x,
                              nrow.z.unique,
                              kernel.type=c("nominal","ordinal"),
                              knots=c("quantiles","uniform"),
-                             basis=c("additive","tensor"),
+                             basis=c("additive","tensor","glp"),
                              cv.func=c("cv.ls","cv.gcv","cv.aic")) {
 
   if(missing(x) || missing(y) || missing (K)) stop(" must provide x, y and K")
@@ -817,7 +820,7 @@ cv.kernel.spline <- function(x,
   ## Additive spline regression models have an intercept in the lm()
   ## model (though not in the gsl.bs function)
 
-  lm.intercept <- ifelse(basis=="additive", TRUE, FALSE)
+  lm.intercept <- ifelse(basis=="additive" || basis=="glp", TRUE, FALSE)
 
   ## Without computing P, compute the number of columns that P would
   ## be and if degrees of freedom is 1 or less, return a large penalty.
@@ -825,7 +828,7 @@ cv.kernel.spline <- function(x,
   n <- length(y)
   c.vec <- NULL
 
-  if(basis=="additive") {
+  if(basis=="additive" || basis=="glp") {
     if(any(K[,1] > 0)) c.vec <- rowSums(K[K[,1]!=0,,drop=FALSE])-1
     ncol.P <- sum(c.vec)
   }
@@ -869,7 +872,7 @@ cv.kernel.spline <- function(x,
       for(i in 1:nrow.z.unique) {
         zz <- ind == ind.vals[i]
         L <- prod.kernel(Z=z,z=z.unique[ind.vals[i],],lambda=lambda,kernel.type=kernel.type)
-        if(basis=="additive") {
+        if(basis=="additive" || basis=="glp") {
           ## Additive spline regression models have an intercept in the lm()
           ## model (though not in the gsl.bs function)
           model <- lm.wfit(cbind(1,P),y,L)
@@ -885,7 +888,7 @@ cv.kernel.spline <- function(x,
       for(i in 1:nrow.z.unique) {
         zz <- ind == ind.vals[i]
         L <- prod.kernel(Z=z,z=z.unique[ind.vals[i],],lambda=lambda,kernel.type=kernel.type)
-        if(basis=="additive") {
+        if(basis=="additive" || basis=="glp") {
           model <- lm(y~.,weights=L,data=data.frame(y,z.factor))
         } else {
           model <- lm(y~.-1,weights=L,data=data.frame(y,z.factor))
@@ -926,7 +929,7 @@ cv.factor.spline <- function(x,
                              I=NULL,
                              kernel.type=c("nominal","ordinal"),
                              knots=c("quantiles","uniform"),
-                             basis=c("additive","tensor"),
+                             basis=c("additive","tensor","glp"),
                              cv.func=c("cv.ls","cv.gcv","cv.aic")) {
 
   if(missing(x) || missing(y) || missing (K)) stop(" must provide x, y and K")
@@ -957,7 +960,7 @@ cv.factor.spline <- function(x,
     }
   }
 
-  if(basis=="additive") {
+  if(basis=="additive" || basis=="glp") {
     if(any(K[,1] > 0)) c.vec <- rowSums(K[K[,1]!=0,,drop=FALSE])-1
     ncol.P <- sum(c(c.vec,i.vec))
   }
@@ -971,7 +974,7 @@ cv.factor.spline <- function(x,
   ## Otherwise, compute the cross-validation function
 
   if(any(K[,1] > 0)||any(I > 0)) {
-    if(basis=="additive") {
+    if(basis=="additive" || basis=="glp") {
       ## Additive spline regression models have an intercept in the lm()
       ## model (though not in the gsl.bs function)
       model <- lm.fit(cbind(1,prod.spline(x=x,z=z,K=K,I=I,knots=knots,basis=basis)),y)

@@ -80,7 +80,8 @@ between these two approaches is that the use of indicator basis
 functions consume degrees of freedom, while kernel weighting does not.
 
 This package implements the approaches described in
-\citep{MA_RACINE_YANG:2011} and \citep{MA_RACINE:2011} when the option
+\citeauthor{MA_RACINE_YANG:2011} \citeyear{MA_RACINE_YANG:2011} and
+\citeauthor{MA_RACINE:2011} \citeyear{MA_RACINE:2011} when the option
 \code{kernel=TRUE} is selected as described below. As well, this
 package implements a range of related methods and has options that
 (hopefully) make it appealing for applied projects, research, and
@@ -201,15 +202,58 @@ B_1\otimes B_2\otimes \dots \otimes B_p,
 \end{equation*}
 where $\otimes$ is the Kronecker product where the products operate
 column-wise and $B_j$ is the basis matrix for predictor $j$ as
-outlined above. 
+outlined above. We also support a `generalized' polynomial B-spline
+basis that consists of a varying-order polynomial with appropriate
+interactions.  A general $p$th order local polynomial estimator for
+the {\it multivariate} predictor case is more cumbersome notationally
+speaking (we let $q$ denote the number of continuous predictors). The
+general multivariate case is considered by \citeauthor{MASRY:1996a}
+\citeyear{MASRY:1996a} who develops some carefully considered notation
+and establishes the uniform almost sure convergence rate and the
+pointwise asymptotic normality result for the local polynomial
+estimator of $g(x)$ and its derivatives up to order $p$. Borrowing
+from \citeauthor{MASRY:1996a} \citeyear{MASRY:1996a}, we introduce the
+following notation:
+\begin{equation*}
+  r = (r_1,\dots ,r_q) , \quad r! = r_1! \times \dots
+  \times r_q! ,
+  \quad
+  \bar r = \sum_{j=1}^q r_j,
+\end{equation*}
+\begin{align}
+  \label{regression:eq:Masry 2}
+  x^r = x_1^{r_1}\times \dots \times x_{q}^{r_q}, \quad \sum_{ 0 \leq
+    \bar r \leq p} &= \sum_{j=0 }^p \sum_{r_1=0}^j \dots
+  \sum_{r_q=0}^j,\cr &\quad\text{ (with $\bar r \equiv r_1+\dots +r_q
+    = j$) }
+\end{align}
+and
+\begin{equation*}
+  (D^r g)(x) = \frac{ \partial^r g(x) }{ \partial x_1^{r_1}
+    \dots \partial x_q^{r_q} }.
+\end{equation*}
+Using this notation, and assuming that $g(x)$ has derivatives of total
+order $p+1$ at a point $x$, we can approximate $g(z)$ locally using a
+multivariate polynomial of total order $p$ given by
+\begin{equation*}
+  g(z) \stackrel{\sim}{= } \sum_{ 0 \leq \bar r \leq p }
+  \frac{1}{r!} (D^r) g(v)|_{v=x}(z-x)^r.
+\end{equation*}
+The generalized (varying-order) involves using the following
+expression rather than \eqref{regression:eq:Masry 2} above,
+\begin{equation*}
+  \sum_{ 0 \leq \bar r \leq {\max\{p_1,\dots,p_q\}}} = \sum_{j=0
+  }^{\max\{p_1,\dots,p_q\}} \sum_{r_1=0}^{j\le p_1} \dots
+  \sum_{r_q=0}^{j\le p_q}.
+\end{equation*}
 
 When additive B-spline bases are employed we have a semiparametric
 `additive' spline model (no interaction among variables), otherwise
 when the tensor product is employed we have a fully nonparametric
 model (interaction among all variables).  Whether to use the additive
-or tensor product bases can be automatically determined via any
-\code{cv.func} method (see the options for \code{basis=} in
-\code{?crs}).
+or tensor product or generalized polynomial bases can be automatically
+determined via any \code{cv.func} method (see the options for
+\code{basis=} in \code{?crs}).
 
 We offer the option to use categorical kernel weighting
 (\code{lm(\dots,weights=L)}) to handle the presence of categorical

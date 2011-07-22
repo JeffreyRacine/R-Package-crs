@@ -1,5 +1,8 @@
 Changes from Version 0.15-0 to 0.15-1 [xx-Jul-2011]
 
+* Added support for generalized B-spline kernel bases (varying order
+  generalized polynomial)
+
 * Corrected issue with plot when variables were cast as factors in the
   model formula
 
