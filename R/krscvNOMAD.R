@@ -18,7 +18,7 @@ krscvNOMAD <- function(xz,
                        kernel.type=c("nominal","ordinal"),
                        complexity=c("degree-knots","degree","knots"),
                        knots=c("quantiles","uniform"),
-                       basis=c("additive","tensor","auto"),
+                       basis=c("additive","tensor","glp","auto"),
                        cv.func=c("cv.ls","cv.gcv","cv.aic"),
                        degree=degree,
                        segments=segments, 
@@ -158,6 +158,24 @@ krscvNOMAD <- function(xz,
                 if(cv > cv.tensor){
                     cv <- cv.tensor
                     basis.opt <-"tensor"
+                }
+
+                cv.glp <- cv.kernel.spline(x=x,
+                                              y=y,
+                                              z=z,
+                                              K=K,
+                                              lambda=lambda,
+                                              z.unique=z.unique,
+                                              ind=ind,
+                                              ind.vals=ind.vals,
+                                              nrow.z.unique=nrow.z.unique,
+                                              kernel.type=kernel.type,
+                                              knots=knots,
+                                              basis="glp",
+                                              cv.func=cv.func)
+                if(cv > cv.glp){
+                    cv <- cv.glp
+                    basis.opt <-"glp"
                 }
 
             } else {

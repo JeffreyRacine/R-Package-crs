@@ -21,7 +21,7 @@ crs(\dots)
     kernel.type = c("nominal","ordinal"),
     complexity = c("degree-knots","degree","knots"),
     knots = c("quantiles","uniform"),
-    basis = c("additive","tensor","auto"),
+    basis = c("additive","tensor","glp","auto"),
     deriv = 0,
     data.return = FALSE,
     prune = FALSE,
@@ -44,7 +44,7 @@ crs(\dots)
     kernel.type = c("nominal","ordinal"),
     complexity = c("degree-knots","degree","knots"),
     knots = c("quantiles","uniform"),
-    basis = c("additive","tensor","auto"),
+    basis = c("additive","tensor","glp","auto"),
     deriv = 0,
     data.return = FALSE,
     prune = FALSE,
@@ -151,15 +151,15 @@ in \code{x} are included or omitted from the resulting estimate }
 
 \item{basis}{ a character string (default \code{basis="additive"})
     indicating whether the additive or tensor product B-spline basis
-    matrix for a multivariate polynomial spline should be used. Note
-    this can be automatically determined by cross-validation if
-    \code{cv="nomad"} or \code{cv="exhaustive"} and \code{basis="auto"},
-    and is an \sQuote{all or none} proposition (i.e. interaction terms
-    for all predictors or for no predictors given the nature of
-    \sQuote{tensor products}). Note also that if there is only one
-    predictor this defaults to \code{basis="additive"} to avoid
-    unnecessary computation as the spline bases are equivalent in this
-    case }
+    matrix for a multivariate polynomial spline or generalized B-spline
+    polynomial basis should be used. Note this can be automatically
+    determined by cross-validation if \code{cv="nomad"} or
+    \code{cv="exhaustive"} and \code{basis="auto"}, and is an
+    \sQuote{all or none} proposition (i.e. interaction terms for all
+    predictors or for no predictors given the nature of \sQuote{tensor
+    products}). Note also that if there is only one predictor this
+    defaults to \code{basis="additive"} to avoid unnecessary computation
+    as the spline bases are equivalent in this case }
 
   \item{deriv}{ an integer \code{l} (default \code{deriv=0}) specifying
   whether to compute the univariate \code{l}th partial derivative for

@@ -22,7 +22,7 @@ frscv <- function(xz,
                   segments.min=1, 
                   complexity=c("degree-knots","degree","knots"),
                   knots=c("quantiles","uniform"),
-                  basis=c("additive","tensor","auto"),
+                  basis=c("additive","tensor","glp","auto"),
                   cv.func=c("cv.ls","cv.gcv","cv.aic"),
                   degree=degree,
                   segments=segments) {
@@ -327,6 +327,29 @@ frscv <- function(xz,
       if(output < cv.vec[j]) {
         cv.vec[j] <- output
         basis.vec[j] <- "tensor"
+      }
+
+      output <- cv.objc(input=KI.mat[j,],
+                        x=x,
+                        y=y,
+                        z=z,
+                        degree.max=degree.max, 
+                        segments.max=segments.max, 
+                        degree.min=degree.min, 
+                        segments.min=segments.min, 
+                        restart=0,
+                        num.restarts=0,
+                        j=j,
+                        nrow.KI.mat=nrow.KI.mat,
+                        t2=Sys.time(),
+                        complexity=complexity,
+                        knots=knots,
+                        basis="glp",
+                        cv.func=cv.func)
+
+      if(output < cv.vec[j]) {
+        cv.vec[j] <- output
+        basis.vec[j] <- "glp"
       }
 
     } else {

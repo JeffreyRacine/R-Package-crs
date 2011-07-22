@@ -24,7 +24,7 @@ krscv <- function(xz,
                   restarts=0,
                   complexity=c("degree-knots","degree","knots"),
                   knots=c("quantiles","uniform"),
-                  basis=c("additive","tensor","auto"),
+                  basis=c("additive","tensor","glp","auto"),
                   cv.func=c("cv.ls","cv.gcv","cv.aic"),
                   degree=degree,
                   segments=segments) {
@@ -417,9 +417,96 @@ krscv <- function(xz,
         lambda.mat[j,] <- output$par
       }
 
+      ## Next, basis=="glp"
+
+      output$convergence <- 42
+
+      while(output$convergence != 0) {
+
+        output <- optim(par=runif(num.z),
+                        cv.objc,
+                        lower=rep(0,num.z),
+                        upper=rep(1,num.z),
+                        method="L-BFGS-B",
+                        x=x,
+                        y=y,
+                        z=z,
+                        K=K.mat[j,],
+                        degree.max=degree.max, 
+                        segments.max=segments.max, 
+                        degree.min=degree.min, 
+                        segments.min=segments.min, 
+                        restart=0,
+                        num.restarts=restarts,
+                        z.unique=z.unique,
+                        ind=ind,
+                        ind.vals=ind.vals,
+                        nrow.z.unique=nrow.z.unique,
+                        kernel.type=kernel.type,
+                        j=j,
+                        nrow.K.mat=nrow.K.mat,
+                        t2=t2,
+                        complexity=complexity,
+                        knots=knots,
+                        basis="glp",
+                        cv.func=cv.func)
+
+      }
+
+      if(restarts > 0) {
+
+        for(r in 1:restarts) {
+
+          output.restart$convergence <- 42
+
+          while(output.restart$convergence != 0) {
+
+            output.restart <- optim(par=runif(num.z),
+                                    cv.objc,
+                                    lower=rep(0,num.z),
+                                    upper=rep(1,num.z),
+                                    method="L-BFGS-B",
+                                    x=x,
+                                    y=y,
+                                    z=z,
+                                    K=K.mat[j,],
+                                    degree.max=degree.max, 
+                                    segments.max=segments.max, 
+                                    degree.min=degree.min, 
+                                    segments.min=segments.min, 
+                                    restart=r,
+                                    num.restarts=restarts,
+                                    z.unique=z.unique,
+                                    ind=ind,
+                                    ind.vals=ind.vals,
+                                    nrow.z.unique=nrow.z.unique,
+                                    kernel.type=kernel.type,
+                                    j=j,
+                                    nrow.K.mat=nrow.K.mat,
+                                    t2=t2,
+                                    complexity=complexity,
+                                    knots=knots,
+                                    basis="glp",
+                                    cv.func=cv.func)
+
+          }
+
+          if(output.restart$value < output$value) output <- output.restart
+
+        }
+
+      } ## end restarts
+
+      if(output$value < cv.vec[j]) {
+        cv.vec[j] <- output$value
+        basis.vec[j] <- "glp"
+        lambda.mat[j,] <- output$par
+      }
+      
+
     } else { ## end auto
 
-      ## Either basis=="additive" or "tensor"
+      ## Either basis=="additive" or "tensor" or "glp"
 
       output$convergence <- 42
 

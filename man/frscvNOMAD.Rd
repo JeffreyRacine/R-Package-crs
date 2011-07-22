@@ -21,7 +21,7 @@ frscvNOMAD(xz,
            segments.min = 1, 
            complexity = c("degree-knots","degree","knots"),
            knots = c("quantiles","uniform"),
-           basis = c("additive","tensor","auto"),
+           basis = c("additive","tensor","glp","auto"),
            cv.func = c("cv.ls","cv.gcv","cv.aic"),
            degree = degree,
            segments = segments, 
@@ -68,14 +68,15 @@ frscvNOMAD(xz,
 
 \item{basis}{ a character string (default \code{basis="additive"})
     indicating whether the additive or tensor product B-spline basis
-    matrix for a multivariate polynomial spline should be used. Note
-    this can be automatically determined by cross-validation if
-    \code{cv=TRUE} and \code{basis="auto"}, and is an \sQuote{all or
-    none} proposition (i.e. interaction terms for all predictors or for
-    no predictors given the nature of \sQuote{tensor products}). Note
-    also that if there is only one predictor this defaults to
-    \code{basis="additive"} to avoid unnecessary computation as the
-    spline bases are equivalent in this case }
+    matrix for a multivariate polynomial spline or generalized B-spline
+    polynomial basis should be used. Note this can be automatically
+    determined by cross-validation if \code{cv=TRUE} and
+    \code{basis="auto"}, and is an \sQuote{all or none} proposition
+    (i.e. interaction terms for all predictors or for no predictors
+    given the nature of \sQuote{tensor products}). Note also that if
+    there is only one predictor this defaults to \code{basis="additive"}
+    to avoid unnecessary computation as the spline bases are equivalent
+    in this case }
 
   \item{cv.func}{a character string (default \code{cv.func="cv.ls"})
     indicating which method to use to select smoothing

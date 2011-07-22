@@ -17,7 +17,7 @@ frscvNOMAD <- function(xz,
                        segments.min=1, 
                        complexity=c("degree-knots","degree","knots"),
                        knots=c("quantiles","uniform"),
-                       basis=c("additive","tensor","auto"),
+                       basis=c("additive","tensor","glp","auto"),
                        cv.func=c("cv.ls","cv.gcv","cv.aic"),
                        degree=degree,
                        segments=segments, 
@@ -142,6 +142,20 @@ frscvNOMAD <- function(xz,
                     cv <- cv.tensor
                     basis.opt <-"tensor"
                 }
+
+                cv.glp <- cv.factor.spline(x=x,
+                                              y=y,
+                                              z=z,
+                                              K=K,
+                                              I=I,
+                                              knots=knots,
+                                              basis="glp",
+                                              cv.func=cv.func)
+                if(cv>cv.glp){
+                    cv <- cv.glp
+                    basis.opt <-"glp"
+                }
+                
             }
             else {
                 cv <- cv.factor.spline(x=x,
