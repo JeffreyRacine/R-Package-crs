@@ -416,8 +416,7 @@ crs.formula <- function(formula,
       if(is.null(lambda)&!is.null(z)&kernel) lambda <- rep(0,num.z)
   }
 
-
-  if(cv!="none"&&basis!="auto"&&NCOL(xz)>1) warning(paste(" cv specified but basis is ", basis, ": you might consider basis=\"auto\"",sep=""))
+  if(cv!="none"&&basis!="auto"&&NCOL(xz)>1) warning(paste(" Multiple predictor cv and basis is ", basis, ": you could consider basis=\"auto\"",sep=""),immediate.=TRUE)
 
   if(kernel==TRUE&&prune==TRUE) warning(" pruning cannot coexist with categorical kernel smoothing (pruning ignored)")
 

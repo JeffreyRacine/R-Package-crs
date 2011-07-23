@@ -96,7 +96,6 @@ prod.spline <- function(x,
         } else {
           tp[[j]] <- predict(gsl.bs(x[,i,drop=FALSE],degree=K[i,1],nbreak=(K[i,2]+1),knots=knots.vec,intercept=gsl.intercept),newx=xeval[,i,drop=FALSE])
         }
-        if((i!=deriv.index)&&(deriv!=0)&&(basis=="glp")) tp[[j]] <- matrix(0,nrow(tp[[j]]),ncol(tp[[j]]))
         j <- j+1
       }
     }
@@ -124,7 +123,15 @@ prod.spline <- function(x,
       dim.P.no.tensor <- NCOL(P)
       ## Solely tensor if basis==tensor      
       if(basis=="tensor") P <- tensor.prod.model.matrix(tp)
-      if(basis=="glp") P <- glp.model.matrix(tp)      
+      if(basis=="glp") {
+        P <- glp.model.matrix(tp)
+        if(deriv!=0) {
+          P.deriv <- list()
+          for(i in 1:length(tp)) P.deriv[[i]] <- matrix(0,1,ncol(tp[[i]]))
+          P.deriv[[deriv.index]] <- matrix(NA,1,ncol(tp[[deriv.index]]))
+          P[,!is.na(as.numeric(glp.model.matrix(P.deriv)))] <- 0
+        }
+      }
     } else {
       P <- tp[[1]]
       dim.P.no.tensor <- NCOL(P)
@@ -408,7 +415,7 @@ deriv.kernel.spline <- function(x,
       dim.P.no.tensor <- attr(P.deriv,"dim.P.no.tensor")
       dim.P.tensor <- NCOL(P)
 
-      if(basis=="additive" || basis=="glp") {
+      if(basis=="additive") {
         model <- lm(y~P)
         dim.P.deriv <- sum(K.additive[deriv.index,])
         deriv.start <- ifelse(deriv.index!=1,sum(K.additive[1:(deriv.index-1),])+1,1)      
@@ -417,10 +424,15 @@ deriv.kernel.spline <- function(x,
         deriv.spline <- P.deriv[,deriv.ind.vec,drop=FALSE]%*%(coef(model)[-1])[deriv.ind.vec]
         vcov.model <- vcov(model)[-1,-1,drop=FALSE]
         se.deriv <- sapply(1:NROW(P.deriv), function(i){ sqrt(P.deriv[i,deriv.ind.vec,drop=FALSE]%*%vcov.model[deriv.ind.vec,deriv.ind.vec]%*%t(P.deriv[i,deriv.ind.vec,drop=FALSE])) })
-      } else {
+      } else if(basis=="tensor") {
         model <- lm(y~P-1)
         deriv.spline <- P.deriv%*%coef(model)
         se.deriv <- sapply(1:NROW(P.deriv), function(i){ sqrt(P.deriv[i,,drop=FALSE]%*%vcov(model)%*%t(P.deriv[i,,drop=FALSE])) })
+      } else if(basis=="glp") {
+        model <- lm(y~P)
+        deriv.spline <- P.deriv%*%coef(model)[-1]
+        vcov.model <- vcov(model)[-1,-1,drop=FALSE]        
+        se.deriv <- sapply(1:NROW(P.deriv), function(i){ sqrt(P.deriv[i,,drop=FALSE]%*%vcov.model%*%t(P.deriv[i,,drop=FALSE])) })
       }
 
     } else {
@@ -460,7 +472,7 @@ deriv.kernel.spline <- function(x,
           dim.P.no.tensor <- attr(P.deriv,"dim.P.no.tensor")
           dim.P.tensor <- NCOL(P)
 
-          if(basis=="additive" || basis=="glp") {
+          if(basis=="additive") {
             model <- lm(y~P)
             dim.P.deriv <- sum(K.additive[deriv.index,])
             deriv.start <- ifelse(deriv.index!=1,sum(K.additive[1:(deriv.index-1),])+1,1)      
@@ -469,10 +481,15 @@ deriv.kernel.spline <- function(x,
             deriv.spline[zz] <- P.deriv[,deriv.ind.vec,drop=FALSE]%*%(coef(model)[-1])[deriv.ind.vec]
             vcov.model <- vcov(model)[-1,-1,drop=FALSE]
             se.deriv[zz] <- sapply(1:NROW(P.deriv), function(i){ sqrt(P.deriv[i,deriv.ind.vec,drop=FALSE]%*%vcov.model[deriv.ind.vec,deriv.ind.vec]%*%t(P.deriv[i,deriv.ind.vec,drop=FALSE])) })            
-          } else {
+          } else if(basis=="tensor") {
             model <- lm(y~P-1)
             deriv.spline[zz] <- P.deriv%*%coef(model)
             se.deriv[zz] <- sapply(1:NROW(P.deriv), function(i){ sqrt(P.deriv[i,,drop=FALSE]%*%vcov(model)%*%t(P.deriv[i,,drop=FALSE])) })
+          } else if(basis=="glp") {
+            model <- lm(y~P)
+            deriv.spline[zz] <- P.deriv%*%coef(model)[-1]
+            vcov.model <- vcov(model)[-1,-1,drop=FALSE]
+            se.deriv[zz] <- sapply(1:NROW(P.deriv), function(i){ sqrt(P.deriv[i,,drop=FALSE]%*%vcov.model%*%t(P.deriv[i,,drop=FALSE])) })
           }
 
         }
@@ -499,7 +516,7 @@ deriv.kernel.spline <- function(x,
           dim.P.no.tensor <- attr(P.deriv,"dim.P.no.tensor")
           dim.P.tensor <- NCOL(P)
 
-          if(basis=="additive" || basis=="glp") {
+          if(basis=="additive") {
             model <- lm(y~P,weights=L)
             dim.P.deriv <- sum(K.additive[deriv.index,])
             deriv.start <- ifelse(deriv.index!=1,sum(K.additive[1:(deriv.index-1),])+1,1)      
@@ -508,10 +525,15 @@ deriv.kernel.spline <- function(x,
             deriv.spline[zz] <- P.deriv[,deriv.ind.vec,drop=FALSE]%*%(coef(model)[-1])[deriv.ind.vec]
             vcov.model <- vcov(model)[-1,-1,drop=FALSE]
             se.deriv[zz] <- sapply(1:NROW(P.deriv), function(i){ sqrt(P.deriv[i,deriv.ind.vec,drop=FALSE]%*%vcov.model[deriv.ind.vec,deriv.ind.vec]%*%t(P.deriv[i,deriv.ind.vec,drop=FALSE])) })
-          } else {
+          } else if(basis=="tensor") {
             model <- lm(y~P-1,weights=L)
             deriv.spline[zz] <- P.deriv%*%coef(model)
             se.deriv[zz] <- sapply(1:NROW(P.deriv), function(i){ sqrt(P.deriv[i,,drop=FALSE]%*%vcov(model)%*%t(P.deriv[i,,drop=FALSE])) })
+          } else if(basis=="glp") {
+            model <- lm(y~P,weights=L)
+            deriv.spline[zz] <- P.deriv%*%coef(model)[-1]
+            vcov.model <- vcov(model)[-1,-1,drop=FALSE]            
+            se.deriv[zz] <- sapply(1:NROW(P.deriv), function(i){ sqrt(P.deriv[i,,drop=FALSE]%*%vcov.model%*%t(P.deriv[i,,drop=FALSE])) })
           }
 
         }
@@ -747,7 +769,7 @@ deriv.factor.spline <- function(x,
     coef.vec.model <- numeric(length=NCOL(P))
     vcov.mat.model <- matrix(0,nrow=NCOL(P),ncol=NCOL(P))
 
-    if(basis=="additive" || basis=="glp") {
+    if(basis=="additive") {
       model <- lm(y~P[,prune.index,drop=FALSE])
       coef.vec.model[prune.index] <- coef(model)[-1]
       vcov.mat.model[prune.index,prune.index] <- vcov(model)[-1,-1,drop=FALSE]
@@ -756,10 +778,16 @@ deriv.factor.spline <- function(x,
       deriv.end <- deriv.start+sum(K.additive[deriv.index,])-1
       deriv.ind.vec[deriv.start:deriv.end] <- TRUE
       deriv.ind.vec <- ifelse(prune.index,deriv.ind.vec,FALSE)
-    } else {
+    } else if(basis=="tensor") {
       model <- lm(y~P[,prune.index,drop=FALSE]-1)
       coef.vec.model[prune.index] <- coef(model)
       vcov.mat.model[prune.index,prune.index] <- vcov(model)
+      deriv.ind.vec[1:dim.P.tensor] <- TRUE            
+      deriv.ind.vec <- ifelse(prune.index,deriv.ind.vec,FALSE)
+    } else if(basis=="glp") {
+      model <- lm(y~P[,prune.index,drop=FALSE])
+      coef.vec.model[prune.index] <- coef(model)[-1]
+      vcov.mat.model[prune.index,prune.index] <- vcov(model)[-1,-1,drop=FALSE]
       deriv.ind.vec[1:dim.P.tensor] <- TRUE            
       deriv.ind.vec <- ifelse(prune.index,deriv.ind.vec,FALSE)
     }
