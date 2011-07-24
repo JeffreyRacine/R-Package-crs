@@ -29,6 +29,8 @@ mypoly <- function(x,
 
   if(!Bernstein) {
 
+    ## Raw polynomials and their derivatives
+
     if(!is.null(ex)) x <- ex
 
     if(gradient.compute) {
@@ -41,37 +43,22 @@ mypoly <- function(x,
         }
         Z <- cbind(Z,tmp)
       }
-      ## If we want to send back matrix of zeros (i.e will not count in
-      ## computation of derivative) return this baby.
-      if(r == -1) Z <- matrix(0,NROW(Z),NCOL(Z))
     } else {
       Z <- outer(x,1L:degree,"^")
     }
     
   } else {
+    ## Bernstein polynomials and their derivatives (i.e. Bezier curves
+    ## i.e. B-splines with no interior knots)
     if(is.null(ex)) {
       if(gradient.compute) {
-        if(r == -1) {
-          Z <- gsl.bs(x,degree=degree,deriv=0)
-          ## If we want to send back matrix of zeros (i.e will not
-          ## count in computation of derivative) return this baby.
-          Z <- matrix(0,NROW(Z),NCOL(Z))          
-        } else {
-          Z <- gsl.bs(x,degree=degree,deriv=r)
-        }
+        Z <- gsl.bs(x,degree=degree,deriv=r)
       } else {
         Z <- gsl.bs(x,degree=degree)
       }
     } else {
       if(gradient.compute) {
-        if(r == -1) {
-          Z <- predict(gsl.bs(x,degree=degree,deriv=0),newx=ex)
-          ## If we want to send back matrix of zeros (i.e will not
-          ## count in computation of derivative) return this baby.
-          Z <- matrix(0,NROW(Z),NCOL(Z))
-        } else {
-          Z <- predict(gsl.bs(x,degree=degree,deriv=r),newx=ex)
-        }
+        Z <- predict(gsl.bs(x,degree=degree,deriv=r),newx=ex)
       } else {
         Z <- predict(gsl.bs(x,degree=degree),newx=ex)
       }
@@ -109,22 +96,17 @@ W.glp <- function(xdat = NULL,
     }
   }
 
-  num.numeric <- ncol(xdat.numeric)
-
-  if(!is.null(gradient.vec) && (length(gradient.vec) != num.numeric)) stop(paste(" Error: gradient vector and number of numeric predictors must be conformable\n",sep=""))
+  if(!is.null(gradient.vec) && (length(gradient.vec) != k)) stop(paste(" Error: gradient vector and number of numeric predictors must be conformable\n",sep=""))
   if(!is.null(gradient.vec) && any(gradient.vec < 0)) stop(paste(" Error: gradient vector must contain non-negative integers\n",sep=""))
-  ## Variables that do not enter the gradient computation will have a
-  ## polynomial basis of zeros (but otherwise conformable with its
-  ## actual basis)
-  if(!is.null(gradient.vec)) gradient.vec[gradient.vec==0] <- -1
+
   if(!is.null(gradient.vec)) {
     gradient.compute <- TRUE
   } else {
     gradient.compute <- FALSE
-    gradient.vec <- rep(NA,NCOL(xdat))
+    gradient.vec <- rep(NA,k)
   }
 
-  if(length(degree) != num.numeric) stop(" Error: degree vector and number of numeric predictors incompatible")
+  if(length(degree) != k) stop(" Error: degree vector and number of numeric predictors incompatible")
 
   if(all(degree == 0) || (k == 0)) {
 
@@ -159,26 +141,42 @@ W.glp <- function(xdat = NULL,
     } else {
       res <- rep.int(1,nrow(exdat.numeric))
     }
-    if(degree[1] > 0) res <- cbind(1, mypoly(x=xdat.numeric[,1],
-                                             ex=exdat.numeric[,1],
-                                             degree=degree[1],
-                                             gradient.compute=gradient.compute,
-                                             r=gradient.vec[1],
-                                             Bernstein=Bernstein))[, 1 + z[, 1]]
-    if(k > 1) for (i in 2:k) if(degree[i] > 0) res <- res * cbind(1, mypoly(x=xdat.numeric[,i],
-                                                                            ex=exdat.numeric[,i],
-                                                                            degree=degree[i],
-                                                                            gradient.compute=gradient.compute,
-                                                                            r=gradient.vec[i],
-                                                                            Bernstein=Bernstein))[, 1 + z[, i]]
+    res.deriv <- 1
+    if(degree[1] > 0) {
+      res <- cbind(1, mypoly(x=xdat.numeric[,1],
+                             ex=exdat.numeric[,1],
+                             degree=degree[1],
+                             gradient.compute=gradient.compute,
+                             r=gradient.vec[1],
+                             Bernstein=Bernstein))[, 1 + z[, 1]]
+
+      if(gradient.compute && gradient.vec[1] != 0) res.deriv <- cbind(1,matrix(NA,1,degree[1]))[, 1 + z[, 1],drop=FALSE]
+      if(gradient.compute && gradient.vec[1] == 0) res.deriv <- cbind(1,matrix(1,1,degree[1]))[, 1 + z[, 1],drop=FALSE]
+    }
+    if(k > 1) for (i in 2:k) if(degree[i] > 0) {
+      res <- res * cbind(1, mypoly(x=xdat.numeric[,i],
+                                   ex=exdat.numeric[,i],
+                                   degree=degree[i],
+                                   gradient.compute=gradient.compute,
+                                   r=gradient.vec[i],
+                                   Bernstein=Bernstein))[, 1 + z[, i]]
+      if(gradient.compute && gradient.vec[i] != 0) res.deriv <- res.deriv * cbind(1,matrix(NA,1,degree[i]))[, 1 + z[, i],drop=FALSE]
+      if(gradient.compute && gradient.vec[i] == 0) res.deriv <- res.deriv *cbind(1, matrix(1,1,degree[i]))[, 1 + z[, i],drop=FALSE]
+    }
+    
     if(is.null(exdat)) {
       res <- matrix(res,nrow=NROW(xdat))
     } else {
       res <- matrix(res,nrow=NROW(exdat))
     }
+    if(gradient.compute) res.deriv <- matrix(res.deriv,nrow=1)
     colnames(res) <- apply(z, 1L, function(x) paste(x, collapse = "."))
-    return(as.matrix(cbind(1,res)))
+    if(gradient.compute) colnames(res.deriv) <- apply(z, 1L, function(x) paste(x, collapse = "."))
 
+    B <- cbind(1,res)
+    if(gradient.compute) B[,!is.na(as.numeric(res.deriv))] <- 0
+    return(B)    
+    
   }
 
 }
@@ -772,21 +770,25 @@ glpregEst <- function(tydat=NULL,
     if(miss.ex) {
       W.eval <- W
 
-      if(!is.null(gradient.vec)) W.eval.deriv <- W.glp(xdat=txdat,
-                                                       degree=degree,
-                                                       gradient.vec=gradient.vec,
-                                                       Bernstein=Bernstein)
+      if(!is.null(gradient.vec)) {
+        W.eval.deriv <- W.glp(xdat=txdat,
+                              degree=degree,
+                              gradient.vec=gradient.vec,
+                              Bernstein=Bernstein)
+      }
     } else {
       W.eval <- W.glp(xdat=txdat,
                       exdat=exdat,
                       degree=degree,
                       Bernstein=Bernstein)
-
-      if(!is.null(gradient.vec)) W.eval.deriv <- W.glp(xdat=txdat,
-                                                       exdat=exdat,
-                                                       degree=degree,
-                                                       gradient.vec=gradient.vec,
-                                                       Bernstein=Bernstein)
+      
+      if(!is.null(gradient.vec)) {
+        W.eval.deriv <- W.glp(xdat=txdat,
+                              exdat=exdat,
+                              degree=degree,
+                              gradient.vec=gradient.vec,
+                              Bernstein=Bernstein)
+      }
     }
     
     ## Local polynomial via smooth coefficient formulation and one
@@ -2180,7 +2182,7 @@ plot.npglpreg <- function(x,
         neval <- length(unique(object$x[,i]))
         newdata <- matrix(NA,nrow=neval,ncol=NCOL(object$x))
       }
-      
+
       newdata <- data.frame(newdata)
       
       if(!is.factor(object$x[,i])) {
