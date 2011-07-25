@@ -151,7 +151,7 @@ W.glp <- function(xdat = NULL,
                              Bernstein=Bernstein))[, 1 + z[, 1]]
 
       if(gradient.compute && gradient.vec[1] != 0) res.deriv <- cbind(1,matrix(NA,1,degree[1]))[, 1 + z[, 1],drop=FALSE]
-      if(gradient.compute && gradient.vec[1] == 0) res.deriv <- cbind(1,matrix(1,1,degree[1]))[, 1 + z[, 1],drop=FALSE]
+      if(gradient.compute && gradient.vec[1] == 0) res.deriv <- cbind(1,matrix(0,1,degree[1]))[, 1 + z[, 1],drop=FALSE]
     }
     if(k > 1) for (i in 2:k) if(degree[i] > 0) {
       res <- res * cbind(1, mypoly(x=xdat.numeric[,i],
@@ -161,7 +161,7 @@ W.glp <- function(xdat = NULL,
                                    r=gradient.vec[i],
                                    Bernstein=Bernstein))[, 1 + z[, i]]
       if(gradient.compute && gradient.vec[i] != 0) res.deriv <- res.deriv * cbind(1,matrix(NA,1,degree[i]))[, 1 + z[, i],drop=FALSE]
-      if(gradient.compute && gradient.vec[i] == 0) res.deriv <- res.deriv *cbind(1, matrix(1,1,degree[i]))[, 1 + z[, i],drop=FALSE]
+      if(gradient.compute && gradient.vec[i] == 0) res.deriv <- res.deriv *cbind(1,matrix(0,1,degree[i]))[, 1 + z[, i],drop=FALSE]
     }
     
     if(is.null(exdat)) {
@@ -173,9 +173,8 @@ W.glp <- function(xdat = NULL,
     colnames(res) <- apply(z, 1L, function(x) paste(x, collapse = "."))
     if(gradient.compute) colnames(res.deriv) <- apply(z, 1L, function(x) paste(x, collapse = "."))
 
-    B <- cbind(1,res)
-    if(gradient.compute) B[,!is.na(as.numeric(res.deriv))] <- 0
-    return(B)    
+    if(gradient.compute) res[,!is.na(as.numeric(res.deriv))] <- 0
+    return(cbind(1,res))    
     
   }
 
