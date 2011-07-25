@@ -12,6 +12,7 @@ export(crs,
        krscvNOMAD,
        npglpreg,
        snomadr,
+       glp.model.matrix,       
        tensor.prod.model.matrix,
        uniquecombs)
 
