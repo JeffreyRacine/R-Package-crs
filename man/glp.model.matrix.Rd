@@ -14,7 +14,7 @@ glp.model.matrix(X)
 \details{This function computes a generalized polynomial where the
   orders of each term entering the polynomial may vary.}
 
-\value{Either a model matrix for a generalized polynomial smooth.}
+\value{A model matrix for a generalized polynomial smooth.}
 
 \references{
 
