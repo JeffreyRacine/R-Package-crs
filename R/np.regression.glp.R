@@ -231,20 +231,30 @@ check.max.degree <- function(xdat=NULL,degree=NULL,issue.warning=FALSE,Bernstein
   d <- numeric(num.numeric)
 
   if(num.numeric > 0) {
-  
+
     for(i in 1:num.numeric) {
       if(degree[i]>0) {
+        ## First check if degree results in a well-conditioned basis
+        d[i] <- degree[i]
         X <- mypoly(x=xdat[,numeric.index[i]],
                     ex=NULL,
                     degree=degree[i],
                     Bernstein=Bernstein)
-        d[i] <- degree[i]
-        while(rcond(t(X)%*%X)<.Machine$double.eps && d[i] > 1) {
-          d[i] <- d[i] - 1
-          X <- mypoly(x=xdat[,numeric.index[i]],
-                      ex=NULL,
-                      degree=d[i],
-                      Bernstein=Bernstein)
+        ## If the max degree is ill-conditioned then ascend
+        ## (descending may require computation of large matrices that
+        ## are discarded)
+        if(rcond(t(X)%*%X)<.Machine$double.eps) {
+          for(j in 1:degree) {
+            d[i] <- j
+            X <- mypoly(x=xdat[,numeric.index[i]],
+                        ex=NULL,
+                        degree=d[i],
+                        Bernstein=Bernstein)
+            if(rcond(t(X)%*%X)<.Machine$double.eps) {
+              d[i] <- j-1
+              break()
+            }
+          }
         }
         if(d[i] < degree[i]) {
           if(issue.warning) warning(paste("\r Predictor ",i," polynomial is ill-conditioned beyond degree ",d[i],": see note in ?npglpreg",sep=""))

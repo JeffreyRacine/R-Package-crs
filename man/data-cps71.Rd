@@ -44,7 +44,7 @@ lines(age,fitted(model.crs),lty=1,col=1)
 lines(age,fitted(model.np),lty=2,col=2)
 
 crs.txt <- paste("crs (R-squared = ",formatC(model.crs$r.squared,format="f",digits=3),")",sep="")
-np.txt <- paste("npreg (R-squared = ",formatC(model.np$R2,format="f",digits=3),")",sep="")
+np.txt <- paste("ll-npreg (R-squared = ",formatC(model.np$R2,format="f",digits=3),")",sep="")
 
 legend(22.5,15,c(crs.txt,np.txt),lty=c(1,2),col=c(1,2))
 
