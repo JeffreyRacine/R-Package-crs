@@ -854,25 +854,15 @@ cv.kernel.spline <- function(x,
   ## be and if degrees of freedom is 1 or less, return a large penalty.
 
   n <- length(y)
-  c.vec <- NULL
-
-  if(basis=="additive" || basis=="glp") {
-    if(any(K[,1] > 0)) c.vec <- rowSums(K[K[,1]!=0,,drop=FALSE])-1
-    ncol.P <- sum(c.vec)
-  }
-  if(basis=="tensor") {
-    if(any(K[,1] > 0)) c.vec <- rowSums(K[K[,1]!=0,,drop=FALSE])
-    ncol.P <- prod(c.vec)
-  }
-
-  if(ncol.P >= (n-1)) return(.Machine$double.xmax)
 
   ## Otherwise, compute the cross-validation function
 
   if(is.null(z)) {
     ## No categorical predictors
     if(any(K[,1] > 0)) {
-      suppressWarnings(epsilon <- residuals(lsfit(P <- prod.spline(x=x,K=K,knots=knots,basis=basis),y,intercept=lm.intercept)))
+      P <- prod.spline(x=x,K=K,knots=knots,basis=basis)
+      if(NCOL(P) >= (n-1)) return(.Machine$double.xmax)
+      suppressWarnings(epsilon <- residuals(lsfit(P,y,intercept=lm.intercept)))
       htt <- hat(P)
       htt <- ifelse(htt == 1, 1-.Machine$double.eps, htt)      
     } else {
@@ -897,6 +887,8 @@ cv.kernel.spline <- function(x,
     htt <- numeric(length=n)
     if(any(K[,1] > 0)) {
       P <- prod.spline(x=x,K=K,knots=knots,basis=basis)
+      ## Check for 1 or fewer degrees of freedom
+      if(NCOL(P) >= (n-1)) return(sqrt(.Machine$double.xmax))
       for(i in 1:nrow.z.unique) {
         zz <- ind == ind.vals[i]
         L <- prod.kernel(Z=z,z=z.unique[ind.vals[i],],lambda=lambda,kernel.type=kernel.type)
@@ -904,8 +896,12 @@ cv.kernel.spline <- function(x,
           ## Additive spline regression models have an intercept in the lm()
           ## model (though not in the gsl.bs function)
           model <- lm.wfit(cbind(1,P),y,L)
+          ## Check for rank-deficient fit
+          if(model$rank != (NCOL(P)+1)) return(sqrt(.Machine$double.xmax))
         } else {
           model <- lm.wfit(P,y,L)
+          ## Check for rank-deficient fit          
+          if(model$rank != NCOL(P)) return(sqrt(.Machine$double.xmax))
         }
         epsilon[zz] <- residuals(model)[zz]
         htt[zz] <- hat(model$qr)[zz]
@@ -971,43 +967,22 @@ cv.factor.spline <- function(x,
 
   n <- NROW(x)
 
-  ## Without computing P, compute the number of columns that P would
-  ## be and if degrees of freedom is 1 or less, return a large penalty.
-
-  c.vec <- NULL
-  i.vec <- NULL
-
-  if(any(I > 0)) {
-    i.vec <- numeric()
-    j <- 1
-    for(i in 1:ncol(z)) {
-      if(I[i] != 0) {
-        i.vec[j] <- length(unique(z[,i]))-1
-        j <- j + 1
-      }
-    }
-  }
-
-  if(basis=="additive" || basis=="glp") {
-    if(any(K[,1] > 0)) c.vec <- rowSums(K[K[,1]!=0,,drop=FALSE])-1
-    ncol.P <- sum(c(c.vec,i.vec))
-  }
-  if(basis=="tensor") {
-    if(any(K[,1] > 0)) c.vec <- rowSums(K[K[,1]!=0,,drop=FALSE])
-    ncol.P <- prod(c(c.vec,i.vec))
-  }
-
-  if(ncol.P >= (n-1)) return(.Machine$double.xmax)
-
   ## Otherwise, compute the cross-validation function
 
   if(any(K[,1] > 0)||any(I > 0)) {
+    P <- prod.spline(x=x,z=z,K=K,I=I,knots=knots,basis=basis)
+    ## Check for 1 or fewer degrees of freedom
+    if(NCOL(P) >= (n-1)) return(sqrt(.Machine$double.xmax))
     if(basis=="additive" || basis=="glp") {
-      ## Additive spline regression models have an intercept in the lm()
-      ## model (though not in the gsl.bs function)
-      model <- lm.fit(cbind(1,prod.spline(x=x,z=z,K=K,I=I,knots=knots,basis=basis)),y)
+      ## Additive spline regression models have an intercept in the
+      ## lm() model (though not in the gsl.bs function)
+      model <- lm.fit(cbind(1,P),y)
+      ## Check for rank-deficient fit
+      if(model$rank != (NCOL(P)+1)) return(sqrt(.Machine$double.xmax))
     } else {
-      model <- lm.fit(prod.spline(x=x,z=z,K=K,I=I,knots=knots,basis=basis),y)
+      model <- lm.fit(P,y)
+      ## Check for rank-deficient fit      
+      if(model$rank != NCOL(P)) return(sqrt(.Machine$double.xmax))      
     }
     htt <- hat(model$qr)
     htt <- ifelse(htt == 1, 1-.Machine$double.eps, htt)
