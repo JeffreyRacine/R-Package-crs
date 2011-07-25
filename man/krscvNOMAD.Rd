@@ -208,7 +208,7 @@ krscvNOMAD(xz,
 }
 
 \author{
-  Jeffrey S. Racine \email{racinej@mcmaster.ca} and Zhenghua Nie <niez@mcmaster.ca>
+  Jeffrey S. Racine \email{racinej@mcmaster.ca} and Zhenghua Nie \email{niez@mcmaster.ca}
 }
 
 %\section{Usage Issues}{

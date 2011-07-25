@@ -196,7 +196,7 @@ frscvNOMAD(xz,
 }
 
 \author{
-  Jeffrey S. Racine \email{racinej@mcmaster.ca} and Zhenghua Nie <niez@mcmaster.ca>
+  Jeffrey S. Racine \email{racinej@mcmaster.ca} and Zhenghua Nie \emailniez@mcmaster.ca}
 }
 
 %\section{Usage Issues}{

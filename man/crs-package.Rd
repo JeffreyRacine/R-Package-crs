@@ -80,9 +80,9 @@
 
 \author{
   
-  Jeffrey S. Racine <racinej@mcmaster.ca> and Zhenghua Nie <niez@mcmaster.ca>
+  Jeffrey S. Racine \email{racinej@mcmaster.ca} and Zhenghua Nie \email{niez@mcmaster.ca}
 
-  Maintainer: Jeffrey S. Racine <racinej@mcmaster.ca>
+  Maintainer: Jeffrey S. Racine \email{racinej@mcmaster.ca}
 
   I would like to gratefully acknowledge support from the Natural
   Sciences and Engineering Research Council of Canada

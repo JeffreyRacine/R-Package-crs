@@ -285,7 +285,7 @@ for each dimension of the continuous \code{x} in \code{txdat}}
 
 }
 \author{
-  Jeffrey S. Racine \email{racinej@mcmaster.ca} and Zhenghua Nie <niez@mcmaster.ca>
+  Jeffrey S. Racine \email{racinej@mcmaster.ca} and Zhenghua Nie \email{niez@mcmaster.ca}
 }
 \note{
   
