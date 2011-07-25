@@ -1,10 +1,13 @@
-###
+## This function tests for the maximum well-conditioned spline degree.
 
-check.max.spline.degree <- function(xdat=NULL,degree=NULL,nbreak.max=NULL) {
+## Note that increasing the number of breaks, other things equal,
+## results in a better-conditioned matrix. Hence we ignore nbreak and
+## set it to its minimum (2)
+
+check.max.spline.degree <- function(xdat=NULL,degree=NULL,issue.warning=FALSE) {
 
   if(is.null(xdat)) stop(" xdat must be provided")
   if(is.null(degree)) stop(" degree vector must be provided")
-  if(is.null(nbreak.max)) stop(" nbreak.max must be provided")  
 
   xdat <- as.data.frame(xdat)
 
@@ -21,14 +24,20 @@ check.max.spline.degree <- function(xdat=NULL,degree=NULL,nbreak.max=NULL) {
   
     for(i in 1:num.numeric) {
       if(degree[i]>0) {
-        X <- gsl.bs(xdat[,numeric.index[i]],degree=degree[i],nbreak=nbreak.max)
+        X <- gsl.bs(xdat[,numeric.index[i]],degree=degree[i],nbreak=2)
         d[i] <- degree[i]
-        while(rcond(t(X)%*%X)<.Machine$double.eps && d[i] > 1) {
-          d[i] <- d[i] - 1
-          X <- gsl.bs(xdat[,numeric.index[i]],degree=d[i],nbreak=nbreak.max)
+        if(rcond(t(X)%*%X)<.Machine$double.eps) {
+          for(j in 1:degree[i]) {
+            d[i] <- j
+            X <- gsl.bs(xdat[,numeric.index[i]],degree=d[i],nbreak=2)
+            if(rcond(t(X)%*%X)<.Machine$double.eps) {
+              d[i] <- j-1
+              break()
+            }
+          }
         }
         if(d[i] < degree[i]) {
-          warning(paste("\r Predictor ",i," polynomial is ill-conditioned beyond degree ",d[i]," (nbreak = ", nbreak.max,"): see note in ?npglpreg",sep=""),immediate.=TRUE)
+          if(issue.warning) warning(paste("\r Predictor ",i," B-spline basis is ill-conditioned beyond degree ",d[i],": see note in ?npglpreg",sep=""),immediate.=TRUE)
           ill.conditioned <- TRUE
         }
       }

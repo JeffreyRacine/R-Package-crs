@@ -244,7 +244,7 @@ check.max.degree <- function(xdat=NULL,degree=NULL,issue.warning=FALSE,Bernstein
         ## (descending may require computation of large matrices that
         ## are discarded)
         if(rcond(t(X)%*%X)<.Machine$double.eps) {
-          for(j in 1:degree) {
+          for(j in 1:degree[i]) {
             d[i] <- j
             X <- mypoly(x=xdat[,numeric.index[i]],
                         ex=NULL,

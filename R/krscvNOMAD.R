@@ -247,8 +247,8 @@ krscvNOMAD <- function(xz,
             x0 <- c(xdegree, xsegments,  xlambda)
             bbin <-c(rep(1, num.x*2),rep(0,  num.z))
             #bounds segments cannot be smaller than 2
-            lb <- c(rep(degree.min,num.x), rep(segments.min, num.x), rep(0, num.z) )
-            ub <- c(rep(degree.max, num.x), rep(segments.max,num.x), rep(1, num.z))
+            lb <- c(rep(degree.min,num.x), rep(segments.min,num.x), rep(0, num.z))
+            ub <- c(rep(degree.max,num.x), rep(segments.max,num.x), rep(1, num.z))
 
         }  
         else if(complexity=="degree") {
@@ -262,8 +262,19 @@ krscvNOMAD <- function(xz,
             x0 <- c(xsegments,  xlambda)
             bbin <-c(rep(1, num.x),rep(0,  num.z))
             #bounds segments cannot be smaller than 2
-            lb <- c(rep(segments.min,num.x),  rep(0, num.z) )
+            lb <- c(rep(segments.min,num.x), rep(0, num.z))
             ub <- c(rep(segments.max,num.x), rep(1, num.z))
+        }
+
+        ## Test for ill-conditioned spline degree, reset upper bound
+        ## if binding and start values.
+
+        ill.conditioned <- check.max.spline.degree(x,rep(degree.max,num.x),issue.warning=FALSE)
+        degree.max.vec <- attr(ill.conditioned, "degree.max.vec")
+
+        if(complexity != "knots") {
+          ub[1:num.x] <- ifelse(ub[1:num.x] > degree.max.vec, degree.max.vec, ub[1:num.x])
+          x0[1:num.x] <- ifelse(x0[1:num.x] > degree.max.vec, degree.max.vec, x0[1:num.x])          
         }
 
         if(length(x0) != length(lb)) stop(" x0 and bounds have differing numbers of variables")
@@ -290,6 +301,8 @@ krscvNOMAD <- function(xz,
         if(basis == "auto") 
         attr(solution, "basis.opt") <- attributes(eval.cv(solution$solution, params))$basis.opt
 
+        solution$degree.max.vec <- degree.max.vec
+        
         ## Restore seed
 
         if(exists.seed) assign(".Random.seed", save.seed, .GlobalEnv)
@@ -450,7 +463,7 @@ krscvNOMAD <- function(xz,
 
     segments[degree==0] <- 1
 
-    if(any(degree==degree.max)) warning(paste(" optimal degree equals search maximum (", degree.max,"): rerun with larger degree.max",sep=""))
+    if(any(degree==nomad.solution$degree.max.vec)) warning(paste(" optimal degree equals search maximum (", nomad.solution$degree.max.vec,"): rerun with larger degree.max",sep=""))
     if(any(segments==segments.max)) warning(paste(" optimal segment equals search maximum (", segments.max,"): rerun with larger segments.max",sep=""))  
     if(!is.null(opts$MAX_BB_EVAL)){
         if(nmulti>0) {if(nmulti*opts$MAX_BB_EVAL <= nomad.solution$bbe) warning(paste(" MAX_BB_EVAL reached in NOMAD: perhaps use a larger value...", sep=""))} 
