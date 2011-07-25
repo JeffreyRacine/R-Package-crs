@@ -1,10 +1,9 @@
 \name{glp.model.matrix}
 \alias{glp.model.matrix}
-\title{ Utility functions for constructing generalized polynomial smooths}
+\title{Utility function for constructing generalized polynomial smooths}
 \description{
-  Produce model matrices or penalty matrices for a generalized
-  polynomial smooth from the model matrices for the marginal bases of
-  the smooth.
+  Produce model matrices for a generalized polynomial smooth from the
+  model matrices for the marginal bases of the smooth.
 }
 \usage{
 glp.model.matrix(X)
@@ -12,10 +11,10 @@ glp.model.matrix(X)
 \arguments{
   \item{X}{a list of model matrices for the marginal bases of a smooth} 
 }
-\details{ This function computes a generalized polynomial where the
+\details{This function computes a generalized polynomial where the
   orders of each term entering the polynomial may vary.}
 
-\value{ Either a model matrix for a generalized polynomial smooth.}
+\value{Either a model matrix for a generalized polynomial smooth.}
 
 \references{
 
