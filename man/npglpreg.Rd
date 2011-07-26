@@ -47,14 +47,14 @@ npglpreg(\dots)
          cv.func = c("cv.ls", "cv.gcv", "cv.aic"),
          opts=list("MAX_BB_EVAL"=10000,
                    "EPSILON"=.Machine$double.eps,
-                   "INITIAL_MESH_SIZE"=paste("r",1.0e-04,sep=""),
-                   "MIN_MESH_SIZE"=paste("r",1.0e-05,sep=""),
-                   "MIN_POLL_SIZE"=paste("r",1.0e-05,sep="")),
+                   "INITIAL_MESH_SIZE"=paste("r",1.0e-05,sep=""),
+                   "MIN_MESH_SIZE"=paste("r",1.0e-06,sep=""),
+                   "MIN_POLL_SIZE"=paste("r",1.0e-06,sep="")),
          nmulti = 5,
          random.seed = 42,
          degree.max = 10,
          degree.min = 0,
-         bandwidth.max = 1.0e+03,
+         bandwidth.max = 1.0e+04,
          bandwidth.min = 1.0e-02,
          gradient.vec = NULL,
          gradient.categorical = FALSE,
@@ -163,11 +163,11 @@ for each dimension of the continuous \code{x} in \code{txdat}}
   
     \item{bandwidth.max}{ the maximum bandwidth scale (i.e. number of
     standard deviations) for each of the continuous predictors (default
-    \code{bandwidth.max=1.0e+03} standard deviations)}
+    \code{bandwidth.max=1.0e+04} standard deviations)}
   
   \item{bandwidth.min}{ the minimum bandwidth scale (i.e. number of
-    standard deviations) for each of the continuous predictors (default
-    \code{bandwidth.min=1.0e-02} standard deviations)}
+    scaled standard deviations) for each of the continuous predictors
+    (default \code{bandwidth.min=1.0e-02} scaled standard deviations)}
   
 \item{gradient.vec}{
   a vector corresponding to the order of the partial (or cross-partial)
@@ -197,6 +197,27 @@ for each dimension of the continuous \code{x} in \code{txdat}}
   }
 }
 \details{
+
+  Typical usages are (see below for a  list of options and also
+  the examples at the end of this help file)
+  \preformatted{
+    ## Conduct generalized local polynomial estimation
+    
+    model <- npglpreg(y~x1+x2)
+    
+    ## Conduct degree 0 local polynomial estimation (i.e. local constant)
+    
+    model <- npglpreg(y~x1+x2,cv="bandwidth",degree=c(0,0))    
+    
+    ## Conduct degree 1 local polynomial estimation (i.e. local linear)
+    
+    model <- npglpreg(y~x1+x2,cv="bandwidth",degree=c(1,1))    
+    
+    ## Conduct degree 2 local polynomial estimation (i.e. local quadratic)
+    
+    model <- npglpreg(y~x1+x2,cv="bandwidth",degree=c(2,2))    
+    
+  }
   
   This function is in beta status until further notice.
 
