@@ -55,6 +55,7 @@ crsEst <- function(xz,
   z <- xztmp$z
   znames <- xztmp$znames
   num.z <- xztmp$num.z
+  is.ordered.z <- xztmp$is.ordered.z
   ## The default is kernel==TRUE - this will throw an error with no
   ## categorical predictors so first check
   if(is.null(num.z) && kernel==TRUE) kernel <- FALSE
@@ -247,6 +248,7 @@ crsEst <- function(xz,
               basis=basis,
               num.x=num.x,
               num.z=num.z,
+              is.ordered.z=is.ordered.z,
               xnames=xnames,
               znames=znames,
               deriv=deriv,
@@ -386,6 +388,7 @@ crs.formula <- function(formula,
   z <- xztmp$z
   znames <- xztmp$znames
   num.z <- xztmp$num.z
+  is.ordered.z <- xztmp$is.ordered.z
   ## The default is kernel==TRUE - this will throw an error with no
   ## categorical predictors so first check
   if(is.null(num.z) && kernel==TRUE) kernel <- FALSE

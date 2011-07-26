@@ -169,6 +169,7 @@ krscv <- function(xz,
 
   z <- as.matrix(xztmp$z)
   num.z <- NCOL(z)
+  is.ordered.z <- xztmp$is.ordered.z
   z.unique <- uniquecombs(z)
   ind <-  attr(z.unique,"index")
   ind.vals <-  unique(ind)

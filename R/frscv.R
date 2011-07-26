@@ -169,6 +169,8 @@ frscv <- function(xz,
   xztmp <- splitFrame(xz)
   x <- xztmp$x
   z <- xztmp$z
+  is.ordered.z <- xztmp$is.ordered.z
+
   if(is.null(z)) {
     include <- NULL
     num.z <- 0

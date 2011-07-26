@@ -316,7 +316,7 @@ frscvNOMAD <- function(xz,
         }
         if (any(include <0) || any(include > 1)) include <- NULL
     }
-
+    is.ordered.z <- xztmp$is.ordered.z
     num.x <- ncol(x)
     n <- nrow(x)
 

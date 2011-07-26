@@ -312,11 +312,13 @@ krscvNOMAD <- function(xz,
     xztmp <- splitFrame(xz,factor.to.numeric=TRUE)
     x <- xztmp$x
     z <- xztmp$z
+    
     if(is.null(z)) 
         stop(" categorical kernel smoothing requires ordinal/nominal predictors")
 
     z <- as.matrix(xztmp$z)
     num.z <- NCOL(z)
+    is.ordered.z <- xztmp$is.ordered.z
     z.unique <- uniquecombs(z)
     ind <-  attr(z.unique,"index")
     ind.vals <-  unique(ind)

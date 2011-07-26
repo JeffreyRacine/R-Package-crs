@@ -591,7 +591,7 @@ to recurse divine.''  (L.~Peter Deutsch).
 ## can be found in http://www.stat.tamu.edu/~sinha/research/note1.pdf
 ## by Dr. Samiran Sinha (Department of Statistics, Texas A&M). I am
 ## solely to blame for any errors and can be contacted at
-## racinej@mcmater.ca (Jeffrey S. Racine).
+## racinej@mcmaster.ca (Jeffrey S. Racine).
 
 ## This function is a (simplified) R implementation of the bs()
 ## function in the splines library and illustrates how the Cox-de Boor

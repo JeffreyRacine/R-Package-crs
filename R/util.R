@@ -88,7 +88,11 @@ splitFrame <- function(xz, factor.to.numeric=FALSE) {
 
   xnames <- xznames[!IND]
 
+  is.ordered.z <- NULL
+  
   if(any(IND)) {
+    is.ordered.z <- logical()
+    for(i in 1:NCOL(xz[,IND,drop=FALSE])) is.ordered.z[i] <- is.ordered((xz[,IND,drop=FALSE])[,i])
     if(!factor.to.numeric) {
       z <- data.frame(xz[,IND,drop=FALSE])
     } else {
@@ -117,6 +121,7 @@ splitFrame <- function(xz, factor.to.numeric=FALSE) {
               xnames=xnames,
               z=z,
               num.z=num.z,
+              is.ordered.z=is.ordered.z,
               znames=znames))
   
 }

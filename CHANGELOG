@@ -1,8 +1,11 @@
 Changes from Version 0.15-0 to 0.15-1 [xx-Jul-2011]
 
+* Initial degree values set to 1 when conducting NOMAD search (only
+  for initial, when nmulti > 1 random valid values are generated)
+
 * Multiple tests for well-conditioned B-spline bases, dynamic
   modification of search boundaries when ill-conditioned bases are
-  detected, and detection of positive degrees of freedom and full
+  detected, and detection of non-positive degrees of freedom and full
   column rank of the spline basis (otherwise the penalty
   sqrt(.Machine$double.xmax) is returned during search) - this can
   lead to a significant reduction in the memory footprint
