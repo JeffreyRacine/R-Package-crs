@@ -1,13 +1,12 @@
-# This function conducts kernel regression spline
-## cross-validation. It takes as input a data.frame xz containing a
-## mix of numeric and factor predictors and a vector y. A range of
-## arguments can be provided, and one can do search on the bandwidths
-## and both the degree and knots ("degree-knots") or the degree
-## holding the number of knots (segments+1) constant or the number of
-## knots (segments+1) holding the degree constant. Two basis types are
-## supported ("additive" or "tensor") and the argument "auto" will
-## choose the basis type automatically.
-
+## This function conducts kernel regression spline cross-validation
+## using NOMAD. It takes as input a data.frame xz containing a mix of
+## numeric and factor predictors and a vector y. A range of arguments
+## can be provided, and one can do search on the bandwidths and both
+## the degree and knots ("degree-knots") or the degree holding the
+## number of knots (segments+1) constant or the number of knots
+## (segments+1) holding the degree constant. Three basis types are
+## supported ("additive", "glp" or "tensor") and the argument "auto"
+## will choose the basis type automatically.
 
 krscvNOMAD <- function(xz,
                        y,

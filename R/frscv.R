@@ -1,18 +1,12 @@
-## This function conducts factor regression spline
-## cross-validation. It takes as input a data.frame xz containing a
-## mix of numeric and factor predictors and a vector y. A range of
-## arguments can be provided, and one can do search on both the degree
-## and knots ("degree-knots") or the degree holding the number of
-## knots (segments+1) constant or the number of knots (segments+1)
-## holding the degree constant. Two basis types are supported
-## ("additive", or "tensor") and the argument "auto" will choose the
-## basis type automatically.
-
-## Currently search is exhaustive taking basis.maxdim as the maximum
-## number of the spline degree (0,1,...) and number of segments
-## (1,2,...). This is a quadratic integer programming problem so
-## ideally I require an IQP (MIQP for kernel-weighting)
-## solver. Currently in R there is no such beast.
+## This function conducts factor regression spline cross-validation
+## using exhaustive search. It takes as input a data.frame xz
+## containing a mix of numeric and factor predictors and a vector y. A
+## range of arguments can be provided, and one can do search on both
+## the degree and knots ("degree-knots") or the degree holding the
+## number of knots (segments+1) constant or the number of knots
+## (segments+1) holding the degree constant. Three basis types are
+## supported ("additive", "glp" or "tensor") and the argument "auto"
+## will choose the basis type automatically.
 
 frscv <- function(xz,
                   y,
