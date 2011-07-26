@@ -239,7 +239,7 @@ krscvNOMAD <- function(xz,
 
         set.seed(random.seed)
 
-        if(is.null(xdegree)) xdegree <- sample(degree.min:degree.max, num.x, replace=T)
+        if(is.null(xdegree)) xdegree <- rep(1,num.x) ## sample(degree.min:degree.max, num.x, replace=T)
         if(is.null(xsegments)) xsegments <- sample(segments.min:segments.max, num.x, replace=T)
         if(is.null(xlambda)) xlambda <- runif(num.z)
 
@@ -335,7 +335,6 @@ krscvNOMAD <- function(xz,
         }
 
     }
-
 
     if(complexity=="degree") {
         if(missing(segments) || is.null(segments)) stop(" segments missing for cross-validation of spline degree")

@@ -407,7 +407,8 @@ crs.formula <- function(formula,
   ## (identity bases) or non-smooth model (kernel).
 
   if(!is.null(degree)&&length(degree)!=num.x) stop(" degree vector must be the same length as x")
-  if(!is.null(segments)&&length(segments)!=num.x) stop(" segments vector must be the same length as x")    
+  if(!is.null(segments)&&length(segments)!=num.x) stop(" segments vector must be the same length as x")
+  if(degree.max > 100) stop(paste(" degree.max (",degree.max,") exceeds reasonable value (",100,")",sep=""))
 
   if(cv=="none"){
       if(is.null(degree)&!is.null(x)) degree <- rep(3,num.x)

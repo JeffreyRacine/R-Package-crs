@@ -562,6 +562,7 @@ npglpreg.formula <- function(formula,
   if(!is.logical(gradient.categorical)) stop(" Error: gradient.categorical must be logical (TRUE/FALSE)")
   if(!is.logical(ridge.warning)) stop(" Error: ridge.warning must be logical (TRUE/FALSE)")
   if(!is.logical(leave.one.out)) stop(" Error: leave.one.out must be logical (TRUE/FALSE)")    
+  if(degree.max > 100) stop(paste(" degree.max (",degree.max,") exceeds reasonable value (",100,")",sep=""))
 
   ukertype <- match.arg(ukertype)
   okertype <- match.arg(okertype)
@@ -1526,6 +1527,8 @@ glpcvNOMAD <- function(ydat=NULL,
   num.numeric <- ncol(as.data.frame(xdat[,xdat.numeric]))
   numeric.index <- which(xdat.numeric==TRUE)
 
+  if(!is.null(degree) && length(degree) != num.numeric) stop(paste(" Error: degree vector supplied has ", length(degree), " elements but there exist ", num.numeric," numeric.predictors",sep=""))
+
   xdat.unordered <- sapply(1:num.bw,function(i){is.factor(xdat[,i])&&!is.ordered(xdat[,i])})
   num.unordered <- ncol(as.data.frame(xdat[,xdat.unordered]))
 
@@ -1586,7 +1589,8 @@ glpcvNOMAD <- function(ydat=NULL,
     if(cv == "degree-bandwidth") {
       degree <- numeric(num.numeric)
       for(i in 1:num.numeric) {
-        degree[i] <- sample(degree.min:ub[(num.bw+1):(num.bw+num.numeric)][i], 1)
+#        degree[i] <- sample(degree.min:ub[(num.bw+1):(num.bw+num.numeric)][i], 1)
+        degree[i] <- 1;## Always start from local linear for first attempt...
       }
     }
     else {
