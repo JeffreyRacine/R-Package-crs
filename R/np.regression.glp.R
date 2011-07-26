@@ -601,6 +601,7 @@ npglpreg.formula <- function(formula,
     bws <- model.cv$bws
     bws.sf <- model.cv$bws.sf
     fv <- model.cv$fv
+    if(isTRUE(all.equal(fv,sqrt(.Machine$double.xmax)))) stop(" Search failed: restart with larger nmulti or smaller degree.max")
   }
   
   if(!is.null(degree))    {
@@ -775,6 +776,12 @@ glpregEst <- function(tydat=NULL,
     W <- W.glp(xdat=txdat,
                degree=degree,
                Bernstein=Bernstein)
+
+    ## Test for ill-conditioned polynomial basis and return a large
+    ## penalty when this occurs
+
+    if(rcond(t(W)%*%W)<.Machine$double.eps)
+      stop(" Ill-conditioned polynomial basis encountered: modify polynomial order")
 
     if(miss.ex) {
       W.eval <- W
@@ -1258,6 +1265,9 @@ glpcv <- function(ydat=NULL,
              degree=degree,
              Bernstein=Bernstein)
 
+  if(rcond(t(W)%*%W)<.Machine$double.eps)
+    return(sqrt(.Machine$double.xmax))
+
   sum.lscv <- function(bw.gamma,...) {
 
     ## Note - we set the kernel for unordered and ordered regressors
@@ -1612,6 +1622,9 @@ glpcvNOMAD <- function(ydat=NULL,
                degree=degree,
                Bernstein=Bernstein)
 
+    if(rcond(t(W)%*%W)<.Machine$double.eps)
+      return(sqrt(.Machine$double.xmax))
+
     if(all(bw.gamma>=0)&&all(bw.gamma[!xdat.numeric]<=1)) {
       lscv <- minimand.cv.ls(bws=bw.gamma,
                              ydat=ydat,
@@ -1653,6 +1666,9 @@ glpcvNOMAD <- function(ydat=NULL,
     W <- W.glp(xdat=xdat,
                degree=degree,
                Bernstein=Bernstein)
+
+    if(rcond(t(W)%*%W)<.Machine$double.eps)
+      return(sqrt(.Machine$double.xmax))
 
     if(all(bw.gamma>=0)&&all(bw.gamma[!xdat.numeric]<=1)) {
       aicc <- minimand.cv.aic(bws=bw.gamma,
@@ -1830,6 +1846,8 @@ glpcvNOMAD <- function(ydat=NULL,
   ## Restore seed
 
   if(exists.seed) assign(".Random.seed", save.seed, .GlobalEnv)
+
+  if(isTRUE(all.equal(fv,sqrt(.Machine$double.xmax)))) stop(" Search failed: restart with larger nmulti or smaller degree.max")
 
   return(list(bws=bw.opt,
               bws.sf=bw.opt.sf,

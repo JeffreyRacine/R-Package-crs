@@ -323,7 +323,7 @@ frscvNOMAD <- function(xz,
     if(missing(x) || missing(y)) stop (" you must provide x and y")
 
     if(complexity=="degree") {
-        if(missing(segments)||is.null(segments)) stop("segments missing for cross-validation of spline degree")
+        if(missing(segments)||is.null(segments)) stop(" segments missing for cross-validation of spline degree")
         if(length(segments)!=num.x) stop(" segments vector must be the same length as x")  
         if(!is.null(degree) && length(degree) == num.x) { #check initial values should be in the bounds
             if(any(degree < degree.min)||any(degree>degree.max)) {
@@ -334,7 +334,7 @@ frscvNOMAD <- function(xz,
         else
             degree <- NULL
     } else if(complexity=="knots") {
-        if(missing(degree)||is.null(degree)) stop("degree missing for cross-validation of number of spline knots")
+        if(missing(degree)||is.null(degree)) stop(" degree missing for cross-validation of number of spline knots")
         if(length(degree)!=num.x) stop(" degree vector must be the same length as x")
         if(!is.null(segments) && length(segments) == num.x) {
             if(any(segments < segments.min)||any(segments > segments.max)) {
@@ -398,6 +398,7 @@ frscvNOMAD <- function(xz,
 
     I.opt <- NULL 
     cv.min <- nomad.solution$objective
+    if(isTRUE(all.equal(cv.min,sqrt(.Machine$double.xmax)))) stop(" Search failed: restart with larger nmulti or smaller degree.max")
     basis.opt <- basis
     if(complexity=="degree-knots") {
         K.opt <- as.integer(nomad.solution$solution)
