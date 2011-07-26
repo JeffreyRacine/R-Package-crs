@@ -602,7 +602,7 @@ npglpreg.formula <- function(formula,
     bws <- model.cv$bws
     bws.sf <- model.cv$bws.sf
     fv <- model.cv$fv
-    if(isTRUE(all.equal(fv,sqrt(.Machine$double.xmax)))) stop(" Search failed: restart with larger nmulti or smaller degree.max")
+    if(isTRUE(all.equal(fv,sqrt(.Machine$double.xmax)))) stop(" Search failed: restart with larger nmulti or smaller degree.max (or degree if provided)")
   }
   
   if(!is.null(degree))    {
@@ -1831,7 +1831,7 @@ glpcvNOMAD <- function(ydat=NULL,
 	if(cv == "degree-bandwidth") {
     degree.opt <- solution$solution[(num.bw+1):(num.bw+num.numeric)]
     for(i in num.numeric){
-      if(isTRUE(all.equal(degree.opt[i],ub[num.bw+i]))) warning(paste(" optimal degree for numeric predictor ",i," equals search upper bound (", ub[num.bw+i],")",sep=""))
+      if(isTRUE(all.equal(degree.opt[i],ub[num.bw+i]))) warning(paste(" Optimal degree for numeric predictor ",i," equals search upper bound (", ub[num.bw+i],")",sep=""))
     }
 	}
 	fv <- solution$objective
@@ -1840,7 +1840,7 @@ glpcvNOMAD <- function(ydat=NULL,
 	numimp <- 0
 
   for(i in num.bw) {
-    if(isTRUE(all.equal(bw.opt[i],lb[i]))) warning(paste(" optimal bandwidth for predictor ",i," equals search lower bound (", formatC(lb[i],digits=3,format="g"),"): rerun with smaller bandwidth.min",sep=""))
+    if(isTRUE(all.equal(bw.opt[i],lb[i]))) warning(paste(" Optimal bandwidth for predictor ",i," equals search lower bound (", formatC(lb[i],digits=3,format="g"),"): rerun with smaller bandwidth.min",sep=""))
   }
 
   console <- printPush("\r                        ",console = console)

@@ -458,7 +458,7 @@ crs.formula <- function(formula,
       segments <- cv.return$segments
       include <- cv.return$I
       basis <- cv.return$basis
-      if(isTRUE(all.equal(cv.min,sqrt(.Machine$double.xmax)))) stop(" Search failed: restart with larger nmulti or smaller degree.max")
+      if(isTRUE(all.equal(cv.min,sqrt(.Machine$double.xmax)))) stop(" Search failed: restart with larger nmulti or smaller degree.max  (or degree if provided)")
     }  else if(cv=="exhaustive") {
 
       ptm <- ptm + system.time(cv.return <- frscv(xz=xz,
