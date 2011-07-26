@@ -47,14 +47,14 @@ npglpreg(\dots)
          cv.func = c("cv.ls", "cv.gcv", "cv.aic"),
          opts=list("MAX_BB_EVAL"=10000,
                    "EPSILON"=.Machine$double.eps,
-                   "INITIAL_MESH_SIZE"=paste("r",1.0e-05,sep=""),
-                   "MIN_MESH_SIZE"=paste("r",1.0e-06,sep=""),
-                   "MIN_POLL_SIZE"=paste("r",1.0e-06,sep="")),
+                   "INITIAL_MESH_SIZE"=paste("r",1.0e-04,sep=""),
+                   "MIN_MESH_SIZE"=paste("r",1.0e-05,sep=""),
+                   "MIN_POLL_SIZE"=paste("r",1.0e-05,sep="")),
          nmulti = 5,
          random.seed = 42,
          degree.max = 10,
          degree.min = 0,
-         bandwidth.max = 1.0e+04,
+         bandwidth.max = 1.0e+03,
          bandwidth.min = 1.0e-02,
          gradient.vec = NULL,
          gradient.categorical = FALSE,
@@ -163,7 +163,7 @@ for each dimension of the continuous \code{x} in \code{txdat}}
   
     \item{bandwidth.max}{ the maximum bandwidth scale (i.e. number of
     standard deviations) for each of the continuous predictors (default
-    \code{bandwidth.max=1.0e+04} standard deviations)}
+    \code{bandwidth.max=1.0e+03} standard deviations)}
   
   \item{bandwidth.min}{ the minimum bandwidth scale (i.e. number of
     scaled standard deviations) for each of the continuous predictors
