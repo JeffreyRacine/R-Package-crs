@@ -41,10 +41,11 @@ y <- sin(sqrt(x1^2+x2^2))/sqrt(x1^2+x2^2) + rnorm(n,sd=.1)
 
 data.train <- data.frame(y,x1,x2)
 
+x1.seq <- seq(min(x1),max(x2),length=n.eval)
+x2.seq <- seq(min(x2),max(x2),length=n.eval)
+
 rm(y,x1,x2)
 
-x1.seq <- seq(x.min,x.max,length=n.eval)
-x2.seq <- seq(x.min,x.max,length=n.eval)
 data.eval <- data.frame(y=0,expand.grid(x1=x2.seq,x2=x2.seq))
 
 model.unres <- crs(y~x1+x2,
