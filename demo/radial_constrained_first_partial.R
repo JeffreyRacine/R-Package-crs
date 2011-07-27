@@ -41,7 +41,7 @@ y <- sin(sqrt(x1^2+x2^2))/sqrt(x1^2+x2^2) + rnorm(n,sd=.1)
 
 data.train <- data.frame(y,x1,x2)
 
-x1.seq <- seq(min(x1),max(x2),length=n.eval)
+x1.seq <- seq(min(x1),max(x1),length=n.eval)
 x2.seq <- seq(min(x2),max(x2),length=n.eval)
 
 rm(y,x1,x2)
