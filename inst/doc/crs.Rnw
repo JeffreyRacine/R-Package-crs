@@ -323,9 +323,8 @@ $c_s\geq 2$ be a finite positive constant. For expositional simplicity
 we will consider the case in which the components of $z$ are
 unordered.
 
-For an unordered categorical predictor, we suggest using a variant of
-the kernel function outlined in \citep{AITCHISON_AITKEN:1976} defined
-as
+For an unordered categorical predictor, we use a variant of the kernel
+function outlined in \citep{AITCHISON_AITKEN:1976} defined as
 \begin{equation}
   \label{eq:barL(new)}
   l( Z_{is}, z_{s},\lambda_s) =
@@ -339,8 +338,13 @@ the value one if $A$ holds true, zero otherwise. Using
 by
 \begin{equation*}
   L(Z_i,z,\lambda) = \prod_{s=1}^r l( Z_{is},z_s,\lambda_s) =
-  \prod_{s=1}^{r} \lambda_s^{ {\bf 1}( Z_{is} \neq z_s) }.
+  \prod_{s=1}^{r} \lambda_s^{ {\bf 1}( Z_{is} \neq z_s) },
 \end{equation*}
+while for an ordered categorical we use the function defined by
+\begin{equation*}
+  l(Z^d_{is},z^d_s,\lambda_s) = \lambda_s^{|Z_{is}^d-z^d_s| }
+\end{equation*}
+and modify the product kernel function appropriately.
 
 Note that when $\lambda_s=1$ all observations are `pooled' hence the
 variable $z_s$ is removed from the resulting estimate, while when

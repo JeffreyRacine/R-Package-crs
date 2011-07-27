@@ -418,7 +418,7 @@ crs.formula <- function(formula,
   if(kernel==TRUE&&prune==TRUE) warning(" pruning cannot coexist with categorical kernel smoothing (pruning ignored)")
 
   ## Check for cv="nomad" and complexity="degree-knots" but
-  ## degree.min==degree.max or segments==segmenst.max
+  ## degree.min==degree.max or segments==segments.max
 
   if((cv=="nomad" && complexity=="degree-knots") && (segments.min==segments.max)) stop("NOMAD search selected with complexity degree-knots but segments.min and segments.max are equal")
   if((cv=="nomad" && complexity=="degree-knots") && (degree.min==degree.max)) stop("NOMAD search selected with complexity degree-knots but degree.min and degree.max are equal")
@@ -1216,7 +1216,7 @@ plot.crs <- function(x,
       if(!require(rgl)) stop(" Error: you must first install the rgl package")
       
       if(!is.null(object$num.z)) stop(" Error: persp3d is for continuous predictors only")
-      if(object$num.x != 2) stop(" Error: persp3d is for cases incolving two continuous predictors only")
+      if(object$num.x != 2) stop(" Error: persp3d is for cases involving two continuous predictors only")
       
       newdata <- matrix(NA,nrow=num.eval,ncol=2)
       newdata <- data.frame(newdata)
