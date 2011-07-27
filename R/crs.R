@@ -28,7 +28,6 @@ crsEst <- function(xz,
                    include=NULL,
                    kernel=TRUE,
                    lambda=NULL,
-                   kernel.type=c("nominal","ordinal"),
                    complexity=c("degree-knots","degree","knots"),
                    knots=c("quantiles","uniform"),
                    basis=c("additive","tensor","glp","auto"),
@@ -39,7 +38,6 @@ crsEst <- function(xz,
   
   ## Take data frame xz and parse into factors (z) and numeric (x).
 
-  kernel.type <- match.arg(kernel.type)
   complexity <- match.arg(complexity)
   knots <- match.arg(knots)
   basis <- match.arg(basis)
@@ -154,7 +152,7 @@ crsEst <- function(xz,
                                    z=z,
                                    K=cbind(degree,segments),
                                    lambda=lambda,
-                                   kernel.type=kernel.type,
+                                   is.ordered.z=is.ordered.z,
                                    knots=knots,
                                    basis=basis)
 
@@ -175,7 +173,7 @@ crsEst <- function(xz,
                                        z=z,
                                        K=cbind(degree,segments),
                                        lambda=lambda,
-                                       kernel.type=kernel.type,
+                                       is.ordered.z=is.ordered.z,
                                        knots=knots,
                                        basis=basis,
                                        deriv.index=m,
@@ -197,7 +195,7 @@ crsEst <- function(xz,
                                          z=z,
                                          K=cbind(degree,segments),
                                          lambda=lambda,
-                                         kernel.type=kernel.type,
+                                         is.ordered.z=is.ordered.z,
                                          knots=knots,
                                          basis=basis)$fitted.values
 
@@ -206,7 +204,7 @@ crsEst <- function(xz,
                                               z=z,
                                               K=cbind(degree,segments),
                                               lambda=lambda,
-                                              kernel.type=kernel.type,
+                                              is.ordered.z=is.ordered.z,
                                               xeval=x,
                                               zeval=ztmp,
                                               knots=knots,
@@ -278,7 +276,6 @@ crs.default <- function(xz,
                         include=NULL,
                         kernel=TRUE,
                         lambda=NULL,
-                        kernel.type=c("nominal","ordinal"),
                         complexity=c("degree-knots","degree","knots"),
                         knots=c("quantiles","uniform"),
                         basis=c("additive","tensor","glp","auto"),
@@ -287,7 +284,6 @@ crs.default <- function(xz,
                         prune=FALSE,
                         ...) {
 
-  kernel.type <- match.arg(kernel.type)
   complexity <- match.arg(complexity)
   knots <- match.arg(knots)
   basis <- match.arg(basis)
@@ -301,7 +297,6 @@ crs.default <- function(xz,
                 include=include,
                 kernel=kernel,
                 lambda=lambda,
-                kernel.type=kernel.type,
                 complexity=complexity,
                 knots=knots,
                 basis=basis,
@@ -348,7 +343,6 @@ crs.formula <- function(formula,
                         cv.func=c("cv.ls","cv.gcv","cv.aic"),
                         kernel=TRUE,
                         lambda=NULL,
-                        kernel.type=c("nominal","ordinal"),
                         complexity=c("degree-knots","degree","knots"),
                         knots=c("quantiles","uniform"),
                         basis=c("additive","tensor","glp","auto"),
@@ -367,7 +361,6 @@ crs.formula <- function(formula,
 
   cv <- match.arg(cv)  
   cv.func <- match.arg(cv.func)
-  kernel.type <- match.arg(kernel.type)
   complexity <- match.arg(complexity)
   knots <- match.arg(knots)
   basis <- match.arg(basis)
@@ -552,7 +545,6 @@ crs.formula <- function(formula,
                                               include=include,
                                               kernel=kernel,
                                               lambda=lambda,
-                                              kernel.type=kernel.type,
                                               complexity=complexity,
                                               knots=knots,
                                               basis=basis,
@@ -749,7 +741,7 @@ predict.crs <- function(object,
       degree <- object$degree
       lambda <- object$lambda
 
-      kernel.type <- object$kernel.type
+      is.ordered.z <- object$is.ordered.z
 
       z <- as.matrix(z)
       zeval <- as.matrix(zeval)
@@ -759,7 +751,7 @@ predict.crs <- function(object,
                                    z=z,
                                    K=K,
                                    lambda=lambda,
-                                   kernel.type=kernel.type,
+                                   is.ordered.z=is.ordered.z,
                                    xeval=xeval,
                                    zeval=zeval,
                                    knots=knots,
@@ -785,7 +777,7 @@ predict.crs <- function(object,
                                          z=z,
                                          K=K,
                                          lambda=lambda,
-                                         kernel.type=kernel.type,
+                                         is.ordered.z=is.ordered.z,
                                          xeval=xeval,
                                          zeval=zeval,
                                          knots=knots,
@@ -808,7 +800,7 @@ predict.crs <- function(object,
                                            z=z,
                                            K=K,
                                            lambda=lambda,
-                                           kernel.type=kernel.type,
+                                           is.ordered.z=is.ordered.z,
                                            xeval=xeval,
                                            zeval=zeval,
                                            knots=knots,
@@ -819,7 +811,7 @@ predict.crs <- function(object,
                                                 z=z,
                                                 K=K,
                                                 lambda=lambda,
-                                                kernel.type=kernel.type,
+                                                is.ordered.z=is.ordered.z,
                                                 xeval=xeval,
                                                 zeval=zevaltmp,
                                                 knots=knots,
@@ -1050,7 +1042,7 @@ plot.crs <- function(x,
     segments <- object$segments
     include <- object$include
     lambda <- object$lambda
-    kernel.type <- object$kernel.type
+    is.ordered.z <- object$is.ordered.z
 
     ## End information required to compute predictions
         
@@ -1129,7 +1121,7 @@ plot.crs <- function(x,
                                        z=z,
                                        K=K,
                                        lambda=lambda,
-                                       kernel.type=kernel.type,
+                                       is.ordered.z=is.ordered.z,
                                        xeval=xeval,
                                        zeval=zeval,
                                        knots=knots,
@@ -1315,7 +1307,7 @@ plot.crs <- function(x,
     segments <- object$segments
     include <- object$include
     lambda <- object$lambda
-    kernel.type <- object$kernel.type
+    is.ordered.z <- object$is.ordered.z
 
     ## End information required to compute predictions
         
@@ -1449,7 +1441,7 @@ plot.crs <- function(x,
                                          z=z,
                                          K=K,
                                          lambda=lambda,
-                                         kernel.type=kernel.type,
+                                         is.ordered.z=is.ordered.z,
                                          xeval=xeval,
                                          zeval=zeval,
                                          knots=knots,
@@ -1469,7 +1461,7 @@ plot.crs <- function(x,
                                            z=z,
                                            K=K,
                                            lambda=lambda,
-                                           kernel.type=kernel.type,
+                                           is.ordered.z=is.ordered.z,
                                            xeval=xeval,
                                            zeval=zeval,
                                            knots=knots,
@@ -1480,7 +1472,7 @@ plot.crs <- function(x,
                                                 z=z,
                                                 K=K,
                                                 lambda=lambda,
-                                                kernel.type=kernel.type,
+                                                is.ordered.z=is.ordered.z,
                                                 xeval=xeval.base,
                                                 zeval=zeval.base,
                                                 knots=knots,

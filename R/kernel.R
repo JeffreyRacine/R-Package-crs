@@ -3,13 +3,11 @@
 kernel <- function(Z,
                    z,
                    lambda,
-                   kernel.type=c("nominal","ordinal")) {
+                   is.ordered.z=NULL) {
 
-  kernel.type=match.arg(kernel.type)
+  if(is.null(is.ordered.z) || missing(Z) || missing(z) || missing(lambda)) stop(" must provide is.ordered.z, Z, z, and lambda")
 
-  if(missing(Z) || missing(z) || missing(lambda)) stop(" must provide Z, z, and lambda")
-
-  if(kernel.type=="nominal") {
+  if(!is.ordered.z) {
     return(ifelse(Z==z,1,lambda))
   } else {
     return(ifelse(Z==z,1,lambda^abs(Z-z)))
@@ -22,20 +20,19 @@ kernel <- function(Z,
 prod.kernel <- function(Z,
                         z,
                         lambda,
-                        kernel.type=c("nominal","ordinal")) {
-
-  kernel.type=match.arg(kernel.type)
+                        is.ordered.z=NULL) {
 
   Z <- as.matrix(Z)
 
-  if(missing(Z) || missing(z) || missing(lambda)) stop(" must provide Z, z, and lambda")
+  if(is.null(is.ordered.z) || missing(Z) || missing(z) || missing(lambda)) stop(" must provide is.ordered.z, Z, z, and lambda")
+  if(length(is.ordered.z) != NCOL(Z)) stop(" is.ordered.z and Z incompatible")
 
   num.z <- NCOL(Z)
 
   if(num.z != NROW(z) || num.z != NROW(lambda)) stop(paste(" incompatible dimensions for Z, z, and lambda (",num.z,",",NROW(z),",",NROW(lambda),")",sep=""))
 
-  prodker <- kernel(Z=Z[,1],z=z[1],lambda=lambda[1],kernel.type=kernel.type)
-  if(num.z > 1) for(i in 2:num.z) prodker <- prodker * kernel(Z=Z[,i],z=z[i],lambda=lambda[i],kernel.type=kernel.type)
+  prodker <- kernel(Z=Z[,1],z=z[1],lambda=lambda[1],is.ordered.z=is.ordered.z[1])
+  if(num.z > 1) for(i in 2:num.z) prodker <- prodker * kernel(Z=Z[,i],z=z[i],lambda=lambda[i],is.ordered.z=is.ordered.z[i])
 
   return(prodker)
   

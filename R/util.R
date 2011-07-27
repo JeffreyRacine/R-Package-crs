@@ -103,7 +103,10 @@ splitFrame <- function(xz, factor.to.numeric=FALSE) {
       ## character strings it produces a warning message. No idea how
       ## to test for this so dropping for the moment. Will affect
       ## ordered types.
-      for(i in 1:NCOL(xz[,IND,drop=FALSE])) z[,i] <- as.numeric((xz[,IND,drop=FALSE])[,i])
+      for(i in 1:NCOL(xz[,IND,drop=FALSE])) {
+        suppressWarnings(z[,i] <- as.numeric(levels((xz[,IND,drop=FALSE])[,i]))[(xz[,IND,drop=FALSE])[,i]])
+        if(any(is.na(z[,i]))) z[,i] <- as.numeric((xz[,IND,drop=FALSE])[,i])
+      }
     }
     ## Don't assign names when factor.to.numeric is TRUE (otherwise
     ## NAs populate matrix)

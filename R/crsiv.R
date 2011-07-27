@@ -354,7 +354,6 @@ crsiv <- function(y,
                  include=phi.0$include,
                  kernel=phi.0$kernel, 
                  basis=phi.0$basis,
-                 kernel.type=phi.0$kernel.type,
                  knots=phi.0$knots,
                  deriv=deriv,
                  data=traindata)
@@ -427,7 +426,6 @@ crsiv <- function(y,
                         include=model.E.phi.w$include,
                         kernel=model.E.phi.w$kernel, 
                         basis=model.E.phi.w$basis,
-                        kernel.type=model.E.phi.w$kernel.type,
                         knots=model.E.phi.w$knots,
                         data=traindata)
       
@@ -471,7 +469,6 @@ crsiv <- function(y,
                  include=phi.0$include,
                  kernel=phi.0$kernel, 
                  basis=phi.0$basis,
-                 kernel.type=phi.0$kernel.type,
                  knots=phi.0$knots,
                  deriv=deriv,
                  data=traindata)

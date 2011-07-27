@@ -14,7 +14,6 @@ krscvNOMAD <- function(xz,
                        segments.max=10, 
                        degree.min=0, 
                        segments.min=1, 
-                       kernel.type=c("nominal","ordinal"),
                        complexity=c("degree-knots","degree","knots"),
                        knots=c("quantiles","uniform"),
                        basis=c("additive","tensor","glp","auto"),
@@ -30,7 +29,6 @@ krscvNOMAD <- function(xz,
     knots <- match.arg(knots)
     basis <- match.arg(basis)
     cv.func <- match.arg(cv.func)  
-    kernel.type <- match.arg(kernel.type)
 
     if( missing(lambda) || is.null(lambda)){
         lambda <- NULL
@@ -56,7 +54,7 @@ krscvNOMAD <- function(xz,
                          ind,
                          ind.vals,
                          nrow.z.unique,
-                         kernel.type,
+                         is.ordered.z,
                          complexity=complexity,
                          knots=knots,
                          basis=basis,
@@ -98,7 +96,7 @@ krscvNOMAD <- function(xz,
             ind <- params$ind
             ind.vals <- params$ind.vals
             nrow.z.unique <- params$nrow.z.unique
-            kernel.type <- params$kernel.type
+            is.ordered.z <- params$is.ordered.z
 
             num.x <- NCOL(x)
             num.z <- NCOL(z)
@@ -136,7 +134,7 @@ krscvNOMAD <- function(xz,
                                        ind=ind,
                                        ind.vals=ind.vals,
                                        nrow.z.unique=nrow.z.unique,
-                                       kernel.type=kernel.type,
+                                       is.ordered.z=is.ordered.z,
                                        knots=knots,
                                        basis=basis.opt,
                                        cv.func=cv.func)
@@ -150,7 +148,7 @@ krscvNOMAD <- function(xz,
                                               ind=ind,
                                               ind.vals=ind.vals,
                                               nrow.z.unique=nrow.z.unique,
-                                              kernel.type=kernel.type,
+                                              is.ordered.z=is.ordered.z,
                                               knots=knots,
                                               basis="tensor",
                                               cv.func=cv.func)
@@ -168,7 +166,7 @@ krscvNOMAD <- function(xz,
                                               ind=ind,
                                               ind.vals=ind.vals,
                                               nrow.z.unique=nrow.z.unique,
-                                              kernel.type=kernel.type,
+                                              is.ordered.z=is.ordered.z,
                                               knots=knots,
                                               basis="glp",
                                               cv.func=cv.func)
@@ -187,7 +185,7 @@ krscvNOMAD <- function(xz,
                                        ind=ind,
                                        ind.vals=ind.vals,
                                        nrow.z.unique=nrow.z.unique,
-                                       kernel.type=kernel.type,
+                                       is.ordered.z=is.ordered.z,
                                        knots=knots,
                                        basis=basis.opt,
                                        cv.func=cv.func)
@@ -219,7 +217,7 @@ krscvNOMAD <- function(xz,
         params$ind <- ind
         params$ind.vals <- ind.vals
         params$nrow.z.unique <- nrow.z.unique
-        params$kernel.type <- kernel.type
+        params$is.ordered.z <- is.ordered.z
         # initial value
         num.z <- NCOL(z)
 
@@ -413,7 +411,7 @@ krscvNOMAD <- function(xz,
                              ind=ind,
                              ind.vals=ind.vals,
                              nrow.z.unique=nrow.z.unique,
-                             kernel.type=kernel.type, 
+                             is.ordered.z=is.ordered.z, 
                              complexity=complexity,
                              knots=knots,
                              basis=basis,

@@ -18,7 +18,6 @@ crs(\dots)
     include = NULL,
     kernel = TRUE,
     lambda = NULL,
-    kernel.type = c("nominal","ordinal"),
     complexity = c("degree-knots","degree","knots"),
     knots = c("quantiles","uniform"),
     basis = c("additive","tensor","glp","auto"),
@@ -41,7 +40,6 @@ crs(\dots)
     cv.func = c("cv.ls","cv.gcv","cv.aic"),
     kernel = TRUE,
     lambda = NULL,
-    kernel.type = c("nominal","ordinal"),
     complexity = c("degree-knots","degree","knots"),
     knots = c("quantiles","uniform"),
     basis = c("additive","tensor","glp","auto"),
@@ -78,13 +76,6 @@ curve)}
 nominal/ordinal (\code{\link{factor}}/\code{\link{ordered}}) predictors
 in \code{x} are included or omitted from the resulting estimate }
 
-  \item{kernel.type}{
-    a character string indicating whether the kernel
-    for the discrete predictors \code{z} should be unordered
-    (default \dQuote{\code{nominal}}) or ordered
-    (\dQuote{\code{ordinal}}) - see \code{\link{crs}} for details
-  }
-  
   \item{lambda}{ a vector of bandwidths for each dimension of the
   categorical \code{z}}
   

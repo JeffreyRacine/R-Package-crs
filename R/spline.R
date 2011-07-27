@@ -159,7 +159,7 @@ predict.kernel.spline <- function(x,
                                   z=NULL,
                                   K,
                                   lambda=NULL,
-                                  kernel.type=c("nominal","ordinal"),
+                                  is.ordered.z=NULL,
                                   xeval=NULL,
                                   zeval=NULL,
                                   knots=c("quantiles","uniform"),
@@ -170,7 +170,7 @@ predict.kernel.spline <- function(x,
 
   basis <- match.arg(basis)
   knots <- match.arg(knots)
-  kernel.type <- match.arg(kernel.type)
+  if(is.null(is.ordered.z)) stop(" is.ordered.z must be provided")
 
   x <- as.matrix(x)
 
@@ -242,7 +242,7 @@ predict.kernel.spline <- function(x,
         htt <- numeric(length=n)
         for(i in 1:nrow.z.unique) {
           zz <- ind == ind.vals[i]
-          L <- prod.kernel(Z=z,z=z.unique[ind.vals[i],],lambda=lambda,kernel.type=kernel.type)
+          L <- prod.kernel(Z=z,z=z.unique[ind.vals[i],],lambda=lambda,is.ordered.z=is.ordered.z)
           P <- prod.spline(x=x,K=K,knots=knots,basis=basis)
           k <- NCOL(P)
           if(basis=="additive" || basis=="glp") {
@@ -273,7 +273,7 @@ predict.kernel.spline <- function(x,
         htt <- NULL ## No hatvalues for evaluation
         for(i in 1:nrow.zeval.unique) {
           zz <- ind.zeval == ind.zeval.vals[i]
-          L <- prod.kernel(Z=z,z=zeval.unique[ind.zeval.vals[i],],lambda=lambda,kernel.type=kernel.type)
+          L <- prod.kernel(Z=z,z=zeval.unique[ind.zeval.vals[i],],lambda=lambda,is.ordered.z=is.ordered.z)
           P <- prod.spline(x=x,K=K,knots=knots,basis=basis)
           k <- NCOL(P)
           if(basis=="additive" || basis=="glp") {
@@ -306,7 +306,7 @@ predict.kernel.spline <- function(x,
         htt <- numeric(length=n)
         for(i in 1:nrow.z.unique) {
           zz <- ind == ind.vals[i]
-          L <- prod.kernel(Z=z,z=z.unique[ind.vals[i],],lambda=lambda,kernel.type=kernel.type)
+          L <- prod.kernel(Z=z,z=z.unique[ind.vals[i],],lambda=lambda,is.ordered.z=is.ordered.z)
           if(basis=="additive" || basis=="glp") {
             model.z.unique <- lm(y~.,weights=L,data=data.frame(y,z.factor))
           } else {
@@ -338,7 +338,7 @@ predict.kernel.spline <- function(x,
         htt <- NULL # no hatvalues for evaluation
         for(i in 1:nrow.zeval.unique) {
           zz <- ind.zeval == ind.zeval.vals[i]
-          L <- prod.kernel(Z=z,z=zeval.unique[ind.zeval.vals[i],],lambda=lambda,kernel.type=kernel.type)
+          L <- prod.kernel(Z=z,z=zeval.unique[ind.zeval.vals[i],],lambda=lambda,is.ordered.z=is.ordered.z)
           if(basis=="additive" || basis=="glp") {
             model.z.unique <- lm(y~.,weights=L,data=data.frame(y,z.factor))
           } else {
@@ -374,7 +374,7 @@ deriv.kernel.spline <- function(x,
                                 z=NULL,
                                 K,
                                 lambda=NULL,
-                                kernel.type=c("nominal","ordinal"),
+                                is.ordered.z=NULL,
                                 xeval=NULL,
                                 zeval=NULL,
                                 knots=c("quantiles","uniform"),
@@ -389,7 +389,7 @@ deriv.kernel.spline <- function(x,
 
   basis <- match.arg(basis)
   knots <- match.arg(knots)
-  kernel.type <- match.arg(kernel.type)
+  if(is.null(is.ordered.z)) stop(" is.ordered.z must be provided")
 
   x <- as.matrix(x)
 
@@ -465,7 +465,7 @@ deriv.kernel.spline <- function(x,
         se.deriv <- numeric(length=n)        
         for(i in 1:nrow.z.unique) {
           zz <- ind == ind.vals[i]
-          L <- prod.kernel(Z=z,z=z.unique[ind.vals[i],],lambda=lambda,kernel.type=kernel.type)
+          L <- prod.kernel(Z=z,z=z.unique[ind.vals[i],],lambda=lambda,is.ordered.z=is.ordered.z)
           P <- prod.spline(x=x,K=K,knots=knots,basis=basis)          
           P.deriv <- prod.spline(x=x,K=K,xeval=x[zz,,drop=FALSE],knots=knots,basis=basis,deriv.index=deriv.index,deriv=deriv)
           k <- NCOL(P)
@@ -509,7 +509,7 @@ deriv.kernel.spline <- function(x,
         se.deriv <- numeric(length=num.eval)        
         for(i in 1:nrow.zeval.unique) {
           zz <- ind.zeval == ind.zeval.vals[i]
-          L <- prod.kernel(Z=z,z=zeval.unique[ind.zeval.vals[i],],lambda=lambda,kernel.type=kernel.type)
+          L <- prod.kernel(Z=z,z=zeval.unique[ind.zeval.vals[i],],lambda=lambda,is.ordered.z=is.ordered.z)
           P <- prod.spline(x=x,K=K,knots=knots,basis=basis)
           P.deriv <- prod.spline(x=x,K=K,xeval=xeval[zz,,drop=FALSE],knots=knots,basis=basis,deriv.index=deriv.index,deriv=deriv)
           k <- NCOL(P)
@@ -831,7 +831,7 @@ cv.kernel.spline <- function(x,
                              ind,
                              ind.vals,
                              nrow.z.unique,
-                             kernel.type=c("nominal","ordinal"),
+                             is.ordered.z=NULL,
                              knots=c("quantiles","uniform"),
                              basis=c("additive","tensor","glp"),
                              cv.func=c("cv.ls","cv.gcv","cv.aic")) {
@@ -841,7 +841,7 @@ cv.kernel.spline <- function(x,
   if(!is.matrix(K)) stop(" K must be a two-column matrix")  
 
   basis <- match.arg(basis)
-  kernel.type <- match.arg(kernel.type)
+  if(is.null(is.ordered.z)) stop(" is.ordered.z must be provided")
   knots <- match.arg(knots)
   cv.func <- match.arg(cv.func)
 
@@ -891,7 +891,7 @@ cv.kernel.spline <- function(x,
       if(NCOL(P) >= (n-1)) return(sqrt(.Machine$double.xmax))
       for(i in 1:nrow.z.unique) {
         zz <- ind == ind.vals[i]
-        L <- prod.kernel(Z=z,z=z.unique[ind.vals[i],],lambda=lambda,kernel.type=kernel.type)
+        L <- prod.kernel(Z=z,z=z.unique[ind.vals[i],],lambda=lambda,is.ordered.z=is.ordered.z)
         if(basis=="additive" || basis=="glp") {
           ## Additive spline regression models have an intercept in the lm()
           ## model (though not in the gsl.bs function)
@@ -911,7 +911,7 @@ cv.kernel.spline <- function(x,
       if(num.z > 1) for(i in 2:num.z) z.factor <- data.frame(z.factor,factor(z[,i]))
       for(i in 1:nrow.z.unique) {
         zz <- ind == ind.vals[i]
-        L <- prod.kernel(Z=z,z=z.unique[ind.vals[i],],lambda=lambda,kernel.type=kernel.type)
+        L <- prod.kernel(Z=z,z=z.unique[ind.vals[i],],lambda=lambda,is.ordered.z=is.ordered.z)
         if(basis=="additive" || basis=="glp") {
           model <- lm(y~.,weights=L,data=data.frame(y,z.factor))
         } else {
@@ -951,7 +951,6 @@ cv.factor.spline <- function(x,
                              z=NULL,
                              K,
                              I=NULL,
-                             kernel.type=c("nominal","ordinal"),
                              knots=c("quantiles","uniform"),
                              basis=c("additive","tensor","glp"),
                              cv.func=c("cv.ls","cv.gcv","cv.aic")) {
@@ -960,7 +959,6 @@ cv.factor.spline <- function(x,
   if(!is.matrix(K)) stop(" K must be a two-column matrix")  
 
   basis <- match.arg(basis)
-  kernel.type <- match.arg(kernel.type)
   knots <- match.arg(knots)
 
   cv.func <- match.arg(cv.func)

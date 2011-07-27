@@ -20,7 +20,6 @@ krscv(xz,
       segments.max=10,
       degree.min=0,
       segments.min=1, 
-      kernel.type = c("nominal","ordinal"),
       restarts = 0,
       complexity = c("degree-knots","degree","knots"),
       knots = c("quantiles","uniform"),
@@ -51,13 +50,6 @@ krscv(xz,
   \item{segments.min}{ the minimum segments of the B-spline basis for
     each of the continuous predictors (default \code{segments.min=1})}
 
-  \item{kernel.type}{
-    a character string indicating whether the kernel
-    for the discrete predictors \code{z} should be unordered
-    (default \dQuote{\code{nominal}}) or ordered
-    (\dQuote{\code{ordinal}}) - see \code{\link{crs}} for details
-  }
-  
   \item{restarts}{
     number of times to restart \code{\link{optim}} from different initial
     random values (default \code{restarts=0}) when searching for optimal

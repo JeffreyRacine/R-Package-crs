@@ -20,7 +20,6 @@ krscvNOMAD(xz,
            segments.max = 10, 
            degree.min = 0, 
            segments.min = 1, 
-           kernel.type = c("nominal","ordinal"),
            complexity = c("degree-knots","degree","knots"),
            knots = c("quantiles","uniform"),
            basis = c("additive","tensor","glp","auto"),
@@ -54,13 +53,6 @@ krscvNOMAD(xz,
   \item{segments.min}{ the minimum segments of the B-spline basis for
     each of the continuous predictors (default \code{segments.min=1})}
 
-  \item{kernel.type}{
-    a character string indicating whether the kernel
-    for the discrete predictors \code{z} should be unordered
-    (default \dQuote{\code{nominal}}) or ordered
-    (\dQuote{\code{ordinal}}) - see \code{\link{crs}} for details
-  }
-  
   \item{complexity}{a character string (default
   \code{complexity="degree-knots"}) indicating whether model `complexity' is
   determined by the degree of the spline or by the number of segments
