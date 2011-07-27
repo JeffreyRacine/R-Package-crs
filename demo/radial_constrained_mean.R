@@ -46,7 +46,7 @@ x2.seq <- seq(min(x2),max(x2),length=n.eval)
 
 rm(y,x1,x2)
 
-data.eval <- data.frame(y=0,expand.grid(x1=x2.seq,x2=x2.seq))
+data.eval <- data.frame(y=0,expand.grid(x1=x1.seq,x2=x2.seq))
 
 model.unres <- crs(y~x1+x2,
                    basis="auto",
