@@ -166,7 +166,6 @@ krscv <- function(xz,
   x <- xztmp$x
   z <- xztmp$z
   if(is.null(z)) stop(" categorical kernel smoothing requires ordinal/nominal predictors")
-
   z <- as.matrix(xztmp$z)
   num.z <- NCOL(z)
   is.ordered.z <- xztmp$is.ordered.z

@@ -618,6 +618,7 @@ predict.crs <- function(object,
     }
     x <- xztmp$x
     z <- xztmp$z
+    is.ordered.z <- xztmp$is.ordered.z
     rm(xztmp)
 
     ## Get evaluation data (newdata) and divide into factors and
@@ -626,9 +627,6 @@ predict.crs <- function(object,
     Terms <- delete.response(terms(object))
     newdata <- model.frame(Terms,newdata,xlev=object$xlevels)
 
-    ## May 20 - this could be a solution of sorts... the issue is that xz does not have information
-    #newdata <- tmf[, attr(attr(tmf, "terms"),"term.labels"), drop = FALSE]
-
     if(!object$kernel) {
       xztmp <- splitFrame(data.frame(newdata))
     } else {
@@ -636,6 +634,7 @@ predict.crs <- function(object,
     }
     xeval <- xztmp$x
     zeval <- xztmp$z
+    is.ordered.z <- xztmp$is.ordered.z    
     rm(xztmp)
 
     ## Compute the predicted values.
@@ -1039,6 +1038,7 @@ plot.crs <- function(x,
     }
     x <- xztmp$x
     z <- xztmp$z
+    is.ordered.z <- xztmp$is.ordered.z    
     rm(xztmp)
 
     ## Get degree vector and lambda vector
@@ -1095,6 +1095,7 @@ plot.crs <- function(x,
         }
         xeval <- xztmp$x
         zeval <- xztmp$z
+        is.ordered.z <- xztmp$is.ordered.z        
         rm(xztmp)
         
         ## Compute the predicted values.
@@ -1302,6 +1303,7 @@ plot.crs <- function(x,
     }
     x <- xztmp$x
     z <- xztmp$z
+    is.ordered.z <- xztmp$is.ordered.z    
     rm(xztmp)
 
     ## Get degree vector and lambda vector
@@ -1368,6 +1370,7 @@ plot.crs <- function(x,
         }
         xeval <- xztmp$x
         zeval <- xztmp$z
+        is.ordered.z <- xztmp$is.ordered.z            
         rm(xztmp)
         
         if(!object$kernel) {
@@ -1377,6 +1380,7 @@ plot.crs <- function(x,
         }
         xeval.base <- xztmp$x
         zeval.base <- xztmp$z
+        is.ordered.z <- xztmp$is.ordered.z            
         rm(xztmp)
         
         ## Compute the predicted values.

@@ -312,7 +312,6 @@ krscvNOMAD <- function(xz,
     xztmp <- splitFrame(xz,factor.to.numeric=TRUE)
     x <- xztmp$x
     z <- xztmp$z
-    
     if(is.null(z)) 
         stop(" categorical kernel smoothing requires ordinal/nominal predictors")
 
