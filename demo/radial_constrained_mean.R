@@ -119,9 +119,7 @@ model.res <- crs(y~x1+x2,cv="none",
 fitted.unres <- matrix(predict(model.unres,newdata=data.eval), n.eval, n.eval)
 fitted.res <- matrix(predict(model.res,newdata=data.eval), n.eval, n.eval)
 
-ylim <- c(min(fitted(model.unres),max(fitted(model.unres))))
-
-zlim <- c(min(fitted(model.unres)),max(fitted(model.unres)))
+zlim <- c(min(fitted.unres,fitted.res),max(fitted.unres,fitted.res))
 
 par(mfrow=c(1,2))
 
