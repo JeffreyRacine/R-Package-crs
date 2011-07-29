@@ -137,8 +137,8 @@ p.updated <- p + w.hat
 
 ## Now estimate the restricted model
 
-data.trans <- data.frame(y=p.updated*n*data.train$y,data.train[,2:ncol(data.train)])
-names(data.trans) <- names(data.train) ## Necessary when there is only 1 regressor
+data.trans <- data.frame(y=p.updated*n*data.train$y,data.train[,2:ncol(data.train),drop=FALSE])
+
 model.res <- crs(y~x1+x2,cv="none",
                  degree=model.unres$degree,
                  segments=model.unres$segments,

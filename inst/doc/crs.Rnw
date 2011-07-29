@@ -342,9 +342,12 @@ by
 \end{equation*}
 while for an ordered categorical we use the function defined by
 \begin{equation*}
-  l(Z^d_{is},z^d_s,\lambda_s) = \lambda_s^{|Z_{is}^d-z^d_s| }
+  \tilde l(Z_{is},z_s,\lambda_s) = \lambda_s^{|Z_{is}-z_s| }
 \end{equation*}
-and modify the product kernel function appropriately.
+and modify the product kernel function appropriately. When $Z$
+contains a mix of ordered and unordered variables we select the
+appropriate kernel for each variable's type when constructing the
+product kernel.
 
 Note that when $\lambda_s=1$ all observations are `pooled' hence the
 variable $z_s$ is removed from the resulting estimate, while when
