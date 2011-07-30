@@ -1,3 +1,7 @@
+Changes from Version 0.15-1 to 0.15-2 [30-July-2011]
+
+* Renamed COPYING file to COPYRIGHTS
+
 Changes from Version 0.15-0 to 0.15-1 [29-Jul-2011]
 
 * Automated detection of ordered/unordered factors implemented

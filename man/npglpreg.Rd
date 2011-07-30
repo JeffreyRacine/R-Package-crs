@@ -389,7 +389,7 @@ y <- x1^3 + rnorm(n,sd=1)
 ## Ideally the method should choose large bandwidths for x1 and x2 and a
 ## generalized polynomial that is a cubic for x1 and degree 0 for x2.
 
-model <- npglpreg(y~x1+x2)
+model <- npglpreg(y~x1+x2,nmulti=1)
 summary(model)
 
 \dontrun{
