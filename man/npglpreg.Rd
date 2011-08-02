@@ -205,7 +205,8 @@ for each dimension of the continuous \code{x} in \code{txdat}}
     
     model <- npglpreg(y~x1+x2)
     
-    ## Conduct degree 0 local polynomial estimation (i.e. local constant)
+    ## Conduct degree 0 local polynomial estimation
+    ## (i.e. Nadaraya-Watson)
     
     model <- npglpreg(y~x1+x2,cv="bandwidth",degree=c(0,0))    
     
@@ -213,9 +214,24 @@ for each dimension of the continuous \code{x} in \code{txdat}}
     
     model <- npglpreg(y~x1+x2,cv="bandwidth",degree=c(1,1))    
     
-    ## Conduct degree 2 local polynomial estimation (i.e. local quadratic)
+    ## Conduct degree 2 local polynomial estimation (i.e. local
+    ## quadratic)
     
-    model <- npglpreg(y~x1+x2,cv="bandwidth",degree=c(2,2))    
+    model <- npglpreg(y~x1+x2,cv="bandwidth",degree=c(2,2))
+
+    ## Plot the mean and bootstrap confidence intervals
+
+    plot(model,ci=TRUE)
+
+    ## Plot the first partial derivatives and bootstrap confidence
+    ## intervals
+
+    plot(model,deriv=1,ci=TRUE)
+
+    ## Plot the first second partial derivatives and bootstrap
+    ## confidence intervals
+
+    plot(model,deriv=2,ci=TRUE)        
     
   }
   

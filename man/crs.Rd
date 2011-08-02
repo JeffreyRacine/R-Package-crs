@@ -197,9 +197,25 @@ in \code{x} are included or omitted from the resulting estimate }
   Typical usages are (see below for a  list of options and also
   the examples at the end of this help file)
   \preformatted{
+    ## Estimate the model and let the basis type be determined by
+    ## cross-validation (i.e. cross-validation will determine whether to
+    ## use the additive, generalized, or tensor product basis)
+    
     model <- crs(y~x1+x2,basis="auto")
     
+    ## Estimate the model for a specified degree/segment/bandwidth
+    ## combination and do not run cross-validation (will use the
+    ## additive basis by default)
+    
     model <- crs(y~x1+factor(x2),cv="none",degree=3,segments=1,lambda=.1)
+    
+    ## Plot the mean and (asymptotic) error bounds
+
+    plot(model,mean=TRUE,ci=TRUE)
+
+    ## Plot the first partial derivative and (asymptotic) error bounds
+
+    plot(model,deriv=1,ci=TRUE)    
     }
     
   \code{crs} computes a regression spline estimate of a one (1)
