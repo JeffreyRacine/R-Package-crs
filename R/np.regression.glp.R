@@ -15,10 +15,13 @@ NZD <- function(a) {
 sd.robust <- function(x) {
   iqr.x <- IQR(x)
   sd.x <- sd(x)
-  if(isTRUE(all.equal(sd.x, 0))) stop(" predictor is a constant not a variable")
+  if(isTRUE(all.equal(sd.x, 0))) stop(" numeric predictor is a constant not a variable")
   ## Test for pathological case where sd > 0 but iqr is 0 (many
   ## repeated values)
-  if(sd.x > 0 && isTRUE(all.equal(iqr.x, 0))) iqr.x <- sd.x
+  if(sd.x > 0 && isTRUE(all.equal(iqr.x, 0))) {
+    iqr.x <- sd.x
+    warning(" numeric predictor exists with numerous repeated values (over 50%, IQR = 0)")
+  }
   min(sd.x,iqr.x/1.34898)
 }
 
