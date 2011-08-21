@@ -13,7 +13,13 @@ NZD <- function(a) {
 }
 
 sd.robust <- function(x) {
-  min(sd(x),IQR(x)/1.34898)
+  iqr.x <- IQR(x)
+  sd.x <- sd(x)
+  if(isTRUE(all.equal(sd.x, 0))) stop(" predictor is a constant not a variable")
+  ## Test for pathological case where sd > 0 but iqr is 0 (many
+  ## repeated values)
+  if(sd.x > 0 && isTRUE(all.equal(iqr.x, 0))) iqr.x <- sd.x
+  min(sd.x,iqr.x/1.34898)
 }
 
 mypoly <- function(x,
