@@ -142,9 +142,22 @@ the specifics of the implementation for the interested reader.
 
 \section*{Implementation}
 
-Spline regression methods can be limited in their potential
-applicability as they are predicated on \emph{continuous}
-predictors. However, in applied settings we often encounter
+Kernel-based methods such as local constant (i.e.\ the
+\citeauthor{NADARAYA:1965} \citeyear{NADARAYA:1965}
+\citeauthor{WATSON:1964} \citeyear{WATSON:1964} estimator) and local
+polynomial regression \citep{FAN_GIJBELS:1996} are based on the
+concept of `local' weighted averaging. Regression spline methods, on
+the other hand, are `global' in nature since a single least square
+procedure leads to the ultimate function estimate over the entire data
+range \citep{STONE:1994}. This `global nature' implies that
+constructing regression splines will be less computationally
+burdensome that their kernel-based counterparts leading to their
+practical appeal relative to kernel-based approaches.
+
+However, while kernel-based regression methods admit a rich array of
+predictor types, spline regression methods can be limited in their
+potential applicability as they are predicated on \emph{continuous}
+predictors only. In applied settings we often encounter
 \emph{categorical} predictors such as strength of preference
 (``strongly prefer'', ``weakly prefer'', ``indifferent'' etc.) and so
 forth. When confronted with categorical predictors, researchers

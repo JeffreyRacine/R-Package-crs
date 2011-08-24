@@ -1,3 +1,16 @@
+Changes from Version 0.15-2 to 0.15-3 [XXX]
+
+* Both degree and segments now set to one for first multistart in crs
+  (previously only degree was, but intent was always to begin from a
+  linear model (with interactions where appropriate) so this glitch is
+  corrected)
+
+* Test for pathological case in npglpreg when initializing bandwidths
+  where IQR is zero but sd > 0 (for setting robust sd) which occurs
+  when there exist many repeated values for a continuous predictor
+
+* Added `typical usage' preformatted illustrations for docs
+
 Changes from Version 0.15-1 to 0.15-2 [30-July-2011]
 
 * Renamed COPYING file to COPYRIGHTS
