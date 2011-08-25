@@ -850,7 +850,7 @@ predict.crs <- function(object,
 ## Basic print method.
 
 print.crs <- function(x,
-                         ...) {
+                      ...) {
 
   cat("Call:\n")
   print(x$call)
