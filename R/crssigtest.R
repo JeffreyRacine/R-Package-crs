@@ -10,10 +10,10 @@
 ## place) that breaks any systematic relationship between the
 ## predictor and outcome.
 
-crssigtest <- function(model=NULL,
-                       index=NULL,
-                       boot.num=399,
-                       boot.type=c("residual","reorder"),
+crssigtest <- function(model = NULL,
+                       index = NULL,
+                       boot.num = 399,
+                       boot.type = c("residual","reorder"),
                        random.seed = 42) {
 
   ## Save seed prior to setting
