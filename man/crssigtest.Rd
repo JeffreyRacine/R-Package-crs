@@ -10,8 +10,8 @@
 }
 \usage{
 crssigtest(model=NULL,
-            index=NULL,
-            boot.num=399)
+           index=NULL,
+           boot.num=399)
 }
 
 \arguments{
@@ -59,6 +59,7 @@ crssigtest(model=NULL,
 }
 
 \examples{
+options(crs.messages=F)
 set.seed(42)
 
 n <- 1000
