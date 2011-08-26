@@ -5,7 +5,7 @@ useDynLib(crs, snomadRInfo)
 import(stats)
 export(crs,
        crsiv,
-       crs.sigtest,
+       crssigtest,
        frscv,
        frscvNOMAD, 
        gsl.bs,
