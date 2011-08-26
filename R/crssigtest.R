@@ -123,7 +123,12 @@ crssigtest <- function(model = NULL,
                             basis=model.basis,
                             knots=model.knots)
 
-    ## Compute the pseudo F-value under the null
+    ## Compute the pseudo F-value under the null (here we could use
+    ## the unrestricted residuals from the model inputted
+    ## residuals(model) while we compute df for the model augmented
+    ## (i.e. if degree==0 set degree==1) to avoid degeneracy when a
+    ## variable is automatically removed) though this does not correct
+    ## the size distortion I am currently experiencing.
 
     uss <- sum(residuals(model.unrestricted)^2)
     rss <- sum(residuals(model.restricted)^2)
@@ -167,7 +172,7 @@ crssigtest <- function(model = NULL,
 
       } else {
 
-        y.boot <- fitted(model.restricted) + sample(residuals(model.unrestricted),replace=T)
+        y.boot <- fitted(model.restricted) + as.numeric(scale(sample(residuals(model),replace=T),center=TRUE,scale=FALSE))
 
         model.unrestricted.boot <- crs(xz=model$xz,
                                        y=y.boot,

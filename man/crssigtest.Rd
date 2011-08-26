@@ -64,6 +64,10 @@ crssigtest(model = NULL,
 }
 
 \section{Usage Issues}{
+  
+  This function should be considered to be in `beta status' until
+  further notice.
+  
   Caution: bootstrap methods are, by their nature, \emph{computationally
   intensive}. This can be frustrating for users possessing large
   datasets. For exploratory purposes, you may wish to override the
