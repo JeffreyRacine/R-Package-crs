@@ -3,14 +3,14 @@
 ## computes the test for predictor `i', otherwise it computes the test
 ## for all predictors, one at a time.
 
-crs.sigtest <- function(model=NULL,index=NULL,B=399) {
+crssigtest <- function(model=NULL,index=NULL,boot.num=399) {
 
   if(is.null(model)) stop(" you must provide a crs model")
   if(is.null(index)) index <- 1:NCOL(model$xz)
   if(index < 1 || index > NCOL(model$xz)) stop(" you must provide a valid index")
   P.vec <- numeric(length(index))
   F.vec <- numeric(length(index))  
-  F.boot <- numeric(length=B)  
+  F.boot <- numeric(length=boot.num)  
 
   for(i in 1:length(index)) {
 
@@ -72,7 +72,7 @@ crs.sigtest <- function(model=NULL,index=NULL,B=399) {
     F.pseudo <- (rss-uss)/uss
     F.vec[i] <- F.pseudo
 
-    for(b in 1:B) {
+    for(b in 1:boot.num) {
     
       ## Bootstrap sample under the null
       
