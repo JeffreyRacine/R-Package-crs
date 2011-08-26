@@ -51,6 +51,7 @@ crssigtest <- function(model = NULL,
 
     degree.restricted <- model.degree
     lambda.restricted <- model.lambda
+    segments.restricted <- model.segments
 
     ## Determine whether variable(s) is numeric or factor
 
@@ -72,13 +73,17 @@ crssigtest <- function(model = NULL,
 
       ## If the degree is zero (i.e. cross-validation has determined a
       ## variable is `irrelevant'), allow the model to be included
-      ## using a degree 1 fit
+      ## using a degree 1/segments 1 fit (latter not necessary but
+      ## zero cost to so doing)
 
       model.degree[degree.index] <- ifelse(model$degree[degree.index]==0,1,model$degree[degree.index])
+      model.segments[degree.index] <- ifelse(model$degree[degree.index]==0,1,model$segments[degree.index])
 
-      ## Set the null degree to zero
+      ## Set the null degree to zero and segments to one (latter not
+      ## necessary but zero cost to so doing)
 
       degree.restricted[degree.index] <- 0
+      segments.restricted[degree.index] <- 1
 
     } else {
 
@@ -114,7 +119,7 @@ crssigtest <- function(model = NULL,
                             cv="none",
                             degree=degree.restricted,
                             lambda=lambda.restricted,
-                            segments=model.segments,
+                            segments=segments.restricted,
                             basis=model.basis,
                             knots=model.knots)
 
@@ -123,17 +128,17 @@ crssigtest <- function(model = NULL,
     uss <- sum(residuals(model.unrestricted)^2)
     rss <- sum(residuals(model.restricted)^2)
 
-    df1 <- model$nobs-model.unrestricted$k
-    df2 <- model.unrestricted$k-model.restricted$k
+    df1 <- model.unrestricted$k-model.restricted$k
+    df2 <- model$nobs-model.unrestricted$k
 
-    F.df <- df1/df2
+    F.df <- df2/df1
   
     F.pseudo <- F.df*(rss-uss)/uss
     F.vec[ii] <- F.pseudo
 
     if(boot.type=="reorder") xz.boot <- model$xz
 
-    for(b in 1:boot.num) {
+    for(bb in 1:boot.num) {
     
       ## Bootstrap sample under the null and recompute the
       ## `restricted' and `unrestricted' models for the null sample
@@ -146,8 +151,8 @@ crssigtest <- function(model = NULL,
                                        y=model$y,
                                        cv="none",
                                        degree=model.degree,
-                                       segments=model.segments,
                                        lambda=model.lambda,
+                                       segments=model.segments,
                                        basis=model.basis,
                                        knots=model.knots)
 
@@ -155,8 +160,8 @@ crssigtest <- function(model = NULL,
                                      y=model$y,
                                      cv="none",
                                      degree=degree.restricted,
-                                     segments=model.segments,
                                      lambda=lambda.restricted,
+                                     segments=segments.restricted,
                                      basis=model.basis,
                                      knots=model.knots)
 
@@ -178,7 +183,7 @@ crssigtest <- function(model = NULL,
                                      cv="none",
                                      degree=degree.restricted,
                                      lambda=lambda.restricted,
-                                     segments=model.segments,
+                                     segments=segments.restricted,
                                      basis=model.basis,
                                      knots=model.knots)
 
@@ -189,9 +194,9 @@ crssigtest <- function(model = NULL,
       
       uss.boot <- sum(residuals(model.unrestricted.boot)^2)
       
-      rss.boot <- sum(residuals(model.restricted.boot)^2)    
-      
-      F.boot[b] <- F.df*(rss.boot-uss.boot)/uss.boot
+      rss.boot <- sum(residuals(model.restricted.boot)^2)
+
+      F.boot[bb] <- F.df*(rss.boot-uss.boot)/uss.boot
 
     }
 
