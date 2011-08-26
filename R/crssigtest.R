@@ -20,9 +20,9 @@ crssigtest <- function(model=NULL,
 
   if(exists(".Random.seed", .GlobalEnv)) {
     save.seed <- get(".Random.seed", .GlobalEnv)
-    exists.seed = TRUE
+    exists.seed <- TRUE
   } else {
-    exists.seed = FALSE
+    exists.seed <- FALSE
   }
 
   set.seed(random.seed)
@@ -33,6 +33,7 @@ crssigtest <- function(model=NULL,
   P.vec <- numeric(length(index))
   F.vec <- numeric(length(index))  
   F.boot <- numeric(length=boot.num)
+  F.boot.mat <- matrix(NA,nrow=boot.num,ncol=length(index))
 
   boot.type <- match.arg(boot.type)
 
@@ -122,7 +123,10 @@ crssigtest <- function(model=NULL,
     uss <- sum(residuals(model.unrestricted)^2)
     rss <- sum(residuals(model.restricted)^2)
 
-    F.df <- (model$nobs-model.unrestricted$k)/(model.unrestricted$k-model.restricted$k)
+    df1 <- model$nobs-model.unrestricted$k
+    df2 <- model.unrestricted$k-model.restricted$k
+
+    F.df <- df1/df2
   
     F.pseudo <- F.df*(rss-uss)/uss
     F.vec[ii] <- F.pseudo
@@ -158,14 +162,14 @@ crssigtest <- function(model=NULL,
 
       } else {
 
-        y.boot <- fitted(model.restricted) + sample(residuals(model.restricted),replace=T)
+        y.boot <- fitted(model.restricted) + sample(residuals(model.unrestricted),replace=T)
 
         model.unrestricted.boot <- crs(xz=model$xz,
                                        y=y.boot,
                                        cv="none",
                                        degree=model.degree,
-                                       segments=model.segments,
                                        lambda=model.lambda,
+                                       segments=model.segments,
                                        basis=model.basis,
                                        knots=model.knots)
 
@@ -173,8 +177,8 @@ crssigtest <- function(model=NULL,
                                      y=y.boot,
                                      cv="none",
                                      degree=degree.restricted,
-                                     segments=model.segments,
                                      lambda=lambda.restricted,
+                                     segments=model.segments,
                                      basis=model.basis,
                                      knots=model.knots)
 
@@ -191,6 +195,8 @@ crssigtest <- function(model=NULL,
 
     }
 
+    F.boot.mat[,ii] <- F.boot
+
     P.vec[ii] <- mean(ifelse(F.boot > F.pseudo, 1, 0))
 
   }
@@ -199,6 +205,11 @@ crssigtest <- function(model=NULL,
 
   if(exists.seed) assign(".Random.seed", save.seed, .GlobalEnv)
   
-  return(list(index=index,P=P.vec,F=F.vec,F.boot=F.boot))
+  return(list(index=index,
+              P=P.vec,
+              F=F.vec,
+              F.boot=F.boot.mat,
+              df1=df1,
+              df2=df2))
 
 } 
