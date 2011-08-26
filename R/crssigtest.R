@@ -121,8 +121,10 @@ crssigtest <- function(model=NULL,
 
     uss <- sum(residuals(model.unrestricted)^2)
     rss <- sum(residuals(model.restricted)^2)
+
+    F.df <- (model$nobs-model.unrestricted$k)/(model.unrestricted$k-model.restricted$k)
   
-    F.pseudo <- (rss-uss)/uss
+    F.pseudo <- F.df*(rss-uss)/uss
     F.vec[ii] <- F.pseudo
 
     if(boot.type=="reorder") xz.boot <- model$xz
@@ -185,7 +187,7 @@ crssigtest <- function(model=NULL,
       
       rss.boot <- sum(residuals(model.restricted.boot)^2)    
       
-      F.boot[b] <- (rss.boot-uss.boot)/uss.boot
+      F.boot[b] <- F.df*(rss.boot-uss.boot)/uss.boot
 
     }
 
