@@ -10,7 +10,22 @@
 ## place) that breaks any systematic relationship between the
 ## predictor and outcome.
 
-crssigtest <- function(model=NULL,index=NULL,boot.num=399,boot.type=c("residual","reorder")) {
+crssigtest <- function(model=NULL,
+                       index=NULL,
+                       boot.num=399,
+                       boot.type=c("residual","reorder"),
+                       random.seed = 42) {
+
+  ## Save seed prior to setting
+
+  if(exists(".Random.seed", .GlobalEnv)) {
+    save.seed <- get(".Random.seed", .GlobalEnv)
+    exists.seed = TRUE
+  } else {
+    exists.seed = FALSE
+  }
+
+  set.seed(random.seed)
 
   if(is.null(model)) stop(" you must provide a crs model")
   if(is.null(index)) index <- 1:NCOL(model$xz)
@@ -21,7 +36,7 @@ crssigtest <- function(model=NULL,index=NULL,boot.num=399,boot.type=c("residual"
 
   boot.type <- match.arg(boot.type)
 
-  for(i in 1:length(index)) {
+  for(ii in 1:length(index)) {
 
     ## Get information from model each time the test is run
 
@@ -39,7 +54,7 @@ crssigtest <- function(model=NULL,index=NULL,boot.num=399,boot.type=c("residual"
     ## Determine whether variable(s) is numeric or factor
 
     xz.numeric <- FALSE
-    if(is.numeric(model$xz[,index[i]])) xz.numeric <- TRUE
+    if(is.numeric(model$xz[,index[ii]])) xz.numeric <- TRUE
 
     ## Test whether degree or bandwidth for the variable being tested
     ## is zero or one. First, the predictors can be in any order
@@ -52,7 +67,7 @@ crssigtest <- function(model=NULL,index=NULL,boot.num=399,boot.type=c("residual"
       ## degree index
 
       degree.index <- 0
-      for(j in 1:index[i]) if(is.numeric(model$xz[,j])) degree.index <- degree.index + 1
+      for(jj in 1:index[ii]) if(is.numeric(model$xz[,jj])) degree.index <- degree.index + 1
 
       ## If the degree is zero (i.e. cross-validation has determined a
       ## variable is `irrelevant'), allow the model to be included
@@ -70,7 +85,7 @@ crssigtest <- function(model=NULL,index=NULL,boot.num=399,boot.type=c("residual"
       ## lambda index
 
       lambda.index <- 0
-      for(j in 1:index[i]) if(!is.numeric(model$xz[,j])) lambda.index <- lambda.index + 1
+      for(jj in 1:index[ii]) if(!is.numeric(model$xz[,jj])) lambda.index <- lambda.index + 1
 
       ## If the bandwidth is one (i.e. cross-validation has determined
       ## a variable is `irrelevant'), allow the model to be included
@@ -108,7 +123,7 @@ crssigtest <- function(model=NULL,index=NULL,boot.num=399,boot.type=c("residual"
     rss <- sum(residuals(model.restricted)^2)
   
     F.pseudo <- (rss-uss)/uss
-    F.vec[i] <- F.pseudo
+    F.vec[ii] <- F.pseudo
 
     if(boot.type=="reorder") xz.boot <- model$xz
 
@@ -119,7 +134,7 @@ crssigtest <- function(model=NULL,index=NULL,boot.num=399,boot.type=c("residual"
 
       if(boot.type=="reorder") {
       
-        xz.boot[,index[i]] <- sample(model$xz[,index[i]],replace=T)
+        xz.boot[,index[ii]] <- sample(model$xz[,index[ii]],replace=T)
 
         model.unrestricted.boot <- crs(xz=xz.boot,
                                        y=model$y,
@@ -166,18 +181,22 @@ crssigtest <- function(model=NULL,index=NULL,boot.num=399,boot.type=c("residual"
 
       ## Recompute the pseudo F-value under the null
       
-      rss.boot <- sum(residuals(model.restricted.boot)^2)    
-      
       uss.boot <- sum(residuals(model.unrestricted.boot)^2)
       
+      rss.boot <- sum(residuals(model.restricted.boot)^2)    
+      
       F.boot[b] <- (rss.boot-uss.boot)/uss.boot
-    
+
     }
 
-    P.vec[i] <- mean(ifelse(F.boot > F.pseudo, 1, 0))
+    P.vec[ii] <- mean(ifelse(F.boot > F.pseudo, 1, 0))
 
   }
 
+  ## Restore seed
+
+  if(exists.seed) assign(".Random.seed", save.seed, .GlobalEnv)
+  
   return(list(index=index,P=P.vec,F=F.vec,F.boot=F.boot))
 
 } 

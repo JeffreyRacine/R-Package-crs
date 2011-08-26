@@ -9,10 +9,11 @@
   setting. The test is based on Ma and Racine (2011).
 }
 \usage{
-crssigtest(model=NULL,
-           index=NULL,
-           boot.num=399,
-           boot.type=c("residual","reorder"))
+crssigtest(model = NULL,
+           index = NULL,
+           boot.num = 399,
+           boot.type = c("residual","reorder"),
+           random.seed = 42)
 }
 
 \arguments{
@@ -32,6 +33,10 @@ crssigtest(model=NULL,
     whether to conduct `residual' bootstrapping (iid) or permute
     (reorder) in place the predictor being tested when imposing the
     null.
+  }
+  \item{random.seed}{
+    an integer used to seed R's random number generator. This is to
+    ensure replicability. Defaults to 42.
   }
 }
 
