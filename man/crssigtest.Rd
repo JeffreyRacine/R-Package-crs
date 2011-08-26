@@ -11,7 +11,8 @@
 \usage{
 crssigtest(model=NULL,
            index=NULL,
-           boot.num=399)
+           boot.num=399,
+           boot.type=c("residual","reorder"))
 }
 
 \arguments{
@@ -27,6 +28,11 @@ crssigtest(model=NULL,
     an integer value specifying the number of bootstrap replications to
     use. Defaults to \code{399}.
   }
+  \item{boot.type}{
+    whether to conduct `residual' bootstrapping (iid) or permute
+    (reorder) in place the predictor being tested when imposing the
+    null.
+  }
 }
 
 \value{
@@ -37,6 +43,8 @@ crssigtest(model=NULL,
   \item{index}{ the vector of indices input }
   \item{F}{ the vector of statistics \code{R} }
   \item{P}{ the vector of P-values for each statistic in \code{F}}
+  \item{F.boot}{ the vector of bootstrapped pseudo F-statistics
+  generated under the null}  
 }
 \references{
   Li, Q. and J.S. Racine (2007), \emph{Nonparametric Econometrics:
