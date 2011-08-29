@@ -47,7 +47,9 @@ crssigtest(model = NULL,
   
   \item{index}{ the vector of indices input }
   \item{F}{ the vector of statistics \code{R} }
-  \item{P}{ the vector of P-values for each statistic in \code{F}}
+  \item{P}{ the vector of bootstrap P-values for each statistic in \code{F}}
+  \item{P}{ the vector of asymptotic P-values for each statistic in
+  \code{F} (approximation of df for categorical predictors)}  
   \item{F.boot}{ the vector of bootstrapped pseudo F-statistics
   generated under the null}  
 }
