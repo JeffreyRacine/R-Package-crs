@@ -327,7 +327,8 @@ in \code{x} are included or omitted from the resulting estimate }
   
   \item{call}{ a symbolic description of the model  }
   
-  \item{r.squared}{ coefficient of determination }
+  \item{r.squared}{ coefficient of determination (Doksum and Samarov
+  (1995)) }
 
   \item{model.lm}{ an object of \sQuote{\code{\link{class}}}
   \sQuote{\code{\link{lm}}} if \code{kernel=FALSE} or a list of objects
@@ -377,7 +378,11 @@ in \code{x} are included or omitted from the resulting estimate }
   http://www.gerad.ca/nomad.
 
   Craven, P. and G. Wahba (1979), \dQuote{Smoothing noisy data with
-  spline functions,} Numerische Mathematik, 13, 377-403.
+    spline functions,} Numerische Mathematik, 13, 377-403.
+
+  Doksum, K. and A. Samarov (1995), \dQuote{Nonparametric Estimation of
+  Global Functionals and a Measure of the Explanatory Power of
+  Covariates in Regression,} The Annals of Statistics, 23 1443-1473.
 
   Hurvich, C.M. and J.S. Simonoff and C.L. Tsai (1998),
   \dQuote{Smoothing parameter selection in nonparametric regression

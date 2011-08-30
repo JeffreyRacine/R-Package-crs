@@ -53,10 +53,10 @@ crssigtest(model = NULL,
   \item{index}{ the vector of indices input }
   \item{F}{ the vector of statistics \code{R} }
   \item{P}{ the vector of bootstrap P-values for each statistic in \code{F}}
-  \item{P}{ the vector of asymptotic P-values for each statistic in
-  \code{F} (approximation of df for categorical predictors)}  
-  \item{F.boot}{ the vector of bootstrapped pseudo F-statistics
-  generated under the null}  
+  \item{P.asy}{ the vector of asymptotic P-values for each statistic in index }
+  \code{df1}{ numerator degrees of freedom (based on the smoother matrix)}
+  \code{df2}{ denominator degrees of freedom (based on the smoother matrix) }    
+  \item{F.boot}{ the vector of bootstrapped pseudo F-statistics generated under the null}  
 }
 \references{
   Li, Q. and J.S. Racine (2007), \emph{Nonparametric Econometrics:
@@ -67,7 +67,7 @@ crssigtest(model = NULL,
 
 }
 \author{
-  Jeffrey S. Racine\email{racinej@mcmaster.ca}
+  Jeffrey S. Racine \email{racinej@mcmaster.ca}
 }
 
 \section{Usage Issues}{
@@ -94,7 +94,7 @@ z <- factor(z)
 ## z is irrelevant
 y <- x1 + x2 + rnorm(n)
 
-model <- crs(y~x1+x2+z)
+model <- crs(y~x1+x2+z,complexity="degree",segments=c(1,1))
 
 crssigtest(model)
 }

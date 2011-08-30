@@ -185,3 +185,9 @@ CORRfunc <- function(y,y.fit) {
 SIGNfunc <- function(y,y.fit) {
   sum(sign(y) == sign(y.fit))/length(y)
 }
+
+blank <- function(len){
+  sapply(len, function(nb){
+    paste(rep(' ', times = nb), collapse='')
+  })
+}

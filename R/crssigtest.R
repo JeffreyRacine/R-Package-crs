@@ -262,12 +262,81 @@ crssigtest <- function(model = NULL,
 
   ## Return a list containing test results
   
-  return(list(index=index,
-              P=P.vec.boot,
-              P.asy=P.vec.asy,
-              F=F.vec,
-              F.boot=F.boot.mat,
-              df1=df1,
-              df2=df2))
+  return(sigtest(index=index,
+                 P=P.vec.boot,
+                 P.asy=P.vec.asy,
+                 F=F.vec,
+                 F.boot=F.boot.mat,
+                 df1=df1,
+                 df2=df2,
+                 boot.num=boot.num,
+                 boot.type=boot.type,
+                 xnames=names(model$xz)))
 
 } 
+
+
+sigtest <- function(index,
+                    P,
+                    P.asy,
+                    F,
+                    F.boot,
+                    df1,
+                    df2,
+                    boot.num,
+                    boot.type,
+                    xnames){
+
+  tsig <- list(index=index,
+               P=P,
+               P.asy=P.asy,
+               F=F,
+               F.boot=F.boot,
+               df1=df1,
+               df2=df2,
+               boot.num=boot.num,
+               boot.type=switch(boot.type,
+                 "residual" = "residual",
+                 "reorder" = "reorder"),
+               xnames=xnames)
+                   
+  tsig$reject <- rep('', length(F))
+  tsig$rejectNum <- rep(NA, length(F))
+
+  tsig$reject[a <- (P < 0.1)] <- '.'
+  tsig$rejectNum[a] <- 10
+
+  tsig$reject[a <- (P < 0.05)] <- '*'
+  tsig$rejectNum[a] <- 5
+
+  tsig$reject[a <- (P < 0.01)] <- '**'
+  tsig$rejectNum[a] <- 1
+
+  tsig$reject[a <- (P < 0.001)] <- '***'
+  tsig$rejectNum[a] <- 0.1
+
+  class(tsig) = "sigtest"
+
+  tsig
+}
+
+print.sigtest <- function(x, ...){
+  cat("\nRegression Spline Significance Test",
+      "\nType ", x$boot.type," Test (",x$boot.num,
+      " replications)",
+      "\nExplanatory variables tested for significance:\n",
+      paste(paste(x$xnames[x$index]," (",x$index,")", sep=""), collapse=", "),"\n\n",
+      sep="")
+      
+
+  maxNameLen <- max(nc <- nchar(nm <- x$xnames[x$index]))
+
+  cat("\nSignificance Tests\n")
+  cat("P Value:", paste("\n", nm, ' ', blank(maxNameLen-nc), format.pval(x$P),
+                        " ", x$reject, sep=''))
+  cat("\n---\nSignif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1\n\n")
+}
+
+summary.sigtest <- function(object, ...) {
+  print(object)
+}

@@ -304,11 +304,15 @@ for each dimension of the continuous \code{x} in \code{txdat}}
   
   \item{call}{ a symbolic description of the model  }
   
-  \item{r.squared}{ coefficient of determination }
+  \item{r.squared}{ coefficient of determination (Doksum and Samarov (1995))}
 
 }
 \references{
-  
+
+  Doksum, K. and A. Samarov (1995), \dQuote{Nonparametric Estimation of
+  Global Functionals and a Measure of the Explanatory Power of
+  Covariates in Regression,} The Annals of Statistics, 23 1443-1473.
+
   Hall, P. and J.S. Racine (2011), \dQuote{Cross-Validated
   Generalized Local Polynomial Regression,} Manuscript.
 
