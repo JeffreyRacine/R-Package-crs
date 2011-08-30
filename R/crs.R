@@ -891,7 +891,8 @@ summary.crs <- function(object,
   cat(paste("\nBasis type: ",format(object$basis),sep=""))
   if(!object$kernel) cat(paste("\nPruning of final model: ",format(ifelse(object$prune,"TRUE","FALSE")),sep=""))
   cat(paste("\nTraining observations: ", format(object$nobs), sep=""))
-  cat(paste("\nRank of model frame: ", format(object$k), sep=""))  
+  cat(paste("\nRank of model frame: ", format(object$k), sep=""))
+  cat(paste("\nTrace of smoother matrix: ", format(round(sum(object$hatvalues))), sep=""))    
   cat(paste("\nResidual standard error: ", format(sqrt(sum(object$residuals^2)/object$df.residual),digits=4)," on ", format(object$df.residual)," degrees of freedom",sep=""))
   adjusted.r.squared <- 1-(1-object$r.squared)*(length(object$fitted.values)-1)/object$df.residual
   cat(paste("\nMultiple R-squared: ", format(object$r.squared,digits=4),",   Adjusted R-squared: ",format(adjusted.r.squared,digits=4), sep=""))

@@ -160,12 +160,8 @@ crssigtest <- function(model = NULL,
     uss <- sum(residuals(model.unrestricted)^2)
     rss <- sum(residuals(model.restricted)^2)
 
-    if(xz.numeric) {
-      df1 <- model.unrestricted$k-model.restricted$k
-    } else {
-      df1 <- 1
-    }
-    df2 <- model$nobs-model.unrestricted$k
+    df1 <- max(1,round(sum(model.unrestricted$hatvalues))-round(sum(model.restricted$hatvalues)))
+    df2 <- model$nobs-round(sum(model.unrestricted$hatvalues))
 
     ## Compute the statistic and save each in F.vec (we allow multiple
     ## tests to be computed with one call to this function).
