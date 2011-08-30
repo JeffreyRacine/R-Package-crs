@@ -83,7 +83,7 @@ crssigtest(model = NULL,
 }
 
 \examples{
-options(crs.messages=F)
+options(crs.messages=FALSE)
 set.seed(42)
 
 n <- 1000
