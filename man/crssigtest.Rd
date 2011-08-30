@@ -54,8 +54,8 @@ crssigtest(model = NULL,
   \item{F}{ the vector of statistics \code{R} }
   \item{P}{ the vector of bootstrap P-values for each statistic in \code{F}}
   \item{P.asy}{ the vector of asymptotic P-values for each statistic in index }
-  \code{df1}{ numerator degrees of freedom (based on the smoother matrix)}
-  \code{df2}{ denominator degrees of freedom (based on the smoother matrix) }    
+  \code{df1}{ the vector of numerator degrees of freedom (based on the smoother matrix)}
+  \code{df2}{ the vector of denominator degrees of freedom (based on the smoother matrix) }    
   \item{F.boot}{ the vector of bootstrapped pseudo F-statistics generated under the null}  
 }
 \references{

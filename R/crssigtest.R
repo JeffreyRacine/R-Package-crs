@@ -43,6 +43,8 @@ crssigtest <- function(model = NULL,
 
   ## Some storage vectors/matrices
 
+  df1.vec <- numeric(length(index))
+  df2.vec <- numeric(length(index))    
   F.vec <- numeric(length(index))  
   P.vec.boot <- numeric(length(index))
   P.vec.asy <- numeric(length(index))  
@@ -161,13 +163,13 @@ crssigtest <- function(model = NULL,
     uss <- sum(residuals(model.unrestricted)^2)
     rss <- sum(residuals(model.restricted)^2)
 
-    df1 <- max(1,round(sum(model.unrestricted$hatvalues))-round(sum(model.restricted$hatvalues)))
-    df2 <- model$nobs-round(sum(model.unrestricted$hatvalues))
+    df1.vec[ii] <- max(1,round(sum(model.unrestricted$hatvalues))-round(sum(model.restricted$hatvalues)))
+    df2.vec[ii] <- model$nobs-round(sum(model.unrestricted$hatvalues))
 
     ## Compute the statistic and save each in F.vec (we allow multiple
     ## tests to be computed with one call to this function).
 
-    F.df <- df2/df1
+    F.df <- df2.vec[ii]/df1.vec[ii]
   
     F.pseudo <- F.df*(rss-uss)/uss
     F.vec[ii] <- F.pseudo
@@ -252,7 +254,7 @@ crssigtest <- function(model = NULL,
       
     ## Compute the asymptotic P value
       
-    P.vec.asy[ii] <- 1-pf(F.pseudo,df1=df1,df2=df2)
+    P.vec.asy[ii] <- 1-pf(F.pseudo,df1=df1.vec[ii],df2=df2.vec[ii])
       
   }
 
@@ -267,8 +269,8 @@ crssigtest <- function(model = NULL,
                  P.asy=P.vec.asy,
                  F=F.vec,
                  F.boot=F.boot.mat,
-                 df1=df1,
-                 df2=df2,
+                 df1=df1.vec,
+                 df2=df2.vec,
                  boot.num=boot.num,
                  boot.type=boot.type,
                  xnames=names(model$xz)))
@@ -296,8 +298,8 @@ sigtest <- function(index,
                df2=df2,
                boot.num=boot.num,
                boot.type=switch(boot.type,
-                 "residual" = "residual",
-                 "reorder" = "reorder"),
+                 "residual" = "Residual",
+                 "reorder" = "Reorder"),
                xnames=xnames)
                    
   tsig$reject <- rep('', length(F))
@@ -322,9 +324,9 @@ sigtest <- function(index,
 
 print.sigtest <- function(x, ...){
   cat("\nRegression Spline Significance Test",
-      "\nType ", x$boot.type," Test (",x$boot.num,
+      "\nTest Type: ", x$boot.type," (",x$boot.num,
       " replications)",
-      "\nExplanatory variables tested for significance:\n",
+      "\nPredictors tested for significance:\n",
       paste(paste(x$xnames[x$index]," (",x$index,")", sep=""), collapse=", "),"\n\n",
       sep="")
       
