@@ -13,7 +13,8 @@ crssigtest(model = NULL,
            index = NULL,
            boot.num = 399,
            boot.type = c("residual","reorder"),
-           random.seed = 42)
+           random.seed = 42,
+           boot = TRUE)
 }
 
 \arguments{
@@ -37,6 +38,10 @@ crssigtest(model = NULL,
   \item{random.seed}{
     an integer used to seed R's random number generator. This is to
     ensure replicability. Defaults to 42.
+  }
+  \item{boot}{
+    a logical value (default \code{TRUE}) indicating whether to compute
+    the bootstrap P-value or simply return the asymptotic P-value
   }
 }
 

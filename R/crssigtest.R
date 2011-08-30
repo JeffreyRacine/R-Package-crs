@@ -14,7 +14,8 @@ crssigtest <- function(model = NULL,
                        index = NULL,
                        boot.num = 399,
                        boot.type = c("residual","reorder"),
-                       random.seed = 42) {
+                       random.seed = 42,
+                       boot = TRUE) {
 
   ## Save any existing seed prior to setting the seed for this routine
   ## (we set the seed to ensure the same outcome when the test is run
@@ -42,9 +43,9 @@ crssigtest <- function(model = NULL,
 
   ## Some storage vectors/matrices
 
-  P.vec <- numeric(length(index))
-  P.vec.asy <- numeric(length(index))  
   F.vec <- numeric(length(index))  
+  P.vec.boot <- numeric(length(index))
+  P.vec.asy <- numeric(length(index))  
   F.boot <- numeric(length=boot.num)
   F.boot.mat <- matrix(NA,nrow=boot.num,ncol=length(index))
 
@@ -171,81 +172,88 @@ crssigtest <- function(model = NULL,
     F.pseudo <- F.df*(rss-uss)/uss
     F.vec[ii] <- F.pseudo
 
-    ## Bootstrap the P-values for the test statistic (we also record
-    ## the asymptotic P-values)
+    ## If boot == TRUE conduct the bootstrap, otherwise only conduct
+    ## the asymptotic P-value
 
-    if(boot.type=="reorder") xz.boot <- model$xz
+    if(boot) {
 
-    for(bb in 1:boot.num) {
-    
-      ## Bootstrap sample under the null and recompute the
-      ## `restricted' and `unrestricted' models for the null sample
-
-      if(boot.type=="reorder") {
+      ## Bootstrap the P-values for the test statistic (we also record
+      ## the asymptotic P-values)
       
-        xz.boot[,index[ii]] <- sample(model$xz[,index[ii]],replace=T)
-
-        model.unrestricted.boot <- crs(xz=xz.boot,
+      if(boot.type=="reorder") xz.boot <- model$xz
+      
+      for(bb in 1:boot.num) {
+        
+        ## Bootstrap sample under the null and recompute the
+        ## `restricted' and `unrestricted' models for the null sample
+        
+        if(boot.type=="reorder") {
+          
+          xz.boot[,index[ii]] <- sample(model$xz[,index[ii]],replace=T)
+          
+          model.unrestricted.boot <- crs(xz=xz.boot,
+                                         y=model$y,
+                                         cv="none",
+                                         degree=model.degree,
+                                         lambda=model.lambda,
+                                         segments=model.segments,
+                                         basis=model.basis,
+                                         knots=model.knots)
+          
+          model.restricted.boot <- crs(xz=xz.boot,
                                        y=model$y,
                                        cv="none",
-                                       degree=model.degree,
-                                       lambda=model.lambda,
-                                       segments=model.segments,
+                                       degree=degree.restricted,
+                                       lambda=lambda.restricted,
+                                       segments=segments.restricted,
                                        basis=model.basis,
                                        knots=model.knots)
-
-        model.restricted.boot <- crs(xz=xz.boot,
-                                     y=model$y,
-                                     cv="none",
-                                     degree=degree.restricted,
-                                     lambda=lambda.restricted,
-                                     segments=segments.restricted,
-                                     basis=model.basis,
-                                     knots=model.knots)
-
-      } else {
-
-        y.boot <- fitted(model.restricted) + as.numeric(scale(sample(residuals(model),replace=T),center=TRUE,scale=FALSE))
-
-        model.unrestricted.boot <- crs(xz=model$xz,
+          
+        } else {
+          
+          y.boot <- fitted(model.restricted) + as.numeric(scale(sample(residuals(model),replace=T),center=TRUE,scale=FALSE))
+          
+          model.unrestricted.boot <- crs(xz=model$xz,
+                                         y=y.boot,
+                                         cv="none",
+                                         degree=model.degree,
+                                         lambda=model.lambda,
+                                         segments=model.segments,
+                                         basis=model.basis,
+                                         knots=model.knots)
+          
+          model.restricted.boot <- crs(xz=model$xz,
                                        y=y.boot,
                                        cv="none",
-                                       degree=model.degree,
-                                       lambda=model.lambda,
-                                       segments=model.segments,
+                                       degree=degree.restricted,
+                                       lambda=lambda.restricted,
+                                       segments=segments.restricted,
                                        basis=model.basis,
                                        knots=model.knots)
-
-        model.restricted.boot <- crs(xz=model$xz,
-                                     y=y.boot,
-                                     cv="none",
-                                     degree=degree.restricted,
-                                     lambda=lambda.restricted,
-                                     segments=segments.restricted,
-                                     basis=model.basis,
-                                     knots=model.knots)
-
+          
+        }
+        
+        
+        ## Recompute the pseudo F-value under the null
+        
+        uss.boot <- sum(residuals(model.unrestricted.boot)^2)
+        
+        rss.boot <- sum(residuals(model.restricted.boot)^2)
+        
+        F.boot[bb] <- F.df*(rss.boot-uss.boot)/uss.boot
+        
       }
-
-
-      ## Recompute the pseudo F-value under the null
       
-      uss.boot <- sum(residuals(model.unrestricted.boot)^2)
+      F.boot.mat[,ii] <- F.boot
       
-      rss.boot <- sum(residuals(model.restricted.boot)^2)
-
-      F.boot[bb] <- F.df*(rss.boot-uss.boot)/uss.boot
+      P.vec.boot[ii] <- mean(ifelse(F.boot > F.pseudo, 1, 0))
 
     }
-
-    F.boot.mat[,ii] <- F.boot
-
-    P.vec[ii] <- mean(ifelse(F.boot > F.pseudo, 1, 0))
-
-    ## Also compute the asymptotic P value by way of comparison
-    
+      
+    ## Compute the asymptotic P value
+      
     P.vec.asy[ii] <- 1-pf(F.pseudo,df1=df1,df2=df2)
-
+      
   }
 
   ## Restore seed
@@ -255,7 +263,7 @@ crssigtest <- function(model = NULL,
   ## Return a list containing test results
   
   return(list(index=index,
-              P=P.vec,
+              P=P.vec.boot,
               P.asy=P.vec.asy,
               F=F.vec,
               F.boot=F.boot.mat,
