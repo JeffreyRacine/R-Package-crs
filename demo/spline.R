@@ -885,6 +885,7 @@ cv.kernel.spline <- function(x,
     num.z <- NCOL(z)
     epsilon <- numeric(length=n)
     htt <- numeric(length=n)
+    ## At least one predictor for which degree > 0
     if(any(K[,1] > 0)) {
       P <- prod.spline(x=x,K=K,knots=knots,basis=basis)
       ## Check for 1 or fewer degrees of freedom
@@ -907,18 +908,19 @@ cv.kernel.spline <- function(x,
         htt[zz] <- hat(model$qr)[zz]
       }
     } else {
+      ## No predictors for which degree > 0      
       z.factor <- data.frame(factor(z[,1]))
       if(num.z > 1) for(i in 2:num.z) z.factor <- data.frame(z.factor,factor(z[,i]))
       for(i in 1:nrow.z.unique) {
         zz <- ind == ind.vals[i]
         L <- prod.kernel(Z=z,z=z.unique[ind.vals[i],],lambda=lambda,is.ordered.z=is.ordered.z)
-        if(basis=="additive" || basis=="glp") {
-          model <- lm(y~.,weights=L,data=data.frame(y,z.factor))
-        } else {
-          model <- lm(y~.-1,weights=L,data=data.frame(y,z.factor))
-        }
+        ## Whether we use additive, glp, or tensor products, this
+        ## model has no continuous predictors hence the intercept is
+        ## the parameter that may shift with the categorical
+        ## predictors
+        model <- lm.wfit(matrix(1,n,1),y,L)
         epsilon[zz] <- residuals(model)[zz]
-        htt[zz] <- hatvalues(model)[zz]
+        htt[zz] <- hat(model$qr)[zz]
       }
     }
 
