@@ -22,9 +22,9 @@ crssigtest(model = NULL,
     a \code{crs} model object.
   }
   \item{index}{
-    a vector of indices for the columns of \code{xz} for which the
+    a vector of indices for the columns of \code{model$xz} for which the
     test of significance is to be conducted. Defaults to (1,2,\dots,\eqn{p})
-    where \eqn{p} is the number of columns in \code{xdat}.
+    where \eqn{p} is the number of columns in \code{model$xz}.
   }
   \item{boot.num}{
     an integer value specifying the number of bootstrap replications to
@@ -41,7 +41,7 @@ crssigtest(model = NULL,
   }
   \item{boot}{
     a logical value (default \code{TRUE}) indicating whether to compute
-    the bootstrap P-value or simply return the asymptotic P-value
+    the bootstrap P-value or simply return the asymptotic P-value.
   }
 }
 
@@ -51,12 +51,19 @@ crssigtest(model = NULL,
   objects. It has the following components:
   
   \item{index}{ the vector of indices input }
-  \item{F}{ the vector of statistics \code{R} }
   \item{P}{ the vector of bootstrap P-values for each statistic in \code{F}}
   \item{P.asy}{ the vector of asymptotic P-values for each statistic in index }
-  \code{df1}{ the vector of numerator degrees of freedom (based on the smoother matrix)}
-  \code{df2}{ the vector of denominator degrees of freedom (based on the smoother matrix) }    
-  \item{F.boot}{ the vector of bootstrapped pseudo F-statistics generated under the null}  
+  \item{F}{ the vector of pseudo F-statistics \code{F} }
+  \item{F.boot}{ the vector of bootstrapped pseudo F-statistics
+    generated under the null}  
+  \item{df1}{ the vector of numerator degrees of freedom (based on the
+    smoother matrix)}
+  
+  \item{df2}{ the vector of denominator degrees of freedom (based on the
+    smoother matrix) }
+  \item{boot.num}{ the number of bootstrap replications }
+  \item{boot.type}{ the \code{boot.type} }
+  \item{xnames}{ the names of the variables in \code{model$xz}}
 }
 \references{
   Li, Q. and J.S. Racine (2007), \emph{Nonparametric Econometrics:

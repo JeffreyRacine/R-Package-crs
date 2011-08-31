@@ -319,7 +319,8 @@ sigtest <- function(index,
 
   class(tsig) = "sigtest"
 
-  tsig
+  return(tsig)
+  
 }
 
 print.sigtest <- function(x, ...){
@@ -333,9 +334,9 @@ print.sigtest <- function(x, ...){
 
   maxNameLen <- max(nc <- nchar(nm <- x$xnames[x$index]))
 
-  cat("\nSignificance Tests\n")
+  cat("\nSignificance Test Summary\n")
   cat("P Value:", paste("\n", nm, ' ', blank(maxNameLen-nc), format.pval(x$P),
-                        " ", formatC(x$reject,width=-4,format="s"), "(df1 = ",x$df1, ", df2 = ", x$df2,")",sep=''))
+                        " ", formatC(x$reject,width=-4,format="s"), "(df1 = ", x$df1, ", df2 = ", x$df2,")",sep=''))
   cat("\n---\nSignif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1\n\n")
 }
 
