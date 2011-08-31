@@ -216,6 +216,7 @@ predict.kernel.spline <- function(x,
     fit.spline <- cbind(fit.spline[[1]],se=fit.spline[[2]])
 
     htt <- hatvalues(model)
+    htt <- ifelse(htt < 1, htt, 1-.Machine$double.eps)
 
   } else {
 
@@ -864,7 +865,7 @@ cv.kernel.spline <- function(x,
       if(NCOL(P) >= (n-1)) return(sqrt(.Machine$double.xmax))
       suppressWarnings(epsilon <- residuals(lsfit(P,y,intercept=lm.intercept)))
       htt <- hat(P)
-      htt <- ifelse(htt == 1, 1-.Machine$double.eps, htt)      
+      htt <- ifelse(htt < 1, htt, 1-.Machine$double.eps)
     } else {
       htt <- rep(1/n,n)
       epsilon <- y-mean(y)
@@ -924,7 +925,7 @@ cv.kernel.spline <- function(x,
       }
     }
 
-    htt <- ifelse(htt == 1, 1-.Machine$double.eps, htt)
+    htt <- ifelse(htt < 1, htt, 1-.Machine$double.eps)
 
     if(cv.func == "cv.ls") {
       cv <- mean((epsilon/(1-htt))^2)
@@ -985,7 +986,7 @@ cv.factor.spline <- function(x,
       if(model$rank != NCOL(P)) return(sqrt(.Machine$double.xmax))      
     }
     htt <- hat(model$qr)
-    htt <- ifelse(htt == 1, 1-.Machine$double.eps, htt)
+    htt <- ifelse(htt < 1, htt, 1-.Machine$double.eps)
     epsilon <- residuals(model)
   } else {
     htt <- rep(1/n,n)
