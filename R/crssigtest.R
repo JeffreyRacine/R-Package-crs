@@ -256,7 +256,7 @@ crssigtest <- function(model = NULL,
       
     ## Compute the asymptotic P value
       
-    P.vec.asy[ii] <- 1-pf(F.pseudo,df1=df1.vec[ii],df2=df2.vec[ii])
+    P.vec.asy[ii] <- pf(F.pseudo,df1=df1.vec[ii],df2=df2.vec[ii],lower.tail=FALSE)
       
   }
 
