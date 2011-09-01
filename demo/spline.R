@@ -216,6 +216,7 @@ predict.kernel.spline <- function(x,
     fit.spline <- cbind(fit.spline[[1]],se=fit.spline[[2]])
 
     htt <- hatvalues(model)
+    htt <- ifelse(htt < 1, htt, 1-.Machine$double.eps)
 
   } else {
 
@@ -254,7 +255,7 @@ predict.kernel.spline <- function(x,
           htt[zz] <- hatvalues(model.z.unique)[zz]
           P <- prod.spline(x=x,K=K,xeval=x[zz,,drop=FALSE],knots=knots,basis=basis)
           tmp <- predict(model.z.unique,newdata=data.frame(as.matrix(P)),interval="confidence",se.fit=TRUE)
-          fit.spline[zz,] <- cbind(tmp[[1]],se=tmp[[2]])
+          fit.spline[zz,] <- cbind(tmp[[1]],tmp[[2]])
           rm(tmp)
         }
       } else {
@@ -284,7 +285,7 @@ predict.kernel.spline <- function(x,
           model[[i]] <- model.z.unique
           P <- prod.spline(x=x,K=K,xeval=xeval[zz,,drop=FALSE],knots=knots,basis=basis)
           tmp <- predict(model.z.unique,newdata=data.frame(as.matrix(P)),interval="confidence",se.fit=TRUE)
-          fit.spline[zz,] <- cbind(tmp[[1]],se=tmp[[2]])
+          fit.spline[zz,] <- cbind(tmp[[1]],tmp[[2]])
           rm(tmp)
         }
 
@@ -292,39 +293,30 @@ predict.kernel.spline <- function(x,
 
     } else {
 
-      ## XXX where is predict here?
-
       ## Degree == 0 (no relevant continuous predictors), train
 
       if(is.null(xeval)) {
-
-        z.factor <- data.frame(factor(z[,1]))
-        k <- ncol(z.factor)
-        if(num.z > 1) for(i in 2:num.z) z.factor <- data.frame(z.factor,factor(z[,i]))
-
-        fit.spline <- matrix(NA,nrow=n,ncol=3)
+        fit.spline <- matrix(NA,nrow=n,ncol=4)
         htt <- numeric(length=n)
+        x.intercept <- rep(1,n)
         for(i in 1:nrow.z.unique) {
           zz <- ind == ind.vals[i]
           L <- prod.kernel(Z=z,z=z.unique[ind.vals[i],],lambda=lambda,is.ordered.z=is.ordered.z)
-          if(basis=="additive" || basis=="glp") {
-            model.z.unique <- lm(y~.,weights=L,data=data.frame(y,z.factor))
-          } else {
-            model.z.unique <- lm(y~.-1,weights=L,data=data.frame(y,z.factor))
-          }
+          k <- 0
+          ## Whether we use additive, glp, or tensor products, this
+          ## model has no continuous predictors hence the intercept is
+          ## the parameter that may shift with the categorical
+          ## predictors
+          model.z.unique <- lm(y~x.intercept-1,weights=L)
           model[[i]] <- model.z.unique
           htt[zz] <- hatvalues(model.z.unique)[zz]
-          fit.spline[zz,] <- fitted(model.z.unique)[zz]
-          k <- 0
+          tmp <- predict(model.z.unique,newdata=data.frame(x.intercept=x.intercept[zz]),interval="confidence",se.fit=TRUE)
+          fit.spline[zz,] <- cbind(tmp[[1]],tmp[[2]])
+          rm(tmp)
         }
-
       } else {
 
-        ## Degree == 0, eval
-
-        z.factor <- data.frame(factor(z[,1]))
-        k <- ncol(z.factor)
-        if(num.z > 1) for(i in 2:num.z) z.factor <- data.frame(z.factor,factor(z[,i]))
+        ## Degree == 0 (no relevant continuous predictors), evaluation
 
         zeval.unique <- uniquecombs(as.matrix(zeval))
         num.zeval <- ncol(zeval.unique)
@@ -334,21 +326,19 @@ predict.kernel.spline <- function(x,
 
         num.eval <- nrow(zeval)
 
-        fit.spline <- matrix(NA,nrow=num.eval,ncol=3)
-        htt <- NULL # no hatvalues for evaluation
+        fit.spline <- matrix(NA,nrow=num.eval,ncol=4)
+        htt <- NULL ## No hatvalues for evaluation
+        x.intercept <- rep(1,n)
         for(i in 1:nrow.zeval.unique) {
           zz <- ind.zeval == ind.zeval.vals[i]
           L <- prod.kernel(Z=z,z=zeval.unique[ind.zeval.vals[i],],lambda=lambda,is.ordered.z=is.ordered.z)
-          if(basis=="additive" || basis=="glp") {
-            model.z.unique <- lm(y~.,weights=L,data=data.frame(y,z.factor))
-          } else {
-            model.z.unique <- lm(y~.-1,weights=L,data=data.frame(y,z.factor))
-          }
-          model[[i]] <- model.z.unique
-          fit.spline[zz,] <- fitted(model.z.unique)[zz]
           k <- 0
+          model.z.unique <- lm(y~x.intercept-1,weights=L)
+          model[[i]] <- model.z.unique
+          tmp <- predict(model.z.unique,newdata=data.frame(x.intercept=rep(1,num.eval)[zz]),interval="confidence",se.fit=TRUE)
+          fit.spline[zz,] <- cbind(tmp[[1]],as.matrix(tmp[[2]]))
+          rm(tmp)
         }
-
       }
 
     }
@@ -864,7 +854,7 @@ cv.kernel.spline <- function(x,
       if(NCOL(P) >= (n-1)) return(sqrt(.Machine$double.xmax))
       suppressWarnings(epsilon <- residuals(lsfit(P,y,intercept=lm.intercept)))
       htt <- hat(P)
-      htt <- ifelse(htt == 1, 1-.Machine$double.eps, htt)      
+      htt <- ifelse(htt < 1, htt, 1-.Machine$double.eps)
     } else {
       htt <- rep(1/n,n)
       epsilon <- y-mean(y)
@@ -924,7 +914,7 @@ cv.kernel.spline <- function(x,
       }
     }
 
-    htt <- ifelse(htt == 1, 1-.Machine$double.eps, htt)
+    htt <- ifelse(htt < 1, htt, 1-.Machine$double.eps)
 
     if(cv.func == "cv.ls") {
       cv <- mean((epsilon/(1-htt))^2)
@@ -985,7 +975,7 @@ cv.factor.spline <- function(x,
       if(model$rank != NCOL(P)) return(sqrt(.Machine$double.xmax))      
     }
     htt <- hat(model$qr)
-    htt <- ifelse(htt == 1, 1-.Machine$double.eps, htt)
+    htt <- ifelse(htt < 1, htt, 1-.Machine$double.eps)
     epsilon <- residuals(model)
   } else {
     htt <- rep(1/n,n)

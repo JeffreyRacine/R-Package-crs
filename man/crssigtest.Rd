@@ -61,6 +61,8 @@ crssigtest(model = NULL,
   
   \item{df2}{ the vector of denominator degrees of freedom (based on the
     smoother matrix) }
+  \item{rss}{ the vector of restricted sums of squared residuals }
+  \item{uss}{ the vector of unrestricted sums of squared residuals }  
   \item{boot.num}{ the number of bootstrap replications }
   \item{boot.type}{ the \code{boot.type} }
   \item{xnames}{ the names of the variables in \code{model$xz}}

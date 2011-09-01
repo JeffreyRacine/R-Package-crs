@@ -45,6 +45,8 @@ crssigtest <- function(model = NULL,
 
   df1.vec <- numeric(length(index))
   df2.vec <- numeric(length(index))    
+  uss.vec <- numeric(length(index))
+  rss.vec <- numeric(length(index))    
   F.vec <- numeric(length(index))  
   P.vec.boot <- numeric(length(index))
   P.vec.asy <- numeric(length(index))  
@@ -160,8 +162,8 @@ crssigtest <- function(model = NULL,
     ## number of parameters). In this case we approximate the number
     ## of restrictions imposed using the value 1.
 
-    uss <- sum(residuals(model.unrestricted)^2)
-    rss <- sum(residuals(model.restricted)^2)
+    uss.vec[ii] <- sum(residuals(model.unrestricted)^2)
+    rss.vec[ii] <- sum(residuals(model.restricted)^2)
 
     df1.vec[ii] <- max(1,round(sum(model.unrestricted$hatvalues))-round(sum(model.restricted$hatvalues)))
     df2.vec[ii] <- model$nobs-round(sum(model.unrestricted$hatvalues))
@@ -171,7 +173,7 @@ crssigtest <- function(model = NULL,
 
     F.df <- df2.vec[ii]/df1.vec[ii]
   
-    F.pseudo <- F.df*(rss-uss)/uss
+    F.pseudo <- F.df*(rss.vec[ii]-uss.vec[ii])/uss.vec[ii]
     F.vec[ii] <- F.pseudo
 
     ## If boot == TRUE conduct the bootstrap, otherwise only conduct
@@ -271,6 +273,8 @@ crssigtest <- function(model = NULL,
                  F.boot=F.boot.mat,
                  df1=df1.vec,
                  df2=df2.vec,
+                 rss=rss.vec,
+                 uss=uss.vec,
                  boot.num=boot.num,
                  boot.type=boot.type,
                  xnames=names(model$xz)))
@@ -285,6 +289,8 @@ sigtest <- function(index,
                     F.boot,
                     df1,
                     df2,
+                    rss,
+                    uss,
                     boot.num,
                     boot.type,
                     xnames){
@@ -296,6 +302,8 @@ sigtest <- function(index,
                F.boot=F.boot,
                df1=df1,
                df2=df2,
+               rss=rss,
+               uss=uss,
                boot.num=boot.num,
                boot.type=switch(boot.type,
                  "residual" = "Residual",
@@ -336,7 +344,7 @@ print.sigtest <- function(x, ...){
 
   cat("\nSignificance Test Summary\n")
   cat("P Value:", paste("\n", nm, ' ', blank(maxNameLen-nc), format.pval(x$P),
-                        " ", formatC(x$reject,width=-4,format="s"), "(df1 = ", x$df1, ", df2 = ", x$df2,")",sep=''))
+                        " ", formatC(x$reject,width=-4,format="s"), "(df1 = ", x$df1, ", df2 = ", x$df2, ", rss = ", formatC(x$rss,digits=4,format="fg"), ", uss = ", formatC(x$uss,digits=4,format="fg"),")",sep=''))
   cat("\n---\nSignif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1\n\n")
 }
 
