@@ -6,7 +6,7 @@
 ## (C) Jeffrey S. Racine (2011)
 
 ## Two methods for imposing the null are implemented, a) a residual
-## bootstrap and b) a reording of the predictor being tested (in
+## bootstrap and b) a reordering of the predictor being tested (in
 ## place) that breaks any systematic relationship between the
 ## predictor and outcome.
 
@@ -33,7 +33,7 @@ crssigtest <- function(model = NULL,
 
   set.seed(random.seed)
 
-  ## Some basic checking for invalid (unintentioned) use of the
+  ## Some basic checking for invalid (unintentional) use of the
   ## function
 
   if(is.null(model)) stop(" you must provide a crs model")
@@ -116,7 +116,7 @@ crssigtest <- function(model = NULL,
       lambda.index <- 0
       for(jj in 1:index[ii]) if(!is.numeric(model$xz[,jj])) lambda.index <- lambda.index + 1
 
-      ## If the bandwidth labmda is one (i.e. cross-validation has
+      ## If the bandwidth lambda is one (i.e. cross-validation has
       ## determined a variable is `irrelevant'), allow the model to be
       ## included using the `frequency' fit (bandwidth of basically
       ## zero)
