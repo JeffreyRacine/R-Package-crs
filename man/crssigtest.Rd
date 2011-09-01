@@ -54,18 +54,19 @@ crssigtest(model = NULL,
   \item{P}{ the vector of bootstrap P-values for each statistic in \code{F}}
   \item{P.asy}{ the vector of asymptotic P-values for each statistic in index }
   \item{F}{ the vector of pseudo F-statistics \code{F} }
-  \item{F.boot}{ the vector of bootstrapped pseudo F-statistics
-    generated under the null}  
-  \item{df1}{ the vector of numerator degrees of freedom (based on the
-    smoother matrix)}
-  
-  \item{df2}{ the vector of denominator degrees of freedom (based on the
-    smoother matrix) }
-  \item{rss}{ the vector of restricted sums of squared residuals }
-  \item{uss}{ the vector of unrestricted sums of squared residuals }  
+  \item{F.boot}{ the matrix of bootstrapped pseudo F-statistics
+    generated under the null (one column  for each statistic in \code{F}) }  
+  \item{df1}{ the vector of numerator degrees of freedom for each
+  statistic in \code{F} (based on the smoother matrix)}
+  \item{df2}{ the vector of denominator degrees of freedom for each
+    statistic in \code{F} (based on the smoother matrix) }
+  \item{rss}{ the vector of restricted sums of squared residuals for
+  each statistic in \code{F} }
+  \item{uss}{ the vector of unrestricted sums of squared residuals for
+  each statistic in \code{F} }  
   \item{boot.num}{ the number of bootstrap replications }
   \item{boot.type}{ the \code{boot.type} }
-  \item{xnames}{ the names of the variables in \code{model$xz}}
+  \item{xnames}{ the names of the variables in \code{model$xz} }
 }
 \references{
   Li, Q. and J.S. Racine (2007), \emph{Nonparametric Econometrics:

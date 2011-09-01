@@ -344,7 +344,12 @@ print.sigtest <- function(x, ...){
 
   cat("\nSignificance Test Summary\n")
   cat("P Value:", paste("\n", nm, ' ', blank(maxNameLen-nc), format.pval(x$P),
-                        " ", formatC(x$reject,width=-4,format="s"), "(df1 = ", x$df1, ", df2 = ", x$df2, ", rss = ", formatC(x$rss,digits=4,format="fg"), ", uss = ", formatC(x$uss,digits=4,format="fg"),")",sep=''))
+                        " ", formatC(x$reject,width=-4,format="s"),
+                        "(F = ", formatC(x$F,digits=4,format="fg"),
+                        ", df1 = ", x$df1,                        
+                        ", df2 = ", x$df2,
+                        ", rss = ", formatC(x$rss,digits=6,format="fg"),
+                        ", uss = ", formatC(x$uss,digits=6,format="fg"),")",sep=''))
   cat("\n---\nSignif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1\n\n")
 }
 
