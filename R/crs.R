@@ -896,6 +896,11 @@ summary.crs <- function(object,
   cat(paste("\nResidual standard error: ", format(sqrt(sum(object$residuals^2)/object$df.residual),digits=4)," on ", format(object$df.residual)," degrees of freedom",sep=""))
   adjusted.r.squared <- 1-(1-object$r.squared)*(length(object$fitted.values)-1)/object$df.residual
   cat(paste("\nMultiple R-squared: ", format(object$r.squared,digits=4),",   Adjusted R-squared: ",format(adjusted.r.squared,digits=4), sep=""))
+  df1 <- round(sum(object$hatvalues))-1
+  df2 <- (object$nobs-round(sum(object$hatvalues)))
+  F <- (df2/df1)*(sum((object$y-mean(model$y))^2)-sum(residuals(object)^2))/sum(residuals(object)^2)
+  cat(paste("\nF-statistic: ", format(F,digits=4), " on ", df1, " and ", df2, " DF, p-value: ", format(pf(F,df1=df1,df2=df2,lower.tail=FALSE),digits=4), sep=""))
+
   cat(paste("\nCross-validation score: ", format(object$cv.score,digits=8), sep=""))  
   if(object$cv != "none") cat(paste("\nNumber of multistarts: ", format(object$nmulti), sep=""))
 
@@ -1592,6 +1597,11 @@ plot.crs <- function(x,
 }
 
 crs.sigtest <- function(object,...) {
+
+  ## This function for the asymptotic significance test can be
+  ## airlifted in trivially... trace of the smoother matrix etc. will
+  ## deliver correct F stat etc. Left for future 9/1/11 since we have
+  ## crssigtest function...
 
   if(object$kernel) stop(" sigtest is currently available only when kernel=FALSE")
 
