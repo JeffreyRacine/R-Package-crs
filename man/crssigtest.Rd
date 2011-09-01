@@ -105,7 +105,9 @@ z <- factor(z)
 y <- x1 + x2 + rnorm(n)
 
 model <- crs(y~x1+x2+z,complexity="degree",segments=c(1,1))
+summary(model)
 
-crssigtest(model)
+model.sigtest <- crssigtest(model)
+summary(model.sigtest)
 }
 \keyword{ nonparametric }
