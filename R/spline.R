@@ -241,7 +241,7 @@ predict.kernel.spline <- function(x,
       if(is.null(xeval)) {
         fit.spline <- matrix(NA,nrow=n,ncol=4)
         htt <- numeric(length=n)
-        P.hat <- numeric(length=n)        
+        P.hat <- numeric(length=n)
         for(i in 1:nrow.z.unique) {
           zz <- ind == ind.vals[i]
           L <- prod.kernel(Z=z,z=z.unique[ind.vals[i],],lambda=lambda,is.ordered.z=is.ordered.z)
@@ -254,7 +254,7 @@ predict.kernel.spline <- function(x,
           }
           model[[i]] <- model.z.unique
           htt[zz] <- hatvalues(model.z.unique)[zz]
-          P.hat[zz] <- sum(L[zz])/n
+          P.hat[zz] <- sum(L)
           P <- prod.spline(x=x,K=K,xeval=x[zz,,drop=FALSE],knots=knots,basis=basis)
           tmp <- predict(model.z.unique,newdata=data.frame(as.matrix(P)),interval="confidence",se.fit=TRUE)
           fit.spline[zz,] <- cbind(tmp[[1]],tmp[[2]])
@@ -314,7 +314,7 @@ predict.kernel.spline <- function(x,
           model.z.unique <- lm(y~x.intercept-1,weights=L)
           model[[i]] <- model.z.unique
           htt[zz] <- hatvalues(model.z.unique)[zz]
-          P.hat[zz] <- sum(L[zz])/n
+          P.hat[zz] <- sum(L)
           tmp <- predict(model.z.unique,newdata=data.frame(x.intercept=x.intercept[zz]),interval="confidence",se.fit=TRUE)
           fit.spline[zz,] <- cbind(tmp[[1]],tmp[[2]])
           rm(tmp)
@@ -353,6 +353,17 @@ predict.kernel.spline <- function(x,
 
   console <- printClear(console)
   console <- printPop(console)
+
+  ## Need to return kernel probability estimates. The kernel function
+  ## we use does not sum to one so the probability estimates will not
+  ## be proper (will not sum to one), so we simply renormalize by the
+  ## sum of the unique probabilities. However, when lambda=1 for all
+  ## categorical predictors there is only one unique probability value
+  ## and the non-proper probability estimates will all equal one so we
+  ## trap this case.
+
+  P.hat <- P.hat/(sum(unique(P.hat/n))*n)
+  P.hat <- ifelse(P.hat==1,1/nrow.z.unique,P.hat)
 
   return(list(fitted.values=fit.spline,
               df.residual=length(y)-model[[1]]$rank,
