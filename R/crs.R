@@ -261,7 +261,8 @@ crsEst <- function(xz,
               x=x,
               z=z,
               prune=prune,
-              prune.index=prune.index))
+              prune.index=prune.index,
+              P.hat=model$P.hat))
 
 }
 

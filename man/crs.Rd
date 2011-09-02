@@ -362,6 +362,9 @@ in \code{x} are included or omitted from the resulting estimate }
 
   \item{hatvalues}{ the \code{\link{hatvalues}} for the estimated model}
 
+  \item{P.hat}{ the kernel probability estimates corresponding to the
+  categorical predictors in the estimated model }
+
 }
   
 \section{Usage Issues}{

@@ -241,6 +241,7 @@ predict.kernel.spline <- function(x,
       if(is.null(xeval)) {
         fit.spline <- matrix(NA,nrow=n,ncol=4)
         htt <- numeric(length=n)
+        P.hat <- numeric(length=n)        
         for(i in 1:nrow.z.unique) {
           zz <- ind == ind.vals[i]
           L <- prod.kernel(Z=z,z=z.unique[ind.vals[i],],lambda=lambda,is.ordered.z=is.ordered.z)
@@ -253,6 +254,7 @@ predict.kernel.spline <- function(x,
           }
           model[[i]] <- model.z.unique
           htt[zz] <- hatvalues(model.z.unique)[zz]
+          P.hat[zz] <- sum(L[zz])/n
           P <- prod.spline(x=x,K=K,xeval=x[zz,,drop=FALSE],knots=knots,basis=basis)
           tmp <- predict(model.z.unique,newdata=data.frame(as.matrix(P)),interval="confidence",se.fit=TRUE)
           fit.spline[zz,] <- cbind(tmp[[1]],tmp[[2]])
@@ -272,6 +274,7 @@ predict.kernel.spline <- function(x,
 
         fit.spline <- matrix(NA,nrow=num.eval,ncol=4)
         htt <- NULL ## No hatvalues for evaluation
+        P.hat <- NULL
         for(i in 1:nrow.zeval.unique) {
           zz <- ind.zeval == ind.zeval.vals[i]
           L <- prod.kernel(Z=z,z=zeval.unique[ind.zeval.vals[i],],lambda=lambda,is.ordered.z=is.ordered.z)
@@ -298,6 +301,7 @@ predict.kernel.spline <- function(x,
       if(is.null(xeval)) {
         fit.spline <- matrix(NA,nrow=n,ncol=4)
         htt <- numeric(length=n)
+        P.hat <- numeric(length=n)        
         x.intercept <- rep(1,n)
         for(i in 1:nrow.z.unique) {
           zz <- ind == ind.vals[i]
@@ -310,6 +314,7 @@ predict.kernel.spline <- function(x,
           model.z.unique <- lm(y~x.intercept-1,weights=L)
           model[[i]] <- model.z.unique
           htt[zz] <- hatvalues(model.z.unique)[zz]
+          P.hat[zz] <- sum(L[zz])/n
           tmp <- predict(model.z.unique,newdata=data.frame(x.intercept=x.intercept[zz]),interval="confidence",se.fit=TRUE)
           fit.spline[zz,] <- cbind(tmp[[1]],tmp[[2]])
           rm(tmp)
@@ -328,6 +333,7 @@ predict.kernel.spline <- function(x,
 
         fit.spline <- matrix(NA,nrow=num.eval,ncol=4)
         htt <- NULL ## No hatvalues for evaluation
+        P.hat <- NULL
         x.intercept <- rep(1,n)
         for(i in 1:nrow.zeval.unique) {
           zz <- ind.zeval == ind.zeval.vals[i]
@@ -352,7 +358,8 @@ predict.kernel.spline <- function(x,
               df.residual=length(y)-model[[1]]$rank,
               rank=model[[1]]$rank, ## rank same for all models
               model=model,
-              hatvalues=htt))
+              hatvalues=htt,
+              P.hat=P.hat))
 
 }
 
