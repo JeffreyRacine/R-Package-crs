@@ -894,7 +894,7 @@ summary.crs <- function(object,
   cat(paste("\nTraining observations: ", format(object$nobs), sep=""))
   cat(paste("\nRank of model frame: ", format(object$k), sep=""))
   cat(paste("\nTrace of smoother matrix: ", format(round(sum(object$hatvalues))), sep=""))    
-  cat(paste("\nResidual standard error: ", format(sqrt(sum(object$residuals^2)/object$df.residual),digits=4)," on ", format(object$df.residual)," degrees of freedom",sep=""))
+  cat(paste("\n\nResidual standard error: ", format(sqrt(sum(object$residuals^2)/object$df.residual),digits=4)," on ", format(object$df.residual)," degrees of freedom",sep=""))
   adjusted.r.squared <- 1-(1-object$r.squared)*(length(object$fitted.values)-1)/object$df.residual
   cat(paste("\nMultiple R-squared: ", format(object$r.squared,digits=4),",   Adjusted R-squared: ",format(adjusted.r.squared,digits=4), sep=""))
   df1 <- round(sum(object$hatvalues))-1
@@ -902,7 +902,7 @@ summary.crs <- function(object,
   F <- (df2/df1)*(sum((object$y-mean(object$y))^2)-sum(residuals(object)^2))/sum(residuals(object)^2)
   cat(paste("\nF-statistic: ", format(F,digits=4), " on ", df1, " and ", df2, " DF, p-value: ", format(pf(F,df1=df1,df2=df2,lower.tail=FALSE),digits=4), sep=""))
 
-  cat(paste("\nCross-validation score: ", format(object$cv.score,digits=8), sep=""))  
+  cat(paste("\n\nCross-validation score: ", format(object$cv.score,digits=8), sep=""))  
   if(object$cv != "none") cat(paste("\nNumber of multistarts: ", format(object$nmulti), sep=""))
 
   if(sigtest&!object$kernel) {
