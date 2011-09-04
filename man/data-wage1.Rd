@@ -49,7 +49,7 @@ are 526 observations in total. }
 \examples{
 data(wage1)
 
-## Cross-validated model selection and estimate first derivatives
+## Cross-validated model selection for spline degree and bandwidths
 
 model <- crs(lwage~married+
              female+
@@ -62,19 +62,15 @@ model <- crs(lwage~married+
              data=wage1,
              segments=c(1,1,1))
 
-degree <- model$degree
-include <- model$include
-basis <- model$basis
-
 summary(model)
 
 ## Residual plots
 plot(model)
 ## Partial mean plots (control for non axis predictors)
 plot(model,mean=TRUE)
-## First derivative plots (control for non axis predictors)
+## Partial first derivative plots (control for non axis predictors)
 plot(model,deriv=1)
-## Second derivative plots (control for non axis predictors)
+## Partial second derivative plots (control for non axis predictors)
 plot(model,deriv=2)
 \dontrun{
 ## Compare with local linear kernel regression
@@ -93,7 +89,7 @@ summary(model)
 
 ## Partial mean plots (control for non axis predictors)
 plot(model,common.scale=FALSE)
-## First derivative plots (control for non axis predictors)
+## Partial first derivative plots (control for non axis predictors)
 plot(model,gradients=TRUE,common.scale=FALSE)
 detach("package:np")
 }
