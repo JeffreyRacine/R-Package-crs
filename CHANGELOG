@@ -1,4 +1,4 @@
-Changes from Version 0.15-2 to 0.15-3 [XXX]
+Changes from Version 0.15-2 to 0.15-3 [05-Sep-2011]
 
 * Fixed glitch when all degrees are zero when computing the
   cross-validation function (also fixes glitch when all degrees are
@@ -21,7 +21,7 @@ Changes from Version 0.15-2 to 0.15-3 [XXX]
 
 * Added `typical usage' preformatted illustrations for docs
 
-Changes from Version 0.15-1 to 0.15-2 [30-July-2011]
+Changes from Version 0.15-1 to 0.15-2 [30-Jul-2011]
 
 * Renamed COPYING file to COPYRIGHTS
 
