@@ -1,5 +1,15 @@
 Changes from Version 0.15-2 to 0.15-3 [XXX]
 
+* Fixed glitch when all degrees are zero when computing the
+  cross-validation function (also fixes glitch when all degrees are
+  zero when plotting the partial surfaces)
+
+* Added new function crssigtest (to be considered in beta status until
+  further notice)
+
+* Added F test for no effect (joint test of significance) in crs
+  summary
+
 * Both degree and segments now set to one for first multistart in crs
   (previously only degree was, but intent was always to begin from a
   linear model (with interactions where appropriate) so this glitch is
