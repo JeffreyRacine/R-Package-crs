@@ -77,7 +77,8 @@ using kernel weighting where the kernel functions are tailored to the
 discrete support of the categorical predictors \citep{RACINE_LI:2004},
 and (ii) using indicator basis functions. The fundamental difference
 between these two approaches is that the use of indicator basis
-functions consume degrees of freedom, while kernel weighting does not.
+functions consume degrees of freedom via the number of columns in the
+spline basis matrix, while kernel weighting does not.
 
 This package implements the approaches described in
 \citeauthor{MA_RACINE_YANG:2011} \citeyear{MA_RACINE_YANG:2011} and
