@@ -28,7 +28,7 @@ int gsl_bspline(double *x,
   int i, j;
 
   gsl_bspline_workspace *bw = gsl_bspline_alloc(k, *nbreak);
-  ncoeffs = gsl_bspline_ncoeffs(bw);
+  ncoeffs = gsl_bspline_ncoeffs(bw);  /* *nbreak+k-2 */
   gsl_vector *B = gsl_vector_alloc(ncoeffs);
   gsl_vector *quantile_vec = gsl_vector_alloc(*nbreak);
 
@@ -51,7 +51,7 @@ int gsl_bspline(double *x,
       for (j = 0; j < ncoeffs; ++j)
         {
           double Bj = gsl_vector_get(B, j);
-          Bx[i*ncoeffs+j] = Bj;
+          Bx[i*ncoeffs+j] = Bj; /* Bx:*n-by-(*nbreak+*degree-1) */
         }
     }
   
@@ -71,6 +71,7 @@ int gsl_bspline_deriv(double *x,
                       int *degree,
                       int *nbreak,
                       int *order,
+											int *order_max, 
                       double *x_min,
                       double *x_max,
                       double *quantile_vector,
@@ -84,43 +85,43 @@ int gsl_bspline_deriv(double *x,
 
   gsl_bspline_workspace *bw = gsl_bspline_alloc(k, *nbreak);
   ncoeffs = gsl_bspline_ncoeffs(bw);
-  gsl_matrix *dB = gsl_matrix_alloc(ncoeffs, 1+*order);
   gsl_vector *dBorder = gsl_vector_alloc(ncoeffs);
   gsl_bspline_deriv_workspace *derivWS = gsl_bspline_deriv_alloc(k);
-  
-  gsl_vector *quantile_vec = gsl_vector_alloc(*nbreak);
+	gsl_matrix *dB = gsl_matrix_alloc(ncoeffs, *order_max+1);
 
-  /* 7/12/10 added support for quantile knots */
+	gsl_vector *quantile_vec = gsl_vector_alloc(*nbreak);
 
-  if(*knots_int == 0) {
-    gsl_bspline_knots_uniform(*x_min, *x_max, bw);
-  } else {
-    for(i = 0; i < *nbreak; i++) gsl_vector_set(quantile_vec, i, quantile_vector[i]);
-    gsl_bspline_knots(quantile_vec, bw);
-  }
+	/* 7/12/10 added support for quantile knots */
 
-  for (i = 0; i < *n; ++i)
-    {
+	if(*knots_int == 0) {
+			gsl_bspline_knots_uniform(*x_min, *x_max, bw);
+	} else {
+			for(i = 0; i < *nbreak; i++) gsl_vector_set(quantile_vec, i, quantile_vector[i]);
+			gsl_bspline_knots(quantile_vec, bw);
+	}
 
-      /* compute B_j(xi) for all j */
-      gsl_bspline_deriv_eval(x[i], *order, dB, bw, derivWS);
+	for (i = 0; i < *n; ++i)
+	{
 
-      /* fill in row i of Bx */
-      gsl_matrix_get_col(dBorder, dB, *order);
-      
-      for (j = 0; j < ncoeffs; ++j)
-        {
-          double Bj = gsl_vector_get(dBorder, j);
-          Bx[i*ncoeffs+j] = Bj;
-        }
-    }
-  
-  gsl_bspline_free(bw);
-  gsl_matrix_free(dB);
-  gsl_vector_free(dBorder);
-  /*  gsl_vector_free(quantile_vec);*/
-  gsl_bspline_deriv_free(derivWS);
+			/* compute B_j(xi) for all j */
+			gsl_bspline_deriv_eval(x[i], order[i], dB, bw, derivWS);
 
-  return(0);
+			/* fill in row i of Bx */
+			gsl_matrix_get_col(dBorder, dB, order[i]);
+
+			for (j = 0; j < ncoeffs; ++j)
+			{
+					double Bj = gsl_vector_get(dBorder, j);
+					Bx[i*ncoeffs+j] = Bj;
+			}
+	}
+
+	gsl_bspline_free(bw);
+	gsl_vector_free(dBorder);
+	gsl_matrix_free(dB);
+	/*  gsl_vector_free(quantile_vec);*/
+	gsl_bspline_deriv_free(derivWS);
+
+	return(0);
 
 } /* main() */
