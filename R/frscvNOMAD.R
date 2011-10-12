@@ -121,52 +121,53 @@ frscvNOMAD <- function(xz,
             basis.opt <-  basis;
             if(basis=="auto"){
                 basis.opt <-"additive"
-                cv <- cv.factor.spline.wrapper(x=x,
-                                       y=y,
-                                       z=z,
-                                       K=K,
-                                       I=I,
-                                       knots=knots,
-                                       basis=basis.opt,
-                                       cv.func=cv.func)
 
+                cv <- cv.factor.spline.wrapper(x=x,
+                                               y=y,
+                                               z=z,
+                                               K=K,
+                                               I=I,
+                                               knots=knots,
+                                               basis=basis.opt,
+                                               cv.func=cv.func)
+                
                 cv.tensor <- cv.factor.spline.wrapper(x=x,
-                                              y=y,
-                                              z=z,
-                                              K=K,
-                                              I=I,
-                                              knots=knots,
-                                              basis="tensor",
-                                              cv.func=cv.func)
+                                                      y=y,
+                                                      z=z,
+                                                      K=K,
+                                                      I=I,
+                                                      knots=knots,
+                                                      basis="tensor",
+                                                      cv.func=cv.func)
                 if(cv>cv.tensor){
-                    cv <- cv.tensor
+                  cv <- cv.tensor
                     basis.opt <-"tensor"
                 }
 
                 cv.glp <- cv.factor.spline.wrapper(x=x,
-                                              y=y,
-                                              z=z,
-                                              K=K,
-                                              I=I,
-                                              knots=knots,
-                                              basis="glp",
-                                              cv.func=cv.func)
+                                                   y=y,
+                                                   z=z,
+                                                   K=K,
+                                                   I=I,
+                                                   knots=knots,
+                                                   basis="glp",
+                                                   cv.func=cv.func)
                 if(cv>cv.glp){
                     cv <- cv.glp
                     basis.opt <-"glp"
                 }
                 
+            } else {
+              cv <- cv.factor.spline.wrapper(x=x,
+                                             y=y,
+                                             z=z,
+                                             K=K,
+                                             I=I,
+                                             knots=knots,
+                                             basis=basis.opt,
+                                             cv.func=cv.func)
             }
-            else {
-                cv <- cv.factor.spline.wrapper(x=x,
-                                       y=y,
-                                       z=z,
-                                       K=K,
-                                       I=I,
-                                       knots=knots,
-                                       basis=basis.opt,
-                                       cv.func=cv.func)
-            }
+
             attr(cv, "basis.opt")<-basis.opt
 
             console <- newLineConsole()

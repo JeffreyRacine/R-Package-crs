@@ -824,72 +824,79 @@ deriv.factor.spline <- function(x,
 ## cv.kernel.spline two times and return the minimum with
 ## the optimal knots.
 cv.kernel.spline.wrapper <- function(x,
-                             y,
-                             z=NULL,
-                             K,
-                             lambda=NULL,
-                             z.unique,
-                             ind,
-                             ind.vals,
-                             nrow.z.unique,
-                             is.ordered.z=NULL,
-                             knots=c("quantiles","uniform", "auto"),
-                             basis=c("additive","tensor","glp"),
-                             cv.func=c("cv.ls","cv.gcv","cv.aic")) {
-		knots.opt <- knots;
-		if(knots == "auto") {
-				knots.opt <- "quantiles"
-				cv <- cv.kernel.spline(x=x, 
-															 y=y, 
-															 z=z, 
-															 K=K, 
-															 lambda=lambda, 
-															 z.unique=z.unique, 
-															 ind=ind, 
-															 ind.vals=ind.vals, 
-															 nrow.z.unique=nrow.z.unique, 
-															 is.ordered.z=is.ordered.z, 
-															 knots="quantiles", 
-															 basis=basis, 
-															 cv.func=cv.func)
+                                     y,
+                                     z=NULL,
+                                     K,
+                                     lambda=NULL,
+                                     z.unique,
+                                     ind,
+                                     ind.vals,
+                                     nrow.z.unique,
+                                     is.ordered.z=NULL,
+                                     knots=c("quantiles","uniform","auto"),
+                                     basis=c("additive","tensor","glp"),
+                                     cv.func=c("cv.ls","cv.gcv","cv.aic")) {
 
-				cv.uniform <- cv.kernel.spline(x=x, 
-																			 y=y, 
-																			 z=z, 
-																			 K=K, 
-																			 lambda=lambda, 
-																			 z.unique=z.unique, 
-																			 ind=ind, 
-																			 ind.vals=ind.vals, 
-																			 nrow.z.unique=nrow.z.unique, 
-																			 is.ordered.z=is.ordered.z, 
-																			 knots="uniform", 
-																			 basis=basis, 
-																			 cv.func=cv.func)
-				if(cv > cv.uniform) {
-						cv <- cv.uniform
-						knots.opt <- "uniform"
-				}
-		}
-		else {
-				cv <- cv.kernel.spline(x=x, 
-															 y=y, 
-															 z=z, 
-															 K=K, 
-															 lambda=lambda, 
-															 z.unique=z.unique, 
-															 ind=ind, 
-															 ind.vals=ind.vals, 
-															 nrow.z.unique=nrow.z.unique, 
-															 is.ordered.z=is.ordered.z, 
-															 knots=knots, 
-															 basis=basis, 
-															 cv.func=cv.func)
-		}
-		attr(cv, "knots.opt") <- knots.opt
+  knots.opt <- knots;
 
-		return(cv)
+  if(knots == "auto") {
 
+    knots.opt <- "quantiles"
+
+    cv <- cv.kernel.spline(x=x, 
+                           y=y, 
+                           z=z, 
+                           K=K, 
+                           lambda=lambda, 
+                           z.unique=z.unique, 
+                           ind=ind, 
+                           ind.vals=ind.vals, 
+                           nrow.z.unique=nrow.z.unique, 
+                           is.ordered.z=is.ordered.z, 
+                           knots="quantiles", 
+                           basis=basis, 
+                           cv.func=cv.func)
+    
+    cv.uniform <- cv.kernel.spline(x=x, 
+                                   y=y, 
+                                   z=z, 
+                                   K=K, 
+                                   lambda=lambda, 
+                                   z.unique=z.unique, 
+                                   ind=ind, 
+                                   ind.vals=ind.vals, 
+                                   nrow.z.unique=nrow.z.unique, 
+                                   is.ordered.z=is.ordered.z, 
+                                   knots="uniform", 
+                                   basis=basis, 
+                                   cv.func=cv.func)
+    if(cv > cv.uniform) {
+      cv <- cv.uniform
+      knots.opt <- "uniform"
+    }
+
+  } else {
+
+    cv <- cv.kernel.spline(x=x, 
+                           y=y, 
+                           z=z, 
+                           K=K, 
+                           lambda=lambda, 
+                           z.unique=z.unique, 
+                           ind=ind, 
+                           ind.vals=ind.vals, 
+                           nrow.z.unique=nrow.z.unique, 
+                           is.ordered.z=is.ordered.z, 
+                           knots=knots, 
+                           basis=basis, 
+                           cv.func=cv.func)
+
+  }
+
+  attr(cv, "knots.opt") <- knots.opt
+  
+  return(cv)
+  
 }
 ## We use the Sherman-Morrison-Woodbury decomposition to efficiently
 ## calculate the leave-one-out cross-validation function for
@@ -1033,48 +1040,56 @@ cv.factor.spline.wrapper <- function(x,
 																		 z=NULL,
 																		 K,
 																		 I=NULL,
-																		 knots=c("quantiles","uniform", "auto"),
+																		 knots=c("quantiles","uniform","auto"),
 																		 basis=c("additive","tensor","glp"),
 																		 cv.func=c("cv.ls","cv.gcv","cv.aic")) {
 
-		knots.opt <- knots
-		if(knots == "auto") {
-				knots.opt <- "quantiles"
-				cv <- cv.factor.spline(x=x, 
-															 y=y, 
-															 z=z, 
-															 K=K, 
-															 I=I, 
-															 knots="quantiles", 
-															 basis=basis, 
-															 cv.func=cv.func)
-				cv.uniform <- cv.factor.spline(x=x, 
-																			 y=y, 
-																			 z=z, 
-																			 K=K, 
-																			 I=I, 
-																			 knots="uniform", 
-																			 basis=basis, 
-																			 cv.func=cv.func)
-				if(cv > cv.uniform) {
-						cv <- cv.uniform
-						knots.opt <- "uniform"
-				}
-		}
-		else {
-				cv <- cv.factor.spline(x=x, 
-															 y=y, 
-															 z=z, 
-															 K=K, 
-															 I=I, 
-															 knots=knots, 
-															 basis=basis, 
-															 cv.func=cv.func)
-		}
-		attr(cv, "knots.opt") <- knots.opt
+  knots.opt <- knots
 
-		return(cv)
+  if(knots == "auto") {
+
+    knots.opt <- "quantiles"
+
+    cv <- cv.factor.spline(x=x, 
+                           y=y, 
+                           z=z, 
+                           K=K, 
+                           I=I, 
+                           knots="quantiles", 
+                           basis=basis, 
+                           cv.func=cv.func)
+
+    cv.uniform <- cv.factor.spline(x=x, 
+                                   y=y, 
+                                   z=z, 
+                                   K=K, 
+                                   I=I, 
+                                   knots="uniform", 
+                                   basis=basis, 
+                                   cv.func=cv.func)
+    if(cv > cv.uniform) {
+      cv <- cv.uniform
+      knots.opt <- "uniform"
+    }
+    
+  }	else {
+
+    cv <- cv.factor.spline(x=x, 
+                           y=y, 
+                           z=z, 
+                           K=K, 
+                           I=I, 
+                           knots=knots, 
+                           basis=basis, 
+                           cv.func=cv.func)
+    
+  }
+
+  attr(cv, "knots.opt") <- knots.opt
+  
+  return(cv)
 }
+
 ## Feb 1 2011 - replaced lm() and hatvalues() with lsfit and hat. On
 ## large datasets makes a noticeable difference (1 predictor, n=10,000
 ## drops from 17 secs to 13, n=100,000 drops 92 to to 71 seconds, so

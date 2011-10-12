@@ -74,18 +74,18 @@ krscv <- function(xz,
     lambda <- ifelse(lambda <= 0, .Machine$double.eps, lambda)
 
     cv <- cv.kernel.spline.wrapper(x=x,
-                           y=y,
-                           z=z,
-                           K=K,
-                           lambda=lambda,
-                           z.unique=z.unique,
-                           ind=ind,
-                           ind.vals=ind.vals,
-                           nrow.z.unique=nrow.z.unique,
-                           is.ordered.z=is.ordered.z,
-                           knots=knots,
-                           basis=basis,
-                           cv.func=cv.func)
+                                   y=y,
+                                   z=z,
+                                   K=K,
+                                   lambda=lambda,
+                                   z.unique=z.unique,
+                                   ind=ind,
+                                   ind.vals=ind.vals,
+                                   nrow.z.unique=nrow.z.unique,
+                                   is.ordered.z=is.ordered.z,
+                                   knots=knots,
+                                   basis=basis,
+                                   cv.func=cv.func)
 
     ## Some i/o unless options(crs.messages=FALSE)
 

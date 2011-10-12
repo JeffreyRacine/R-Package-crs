@@ -73,14 +73,14 @@ frscv <- function(xz,
     }
 
     cv <- cv.factor.spline.wrapper(x=x,
-                           y=y,
-                           z=z,
-                           K=K,
-                           I=I,
-                           knots=knots,
-                           basis=basis,
-                           cv.func=cv.func)
-
+                                   y=y,
+                                   z=z,
+                                   K=K,
+                                   I=I,
+                                   knots=knots,
+                                   basis=basis,
+                                   cv.func=cv.func)
+    
     ## Some i/o unless options(crs.messages=FALSE)
 
     ## Degree is first column of K K[,1], segments second column K[,2]

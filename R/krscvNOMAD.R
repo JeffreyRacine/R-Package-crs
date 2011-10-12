@@ -124,75 +124,76 @@ krscvNOMAD <- function(xz,
 
             basis.opt <-  basis;
             if(basis=="auto"){
-                basis.opt <- "additive"
-                cv <- cv.kernel.spline.wrapper(x=x,
-                                       y=y,
-                                       z=z,
-                                       K=K,
-                                       lambda=lambda,
-                                       z.unique=z.unique,
-                                       ind=ind,
-                                       ind.vals=ind.vals,
-                                       nrow.z.unique=nrow.z.unique,
-                                       is.ordered.z=is.ordered.z,
-                                       knots=knots,
-                                       basis=basis.opt,
-                                       cv.func=cv.func)
-
-                cv.tensor <- cv.kernel.spline.wrapper(x=x,
-                                              y=y,
-                                              z=z,
-                                              K=K,
-                                              lambda=lambda,
-                                              z.unique=z.unique,
-                                              ind=ind,
-                                              ind.vals=ind.vals,
-                                              nrow.z.unique=nrow.z.unique,
-                                              is.ordered.z=is.ordered.z,
-                                              knots=knots,
-                                              basis="tensor",
-                                              cv.func=cv.func)
-                if(cv > cv.tensor){
-                    cv <- cv.tensor
-                    basis.opt <-"tensor"
-                }
-
-                cv.glp <- cv.kernel.spline.wrapper(x=x,
-                                              y=y,
-                                              z=z,
-                                              K=K,
-                                              lambda=lambda,
-                                              z.unique=z.unique,
-                                              ind=ind,
-                                              ind.vals=ind.vals,
-                                              nrow.z.unique=nrow.z.unique,
-                                              is.ordered.z=is.ordered.z,
-                                              knots=knots,
-                                              basis="glp",
-                                              cv.func=cv.func)
-                if(cv > cv.glp){
-                    cv <- cv.glp
-                    basis.opt <-"glp"
-                }
-
+              basis.opt <- "additive"
+              
+              cv <- cv.kernel.spline.wrapper(x=x,
+                                             y=y,
+                                             z=z,
+                                             K=K,
+                                             lambda=lambda,
+                                             z.unique=z.unique,
+                                             ind=ind,
+                                             ind.vals=ind.vals,
+                                             nrow.z.unique=nrow.z.unique,
+                                             is.ordered.z=is.ordered.z,
+                                             knots=knots,
+                                             basis=basis.opt,
+                                             cv.func=cv.func)
+              
+              cv.tensor <- cv.kernel.spline.wrapper(x=x,
+                                                    y=y,
+                                                    z=z,
+                                                    K=K,
+                                                    lambda=lambda,
+                                                    z.unique=z.unique,
+                                                    ind=ind,
+                                                    ind.vals=ind.vals,
+                                                    nrow.z.unique=nrow.z.unique,
+                                                    is.ordered.z=is.ordered.z,
+                                                    knots=knots,
+                                                    basis="tensor",
+                                                    cv.func=cv.func)
+              if(cv > cv.tensor){
+                cv <- cv.tensor
+                basis.opt <-"tensor"
+              }
+              
+              cv.glp <- cv.kernel.spline.wrapper(x=x,
+                                                 y=y,
+                                                 z=z,
+                                                 K=K,
+                                                 lambda=lambda,
+                                                 z.unique=z.unique,
+                                                 ind=ind,
+                                                 ind.vals=ind.vals,
+                                                 nrow.z.unique=nrow.z.unique,
+                                                 is.ordered.z=is.ordered.z,
+                                                 knots=knots,
+                                                 basis="glp",
+                                                 cv.func=cv.func)
+              if(cv > cv.glp){
+                cv <- cv.glp
+                basis.opt <-"glp"
+              }
+              
             } else {
-                cv <- cv.kernel.spline.wrapper(x=x,
-                                       y=y,
-                                       z=z,
-                                       K=K,
-                                       lambda=lambda,
-                                       z.unique=z.unique,
-                                       ind=ind,
-                                       ind.vals=ind.vals,
-                                       nrow.z.unique=nrow.z.unique,
-                                       is.ordered.z=is.ordered.z,
-                                       knots=knots,
-                                       basis=basis.opt,
-                                       cv.func=cv.func)
+              cv <- cv.kernel.spline.wrapper(x=x,
+                                             y=y,
+                                             z=z,
+                                             K=K,
+                                             lambda=lambda,
+                                             z.unique=z.unique,
+                                             ind=ind,
+                                             ind.vals=ind.vals,
+                                             nrow.z.unique=nrow.z.unique,
+                                             is.ordered.z=is.ordered.z,
+                                             knots=knots,
+                                             basis=basis.opt,
+                                             cv.func=cv.func)
             }
-
+            
             attr(cv, "basis.opt")<-basis.opt
-
+            
             console <- newLineConsole()
             console <- printClear(console)
             console <- printPop(console)

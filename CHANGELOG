@@ -1,3 +1,8 @@
+Changes from Version 0.15-3 to 0.15-4 [XXX]
+
+* Minor changes to help page examples and descriptions and to the crs
+  vignette
+
 Changes from Version 0.15-2 to 0.15-3 [05-Sep-2011]
 
 * Fixed glitch when all degrees are zero when computing the

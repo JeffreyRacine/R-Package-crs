@@ -21,7 +21,7 @@ krscvNOMAD(xz,
            degree.min = 0, 
            segments.min = 1, 
            complexity = c("degree-knots","degree","knots"),
-           knots = c("quantiles","uniform", "auto"),
+           knots = c("quantiles","uniform","auto"),
            basis = c("additive","tensor","glp","auto"),
            cv.func = c("cv.ls","cv.gcv","cv.aic"),
            degree = degree,
@@ -65,8 +65,8 @@ krscvNOMAD(xz,
   specifying where knots are to be placed. \sQuote{quantiles} specifies
   knots placed at equally spaced quantiles (equal number of observations
   lie in each segment) and \sQuote{uniform} specifies knots placed at
-  equally spaced intervals. If \code{knots="auto"}, knots will be 
-	automatically determined by the smaller value of cross-validation }
+  equally spaced intervals. If \code{knots="auto"}, the knot type will
+  be automatically determined by cross-validation }
 
   \item{basis}{ a character string (default \code{basis="additive"})
     indicating whether the additive or tensor product B-spline basis
