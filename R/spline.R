@@ -819,6 +819,78 @@ deriv.factor.spline <- function(x,
 
 }
 
+## The following function is a wrapper of cv.kernel.spline to 
+## handle the situation when knots="auto". It will call 
+## cv.kernel.spline two times and return the minimum with
+## the optimal knots.
+cv.kernel.spline.wrapper <- function(x,
+                             y,
+                             z=NULL,
+                             K,
+                             lambda=NULL,
+                             z.unique,
+                             ind,
+                             ind.vals,
+                             nrow.z.unique,
+                             is.ordered.z=NULL,
+                             knots=c("quantiles","uniform", "auto"),
+                             basis=c("additive","tensor","glp"),
+                             cv.func=c("cv.ls","cv.gcv","cv.aic")) {
+		knots.opt <- knots;
+		if(knots == "auto") {
+				knots.opt <- "quantiles"
+				cv <- cv.kernel.spline(x=x, 
+															 y=y, 
+															 z=z, 
+															 K=K, 
+															 lambda=lambda, 
+															 z.unique=z.unique, 
+															 ind=ind, 
+															 ind.vals=ind.vals, 
+															 nrow.z.unique=nrow.z.unique, 
+															 is.ordered.z=is.ordered.z, 
+															 knots="quantiles", 
+															 basis=basis, 
+															 cv.func=cv.func)
+
+				cv.uniform <- cv.kernel.spline(x=x, 
+																			 y=y, 
+																			 z=z, 
+																			 K=K, 
+																			 lambda=lambda, 
+																			 z.unique=z.unique, 
+																			 ind=ind, 
+																			 ind.vals=ind.vals, 
+																			 nrow.z.unique=nrow.z.unique, 
+																			 is.ordered.z=is.ordered.z, 
+																			 knots="uniform", 
+																			 basis=basis, 
+																			 cv.func=cv.func)
+				if(cv > cv.uniform) {
+						cv <- cv.uniform
+						knots.opt <- "uniform"
+				}
+		}
+		else {
+				cv <- cv.kernel.spline(x=x, 
+															 y=y, 
+															 z=z, 
+															 K=K, 
+															 lambda=lambda, 
+															 z.unique=z.unique, 
+															 ind=ind, 
+															 ind.vals=ind.vals, 
+															 nrow.z.unique=nrow.z.unique, 
+															 is.ordered.z=is.ordered.z, 
+															 knots=knots, 
+															 basis=basis, 
+															 cv.func=cv.func)
+		}
+		attr(cv, "knots.opt") <- knots.opt
+
+		return(cv)
+
+}
 ## We use the Sherman-Morrison-Woodbury decomposition to efficiently
 ## calculate the leave-one-out cross-validation function for
 ## categorical kernel splines.
@@ -831,186 +903,238 @@ deriv.factor.spline <- function(x,
 ## for more complicated problems which is naturally desirable.
 
 cv.kernel.spline <- function(x,
-                             y,
-                             z=NULL,
-                             K,
-                             lambda=NULL,
-                             z.unique,
-                             ind,
-                             ind.vals,
-                             nrow.z.unique,
-                             is.ordered.z=NULL,
-                             knots=c("quantiles","uniform"),
-                             basis=c("additive","tensor","glp"),
-                             cv.func=c("cv.ls","cv.gcv","cv.aic")) {
+														 y,
+														 z=NULL,
+														 K,
+														 lambda=NULL,
+														 z.unique,
+														 ind,
+														 ind.vals,
+														 nrow.z.unique,
+														 is.ordered.z=NULL,
+														 knots=c("quantiles","uniform"),
+														 basis=c("additive","tensor","glp"),
+														 cv.func=c("cv.ls","cv.gcv","cv.aic")) {
 
-  if(missing(x) || missing(y) || missing (K)) stop(" must provide x, y and K")
+		if(missing(x) || missing(y) || missing (K)) stop(" must provide x, y and K")
 
-  if(!is.matrix(K)) stop(" K must be a two-column matrix")  
+		if(!is.matrix(K)) stop(" K must be a two-column matrix")  
 
-  basis <- match.arg(basis)
-  if(is.null(is.ordered.z)) stop(" is.ordered.z must be provided")
-  knots <- match.arg(knots)
-  cv.func <- match.arg(cv.func)
+		basis <- match.arg(basis)
+		if(is.null(is.ordered.z)) stop(" is.ordered.z must be provided")
+		knots <- match.arg(knots)
+		cv.func <- match.arg(cv.func)
 
-  ## Additive spline regression models have an intercept in the lm()
-  ## model (though not in the gsl.bs function)
+		## Additive spline regression models have an intercept in the lm()
+		## model (though not in the gsl.bs function)
 
-  lm.intercept <- ifelse(basis=="additive" || basis=="glp", TRUE, FALSE)
+		lm.intercept <- ifelse(basis=="additive" || basis=="glp", TRUE, FALSE)
 
-  ## Without computing P, compute the number of columns that P would
-  ## be and if degrees of freedom is 1 or less, return a large penalty.
+		## Without computing P, compute the number of columns that P would
+		## be and if degrees of freedom is 1 or less, return a large penalty.
 
-  n <- length(y)
+		n <- length(y)
 
-  ## Otherwise, compute the cross-validation function
+		## Otherwise, compute the cross-validation function
 
-  if(is.null(z)) {
-    ## No categorical predictors
-    if(any(K[,1] > 0)) {
-      P <- prod.spline(x=x,K=K,knots=knots,basis=basis)
-      if(NCOL(P) >= (n-1)) return(sqrt(.Machine$double.xmax))
-      suppressWarnings(epsilon <- residuals(lsfit(P,y,intercept=lm.intercept)))
-      htt <- hat(P)
-      htt <- ifelse(htt < 1, htt, 1-.Machine$double.eps)
-    } else {
-      htt <- rep(1/n,n)
-      epsilon <- y-mean(y)
-    }
-    if(cv.func == "cv.ls") {
-      cv <- mean(epsilon^2/(1-htt)^2)
-    } else if(cv.func == "cv.gcv"){
-      cv <- mean(epsilon^2/(1-mean(htt))^2)
-    } else if(cv.func == "cv.aic"){
-      sigmasq <- mean(epsilon^2)
-      traceH <- sum(htt)
-      penalty <- (1+traceH/n)/(1-(traceH+2)/n)
-      cv <- ifelse(penalty < 0, .Machine$double.xmax, log(sigmasq)+penalty);
-    }
-  } else {
-    ## Categorical predictors - this is the workhorse
-    z <- as.matrix(z)
-    num.z <- NCOL(z)
-    epsilon <- numeric(length=n)
-    htt <- numeric(length=n)
-    ## At least one predictor for which degree > 0
-    if(any(K[,1] > 0)) {
-      P <- prod.spline(x=x,K=K,knots=knots,basis=basis)
-      ## Check for 1 or fewer degrees of freedom
-      if(NCOL(P) >= (n-1)) return(sqrt(.Machine$double.xmax))
-      for(i in 1:nrow.z.unique) {
-        zz <- ind == ind.vals[i]
-        L <- prod.kernel(Z=z,z=z.unique[ind.vals[i],],lambda=lambda,is.ordered.z=is.ordered.z)
-        if(basis=="additive" || basis=="glp") {
-          ## Additive spline regression models have an intercept in the lm()
-          ## model (though not in the gsl.bs function)
-          model <- lm.wfit(cbind(1,P),y,L)
-          ## Check for rank-deficient fit
-          if(model$rank != (NCOL(P)+1)) return(sqrt(.Machine$double.xmax))
-        } else {
-          model <- lm.wfit(P,y,L)
-          ## Check for rank-deficient fit          
-          if(model$rank != NCOL(P)) return(sqrt(.Machine$double.xmax))
-        }
-        epsilon[zz] <- residuals(model)[zz]
-        htt[zz] <- hat(model$qr)[zz]
-      }
-    } else {
-      ## No predictors for which degree > 0      
-      z.factor <- data.frame(factor(z[,1]))
-      if(num.z > 1) for(i in 2:num.z) z.factor <- data.frame(z.factor,factor(z[,i]))
-      for(i in 1:nrow.z.unique) {
-        zz <- ind == ind.vals[i]
-        L <- prod.kernel(Z=z,z=z.unique[ind.vals[i],],lambda=lambda,is.ordered.z=is.ordered.z)
-        ## Whether we use additive, glp, or tensor products, this
-        ## model has no continuous predictors hence the intercept is
-        ## the parameter that may shift with the categorical
-        ## predictors
-        model <- lm.wfit(matrix(1,n,1),y,L)
-        epsilon[zz] <- residuals(model)[zz]
-        htt[zz] <- hat(model$qr)[zz]
-      }
-    }
+		if(is.null(z)) {
+				## No categorical predictors
+				if(any(K[,1] > 0)) {
+						P <- prod.spline(x=x,K=K,knots=knots,basis=basis)
+						if(NCOL(P) >= (n-1)) return(sqrt(.Machine$double.xmax))
+						suppressWarnings(epsilon <- residuals(lsfit(P,y,intercept=lm.intercept)))
+						htt <- hat(P)
+						htt <- ifelse(htt < 1, htt, 1-.Machine$double.eps)
+				} else {
+						htt <- rep(1/n,n)
+						epsilon <- y-mean(y)
+				}
+				if(cv.func == "cv.ls") {
+						cv <- mean(epsilon^2/(1-htt)^2)
+				} else if(cv.func == "cv.gcv"){
+						cv <- mean(epsilon^2/(1-mean(htt))^2)
+				} else if(cv.func == "cv.aic"){
+						sigmasq <- mean(epsilon^2)
+						traceH <- sum(htt)
+						penalty <- (1+traceH/n)/(1-(traceH+2)/n)
+						cv <- ifelse(penalty < 0, .Machine$double.xmax, log(sigmasq)+penalty);
+				}
+		} else {
+				## Categorical predictors - this is the workhorse
+				z <- as.matrix(z)
+				num.z <- NCOL(z)
+				epsilon <- numeric(length=n)
+				htt <- numeric(length=n)
+				## At least one predictor for which degree > 0
+				if(any(K[,1] > 0)) {
+						P <- prod.spline(x=x,K=K,knots=knots,basis=basis)
+						## Check for 1 or fewer degrees of freedom
+						if(NCOL(P) >= (n-1)) return(sqrt(.Machine$double.xmax))
+						for(i in 1:nrow.z.unique) {
+								zz <- ind == ind.vals[i]
+								L <- prod.kernel(Z=z,z=z.unique[ind.vals[i],],lambda=lambda,is.ordered.z=is.ordered.z)
+								if(basis=="additive" || basis=="glp") {
+										## Additive spline regression models have an intercept in the lm()
+										## model (though not in the gsl.bs function)
+										model <- lm.wfit(cbind(1,P),y,L)
+										## Check for rank-deficient fit
+										if(model$rank != (NCOL(P)+1)) return(sqrt(.Machine$double.xmax))
+								} else {
+										model <- lm.wfit(P,y,L)
+										## Check for rank-deficient fit          
+										if(model$rank != NCOL(P)) return(sqrt(.Machine$double.xmax))
+								}
+								epsilon[zz] <- residuals(model)[zz]
+								htt[zz] <- hat(model$qr)[zz]
+						}
+				} else {
+						## No predictors for which degree > 0      
+						z.factor <- data.frame(factor(z[,1]))
+						if(num.z > 1) for(i in 2:num.z) z.factor <- data.frame(z.factor,factor(z[,i]))
+						for(i in 1:nrow.z.unique) {
+								zz <- ind == ind.vals[i]
+								L <- prod.kernel(Z=z,z=z.unique[ind.vals[i],],lambda=lambda,is.ordered.z=is.ordered.z)
+								## Whether we use additive, glp, or tensor products, this
+								## model has no continuous predictors hence the intercept is
+								## the parameter that may shift with the categorical
+								## predictors
+								model <- lm.wfit(matrix(1,n,1),y,L)
+								epsilon[zz] <- residuals(model)[zz]
+								htt[zz] <- hat(model$qr)[zz]
+						}
+				}
 
-    htt <- ifelse(htt < 1, htt, 1-.Machine$double.eps)
+				htt <- ifelse(htt < 1, htt, 1-.Machine$double.eps)
 
-    if(cv.func == "cv.ls") {
-      cv <- mean((epsilon/(1-htt))^2)
-    } else if(cv.func == "cv.gcv"){
-      cv <- mean((epsilon/(1-mean(htt)))^2)
-    } else if(cv.func == "cv.aic"){
-      sigmasq <- mean(epsilon^2)
-      traceH <- sum(htt)
-      penalty <- (1+traceH/n)/(1-(traceH+2)/n)
-      cv <- ifelse(penalty < 0, .Machine$double.xmax, log(sigmasq)+penalty);
-    }
+				if(cv.func == "cv.ls") {
+						cv <- mean((epsilon/(1-htt))^2)
+				} else if(cv.func == "cv.gcv"){
+						cv <- mean((epsilon/(1-mean(htt)))^2)
+				} else if(cv.func == "cv.aic"){
+						sigmasq <- mean(epsilon^2)
+						traceH <- sum(htt)
+						penalty <- (1+traceH/n)/(1-(traceH+2)/n)
+						cv <- ifelse(penalty < 0, .Machine$double.xmax, log(sigmasq)+penalty);
+				}
 
-  }
+		}
 
-  return(cv)
+		return(cv)
 
 }
 
+## The following function is a wrapper of cv.factor.spline to 
+## handle the situation when knots="auto". It will call 
+## cv.factor.spline two times and return the minimum with
+## the optimal knots.
+
+cv.factor.spline.wrapper <- function(x,
+																		 y,
+																		 z=NULL,
+																		 K,
+																		 I=NULL,
+																		 knots=c("quantiles","uniform", "auto"),
+																		 basis=c("additive","tensor","glp"),
+																		 cv.func=c("cv.ls","cv.gcv","cv.aic")) {
+
+		knots.opt <- knots
+		if(knots == "auto") {
+				knots.opt <- "quantiles"
+				cv <- cv.factor.spline(x=x, 
+															 y=y, 
+															 z=z, 
+															 K=K, 
+															 I=I, 
+															 knots="quantiles", 
+															 basis=basis, 
+															 cv.func=cv.func)
+				cv.uniform <- cv.factor.spline(x=x, 
+																			 y=y, 
+																			 z=z, 
+																			 K=K, 
+																			 I=I, 
+																			 knots="uniform", 
+																			 basis=basis, 
+																			 cv.func=cv.func)
+				if(cv > cv.uniform) {
+						cv <- cv.uniform
+						knots.opt <- "uniform"
+				}
+		}
+		else {
+				cv <- cv.factor.spline(x=x, 
+															 y=y, 
+															 z=z, 
+															 K=K, 
+															 I=I, 
+															 knots=knots, 
+															 basis=basis, 
+															 cv.func=cv.func)
+		}
+		attr(cv, "knots.opt") <- knots.opt
+
+		return(cv)
+}
 ## Feb 1 2011 - replaced lm() and hatvalues() with lsfit and hat. On
 ## large datasets makes a noticeable difference (1 predictor, n=10,000
 ## drops from 17 secs to 13, n=100,000 drops 92 to to 71 seconds, so
 ## cuts runtime to ~ 0.77 of original time)
 
 cv.factor.spline <- function(x,
-                             y,
-                             z=NULL,
-                             K,
-                             I=NULL,
-                             knots=c("quantiles","uniform"),
-                             basis=c("additive","tensor","glp"),
-                             cv.func=c("cv.ls","cv.gcv","cv.aic")) {
+														 y,
+														 z=NULL,
+														 K,
+														 I=NULL,
+														 knots=c("quantiles","uniform"),
+														 basis=c("additive","tensor","glp"),
+														 cv.func=c("cv.ls","cv.gcv","cv.aic")) {
 
-  if(missing(x) || missing(y) || missing (K)) stop(" must provide x, y and K")
-  if(!is.matrix(K)) stop(" K must be a two-column matrix")  
+		if(missing(x) || missing(y) || missing (K)) stop(" must provide x, y and K")
+		if(!is.matrix(K)) stop(" K must be a two-column matrix")  
 
-  basis <- match.arg(basis)
-  knots <- match.arg(knots)
+		basis <- match.arg(basis)
+		knots <- match.arg(knots)
 
-  cv.func <- match.arg(cv.func)
+		cv.func <- match.arg(cv.func)
 
-  n <- NROW(x)
+		n <- NROW(x)
 
-  ## Otherwise, compute the cross-validation function
+		## Otherwise, compute the cross-validation function
 
-  if(any(K[,1] > 0)||any(I > 0)) {
-    P <- prod.spline(x=x,z=z,K=K,I=I,knots=knots,basis=basis)
-    ## Check for 1 or fewer degrees of freedom
-    if(NCOL(P) >= (n-1)) return(sqrt(.Machine$double.xmax))
-    if(basis=="additive" || basis=="glp") {
-      ## Additive spline regression models have an intercept in the
-      ## lm() model (though not in the gsl.bs function)
-      model <- lm.fit(cbind(1,P),y)
-      ## Check for rank-deficient fit
-      if(model$rank != (NCOL(P)+1)) return(sqrt(.Machine$double.xmax))
-    } else {
-      model <- lm.fit(P,y)
-      ## Check for rank-deficient fit      
-      if(model$rank != NCOL(P)) return(sqrt(.Machine$double.xmax))      
-    }
-    htt <- hat(model$qr)
-    htt <- ifelse(htt < 1, htt, 1-.Machine$double.eps)
-    epsilon <- residuals(model)
-  } else {
-    htt <- rep(1/n,n)
-    epsilon <- y-mean(y)
-  }
+		if(any(K[,1] > 0)||any(I > 0)) {
+				P <- prod.spline(x=x,z=z,K=K,I=I,knots=knots,basis=basis)
+				## Check for 1 or fewer degrees of freedom
+				if(NCOL(P) >= (n-1)) return(sqrt(.Machine$double.xmax))
+				if(basis=="additive" || basis=="glp") {
+						## Additive spline regression models have an intercept in the
+						## lm() model (though not in the gsl.bs function)
+						model <- lm.fit(cbind(1,P),y)
+						## Check for rank-deficient fit
+						if(model$rank != (NCOL(P)+1)) return(sqrt(.Machine$double.xmax))
+				} else {
+						model <- lm.fit(P,y)
+						## Check for rank-deficient fit      
+						if(model$rank != NCOL(P)) return(sqrt(.Machine$double.xmax))      
+				}
+				htt <- hat(model$qr)
+				htt <- ifelse(htt < 1, htt, 1-.Machine$double.eps)
+				epsilon <- residuals(model)
+		} else {
+				htt <- rep(1/n,n)
+				epsilon <- y-mean(y)
+		}
 
-  if(cv.func == "cv.ls") {
-    cv <- mean((epsilon/(1-htt))^2)
-  } else if(cv.func == "cv.gcv"){
-    cv <- mean((epsilon/(1-mean(htt)))^2)
-  } else if(cv.func == "cv.aic"){
-    sigmasq <- mean(epsilon^2)
-    traceH <- sum(htt)
-    penalty <- (1+traceH/n)/(1-(traceH+2)/n)
-    cv <- ifelse(penalty < 0, .Machine$double.xmax, log(sigmasq)+penalty);
-  }
+		if(cv.func == "cv.ls") {
+				cv <- mean((epsilon/(1-htt))^2)
+		} else if(cv.func == "cv.gcv"){
+				cv <- mean((epsilon/(1-mean(htt)))^2)
+		} else if(cv.func == "cv.aic"){
+				sigmasq <- mean(epsilon^2)
+				traceH <- sum(htt)
+				penalty <- (1+traceH/n)/(1-(traceH+2)/n)
+				cv <- ifelse(penalty < 0, .Machine$double.xmax, log(sigmasq)+penalty);
+		}
 
-  return(cv)
-  
+		return(cv)
+
 }

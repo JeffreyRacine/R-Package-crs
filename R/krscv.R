@@ -16,7 +16,7 @@ krscv <- function(xz,
                   segments.min=1, 
                   restarts=0,
                   complexity=c("degree-knots","degree","knots"),
-                  knots=c("quantiles","uniform"),
+                  knots=c("quantiles","uniform", "auto"),
                   basis=c("additive","tensor","glp","auto"),
                   cv.func=c("cv.ls","cv.gcv","cv.aic"),
                   degree=degree,
@@ -73,7 +73,7 @@ krscv <- function(xz,
     ## When using weights= lambda of zero fails. Trivial to trap.
     lambda <- ifelse(lambda <= 0, .Machine$double.eps, lambda)
 
-    cv <- cv.kernel.spline(x=x,
+    cv <- cv.kernel.spline.wrapper(x=x,
                            y=y,
                            z=z,
                            K=K,
@@ -589,6 +589,7 @@ krscv <- function(xz,
 
   }
 
+
   ## Sort on cv.vec
 
   ocv.vec <- order(cv.vec)
@@ -604,9 +605,32 @@ krscv <- function(xz,
   console <- printClear(console)
   console <- printPop(console)
 
-  ## Set number of segments when degree==0 to 1 (or NA)
 
+  ## Set number of segments when degree==0 to 1 (or NA)
   segments[degree==0] <- 1
+
+  knots.opt <- knots
+  ## One more time to call cv.kernel.spline to know knots when knots="auto"
+	if(knots=="auto") {
+			## When using weights= lambda of zero fails. Trivial to trap.
+			lambda.opt <- ifelse(lambda.opt <= 0, .Machine$double.eps, lambda.opt)
+
+			cv.knots <- cv.kernel.spline.wrapper(x=x,
+																					 y=y,
+																					 z=z,
+																					 K=cbind(degree, segments),
+																					 lambda=lambda.opt,
+																					 z.unique=z.unique,
+																					 ind=ind,
+																					 ind.vals=ind.vals,
+																					 nrow.z.unique=nrow.z.unique,
+																					 is.ordered.z=is.ordered.z,
+																					 knots=knots,
+																					 basis=basis.opt,
+																					 cv.func=cv.func)
+
+			knots.opt <- attributes(cv.knots)$knots.opt
+	}
 
   if(any(degree==degree.max)) warning(paste(" optimal degree equals search maximum (", degree.max,"): rerun with larger degree.max",sep=""))
   if(any(segments==segments.max)) warning(paste(" optimal segment equals search maximum (", segments.max,"): rerun with larger segments.max",sep=""))  
@@ -620,7 +644,7 @@ krscv <- function(xz,
         degree.min=degree.min, 
         segments.min=segments.min, 
         complexity=complexity,
-        knots=knots,
+        knots=knots.opt,
         degree=degree,
         segments=segments,
         restarts=restarts,

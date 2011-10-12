@@ -15,7 +15,7 @@ frscv <- function(xz,
                   degree.min=0, 
                   segments.min=1, 
                   complexity=c("degree-knots","degree","knots"),
-                  knots=c("quantiles","uniform"),
+                  knots=c("quantiles","uniform", "auto"),
                   basis=c("additive","tensor","glp","auto"),
                   cv.func=c("cv.ls","cv.gcv","cv.aic"),
                   degree=degree,
@@ -72,7 +72,7 @@ frscv <- function(xz,
       I <- NULL
     }
 
-    cv <- cv.factor.spline(x=x,
+    cv <- cv.factor.spline.wrapper(x=x,
                            y=y,
                            z=z,
                            K=K,
@@ -269,6 +269,7 @@ frscv <- function(xz,
 
   nrow.KI.mat <- NROW(KI.mat)
   basis.vec <- character(nrow.KI.mat)
+  knots.vec <- character(nrow.KI.mat)
 
   ## Initialize    
 
@@ -297,8 +298,11 @@ frscv <- function(xz,
                         cv.func=cv.func)
 
       if(output < cv.vec[j]) {
-        cv.vec[j] <- output
         basis.vec[j] <- "additive"
+				knots.vec[j] <- attributes(output)$knots.opt
+				attributes(output) <- NULL
+        cv.vec[j] <- output
+
       }
       
       output <- cv.objc(input=KI.mat[j,],
@@ -320,8 +324,10 @@ frscv <- function(xz,
                         cv.func=cv.func)
 
       if(output < cv.vec[j]) {
-        cv.vec[j] <- output
         basis.vec[j] <- "tensor"
+				knots.vec[j] <- attributes(output)$knots.opt
+				attributes(output) <- NULL
+        cv.vec[j] <- output
       }
 
       output <- cv.objc(input=KI.mat[j,],
@@ -343,8 +349,10 @@ frscv <- function(xz,
                         cv.func=cv.func)
 
       if(output < cv.vec[j]) {
-        cv.vec[j] <- output
         basis.vec[j] <- "glp"
+				knots.vec[j] <- attributes(output)$knots.opt
+				attributes(output) <- NULL
+        cv.vec[j] <- output
       }
 
     } else {
@@ -370,8 +378,10 @@ frscv <- function(xz,
                         cv.func=cv.func)
 
       if(output < cv.vec[j]) {
-        cv.vec[j] <- output
         basis.vec[j] <- basis
+				knots.vec[j] <- attributes(output)$knots.opt
+				attributes(output) <- NULL
+        cv.vec[j] <- output
       }
       
     }
@@ -385,6 +395,7 @@ frscv <- function(xz,
   cv.min <- cv.vec[ocv.vec][1]
   K.opt <- KI.mat[ocv.vec,,drop=FALSE][1,]
   basis.opt <- basis.vec[ocv.vec][1]
+	knots.opt <- knots.vec[ocv.vec][1]
   degree <- K.opt[1:num.x]
   segments <- K.opt[(num.x+1):(2*num.x)]
 
@@ -411,7 +422,7 @@ frscv <- function(xz,
         degree.min=degree.min, 
         segments.min=segments.min, 
         complexity=complexity,
-        knots=knots,
+        knots=knots.opt,
         degree=degree,
         segments=segments,
         K.mat=KI.mat,
