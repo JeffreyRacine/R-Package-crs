@@ -1,5 +1,8 @@
 Changes from Version 0.15-3 to 0.15-4 [XXX]
 
+* Extended the gsl.bs functionality to permit out-of-sample prediction
+  of the spline basis and its derivatives
+
 * Added options knots="auto" to automatically determine whether to use
   quantile or uniform knots
 
