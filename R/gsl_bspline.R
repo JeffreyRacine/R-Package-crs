@@ -57,24 +57,33 @@ gsl.bs.default <- function(x,
 	if(any(outside)){
 			warning("some 'x' values beyond boundary knots may cause ill-conditioned bases")
 			ord <- degree + 1
-#			Boundary.knots <- c(x.min, x.max)
-#			Aknots <- sort(c(rep(Boundary.knots, degree+1), knots))
-#			nbreak1 <- length(Aknots) 
-			derivs<- 0:degree
-			scalef <- gamma(1L:ord)
+			derivs<- deriv:degree
+			if(ord == deriv) 
+					scalef = 1
+			else
+					scalef <- gamma(1L:(ord-deriv))
 			B <- array(0, c(length(x), nbreak+degree-1))
 			
-			if(any(ol)){##the following code follows bs,  but it does not provide the derivatives,  we need to know how to compute derivatives when
-					# these happen
+			if(any(ol) && (ord>deriv)){ #ord <=deriv,  derivatives should be zero..#
 					k.pivot <- x.min
-					xl <- cbind(1, outer(x[ol]-k.pivot, 1L:degree,  "^"))
-					tt <- bs.des(rep(k.pivot, ord), degree, nbreak, deriv=derivs, x.min, x.max)  #If 'knots' is given,  we have not implemented it.
+					if(degree == deriv){
+							xl <- cbind(1)
+					}
+					else {
+							xl <- cbind(1, outer(x[ol]-k.pivot, 1L:(degree-deriv),  "^"))
+					}
+					tt <- bs.des(rep(k.pivot, ord-deriv), degree, nbreak, deriv=derivs, x.min, x.max, knots)  #If 'knots' is given,  we have not implemented it.
 					B[ol, ] <- xl %*% (tt/scalef)
 			}
-			if(any(or)){
+			if(any(or) && (ord>deriv)){
 					k.pivot <- x.max
-					xr <- cbind(1, outer(x[or]-k.pivot, 1L:degree,  "^"))
-					tt <- bs.des(rep(k.pivot, ord), degree, nbreak,deriv= derivs, x.min, x.max)
+					if(degree == deriv){
+							xr <- cbind(1)
+					}
+					else {
+							xr <- cbind(1, outer(x[or]-k.pivot, 1L:(degree-deriv),  "^"))
+					}
+					tt <- bs.des(rep(k.pivot, ord-deriv), degree, nbreak,deriv= derivs, x.min, x.max, knots)
 					B[or, ] <- xr %*% (tt/scalef)
 			}
 			if(any(inside <- !outside))

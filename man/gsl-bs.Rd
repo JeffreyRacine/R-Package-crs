@@ -62,7 +62,7 @@ basis; default is \sQuote{FALSE} }
 \value{
 
   \code{gsl.bs} returns a \code{gsl.bs} object.  A matrix of dimension
-  \sQuote{c(length(x), degree)}.
+  \sQuote{c(length(x), degree+nbreak-1)}.
 
   A primary use is in modelling formulas to directly specify a piecewise
   polynomial term in a model. See \url{http://www.gnu.org/software/gsl/}
