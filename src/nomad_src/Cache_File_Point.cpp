@@ -41,7 +41,7 @@
 */
 #include "Cache_File_Point.hpp"
 #include "Eval_Point.hpp"
-
+using namespace std;
 /*-----------------------------------*/
 /*   static members initialization   */
 /*-----------------------------------*/

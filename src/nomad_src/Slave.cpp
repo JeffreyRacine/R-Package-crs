@@ -40,7 +40,7 @@
   \see    Slave.hpp
 */
 #include "Slave.hpp"
-
+using namespace std;
 /*-----------------------------------*/
 /*   static members initialization   */
 /*-----------------------------------*/

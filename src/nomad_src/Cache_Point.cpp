@@ -40,7 +40,7 @@
   \see    Cache_Point.hpp
 */
 #include "Cache_Point.hpp"
-
+using namespace std;
 /*-----------------------------------------------------------*/
 /*                     comparison operator                   */
 /*-----------------------------------------------------------*/

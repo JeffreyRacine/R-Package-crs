@@ -40,7 +40,7 @@
   \see    Pareto_Point.hpp
 */
 #include "Pareto_Point.hpp"
-
+using namespace std;
 /*--------------------------------------------------------*/
 /* comparison operator:                                   */
 /*  . supposes that argument fp is a Pareto_Point         */

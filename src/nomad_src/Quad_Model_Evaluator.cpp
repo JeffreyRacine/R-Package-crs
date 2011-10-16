@@ -40,7 +40,7 @@
   \see    Quad_Mopel_Evaluator.hpp
 */
 #include "Quad_Model_Evaluator.hpp"
-
+using namespace std;
 /*-----------------------------*/
 /*         constructor         */
 /*-----------------------------*/

@@ -40,7 +40,7 @@
   \see    Mesh.hpp
 */
 #include "Mesh.hpp"
-
+using namespace std;
 /*-----------------------------------*/
 /*   static members initialization   */
 /*-----------------------------------*/

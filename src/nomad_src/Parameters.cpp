@@ -41,7 +41,7 @@
 */
 #include "Parameters.hpp"
 #include "Slave.hpp"
-
+using namespace std;
 /*----------------------------------------*/
 /*                destructor              */
 /*----------------------------------------*/

@@ -40,7 +40,7 @@
   \see    Pareto_Front.hpp
 */
 #include "Pareto_Front.hpp"
-
+using namespace std;
 /*------------------------------------------------------*/
 /*                 insertion of a point                 */
 /*   (returns true if the point is a new Pareto point)  */

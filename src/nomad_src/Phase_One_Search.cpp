@@ -40,7 +40,7 @@
   \see    Phase_One_Search.hpp
 */
 #include "Phase_One_Search.hpp"
-
+using namespace std;
 /*-------------------------------------------------------------*/
 /*                         phase one search                    */
 /*                 (try to satisfy EB constraints)             */

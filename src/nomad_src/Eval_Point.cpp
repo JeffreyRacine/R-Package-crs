@@ -42,7 +42,7 @@
 #include "Cache_File_Point.hpp"
 #include "Eval_Point.hpp"
 #include "Slave.hpp"
-
+using namespace std;
 /*-----------------------------------*/
 /*   static members initialization   */
 /*-----------------------------------*/

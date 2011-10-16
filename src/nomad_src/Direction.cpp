@@ -40,7 +40,7 @@
   \see    Direction.hpp
 */
 #include "Direction.hpp"
-
+using namespace std;
 /*-----------------------------------*/
 /*   static members initialization   */
 /*-----------------------------------*/

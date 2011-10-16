@@ -40,7 +40,7 @@
   \see    Clock.hpp
 */
 #include "Clock.hpp"
-
+using namespace std;
 /*-----------------------------------*/
 /*   static members initialization   */
 /*-----------------------------------*/

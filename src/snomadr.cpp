@@ -498,8 +498,8 @@ extern "C" {
 
 						if(print_output > 0)
 						{
-								printf("\niterations: %d\n", stats.get_iterations());
-								printf("time:       %d\n", stats.get_real_time());
+								Rprintf("\niterations: %d\n", stats.get_iterations());
+								Rprintf("time:       %d\n", stats.get_real_time());
 						}
 						/* output the results */
 						const NOMAD::Eval_Point *cur_x;
@@ -524,7 +524,7 @@ extern "C" {
 
 				}
 				catch(std::exception &e){
-						std::cerr<<"\nNOMAD has been interrupted ("<<e.what()<<")\n\n";
+						 error("\nNOMAD has been interrupted ( %s )\n\n",  e.what() );
 				}
 
 				NOMAD::Slave::stop_slaves(out);
@@ -875,7 +875,7 @@ extern "C" {
 
 				}
 				catch(std::exception &e){
-						std::cerr<<"\nNOMAD has been interrupted ("<<e.what()<<")\n\n";
+						error("\nNOMAD has been interrupted ( %s )\n\n",  e.what());
 				}
 
 				NOMAD::Slave::stop_slaves(out);

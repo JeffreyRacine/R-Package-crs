@@ -40,7 +40,7 @@
   \see    LH_Search.hpp
 */
 #include "LH_Search.hpp"
-
+using namespace std;
 /*-----------------------------------------------------------*/
 /*              MADS Latin-Hypercube (LH) search             */
 /*-----------------------------------------------------------*/

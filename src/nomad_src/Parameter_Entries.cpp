@@ -40,7 +40,7 @@
   \see    Parameter_Entries.hpp
 */
 #include "Parameter_Entries.hpp"
-
+using namespace std;
 /*--------------------------------------------*/
 /*                 destructor                 */
 /*--------------------------------------------*/

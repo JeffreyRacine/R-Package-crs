@@ -40,7 +40,7 @@
   \see    Multi_Obj_Evaluator.hpp
 */
 #include "Multi_Obj_Evaluator.hpp"
-
+using namespace std;
 /*-----------------------------------*/
 /*   static members initialization   */
 /*-----------------------------------*/

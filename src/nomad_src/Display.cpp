@@ -40,7 +40,7 @@
   \see    Display.hpp
 */
 #include "Display.hpp"
-
+using namespace std;
 /*---------------------------------------------------------*/
 /*                    open an indented block               */
 /*---------------------------------------------------------*/

@@ -40,7 +40,7 @@
   \see    Random_Pickup.hpp
 */
 #include "Random_Pickup.hpp"
-
+using namespace std;
 /*---------------------------------------------------------*/
 /*                         constructor                     */
 /*---------------------------------------------------------*/

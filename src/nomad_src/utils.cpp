@@ -40,7 +40,7 @@
   \see    utils.hpp
 */
 #include "utils.hpp"
-
+using namespace std;
 /*---------------------------------------------------------------*/
 /*               construct the first n prime numbers             */
 /*---------------------------------------------------------------*/

@@ -40,7 +40,7 @@
   \see    Point.hpp
 */
 #include "Point.hpp"
-
+using namespace std;
 /*-----------------------------------*/
 /*   static members initialization   */
 /*-----------------------------------*/

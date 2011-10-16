@@ -40,7 +40,7 @@
   \see    Evaluator_Control.hpp
 */
 #include "Evaluator_Control.hpp"
-
+using namespace std;
 /*-----------------------------------*/
 /*   static members initialization   */
 /*-----------------------------------*/

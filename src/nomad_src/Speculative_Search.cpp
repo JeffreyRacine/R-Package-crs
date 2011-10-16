@@ -40,7 +40,7 @@
   \see    Speculative.hpp
 */
 #include "Speculative_Search.hpp"
-
+using namespace std;
 /*-------------------------------------------------------------*/
 /*                     MADS speculative search                 */
 /*-------------------------------------------------------------*/

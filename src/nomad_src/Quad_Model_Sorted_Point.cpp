@@ -40,7 +40,7 @@
   \see    Quad_Model_Sorted_Point.hpp
 */
 #include "Quad_Model_Sorted_Point.hpp"
-
+using namespace std;
 /*---------------------------------------------------------*/
 /*                        constructor                      */
 /*---------------------------------------------------------*/

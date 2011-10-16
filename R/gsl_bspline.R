@@ -73,7 +73,7 @@ gsl.bs.default <- function(x,
 					else {
 							xl <- cbind(1, outer(x[ol]-k.pivot, 1L:(degree-deriv),  "^"))
 					}
-					tt <- bs.des(rep(k.pivot, ord-deriv), degree, nbreak, deriv=derivs, x.min, x.max, knots)  #If 'knots' is given,  we have not implemented it.
+					tt <- bs.des(rep(k.pivot, ord-deriv), degree, nbreak, deriv=derivs, x.min, x.max, knots)  
 					B[ol, ] <- xl %*% (tt/scalef)
 			}
 			if(any(or) && (ord>deriv)){

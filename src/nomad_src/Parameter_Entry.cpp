@@ -40,7 +40,7 @@
   \see    Parameter_Entry.hpp
 */
 #include "Parameter_Entry.hpp"
-
+using namespace std;
 /*-----------------------------------*/
 /*  . constructor (from a string)    */
 /*  . ignores all entries after '#'  */

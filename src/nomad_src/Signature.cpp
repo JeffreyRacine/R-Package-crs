@@ -40,7 +40,7 @@
   \see    Signature.hpp
 */
 #include "Signature.hpp"
-
+using namespace std;
 /*-----------------------------------*/
 /*   static members initialization   */
 /*-----------------------------------*/

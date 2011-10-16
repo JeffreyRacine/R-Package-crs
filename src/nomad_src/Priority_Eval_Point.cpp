@@ -40,7 +40,7 @@
   \see    Priority_Eval_Point.hpp
 */
 #include "Priority_Eval_Point.hpp"
-
+using namespace std;
 /*------------------------------------------------*/
 /*                comparison operator             */
 /*------------------------------------------------*/

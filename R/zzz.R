@@ -1,5 +1,5 @@
 .onAttach <- function (lib, pkg) {
-  cat("Categorical Regression Splines (version 0.15-4)\n");
+	packageStartupMessage("Categorical Regression Splines (version 0.15-4)", domain = NULL,  appendLF = TRUE)
   if(is.null(options('crs.messages')$crs.messages))
     options(crs.messages = TRUE)
 

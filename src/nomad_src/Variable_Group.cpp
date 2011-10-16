@@ -40,7 +40,7 @@
   \see    Variable_Group.hpp
 */
 #include "Variable_Group.hpp"
-
+using namespace std;
 /*-------------------------------------------------------------*/
 /*     check (also removes fixed variables from the group)     */
 /*-------------------------------------------------------------*/

@@ -40,7 +40,7 @@
   \see    Phase_One_Evaluator.hpp
 */
 #include "Phase_One_Evaluator.hpp"
-
+using namespace std;
 /*------------------------------------------------------------------*/
 /*         compute f(x) from the blackbox outputs of a point        */
 /*              (special objective for MADS phase 1)                */

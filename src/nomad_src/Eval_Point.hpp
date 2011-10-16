@@ -46,11 +46,11 @@
 #include "Cache_File_Point.hpp"
 #include "Set_Element.hpp"
 
-#ifdef WINDOWS 
-#ifndef isnan
+/*#ifdef WINDOWS */ 
+#ifndef isnan 
 inline bool isnan ( double x ) { return x != x; }
-#endif
-#endif
+#endif 
+/*#endif */
 
 namespace NOMAD {
 

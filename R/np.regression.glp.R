@@ -13,68 +13,82 @@ NZD <- function(a) {
 }
 
 sd.robust <- function(x) {
-  iqr.x <- IQR(x)
-  sd.x <- sd(x)
-  if(isTRUE(all.equal(sd.x, 0))) stop(" numeric predictor is a constant not a variable")
-  ## Test for pathological case where sd > 0 but iqr is 0 (many
-  ## repeated values)
-  if(sd.x > 0 && isTRUE(all.equal(iqr.x, 0))) {
-    iqr.x <- sd.x
-    warning(" numeric predictor exists with numerous repeated values (over 50%, IQR = 0)")
-  }
-  min(sd.x,iqr.x/1.34898)
+		
+		np.sd <- function(x, na.rm=FALSE) {
+				if (is.matrix(x)) {
+						apply(x, 2, sd, na.rm=na.rm)
+				}
+				else if (is.vector(x))
+						sqrt(var(x, na.rm=na.rm))
+				else if (is.data.frame(x)) {
+						sapply(x, sd, na.rm=na.rm)
+				}
+				else
+						sqrt(var(as.vector(x), na.rm=na.rm))
+		}
+
+		iqr.x <- IQR(x)
+		sd.x <- np.sd(x)
+		if(isTRUE(all.equal(sd.x, 0))) stop(" numeric predictor is a constant not a variable")
+		## Test for pathological case where sd > 0 but iqr is 0 (many
+		## repeated values)
+		if(sd.x > 0 && isTRUE(all.equal(iqr.x, 0))) {
+				iqr.x <- sd.x
+				warning(" numeric predictor exists with numerous repeated values (over 50%, IQR = 0)")
+		}
+		min(sd.x,iqr.x/1.34898)
 }
 
 mypoly <- function(x,
-                   ex=NULL,
-                   degree,
-                   gradient.compute = FALSE,
-                   r=0,
-                   Bernstein = TRUE) {
+									 ex=NULL,
+									 degree,
+									 gradient.compute = FALSE,
+									 r=0,
+									 Bernstein = TRUE) {
 
-  if(missing(x)) stop(" Error: x required")
-  if(missing(degree)) stop(" Error: degree required")
-  if(degree < 1) stop(" Error: degree must be a positive integer")
+		if(missing(x)) stop(" Error: x required")
+		if(missing(degree)) stop(" Error: degree required")
+		if(degree < 1) stop(" Error: degree must be a positive integer")
 
-  if(!Bernstein) {
+		if(!Bernstein) {
 
-    ## Raw polynomials and their derivatives
+				## Raw polynomials and their derivatives
 
-    if(!is.null(ex)) x <- ex
+				if(!is.null(ex)) x <- ex
 
-    if(gradient.compute) {
-      Z <- NULL
-      for(i in 1:degree) {
-        if((i-r) >= 0) {
-          tmp <- (factorial(i)/factorial(i-r))*x^max(0,i-r)
-        } else {
-          tmp <- rep(0,length(x))
-        }
-        Z <- cbind(Z,tmp)
-      }
-    } else {
-      Z <- outer(x,1L:degree,"^")
-    }
-    
-  } else {
-    ## Bernstein polynomials and their derivatives (i.e. Bezier curves
-    ## i.e. B-splines with no interior knots)
-    if(is.null(ex)) {
-      if(gradient.compute) {
-        Z <- gsl.bs(x,degree=degree,deriv=r)
-      } else {
-        Z <- gsl.bs(x,degree=degree)
-      }
-    } else {
-      if(gradient.compute) {
-        Z <- predict(gsl.bs(x,degree=degree,deriv=r),newx=ex)
-      } else {
-        Z <- predict(gsl.bs(x,degree=degree),newx=ex)
-      }
-    }
-  }
+				if(gradient.compute) {
+						Z <- NULL
+						for(i in 1:degree) {
+								if((i-r) >= 0) {
+										tmp <- (factorial(i)/factorial(i-r))*x^max(0,i-r)
+								} else {
+										tmp <- rep(0,length(x))
+								}
+								Z <- cbind(Z,tmp)
+						}
+				} else {
+						Z <- outer(x,1L:degree,"^")
+				}
 
-  return(as.matrix(Z))
+		} else {
+				## Bernstein polynomials and their derivatives (i.e. Bezier curves
+				## i.e. B-splines with no interior knots)
+				if(is.null(ex)) {
+						if(gradient.compute) {
+								Z <- gsl.bs(x,degree=degree,deriv=r)
+						} else {
+								Z <- gsl.bs(x,degree=degree)
+						}
+				} else {
+						if(gradient.compute) {
+								Z <- predict(gsl.bs(x,degree=degree,deriv=r),newx=ex)
+						} else {
+								Z <- predict(gsl.bs(x,degree=degree),newx=ex)
+						}
+				}
+		}
+
+		return(as.matrix(Z))
 
 }
 
@@ -83,109 +97,109 @@ mypoly <- function(x,
 ## polynomial with varying polynomial order.
 
 W.glp <- function(xdat = NULL,
-                  exdat = NULL,
-                  degree = NULL,
-                  gradient.vec = NULL,
-                  Bernstein = TRUE) {
+									exdat = NULL,
+									degree = NULL,
+									gradient.vec = NULL,
+									Bernstein = TRUE) {
 
-  if(is.null(xdat)) stop(" Error: You must provide data")
-  if(is.null(degree) || any(degree < 0)) stop(paste(" Error: degree vector must contain non-negative integers\ndegree is (", degree, ")\n",sep=""))
+		if(is.null(xdat)) stop(" Error: You must provide data")
+		if(is.null(degree) || any(degree < 0)) stop(paste(" Error: degree vector must contain non-negative integers\ndegree is (", degree, ")\n",sep=""))
 
-  xdat <- as.data.frame(xdat)
+		xdat <- as.data.frame(xdat)
 
-  xdat.col.numeric <- sapply(1:ncol(xdat),function(i){is.numeric(xdat[,i])})
-  k <- ncol(as.data.frame(xdat[,xdat.col.numeric]))
+		xdat.col.numeric <- sapply(1:ncol(xdat),function(i){is.numeric(xdat[,i])})
+		k <- ncol(as.data.frame(xdat[,xdat.col.numeric]))
 
-  if(k > 0) {
-    xdat.numeric <- as.data.frame(xdat[,xdat.col.numeric])
-    if(!is.null(exdat)) {
-      exdat.numeric <- as.data.frame(exdat[,xdat.col.numeric])
-    } else {
-      exdat.numeric <- NULL
-    }
-  }
+		if(k > 0) {
+				xdat.numeric <- as.data.frame(xdat[,xdat.col.numeric])
+				if(!is.null(exdat)) {
+						exdat.numeric <- as.data.frame(exdat[,xdat.col.numeric])
+				} else {
+						exdat.numeric <- NULL
+				}
+		}
 
-  if(!is.null(gradient.vec) && (length(gradient.vec) != k)) stop(paste(" Error: gradient vector and number of numeric predictors must be conformable\n",sep=""))
-  if(!is.null(gradient.vec) && any(gradient.vec < 0)) stop(paste(" Error: gradient vector must contain non-negative integers\n",sep=""))
+		if(!is.null(gradient.vec) && (length(gradient.vec) != k)) stop(paste(" Error: gradient vector and number of numeric predictors must be conformable\n",sep=""))
+		if(!is.null(gradient.vec) && any(gradient.vec < 0)) stop(paste(" Error: gradient vector must contain non-negative integers\n",sep=""))
 
-  if(!is.null(gradient.vec)) {
-    gradient.compute <- TRUE
-  } else {
-    gradient.compute <- FALSE
-    gradient.vec <- rep(NA,k)
-  }
+		if(!is.null(gradient.vec)) {
+				gradient.compute <- TRUE
+		} else {
+				gradient.compute <- FALSE
+				gradient.vec <- rep(NA,k)
+		}
 
-  if(length(degree) != k) stop(" Error: degree vector and number of numeric predictors incompatible")
+		if(length(degree) != k) stop(" Error: degree vector and number of numeric predictors incompatible")
 
-  if(all(degree == 0) || (k == 0)) {
+		if(all(degree == 0) || (k == 0)) {
 
-    ## Local constant OR no continuous variables
+				## Local constant OR no continuous variables
 
-    if(is.null(exdat)) {
-      return(matrix(1,nrow=nrow(xdat.numeric),ncol=1))
-    } else {
-      return(matrix(1,nrow=nrow(exdat.numeric),ncol=1))
-    }
+				if(is.null(exdat)) {
+						return(matrix(1,nrow=nrow(xdat.numeric),ncol=1))
+				} else {
+						return(matrix(1,nrow=nrow(exdat.numeric),ncol=1))
+				}
 
-  } else {
+		} else {
 
-    degree.list <- list()
-    for(i in 1:k) degree.list[[i]] <- 0:degree[i]
-    z <- do.call("expand.grid", degree.list, k)
-    s <- rowSums(z)
-    ind <- (s > 0) & (s <= max(degree))
-    z <- z[ind, ,drop=FALSE]
-    if(!all(degree==max(degree))) {
-      for(j in 1:length(degree)) {
-        d <- degree[j]
-        if((d < max(degree)) & (d > 0)) {
-          s <- rowSums(z)
-          d <- (s > d) & (z[,j,drop=FALSE]==matrix(d,nrow(z),1,byrow=TRUE))
-          z <- z[!d, ]
-        }
-      }
-    }
-    if(is.null(exdat)) {
-      res <- rep.int(1,nrow(xdat.numeric))
-    } else {
-      res <- rep.int(1,nrow(exdat.numeric))
-    }
-    res.deriv <- 1
-    if(degree[1] > 0) {
-      res <- cbind(1, mypoly(x=xdat.numeric[,1],
-                             ex=exdat.numeric[,1],
-                             degree=degree[1],
-                             gradient.compute=gradient.compute,
-                             r=gradient.vec[1],
-                             Bernstein=Bernstein))[, 1 + z[, 1]]
+				degree.list <- list()
+				for(i in 1:k) degree.list[[i]] <- 0:degree[i]
+				z <- do.call("expand.grid", degree.list, k)
+				s <- rowSums(z)
+				ind <- (s > 0) & (s <= max(degree))
+				z <- z[ind, ,drop=FALSE]
+				if(!all(degree==max(degree))) {
+						for(j in 1:length(degree)) {
+								d <- degree[j]
+								if((d < max(degree)) & (d > 0)) {
+										s <- rowSums(z)
+										d <- (s > d) & (z[,j,drop=FALSE]==matrix(d,nrow(z),1,byrow=TRUE))
+										z <- z[!d, ]
+								}
+						}
+				}
+				if(is.null(exdat)) {
+						res <- rep.int(1,nrow(xdat.numeric))
+				} else {
+						res <- rep.int(1,nrow(exdat.numeric))
+				}
+				res.deriv <- 1
+				if(degree[1] > 0) {
+						res <- cbind(1, mypoly(x=xdat.numeric[,1],
+																	 ex=exdat.numeric[,1],
+																	 degree=degree[1],
+																	 gradient.compute=gradient.compute,
+																	 r=gradient.vec[1],
+																	 Bernstein=Bernstein))[, 1 + z[, 1]]
 
-      if(gradient.compute && gradient.vec[1] != 0) res.deriv <- cbind(1,matrix(NA,1,degree[1]))[, 1 + z[, 1],drop=FALSE]
-      if(gradient.compute && gradient.vec[1] == 0) res.deriv <- cbind(1,matrix(0,1,degree[1]))[, 1 + z[, 1],drop=FALSE]
-    }
-    if(k > 1) for (i in 2:k) if(degree[i] > 0) {
-      res <- res * cbind(1, mypoly(x=xdat.numeric[,i],
-                                   ex=exdat.numeric[,i],
-                                   degree=degree[i],
-                                   gradient.compute=gradient.compute,
-                                   r=gradient.vec[i],
-                                   Bernstein=Bernstein))[, 1 + z[, i]]
-      if(gradient.compute && gradient.vec[i] != 0) res.deriv <- res.deriv * cbind(1,matrix(NA,1,degree[i]))[, 1 + z[, i],drop=FALSE]
-      if(gradient.compute && gradient.vec[i] == 0) res.deriv <- res.deriv *cbind(1,matrix(0,1,degree[i]))[, 1 + z[, i],drop=FALSE]
-    }
-    
-    if(is.null(exdat)) {
-      res <- matrix(res,nrow=NROW(xdat))
-    } else {
-      res <- matrix(res,nrow=NROW(exdat))
-    }
-    if(gradient.compute) res.deriv <- matrix(res.deriv,nrow=1)
-    colnames(res) <- apply(z, 1L, function(x) paste(x, collapse = "."))
-    if(gradient.compute) colnames(res.deriv) <- apply(z, 1L, function(x) paste(x, collapse = "."))
+						if(gradient.compute && gradient.vec[1] != 0) res.deriv <- cbind(1,matrix(NA,1,degree[1]))[, 1 + z[, 1],drop=FALSE]
+						if(gradient.compute && gradient.vec[1] == 0) res.deriv <- cbind(1,matrix(0,1,degree[1]))[, 1 + z[, 1],drop=FALSE]
+				}
+				if(k > 1) for (i in 2:k) if(degree[i] > 0) {
+						res <- res * cbind(1, mypoly(x=xdat.numeric[,i],
+																				 ex=exdat.numeric[,i],
+																				 degree=degree[i],
+																				 gradient.compute=gradient.compute,
+																				 r=gradient.vec[i],
+																				 Bernstein=Bernstein))[, 1 + z[, i]]
+						if(gradient.compute && gradient.vec[i] != 0) res.deriv <- res.deriv * cbind(1,matrix(NA,1,degree[i]))[, 1 + z[, i],drop=FALSE]
+						if(gradient.compute && gradient.vec[i] == 0) res.deriv <- res.deriv *cbind(1,matrix(0,1,degree[i]))[, 1 + z[, i],drop=FALSE]
+				}
 
-    if(gradient.compute) res[,!is.na(as.numeric(res.deriv))] <- 0
-    return(cbind(1,res))    
-    
-  }
+				if(is.null(exdat)) {
+						res <- matrix(res,nrow=NROW(xdat))
+				} else {
+						res <- matrix(res,nrow=NROW(exdat))
+				}
+				if(gradient.compute) res.deriv <- matrix(res.deriv,nrow=1)
+				colnames(res) <- apply(z, 1L, function(x) paste(x, collapse = "."))
+				if(gradient.compute) colnames(res.deriv) <- apply(z, 1L, function(x) paste(x, collapse = "."))
+
+				if(gradient.compute) res[,!is.na(as.numeric(res.deriv))] <- 0
+				return(cbind(1,res))    
+
+		}
 
 }
 
@@ -207,16 +221,16 @@ W.glp <- function(xdat = NULL,
 
 knn.max <- function(x) {
 
-  k.max <- length(x)-1
-  non.unique <- length(unique(x)) != length(x)
-  if(non.unique) x <- unique(x)
-  for(i in 1:length(x)) {
-    x.diff.unique <- sort(unique(abs(x[i]-x[-i])))
-    if(length(x.diff.unique) < k.max)
-      if(length(x.diff.unique)-1 < k.max) k.max <- length(x.diff.unique)-1
-  }
+		k.max <- length(x)-1
+		non.unique <- length(unique(x)) != length(x)
+		if(non.unique) x <- unique(x)
+		for(i in 1:length(x)) {
+				x.diff.unique <- sort(unique(abs(x[i]-x[-i])))
+				if(length(x.diff.unique) < k.max)
+						if(length(x.diff.unique)-1 < k.max) k.max <- length(x.diff.unique)-1
+		}
 
-  return(k.max)
+		return(k.max)
 
 }
 
@@ -227,2162 +241,2162 @@ knn.max <- function(x) {
 
 check.max.degree <- function(xdat=NULL,degree=NULL,issue.warning=FALSE,Bernstein=TRUE) {
 
-  if(is.null(xdat)) stop(" xdat must be provided")
-  if(is.null(degree)) stop(" degree vector must be provided")
+		if(is.null(xdat)) stop(" xdat must be provided")
+		if(is.null(degree)) stop(" degree vector must be provided")
 
-  xdat <- as.data.frame(xdat)
+		xdat <- as.data.frame(xdat)
 
-  ill.conditioned <- FALSE
+		ill.conditioned <- FALSE
 
-  xdat.numeric <- sapply(1:ncol(xdat),function(i){is.numeric(xdat[,i])})
-  numeric.index <- which(xdat.numeric==TRUE)  
-  num.numeric <- sum(sapply(1:NCOL(xdat),function(i){is.numeric(xdat[,i])})==TRUE)
-  d <- numeric(num.numeric)
+		xdat.numeric <- sapply(1:ncol(xdat),function(i){is.numeric(xdat[,i])})
+		numeric.index <- which(xdat.numeric==TRUE)  
+		num.numeric <- sum(sapply(1:NCOL(xdat),function(i){is.numeric(xdat[,i])})==TRUE)
+		d <- numeric(num.numeric)
 
-  if(num.numeric > 0) {
+		if(num.numeric > 0) {
 
-    for(i in 1:num.numeric) {
-      if(degree[i]>0) {
-        ## First check if degree results in a well-conditioned basis
-        d[i] <- degree[i]
-        X <- mypoly(x=xdat[,numeric.index[i]],
-                    ex=NULL,
-                    degree=degree[i],
-                    Bernstein=Bernstein)
-        ## If the max degree is ill-conditioned then ascend
-        ## (descending may require computation of large matrices that
-        ## are discarded)
-        if(rcond(t(X)%*%X)<.Machine$double.eps) {
-          for(j in 1:degree[i]) {
-            d[i] <- j
-            X <- mypoly(x=xdat[,numeric.index[i]],
-                        ex=NULL,
-                        degree=d[i],
-                        Bernstein=Bernstein)
-            if(rcond(t(X)%*%X)<.Machine$double.eps) {
-              d[i] <- j-1
-              break()
-            }
-          }
-        }
-        if(d[i] < degree[i]) {
-          if(issue.warning) warning(paste("\r Predictor ",i," polynomial is ill-conditioned beyond degree ",d[i],": see note in ?npglpreg",sep=""))
-          ill.conditioned <- TRUE
-        }
-      }
-    }
+				for(i in 1:num.numeric) {
+						if(degree[i]>0) {
+								## First check if degree results in a well-conditioned basis
+								d[i] <- degree[i]
+								X <- mypoly(x=xdat[,numeric.index[i]],
+														ex=NULL,
+														degree=degree[i],
+														Bernstein=Bernstein)
+								## If the max degree is ill-conditioned then ascend
+								## (descending may require computation of large matrices that
+								## are discarded)
+								if(rcond(t(X)%*%X)<.Machine$double.eps) {
+										for(j in 1:degree[i]) {
+												d[i] <- j
+												X <- mypoly(x=xdat[,numeric.index[i]],
+																		ex=NULL,
+																		degree=d[i],
+																		Bernstein=Bernstein)
+												if(rcond(t(X)%*%X)<.Machine$double.eps) {
+														d[i] <- j-1
+														break()
+												}
+										}
+								}
+								if(d[i] < degree[i]) {
+										if(issue.warning) warning(paste("\r Predictor ",i," polynomial is ill-conditioned beyond degree ",d[i],": see note in ?npglpreg",sep=""))
+										ill.conditioned <- TRUE
+								}
+						}
+				}
 
-  }
+		}
 
-  attr(ill.conditioned, "degree.max.vec") <- d
-  return(ill.conditioned)
+		attr(ill.conditioned, "degree.max.vec") <- d
+		return(ill.conditioned)
 
 }
 
 npglpreg <- function(...) UseMethod("npglpreg")
 
 npglpreg.default <- function(tydat=NULL,
-                             txdat=NULL,
-                             eydat=NULL,
-                             exdat=NULL,
-                             bws=NULL,
-                             degree=NULL,
-                             leave.one.out=FALSE,
-                             ukertype=c("liracine","aitchisonaitken"),
-                             okertype=c("liracine","wangvanryzin"),
-                             bwtype = c("fixed","generalized_nn","adaptive_nn"),
-                             gradient.vec=NULL,
-                             gradient.categorical=FALSE,
-                             Bernstein=TRUE,
-                             ...) {
+														 txdat=NULL,
+														 eydat=NULL,
+														 exdat=NULL,
+														 bws=NULL,
+														 degree=NULL,
+														 leave.one.out=FALSE,
+														 ukertype=c("liracine","aitchisonaitken"),
+														 okertype=c("liracine","wangvanryzin"),
+														 bwtype = c("fixed","generalized_nn","adaptive_nn"),
+														 gradient.vec=NULL,
+														 gradient.categorical=FALSE,
+														 Bernstein=TRUE,
+														 ...) {
 
-  ukertype <- match.arg(ukertype)
-  okertype <- match.arg(okertype)
-  bwtype <- match.arg(bwtype)
+		ukertype <- match.arg(ukertype)
+		okertype <- match.arg(okertype)
+		bwtype <- match.arg(bwtype)
 
-  est <- glpregEst(tydat=tydat,
-                   txdat=txdat,
-                   eydat=eydat,
-                   exdat=exdat,
-                   bws=bws,
-                   degree=degree,
-                   leave.one.out=leave.one.out,
-                   ukertype=ukertype,
-                   okertype=okertype,
-                   bwtype=bwtype,
-                   gradient.vec=gradient.vec,
-                   Bernstein=Bernstein,
-                   ...)
+		est <- glpregEst(tydat=tydat,
+										 txdat=txdat,
+										 eydat=eydat,
+										 exdat=exdat,
+										 bws=bws,
+										 degree=degree,
+										 leave.one.out=leave.one.out,
+										 ukertype=ukertype,
+										 okertype=okertype,
+										 bwtype=bwtype,
+										 gradient.vec=gradient.vec,
+										 Bernstein=Bernstein,
+										 ...)
 
-  ## Gradients for categorical predictors (here we just compute them
-  ## all though gradient for continuous predictors given above
-  ## requires specific variables to be selected)
+		## Gradients for categorical predictors (here we just compute them
+		## all though gradient for continuous predictors given above
+		## requires specific variables to be selected)
 
-  est$gradient.categorical.mat <- NULL
+		est$gradient.categorical.mat <- NULL
 
-  if(gradient.categorical) {
+		if(gradient.categorical) {
 
-    num.numeric <- est$num.numeric
-    num.categorical <- est$num.categorical
+				num.numeric <- est$num.numeric
+				num.categorical <- est$num.categorical
 
-    if(num.categorical > 0) {
+				if(num.categorical > 0) {
 
-      num.eval <- ifelse(is.null(exdat),nrow(txdat),nrow(exdat))
-      gradient.categorical.mat <- matrix(NA,nrow=num.eval,ncol=num.categorical)
+						num.eval <- ifelse(is.null(exdat),nrow(txdat),nrow(exdat))
+						gradient.categorical.mat <- matrix(NA,nrow=num.eval,ncol=num.categorical)
 
-      for(i in 1:num.categorical) {
+						for(i in 1:num.categorical) {
 
-        if(is.null(exdat)) {
-          exdat.base <- txdat
-        } else {
-          exdat.base <- exdat
-        }
+								if(is.null(exdat)) {
+										exdat.base <- txdat
+								} else {
+										exdat.base <- exdat
+								}
 
-        categorical.index <- est$categorical.index
-        eval.base <- levels(txdat[,categorical.index[i]])[1]
-        eval.levels <- levels(txdat[,categorical.index[i]])
+								categorical.index <- est$categorical.index
+								eval.base <- levels(txdat[,categorical.index[i]])[1]
+								eval.levels <- levels(txdat[,categorical.index[i]])
 
-        if(is.ordered(txdat[,categorical.index[i]])) {
-          exdat.base[,categorical.index[i]] <- ordered(rep(eval.base,num.eval),levels=eval.levels)
-        } else {
-          exdat.base[,categorical.index[i]] <- factor(rep(eval.base,num.eval),levels=eval.levels)
-        }
+								if(is.ordered(txdat[,categorical.index[i]])) {
+										exdat.base[,categorical.index[i]] <- ordered(rep(eval.base,num.eval),levels=eval.levels)
+								} else {
+										exdat.base[,categorical.index[i]] <- factor(rep(eval.base,num.eval),levels=eval.levels)
+								}
 
-        est.base <- glpregEst(tydat=tydat,
-                              txdat=txdat,
-                              eydat=eydat,
-                              exdat=exdat.base,
-                              bws=bws,
-                              degree=degree,
-                              leave.one.out=leave.one.out,
-                              ukertype=ukertype,
-                              okertype=okertype,
-                              bwtype=bwtype,
-                              gradient.vec=NULL,
-                              Bernstein=Bernstein,
-                              ...)
+								est.base <- glpregEst(tydat=tydat,
+																			txdat=txdat,
+																			eydat=eydat,
+																			exdat=exdat.base,
+																			bws=bws,
+																			degree=degree,
+																			leave.one.out=leave.one.out,
+																			ukertype=ukertype,
+																			okertype=okertype,
+																			bwtype=bwtype,
+																			gradient.vec=NULL,
+																			Bernstein=Bernstein,
+																			...)
 
-        gradient.categorical.mat[,i] <- est$fitted.values - est.base$fitted.values
+								gradient.categorical.mat[,i] <- est$fitted.values - est.base$fitted.values
 
-      }
+						}
 
-      est$gradient.categorical.mat <- gradient.categorical.mat
+						est$gradient.categorical.mat <- gradient.categorical.mat
 
-    }
+				}
 
-  }
+		}
 
-  ## Add results to estimated object.
+		## Add results to estimated object.
 
-  if(!is.null(eydat)) {
-    est$r.squared <- RSQfunc(eydat,est$fitted.values)
-    est$residuals <- eydat - est$fitted.values
-  } else if(is.null(eydat)&&is.null(exdat)) {
-    est$r.squared <- RSQfunc(tydat,est$fitted.values)
-    est$residuals <- tydat - est$fitted.values
-  } else {
-    est$r.squared <- NULL
-    est$residuals <- NULL
-  }
-    
-  est$call <- match.call()
+		if(!is.null(eydat)) {
+				est$r.squared <- RSQfunc(eydat,est$fitted.values)
+				est$residuals <- eydat - est$fitted.values
+		} else if(is.null(eydat)&&is.null(exdat)) {
+				est$r.squared <- RSQfunc(tydat,est$fitted.values)
+				est$residuals <- tydat - est$fitted.values
+		} else {
+				est$r.squared <- NULL
+				est$residuals <- NULL
+		}
 
-  ## Return object of type npglpreg
+		est$call <- match.call()
 
-  class(est) <- "npglpreg"
+		## Return object of type npglpreg
 
-  return(est)
+		class(est) <- "npglpreg"
+
+		return(est)
 
 }
 
 ## Basic print method.
 
 print.npglpreg <- function(x,
-                           ...) {
-  cat("Call:\n")
-  print(x$call)
+													 ...) {
+		cat("Call:\n")
+		print(x$call)
 
 }
 
 summary.npglpreg <- function(object,
-                             ...) {
+														 ...) {
 
-  cat("Call:\n")
-  print(object$call)
-  cat("\nGeneralized Local Polynomial Kernel Regression\n",sep="")
+		cat("Call:\n")
+		print(object$call)
+		cat("\nGeneralized Local Polynomial Kernel Regression\n",sep="")
 
-  ## Summarize continuous predictors
+		## Summarize continuous predictors
 
-  if(object$Bernstein) {
-    cat("\nPolynomial type: Bernstein")
-  } else {
-    cat("\nPolynomial type: raw")
-  }
+		if(object$Bernstein) {
+				cat("\nPolynomial type: Bernstein")
+		} else {
+				cat("\nPolynomial type: raw")
+		}
 
-  if(object$num.numeric == 1){
-    cat(paste("\nThere is ",format(object$num.numeric), " continuous predictor",sep=""),sep="")
-  } else if(object$num.numeric > 1) {
-    cat(paste("\nThere are ",format(object$num.numeric), " continuous predictors",sep=""),sep="")
-  }
+		if(object$num.numeric == 1){
+				cat(paste("\nThere is ",format(object$num.numeric), " continuous predictor",sep=""),sep="")
+		} else if(object$num.numeric > 1) {
+				cat(paste("\nThere are ",format(object$num.numeric), " continuous predictors",sep=""),sep="")
+		}
 
-  if(object$num.numeric >= 1) {
-    for(j in 1:object$num.numeric) {
-      if(object$bwtype=="fixed") {
-        cat(paste("\nBandwidth for ",format(object$xnames[object$numeric.index][j]),": ",format(object$bws[object$numeric.index][j]),sep=""),sep="")
-        if(!is.null(object$bws.sf))
-          cat(paste(" (scale factor = ", format(object$bws.sf[object$numeric.index][j]),")",sep=""),sep="")          
-      } else {
-        cat(paste("\nKth nearest neighbor for ",format(object$xnames[object$numeric.index][j]),": ",format(object$bws[object$numeric.index][j]),sep=""),sep="")
-      }
-    }
-  }
+		if(object$num.numeric >= 1) {
+				for(j in 1:object$num.numeric) {
+						if(object$bwtype=="fixed") {
+								cat(paste("\nBandwidth for ",format(object$xnames[object$numeric.index][j]),": ",format(object$bws[object$numeric.index][j]),sep=""),sep="")
+								if(!is.null(object$bws.sf))
+										cat(paste(" (scale factor = ", format(object$bws.sf[object$numeric.index][j]),")",sep=""),sep="")          
+						} else {
+								cat(paste("\nKth nearest neighbor for ",format(object$xnames[object$numeric.index][j]),": ",format(object$bws[object$numeric.index][j]),sep=""),sep="")
+						}
+				}
+		}
 
-  for(j in 1:object$num.numeric)
-    cat(paste("\nDegree for ",format(object$xnames[object$numeric.index][j]),": ",format(object$degree[j]),sep=""),sep="")
+		for(j in 1:object$num.numeric)
+				cat(paste("\nDegree for ",format(object$xnames[object$numeric.index][j]),": ",format(object$degree[j]),sep=""),sep="")
 
-  ## Summarize categorical predictors  
-    
-  if(object$num.categorical==1) {
-    cat(paste("\nThere is ",format(object$num.categorical), " categorical predictor",sep=""),sep="")
-  } else if(object$num.categorical > 1) {
-    cat(paste("\nThere are ",format(object$num.categorical), " categorical predictors",sep=""),sep="")
-  }
+		## Summarize categorical predictors  
 
-  if(object$num.categorical >= 1) for(j in 1:(object$num.categorical)) 
-    cat(paste("\nBandwidth for ",format(object$xnames[object$categorical.index][j]),": ",format(object$bws[object$categorical.index][j]),sep=""),sep="")
+		if(object$num.categorical==1) {
+				cat(paste("\nThere is ",format(object$num.categorical), " categorical predictor",sep=""),sep="")
+		} else if(object$num.categorical > 1) {
+				cat(paste("\nThere are ",format(object$num.categorical), " categorical predictors",sep=""),sep="")
+		}
+
+		if(object$num.categorical >= 1) for(j in 1:(object$num.categorical)) 
+				cat(paste("\nBandwidth for ",format(object$xnames[object$categorical.index][j]),": ",format(object$bws[object$categorical.index][j]),sep=""),sep="")
 
 
-  ## Summary statistics
+		## Summary statistics
 
-  cat(paste("\nTraining observations: ", format(object$nobs), sep=""))
-  cat(paste("\nMultiple R-squared: ", format(object$r.squared,digits=4), sep=""))
-  if(!is.null(object$fv)) {
-    cat(paste("\nCross-validation score: ", format(object$fv,digits=8), sep=""))
-    cat(paste("\nNumber of multistarts: ", format(object$nmulti), sep=""))
-  }
-  cat(paste("\nEstimation time: ", formatC(object$ptm[1],digits=1,format="f"), " seconds",sep=""))
-  cat("\n\n")
+		cat(paste("\nTraining observations: ", format(object$nobs), sep=""))
+		cat(paste("\nMultiple R-squared: ", format(object$r.squared,digits=4), sep=""))
+		if(!is.null(object$fv)) {
+				cat(paste("\nCross-validation score: ", format(object$fv,digits=8), sep=""))
+				cat(paste("\nNumber of multistarts: ", format(object$nmulti), sep=""))
+		}
+		cat(paste("\nEstimation time: ", formatC(object$ptm[1],digits=1,format="f"), " seconds",sep=""))
+		cat("\n\n")
 
 }
 
 ## Method for predicting given a new data frame.
 
 predict.npglpreg <- function(object,
-                             newdata=NULL,
-                             gradient.vec=NULL,
-                             ...) {
+														 newdata=NULL,
+														 gradient.vec=NULL,
+														 ...) {
 
-  if(is.null(newdata)) {
-    
-    ## If no new data provided, return sample fit.
-    fitted.values <- fitted(object)
-    gradient <- object$gradient
-    gradient.categorical.mat <- object$gradient.categorical.mat
-    
-  } else{
+		if(is.null(newdata)) {
 
-    ## Get training data from object (xz and y) and parse into factors
-    ## and numeric.
-    
-    degree <- object$degree
-    bws <- object$bws
-    bwtype <- object$bwtype
-    ukertype <- object$ukertype
-    okertype <- object$okertype
-    Bernstein <- object$Bernstein
-    if(is.null(gradient.vec)) {
-      gradient.vec <- object$gradient.vec
-    } 
-    
-    txdat <- object$x
-    tydat <- object$y
+				## If no new data provided, return sample fit.
+				fitted.values <- fitted(object)
+				gradient <- object$gradient
+				gradient.categorical.mat <- object$gradient.categorical.mat
 
-    tt <- terms(object)
-    has.ey <- succeedWithResponse(tt, newdata)
-    if (has.ey) {
-      eydat <- model.response(model.frame(tt,newdata))
-    } else {
-      eydat <- NULL
-    }      
-    exdat <- model.frame(delete.response(tt),newdata,xlev=object$xlevels)
+		} else{
 
-    ## Return the predicted values.
+				## Get training data from object (xz and y) and parse into factors
+				## and numeric.
 
-    est <- npglpreg.default(tydat=tydat,
-                            txdat=txdat,
-                            exdat=exdat,
-                            eydat=eydat,
-                            bws=bws,
-                            degree=degree,
-                            ukertype=ukertype,
-                            okertype=okertype,
-                            bwtype=bwtype,
-                            gradient.vec=gradient.vec,
-                            Bernstein=Bernstein,
-                            ...)
-    
-    fitted.values <- est$fitted.values
-    gradient <- est$gradient
-    gradient.categorical.mat <- est$gradient.categorical.mat
-    
-  }
+				degree <- object$degree
+				bws <- object$bws
+				bwtype <- object$bwtype
+				ukertype <- object$ukertype
+				okertype <- object$okertype
+				Bernstein <- object$Bernstein
+				if(is.null(gradient.vec)) {
+						gradient.vec <- object$gradient.vec
+				} 
 
-  attr(fitted.values, "gradient") <- gradient
-  attr(fitted.values, "gradient.categorical.mat") <- gradient.categorical.mat
+				txdat <- object$x
+				tydat <- object$y
 
-  return(fitted.values)
+				tt <- terms(object)
+				has.ey <- succeedWithResponse(tt, newdata)
+				if (has.ey) {
+						eydat <- model.response(model.frame(tt,newdata))
+				} else {
+						eydat <- NULL
+				}      
+				exdat <- model.frame(delete.response(tt),newdata,xlev=object$xlevels)
+
+				## Return the predicted values.
+
+				est <- npglpreg.default(tydat=tydat,
+																txdat=txdat,
+																exdat=exdat,
+																eydat=eydat,
+																bws=bws,
+																degree=degree,
+																ukertype=ukertype,
+																okertype=okertype,
+																bwtype=bwtype,
+																gradient.vec=gradient.vec,
+																Bernstein=Bernstein,
+																...)
+
+				fitted.values <- est$fitted.values
+				gradient <- est$gradient
+				gradient.categorical.mat <- est$gradient.categorical.mat
+
+		}
+
+		attr(fitted.values, "gradient") <- gradient
+		attr(fitted.values, "gradient.categorical.mat") <- gradient.categorical.mat
+
+		return(fitted.values)
 
 }
 
 
 npglpreg.formula <- function(formula,
-                             data=list(),
-                             tydat=NULL,
-                             txdat=NULL,
-                             eydat=NULL,
-                             exdat=NULL,
-                             bws=NULL,
-                             degree=NULL,
-                             leave.one.out=FALSE,
-                             ukertype=c("liracine","aitchisonaitken"),
-                             okertype=c("liracine","wangvanryzin"),
-                             bwtype = c("fixed","generalized_nn","adaptive_nn"),
-                             cv=c("degree-bandwidth","bandwidth","none"),
-                             cv.func=c("cv.ls","cv.gcv","cv.aic"),
-                             opts=list("MAX_BB_EVAL"=10000,
-                               "EPSILON"=.Machine$double.eps,
-                               "INITIAL_MESH_SIZE"=paste("r",1.0e-04,sep=""),
-                               "MIN_MESH_SIZE"=paste("r",1.0e-05,sep=""),
-                               "MIN_POLL_SIZE"=paste("r",1.0e-05,sep="")),
-                             nmulti=5,
-                             random.seed=42,
-                             degree.max=10,
-                             degree.min=0,
-                             bandwidth.max=1.0e+03,
-                             bandwidth.min=1.0e-02,
-                             gradient.vec=NULL,
-                             gradient.categorical=FALSE,
-                             ridge.warning=FALSE,
-                             Bernstein=TRUE,
-                             ...) {
+														 data=list(),
+														 tydat=NULL,
+														 txdat=NULL,
+														 eydat=NULL,
+														 exdat=NULL,
+														 bws=NULL,
+														 degree=NULL,
+														 leave.one.out=FALSE,
+														 ukertype=c("liracine","aitchisonaitken"),
+														 okertype=c("liracine","wangvanryzin"),
+														 bwtype = c("fixed","generalized_nn","adaptive_nn"),
+														 cv=c("degree-bandwidth","bandwidth","none"),
+														 cv.func=c("cv.ls","cv.gcv","cv.aic"),
+														 opts=list("MAX_BB_EVAL"=10000,
+																			 "EPSILON"=.Machine$double.eps,
+																			 "INITIAL_MESH_SIZE"=paste("r",1.0e-04,sep=""),
+																			 "MIN_MESH_SIZE"=paste("r",1.0e-05,sep=""),
+																			 "MIN_POLL_SIZE"=paste("r",1.0e-05,sep="")),
+														 nmulti=5,
+														 random.seed=42,
+														 degree.max=10,
+														 degree.min=0,
+														 bandwidth.max=1.0e+03,
+														 bandwidth.min=1.0e-02,
+														 gradient.vec=NULL,
+														 gradient.categorical=FALSE,
+														 ridge.warning=FALSE,
+														 Bernstein=TRUE,
+														 ...) {
 
-  if(!require(np)) stop(" Error: you must install the np package to use this function")
-  if(!is.logical(Bernstein)) stop(" Error: Bernstein must be logical (TRUE/FALSE)")
-  if(!is.logical(gradient.categorical)) stop(" Error: gradient.categorical must be logical (TRUE/FALSE)")
-  if(!is.logical(ridge.warning)) stop(" Error: ridge.warning must be logical (TRUE/FALSE)")
-  if(!is.logical(leave.one.out)) stop(" Error: leave.one.out must be logical (TRUE/FALSE)")    
-  if(degree.max > 100) stop(paste(" degree.max (",degree.max,") exceeds reasonable value (",100,")",sep=""))
+		if(!require(np)) stop(" Error: you must install the np package to use this function")
+		if(!is.logical(Bernstein)) stop(" Error: Bernstein must be logical (TRUE/FALSE)")
+		if(!is.logical(gradient.categorical)) stop(" Error: gradient.categorical must be logical (TRUE/FALSE)")
+		if(!is.logical(ridge.warning)) stop(" Error: ridge.warning must be logical (TRUE/FALSE)")
+		if(!is.logical(leave.one.out)) stop(" Error: leave.one.out must be logical (TRUE/FALSE)")    
+		if(degree.max > 100) stop(paste(" degree.max (",degree.max,") exceeds reasonable value (",100,")",sep=""))
 
-  ukertype <- match.arg(ukertype)
-  okertype <- match.arg(okertype)
-  bwtype <- match.arg(bwtype)
-  cv <- match.arg(cv)
-  cv.func <- match.arg(cv.func)
+		ukertype <- match.arg(ukertype)
+		okertype <- match.arg(okertype)
+		bwtype <- match.arg(bwtype)
+		cv <- match.arg(cv)
+		cv.func <- match.arg(cv.func)
 
-  mf <- model.frame(formula=formula, data=data)
-  mt <- attr(mf, "terms")
-  tydat <- model.response(mf)
-  txdat <- mf[, attr(attr(mf, "terms"),"term.labels"), drop = FALSE]
+		mf <- model.frame(formula=formula, data=data)
+		mt <- attr(mf, "terms")
+		tydat <- model.response(mf)
+		txdat <- mf[, attr(attr(mf, "terms"),"term.labels"), drop = FALSE]
 
-  fv <- NULL
-  ptm <- system.time("")
+		fv <- NULL
+		ptm <- system.time("")
 
-  bws.sf <- NULL
+		bws.sf <- NULL
 
-  if(cv!="none") {
-    ptm <- ptm + system.time(model.cv <-glpcvNOMAD(ydat=tydat,
-                                                   xdat=txdat,
-                                                   opts=opts,
-                                                   cv=cv,
-                                                   degree=degree,
-                                                   bandwidth=bws,
-                                                   bwmethod=cv.func,
-                                                   bwtype=bwtype,
-                                                   nmulti=nmulti,
-                                                   random.seed=random.seed,
-                                                   degree.max=degree.max,
-                                                   degree.min=degree.min,
-                                                   bandwidth.max=bandwidth.max,
-                                                   bandwidth.min=bandwidth.min,
-                                                   ridge.warning=ridge.warning,
-                                                   Bernstein=Bernstein,
-                                                   ...))
-    degree <- model.cv$degree
-    bws <- model.cv$bws
-    bws.sf <- model.cv$bws.sf
-    fv <- model.cv$fv
-    if(isTRUE(all.equal(fv,sqrt(.Machine$double.xmax)))) stop(" Search failed: restart with larger nmulti or smaller degree.max (or degree if provided)")
-  }
-  
-  if(!is.null(degree))    {
-    ill.conditioned <- check.max.degree(txdat,degree,issue.warning=TRUE,Bernstein=Bernstein)
-    degree.max.vec <- attr(ill.conditioned, "degree.max.vec")
-    degree <- ifelse(degree > degree.max.vec, degree.max.vec, degree)
-  }
+		if(cv!="none") {
+				ptm <- ptm + system.time(model.cv <-glpcvNOMAD(ydat=tydat,
+																											 xdat=txdat,
+																											 opts=opts,
+																											 cv=cv,
+																											 degree=degree,
+																											 bandwidth=bws,
+																											 bwmethod=cv.func,
+																											 bwtype=bwtype,
+																											 nmulti=nmulti,
+																											 random.seed=random.seed,
+																											 degree.max=degree.max,
+																											 degree.min=degree.min,
+																											 bandwidth.max=bandwidth.max,
+																											 bandwidth.min=bandwidth.min,
+																											 ridge.warning=ridge.warning,
+																											 Bernstein=Bernstein,
+																											 ...))
+				degree <- model.cv$degree
+				bws <- model.cv$bws
+				bws.sf <- model.cv$bws.sf
+				fv <- model.cv$fv
+				if(isTRUE(all.equal(fv,sqrt(.Machine$double.xmax)))) stop(" Search failed: restart with larger nmulti or smaller degree.max (or degree if provided)")
+		}
 
-  ptm <- ptm + system.time(est <- npglpreg.default(tydat=tydat,
-                                                   txdat=txdat,
-                                                   eydat=eydat,
-                                                   exdat=exdat,
-                                                   bws=bws,
-                                                   degree=degree,
-                                                   leave.one.out=leave.one.out,
-                                                   ukertype=ukertype,
-                                                   okertype=okertype,
-                                                   bwtype=bwtype,
-                                                   gradient.vec=gradient.vec,
-                                                   gradient.categorical=gradient.categorical,
-                                                   ridge.warning=ridge.warning,
-                                                   Bernstein=Bernstein,
-                                                   ...))
-  
-  est$call <- match.call()
-  est$formula <- formula
-  est$terms <- mt
-  est$xlevels <- .getXlevels(mt, mf)
-  est$x <- txdat
-  est$y <- tydat
-  est$fv <- fv
-  est$nmulti <- nmulti
-  est$ptm <- ptm
-  est$bws.sf <- bws.sf
+		if(!is.null(degree))    {
+				ill.conditioned <- check.max.degree(txdat,degree,issue.warning=TRUE,Bernstein=Bernstein)
+				degree.max.vec <- attr(ill.conditioned, "degree.max.vec")
+				degree <- ifelse(degree > degree.max.vec, degree.max.vec, degree)
+		}
 
-  return(est)
+		ptm <- ptm + system.time(est <- npglpreg.default(tydat=tydat,
+																										 txdat=txdat,
+																										 eydat=eydat,
+																										 exdat=exdat,
+																										 bws=bws,
+																										 degree=degree,
+																										 leave.one.out=leave.one.out,
+																										 ukertype=ukertype,
+																										 okertype=okertype,
+																										 bwtype=bwtype,
+																										 gradient.vec=gradient.vec,
+																										 gradient.categorical=gradient.categorical,
+																										 ridge.warning=ridge.warning,
+																										 Bernstein=Bernstein,
+																										 ...))
+
+		est$call <- match.call()
+		est$formula <- formula
+		est$terms <- mt
+		est$xlevels <- .getXlevels(mt, mf)
+		est$x <- txdat
+		est$y <- tydat
+		est$fv <- fv
+		est$nmulti <- nmulti
+		est$ptm <- ptm
+		est$bws.sf <- bws.sf
+
+		return(est)
 
 }
 
 glpregEst <- function(tydat=NULL,
-                      txdat=NULL,
-                      eydat=NULL,
-                      exdat=NULL,
-                      bws=NULL,
-                      degree=NULL,
-                      leave.one.out=FALSE,
-                      ukertype=c("liracine","aitchisonaitken"),
-                      okertype=c("liracine","wangvanryzin"),
-                      bwtype=c("fixed","generalized_nn","adaptive_nn"),
-                      gradient.vec=NULL,
-                      ridge.warning=FALSE,
-                      Bernstein=TRUE,
-                      ...) {
+											txdat=NULL,
+											eydat=NULL,
+											exdat=NULL,
+											bws=NULL,
+											degree=NULL,
+											leave.one.out=FALSE,
+											ukertype=c("liracine","aitchisonaitken"),
+											okertype=c("liracine","wangvanryzin"),
+											bwtype=c("fixed","generalized_nn","adaptive_nn"),
+											gradient.vec=NULL,
+											ridge.warning=FALSE,
+											Bernstein=TRUE,
+											...) {
 
-  ukertype <- match.arg(ukertype)
-  okertype <- match.arg(okertype)
-  bwtype <- match.arg(bwtype)
+		ukertype <- match.arg(ukertype)
+		okertype <- match.arg(okertype)
+		bwtype <- match.arg(bwtype)
 
-  if(is.null(tydat)) stop(" Error: You must provide y data")
-  if(is.null(txdat)) stop(" Error: You must provide X data")
-  if(is.null(bws)) stop(" Error: You must provide a bandwidth object")
-  if(is.null(degree) || any(degree < 0)) stop(paste(" Error: degree vector must contain non-negative integers\ndegree is (", degree, ")\n",sep=""))
+		if(is.null(tydat)) stop(" Error: You must provide y data")
+		if(is.null(txdat)) stop(" Error: You must provide X data")
+		if(is.null(bws)) stop(" Error: You must provide a bandwidth object")
+		if(is.null(degree) || any(degree < 0)) stop(paste(" Error: degree vector must contain non-negative integers\ndegree is (", degree, ")\n",sep=""))
 
-  miss.ex = is.null(exdat)
-  miss.ey = is.null(eydat)
+		miss.ex = is.null(exdat)
+		miss.ey = is.null(eydat)
 
-  if (miss.ex){
-    exdat <- txdat
-  }
+		if (miss.ex){
+				exdat <- txdat
+		}
 
-  txdat <- as.data.frame(txdat)
-  exdat <- as.data.frame(exdat)
+		txdat <- as.data.frame(txdat)
+		exdat <- as.data.frame(exdat)
 
-  maxPenalty <- sqrt(.Machine$double.xmax)
+		maxPenalty <- sqrt(.Machine$double.xmax)
 
-  n.train <- nrow(txdat)
-  n.eval <- nrow(exdat)
+		n.train <- nrow(txdat)
+		n.eval <- nrow(exdat)
 
-  xdat.numeric <- sapply(1:ncol(txdat),function(i){is.numeric(txdat[,i])})
-  categorical.index <- which(xdat.numeric==FALSE)
-  numeric.index <- which(xdat.numeric==TRUE)  
-  num.numeric <- sum(sapply(1:NCOL(txdat),function(i){is.numeric(txdat[,i])})==TRUE)
-  num.categorical <- NCOL(txdat)-num.numeric
+		xdat.numeric <- sapply(1:ncol(txdat),function(i){is.numeric(txdat[,i])})
+		categorical.index <- which(xdat.numeric==FALSE)
+		numeric.index <- which(xdat.numeric==TRUE)  
+		num.numeric <- sum(sapply(1:NCOL(txdat),function(i){is.numeric(txdat[,i])})==TRUE)
+		num.categorical <- NCOL(txdat)-num.numeric
 
-  ## Test for invalid knn values
+		## Test for invalid knn values
 
-  ## Below is the worst case scenario where
-  ## all(txdat[,numeric.index[i]]%%1==0). Otherwise, we would have to
-  ## compute all distances and then take the smallest integer for which
-  ## the distance is defined.
+		## Below is the worst case scenario where
+		## all(txdat[,numeric.index[i]]%%1==0). Otherwise, we would have to
+		## compute all distances and then take the smallest integer for which
+		## the distance is defined.
 
-  if(bwtype!="fixed" && !is.null(bws) && num.numeric > 0) {
-    for(i in 1:num.numeric) {
-      k.max <- knn.max(txdat[,numeric.index[i]])
-      if(bws[numeric.index[i]] > k.max) stop(paste("Error: invalid knn provided for predictor ",numeric.index[i],": max is ",k.max,sep=""))
-    }
-  }
+		if(bwtype!="fixed" && !is.null(bws) && num.numeric > 0) {
+				for(i in 1:num.numeric) {
+						k.max <- knn.max(txdat[,numeric.index[i]])
+						if(bws[numeric.index[i]] > k.max) stop(paste("Error: invalid knn provided for predictor ",numeric.index[i],": max is ",k.max,sep=""))
+				}
+		}
 
-  ## Check whether it appears that training and evaluation data are
-  ## conformable
+		## Check whether it appears that training and evaluation data are
+		## conformable
 
-  console <- newLineConsole()
-  console <- printClear(console)
-  console <- printPop(console)
+		console <- newLineConsole()
+		console <- printClear(console)
+		console <- printPop(console)
 
-  if(ncol(txdat)!=ncol(exdat))
-    stop(" Error: training and evaluation data have unequal number of columns\n")
+		if(ncol(txdat)!=ncol(exdat))
+				stop(" Error: training and evaluation data have unequal number of columns\n")
 
-  if(all(degree == 0)) {
+		if(all(degree == 0)) {
 
-    ## Local constant using only one call to npksum
+				## Local constant using only one call to npksum
 
-    if(leave.one.out == TRUE) {
+				if(leave.one.out == TRUE) {
 
-      ## exdat not supported with leave.one.out, but this is only used
-      ## for cross-validation hence no exdat
+						## exdat not supported with leave.one.out, but this is only used
+						## for cross-validation hence no exdat
 
-      tww <- npksum(txdat = txdat,
-                    weights = as.matrix(data.frame(1,tydat)),
-                    tydat = rep(1,length(tydat)),
-                    bws = bws,
-                    bandwidth.divide = TRUE,
-                    leave.one.out = leave.one.out,
-                    ukertype = ukertype,
-                    okertype = okertype,
-                    bwtype = bwtype,                    
-                    ...)$ksum
+						tww <- npksum(txdat = txdat,
+													weights = as.matrix(data.frame(1,tydat)),
+													tydat = rep(1,length(tydat)),
+													bws = bws,
+													bandwidth.divide = TRUE,
+													leave.one.out = leave.one.out,
+													ukertype = ukertype,
+													okertype = okertype,
+													bwtype = bwtype,                    
+													...)$ksum
 
-    } else {
+				} else {
 
-      tww <- npksum(txdat = txdat,
-                    exdat = exdat,
-                    weights = as.matrix(data.frame(1,tydat)),
-                    tydat = rep(1,length(tydat)),
-                    bws = bws,
-                    bandwidth.divide = TRUE,
-                    leave.one.out = leave.one.out,
-                    ukertype = ukertype,
-                    okertype = okertype,
-                    bwtype = bwtype,                    
-                    ...)$ksum
+						tww <- npksum(txdat = txdat,
+													exdat = exdat,
+													weights = as.matrix(data.frame(1,tydat)),
+													tydat = rep(1,length(tydat)),
+													bws = bws,
+													bandwidth.divide = TRUE,
+													leave.one.out = leave.one.out,
+													ukertype = ukertype,
+													okertype = okertype,
+													bwtype = bwtype,                    
+													...)$ksum
 
-    }
+				}
 
 
-    ## Note that as bandwidth approaches zero the local constant
-    ## estimator undersmooths and approaches each sample realization,
-    ## so use the convention that when the sum of the kernel weights
-    ## equals 0, return y. This is unique to this code.
+				## Note that as bandwidth approaches zero the local constant
+				## estimator undersmooths and approaches each sample realization,
+				## so use the convention that when the sum of the kernel weights
+				## equals 0, return y. This is unique to this code.
 
-    mhat <- tww[2,]/NZD(tww[1,])
+				mhat <- tww[2,]/NZD(tww[1,])
 
-    return(list(fitted.values = mhat,
-                gradient = NULL,
-                coef.mat = NULL,
-                bwtype = bwtype,
-                ukertype = ukertype,
-                okertype = okertype,
-                degree = degree,
-                bws = bws,
-                nobs = n.train,
-                num.numeric = num.numeric,
-                num.categorical = num.categorical,
-                xnames = names(txdat),
-                categorical.index = categorical.index,
-                numeric.index = numeric.index,
-                gradient.vec = gradient.vec,
-                Bernstein = Bernstein))
-    
-  } else {
+				return(list(fitted.values = mhat,
+										gradient = NULL,
+										coef.mat = NULL,
+										bwtype = bwtype,
+										ukertype = ukertype,
+										okertype = okertype,
+										degree = degree,
+										bws = bws,
+										nobs = n.train,
+										num.numeric = num.numeric,
+										num.categorical = num.categorical,
+										xnames = names(txdat),
+										categorical.index = categorical.index,
+										numeric.index = numeric.index,
+										gradient.vec = gradient.vec,
+										Bernstein = Bernstein))
 
-    W <- W.glp(xdat=txdat,
-               degree=degree,
-               Bernstein=Bernstein)
+		} else {
 
-    ## Test for ill-conditioned polynomial basis and return a large
-    ## penalty when this occurs
+				W <- W.glp(xdat=txdat,
+									 degree=degree,
+									 Bernstein=Bernstein)
 
-    if(rcond(t(W)%*%W)<.Machine$double.eps)
-      stop(" Ill-conditioned polynomial basis encountered: modify polynomial order")
+				## Test for ill-conditioned polynomial basis and return a large
+				## penalty when this occurs
 
-    if(miss.ex) {
-      W.eval <- W
+				if(rcond(t(W)%*%W)<.Machine$double.eps)
+						stop(" Ill-conditioned polynomial basis encountered: modify polynomial order")
 
-      if(!is.null(gradient.vec)) {
-        W.eval.deriv <- W.glp(xdat=txdat,
-                              degree=degree,
-                              gradient.vec=gradient.vec,
-                              Bernstein=Bernstein)
-      }
-    } else {
-      W.eval <- W.glp(xdat=txdat,
-                      exdat=exdat,
-                      degree=degree,
-                      Bernstein=Bernstein)
-      
-      if(!is.null(gradient.vec)) {
-        W.eval.deriv <- W.glp(xdat=txdat,
-                              exdat=exdat,
-                              degree=degree,
-                              gradient.vec=gradient.vec,
-                              Bernstein=Bernstein)
-      }
-    }
-    
-    ## Local polynomial via smooth coefficient formulation and one
-    ## call to npksum
+				if(miss.ex) {
+						W.eval <- W
 
-    if(leave.one.out == TRUE) {
+						if(!is.null(gradient.vec)) {
+								W.eval.deriv <- W.glp(xdat=txdat,
+																			degree=degree,
+																			gradient.vec=gradient.vec,
+																			Bernstein=Bernstein)
+						}
+				} else {
+						W.eval <- W.glp(xdat=txdat,
+														exdat=exdat,
+														degree=degree,
+														Bernstein=Bernstein)
 
-      ## exdat not supported with leave.one.out, but this is only used
-      ## for cross-validation hence no exdat
+						if(!is.null(gradient.vec)) {
+								W.eval.deriv <- W.glp(xdat=txdat,
+																			exdat=exdat,
+																			degree=degree,
+																			gradient.vec=gradient.vec,
+																			Bernstein=Bernstein)
+						}
+				}
 
-      tww <- npksum(txdat = txdat,
-                    tydat = as.matrix(cbind(tydat,W)),
-                    weights = W,
-                    bws = bws,
-                    bandwidth.divide = TRUE,
-                    leave.one.out = leave.one.out,
-                    ukertype = ukertype,
-                    okertype = okertype,
-                    bwtype = bwtype,                    
-                    ...)$ksum
+				## Local polynomial via smooth coefficient formulation and one
+				## call to npksum
 
-    } else {
+				if(leave.one.out == TRUE) {
 
-      tww <- npksum(txdat = txdat,
-                    exdat = exdat,
-                    tydat = as.matrix(cbind(tydat,W)),
-                    weights = W,
-                    bws = bws,
-                    bandwidth.divide = TRUE,
-                    leave.one.out = leave.one.out,
-                    ukertype = ukertype,
-                    okertype = okertype,
-                    bwtype = bwtype,                    
-                    ...)$ksum
+						## exdat not supported with leave.one.out, but this is only used
+						## for cross-validation hence no exdat
 
-    }
+						tww <- npksum(txdat = txdat,
+													tydat = as.matrix(cbind(tydat,W)),
+													weights = W,
+													bws = bws,
+													bandwidth.divide = TRUE,
+													leave.one.out = leave.one.out,
+													ukertype = ukertype,
+													okertype = okertype,
+													bwtype = bwtype,                    
+													...)$ksum
 
-    tyw <- array(tww,dim = c(ncol(W)+1,ncol(W),n.eval))[1,,]
-    tww <- array(tww,dim = c(ncol(W)+1,ncol(W),n.eval))[-1,,]
+				} else {
 
-    ## This traps the case with one evaluation point where we need to
-    ## keep the extra dimension.
+						tww <- npksum(txdat = txdat,
+													exdat = exdat,
+													tydat = as.matrix(cbind(tydat,W)),
+													weights = W,
+													bws = bws,
+													bandwidth.divide = TRUE,
+													leave.one.out = leave.one.out,
+													ukertype = ukertype,
+													okertype = okertype,
+													bwtype = bwtype,                    
+													...)$ksum
 
-    if(!is.matrix(tyw)) {
-      tyw <- matrix(tyw)
-      tww <- array(tww,dim = c(ncol(W),ncol(W),n.eval))
-    }
+				}
 
-    coef.mat <- matrix(maxPenalty,ncol(W),n.eval)
-    epsilon <- 1.0/n.eval
-    ridge <- double(n.eval)
-    doridge <- !logical(n.eval)
+				tyw <- array(tww,dim = c(ncol(W)+1,ncol(W),n.eval))[1,,]
+				tww <- array(tww,dim = c(ncol(W)+1,ncol(W),n.eval))[-1,,]
 
-    nc <- ncol(tww[,,1])
+				## This traps the case with one evaluation point where we need to
+				## keep the extra dimension.
 
-    ridger <- function(i) {
-      doridge[i] <<- FALSE
-      ridge.val <- ridge[i]*tyw[1,i][1]/NZD(tww[,,i][1,1])
-      tryCatch(solve(tww[,,i]+diag(rep(ridge[i],nc)),
-                     tyw[,i]+c(ridge.val,rep(0,nc-1)),tol=.Machine$double.eps),
-               error = function(e){
-                 ridge[i] <<- ridge[i]+epsilon
-                 doridge[i] <<- TRUE
-                 if(ridge.warning) console <- printPush(paste("\rWarning: ridging required for inversion at obs. ", i, ", ridge = ",formatC(ridge[i],digits=4,format="f"),"        ",sep=""),console = console)
-                 return(rep(maxPenalty,nc))
-               })
-    }
+				if(!is.matrix(tyw)) {
+						tyw <- matrix(tyw)
+						tww <- array(tww,dim = c(ncol(W),ncol(W),n.eval))
+				}
 
-    ## Test for singularity of the generalized local polynomial
-    ## estimator, shrink the mean towards the local constant mean.
+				coef.mat <- matrix(maxPenalty,ncol(W),n.eval)
+				epsilon <- 1.0/n.eval
+				ridge <- double(n.eval)
+				doridge <- !logical(n.eval)
 
-    while(any(doridge)){
-      iloo <- (1:n.eval)[doridge]
-      coef.mat[,iloo] <- sapply(iloo, ridger)
-    }
+				nc <- ncol(tww[,,1])
 
-    mhat <- sapply(1:n.eval, function(i) {
-      W.eval[i,, drop = FALSE] %*% coef.mat[,i]
-    })
+				ridger <- function(i) {
+						doridge[i] <<- FALSE
+						ridge.val <- ridge[i]*tyw[1,i][1]/NZD(tww[,,i][1,1])
+						tryCatch(solve(tww[,,i]+diag(rep(ridge[i],nc)),
+													 tyw[,i]+c(ridge.val,rep(0,nc-1)),tol=.Machine$double.eps),
+										 error = function(e){
+												 ridge[i] <<- ridge[i]+epsilon
+												 doridge[i] <<- TRUE
+												 if(ridge.warning) console <- printPush(paste("\rWarning: ridging required for inversion at obs. ", i, ", ridge = ",formatC(ridge[i],digits=4,format="f"),"        ",sep=""),console = console)
+												 return(rep(maxPenalty,nc))
+										 })
+				}
 
-    if(!is.null(gradient.vec)) {
-      gradient <- sapply(1:n.eval, function(i) {
-        W.eval.deriv[i,-1, drop = FALSE] %*% coef.mat[-1,i]
-      })
-    } else {
-      gradient <- NULL
-    }
+				## Test for singularity of the generalized local polynomial
+				## estimator, shrink the mean towards the local constant mean.
 
-    return(list(fitted.values = mhat,
-                gradient = gradient,
-                coef.mat = t(coef.mat[-1,]),
-                bwtype = bwtype,
-                ukertype = ukertype,
-                okertype = okertype,
-                degree = degree,
-                bws = bws,
-                nobs = n.train,
-                num.numeric = num.numeric,
-                num.categorical = num.categorical,
-                xnames = names(txdat),
-                categorical.index = categorical.index,
-                numeric.index = numeric.index,
-                gradient.vec = gradient.vec,
-                Bernstein = Bernstein))
-    
-  }
+				while(any(doridge)){
+						iloo <- (1:n.eval)[doridge]
+						coef.mat[,iloo] <- sapply(iloo, ridger)
+				}
+
+				mhat <- sapply(1:n.eval, function(i) {
+											 W.eval[i,, drop = FALSE] %*% coef.mat[,i]
+										 })
+
+				if(!is.null(gradient.vec)) {
+						gradient <- sapply(1:n.eval, function(i) {
+															 W.eval.deriv[i,-1, drop = FALSE] %*% coef.mat[-1,i]
+										 })
+				} else {
+						gradient <- NULL
+				}
+
+				return(list(fitted.values = mhat,
+										gradient = gradient,
+										coef.mat = t(coef.mat[-1,]),
+										bwtype = bwtype,
+										ukertype = ukertype,
+										okertype = okertype,
+										degree = degree,
+										bws = bws,
+										nobs = n.train,
+										num.numeric = num.numeric,
+										num.categorical = num.categorical,
+										xnames = names(txdat),
+										categorical.index = categorical.index,
+										numeric.index = numeric.index,
+										gradient.vec = gradient.vec,
+										Bernstein = Bernstein))
+
+		}
 
 }
 
 minimand.cv.ls <- function(bws=NULL,
-                           ydat=NULL,
-                           xdat=NULL,
-                           degree=NULL,
-                           W=NULL,
-                           ukertype=c("liracine","aitchisonaitken"),
-                           okertype=c("liracine","wangvanryzin"),
-                           bwtype = c("fixed","generalized_nn","adaptive_nn"),
-                           ridge.warning=FALSE,
-                           ...) {
+													 ydat=NULL,
+													 xdat=NULL,
+													 degree=NULL,
+													 W=NULL,
+													 ukertype=c("liracine","aitchisonaitken"),
+													 okertype=c("liracine","wangvanryzin"),
+													 bwtype = c("fixed","generalized_nn","adaptive_nn"),
+													 ridge.warning=FALSE,
+													 ...) {
 
-  ukertype <- match.arg(ukertype)
-  okertype <- match.arg(okertype)
-  bwtype <- match.arg(bwtype)  
+		ukertype <- match.arg(ukertype)
+		okertype <- match.arg(okertype)
+		bwtype <- match.arg(bwtype)  
 
-  if(is.null(ydat)) stop(" Error: You must provide y data")
-  if(is.null(xdat)) stop(" Error: You must provide X data")
-  if(is.null(W)) stop(" Error: You must provide a weighting matrix W")
-  if(is.null(bws)) stop(" Error: You must provide a bandwidth object")
-  if(is.null(degree) || any(degree < 0)) stop(paste(" Error: degree vector must contain non-negative integers\ndegree is (", degree, ")\n",sep=""))
+		if(is.null(ydat)) stop(" Error: You must provide y data")
+		if(is.null(xdat)) stop(" Error: You must provide X data")
+		if(is.null(W)) stop(" Error: You must provide a weighting matrix W")
+		if(is.null(bws)) stop(" Error: You must provide a bandwidth object")
+		if(is.null(degree) || any(degree < 0)) stop(paste(" Error: degree vector must contain non-negative integers\ndegree is (", degree, ")\n",sep=""))
 
-  xdat <- as.data.frame(xdat)
+		xdat <- as.data.frame(xdat)
 
-  n <- length(ydat)
+		n <- length(ydat)
 
-  maxPenalty <- sqrt(.Machine$double.xmax)
+		maxPenalty <- sqrt(.Machine$double.xmax)
 
-  console <- newLineConsole()
-  console <- printClear(console)
-  console <- printPop(console)
+		console <- newLineConsole()
+		console <- printClear(console)
+		console <- printPop(console)
 
-  if(any(bws<=0)) {
+		if(any(bws<=0)) {
 
-    return(maxPenalty)
+				return(maxPenalty)
 
-  } else {
+		} else {
 
-    if(all(degree == 0)) {
+				if(all(degree == 0)) {
 
-      ## Local constant via one call to npksum
+						## Local constant via one call to npksum
 
-      tww <- npksum(txdat = xdat,
-                    weights = as.matrix(data.frame(1,ydat)),
-                    tydat = rep(1,n),
-                    bws = bws,
-                    leave.one.out = TRUE,
-                    bandwidth.divide = TRUE,
-                    ukertype = ukertype,
-                    okertype = okertype,
-                    bwtype = bwtype,                    
-                    ...)$ksum
+						tww <- npksum(txdat = xdat,
+													weights = as.matrix(data.frame(1,ydat)),
+													tydat = rep(1,n),
+													bws = bws,
+													leave.one.out = TRUE,
+													bandwidth.divide = TRUE,
+													ukertype = ukertype,
+													okertype = okertype,
+													bwtype = bwtype,                    
+													...)$ksum
 
-      mean.loo <- tww[2,]/NZD(tww[1,])
-      
-      if (!any(mean.loo == maxPenalty)){
-        fv <- mean((ydat-mean.loo)^2)
-      } else {
-        fv <- maxPenalty
-      }
+						mean.loo <- tww[2,]/NZD(tww[1,])
 
-      fv <- ifelse(is.finite(fv),fv,maxPenalty)
+						if (!any(mean.loo == maxPenalty)){
+								fv <- mean((ydat-mean.loo)^2)
+						} else {
+								fv <- maxPenalty
+						}
 
-      console <- printPush("\r                                                ",console = console)
-      console <- printPush(paste("\rfv = ",format(fv)," ",sep=""),console = console)
+						fv <- ifelse(is.finite(fv),fv,maxPenalty)
 
-      return(fv)
+						console <- printPush("\r                                                ",console = console)
+						console <- printPush(paste("\rfv = ",format(fv)," ",sep=""),console = console)
 
-    } else {
+						return(fv)
+
+				} else {
 
 
-      ## Generalized local polynomial via smooth coefficient
-      ## formulation and one call to npksum
+						## Generalized local polynomial via smooth coefficient
+						## formulation and one call to npksum
 
-      tww <- npksum(txdat = xdat,
-                    tydat = as.matrix(cbind(ydat,W)),
-                    weights = W,
-                    bws = bws,
-                    leave.one.out = TRUE,
-                    bandwidth.divide = TRUE,
-                    ukertype = ukertype,
-                    okertype = okertype,
-                    bwtype = bwtype,                    
-                    ...)$ksum
+						tww <- npksum(txdat = xdat,
+													tydat = as.matrix(cbind(ydat,W)),
+													weights = W,
+													bws = bws,
+													leave.one.out = TRUE,
+													bandwidth.divide = TRUE,
+													ukertype = ukertype,
+													okertype = okertype,
+													bwtype = bwtype,                    
+													...)$ksum
 
-      tyw <- array(tww,dim = c(ncol(W)+1,ncol(W),n))[1,,]
-      tww <- array(tww,dim = c(ncol(W)+1,ncol(W),n))[-1,,]
+						tyw <- array(tww,dim = c(ncol(W)+1,ncol(W),n))[1,,]
+						tww <- array(tww,dim = c(ncol(W)+1,ncol(W),n))[-1,,]
 
-      mean.loo <- rep(maxPenalty,n)
-      epsilon <- 1.0/n
-      ridge <- double(n)
-      doridge <- !logical(n)
+						mean.loo <- rep(maxPenalty,n)
+						epsilon <- 1.0/n
+						ridge <- double(n)
+						doridge <- !logical(n)
 
-      nc <- ncol(tww[,,1])
+						nc <- ncol(tww[,,1])
 
-      ## Test for singularity of the generalized local polynomial
-      ## estimator, shrink the mean towards the local constant mean.
+						## Test for singularity of the generalized local polynomial
+						## estimator, shrink the mean towards the local constant mean.
 
-      ridger <- function(i) {
-        doridge[i] <<- FALSE
-        ridge.val <- ridge[i]*tyw[1,i][1]/NZD(tww[,,i][1,1])
-        W[i,, drop = FALSE] %*% tryCatch(solve(tww[,,i]+diag(rep(ridge[i],nc)),
-                tyw[,i]+c(ridge.val,rep(0,nc-1)),tol=.Machine$double.eps),
-                error = function(e){
-                  ridge[i] <<- ridge[i]+epsilon
-                  doridge[i] <<- TRUE
-                  if(ridge.warning) console <- printPush(paste("\rWarning: ridging required for inversion at obs. ", i, ", ridge = ",formatC(ridge[i],digits=4,format="f"),"        ",sep=""),console = console)
-                  return(rep(maxPenalty,nc))
-                })
-      }
+						ridger <- function(i) {
+								doridge[i] <<- FALSE
+								ridge.val <- ridge[i]*tyw[1,i][1]/NZD(tww[,,i][1,1])
+								W[i,, drop = FALSE] %*% tryCatch(solve(tww[,,i]+diag(rep(ridge[i],nc)),
+																											 tyw[,i]+c(ridge.val,rep(0,nc-1)),tol=.Machine$double.eps),
+																								 error = function(e){
+																										 ridge[i] <<- ridge[i]+epsilon
+																										 doridge[i] <<- TRUE
+																										 if(ridge.warning) console <- printPush(paste("\rWarning: ridging required for inversion at obs. ", i, ", ridge = ",formatC(ridge[i],digits=4,format="f"),"        ",sep=""),console = console)
+																										 return(rep(maxPenalty,nc))
+																								 })
+						}
 
-      while(any(doridge)){
-        iloo <- (1:n)[doridge]
-        mean.loo[iloo] <- sapply(iloo, ridger)
-      }
+						while(any(doridge)){
+								iloo <- (1:n)[doridge]
+								mean.loo[iloo] <- sapply(iloo, ridger)
+						}
 
-      if (!any(mean.loo == maxPenalty)){
-        fv <- mean((ydat-mean.loo)^2)
-      } else {
-        fv <- maxPenalty
-      }
+						if (!any(mean.loo == maxPenalty)){
+								fv <- mean((ydat-mean.loo)^2)
+						} else {
+								fv <- maxPenalty
+						}
 
-      fv <- ifelse(is.finite(fv),fv,maxPenalty)
+						fv <- ifelse(is.finite(fv),fv,maxPenalty)
 
-      console <- printPush("\r                                                ",console = console)
-      console <- printPush(paste("\rfv = ",format(fv)," ",sep=""),console = console)
+						console <- printPush("\r                                                ",console = console)
+						console <- printPush(paste("\rfv = ",format(fv)," ",sep=""),console = console)
 
-      return(fv)
+						return(fv)
 
-    }
+				}
 
-  }
+		}
 
 }
 
 minimand.cv.aic <- function(bws=NULL,
-                            ydat=NULL,
-                            xdat=NULL,
-                            degree=NULL,
-                            W=NULL,
-                            ukertype=c("liracine","aitchisonaitken"),
-                            okertype=c("liracine","wangvanryzin"),
-                            bwtype = c("fixed","generalized_nn","adaptive_nn"),
-                            ridge.warning=FALSE,
-                            ...) {
+														ydat=NULL,
+														xdat=NULL,
+														degree=NULL,
+														W=NULL,
+														ukertype=c("liracine","aitchisonaitken"),
+														okertype=c("liracine","wangvanryzin"),
+														bwtype = c("fixed","generalized_nn","adaptive_nn"),
+														ridge.warning=FALSE,
+														...) {
 
-  ukertype <- match.arg(ukertype)
-  okertype <- match.arg(okertype)
-  bwtype <- match.arg(bwtype)  
+		ukertype <- match.arg(ukertype)
+		okertype <- match.arg(okertype)
+		bwtype <- match.arg(bwtype)  
 
-  if(is.null(ydat)) stop(" Error: You must provide y data")
-  if(is.null(xdat)) stop(" Error: You must provide X data")
-  if(!all(degree==0)) if(is.null(W)) stop(" Error: You must provide a weighting matrix W")
-  if(is.null(bws)) stop(" Error: You must provide a bandwidth object")
-  if(is.null(degree) || any(degree < 0)) stop(paste(" Error: degree vector must contain non-negative integers\ndegree is (", degree, ")\n",sep=""))
+		if(is.null(ydat)) stop(" Error: You must provide y data")
+		if(is.null(xdat)) stop(" Error: You must provide X data")
+		if(!all(degree==0)) if(is.null(W)) stop(" Error: You must provide a weighting matrix W")
+		if(is.null(bws)) stop(" Error: You must provide a bandwidth object")
+		if(is.null(degree) || any(degree < 0)) stop(paste(" Error: degree vector must contain non-negative integers\ndegree is (", degree, ")\n",sep=""))
 
-  xdat <- as.data.frame(xdat)
+		xdat <- as.data.frame(xdat)
 
-  n <- length(ydat)
+		n <- length(ydat)
 
-  maxPenalty <- sqrt(.Machine$double.xmax)
+		maxPenalty <- sqrt(.Machine$double.xmax)
 
-  console <- newLineConsole()
-  console <- printClear(console)
-  console <- printPop(console)
+		console <- newLineConsole()
+		console <- printClear(console)
+		console <- printPop(console)
 
-  if(any(bws<=0)) {
+		if(any(bws<=0)) {
 
-    return(maxPenalty)
+				return(maxPenalty)
 
-  } else {
+		} else {
 
-    ## This computes the kernel function when i=j (i.e., K(0))
+				## This computes the kernel function when i=j (i.e., K(0))
 
-    kernel.i.eq.j <- npksum(txdat = xdat[1,],
-                            weights = as.matrix(data.frame(1,ydat)[1,]),
-                            tydat = 1,
-                            bws = bws,
-                            bandwidth.divide = TRUE,
-                            ukertype = ukertype,
-                            okertype = okertype,
-                            bwtype = bwtype,                    
-                            ...)$ksum[1,1]
+				kernel.i.eq.j <- npksum(txdat = xdat[1,],
+																weights = as.matrix(data.frame(1,ydat)[1,]),
+																tydat = 1,
+																bws = bws,
+																bandwidth.divide = TRUE,
+																ukertype = ukertype,
+																okertype = okertype,
+																bwtype = bwtype,                    
+																...)$ksum[1,1]
 
-    if(all(degree == 0)) {
+				if(all(degree == 0)) {
 
-      ## Local constant via one call to npksum
+						## Local constant via one call to npksum
 
-      tww <- npksum(txdat = xdat,
-                    weights = as.matrix(data.frame(1,ydat)),
-                    tydat = rep(1,n),
-                    bws = bws,
-                    bandwidth.divide = TRUE,
-                    ukertype = ukertype,
-                    okertype = okertype,
-                    bwtype = bwtype,                    
-                    ...)$ksum
+						tww <- npksum(txdat = xdat,
+													weights = as.matrix(data.frame(1,ydat)),
+													tydat = rep(1,n),
+													bws = bws,
+													bandwidth.divide = TRUE,
+													ukertype = ukertype,
+													okertype = okertype,
+													bwtype = bwtype,                    
+													...)$ksum
 
-      ghat <- tww[2,]/NZD(tww[1,])
+						ghat <- tww[2,]/NZD(tww[1,])
 
-      trH <- kernel.i.eq.j*sum(1/NZD(tww[1,]))
+						trH <- kernel.i.eq.j*sum(1/NZD(tww[1,]))
 
-      aic.penalty <- (1+trH/n)/(1-(trH+2)/n)
+						aic.penalty <- (1+trH/n)/(1-(trH+2)/n)
 
-      if (!any(ghat == maxPenalty) && (aic.penalty > 0)){
-        fv <- log(mean((ydat-ghat)^2)) + aic.penalty
-      } else {
-        fv <- maxPenalty
-      }
+						if (!any(ghat == maxPenalty) && (aic.penalty > 0)){
+								fv <- log(mean((ydat-ghat)^2)) + aic.penalty
+						} else {
+								fv <- maxPenalty
+						}
 
-      return(ifelse(is.finite(fv),fv,maxPenalty))
+						return(ifelse(is.finite(fv),fv,maxPenalty))
 
-    } else {
+				} else {
 
-      ## Generalized local polynomial via smooth coefficient
-      ## formulation and one call to npksum
+						## Generalized local polynomial via smooth coefficient
+						## formulation and one call to npksum
 
-      tww <- npksum(txdat = xdat,
-                    tydat = as.matrix(cbind(ydat,W)),
-                    weights = W,
-                    bws = bws,
-                    bandwidth.divide = TRUE,
-                    ukertype = ukertype,
-                    okertype = okertype,
-                    bwtype = bwtype,                    
-                    ...)$ksum
+						tww <- npksum(txdat = xdat,
+													tydat = as.matrix(cbind(ydat,W)),
+													weights = W,
+													bws = bws,
+													bandwidth.divide = TRUE,
+													ukertype = ukertype,
+													okertype = okertype,
+													bwtype = bwtype,                    
+													...)$ksum
 
-      tyw <- array(tww,dim = c(ncol(W)+1,ncol(W),n))[1,,]
-      tww <- array(tww,dim = c(ncol(W)+1,ncol(W),n))[-1,,]
+						tyw <- array(tww,dim = c(ncol(W)+1,ncol(W),n))[1,,]
+						tww <- array(tww,dim = c(ncol(W)+1,ncol(W),n))[-1,,]
 
-      ghat <- rep(maxPenalty,n)
-      epsilon <- 1.0/n
-      ridge <- double(n)
-      doridge <- !logical(n)
+						ghat <- rep(maxPenalty,n)
+						epsilon <- 1.0/n
+						ridge <- double(n)
+						doridge <- !logical(n)
 
-      nc <- ncol(tww[,,1])
+						nc <- ncol(tww[,,1])
 
-      ## Test for singularity of the generalized local polynomial
-      ## estimator, shrink the mean towards the local constant mean.
+						## Test for singularity of the generalized local polynomial
+						## estimator, shrink the mean towards the local constant mean.
 
-      ridger <- function(i) {
-        doridge[i] <<- FALSE
-        ridge.val <- ridge[i]*tyw[1,i][1]/NZD(tww[,,i][1,1])
-        W[i,, drop = FALSE] %*% tryCatch(solve(tww[,,i]+diag(rep(ridge[i],nc)),
-                tyw[,i]+c(ridge.val,rep(0,nc-1)),tol=.Machine$double.eps),
-                error = function(e){
-                  ridge[i] <<- ridge[i]+epsilon
-                  doridge[i] <<- TRUE
-                  if(ridge.warning) console <- printPush(paste("\rWarning: ridging required for inversion at obs. ", i, ", ridge = ",formatC(ridge[i],digits=4,format="f"),"        ",sep=""),console = console)
-                  return(rep(maxPenalty,nc))
-                })
-      }
+						ridger <- function(i) {
+								doridge[i] <<- FALSE
+								ridge.val <- ridge[i]*tyw[1,i][1]/NZD(tww[,,i][1,1])
+								W[i,, drop = FALSE] %*% tryCatch(solve(tww[,,i]+diag(rep(ridge[i],nc)),
+																											 tyw[,i]+c(ridge.val,rep(0,nc-1)),tol=.Machine$double.eps),
+																								 error = function(e){
+																										 ridge[i] <<- ridge[i]+epsilon
+																										 doridge[i] <<- TRUE
+																										 if(ridge.warning) console <- printPush(paste("\rWarning: ridging required for inversion at obs. ", i, ", ridge = ",formatC(ridge[i],digits=4,format="f"),"        ",sep=""),console = console)
+																										 return(rep(maxPenalty,nc))
+																								 })
+						}
 
-      while(any(doridge)){
-        ii <- (1:n)[doridge]
-        ghat[ii] <- sapply(ii, ridger)
-      }
+						while(any(doridge)){
+								ii <- (1:n)[doridge]
+								ghat[ii] <- sapply(ii, ridger)
+						}
 
-      trH <- kernel.i.eq.j*sum(sapply(1:n,function(i){
-        W[i,, drop = FALSE] %*% solve(tww[,,i]+diag(rep(ridge[i],nc)),tol=.Machine$double.eps) %*% t(W[i,, drop = FALSE])
-      }))
+						trH <- kernel.i.eq.j*sum(sapply(1:n,function(i){
+																						W[i,, drop = FALSE] %*% solve(tww[,,i]+diag(rep(ridge[i],nc)),tol=.Machine$double.eps) %*% t(W[i,, drop = FALSE])
+																											 }))
 
-      if (!any(ghat == maxPenalty)){
-        fv <- log(mean((ydat-ghat)^2)) + (1+trH/n)/(1-(trH+2)/n)
-      } else {
-        fv <- maxPenalty
-      }
+						if (!any(ghat == maxPenalty)){
+								fv <- log(mean((ydat-ghat)^2)) + (1+trH/n)/(1-(trH+2)/n)
+						} else {
+								fv <- maxPenalty
+						}
 
-      fv <- ifelse(is.finite(fv),fv,maxPenalty)
+						fv <- ifelse(is.finite(fv),fv,maxPenalty)
 
-      console <- printPush("\r                                                ",console = console)
-      console <- printPush(paste("\rfv = ",format(fv)," ",sep=""),console = console)
+						console <- printPush("\r                                                ",console = console)
+						console <- printPush(paste("\rfv = ",format(fv)," ",sep=""),console = console)
 
-      return(fv)
+						return(fv)
 
-    }
+				}
 
-  }
+		}
 
 }
 
 glpcv <- function(ydat=NULL,
-                  xdat=NULL,
-                  degree=NULL,
-                  bwmethod=c("cv.ls","cv.aic"),
-                  ukertype=c("liracine","aitchisonaitken"),
-                  okertype=c("liracine","wangvanryzin"),
-                  bwtype = c("fixed","generalized_nn","adaptive_nn"),
-                  nmulti=NULL,
-                  random.seed=42,
-                  optim.maxattempts = 10,
-                  optim.method=c("Nelder-Mead", "BFGS", "CG"),
-                  optim.reltol=sqrt(.Machine$double.eps),
-                  optim.abstol=.Machine$double.eps,
-                  optim.maxit=500,
-                  debug=FALSE,
-                  Bernstein=TRUE,
-                  ...) {
+									xdat=NULL,
+									degree=NULL,
+									bwmethod=c("cv.ls","cv.aic"),
+									ukertype=c("liracine","aitchisonaitken"),
+									okertype=c("liracine","wangvanryzin"),
+									bwtype = c("fixed","generalized_nn","adaptive_nn"),
+									nmulti=NULL,
+									random.seed=42,
+									optim.maxattempts = 10,
+									optim.method=c("Nelder-Mead", "BFGS", "CG"),
+									optim.reltol=sqrt(.Machine$double.eps),
+									optim.abstol=.Machine$double.eps,
+									optim.maxit=500,
+									debug=FALSE,
+									Bernstein=TRUE,
+									...) {
 
-  ## Save seed prior to setting
+		## Save seed prior to setting
 
-  if(exists(".Random.seed", .GlobalEnv)) {
-    save.seed <- get(".Random.seed", .GlobalEnv)
-    exists.seed = TRUE
-  } else {
-    exists.seed = FALSE
-  }
+		if(exists(".Random.seed", .GlobalEnv)) {
+				save.seed <- get(".Random.seed", .GlobalEnv)
+				exists.seed = TRUE
+		} else {
+				exists.seed = FALSE
+		}
 
-  set.seed(random.seed)
+		set.seed(random.seed)
 
-  if(debug) system("rm optim.debug bandwidth.out optim.out")
+		if(debug) system("rm optim.debug bandwidth.out optim.out")
 
-  if(is.null(ydat)) stop(" Error: You must provide y data")
-  if(is.null(xdat)) stop(" Error: You must provide X data")
-  if(is.null(degree) || any(degree < 0)) stop(paste(" Error: degree vector must contain non-negative integers\ndegree is (", degree, ")\n",sep=""))
-  if(!is.null(nmulti) && nmulti < 1) stop(paste(" Error: nmulti must be a positive integer (minimum 1)\nnmulti is (", nmulti, ")\n",sep=""))
+		if(is.null(ydat)) stop(" Error: You must provide y data")
+		if(is.null(xdat)) stop(" Error: You must provide X data")
+		if(is.null(degree) || any(degree < 0)) stop(paste(" Error: degree vector must contain non-negative integers\ndegree is (", degree, ")\n",sep=""))
+		if(!is.null(nmulti) && nmulti < 1) stop(paste(" Error: nmulti must be a positive integer (minimum 1)\nnmulti is (", nmulti, ")\n",sep=""))
 
-  bwmethod <- match.arg(bwmethod)
+		bwmethod <- match.arg(bwmethod)
 
-  ukertype <- match.arg(ukertype)
-  okertype <- match.arg(okertype)
-  bwtype <- match.arg(bwtype)  
+		ukertype <- match.arg(ukertype)
+		okertype <- match.arg(okertype)
+		bwtype <- match.arg(bwtype)  
 
-  optim.method <- match.arg(optim.method)
-  optim.control <- list(abstol = optim.abstol,
-                        reltol = optim.reltol,
-                        maxit = optim.maxit)
+		optim.method <- match.arg(optim.method)
+		optim.control <- list(abstol = optim.abstol,
+													reltol = optim.reltol,
+													maxit = optim.maxit)
 
-  maxPenalty <- sqrt(.Machine$double.xmax)
+		maxPenalty <- sqrt(.Machine$double.xmax)
 
-  xdat <- as.data.frame(xdat)
+		xdat <- as.data.frame(xdat)
 
-  num.bw <- ncol(xdat)
+		num.bw <- ncol(xdat)
 
-  if(is.null(nmulti)) nmulti <- min(5,num.bw)
+		if(is.null(nmulti)) nmulti <- min(5,num.bw)
 
-  ## Which variables are categorical, which are discrete...
+		## Which variables are categorical, which are discrete...
 
-  xdat.numeric <- sapply(1:ncol(xdat),function(i){is.numeric(xdat[,i])})
+		xdat.numeric <- sapply(1:ncol(xdat),function(i){is.numeric(xdat[,i])})
 
-  ## First initialize initial search values of the vector of
-  ## bandwidths to lie in [0,1]
+		## First initialize initial search values of the vector of
+		## bandwidths to lie in [0,1]
 
-  if(debug) write(c("cv",paste(rep("x",num.bw),seq(1:num.bw),sep="")),file="optim.debug",ncol=(num.bw+1))
+		if(debug) write(c("cv",paste(rep("x",num.bw),seq(1:num.bw),sep="")),file="optim.debug",ncol=(num.bw+1))
 
-  ## Pass in the local polynomial weight matrix rather than
-  ## recomputing with each iteration.
+		## Pass in the local polynomial weight matrix rather than
+		## recomputing with each iteration.
 
-  W <- W.glp(xdat=xdat,
-             degree=degree,
-             Bernstein=Bernstein)
+		W <- W.glp(xdat=xdat,
+							 degree=degree,
+							 Bernstein=Bernstein)
 
-  if(rcond(t(W)%*%W)<.Machine$double.eps)
-    return(sqrt(.Machine$double.xmax))
+		if(rcond(t(W)%*%W)<.Machine$double.eps)
+				return(sqrt(.Machine$double.xmax))
 
-  sum.lscv <- function(bw.gamma,...) {
+		sum.lscv <- function(bw.gamma,...) {
 
-    ## Note - we set the kernel for unordered and ordered regressors
-    ## to the liracine kernel (0<=lambda<=1) and test for proper
-    ## bounds in sum.lscv.
+				## Note - we set the kernel for unordered and ordered regressors
+				## to the liracine kernel (0<=lambda<=1) and test for proper
+				## bounds in sum.lscv.
 
-    if(all(bw.gamma>=0)&&all(bw.gamma[!xdat.numeric]<=1)) {
-      lscv <- minimand.cv.ls(bws=bw.gamma,
-                             ydat=ydat,
-                             xdat=xdat,
-                             ukertype=ukertype,
-                             okertype=okertype,
-                             bwtype=bwtype,                    
-                             ...)
-    } else {
-      lscv <- maxPenalty
-    }
+				if(all(bw.gamma>=0)&&all(bw.gamma[!xdat.numeric]<=1)) {
+						lscv <- minimand.cv.ls(bws=bw.gamma,
+																	 ydat=ydat,
+																	 xdat=xdat,
+																	 ukertype=ukertype,
+																	 okertype=okertype,
+																	 bwtype=bwtype,                    
+																	 ...)
+				} else {
+						lscv <- maxPenalty
+				}
 
-    if(debug) write(c(lscv,bw.gamma),file="optim.debug",ncol=(num.bw+1),append=TRUE)
-    return(lscv)
-  }
+				if(debug) write(c(lscv,bw.gamma),file="optim.debug",ncol=(num.bw+1),append=TRUE)
+				return(lscv)
+		}
 
-  sum.aicc <- function(bw.gamma,...) {
+		sum.aicc <- function(bw.gamma,...) {
 
-    ## Note - we set the kernel for unordered and ordered regressors
-    ## to the liracine kernel (0<=lambda<=1) and test for proper
-    ## bounds in sum.lscv.
+				## Note - we set the kernel for unordered and ordered regressors
+				## to the liracine kernel (0<=lambda<=1) and test for proper
+				## bounds in sum.lscv.
 
-    if(all(bw.gamma>=0)&&all(bw.gamma[!xdat.numeric]<=1)) {
-      aicc <- minimand.cv.aic(bws=bw.gamma,
-                              ydat=ydat,
-                              xdat=xdat,
-                              ukertype=ukertype,
-                              okertype=okertype,
-                              bwtype=bwtype,                    
-                              ...)
-    } else {
-      aicc <- maxPenalty
-    }
+				if(all(bw.gamma>=0)&&all(bw.gamma[!xdat.numeric]<=1)) {
+						aicc <- minimand.cv.aic(bws=bw.gamma,
+																		ydat=ydat,
+																		xdat=xdat,
+																		ukertype=ukertype,
+																		okertype=okertype,
+																		bwtype=bwtype,                    
+																		...)
+				} else {
+						aicc <- maxPenalty
+				}
 
-    if(debug) write(c(aicc,bw.gamma),file="optim.debug",ncol=(num.bw+1),append=TRUE)
-    return(aicc)
-  }
+				if(debug) write(c(aicc,bw.gamma),file="optim.debug",ncol=(num.bw+1),append=TRUE)
+				return(aicc)
+		}
 
-  ## Multistarting
+		## Multistarting
 
-  fv.vec <- numeric(nmulti)
+		fv.vec <- numeric(nmulti)
 
-  ## Pass in the W matrix rather than recomputing it each time
+		## Pass in the W matrix rather than recomputing it each time
 
-  for(iMulti in 1:nmulti) {
+		for(iMulti in 1:nmulti) {
 
-    num.numeric <- ncol(as.data.frame(xdat[,xdat.numeric]))
+				num.numeric <- ncol(as.data.frame(xdat[,xdat.numeric]))
 
-    ## First initialize to values for factors (`liracine' kernel)
+				## First initialize to values for factors (`liracine' kernel)
 
-    init.search.vals <- runif(ncol(xdat),0,1)
+				init.search.vals <- runif(ncol(xdat),0,1)
 
-    for(i in 1:ncol(xdat)) {
-      if(xdat.numeric[i]==TRUE) {
-        init.search.vals[i] <- runif(1,.5,1.5)*sd.robust(xdat[,i])*nrow(xdat)^{-1/(4+num.numeric)}
-      }
-    }
+				for(i in 1:ncol(xdat)) {
+						if(xdat.numeric[i]==TRUE) {
+								init.search.vals[i] <- runif(1,.5,1.5)*sd.robust(xdat[,i])*nrow(xdat)^{-1/(4+num.numeric)}
+						}
+				}
 
-    ## Initialize `best' values prior to search
+				## Initialize `best' values prior to search
 
-    if(iMulti == 1) {
-      fv <- maxPenalty
-      numimp <- 0
-      bw.opt <- init.search.vals
-      best <- 1
-    }
+				if(iMulti == 1) {
+						fv <- maxPenalty
+						numimp <- 0
+						bw.opt <- init.search.vals
+						best <- 1
+				}
 
-    if(bwmethod == "cv.ls" ) {
+				if(bwmethod == "cv.ls" ) {
 
-      suppressWarnings(optim.return <- optim(init.search.vals,
-                                             fn=sum.lscv,
-                                             method=optim.method,
-                                             control=optim.control,
-                                             degree=degree,
-                                             W=W,
-                                             ukertype=ukertype,
-                                             okertype=okertype,
-                                             bwtype=bwtype,                    
-                                             ...))
+						suppressWarnings(optim.return <- optim(init.search.vals,
+																									 fn=sum.lscv,
+																									 method=optim.method,
+																									 control=optim.control,
+																									 degree=degree,
+																									 W=W,
+																									 ukertype=ukertype,
+																									 okertype=okertype,
+																									 bwtype=bwtype,                    
+																									 ...))
 
-      attempts <- 0
-      while((optim.return$convergence != 0) && (attempts <= optim.maxattempts)) {
-        init.search.vals <- runif(ncol(xdat),0,1)
-        if(xdat.numeric[i]==TRUE) {
-          init.search.vals[i] <- runif(1,.5,1.5)*sd.robust(xdat[,i])*nrow(xdat)^{-1/(4+num.numeric)}
-        }
-        attempts <- attempts + 1
-        optim.control$abstol <- optim.control$abstol * 10.0
-        optim.control$reltol <- optim.control$reltol * 10.0
-        suppressWarnings(optim.return <- optim(init.search.vals,
-                                               fn=sum.lscv,
-                                               method=optim.method,
-                                               control=optim.control,
-                                               degree=degree,
-                                               W=W,
-                                               ukertype=ukertype,
-                                               okertype=okertype,
-                                               bwtype=bwtype,                    
-                                               ...))
-      }
+						attempts <- 0
+						while((optim.return$convergence != 0) && (attempts <= optim.maxattempts)) {
+								init.search.vals <- runif(ncol(xdat),0,1)
+								if(xdat.numeric[i]==TRUE) {
+										init.search.vals[i] <- runif(1,.5,1.5)*sd.robust(xdat[,i])*nrow(xdat)^{-1/(4+num.numeric)}
+								}
+								attempts <- attempts + 1
+								optim.control$abstol <- optim.control$abstol * 10.0
+								optim.control$reltol <- optim.control$reltol * 10.0
+								suppressWarnings(optim.return <- optim(init.search.vals,
+																											 fn=sum.lscv,
+																											 method=optim.method,
+																											 control=optim.control,
+																											 degree=degree,
+																											 W=W,
+																											 ukertype=ukertype,
+																											 okertype=okertype,
+																											 bwtype=bwtype,                    
+																											 ...))
+						}
 
-    } else {
+				} else {
 
-      suppressWarnings(optim.return <- optim(init.search.vals,
-                                             fn=sum.aicc,
-                                             method=optim.method,
-                                             control=optim.control,
-                                             degree=degree,
-                                             W=W,
-                                             ukertype=ukertype,
-                                             okertype=okertype,
-                                             bwtype=bwtype,                    
-                                             ...))
+						suppressWarnings(optim.return <- optim(init.search.vals,
+																									 fn=sum.aicc,
+																									 method=optim.method,
+																									 control=optim.control,
+																									 degree=degree,
+																									 W=W,
+																									 ukertype=ukertype,
+																									 okertype=okertype,
+																									 bwtype=bwtype,                    
+																									 ...))
 
-      attempts <- 0
-      while((optim.return$convergence != 0) && (attempts <= optim.maxattempts)) {
-        init.search.vals <- runif(ncol(xdat),0,1)
-        if(xdat.numeric[i]==TRUE) {
-          init.search.vals[i] <- runif(1,.5,1.5)*sd.robust(xdat[,i])*nrow(xdat)^{-1/(4+num.numeric)}
-        }
-        attempts <- attempts + 1
-        optim.control$abstol <- optim.control$abstol * 10.0
-        optim.control$reltol <- optim.control$reltol * 10.0
-        suppressWarnings(optim.return <- optim(init.search.vals,
-                                               fn = sum.aicc,
-                                               method=optim.method,
-                                               control = optim.control,
-                                               W=W,
-                                               ukertype=ukertype,
-                                               okertype=okertype,
-                                               bwtype=bwtype,                    
-                                               ...))
-      }
-    }
+						attempts <- 0
+						while((optim.return$convergence != 0) && (attempts <= optim.maxattempts)) {
+								init.search.vals <- runif(ncol(xdat),0,1)
+								if(xdat.numeric[i]==TRUE) {
+										init.search.vals[i] <- runif(1,.5,1.5)*sd.robust(xdat[,i])*nrow(xdat)^{-1/(4+num.numeric)}
+								}
+								attempts <- attempts + 1
+								optim.control$abstol <- optim.control$abstol * 10.0
+								optim.control$reltol <- optim.control$reltol * 10.0
+								suppressWarnings(optim.return <- optim(init.search.vals,
+																											 fn = sum.aicc,
+																											 method=optim.method,
+																											 control = optim.control,
+																											 W=W,
+																											 ukertype=ukertype,
+																											 okertype=okertype,
+																											 bwtype=bwtype,                    
+																											 ...))
+						}
+				}
 
-    if(optim.return$convergence != 0) warning(" optim failed to converge")
+				if(optim.return$convergence != 0) warning(" optim failed to converge")
 
-    fv.vec[iMulti] <- optim.return$value
+				fv.vec[iMulti] <- optim.return$value
 
-    if(optim.return$value < fv) {
-      bw.opt <- optim.return$par
-      fv <- optim.return$value
-      numimp <- numimp + 1
-      best <- iMulti
-      if(debug) {
-        if(iMulti==1) {
-          write(cbind(iMulti,t(bw.opt)),"bandwidth.out",ncol=(1+length(bw.opt)))
-          write(cbind(iMulti,fv),"optim.out",ncol=2)
-        } else {
-          write(cbind(iMulti,t(bw.opt)),"bandwidth.out",ncol=(1+length(bw.opt)),append=TRUE)
-          write(cbind(iMulti,fv),"optim.out",ncol=2,append=TRUE)
-        }
-      }
-    }
+				if(optim.return$value < fv) {
+						bw.opt <- optim.return$par
+						fv <- optim.return$value
+						numimp <- numimp + 1
+						best <- iMulti
+						if(debug) {
+								if(iMulti==1) {
+										write(cbind(iMulti,t(bw.opt)),"bandwidth.out",ncol=(1+length(bw.opt)))
+										write(cbind(iMulti,fv),"optim.out",ncol=2)
+								} else {
+										write(cbind(iMulti,t(bw.opt)),"bandwidth.out",ncol=(1+length(bw.opt)),append=TRUE)
+										write(cbind(iMulti,fv),"optim.out",ncol=2,append=TRUE)
+								}
+						}
+				}
 
-  }
+		}
 
-  ## Restore seed
+		## Restore seed
 
-  if(exists.seed) assign(".Random.seed", save.seed, .GlobalEnv)
+		if(exists.seed) assign(".Random.seed", save.seed, .GlobalEnv)
 
-  return(list(bws=bw.opt,fv=fv,numimp=numimp,best=best,fv.vec=fv.vec))
+		return(list(bws=bw.opt,fv=fv,numimp=numimp,best=best,fv.vec=fv.vec))
 
 }
 
 glpcvNOMAD <- function(ydat=NULL,
-                       xdat=NULL,
-                       degree=NULL,
-                       bandwidth=NULL,
-                       bwmethod=c("cv.ls","cv.aic"),
-                       ukertype=c("liracine","aitchisonaitken"),
-                       okertype=c("liracine","wangvanryzin"),
-                       bwtype = c("fixed","generalized_nn","adaptive_nn"),
-                       cv=c("degree-bandwidth", "bandwidth"),
-                       nmulti=NULL,
-                       random.seed=42,
-                       degree.max=10,
-                       degree.min=0,
-                       bandwidth.max=1.0e+03,
-                       bandwidth.min=1.0e-02,
-                       opts=list("MAX_BB_EVAL"=10000,
-                         "EPSILON"=.Machine$double.eps,
-                         "INITIAL_MESH_SIZE"=paste("r",1.0e-04,sep=""),
-                         "MIN_MESH_SIZE"=paste("r",1.0e-05,sep=""),
-                         "MIN_POLL_SIZE"=paste("r",1.0e-05,sep="")),
-                       ridge.warning=FALSE,
-                       Bernstein=TRUE,
-                       ...) {
+											 xdat=NULL,
+											 degree=NULL,
+											 bandwidth=NULL,
+											 bwmethod=c("cv.ls","cv.aic"),
+											 ukertype=c("liracine","aitchisonaitken"),
+											 okertype=c("liracine","wangvanryzin"),
+											 bwtype = c("fixed","generalized_nn","adaptive_nn"),
+											 cv=c("degree-bandwidth", "bandwidth"),
+											 nmulti=NULL,
+											 random.seed=42,
+											 degree.max=10,
+											 degree.min=0,
+											 bandwidth.max=1.0e+03,
+											 bandwidth.min=1.0e-02,
+											 opts=list("MAX_BB_EVAL"=10000,
+																 "EPSILON"=.Machine$double.eps,
+																 "INITIAL_MESH_SIZE"=paste("r",1.0e-04,sep=""),
+																 "MIN_MESH_SIZE"=paste("r",1.0e-05,sep=""),
+																 "MIN_POLL_SIZE"=paste("r",1.0e-05,sep="")),
+											 ridge.warning=FALSE,
+											 Bernstein=TRUE,
+											 ...) {
 
-  ## Save the seed prior to setting
+		## Save the seed prior to setting
 
-  if(exists(".Random.seed", .GlobalEnv)) {
-    save.seed <- get(".Random.seed", .GlobalEnv)
-    exists.seed = TRUE
-  } else {
-    exists.seed = FALSE
-  }
-
-  set.seed(random.seed)
-
-  ukertype <- match.arg(ukertype)
-  okertype <- match.arg(okertype)
-  bwtype <- match.arg(bwtype)  
-  bwmethod <- match.arg(bwmethod)
-  cv <- match.arg(cv)
-
-  if(is.null(ydat)) stop(" Error: You must provide y data")
-  if(is.null(xdat)) stop(" Error: You must provide X data")
-  if(!is.null(nmulti) && nmulti < 1) stop(paste(" Error: nmulti must be a positive integer (minimum 1)\nnmulti is (", nmulti, ")\n",sep=""))
-
-  if(!is.null(degree) && any(degree < 0)) stop(paste(" Error: degree vector must contain non-negative integers\ndegree is (", degree, ")\n",sep=""))
-
-  if(degree.min < 0 ) stop(" Error: degree.min must be a non-negative integer")
-  if(degree.max < degree.min) stop(" Error: degree.max must exceed degree.min")
-
-  if(bandwidth.min < 0) stop(" Error: bandwidth.min must be non-negative")
-  if(bandwidth.max < bandwidth.min) stop(" Error: bandwidth.max must exceed bandwidth.min")
-
-  if(cv=="degree-bandwidth") {
-    if(!is.null(degree) && any(degree>degree.max)) stop(" Error: degree supplied but exceeds degree.max")
-    if(!is.null(degree) && any(degree<degree.min)) stop(" Error: degree supplied but less than degree.min")
-  }
-  
-  maxPenalty <- sqrt(.Machine$double.xmax)
-
-  ## For nearest neighbour bandwidths override default bandwidth.min
-  ## and bandwidth.max and use sample size information.
-
-  num.bw <- ncol(xdat)
-  num.obs <- nrow(xdat)
-  
-  if(bwtype!="fixed") {
-    bandwidth.min <- 1
-    bandwidth.max <- num.obs-1
-  }
-
-  xdat <- as.data.frame(xdat)
-  
-  if(!is.null(bandwidth) && (length(bandwidth) != num.bw)) stop(" Error: bandwidth supplied but length not compatible with X data")
-
-  if(is.null(nmulti)) nmulti <- min(5,num.bw)
-
-  ## Determine which predictors are categorical and which are
-  ## discrete... we care about unordered categorical kernels if the
-  ## Aitchison & Aitken kernel is used since its bandwidth bounds are
-  ## [0,(c-1)/c] and not 0/1 as are the rest of the unordered and
-  ## ordered kernel bandwidth bounds.
-
-  xdat.numeric <- sapply(1:num.bw,function(i){is.numeric(xdat[,i])})
-  num.numeric <- ncol(as.data.frame(xdat[,xdat.numeric]))
-  numeric.index <- which(xdat.numeric==TRUE)
-
-  if(!is.null(degree) && length(degree) != num.numeric) stop(paste(" Error: degree vector supplied has ", length(degree), " elements but there exist ", num.numeric," numeric.predictors",sep=""))
-
-  xdat.unordered <- sapply(1:num.bw,function(i){is.factor(xdat[,i])&&!is.ordered(xdat[,i])})
-  num.unordered <- ncol(as.data.frame(xdat[,xdat.unordered]))
-
-  if(cv=="degree-bandwidth") {
-    bbin <- c(rep(0, num.bw), rep(1, num.numeric))
-    lb <- c(rep(bandwidth.min, num.bw), rep(degree.min, num.numeric))
-    ub <- c(rep(bandwidth.max, num.bw), rep(degree.max, num.numeric))
-  } else {
-    bbin <- c(rep(0, num.bw))
-    lb <- c(rep(bandwidth.min, num.bw))
-    ub <- c(rep(bandwidth.max, num.bw))
-  }
-
-  if(bwtype!="fixed" && num.numeric > 0) {
-    for(i in 1:num.numeric) {
-      k.max <- knn.max(xdat[,numeric.index[i]])
-      if(ub[numeric.index[i]] > k.max) ub[numeric.index[i]] <- k.max
-    }
-  }
-
-  ## Scale lb appropriately by n, don't want this for ub.
-
-  if(bwtype=="fixed" && num.numeric > 0) {
-    for(i in 1:num.numeric) {
-      sd.xdat <- sd.robust(xdat[,numeric.index[i]])
-      lb[numeric.index[i]] <- lb[numeric.index[i]]*sd.xdat*length(ydat)^{-1/(num.numeric+4)}
-      ub[numeric.index[i]] <- ub[numeric.index[i]]*sd.xdat
-    }
-  }
-
-  for(i in 1:num.bw) {
-    ## Need to do integer search for numeric predictors when bwtype is
-    ## a nearest-neighbour, so set bbin appropriately.
-    if(xdat.numeric[i]==TRUE && bwtype!="fixed") {
-      bbin[i] <- 1
-    }
-    if(xdat.numeric[i]!=TRUE) {
-      lb[i] <- 0.0
-      ub[i] <- 1.0
-    }
-    ## Check for unordered and Aitchison/Aitken kernel
-    if(xdat.unordered[i]==TRUE && ukertype=="aitchisonaitken") {
-      c.num <- length(unique(xdat[,i]))
-      ub[i] <- (c.num-1)/c.num
-    }
-  }
-
-  ## Use degree for initial values if provided
-
-  ill.conditioned <- check.max.degree(xdat,rep(degree.max,num.numeric),Bernstein=Bernstein)
-  degree.max.vec <- attr(ill.conditioned, "degree.max.vec")
-
-  if(cv == "degree-bandwidth") {
-    ub[(num.bw+1):(num.bw+num.numeric)] <- ifelse(ub[(num.bw+1):(num.bw+num.numeric)] > degree.max.vec, degree.max.vec, ub[(num.bw+1):(num.bw+num.numeric)])
-  }
-
-  if(is.null(degree)) {
-    if(cv == "degree-bandwidth") {
-      degree <- numeric(num.numeric)
-      for(i in 1:num.numeric) {
-#        degree[i] <- sample(degree.min:ub[(num.bw+1):(num.bw+num.numeric)][i], 1)
-        degree[i] <- 1;## Always start from local linear for first attempt...
-      }
-    }
-    else {
-      stop(paste(" Error: degree must be given when optimizing only bandwidth"))
-    }
-  }
-
-  ## Create the function wrappers to be fed to the snomadr solver for
-  ## leave-one-out cross-validation and Hurvich, Simonoff, and Tsai's
-  ## AIC_c approach
-
-  eval.lscv <- function(input, params){
-
-    ydat <- params$ydat
-    xdat <- params$xdat
-    xdat.numeric <- params$xdat.numeric
-    num.bw <- params$num.bw
-    num.numeric <- params$num.numeric
-    maxPenalty <- params$maxPenalty
-    degree <- params$degree
-    cv <- params$cv
-    ukertype <- params$ukertype
-    okertype <- params$okertype
-    bwtype <- params$bwtype
-    ridge.warning <- params$ridge.warning
-    Bernstein <- params$Bernstein
-
-    bw.gamma <- input[1:num.bw]
-    if(cv=="degree-bandwidth")
-      degree <- round(input[(num.bw+1):(num.bw+num.numeric)])
-
-    W <- W.glp(xdat=xdat,
-               degree=degree,
-               Bernstein=Bernstein)
-
-    if(rcond(t(W)%*%W)<.Machine$double.eps)
-      return(sqrt(.Machine$double.xmax))
-
-    if(all(bw.gamma>=0)&&all(bw.gamma[!xdat.numeric]<=1)) {
-      lscv <- minimand.cv.ls(bws=bw.gamma,
-                             ydat=ydat,
-                             xdat=xdat,
-                             degree=degree,
-                             W=W,
-                             ukertype=ukertype,
-                             okertype=okertype,
-                             bwtype=bwtype,
-                             ridge.warning=ridge.warning,
-                             ...)
-    } else {
-      lscv <- maxPenalty
-    }
-
-    return(lscv)
-  }
-
-  eval.aicc <- function(input, params){
-
-    ydat <- params$ydat
-    xdat <- params$xdat
-    xdat.numeric <- params$xdat.numeric
-    num.bw <- params$num.bw
-    num.numeric <- params$num.numeric
-    maxPenalty <- params$maxPenalty
-    degree <- params$degree
-    cv <- params$cv
-    ukertype <- params$ukertype
-    okertype <- params$okertype
-    bwtype <- params$bwtype
-    ridge.warning <- params$ridge.warning
-    Bernstein <- params$Bernstein
-    
-    bw.gamma <- input[1:num.bw]
-    if(cv=="degree-bandwidth")
-      degree <- round(input[(num.bw+1):(num.bw+num.numeric)])
-
-    W <- W.glp(xdat=xdat,
-               degree=degree,
-               Bernstein=Bernstein)
-
-    if(rcond(t(W)%*%W)<.Machine$double.eps)
-      return(sqrt(.Machine$double.xmax))
-
-    if(all(bw.gamma>=0)&&all(bw.gamma[!xdat.numeric]<=1)) {
-      aicc <- minimand.cv.aic(bws=bw.gamma,
-                              ydat=ydat,
-                              xdat=xdat,
-                              degree=degree,
-                              W=W,
-                              ukertype=ukertype,
-                              okertype=okertype,
-                              bwtype=bwtype,
-                              ridge.warning=ridge.warning,
-                              ...)
-    } else {
-      aicc <- maxPenalty
-    }
-
-    return(aicc)
-  }
-
-  ## Generate the params fed to the snomadr solver
-
-  params <- list()
-  params$xdat <- xdat
-  params$ydat <- ydat
-  params$xdat.numeric <- xdat.numeric
-  params$num.bw <- num.bw
-  params$num.numeric <- num.numeric
-  params$maxPenalty <- maxPenalty
-  params$cv <- cv
-  params$degree <- degree
-  params$ukertype <- ukertype
-  params$okertype <- okertype
-  params$bwtype <- bwtype
-  params$ridge.warning <- ridge.warning
-  params$Bernstein <- Bernstein
-
-  ## No constraints
-
-  bbout <-c(0)
-
-  ## Multistarting
-
-  fv.vec <- numeric(nmulti)
-
-  ## Whether or not to display the information in snomadr
-  print.output <- FALSE
-  console <- newLineConsole()
-  if(!is.null(opts$DISPLAY_DEGREE)){
-    if(opts$DISPLAY_DEGREE>0){
-      print.output <-TRUE
-      console <- printPush("\rCalling NOMAD (Nonsmooth Optimization by Mesh Adaptive Direct Search)\n",console = console)
-    }
-  } else {
-    print.output <-TRUE
-    console <- printPush("\rCalling NOMAD (Nonsmooth Optimization by Mesh Adaptive Direct Search)\n",console = console)
-  }
-
-  degree.opt <- degree
-
-  ## Use bandwidth for initial values if provided
-
-  if(is.null(bandwidth)) {
-    init.search.vals <- runif(num.bw,0,1)
-    for(i in 1:num.bw) {
-      if(xdat.numeric[i]==TRUE && bwtype=="fixed") {
-        init.search.vals[i] <- runif(1,.5,1.5)*sd.robust(xdat[,i])*nrow(xdat)^{-1/(4+num.numeric)}
-      } 
-      if(xdat.numeric[i]==TRUE && bwtype!="fixed") {
-        init.search.vals[i] <- round(runif(1,2,sqrt(ub[i])))
-      }
-      if(xdat.unordered[i]==TRUE && ukertype=="aitchisonaitken") {
-        c.num <- length(unique(xdat[,i]))
-        init.search.vals[i] <- runif(1,0,(c.num-1)/c.num)
-      }
-    }
-  } else {
-    init.search.vals <- bandwidth
-  }
-
-  ## Generate all initial points for the multiple restarting
-	x0.pts <- matrix(numeric(1), nmulti, length(bbin))
-	for(iMulti in 1:nmulti) {
-    ## First initialize to values for factors (`liracine' kernel)
-    if(iMulti != 1) {
-      init.search.vals <- runif(num.bw,0,1)
-      for(i in 1:num.bw) {
-        if(xdat.numeric[i]==TRUE && bwtype=="fixed") {
-          init.search.vals[i] <- runif(1,.5,1.5)*sd.robust(xdat[,i])*nrow(xdat)^{-1/(4+num.numeric)}
-        }
-        if(xdat.numeric[i]==TRUE && bwtype!="fixed") {
-          init.search.vals[i] <- round(runif(1,2,sqrt(ub[i])))
-        }
-        if(xdat.unordered[i]==TRUE && ukertype=="aitchisonaitken") {
-          c.num <- length(unique(xdat[,i]))
-          init.search.vals[i] <- runif(1,0,(c.num-1)/c.num)
-        }
-      }
-    }
-    
-    if(cv == "degree-bandwidth" && iMulti != 1) {
-      for(i in 1:num.numeric) {
-        degree[i] <- sample(degree.min:ub[(num.bw+1):(num.bw+num.numeric)][i], 1)
-      }
-    }
-    
-    if(cv =="degree-bandwidth"){
-      x0.pts[iMulti, ] <- c(init.search.vals, degree)
+		if(exists(".Random.seed", .GlobalEnv)) {
+				save.seed <- get(".Random.seed", .GlobalEnv)
+				exists.seed = TRUE
+		} else {
+				exists.seed = FALSE
 		}
-    else {
-      x0.pts[iMulti, ] <- c(init.search.vals)
+
+		set.seed(random.seed)
+
+		ukertype <- match.arg(ukertype)
+		okertype <- match.arg(okertype)
+		bwtype <- match.arg(bwtype)  
+		bwmethod <- match.arg(bwmethod)
+		cv <- match.arg(cv)
+
+		if(is.null(ydat)) stop(" Error: You must provide y data")
+		if(is.null(xdat)) stop(" Error: You must provide X data")
+		if(!is.null(nmulti) && nmulti < 1) stop(paste(" Error: nmulti must be a positive integer (minimum 1)\nnmulti is (", nmulti, ")\n",sep=""))
+
+		if(!is.null(degree) && any(degree < 0)) stop(paste(" Error: degree vector must contain non-negative integers\ndegree is (", degree, ")\n",sep=""))
+
+		if(degree.min < 0 ) stop(" Error: degree.min must be a non-negative integer")
+		if(degree.max < degree.min) stop(" Error: degree.max must exceed degree.min")
+
+		if(bandwidth.min < 0) stop(" Error: bandwidth.min must be non-negative")
+		if(bandwidth.max < bandwidth.min) stop(" Error: bandwidth.max must exceed bandwidth.min")
+
+		if(cv=="degree-bandwidth") {
+				if(!is.null(degree) && any(degree>degree.max)) stop(" Error: degree supplied but exceeds degree.max")
+				if(!is.null(degree) && any(degree<degree.min)) stop(" Error: degree supplied but less than degree.min")
 		}
-    
-	}
 
-	if(bwmethod == "cv.ls" ) {
-			solution<-snomadr(eval.f=eval.lscv,
-												n=length(bbin),
-												x0=as.numeric(x0.pts),
-												bbin=bbin,
-												bbout=bbout,
-												lb=lb,
-												ub=ub,
-												nmulti=ifelse(nmulti==1,0,nmulti),
-												random.seed=random.seed,
-												opts=opts,
-												print.output=print.output,
-												params=params);
+		maxPenalty <- sqrt(.Machine$double.xmax)
 
-	} else {
-			solution<-snomadr(eval.f=eval.aicc,
-												n=length(bbin),
-												x0=as.numeric(x0.pts),
-												bbin=bbin,
-												bbout=bbout,
-												lb=lb,
-												ub=ub,
-												nmulti=ifelse(nmulti==1,0,nmulti),
-												random.seed=random.seed,
-												opts=opts,
-												print.output=print.output,
-												params=params);
-	}
+		## For nearest neighbour bandwidths override default bandwidth.min
+		## and bandwidth.max and use sample size information.
 
-	fv.vec[1] <- solution$objective
+		num.bw <- ncol(xdat)
+		num.obs <- nrow(xdat)
 
-	bw.opt <- solution$solution[1:num.bw]
-  bw.opt.sf <- NULL
-  if(bwtype=="fixed") {
-    bw.opt.sf <- bw.opt
-    for(i in 1:num.numeric) {
-      sd.xdat <- sd.robust(xdat[,numeric.index[i]])
-      bw.opt.sf[numeric.index[i]] <- bw.opt[numeric.index[i]]/sd.xdat*length(ydat)^{1/(num.numeric+4)}
-    }
-  }
+		if(bwtype!="fixed") {
+				bandwidth.min <- 1
+				bandwidth.max <- num.obs-1
+		}
 
-	if(cv == "degree-bandwidth") {
-    degree.opt <- solution$solution[(num.bw+1):(num.bw+num.numeric)]
-    for(i in num.numeric){
-      if(isTRUE(all.equal(degree.opt[i],ub[num.bw+i]))) warning(paste(" Optimal degree for numeric predictor ",i," equals search upper bound (", ub[num.bw+i],")",sep=""))
-    }
-	}
-	fv <- solution$objective
+		xdat <- as.data.frame(xdat)
 
-	best <- NULL
-	numimp <- 0
+		if(!is.null(bandwidth) && (length(bandwidth) != num.bw)) stop(" Error: bandwidth supplied but length not compatible with X data")
 
-  for(i in num.bw) {
-    if(isTRUE(all.equal(bw.opt[i],lb[i]))) warning(paste(" Optimal bandwidth for predictor ",i," equals search lower bound (", formatC(lb[i],digits=3,format="g"),"): rerun with smaller bandwidth.min",sep=""))
-  }
+		if(is.null(nmulti)) nmulti <- min(5,num.bw)
 
-  console <- printPush("\r                        ",console = console)
-  console <- printClear(console)
-  console <- printPop(console)
+		## Determine which predictors are categorical and which are
+		## discrete... we care about unordered categorical kernels if the
+		## Aitchison & Aitken kernel is used since its bandwidth bounds are
+		## [0,(c-1)/c] and not 0/1 as are the rest of the unordered and
+		## ordered kernel bandwidth bounds.
 
-  ## Restore seed
+		xdat.numeric <- sapply(1:num.bw,function(i){is.numeric(xdat[,i])})
+		num.numeric <- ncol(as.data.frame(xdat[,xdat.numeric]))
+		numeric.index <- which(xdat.numeric==TRUE)
 
-  if(exists.seed) assign(".Random.seed", save.seed, .GlobalEnv)
+		if(!is.null(degree) && length(degree) != num.numeric) stop(paste(" Error: degree vector supplied has ", length(degree), " elements but there exist ", num.numeric," numeric.predictors",sep=""))
 
-  if(isTRUE(all.equal(fv,sqrt(.Machine$double.xmax)))) stop(" Search failed: restart with larger nmulti or smaller degree.max")
+		xdat.unordered <- sapply(1:num.bw,function(i){is.factor(xdat[,i])&&!is.ordered(xdat[,i])})
+		num.unordered <- ncol(as.data.frame(xdat[,xdat.unordered]))
 
-  return(list(bws=bw.opt,
-              bws.sf=bw.opt.sf,
-              fv=fv,
-              numimp=numimp,
-              best=best,
-              fv.vec=fv.vec,
-              degree=degree.opt,
-              bwtype=bwtype,
-              ukertype=ukertype,
-              okertype=okertype))
+		if(cv=="degree-bandwidth") {
+				bbin <- c(rep(0, num.bw), rep(1, num.numeric))
+				lb <- c(rep(bandwidth.min, num.bw), rep(degree.min, num.numeric))
+				ub <- c(rep(bandwidth.max, num.bw), rep(degree.max, num.numeric))
+		} else {
+				bbin <- c(rep(0, num.bw))
+				lb <- c(rep(bandwidth.min, num.bw))
+				ub <- c(rep(bandwidth.max, num.bw))
+		}
+
+		if(bwtype!="fixed" && num.numeric > 0) {
+				for(i in 1:num.numeric) {
+						k.max <- knn.max(xdat[,numeric.index[i]])
+						if(ub[numeric.index[i]] > k.max) ub[numeric.index[i]] <- k.max
+				}
+		}
+
+		## Scale lb appropriately by n, don't want this for ub.
+
+		if(bwtype=="fixed" && num.numeric > 0) {
+				for(i in 1:num.numeric) {
+						sd.xdat <- sd.robust(xdat[,numeric.index[i]])
+						lb[numeric.index[i]] <- lb[numeric.index[i]]*sd.xdat*length(ydat)^{-1/(num.numeric+4)}
+						ub[numeric.index[i]] <- ub[numeric.index[i]]*sd.xdat
+				}
+		}
+
+		for(i in 1:num.bw) {
+				## Need to do integer search for numeric predictors when bwtype is
+				## a nearest-neighbour, so set bbin appropriately.
+				if(xdat.numeric[i]==TRUE && bwtype!="fixed") {
+						bbin[i] <- 1
+				}
+				if(xdat.numeric[i]!=TRUE) {
+						lb[i] <- 0.0
+						ub[i] <- 1.0
+				}
+				## Check for unordered and Aitchison/Aitken kernel
+				if(xdat.unordered[i]==TRUE && ukertype=="aitchisonaitken") {
+						c.num <- length(unique(xdat[,i]))
+						ub[i] <- (c.num-1)/c.num
+				}
+		}
+
+		## Use degree for initial values if provided
+
+		ill.conditioned <- check.max.degree(xdat,rep(degree.max,num.numeric),Bernstein=Bernstein)
+		degree.max.vec <- attr(ill.conditioned, "degree.max.vec")
+
+		if(cv == "degree-bandwidth") {
+				ub[(num.bw+1):(num.bw+num.numeric)] <- ifelse(ub[(num.bw+1):(num.bw+num.numeric)] > degree.max.vec, degree.max.vec, ub[(num.bw+1):(num.bw+num.numeric)])
+		}
+
+		if(is.null(degree)) {
+				if(cv == "degree-bandwidth") {
+						degree <- numeric(num.numeric)
+						for(i in 1:num.numeric) {
+								#        degree[i] <- sample(degree.min:ub[(num.bw+1):(num.bw+num.numeric)][i], 1)
+								degree[i] <- 1;## Always start from local linear for first attempt...
+						}
+				}
+				else {
+						stop(paste(" Error: degree must be given when optimizing only bandwidth"))
+				}
+		}
+
+		## Create the function wrappers to be fed to the snomadr solver for
+		## leave-one-out cross-validation and Hurvich, Simonoff, and Tsai's
+		## AIC_c approach
+
+		eval.lscv <- function(input, params){
+
+				ydat <- params$ydat
+				xdat <- params$xdat
+				xdat.numeric <- params$xdat.numeric
+				num.bw <- params$num.bw
+				num.numeric <- params$num.numeric
+				maxPenalty <- params$maxPenalty
+				degree <- params$degree
+				cv <- params$cv
+				ukertype <- params$ukertype
+				okertype <- params$okertype
+				bwtype <- params$bwtype
+				ridge.warning <- params$ridge.warning
+				Bernstein <- params$Bernstein
+
+				bw.gamma <- input[1:num.bw]
+				if(cv=="degree-bandwidth")
+						degree <- round(input[(num.bw+1):(num.bw+num.numeric)])
+
+				W <- W.glp(xdat=xdat,
+									 degree=degree,
+									 Bernstein=Bernstein)
+
+				if(rcond(t(W)%*%W)<.Machine$double.eps)
+						return(sqrt(.Machine$double.xmax))
+
+				if(all(bw.gamma>=0)&&all(bw.gamma[!xdat.numeric]<=1)) {
+						lscv <- minimand.cv.ls(bws=bw.gamma,
+																	 ydat=ydat,
+																	 xdat=xdat,
+																	 degree=degree,
+																	 W=W,
+																	 ukertype=ukertype,
+																	 okertype=okertype,
+																	 bwtype=bwtype,
+																	 ridge.warning=ridge.warning,
+																	 ...)
+				} else {
+						lscv <- maxPenalty
+				}
+
+				return(lscv)
+		}
+
+		eval.aicc <- function(input, params){
+
+				ydat <- params$ydat
+				xdat <- params$xdat
+				xdat.numeric <- params$xdat.numeric
+				num.bw <- params$num.bw
+				num.numeric <- params$num.numeric
+				maxPenalty <- params$maxPenalty
+				degree <- params$degree
+				cv <- params$cv
+				ukertype <- params$ukertype
+				okertype <- params$okertype
+				bwtype <- params$bwtype
+				ridge.warning <- params$ridge.warning
+				Bernstein <- params$Bernstein
+
+				bw.gamma <- input[1:num.bw]
+				if(cv=="degree-bandwidth")
+						degree <- round(input[(num.bw+1):(num.bw+num.numeric)])
+
+				W <- W.glp(xdat=xdat,
+									 degree=degree,
+									 Bernstein=Bernstein)
+
+				if(rcond(t(W)%*%W)<.Machine$double.eps)
+						return(sqrt(.Machine$double.xmax))
+
+				if(all(bw.gamma>=0)&&all(bw.gamma[!xdat.numeric]<=1)) {
+						aicc <- minimand.cv.aic(bws=bw.gamma,
+																		ydat=ydat,
+																		xdat=xdat,
+																		degree=degree,
+																		W=W,
+																		ukertype=ukertype,
+																		okertype=okertype,
+																		bwtype=bwtype,
+																		ridge.warning=ridge.warning,
+																		...)
+				} else {
+						aicc <- maxPenalty
+				}
+
+				return(aicc)
+		}
+
+		## Generate the params fed to the snomadr solver
+
+		params <- list()
+		params$xdat <- xdat
+		params$ydat <- ydat
+		params$xdat.numeric <- xdat.numeric
+		params$num.bw <- num.bw
+		params$num.numeric <- num.numeric
+		params$maxPenalty <- maxPenalty
+		params$cv <- cv
+		params$degree <- degree
+		params$ukertype <- ukertype
+		params$okertype <- okertype
+		params$bwtype <- bwtype
+		params$ridge.warning <- ridge.warning
+		params$Bernstein <- Bernstein
+
+		## No constraints
+
+		bbout <-c(0)
+
+		## Multistarting
+
+		fv.vec <- numeric(nmulti)
+
+		## Whether or not to display the information in snomadr
+		print.output <- FALSE
+		console <- newLineConsole()
+		if(!is.null(opts$DISPLAY_DEGREE)){
+				if(opts$DISPLAY_DEGREE>0){
+						print.output <-TRUE
+						console <- printPush("\rCalling NOMAD (Nonsmooth Optimization by Mesh Adaptive Direct Search)\n",console = console)
+				}
+		} else {
+				print.output <-TRUE
+				console <- printPush("\rCalling NOMAD (Nonsmooth Optimization by Mesh Adaptive Direct Search)\n",console = console)
+		}
+
+		degree.opt <- degree
+
+		## Use bandwidth for initial values if provided
+
+		if(is.null(bandwidth)) {
+				init.search.vals <- runif(num.bw,0,1)
+				for(i in 1:num.bw) {
+						if(xdat.numeric[i]==TRUE && bwtype=="fixed") {
+								init.search.vals[i] <- runif(1,.5,1.5)*sd.robust(xdat[,i])*nrow(xdat)^{-1/(4+num.numeric)}
+						} 
+						if(xdat.numeric[i]==TRUE && bwtype!="fixed") {
+								init.search.vals[i] <- round(runif(1,2,sqrt(ub[i])))
+						}
+						if(xdat.unordered[i]==TRUE && ukertype=="aitchisonaitken") {
+								c.num <- length(unique(xdat[,i]))
+								init.search.vals[i] <- runif(1,0,(c.num-1)/c.num)
+						}
+				}
+		} else {
+				init.search.vals <- bandwidth
+		}
+
+		## Generate all initial points for the multiple restarting
+		x0.pts <- matrix(numeric(1), nmulti, length(bbin))
+		for(iMulti in 1:nmulti) {
+				## First initialize to values for factors (`liracine' kernel)
+				if(iMulti != 1) {
+						init.search.vals <- runif(num.bw,0,1)
+						for(i in 1:num.bw) {
+								if(xdat.numeric[i]==TRUE && bwtype=="fixed") {
+										init.search.vals[i] <- runif(1,.5,1.5)*sd.robust(xdat[,i])*nrow(xdat)^{-1/(4+num.numeric)}
+								}
+								if(xdat.numeric[i]==TRUE && bwtype!="fixed") {
+										init.search.vals[i] <- round(runif(1,2,sqrt(ub[i])))
+								}
+								if(xdat.unordered[i]==TRUE && ukertype=="aitchisonaitken") {
+										c.num <- length(unique(xdat[,i]))
+										init.search.vals[i] <- runif(1,0,(c.num-1)/c.num)
+								}
+						}
+				}
+
+				if(cv == "degree-bandwidth" && iMulti != 1) {
+						for(i in 1:num.numeric) {
+								degree[i] <- sample(degree.min:ub[(num.bw+1):(num.bw+num.numeric)][i], 1)
+						}
+				}
+
+				if(cv =="degree-bandwidth"){
+						x0.pts[iMulti, ] <- c(init.search.vals, degree)
+				}
+				else {
+						x0.pts[iMulti, ] <- c(init.search.vals)
+				}
+
+		}
+
+		if(bwmethod == "cv.ls" ) {
+				solution<-snomadr(eval.f=eval.lscv,
+													n=length(bbin),
+													x0=as.numeric(x0.pts),
+													bbin=bbin,
+													bbout=bbout,
+													lb=lb,
+													ub=ub,
+													nmulti=ifelse(nmulti==1,0,nmulti),
+													random.seed=random.seed,
+													opts=opts,
+													print.output=print.output,
+													params=params);
+
+		} else {
+				solution<-snomadr(eval.f=eval.aicc,
+													n=length(bbin),
+													x0=as.numeric(x0.pts),
+													bbin=bbin,
+													bbout=bbout,
+													lb=lb,
+													ub=ub,
+													nmulti=ifelse(nmulti==1,0,nmulti),
+													random.seed=random.seed,
+													opts=opts,
+													print.output=print.output,
+													params=params);
+		}
+
+		fv.vec[1] <- solution$objective
+
+		bw.opt <- solution$solution[1:num.bw]
+		bw.opt.sf <- NULL
+		if(bwtype=="fixed") {
+				bw.opt.sf <- bw.opt
+				for(i in 1:num.numeric) {
+						sd.xdat <- sd.robust(xdat[,numeric.index[i]])
+						bw.opt.sf[numeric.index[i]] <- bw.opt[numeric.index[i]]/sd.xdat*length(ydat)^{1/(num.numeric+4)}
+				}
+		}
+
+		if(cv == "degree-bandwidth") {
+				degree.opt <- solution$solution[(num.bw+1):(num.bw+num.numeric)]
+				for(i in num.numeric){
+						if(isTRUE(all.equal(degree.opt[i],ub[num.bw+i]))) warning(paste(" Optimal degree for numeric predictor ",i," equals search upper bound (", ub[num.bw+i],")",sep=""))
+				}
+		}
+		fv <- solution$objective
+
+		best <- NULL
+		numimp <- 0
+
+		for(i in num.bw) {
+				if(isTRUE(all.equal(bw.opt[i],lb[i]))) warning(paste(" Optimal bandwidth for predictor ",i," equals search lower bound (", formatC(lb[i],digits=3,format="g"),"): rerun with smaller bandwidth.min",sep=""))
+		}
+
+		console <- printPush("\r                        ",console = console)
+		console <- printClear(console)
+		console <- printPop(console)
+
+		## Restore seed
+
+		if(exists.seed) assign(".Random.seed", save.seed, .GlobalEnv)
+
+		if(isTRUE(all.equal(fv,sqrt(.Machine$double.xmax)))) stop(" Search failed: restart with larger nmulti or smaller degree.max")
+
+		return(list(bws=bw.opt,
+								bws.sf=bw.opt.sf,
+								fv=fv,
+								numimp=numimp,
+								best=best,
+								fv.vec=fv.vec,
+								degree=degree.opt,
+								bwtype=bwtype,
+								ukertype=ukertype,
+								okertype=okertype))
 
 }
 
 compute.bootstrap.errors <- function(tydat,
-                                     txdat,
-                                     exdat,
-                                     eydat,
-                                     bws,
-                                     degree,
-                                     ukertype,
-                                     okertype,
-                                     bwtype,boot.object=c("fitted","gradient","gradient.categorical"),
-                                     plot.errors.boot.num=99,
-                                     plot.errors.type=c("quantiles","standard"),
-                                     plot.errors.quantiles=c(.025,.975),
-                                     alpha=0.05,
-                                     gradient.vec=NULL,
-                                     gradient.categorical=FALSE,
-                                     gradient.categorical.index=NULL,
-                                     Bernstein=TRUE,
-                                     ...){
-  
-  plot.errors.type <- match.arg(plot.errors.type)
-  boot.object <- match.arg(boot.object)
+																		 txdat,
+																		 exdat,
+																		 eydat,
+																		 bws,
+																		 degree,
+																		 ukertype,
+																		 okertype,
+																		 bwtype,boot.object=c("fitted","gradient","gradient.categorical"),
+																		 plot.errors.boot.num=99,
+																		 plot.errors.type=c("quantiles","standard"),
+																		 plot.errors.quantiles=c(.025,.975),
+																		 alpha=0.05,
+																		 gradient.vec=NULL,
+																		 gradient.categorical=FALSE,
+																		 gradient.categorical.index=NULL,
+																		 Bernstein=TRUE,
+																		 ...){
 
-  if(missing(exdat)) {
-    neval <- nrow(txdat)
-    exdat <- txdat
-  } else {
-    neval <- nrow(exdat)
-  }
+		plot.errors.type <- match.arg(plot.errors.type)
+		boot.object <- match.arg(boot.object)
 
-  boot.err <- matrix(data = NA, nrow = neval, ncol = 2)
+		if(missing(exdat)) {
+				neval <- nrow(txdat)
+				exdat <- txdat
+		} else {
+				neval <- nrow(exdat)
+		}
 
-  ## Conduct simple iid residual bootstrap
+		boot.err <- matrix(data = NA, nrow = neval, ncol = 2)
 
-  boot.func.mean <- function(model.fitted,indices){
-    est.boot <- npglpreg(tydat=model.fitted+(tydat-model.fitted)[indices],
-                         txdat=txdat,
-                         exdat=exdat,
-                         bws=bws,
-                         degree=degree,
-                         ukertype=ukertype,
-                         okertype=okertype,
-                         bwtype=bwtype,
-                         gradient.vec=gradient.vec,
-                         gradient.categorical=gradient.categorical,
-                         gradient.categorical.index=gradient.categorical.index,
-                         Bernstein=Bernstein,
-                         ...)
-    if(boot.object=="fitted") {
-      return(est.boot$fitted.values)
-    } else if(boot.object=="gradient") {
-      return(est.boot$gradient)
-    } else if(boot.object=="gradient.categorical") {
-      return(est.boot$gradient.categorical.mat[,gradient.categorical.index])
-    }
-  }
-  
-  ## Fitted values for the training data required
-  
-  est <- npglpreg(tydat=tydat,
-                  txdat=txdat,
-                  bws=bws,
-                  degree=degree,
-                  ukertype=ukertype,
-                  okertype=okertype,
-                  bwtype=bwtype,
-                  Bernstein=Bernstein,
-                  ...)
-  
-  model.fitted <- est$fitted.values
-  
-  boot.out <- boot(data = model.fitted,
-                   statistic = boot.func.mean,
-                   R = plot.errors.boot.num)
-  
-  if (plot.errors.type == "standard") {
-    boot.err[,1:2] <- qnorm(1-alpha/2)*sqrt(diag(cov(boot.out$t)))
-    boot.err[,1] <- boot.out$t0 - boot.err[,1]
-    boot.err[,2] <- boot.out$t0 + boot.err[,2]
-  }
-  else if (plot.errors.type == "quantiles") {
-    boot.err[,1:2] <- t(sapply(as.data.frame(boot.out$t),
-                               function (y) {
-                                 quantile(y,probs = plot.errors.quantiles)
-                               }))
-  }
-  
-  return(cbind(boot.out$t0,boot.err))
+		## Conduct simple iid residual bootstrap
+
+		boot.func.mean <- function(model.fitted,indices){
+				est.boot <- npglpreg(tydat=model.fitted+(tydat-model.fitted)[indices],
+														 txdat=txdat,
+														 exdat=exdat,
+														 bws=bws,
+														 degree=degree,
+														 ukertype=ukertype,
+														 okertype=okertype,
+														 bwtype=bwtype,
+														 gradient.vec=gradient.vec,
+														 gradient.categorical=gradient.categorical,
+														 gradient.categorical.index=gradient.categorical.index,
+														 Bernstein=Bernstein,
+														 ...)
+				if(boot.object=="fitted") {
+						return(est.boot$fitted.values)
+				} else if(boot.object=="gradient") {
+						return(est.boot$gradient)
+				} else if(boot.object=="gradient.categorical") {
+						return(est.boot$gradient.categorical.mat[,gradient.categorical.index])
+				}
+		}
+
+		## Fitted values for the training data required
+
+		est <- npglpreg(tydat=tydat,
+										txdat=txdat,
+										bws=bws,
+										degree=degree,
+										ukertype=ukertype,
+										okertype=okertype,
+										bwtype=bwtype,
+										Bernstein=Bernstein,
+										...)
+
+		model.fitted <- est$fitted.values
+
+		boot.out <- boot(data = model.fitted,
+										 statistic = boot.func.mean,
+										 R = plot.errors.boot.num)
+
+		if (plot.errors.type == "standard") {
+				boot.err[,1:2] <- qnorm(1-alpha/2)*sqrt(diag(cov(boot.out$t)))
+				boot.err[,1] <- boot.out$t0 - boot.err[,1]
+				boot.err[,2] <- boot.out$t0 + boot.err[,2]
+		}
+		else if (plot.errors.type == "quantiles") {
+				boot.err[,1:2] <- t(sapply(as.data.frame(boot.out$t),
+																	 function (y) {
+																			 quantile(y,probs = plot.errors.quantiles)
+																	 }))
+		}
+
+		return(cbind(boot.out$t0,boot.err))
 
 }
 
 plot.npglpreg <- function(x,
-                          mean=TRUE,
-                          deriv=0,
-                          ci=FALSE,
-                          num.eval=100,
-                          common.scale=TRUE,
-                          xtrim = 0.0,
-                          xq = 0.5,
-                          plot.behavior = c("plot","plot-data","data"),
-                          plot.errors.boot.num=99,
-                          plot.errors.type=c("quantiles","standard"),
-                          plot.errors.quantiles=c(.025,.975),
-                          persp.rgl=FALSE,
-                          ...) {
-  
-  plot.behavior <- match.arg(plot.behavior)
-  plot.errors.type <- match.arg(plot.errors.type)
+													mean=TRUE,
+													deriv=0,
+													ci=FALSE,
+													num.eval=100,
+													common.scale=TRUE,
+													xtrim = 0.0,
+													xq = 0.5,
+													plot.behavior = c("plot","plot-data","data"),
+													plot.errors.boot.num=99,
+													plot.errors.type=c("quantiles","standard"),
+													plot.errors.quantiles=c(.025,.975),
+													persp.rgl=FALSE,
+													...) {
 
-  object <- x
+		plot.behavior <- match.arg(plot.behavior)
+		plot.errors.type <- match.arg(plot.errors.type)
 
-  ## Needed for correctly obtaining predictions
+		object <- x
 
-  degree <- object$degree
-  bws <- object$bws
-  bwtype <- object$bwtype
-  ukertype <- object$ukertype
-  okertype <- object$okertype
-  Bernstein <- object$Bernstein
-  
-  txdat <- object$x
-  tydat <- object$y
+		## Needed for correctly obtaining predictions
 
-  xq <- double(ncol(txdat)) + xq
+		degree <- object$degree
+		bws <- object$bws
+		bwtype <- object$bwtype
+		ukertype <- object$ukertype
+		okertype <- object$okertype
+		Bernstein <- object$Bernstein
 
-  console <- newLineConsole()
-  console <- printClear(console)
-  console <- printPop(console)
-  console <- printPush("\rWorking...",console = console)
+		txdat <- object$x
+		tydat <- object$y
 
-  ## Mean
-  
-  if(mean==TRUE && deriv==0) {
+		xq <- double(ncol(txdat)) + xq
 
-    if(!persp.rgl) {
-      
-      mg <- list()
-      
-      for(i in 1:NCOL(object$x)) {
-        
-        if(!is.factor(object$x[,i])) {
-          exdat <- matrix(NA,nrow=num.eval,ncol=NCOL(object$x))
-          neval <- num.eval
-        } else {
-          neval <- length(unique(object$x[,i]))
-          exdat <- matrix(NA,nrow=neval,ncol=NCOL(object$x))
-        }
-        
-        exdat <- data.frame(exdat)
-        
-        if(!is.factor(object$x[,i])) {
-          xlim <- trim.quantiles(object$x[,i],xtrim)          
-          exdat[,i] <- seq(xlim[1],xlim[2],length=neval)
-        } else {
-          exdat[,i] <- sort(unique(object$x[,i]))
-        }
-        
-        for(j in (1:NCOL(object$x))[-i]) {
-          exdat[,j] <- rep(uocquantile(object$x[,j],prob=xq[j]),neval)
-        }
+		console <- newLineConsole()
+		console <- printClear(console)
+		console <- printPop(console)
+		console <- printPush("\rWorking...",console = console)
 
-        names(exdat) <- object$xnames
+		## Mean
 
-        est <- npglpreg.default(tydat=tydat,
-                                txdat=txdat,
-                                exdat=exdat,
-                                bws=bws,
-                                degree=degree,
-                                ukertype=ukertype,
-                                okertype=okertype,
-                                bwtype=bwtype,
-                                Bernstein=Bernstein,
-                                ...)
+		if(mean==TRUE && deriv==0) {
 
-        fitted.values <- est$fitted.values
+				if(!persp.rgl) {
 
-        if(!ci) {
-          
-          mg[[i]] <- data.frame(exdat[,i],fitted.values)
-          names(mg[[i]]) <- c(names(exdat)[i],"mean")
-          
-        } else {
+						mg <- list()
 
-          console <- printClear(console)
-          console <- printPop(console)
-          console <- printPush(paste("\rConducting ",plot.errors.boot.num," bootstrap resamples for predictor ",i,"...",sep=""),console = console)
-          
-          ci.out <- compute.bootstrap.errors(tydat=tydat,
-                                             txdat=txdat,
-                                             exdat=exdat,
-                                             bws=bws,
-                                             degree=degree,
-                                             ukertype=ukertype,
-                                             okertype=okertype,
-                                             bwtype=bwtype,
-                                             boot.object="fitted",
-                                             plot.errors.boot.num=plot.errors.boot.num,
-                                             plot.errors.type=plot.errors.type,
-                                             plot.errors.quantiles=plot.errors.quantiles)
-          
-          mg[[i]] <- data.frame(exdat[,i],ci.out)
-          names(mg[[i]]) <- c(names(exdat)[i],"mean","lwr","upr")
-          
-        }
+						for(i in 1:NCOL(object$x)) {
 
-      }
-      
-      if(common.scale) {
-        min.mg <- Inf
-        max.mg <- -Inf
-        for(i in 1:length(mg)) {
-          min.mg <- min(min.mg,min(mg[[i]][,-1]))
-          max.mg <- max(max.mg,max(mg[[i]][,-1]))
-        }
-        ylim <- c(min.mg,max.mg)
-      } else {
-        ylim <- NULL
-      }
-      
-      if(plot.behavior!="data") {
+								if(!is.factor(object$x[,i])) {
+										exdat <- matrix(NA,nrow=num.eval,ncol=NCOL(object$x))
+										neval <- num.eval
+								} else {
+										neval <- length(unique(object$x[,i]))
+										exdat <- matrix(NA,nrow=neval,ncol=NCOL(object$x))
+								}
 
-        if(!is.null(object$num.categorical)||(object$num.numeric>1)) par(mfrow=dim.plot(NCOL(object$x)))
-      
-        for(i in 1:NCOL(object$x)) {
+								exdat <- data.frame(exdat)
 
-          if(!ci) {
-        
-            plot(mg[[i]][,1],mg[[i]][,2],
-                 xlab=names(exdat)[i],
-                 ylab="Conditional Mean",
-                 ylim=ylim,
-                 type="l")
-            
-          } else {
-            if(!common.scale) ylim <- c(min(mg[[i]][,-1]),max(mg[[i]][,-1]))
-            plot(mg[[i]][,1],mg[[i]][,2],
-                 xlab=names(exdat)[i],
-                 ylab="Conditional Mean",
-                 ylim=ylim,
-                 type="l")
-            ## Need to overlay for proper plotting of factor errorbars
-            par(new=TRUE)
-            plot(mg[[i]][,1],mg[[i]][,3],
-                 xlab="",
-                 ylab="",
-                 ylim=ylim,
-                 type="l",
-                 axes=FALSE,
-                 lty=2,
-                 col=2)
-            par(new=TRUE)
-            plot(mg[[i]][,1],mg[[i]][,4],
-                 xlab="",
-                 ylab="",
-                 ylim=ylim,
-                 type="l",
-                 axes=FALSE,
-                 lty=2,
-                 col=2)
-          }
-          
-        }
-        
-      }
-      
-    } else {
-      
-      if(!require(rgl)) stop(" Error: you must first install the rgl package")
-      
-      if(object$num.categorical != 0) stop(" Error: persp3d is for continuous predictors only")
-      if(object$num.numeric != 2) stop(" Error: persp3d is for cases involving two continuous predictors only")
-      
-      newdata <- matrix(NA,nrow=num.eval,ncol=2)
-      newdata <- data.frame(newdata)
-      
-      xlim <- trim.quantiles(object$x[,1],xtrim)
-      ylim <- trim.quantiles(object$x[,2],xtrim)      
-      
-      x1.seq <- seq(xlim[1],xlim[2],length=num.eval)
-      x2.seq <- seq(ylim[1],ylim[2],length=num.eval)    
-      x.grid <- expand.grid(x1.seq,x2.seq)
-      newdata <- data.frame(x.grid[,1],x.grid[,2])
-      names(newdata) <- names(object$x)
-      
-      z <- matrix(predict(object,newdata=newdata),num.eval,num.eval)
+								if(!is.factor(object$x[,i])) {
+										xlim <- trim.quantiles(object$x[,i],xtrim)          
+										exdat[,i] <- seq(xlim[1],xlim[2],length=neval)
+								} else {
+										exdat[,i] <- sort(unique(object$x[,i]))
+								}
 
-      mg <- list()
+								for(j in (1:NCOL(object$x))[-i]) {
+										exdat[,j] <- rep(uocquantile(object$x[,j],prob=xq[j]),neval)
+								}
 
-      mg[[1]] <- data.frame(newdata,z)
+								names(exdat) <- object$xnames
 
-      if(plot.behavior!="data") {
-        
-        num.colors <- 1000
-        colorlut <- topo.colors(num.colors) 
-        col <- colorlut[ (num.colors-1)*(z-min(z))/(max(z)-min(z)) + 1 ]
-        
-        open3d()
-        
-        par3d(windowRect=c(900,100,900+640,100+640))
-        rgl.viewpoint(theta = 0, phi = -70, fov = 80)
-        
-        persp3d(x=x1.seq,y=x2.seq,z=z,
-                xlab=names(object$x)[1],ylab=names(object$x)[2],zlab="Y",
-                ticktype="detailed",      
-                border="red",
-                color=col,
-                alpha=.7,
-                back="lines",
-                main="Conditional Mean")
-        
-        grid3d(c("x", "y+", "z"))
-        
-        play3d(spin3d(axis=c(0,0,1), rpm=5), duration=15)
-        
-      }
+								est <- npglpreg.default(tydat=tydat,
+																				txdat=txdat,
+																				exdat=exdat,
+																				bws=bws,
+																				degree=degree,
+																				ukertype=ukertype,
+																				okertype=okertype,
+																				bwtype=bwtype,
+																				Bernstein=Bernstein,
+																				...)
 
-    }
-    
-    if(plot.behavior!="plot") {
-      console <- printClear(console)
-      console <- printPop(console)
-      return(mg)
-    }
-      
-  }
-    
-  ## deriv
+								fitted.values <- est$fitted.values
 
-  if(deriv > 0) {
-    
-    rg <- list()
+								if(!ci) {
 
-    i.numeric <- 1
-    i.categorical <- 1
-    
-    for(i in 1:NCOL(object$x)) {
+										mg[[i]] <- data.frame(exdat[,i],fitted.values)
+										names(mg[[i]]) <- c(names(exdat)[i],"mean")
 
-      gradient.vec <- NULL
-      
-      if(!is.factor(object$x[,i])) {
-        newdata <- matrix(NA,nrow=num.eval,ncol=NCOL(object$x))
-        neval <- num.eval
-        gradient.vec <- rep(0,object$num.numeric)
-        gradient.vec[i.numeric] <- deriv
-      } else {
-        neval <- length(unique(object$x[,i]))
-        newdata <- matrix(NA,nrow=neval,ncol=NCOL(object$x))
-      }
+								} else {
 
-      newdata <- data.frame(newdata)
-      
-      if(!is.factor(object$x[,i])) {
-        xlim <- trim.quantiles(object$x[,i],xtrim)        
-        newdata[,i] <- seq(xlim[1],xlim[2],length=neval)
-      } else {
-        newdata[,i] <- sort(unique(object$x[,i]))
-      }
-      
-      for(j in (1:NCOL(object$x))[-i]) {
-        newdata[,j] <- rep(uocquantile(object$x[,j],prob=xq[j]),neval)
-      }
-      
-      names(newdata) <- object$xnames
+										console <- printClear(console)
+										console <- printPop(console)
+										console <- printPush(paste("\rConducting ",plot.errors.boot.num," bootstrap resamples for predictor ",i,"...",sep=""),console = console)
 
-      est <- npglpreg.default(tydat=tydat,
-                              txdat=txdat,
-                              exdat=newdata,
-                              bws=bws,
-                              degree=degree,
-                              ukertype=ukertype,
-                              okertype=okertype,
-                              bwtype=bwtype,
-                              gradient.vec=gradient.vec,
-                              gradient.categorical=TRUE,
-                              Bernstein=Bernstein,
-                              ...)
+										ci.out <- compute.bootstrap.errors(tydat=tydat,
+																											 txdat=txdat,
+																											 exdat=exdat,
+																											 bws=bws,
+																											 degree=degree,
+																											 ukertype=ukertype,
+																											 okertype=okertype,
+																											 bwtype=bwtype,
+																											 boot.object="fitted",
+																											 plot.errors.boot.num=plot.errors.boot.num,
+																											 plot.errors.type=plot.errors.type,
+																											 plot.errors.quantiles=plot.errors.quantiles)
 
-      if(!is.factor(object$x[,i])) {
-        fitted.values <- est$gradient
-      } else {
-        fitted.values <- est$gradient.categorical.mat[,i.categorical]
-      }
-        
+										mg[[i]] <- data.frame(exdat[,i],ci.out)
+										names(mg[[i]]) <- c(names(exdat)[i],"mean","lwr","upr")
 
-      if(!ci) {
-        
-        rg[[i]] <- data.frame(newdata[,i],fitted.values)
-        names(rg[[i]]) <- c(names(newdata)[i],"deriv")
-        
-      } else {
-        
-        console <- printClear(console)
-        console <- printPop(console)
-        console <- printPush(paste("\rConducting ",plot.errors.boot.num," bootstrap resamples for predictor ",i,"...",sep=""),console = console)
-          
-        if(!is.factor(object$x[,i])) {
-          ci.out <- compute.bootstrap.errors(tydat=tydat,
-                                             txdat=txdat,
-                                             exdat=newdata,
-                                             bws=bws,
-                                             degree=degree,
-                                             ukertype=ukertype,
-                                             okertype=okertype,
-                                             bwtype=bwtype,
-                                             boot.object="gradient",
-                                             plot.errors.boot.num=plot.errors.boot.num,
-                                             plot.errors.type=plot.errors.type,
-                                             plot.errors.quantiles=plot.errors.quantiles,
-                                             gradient.vec=gradient.vec)
-        } else {
-          ci.out <- compute.bootstrap.errors(tydat=tydat,
-                                             txdat=txdat,
-                                             exdat=newdata,
-                                             bws=bws,
-                                             degree=degree,
-                                             ukertype=ukertype,
-                                             okertype=okertype,
-                                             bwtype=bwtype,
-                                             boot.object="gradient.categorical",
-                                             plot.errors.boot.num=plot.errors.boot.num,
-                                             plot.errors.type=plot.errors.type,
-                                             plot.errors.quantiles=plot.errors.quantiles,
-                                             gradient.categorical=TRUE,                                
-                                             gradient.categorical.index=i.categorical)
-        }
-        
-        rg[[i]] <- data.frame(newdata[,i],ci.out)
-        names(rg[[i]]) <- c(names(newdata)[i],"deriv","lwr","upr")
-        
-      }
-      
-      if(!is.factor(object$x[,i])) {
-        i.numeric <- i.numeric + 1
-      } else {
-        i.categorical <- i.categorical + 1
-      }          
-        
-    }
-    
-    if(common.scale) {
-      min.rg <- Inf
-      max.rg <- -Inf
-      for(i in 1:length(rg)) {
-        min.rg <- min(min.rg,min(rg[[i]][,-1]))
-        max.rg <- max(max.rg,max(rg[[i]][,-1]))
-      }
-      ylim <- c(min.rg,max.rg)
-    } else {
-      ylim <- NULL
-    }
-    
-    if(plot.behavior!="data") {
-      
-      if(!is.null(object$num.categorical)||(object$num.numeric>1)) par(mfrow=dim.plot(NCOL(object$x)))
-    
-      for(i in 1:NCOL(object$x)) {
-        
-          if(!ci) {
-          plot(rg[[i]][,1],rg[[i]][,2],
-               xlab=names(newdata)[i],
-               ylab=ifelse(!is.factor(newdata[,i]), paste("Order", deriv,"Gradient"), "Difference in Levels"),
-               ylim=ylim,
-               type="l")
-          
-        } else {
-          if(!common.scale) ylim <- c(min(rg[[i]][,-1]),max(rg[[i]][,-1]))
-          plot(rg[[i]][,1],rg[[i]][,2],
-               xlab=names(newdata)[i],
-               ylab=ifelse(!is.factor(newdata[,i]), paste("Order", deriv,"Gradient"), "Difference in Levels"),
-               ylim=ylim,
-               type="l")
-          ## Need to overlay for proper plotting of factor errorbars
-          par(new=TRUE)
-          plot(rg[[i]][,1],rg[[i]][,3],
-               xlab="",
-               ylab="",
-               ylim=ylim,
-               type="l",
-               axes=FALSE,
-               lty=2,
-               col=2)
-          par(new=TRUE)
-          plot(rg[[i]][,1],rg[[i]][,4],
-               xlab="",
-               ylab="",
-               ylim=ylim,
-               type="l",
-               axes=FALSE,
-               lty=2,
-               col=2)
-        }
-        
-      }
-      
-    }
-    
-    if(plot.behavior!="plot") {
-      console <- printClear(console)
-      console <- printPop(console)
-      return(rg)
-    }
-    
-  }
+								}
 
-  console <- printClear(console)
-  console <- printPop(console)
+						}
 
-  ## Reset par to 1,1 (can be modified above)
-  
-  if(!persp.rgl) par(mfrow=c(1,1))
-  
+						if(common.scale) {
+								min.mg <- Inf
+								max.mg <- -Inf
+								for(i in 1:length(mg)) {
+										min.mg <- min(min.mg,min(mg[[i]][,-1]))
+										max.mg <- max(max.mg,max(mg[[i]][,-1]))
+								}
+								ylim <- c(min.mg,max.mg)
+						} else {
+								ylim <- NULL
+						}
+
+						if(plot.behavior!="data") {
+
+								if(!is.null(object$num.categorical)||(object$num.numeric>1)) par(mfrow=dim.plot(NCOL(object$x)))
+
+								for(i in 1:NCOL(object$x)) {
+
+										if(!ci) {
+
+												plot(mg[[i]][,1],mg[[i]][,2],
+														 xlab=names(exdat)[i],
+														 ylab="Conditional Mean",
+														 ylim=ylim,
+														 type="l")
+
+										} else {
+												if(!common.scale) ylim <- c(min(mg[[i]][,-1]),max(mg[[i]][,-1]))
+												plot(mg[[i]][,1],mg[[i]][,2],
+														 xlab=names(exdat)[i],
+														 ylab="Conditional Mean",
+														 ylim=ylim,
+														 type="l")
+												## Need to overlay for proper plotting of factor errorbars
+												par(new=TRUE)
+												plot(mg[[i]][,1],mg[[i]][,3],
+														 xlab="",
+														 ylab="",
+														 ylim=ylim,
+														 type="l",
+														 axes=FALSE,
+														 lty=2,
+														 col=2)
+												par(new=TRUE)
+												plot(mg[[i]][,1],mg[[i]][,4],
+														 xlab="",
+														 ylab="",
+														 ylim=ylim,
+														 type="l",
+														 axes=FALSE,
+														 lty=2,
+														 col=2)
+										}
+
+								}
+
+						}
+
+				} else {
+
+						if(!require(rgl)) stop(" Error: you must first install the rgl package")
+
+						if(object$num.categorical != 0) stop(" Error: persp3d is for continuous predictors only")
+						if(object$num.numeric != 2) stop(" Error: persp3d is for cases involving two continuous predictors only")
+
+						newdata <- matrix(NA,nrow=num.eval,ncol=2)
+						newdata <- data.frame(newdata)
+
+						xlim <- trim.quantiles(object$x[,1],xtrim)
+						ylim <- trim.quantiles(object$x[,2],xtrim)      
+
+						x1.seq <- seq(xlim[1],xlim[2],length=num.eval)
+						x2.seq <- seq(ylim[1],ylim[2],length=num.eval)    
+						x.grid <- expand.grid(x1.seq,x2.seq)
+						newdata <- data.frame(x.grid[,1],x.grid[,2])
+						names(newdata) <- names(object$x)
+
+						z <- matrix(predict(object,newdata=newdata),num.eval,num.eval)
+
+						mg <- list()
+
+						mg[[1]] <- data.frame(newdata,z)
+
+						if(plot.behavior!="data") {
+
+								num.colors <- 1000
+								colorlut <- topo.colors(num.colors) 
+								col <- colorlut[ (num.colors-1)*(z-min(z))/(max(z)-min(z)) + 1 ]
+
+								open3d()
+
+								par3d(windowRect=c(900,100,900+640,100+640))
+								rgl.viewpoint(theta = 0, phi = -70, fov = 80)
+
+								persp3d(x=x1.seq,y=x2.seq,z=z,
+												xlab=names(object$x)[1],ylab=names(object$x)[2],zlab="Y",
+												ticktype="detailed",      
+												border="red",
+												color=col,
+												alpha=.7,
+												back="lines",
+												main="Conditional Mean")
+
+								grid3d(c("x", "y+", "z"))
+
+								play3d(spin3d(axis=c(0,0,1), rpm=5), duration=15)
+
+						}
+
+				}
+
+				if(plot.behavior!="plot") {
+						console <- printClear(console)
+						console <- printPop(console)
+						return(mg)
+				}
+
+		}
+
+		## deriv
+
+		if(deriv > 0) {
+
+				rg <- list()
+
+				i.numeric <- 1
+				i.categorical <- 1
+
+				for(i in 1:NCOL(object$x)) {
+
+						gradient.vec <- NULL
+
+						if(!is.factor(object$x[,i])) {
+								newdata <- matrix(NA,nrow=num.eval,ncol=NCOL(object$x))
+								neval <- num.eval
+								gradient.vec <- rep(0,object$num.numeric)
+								gradient.vec[i.numeric] <- deriv
+						} else {
+								neval <- length(unique(object$x[,i]))
+								newdata <- matrix(NA,nrow=neval,ncol=NCOL(object$x))
+						}
+
+						newdata <- data.frame(newdata)
+
+						if(!is.factor(object$x[,i])) {
+								xlim <- trim.quantiles(object$x[,i],xtrim)        
+								newdata[,i] <- seq(xlim[1],xlim[2],length=neval)
+						} else {
+								newdata[,i] <- sort(unique(object$x[,i]))
+						}
+
+						for(j in (1:NCOL(object$x))[-i]) {
+								newdata[,j] <- rep(uocquantile(object$x[,j],prob=xq[j]),neval)
+						}
+
+						names(newdata) <- object$xnames
+
+						est <- npglpreg.default(tydat=tydat,
+																		txdat=txdat,
+																		exdat=newdata,
+																		bws=bws,
+																		degree=degree,
+																		ukertype=ukertype,
+																		okertype=okertype,
+																		bwtype=bwtype,
+																		gradient.vec=gradient.vec,
+																		gradient.categorical=TRUE,
+																		Bernstein=Bernstein,
+																		...)
+
+						if(!is.factor(object$x[,i])) {
+								fitted.values <- est$gradient
+						} else {
+								fitted.values <- est$gradient.categorical.mat[,i.categorical]
+						}
+
+
+						if(!ci) {
+
+								rg[[i]] <- data.frame(newdata[,i],fitted.values)
+								names(rg[[i]]) <- c(names(newdata)[i],"deriv")
+
+						} else {
+
+								console <- printClear(console)
+								console <- printPop(console)
+								console <- printPush(paste("\rConducting ",plot.errors.boot.num," bootstrap resamples for predictor ",i,"...",sep=""),console = console)
+
+								if(!is.factor(object$x[,i])) {
+										ci.out <- compute.bootstrap.errors(tydat=tydat,
+																											 txdat=txdat,
+																											 exdat=newdata,
+																											 bws=bws,
+																											 degree=degree,
+																											 ukertype=ukertype,
+																											 okertype=okertype,
+																											 bwtype=bwtype,
+																											 boot.object="gradient",
+																											 plot.errors.boot.num=plot.errors.boot.num,
+																											 plot.errors.type=plot.errors.type,
+																											 plot.errors.quantiles=plot.errors.quantiles,
+																											 gradient.vec=gradient.vec)
+								} else {
+										ci.out <- compute.bootstrap.errors(tydat=tydat,
+																											 txdat=txdat,
+																											 exdat=newdata,
+																											 bws=bws,
+																											 degree=degree,
+																											 ukertype=ukertype,
+																											 okertype=okertype,
+																											 bwtype=bwtype,
+																											 boot.object="gradient.categorical",
+																											 plot.errors.boot.num=plot.errors.boot.num,
+																											 plot.errors.type=plot.errors.type,
+																											 plot.errors.quantiles=plot.errors.quantiles,
+																											 gradient.categorical=TRUE,                                
+																											 gradient.categorical.index=i.categorical)
+								}
+
+								rg[[i]] <- data.frame(newdata[,i],ci.out)
+								names(rg[[i]]) <- c(names(newdata)[i],"deriv","lwr","upr")
+
+						}
+
+						if(!is.factor(object$x[,i])) {
+								i.numeric <- i.numeric + 1
+						} else {
+								i.categorical <- i.categorical + 1
+						}          
+
+				}
+
+				if(common.scale) {
+						min.rg <- Inf
+						max.rg <- -Inf
+						for(i in 1:length(rg)) {
+								min.rg <- min(min.rg,min(rg[[i]][,-1]))
+								max.rg <- max(max.rg,max(rg[[i]][,-1]))
+						}
+						ylim <- c(min.rg,max.rg)
+				} else {
+						ylim <- NULL
+				}
+
+				if(plot.behavior!="data") {
+
+						if(!is.null(object$num.categorical)||(object$num.numeric>1)) par(mfrow=dim.plot(NCOL(object$x)))
+
+						for(i in 1:NCOL(object$x)) {
+
+								if(!ci) {
+										plot(rg[[i]][,1],rg[[i]][,2],
+												 xlab=names(newdata)[i],
+												 ylab=ifelse(!is.factor(newdata[,i]), paste("Order", deriv,"Gradient"), "Difference in Levels"),
+												 ylim=ylim,
+												 type="l")
+
+								} else {
+										if(!common.scale) ylim <- c(min(rg[[i]][,-1]),max(rg[[i]][,-1]))
+										plot(rg[[i]][,1],rg[[i]][,2],
+												 xlab=names(newdata)[i],
+												 ylab=ifelse(!is.factor(newdata[,i]), paste("Order", deriv,"Gradient"), "Difference in Levels"),
+												 ylim=ylim,
+												 type="l")
+										## Need to overlay for proper plotting of factor errorbars
+										par(new=TRUE)
+										plot(rg[[i]][,1],rg[[i]][,3],
+												 xlab="",
+												 ylab="",
+												 ylim=ylim,
+												 type="l",
+												 axes=FALSE,
+												 lty=2,
+												 col=2)
+										par(new=TRUE)
+										plot(rg[[i]][,1],rg[[i]][,4],
+												 xlab="",
+												 ylab="",
+												 ylim=ylim,
+												 type="l",
+												 axes=FALSE,
+												 lty=2,
+												 col=2)
+								}
+
+						}
+
+				}
+
+				if(plot.behavior!="plot") {
+						console <- printClear(console)
+						console <- printPop(console)
+						return(rg)
+				}
+
+		}
+
+		console <- printClear(console)
+		console <- printPop(console)
+
+		## Reset par to 1,1 (can be modified above)
+
+		if(!persp.rgl) par(mfrow=c(1,1))
+
 }

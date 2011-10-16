@@ -40,7 +40,7 @@
   \see    Cache.hpp
 */
 #include "Cache.hpp"
-
+using namespace std;
 /*-----------------------------------*/
 /*   static members initialization   */
 /*-----------------------------------*/

@@ -40,7 +40,7 @@
   \see    Model_Stats.hpp
 */
 #include "Model_Stats.hpp"
-
+using namespace std;
 /*---------------------------------------------------------*/
 /*                     affectation operator                */
 /*---------------------------------------------------------*/

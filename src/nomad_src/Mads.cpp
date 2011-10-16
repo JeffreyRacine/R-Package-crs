@@ -40,7 +40,7 @@
   \see    Mads.hpp
 */
 #include "Mads.hpp"
-
+using namespace std;
 /*-----------------------------------*/
 /*   static members initialization   */
 /*-----------------------------------*/

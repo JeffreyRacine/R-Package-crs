@@ -40,7 +40,7 @@
   \see    L_Curve.hpp
 */
 #include "L_Curve.hpp"
-
+using namespace std;
 /*-----------------------------------------------*/
 /*          insertion of a pair bbe/f            */
 /*-----------------------------------------------*/
