@@ -44,8 +44,9 @@ gsl.bs.default <- function(x,
 			or <- x > x.max 
 	}
 
-  ## we should check Xs  are within knots   
-## It seems that 'knots' is given,  we don't require x.min and x.max,  otherwise,  we check the boundary.
+  ## We check whether the Xs are within knots. It seems that if 'knots'
+  ## is given, we don't require x.min and x.max, otherwise, we check
+  ## the boundary.
 
 	if(!is.null(knots)) {
 			ol <- ol | x < min(knots)
@@ -55,7 +56,7 @@ gsl.bs.default <- function(x,
 	outside <- ol | or 
 
 	if(any(outside)){
-			warning("some 'x' values beyond boundary knots may cause ill-conditioned bases")
+			## warning("some 'x' values beyond boundary knots may cause ill-conditioned bases")
 			ord <- degree + 1
 			derivs<- deriv:degree
 			if(ord == deriv) 
