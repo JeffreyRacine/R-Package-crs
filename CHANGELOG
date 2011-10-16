@@ -1,9 +1,17 @@
+Changes from Version 0.15-4 to 0.15-5 [16-Oct-2011]
+
+* Thanks to Professor Brian Ripley, additional Solaris C/C++ compiler
+  warnings/issues have been resolved
+
+* Some internal changes for soon to be deprecated functionality
+  (sd(<matrix>) expected to be deprecated shortly)
+
 Changes from Version 0.15-3 to 0.15-4 [15-Oct-2011]
 
 * Extended the gsl.bs functionality to permit out-of-sample prediction
   of the spline basis and its derivatives
 
-* Added options knots="auto" to automatically determine via
+* Added option knots="auto" to automatically determine via
   cross-validation whether to use quantile or uniform knots
 
 * Minor changes to help page examples and descriptions and to the crs
