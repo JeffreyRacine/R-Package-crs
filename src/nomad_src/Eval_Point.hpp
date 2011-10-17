@@ -47,10 +47,10 @@
 #include "Set_Element.hpp"
 
 /*#ifdef WINDOWS */ 
-#ifndef isnan 
-inline bool isnan ( double x ) { return x != x; }
-#endif 
-/*#endif */
+/*  #ifndef isnan */ //we change the name "isnan" to nomad_isnan  to avoid redefined.
+inline bool nomad_isnan ( double x ) { return x != x; }
+/*  #endif 
+#endif */
 
 namespace NOMAD {
 

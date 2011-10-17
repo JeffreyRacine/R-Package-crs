@@ -475,10 +475,10 @@ bool NOMAD::Eval_Point::check_nan ( void ) const
   int m = _bb_outputs.size();
   for ( int i = 0 ; i < m ; ++i )
 #ifdef WINDOWS
-    if ( isnan ( _bb_outputs[i].value() ) )
+    if ( nomad_isnan ( _bb_outputs[i].value() ) )
       return true;
 #else
-    if ( isnan ( _bb_outputs[i].value() ) )
+    if ( nomad_isnan ( _bb_outputs[i].value() ) )
       return true;
 #endif
   return false;
