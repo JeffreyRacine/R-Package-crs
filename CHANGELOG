@@ -1,4 +1,4 @@
-Changes from Version 0.15-6 to 0.15-7 [XXX]
+Changes from Version 0.15-6 to 0.15-7 [24-Oct-2011]
 
 * Added logical model.return to crs (default model.return=FALSE) which
   previously returned a list of models corresponding to each unique
