@@ -35,7 +35,7 @@ crsEst <- function(xz,
                    data.return=FALSE,
                    prune=FALSE,
                    prune.index=NULL,
-                   model.return=model.return) {
+                   model.return=FALSE) {
   
   ## Take data frame xz and parse into factors (z) and numeric (x).
 
@@ -356,6 +356,7 @@ crs.formula <- function(formula,
                         deriv=0,
                         data.return=FALSE,
                         prune=FALSE,
+                        model.return=FALSE,
                         restarts=0,
                         random.seed=42,
                         opts=list("MAX_BB_EVAL"=10000,
@@ -564,6 +565,7 @@ crs.formula <- function(formula,
                                               deriv=deriv,
                                               data.return=data.return,
                                               prune=prune,
+                                              model.return=model.return,
                                               ...))
   
   est$call <- match.call()
