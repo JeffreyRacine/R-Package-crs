@@ -24,6 +24,7 @@ crs(\dots)
     deriv = 0,
     data.return = FALSE,
     prune = FALSE,
+    model.return = FALSE,
     \dots)
 
 \method{crs}{formula}(formula,
@@ -46,6 +47,7 @@ crs(\dots)
     deriv = 0,
     data.return = FALSE,
     prune = FALSE,
+    model.return = FALSE,
     restarts = 0,
     random.seed = 42,
     opts = list("MAX_BB_EVAL"=10000,
@@ -169,7 +171,11 @@ in \code{x} are included or omitted from the resulting estimate }
    cross-validation criterion based upon a modified version of
    \code{\link[MASS]{stepAIC}} (see below for details) }
 
-  \item{restarts}{ integer specifying the number of times to restart the
+  \item{model.return}{ a logical value indicating whether to return the
+  list of \code{\link{lm}} models or not when \code{kernel=TRUE}
+  (default \code{model.return=FALSE}) }
+
+\item{restarts}{ integer specifying the number of times to restart the
     process of finding extrema of the cross-validation function (for the
     bandwidths only) from different (random) initial points }
 

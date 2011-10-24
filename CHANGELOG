@@ -1,3 +1,11 @@
+Changes from Version 0.15-6 to 0.15-7 [XXX]
+
+* Added logical model.return to crs (default model.return=FALSE) which
+  previously returned a list of models corresponding to each unique
+  combination of the categorical predictors when kernel=TRUE (the
+  memory footprint could be potentially very large so this allows the
+  user to generate this list if so needed)
+
 Changes from Version 0.15-5 to 0.15-6 [17-Oct-2011]
 
 * Compiler error thrown on some systems due to changes in

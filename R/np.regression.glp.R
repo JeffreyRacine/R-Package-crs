@@ -13,6 +13,7 @@ NZD <- function(a) {
 }
 
 sd.robust <- function(x) {
+  if(is.matrix(x)) stop(" sd.robust is to be used with vectors only")
   iqr.x <- IQR(x)
   sd.x <- sd(x)
   if(isTRUE(all.equal(sd.x, 0))) stop(" numeric predictor is a constant not a variable")

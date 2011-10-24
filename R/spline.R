@@ -163,7 +163,8 @@ predict.kernel.spline <- function(x,
                                   xeval=NULL,
                                   zeval=NULL,
                                   knots=c("quantiles","uniform"),
-                                  basis=c("additive","tensor","glp")){
+                                  basis=c("additive","tensor","glp"),
+                                  model.return=FALSE){
 
   if(missing(x) || missing(y) || missing (K)) stop(" must provide x, y and K")
   if(!is.matrix(K)) stop(" K must be a two-column matrix")  
@@ -178,6 +179,9 @@ predict.kernel.spline <- function(x,
 
   console <- newLineConsole()
   console <- printPush("Working...",console = console)
+
+  model <- NULL ## Returned if model=FALSE and there exist categorical
+                ## predictors
 
   if(is.null(z)) {
 
@@ -218,9 +222,11 @@ predict.kernel.spline <- function(x,
     htt <- hatvalues(model)
     htt <- ifelse(htt < 1, htt, 1-.Machine$double.eps)
 
+    rank <- model$rank
+
   } else {
 
-    model <- list()
+    if(model.return) model <- list()
 
     ## Categorical predictor case
 
@@ -252,7 +258,7 @@ predict.kernel.spline <- function(x,
           } else {
             model.z.unique <- lm(y~P-1,weights=L)
           }
-          model[[i]] <- model.z.unique
+          if(model.return) model[[i]] <- model.z.unique
           htt[zz] <- hatvalues(model.z.unique)[zz]
           P.hat[zz] <- sum(L)
           P <- prod.spline(x=x,K=K,xeval=x[zz,,drop=FALSE],knots=knots,basis=basis)
@@ -285,7 +291,7 @@ predict.kernel.spline <- function(x,
           } else {
             model.z.unique <- lm(y~P-1,weights=L)
           }
-          model[[i]] <- model.z.unique
+          if(model.return) model[[i]] <- model.z.unique
           P <- prod.spline(x=x,K=K,xeval=xeval[zz,,drop=FALSE],knots=knots,basis=basis)
           tmp <- predict(model.z.unique,newdata=data.frame(as.matrix(P)),interval="confidence",se.fit=TRUE)
           fit.spline[zz,] <- cbind(tmp[[1]],tmp[[2]])
@@ -312,7 +318,7 @@ predict.kernel.spline <- function(x,
           ## the parameter that may shift with the categorical
           ## predictors
           model.z.unique <- lm(y~x.intercept-1,weights=L)
-          model[[i]] <- model.z.unique
+          if(model.return) model[[i]] <- model.z.unique
           htt[zz] <- hatvalues(model.z.unique)[zz]
           P.hat[zz] <- sum(L)
           tmp <- predict(model.z.unique,newdata=data.frame(x.intercept=x.intercept[zz]),interval="confidence",se.fit=TRUE)
@@ -340,7 +346,7 @@ predict.kernel.spline <- function(x,
           L <- prod.kernel(Z=z,z=zeval.unique[ind.zeval.vals[i],],lambda=lambda,is.ordered.z=is.ordered.z)
           k <- 0
           model.z.unique <- lm(y~x.intercept-1,weights=L)
-          model[[i]] <- model.z.unique
+          if(model.return) model[[i]] <- model.z.unique
           tmp <- predict(model.z.unique,newdata=data.frame(x.intercept=rep(1,num.eval)[zz]),interval="confidence",se.fit=TRUE)
           fit.spline[zz,] <- cbind(tmp[[1]],as.matrix(tmp[[2]]))
           rm(tmp)
@@ -348,6 +354,8 @@ predict.kernel.spline <- function(x,
       }
 
     }
+
+    rank <- model.z.unique$rank ## same for all models
 
   }
 
@@ -366,8 +374,8 @@ predict.kernel.spline <- function(x,
   P.hat <- ifelse(P.hat==1,1/nrow.z.unique,P.hat)
 
   return(list(fitted.values=fit.spline,
-              df.residual=length(y)-model[[1]]$rank,
-              rank=model[[1]]$rank, ## rank same for all models
+              df.residual=length(y)-rank,
+              rank=rank, 
               model=model,
               hatvalues=htt,
               P.hat=P.hat))

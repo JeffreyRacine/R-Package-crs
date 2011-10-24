@@ -34,7 +34,8 @@ crsEst <- function(xz,
                    deriv=0,
                    data.return=FALSE,
                    prune=FALSE,
-                   prune.index=NULL) {
+                   prune.index=NULL,
+                   model.return=model.return) {
   
   ## Take data frame xz and parse into factors (z) and numeric (x).
 
@@ -154,7 +155,8 @@ crsEst <- function(xz,
                                    lambda=lambda,
                                    is.ordered.z=is.ordered.z,
                                    knots=knots,
-                                   basis=basis)
+                                   basis=basis,
+                                   model.return=model.return)
 
     prune.index <- NULL
 
@@ -197,7 +199,8 @@ crsEst <- function(xz,
                                          lambda=lambda,
                                          is.ordered.z=is.ordered.z,
                                          knots=knots,
-                                         basis=basis)$fitted.values
+                                         basis=basis,
+                                         model.return=model.return)$fitted.values
 
           zpred.base <- predict.kernel.spline(x=x,
                                               y=y,
@@ -208,7 +211,8 @@ crsEst <- function(xz,
                                               xeval=x,
                                               zeval=ztmp,
                                               knots=knots,
-                                              basis=basis)$fitted.values
+                                              basis=basis,
+                                              model.return=model.return)$fitted.values
 
           deriv.mat[,i] <- zpred[,1]-zpred.base[,1]
           deriv.mat.lwr[,i] <- deriv.mat[,i] - qnorm(0.975)*sqrt(zpred[,4]^2+zpred.base[,4]^2)
@@ -283,6 +287,7 @@ crs.default <- function(xz,
                         deriv=0,
                         data.return=FALSE,
                         prune=FALSE,
+                        model.return=FALSE,
                         ...) {
 
   complexity <- match.arg(complexity)
@@ -303,7 +308,8 @@ crs.default <- function(xz,
                 basis=basis,
                 deriv=deriv,
                 data.return=data.return,
-                prune=prune)
+                prune=prune,
+                model.return=model.return)
 
   ## Add results to estimated object.
 
