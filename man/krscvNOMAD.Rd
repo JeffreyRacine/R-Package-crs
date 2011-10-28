@@ -27,8 +27,8 @@ krscvNOMAD(xz,
            degree = degree,
            segments = segments,
            lambda = lambda, 
-					 lambda.discrete = FALSE, 
-					 lambda.discrete.num = 10, 
+           lambda.discrete = FALSE, 
+           lambda.discrete.num = 10, 
            random.seed = 42,
            opts = list(),
            nmulti = 0)
@@ -97,14 +97,16 @@ krscvNOMAD(xz,
   the B-spline basis for each dimension of the continuous \code{x}
   (i.e. number of knots minus one)}
 
-  \item{lambda}{ real/vector for the categorical predictors. If it is not
-  NULL,  it will be a starting value of lambda}
+  \item{lambda}{ real/vector for the categorical predictors. If it is
+  not NULL, it will be the starting value(s) for lambda}
 
-  \item{lambda.discrete}{ if \code{lambda.discrete=TRUE}, the bandwidth will
-			be discretized into \code{lambda.discrete.num+1} points and \code{lambda} 
-		 will be chosen from these points. }
+  \item{lambda.discrete}{ if \code{lambda.discrete=TRUE}, the bandwidth
+      will be discretized into \code{lambda.discrete.num+1} points and
+      \code{lambda} will be chosen from these points}
   
-  \item{lambda.discrete.num}{this parameter will only be used when \code{lambda.discrete=TRUE}.}
+  \item{lambda.discrete.num}{a positive integer indicating the number of
+  discrete values that lambda can assume - this parameter will only be
+  used when \code{lambda.discrete=TRUE}}
 
 \item{random.seed}{
   when it is not missing and not equal to 0, the initial points  will 

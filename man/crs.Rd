@@ -41,6 +41,8 @@ crs(\dots)
     cv.func = c("cv.ls","cv.gcv","cv.aic"),
     kernel = TRUE,
     lambda = NULL,
+    lambda.discrete = FALSE,
+    lambda.discrete.num = 10,
     complexity = c("degree-knots","degree","knots"),
     knots = c("quantiles","uniform","auto"),
     basis = c("additive","tensor","glp","auto"),
@@ -79,7 +81,15 @@ nominal/ordinal (\code{\link{factor}}/\code{\link{ordered}}) predictors
 in \code{x} are included or omitted from the resulting estimate }
 
   \item{lambda}{ a vector of bandwidths for each dimension of the
-  categorical \code{z}}
+    categorical \code{z}}
+
+  \item{lambda.discrete}{ if \code{lambda.discrete=TRUE}, the bandwidth
+      will be discretized into \code{lambda.discrete.num+1} points and
+      \code{lambda} will be chosen from these points}
+  
+  \item{lambda.discrete.num}{a positive integer indicating the number of
+  discrete values that lambda can assume - this parameter will only be
+  used when \code{lambda.discrete=TRUE}}
   
   \item{formula}{ a symbolic description of the model to be fit }
   

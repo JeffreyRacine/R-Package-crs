@@ -350,6 +350,8 @@ crs.formula <- function(formula,
                         cv.func=c("cv.ls","cv.gcv","cv.aic"),
                         kernel=TRUE,
                         lambda=NULL,
+                        lambda.discrete=FALSE,
+                        lambda.discrete.num=10,                                                       
                         complexity=c("degree-knots","degree","knots"),
                         knots=c("quantiles","uniform","auto"),
                         basis=c("additive","tensor","glp","auto"),
@@ -413,14 +415,15 @@ crs.formula <- function(formula,
   if(!is.null(degree)&&length(degree)!=num.x) stop(" degree vector must be the same length as x")
   if(!is.null(segments)&&length(segments)!=num.x) stop(" segments vector must be the same length as x")
   if(degree.max > 100) stop(paste(" degree.max (",degree.max,") exceeds reasonable value (",100,")",sep=""))
+  if(lambda.discrete.num < 1) stop(" lambda.discrete.num must be a positive integer")
 
   if(cv=="none"){
       if(is.null(degree)&!is.null(x)) degree <- rep(3,num.x)
       if(is.null(segments)&!is.null(x)) segments <- rep(1,num.x)
       if(is.null(include)&!is.null(z)&!kernel) include <- rep(1,num.z)
       if(is.null(lambda)&!is.null(z)&kernel) lambda <- rep(0,num.z)
-			if(basis=="auto") basis <- "additive"  
-			if(knots=="auto") knots <- "quantiles"
+      if(basis=="auto") basis <- "additive"  
+      if(knots=="auto") knots <- "quantiles"
   }
 
   if(cv!="none"&&basis!="auto"&&NCOL(xz)>1) warning(paste(" Multiple predictor cv and basis is ", basis, ": you could consider basis=\"auto\"",sep=""),immediate.=TRUE)
@@ -464,7 +467,7 @@ crs.formula <- function(formula,
       segments <- cv.return$segments
       include <- cv.return$I
       basis <- cv.return$basis
-			knots <- cv.return$knots
+      knots <- cv.return$knots
       if(isTRUE(all.equal(cv.min,sqrt(.Machine$double.xmax)))) stop(" Search failed: restart with larger nmulti or smaller degree.max  (or degree if provided)")
     }  else if(cv=="exhaustive") {
 
@@ -487,7 +490,7 @@ crs.formula <- function(formula,
       segments <- cv.return$segments
       include <- cv.return$I
       basis <- cv.return$basis
-			knots <- cv.return$knots
+      knots <- cv.return$knots
       if(isTRUE(all.equal(cv.min,sqrt(.Machine$double.xmax)))) stop(" Search failed: restart with smaller degree.max")
     }
 
@@ -502,14 +505,16 @@ crs.formula <- function(formula,
                                                        degree.max=degree.max, 
                                                        segments.max=segments.max, 
                                                        degree.min=degree.min, 
-                                                       segments.min=segments.min, 
+                                                       segments.min=segments.min,
                                                        complexity=complexity,
                                                        knots=knots,
                                                        basis=basis,
                                                        cv.func=cv.func,
                                                        degree=degree,
                                                        segments=segments,
-                                                       lambda=lambda, 
+                                                       lambda=lambda,
+                                                       lambda.discrete=lambda.discrete,
+                                                       lambda.discrete.num=lambda.discrete.num,
                                                        random.seed=random.seed,
                                                        opts=opts,
                                                        nmulti=nmulti))
@@ -520,7 +525,7 @@ crs.formula <- function(formula,
       include <- cv.return$I
       lambda <- cv.return$lambda
       basis <- cv.return$basis
-			knots <- cv.return$knots
+      knots <- cv.return$knots
       if(isTRUE(all.equal(cv.min,sqrt(.Machine$double.xmax)))) stop(" Search failed: restart with larger nmulti or smaller degree.max")
     
     } else if(cv=="exhaustive") {
@@ -545,7 +550,7 @@ crs.formula <- function(formula,
       include <- cv.return$I
       lambda <- cv.return$lambda
       basis <- cv.return$basis
-			knots <- cv.return$knots
+      knots <- cv.return$knots
       if(isTRUE(all.equal(cv.min,sqrt(.Machine$double.xmax)))) stop(" Search failed: restart with smaller degree.max")
     
     }
