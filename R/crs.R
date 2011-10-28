@@ -415,7 +415,7 @@ crs.formula <- function(formula,
   if(!is.null(degree)&&length(degree)!=num.x) stop(" degree vector must be the same length as x")
   if(!is.null(segments)&&length(segments)!=num.x) stop(" segments vector must be the same length as x")
   if(degree.max > 100) stop(paste(" degree.max (",degree.max,") exceeds reasonable value (",100,")",sep=""))
-  if(lambda.discrete.num < 1) stop(" lambda.discrete.num must be a positive integer")
+  if(lambda.discrete && (lambda.discrete.num < 1)) stop(" lambda.discrete.num must be a positive integer")
 
   if(cv=="none"){
       if(is.null(degree)&!is.null(x)) degree <- rep(3,num.x)
