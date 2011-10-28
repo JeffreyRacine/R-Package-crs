@@ -42,7 +42,7 @@ crs(\dots)
     kernel = TRUE,
     lambda = NULL,
     lambda.discrete = FALSE,
-    lambda.discrete.num = 10,
+    lambda.discrete.num = 100,
     complexity = c("degree-knots","degree","knots"),
     knots = c("quantiles","uniform","auto"),
     basis = c("additive","tensor","glp","auto"),

@@ -22,7 +22,7 @@ krscvNOMAD <- function(xz,
                        segments=segments, 
                        lambda=lambda,
                        lambda.discrete=FALSE, 
-                       lambda.discrete.num=10, 
+                       lambda.discrete.num=100,
                        random.seed=42,
                        opts=list(),
                        nmulti=0) {
@@ -248,7 +248,7 @@ krscvNOMAD <- function(xz,
             xlambda <- round(lambda*lambda.discrete.num) ##xlambda will be integers.
             lambda.flag <- 1L
             lambda.ub <- lambda.discrete.num
-						lambda.ub <- as.integer(lambda.ub)
+            lambda.ub <- as.integer(lambda.ub)
         }
 
         ## Save seed prior to setting
@@ -267,7 +267,7 @@ krscvNOMAD <- function(xz,
         if(is.null(xlambda)) {
             xlambda <- runif(num.z)  ## xlambda stores number from 0 to 1
             if(lambda.discrete)
-                xlambda <- (rep(1, num.z)) ##  xlambda stores integers.
+                xlambda <- rep(round(0.5*lambda.discrete.num), num.z) ##  xlambda stores integers, use 0.5*lambda.discrete.num for first multistart
         }
         if(lambda.discrete)
             xlambda <- as.integer(xlambda)

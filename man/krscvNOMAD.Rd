@@ -28,7 +28,7 @@ krscvNOMAD(xz,
            segments = segments,
            lambda = lambda, 
            lambda.discrete = FALSE, 
-           lambda.discrete.num = 10, 
+           lambda.discrete.num = 100, 
            random.seed = 42,
            opts = list(),
            nmulti = 0)
