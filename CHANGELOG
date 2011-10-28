@@ -2,8 +2,9 @@ Changes from Version 0.15-6 to 0.15-7 [24-Oct-2011]
 
 * Added the option to treat the continuous bandwidths as discrete with
   lambda.discrete.num+1 values in the range [0,1] which can be more
-  computationally efficient than doing mixed integer search treating
-  the lambda as real-valued
+  computationally efficient when a `quick and dirty' solution is
+  sufficient than doing mixed integer search treating the lambda as
+  real-valued
 
 Changes from Version 0.15-6 to 0.15-7 [24-Oct-2011]
 
