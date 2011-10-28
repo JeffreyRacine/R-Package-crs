@@ -45,7 +45,7 @@ krscvNOMAD <- function(xz,
 
     if(lambda.discrete && !is.null(lambda.discrete.num)){
         lambda.discrete.num <- as.integer(lambda.discrete.num)
-        if(lambda.discrete.num < 0) lambda.discrete.num <- 10
+        if(lambda.discrete.num < 1) lambda.discrete.num <- 10
     }
 
     t1 <- Sys.time()
@@ -233,19 +233,22 @@ krscvNOMAD <- function(xz,
         params$nrow.z.unique <- nrow.z.unique
         params$is.ordered.z <- is.ordered.z
         params$lambda.discrete.num <- lambda.discrete.num
+        params$lambda.discrete <- lambda.discrete
+
         # initial value
         num.z <- NCOL(z)
 
         xsegments <- segments
         xdegree <- degree
         xlambda <- lambda
-        lambda.flag <- 0   #continous,  1: integer
-        lambda.ub <- 1     #continuous 1, integer: lambda.discrete.num  
+        lambda.flag <- 0L   #continous,  1: integer
+        lambda.ub <- 1.0     #continuous 1, integer: lambda.discrete.num  
         if(lambda.discrete){
             if(!is.null(xlambda))
             xlambda <- round(lambda*lambda.discrete.num) ##xlambda will be integers.
-            lambda.flag <- 1
+            lambda.flag <- 1L
             lambda.ub <- lambda.discrete.num
+						lambda.ub <- as.integer(lambda.ub)
         }
 
         ## Save seed prior to setting
