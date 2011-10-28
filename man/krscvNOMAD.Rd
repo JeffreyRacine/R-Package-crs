@@ -27,6 +27,8 @@ krscvNOMAD(xz,
            degree = degree,
            segments = segments,
            lambda = lambda, 
+					 lambda.discrete = FALSE, 
+					 lambda.discrete.num = 10, 
            random.seed = 42,
            opts = list(),
            nmulti = 0)
@@ -97,6 +99,12 @@ krscvNOMAD(xz,
 
   \item{lambda}{ real/vector for the categorical predictors. If it is not
   NULL,  it will be a starting value of lambda}
+
+  \item{lambda.discrete}{ if \code{lambda.discrete=TRUE}, the bandwidth will
+			be discretized into \code{lambda.discrete.num+1} points and \code{lambda} 
+		 will be chosen from these points. }
+  
+  \item{lambda.discrete.num}{this parameter will only be used when \code{lambda.discrete=TRUE}.}
 
 \item{random.seed}{
   when it is not missing and not equal to 0, the initial points  will 

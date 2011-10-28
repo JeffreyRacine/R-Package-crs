@@ -21,6 +21,8 @@ krscvNOMAD <- function(xz,
                        degree=degree,
                        segments=segments, 
                        lambda=lambda,
+											 lambda.discrete=FALSE, 
+											 lambda.discrete.num=10, 
                        random.seed=42,
                        opts=list(),
                        nmulti=0) {
@@ -40,6 +42,11 @@ krscvNOMAD <- function(xz,
 
     if(missing(degree)) degree <- NULL
     if(missing(segments)) segments <- NULL
+
+		if(lambda.discrete && !is.null(lambda.discrete.num)){
+				lambda.discrete.num <- as.integer(lambda.discrete.num)
+				if(lambda.discrete.num < 0) lambda.discrete.num <- 10
+		}
 
     t1 <- Sys.time()
 
@@ -61,6 +68,8 @@ krscvNOMAD <- function(xz,
                          segments=segments, 
                          degree=degree, 
                          lambda=lambda, 
+												 lambda.discrete=lambda.discrete, 
+												 lambda.discrete.num=lambda.discrete.num, 
                          cv.func=cv.func, 
                          opts=opts,
                          print.output=print.output, 
@@ -97,6 +106,8 @@ krscvNOMAD <- function(xz,
             ind.vals <- params$ind.vals
             nrow.z.unique <- params$nrow.z.unique
             is.ordered.z <- params$is.ordered.z
+						lambda.discrete.num <- params$lambda.discrete.num
+						lambda.discrete <- params$lambda.discrete
 
             num.x <- NCOL(x)
             num.z <- NCOL(z)
@@ -116,6 +127,8 @@ krscvNOMAD <- function(xz,
                 lambda <- input[(num.x+1):(num.x+num.z)]
             }
 
+						if(lambda.discrete)
+								lambda <- lambda/lambda.discrete.num  ##let lambda to be [0, 1]
 
             ## When using weights= lambda of zero fails. Trivial to trap.
             ## This will be a problem because we cannot change "input". I'll think it.
@@ -219,12 +232,21 @@ krscvNOMAD <- function(xz,
         params$ind.vals <- ind.vals
         params$nrow.z.unique <- nrow.z.unique
         params$is.ordered.z <- is.ordered.z
+				params$lambda.discrete.num <- lambda.discrete.num
         # initial value
         num.z <- NCOL(z)
 
         xsegments <- segments
         xdegree <- degree
-        xlambda <- lambda
+				xlambda <- lambda
+				lambda.flag <- 0   #continous,  1: integer
+				lambda.ub <- 1     #continuous 1, integer: lambda.discrete.num  
+				if(lambda.discrete){
+						if(!is.null(xlambda))
+						xlambda <- round(lambda*lambda.discrete.num) ##xlambda will be integers.
+						lambda.flag <- 1
+						lambda.ub <- lambda.discrete.num
+				}
 
         ## Save seed prior to setting
 
@@ -239,29 +261,35 @@ krscvNOMAD <- function(xz,
 
         if(is.null(xdegree)) xdegree <- rep(1,num.x) ## sample(degree.min:degree.max, num.x, replace=T)
         if(is.null(xsegments)) xsegments <- rep(1,num.x) ## sample(segments.min:segments.max, num.x, replace=T)
-        if(is.null(xlambda)) xlambda <- runif(num.z)
+        if(is.null(xlambda)) {
+						xlambda <- runif(num.z)  ## xlambda stores number from 0 to 1
+						if(lambda.discrete)
+								xlambda <- (rep(1, num.z)) ##  xlambda stores integers.
+				}
+				if(lambda.discrete)
+						xlambda <- as.integer(xlambda)
 
         if(complexity =="degree-knots") {
             x0 <- c(xdegree, xsegments,  xlambda)
-            bbin <-c(rep(1, num.x*2),rep(0,  num.z))
+            bbin <-c(rep(1, num.x*2),rep(lambda.flag,  num.z))
             #bounds segments cannot be smaller than 2
             lb <- c(rep(degree.min,num.x), rep(segments.min,num.x), rep(0, num.z))
-            ub <- c(rep(degree.max,num.x), rep(segments.max,num.x), rep(1, num.z))
+            ub <- c(rep(degree.max,num.x), rep(segments.max,num.x), rep(lambda.ub,  num.z))
 
         }  
         else if(complexity=="degree") {
             x0 <- c(xdegree,  xlambda)
-            bbin <-c(rep(1, num.x),rep(0,  num.z))
+            bbin <-c(rep(1, num.x),rep(lambda.flag,  num.z))
             lb <- c(rep(degree.min,num.x),  rep(0, num.z) )
-            ub <- c(rep(degree.max,num.x), rep(1, num.z))
+            ub <- c(rep(degree.max,num.x), rep(lambda.ub, num.z))
         }  
         else if(complexity=="knots")
         {
             x0 <- c(xsegments,  xlambda)
-            bbin <-c(rep(1, num.x),rep(0,  num.z))
+            bbin <-c(rep(1, num.x),rep(lambda.flag,  num.z))
             #bounds segments cannot be smaller than 2
             lb <- c(rep(segments.min,num.x), rep(0, num.z))
-            ub <- c(rep(segments.max,num.x), rep(1, num.z))
+            ub <- c(rep(segments.max,num.x), rep(lambda.ub, num.z))
         }
 
         ## Test for ill-conditioned spline degree, reset upper bound
@@ -426,6 +454,8 @@ krscvNOMAD <- function(xz,
                              segments=segments, 
                              degree=degree, 
                              lambda=lambda, 
+														 lambda.discrete=lambda.discrete, 
+														 lambda.discrete.num=lambda.discrete.num, 
                              cv.func=cv.func, 
                              opts=opts,
                              print.output=print.output, 
@@ -453,6 +483,9 @@ krscvNOMAD <- function(xz,
         lambda.opt <- as.numeric(nomad.solution$solution[(num.x+1):(num.x+num.z)])
         K.opt <-cbind(degree, segments)
     }
+		
+		if(lambda.discrete)
+				lambda.opt <- lambda.opt/lambda.discrete.num
 
     basis.opt <- basis
     if(basis == "auto") basis.opt <- attributes(nomad.solution)$basis.opt
