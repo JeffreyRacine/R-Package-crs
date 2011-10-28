@@ -426,7 +426,7 @@ crs.formula <- function(formula,
       if(knots=="auto") knots <- "quantiles"
   }
 
-  if(cv!="none"&&basis!="auto"&&NCOL(xz)>1) warning(paste(" Multiple predictor cv and basis is ", basis, ": you could consider basis=\"auto\"",sep=""),immediate.=TRUE)
+  if(cv!="none"&&basis!="auto"&&num.x>1) warning(paste(" Multiple continuous predictor cv and basis is ", basis, ": you could consider basis=\"auto\"",sep=""),immediate.=TRUE)
 
   if(kernel==TRUE&&prune==TRUE) warning(" pruning cannot coexist with categorical kernel smoothing (pruning ignored)")
 
