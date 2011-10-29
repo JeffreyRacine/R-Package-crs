@@ -262,8 +262,8 @@ krscvNOMAD <- function(xz,
 
         set.seed(random.seed)
 
-        if(is.null(xdegree)) xdegree <- rep(1,num.x) ## sample(degree.min:degree.max, num.x, replace=T)
-        if(is.null(xsegments)) xsegments <- rep(1,num.x) ## sample(segments.min:segments.max, num.x, replace=T)
+        if(is.null(xdegree)) xdegree <- rep(max(1,degree.min),num.x) ## sample(degree.min:degree.max, num.x, replace=T)
+        if(is.null(xsegments)) xsegments <- rep(max(1,segments.min),num.x) ## sample(segments.min:segments.max, num.x, replace=T)
         if(is.null(xlambda)) {
             xlambda <- runif(num.z)  ## xlambda stores number from 0 to 1
             if(lambda.discrete)
