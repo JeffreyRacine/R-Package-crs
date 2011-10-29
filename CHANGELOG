@@ -6,6 +6,9 @@ Changes from Version 0.15-6 to 0.15-7 [24-Oct-2011]
   sufficient than doing mixed integer search treating the lambda as
   real-valued
 
+* Corrected incorrect warning about using basis="auto" when there was
+  only one continuous predictor
+
 Changes from Version 0.15-6 to 0.15-7 [24-Oct-2011]
 
 * Added logical model.return to crs (default model.return=FALSE) which
