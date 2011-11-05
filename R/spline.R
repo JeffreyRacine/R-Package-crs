@@ -957,7 +957,7 @@ cv.kernel.spline <- function(x,
 				if(any(K[,1] > 0)) {
 						P <- prod.spline(x=x,K=K,knots=knots,basis=basis)
 						if(NCOL(P) >= (n-1)) return(sqrt(.Machine$double.xmax))
-						suppressWarnings(epsilon <- residuals(lsfit(P,y,intercept=lm.intercept)))
+						suppressWarnings(epsilon <- residuals(lm.fit(P,y,intercept=lm.intercept)))
 						htt <- hat(P)
 						htt <- ifelse(htt < 1, htt, 1-.Machine$double.eps)
 				} else {
