@@ -18,9 +18,10 @@ krscv <- function(xz,
                   complexity=c("degree-knots","degree","knots"),
                   knots=c("quantiles","uniform", "auto"),
                   basis=c("additive","tensor","glp","auto"),
-                  cv.func=c("cv.ls","cv.gcv","cv.aic"),
+                  cv.func=c("cv.ls","cv.gcv","cv.aic","cv.rq"),
                   degree=degree,
-                  segments=segments) {
+                  segments=segments,
+                  tau=NULL) {
 
   complexity <- match.arg(complexity)
   knots <- match.arg(knots)
@@ -53,7 +54,8 @@ krscv <- function(xz,
                       complexity=complexity,
                       knots=knots,
                       basis=basis,
-                      cv.func=cv.func) {
+                      cv.func=cv.func,
+                      tau=tau) {
 
     ## K is a matrix, column 1 degree, column 2 segments, either or
     ## both can be determined via cv so need to take care to allow
@@ -85,7 +87,8 @@ krscv <- function(xz,
                                    is.ordered.z=is.ordered.z,
                                    knots=knots,
                                    basis=basis,
-                                   cv.func=cv.func)
+                                   cv.func=cv.func,
+                                   tau=tau)
 
     ## Some i/o unless options(crs.messages=FALSE)
 
@@ -268,7 +271,8 @@ krscv <- function(xz,
                         complexity=complexity,
                         knots=knots,
                         basis="additive",
-                        cv.func=cv.func)
+                        cv.func=cv.func,
+                        tau=tau)
 
       }
 
@@ -306,7 +310,8 @@ krscv <- function(xz,
                                     complexity=complexity,
                                     knots=knots,
                                     basis="additive",
-                                    cv.func=cv.func)
+                                    cv.func=cv.func,
+                                    tau=tau)
 
           }
 
@@ -354,7 +359,8 @@ krscv <- function(xz,
                         complexity=complexity,
                         knots=knots,
                         basis="tensor",
-                        cv.func=cv.func)
+                        cv.func=cv.func,
+                        tau=tau)
 
       }
 
@@ -392,7 +398,8 @@ krscv <- function(xz,
                                     complexity=complexity,
                                     knots=knots,
                                     basis="tensor",
-                                    cv.func=cv.func)
+                                    cv.func=cv.func,
+                                    tau=tau)
 
           }
 
@@ -440,7 +447,8 @@ krscv <- function(xz,
                         complexity=complexity,
                         knots=knots,
                         basis="glp",
-                        cv.func=cv.func)
+                        cv.func=cv.func,
+                        tau=tau)
 
       }
 
@@ -478,7 +486,8 @@ krscv <- function(xz,
                                     complexity=complexity,
                                     knots=knots,
                                     basis="glp",
-                                    cv.func=cv.func)
+                                    cv.func=cv.func,
+                                    tau=tau)
 
           }
 
@@ -529,7 +538,8 @@ krscv <- function(xz,
                         complexity=complexity,
                         knots=knots,
                         basis=basis,
-                        cv.func=cv.func)
+                        cv.func=cv.func,
+                        tau=tau)
 
       }
 
@@ -567,7 +577,8 @@ krscv <- function(xz,
                                     complexity=complexity,
                                     knots=knots,
                                     basis=basis,
-                                    cv.func=cv.func)
+                                    cv.func=cv.func,
+                                    tau=tau)
 
           }
 
@@ -627,7 +638,8 @@ krscv <- function(xz,
 																					 is.ordered.z=is.ordered.z,
 																					 knots=knots,
 																					 basis=basis.opt,
-																					 cv.func=cv.func)
+																					 cv.func=cv.func,
+                                           tau=tau)
 
 			knots.opt <- attributes(cv.knots)$knots.opt
 	}
@@ -654,6 +666,7 @@ krscv <- function(xz,
         cv.objc=cv.min,
         cv.objc.vec=as.matrix(cv.vec),
         num.x=num.x,
-        cv.func=cv.func)
+        cv.func=cv.func,
+        tau=tau)
 
 }

@@ -17,7 +17,8 @@ crscv <- function(K,
                   cv.objc,
                   cv.objc.vec,
                   num.x,
-                  cv.func) {
+                  cv.func,
+                  tau) {
 
     tregcv = list(K=K,
                   I=I,
@@ -38,7 +39,8 @@ crscv <- function(K,
                   cv.objc=cv.objc,
                   cv.objc.vec=cv.objc.vec,
                   num.x=num.x,
-                  cv.func=cv.func)
+                  cv.func=cv.func,
+                  tau=tau)
 
   class(tregcv) <- "crscv"
 

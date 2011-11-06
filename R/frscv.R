@@ -17,9 +17,10 @@ frscv <- function(xz,
                   complexity=c("degree-knots","degree","knots"),
                   knots=c("quantiles","uniform", "auto"),
                   basis=c("additive","tensor","glp","auto"),
-                  cv.func=c("cv.ls","cv.gcv","cv.aic"),
+                  cv.func=c("cv.ls","cv.gcv","cv.aic","cv.rq"),
                   degree=degree,
-                  segments=segments) {
+                  segments=segments,
+                  tau=NULL) {
 
   complexity <- match.arg(complexity)
   knots <- match.arg(knots)
@@ -44,7 +45,8 @@ frscv <- function(xz,
                       complexity=complexity,
                       knots=knots,
                       basis=basis,
-                      cv.func=cv.func) {
+                      cv.func=cv.func,
+                      tau=tau) {
 
     if(missing(input) || missing(x) || missing(y)) stop(" you must provide input, x, y")
 
@@ -79,7 +81,8 @@ frscv <- function(xz,
                                    I=I,
                                    knots=knots,
                                    basis=basis,
-                                   cv.func=cv.func)
+                                   cv.func=cv.func,
+                                   tau=tau)
     
     ## Some i/o unless options(crs.messages=FALSE)
 
@@ -295,14 +298,14 @@ frscv <- function(xz,
                         complexity=complexity,
                         knots=knots,
                         basis="additive",
-                        cv.func=cv.func)
+                        cv.func=cv.func,
+                        tau=tau)
 
       if(output < cv.vec[j]) {
         basis.vec[j] <- "additive"
 				knots.vec[j] <- attributes(output)$knots.opt
 				attributes(output) <- NULL
         cv.vec[j] <- output
-
       }
       
       output <- cv.objc(input=KI.mat[j,],
@@ -321,7 +324,8 @@ frscv <- function(xz,
                         complexity=complexity,
                         knots=knots,
                         basis="tensor",
-                        cv.func=cv.func)
+                        cv.func=cv.func,
+                        tau=tau)
 
       if(output < cv.vec[j]) {
         basis.vec[j] <- "tensor"
@@ -346,7 +350,8 @@ frscv <- function(xz,
                         complexity=complexity,
                         knots=knots,
                         basis="glp",
-                        cv.func=cv.func)
+                        cv.func=cv.func,
+                        tau=tau)
 
       if(output < cv.vec[j]) {
         basis.vec[j] <- "glp"
@@ -375,7 +380,8 @@ frscv <- function(xz,
                         complexity=complexity,
                         knots=knots,
                         basis=basis,
-                        cv.func=cv.func)
+                        cv.func=cv.func,
+                        tau=tau)
 
       if(output < cv.vec[j]) {
         basis.vec[j] <- basis
@@ -432,6 +438,7 @@ frscv <- function(xz,
         cv.objc=cv.min,
         cv.objc.vec=as.matrix(cv.vec),
         num.x=num.x,
-        cv.func=cv.func)
+        cv.func=cv.func,
+        tau=tau)
 
 }
