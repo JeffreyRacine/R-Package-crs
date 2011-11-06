@@ -23,9 +23,10 @@ frscv(xz,
       complexity = c("degree-knots","degree","knots"),
       knots = c("quantiles","uniform","auto"),
       basis = c("additive","tensor","glp","auto"),
-      cv.func = c("cv.ls","cv.gcv","cv.aic"),
+      cv.func = c("cv.ls","cv.gcv","cv.aic","cv.rq"),
       degree = degree,
-      segments = segments)
+      segments = segments,
+      tau = NULL)
 }
 
 \arguments{
@@ -91,6 +92,12 @@ frscv(xz,
   the B-spline basis for each dimension of the continuous \code{x}
   (i.e. number of knots minus one)}
 
+  \item{tau}{
+    if non-null a number in (0,1) denoting the quantile for which a quantile
+    regression spline is to be estimated rather than estimating the
+    conditional mean (default \code{tau=NULL})
+  }
+  
 }
 
 \details{

@@ -25,6 +25,7 @@ crs(\dots)
     data.return = FALSE,
     prune = FALSE,
     model.return = FALSE,
+    tau = NULL,
     \dots)
 
 \method{crs}{formula}(formula,
@@ -38,7 +39,7 @@ crs(\dots)
     segments.min = 1, 
     cv = c("nomad","exhaustive","none"),
     cv.threshold=1000,
-    cv.func = c("cv.ls","cv.gcv","cv.aic"),
+    cv.func = c("cv.ls","cv.gcv","cv.aic","cv.rq"),
     kernel = TRUE,
     lambda = NULL,
     lambda.discrete = FALSE,
@@ -57,7 +58,8 @@ crs(\dots)
                 "INITIAL_MESH_SIZE"="r1.0e-01",
                 "MIN_MESH_SIZE"=paste("r",sqrt(.Machine$double.eps),sep=""),
                 "MIN_POLL_SIZE"=paste("r",sqrt(.Machine$double.eps),sep="")),
-    nmulti = 5, 
+    nmulti = 5,
+    tau = NULL,
     \dots)
 }
 \arguments{
@@ -203,7 +205,11 @@ in \code{x} are included or omitted from the resulting estimate }
     the cross-validation function from different (random) initial
     points (default \code{nmulti=5})
   }
-
+  \item{tau}{
+    if non-null a number in (0,1) denoting the quantile for which a quantile
+    regression spline is to be estimated rather than estimating the
+    conditional mean (default \code{tau=NULL})
+  }
  
   \item{\dots}{ optional arguments }
   
