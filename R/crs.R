@@ -1113,8 +1113,8 @@ plot.crs <- function(x,
     segments <- object$segments
     include <- object$include
     lambda <- object$lambda
-    tau <- object$tau
     is.ordered.z <- object$is.ordered.z
+    tau <- object$tau
 
     ## End information required to compute predictions
         

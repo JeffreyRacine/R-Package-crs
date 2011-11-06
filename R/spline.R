@@ -230,8 +230,11 @@ predict.kernel.spline <- function(x,
       }
     }
 
-    fit.spline <- cbind(fit.spline[[1]],se=fit.spline[[2]])
-
+    if(is.null(tau))
+      fit.spline <- cbind(fit.spline[[1]],se=fit.spline[[2]])
+    else
+      fit.spline <- cbind(fit.spline,NA)
+    
     if(is.null(tau))        
       htt <- hatvalues(model)
     else
@@ -296,6 +299,12 @@ predict.kernel.spline <- function(x,
           P <- prod.spline(x=x,K=K,xeval=x[zz,,drop=FALSE],knots=knots,basis=basis)
           tmp <- predict(model.z.unique,newdata=data.frame(as.matrix(P)),interval="confidence",se.fit=TRUE)
           fit.spline[zz,] <- cbind(tmp[[1]],tmp[[2]])
+
+          if(is.null(tau))
+            fit.spline[zz,] <- cbind(tmp[[1]],tmp[[2]])
+          else
+            fit.spline[zz,] <- cbind(tmp,NA)
+          
           rm(tmp)
         }
       } else {
@@ -332,7 +341,12 @@ predict.kernel.spline <- function(x,
           if(model.return) model[[i]] <- model.z.unique
           P <- prod.spline(x=x,K=K,xeval=xeval[zz,,drop=FALSE],knots=knots,basis=basis)
           tmp <- predict(model.z.unique,newdata=data.frame(as.matrix(P)),interval="confidence",se.fit=TRUE)
-          fit.spline[zz,] <- cbind(tmp[[1]],tmp[[2]])
+
+          if(is.null(tau))
+            fit.spline[zz,] <- cbind(tmp[[1]],tmp[[2]])
+          else
+            fit.spline[zz,] <- cbind(tmp,NA)
+
           rm(tmp)
         }
 
@@ -367,7 +381,12 @@ predict.kernel.spline <- function(x,
             htt[zz] <- hatvalues(model.z.unique.hat)[zz]
           P.hat[zz] <- sum(L)
           tmp <- predict(model.z.unique,newdata=data.frame(x.intercept=x.intercept[zz]),interval="confidence",se.fit=TRUE)
-          fit.spline[zz,] <- cbind(tmp[[1]],tmp[[2]])
+
+          if(is.null(tau))
+            fit.spline[zz,] <- cbind(tmp[[1]],tmp[[2]])
+          else
+            fit.spline[zz,] <- cbind(tmp,NA)
+
           rm(tmp)
         }
       } else {
@@ -396,7 +415,12 @@ predict.kernel.spline <- function(x,
             model.z.unique <- rq(y~x.intercept-1,weights=L,tau=tau)            
           if(model.return) model[[i]] <- model.z.unique
           tmp <- predict(model.z.unique,newdata=data.frame(x.intercept=rep(1,num.eval)[zz]),interval="confidence",se.fit=TRUE)
-          fit.spline[zz,] <- cbind(tmp[[1]],as.matrix(tmp[[2]]))
+
+          if(is.null(tau))
+            fit.spline[zz,] <- cbind(tmp[[1]],tmp[[2]])
+          else
+            fit.spline[zz,] <- cbind(tmp,NA)
+
           rm(tmp)
         }
       }
@@ -917,7 +941,7 @@ predict.factor.spline <- function(x,
   if(is.null(tau))
     fit.spline <- cbind(fit.spline[[1]],se=fit.spline[[2]])
   else
-    fit.spline <- cbind(fit.spline,NA)
+    fit.spline <- cbind(fit.spline,se=NA)
 
   console <- printClear(console)
   console <- printPop(console)
@@ -1263,8 +1287,9 @@ cv.kernel.spline <- function(x,
             if(model$rank != (NCOL(P)+1)) return(sqrt(.Machine$double.xmax))
           } else {
             model <- rq.wfit(cbind(1,P),y,weights=L,tau=tau)
+            model.hat <- lm.wfit(cbind(1,P),y,L)
             ## Check for rank-deficient fit
-            if(NCOL(model$x) != (NCOL(P)+1)) return(sqrt(.Machine$double.xmax))
+            if(model.hat$rank != (NCOL(P)+1)) return(sqrt(.Machine$double.xmax))
           }
         } else {
           if(is.null(tau)) {
@@ -1273,15 +1298,16 @@ cv.kernel.spline <- function(x,
             if(model$rank != NCOL(P)) return(sqrt(.Machine$double.xmax))
           } else {
             model <- rq.wfit(P,y,weights=L,tau=tau)
+            model.hat <- lm.wfit(P,y,L)
             ## Check for rank-deficient fit          
-            if(NCOL(model$x) != NCOL(P)) return(sqrt(.Machine$double.xmax))
+            if(model.hat$rank != NCOL(P)) return(sqrt(.Machine$double.xmax))
           }
         }
         epsilon[zz] <- residuals(model)[zz]
         if(is.null(tau))
           htt[zz] <- hat(model$qr)[zz]
         else
-          htt[zz] <- hat(model$x)[zz]  ## XXXXX this is absolutely wrong...
+          htt[zz] <- hat(model.hat$qr)[zz]
       }
     } else {
       ## No predictors for which degree > 0      
@@ -1299,7 +1325,8 @@ cv.kernel.spline <- function(x,
           htt[zz] <- hat(model$qr)[zz]
         } else {
           model <- rq.wfit(matrix(1,n,1),y,weights=L,tau=tau)
-          htt[zz] <- hat(model$x)[zz] ## XXXXX This most certainly is incorrect! But it is a corner case so ignore for now 6/11/11 (all x irrelevant)
+          model.hat <- lm.wfit(matrix(1,n,1),y,L)
+          htt[zz] <- hat(model.hat$qr)[zz]
         }          
         epsilon[zz] <- residuals(model)[zz]
       }
@@ -1431,8 +1458,9 @@ cv.factor.spline <- function(x,
         if(model$rank != (NCOL(P)+1)) return(sqrt(.Machine$double.xmax))
       } else {
         model <- rq.fit(cbind(1,P),y,tau=tau)
+        model.hat <- lm.fit(cbind(1,P),y)
         ## Check for rank-deficient fit
-        if(NCOL(model$x) != (NCOL(P)+1)) return(sqrt(.Machine$double.xmax))
+        if(model.hat$rank != (NCOL(P)+1)) return(sqrt(.Machine$double.xmax))
       }
     } else {
       if(is.null(tau)) {
@@ -1441,14 +1469,15 @@ cv.factor.spline <- function(x,
         if(model$rank != NCOL(P)) return(sqrt(.Machine$double.xmax))
       } else {
         model <- rq.fit(P,y,tau=tau)
+        model.hat <- lm.fit(P,y)
         ## Check for rank-deficient fit      
-        if(NCOL(model$rx) != NCOL(P)) return(sqrt(.Machine$double.xmax))
+        if(model.hat$rank != NCOL(P)) return(sqrt(.Machine$double.xmax))
       }
     }
     if(is.null(tau))
       htt <- hat(model$qr)
     else
-      htt <- hat(model$x) ### XXX This most certainly is wrong! Quantiles may need further refinement...
+      htt <- hat(model.hat$qr)
     htt <- ifelse(htt < 1, htt, 1-.Machine$double.eps)
     epsilon <- residuals(model)
   } else {
