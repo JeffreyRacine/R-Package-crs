@@ -398,7 +398,10 @@ crs.formula <- function(formula,
   knots <- match.arg(knots)
   basis <- match.arg(basis)
 
-  if(!is.null(tau)) cv.func <- "cv.rq"
+  if(!is.null(tau)) {
+    cv.func <- "cv.rq"
+    if(!require(quantreg)) stop(" Error: you must first install the quantreg package")
+  }
 
   mf <- model.frame(formula=formula, data=data)
   mt <- attr(mf, "terms")
