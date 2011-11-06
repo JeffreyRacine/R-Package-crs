@@ -901,6 +901,8 @@ predict.crs <- function(object,
   attr(fitted.values, "deriv.mat.lwr") <- deriv.mat.lwr
   attr(fitted.values, "deriv.mat.upr") <- deriv.mat.upr
 
+  print(fitted.values)
+
   return(fitted.values)
 
 }
