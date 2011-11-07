@@ -180,11 +180,12 @@ snomadr(eval.f,
     \item{solution}{optimal value of the controls}
 }
 \references{
-  M.A. Abramson, C. Audet, G. Couture, J.E. Dennis, Jr., and S. Le
-  Digabel (2011), \dQuote{The NOMAD project}. Software available at
-  http://www.gerad.ca/nomad.
 
-  S. Le Digabel (2011), \dQuote{Algorithm 909: NOMAD: Nonlinear
+  Abramson, M.A. and C. Audet and G. Couture and J.E. Dennis Jr. and
+  S. Le Digabel (2011), \dQuote{The NOMAD project}. Software available
+  at http://www.gerad.ca/nomad.
+
+  Le Digabel, S. (2011), \dQuote{Algorithm 909: NOMAD: Nonlinear
   optimization with the MADS algorithm}. ACM Transactions on
   Mathematical Software, 37(4):44:1-44:15.
   

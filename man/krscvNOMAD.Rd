@@ -190,9 +190,9 @@ krscvNOMAD(xz,
 
 \references{
 
-  M.A. Abramson, C. Audet, G. Couture, J.E. Dennis, Jr., and S. Le
-  Digabel (2011), \dQuote{The NOMAD project}. Software available at
-  http://www.gerad.ca/nomad.
+  Abramson, M.A. and C. Audet and G. Couture and J.E. Dennis Jr. and
+  S. Le Digabel (2011), \dQuote{The NOMAD project}. Software available
+  at http://www.gerad.ca/nomad.
 
   Craven, P. and G. Wahba (1979), \dQuote{Smoothing noisy data with
   spline functions,} Numerische Mathematik, 13, 377-403.
@@ -202,18 +202,18 @@ krscvNOMAD(xz,
     using an improved Akaike information criterion,} Journal of the
   Royal Statistical Society B, 60, 271-293.
 
-  S. Le Digabel (2011), \dQuote{Algorithm 909: NOMAD: Nonlinear
+  Le Digabel, S. (2011), \dQuote{Algorithm 909: NOMAD: Nonlinear
   optimization with the MADS algorithm}. ACM Transactions on
   Mathematical Software, 37(4):44:1-44:15.
   
+  Li, Q. and J.S. Racine (2007), \emph{Nonparametric Econometrics:
+    Theory and Practice,} Princeton University Press.
+
   Ma, S. and J.S. Racine and L. Yang (2011), \dQuote{Spline Regression
   in the Presence of Categorical Predictors,} manuscript.
 
   Ma, S. and J.S. Racine (2011), \dQuote{Additive Regression Splines
   With Irrelevant Categorical and Continuous Regressors,} manuscript.
-
-  Li, Q. and J.S. Racine (2007), \emph{Nonparametric Econometrics:
-    Theory and Practice,} Princeton University Press.
 
 }
 
