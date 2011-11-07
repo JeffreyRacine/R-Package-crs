@@ -233,7 +233,7 @@ predict.kernel.spline <- function(x,
     if(is.null(tau))
       fit.spline <- cbind(fit.spline[[1]],se=fit.spline[[2]])
     else
-      fit.spline <- cbind(fit.spline,(fit.spline[,3]-fit.spline[,1])/1.96)
+      fit.spline <- cbind(fit.spline,se=ifelse(NCOL(fit.spline)>1,(fit.spline[,3]-fit.spline[,1])/1.96,NA))
 
     if(is.null(tau))
       htt <- hatvalues(model)
@@ -939,7 +939,7 @@ predict.factor.spline <- function(x,
   if(is.null(tau))
     fit.spline <- cbind(fit.spline[[1]],se=fit.spline[[2]])
   else
-    fit.spline <- cbind(fit.spline,se=(fit.spline[,3]-fit.spline[,1])/1.96)
+    fit.spline <- cbind(fit.spline,se=ifelse(NCOL(fit.spline)>1,(fit.spline[,3]-fit.spline[,1])/1.96,NA))
 
   console <- printClear(console)
   console <- printPop(console)
