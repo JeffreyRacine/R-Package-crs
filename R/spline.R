@@ -233,7 +233,7 @@ predict.kernel.spline <- function(x,
     if(is.null(tau))
       fit.spline <- cbind(fit.spline[[1]],se=fit.spline[[2]])
     else
-      fit.spline <- cbind(fit.spline,NA)
+      fit.spline <- cbind(fit.spline,(fit.spline[,3]-fit.spline[,1])/1.96)
 
     if(is.null(tau))
       htt <- hatvalues(model)
@@ -298,13 +298,11 @@ predict.kernel.spline <- function(x,
           P.hat[zz] <- sum(L)
           P <- prod.spline(x=x,K=K,xeval=x[zz,,drop=FALSE],knots=knots,basis=basis)
           tmp <- predict(model.z.unique,newdata=data.frame(as.matrix(P)),interval="confidence",se.fit=TRUE)
-          fit.spline[zz,] <- cbind(tmp[[1]],tmp[[2]])
 
           if(is.null(tau))
             fit.spline[zz,] <- cbind(tmp[[1]],tmp[[2]])
           else
-            fit.spline[zz,] <- cbind(tmp,NA)
-
+            fit.spline[zz,] <- cbind(tmp,(tmp[,3]-tmp[,1])/1.96)
           rm(tmp)
         }
       } else {
@@ -345,7 +343,7 @@ predict.kernel.spline <- function(x,
           if(is.null(tau))
             fit.spline[zz,] <- cbind(tmp[[1]],tmp[[2]])
           else
-            fit.spline[zz,] <- cbind(tmp,NA)
+            fit.spline[zz,] <- cbind(tmp,(tmp[,3]-tmp[,1])/1.96)
 
           rm(tmp)
         }
@@ -385,7 +383,7 @@ predict.kernel.spline <- function(x,
           if(is.null(tau))
             fit.spline[zz,] <- cbind(tmp[[1]],tmp[[2]])
           else
-            fit.spline[zz,] <- cbind(tmp,NA)
+            fit.spline[zz,] <- cbind(tmp,(tmp[,3]-tmp[,1])/1.96)
 
           rm(tmp)
         }
@@ -419,7 +417,7 @@ predict.kernel.spline <- function(x,
           if(is.null(tau))
             fit.spline[zz,] <- cbind(tmp[[1]],tmp[[2]])
           else
-            fit.spline[zz,] <- cbind(tmp,NA)
+            fit.spline[zz,] <- cbind(tmp,(tmp[,3]-tmp[,1])/1.96)
 
           rm(tmp)
         }
@@ -941,7 +939,7 @@ predict.factor.spline <- function(x,
   if(is.null(tau))
     fit.spline <- cbind(fit.spline[[1]],se=fit.spline[[2]])
   else
-    fit.spline <- cbind(fit.spline,se=NA)
+    fit.spline <- cbind(fit.spline,se=(fit.spline[,3]-fit.spline[,1])/1.96)
 
   console <- printClear(console)
   console <- printPop(console)

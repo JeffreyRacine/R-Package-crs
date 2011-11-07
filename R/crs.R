@@ -1562,7 +1562,7 @@ plot.crs <- function(x,
                                                 knots=knots,
                                                 basis=basis,
                                                 tau=tau)$fitted.values
-            
+
             deriv.est <- zpred[,1]-zpred.base[,1]
             deriv.lwr <- deriv.est - qnorm(0.975)*sqrt(zpred[,4]^2+zpred.base[,4]^2)
             deriv.upr <- deriv.est + qnorm(0.975)*sqrt(zpred[,4]^2+zpred.base[,4]^2)
