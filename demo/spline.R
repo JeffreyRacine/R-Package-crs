@@ -538,7 +538,7 @@ deriv.kernel.spline <- function(x,
         else
           vcov.model <- summary(model,covariance=TRUE)$cov
 
-        se.deriv <- sapply(1:NROW(P.deriv), function(i){ sqrt(P.deriv[i,,drop=FALSE]%*%vcov.model.%*%t(P.deriv[i,,drop=FALSE])) })
+        se.deriv <- sapply(1:NROW(P.deriv), function(i){ sqrt(P.deriv[i,,drop=FALSE]%*%vcov.model%*%t(P.deriv[i,,drop=FALSE])) })
       } else if(basis=="glp") {
         if(is.null(tau))
           model <- lm(y~P)
@@ -1225,19 +1225,25 @@ cv.kernel.spline <- function(x,
       if(NCOL(P) >= (n-1))
         return(sqrt(.Machine$double.xmax))
       ## Test condition
-      if(rcond(t(P)%*%P) < .Machine$double.eps)
-        return(sqrt(.Machine$double.xmax))
+      if(!is.null(tau)) {
+        if(rcond(t(P)%*%P) < .Machine$double.eps)
+          return(sqrt(.Machine$double.xmax))
+      }
       if(basis=="additive" || basis=="glp") {
         ## Additive spline regression models have an intercept in the lm()
         ## model (though not in the gsl.bs function)
         if(is.null(tau)) {
           epsilon <- residuals(lm.fit(cbind(1,P),y))
+          ## Test for rank-deficient fit
+          if(model$rank != (NCOL(P)+1)) return(sqrt(.Machine$double.xmax))
         } else {
           epsilon <- residuals(rq.fit(cbind(1,P),y,tau=tau))
         }
       } else {
         if(is.null(tau)) {
           epsilon <- residuals(lm.fit(P,y))
+          ## Test for rank-deficient fit
+          if(model$rank != NCOL(P)) return(sqrt(.Machine$double.xmax))
         } else {
           epsilon <- residuals(rq.fit(P,y,tau=tau))
         }
@@ -1281,34 +1287,44 @@ cv.kernel.spline <- function(x,
           ## Additive spline regression models have an intercept in
           ## the lm() model (though not in the gsl.bs function)
           ## Check for rank-deficient fit
-          Pw <- diag(sqrt(L))%*%cbind(1,P)
+
           ## First simple test - no degrees of freedom, so no need to
           ## test condition
           if(NCOL(P) >= (n-1))
             return(sqrt(.Machine$double.xmax))
           ## Test condition
-          if(rcond(t(Pw)%*%Pw) < .Machine$double.eps)
-            return(sqrt(.Machine$double.xmax))
-          rm(Pw)
+          if(!is.null(tau)) {
+            Pw <- diag(sqrt(L))%*%cbind(1,P)
+            if(rcond(t(Pw)%*%Pw) < .Machine$double.eps)
+              return(sqrt(.Machine$double.xmax))
+            rm(Pw)
+          }
           if(is.null(tau)) {
             model <- lm.wfit(cbind(1,P),y,L)
+            ## Test for rank-deficient fit
+            if(model$rank != (NCOL(P)+1)) return(sqrt(.Machine$double.xmax))
           } else {
             model <- rq.wfit(cbind(1,P),y,weights=L,tau=tau)
             model.hat <- lm.wfit(cbind(1,P),y,L)
           }
         } else {
           ## Check for rank-deficient fit
-          Pw <- diag(sqrt(L))%*%P
+
           ## First simple test - no degrees of freedom, so no need to
           ## test condition
           if(NCOL(P) >= (n-1))
             return(sqrt(.Machine$double.xmax))
           ## Test condition
-          if(rcond(t(Pw)%*%Pw) < .Machine$double.eps)
-            return(sqrt(.Machine$double.xmax))
-          rm(Pw)
+          if(!is.null(tau)) {
+            Pw <- diag(sqrt(L))%*%P
+            if(rcond(t(Pw)%*%Pw) < .Machine$double.eps)
+              return(sqrt(.Machine$double.xmax))
+            rm(Pw)
+          }
           if(is.null(tau)) {
             model <- lm.wfit(P,y,L)
+            ## Test for rank-deficient fit
+            if(model$rank != NCOL(P)) return(sqrt(.Machine$double.xmax))
           } else {
             model <- rq.wfit(P,y,weights=L,tau=tau)
             model.hat <- lm.wfit(P,y,L)
@@ -1464,13 +1480,17 @@ cv.factor.spline <- function(x,
     if(NCOL(P) >= (n-1))
       return(sqrt(.Machine$double.xmax))
     ## Test condition
-    if(rcond(t(P)%*%P) < .Machine$double.eps)
-      return(sqrt(.Machine$double.xmax))
+    if(!is.null(tau)) {
+      if(rcond(t(P)%*%P) < .Machine$double.eps)
+        return(sqrt(.Machine$double.xmax))
+    }
     if(basis=="additive" || basis=="glp") {
       ## Additive spline regression models have an intercept in the
       ## lm() model (though not in the gsl.bs function)
       if(is.null(tau)) {
         model <- lm.fit(cbind(1,P),y)
+        ## Test for rank-deficient fit
+        if(model$rank != (NCOL(P)+1)) return(sqrt(.Machine$double.xmax))
       } else {
         model <- rq.fit(cbind(1,P),y,tau=tau)
         model.hat <- lm.fit(cbind(1,P),y)
@@ -1478,6 +1498,8 @@ cv.factor.spline <- function(x,
     } else {
       if(is.null(tau)) {
         model <- lm.fit(P,y)
+        ## Test for rank-deficient fit
+        if(model$rank != NCOL(P)) return(sqrt(.Machine$double.xmax))
       } else {
         model <- rq.fit(P,y,tau=tau)
         model.hat <- lm.fit(P,y)
