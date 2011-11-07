@@ -1,5 +1,13 @@
 Changes from Version 0.15-7 to 0.15-8 [1-Nov-2011]
 
+* Passing back cv function from solver rather than computing
+
+* Added ability to estimate quantile regression splines (to be
+  considered in beta status until further notice)
+
+* More rigorous testing for rank deficient fit via rcond() in cv
+  function
+
 * Fixed issue where degree.min was set > 1 but initial degree was 1
   (corresponding to the linear model which is the default for the
   initial degree otherwise)
