@@ -538,7 +538,7 @@ deriv.kernel.spline <- function(x,
         else
           vcov.model <- summary(model,covariance=TRUE)$cov
 
-        se.deriv <- sapply(1:NROW(P.deriv), function(i){ sqrt(P.deriv[i,,drop=FALSE]%*%vcov.model.%*%t(P.deriv[i,,drop=FALSE])) })
+        se.deriv <- sapply(1:NROW(P.deriv), function(i){ sqrt(P.deriv[i,,drop=FALSE]%*%vcov.model%*%t(P.deriv[i,,drop=FALSE])) })
       } else if(basis=="glp") {
         if(is.null(tau))
           model <- lm(y~P)
