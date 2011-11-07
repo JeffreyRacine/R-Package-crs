@@ -280,7 +280,6 @@ crsEst <- function(xz,
               hatvalues=model$hatvalues,
               nobs=length(y),
               k=model$rank,
-              cv.score=mean((y-model$fitted.values[,1])^2/(1-model$hatvalues)^2),
               x=x,
               z=z,
               prune=prune,
@@ -491,7 +490,7 @@ crs.formula <- function(formula,
                                                        nmulti=nmulti,
                                                        tau=tau))
 
-      cv.min <- cv.return$cv.min
+      cv.min <- cv.return$cv.objc
       degree <- cv.return$degree
       segments <- cv.return$segments
       include <- cv.return$I
@@ -514,7 +513,7 @@ crs.formula <- function(formula,
                                                   segments=segments,
                                                   tau=tau))
       
-      cv.min <- cv.return$cv.min
+      cv.min <- cv.return$cv.objc
       degree <- cv.return$degree
       segments <- cv.return$segments
       include <- cv.return$I
@@ -549,7 +548,7 @@ crs.formula <- function(formula,
                                                        nmulti=nmulti,
                                                        tau=tau))
       
-      cv.min <- cv.return$cv.min
+      cv.min <- cv.return$cv.objc
       degree <- cv.return$degree
       segments <- cv.return$segments
       include <- cv.return$I
@@ -575,7 +574,7 @@ crs.formula <- function(formula,
                                                   restarts=restarts,
                                                   tau=tau))
       
-      cv.min <- cv.return$cv.min
+      cv.min <- cv.return$cv.objc
       degree <- cv.return$degree
       segments <- cv.return$segments
       include <- cv.return$I
@@ -604,7 +603,9 @@ crs.formula <- function(formula,
                                               model.return=model.return,
                                               tau=tau,
                                               ...))
-  
+
+
+  est$cv.score <- cv.min
   est$call <- match.call()
   est$formula <- formula
   est$terms <- mt
@@ -969,7 +970,7 @@ summary.crs <- function(object,
   F <- (df2/df1)*(sum((object$y-mean(object$y))^2)-sum(residuals(object)^2))/sum(residuals(object)^2)
   if(is.null(object$tau)) cat(paste("\nF-statistic: ", format(F,digits=4), " on ", df1, " and ", df2, " DF, p-value: ", format(pf(F,df1=df1,df2=df2,lower.tail=FALSE),digits=4), sep=""))
 
-  cat(paste("\n\nCross-validation score: ", format(object$cv.score,digits=8), sep=""))  
+  if(!is.null(object$cv.score)) cat(paste("\n\nCross-validation score: ", format(object$cv.score,digits=8), sep=""))  
   if(object$cv != "none") cat(paste("\nNumber of multistarts: ", format(object$nmulti), sep=""))
 
   if(sigtest&!object$kernel) {

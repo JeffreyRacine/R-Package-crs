@@ -1,9 +1,10 @@
 Changes from Version 0.15-7 to 0.15-8 [1-Nov-2011]
 
-* Passing back cv function from solver rather than computing
+* Fixed issue with reported cross-validation score only corresponding
+  to leave-one-out cross-validation by passing back cv function from
+  solver rather than computing post estimation
 
-* Added ability to estimate quantile regression splines (to be
-  considered in beta status until further notice)
+* Added ability to estimate quantile regression splines
 
 * More rigorous testing for rank deficient fit via rcond() in cv
   function

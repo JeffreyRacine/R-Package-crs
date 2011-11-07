@@ -88,7 +88,7 @@ print.crscv <- function(x, ...){
     cat("\n\n")
   } else {
     cat("\nRegression Spline Cross-Validation",sep="")
-    cat(paste("\n\nObjective Function Value : ",format(x$cv.objc),sep=""),sep="")
+    cat(paste("\n\nObjective Function Value: ",format(x$cv.objc),sep=""),sep="")
 
     cat(paste("\n\nKnot type: ", format(x$knots), sep=""))    
     cat(paste("\nModel complexity proxy: ", format(x$complexity), sep=""))
