@@ -1248,7 +1248,7 @@ plot.crs <- function(x,
           if(!ci) {
             plot(mg[[i]][,1],mg[[i]][,2],
                  xlab=names(newdata)[i],
-                 ylab="Conditional Mean",
+                 ylab=ifelse(is.null(tau),"Conditional Mean",paste("Conditional Quantile (tau = ",format(tau),")",sep="")),
                  ylim=ylim,
                  type="l",
                  ...)
@@ -1257,7 +1257,7 @@ plot.crs <- function(x,
             if(!common.scale) ylim <- c(min(mg[[i]][,-1]),max(mg[[i]][,-1]))
             plot(mg[[i]][,1],mg[[i]][,2],
                  xlab=names(newdata)[i],
-                 ylab="Conditional Mean",
+                 ylab=ifelse(is.null(tau),"Conditional Mean",paste("Conditional Quantile (tau = ",format(tau),")",sep="")),
                  ylim=ylim,
                  type="l",
                  ...)
@@ -1333,7 +1333,7 @@ plot.crs <- function(x,
                 color=col,
                 alpha=.7,
                 back="lines",
-                main="Conditional Mean")
+                main=ifelse(is.null(tau),"Conditional Mean",paste("Conditional Quantile (tau = ",format(tau),")",sep="")))
         
         grid3d(c("x", "y+", "z"))
         
