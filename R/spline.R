@@ -1274,10 +1274,6 @@ cv.kernel.spline <- function(x,
           ## the lm() model (though not in the gsl.bs function)
           ## Check for rank-deficient fit
 
-          ## First simple test - no degrees of freedom, so no need to
-          ## test condition
-          if(NCOL(P) >= (n-1))
-            return(sqrt(.Machine$double.xmax))
           ## Test condition
           if(!is.null(tau)) {
             Pw <- diag(sqrt(L))%*%cbind(1,P)
@@ -1296,10 +1292,6 @@ cv.kernel.spline <- function(x,
         } else {
           ## Check for rank-deficient fit
 
-          ## First simple test - no degrees of freedom, so no need to
-          ## test condition
-          if(NCOL(P) >= (n-1))
-            return(sqrt(.Machine$double.xmax))
           ## Test condition
           if(!is.null(tau)) {
             Pw <- diag(sqrt(L))%*%P
