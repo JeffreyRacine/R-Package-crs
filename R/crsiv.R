@@ -355,6 +355,7 @@ crsiv <- function(y,
                  kernel=phi.0$kernel, 
                  basis=phi.0$basis,
                  knots=phi.0$knots,
+                 tau=phi.0$tau,
                  deriv=deriv,
                  data=traindata)
 
@@ -427,6 +428,7 @@ crsiv <- function(y,
                         kernel=model.E.phi.w$kernel, 
                         basis=model.E.phi.w$basis,
                         knots=model.E.phi.w$knots,
+                        tau=model.E.phi.w$tau,                        
                         data=traindata)
       
       E.phi.w <- predict(model.stop,newdata=evaldata)
@@ -470,6 +472,7 @@ crsiv <- function(y,
                  kernel=phi.0$kernel, 
                  basis=phi.0$basis,
                  knots=phi.0$knots,
+                 tau=phi.0$tau,                 
                  deriv=deriv,
                  data=traindata)
 

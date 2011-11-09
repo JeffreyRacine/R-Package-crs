@@ -34,7 +34,7 @@ u <- -0.5*v + eps
 w <- rnorm(n,mean=0,sd=1)
 z <- 0.2*w + v
 
-## In Darolles et al (2011) there exist two DGPs. The first is`a
+## In Darolles et al (2011) there exist two DGPs. The first is
 ## phi(z)=z^2.
 
 phi <- function(z) { z^2 }
@@ -50,7 +50,7 @@ evaldata <- data.frame(z=sort(z))
 model.iv <- crsiv(y=y,z=z,w=w,cv=cv,nmulti=nmulti,method=method)
 phihat.iv <- predict(model.iv,newdata=evaldata)
 
-## Now the non-iv regression spline estimator of E(y|z)`a
+## Now the non-iv regression spline estimator of E(y|z)
 
 model.noniv <- crs(y~z,cv=cv,nmulti=nmulti,opts=opts)
 crs.mean <- predict(model.noniv,newdata=evaldata)
