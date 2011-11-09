@@ -949,14 +949,14 @@ summary.crs <- function(object,
   }  else {
     cat(paste("\nThere are ",format(object$num.z), " categorical predictors",sep=""),sep="")
   }
-  cat(paste("\nKnot type: ", format(object$knots), sep=""))
-  cat(paste("\nModel complexity proxy: ", format(object$complexity), sep=""))
-    for(j in 1:object$num.x)
-      cat(paste("\nSpline degree/number of segments for ",format(object$xnames[j]),": ",format(object$degree[j]),"/",format(object$segments[j]),sep=""),sep="")
+  for(j in 1:object$num.x)
+    cat(paste("\nSpline degree/number of segments for ",format(object$xnames[j]),": ",format(object$degree[j]),"/",format(object$segments[j]),sep=""),sep="")
   if(!is.null(object$include)) for(j in 1:length(object$include))
     cat(paste("\nInclusion indicator for ",format(object$znames[j]),": ",format(object$include[j]),sep=""),sep="")
   if(!is.null(object$lambda)) for(j in 1:length(object$lambda))
     cat(paste("\nBandwidth for ",format(object$znames[j]),": ",format(object$lambda[j]),sep=""),sep="")
+  cat(paste("\nModel complexity proxy: ", format(object$complexity), sep=""))
+  cat(paste("\nKnot type: ", format(object$knots), sep=""))
   cat(paste("\nBasis type: ",format(object$basis),sep=""))
   if(!object$kernel) cat(paste("\nPruning of final model: ",format(ifelse(object$prune,"TRUE","FALSE")),sep=""))
   cat(paste("\nTraining observations: ", format(object$nobs), sep=""))
