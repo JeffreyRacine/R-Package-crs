@@ -1375,7 +1375,7 @@ cv.kernel.spline <- function(x,
     cv <- ifelse(penalty < 0, .Machine$double.xmax, log(sigmasq)+penalty);
   }
   
-  return(cv)
+  return(ifelse(!is.na(cv),cv,.Machine$double.xmax))
 
 }
 
@@ -1540,6 +1540,6 @@ cv.factor.spline <- function(x,
     cv <- ifelse(penalty < 0, .Machine$double.xmax, log(sigmasq)+penalty);
   }
   
-  return(cv)
+  return(ifelse(!is.na(cv),cv,.Machine$double.xmax))
 
 }
