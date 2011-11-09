@@ -23,7 +23,7 @@ frscv(xz,
       complexity = c("degree-knots","degree","knots"),
       knots = c("quantiles","uniform","auto"),
       basis = c("additive","tensor","glp","auto"),
-      cv.func = c("cv.ls","cv.gcv","cv.aic","cv.rq"),
+      cv.func = c("cv.ls","cv.gcv","cv.aic"),
       degree = degree,
       segments = segments,
       tau = NULL)

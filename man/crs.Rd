@@ -39,7 +39,7 @@ crs(\dots)
     segments.min = 1, 
     cv = c("nomad","exhaustive","none"),
     cv.threshold=1000,
-    cv.func = c("cv.ls","cv.gcv","cv.aic","cv.rq"),
+    cv.func = c("cv.ls","cv.gcv","cv.aic"),
     kernel = TRUE,
     lambda = NULL,
     lambda.discrete = FALSE,
@@ -208,9 +208,8 @@ in \code{x} are included or omitted from the resulting estimate }
   \item{tau}{
     if non-null a number in (0,1) denoting the quantile for which a quantile
     regression spline is to be estimated rather than estimating the
-    conditional mean (default \code{tau=NULL}). Note that
-    \code{cv="cv.rq"} will be automatically set when this option is
-    invoked and will override any value of \code{cv=...} otherwise set
+    conditional mean (default \code{tau=NULL}). Criterion function set
+    by \code{cv.func=} are modified accordingly to admit quantile regression.
   }
  
   \item{\dots}{ optional arguments }

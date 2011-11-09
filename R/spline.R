@@ -1104,7 +1104,7 @@ cv.kernel.spline.wrapper <- function(x,
                                      is.ordered.z=NULL,
                                      knots=c("quantiles","uniform","auto"),
                                      basis=c("additive","tensor","glp"),
-                                     cv.func=c("cv.ls","cv.gcv","cv.aic","cv.rq"),
+                                     cv.func=c("cv.ls","cv.gcv","cv.aic"),
                                      tau=NULL) {
 
   knots.opt <- knots;
@@ -1194,7 +1194,7 @@ cv.kernel.spline <- function(x,
 														 is.ordered.z=NULL,
 														 knots=c("quantiles","uniform"),
 														 basis=c("additive","tensor","glp"),
-														 cv.func=c("cv.ls","cv.gcv","cv.aic","cv.rq"),
+														 cv.func=c("cv.ls","cv.gcv","cv.aic"),
                              tau=NULL) {
 
   if(missing(x) || missing(y) || missing (K)) stop(" must provide x, y and K")
@@ -1252,19 +1252,7 @@ cv.kernel.spline <- function(x,
       htt <- rep(1/n,n)
       epsilon <- y-mean(y)
     }
-    if(cv.func == "cv.ls") {
-      cv <- mean(epsilon^2/(1-htt)^2)
-    } else if(cv.func == "cv.gcv"){
-      cv <- mean(epsilon^2/(1-mean(htt))^2)
-    } else if(cv.func == "cv.aic"){
-      sigmasq <- mean(epsilon^2)
-      traceH <- sum(htt)
-      penalty <- (1+traceH/n)/(1-(traceH+2)/n)
-      cv <- ifelse(penalty < 0, .Machine$double.xmax, log(sigmasq)+penalty);
-    } else if(cv.func == "cv.rq") {
-      ## Note - this is defined in util.R so if you modify there you must modify here also
-      cv <- mean(check.function(epsilon,tau)/(1-htt)^(1/sqrt(tau*(1-tau))))
-    }
+
   } else {
 
     ## Categorical predictors - this is the workhorse
@@ -1359,22 +1347,34 @@ cv.kernel.spline <- function(x,
 
     htt <- ifelse(htt < 1, htt, 1-.Machine$double.eps)
 
-    if(cv.func == "cv.ls") {
-      cv <- mean((epsilon/(1-htt))^2)
-    } else if(cv.func == "cv.gcv"){
-      cv <- mean((epsilon/(1-mean(htt)))^2)
-    } else if(cv.func == "cv.aic"){
-      sigmasq <- mean(epsilon^2)
-      traceH <- sum(htt)
-      penalty <- (1+traceH/n)/(1-(traceH+2)/n)
-      cv <- ifelse(penalty < 0, .Machine$double.xmax, log(sigmasq)+penalty);
-    } else if(cv.func == "cv.rq") {
-      ## Note - this is defined in util.R so if you modify there you must modify here also
-      cv <- mean(check.function(epsilon,tau)/(1-htt)^(1/sqrt(tau*(1-tau))))
-    }
-
   }
 
+  if(cv.func == "cv.ls") {
+    if(is.null(tau)) 
+      cv <- mean(epsilon^2/(1-htt)^2)
+    else
+      ## Note - this is defined in util.R so if you modify there you must modify here also
+      cv <- mean(check.function(epsilon,tau)/(1-htt)^(1/sqrt(tau*(1-tau))))
+  } else if(cv.func == "cv.gcv"){
+    if(is.null(tau)) 
+      cv <- mean(epsilon^2/(1-mean(htt))^2)
+    else
+      ## Note - this is defined in util.R so if you modify there you must modify here also        
+      cv <- mean(check.function(epsilon,tau)/(1-mean(htt))^(1/sqrt(tau*(1-tau))))        
+  } else if(cv.func == "cv.aic"){
+    if(is.null(tau))
+      sigmasq <- mean(epsilon^2)
+    else
+      sigmasq <- mean(check.function(epsilon,tau))
+    ## Note - the above two criteria are sound and modified via
+    ## tau*(1-tau) to admit quantiles. However this modification does
+    ## not incorporate the quantile so is definitely not reliable -
+    ## topic for future research perhaps?
+    traceH <- sum(htt)
+    penalty <- (1+traceH/n)/(1-(traceH+2)/n)
+    cv <- ifelse(penalty < 0, .Machine$double.xmax, log(sigmasq)+penalty);
+  }
+  
   return(cv)
 
 }
@@ -1391,7 +1391,7 @@ cv.factor.spline.wrapper <- function(x,
 																		 I=NULL,
 																		 knots=c("quantiles","uniform","auto"),
 																		 basis=c("additive","tensor","glp"),
-																		 cv.func=c("cv.ls","cv.gcv","cv.aic","cv.rq"),
+																		 cv.func=c("cv.ls","cv.gcv","cv.aic"),
                                      tau=NULL) {
 
   knots.opt <- knots
@@ -1455,7 +1455,7 @@ cv.factor.spline <- function(x,
 														 I=NULL,
 														 knots=c("quantiles","uniform"),
 														 basis=c("additive","tensor","glp"),
-														 cv.func=c("cv.ls","cv.gcv","cv.aic","cv.rq"),
+														 cv.func=c("cv.ls","cv.gcv","cv.aic"),
                              tau=NULL) {
 
   if(missing(x) || missing(y) || missing (K)) stop(" must provide x, y and K")
@@ -1515,19 +1515,31 @@ cv.factor.spline <- function(x,
   }
 
   if(cv.func == "cv.ls") {
-    cv <- mean((epsilon/(1-htt))^2)
+    if(is.null(tau)) 
+      cv <- mean(epsilon^2/(1-htt)^2)
+    else
+      ## Note - this is defined in util.R so if you modify there you must modify here also
+      cv <- mean(check.function(epsilon,tau)/(1-htt)^(1/sqrt(tau*(1-tau))))
   } else if(cv.func == "cv.gcv"){
-    cv <- mean((epsilon/(1-mean(htt)))^2)
+    if(is.null(tau)) 
+      cv <- mean(epsilon^2/(1-mean(htt))^2)
+    else
+      ## Note - this is defined in util.R so if you modify there you must modify here also        
+      cv <- mean(check.function(epsilon,tau)/(1-mean(htt))^(1/sqrt(tau*(1-tau))))        
   } else if(cv.func == "cv.aic"){
-    sigmasq <- mean(epsilon^2)
+    if(is.null(tau))
+      sigmasq <- mean(epsilon^2)
+    else
+      sigmasq <- mean(check.function(epsilon,tau))
+    ## Note - the above two criteria are sound and modified via
+    ## tau*(1-tau) to admit quantiles. However this modification does
+    ## not incorporate the quantile so is definitely not reliable -
+    ## topic for future research perhaps?
     traceH <- sum(htt)
     penalty <- (1+traceH/n)/(1-(traceH+2)/n)
     cv <- ifelse(penalty < 0, .Machine$double.xmax, log(sigmasq)+penalty);
-  } else if(cv.func == "cv.rq") {
-    ## Note - this is defined in util.R so if you modify there you must modify here also
-    cv <- mean(check.function(epsilon,tau)/(1-htt)^(1/sqrt(tau*(1-tau))))
   }
-
+  
   return(cv)
 
 }

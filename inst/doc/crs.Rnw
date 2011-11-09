@@ -542,7 +542,6 @@ set.seed(1234)
 n <- 1000
 x1 <- runif(n)
 x2 <- runif(n)
-dgp <- numeric(n)
 z <- ifelse(x1>.5,1,0)
 dgp <- cos(2*pi*x1)+sin(2*pi*x2)+2*z
 z <- factor(z)

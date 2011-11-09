@@ -368,7 +368,7 @@ crs.formula <- function(formula,
                         segments.min=1, 
                         cv=c("nomad","exhaustive","none"),
                         cv.threshold=1000,
-                        cv.func=c("cv.ls","cv.gcv","cv.aic","cv.rq"),
+                        cv.func=c("cv.ls","cv.gcv","cv.aic"),
                         kernel=TRUE,
                         lambda=NULL,
                         lambda.discrete=FALSE,
@@ -398,7 +398,6 @@ crs.formula <- function(formula,
   basis <- match.arg(basis)
 
   if(!is.null(tau)) {
-    cv.func <- "cv.rq"
     if(!require(quantreg)) stop(" Error: you must first install the quantreg package")
   }
 
