@@ -399,6 +399,7 @@ crs.formula <- function(formula,
 
   if(!is.null(tau)) {
     if(!require(quantreg)) stop(" Error: you must first install the quantreg package")
+    if(!is.null(tau) & cv.func=="cv.aic") warning(" cv.aic does not account for tau and is therefore not recommended")
   }
 
   mf <- model.frame(formula=formula, data=data)
