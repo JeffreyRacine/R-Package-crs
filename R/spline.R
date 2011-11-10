@@ -1275,12 +1275,12 @@ cv.kernel.spline <- function(x,
             if(model$rank < (NCOL(P)+1))
               return(sqrt(.Machine$double.xmax))
           } else {
-            model.hat <- lm.wfit(cbind(1,P),y,L)
-            if(model.hat$rank < (NCOL(P)+1))
-              return(sqrt(.Machine$double.xmax))
             model <- tryCatch(rq.wfit(cbind(1,P),y,weights=L,tau=tau,method="pfn"),error=function(e){FALSE})
             if(is.logical(model))
               return(sqrt(.Machine$double.xmax))            
+            model.hat <- lm.wfit(cbind(1,P),y,L)
+            if(model.hat$rank < (NCOL(P)+1))
+              return(sqrt(.Machine$double.xmax))
           }
         } else {
           if(is.null(tau)) {
@@ -1288,11 +1288,11 @@ cv.kernel.spline <- function(x,
             if(model$rank < NCOL(P))
               return(sqrt(.Machine$double.xmax))
           } else {
-            model.hat <- lm.wfit(P,y,L)
-            if(model.hat$rank < NCOL(P))
-              return(sqrt(.Machine$double.xmax))            
             model <- tryCatch(rq.wfit(P,y,weights=L,tau=tau,method="pfn"),error=function(e){FALSE})
             if(is.logical(model))
+              return(sqrt(.Machine$double.xmax))            
+            model.hat <- lm.wfit(P,y,L)
+            if(model.hat$rank < NCOL(P))
               return(sqrt(.Machine$double.xmax))            
           }
         }
