@@ -514,7 +514,7 @@ deriv.kernel.spline <- function(x,
         dim.P.deriv <- sum(K.additive[deriv.index,])
         deriv.start <- ifelse(deriv.index!=1,sum(K.additive[1:(deriv.index-1),])+1,1)
         deriv.end <- deriv.start+sum(K.additive[deriv.index,])-1
-        deriv.ind.vec <- deriv.start:deriv.end
+        deriv.ind.vec <- max(1,deriv.start:deriv.end - length(which(K[,1]==0)))
         deriv.spline <- P.deriv[,deriv.ind.vec,drop=FALSE]%*%(coef(model)[-1])[deriv.ind.vec]
 
         if(is.null(tau))
@@ -597,7 +597,7 @@ deriv.kernel.spline <- function(x,
             dim.P.deriv <- sum(K.additive[deriv.index,])
             deriv.start <- ifelse(deriv.index!=1,sum(K.additive[1:(deriv.index-1),])+1,1)
             deriv.end <- deriv.start+sum(K.additive[deriv.index,])-1
-            deriv.ind.vec <- deriv.start:deriv.end
+            deriv.ind.vec <- max(1,deriv.start:deriv.end - length(which(K[,1]==0)))
             deriv.spline[zz] <- P.deriv[,deriv.ind.vec,drop=FALSE]%*%(coef(model)[-1])[deriv.ind.vec]
 
             if(is.null(tau))
@@ -669,7 +669,7 @@ deriv.kernel.spline <- function(x,
             dim.P.deriv <- sum(K.additive[deriv.index,])
             deriv.start <- ifelse(deriv.index!=1,sum(K.additive[1:(deriv.index-1),])+1,1)
             deriv.end <- deriv.start+sum(K.additive[deriv.index,])-1
-            deriv.ind.vec <- deriv.start:deriv.end
+            deriv.ind.vec <- max(1,deriv.start:deriv.end - length(which(K[,1]==0)))
             deriv.spline[zz] <- P.deriv[,deriv.ind.vec,drop=FALSE]%*%(coef(model)[-1])[deriv.ind.vec]
 
             if(is.null(tau))
@@ -1037,7 +1037,7 @@ deriv.factor.spline <- function(x,
       dim.P.deriv <- sum(K.additive[deriv.index,])
       deriv.start <- ifelse(deriv.index!=1,sum(K.additive[1:(deriv.index-1),])+1,1)
       deriv.end <- deriv.start+sum(K.additive[deriv.index,])-1
-      deriv.ind.vec[deriv.start:deriv.end] <- TRUE
+      deriv.ind.vec[max(1,deriv.start:deriv.end - length(which(K[,1]==0)) - length(which(I==0)))] <- TRUE
       deriv.ind.vec <- ifelse(prune.index,deriv.ind.vec,FALSE)
     } else if(basis=="tensor") {
       if(is.null(tau))

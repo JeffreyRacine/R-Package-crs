@@ -1,4 +1,8 @@
-Changes from Version 0.15-7 to 0.15-8 [7-Nov-2011]
+Changes from Version 0.15-7 to 0.15-8 [10-Nov-2011]
+
+* Fixed glitch with derivative computation when one or more degrees is
+  0 when kernel=TRUE and additionally when one or more factors is
+  excluded when using kernel=FALSE
 
 * Fixed issue with reported cross-validation score only corresponding
   to leave-one-out cross-validation by passing back cv function from

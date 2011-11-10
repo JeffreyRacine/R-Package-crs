@@ -1459,7 +1459,6 @@ plot.crs <- function(x,
         if(!object$kernel) {
 
           if(!is.factor(newdata[,i])) {
-
             if(deriv <= degree[i.numeric]) {
               tmp <- deriv.factor.spline(x=x,
                                          y=y,
@@ -1531,6 +1530,7 @@ plot.crs <- function(x,
                                          deriv.index=m,
                                          deriv=deriv,
                                          tau=tau)
+    
             } else {
               tmp <- matrix(0,nrow(newdata),3)
             }
@@ -1591,8 +1591,8 @@ plot.crs <- function(x,
 
       }
 
-    } 
-    
+    }
+
     if(deriv > 0) {
 
       if(common.scale) {
