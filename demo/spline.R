@@ -201,12 +201,12 @@ predict.kernel.spline <- function(x,
         if(is.null(tau))
           model <- lm(y~P)
         else
-          suppressWarnings(model <- rq(y~P,tau=tau))
+          suppressWarnings(model <- rq(y~P,tau=tau,method="fn"))
       } else {
         if(is.null(tau))
           model <- lm(y~P-1)
         else
-          suppressWarnings(model <- rq(y~P-1,tau=tau))
+          suppressWarnings(model <- rq(y~P-1,tau=tau,method="fn"))
       }
       if(is.null(xeval)) {
         fit.spline <- predict(model,interval="confidence",se.fit=TRUE)
@@ -222,7 +222,7 @@ predict.kernel.spline <- function(x,
       if(is.null(tau))
         model <- lm(y~1)
       else
-        suppressWarnings(model <- rq(y~1,tau=tau))
+        suppressWarnings(model <- rq(y~1,tau=tau,method="fn"))
       if(is.null(xeval)) {
         fit.spline <- predict(model,interval="confidence",se.fit=TRUE)
       } else {
@@ -280,13 +280,13 @@ predict.kernel.spline <- function(x,
             if(is.null(tau))
               model.z.unique <- lm(y~P,weights=L)
             else
-              suppressWarnings(model.z.unique <- rq(y~P,weights=L,tau=tau))
+              suppressWarnings(model.z.unique <- rq(y~P,weights=L,tau=tau,method="fn"))
               model.z.unique.hat <- lm(y~P,weights=L)
           } else {
             if(is.null(tau))
               model.z.unique <- lm(y~P-1,weights=L)
             else
-              suppressWarnings(model.z.unique <- rq(y~P-1,weights=L,tau=tau))
+              suppressWarnings(model.z.unique <- rq(y~P-1,weights=L,tau=tau,method="fn"))
               model.z.unique.hat <- lm(y~P-1,weights=L)
           }
           if(model.return) model[[i]] <- model.z.unique
@@ -329,12 +329,12 @@ predict.kernel.spline <- function(x,
             if(is.null(tau))
               model.z.unique <- lm(y~P,weights=L)
             else
-              suppressWarnings(model.z.unique <- rq(y~P,weights=L,tau=tau))
+              suppressWarnings(model.z.unique <- rq(y~P,weights=L,tau=tau,method="fn"))
           } else {
             if(is.null(tau))
               model.z.unique <- lm(y~P-1,weights=L)
             else
-              suppressWarnings(model.z.unique <- rq(y~P-1,weights=L,tau=tau))
+              suppressWarnings(model.z.unique <- rq(y~P-1,weights=L,tau=tau,method="fn"))
           }
           if(model.return) model[[i]] <- model.z.unique
           P <- prod.spline(x=x,K=K,xeval=xeval[zz,,drop=FALSE],knots=knots,basis=basis)
@@ -370,7 +370,7 @@ predict.kernel.spline <- function(x,
           if(is.null(tau))
             model.z.unique <- lm(y~x.intercept-1,weights=L)
           else
-            suppressWarnings(model.z.unique <- rq(y~x.intercept-1,weights=L,tau=tau))
+            suppressWarnings(model.z.unique <- rq(y~x.intercept-1,weights=L,tau=tau,method="fn"))
             model.z.unique.hat <- lm(y~x.intercept-1,weights=L)
           if(model.return) model[[i]] <- model.z.unique
           if(is.null(tau))
@@ -410,7 +410,7 @@ predict.kernel.spline <- function(x,
           if(is.null(tau))
             model.z.unique <- lm(y~x.intercept-1,weights=L)
           else
-            suppressWarnings(model.z.unique <- rq(y~x.intercept-1,weights=L,tau=tau))
+            suppressWarnings(model.z.unique <- rq(y~x.intercept-1,weights=L,tau=tau,method="fn"))
           if(model.return) model[[i]] <- model.z.unique
           tmp <- predict(model.z.unique,newdata=data.frame(x.intercept=rep(1,num.eval)[zz]),interval="confidence",se.fit=TRUE)
 
@@ -509,12 +509,12 @@ deriv.kernel.spline <- function(x,
         if(is.null(tau))
           model <- lm(y~P)
         else
-          suppressWarnings(model <- rq(y~P,tau=tau))
+          suppressWarnings(model <- rq(y~P,tau=tau,method="fn"))
 
         dim.P.deriv <- sum(K.additive[deriv.index,])
         deriv.start <- ifelse(deriv.index!=1,sum(K.additive[1:(deriv.index-1),])+1,1)
         deriv.end <- deriv.start+sum(K.additive[deriv.index,])-1
-        deriv.ind.vec <- deriv.start:deriv.end
+        deriv.ind.vec <- max(1,deriv.start:deriv.end - length(which(K[,1]==0)))
         deriv.spline <- P.deriv[,deriv.ind.vec,drop=FALSE]%*%(coef(model)[-1])[deriv.ind.vec]
 
         if(is.null(tau))
@@ -527,7 +527,7 @@ deriv.kernel.spline <- function(x,
         if(is.null(tau))
           model <- lm(y~P-1)
         else
-          suppressWarnings(model <- rq(y~P-1,tau=tau))
+          suppressWarnings(model <- rq(y~P-1,tau=tau,method="fn"))
 
         deriv.spline <- P.deriv%*%coef(model)
 
@@ -541,7 +541,7 @@ deriv.kernel.spline <- function(x,
         if(is.null(tau))
           model <- lm(y~P)
         else
-          suppressWarnings(model <- rq(y~P,tau=tau))
+          suppressWarnings(model <- rq(y~P,tau=tau,method="fn"))
         deriv.spline <- P.deriv%*%coef(model)[-1]
 
         if(is.null(tau))
@@ -593,11 +593,11 @@ deriv.kernel.spline <- function(x,
             if(is.null(tau))
               model <- lm(y~P)
             else
-              suppressWarnings(model <- rq(y~P,tau=tau))
+              suppressWarnings(model <- rq(y~P,tau=tau,method="fn"))
             dim.P.deriv <- sum(K.additive[deriv.index,])
             deriv.start <- ifelse(deriv.index!=1,sum(K.additive[1:(deriv.index-1),])+1,1)
             deriv.end <- deriv.start+sum(K.additive[deriv.index,])-1
-            deriv.ind.vec <- deriv.start:deriv.end
+            deriv.ind.vec <- max(1,deriv.start:deriv.end - length(which(K[,1]==0)))
             deriv.spline[zz] <- P.deriv[,deriv.ind.vec,drop=FALSE]%*%(coef(model)[-1])[deriv.ind.vec]
 
             if(is.null(tau))
@@ -610,7 +610,7 @@ deriv.kernel.spline <- function(x,
             if(is.null(tau))
               model <- lm(y~P-1)
             else
-              suppressWarnings(model <- rq(y~P-1,tau=tau))
+              suppressWarnings(model <- rq(y~P-1,tau=tau,method="fn"))
 
             deriv.spline[zz] <- P.deriv%*%coef(model)
 
@@ -624,7 +624,7 @@ deriv.kernel.spline <- function(x,
             if(is.null(tau))
               model <- lm(y~P)
             else
-              suppressWarnings(model <- rq(y~P,tau=tau))
+              suppressWarnings(model <- rq(y~P,tau=tau,method="fn"))
 
             deriv.spline[zz] <- P.deriv%*%coef(model)[-1]
 
@@ -664,12 +664,12 @@ deriv.kernel.spline <- function(x,
             if(is.null(tau))
               model <- lm(y~P,weights=L)
             else
-              suppressWarnings(model <- rq(y~P,weights=L,tau=tau))
+              suppressWarnings(model <- rq(y~P,weights=L,tau=tau,method="fn"))
 
             dim.P.deriv <- sum(K.additive[deriv.index,])
             deriv.start <- ifelse(deriv.index!=1,sum(K.additive[1:(deriv.index-1),])+1,1)
             deriv.end <- deriv.start+sum(K.additive[deriv.index,])-1
-            deriv.ind.vec <- deriv.start:deriv.end
+            deriv.ind.vec <- max(1,deriv.start:deriv.end - length(which(K[,1]==0)))
             deriv.spline[zz] <- P.deriv[,deriv.ind.vec,drop=FALSE]%*%(coef(model)[-1])[deriv.ind.vec]
 
             if(is.null(tau))
@@ -682,7 +682,7 @@ deriv.kernel.spline <- function(x,
             if(is.null(tau))
               model <- lm(y~P-1,weights=L)
             else
-              suppressWarnings(model <- rq(y~P-1,weights=L,tau=tau))
+              suppressWarnings(model <- rq(y~P-1,weights=L,tau=tau,method="fn"))
             deriv.spline[zz] <- P.deriv%*%coef(model)
 
             if(is.null(tau))
@@ -695,7 +695,7 @@ deriv.kernel.spline <- function(x,
             if(is.null(tau))
               model <- lm(y~P,weights=L)
             else
-              suppressWarnings(model <- rq(y~P,weights=L,tau=tau))
+              suppressWarnings(model <- rq(y~P,weights=L,tau=tau,method="fn"))
 
             deriv.spline[zz] <- P.deriv%*%coef(model)[-1]
 
@@ -791,12 +791,12 @@ predict.factor.spline <- function(x,
         if(is.null(tau))
           model <- lm(y~.,data=P.df)
         else
-          suppressWarnings(model <- rq(y~.,data=P.df,tau=tau))
+          suppressWarnings(model <- rq(y~.,data=P.df,tau=tau,method="fn"))
       } else {
         if(is.null(tau))
           model <- lm(y~.-1,data=P.df)
         else
-          suppressWarnings(model <- rq(y~.-1,data=P.df,tau=tau))
+          suppressWarnings(model <- rq(y~.-1,data=P.df,tau=tau,method="fn"))
       }
       if(is.null(tau))
         cv <- mean(residuals(model)^2/(1-hatvalues(model))^2)
@@ -811,7 +811,7 @@ predict.factor.spline <- function(x,
                                  k=log(length(y)),
                                  trace=trace)
         else
-          suppressWarnings(model.pruned <- stepCV(rq(y~.,data=P.df,tau=tau),
+          suppressWarnings(model.pruned <- stepCV(rq(y~.,data=P.df,tau=tau,method="fn"),
                                                   scope=list(upper=~.,lower=~1),
                                                   k=log(length(y)),
                                                   trace=trace))
@@ -824,7 +824,7 @@ predict.factor.spline <- function(x,
                                  k=log(length(y)),
                                  trace=trace)
         else
-          suppressWarnings(model.pruned <- stepCV(rq(y~.-1,data=P.df,tau=tau),
+          suppressWarnings(model.pruned <- stepCV(rq(y~.-1,data=P.df,tau=tau,method="fn"),
                                                   scope=list(upper=~.,lower=~1),
                                                   k=log(length(y)),
                                                   trace=trace))
@@ -842,12 +842,12 @@ predict.factor.spline <- function(x,
           if(is.null(tau))
             model <- lm(y~P[,IND,drop=FALSE])
           else
-            suppressWarnings(model <- rq(y~P[,IND,drop=FALSE],tau=tau))
+            suppressWarnings(model <- rq(y~P[,IND,drop=FALSE],tau=tau,method="fn"))
         } else {
           if(is.null(tau))
             model <- lm(y~P[,IND,drop=FALSE]-1)
           else
-            suppressWarnings(model <- rq(y~P[,IND,drop=FALSE]-1,tau=tau))
+            suppressWarnings(model <- rq(y~P[,IND,drop=FALSE]-1,tau=tau,method="fn"))
         }
       } else {
         warning(" pruned model did not lower cross-validation score, using non-pruned bases")
@@ -856,12 +856,12 @@ predict.factor.spline <- function(x,
           if(is.null(tau))
             model <- lm(y~P)
           else
-            suppressWarnings(model <- rq(y~P,tau=tau))
+            suppressWarnings(model <- rq(y~P,tau=tau,method="fn"))
         } else {
           if(is.null(tau))
             model <- lm(y~P-1)
           else
-            suppressWarnings(model <- rq(y~P-1,tau=tau))
+            suppressWarnings(model <- rq(y~P-1,tau=tau,method="fn"))
         }
       }
     } else if(prune) {
@@ -871,12 +871,12 @@ predict.factor.spline <- function(x,
         if(is.null(tau))
           model <- lm(y~P[,IND,drop=FALSE])
         else
-          suppressWarnings(model <- rq(y~P[,IND,drop=FALSE],tau=tau))
+          suppressWarnings(model <- rq(y~P[,IND,drop=FALSE],tau=tau,method="fn"))
       } else {
         if(is.null(tau))
           model <- lm(y~P[,IND,drop=FALSE]-1)
         else
-          suppressWarnings(model <- rq(y~P[,IND,drop=FALSE]-1,tau=tau))
+          suppressWarnings(model <- rq(y~P[,IND,drop=FALSE]-1,tau=tau,method="fn"))
       }
       cv <- NULL
       if(is.null(tau))
@@ -890,12 +890,12 @@ predict.factor.spline <- function(x,
         if(is.null(tau))
           model <- lm(y~P)
         else
-          suppressWarnings(model <- rq(y~P,tau=tau))
+          suppressWarnings(model <- rq(y~P,tau=tau,method="fn"))
       } else {
         if(is.null(tau))
           model <- lm(y~P-1)
         else
-          suppressWarnings(model <- rq(y~P-1,tau=tau))
+          suppressWarnings(model <- rq(y~P-1,tau=tau,method="fn"))
       }
       cv.pruned <- NULL
       if(is.null(tau))
@@ -919,13 +919,13 @@ predict.factor.spline <- function(x,
     if(is.null(tau))
       model <- lm(y~1)
     else
-      suppressWarnings(model <- rq(y~1,tau=tau))
+      suppressWarnings(model <- rq(y~1,tau=tau,method="fn"))
 
 
     if(is.null(tau))
       cv <- mean(residuals(model)^2/(1-hatvalues(model))^2) ## Added
     else
-      suppressWarnings(cv <- cv.rq(model,tau=tau))
+      suppressWarnings(cv <- cv.rq(model,tau=tau,method="fn"))
 
     cv.pruned <- NULL
     if(is.null(xeval)) {
@@ -1025,7 +1025,7 @@ deriv.factor.spline <- function(x,
       if(is.null(tau))
         model <- lm(y~P[,prune.index,drop=FALSE])
       else
-        suppressWarnings(model <- rq(y~P[,prune.index,drop=FALSE],tau=tau))
+        suppressWarnings(model <- rq(y~P[,prune.index,drop=FALSE],tau=tau,method="fn"))
 
       coef.vec.model[prune.index] <- coef(model)[-1]
 
@@ -1037,13 +1037,13 @@ deriv.factor.spline <- function(x,
       dim.P.deriv <- sum(K.additive[deriv.index,])
       deriv.start <- ifelse(deriv.index!=1,sum(K.additive[1:(deriv.index-1),])+1,1)
       deriv.end <- deriv.start+sum(K.additive[deriv.index,])-1
-      deriv.ind.vec[deriv.start:deriv.end] <- TRUE
+      deriv.ind.vec[max(1,deriv.start:deriv.end - length(which(K[,1]==0)) - length(which(I==0)))] <- TRUE
       deriv.ind.vec <- ifelse(prune.index,deriv.ind.vec,FALSE)
     } else if(basis=="tensor") {
       if(is.null(tau))
         model <- lm(y~P[,prune.index,drop=FALSE]-1)
       else
-        suppressWarnings(model <- rq(y~P[,prune.index,drop=FALSE]-1,tau=tau))
+        suppressWarnings(model <- rq(y~P[,prune.index,drop=FALSE]-1,tau=tau,method="fn"))
       coef.vec.model[prune.index] <- coef(model)
 
       if(is.null(tau))
@@ -1057,7 +1057,7 @@ deriv.factor.spline <- function(x,
       if(is.null(tau))
         model <- lm(y~P[,prune.index,drop=FALSE])
       else
-        suppressWarnings(model <- rq(y~P[,prune.index,drop=FALSE],tau=tau))
+        suppressWarnings(model <- rq(y~P[,prune.index,drop=FALSE],tau=tau,method="fn"))
       coef.vec.model[prune.index] <- coef(model)[-1]
 
       if(is.null(tau))
@@ -1229,7 +1229,7 @@ cv.kernel.spline <- function(x,
           if(model$rank < (NCOL(P)+1))
             return(sqrt(.Machine$double.xmax))
         } else {
-          residuals <- tryCatch(residuals(rq.fit(cbind(1,P),y,tau=tau,method="pfn")),error=function(e){FALSE})
+          residuals <- tryCatch(residuals(rq.fit(cbind(1,P),y,tau=tau,method="fn")),error=function(e){FALSE})
           if(is.logical(residuals))
             return(sqrt(.Machine$double.xmax))            
         }
@@ -1239,7 +1239,7 @@ cv.kernel.spline <- function(x,
           if(model$rank < NCOL(P))
             return(sqrt(.Machine$double.xmax))
         } else {
-          residuals <- tryCatch(residuals(rq.fit(P,y,tau=tau,method="pfn")),error=function(e){FALSE})
+          residuals <- tryCatch(residuals(rq.fit(P,y,tau=tau,method="fn")),error=function(e){FALSE})
           if(is.logical(residuals))
             return(sqrt(.Machine$double.xmax))            
         }
@@ -1275,12 +1275,12 @@ cv.kernel.spline <- function(x,
             if(model$rank < (NCOL(P)+1))
               return(sqrt(.Machine$double.xmax))
           } else {
-            model <- tryCatch(rq.wfit(cbind(1,P),y,weights=L,tau=tau,method="pfn"),error=function(e){FALSE})
-            if(is.logical(model))
-              return(sqrt(.Machine$double.xmax))            
             model.hat <- lm.wfit(cbind(1,P),y,L)
             if(model.hat$rank < (NCOL(P)+1))
               return(sqrt(.Machine$double.xmax))
+            model <- tryCatch(rq.wfit(cbind(1,P),y,weights=L,tau=tau,method="fn"),error=function(e){FALSE})
+            if(is.logical(model))
+              return(sqrt(.Machine$double.xmax))            
           }
         } else {
           if(is.null(tau)) {
@@ -1288,11 +1288,11 @@ cv.kernel.spline <- function(x,
             if(model$rank < NCOL(P))
               return(sqrt(.Machine$double.xmax))
           } else {
-            model <- tryCatch(rq.wfit(P,y,weights=L,tau=tau,method="pfn"),error=function(e){FALSE})
-            if(is.logical(model))
-              return(sqrt(.Machine$double.xmax))            
             model.hat <- lm.wfit(P,y,L)
             if(model.hat$rank < NCOL(P))
+              return(sqrt(.Machine$double.xmax))            
+            model <- tryCatch(rq.wfit(P,y,weights=L,tau=tau,method="fn"),error=function(e){FALSE})
+            if(is.logical(model))
               return(sqrt(.Machine$double.xmax))            
           }
         }
@@ -1318,7 +1318,7 @@ cv.kernel.spline <- function(x,
           model <- lm.wfit(matrix(1,n,1),y,L)
           htt[zz] <- hat(model$qr)[zz]
         } else {
-          model <- tryCatch(rq.wfit(matrix(1,n,1),y,weights=L,tau=tau,method="pfn"),error=function(e){FALSE})
+          model <- tryCatch(rq.wfit(matrix(1,n,1),y,weights=L,tau=tau,method="fn"),error=function(e){FALSE})
           if(is.logical(model))
             return(sqrt(.Machine$double.xmax))            
           model.hat <- lm.wfit(matrix(1,n,1),y,L)
@@ -1468,7 +1468,7 @@ cv.factor.spline <- function(x,
         ## Test for rank-deficient fit
         if(model$rank < (NCOL(P)+1)) return(sqrt(.Machine$double.xmax))
       } else {
-        suppressWarnings(model <- rq.fit(cbind(1,P),y,tau=tau,method="pfn"))
+        suppressWarnings(model <- rq.fit(cbind(1,P),y,tau=tau,method="fn"))
         model.hat <- lm.fit(cbind(1,P),y)
       }
     } else {
@@ -1477,7 +1477,7 @@ cv.factor.spline <- function(x,
         ## Test for rank-deficient fit
         if(model$rank < NCOL(P)) return(sqrt(.Machine$double.xmax))
       } else {
-        suppressWarnings(model <- rq.fit(P,y,tau=tau,method="pfn"))
+        suppressWarnings(model <- rq.fit(P,y,tau=tau,method="fn"))
         model.hat <- lm.fit(P,y)
       }
     }

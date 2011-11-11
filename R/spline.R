@@ -496,7 +496,7 @@ deriv.kernel.spline <- function(x,
 
   if(is.null(z)) {
 
-    ## First no categorical predictor case
+    ## First no categorical predictor case (never reached by crs)
 
     if(K[deriv.index,1]!=0) {
 
@@ -597,7 +597,8 @@ deriv.kernel.spline <- function(x,
             dim.P.deriv <- sum(K.additive[deriv.index,])
             deriv.start <- ifelse(deriv.index!=1,sum(K.additive[1:(deriv.index-1),])+1,1)
             deriv.end <- deriv.start+sum(K.additive[deriv.index,])-1
-            deriv.ind.vec <- max(1,deriv.start:deriv.end - length(which(K[,1]==0)))
+            deriv.ind.vec <- deriv.start:deriv.end - length(which(K[,1]==0))
+            if(any(deriv.ind.vec==0)) deriv.ind.vec <- deriv.ind.vec + 1
             deriv.spline[zz] <- P.deriv[,deriv.ind.vec,drop=FALSE]%*%(coef(model)[-1])[deriv.ind.vec]
 
             if(is.null(tau))
@@ -669,7 +670,8 @@ deriv.kernel.spline <- function(x,
             dim.P.deriv <- sum(K.additive[deriv.index,])
             deriv.start <- ifelse(deriv.index!=1,sum(K.additive[1:(deriv.index-1),])+1,1)
             deriv.end <- deriv.start+sum(K.additive[deriv.index,])-1
-            deriv.ind.vec <- max(1,deriv.start:deriv.end - length(which(K[,1]==0)))
+            deriv.ind.vec <- deriv.start:deriv.end - length(which(K[,1]==0))
+            if(any(deriv.ind.vec==0)) deriv.ind.vec <- deriv.ind.vec + 1
             deriv.spline[zz] <- P.deriv[,deriv.ind.vec,drop=FALSE]%*%(coef(model)[-1])[deriv.ind.vec]
 
             if(is.null(tau))
@@ -1020,7 +1022,6 @@ deriv.factor.spline <- function(x,
 
     coef.vec.model <- numeric(length=NCOL(P))
     vcov.mat.model <- matrix(0,nrow=NCOL(P),ncol=NCOL(P))
-
     if(basis=="additive") {
       if(is.null(tau))
         model <- lm(y~P[,prune.index,drop=FALSE])
@@ -1037,7 +1038,9 @@ deriv.factor.spline <- function(x,
       dim.P.deriv <- sum(K.additive[deriv.index,])
       deriv.start <- ifelse(deriv.index!=1,sum(K.additive[1:(deriv.index-1),])+1,1)
       deriv.end <- deriv.start+sum(K.additive[deriv.index,])-1
-      deriv.ind.vec[max(1,deriv.start:deriv.end - length(which(K[,1]==0)) - length(which(I==0)))] <- TRUE
+      deriv.ind <- deriv.start:deriv.end - length(which(K[,1]==0)) - length(which(I==0))
+      if(any(deriv.ind==0)) deriv.ind <- deriv.ind + 1
+      deriv.ind.vec[deriv.ind] <- TRUE
       deriv.ind.vec <- ifelse(prune.index,deriv.ind.vec,FALSE)
     } else if(basis=="tensor") {
       if(is.null(tau))
