@@ -6,9 +6,11 @@ n <- 10000
 
 x <- runif(n,-1,1)
 x.seq <- seq(min(x),max(x),length=100)
+
+sd.x <- .1+abs(x)
 sd.x.seq <- .1+abs(x.seq)
 
-y <- rnorm(n,mean=x,sd=.1+abs(x))
+y <- rnorm(n,mean=x,sd=sd.x)
 
 taus <- c(0.05,0.1,.25,0.5,.75,.9,0.95)
 
