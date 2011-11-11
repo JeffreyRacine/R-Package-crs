@@ -485,10 +485,13 @@ deriv.kernel.spline <- function(x,
 
   ## Univariate additive spline bases have one less column than
   ## univariate tensor spline bases. This is used only for setting
-  ## appropriate columns for derivative computation.
+  ## appropriate columns for derivative computation. We also need to
+  ## set the segments to 0 when the degree is zero, again only for
+  ## derivative computation when using an additive basis.
 
   if(basis=="additive" || basis=="glp") {
     K.additive <- K
+    K.additive[,2] <- ifelse(K[,1]==0,0,K[,2])    
     K.additive[,1] <- ifelse(K[,1]>0,K[,1]-1,K[,1])
   }
 
@@ -597,10 +600,8 @@ deriv.kernel.spline <- function(x,
             dim.P.deriv <- sum(K.additive[deriv.index,])
             deriv.start <- ifelse(deriv.index!=1,sum(K.additive[1:(deriv.index-1),])+1,1)
             deriv.end <- deriv.start+sum(K.additive[deriv.index,])-1
-            deriv.ind.vec <- deriv.start:deriv.end - length(which(K[,1]==0))
-            if(any(deriv.ind.vec==0)) deriv.ind.vec <- deriv.ind.vec + 1
+            deriv.ind.vec <- deriv.start:deriv.end
             deriv.spline[zz] <- P.deriv[,deriv.ind.vec,drop=FALSE]%*%(coef(model)[-1])[deriv.ind.vec]
-
             if(is.null(tau))
               vcov.model <- vcov(model)[-1,-1,drop=FALSE]
             else
@@ -670,10 +671,8 @@ deriv.kernel.spline <- function(x,
             dim.P.deriv <- sum(K.additive[deriv.index,])
             deriv.start <- ifelse(deriv.index!=1,sum(K.additive[1:(deriv.index-1),])+1,1)
             deriv.end <- deriv.start+sum(K.additive[deriv.index,])-1
-            deriv.ind.vec <- deriv.start:deriv.end - length(which(K[,1]==0))
-            if(any(deriv.ind.vec==0)) deriv.ind.vec <- deriv.ind.vec + 1
+            deriv.ind.vec <- deriv.start:deriv.end
             deriv.spline[zz] <- P.deriv[,deriv.ind.vec,drop=FALSE]%*%(coef(model)[-1])[deriv.ind.vec]
-
             if(is.null(tau))
               vcov.model <- vcov(model)[-1,-1,drop=FALSE]
             else
@@ -996,13 +995,15 @@ deriv.factor.spline <- function(x,
 
   ## Univariate additive spline bases have one less column than
   ## univariate tensor spline bases. This is used only for setting
-  ## appropriate columns for derivative computation.
+  ## appropriate columns for derivative computation. We also need to
+  ## set the segments to 0 when the degree is zero, again only for
+  ## derivative computation when using an additive basis.
 
   if(basis=="additive" || basis=="glp") {
     K.additive <- K
+    K.additive[,2] <- ifelse(K[,1]==0,0,K[,2])    
     K.additive[,1] <- ifelse(K[,1]>0,K[,1]-1,K[,1])
   }
-
   if(K[deriv.index,1]!=0) {
 
     ## Degree > 0
@@ -1038,9 +1039,7 @@ deriv.factor.spline <- function(x,
       dim.P.deriv <- sum(K.additive[deriv.index,])
       deriv.start <- ifelse(deriv.index!=1,sum(K.additive[1:(deriv.index-1),])+1,1)
       deriv.end <- deriv.start+sum(K.additive[deriv.index,])-1
-      deriv.ind <- deriv.start:deriv.end - length(which(K[,1]==0)) - length(which(I==0))
-      if(any(deriv.ind==0)) deriv.ind <- deriv.ind + 1
-      deriv.ind.vec[deriv.ind] <- TRUE
+      deriv.ind.vec[deriv.start:deriv.end] <- TRUE
       deriv.ind.vec <- ifelse(prune.index,deriv.ind.vec,FALSE)
     } else if(basis=="tensor") {
       if(is.null(tau))
