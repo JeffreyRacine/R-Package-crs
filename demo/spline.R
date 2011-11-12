@@ -128,6 +128,9 @@ prod.spline <- function(x,
         if(deriv!=0) {
           P.deriv <- list()
           for(i in 1:length(tp)) P.deriv[[i]] <- matrix(0,1,ncol(tp[[i]]))
+          ## Nov 11 2011, DC, is this the last remaining issue for derivs?
+          deriv.index <- deriv.index - length(which((K[,1]==0)))
+          while(deriv.index[1]==0) deriv.index <- deriv.index + 1
           P.deriv[[deriv.index]] <- matrix(NA,1,ncol(tp[[deriv.index]]))
           P[,!is.na(as.numeric(glp.model.matrix(P.deriv)))] <- 0
         }
@@ -485,10 +488,13 @@ deriv.kernel.spline <- function(x,
 
   ## Univariate additive spline bases have one less column than
   ## univariate tensor spline bases. This is used only for setting
-  ## appropriate columns for derivative computation.
+  ## appropriate columns for derivative computation. We also need to
+  ## set the segments to 0 when the degree is zero, again only for
+  ## derivative computation when using an additive basis.
 
   if(basis=="additive" || basis=="glp") {
     K.additive <- K
+    K.additive[,2] <- ifelse(K[,1]==0,0,K[,2])    
     K.additive[,1] <- ifelse(K[,1]>0,K[,1]-1,K[,1])
   }
 
@@ -496,7 +502,7 @@ deriv.kernel.spline <- function(x,
 
   if(is.null(z)) {
 
-    ## First no categorical predictor case
+    ## First no categorical predictor case (never reached by crs)
 
     if(K[deriv.index,1]!=0) {
 
@@ -597,9 +603,8 @@ deriv.kernel.spline <- function(x,
             dim.P.deriv <- sum(K.additive[deriv.index,])
             deriv.start <- ifelse(deriv.index!=1,sum(K.additive[1:(deriv.index-1),])+1,1)
             deriv.end <- deriv.start+sum(K.additive[deriv.index,])-1
-            deriv.ind.vec <- max(1,deriv.start:deriv.end - length(which(K[,1]==0)))
+            deriv.ind.vec <- deriv.start:deriv.end
             deriv.spline[zz] <- P.deriv[,deriv.ind.vec,drop=FALSE]%*%(coef(model)[-1])[deriv.ind.vec]
-
             if(is.null(tau))
               vcov.model <- vcov(model)[-1,-1,drop=FALSE]
             else
@@ -669,9 +674,8 @@ deriv.kernel.spline <- function(x,
             dim.P.deriv <- sum(K.additive[deriv.index,])
             deriv.start <- ifelse(deriv.index!=1,sum(K.additive[1:(deriv.index-1),])+1,1)
             deriv.end <- deriv.start+sum(K.additive[deriv.index,])-1
-            deriv.ind.vec <- max(1,deriv.start:deriv.end - length(which(K[,1]==0)))
+            deriv.ind.vec <- deriv.start:deriv.end
             deriv.spline[zz] <- P.deriv[,deriv.ind.vec,drop=FALSE]%*%(coef(model)[-1])[deriv.ind.vec]
-
             if(is.null(tau))
               vcov.model <- vcov(model)[-1,-1,drop=FALSE]
             else
@@ -696,7 +700,6 @@ deriv.kernel.spline <- function(x,
               model <- lm(y~P,weights=L)
             else
               suppressWarnings(model <- rq(y~P,weights=L,tau=tau,method="fn"))
-
             deriv.spline[zz] <- P.deriv%*%coef(model)[-1]
 
             if(is.null(tau))
@@ -994,13 +997,15 @@ deriv.factor.spline <- function(x,
 
   ## Univariate additive spline bases have one less column than
   ## univariate tensor spline bases. This is used only for setting
-  ## appropriate columns for derivative computation.
+  ## appropriate columns for derivative computation. We also need to
+  ## set the segments to 0 when the degree is zero, again only for
+  ## derivative computation when using an additive basis.
 
   if(basis=="additive" || basis=="glp") {
     K.additive <- K
+    K.additive[,2] <- ifelse(K[,1]==0,0,K[,2])    
     K.additive[,1] <- ifelse(K[,1]>0,K[,1]-1,K[,1])
   }
-
   if(K[deriv.index,1]!=0) {
 
     ## Degree > 0
@@ -1020,7 +1025,6 @@ deriv.factor.spline <- function(x,
 
     coef.vec.model <- numeric(length=NCOL(P))
     vcov.mat.model <- matrix(0,nrow=NCOL(P),ncol=NCOL(P))
-
     if(basis=="additive") {
       if(is.null(tau))
         model <- lm(y~P[,prune.index,drop=FALSE])
@@ -1037,7 +1041,7 @@ deriv.factor.spline <- function(x,
       dim.P.deriv <- sum(K.additive[deriv.index,])
       deriv.start <- ifelse(deriv.index!=1,sum(K.additive[1:(deriv.index-1),])+1,1)
       deriv.end <- deriv.start+sum(K.additive[deriv.index,])-1
-      deriv.ind.vec[max(1,deriv.start:deriv.end - length(which(K[,1]==0)) - length(which(I==0)))] <- TRUE
+      deriv.ind.vec[deriv.start:deriv.end] <- TRUE
       deriv.ind.vec <- ifelse(prune.index,deriv.ind.vec,FALSE)
     } else if(basis=="tensor") {
       if(is.null(tau))
