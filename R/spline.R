@@ -1364,12 +1364,8 @@ cv.kernel.spline <- function(x,
       sigmasq <- mean(epsilon^2)
     else
       sigmasq <- mean(check.function(epsilon,tau))
-    ## Note - the above two criteria are sound and modified via
-    ## tau*(1-tau) to admit quantiles. However this modification does
-    ## not incorporate the quantile so is definitely not reliable -
-    ## topic for future research perhaps?
     traceH <- sum(htt)
-    penalty <- (1+traceH/n)/(1-(traceH+2)/n)
+    penalty <- (1+traceH/n)/(1-(traceH+2)/n)^(0.5/sqrt(tau*(1-tau)))
     cv <- ifelse(penalty < 0, .Machine$double.xmax, log(sigmasq)+penalty);
   }
   
@@ -1534,12 +1530,8 @@ cv.factor.spline <- function(x,
       sigmasq <- mean(epsilon^2)
     else
       sigmasq <- mean(check.function(epsilon,tau))
-    ## Note - the above two criteria are sound and modified via
-    ## tau*(1-tau) to admit quantiles. However this modification does
-    ## not incorporate the quantile so is definitely not reliable -
-    ## topic for future research perhaps?
     traceH <- sum(htt)
-    penalty <- (1+traceH/n)/(1-(traceH+2)/n)
+    penalty <- (1+traceH/n)/(1-(traceH+2)/n)^(0.5/sqrt(tau*(1-tau)))
     cv <- ifelse(penalty < 0, .Machine$double.xmax, log(sigmasq)+penalty);
   }
   
