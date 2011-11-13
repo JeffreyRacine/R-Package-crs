@@ -253,14 +253,14 @@ check.max.degree <- function(xdat=NULL,degree=NULL,issue.warning=FALSE,Bernstein
         ## If the max degree is ill-conditioned then ascend
         ## (descending may require computation of large matrices that
         ## are discarded)
-        if(rcond(t(X)%*%X)<.Machine$double.eps) {
+        if(!is.fullrank(X)) {
           for(j in 1:degree[i]) {
             d[i] <- j
             X <- mypoly(x=xdat[,numeric.index[i]],
                         ex=NULL,
                         degree=d[i],
                         Bernstein=Bernstein)
-            if(rcond(t(X)%*%X)<.Machine$double.eps) {
+            if(!is.fullrank(X)) {
               d[i] <- j-1
               break()
             }
@@ -791,7 +791,7 @@ glpregEst <- function(tydat=NULL,
     ## Test for ill-conditioned polynomial basis and return a large
     ## penalty when this occurs
 
-    if(rcond(t(W)%*%W)<.Machine$double.eps)
+    if(!is.fullrank(W))
       stop(" Ill-conditioned polynomial basis encountered: modify polynomial order")
 
     if(miss.ex) {
@@ -1276,7 +1276,7 @@ glpcv <- function(ydat=NULL,
              degree=degree,
              Bernstein=Bernstein)
 
-  if(rcond(t(W)%*%W)<.Machine$double.eps)
+  if(!is.fullrank(W))
     return(sqrt(.Machine$double.xmax))
 
   sum.lscv <- function(bw.gamma,...) {
@@ -1636,7 +1636,7 @@ glpcvNOMAD <- function(ydat=NULL,
                degree=degree,
                Bernstein=Bernstein)
 
-    if(rcond(t(W)%*%W)<.Machine$double.eps)
+    if(!is.fullrank(W))
       return(sqrt(.Machine$double.xmax))
 
     if(all(bw.gamma>=0)&&all(bw.gamma[!xdat.numeric]<=1)) {
@@ -1681,7 +1681,7 @@ glpcvNOMAD <- function(ydat=NULL,
                degree=degree,
                Bernstein=Bernstein)
 
-    if(rcond(t(W)%*%W)<.Machine$double.eps)
+    if(!is.fullrank(W))
       return(sqrt(.Machine$double.xmax))
 
     if(all(bw.gamma>=0)&&all(bw.gamma[!xdat.numeric]<=1)) {
