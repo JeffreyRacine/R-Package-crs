@@ -206,3 +206,16 @@ check.function <- function(u,tau=0.5) {
 cv.rq <- function (model, tau = 0.5) {
   return(mean(check.function(residuals(model),tau)/(1-hat(model$x))^(1/sqrt(tau*(1-tau)))))
 }
+
+## From the limma package... check the condition number of a matrix
+## (ratio of max/min eigenvalue) using .Machine$double.eps rather than
+## their 1e-13 constant. Note that for weighted regression you simply
+## use x*L which conducts row-wise multiplication (i.e. diag(L)%*%X
+## not necessary)
+
+is.fullrank <- function (x) 
+{
+    x <- as.matrix(x)
+    e <- eigen(crossprod(x), symmetric = TRUE, only.values = TRUE)$values
+    e[1] > 0 && abs(e[length(e)]/e[1]) > .Machine$double.eps
+}

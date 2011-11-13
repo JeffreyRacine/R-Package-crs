@@ -928,7 +928,7 @@ predict.factor.spline <- function(x,
     if(is.null(tau))
       cv <- mean(residuals(model)^2/(1-hatvalues(model))^2) ## Added
     else
-      suppressWarnings(cv <- cv.rq(model,tau=tau,method="fn"))
+      suppressWarnings(cv <- cv.rq(model,tau=tau))
 
     cv.pruned <- NULL
     if(is.null(xeval)) {
@@ -1233,6 +1233,9 @@ cv.kernel.spline <- function(x,
           if(model$rank < (NCOL(P)+1))
             return(sqrt(.Machine$double.xmax))
         } else {
+          ## Test for full column rank
+          if(!is.fullrank(cbind(1,P)))
+            return(sqrt(.Machine$double.xmax))         
           residuals <- tryCatch(residuals(rq.fit(cbind(1,P),y,tau=tau,method="fn")),error=function(e){FALSE})
           if(is.logical(residuals))
             return(sqrt(.Machine$double.xmax))            
@@ -1243,6 +1246,9 @@ cv.kernel.spline <- function(x,
           if(model$rank < NCOL(P))
             return(sqrt(.Machine$double.xmax))
         } else {
+          ## Test for full column rank
+          if(!is.fullrank(P))
+            return(sqrt(.Machine$double.xmax))         
           residuals <- tryCatch(residuals(rq.fit(P,y,tau=tau,method="fn")),error=function(e){FALSE})
           if(is.logical(residuals))
             return(sqrt(.Machine$double.xmax))            
@@ -1279,12 +1285,13 @@ cv.kernel.spline <- function(x,
             if(model$rank < (NCOL(P)+1))
               return(sqrt(.Machine$double.xmax))
           } else {
-            model.hat <- lm.wfit(cbind(1,P),y,L)
-            if(model.hat$rank < (NCOL(P)+1))
-              return(sqrt(.Machine$double.xmax))
+            ## Test for full column rank
+            if(!is.fullrank(cbind(1,P)*L))
+              return(sqrt(.Machine$double.xmax))         
             model <- tryCatch(rq.wfit(cbind(1,P),y,weights=L,tau=tau,method="fn"),error=function(e){FALSE})
             if(is.logical(model))
               return(sqrt(.Machine$double.xmax))            
+            model.hat <- lm.wfit(cbind(1,P),y,L)
           }
         } else {
           if(is.null(tau)) {
@@ -1292,12 +1299,13 @@ cv.kernel.spline <- function(x,
             if(model$rank < NCOL(P))
               return(sqrt(.Machine$double.xmax))
           } else {
-            model.hat <- lm.wfit(P,y,L)
-            if(model.hat$rank < NCOL(P))
-              return(sqrt(.Machine$double.xmax))            
+            ## Test for full column rank
+            if(!is.fullrank(P*L))
+              return(sqrt(.Machine$double.xmax))         
             model <- tryCatch(rq.wfit(P,y,weights=L,tau=tau,method="fn"),error=function(e){FALSE})
             if(is.logical(model))
               return(sqrt(.Machine$double.xmax))            
+            model.hat <- lm.wfit(P,y,L)
           }
         }
         epsilon[zz] <- residuals(model)[zz]
@@ -1314,6 +1322,9 @@ cv.kernel.spline <- function(x,
       for(i in 1:nrow.z.unique) {
         zz <- ind == ind.vals[i]
         L <- prod.kernel(Z=z,z=z.unique[ind.vals[i],],lambda=lambda,is.ordered.z=is.ordered.z)
+        ## Test for full column rank
+        if(!is.fullrank(matrix(1,n,1)*L))
+          return(sqrt(.Machine$double.xmax))                        
         ## Whether we use additive, glp, or tensor products, this
         ## model has no continuous predictors hence the intercept is
         ## the parameter that may shift with the categorical
@@ -1472,7 +1483,12 @@ cv.factor.spline <- function(x,
         ## Test for rank-deficient fit
         if(model$rank < (NCOL(P)+1)) return(sqrt(.Machine$double.xmax))
       } else {
-        suppressWarnings(model <- rq.fit(cbind(1,P),y,tau=tau,method="fn"))
+        ## Test for full column rank
+        if(!is.fullrank(cbind(1,P)))
+          return(sqrt(.Machine$double.xmax))      
+        model <- tryCatch(rq.fit(cbind(1,P),y,tau=tau,method="fn"),error=function(e){FALSE})
+        if(is.logical(model))
+          return(sqrt(.Machine$double.xmax))            
         model.hat <- lm.fit(cbind(1,P),y)
       }
     } else {
@@ -1481,7 +1497,12 @@ cv.factor.spline <- function(x,
         ## Test for rank-deficient fit
         if(model$rank < NCOL(P)) return(sqrt(.Machine$double.xmax))
       } else {
-        suppressWarnings(model <- rq.fit(P,y,tau=tau,method="fn"))
+        ## Test for full column rank
+        if(!is.fullrank(P))
+          return(sqrt(.Machine$double.xmax))      
+        model <- tryCatch(rq.fit(P,y,tau=tau,method="fn"),error=function(e){FALSE})
+        if(is.logical(model))
+          return(sqrt(.Machine$double.xmax))            
         model.hat <- lm.fit(P,y)
       }
     }
