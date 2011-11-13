@@ -1365,7 +1365,7 @@ cv.kernel.spline <- function(x,
     else
       sigmasq <- mean(check.function(epsilon,tau))
     traceH <- sum(htt)
-    penalty <- (1+traceH/n)/(1-(traceH+2)/n)^(0.5/sqrt(tau*(1-tau)))
+    penalty <- ((1+traceH/n)/(1-(traceH+2)/n))^(0.5/sqrt(tau*(1-tau)))
     cv <- ifelse(penalty < 0, .Machine$double.xmax, log(sigmasq)+penalty);
   }
   
@@ -1531,7 +1531,7 @@ cv.factor.spline <- function(x,
     else
       sigmasq <- mean(check.function(epsilon,tau))
     traceH <- sum(htt)
-    penalty <- (1+traceH/n)/(1-(traceH+2)/n)^(0.5/sqrt(tau*(1-tau)))
+    penalty <- ((1+traceH/n)/(1-(traceH+2)/n))^(0.5/sqrt(tau*(1-tau)))
     cv <- ifelse(penalty < 0, .Machine$double.xmax, log(sigmasq)+penalty);
   }
   
