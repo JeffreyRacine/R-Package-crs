@@ -1291,6 +1291,7 @@ cv.kernel.spline <- function(x,
             model <- tryCatch(rq.wfit(cbind(1,P),y,weights=L,tau=tau,method="fn"),error=function(e){FALSE})
             if(is.logical(model))
               return(sqrt(.Machine$double.xmax))            
+            model.hat <- lm.wfit(cbind(1,P),y,L)
           }
         } else {
           if(is.null(tau)) {
@@ -1304,6 +1305,7 @@ cv.kernel.spline <- function(x,
             model <- tryCatch(rq.wfit(P,y,weights=L,tau=tau,method="fn"),error=function(e){FALSE})
             if(is.logical(model))
               return(sqrt(.Machine$double.xmax))            
+            model.hat <- lm.wfit(P,y,L)
           }
         }
         epsilon[zz] <- residuals(model)[zz]
