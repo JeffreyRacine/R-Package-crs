@@ -855,6 +855,9 @@ glpregEst <- function(tydat=NULL,
 
     tyw <- array(tww,dim = c(ncol(W)+1,ncol(W),n.eval))[1,,]
     tww <- array(tww,dim = c(ncol(W)+1,ncol(W),n.eval))[-1,,]
+    ## This ought to render call to ridging obsolete...
+    if(!is.fullrank(tww))
+      return(sqrt(.Machine$double.xmax))
 
     ## This traps the case with one evaluation point where we need to
     ## keep the extra dimension.
@@ -1011,6 +1014,9 @@ minimand.cv.ls <- function(bws=NULL,
 
       tyw <- array(tww,dim = c(ncol(W)+1,ncol(W),n))[1,,]
       tww <- array(tww,dim = c(ncol(W)+1,ncol(W),n))[-1,,]
+      ## This ought to render call to ridging obsolete...
+      if(!is.fullrank(tww))
+        return(sqrt(.Machine$double.xmax))
 
       mean.loo <- rep(maxPenalty,n)
       epsilon <- 1.0/n
@@ -1153,6 +1159,9 @@ minimand.cv.aic <- function(bws=NULL,
 
       tyw <- array(tww,dim = c(ncol(W)+1,ncol(W),n))[1,,]
       tww <- array(tww,dim = c(ncol(W)+1,ncol(W),n))[-1,,]
+      ## This ought to render call to ridging obsolete...
+      if(!is.fullrank(tww))
+        return(sqrt(.Machine$double.xmax))
 
       ghat <- rep(maxPenalty,n)
       epsilon <- 1.0/n
