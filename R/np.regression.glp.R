@@ -855,10 +855,15 @@ glpregEst <- function(tydat=NULL,
 
     tyw <- array(tww,dim = c(ncol(W)+1,ncol(W),n.eval))[1,,]
     tww <- array(tww,dim = c(ncol(W)+1,ncol(W),n.eval))[-1,,]
-    ## This ought to render call to ridging obsolete...
-    if(!is.fullrank(tww))
-      return(sqrt(.Machine$double.xmax))
 
+    ## This ought to render call to ridging obsolete...
+    for(i in 1:n.eval) {
+      if(!is.fullrank(tww[,,i])) {
+        if(ridge.warning) console <- printPush(paste("\rWarning: is.fullrank required for inversion at obs. ", i," failed",sep=""),console = console)
+        return(sqrt(.Machine$double.xmax))
+      }
+    }
+      
     ## This traps the case with one evaluation point where we need to
     ## keep the extra dimension.
 
@@ -1014,9 +1019,14 @@ minimand.cv.ls <- function(bws=NULL,
 
       tyw <- array(tww,dim = c(ncol(W)+1,ncol(W),n))[1,,]
       tww <- array(tww,dim = c(ncol(W)+1,ncol(W),n))[-1,,]
+
       ## This ought to render call to ridging obsolete...
-      if(!is.fullrank(tww))
-        return(sqrt(.Machine$double.xmax))
+      for(i in 1:n) {
+        if(!is.fullrank(tww[,,i])) {
+          if(ridge.warning) console <- printPush(paste("\rWarning: is.fullrank required for inversion at obs. ", i," failed",sep=""),console = console)
+          return(sqrt(.Machine$double.xmax))
+        }
+      }
 
       mean.loo <- rep(maxPenalty,n)
       epsilon <- 1.0/n
@@ -1159,9 +1169,14 @@ minimand.cv.aic <- function(bws=NULL,
 
       tyw <- array(tww,dim = c(ncol(W)+1,ncol(W),n))[1,,]
       tww <- array(tww,dim = c(ncol(W)+1,ncol(W),n))[-1,,]
+
       ## This ought to render call to ridging obsolete...
-      if(!is.fullrank(tww))
-        return(sqrt(.Machine$double.xmax))
+      for(i in 1:n) {
+        if(!is.fullrank(tww[,,i])) {
+          if(ridge.warning) console <- printPush(paste("\rWarning: is.fullrank required for inversion at obs. ", i," failed",sep=""),console = console)
+          return(sqrt(.Machine$double.xmax))
+        }
+      }
 
       ghat <- rep(maxPenalty,n)
       epsilon <- 1.0/n
