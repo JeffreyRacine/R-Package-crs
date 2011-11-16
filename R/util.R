@@ -219,3 +219,45 @@ is.fullrank <- function (x)
     e <- eigen(crossprod(x), symmetric = TRUE, only.values = TRUE)$values
     e[1] > 0 && abs(e[length(e)]/e[1]) > .Machine$double.eps
 }
+
+## Function that determines the dimension of the multivariate basis
+## without precomputing it... the tensor is the mother that consumes
+## ginormous amounts of memory. At this stage I do not have a simple
+## formula to compute the dimension of the glp basis but I do have an
+## upper bound so use that...
+
+dim.bs <- function(basis="additive",kernel=TRUE,degree=NULL,segments=NULL,include=NULL,categories=NULL) {
+
+  if(basis!="additive" & basis!="glp" & basis!="tensor") stop(" Error: basis must be either additive, glp, or tensor")
+
+  if(!kernel)
+    if(is.null(include) | is.null(categories)) stop(" Error: you must provide include and categories vectors")    
+  
+  K <- cbind(degree,segments)
+
+  ncol.bs <- 0
+
+  if(kernel) {
+    if(basis=="additive") {
+      if(any(K[,1] > 0))
+        ncol.bs <- sum(rowSums(K[K[,1]!=0,,drop=FALSE])-1)
+    }
+    if(basis=="tensor") {
+      if(any(K[,1] > 0))
+        ncol.bs <- prod(rowSums(K[K[,1]!=0,,drop=FALSE]))
+    }
+  } else {
+    if(basis=="additive") {
+      if(any(K[,1] > 0)) 
+        ncol.bs <- sum(c(rowSums(K[K[,1]!=0,,drop=FALSE])-1,include*categories-1))
+    }
+    if(basis=="tensor") {
+      if(any(K[,1] > 0)) 
+        ncol.bs <- prod(c(rowSums(K[K[,1]!=0,,drop=FALSE]),(include*categories-1)))
+    }
+  }
+
+  return(ncol.bs)
+
+}
+

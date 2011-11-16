@@ -1215,6 +1215,11 @@ cv.kernel.spline <- function(x,
 
   n <- length(y)
 
+  ## Check dimension of P prior to calculating the basis
+
+  if(dim.bs(basis=basis,kernel=TRUE,degree=K[,1],segments=K[,2]) >= (n-1))
+    return(sqrt(.Machine$double.xmax))
+
   ## Otherwise, compute the cross-validation function
 
   if(is.null(z)) {
@@ -1461,6 +1466,18 @@ cv.factor.spline <- function(x,
   cv.func <- match.arg(cv.func)
 
   n <- NROW(x)
+
+  ## Check dimension of P prior to calculating the basis
+
+  if(is.null(I)) {
+    categories <- NULL
+  } else {
+    categories <- numeric()
+    for(i in NCOL(z)) categories[i] <- length(unique(z[,i]))
+  }
+
+  if(dim.bs(basis=basis,kernel=TRUE,degree=K[,1],segments=K[,2],include=I,categories=categories) >= (n-1))
+    return(sqrt(.Machine$double.xmax))
 
   ## Otherwise, compute the cross-validation function
 
