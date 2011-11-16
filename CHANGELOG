@@ -1,4 +1,9 @@
-Changes from Version 0.15-7 to 0.15-8 [10-Nov-2011]
+Changes from Version 0.15-7 to 0.15-8 [16-Nov-2011]
+
+* Added support for is.fullrank testing for generalized local
+  polynomial kernel regression for cross-validation (default remains
+  ridging a la Seifert & Gasser), replaced rcond(t(X)%*%X) with
+  is.fullrank(X) (smaller memory footprint for large datasets)
 
 * Fixed glitch with derivative computation when one or more degrees is
   0 when kernel=TRUE and additionally when one or more factors is

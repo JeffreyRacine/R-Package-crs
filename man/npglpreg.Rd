@@ -58,6 +58,7 @@ npglpreg(\dots)
          bandwidth.min = 1.0e-02,
          gradient.vec = NULL,
          gradient.categorical = FALSE,
+         ridge = TRUE,
          ridge.warning = FALSE,
          Bernstein = TRUE,
          \dots)
@@ -178,6 +179,12 @@ for each dimension of the continuous \code{x} in \code{txdat}}
   (i.e. differences in the response from the base value for each
   categorical predictor) are to be computed
 }
+
+\item{ridge}{ a logical value indicating whether to use ridging (Seifert
+  and Gasser (2000)) for ill-conditioned inversion (default
+  \code{ridge=TRUE}) or to instead test for ill-conditioned matrices and
+  penalize heavily when this is the case (much stronger condition
+  imposed on cross-validation)}
 
 \item{ridge.warning}{ a logical value indicating whether to issue an
   immediate warning message when ridging (Seifert and Gasser (2000)) is

@@ -563,6 +563,7 @@ npglpreg.formula <- function(formula,
                              bandwidth.min=1.0e-02,
                              gradient.vec=NULL,
                              gradient.categorical=FALSE,
+                             ridge=TRUE,
                              ridge.warning=FALSE,
                              Bernstein=TRUE,
                              ...) {
@@ -605,6 +606,7 @@ npglpreg.formula <- function(formula,
                                                    degree.min=degree.min,
                                                    bandwidth.max=bandwidth.max,
                                                    bandwidth.min=bandwidth.min,
+                                                   ridge=ridge,                                                   
                                                    ridge.warning=ridge.warning,
                                                    Bernstein=Bernstein,
                                                    ...))
@@ -633,7 +635,8 @@ npglpreg.formula <- function(formula,
                                                    bwtype=bwtype,
                                                    gradient.vec=gradient.vec,
                                                    gradient.categorical=gradient.categorical,
-                                                   ridge.warning=ridge.warning,
+                                                   ridge=ridge,
+                                                   ridge.warning=ridge.warning,                                                   
                                                    Bernstein=Bernstein,
                                                    ...))
   
@@ -663,6 +666,7 @@ glpregEst <- function(tydat=NULL,
                       okertype=c("liracine","wangvanryzin"),
                       bwtype=c("fixed","generalized_nn","adaptive_nn"),
                       gradient.vec=NULL,
+                      ridge=TRUE,
                       ridge.warning=FALSE,
                       Bernstein=TRUE,
                       ...) {
@@ -856,11 +860,17 @@ glpregEst <- function(tydat=NULL,
     tyw <- array(tww,dim = c(ncol(W)+1,ncol(W),n.eval))[1,,]
     tww <- array(tww,dim = c(ncol(W)+1,ncol(W),n.eval))[-1,,]
 
-    ## This ought to render call to ridging obsolete...
-    for(i in 1:n.eval) {
-      if(!is.fullrank(tww[,,i])) {
-        if(ridge.warning) console <- printPush(paste("\rWarning: is.fullrank required for inversion at obs. ", i," failed",sep=""),console = console)
-        return(sqrt(.Machine$double.xmax))
+    if(!ridge) {
+      ## We can choose to use ridging or simply check for less than
+      ## full column rank. If we test for full column rank ridging
+      ## ought never occur but this is quite strong as if one
+      ## observation only is sparse and inversion is problematic, for
+      ## the rest of the sample this may not be the case.
+      for(i in 1:n.eval) {
+        if(!is.fullrank(tww[,,i])) {
+          if(ridge.warning) console <- printPush(paste("\rWarning: is.fullrank required for inversion at obs. ", i," failed",sep=""),console = console)
+          return(sqrt(.Machine$double.xmax))
+        }
       }
     }
       
@@ -941,6 +951,7 @@ minimand.cv.ls <- function(bws=NULL,
                            ukertype=c("liracine","aitchisonaitken"),
                            okertype=c("liracine","wangvanryzin"),
                            bwtype = c("fixed","generalized_nn","adaptive_nn"),
+                           ridge=TRUE,
                            ridge.warning=FALSE,
                            ...) {
 
@@ -1020,14 +1031,20 @@ minimand.cv.ls <- function(bws=NULL,
       tyw <- array(tww,dim = c(ncol(W)+1,ncol(W),n))[1,,]
       tww <- array(tww,dim = c(ncol(W)+1,ncol(W),n))[-1,,]
 
-      ## This ought to render call to ridging obsolete...
-      for(i in 1:n) {
-        if(!is.fullrank(tww[,,i])) {
-          if(ridge.warning) console <- printPush(paste("\rWarning: is.fullrank required for inversion at obs. ", i," failed",sep=""),console = console)
-          return(sqrt(.Machine$double.xmax))
+      if(!ridge) {
+        ## We can choose to use ridging or simply check for less than
+        ## full column rank. If we test for full column rank ridging
+        ## ought never occur but this is quite strong as if one
+        ## observation only is sparse and inversion is problematic, for
+        ## the rest of the sample this may not be the case.
+        for(i in 1:n) {
+          if(!is.fullrank(tww[,,i])) {
+            if(ridge.warning) console <- printPush(paste("\rWarning: is.fullrank required for inversion at obs. ", i," failed",sep=""),console = console)
+            return(sqrt(.Machine$double.xmax))
+          }
         }
       }
-
+      
       mean.loo <- rep(maxPenalty,n)
       epsilon <- 1.0/n
       ridge <- double(n)
@@ -1083,6 +1100,7 @@ minimand.cv.aic <- function(bws=NULL,
                             ukertype=c("liracine","aitchisonaitken"),
                             okertype=c("liracine","wangvanryzin"),
                             bwtype = c("fixed","generalized_nn","adaptive_nn"),
+                            ridge=TRUE,
                             ridge.warning=FALSE,
                             ...) {
 
@@ -1170,11 +1188,17 @@ minimand.cv.aic <- function(bws=NULL,
       tyw <- array(tww,dim = c(ncol(W)+1,ncol(W),n))[1,,]
       tww <- array(tww,dim = c(ncol(W)+1,ncol(W),n))[-1,,]
 
-      ## This ought to render call to ridging obsolete...
-      for(i in 1:n) {
-        if(!is.fullrank(tww[,,i])) {
-          if(ridge.warning) console <- printPush(paste("\rWarning: is.fullrank required for inversion at obs. ", i," failed",sep=""),console = console)
-          return(sqrt(.Machine$double.xmax))
+      if(!ridge) {
+        ## We can choose to use ridging or simply check for less than
+        ## full column rank. If we test for full column rank ridging
+        ## ought never occur but this is quite strong as if one
+        ## observation only is sparse and inversion is problematic, for
+        ## the rest of the sample this may not be the case.
+        for(i in 1:n) {
+          if(!is.fullrank(tww[,,i])) {
+            if(ridge.warning) console <- printPush(paste("\rWarning: is.fullrank required for inversion at obs. ", i," failed",sep=""),console = console)
+            return(sqrt(.Machine$double.xmax))
+          }
         }
       }
 
@@ -1315,7 +1339,7 @@ glpcv <- function(ydat=NULL,
                              xdat=xdat,
                              ukertype=ukertype,
                              okertype=okertype,
-                             bwtype=bwtype,                    
+                             bwtype=bwtype,
                              ...)
     } else {
       lscv <- maxPenalty
@@ -1494,6 +1518,7 @@ glpcvNOMAD <- function(ydat=NULL,
                          "INITIAL_MESH_SIZE"=paste("r",1.0e-04,sep=""),
                          "MIN_MESH_SIZE"=paste("r",1.0e-05,sep=""),
                          "MIN_POLL_SIZE"=paste("r",1.0e-05,sep="")),
+                       ridge=TRUE,
                        ridge.warning=FALSE,
                        Bernstein=TRUE,
                        ...) {
@@ -1649,7 +1674,8 @@ glpcvNOMAD <- function(ydat=NULL,
     ukertype <- params$ukertype
     okertype <- params$okertype
     bwtype <- params$bwtype
-    ridge.warning <- params$ridge.warning
+    ridge <- params$ridge
+    ridge.warning <- params$ridge.warning    
     Bernstein <- params$Bernstein
 
     bw.gamma <- input[1:num.bw]
@@ -1672,6 +1698,7 @@ glpcvNOMAD <- function(ydat=NULL,
                              ukertype=ukertype,
                              okertype=okertype,
                              bwtype=bwtype,
+                             ridge=ridge,
                              ridge.warning=ridge.warning,
                              ...)
     } else {
@@ -1694,7 +1721,8 @@ glpcvNOMAD <- function(ydat=NULL,
     ukertype <- params$ukertype
     okertype <- params$okertype
     bwtype <- params$bwtype
-    ridge.warning <- params$ridge.warning
+    ridge <- params$ridge
+    ridge.warning <- params$ridge.warning    
     Bernstein <- params$Bernstein
     
     bw.gamma <- input[1:num.bw]
@@ -1717,6 +1745,7 @@ glpcvNOMAD <- function(ydat=NULL,
                               ukertype=ukertype,
                               okertype=okertype,
                               bwtype=bwtype,
+                              ridge=ridge,
                               ridge.warning=ridge.warning,
                               ...)
     } else {
@@ -1740,6 +1769,7 @@ glpcvNOMAD <- function(ydat=NULL,
   params$ukertype <- ukertype
   params$okertype <- okertype
   params$bwtype <- bwtype
+  params$ridge <- ridge  
   params$ridge.warning <- ridge.warning
   params$Bernstein <- Bernstein
 
