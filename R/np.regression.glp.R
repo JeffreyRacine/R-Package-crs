@@ -792,8 +792,12 @@ glpregEst <- function(tydat=NULL,
                degree=degree,
                Bernstein=Bernstein)
 
-    ## Test for ill-conditioned polynomial basis and return a large
-    ## penalty when this occurs
+    ## Test for negative degrees of freedom
+
+    if(ncol(W) >= nrow(W)-1)
+      stop(" Lack of degrees of freedom encountered: modify polynomial order")
+    
+    ## Test for ill-conditioned polynomial basis
 
     if(!is.fullrank(W))
       stop(" Ill-conditioned polynomial basis encountered: modify polynomial order")
@@ -1324,8 +1328,15 @@ glpcv <- function(ydat=NULL,
              degree=degree,
              Bernstein=Bernstein)
 
+  ## Check for positive degrees of freedom
+
+  if(ncol(W) >= nrow(W)-1)
+    return(maxPenalty)
+
+  ## Check for full column rank
+
   if(!is.fullrank(W))
-    return(sqrt(.Machine$double.xmax))
+    return(maxPenalty)
 
   sum.lscv <- function(bw.gamma,...) {
 
@@ -1686,8 +1697,15 @@ glpcvNOMAD <- function(ydat=NULL,
                degree=degree,
                Bernstein=Bernstein)
 
+    ## Check for positive degrees of freedom
+    
+    if(ncol(W) >= nrow(W)-1)
+      return(maxPenalty)
+    
+    ## Check for full column rank
+    
     if(!is.fullrank(W))
-      return(sqrt(.Machine$double.xmax))
+      return(maxPenalty)
 
     if(all(bw.gamma>=0)&&all(bw.gamma[!xdat.numeric]<=1)) {
       lscv <- minimand.cv.ls(bws=bw.gamma,
@@ -1733,8 +1751,15 @@ glpcvNOMAD <- function(ydat=NULL,
                degree=degree,
                Bernstein=Bernstein)
 
+    ## Check for positive degrees of freedom
+    
+    if(ncol(W) >= nrow(W)-1)
+      return(maxPenalty)
+    
+    ## Check for full column rank
+    
     if(!is.fullrank(W))
-      return(sqrt(.Machine$double.xmax))
+      return(maxPenalty)
 
     if(all(bw.gamma>=0)&&all(bw.gamma[!xdat.numeric]<=1)) {
       aicc <- minimand.cv.aic(bws=bw.gamma,

@@ -1,3 +1,6 @@
+## This demo considers quantile regression spline estimation using
+## crs() for a heteroskedastic Gaussian DGP.
+
 library(crs)
 
 set.seed(24)
