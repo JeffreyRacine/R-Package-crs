@@ -2,6 +2,7 @@ cqrs                               R code for fitting and plotting quantile regr
 crsiv                              R code for testing crsiv with one endogenous predictor, no exogenous predictors
 crsiv_exog                         R code for testing crsiv with one endogenous and one exogenous predictor
 crsiv_exog_persp                   R code for testing crsiv with one endogenous and one exogenous predictor then plotting results in a perspective plot
+glpreg_npRmpi                      R code for running parallel npglpreg jobs presuming npRmpi is installed on your system
 nomad_factor                       R code for testing NOMAD for factor regression splines
 nomad_kernel                       R code for testing NOMAD for categorical regression splines
 radial_constrained_first_partial   R code for constrained radial function estimation (constrain the first derivatives to lie between -0.1 and 0.1)
@@ -12,3 +13,4 @@ radial_persp                       R code for fitting and plotting a 3D perspect
 radial_rgl                         R code for fitting and generating a 3D real-time rendering plot for the `radial' function using OpenGL
 sine_rgl                           R code for fitting and generating a 3D real-time rendering plot for a product sine function using OpenGL
 spline                             R code from the package with low-level functions needed for constrained estimation
+Rprofile                           Initialization file for running parallel npglpreg

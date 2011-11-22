@@ -29,7 +29,7 @@ npglpreg(\dots)
          gradient.vec = NULL,
          gradient.categorical = FALSE,
          Bernstein = TRUE,
-         mpi = TRUE,
+         mpi = FALSE,
          \dots)
 
 \method{npglpreg}{formula}(formula,
@@ -62,7 +62,7 @@ npglpreg(\dots)
          ridge = TRUE,
          ridge.warning = FALSE,
          Bernstein = TRUE,
-         mpi = TRUE,
+         mpi = FALSE,
          \dots)
 }
 
@@ -199,11 +199,12 @@ for each dimension of the continuous \code{x} in \code{txdat}}
   B-spline with no interior knots)
 }
 
-\item{mpi}{ a logical value that, when \code{mpi=TRUE} will call
-  the \code{npRmpi} rather than the \code{np} package (note - code needs
-  to mirror examples in the demo directory of the \code{npRmpi} package,
-  you need to broadcast loading of the \code{crs} package, and need
-  \code{.Rprofile} in your current directory}
+\item{mpi}{ a logical value (default \code{mpi=FALSE}) that, when
+  \code{mpi=TRUE}, can call the \code{npRmpi} rather than the \code{np}
+  package (note - code needs to mirror examples in the demo directory of
+  the \code{npRmpi} package, you need to broadcast loading of the
+  \code{crs} package, and need \code{.Rprofile} in your current
+  directory)}
 
 \item{\dots}{
     additional arguments supplied to specify the regression type,

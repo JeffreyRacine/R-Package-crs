@@ -2,7 +2,7 @@ Package: crs
 Version: 0.15-8
 Date: 2011-11-22
 Depends:
-Suggests: np, rgl, quadprog, quantreg
+Suggests: np, npRmpi, rgl, quadprog, quantreg
 Title: Categorical Regression Splines
 Author: Jeffrey S. Racine <racinej@mcmaster.ca> and Zhenghua Nie <niez@mcmaster.ca>
 Maintainer: Jeffrey S. Racine <racinej@mcmaster.ca> 
