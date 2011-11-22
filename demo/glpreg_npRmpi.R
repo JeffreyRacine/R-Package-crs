@@ -2,9 +2,9 @@
 ## npglpreg will call npRmpi rather than np for computing the
 ## estimator. Other than that running this example is identical to
 ## running npRmpi code. Note you _must_ have .Rprofile in your current
-## directory (rename Rprofile from the demo directory to .Rprofile
-## then follow instructions for running parallel R jobs on your
-## system, e.g. openmpirun -n 4 R CMD BATCH glpreg_npRmpi.R)
+## directory (rename Rprofile from the npRmpi inst directory to
+## .Rprofile then follow instructions for running parallel R jobs on
+## your system, e.g. openmpirun -n 4 R CMD BATCH glpreg_npRmpi.R)
 
 rm(list=ls())
 

@@ -13,4 +13,4 @@ radial_persp                       R code for fitting and plotting a 3D perspect
 radial_rgl                         R code for fitting and generating a 3D real-time rendering plot for the `radial' function using OpenGL
 sine_rgl                           R code for fitting and generating a 3D real-time rendering plot for a product sine function using OpenGL
 spline                             R code from the package with low-level functions needed for constrained estimation
-Rprofile                           Initialization file for running parallel npglpreg
+
