@@ -29,6 +29,7 @@ npglpreg(\dots)
          gradient.vec = NULL,
          gradient.categorical = FALSE,
          Bernstein = TRUE,
+         mpi = TRUE,
          \dots)
 
 \method{npglpreg}{formula}(formula,
@@ -61,6 +62,7 @@ npglpreg(\dots)
          ridge = TRUE,
          ridge.warning = FALSE,
          Bernstein = TRUE,
+         mpi = TRUE,
          \dots)
 }
 
@@ -196,6 +198,12 @@ for each dimension of the continuous \code{x} in \code{txdat}}
   polynomial is also know as a Bezier curve which is also a
   B-spline with no interior knots)
 }
+
+\item{mpi}{ a logical value that, when \code{mpi=TRUE} will call
+  the \code{npRmpi} rather than the \code{np} package (note - code needs
+  to mirror examples in the demo directory of the \code{npRmpi} package,
+  you need to broadcast loading of the \code{crs} package, and need
+  \code{.Rprofile} in your current directory}
 
 \item{\dots}{
     additional arguments supplied to specify the regression type,

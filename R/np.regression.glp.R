@@ -295,6 +295,7 @@ npglpreg.default <- function(tydat=NULL,
                              gradient.vec=NULL,
                              gradient.categorical=FALSE,
                              Bernstein=TRUE,
+                             mpi=FALSE,
                              ...) {
 
   ukertype <- match.arg(ukertype)
@@ -566,9 +567,11 @@ npglpreg.formula <- function(formula,
                              ridge=TRUE,
                              ridge.warning=FALSE,
                              Bernstein=TRUE,
+                             mpi=FALSE,
                              ...) {
 
-  if(!require(np)) stop(" Error: you must install the np package to use this function")
+  if(!mpi&&!require(np)) stop(" Error: you must install the np package to use this function")
+  if(mpi&&!require(npRmpi)) stop(" Error: you must install the npRmpi package to use this function")  
   if(!is.logical(Bernstein)) stop(" Error: Bernstein must be logical (TRUE/FALSE)")
   if(!is.logical(gradient.categorical)) stop(" Error: gradient.categorical must be logical (TRUE/FALSE)")
   if(!is.logical(ridge.warning)) stop(" Error: ridge.warning must be logical (TRUE/FALSE)")
@@ -1698,7 +1701,7 @@ glpcvNOMAD <- function(ydat=NULL,
                Bernstein=Bernstein)
 
     ## Check for positive degrees of freedom
-    
+
     if(ncol(W) >= nrow(W)-1)
       return(maxPenalty)
     
