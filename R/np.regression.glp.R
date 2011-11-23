@@ -900,7 +900,7 @@ glpregEst <- function(tydat=NULL,
       ## the rest of the sample this may not be the case.
       for(i in 1:n.eval) {
         if(!is.fullrank(tww[,,i])) {
-          if(cv.warning) console <- printPush(paste("\rWarning: is.fullrank required for inversion at obs. ", i," failed",sep=""),console = console)
+          if(cv.warning) console <- printPush(paste("\rWarning: is.fullrank required for inversion at obs. ", i," failed      ",sep=""),console = console)
           return(maxPenalty)
         }
       }
@@ -1081,7 +1081,7 @@ minimand.cv.ls <- function(bws=NULL,
         ## the rest of the sample this may not be the case.
         for(i in 1:n) {
           if(!is.fullrank(tww[,,i])) {
-            if(cv.warning) console <- printPush(paste("\rWarning: is.fullrank required for inversion at obs. ", i," failed",sep=""),console = console)
+            if(cv.warning) console <- printPush(paste("\rWarning: is.fullrank required for inversion at obs. ", i," failed      ",sep=""),console = console)
             return(maxPenalty)
           }
         }
@@ -1247,7 +1247,7 @@ minimand.cv.aic <- function(bws=NULL,
         ## the rest of the sample this may not be the case.
         for(i in 1:n) {
           if(!is.fullrank(tww[,,i])) {
-            if(cv.warning) console <- printPush(paste("\rWarning: is.fullrank required for inversion at obs. ", i," failed",sep=""),console = console)
+            if(cv.warning) console <- printPush(paste("\rWarning: is.fullrank required for inversion at obs. ", i," failed      ",sep=""),console = console)
             return(maxPenalty)
           }
         }
