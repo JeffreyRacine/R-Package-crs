@@ -1048,7 +1048,7 @@ minimand.cv.ls <- function(bws=NULL,
 
       fv <- ifelse(is.finite(fv),fv,maxPenalty)
 
-      console <- printPush("\r                                                ",console = console)
+      console <- printPush("\r                                                                         ",console = console)
       console <- printPush(paste("\rfv = ",format(fv)," ",sep=""),console = console)
 
       return(fv)
@@ -1123,7 +1123,7 @@ minimand.cv.ls <- function(bws=NULL,
 
       fv <- ifelse(is.finite(fv),fv,maxPenalty)
 
-      console <- printPush("\r                                                ",console = console)
+      console <- printPush("\r                                                                         ",console = console)
       console <- printPush(paste("\rfv = ",format(fv)," ",sep=""),console = console)
 
       return(fv)
@@ -1293,7 +1293,7 @@ minimand.cv.aic <- function(bws=NULL,
 
       fv <- ifelse(is.finite(fv),fv,maxPenalty)
 
-      console <- printPush("\r                                                ",console = console)
+      console <- printPush("\r                                                                         ",console = console)
       console <- printPush(paste("\rfv = ",format(fv)," ",sep=""),console = console)
 
       return(fv)
