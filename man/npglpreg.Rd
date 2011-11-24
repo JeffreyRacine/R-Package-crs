@@ -31,6 +31,7 @@ npglpreg(\dots)
          cv.shrink = TRUE,
          cv.warning = FALSE,
          Bernstein = TRUE,
+         mpi = FALSE,
          \dots)
 
 \method{npglpreg}{formula}(formula,
