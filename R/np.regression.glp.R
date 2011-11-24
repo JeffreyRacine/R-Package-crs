@@ -298,6 +298,7 @@ npglpreg.default <- function(tydat=NULL,
                              cv.shrink=TRUE,
                              cv.warning=FALSE,
                              Bernstein=TRUE,
+                             mpi=FALSE,
                              ...) {
 
   ukertype <- match.arg(ukertype)
@@ -309,7 +310,7 @@ npglpreg.default <- function(tydat=NULL,
   ### occurs because glpcvNOMAD uses the leave-one-out estimator, here
   ### we use full sample, so it is possible for the leave-one-out to
   ### have fullrank but the full sample to fail. Thus we need to use
-  ### ridging for estimation hence override the value here. 
+  ### ridging for estimation hence override the value here.
 
   est <- glpregEst(tydat=tydat,
                    txdat=txdat,
@@ -322,7 +323,7 @@ npglpreg.default <- function(tydat=NULL,
                    okertype=okertype,
                    bwtype=bwtype,
                    gradient.vec=gradient.vec,
-                   cv.shrink=TRUE,
+                   cv.shrink=TRUE, ## Override
                    cv.warning=cv.warning,                   
                    Bernstein=Bernstein,
                    ...)
@@ -374,7 +375,7 @@ npglpreg.default <- function(tydat=NULL,
                               okertype=okertype,
                               bwtype=bwtype,
                               gradient.vec=NULL,
-                              cv.shrink=cv.shrink,
+                              cv.shrink=TRUE, ## Override
                               cv.warning=cv.warning,                   
                               Bernstein=Bernstein,
                               ...)
@@ -510,6 +511,7 @@ predict.npglpreg <- function(object,
     ukertype <- object$ukertype
     okertype <- object$okertype
     Bernstein <- object$Bernstein
+    mpi <- object$mpi
     if(is.null(gradient.vec)) {
       gradient.vec <- object$gradient.vec
     } 
@@ -528,6 +530,8 @@ predict.npglpreg <- function(object,
 
     ## Return the predicted values.
 
+    ## Nov 22 XXX - do we need to feed cv.shrink and cv.warning here???
+
     est <- npglpreg.default(tydat=tydat,
                             txdat=txdat,
                             exdat=exdat,
@@ -539,6 +543,7 @@ predict.npglpreg <- function(object,
                             bwtype=bwtype,
                             gradient.vec=gradient.vec,
                             Bernstein=Bernstein,
+                            mpi=mpi,
                             ...)
     
     fitted.values <- est$fitted.values
@@ -635,6 +640,7 @@ npglpreg.formula <- function(formula,
                                                    cv.shrink=cv.shrink,                                                   
                                                    cv.warning=cv.warning,
                                                    Bernstein=Bernstein,
+                                                   mpi=mpi,
                                                    ...))
     degree <- model.cv$degree
     bws <- model.cv$bws
@@ -661,12 +667,13 @@ npglpreg.formula <- function(formula,
                                                    bwtype=bwtype,
                                                    gradient.vec=gradient.vec,
                                                    gradient.categorical=gradient.categorical,
-                                                   cv.shrink=cv.shrink,
+                                                   cv.shrink=TRUE, ## Must override cv.shrink here
                                                    cv.warning=cv.warning,
                                                    Bernstein=Bernstein,
                                                    mpi=mpi,
                                                    ...))
   
+
   est$call <- match.call()
   est$formula <- formula
   est$terms <- mt
@@ -975,6 +982,8 @@ glpregEst <- function(tydat=NULL,
   }
 
 }
+
+## Could we just call glpregEst within (here and cv.aic?)
 
 minimand.cv.ls <- function(bws=NULL,
                            ydat=NULL,

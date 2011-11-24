@@ -228,6 +228,33 @@ is.fullrank <- function (x)
 
 dim.bs <- function(basis="additive",kernel=TRUE,degree=NULL,segments=NULL,include=NULL,categories=NULL) {
 
+  ## This function computes the dimension of the glp basis without the
+  ## memory overhead associated with computing the glp basis itself
+  ## (though for large degrees and number of covariates it is not the
+  ## first best solution - we are currently trying to nail down the
+  ## combinatoric formula for the general solution though this is
+  ## infinitely better than first computing the basis then taking its
+  ## dim())
+
+  direct.plus <- function(v1,v2, upper.v) {
+    k1 <- length(v1)
+    k2 <- length(v2)
+    v3 <- vector()
+		ij <- 1
+    for(i in 1:k1) {
+      for(j in 1:k2) { 
+        v12 <- v1[i] + v2[j]
+		    if (v12 <= upper.v) {
+          v3[ij] <- v12
+          ij <- ij + 1
+				}
+      }
+    }
+    return(v3)
+  }
+
+  ## Some basic error checking
+ 
   if(basis!="additive" & basis!="glp" & basis!="tensor") stop(" Error: basis must be either additive, glp, or tensor")
 
   if(!kernel)
@@ -242,6 +269,29 @@ dim.bs <- function(basis="additive",kernel=TRUE,degree=NULL,segments=NULL,includ
       if(any(K[,1] > 0))
         ncol.bs <- sum(rowSums(K[K[,1]!=0,,drop=FALSE])-1)
     }
+    if(basis=="glp") {
+      dimen <- rowSums(K[K[,1]!=0,,drop=FALSE])-1
+      dimen <- dimen[dimen>0] ## delete the elements which are eqaul to 0.
+      dimen <- sort(dimen,decreasing=TRUE) ## sort the array,  so we can save memory when doing the computation.
+      k <-length(dimen)
+      if(k==0) {
+        ncol.bs <- 0
+      } else {
+        dimen.list <- list()
+        for(i in 1:k) {
+          dimen.list[[i]] <- 0:(dimen[i]-1)
+        }
+        v1 <- dimen.list[[1]]
+        if(k>1)
+          {
+            for(i in 2:k){
+              v1 <- direct.plus(v1,dimen.list[[i]], dimen[1])   #since every element is bigger than 0.
+            }
+          }
+        v1 <- v1[(v1>0)]  #delete 0.
+        ncol.bs <- length(v1)+k
+      }
+    }
     if(basis=="tensor") {
       if(any(K[,1] > 0))
         ncol.bs <- prod(rowSums(K[K[,1]!=0,,drop=FALSE]))
@@ -249,7 +299,30 @@ dim.bs <- function(basis="additive",kernel=TRUE,degree=NULL,segments=NULL,includ
   } else {
     if(basis=="additive") {
       if(any(K[,1] > 0)) 
-        ncol.bs <- sum(c(rowSums(K[K[,1]!=0,,drop=FALSE])-1,include*categories-1))
+        ncol.bs <- sum(c(rowSums(K[K[,1]!=0,,drop=FALSE]),include*categories-1))
+    }
+    if(basis=="glp") {
+      dimen <- c(rowSums(K[K[,1]!=0,,drop=FALSE])-1,include*categories-1)
+      dimen <- dimen[dimen>0] ## delete the elements which are eqaul to 0.
+      dimen <- sort(dimen,decreasing=TRUE) ## sort the array,  so we can save memory when doing the computation.
+      k <-length(dimen)
+      if(k==0) {
+        ncol.bs <- 0
+      } else {
+        dimen.list <- list()
+        for(i in 1:k) {
+          dimen.list[[i]] <- 0:(dimen[i]-1)
+        }
+        v1 <- dimen.list[[1]]
+        if(k>1)
+          {
+            for(i in 2:k){
+              v1 <- direct.plus(v1,dimen.list[[i]], dimen[1])   #since every element is bigger than 0.
+            }
+          }
+        v1 <- v1[(v1>0)]  #delete 0.
+        ncol.bs <- length(v1)+k
+      }
     }
     if(basis=="tensor") {
       if(any(K[,1] > 0)) 

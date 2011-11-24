@@ -134,7 +134,7 @@ void setApplicationOptions(NOMAD::Parameters & p, SEXP opts ) {
 
 		p.read(opt_file);
 
-		remove(opt_file);
+    //		remove(opt_file);
 
 		return;
 }
