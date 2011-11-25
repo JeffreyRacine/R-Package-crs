@@ -1,3 +1,16 @@
+Changes from Version 0.15-8 to 0.15-9 [25-Nov-2011]
+
+* Fixed glitch when computing derivatives with crs and multiple
+  predictors are of degree zero
+
+* Added support for parallel npglpreg (calls npRmpi rather than np -
+  see demo)
+
+* Better memory handling for complex bases via dim.bs (still not
+  perfect and speed can be improved when checking for dimension of glp
+  basis) - can dramatically reduce memory footprint with basis="auto",
+  "tensor", or "glp"
+
 Changes from Version 0.15-7 to 0.15-8 [16-Nov-2011]
 
 * Added support for is.fullrank testing for generalized local

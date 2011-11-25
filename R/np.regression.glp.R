@@ -823,15 +823,15 @@ glpregEst <- function(tydat=NULL,
     
   } else {
 
+    ## Test for negative degrees of freedom
+
+    if(dim.bs(basis="glp",kernel=TRUE,degree=degree,segments=rep(1,length(degree)))>n.train-1)
+      stop(" Ill-conditioned polynomial basis encountered: modify polynomial order")      
+
     W <- W.glp(xdat=txdat,
                degree=degree,
                Bernstein=Bernstein)
 
-    ## Test for negative degrees of freedom
-
-    if(ncol(W) >= nrow(W)-1)
-      stop(" Lack of degrees of freedom encountered: modify polynomial order")
-    
     ## Test for ill-conditioned polynomial basis
 
     if(!is.fullrank(W))
@@ -1015,11 +1015,15 @@ minimand.cv.ls <- function(bws=NULL,
 
   if(!is.null(W)) {
     ## Check for positive degrees of freedom  
-    if(ncol(W) >= nrow(W)-1)
+    if(ncol(W) >= nrow(W)-1) {
+      if(cv.warning) console <- printPush(paste("\rWarning: negative degrees of freedom                           ",sep=""),console = console)
       return(maxPenalty)
+    }
     ## Check for full column rank
-    if(!is.fullrank(W))
+    if(!is.fullrank(W)) {
+      if(cv.warning) console <- printPush(paste("\rWarning: negative degrees of freedom                           ",sep=""),console = console)
       return(maxPenalty)
+    }
   }
 
   console <- newLineConsole()
@@ -1173,11 +1177,15 @@ minimand.cv.aic <- function(bws=NULL,
 
   if(!is.null(W)) {
     ## Check for positive degrees of freedom  
-    if(ncol(W) >= nrow(W)-1)
+    if(ncol(W) >= nrow(W)-1) {
+      if(cv.warning) console <- printPush(paste("\rWarning: negative degrees of freedom                           ",sep=""),console = console)
       return(maxPenalty)
+    }
     ## Check for full column rank
-    if(!is.fullrank(W))
+    if(!is.fullrank(W)) {
+      if(cv.warning) console <- printPush(paste("\rWarning: is.fullrank required for inversion at obs. ", i," failed      ",sep=""),console = console)
       return(maxPenalty)
+    }
   }
 
   console <- newLineConsole()
@@ -1376,6 +1384,9 @@ glpcv <- function(ydat=NULL,
   ## bandwidths to lie in [0,1]
 
   if(debug) write(c("cv",paste(rep("x",num.bw),seq(1:num.bw),sep="")),file="optim.debug",ncol=(num.bw+1))
+
+  if(dim.bs(basis="glp",kernel=TRUE,degree=degree,segments=rep(1,length(degree)))>ncol(xdat)-1)
+    return(maxPenalty)
 
   ## Pass in the local polynomial weight matrix rather than
   ## recomputing with each iteration.
@@ -1749,8 +1760,10 @@ glpcvNOMAD <- function(ydat=NULL,
     if(cv=="degree-bandwidth")
       degree <- round(input[(num.bw+1):(num.bw+num.numeric)])
 
-    ## We check for negative degrees of freedom and less than full
-    ## column rank in minimand.* below, not here
+    ## Test for negative degrees of freedom
+
+    if(dim.bs(basis="glp",kernel=TRUE,degree=degree,segments=rep(1,length(degree)))>length(ydat)-1)
+      return(maxPenalty)
 
     W <- W.glp(xdat=xdat,
                degree=degree,
@@ -1795,6 +1808,9 @@ glpcvNOMAD <- function(ydat=NULL,
     bw.gamma <- input[1:num.bw]
     if(cv=="degree-bandwidth")
       degree <- round(input[(num.bw+1):(num.bw+num.numeric)])
+
+    if(dim.bs(basis="glp",kernel=TRUE,degree=degree,segments=rep(1,length(degree)))>length(ydat)-1)
+      return(maxPenalty)
 
     W <- W.glp(xdat=xdat,
                degree=degree,
@@ -1866,7 +1882,7 @@ glpcvNOMAD <- function(ydat=NULL,
     init.search.vals <- runif(num.bw,0,1)
     for(i in 1:num.bw) {
       if(xdat.numeric[i]==TRUE && bwtype=="fixed") {
-        init.search.vals[i] <- runif(1,.5,1.5)*sd.robust(xdat[,i])*nrow(xdat)^{-1/(4+num.numeric)}
+        init.search.vals[i] <- bandwidth.min + runif(1,.5,1.5)*sd.robust(xdat[,i])*nrow(xdat)^{-1/(4+num.numeric)}
       } 
       if(xdat.numeric[i]==TRUE && bwtype!="fixed") {
         init.search.vals[i] <- round(runif(1,2,sqrt(ub[i])))
@@ -1888,7 +1904,7 @@ glpcvNOMAD <- function(ydat=NULL,
       init.search.vals <- runif(num.bw,0,1)
       for(i in 1:num.bw) {
         if(xdat.numeric[i]==TRUE && bwtype=="fixed") {
-          init.search.vals[i] <- runif(1,.5,1.5)*sd.robust(xdat[,i])*nrow(xdat)^{-1/(4+num.numeric)}
+          init.search.vals[i] <- bandwidth.min + runif(1,.5,1.5)*sd.robust(xdat[,i])*nrow(xdat)^{-1/(4+num.numeric)}
         }
         if(xdat.numeric[i]==TRUE && bwtype!="fixed") {
           init.search.vals[i] <- round(runif(1,2,sqrt(ub[i])))
