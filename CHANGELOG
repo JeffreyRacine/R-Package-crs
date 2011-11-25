@@ -6,10 +6,10 @@ Changes from Version 0.15-8 to 0.15-9 [25-Nov-2011]
 * Added support for parallel npglpreg (calls npRmpi rather than np -
   see demo)
 
-* Better memory handling for complex bases via dim.bs (still not
-  perfect and speed can be improved when checking for dimension of glp
-  basis) - can dramatically reduce memory footprint with basis="auto",
-  "tensor", or "glp"
+* Improved handling of complex bases via dim.bs (test for negative
+  degrees of freedom prior to attempting to construct the basis
+  function - dramatically reduces memory overhead and can cut down on
+  unnecessary computation)
 
 Changes from Version 0.15-7 to 0.15-8 [16-Nov-2011]
 
