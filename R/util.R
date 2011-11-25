@@ -222,37 +222,61 @@ is.fullrank <- function (x)
 
 ## Function that determines the dimension of the multivariate basis
 ## without precomputing it... the tensor is the mother that consumes
-## ginormous amounts of memory. At this stage I do not have a simple
-## formula to compute the dimension of the glp basis but I do have an
-## upper bound so use that...
+## ginormous amounts of memory, followed by the glp basis.
 
 dim.bs <- function(basis="additive",kernel=TRUE,degree=NULL,segments=NULL,include=NULL,categories=NULL) {
 
   ## This function computes the dimension of the glp basis without the
   ## memory overhead associated with computing the glp basis itself
-  ## (though for large degrees and number of covariates it is not the
-  ## first best solution - we are currently trying to nail down the
-  ## combinatoric formula for the general solution though this is
-  ## infinitely better than first computing the basis then taking its
-  ## dim())
+  ## (thanks to Zhenghua Nie)
 
-  direct.plus <- function(v1,v2, upper.v) {
-    k1 <- length(v1)
-    k2 <- length(v2)
-    v3 <- vector()
-		ij <- 1
-    for(i in 1:k1) {
-      for(j in 1:k2) { 
-        v12 <- v1[i] + v2[j]
-		    if (v12 <= upper.v) {
-          v3[ij] <- v12
-          ij <- ij + 1
-				}
+  two.dimen<- function(d1,d2,nd1,pd12){
+    if(d2 ==1) {
+      ret <- list()
+      ret$d12 <- pd12
+      ret$nd1 <- nd1
+      return(ret)
+    }
+    d12 <- d2
+    if(d1-d2>0){
+      for(i in 1:(d1-d2)){
+        d12 <- d12+d2*nd1[i]
+      }}
+    if(d2>1){
+      for(i in 2:d2){
+        d12 <- d12 + (i*nd1[d1-i+1])
       }
     }
-    return(v3)
+    d12 <- d12 + nd1[d1]   ## The maximum number
+    
+    nd2 <- nd1  ## Calculate nd2
+    if(d1>1){
+      for(j in 1:(d1-1)) {
+        nd2[j] <- 0
+        for(i in j:max(0,j-d2+1)) {
+          if(i > 0) {
+            nd2[j] <- nd2[j] + nd1[i]                  
+          }
+          else {
+            nd2[j] <- nd2[j] + 1  ## nd1[0] always 1
+          }
+        }
+      }
+    }
+    if(d2>1) {
+      nd2[d1] <- nd1[d1]
+      for(i in (d1-d2+1):(d1-1)) nd2[d1] <- nd2[d1]+nd1[i]
+    }
+    else {
+      nd2[d1] <- nd1[d1]
+    }
+    ret <- list()
+    ret$d12 <- d12
+    ret$nd1 <- nd2 
+    
+    return(ret)
   }
-
+  
   ## Some basic error checking
  
   if(basis!="additive" & basis!="glp" & basis!="tensor") stop(" Error: basis must be either additive, glp, or tensor")
@@ -271,25 +295,23 @@ dim.bs <- function(basis="additive",kernel=TRUE,degree=NULL,segments=NULL,includ
     }
     if(basis=="glp") {
       dimen <- rowSums(K[K[,1]!=0,,drop=FALSE])-1
-      dimen <- dimen[dimen>0] ## delete the elements which are eqaul to 0.
-      dimen <- sort(dimen,decreasing=TRUE) ## sort the array,  so we can save memory when doing the computation.
+      dimen <- dimen[dimen>0] ## Delete elements which are equal to 0.
+      dimen <- sort(dimen,decreasing=TRUE) ## Sort the array to save memory when doing the computation.
       k <-length(dimen)
       if(k==0) {
         ncol.bs <- 0
       } else {
-        dimen.list <- list()
-        for(i in 1:k) {
-          dimen.list[[i]] <- 0:(dimen[i]-1)
-        }
-        v1 <- dimen.list[[1]]
-        if(k>1)
-          {
-            for(i in 2:k){
-              v1 <- direct.plus(v1,dimen.list[[i]], dimen[1])   #since every element is bigger than 0.
-            }
+        nd1 <- rep(1,dimen[1])   ## At the beginning,  we have one for [1, 2, 3, ..., dimen[1]]
+        nd1[dimen[1]] <- 0       ## nd1 represents the frequency for every element of [1, 2, 3, ..., dimen[1]]
+        ncol.bs <- dimen[1]
+        if(k>1) {
+          for(i in 2:k) {
+						dim.rt <- two.dimen(dimen[1],dimen[i],nd1,ncol.bs)
+						nd1 <- dim.rt$nd1
+						ncol.bs <- dim.rt$d12
           }
-        v1 <- v1[(v1>0)]  #delete 0.
-        ncol.bs <- length(v1)+k
+          ncol.bs <- dim.rt$d12+k-1
+        }
       }
     }
     if(basis=="tensor") {
@@ -303,25 +325,23 @@ dim.bs <- function(basis="additive",kernel=TRUE,degree=NULL,segments=NULL,includ
     }
     if(basis=="glp") {
       dimen <- c(rowSums(K[K[,1]!=0,,drop=FALSE])-1,include*categories-1)
-      dimen <- dimen[dimen>0] ## delete the elements which are eqaul to 0.
-      dimen <- sort(dimen,decreasing=TRUE) ## sort the array,  so we can save memory when doing the computation.
+      dimen <- dimen[dimen>0] ## Delete elements which are eqaul to 0.
+      dimen <- sort(dimen,decreasing=TRUE) ## Sort the array to save memory when doing the computation.
       k <-length(dimen)
       if(k==0) {
         ncol.bs <- 0
       } else {
-        dimen.list <- list()
-        for(i in 1:k) {
-          dimen.list[[i]] <- 0:(dimen[i]-1)
-        }
-        v1 <- dimen.list[[1]]
-        if(k>1)
-          {
-            for(i in 2:k){
-              v1 <- direct.plus(v1,dimen.list[[i]], dimen[1])   #since every element is bigger than 0.
-            }
+        nd1 <- rep(1,dimen[1])   ## At the beginning,  we have one for [1, 2, 3, ..., dimen[1]]
+        nd1[dimen[1]] <- 0       ## nd1 represents the frequency for every element of [1, 2, 3, ..., dimen[1]]
+        ncol.bs <- dimen[1]
+        if(k>1) {
+          for(i in 2:k) {
+						dim.rt <- two.dimen(dimen[1],dimen[i],nd1,ncol.bs)
+						nd1 <- dim.rt$nd1
+						ncol.bs <- dim.rt$d12
           }
-        v1 <- v1[(v1>0)]  #delete 0.
-        ncol.bs <- length(v1)+k
+          ncol.bs <- dim.rt$d12+k-1
+        }
       }
     }
     if(basis=="tensor") {
