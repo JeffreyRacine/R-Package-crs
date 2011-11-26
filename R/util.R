@@ -306,9 +306,9 @@ dim.bs <- function(basis="additive",kernel=TRUE,degree=NULL,segments=NULL,includ
         ncol.bs <- dimen[1]
         if(k>1) {
           for(i in 2:k) {
-						dim.rt <- two.dimen(dimen[1],dimen[i],nd1,ncol.bs)
-						nd1 <- dim.rt$nd1
-						ncol.bs <- dim.rt$d12
+            dim.rt <- two.dimen(dimen[1],dimen[i],nd1,ncol.bs)
+            nd1 <- dim.rt$nd1
+            ncol.bs <- dim.rt$d12
           }
           ncol.bs <- dim.rt$d12+k-1
         }
@@ -336,9 +336,9 @@ dim.bs <- function(basis="additive",kernel=TRUE,degree=NULL,segments=NULL,includ
         ncol.bs <- dimen[1]
         if(k>1) {
           for(i in 2:k) {
-						dim.rt <- two.dimen(dimen[1],dimen[i],nd1,ncol.bs)
-						nd1 <- dim.rt$nd1
-						ncol.bs <- dim.rt$d12
+            dim.rt <- two.dimen(dimen[1],dimen[i],nd1,ncol.bs)
+            nd1 <- dim.rt$nd1
+            ncol.bs <- dim.rt$d12
           }
           ncol.bs <- dim.rt$d12+k-1
         }

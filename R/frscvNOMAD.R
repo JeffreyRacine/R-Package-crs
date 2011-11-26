@@ -144,7 +144,7 @@ frscvNOMAD <- function(xz,
                                                       basis="tensor",
                                                       cv.func=cv.func,
                                                       tau=tau)
-                if(cv>cv.tensor){
+                if(cv > cv.tensor){
                   cv <- cv.tensor
                     basis.opt <-"tensor"
                 }

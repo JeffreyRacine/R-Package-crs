@@ -1364,12 +1364,14 @@ cv.kernel.spline <- function(x,
       ## Note - this is defined in util.R so if you modify there you must modify here also        
       cv <- mean(check.function(epsilon,tau)/(1-mean(htt))^(1/sqrt(tau*(1-tau))))        
   } else if(cv.func == "cv.aic"){
-    if(is.null(tau))
-      sigmasq <- mean(epsilon^2)
-    else
-      sigmasq <- mean(check.function(epsilon,tau))
     traceH <- sum(htt)
-    penalty <- ((1+traceH/n)/(1-(traceH+2)/n))*(0.5/sqrt(tau*(1-tau)))
+    if(is.null(tau)) {
+      sigmasq <- mean(epsilon^2)
+      penalty <- ((1+traceH/n)/(1-(traceH+2)/n))
+    } else {
+      sigmasq <- mean(check.function(epsilon,tau))
+      penalty <- ((1+traceH/n)/(1-(traceH+2)/n))*(0.5/sqrt(tau*(1-tau)))
+    }
     cv <- ifelse(penalty < 0, .Machine$double.xmax, log(sigmasq)+penalty);
   }
   
@@ -1542,12 +1544,14 @@ cv.factor.spline <- function(x,
       ## Note - this is defined in util.R so if you modify there you must modify here also        
       cv <- mean(check.function(epsilon,tau)/(1-mean(htt))^(1/sqrt(tau*(1-tau))))        
   } else if(cv.func == "cv.aic"){
-    if(is.null(tau))
-      sigmasq <- mean(epsilon^2)
-    else
-      sigmasq <- mean(check.function(epsilon,tau))
     traceH <- sum(htt)
-    penalty <- ((1+traceH/n)/(1-(traceH+2)/n))*(0.5/sqrt(tau*(1-tau)))
+    if(is.null(tau)) {
+      sigmasq <- mean(epsilon^2)
+      penalty <- ((1+traceH/n)/(1-(traceH+2)/n))
+    } else {
+      sigmasq <- mean(check.function(epsilon,tau))
+      penalty <- ((1+traceH/n)/(1-(traceH+2)/n))*(0.5/sqrt(tau*(1-tau)))
+    }
     cv <- ifelse(penalty < 0, .Machine$double.xmax, log(sigmasq)+penalty);
   }
   
