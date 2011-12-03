@@ -25,7 +25,7 @@ npglpreg(\dots)
          leave.one.out = FALSE,
          ukertype = c("liracine", "aitchisonaitken"),
          okertype = c("liracine", "wangvanryzin"),
-         bwtype = c("fixed", "generalized_nn", "adaptive_nn","auto"),
+         bwtype = c("fixed", "generalized_nn", "adaptive_nn", "auto"),
          gradient.vec = NULL,
          gradient.categorical = FALSE,
          cv.shrink = TRUE,
@@ -45,7 +45,7 @@ npglpreg(\dots)
          leave.one.out = FALSE,
          ukertype = c("liracine", "aitchisonaitken"),
          okertype = c("liracine", "wangvanryzin"),
-         bwtype = c("fixed", "generalized_nn", "adaptive_nn","auto"),
+         bwtype = c("fixed", "generalized_nn", "adaptive_nn", "auto"),
          cv = c("degree-bandwidth", "bandwidth", "none"),
          cv.func = c("cv.ls", "cv.gcv", "cv.aic"),
          opts=list("MAX_BB_EVAL"=10000,
@@ -132,8 +132,8 @@ for each dimension of the continuous \code{x} in \code{txdat}}
     type will be automatically determined by cross-validation. Defaults
     to \code{fixed}. Option summary:\cr
     \code{fixed}: compute fixed bandwidths \cr
-    \code{generalized_nn}: compute generalized nearest neighbors \cr
-    \code{adaptive_nn}: compute adaptive nearest neighbors
+    \code{generalized_nn}: compute generalized nearest neighbor bandwidths \cr
+    \code{adaptive_nn}: compute adaptive nearest neighbor bandwidths
   }
   \item{cv}{
   a character string (default \code{cv="nomad"}) indicating whether to
