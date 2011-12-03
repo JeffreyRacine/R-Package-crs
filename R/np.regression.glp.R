@@ -626,6 +626,8 @@ npglpreg.formula <- function(formula,
 
   if(cv=="none"&&bwtype=="auto") stop(" Error: you cannot use bwtype==\"auto\" without running cross-validation")
 
+  if(cv!="none"&&bwtype!="auto") warning(paste(" bwypte is ", bwtype, ": you could consider bwtype=\"auto\"",sep=""),immediate.=TRUE)
+  
   if(cv!="none") {
     if(bwtype!="auto") {
       ptm <- ptm + system.time(model.cv <-glpcvNOMAD(ydat=tydat,
