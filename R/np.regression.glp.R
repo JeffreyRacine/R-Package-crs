@@ -292,7 +292,7 @@ npglpreg.default <- function(tydat=NULL,
                              leave.one.out=FALSE,
                              ukertype=c("liracine","aitchisonaitken"),
                              okertype=c("liracine","wangvanryzin"),
-                             bwtype = c("fixed","generalized_nn","adaptive_nn"),
+                             bwtype = c("fixed","generalized_nn","adaptive_nn","auto"),
                              gradient.vec=NULL,
                              gradient.categorical=FALSE,
                              cv.shrink=TRUE,
@@ -446,6 +446,8 @@ summary.npglpreg <- function(object,
     cat(paste("\nThere are ",format(object$num.numeric), " continuous predictors",sep=""),sep="")
   }
 
+  cat(paste("\nBandwidth type: ", object$bwtype, sep=""))
+
   if(object$num.numeric >= 1) {
     for(j in 1:object$num.numeric) {
       if(object$bwtype=="fixed") {
@@ -571,7 +573,7 @@ npglpreg.formula <- function(formula,
                              leave.one.out=FALSE,
                              ukertype=c("liracine","aitchisonaitken"),
                              okertype=c("liracine","wangvanryzin"),
-                             bwtype = c("fixed","generalized_nn","adaptive_nn"),
+                             bwtype = c("fixed","generalized_nn","adaptive_nn","auto"),
                              cv=c("degree-bandwidth","bandwidth","none"),
                              cv.func=c("cv.ls","cv.gcv","cv.aic"),
                              opts=list("MAX_BB_EVAL"=10000,
@@ -622,26 +624,104 @@ npglpreg.formula <- function(formula,
 
   bws.sf <- NULL
 
+  if(cv=="none"&&bwtype=="auto") stop(" Error: you cannot use bwtype==\"auto\" without running cross-validation")
+
   if(cv!="none") {
-    ptm <- ptm + system.time(model.cv <-glpcvNOMAD(ydat=tydat,
-                                                   xdat=txdat,
-                                                   opts=opts,
-                                                   cv=cv,
-                                                   degree=degree,
-                                                   bandwidth=bws,
-                                                   bwmethod=cv.func,
-                                                   bwtype=bwtype,
-                                                   nmulti=nmulti,
-                                                   random.seed=random.seed,
-                                                   degree.max=degree.max,
-                                                   degree.min=degree.min,
-                                                   bandwidth.max=bandwidth.max,
-                                                   bandwidth.min=bandwidth.min,
-                                                   cv.shrink=cv.shrink,                                                   
-                                                   cv.warning=cv.warning,
-                                                   Bernstein=Bernstein,
-                                                   mpi=mpi,
-                                                   ...))
+    if(bwtype!="auto") {
+      ptm <- ptm + system.time(model.cv <-glpcvNOMAD(ydat=tydat,
+                                                     xdat=txdat,
+                                                     opts=opts,
+                                                     cv=cv,
+                                                     degree=degree,
+                                                     bandwidth=bws,
+                                                     bwmethod=cv.func,
+                                                     bwtype=bwtype,
+                                                     nmulti=nmulti,
+                                                     random.seed=random.seed,
+                                                     degree.max=degree.max,
+                                                     degree.min=degree.min,
+                                                     bandwidth.max=bandwidth.max,
+                                                     bandwidth.min=bandwidth.min,
+                                                     cv.shrink=cv.shrink,                                                   
+                                                     cv.warning=cv.warning,
+                                                     Bernstein=Bernstein,
+                                                     mpi=mpi,
+                                                     ...))
+    } else {
+      ptm <- ptm + system.time(model.cv <-glpcvNOMAD(ydat=tydat,
+                                                     xdat=txdat,
+                                                     opts=opts,
+                                                     cv=cv,
+                                                     degree=degree,
+                                                     bandwidth=bws,
+                                                     bwmethod=cv.func,
+                                                     bwtype="fixed",
+                                                     nmulti=nmulti,
+                                                     random.seed=random.seed,
+                                                     degree.max=degree.max,
+                                                     degree.min=degree.min,
+                                                     bandwidth.max=bandwidth.max,
+                                                     bandwidth.min=bandwidth.min,
+                                                     cv.shrink=cv.shrink,                                                   
+                                                     cv.warning=cv.warning,
+                                                     Bernstein=Bernstein,
+                                                     mpi=mpi,
+                                                     ...))
+
+      bwtype <- "fixed"
+      fv <- model.cv$fv
+
+      ptm <- ptm + system.time(model <-glpcvNOMAD(ydat=tydat,
+                                                  xdat=txdat,
+                                                  opts=opts,
+                                                  cv=cv,
+                                                  degree=degree,
+                                                  bandwidth=bws,
+                                                  bwmethod=cv.func,
+                                                  bwtype="generalized_nn",
+                                                  nmulti=nmulti,
+                                                  random.seed=random.seed,
+                                                  degree.max=degree.max,
+                                                  degree.min=degree.min,
+                                                  bandwidth.max=bandwidth.max,
+                                                  bandwidth.min=bandwidth.min,
+                                                  cv.shrink=cv.shrink,                                                   
+                                                  cv.warning=cv.warning,
+                                                  Bernstein=Bernstein,
+                                                  mpi=mpi,
+                                                  ...))
+
+      if(model$fv < model.cv$fv) {
+        model.cv <- model
+        bwtype <- "generalized_nn"
+      }
+      
+      ptm <- ptm + system.time(model <-glpcvNOMAD(ydat=tydat,
+                                                  xdat=txdat,
+                                                  opts=opts,
+                                                  cv=cv,
+                                                  degree=degree,
+                                                  bandwidth=bws,
+                                                  bwmethod=cv.func,
+                                                  bwtype="adaptive_nn",
+                                                  nmulti=nmulti,
+                                                  random.seed=random.seed,
+                                                  degree.max=degree.max,
+                                                  degree.min=degree.min,
+                                                  bandwidth.max=bandwidth.max,
+                                                  bandwidth.min=bandwidth.min,
+                                                  cv.shrink=cv.shrink,                                                   
+                                                  cv.warning=cv.warning,
+                                                  Bernstein=Bernstein,
+                                                  mpi=mpi,
+                                                  ...))
+      if(model$fv < model.cv$fv) {
+        model.cv <- model
+        bwtype <- "adptive_nn"
+      }
+      
+    }
+
     degree <- model.cv$degree
     bws <- model.cv$bws
     bws.sf <- model.cv$bws.sf

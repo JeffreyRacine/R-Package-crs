@@ -1,6 +1,9 @@
-Changes from Version 0.15-9 to 0.15-10 [25-Nov-2011]
+Changes from Version 0.15-9 to 0.15-10 [5-Dec-2011]
 
 * Fixed regression in code when using cv.func=cv.aic
+
+* Added option bwtype="auto" for npglpreg (automatically determine the
+  bandwidth type via cross-validation)
 
 Changes from Version 0.15-8 to 0.15-9 [25-Nov-2011]
 
