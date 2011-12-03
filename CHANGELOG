@@ -1,3 +1,7 @@
+Changes from Version 0.15-10 to 0.15-11 [3-Dec-2011]
+
+* Fixed glitch in bwtype="auto" when adaptive_nn is selected
+
 Changes from Version 0.15-9 to 0.15-10 [3-Dec-2011]
 
 * Fixed regression in code when using cv.func=cv.aic

@@ -719,7 +719,7 @@ npglpreg.formula <- function(formula,
                                                   ...))
       if(model$fv < model.cv$fv) {
         model.cv <- model
-        bwtype <- "adptive_nn"
+        bwtype <- "adaptive_nn"
       }
       
     }
