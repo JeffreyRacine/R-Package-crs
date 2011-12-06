@@ -1108,6 +1108,7 @@ cv.kernel.spline.wrapper <- function(x,
                                      knots=c("quantiles","uniform","auto"),
                                      basis=c("additive","tensor","glp"),
                                      cv.func=c("cv.ls","cv.gcv","cv.aic"),
+                                     cv.df.min=1,
                                      tau=NULL) {
 
   knots.opt <- knots;
@@ -1129,6 +1130,7 @@ cv.kernel.spline.wrapper <- function(x,
                            knots="quantiles",
                            basis=basis,
                            cv.func=cv.func,
+                           cv.df.min=cv.df.min,
                            tau=tau)
 
     cv.uniform <- cv.kernel.spline(x=x,
@@ -1144,6 +1146,7 @@ cv.kernel.spline.wrapper <- function(x,
                                    knots="uniform",
                                    basis=basis,
                                    cv.func=cv.func,
+                                   cv.df.min=cv.df.min,
                                    tau=tau)
     if(cv > cv.uniform) {
       cv <- cv.uniform
@@ -1165,6 +1168,7 @@ cv.kernel.spline.wrapper <- function(x,
                            knots=knots,
                            basis=basis,
                            cv.func=cv.func,
+                           cv.df.min=cv.df.min,
                            tau=tau)
 
   }
@@ -1198,6 +1202,7 @@ cv.kernel.spline <- function(x,
 														 knots=c("quantiles","uniform"),
 														 basis=c("additive","tensor","glp"),
 														 cv.func=c("cv.ls","cv.gcv","cv.aic"),
+                             cv.df.min=1,
                              tau=NULL) {
 
   if(missing(x) || missing(y) || missing (K)) stop(" must provide x, y and K")
@@ -1216,7 +1221,7 @@ cv.kernel.spline <- function(x,
 
   ## Check dimension of P prior to calculating the basis
 
-  if(dim.bs(basis=basis,kernel=TRUE,degree=K[,1],segments=K[,2]) >= (n-1))
+  if(n - dim.bs(basis=basis,kernel=TRUE,degree=K[,1],segments=K[,2]) <= cv.df.min)
     return(sqrt(.Machine$double.xmax))
 
   ## Otherwise, compute the cross-validation function
@@ -1392,6 +1397,7 @@ cv.factor.spline.wrapper <- function(x,
 																		 knots=c("quantiles","uniform","auto"),
 																		 basis=c("additive","tensor","glp"),
 																		 cv.func=c("cv.ls","cv.gcv","cv.aic"),
+                                     cv.df.min=1,
                                      tau=NULL) {
 
   knots.opt <- knots
@@ -1408,6 +1414,7 @@ cv.factor.spline.wrapper <- function(x,
                            knots="quantiles",
                            basis=basis,
                            cv.func=cv.func,
+                           cv.df.min=cv.df.min,
                            tau=tau)
 
     cv.uniform <- cv.factor.spline(x=x,
@@ -1418,6 +1425,7 @@ cv.factor.spline.wrapper <- function(x,
                                    knots="uniform",
                                    basis=basis,
                                    cv.func=cv.func,
+                                   cv.df.min=cv.df.min,                                   
                                    tau=tau)
     if(cv > cv.uniform) {
       cv <- cv.uniform
@@ -1434,6 +1442,7 @@ cv.factor.spline.wrapper <- function(x,
                            knots=knots,
                            basis=basis,
                            cv.func=cv.func,
+                           cv.df.min=cv.df.min,
                            tau=tau)
 
   }
@@ -1456,6 +1465,7 @@ cv.factor.spline <- function(x,
 														 knots=c("quantiles","uniform"),
 														 basis=c("additive","tensor","glp"),
 														 cv.func=c("cv.ls","cv.gcv","cv.aic"),
+                             cv.df.min=1,
                              tau=NULL) {
 
   if(missing(x) || missing(y) || missing (K)) stop(" must provide x, y and K")
@@ -1477,7 +1487,7 @@ cv.factor.spline <- function(x,
     for(i in NCOL(z)) categories[i] <- length(unique(z[,i]))
   }
 
-  if(dim.bs(basis=basis,kernel=TRUE,degree=K[,1],segments=K[,2],include=I,categories=categories) >= (n-1))
+  if(n - dim.bs(basis=basis,kernel=TRUE,degree=K[,1],segments=K[,2],include=I,categories=categories) <= cv.df.min)
     return(sqrt(.Machine$double.xmax))
 
   ## Otherwise, compute the cross-validation function

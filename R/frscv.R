@@ -46,6 +46,7 @@ frscv <- function(xz,
                       knots=knots,
                       basis=basis,
                       cv.func=cv.func,
+                      cv.df.min=1,
                       tau=tau) {
 
     if(missing(input) || missing(x) || missing(y)) stop(" you must provide input, x, y")
@@ -82,6 +83,7 @@ frscv <- function(xz,
                                    knots=knots,
                                    basis=basis,
                                    cv.func=cv.func,
+                                   cv.df.min=1,
                                    tau=tau)
     
     ## Some i/o unless options(crs.messages=FALSE)
@@ -299,6 +301,7 @@ frscv <- function(xz,
                         knots=knots,
                         basis="additive",
                         cv.func=cv.func,
+                        cv.df.min=1,
                         tau=tau)
 
       if(output < cv.vec[j]) {
@@ -325,6 +328,7 @@ frscv <- function(xz,
                         knots=knots,
                         basis="tensor",
                         cv.func=cv.func,
+                        cv.df.min=1,
                         tau=tau)
 
       if(output < cv.vec[j]) {
@@ -351,6 +355,7 @@ frscv <- function(xz,
                         knots=knots,
                         basis="glp",
                         cv.func=cv.func,
+                        cv.df.min=1,
                         tau=tau)
 
       if(output < cv.vec[j]) {
@@ -381,6 +386,7 @@ frscv <- function(xz,
                         knots=knots,
                         basis=basis,
                         cv.func=cv.func,
+                        cv.df.min=1,
                         tau=tau)
 
       if(output < cv.vec[j]) {

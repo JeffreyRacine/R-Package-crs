@@ -14,6 +14,7 @@ krscvNOMAD <- function(xz,
                        segments.max=10, 
                        degree.min=0, 
                        segments.min=1, 
+                       cv.df.min=1,
                        complexity=c("degree-knots","degree","knots"),
                        knots=c("quantiles","uniform", "auto"),
                        basis=c("additive","tensor","glp","auto"),
@@ -75,6 +76,7 @@ krscvNOMAD <- function(xz,
                          opts=opts,
                          print.output=print.output, 
                          nmulti=nmulti,
+                         cv.df.min=cv.df.min,
                          tau=tau) {
 
         if( missing(x) || missing(y)  ) stop(" you must provide input, x, y")
@@ -110,6 +112,7 @@ krscvNOMAD <- function(xz,
             is.ordered.z <- params$is.ordered.z
             lambda.discrete.num <- params$lambda.discrete.num
             lambda.discrete <- params$lambda.discrete
+            cv.df.min <- params$cv.df.min
             tau <- params$tau
 
             num.x <- NCOL(x)
@@ -154,6 +157,7 @@ krscvNOMAD <- function(xz,
                                              is.ordered.z=is.ordered.z,
                                              knots=knots,
                                              basis=basis.opt,
+                                             cv.df.min=cv.df.min,
                                              cv.func=cv.func,
                                              tau=tau)
               
@@ -170,6 +174,7 @@ krscvNOMAD <- function(xz,
                                                     knots=knots,
                                                     basis="tensor",
                                                     cv.func=cv.func,
+                                                    cv.df.min=cv.df.min,
                                                     tau=tau)
               if(cv > cv.tensor){
                 cv <- cv.tensor
@@ -189,6 +194,7 @@ krscvNOMAD <- function(xz,
                                                  knots=knots,
                                                  basis="glp",
                                                  cv.func=cv.func,
+                                                 cv.df.min=cv.df.min,
                                                  tau=tau)
               if(cv > cv.glp){
                 cv <- cv.glp
@@ -209,6 +215,7 @@ krscvNOMAD <- function(xz,
                                              knots=knots,
                                              basis=basis.opt,
                                              cv.func=cv.func,
+                                             cv.df.min=cv.df.min,
                                              tau=tau)
             }
             
@@ -242,6 +249,7 @@ krscvNOMAD <- function(xz,
         params$lambda.discrete.num <- lambda.discrete.num
         params$lambda.discrete <- lambda.discrete
         params$tau <- tau
+        params$cv.df.min <- cv.df.min
 
         # initial value
         num.z <- NCOL(z)
@@ -471,6 +479,7 @@ krscvNOMAD <- function(xz,
                              opts=opts,
                              print.output=print.output, 
                              nmulti=nmulti,
+                             cv.df.min=cv.df.min,
                              tau=tau) 
 
     t2 <- Sys.time()

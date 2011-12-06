@@ -18,7 +18,8 @@ frscvNOMAD(xz,
            degree.max = 10, 
            segments.max = 10, 
            degree.min = 0, 
-           segments.min = 1, 
+           segments.min = 1,
+           cv.df.min = 1,
            complexity = c("degree-knots","degree","knots"),
            knots = c("quantiles","uniform","auto"),
            basis = c("additive","tensor","glp","auto"),
@@ -52,6 +53,9 @@ frscvNOMAD(xz,
   
   \item{segments.min}{ the minimum segments of the B-spline basis for
     each of the continuous predictors (default \code{segments.min=1})}
+
+  \item{cv.df.min}{ the minimum degrees of freedom to allow when
+    conducting cross-validation (default \code{cv.df.min=1})}
 
   \item{complexity}{a character string (default
   \code{complexity="degree-knots"}) indicating whether model `complexity' is

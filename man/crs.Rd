@@ -37,6 +37,7 @@ crs(\dots)
     segments.max = 10, 
     degree.min = 0, 
     segments.min = 1, 
+    cv.df.min = 1,
     cv = c("nomad","exhaustive","none"),
     cv.threshold=1000,
     cv.func = c("cv.ls","cv.gcv","cv.aic"),
@@ -133,6 +134,10 @@ in \code{x} are included or omitted from the resulting estimate }
 
   \item{segments.min}{ the minimum segments of the B-spline basis for
     each of the continuous predictors (default \code{segments.min=1})}
+
+  \item{cv.df.min}{ the minimum degrees of freedom to allow when
+    conducting NOMAD-based cross-validation (default
+    \code{cv.df.min=1})}
 
   \item{complexity}{a character string (default
   \code{complexity="degree-knots"}) indicating whether model

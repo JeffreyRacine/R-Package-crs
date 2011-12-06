@@ -1,3 +1,10 @@
+Changes from Version 0.15-11 to 0.15-12 [7-Dec-2011]
+
+* Added option to limit the minimum degrees of freedom when conducting
+  cross validation (see cv.df.min which defaults to 1) which can save
+  memory and computation time for large sample sizes by avoiding
+  computation of potentially very large dimensioned spline bases
+
 Changes from Version 0.15-10 to 0.15-11 [3-Dec-2011]
 
 * Fixed glitch in bwtype="auto" when adaptive_nn is selected

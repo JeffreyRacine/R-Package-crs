@@ -55,6 +55,7 @@ krscv <- function(xz,
                       knots=knots,
                       basis=basis,
                       cv.func=cv.func,
+                      cv.df.min=1,
                       tau=tau) {
 
     ## K is a matrix, column 1 degree, column 2 segments, either or
@@ -88,6 +89,7 @@ krscv <- function(xz,
                                    knots=knots,
                                    basis=basis,
                                    cv.func=cv.func,
+                                   cv.df.min=1,
                                    tau=tau)
 
     ## Some i/o unless options(crs.messages=FALSE)
@@ -272,6 +274,7 @@ krscv <- function(xz,
                         knots=knots,
                         basis="additive",
                         cv.func=cv.func,
+                        cv.df.min=1,
                         tau=tau)
 
       }
@@ -311,6 +314,7 @@ krscv <- function(xz,
                                     knots=knots,
                                     basis="additive",
                                     cv.func=cv.func,
+                                    cv.df.min=1,
                                     tau=tau)
 
           }
@@ -360,6 +364,7 @@ krscv <- function(xz,
                         knots=knots,
                         basis="tensor",
                         cv.func=cv.func,
+                        cv.df.min=1,
                         tau=tau)
 
       }
@@ -399,6 +404,7 @@ krscv <- function(xz,
                                     knots=knots,
                                     basis="tensor",
                                     cv.func=cv.func,
+                                    cv.df.min=1,
                                     tau=tau)
 
           }
@@ -448,6 +454,7 @@ krscv <- function(xz,
                         knots=knots,
                         basis="glp",
                         cv.func=cv.func,
+                        cv.df.min=1,
                         tau=tau)
 
       }
@@ -487,6 +494,7 @@ krscv <- function(xz,
                                     knots=knots,
                                     basis="glp",
                                     cv.func=cv.func,
+                                    cv.df.min=1,
                                     tau=tau)
 
           }
@@ -539,6 +547,7 @@ krscv <- function(xz,
                         knots=knots,
                         basis=basis,
                         cv.func=cv.func,
+                        cv.df.min=1,
                         tau=tau)
 
       }
@@ -578,6 +587,7 @@ krscv <- function(xz,
                                     knots=knots,
                                     basis=basis,
                                     cv.func=cv.func,
+                                    cv.df.min=1,
                                     tau=tau)
 
           }
@@ -639,6 +649,7 @@ krscv <- function(xz,
 																					 knots=knots,
 																					 basis=basis.opt,
 																					 cv.func=cv.func,
+                                           cv.df.min=1,
                                            tau=tau)
 
 			knots.opt <- attributes(cv.knots)$knots.opt

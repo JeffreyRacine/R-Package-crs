@@ -15,6 +15,7 @@ frscvNOMAD <- function(xz,
                        segments.max=10, 
                        degree.min=0, 
                        segments.min=1, 
+                       cv.df.min=1,
                        complexity=c("degree-knots","degree","knots"),
                        knots=c("quantiles","uniform", "auto"),
                        basis=c("additive","tensor","glp","auto"),
@@ -62,6 +63,7 @@ frscvNOMAD <- function(xz,
                          opts=opts,
                          print.output=print.output, 
                          nmulti=nmulti,
+                         cv.df.min=cv.df.min,
                          tau=tau) {
 
         if( missing(x) || missing(y) ) stop(" you must provide input, x, y")
@@ -93,6 +95,7 @@ frscvNOMAD <- function(xz,
             cv.func <- params$cv.func
             basis <- params$basis
             tau <- params$tau
+            cv.df.min <- params$cv.df.min
 
             num.x <- NCOL(x)
             num.z <- 0
@@ -133,6 +136,7 @@ frscvNOMAD <- function(xz,
                                                knots=knots,
                                                basis=basis.opt,
                                                cv.func=cv.func,
+                                               cv.df.min=cv.df.min,
                                                tau=tau)
                 
                 cv.tensor <- cv.factor.spline.wrapper(x=x,
@@ -143,6 +147,7 @@ frscvNOMAD <- function(xz,
                                                       knots=knots,
                                                       basis="tensor",
                                                       cv.func=cv.func,
+                                                      cv.df.min=cv.df.min,
                                                       tau=tau)
                 if(cv > cv.tensor){
                   cv <- cv.tensor
@@ -157,6 +162,7 @@ frscvNOMAD <- function(xz,
                                                    knots=knots,
                                                    basis="glp",
                                                    cv.func=cv.func,
+                                                   cv.df.min=cv.df.min,
                                                    tau=tau)
                 if(cv>cv.glp){
                     cv <- cv.glp
@@ -172,6 +178,7 @@ frscvNOMAD <- function(xz,
                                              knots=knots,
                                              basis=basis.opt,
                                              cv.func=cv.func,
+                                             cv.df.min=cv.df.min,
                                              tau=tau)
             }
 
@@ -198,6 +205,7 @@ frscvNOMAD <- function(xz,
         params$cv.func <- cv.func
         params$basis <- basis
         params$tau <- tau
+        params$cv.df.min <- cv.df.min
 
         # initial value
         if(!is.null(z)) {
@@ -406,6 +414,7 @@ frscvNOMAD <- function(xz,
                                opts=opts,
                                print.output=print.output, 
                                nmulti=nmulti,
+                               cv.df.min=cv.df.min,
                                tau=tau) 
 
     t2 <- Sys.time()

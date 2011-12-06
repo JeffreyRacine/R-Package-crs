@@ -365,7 +365,8 @@ crs.formula <- function(formula,
                         degree.max=10, 
                         segments.max=10, 
                         degree.min=0, 
-                        segments.min=1, 
+                        segments.min=1,
+                        cv.df.min=1,
                         cv=c("nomad","exhaustive","none"),
                         cv.threshold=1000,
                         cv.func=c("cv.ls","cv.gcv","cv.aic"),
@@ -438,6 +439,7 @@ crs.formula <- function(formula,
   ## If no degree nor include nor lambda, return cubic spline
   ## (identity bases) or non-smooth model (kernel).
 
+  if(cv.df.min < 1 || cv.df.min > length(y)-1) stop(" cv.df.min must be a positive integer less than n")
   if(!is.null(degree)&&length(degree)!=num.x) stop(" degree vector must be the same length as x")
   if(!is.null(segments)&&length(segments)!=num.x) stop(" segments vector must be the same length as x")
   if(degree.max > 100) stop(paste(" degree.max (",degree.max,") exceeds reasonable value (",100,")",sep=""))
@@ -476,7 +478,8 @@ crs.formula <- function(formula,
                                                        degree.max=degree.max, 
                                                        segments.max=segments.max, 
                                                        degree.min=degree.min, 
-                                                       segments.min=segments.min, 
+                                                       segments.min=segments.min,
+                                                       cv.df.min=cv.df.min,
                                                        complexity=complexity,
                                                        knots=knots,
                                                        basis=basis,
@@ -533,6 +536,7 @@ crs.formula <- function(formula,
                                                        segments.max=segments.max, 
                                                        degree.min=degree.min, 
                                                        segments.min=segments.min,
+                                                       cv.df.min=cv.df.min,
                                                        complexity=complexity,
                                                        knots=knots,
                                                        basis=basis,
