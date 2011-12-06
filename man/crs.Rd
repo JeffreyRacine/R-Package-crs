@@ -39,7 +39,7 @@ crs(\dots)
     segments.min = 1, 
     cv.df.min = 1,
     cv = c("nomad","exhaustive","none"),
-    cv.threshold=1000,
+    cv.threshold = 1000,
     cv.func = c("cv.ls","cv.gcv","cv.aic"),
     kernel = TRUE,
     lambda = NULL,
