@@ -8,7 +8,7 @@ nomad_kernel                       R code for testing NOMAD for categorical regr
 radial_constrained_first_partial   R code for constrained radial function estimation (constrain the first derivatives to lie between -0.1 and 0.1)
 radial_constrained_mean            R code for constrained radial function estimation (constrain the mean to lie between 0 and 1/2)
 radial_constrained_second_partial  R code for constrained radial function estimation (constrain the second derivatives to be non-negative)
-radial_constrained_test            R code for testing constraint validity for radial function estimation (constrain the mean to lie between 0 and 1/2) non-negative)
+radial_constrained_test            R code for testing constraint validity for radial function estimation (constrain the mean to lie between -0.217 and 1, which the true DGP does though the noisy data does not)
 radial_persp                       R code for fitting and plotting a 3D perspective plot for the `radial' function
 radial_rgl                         R code for fitting and generating a 3D real-time rendering plot for the `radial' function using OpenGL
 sine_rgl                           R code for fitting and generating a 3D real-time rendering plot for a product sine function using OpenGL

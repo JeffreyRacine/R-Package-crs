@@ -573,13 +573,6 @@ P <- 1-pf(F,1,model$df.residual)
 P
 @ 
 
-Note that \code{summary} supports the option \code{sigtest=TRUE} that
-conducts an F-test for significance for each predictor.
-
-<<echo=TRUE,keep.source=TRUE>>=
-summary(model,sigtest=TRUE)
-@ 
-
 \setkeys{Gin}{width=0.75\textwidth}
 \begin{center}
 <<fig=TRUE,echo=FALSE,keep.source=TRUE>>=
