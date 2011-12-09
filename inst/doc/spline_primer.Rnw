@@ -1,4 +1,4 @@
-%% $Id: spline_primer.Rnw,v 1.27 2011/04/27 13:53:03 jracine Exp jracine $
+%% $Id: spline_primer.Rnw,v 1.28 2011/12/09 16:50:46 jracine Exp jracine $
 
 %\VignetteIndexEntry{A Primer on Spline Regression}
 %\VignetteDepends{crs}
@@ -43,7 +43,7 @@
   \end{singlespacing}
 }
 
-\title{A Primer on Spline Regression}
+\title{A Primer on Regression Splines}
 \author{Jeffrey S.~Racine}
 \date{\today}
 \thanks{These notes are culled from a variety of sources. I am solely
@@ -97,6 +97,15 @@ consider the univariate B\'ezier function. In Section
 then in Section \ref{sec:mv spline} we turn to the multivariate case
 where we also briefly mention how one could handle the presence of
 categorical predictors.
+
+We presume that interest lies in `regression spline' methodology which
+differs in a number of ways from `smoothing splines', both of which
+are popular in applied settings. The fundamental difference between
+the two approaches is that smoothing splines explicitly penalize
+roughness and use the data points themselves as potential knots
+whereas regression splines place knots at equidistant/equiquantile
+points. We direct the interested reader to \citeasnoun{WAHBA:1990} for
+a treatment of smoothing splines.
 
 \section{\label{sec:bezier}B\'ezier curves}
 
@@ -585,7 +594,7 @@ to recurse divine.''  (L.~Peter Deutsch).
 \singlespacing
 {\scriptsize
 \begin{verbatim}
-## $Id: spline_primer.Rnw,v 1.27 2011/04/27 13:53:03 jracine Exp jracine $
+## $Id: spline_primer.Rnw,v 1.28 2011/12/09 16:50:46 jracine Exp jracine $
 
 ## April 23 2011. The code below is based upon an illustration that
 ## can be found in http://www.stat.tamu.edu/~sinha/research/note1.pdf
