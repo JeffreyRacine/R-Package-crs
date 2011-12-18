@@ -1,7 +1,7 @@
 \name{uniquecombs}
 \alias{uniquecombs}
 %- Also NEED an `\alias' for EACH other topic documented here.
-\title{find the unique rows in a matrix }
+\title{Find the unique rows in a matrix }
 \description{
 This routine returns a matrix containing all the unique rows of the
 matrix supplied as its argument. That is, all the duplicate rows are

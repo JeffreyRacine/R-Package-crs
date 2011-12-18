@@ -626,7 +626,7 @@ npglpreg.formula <- function(formula,
 
   if(cv=="none"&&bwtype=="auto") stop(" Error: you cannot use bwtype==\"auto\" without running cross-validation")
 
-  if(cv!="none"&&bwtype!="auto") warning(paste(" bwypte is ", bwtype, ": you could consider bwtype=\"auto\"",sep=""),immediate.=TRUE)
+  if(cv!="none"&&bwtype!="auto") warning(paste(" bwtype is ", bwtype, ": you could consider bwtype=\"auto\"",sep=""),immediate.=TRUE)
   
   if(cv!="none") {
     if(bwtype!="auto") {
