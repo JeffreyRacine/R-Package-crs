@@ -27,6 +27,7 @@ method <- as.numeric(readline(prompt="Input the method (0=Landweber-Fridman, 1=T
 method <- ifelse(method==0,"Landweber-Fridman","Tikhonov")
 cv <- as.numeric(readline(prompt="Input the cv method (0=nomad, 1=exhaustive): "))
 cv <- ifelse(cv==0,"nomad","exhaustive")
+nmulti <- 1
 if(cv=="nomad") nmulti <- as.numeric(readline(prompt="Input the number of multistarts desired (e.g. 10): "))
 num.eval <- as.numeric(readline(prompt="Input the number of evaluation observations desired (e.g. 50): "))
 

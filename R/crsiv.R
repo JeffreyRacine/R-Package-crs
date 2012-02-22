@@ -341,6 +341,10 @@ crsiv <- function(y,
     ## phihat and the fitted values from this approach are _identical_
     ## (I expected approximately equal).
 
+    ## Feb 21 2012 - JP Florens said the starting point should be
+    ## E[E[Y|W]|Z], below we do E[Y|Z]... certainly works, could be
+    ## shorten the iterative process?
+
     phi.0 <- crs(formula.yz,opts=opts,data=traindata,...)
 
     residuals.phihat <- traindata$y-phihat

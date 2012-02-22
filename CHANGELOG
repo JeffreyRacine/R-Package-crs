@@ -1,3 +1,10 @@
+Changes from Version 0.15-12 to 0.15-13 [7-Dec-2011]
+
+* Modified vignette (spline_primer)
+
+* Corrected error in demo for IV regression when exhaustive search was
+  selected (nmulti needed to be set though it is not used)
+
 Changes from Version 0.15-11 to 0.15-12 [7-Dec-2011]
 
 * Added option to limit the minimum degrees of freedom when conducting
