@@ -321,8 +321,6 @@ crsivderiv <- function(y,
   
   ## This we iterate...
   
-  par(mfrow=c(1,2))
-  
   for(j in 2:iterate.max) {
     
     cat(paste("\rIteration ", j, " of at most ", iterate.max,sep=""))
