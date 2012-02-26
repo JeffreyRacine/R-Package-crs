@@ -1,4 +1,8 @@
-Changes from Version 0.15-12 to 0.15-13 [7-Dec-2011]
+Changes from Version 0.15-12 to 0.15-13 [XXX-Feb-2012]
+
+* Added new function crsivderiv()
+
+* More options added to crsiv()
 
 * Modified vignette (spline_primer)
 

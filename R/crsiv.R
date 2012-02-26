@@ -36,8 +36,9 @@ crsiv <- function(y,
                   alpha.max=1.0e-01,
                   alpha.tol=.Machine$double.eps^0.25,
                   iterate.max=100,
-                  iterate.tol=1.0e-05,
+                  iterate.tol=1.0e-04,
                   constant=0.5,
+                  stop.on.increase=TRUE,
                   method=c("Landweber-Fridman","Tikhonov"),
                   opts=list("MAX_BB_EVAL"=10000,
                             "EPSILON"=.Machine$double.eps,
@@ -144,6 +145,8 @@ crsiv <- function(y,
   console <- newLineConsole()
 
   ## Basic error checking
+
+  if(!is.logical(stop.on.increase)) stop("stop.on.increase must be logical (TRUE/FALSE)")
 
   if(missing(y)) stop("You must provide y")
   if(missing(z)) stop("You must provide z")
@@ -438,14 +441,11 @@ crsiv <- function(y,
       E.phi.w <- predict(model.stop,newdata=evaldata)
       norm.stop[j] <- mean(((E.y.w-E.phi.w)/E.y.w)^2)
 
-      ## If we are below stopping tolerance then break
+      ## If stopping rule criterion increases or we are below stopping
+      ## tolerance then break
 
-      if((norm.stop[j-1]-norm.stop[j]) < iterate.tol) break()
-
-      ## If objective increases then break, but in this case phihat
-      ## ought to be phij.m.1
-
-      if(norm.stop[j] > norm.stop[j-1]) {
+      if(norm.stop[j] < iterate.tol) break()
+      if(stop.on.increase && norm.stop[j] > norm.stop[j-1]) {
         phihat <- phi.j.m.1
         break()
       }
