@@ -36,7 +36,6 @@ crsivderiv(y,
                        "MIN_MESH_SIZE"=paste("r",sqrt(.Machine$double.eps),sep=""),
                        "MIN_POLL_SIZE"=paste("r",sqrt(.Machine$double.eps),sep=""),
                        "DISPLAY_DEGREE"=0),
-           deriv = 0,
            ...)
 }
 
@@ -102,14 +101,6 @@ crsivderiv(y,
 \item{opts}{
   arguments passed to the NOMAD solver (see \code{\link{snomadr}} for
   further details)
-}
-\item{deriv}{ an integer \code{l} (default \code{deriv=0}) specifying
-  whether to compute the univariate \code{l}th partial derivative for
-  each continuous predictor (and difference in levels for each
-  categorical predictor) or not and if so what order. Note that if
-  \code{deriv} is higher than the spline degree of the associated
-  continuous predictor then the derivative will be zero and a warning
-  issued to this effect
 }
 \item{...}{
   additional arguments supplied to \code{\link{crs}}

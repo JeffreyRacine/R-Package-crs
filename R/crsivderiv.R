@@ -46,7 +46,7 @@ crsivderiv <- function(y,
                        weval=NULL,
                        xeval=NULL,
                        iterate.max=100,
-                       iterate.tol=1.0e-05,
+                       iterate.tol=1.0e-04,
                        constant=0.5,
                        start.phi.zero=FALSE,
                        stop.on.increase=TRUE,
@@ -398,11 +398,8 @@ crsivderiv <- function(y,
     ## tolerance then break
     
     if(norm.stop[j] < iterate.tol) break()
-    if(stop.on.increase && norm.stop[j] > norm.stop[j-1]) {
-      phihat <- phi.j.m.1
-      break()
-    }
-
+    if(stop.on.increase && norm.stop[j] > norm.stop[j-1]) break()
+    
   }
 
   console <- printClear(console)
