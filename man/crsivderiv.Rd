@@ -19,25 +19,25 @@ Nonparametric Instrumental Regression
 }
 \usage{
 crsivderiv(y,
-      z,
-      w,
-      x = NULL,
-      zeval = NULL,
-      weval = NULL,
-      xeval = NULL,
-      iterate.max = 100,
-      iterate.tol = 1.0e-04,
-      constant = 0.5,
-      start.phi.zero = FALSE,
-      stop.on.increase = TRUE,
-      opts = list("MAX_BB_EVAL"=10000,
-                  "EPSILON"=.Machine$double.eps,
-                  "INITIAL_MESH_SIZE"="r1.0e-01",
-                  "MIN_MESH_SIZE"=paste("r",sqrt(.Machine$double.eps),sep=""),
-                  "MIN_POLL_SIZE"=paste("r",sqrt(.Machine$double.eps),sep=""),
-                  "DISPLAY_DEGREE"=0),
-      deriv = 0,
-      ...)
+           z,
+           w,
+           x = NULL,
+           zeval = NULL,
+           weval = NULL,
+           xeval = NULL,
+           iterate.max = 100,
+           iterate.tol = 1.0e-04,
+           constant = 0.5,
+           start.phi.zero = FALSE,
+           stop.on.increase = TRUE,
+           opts = list("MAX_BB_EVAL"=10000,
+                       "EPSILON"=.Machine$double.eps,
+                       "INITIAL_MESH_SIZE"="r1.0e-01",
+                       "MIN_MESH_SIZE"=paste("r",sqrt(.Machine$double.eps),sep=""),
+                       "MIN_POLL_SIZE"=paste("r",sqrt(.Machine$double.eps),sep=""),
+                       "DISPLAY_DEGREE"=0),
+           deriv = 0,
+           ...)
 }
 
 \arguments{
@@ -93,11 +93,6 @@ crsivderiv(y,
   instead begin from \eqn{E(y|z)} (defaults to \code{FALSE}, see details
   below)
 }
-\item{smooth.while.iterating}{
-  a logical value indicating whether to re-smooth
-  \eqn{E(\varphi|w)}{E(phi|w)} during Landweber-Fridman iteration
-  (defaults to \code{TRUE})
-}
 \item{stop.on.increase}{
   a logical value (defaults to \code{TRUE}) indicating whether to halt
   iteration if the stopping criterion (see below) increases over the
@@ -147,27 +142,9 @@ crsivderiv(y,
   guarantee an exact solution for each iteration (i.e. there will be no
   errors arising due to numerical search).
 
-  \code{demo(crsivderiv)}, \code{demo(crsivderiv_exog)}, and
-  \code{demo(crsivderiv_exog_persp)} provide flexible interactive
-  demonstrations similar to the example below that allow you to modify
-  and experiment with parameters such as the sample size, method, and so
-  forth in an interactive session.
-  
 }
 \value{
   
-  \code{crsivderiv} returns a \code{\link{crs}} object.  The generic
-    functions \code{\link{fitted}} and \code{\link{residuals}} extract
-    (or generate) estimated values and residuals. Furthermore, the
-    functions \code{\link{summary}}, \code{\link{predict}}, and
-    \code{\link{plot}} (options \code{mean=FALSE}, \code{deriv=i} where
-    \eqn{i} is an integer, \code{ci=FALSE},
-    \code{plot.behavior=c("plot","plot-data","data")}) support objects
-    of this type.
-    
-    See \code{\link{crs}} for details on the return object components.
-
-    In addition to the standard \code{\link{crs}} components,
     \code{crsivderiv} returns components \code{phi.prime}, \code{phi},
     \code{num.iterations} and \code{norm.stop}.
     
@@ -207,8 +184,7 @@ crsivderiv(y,
 
 }
 \author{
-  Jeffrey S. Racine \email{racinej@mcmaster.ca}, Samuele Centorrino
- \email{samuele.centorrino@univ-tlse1.fr}
+  Jeffrey S. Racine \email{racinej@mcmaster.ca}
 }
 \note{
 This function should be considered to be in `beta test' status until further notice.
