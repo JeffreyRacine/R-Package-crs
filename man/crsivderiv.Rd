@@ -224,6 +224,10 @@ This function should be considered to be in `beta test' status until further not
 set.seed(42)
 n <- 1500
 
+## For trimming the plot (trim .5\% from each tail)
+
+trim <- 0.005
+
 ## Turn off display I/O for crs() NOMAD search (i.e. keep the standard
 ## defaults and add "DISPLAY_DEGREE"=0)...
 
@@ -292,5 +296,6 @@ plot(z,model.ivderiv$phi.prime,
      ylab="Derivative",
      type="l",
      lwd=2)
+rug(z)     
 }
 \keyword{ instrument }
