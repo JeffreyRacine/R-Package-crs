@@ -14,7 +14,7 @@ and instruments \eqn{W}. The function \eqn{\varphi}{phi} is the solution
 of an ill-posed inverse problem.
 
 When \code{method="Tikhonov"}, \code{crsiv} uses the approach of
-Darolles, Fan, Florens and Renault (forthcoming) modified for regression
+Darolles, Fan, Florens and Renault (2011) modified for regression
 splines (Darolles et al use local constant kernel weighting). When
 \code{method="Landweber-Fridman"}, \code{crsiv} uses the approach of
 Horowitz (2011) using the regression spline methodology implemented in
@@ -120,7 +120,7 @@ crsiv(y,
 \item{method}{
   the regularization method employed (default
    \code{"Landweber-Fridman"}, see Horowitz (2011); see Darolles, Fan,
-   Florens and Renault (forthcoming) for details for \code{"Tikhonov"})
+   Florens and Renault (2011) for details for \code{"Tikhonov"})
  }
   \item{opts}{
     arguments passed to the NOMAD solver (see \code{\link{snomadr}} for
@@ -210,12 +210,16 @@ crsiv(y,
   Edward E. Leamer, Editor(s), Handbook of Econometrics, Elsevier, 2007,
   Volume 6, Part 2, Chapter 77, Pages 5633-5751
 
-  Darolles, S. and Y. Fan and J.P. Florens and E. Renault (forthcoming),
-  \dQuote{Nonparametric Instrumental Regression,} Econometrica.
-
+  Darolles, S. and Y. Fan and J.P. Florens and E. Renault (2011),
+  \dQuote{Nonparametric Instrumental Regression,} Econometrica, 79,
+  1541-1565.
+  
   Feve, F. and J.P. Florens (2010), \dQuote{The practice of
   non-parametric estimation by solving inverse problems: the example of
   transformation models,} Econometrics Journal, 13, S1-S27.
+
+  Florens, J.P. and J.S. Racine (2012), \dQuote{Nonparametric
+  Instrumental Derivatives,} Working Paper.
 
   Fridman, V. M. (1956), \dQuote{A Method of Successive Approximations
   for Fredholm Integral Equations of the First Kind,} Uspeskhi,

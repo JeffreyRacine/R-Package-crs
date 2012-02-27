@@ -2,7 +2,7 @@
 \alias{crsivderiv}
 
 \title{
-Nonparametric Instrumental Regression
+Nonparametric Instrumental Derivatives
 }
 \description{
   
@@ -149,15 +149,16 @@ crsivderiv(y,
   Edward E. Leamer, Editor(s), Handbook of Econometrics, Elsevier, 2007,
   Volume 6, Part 2, Chapter 77, Pages 5633-5751
 
-  Darolles, S. and Y. Fan and J.P. Florens and E. Renault (forthcoming),
-  \dQuote{Nonparametric Instrumental Regression,} Econometrica.
-
+  Darolles, S. and Y. Fan and J.P. Florens and E. Renault (2011),
+  \dQuote{Nonparametric Instrumental Regression,} Econometrica, 79,
+  1541-1565.
+  
   Feve, F. and J.P. Florens (2010), \dQuote{The practice of
   non-parametric estimation by solving inverse problems: the example of
   transformation models,} Econometrics Journal, 13, S1-S27.
 
   Florens, J.P. and J.S. Racine (2012), \dQuote{Nonparametric
-  Instrumental Variables Estimation of Marginal Effects,} Working Paper.
+  Instrumental Derivatives,} Working Paper.
 
   Fridman, V. M. (1956), \dQuote{A Method of Successive Approximations
   for Fredholm Integral Equations of the First Kind,} Uspeskhi,
@@ -178,7 +179,9 @@ crsivderiv(y,
   Jeffrey S. Racine \email{racinej@mcmaster.ca}
 }
 \note{
-This function should be considered to be in `beta test' status until further notice.
+This function currently supports univariate \code{z} only.
+This function should be considered to be in `beta test' status until
+further notice.
 }
 
 \seealso{
