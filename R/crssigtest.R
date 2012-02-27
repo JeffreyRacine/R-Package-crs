@@ -266,7 +266,7 @@ crssigtest <- function(model = NULL,
 
   ## Return a list containing test results
   
-  return(sigtest(index=index,
+  return(sigtest.crs(index=index,
                  P=P.vec.boot,
                  P.asy=P.vec.asy,
                  F=F.vec,
@@ -282,7 +282,7 @@ crssigtest <- function(model = NULL,
 } 
 
 
-sigtest <- function(index,
+sigtest.crs <- function(index,
                     P,
                     P.asy,
                     F,
@@ -325,13 +325,13 @@ sigtest <- function(index,
   tsig$reject[a <- (P < 0.001)] <- '***'
   tsig$rejectNum[a] <- 0.1
 
-  class(tsig) = "sigtest"
+  class(tsig) = "sigtest.crs"
 
   return(tsig)
   
 }
 
-print.sigtest <- function(x, ...){
+print.sigtest.crs <- function(x, ...){
   cat("\nRegression Spline Significance Test",
       "\nTest Type: ", x$boot.type," (",x$boot.num,
       " replications)",
@@ -353,6 +353,6 @@ print.sigtest <- function(x, ...){
   cat("\n---\nSignif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1\n\n")
 }
 
-summary.sigtest <- function(object, ...) {
+summary.sigtest.crs <- function(object, ...) {
   print(object)
 }

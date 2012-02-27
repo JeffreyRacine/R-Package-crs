@@ -18,8 +18,8 @@ export(crs,
        tensor.prod.model.matrix,
        uniquecombs)
 
-S3method(print,sigtest)
-S3method(summary,sigtest)
+S3method(print,sigtest.crs)
+S3method(summary,sigtest.crs)
 
 S3method(crs, formula)
 S3method(crs, default)

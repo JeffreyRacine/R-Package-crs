@@ -35,6 +35,7 @@ crsiv(y,
       iterate.max = 100,
       iterate.tol = 1.0e-04,
       constant = 0.5,
+      stop.on.increase = TRUE,
       method = c("Landweber-Fridman","Tikhonov"),
       opts = list("MAX_BB_EVAL"=10000,
                   "EPSILON"=.Machine$double.eps,
@@ -109,6 +110,12 @@ crsiv(y,
 }
 \item{constant}{
   the constant to use when using  \code{method="Landweber-Fridman"}
+}
+\item{stop.on.increase}{
+  a logical value (defaults to \code{TRUE}) indicating whether to halt
+  iteration if the stopping criterion (see below) increases over the
+  course of one iteration (i.e. it may be above the iteration tolerance
+  but increased)
 }
 \item{method}{
   the regularization method employed (default
