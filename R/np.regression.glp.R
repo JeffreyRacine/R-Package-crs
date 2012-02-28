@@ -1465,7 +1465,7 @@ glpcv <- function(ydat=NULL,
   ## First initialize initial search values of the vector of
   ## bandwidths to lie in [0,1]
 
-  if(debug) write(c("cv",paste(rep("x",num.bw),seq(1:num.bw),sep="")),file="optim.debug",ncol=(num.bw+1))
+  if(debug) write(c("cv",paste(rep("x",num.bw),seq(1:num.bw),sep="")),file="optim.debug",ncolumns=(num.bw+1))
 
   if(dim.bs(basis="glp",kernel=TRUE,degree=degree,segments=rep(1,length(degree)))>ncol(xdat)-1)
     return(maxPenalty)
@@ -1505,7 +1505,7 @@ glpcv <- function(ydat=NULL,
       lscv <- maxPenalty
     }
 
-    if(debug) write(c(lscv,bw.gamma),file="optim.debug",ncol=(num.bw+1),append=TRUE)
+    if(debug) write(c(lscv,bw.gamma),file="optim.debug",ncolumns=(num.bw+1),append=TRUE)
     return(lscv)
   }
 
@@ -1527,7 +1527,7 @@ glpcv <- function(ydat=NULL,
       aicc <- maxPenalty
     }
 
-    if(debug) write(c(aicc,bw.gamma),file="optim.debug",ncol=(num.bw+1),append=TRUE)
+    if(debug) write(c(aicc,bw.gamma),file="optim.debug",ncolumns=(num.bw+1),append=TRUE)
     return(aicc)
   }
 
@@ -1639,11 +1639,11 @@ glpcv <- function(ydat=NULL,
       best <- iMulti
       if(debug) {
         if(iMulti==1) {
-          write(cbind(iMulti,t(bw.opt)),"bandwidth.out",ncol=(1+length(bw.opt)))
-          write(cbind(iMulti,fv),"optim.out",ncol=2)
+          write(cbind(iMulti,t(bw.opt)),"bandwidth.out",ncolumns=(1+length(bw.opt)))
+          write(cbind(iMulti,fv),"optim.out",ncolumns=2)
         } else {
-          write(cbind(iMulti,t(bw.opt)),"bandwidth.out",ncol=(1+length(bw.opt)),append=TRUE)
-          write(cbind(iMulti,fv),"optim.out",ncol=2,append=TRUE)
+          write(cbind(iMulti,t(bw.opt)),"bandwidth.out",ncolumns=(1+length(bw.opt)),append=TRUE)
+          write(cbind(iMulti,fv),"optim.out",ncolumns=2,append=TRUE)
         }
       }
     }
