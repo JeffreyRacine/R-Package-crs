@@ -389,7 +389,7 @@ crsiv <- function(y,
     phi.0 <- crs(formula.yz,opts=opts,data=traindata,...)
     model.residphi0 <- crs(formula.residphi0w,opts=opts,data=traindata,...)
     model.Eresidphi0.z <- crs(formula.predictmodelresidphi0z,opts=opts,data=traindata,...)
-    phi.j.m.1 <- predict(phi.0,newdata=evaldata) + predict(model.Eresidphi0.z,newdata=evaldata)
+    phi.j.m.1 <- predict(phi.0,newdata=evaldata) + constant*predict(model.Eresidphi0.z,newdata=evaldata)
 
     ## For the stopping rule
 

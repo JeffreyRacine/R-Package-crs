@@ -61,7 +61,7 @@ dim.plot = function(x) {
 
 succeedWithResponse <- function(tt, frame){
   !any(class(try(eval(expr = attr(tt, "variables"),
-                      envir = frame, encl = NULL), silen = TRUE)) == "try-error")
+                      envir = frame, enclos = NULL), silent = TRUE)) == "try-error")
 }
 
 ## Utility function to divide explanatory variables into

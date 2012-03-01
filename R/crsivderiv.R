@@ -50,6 +50,7 @@ crsivderiv <- function(y,
                        constant=0.5,
                        start.phi.zero=FALSE,
                        stop.on.increase=TRUE,
+                       smooth.residuals=FALSE,
                        opts=list("MAX_BB_EVAL"=10000,
                          "EPSILON"=.Machine$double.eps,
                          "INITIAL_MESH_SIZE"="r1.0e-01",
@@ -63,6 +64,7 @@ crsivderiv <- function(y,
   ## Basic error checking
 
   if(!is.logical(stop.on.increase)) stop("stop.on.increase must be logical (TRUE/FALSE)")
+  if(!is.logical(smooth.residuals)) stop("smooth.residuals must be logical (TRUE/FALSE)")  
 
   if(missing(y)) stop("You must provide y")
   if(missing(z)) stop("You must provide z")
@@ -286,12 +288,27 @@ crsivderiv <- function(y,
   
   ## Next, we regress require \mu_{0,i} W
   
-  model.E.mu.w <- crs(formula.muw,
-                      opts=opts,data=traindata,
-                      cv="none",
-                      degree=model.E.phi.w$degree,
-                      segments=model.E.phi.w$segments,
-                      ...)
+  if(!smooth.residuals) {
+
+    model.E.mu.w <- crs(formula.muw,
+                        opts=opts,data=traindata,
+                        cv="none",
+                        degree=model.E.phi.w$degree,
+                        segments=model.E.phi.w$segments,
+                        ...)
+
+  } else {
+
+    ## Smooth residuals
+
+    model.E.mu.w <- crs(formula.muw,
+                        opts=opts,data=traindata,
+                        cv="none",
+                        degree=model.E.phi.w$degree,
+                        segments=model.E.phi.w$segments,
+                        ...)
+
+  }
   
   ## We require the fitted values...
   
@@ -322,17 +339,22 @@ crsivderiv <- function(y,
   ## This we iterate...
   
   for(j in 2:iterate.max) {
+
+    ## Save previous run in case stop norm increases
+    
+    phi.j.m.1 <- phi
+    phi.prime.j.m.1 <- phi.prime
     
     cat(paste("\rIteration ", j, " of at most ", iterate.max,sep=""))
-
-      console <- printClear(console)
-      console <- printPop(console)
-      if(is.null(x)) {
-        console <- printPush(paste("Computing optimal smoothing and phi(z) for iteration ", j,"...",sep=""),console)
-      } else {
-        console <- printPush(paste("Computing optimal smoothing and phi(z,x) for iteration ", j,"...",sep=""),console)
-      }
-
+    
+    console <- printClear(console)
+    console <- printPop(console)
+    if(is.null(x)) {
+      console <- printPush(paste("Computing optimal smoothing and phi(z) for iteration ", j,"...",sep=""),console)
+    } else {
+      console <- printPush(paste("Computing optimal smoothing and phi(z,x) for iteration ", j,"...",sep=""),console)
+    }
+    
     ## NOTE - this presumes univariate z case... in general this would
     ## be a continuous variable's index
     
@@ -362,13 +384,27 @@ crsivderiv <- function(y,
     mean.mu <- mean(mu)
     
     ## Next, we regress require \mu_{0,i} W
+
+    if(!smooth.residuals) {
     
-    model.E.mu.w <- crs(formula.muw,
-                        opts=opts,data=traindata,
-                        cv="none",
-                        degree=model.E.phi.w$degree,
-                        segments=model.E.phi.w$segments,
-                        ...)
+      model.E.mu.w <- crs(formula.muw,
+                          opts=opts,
+                          data=traindata,
+                          cv="none",
+                          degree=model.E.phi.w$degree,
+                          segments=model.E.phi.w$segments,
+                          ...)
+
+    } else {
+
+      ## Smooth residuals
+
+      model.E.mu.w <- crs(formula.muw,
+                          opts=opts,
+                          data=traindata,
+                          ...)
+
+    }
     
     ## We require the fitted values...
     
@@ -398,7 +434,11 @@ crsivderiv <- function(y,
     ## tolerance then break
     
     if(norm.stop[j] < iterate.tol) break()
-    if(stop.on.increase && norm.stop[j] > norm.stop[j-1]) break()
+    if(stop.on.increase && norm.stop[j] > norm.stop[j-1]) {
+      phi <- phi.j.m.1 
+      phi.prime <- phi.prime.j.m.1
+      break()
+    }
     
   }
 
