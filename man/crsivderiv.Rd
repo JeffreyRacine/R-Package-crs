@@ -30,7 +30,7 @@ crsivderiv(y,
            constant = 0.5,
            start.phi.zero = FALSE,
            stop.on.increase = TRUE,
-           smooth.residuals = FALSE,
+           smooth.residuals = TRUE,
            opts = list("MAX_BB_EVAL"=10000,
                        "EPSILON"=.Machine$double.eps,
                        "INITIAL_MESH_SIZE"="r1.0e-01",
@@ -100,10 +100,10 @@ crsivderiv(y,
   but increased)
 }
 \item{smooth.residuals}{
-  a logical value (defaults to \code{FALSE}) indicating whether to
+  a logical value (defaults to \code{TRUE}) indicating whether to
   optimize bandidths for the regression of \eqn{y-\varphi(z)}{y-phi(z)}
   on \eqn{w} or for the regression of \eqn{\varphi(z)}{phi(z)} on
-  \eqn{w}
+  \eqn{w} during iteration
  }
 \item{opts}{
   arguments passed to the NOMAD solver (see \code{\link{snomadr}} for
