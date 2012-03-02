@@ -132,12 +132,19 @@ crsiv(y,
   categorical predictor) or not and if so what order. Note that if
   \code{deriv} is higher than the spline degree of the associated
   continuous predictor then the derivative will be zero and a warning
-  issued to this effect
+  issued to this effect (see important note below)
   }
 \item{...}{
   additional arguments supplied to \code{\link{crs}}
 }
 }
+\note{
+  Using the option \code{deriv=} computes (effectively) the analytical
+  derivative of the estimated \eqn{\varphi(Z,X)}{phi(Z,X)} and not that
+  using \code{\link{crsivderiv}}, which instead uses the method of
+  Florens and Racine (2012). Though both are statistically consistent,
+  practioners may desire one over the other hence we provide both.
+ }
 \details{
   Tikhonov regularization requires computation of weight matrices of
   dimension \eqn{n\times n}{n x n} which can be computationally costly

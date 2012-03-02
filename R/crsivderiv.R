@@ -288,16 +288,7 @@ crsivderiv <- function(y,
   
   ## Next, we regress require \mu_{0,i} W
   
-  if(!smooth.residuals) {
-
-    model.E.mu.w <- crs(formula.muw,
-                        opts=opts,data=traindata,
-                        cv="none",
-                        degree=model.E.phi.w$degree,
-                        segments=model.E.phi.w$segments,
-                        ...)
-
-  } else {
+  if(smooth.residuals) {
 
     ## Smooth residuals
 
@@ -307,16 +298,33 @@ crsivderiv <- function(y,
                         degree=model.E.phi.w$degree,
                         segments=model.E.phi.w$segments,
                         ...)
+    
+    ## We require the fitted values...
+    
+    predicted.model.E.mu.w <- predict(model.E.mu.w,newdata=evaldata)
+    
+    ## We again require the mean of the fitted values
+    
+    mean.predicted.model.E.mu.w <- mean(predicted.model.E.mu.w)
+    
+  } else {
 
+    model.E.phi.w <- crs(formula.phiw,
+                        opts=opts,data=traindata,
+                        cv="none",
+                        degree=model.E.phi.w$degree,
+                        segments=model.E.phi.w$segments,
+                        ...)
+
+    ## We require the fitted values...
+    
+    predicted.model.E.my.w <- E.y.w - predict(model.E.phi.w,newdata=evaldata)
+    
+    ## We again require the mean of the fitted values
+    
+    mean.predicted.model.E.phi.w <- mean(E.y.w) - mean(predicted.model.E.phi.w)
+    
   }
-  
-  ## We require the fitted values...
-  
-  predicted.model.E.mu.w <- predict(model.E.mu.w,newdata=evaldata)
-
-  ## We again require the mean of the fitted values
-  
-  mean.predicted.model.E.mu.w <- mean(predicted.model.E.mu.w)
   
   ## Now we compute T^* applied to mu
   
@@ -385,34 +393,43 @@ crsivderiv <- function(y,
     
     ## Next, we regress require \mu_{0,i} W
 
-    if(!smooth.residuals) {
-    
+    if(smooth.residuals) {
+      
+      ## Smooth residuals
+      
       model.E.mu.w <- crs(formula.muw,
-                          opts=opts,
-                          data=traindata,
+                          opts=opts,data=traindata,
                           cv="none",
                           degree=model.E.phi.w$degree,
                           segments=model.E.phi.w$segments,
                           ...)
-
+      
+      ## We require the fitted values...
+      
+      predicted.model.E.mu.w <- predict(model.E.mu.w,newdata=evaldata)
+      
+      ## We again require the mean of the fitted values
+      
+      mean.predicted.model.E.mu.w <- mean(predicted.model.E.mu.w)
+      
     } else {
-
-      ## Smooth residuals
-
-      model.E.mu.w <- crs(formula.muw,
-                          opts=opts,
-                          data=traindata,
-                          ...)
-
+      
+      model.E.phi.w <- crs(formula.phiw,
+                           opts=opts,data=traindata,
+                           cv="none",
+                           degree=model.E.phi.w$degree,
+                           segments=model.E.phi.w$segments,
+                           ...)
+      
+      ## We require the fitted values...
+      
+      predicted.model.E.my.w <- E.y.w - predict(model.E.phi.w,newdata=evaldata)
+      
+      ## We again require the mean of the fitted values
+      
+      mean.predicted.model.E.phi.w <- mean(E.y.w) - mean(predicted.model.E.phi.w)
+      
     }
-    
-    ## We require the fitted values...
-    
-    predicted.model.E.mu.w <- predict(model.E.mu.w,newdata=evaldata)
-    
-    ## We again require the mean of the fitted values
-    
-    mean.predicted.model.E.mu.w <- mean(predicted.model.E.mu.w)
     
     ## Now we compute T^* applied to mu
     
