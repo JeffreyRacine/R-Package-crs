@@ -318,7 +318,7 @@ crsivderiv <- function(y,
 
     ## We require the fitted values...
     
-    predicted.model.E.my.w <- E.y.w - predict(model.E.phi.w,newdata=evaldata)
+    predicted.model.E.phi.w <- E.y.w - predict(model.E.phi.w,newdata=evaldata)
     
     ## We again require the mean of the fitted values
     
