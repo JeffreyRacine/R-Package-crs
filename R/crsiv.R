@@ -357,7 +357,7 @@ crsiv <- function(y,
     ## (I expected approximately equal).
 
     ## Feb 21 2012 - JP Florens said the starting point should be
-    ## E[E[Y|W]|Z], below we do E[Y|Z]... certainly works, could be
+    ## E[E[Y|W]|Z], below we do E[Y|Z]... certainly works, could we
     ## shorten the iterative process?
 
     if(crs.messages) options(crs.messages=FALSE)

@@ -14,7 +14,7 @@
 ## This function returns a list with the following elements:
 
 ## phi: the IV estimator of phi(z) corresponding to the estimated
-## deriviative phihat(z)
+## derivative phihat(z)
 ## phi.prime: the IV derivative estimator
 ## num.iterations: number of iterations taken by Landweber-Fridman
 ## norm.stop: the stopping rule for each Landweber-Fridman iteration
