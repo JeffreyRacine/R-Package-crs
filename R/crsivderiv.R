@@ -45,7 +45,7 @@ crsivderiv <- function(y,
                        zeval=NULL,
                        weval=NULL,
                        xeval=NULL,
-                       iterate.max=100,
+                       iterate.max=1000,
                        iterate.tol=1.0e-04,
                        constant=0.5,
                        start.phi.zero=FALSE,
@@ -59,6 +59,8 @@ crsivderiv <- function(y,
                          "DISPLAY_DEGREE"=0),
                        ...) {
   
+  crs.messages <- getOption("crs.messages")
+
   console <- newLineConsole()
 
   ## Basic error checking
@@ -163,11 +165,13 @@ crsivderiv <- function(y,
       console <- printPush(paste("Computing optimal smoothing  for E(y|z,x) for iteration 1...",sep=""),console)
     }
     
+    if(crs.messages) options(crs.messages=FALSE)
     model.E.y.z <- crs(formula.yz,
                        opts=opts,
                        data=traindata,
                        deriv=1,
                        ...)
+    if(crs.messages) options(crs.messages=TRUE)    
 
     E.y.z <- predict(model.E.y.z,newdata=evaldata)
     
@@ -187,10 +191,12 @@ crsivderiv <- function(y,
 
     ## For stopping rule...
 
+    if(crs.messages) options(crs.messages=FALSE)
     model.E.y.w <- crs(formula.yw,
                       opts=opts,
                       data=traindata,
                       ...)
+    if(crs.messages) options(crs.messages=TRUE)    
 
     E.y.w <- predict(model.E.y.w,newdata=evaldata)
 
@@ -216,10 +222,12 @@ crsivderiv <- function(y,
 
     ## Next, we regress require \mu_{0,i} W
 
+    if(crs.messages) options(crs.messages=FALSE)
     model.E.y.w <- crs(formula.yw,
                       opts=opts,
                       data=traindata,
                       ...)
+    if(crs.messages) options(crs.messages=TRUE)    
 
     E.y.w <- predict(model.E.y.w,newdata=evaldata)
 
@@ -269,10 +277,12 @@ crsivderiv <- function(y,
   
   ## For the stopping rule, we require E.phi.w
   
+  if(crs.messages) options(crs.messages=FALSE)
   model.E.phi.w <- crs(formula.phiw,
                        opts=opts,
                        data=traindata,
                        ...)
+  if(crs.messages) options(crs.messages=TRUE)    
   
   E.phi.w <- predict(model.E.phi.w,newdata=evaldata)
 
@@ -292,12 +302,14 @@ crsivderiv <- function(y,
 
     ## Smooth residuals
 
+    if(crs.messages) options(crs.messages=FALSE)
     model.E.mu.w <- crs(formula.muw,
                         opts=opts,data=traindata,
                         cv="none",
                         degree=model.E.phi.w$degree,
                         segments=model.E.phi.w$segments,
                         ...)
+    if(crs.messages) options(crs.messages=TRUE)    
     
     ## We require the fitted values...
     
@@ -309,12 +321,14 @@ crsivderiv <- function(y,
     
   } else {
 
+    if(crs.messages) options(crs.messages=FALSE)
     model.E.phi.w <- crs(formula.phiw,
                         opts=opts,data=traindata,
                         cv="none",
                         degree=model.E.phi.w$degree,
                         segments=model.E.phi.w$segments,
                         ...)
+    if(crs.messages) options(crs.messages=TRUE)    
 
     ## We require the fitted values...
     
@@ -375,10 +389,12 @@ crsivderiv <- function(y,
     
     ## For the stopping rule, we require E.phi.w
     
+    if(crs.messages) options(crs.messages=FALSE)
     model.E.phi.w <- crs(formula.phiw,
                          opts=opts,
                          data=traindata,
                          ...)
+    if(crs.messages) options(crs.messages=TRUE)    
     
     E.phi.w <- predict(model.E.phi.w,newdata=evaldata)
     norm.stop[j] <- mean(((E.y.w-E.phi.w)/E.y.w)^2)
@@ -397,12 +413,14 @@ crsivderiv <- function(y,
       
       ## Smooth residuals
       
+      if(crs.messages) options(crs.messages=FALSE)
       model.E.mu.w <- crs(formula.muw,
                           opts=opts,data=traindata,
                           cv="none",
                           degree=model.E.phi.w$degree,
                           segments=model.E.phi.w$segments,
                           ...)
+      if(crs.messages) options(crs.messages=TRUE)    
       
       ## We require the fitted values...
       
@@ -414,12 +432,14 @@ crsivderiv <- function(y,
       
     } else {
       
+      if(crs.messages) options(crs.messages=FALSE)
       model.E.phi.w <- crs(formula.phiw,
                            opts=opts,data=traindata,
                            cv="none",
                            degree=model.E.phi.w$degree,
                            segments=model.E.phi.w$segments,
                            ...)
+      if(crs.messages) options(crs.messages=TRUE)    
       
       ## We require the fitted values...
       

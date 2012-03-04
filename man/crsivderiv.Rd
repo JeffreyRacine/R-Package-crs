@@ -25,7 +25,7 @@ crsivderiv(y,
            zeval = NULL,
            weval = NULL,
            xeval = NULL,
-           iterate.max = 100,
+           iterate.max = 1000,
            iterate.tol = 1.0e-04,
            constant = 0.5,
            start.phi.zero = FALSE,
@@ -204,16 +204,6 @@ n <- 1500
 ## For trimming the plot (trim .5\% from each tail)
 
 trim <- 0.005
-
-## Turn off display I/O for crs() NOMAD search (i.e. keep the standard
-## defaults and add "DISPLAY_DEGREE"=0)...
-
-opts <- list("MAX_BB_EVAL"=10000,
-             "EPSILON"=.Machine$double.eps,
-             "INITIAL_MESH_SIZE"="r1.0e-01",
-             "MIN_MESH_SIZE"=paste("r",sqrt(.Machine$double.eps),sep=""),
-             "MIN_POLL_SIZE"=paste("r",sqrt(.Machine$double.eps),sep=""),
-             "DISPLAY_DEGREE"=0)
 
 ## The DGP is as follows:
 

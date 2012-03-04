@@ -32,7 +32,7 @@ crsiv(y,
       alpha.min = 1e-10,
       alpha.max = 1e-01,
       alpha.tol = .Machine$double.eps^0.25,
-      iterate.max = 100,
+      iterate.max = 1000,
       iterate.tol = 1.0e-04,
       constant = 0.5,
       stop.on.increase = TRUE,
@@ -260,16 +260,6 @@ This function should be considered to be in `beta test' status until further not
 
 set.seed(42)
 n <- 1500
-
-## Turn off display I/O for crs() NOMAD search (i.e. keep the standard
-## defaults and add "DISPLAY_DEGREE"=0)...
-
-opts <- list("MAX_BB_EVAL"=10000,
-             "EPSILON"=.Machine$double.eps,
-             "INITIAL_MESH_SIZE"="r1.0e-01",
-             "MIN_MESH_SIZE"=paste("r",sqrt(.Machine$double.eps),sep=""),
-             "MIN_POLL_SIZE"=paste("r",sqrt(.Machine$double.eps),sep=""),
-             "DISPLAY_DEGREE"=0)
 
 ## The DGP is as follows:
 

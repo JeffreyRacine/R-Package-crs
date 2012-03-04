@@ -35,7 +35,7 @@ crsiv <- function(y,
                   alpha.min=1.0e-10,
                   alpha.max=1.0e-01,
                   alpha.tol=.Machine$double.eps^0.25,
-                  iterate.max=100,
+                  iterate.max=1000,
                   iterate.tol=1.0e-04,
                   constant=0.5,
                   stop.on.increase=TRUE,
@@ -48,6 +48,8 @@ crsiv <- function(y,
                             "DISPLAY_DEGREE"=0),
                   deriv=0,
                   ...) {
+
+  crs.messages <- getOption("crs.messages")
 
   ## This function was constructed initially by Samuele Centorrino
   ## <samuele.centorrino@univ-tlse1.fr>
@@ -229,7 +231,9 @@ crsiv <- function(y,
     console <- printClear(console)
     console <- printPop(console)
     console <- printPush("Computing weights and optimal smoothing for E(y|w)...", console)
+    if(crs.messages) options(crs.messages=FALSE)
     model<-crs(formula.yw,opts=opts,data=traindata,...)
+    if(crs.messages) options(crs.messages=TRUE)    
     E.y.w <- predict(model,newdata=evaldata)
     B <- model.matrix(model$model.lm)
     KYW <- B%*%solve(t(B)%*%B)%*%t(B)
@@ -243,7 +247,9 @@ crsiv <- function(y,
     } else {
       console <- printPush("Computing weights and optimal smoothing for E(E(y|w)|z,x)...", console)
     }
+    if(crs.messages) options(crs.messages=FALSE)
     model <- crs(formula.Eywz,opts=opts,data=traindata,...)
+    if(crs.messages) options(crs.messages=TRUE)    
     E.E.y.w.z <- predict(model,newdata=evaldata)
     B <- model.matrix(model$model.lm)
     KYWZ <- B%*%solve(t(B)%*%B)%*%t(B)
@@ -289,7 +295,9 @@ crsiv <- function(y,
     } else {
       console <- printPush("Computing optimal smoothing and weights for E(phi(z,x)|w)...", console)
     }
+    if(crs.messages) options(crs.messages=FALSE)
     model <- crs(formula.phiw,opts=opts,data=traindata,...)
+    if(crs.messages) options(crs.messages=TRUE)    
     E.phi.w <- predict(model,newdata=evaldata)
     B <- model.matrix(model$model.lm)
     KPHIW <- B%*%solve(t(B)%*%B)%*%t(B)
@@ -303,7 +311,9 @@ crsiv <- function(y,
     } else {
       console <- printPush("Computing optimal smoothing and weights for E(E(phi(z,x)|w)|z,x)...", console)
     }
+    if(crs.messages) options(crs.messages=FALSE)
     model <- crs(formula.Ephiwz,opts=opts,data=traindata,...)
+    if(crs.messages) options(crs.messages=TRUE)    
     B <- model.matrix(model$model.lm)
     KPHIWZ <- B%*%solve(t(B)%*%B)%*%t(B)
     
@@ -348,6 +358,7 @@ crsiv <- function(y,
     ## E[E[Y|W]|Z], below we do E[Y|Z]... certainly works, could be
     ## shorten the iterative process?
 
+    if(crs.messages) options(crs.messages=FALSE)
     phi.0 <- crs(formula.yz,opts=opts,data=traindata,...)
 
     residuals.phi <- traindata$y-phi
@@ -365,6 +376,7 @@ crsiv <- function(y,
                  tau=phi.0$tau,
                  deriv=deriv,
                  data=traindata)
+    if(crs.messages) options(crs.messages=TRUE)    
 
     model$residuals <- residuals.phi
     model$phi <- phi
@@ -386,9 +398,11 @@ crsiv <- function(y,
     } else {
       console <- printPush(paste("Computing optimal smoothing and phi(z,x) for iteration 1...",sep=""),console)
     }
+    if(crs.messages) options(crs.messages=FALSE)
     phi.0 <- crs(formula.yz,opts=opts,data=traindata,...)
     model.residphi0 <- crs(formula.residphi0w,opts=opts,data=traindata,...)
     model.Eresidphi0.z <- crs(formula.predictmodelresidphi0z,opts=opts,data=traindata,...)
+    if(crs.messages) options(crs.messages=TRUE)    
     phi.j.m.1 <- predict(phi.0,newdata=evaldata) + constant*predict(model.Eresidphi0.z,newdata=evaldata)
 
     ## For the stopping rule
@@ -398,11 +412,14 @@ crsiv <- function(y,
     console <- printPush(paste("Computing optimal smoothing for the stopping rule...",sep=""),console)
 
     norm.stop <- numeric()
+    if(crs.messages) options(crs.messages=FALSE)
     model.E.y.w <- crs(formula.yw,opts=opts,data=traindata,...)
     E.y.w <- predict(model.E.y.w,newdata=evaldata)
     phi <- phi.j.m.1
     model.E.phi.w <- crs(formula.phiw,opts=opts,data=traindata,...)
     E.phi.w <- predict(model.E.phi.w,newdata=evaldata)
+    if(crs.messages) options(crs.messages=TRUE)    
+
     norm.stop[1] <- mean(((E.y.w-E.phi.w)/E.y.w)^2)
 
     for(j in 2:iterate.max) {
@@ -415,8 +432,10 @@ crsiv <- function(y,
         console <- printPush(paste("Computing optimal smoothing and phi(z,x) for iteration ", j,"...",sep=""),console)
       }
 
+      if(crs.messages) options(crs.messages=FALSE)
       model.residw <- crs(formula.residw,opts=opts,data=traindata,...)
       model.predict.residw.z <- crs(formula.predictmodelresidwz,opts=opts,data=traindata,...)
+      if(crs.messages) options(crs.messages=TRUE)    
 
       phi <- phi.j.m.1 + constant*predict(model.predict.residw.z,newdata=evaldata)
 
@@ -426,6 +445,7 @@ crsiv <- function(y,
 
       ## For the stopping rule (use same smoothing as original,
       ## cv="none" so no ... args allowed hence pass all relevant args)
+      if(crs.messages) options(crs.messages=FALSE)
       model.stop <- crs(formula.phiw,
                         cv="none",
                         degree=model.E.phi.w$degree,
@@ -437,6 +457,7 @@ crsiv <- function(y,
                         knots=model.E.phi.w$knots,
                         tau=model.E.phi.w$tau,                        
                         data=traindata)
+      if(crs.messages) options(crs.messages=TRUE)    
       
       E.phi.w <- predict(model.stop,newdata=evaldata)
       norm.stop[j] <- mean(((E.y.w-E.phi.w)/E.y.w)^2)
@@ -467,6 +488,7 @@ crsiv <- function(y,
     residuals.phi <- traindata$y-phi
     traindata$y <- traindata$y - (fitted(phi.0)-phi)
 
+    if(crs.messages) options(crs.messages=FALSE)
     model <- crs(formula.yz,
                  cv="none",
                  degree=phi.0$degree,
@@ -479,6 +501,7 @@ crsiv <- function(y,
                  tau=phi.0$tau,                 
                  deriv=deriv,
                  data=traindata)
+    if(crs.messages) options(crs.messages=TRUE)    
 
     model$residuals <- residuals.phi
     model$phi <- phi
