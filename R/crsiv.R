@@ -17,7 +17,7 @@
 
 ## ... optional arguments for crs()
 
-## This function returns a list with the following elements:
+## This function returns a list with some of the following elements:
 
 ## phi: the IV estimator of phi(y)
 ## alpha:  the Tikhonov regularization parameter
@@ -157,6 +157,8 @@ crsiv <- function(y,
   if(NROW(y) != NROW(z) || NROW(y) != NROW(w)) stop("y, z, and w have differing numbers of rows")
   if(!is.null(x) && NROW(y) != NROW(x)) stop("y and x have differing numbers of rows")
   if(iterate.max < 2) stop("iterate.max must be at least 2")
+  if(constant <= 0 || constant >=1) stop("constant must lie in (0,1)")
+  if(iterate.tol <= 0) stop("iterate.tol must be positive")
 
   ## Cast as data frames
 

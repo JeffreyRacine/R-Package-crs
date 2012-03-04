@@ -14,7 +14,10 @@
 ## This function returns a list with the following elements:
 
 ## phi: the IV estimator of phi(z) corresponding to the estimated
-## deriviative phi(z)
+## deriviative phihat(z)
+## phi.prime: the IV derivative estimator
+## num.iterations: number of iterations taken by Landweber-Fridman
+## norm.stop: the stopping rule for each Landweber-Fridman iteration
 
 ## This function will compute the integral using the trapezoidal rule
 ## and the cumsum function as we need to compute this in a
@@ -65,9 +68,11 @@ crsivderiv <- function(y,
 
   ## Basic error checking
 
+  if(!is.logical(start.phi.zero)) stop("start.phi.zero must be logical (TRUE/FALSE)")
   if(!is.logical(stop.on.increase)) stop("stop.on.increase must be logical (TRUE/FALSE)")
   if(!is.logical(smooth.residuals)) stop("smooth.residuals must be logical (TRUE/FALSE)")  
 
+  if(constant <= 0 || constant >=1) stop("constant must lie in (0,1)")
   if(missing(y)) stop("You must provide y")
   if(missing(z)) stop("You must provide z")
   if(missing(w)) stop("You must provide w")
@@ -75,6 +80,7 @@ crsivderiv <- function(y,
   if(NROW(y) != NROW(z) || NROW(y) != NROW(w)) stop("y, z, and w have differing numbers of rows")
   if(!is.null(x) && NROW(y) != NROW(x)) stop("y and x have differing numbers of rows")
   if(iterate.max < 2) stop("iterate.max must be at least 2")
+  if(iterate.tol <= 0) stop("iterate.tol must be positive")
 
   ## Cast as data frames
 
