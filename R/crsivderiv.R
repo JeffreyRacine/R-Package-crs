@@ -14,7 +14,7 @@
 ## This function returns a list with the following elements:
 
 ## phi: the IV estimator of phi(z) corresponding to the estimated
-## deriviative phihat(z)
+## deriviative phi(z)
 
 ## This function will compute the integral using the trapezoidal rule
 ## and the cumsum function as we need to compute this in a

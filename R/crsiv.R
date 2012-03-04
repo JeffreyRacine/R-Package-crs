@@ -19,7 +19,7 @@
 
 ## This function returns a list with the following elements:
 
-## phihat: the IV estimator of phi(y)
+## phi: the IV estimator of phi(y)
 ## alpha:  the Tikhonov regularization parameter
 ## num.iterations:  the number of Landweber-Fridman iterations
 ## norm.stop: the vector of values of the objective function used for stopping
@@ -199,20 +199,20 @@ crsiv <- function(y,
   }
 
   formula.yw <- as.formula(paste("y ~ ", paste(wnames, collapse= "+")))
-  formula.phihatw <- as.formula(paste("phihat ~ ", paste(wnames, collapse= "+")))  
+  formula.phiw <- as.formula(paste("phi ~ ", paste(wnames, collapse= "+")))  
   formula.residw <- as.formula(paste("(y-phi.j.m.1) ~ ", paste(wnames, collapse= "+")))
   formula.residphi0w <- as.formula(paste("residuals(phi.0) ~ ", paste(wnames, collapse= "+")))    
 
   if(is.null(x)) {
     formula.yz <- as.formula(paste("y ~ ", paste(znames, collapse= "+")))
     formula.Eywz <- as.formula(paste("E.y.w ~ ", paste(znames, collapse= "+")))
-    formula.Ephihatwz <- as.formula(paste("E.phihat.w ~ ", paste(znames, collapse= "+")))  
+    formula.Ephiwz <- as.formula(paste("E.phi.w ~ ", paste(znames, collapse= "+")))  
     formula.predictmodelresidphi0z <- as.formula(paste("predict(model.residphi0,newdata=evaldata) ~ ", paste(znames, collapse= "+")))
     formula.predictmodelresidwz <- as.formula(paste("predict(model.residw,newdata=evaldata) ~ ", paste(znames, collapse= "+")))
   } else {
     formula.yz <- as.formula(paste("y ~ ", paste(znames, collapse= "+"), " + ", paste(xnames, collapse= "+")))
     formula.Eywz <- as.formula(paste("E.y.w ~ ", paste(znames, collapse= "+"), " + ", paste(xnames, collapse= "+")))
-    formula.Ephihatwz <- as.formula(paste("E.phihat.w ~ ", paste(znames, collapse= "+"), " + ", paste(xnames, collapse= "+")))  
+    formula.Ephiwz <- as.formula(paste("E.phi.w ~ ", paste(znames, collapse= "+"), " + ", paste(xnames, collapse= "+")))  
     formula.predictmodelresidphi0z <- as.formula(paste("predict(model.residphi0,newdata=evaldata) ~ ", paste(znames, collapse= "+"), " + ", paste(xnames, collapse= "+")))
     formula.predictmodelresidwz <- as.formula(paste("predict(model.residw,newdata=evaldata) ~ ", paste(znames, collapse= "+"), " + ", paste(xnames, collapse= "+")))
   }
@@ -265,7 +265,7 @@ crsiv <- function(y,
     }
     
     ## Finally, we conduct regularized Tikhonov regression using this
-    ## optimal alpha to get a first stage estimate of phihat
+    ## optimal alpha to get a first stage estimate of phi
 
     console <- printClear(console)
     console <- printPop(console)
@@ -274,7 +274,7 @@ crsiv <- function(y,
     } else {
       console <- printPush("Computing initial phi(z,x) estimate...", console)
     }
-    phihat <- as.vector(tikh(alpha, CZ = KYW, CY = KYWZ, Cr.r = E.E.y.w.z))
+    phi <- as.vector(tikh(alpha, CZ = KYW, CY = KYWZ, Cr.r = E.E.y.w.z))
 
     ## KYWZ and KZWS no longer used, save memory
     
@@ -289,8 +289,8 @@ crsiv <- function(y,
     } else {
       console <- printPush("Computing optimal smoothing and weights for E(phi(z,x)|w)...", console)
     }
-    model <- crs(formula.phihatw,opts=opts,data=traindata,...)
-    E.phihat.w <- predict(model,newdata=evaldata)
+    model <- crs(formula.phiw,opts=opts,data=traindata,...)
+    E.phi.w <- predict(model,newdata=evaldata)
     B <- model.matrix(model$model.lm)
     KPHIW <- B%*%solve(t(B)%*%B)%*%t(B)
     
@@ -303,7 +303,7 @@ crsiv <- function(y,
     } else {
       console <- printPush("Computing optimal smoothing and weights for E(E(phi(z,x)|w)|z,x)...", console)
     }
-    model <- crs(formula.Ephihatwz,opts=opts,data=traindata,...)
+    model <- crs(formula.Ephiwz,opts=opts,data=traindata,...)
     B <- model.matrix(model$model.lm)
     KPHIWZ <- B%*%solve(t(B)%*%B)%*%t(B)
     
@@ -328,7 +328,7 @@ crsiv <- function(y,
     } else {
       console <- printPush("Computing final phi(z,x) estimate...", console)
     }
-    phihat <- as.vector(tikh(alpha, CZ = KPHIW, CY = KPHIWZ, Cr.r = E.E.y.w.z))
+    phi <- as.vector(tikh(alpha, CZ = KPHIW, CY = KPHIWZ, Cr.r = E.E.y.w.z))
     
     console <- printClear(console)
     console <- printPop(console)
@@ -337,11 +337,11 @@ crsiv <- function(y,
     if((alpha.max-alpha)/alpha.max < 0.01) warning(paste(" Tikhonov parameter alpha (",formatC(alpha,digits=4,format="f"),") is close to the search maximum (",alpha.max,")",sep=""))
     
     ## phi.0 is the conditional mean model. We compute lambda =
-    ## fitted(phi.0)-phihat then transform y via
+    ## fitted(phi.0)-phi then transform y via
     ## y.lambda=y-lambda. Here we overwrite y so that we can reuse the
     ## formula. Before that, save the proper residuals and then push
     ## these into the model. June 9 2011 - I am concerned because
-    ## phihat and the fitted values from this approach are _identical_
+    ## phi and the fitted values from this approach are _identical_
     ## (I expected approximately equal).
 
     ## Feb 21 2012 - JP Florens said the starting point should be
@@ -350,8 +350,8 @@ crsiv <- function(y,
 
     phi.0 <- crs(formula.yz,opts=opts,data=traindata,...)
 
-    residuals.phihat <- traindata$y-phihat
-    traindata$y <- traindata$y - (fitted(phi.0)-phihat)
+    residuals.phi <- traindata$y-phi
+    traindata$y <- traindata$y - (fitted(phi.0)-phi)
 
     model <- crs(formula.yz,
                  cv="none",
@@ -366,8 +366,8 @@ crsiv <- function(y,
                  deriv=deriv,
                  data=traindata)
 
-    model$residuals <- residuals.phihat
-    model$phihat <- phihat
+    model$residuals <- residuals.phi
+    model$phi <- phi
     model$alpha <- alpha
 
     return(model)
@@ -400,8 +400,8 @@ crsiv <- function(y,
     norm.stop <- numeric()
     model.E.y.w <- crs(formula.yw,opts=opts,data=traindata,...)
     E.y.w <- predict(model.E.y.w,newdata=evaldata)
-    phihat <- phi.j.m.1
-    model.E.phi.w <- crs(formula.phihatw,opts=opts,data=traindata,...)
+    phi <- phi.j.m.1
+    model.E.phi.w <- crs(formula.phiw,opts=opts,data=traindata,...)
     E.phi.w <- predict(model.E.phi.w,newdata=evaldata)
     norm.stop[1] <- mean(((E.y.w-E.phi.w)/E.y.w)^2)
 
@@ -418,7 +418,7 @@ crsiv <- function(y,
       model.residw <- crs(formula.residw,opts=opts,data=traindata,...)
       model.predict.residw.z <- crs(formula.predictmodelresidwz,opts=opts,data=traindata,...)
 
-      phihat <- phi.j.m.1 + constant*predict(model.predict.residw.z,newdata=evaldata)
+      phi <- phi.j.m.1 + constant*predict(model.predict.residw.z,newdata=evaldata)
 
       console <- printClear(console)
       console <- printPop(console)
@@ -426,7 +426,7 @@ crsiv <- function(y,
 
       ## For the stopping rule (use same smoothing as original,
       ## cv="none" so no ... args allowed hence pass all relevant args)
-      model.stop <- crs(formula.phihatw,
+      model.stop <- crs(formula.phiw,
                         cv="none",
                         degree=model.E.phi.w$degree,
                         segments=model.E.phi.w$segments,
@@ -446,26 +446,26 @@ crsiv <- function(y,
 
       if(norm.stop[j] < iterate.tol) break()
       if(stop.on.increase && norm.stop[j] > norm.stop[j-1]) {
-        phihat <- phi.j.m.1
+        phi <- phi.j.m.1
         break()
       }
 
       ## For next iteration phi.j
 
-      phi.j.m.1 <- phihat
+      phi.j.m.1 <- phi
 
     }
 
     ## phi.0 is the conditional mean model. We compute lambda =
-    ## fitted(phi.0)-phihat then transform y via
+    ## fitted(phi.0)-phi then transform y via
     ## y.lambda=y-lambda. Here we overwrite y so that we can reuse the
     ## formula. Before that, save the proper residuals and then push
     ## these into the model. June 9 2011 - I am concerned because
-    ## phihat and the fitted values from this approach are _identical_
+    ## phi and the fitted values from this approach are _identical_
     ## (I expected approximately equal).
 
-    residuals.phihat <- traindata$y-phihat
-    traindata$y <- traindata$y - (fitted(phi.0)-phihat)
+    residuals.phi <- traindata$y-phi
+    traindata$y <- traindata$y - (fitted(phi.0)-phi)
 
     model <- crs(formula.yz,
                  cv="none",
@@ -480,8 +480,8 @@ crsiv <- function(y,
                  deriv=deriv,
                  data=traindata)
 
-    model$residuals <- residuals.phihat
-    model$phihat <- phihat
+    model$residuals <- residuals.phi
+    model$phi <- phi
     model$num.iterations <- j
     model$norm.stop <- norm.stop
 
