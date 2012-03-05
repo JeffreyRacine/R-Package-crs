@@ -101,4 +101,13 @@ const char *stop_message[]={
       "MAX_CACHE_MEMORY_REACHED   ,    ///< Max cache memory"
     };
 
+
+class Routbuf: public std::streambuf {
+		private:
+				int overflow(int c){
+								if(c!=EOF) Rprintf("%.1s", (char *)&c);  //this is for the class Display in NOMAD. cout will be redirected to this class and output by Rprintf.
+								return c;
+				}
+
+};
 #endif

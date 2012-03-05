@@ -39,7 +39,19 @@
   \date   2010-04-12
 */
 #include "nomad.hpp"
+#include <R.h>
+#include <Rdefines.h>
+#include <R_ext/Utils.h>
 using namespace std;
+
+class Routbuf: public std::streambuf {
+		private:
+				int overflow(int c){
+								if(c!=EOF) Rprintf("%.1s", (char *)&c);  //this is for the class Display in NOMAD. cout will be redirected to this class and output by Rprintf.
+								return c;
+				}
+
+};
 /*------------------------------------------*/
 /*            NOMAD main function           */
 /*------------------------------------------*/
@@ -47,7 +59,9 @@ int main ( int argc , char ** argv )
 {
 
   // display:
-  NOMAD::Display out ( std::cout );
+	Routbuf routbuf;
+	std::ostream rout(&routbuf);
+  NOMAD::Display out ( rout );
   out.precision ( NOMAD::DISPLAY_PRECISION_STD );
 
   std::string error;
@@ -57,7 +71,7 @@ int main ( int argc , char ** argv )
 
     // usage:
     if ( argc < 2 ) {
-      NOMAD::display_usage ( std::cerr );
+      NOMAD::display_usage ( rout );
       NOMAD::end();
       return EXIT_FAILURE;
     }
@@ -95,7 +109,7 @@ int main ( int argc , char ** argv )
     // check the number of processess:
 #ifdef USE_MPI
     if ( NOMAD::Slave::get_nb_processes() < 2 ) {
-      NOMAD::display_usage ( std::cerr );
+      NOMAD::display_usage ( rout );
       NOMAD::end();
       return EXIT_FAILURE;
     }
@@ -136,7 +150,7 @@ int main ( int argc , char ** argv )
     catch ( std::exception & e ) {
       if ( NOMAD::Slave::is_master() ) {
 	error = std::string ( "NOMAD has been interrupted: " ) + e.what();
-	std::cerr << std::endl << error << std::endl << std::endl;
+	rout << std::endl << error << std::endl << std::endl;
       }
     }
     

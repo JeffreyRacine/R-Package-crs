@@ -36,6 +36,9 @@ using namespace std;
 static SEXP thefun,theenv;
 SEXP showArgs1(SEXP largs);
 
+static Routbuf routbuf;
+static std::ostream rout(&routbuf);
+
 bool file_exists(const char*path)
 {
 		struct stat sbuf;
@@ -73,11 +76,12 @@ SEXP getListElement(SEXP list, std::string str)
 //
 void setApplicationOptions(NOMAD::Parameters & p, SEXP opts ) {
 
-		FILE *fp;
-		const char opt_file[]="tmp.opt";
+		std::stringbuf nomadbuf;
+		std::iostream fp(&nomadbuf);
 
-		fp=fopen(opt_file, "w");
 
+		fp.precision(15);
+		fp.seekg(0, std::ios::beg);
 		// extract the sub-lists with options of the different types into separate lists
 		SEXP opts_integer = getListElement(opts, "integer");
 		SEXP opts_numeric = getListElement(opts, "numeric");
@@ -95,7 +99,8 @@ void setApplicationOptions(NOMAD::Parameters & p, SEXP opts ) {
 				SEXP opt_value;
 				PROTECT(opt_value = AS_INTEGER(VECTOR_ELT(opts_integer, list_cnt)));
 
-				fprintf(fp, "%s\t%d\n", CHAR(STRING_ELT(opts_integer_names,  list_cnt)),  INTEGER(opt_value)[0]);
+			fp <<  CHAR(STRING_ELT(opts_integer_names,  list_cnt)) << "\t" <<  INTEGER(opt_value)[0] << std::endl;
+			
 
 				UNPROTECT(1);	
 		}
@@ -108,7 +113,7 @@ void setApplicationOptions(NOMAD::Parameters & p, SEXP opts ) {
 				SEXP opt_value;
 				PROTECT(opt_value = VECTOR_ELT(opts_numeric, list_cnt));
 
-				fprintf(fp, "%s\t%.10g\n", CHAR(STRING_ELT(opts_numeric_names,  list_cnt)),  REAL(opt_value)[0]);
+				fp << CHAR(STRING_ELT(opts_numeric_names,  list_cnt)) << "\t" <<  REAL(opt_value)[0] << std::endl;
 
 				UNPROTECT(1);	
 
@@ -124,17 +129,15 @@ void setApplicationOptions(NOMAD::Parameters & p, SEXP opts ) {
 				SEXP opt_value;
 				PROTECT(opt_value = STRING_ELT(VECTOR_ELT(opts_string, list_cnt),0));
 
-				fprintf(fp, "%s\t%s\n", CHAR(STRING_ELT(opts_string_names,  list_cnt)),  CHAR(opt_value));
+				fp <<  CHAR(STRING_ELT(opts_string_names,  list_cnt)) << "\t" <<   CHAR(opt_value) << std::endl;
 
 
 				UNPROTECT(1);	
 		}
 
-		fclose(fp);
+		fp.seekg (0,  std::ios::beg);
 
-		p.read(opt_file);
-
-    //		remove(opt_file);
+		p.read(fp);
 
 		return;
 }
@@ -329,7 +332,7 @@ extern "C" {
 
 				SEXP solution;
 
-				NOMAD::Display out(std::cout);
+				NOMAD::Display out(rout);
 
 				//showArgs1(args);
 
@@ -391,7 +394,7 @@ extern "C" {
 
 				PROTECT(solution=args);
 
-				NOMAD::Display out(std::cout);
+				NOMAD::Display out(rout);
 				out.precision(NOMAD::DISPLAY_PRECISION_STD);
 
 				theenv = getListElement(args, "snomadr.environment");
@@ -618,7 +621,7 @@ extern "C" {
 
 				PROTECT(solution=args);
 
-				NOMAD::Display out(std::cout);
+				NOMAD::Display out(rout);
 				out.precision(NOMAD::DISPLAY_PRECISION_STD);
 
 				theenv = getListElement(args, "snomadr.environment");

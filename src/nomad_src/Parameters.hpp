@@ -223,6 +223,7 @@ namespace NOMAD {
        \param param_file Name of the parameters file -- \b IN.
     */
     void read ( const std::string & param_file );
+    void read ( std::iostream &fin );
 
     /// Check the parameters.
     /**
