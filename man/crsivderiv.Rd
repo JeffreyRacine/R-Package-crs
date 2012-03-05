@@ -27,7 +27,8 @@ crsivderiv(y,
            xeval = NULL,
            iterate.max = 1000,
            iterate.tol = 1.0e-04,
-           constant = 0.5,
+           iterate.diff.tol = 1.0e-08,
+           constant = 0.95,
            start.phi.zero = FALSE,
            stop.on.increase = TRUE,
            smooth.residuals = TRUE,
@@ -83,6 +84,11 @@ crsivderiv(y,
 }
 \item{iterate.tol}{
   the search tolerance for the stopping rule when using Landweber-Fridman iteration
+}
+\item{iterate.diff.tol}{
+  the search tolerance for the difference in the stopping rule from
+  iteration to iteration when using Landweber-Fridman
+  (disable by setting to zero)
 }
 \item{constant}{
   the constant to use when using  Landweber-Fridman iteration

@@ -34,7 +34,8 @@ crsiv(y,
       alpha.tol = .Machine$double.eps^0.25,
       iterate.max = 1000,
       iterate.tol = 1.0e-04,
-      constant = 0.5,
+      iterate.diff.tol = 1.0e-08,
+      constant = 0.95,
       stop.on.increase = TRUE,
       method = c("Landweber-Fridman","Tikhonov"),
       opts = list("MAX_BB_EVAL"=10000,
@@ -107,6 +108,11 @@ crsiv(y,
 }
 \item{iterate.tol}{
   the search tolerance for the stopping rule when using \code{method="Landweber-Fridman"}
+}
+\item{iterate.diff.tol}{
+  the search tolerance for the difference in the stopping rule from
+  iteration to iteration when using \code{method="Landweber-Fridman"}
+    (disable by setting to zero)
 }
 \item{constant}{
   the constant to use when using  \code{method="Landweber-Fridman"}

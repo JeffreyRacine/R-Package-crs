@@ -37,6 +37,7 @@ crsiv <- function(y,
                   alpha.tol=.Machine$double.eps^0.25,
                   iterate.max=1000,
                   iterate.tol=1.0e-04,
+                  iterate.diff.tol=1.0e-08,
                   constant=0.5,
                   stop.on.increase=TRUE,
                   method=c("Landweber-Fridman","Tikhonov"),
@@ -159,6 +160,7 @@ crsiv <- function(y,
   if(iterate.max < 2) stop("iterate.max must be at least 2")
   if(constant <= 0 || constant >=1) stop("constant must lie in (0,1)")
   if(iterate.tol <= 0) stop("iterate.tol must be positive")
+  if(iterate.diff.tol < 0) stop("iterate.diff.tol must be non-negative")
 
   ## Cast as data frames
 
@@ -468,6 +470,7 @@ crsiv <- function(y,
       ## tolerance then break
 
       if(norm.stop[j] < iterate.tol) break()
+      if(norm.stop[j-1]-norm.stop[j] < iterate.diff.tol) break()
       if(stop.on.increase && norm.stop[j] > norm.stop[j-1]) {
         phi <- phi.j.m.1
         break()
