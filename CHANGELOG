@@ -9,6 +9,9 @@ Changes from Version 0.15-12 to 0.15-13 [05-Mar-2012]
 * Corrected error in demo for IV regression when exhaustive search was
   selected (nmulti needed to be set though it is not used)
 
+* Changes to code to improve compliance with R `Writing portable
+  packages' guidelines and correct partial argument matches
+
 Changes from Version 0.15-11 to 0.15-12 [7-Dec-2011]
 
 * Added option to limit the minimum degrees of freedom when conducting
