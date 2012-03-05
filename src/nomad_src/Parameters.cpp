@@ -8533,3 +8533,1582 @@ void NOMAD::Parameters::help ( const std::list<std::string> & pnames ) const
  
   _out.close_block();
 }
+
+
+/*----------------------------------------*/
+/*          read parameters from iostream        */
+/*----------------------------------------*/
+void NOMAD::Parameters::read ( std::iostream  &fin )
+{
+		fin.seekg(0, std::ios::beg);
+
+		std::string err;
+  // parameters will have to be checked:
+  _to_be_checked = true;
+	
+  // the set of entries:
+  NOMAD::Parameter_Entries entries;
+
+  // the file is read: fill the set 'entries' of Parameter_Entry:
+  NOMAD::Parameter_Entry * pe;
+  std::string              s;
+
+  while ( fin.good() && !fin.eof() ) {
+
+    s.clear();
+    
+    getline ( fin , s );
+
+    if ( !fin.fail() && !s.empty() ) {
+      pe = new NOMAD::Parameter_Entry ( s );
+      if ( pe->is_ok() )
+	entries.insert ( pe ); // pe will be deleted by ~Parameter_Entries()
+      else {
+	if ( ( pe->get_name() != "" && pe->get_nb_values() == 0 ) ||
+	     pe->get_name() == "STATS_FILE" ) {
+	  err = "invalid parameter: " + pe->get_name();
+	  delete pe;
+	  throw Invalid_Parameter ( "Parameters.cpp" , __LINE__ , err );
+	}
+	delete pe;
+      }
+    }
+  }
+
+  // entries display:
+#ifdef DEBUG
+  if ( NOMAD::Slave::is_master() )
+    _out << std::endl
+	 << NOMAD::open_block ( "parsing of \'" + param_file + "\'" )
+	 << entries
+	 << NOMAD::close_block();
+#endif
+
+  // interpret and set the entries using SET methods:
+  std::list<std::string>::const_iterator it , end;
+  int                                    i , j , m;
+  NOMAD::Double                          d;
+
+  /*----------------------------------------------*/
+
+  // EPSILON:
+  // --------
+  {
+    pe = entries.find ( "EPSILON" );
+    if ( pe ) {
+      if ( !pe->is_unique() )
+	throw Invalid_Parameter ( "Parameters.cpp" , __LINE__ ,
+				  "invalid parameter: EPSILON not unique" );
+      if ( pe->get_nb_values() != 1 || !d.atof ( *(pe->get_values().begin()) ) )
+	throw Invalid_Parameter ( "Parameters.cpp" , __LINE__ ,
+				  "invalid parameter: EPSILON" );
+      set_EPSILON (d);
+      pe->set_has_been_interpreted();     
+    }
+  }
+
+  // UNDEF_STR:
+  // ----------
+  pe = entries.find ( "UNDEF_STR" );
+  if ( pe ) {
+    if ( !pe->is_unique() )
+      throw Invalid_Parameter ( "Parameters.cpp" , __LINE__ ,
+				"invalid parameter: UNDEF_STR not unique" );
+    set_UNDEF_STR ( *(pe->get_values().begin()) );
+    pe->set_has_been_interpreted();
+  }
+  
+  // INF_STR:
+  // --------
+  pe = entries.find ( "INF_STR" );
+  if ( pe ) {
+    if ( !pe->is_unique() )
+      throw Invalid_Parameter ( "Parameters.cpp" , __LINE__ ,
+				"invalid parameter: INF_STR not unique" );
+    set_INF_STR ( *(pe->get_values().begin()) );
+    pe->set_has_been_interpreted();
+  }
+
+  // MESH_UPDATE_BASIS:
+  // ------------------
+  {
+    pe = entries.find ( "MESH_UPDATE_BASIS" );
+    if ( pe ) {
+      if ( !pe->is_unique() )
+	throw Invalid_Parameter ( "Parameters.cpp" , __LINE__ ,
+	      "invalid parameter: MESH_UPDATE_BASIS not unique" );
+      if ( pe->get_nb_values() != 1 || !d.atof ( *(pe->get_values().begin()) ) )
+	throw Invalid_Parameter ( "Parameters.cpp" , __LINE__ ,
+				  "invalid parameter: MESH_UPDATE_BASIS" );
+      set_MESH_UPDATE_BASIS (d);
+      pe->set_has_been_interpreted();     
+    }
+  }
+
+  // INITIAL_MESH_INDEX:
+  // -------------------
+  {
+    pe = entries.find ( "INITIAL_MESH_INDEX" );
+    if ( pe ) {
+      if ( !pe->is_unique() )
+	throw Invalid_Parameter ( "Parameters.cpp" , __LINE__ ,
+	      "invalid parameter: INITIAL_MESH_INDEX not unique" );
+      if ( pe->get_nb_values() != 1 || !NOMAD::atoi (*(pe->get_values().begin()), i) )
+	throw Invalid_Parameter ( "Parameters.cpp" , __LINE__ ,
+				  "invalid parameter: INITIAL_MESH_INDEX" );
+      pe->set_has_been_interpreted();
+      set_INITIAL_MESH_INDEX (i);
+    }
+  }
+
+  // MESH_REFINING_EXPONENT:
+  // -----------------------
+  {
+    pe = entries.find ( "MESH_REFINING_EXPONENT" );
+    if ( pe ) {
+      if ( !pe->is_unique() )
+	throw Invalid_Parameter ( "Parameters.cpp" , __LINE__ ,
+	      "invalid parameter: MESH_REFINING_EXPONENT not unique" );
+      if ( pe->get_nb_values() != 1 || !NOMAD::atoi (*(pe->get_values().begin()), i) )
+	throw Invalid_Parameter ( "Parameters.cpp" , __LINE__ ,
+				  "invalid parameter: MESH_REFINING_EXPONENT" );
+      pe->set_has_been_interpreted();
+      set_MESH_REFINING_EXPONENT (i);
+    }
+  }
+
+  // MESH_COARSENING_EXPONENT:
+  // -------------------------
+  {
+    pe = entries.find ( "MESH_COARSENING_EXPONENT" );
+    if ( pe ) {
+      if ( !pe->is_unique() )
+	throw Invalid_Parameter ( "Parameters.cpp" , __LINE__ ,
+	      "invalid parameter: MESH_COARSENING_EXPONENT not unique" );
+      if ( pe->get_nb_values() != 1 || !NOMAD::atoi (*(pe->get_values().begin()), i) )
+	throw Invalid_Parameter ( "Parameters.cpp" , __LINE__ ,
+				  "invalid parameter: MESH_COARSENING_EXPONENT" );
+      pe->set_has_been_interpreted();
+      set_MESH_COARSENING_EXPONENT (i);
+    }
+  }
+
+  // MAX_MESH_INDEX:
+  // ---------------
+  {    
+     pe = entries.find ( "MAX_MESH_INDEX" );
+    if ( pe ) {
+      if ( !pe->is_unique() )
+	throw Invalid_Parameter ( "Parameters.cpp" , __LINE__ ,
+				  "invalid parameter: MAX_MESH_INDEX not unique" );
+      if ( pe->get_nb_values() != 1 || !NOMAD::atoi (*(pe->get_values().begin()), i) )
+	throw Invalid_Parameter ( "Parameters.cpp" , __LINE__ ,
+				  "invalid parameter: MAX_MESH_INDEX" );
+      pe->set_has_been_interpreted();
+      set_MAX_MESH_INDEX (i);
+    }
+  }
+
+  // HALTON_SEED:
+  // ------------
+  {
+    pe = entries.find ( "HALTON_SEED" );
+    if ( pe ) {
+      if ( !pe->is_unique() )
+	throw Invalid_Parameter ( "Parameters.cpp" , __LINE__ ,
+				  "invalid parameter: HALTON_SEED not unique" );
+      if ( pe->get_nb_values() != 1 || !NOMAD::atoi (*(pe->get_values().begin()), i) )
+	throw Invalid_Parameter ( "Parameters.cpp" , __LINE__ ,
+				  "invalid parameter: HALTON_SEED" );
+      pe->set_has_been_interpreted();
+      set_HALTON_SEED (i);
+    }
+  }
+
+  // POINT_DISPLAY_LIMIT:
+  // --------------------
+  {
+    pe = entries.find ( "POINT_DISPLAY_LIMIT" );
+    if ( pe ) {
+      if ( !pe->is_unique() )
+	throw Invalid_Parameter ( "Parameters.cpp" , __LINE__ ,
+	      "invalid parameter: POINT_DISPLAY_LIMIT not unique" );
+      if ( pe->get_nb_values() != 1 || !NOMAD::atoi (*(pe->get_values().begin()), i) )
+	throw Invalid_Parameter ( "Parameters.cpp" , __LINE__ ,
+				  "invalid parameter: POINT_DISPLAY_LIMIT" );
+      set_POINT_DISPLAY_LIMIT (i);
+      pe->set_has_been_interpreted();     
+    }
+  }
+
+  // DIMENSION:
+  // ----------
+  {
+    pe = entries.find ( "DIMENSION" );
+    
+    if ( !pe ) {
+      if ( !pe && _dimension <= 0 )
+	throw Invalid_Parameter ( "Parameters.cpp" , __LINE__ ,
+				  "invalid parameter: DIMENSION not defined" );
+    }
+    else {
+      if ( !pe->is_unique() )
+	throw Invalid_Parameter ( "Parameters.cpp" , __LINE__ ,
+				  "invalid parameter: DIMENSION not unique" );
+
+      int dim;
+      if ( pe->get_nb_values() != 1 || !NOMAD::atoi (*(pe->get_values().begin()), dim) )
+	throw Invalid_Parameter ( "Parameters.cpp" , __LINE__ ,
+				  "invalid parameter: DIMENSION" );
+      
+      pe->set_has_been_interpreted();
+      
+      set_DIMENSION ( dim );
+    }
+  }
+  
+  // SNAP_TO_BOUNDS:
+  // ---------------
+  {
+    pe = entries.find ( "SNAP_TO_BOUNDS" );
+    if ( pe ) {
+      if ( !pe->is_unique() )
+	throw Invalid_Parameter ( "Parameters.cpp" , __LINE__ ,
+				  "invalid parameter: SNAP_TO_BOUNDS not unique" );
+      i = NOMAD::string_to_bool ( *(pe->get_values().begin() ) );
+      if ( pe->get_nb_values() != 1 ||  i == -1 )
+	throw Invalid_Parameter ( "Parameters.cpp" , __LINE__ ,
+				  "invalid parameter: SNAP_TO_BOUNDS" );
+      set_SNAP_TO_BOUNDS ( i == 1 );
+      pe->set_has_been_interpreted();
+    }
+  }
+
+  // MULTI-MADS:
+  // -----------
+  {
+    // MULTI_OVERALL_BB_EVAL:
+    pe = entries.find ( "MULTI_OVERALL_BB_EVAL" );
+    if ( pe ) {
+      if ( !pe->is_unique() )
+	throw Invalid_Parameter ( "Parameters.cpp" , __LINE__ ,
+	      "invalid parameter: MULTI_OVERALL_BB_EVAL not unique" );
+      if ( pe->get_nb_values() != 1 || !NOMAD::atoi (*(pe->get_values().begin()) , i) )
+	throw Invalid_Parameter ( "Parameters.cpp" , __LINE__ ,
+				  "invalid parameter: MULTI_OVERALL_BB_EVAL" );
+      pe->set_has_been_interpreted();
+      set_MULTI_OVERALL_BB_EVAL (i);
+    }
+
+    // MULTI_NB_MADS_RUNS:
+    pe = entries.find ( "MULTI_NB_MADS_RUNS" );
+    if ( pe ) {
+      if ( !pe->is_unique() )
+	throw Invalid_Parameter ( "Parameters.cpp" , __LINE__ ,
+	      "invalid parameter: MULTI_NB_MADS_RUNS not unique" );
+      if ( pe->get_nb_values() != 1 || !NOMAD::atoi (*(pe->get_values().begin()) , i) )
+	throw Invalid_Parameter ( "Parameters.cpp" , __LINE__ ,
+				  "invalid parameter: MULTI_NB_MADS_RUNS" );
+      pe->set_has_been_interpreted();
+      set_MULTI_NB_MADS_RUNS (i);
+    }
+
+    // MULTI_USE_DELTA_CRIT:
+    pe = entries.find ( "MULTI_USE_DELTA_CRIT" );
+    if ( pe ) {
+      if ( !pe->is_unique() )
+	throw Invalid_Parameter ( "Parameters.cpp" , __LINE__ ,
+	      "invalid parameter: MULTI_USE_DELTA_CRIT not unique" );
+      i = NOMAD::string_to_bool ( *(pe->get_values().begin() ) );
+      if ( pe->get_nb_values() != 1 ||  i == -1 )
+	throw Invalid_Parameter ( "Parameters.cpp" , __LINE__ ,
+				  "invalid parameter: MULTI_USE_DELTA_CRIT" );
+      pe->set_has_been_interpreted();
+      set_MULTI_USE_DELTA_CRIT ( i == 1 );
+    }    
+
+    // MULTI_F_BOUNDS (f1_min, f2_min, f2_min, f2_max):
+    pe = entries.find ( "MULTI_F_BOUNDS" );
+    if ( pe ) {
+      if ( !pe->is_unique() )
+	throw Invalid_Parameter ( "Parameters.cpp" , __LINE__ ,
+	      "invalid parameter: MULTI_F_BOUNDS not unique" );
+      if ( pe->get_nb_values() != 4 )
+	throw Invalid_Parameter ( "Parameters.cpp" , __LINE__ ,
+				  "invalid parameter: MULTI_F_BOUNDS" );
+      NOMAD::Point mfb ( 4 );
+      it = pe->get_values().begin();
+      for ( i = 0 ; i < 4 ; ++i ) {
+	if ( !d.atof ( *it ) )
+	  throw Invalid_Parameter ( "Parameters.cpp" , __LINE__ ,
+				    "invalid parameter: MULTI_F_BOUNDS" );
+	mfb[i] = d;
+	++it;
+      }
+      pe->set_has_been_interpreted();
+      set_MULTI_F_BOUNDS ( mfb );
+    }
+
+    // MULTI_FORMULATION:
+    // ------------------
+    {
+      pe = entries.find ( "MULTI_FORMULATION" );
+      if ( pe ) {
+	if ( !pe->is_unique() )
+	  throw Invalid_Parameter ( "Parameters.cpp" , __LINE__ ,
+		"invalid parameter: MULTI_FORMULATION not unique" );
+	NOMAD::multi_formulation_type mft;
+	if ( pe->get_nb_values() != 1 ||
+	     !NOMAD::string_to_multi_formulation_type
+	     ( *(pe->get_values().begin()) , mft )    )
+	  throw Invalid_Parameter ( "Parameters.cpp" , __LINE__ ,
+		"Invalid parameter: MULTI_FORMULATION_TYPE" );
+	pe->set_has_been_interpreted();
+	set_MULTI_FORMULATION ( mft );
+      }
+    }
+  }
+
+  // model parameters:
+  // -----------------
+  {
+
+    // MODEL_SEARCH:
+    {
+      pe = entries.find ( "MODEL_SEARCH" );
+      if ( pe ) {
+	if ( !pe->is_unique() )
+	  throw Invalid_Parameter ( "Parameters.cpp" , __LINE__ ,
+		"invalid parameter: MODEL_SEARCH not unique" );
+	i = NOMAD::string_to_bool ( *(pe->get_values().begin() ) );
+	if ( pe->get_nb_values() != 1 ||  i == -1 )
+	  throw Invalid_Parameter ( "Parameters.cpp" , __LINE__ ,
+				    "invalid parameter: MODEL_SEARCH" );
+	set_MODEL_SEARCH ( i == 1 );
+	pe->set_has_been_interpreted();
+      }
+    }
+
+    // MODEL_SEARCH_OPTIMISTIC:
+    {
+      pe = entries.find ( "MODEL_SEARCH_OPTIMISTIC" );
+      if ( pe ) {
+	if ( !pe->is_unique() )
+	  throw Invalid_Parameter ( "Parameters.cpp" , __LINE__ ,
+		"invalid parameter: MODEL_SEARCH_OPTIMISTIC not unique" );
+	i = NOMAD::string_to_bool ( *(pe->get_values().begin() ) );
+	if ( pe->get_nb_values() != 1 ||  i == -1 )
+	  throw Invalid_Parameter ( "Parameters.cpp" , __LINE__ ,
+				    "invalid parameter: MODEL_SEARCH_OPTIMISTIC" );
+	set_MODEL_SEARCH_OPTIMISTIC ( i == 1 );
+	pe->set_has_been_interpreted();
+      }
+    }
+
+    // MODEL_PROJ_TO_MESH:
+    {
+      pe = entries.find ( "MODEL_SEARCH_PROJ_TO_MESH" );
+      if ( pe ) {
+	if ( !pe->is_unique() )
+	  throw Invalid_Parameter ( "Parameters.cpp" , __LINE__ ,
+		"invalid parameter: MODEL_SEARCH_PROJ_TO_MESH not unique" );
+	i = NOMAD::string_to_bool ( *(pe->get_values().begin() ) );
+	if ( pe->get_nb_values() != 1 ||  i == -1 )
+	  throw Invalid_Parameter ( "Parameters.cpp" , __LINE__ ,
+				    "invalid parameter: MODEL_SEARCH_PROJ_TO_MESH" );
+	set_MODEL_SEARCH_PROJ_TO_MESH ( i == 1 );
+	pe->set_has_been_interpreted();
+      }
+    }
+
+    // MODEL_RADIUS_FACTOR:
+    {
+      pe = entries.find ( "MODEL_RADIUS_FACTOR" );
+      if ( pe ) {
+	if ( !pe->is_unique() )
+	  throw Invalid_Parameter ( "Parameters.cpp" , __LINE__ ,
+		"invalid parameter: MODEL_RADIUS_FACTOR not unique" );
+	if ( pe->get_nb_values() != 1 || !d.atof ( *(pe->get_values().begin()) ) )
+	  throw Invalid_Parameter ( "Parameters.cpp" , __LINE__ ,
+				    "invalid parameter: MODEL_RADIUS_FACTOR" );
+	pe->set_has_been_interpreted();
+	set_MODEL_RADIUS_FACTOR ( d );
+      }
+    }
+
+    // MODEL_USE_WP:
+    {
+      pe = entries.find ( "MODEL_USE_WP" );
+      if ( pe ) {
+	if ( !pe->is_unique() )
+	  throw Invalid_Parameter ( "Parameters.cpp" , __LINE__ ,
+				    "invalid parameter: MODEL_USE_WP not unique" );
+	i = NOMAD::string_to_bool ( *(pe->get_values().begin() ) );
+	if ( pe->get_nb_values() != 1 ||  i == -1 )
+	  throw Invalid_Parameter ( "Parameters.cpp" , __LINE__ ,
+				    "invalid parameter: MODEL_USE_WP" );
+	set_MODEL_USE_WP ( i == 1 );
+	pe->set_has_been_interpreted();
+      }
+    }
+    
+    // MODEL_MAX_Y_SIZE:
+    {
+      pe = entries.find ( "MODEL_MAX_Y_SIZE" );
+      if ( pe ) {
+	if ( !pe->is_unique() )
+	  throw Invalid_Parameter ( "Parameters.cpp" , __LINE__ ,
+		"invalid parameter: MODEL_MAX_Y_SIZE not unique" );
+	if ( pe->get_nb_values() != 1 || !NOMAD::atoi (*(pe->get_values().begin()), i) )
+	  throw Invalid_Parameter ( "Parameters.cpp" , __LINE__ ,
+				    "invalid parameter: MODEL_MAX_Y_SIZE" );
+	pe->set_has_been_interpreted();
+	set_MODEL_MAX_Y_SIZE (i);
+      }
+    }
+
+    // MODEL_MIN_Y_SIZE:
+    {
+      pe = entries.find ( "MODEL_MIN_Y_SIZE" );
+      if ( pe ) {
+
+	if ( !pe->is_unique() )
+	  throw Invalid_Parameter ( "Parameters.cpp" , __LINE__ ,
+		"invalid parameter: MODEL_MIN_Y_SIZE not unique" );
+
+	if ( pe->get_nb_values() != 1 )
+	  throw Invalid_Parameter ( "Parameters.cpp" , __LINE__ ,
+				    "invalid parameter: MODEL_MIN_Y_SIZE" );
+      
+	s = *(pe->get_values().begin());
+	NOMAD::toupper(s);
+
+	if ( s == "N+1" )
+	  i = -1;
+	else if ( !NOMAD::atoi ( s , i ) )
+	  throw Invalid_Parameter ( "Parameters.cpp" , __LINE__ ,
+				    "invalid parameter: MODEL_MIN_Y_SIZE" );
+
+	pe->set_has_been_interpreted();
+	set_MODEL_MIN_Y_SIZE (i);
+      }
+    }
+
+    // MODEL_SEARCH_MAX_TRIAL_PTS:
+    {
+      pe = entries.find ( "MODEL_SEARCH_MAX_TRIAL_PTS" );
+      if ( pe ) {
+	if ( !pe->is_unique() )
+	  throw Invalid_Parameter ( "Parameters.cpp" , __LINE__ ,
+		"invalid parameter: MODEL_SEARCH_MAX_TRIAL_PTS not unique" );
+	if ( pe->get_nb_values() != 1 || !NOMAD::atoi (*(pe->get_values().begin()), i) )
+	  throw Invalid_Parameter ( "Parameters.cpp" , __LINE__ ,
+				    "invalid parameter: MODEL_SEARCH_MAX_TRIAL_PTS" );
+	pe->set_has_been_interpreted();
+	set_MODEL_SEARCH_MAX_TRIAL_PTS (i);
+      }
+    }
+
+    // MODEL_EVAL_SORT:
+    {
+      pe = entries.find ( "MODEL_EVAL_SORT" );
+      if ( pe ) {
+	if ( !pe->is_unique() )
+	  throw Invalid_Parameter ( "Parameters.cpp" , __LINE__ ,
+		"invalid parameter: MODEL_EVAL_SORT not unique" );
+	i = NOMAD::string_to_bool ( *(pe->get_values().begin() ) );
+	if ( pe->get_nb_values() != 1 ||  i == -1 )
+	  throw Invalid_Parameter ( "Parameters.cpp" , __LINE__ ,
+				    "invalid parameter: MODEL_EVAL_SORT" );
+	set_MODEL_EVAL_SORT ( i == 1 );
+	pe->set_has_been_interpreted();
+      }
+    }
+
+    // MODEL_EVAL_SORT_CAUTIOUS:
+    {
+      pe = entries.find ( "MODEL_EVAL_SORT_CAUTIOUS" );
+      if ( pe ) {
+	if ( !pe->is_unique() )
+	  throw Invalid_Parameter ( "Parameters.cpp" , __LINE__ ,
+		"invalid parameter: MODEL_EVAL_SORT_CAUTIOUS not unique" );
+	i = NOMAD::string_to_bool ( *(pe->get_values().begin() ) );
+	if ( pe->get_nb_values() != 1 ||  i == -1 )
+	  throw Invalid_Parameter ( "Parameters.cpp" , __LINE__ ,
+				    "invalid parameter: MODEL_EVAL_SORT_CAUTIOUS" );
+	set_MODEL_EVAL_SORT_CAUTIOUS ( i == 1 );
+	pe->set_has_been_interpreted();
+      }
+    }
+  }
+
+  // SPECULATIVE_SEARCH:
+  // -------------------
+  {
+    pe = entries.find ( "SPECULATIVE_SEARCH" );
+    if ( pe ) {
+      if ( !pe->is_unique() )
+	throw Invalid_Parameter ( "Parameters.cpp" , __LINE__ ,
+	      "invalid parameter: SPECULATIVE_SEARCH not unique" );
+      i = NOMAD::string_to_bool ( *(pe->get_values().begin() ) );
+      if ( pe->get_nb_values() != 1 ||  i == -1 )
+	throw Invalid_Parameter ( "Parameters.cpp" , __LINE__ ,
+				  "invalid parameter: SPECULATIVE_SEARCH" );
+      set_SPECULATIVE_SEARCH ( i == 1 );
+      pe->set_has_been_interpreted();
+    }
+  }
+
+  // VNS_SEARCH:
+  // -----------
+  {
+    pe = entries.find ( "VNS_SEARCH" );
+    if ( pe ) {
+      if ( !pe->is_unique() )
+	throw Invalid_Parameter ( "Parameters.cpp" , __LINE__ ,
+				  "invalid parameter: VNS_SEARCH not unique" );
+      if ( pe->get_nb_values() != 1 )
+	throw Invalid_Parameter ( "Parameters.cpp" , __LINE__ ,
+				  "invalid parameter: VNS_SEARCH" );
+
+      s = *(pe->get_values().begin());
+      i = NOMAD::string_to_bool ( s );
+      
+      // entered as a real:
+      if ( i == -1 || s == "1" ) {
+	if ( !d.atof ( s ) )
+	  throw Invalid_Parameter ( "Parameters.cpp" , __LINE__ ,
+		"invalid parameter: VNS_SEARCH" );
+	set_VNS_SEARCH ( d );
+      }
+      // entered as a boolean:
+      else
+	set_VNS_SEARCH ( i == 1 );
+
+      pe->set_has_been_interpreted();
+    }
+  }
+
+  // CACHE_SEARCH:
+  // -------------
+  {
+    pe = entries.find ( "CACHE_SEARCH" );
+    if ( pe ) {
+      if ( !pe->is_unique() )
+	throw Invalid_Parameter ( "Parameters.cpp" , __LINE__ ,
+	      "invalid parameter: CACHE_SEARCH not unique" );
+      i = NOMAD::string_to_bool ( *(pe->get_values().begin() ) );
+      if ( pe->get_nb_values() != 1 ||  i == -1 )
+	throw Invalid_Parameter ( "Parameters.cpp" , __LINE__ ,
+	      "invalid parameter: CACHE_SEARCH" );
+      set_CACHE_SEARCH ( i == 1 );
+      pe->set_has_been_interpreted();
+    }
+  }
+
+  // LH_SEARCH:
+  // ----------
+  {
+    pe = entries.find ( "LH_SEARCH" );
+    if ( pe ) {
+      if ( !pe->is_unique() )
+	throw Invalid_Parameter ( "Parameters.cpp" , __LINE__ ,
+	      "invalid parameter: LH_SEARCH not unique" );
+      if ( pe->get_nb_values() != 2 )
+	throw Invalid_Parameter ( "Parameters.cpp" , __LINE__ ,
+	      "invalid parameter: LH_SEARCH" );
+      it = pe->get_values().begin();
+
+      if ( !NOMAD::atoi (*it++ , i) || i < 0 )
+	throw Invalid_Parameter ( "Parameters.cpp" , __LINE__ ,
+	      "invalid parameter: LH_SEARCH" );
+
+      if ( !NOMAD::atoi (*it , j) || j < 0 )
+	throw Invalid_Parameter ( "Parameters.cpp" , __LINE__ ,
+	      "invalid parameter: LH_SEARCH" );
+
+      set_LH_SEARCH ( i , j );
+      pe->set_has_been_interpreted();
+    }
+
+    // OPPORTUNISTIC_LH:
+    // -----------------
+    {
+      pe = entries.find ( "OPPORTUNISTIC_LH" );
+      if ( pe ) {
+	if ( !pe->is_unique() )
+	  throw Invalid_Parameter ( "Parameters.cpp" , __LINE__ ,
+		"invalid parameter: OPPORTUNISTIC_LH not unique" );
+	i = NOMAD::string_to_bool ( *(pe->get_values().begin() ) );
+	if ( pe->get_nb_values() != 1 ||  i == -1 )
+	  throw Invalid_Parameter ( "Parameters.cpp" , __LINE__ ,
+				    "invalid parameter: OPPORTUNISTIC_LH" );
+	set_OPPORTUNISTIC_LH ( i == 1 );
+	pe->set_has_been_interpreted();
+      }
+    }
+  }
+
+  // OPPORTUNISTIC_CACHE_SEARCH:
+  // ---------------------------
+  {
+    pe = entries.find ( "OPPORTUNISTIC_CACHE_SEARCH" );
+    if ( pe ) {
+      if ( !pe->is_unique() )
+	throw Invalid_Parameter ( "Parameters.cpp" , __LINE__ ,
+	      "invalid parameter: OPPORTUNISTIC_CACHE_SEARCH not unique" );
+      i = NOMAD::string_to_bool ( *(pe->get_values().begin() ) );
+      if ( pe->get_nb_values() != 1 ||  i == -1 )
+	throw Invalid_Parameter ( "Parameters.cpp" , __LINE__ ,
+	      "invalid parameter: OPPORTUNISTIC_CACHE_SEARCH" );
+      set_OPPORTUNISTIC_CACHE_SEARCH ( i == 1 );
+      pe->set_has_been_interpreted();
+    }
+  }
+  
+  // opportunistic strategy:
+  // -----------------------
+  {
+    // OPPORTUNISTIC_EVAL:
+    pe = entries.find ( "OPPORTUNISTIC_EVAL" );
+    if ( pe ) {
+      if ( !pe->is_unique() )
+	throw Invalid_Parameter ( "Parameters.cpp" , __LINE__ ,
+	      "invalid parameter: OPPORTUNISTIC_EVAL not unique" );
+      i = NOMAD::string_to_bool ( *(pe->get_values().begin() ) );
+      if ( pe->get_nb_values() != 1 ||  i == -1 )
+	throw Invalid_Parameter ( "Parameters.cpp" , __LINE__ ,
+				  "invalid parameter: OPPORTUNISTIC_EVAL" );
+      set_OPPORTUNISTIC_EVAL ( i == 1 );
+      pe->set_has_been_interpreted();
+    }
+
+    // OPPORTUNISTIC_MIN_NB_SUCCESS:
+    pe = entries.find ( "OPPORTUNISTIC_MIN_NB_SUCCESS" );
+    if ( pe ) {
+      if ( !pe->is_unique() )
+	throw Invalid_Parameter ( "Parameters.cpp" , __LINE__ ,
+	      "invalid parameter: OPPORTUNISTIC_MIN_NB_SUCCESS not unique" );
+      if ( pe->get_nb_values() != 1 || !NOMAD::atoi (*(pe->get_values().begin()) , i) )
+	throw Invalid_Parameter ( "Parameters.cpp" , __LINE__ ,
+	      "invalid parameter: OPPORTUNISTIC_MIN_NB_SUCCESS" );
+      pe->set_has_been_interpreted();
+      set_OPPORTUNISTIC_MIN_NB_SUCCESS (i);
+    }
+
+    // OPPORTUNISTIC_MIN_EVAL:
+    pe = entries.find ( "OPPORTUNISTIC_MIN_EVAL" );
+    if ( pe ) {
+      if ( !pe->is_unique() )
+	throw Invalid_Parameter ( "Parameters.cpp" , __LINE__ ,
+	      "invalid parameter: OPPORTUNISTIC_MIN_EVAL not unique" );
+      if ( pe->get_nb_values() != 1 || !NOMAD::atoi (*(pe->get_values().begin()) , i) )
+	throw Invalid_Parameter ( "Parameters.cpp" , __LINE__ ,
+				  "invalid parameter: OPPORTUNISTIC_MIN_EVAL" );
+      pe->set_has_been_interpreted();
+      set_OPPORTUNISTIC_MIN_EVAL (i);
+    }
+
+    // OPPORTUNISTIC_MIN_F_IMPRVMT:
+    pe = entries.find ( "OPPORTUNISTIC_MIN_F_IMPRVMT" );
+    if ( pe ) {
+      if ( !pe->is_unique() )
+	throw Invalid_Parameter ( "Parameters.cpp" , __LINE__ ,
+	      "invalid parameter: OPPORTUNISTIC_MIN_F_IMPRVMT not unique" );
+      if ( pe->get_nb_values() != 1 || !d.atof ( *(pe->get_values().begin()) ) )
+	throw Invalid_Parameter ( "Parameters.cpp" , __LINE__ ,
+	      "invalid parameter: OPPORTUNISTIC_MIN_F_IMPRVMT" );
+      pe->set_has_been_interpreted();
+      set_OPPORTUNISTIC_MIN_F_IMPRVMT ( d );
+    }
+
+    // OPPORTUNISTIC_LUCKY_EVAL:
+    pe = entries.find ( "OPPORTUNISTIC_LUCKY_EVAL" );
+    if ( pe ) {
+      if ( !pe->is_unique() )
+	throw Invalid_Parameter ( "Parameters.cpp" , __LINE__ ,
+	      "invalid parameter: OPPORTUNISTIC_LUCKY_EVAL not unique" );
+      i = NOMAD::string_to_bool ( *(pe->get_values().begin() ) );
+      if ( pe->get_nb_values() != 1 ||  i == -1 )
+	throw Invalid_Parameter ( "Parameters.cpp" , __LINE__ ,
+				  "invalid parameter: OPPORTUNISTIC_LUCKY_EVAL" );
+      set_OPPORTUNISTIC_LUCKY_EVAL ( i == 1 );
+      pe->set_has_been_interpreted();
+    }
+  }
+
+  // Directions (DIRECTION_TYPE and SEC_POLL_DIR_TYPE):
+  // --------------------------------------------------
+  {
+    NOMAD::direction_type dt;
+
+    pe = entries.find ( "DIRECTION_TYPE" );
+    while ( pe ) {
+
+      if ( !NOMAD::strings_to_direction_type ( pe->get_values() , dt ) )
+	throw Invalid_Parameter ( "Parameters.cpp" , __LINE__ ,
+				  "invalid parameter: DIRECTION_TYPE" );
+      set_DIRECTION_TYPE ( dt );
+
+      pe->set_has_been_interpreted();
+      pe = pe->get_next();
+    }
+
+    pe = entries.find ( "SEC_POLL_DIR_TYPE" );
+    while ( pe ) {
+      if ( !NOMAD::strings_to_direction_type ( pe->get_values() , dt ) )
+	throw Invalid_Parameter ( "Parameters.cpp" , __LINE__ ,
+				  "invalid parameter: SEC_POLL_DIR_TYPE" );
+      set_SEC_POLL_DIR_TYPE ( dt );
+
+      pe->set_has_been_interpreted();
+      pe = pe->get_next();
+    }
+  }
+
+  // MAX_ITERATIONS:
+  // ---------------
+  {
+    pe = entries.find ( "MAX_ITERATIONS" );
+    if ( pe ) {
+      if ( !pe->is_unique() )
+	throw Invalid_Parameter ( "Parameters.cpp" , __LINE__ ,
+				  "invalid parameter: MAX_ITERATIONS not unique" );
+      if ( pe->get_nb_values() != 1 || !NOMAD::atoi (*(pe->get_values().begin()) , i) )
+	throw Invalid_Parameter ( "Parameters.cpp" , __LINE__ ,
+				  "invalid parameter: MAX_ITERATIONS" );
+      pe->set_has_been_interpreted();
+      set_MAX_ITERATIONS (i);
+    }
+  }
+
+  // MAX_CACHE_MEMORY:
+  // -----------------
+  {
+    pe = entries.find ( "MAX_CACHE_MEMORY" );
+    if ( pe ) {
+      if ( !pe->is_unique() )
+	throw Invalid_Parameter ( "Parameters.cpp" , __LINE__ ,
+				  "invalid parameter: MAX_CACHE_MEMORY not unique" );
+      if ( pe->get_nb_values() != 1 || !d.atof ( *(pe->get_values().begin()) ) )
+	throw Invalid_Parameter ( "Parameters.cpp" , __LINE__ ,
+				  "invalid parameter: MAX_CACHE_MEMORY" );
+      pe->set_has_been_interpreted();
+      set_MAX_CACHE_MEMORY (static_cast<float>(d.value()));
+    }
+  }
+
+  // MAX_EVAL:
+  // ---------
+  {
+    pe = entries.find ( "MAX_EVAL" );
+    if ( pe ) {
+      if ( !pe->is_unique() )
+	throw Invalid_Parameter ( "Parameters.cpp" , __LINE__ ,
+				  "invalid parameter: MAX_EVAL not unique" );
+      if ( pe->get_nb_values() != 1 || !NOMAD::atoi (*(pe->get_values().begin()) , i) )
+	throw Invalid_Parameter ( "Parameters.cpp" , __LINE__ ,
+				  "invalid parameter: MAX_EVAL" );
+      pe->set_has_been_interpreted();
+      set_MAX_EVAL (i);
+    }
+  }
+
+  // MAX_BB_EVAL:
+  // ------------
+  {
+    pe = entries.find ( "MAX_BB_EVAL" );
+    if ( pe ) {
+      if ( !pe->is_unique() )
+	throw Invalid_Parameter ( "Parameters.cpp" , __LINE__ ,
+				  "invalid parameter: MAX_BB_EVAL not unique" );
+      if ( pe->get_nb_values() != 1 || !NOMAD::atoi (*(pe->get_values().begin()) , i) )
+	throw Invalid_Parameter ( "Parameters.cpp" , __LINE__ ,
+				  "invalid parameter: MAX_BB_EVAL" );
+      pe->set_has_been_interpreted();
+      set_MAX_BB_EVAL (i);
+    }
+  }
+
+  // MAX_SIM_BB_EVAL:
+  // ----------------
+  {
+    pe = entries.find ( "MAX_SIM_BB_EVAL" );
+    if ( pe ) {
+      if ( !pe->is_unique() )
+	throw Invalid_Parameter ( "Parameters.cpp" , __LINE__ ,
+				  "invalid parameter: MAX_SIM_BB_EVAL not unique" );
+      if ( pe->get_nb_values() != 1 || !NOMAD::atoi (*(pe->get_values().begin()) , i) )
+	throw Invalid_Parameter ( "Parameters.cpp" , __LINE__ ,
+				  "invalid parameter: MAX_SIM_BB_EVAL" );
+      pe->set_has_been_interpreted();
+      set_MAX_SIM_BB_EVAL (i);
+    }
+  }
+
+  // MAX_SGTE_EVAL:
+  // --------------
+  {
+    pe = entries.find ( "MAX_SGTE_EVAL" );
+    if ( pe ) {
+      if ( !pe->is_unique() )
+	throw Invalid_Parameter ( "Parameters.cpp" , __LINE__ ,
+				  "invalid parameter: MAX_SGTE_EVAL not unique" );
+      if ( pe->get_nb_values() != 1 || !NOMAD::atoi (*(pe->get_values().begin()), i) )
+	throw Invalid_Parameter ( "Parameters.cpp" , __LINE__ ,
+				  "invalid parameter: MAX_SGTE_EVAL" );
+      pe->set_has_been_interpreted();
+      set_MAX_SGTE_EVAL (i);
+    }
+  }
+
+  // MAX_TIME:
+  // ---------
+  {
+    pe = entries.find ( "MAX_TIME" );
+    if ( pe ) {
+      if ( !pe->is_unique() )
+	throw Invalid_Parameter ( "Parameters.cpp" , __LINE__ ,
+				  "invalid parameter: MAX_TIME not unique" );
+      if ( pe->get_nb_values() != 1 || !NOMAD::atoi (*(pe->get_values().begin()), i) )
+	throw Invalid_Parameter ( "Parameters.cpp" , __LINE__ ,
+				  "invalid parameter: MAX_TIME" );
+
+      pe->set_has_been_interpreted();
+      set_MAX_TIME (i);
+    }
+  }
+
+  // STAT_SUM_TARGET:
+  // ----------------
+  {
+    pe = entries.find ( "STAT_SUM_TARGET" );
+    if ( pe ) {
+      if ( !pe->is_unique() )
+	throw Invalid_Parameter ( "Parameters.cpp" , __LINE__ ,
+				  "invalid parameter: STAT_SUM_TARGET not unique" );
+      if ( pe->get_nb_values() != 1 || !d.atof ( *(pe->get_values().begin()) ) )
+	throw Invalid_Parameter ( "Parameters.cpp" , __LINE__ ,
+				  "invalid parameter: STAT_SUM_TARGET" );
+      pe->set_has_been_interpreted();
+      set_STAT_SUM_TARGET ( d );
+    }
+  }
+
+  // L_CURVE_TARGET:
+  // ---------------
+  {
+    pe = entries.find ( "L_CURVE_TARGET" );
+    if ( pe ) {
+      if ( !pe->is_unique() )
+	throw Invalid_Parameter ( "Parameters.cpp" , __LINE__ ,
+				  "invalid parameter: L_CURVE_TARGET not unique" );
+      if ( pe->get_nb_values() != 1 || !d.atof ( *(pe->get_values().begin()) ) )
+	throw Invalid_Parameter ( "Parameters.cpp" , __LINE__ ,
+				  "invalid parameter: L_CURVE_TARGET" );
+      pe->set_has_been_interpreted();
+      set_L_CURVE_TARGET ( d );
+    }
+  }
+  
+  // EXTENDED_POLL_TRIGGER:
+  // ----------------------
+  {
+    pe = entries.find ( "EXTENDED_POLL_TRIGGER" );
+    if ( pe ) {
+      if ( !pe->is_unique() )
+	throw Invalid_Parameter ( "Parameters.cpp" , __LINE__ ,
+	      "invalid parameter: EXTENDED_POLL_TRIGGER not unique" );
+
+      bool rel;
+
+      if ( pe->get_nb_values() != 1 ||
+	   !d.relative_atof ( *(pe->get_values().begin()) , rel ) )
+	throw Invalid_Parameter ( "Parameters.cpp" , __LINE__ ,
+	      "invalid parameter: EXTENDED_POLL_TRIGGER" );
+
+      pe->set_has_been_interpreted();
+      set_EXTENDED_POLL_TRIGGER ( d , rel );
+    }
+  }
+
+  // EXTENDED_POLL_ENABLED:
+  // ----------------------
+  {
+    pe = entries.find ( "EXTENDED_POLL_ENABLED" );
+    if ( pe ) {
+      if ( !pe->is_unique() )
+	throw Invalid_Parameter ( "Parameters.cpp" , __LINE__ ,
+	      "invalid parameter: EXTENDED_POLL_ENABLED not unique" );
+      i = NOMAD::string_to_bool ( *(pe->get_values().begin() ) );
+      if ( pe->get_nb_values() != 1 ||  i == -1 )
+	throw Invalid_Parameter ( "Parameters.cpp" , __LINE__ ,
+				  "invalid parameter: EXTENDED_POLL_ENABLED" );
+      set_EXTENDED_POLL_ENABLED ( i == 1 );
+      pe->set_has_been_interpreted();
+    }
+  }
+
+  // USER_CALLS_ENABLED:
+  // -------------------
+  {
+    pe = entries.find ( "USER_CALLS_ENABLED" );
+    if ( pe ) {
+      if ( !pe->is_unique() )
+	throw Invalid_Parameter ( "Parameters.cpp" , __LINE__ ,
+	      "invalid parameter: USER_CALLS_ENABLED not unique" );
+      i = NOMAD::string_to_bool ( *(pe->get_values().begin() ) );
+      if ( pe->get_nb_values() != 1 ||  i == -1 )
+	throw Invalid_Parameter ( "Parameters.cpp" , __LINE__ ,
+				  "invalid parameter: USER_CALLS_ENABLED" );
+      set_USER_CALLS_ENABLED ( i == 1 );
+      pe->set_has_been_interpreted();
+    }
+  }
+
+  // ASYNCHRONOUS:
+  // -------------
+  {
+    pe = entries.find ( "ASYNCHRONOUS" );
+    if ( pe ) {
+      if ( !pe->is_unique() )
+	throw Invalid_Parameter ( "Parameters.cpp" , __LINE__ ,
+	      "invalid parameter: ASYNCHRONOUS not unique" );
+      i = NOMAD::string_to_bool ( *(pe->get_values().begin() ) );
+      if ( pe->get_nb_values() != 1 ||  i == -1 )
+	throw Invalid_Parameter ( "Parameters.cpp" , __LINE__ ,
+				  "invalid parameter: ASYNCHRONOUS" );
+      set_ASYNCHRONOUS ( i == 1 );
+      pe->set_has_been_interpreted();
+    }
+  }
+
+  // RHO:
+  // ----
+  {
+    pe = entries.find ( "RHO" );
+    if ( pe ) {
+      if ( !pe->is_unique() )
+	throw Invalid_Parameter ( "Parameters.cpp" , __LINE__ ,
+				  "invalid parameter: RHO not unique" );
+      if ( pe->get_nb_values() != 1 || !d.atof ( *(pe->get_values().begin()) ) )
+	throw Invalid_Parameter ( "Parameters.cpp" , __LINE__ ,
+				  "invalid parameter: RHO" );
+      pe->set_has_been_interpreted();
+      set_RHO(d);
+    }
+  }
+
+  // H_MIN:
+  // ------
+  {
+    pe = entries.find ( "H_MIN" );
+    if ( pe ) {
+      if ( !pe->is_unique() )
+	throw Invalid_Parameter ( "Parameters.cpp" , __LINE__ ,
+				  "invalid parameter: H_MIN not unique" );
+      if ( pe->get_nb_values() != 1 || !d.atof ( *(pe->get_values().begin()) ) )
+	throw Invalid_Parameter ( "Parameters.cpp" , __LINE__ ,
+				  "invalid parameter: H_MIN" );
+      pe->set_has_been_interpreted();
+      set_H_MIN(d);
+    }
+  }
+
+  // H_MAX_0:
+  // --------
+  {
+    pe = entries.find ( "H_MAX_0" );
+    if ( pe ) {
+      if ( !pe->is_unique() )
+	throw Invalid_Parameter ( "Parameters.cpp" , __LINE__ ,
+				  "invalid parameter: H_MAX_0 not unique" );
+      if ( pe->get_nb_values() != 1 || !d.atof ( *(pe->get_values().begin()) ) )
+	throw Invalid_Parameter ( "Parameters.cpp" , __LINE__ ,
+				  "Invalid parameter: H_MAX_0" );
+      pe->set_has_been_interpreted();
+      set_H_MAX_0(d);
+    }
+  }
+
+  // H_NORM:
+  // -------
+  {
+    pe = entries.find ( "H_NORM" );
+    if ( pe ) {
+      if ( !pe->is_unique() )
+	throw Invalid_Parameter ( "Parameters.cpp" , __LINE__ ,
+				  "invalid parameter: H_NORM not unique" );
+      NOMAD::hnorm_type hn = NOMAD::L2;
+      if ( pe->get_nb_values() != 1 ||
+	   !NOMAD::string_to_hnorm_type ( *(pe->get_values().begin()) , hn ) )
+	throw Invalid_Parameter ( "Parameters.cpp" , __LINE__ ,
+				  "Invalid parameter: H_NORM" );
+      pe->set_has_been_interpreted();
+      set_H_NORM ( hn );
+    }
+  }
+
+  // TMP_DIR:
+  // --------
+  {
+    _tmp_dir.clear();
+    pe = entries.find ( "TMP_DIR" );
+    if ( pe ) {
+      if ( !pe->is_unique() )
+	throw Invalid_Parameter ( "Parameters.cpp" , __LINE__ ,
+				  "invalid parameter: TMP_DIR not unique" );
+
+      if ( pe->get_nb_values() != 1 )
+	throw Invalid_Parameter ( "Parameters.cpp" , __LINE__ ,
+				  "invalid parameter: TMP_DIR" );
+      
+      set_TMP_DIR ( *(pe->get_values().begin()) );
+
+      pe->set_has_been_interpreted();
+    }
+  }
+
+  // ADD_SEED_TO_FILE_NAMES:
+  // -----------------------
+  {
+    pe = entries.find ( "ADD_SEED_TO_FILE_NAMES" );
+    if ( pe ) {
+      if ( !pe->is_unique() )
+	throw Invalid_Parameter ( "Parameters.cpp" , __LINE__ ,
+	      "invalid parameter: ADD_SEED_TO_FILE_NAMES not unique" );
+
+      if ( pe->get_nb_values() != 1 )
+	throw Invalid_Parameter ( "Parameters.cpp" , __LINE__ ,
+	      "invalid parameter: ADD_SEED_TO_FILE_NAMES" );
+
+      i = NOMAD::string_to_bool ( *(pe->get_values().begin() ) );
+      if ( pe->get_nb_values() != 1 ||  i == -1 )
+	throw Invalid_Parameter ( "Parameters.cpp" , __LINE__ ,
+	      "invalid parameter: ADD_SEED_TO_FILE_NAMES" );
+      set_ADD_SEED_TO_FILE_NAMES ( i == 1 );
+      pe->set_has_been_interpreted();
+    }
+  }
+
+  // SOLUTION_FILE:
+  // --------------
+  {
+    _solution_file.clear();
+    pe = entries.find ( "SOLUTION_FILE" );
+    if ( pe ) {
+      if ( !pe->is_unique() )
+	throw Invalid_Parameter ( "Parameters.cpp" , __LINE__ ,
+				  "invalid parameter: SOLUTION_FILE not unique" );
+
+      if ( pe->get_nb_values() != 1 )
+	throw Invalid_Parameter ( "Parameters.cpp" , __LINE__ ,
+				  "invalid parameter: SOLUTION_FILE" );
+      set_SOLUTION_FILE ( *(pe->get_values().begin()) );
+      pe->set_has_been_interpreted();
+    }
+  }
+
+  // HISTORY_FILE:
+  // -------------
+  {
+    _history_file.clear();
+    pe = entries.find ( "HISTORY_FILE" );
+    if ( pe ) {
+      if ( !pe->is_unique() )
+	throw Invalid_Parameter ( "Parameters.cpp" , __LINE__ ,
+				  "invalid parameter: HISTORY_FILE not unique" );
+
+      if ( pe->get_nb_values() != 1 )
+	throw Invalid_Parameter ( "Parameters.cpp" , __LINE__ ,
+				  "invalid parameter: HISTORY_FILE" );
+      set_HISTORY_FILE ( *(pe->get_values().begin()) );
+      pe->set_has_been_interpreted();
+    }
+  }
+
+  // STATS_FILE:
+  // -----------
+  {
+    pe = entries.find ( "STATS_FILE" );
+    if ( pe ) {
+
+      if ( !pe->is_unique() )
+	throw Invalid_Parameter ( "Parameters.cpp" , __LINE__ ,
+	      "invalid parameter: STATS_FILE not unique" );      
+
+      end = pe->get_values().end();
+      it  = pe->get_values().begin();
+      std::string file_name = *it;
+      ++it;
+
+      std::list<std::string> ls;
+      while ( it != end ) {
+	ls.push_back(*it);
+	++it;
+      }
+
+      ls.resize(ls.size()-1);
+
+      set_STATS_FILE ( file_name , ls );
+      pe->set_has_been_interpreted();
+    }
+  }
+
+  // CACHE FILE:
+  // -----------
+  {
+    _cache_file.clear();
+    pe = entries.find ( "CACHE_FILE" );
+    if ( pe ) {
+      if ( !pe->is_unique() )
+	throw Invalid_Parameter ( "Parameters.cpp" , __LINE__ ,
+				  "invalid parameter: CACHE_FILE not unique" );
+      if ( pe->get_nb_values() != 1 )
+	throw Invalid_Parameter ( "Parameters.cpp" , __LINE__ ,
+				  "invalid parameter: CACHE_FILE" );
+      set_CACHE_FILE ( *(pe->get_values().begin()) );
+      pe->set_has_been_interpreted();
+    }
+  }
+
+  // SGTE_CACHE FILE:
+  // ----------------
+  {
+    _sgte_cache_file.clear();
+    pe = entries.find ( "SGTE_CACHE_FILE" );
+    if ( pe ) {
+      if ( !pe->is_unique() )
+	throw Invalid_Parameter ( "Parameters.cpp" , __LINE__ ,
+				  "invalid parameter: SGTE_CACHE_FILE not unique" );
+      if ( pe->get_nb_values() != 1 )
+	throw Invalid_Parameter ( "Parameters.cpp" , __LINE__ ,
+				  "invalid parameter: SGTE_CACHE_FILE" );
+      set_SGTE_CACHE_FILE ( *(pe->get_values().begin()) );
+      pe->set_has_been_interpreted();
+    }
+  }
+
+
+  // CACHE_SAVE_PERIOD:
+  // ------------------
+  {
+    pe = entries.find ( "CACHE_SAVE_PERIOD" );
+    if ( pe ) {
+      if ( !pe->is_unique() )
+	throw Invalid_Parameter ( "Parameters.cpp" , __LINE__ ,
+	      "invalid parameter: CACHE_SAVE_PERIOD not unique" );
+      if ( pe->get_nb_values() != 1 || !NOMAD::atoi (*(pe->get_values().begin()) , i) )
+	throw Invalid_Parameter ( "Parameters.cpp" , __LINE__ ,
+				  "invalid parameter: CACHE_SAVE_PERIOD" );
+      set_CACHE_SAVE_PERIOD (i);
+      pe->set_has_been_interpreted();
+    }
+  }
+
+  // SGTE_COST:
+  // ----------
+  {
+    pe = entries.find ( "SGTE_COST" );
+    if ( pe ) {
+      if ( !pe->is_unique() )
+	throw Invalid_Parameter ( "Parameters.cpp" , __LINE__ ,
+				  "invalid parameter: SGTE_COST not unique" );
+      if ( pe->get_nb_values() != 1 ||
+	   !NOMAD::atoi (*(pe->get_values().begin()) , i) )
+	throw Invalid_Parameter ( "Parameters.cpp" , __LINE__ ,
+				  "invalid parameter: SGTE_COST" );
+      set_SGTE_COST (i);
+      pe->set_has_been_interpreted();
+    }
+  }
+
+  // X0:
+  // ---
+  interpret_x0 ( entries );
+
+  // FIXED_VARIABLE:
+  // ---------------
+  interpret_BFVS ( entries , "FIXED_VARIABLE");
+
+  // LOWER_BOUND:
+  // ------------
+  interpret_BFVS ( entries , "LOWER_BOUND");
+
+  // UPPER_BOUND:
+  // ------------
+  interpret_BFVS ( entries , "UPPER_BOUND");
+
+  // SCALING:
+  // --------
+  interpret_BFVS ( entries , "SCALING" );
+
+  // BB_INPUT_TYPE:
+  // --------------
+  interpret_bb_input_type ( entries );
+
+  // F_TARGET:
+  // ---------
+  interpret_f_target ( entries );
+
+  // STOP_IF_FEASIBLE:
+  // -----------------
+  pe = entries.find ( "STOP_IF_FEASIBLE" );
+  if ( pe ) {
+    if ( !pe->is_unique() )
+      throw Invalid_Parameter ( "Parameters.cpp" , __LINE__ ,
+	    "invalid parameter: STOP_IF_FEASIBLE not unique" );
+    i = NOMAD::string_to_bool ( *(pe->get_values().begin() ) );
+    if ( pe->get_nb_values() != 1 ||  i == -1 )
+      throw Invalid_Parameter ( "Parameters.cpp" , __LINE__ ,
+	    "invalid parameter: STOP_IF_FEASIBLE" );
+    pe->set_has_been_interpreted();
+    set_STOP_IF_FEASIBLE ( i == 1 );
+  }
+
+  // BB_INPUT_INCLUDE_TAG:
+  // ---------------------
+  {
+    pe = entries.find ( "BB_INPUT_INCLUDE_TAG" );
+    if ( pe ) {
+      if ( !pe->is_unique() )
+	throw Invalid_Parameter ( "Parameters.cpp" , __LINE__ ,
+	      "invalid parameter: BB_INPUT_INCLUDE_TAG not unique" );
+      i = NOMAD::string_to_bool ( *(pe->get_values().begin() ) );
+      if ( pe->get_nb_values() != 1 ||  i == -1 )
+	throw Invalid_Parameter ( "Parameters.cpp" , __LINE__ ,
+	      "invalid parameter: BB_INPUT_INCLUDE_TAG" );
+      set_BB_INPUT_INCLUDE_TAG ( i == 1 );
+      pe->set_has_been_interpreted();
+    }
+  }
+
+  // BB_INPUT_INCLUDE_SEED:
+  // ----------------------
+  {
+    pe = entries.find ( "BB_INPUT_INCLUDE_SEED" );
+    if ( pe ) {
+      if ( !pe->is_unique() )
+	throw Invalid_Parameter ( "Parameters.cpp" , __LINE__ ,
+	      "invalid parameter: BB_INPUT_INCLUDE_SEED not unique" );
+      i = NOMAD::string_to_bool ( *(pe->get_values().begin() ) );
+      if ( pe->get_nb_values() != 1 ||  i == -1 )
+	throw Invalid_Parameter ( "Parameters.cpp" , __LINE__ ,
+	      "invalid parameter: BB_INPUT_INCLUDE_SEED" );
+      set_BB_INPUT_INCLUDE_SEED ( i == 1 );
+      pe->set_has_been_interpreted();
+    }
+  }
+  // BB_REDIRECTION:
+  // ---------------
+  {
+    pe = entries.find ( "BB_REDIRECTION" );
+    if ( pe ) {
+      if ( !pe->is_unique() )
+	throw Invalid_Parameter ( "Parameters.cpp" , __LINE__ ,
+	      "invalid parameter: BB_REDIRECTION not unique" );
+      i = NOMAD::string_to_bool ( *(pe->get_values().begin() ) );
+      if ( pe->get_nb_values() != 1 ||  i == -1 )
+	throw Invalid_Parameter ( "Parameters.cpp" , __LINE__ ,
+	      "invalid parameter: BB_REDIRECTION" );
+      set_BB_REDIRECTION ( i == 1 );
+      pe->set_has_been_interpreted();
+    }
+  }
+
+  // INITIAL_MESH_SIZE, MIN_MESH_SIZE, and MIN_POLL_SIZE:
+  // ----------------------------------------------------
+  interpret_mesh_sizes ( entries , "INITIAL_MESH_SIZE" );
+  interpret_mesh_sizes ( entries , "MIN_MESH_SIZE"     );
+  interpret_mesh_sizes ( entries , "MIN_POLL_SIZE"     );
+  
+  // BB_OUTPUT_TYPE:
+  // ---------------
+  {
+    pe = entries.find ( "BB_OUTPUT_TYPE" );
+
+    if ( !pe ) {
+      if ( _bb_output_type.empty() )
+	throw Invalid_Parameter ( "Parameters.cpp" , __LINE__ ,
+				  "invalid parameter: BB_OUTPUT_TYPE not defined" );
+    }
+    else {
+
+      if ( !pe->is_unique() )
+	throw Invalid_Parameter ( "Parameters.cpp" , __LINE__ ,
+				  "invalid parameter: BB_OUTPUT_TYPE not unique" );
+
+      m = pe->get_nb_values();
+
+      if ( m <= 0 )
+	throw Invalid_Parameter ( "Parameters.cpp" , __LINE__ ,
+				  "invalid parameter: BB_OUTPUT_TYPE" );
+    
+      NOMAD::bb_output_type            cur;
+      std::list<NOMAD::bb_output_type> bbot;
+      i   = 0;
+      end = pe->get_values().end();
+      for ( it = pe->get_values().begin() ; it != end ; ++it ) {
+	if ( !NOMAD::string_to_bb_output_type ( *it , cur ) ) {
+	  err = "invalid parameter: BB_OUTPUT_TYPE (" + pe->get_name();
+	  throw Invalid_Parameter ( "Parameters.cpp" , __LINE__ , err );
+	}
+	bbot.push_back (cur);
+      }
+
+      set_BB_OUTPUT_TYPE ( bbot );
+  
+      pe->set_has_been_interpreted();
+    }
+  }
+
+  // NEIGHBORS_EXE:
+  // --------------
+  {
+    _neighbors_exe.clear();
+    pe = entries.find ( "NEIGHBORS_EXE" );
+    if ( pe ) {
+      if ( !pe->is_unique() )
+	throw Invalid_Parameter ( "Parameters.cpp" , __LINE__ ,
+				  "invalid parameter: NEIGHBORS_EXE not unique" );
+
+      if ( pe->get_nb_values() != 1 )
+	throw Invalid_Parameter ( "Parameters.cpp" , __LINE__ ,
+				  "invalid parameter: NEIGHBORS_EXE" );
+      set_NEIGHBORS_EXE ( *(pe->get_values().begin()) );
+      pe->set_has_been_interpreted();
+    }
+  }
+
+  // BB_EXE:
+  // -------
+  {
+    pe = entries.find ( "BB_EXE" );
+    if ( pe ) {
+
+      if ( !pe->is_unique() )
+	throw Invalid_Parameter ( "Parameters.cpp" , __LINE__ ,
+				  "invalid parameter: BB_EXE not unique" );
+
+      m = pe->get_nb_values();
+
+      if ( m == 1 )
+	set_BB_EXE ( *pe->get_values().begin() );
+
+      else {
+
+	if ( m != static_cast<int>(_bb_output_type.size()) )
+	  throw Invalid_Parameter ( "Parameters.cpp" , __LINE__ ,
+				    "invalid parameter: BB_EXE" );
+      
+	std::list<std::string> bbexe;
+	end = pe->get_values().end();
+	for ( it = pe->get_values().begin() ; it != end ; ++it )
+	  bbexe.push_back (*it);
+
+	set_BB_EXE ( bbexe );
+      }
+
+      pe->set_has_been_interpreted();
+    }
+  }
+
+  // SGTE_EXE:
+  // ---------
+  {
+    pe = entries.find ( "SGTE_EXE" );
+    if ( pe ) {
+
+      std::string bb_exe_name , sgte_name;
+      
+      if ( pe->get_nb_values() == 1 ) {
+	if ( !pe->is_unique() )
+	  throw Invalid_Parameter ( "Parameters.cpp" , __LINE__ ,
+	        "invalid parameter: SGTE_EXE (with one arguement) not unique" );
+	sgte_name = *pe->get_values().begin();
+      }
+
+      else if ( pe->get_nb_values() == 2 ) {
+	bb_exe_name = *pe->get_values().begin();
+	sgte_name   = *(++pe->get_values().begin());
+      }
+
+      else
+	throw Invalid_Parameter ( "Parameters.cpp" , __LINE__ ,
+				  "invalid parameter: SGTE_EXE" );
+
+      set_SGTE_EXE ( bb_exe_name , sgte_name );
+      pe->set_has_been_interpreted();
+    }
+  }
+
+  // SGTE_EVAL_SORT:
+  // ---------------
+  {
+    pe = entries.find ( "SGTE_EVAL_SORT" );
+    if ( pe ) {
+      if ( !pe->is_unique() )
+	throw Invalid_Parameter ( "Parameters.cpp" , __LINE__ ,
+				  "invalid parameter: SGTE_EVAL_SORT not unique" );
+      i = NOMAD::string_to_bool ( *(pe->get_values().begin() ) );
+      if ( pe->get_nb_values() != 1 ||  i == -1 )
+	throw Invalid_Parameter ( "Parameters.cpp" , __LINE__ ,
+				  "invalid parameter: SGTE_EVAL_SORT" );
+      set_SGTE_EVAL_SORT ( i == 1 );
+      pe->set_has_been_interpreted();
+    }
+  }
+
+  // HAS_SGTE:
+  // ---------
+  {
+    pe = entries.find ( "HAS_SGTE" );
+    if ( pe ) {
+      if ( !pe->is_unique() )
+	throw Invalid_Parameter ( "Parameters.cpp" , __LINE__ ,
+				  "invalid parameter: HAS_SGTE not unique" );
+      i = NOMAD::string_to_bool ( *(pe->get_values().begin() ) );
+      if ( pe->get_nb_values() != 1 ||  i == -1 )
+	throw Invalid_Parameter ( "Parameters.cpp" , __LINE__ ,
+				  "invalid parameter: HAS_SGTE" );
+      set_HAS_SGTE ( i == 1 );
+      pe->set_has_been_interpreted();
+    }
+  }
+
+  // OPT_ONLY_SGTE:
+  // --------------
+  {
+    pe = entries.find ( "OPT_ONLY_SGTE" );
+    if ( pe ) {
+      if ( !pe->is_unique() )
+	throw Invalid_Parameter ( "Parameters.cpp" , __LINE__ ,
+				  "invalid parameter: OPT_ONLY_SGTE not unique" );
+      i = NOMAD::string_to_bool ( *(pe->get_values().begin() ) );
+      if ( pe->get_nb_values() != 1 ||  i == -1 )
+	throw Invalid_Parameter ( "Parameters.cpp" , __LINE__ ,
+				  "invalid parameter: OPT_ONLY_SGTE" );
+      set_OPT_ONLY_SGTE ( i == 1 );
+      pe->set_has_been_interpreted();
+    }
+  }
+
+  // DISPLAY_DEGREE:
+  // ---------------
+  {
+    pe = entries.find ( "DISPLAY_DEGREE" );
+    if ( pe ) {
+      if ( !pe->is_unique() )
+	throw Invalid_Parameter ( "Parameters.cpp" , __LINE__ ,
+	      "invalid parameter: DISPLAY_DEGREE not unique" );
+      if ( pe->get_nb_values() != 1 ||
+	   !set_DISPLAY_DEGREE ( *(pe->get_values().begin()) ) )
+	throw Invalid_Parameter ( "Parameters.cpp" , __LINE__ ,
+				  "invalid parameter: DISPLAY_DEGREE" );
+      pe->set_has_been_interpreted();
+    }
+  }
+
+  // OPEN_BRACE:
+  // -----------
+  {
+    pe = entries.find ( "OPEN_BRACE" );
+    if ( pe ) {
+      if ( !pe->is_unique() )
+	throw Invalid_Parameter ( "Parameters.cpp" , __LINE__ ,
+				  "invalid parameter: OPEN_BRACE not unique" );
+
+      if ( pe->get_nb_values() != 1 )
+	throw Invalid_Parameter ( "Parameters.cpp" , __LINE__ ,
+				  "invalid parameter: OPEN_BRACE" );
+      
+      set_OPEN_BRACE ( *(pe->get_values().begin()) );
+
+      pe->set_has_been_interpreted();
+    }
+  }
+
+  // CLOSED_BRACE:
+  // -------------
+  {
+    pe = entries.find ( "CLOSED_BRACE" );
+    if ( pe ) {
+      if ( !pe->is_unique() )
+	throw Invalid_Parameter ( "Parameters.cpp" , __LINE__ ,
+				  "invalid parameter: CLOSED_BRACE not unique" );
+
+      if ( pe->get_nb_values() != 1 )
+	throw Invalid_Parameter ( "Parameters.cpp" , __LINE__ ,
+				  "invalid parameter: CLOSED_BRACE" );
+      
+      set_CLOSED_BRACE ( *(pe->get_values().begin()) );
+
+      pe->set_has_been_interpreted();
+    }
+  }
+
+  // DISPLAY_STATS:
+  {
+    pe = entries.find ( "DISPLAY_STATS" );
+    if ( pe ) {
+      if ( !pe->is_unique() )
+	throw Invalid_Parameter ( "Parameters.cpp" , __LINE__ ,
+	      "invalid parameter: DISPLAY_STATS not unique" );      
+      std::list<std::string> ls;
+      end = pe->get_values().end();
+      for ( it = pe->get_values().begin() ; it != end ; ++it )
+	ls.push_back ( *it );
+      ls.resize ( ls.size()-1 );
+      set_DISPLAY_STATS ( ls );
+      pe->set_has_been_interpreted();
+    }
+  }
+
+  // SEED:
+  // -----
+  {
+    pe = entries.find ( "SEED" );
+
+    if ( pe ) {
+
+      if ( !pe->is_unique() )
+	throw Invalid_Parameter ( "Parameters.cpp" , __LINE__ ,
+				  "invalid parameter: SEED not unique" );
+      
+      if ( pe->get_nb_values() != 1 )
+	throw Invalid_Parameter ( "Parameters.cpp" , __LINE__ ,
+				  "invalid parameter: SEED" );
+
+      s = *(pe->get_values().begin());
+      NOMAD::toupper(s);
+
+      if ( s == "NONE" || s == "DIFF" )
+	i = -1;
+      else if ( !NOMAD::atoi ( s , i ) )
+	throw Invalid_Parameter ( "Parameters.cpp" , __LINE__ ,
+				  "invalid parameter: SEED" );
+      set_SEED(i);
+      pe->set_has_been_interpreted();
+    }
+  }
+
+  // VARIABLE_GROUP:
+  // ---------------
+  interpret_var_groups ( entries );
+  
+  // PERIODIC_VARIABLE:
+  // ------------------
+  interpret_periodic_var ( entries );
+
+  /*----------------------------------------------*/
+
+  // check the non-interpreted parameters:
+  pe = entries.find_non_interpreted();
+  if ( pe ) {
+    err = "invalid parameter: " + pe->get_name() + " - unknown";
+    throw Invalid_Parameter ( "Parameters.cpp" , __LINE__ , err );
+  }
+
+  // user must check the parameters with Parameters::check()
+}
+

@@ -130,7 +130,7 @@ namespace NOMAD {
                   (can be a \c std::ofstream)
 		  -- \b IN -- \b optional (default = \c std::cout).
      */
-    Display ( std::ostream & out = std::cout )
+    Display ( std::ostream & out ) // = std::cout )  //R does not like std::cout,  so we comment this default value.
       : _out          ( out                   ) , // can be a std::ofstream
 	_newline      ( true                  ) ,
 	_open_brace   ( "{"                   ) ,
