@@ -150,7 +150,7 @@ crsivderiv(y,
 \value{
   
     \code{crsivderiv} returns components \code{phi.prime}, \code{phi},
-    \code{num.iterations} and \code{norm.stop}.
+    \code{num.iterations}, \code{norm.stop} and \code{convergence}.
     
 }
   
