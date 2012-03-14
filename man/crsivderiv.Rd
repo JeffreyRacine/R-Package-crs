@@ -166,9 +166,9 @@ crsivderiv(y,
   \dQuote{Nonparametric Instrumental Regression,} Econometrica, 79,
   1541-1565.
   
-  Feve, F. and J.P. Florens (2010), \dQuote{The practice of
-  non-parametric estimation by solving inverse problems: the example of
-  transformation models,} Econometrics Journal, 13, S1-S27.
+  Feve, F. and J.P. Florens (2010), \dQuote{The Practice of
+  Non-parametric Estimation by Solving Inverse Problems: The Example of
+  Transformation Models,} Econometrics Journal, 13, S1-S27.
 
   Florens, J.P. and J.S. Racine (2012), \dQuote{Nonparametric
   Instrumental Derivatives,} Working Paper.
@@ -178,10 +178,10 @@ crsivderiv(y,
   Math. Nauk., 11, 233-334, in Russian.
 
   Horowitz, J.L. (2011), \dQuote{Applied Nonparametric Instrumental
-  Variables Estimation,}, Econometrica, 79, 347-394.
+  Variables Estimation,} Econometrica, 79, 347-394.
   
-  Landweber, L. (1951), \dQuote{An iterative formula for Fredholm
-  integral equations of the first kind,} American Journal of
+  Landweber, L. (1951), \dQuote{An Iterative Formula for Fredholm
+  Integral Equations of the First Kind,} American Journal of
   Mathematics, 73, 615-24.
 
   Li, Q. and J.S. Racine (2007), \emph{Nonparametric Econometrics:
