@@ -186,7 +186,7 @@ snomadr(eval.f,
   at http://www.gerad.ca/nomad.
 
   Le Digabel, S. (2011), \dQuote{Algorithm 909: NOMAD: Nonlinear
-  optimization with the MADS algorithm}. ACM Transactions on
+  Optimization With The MADS Algorithm}. ACM Transactions on
   Mathematical Software, 37(4):44:1-44:15.
   
 }

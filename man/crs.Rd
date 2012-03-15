@@ -409,20 +409,20 @@ in \code{x} are included or omitted from the resulting estimate }
   S. Le Digabel (2011), \dQuote{The NOMAD project}. Software available
   at http://www.gerad.ca/nomad.
 
-  Craven, P. and G. Wahba (1979), \dQuote{Smoothing noisy data with
-    spline functions,} Numerische Mathematik, 13, 377-403.
+  Craven, P. and G. Wahba (1979), \dQuote{Smoothing Noisy Data With
+    Spline Functions,} Numerische Mathematik, 13, 377-403.
 
   Doksum, K. and A. Samarov (1995), \dQuote{Nonparametric Estimation of
   Global Functionals and a Measure of the Explanatory Power of
   Covariates in Regression,} The Annals of Statistics, 23 1443-1473.
 
   Hurvich, C.M. and J.S. Simonoff and C.L. Tsai (1998),
-  \dQuote{Smoothing parameter selection in nonparametric regression
-    using an improved Akaike information criterion,} Journal of the
+  \dQuote{Smoothing Parameter Selection in Nonparametric Regression
+    Using an Improved Akaike Information Criterion,} Journal of the
   Royal Statistical Society B, 60, 271-293.
 
   Le Digabel, S. (2011), \dQuote{Algorithm 909: NOMAD: Nonlinear
-  optimization with the MADS algorithm}. ACM Transactions on
+  Optimization With The MADS Algorithm}. ACM Transactions on
   Mathematical Software, 37(4):44:1-44:15.
 
   Li, Q. and J.S. Racine (2007), \emph{Nonparametric Econometrics:
