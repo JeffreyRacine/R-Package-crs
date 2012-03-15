@@ -149,7 +149,7 @@ crsiv(y,
   derivative of the estimated \eqn{\varphi(Z,X)}{phi(Z,X)} and not that
   using \code{\link{crsivderiv}}, which instead uses the method of
   Florens and Racine (2012). Though both are statistically consistent,
-  practioners may desire one over the other hence we provide both.
+  practitioners may desire one over the other hence we provide both.
  }
 \details{
   Tikhonov regularization requires computation of weight matrices of
