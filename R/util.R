@@ -201,9 +201,14 @@ check.function <- function(u,tau=0.5) {
 }
 
 ## Note - this is defined in cv.kernel.spline so if you modify there
-## you must modify here also
+## you must modify here also.
 
-cv.rq <- function (model, tau = 0.5) {
+## Note - March 20 2012 - this is buggy - model$x is empty but
+## hat(model$x) returns 1 so it passes. This is not used for
+## cross-validation, rather only for summary/predict and potentially
+## pruning, so for the moment we let it sit.
+
+cv.rq <- function (model, tau = 0.5, weights = NULL) {
   return(mean(check.function(residuals(model),tau)/(1-hat(model$x))^(1/sqrt(tau*(1-tau)))))
 }
 
