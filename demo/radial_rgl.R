@@ -85,3 +85,10 @@ grid3d(c("x", "y+", "z"))
 ## rgl.postscript("foo.pdf","pdf"). Or better still,
 ## rgl.snapshot("foo.png") for a png that can be called directly in
 ## LaTeX via \includegraphics[scale=.6]{foo.png}
+
+## Note also that Sweave support exists as of v0.92.858 and can be
+## incorporated per the following illustration:
+## <<fig=true, grdevice=rgl.Sweave, pdf=false, stayopen=TRUE>>= 
+## x <- rnorm(100); y <- rnorm(100); z <- rnorm(100) 
+## plot3d(x, y, z) 
+## @ 
