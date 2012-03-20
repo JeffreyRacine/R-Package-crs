@@ -192,7 +192,7 @@ predict.kernel.spline <- function(x,
 
   if(is.null(z)) {
 
-    ## First no categorical predictor case
+    ## First no categorical predictor case, never reached when called by crs()
 
     if(any(K[,1] > 0)) {
 
@@ -277,7 +277,7 @@ predict.kernel.spline <- function(x,
         for(i in 1:nrow.z.unique) {
           zz <- ind == ind.vals[i]
           L <- prod.kernel(Z=z,z=z.unique[ind.vals[i],],lambda=lambda,is.ordered.z=is.ordered.z)
-          if(!is.null(weights)) L <- weights*L  ## Mar 20 2012 - need to dig into this - will likely barf on non-null weights
+          if(!is.null(weights)) L <- weights*L
           P <- prod.spline(x=x,K=K,knots=knots,basis=basis)
           k <- NCOL(P)
           if(basis=="additive" || basis=="glp") {
@@ -327,7 +327,7 @@ predict.kernel.spline <- function(x,
         for(i in 1:nrow.zeval.unique) {
           zz <- ind.zeval == ind.zeval.vals[i]
           L <- prod.kernel(Z=z,z=zeval.unique[ind.zeval.vals[i],],lambda=lambda,is.ordered.z=is.ordered.z)
-          if(!is.null(weights)) L <- weights*L  ## Mar 20 2012 - need to dig into this - will likely barf on non-null weights
+          if(!is.null(weights)) L <- weights*L
           P <- prod.spline(x=x,K=K,knots=knots,basis=basis)
           k <- NCOL(P)
           if(basis=="additive" || basis=="glp") {
@@ -367,7 +367,7 @@ predict.kernel.spline <- function(x,
         for(i in 1:nrow.z.unique) {
           zz <- ind == ind.vals[i]
           L <- prod.kernel(Z=z,z=z.unique[ind.vals[i],],lambda=lambda,is.ordered.z=is.ordered.z)
-          if(!is.null(weights)) L <- weights*L  ## Mar 20 2012 - need to dig into this - will likely barf on non-null weights
+          if(!is.null(weights)) L <- weights*L
           k <- 0
           ## Whether we use additive, glp, or tensor products, this
           ## model has no continuous predictors hence the intercept is
@@ -412,7 +412,7 @@ predict.kernel.spline <- function(x,
         for(i in 1:nrow.zeval.unique) {
           zz <- ind.zeval == ind.zeval.vals[i]
           L <- prod.kernel(Z=z,z=zeval.unique[ind.zeval.vals[i],],lambda=lambda,is.ordered.z=is.ordered.z)
-          if(!is.null(weights)) L <- weights*L  ## Mar 20 2012 - need to dig into this - will likely barf on non-null weights
+          if(!is.null(weights)) L <- weights*L
           k <- 0
           if(is.null(tau))
             model.z.unique <- lm(y~x.intercept-1,weights=L)
@@ -594,7 +594,7 @@ deriv.kernel.spline <- function(x,
         for(i in 1:nrow.z.unique) {
           zz <- ind == ind.vals[i]
           L <- prod.kernel(Z=z,z=z.unique[ind.vals[i],],lambda=lambda,is.ordered.z=is.ordered.z)
-          if(!is.null(weights)) L <- weights*L  ## Mar 20 2012 - need to dig into this - will likely barf on non-null weights
+          if(!is.null(weights)) L <- weights*L
           P <- prod.spline(x=x,K=K,knots=knots,basis=basis)
           P.deriv <- prod.spline(x=x,K=K,xeval=x[zz,,drop=FALSE],knots=knots,basis=basis,deriv.index=deriv.index,deriv=deriv)
           k <- NCOL(P)
@@ -665,7 +665,7 @@ deriv.kernel.spline <- function(x,
         for(i in 1:nrow.zeval.unique) {
           zz <- ind.zeval == ind.zeval.vals[i]
           L <- prod.kernel(Z=z,z=zeval.unique[ind.zeval.vals[i],],lambda=lambda,is.ordered.z=is.ordered.z)
-          if(!is.null(weights)) L <- weights*L ## Mar 20 2012 - need to dig into this - will likely barf on non-null weights
+          if(!is.null(weights)) L <- weights*L
           P <- prod.spline(x=x,K=K,knots=knots,basis=basis)
           P.deriv <- prod.spline(x=x,K=K,xeval=xeval[zz,,drop=FALSE],knots=knots,basis=basis,deriv.index=deriv.index,deriv=deriv)
           k <- NCOL(P)
@@ -1143,7 +1143,7 @@ cv.kernel.spline.wrapper <- function(x,
                            cv.func=cv.func,
                            cv.df.min=cv.df.min,
                            tau=tau,
-                           weights=NULL)
+                           weights=weights)
 
     cv.uniform <- cv.kernel.spline(x=x,
                                    y=y,
@@ -1160,7 +1160,7 @@ cv.kernel.spline.wrapper <- function(x,
                                    cv.func=cv.func,
                                    cv.df.min=cv.df.min,
                                    tau=tau,
-                                   weights=NULL)
+                                   weights=weights)
     if(cv > cv.uniform) {
       cv <- cv.uniform
       knots.opt <- "uniform"
@@ -1183,7 +1183,7 @@ cv.kernel.spline.wrapper <- function(x,
                            cv.func=cv.func,
                            cv.df.min=cv.df.min,
                            tau=tau,
-                           weights=NULL)
+                           weights=weights)
 
   }
 
@@ -1305,7 +1305,7 @@ cv.kernel.spline <- function(x,
        for(i in 1:nrow.z.unique) {
         zz <- ind == ind.vals[i]
         L <- prod.kernel(Z=z,z=z.unique[ind.vals[i],],lambda=lambda,is.ordered.z=is.ordered.z)
-        if(!is.null(weights)) L <- weights*L  ## Mar 20 2012 - need to dig into this - will likely barf on non-null weights
+        if(!is.null(weights)) L <- weights*L
         if(basis=="additive" || basis=="glp") {
           ## Additive spline regression models have an intercept in
           ## the lm() model (though not in the gsl.bs function)
@@ -1351,7 +1351,7 @@ cv.kernel.spline <- function(x,
       for(i in 1:nrow.z.unique) {
         zz <- ind == ind.vals[i]
         L <- prod.kernel(Z=z,z=z.unique[ind.vals[i],],lambda=lambda,is.ordered.z=is.ordered.z)
-        if(!is.null(weights)) L <- weights*L  ## Mar 20 2012 - need to dig into this - will likely barf on non-null weights
+        if(!is.null(weights)) L <- weights*L
         ## Test for full column rank
         if(!is.fullrank(matrix(1,n,1)*L))
           return(sqrt(.Machine$double.xmax))                        

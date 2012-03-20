@@ -241,7 +241,7 @@ predict.kernel.spline <- function(x,
     if(is.null(tau))
       htt <- hatvalues(model)
     else
-      htt <- hat(model$x)
+      htt <- hat(model$qr)
 
     htt <- ifelse(htt < 1, htt, 1-.Machine$double.eps)
 
@@ -958,7 +958,7 @@ predict.factor.spline <- function(x,
   if(is.null(tau))
     htt <- hatvalues(model)
   else
-    htt <- hat(model$x)
+    htt <- hat(model$qr)
 
   return(list(fitted.values=fit.spline,
               df.residual=model$df.residual,
@@ -1245,7 +1245,6 @@ cv.kernel.spline <- function(x,
     ## Here we need to use lm.wfit throughout with weights, but lm.wfit
     ## needs non-null weights, so if weights are null create a vector of
     ## ones
-    if(is.null(weights)) weights <- rep(1,n)
     ## No categorical predictors, never reached when called by crs()
     if(any(K[,1] > 0)) {
       ## Check for rank-deficient fit
@@ -1257,27 +1256,39 @@ cv.kernel.spline <- function(x,
         ## Additive spline regression models have an intercept in the lm()
         ## model (though not in the gsl.bs function)
         if(is.null(tau)) {
-          epsilon <- residuals(model <- lm.wfit(cbind(1,P),y,weights))
+          if(is.null(weights))
+            epsilon <- residuals(model <- lm.fit(cbind(1,P),y))
+          else
+            epsilon <- residuals(model <- lm.wfit(cbind(1,P),y,weights))            
           if(model$rank < (NCOL(P)+1))
             return(sqrt(.Machine$double.xmax))
         } else {
           ## Test for full column rank
           if(!is.fullrank(cbind(1,P)))
             return(sqrt(.Machine$double.xmax))         
-          residuals <- tryCatch(residuals(rq.wfit(cbind(1,P),y,tau=tau,weights,method="fn")),error=function(e){FALSE})
+          if(is.null(weights))
+            residuals <- tryCatch(residuals(rq.fit(cbind(1,P),y,tau=tau,method="fn")),error=function(e){FALSE})
+          else
+            residuals <- tryCatch(residuals(rq.wfit(cbind(1,P),y,tau=tau,weights,method="fn")),error=function(e){FALSE})            
           if(is.logical(residuals))
             return(sqrt(.Machine$double.xmax))            
         }
       } else {
         if(is.null(tau)) {
-          epsilon <- residuals(model <- lm.wfit(P,y,weights))
+          if(is.null(weights))
+            epsilon <- residuals(model <- lm.fit(P,y))
+          else
+            epsilon <- residuals(model <- lm.wfit(P,y,weights))            
           if(model$rank < NCOL(P))
             return(sqrt(.Machine$double.xmax))
         } else {
           ## Test for full column rank
           if(!is.fullrank(P))
             return(sqrt(.Machine$double.xmax))         
-          residuals <- tryCatch(residuals(rq.wfit(P,y,tau=tau,weights,method="fn")),error=function(e){FALSE})
+          if(is.null(weights))
+            residuals <- tryCatch(residuals(rq.fit(P,y,tau=tau,method="fn")),error=function(e){FALSE})
+          else
+            residuals <- tryCatch(residuals(rq.wfit(P,y,tau=tau,weights,method="fn")),error=function(e){FALSE})            
           if(is.logical(residuals))
             return(sqrt(.Machine$double.xmax))            
         }
@@ -1516,8 +1527,6 @@ cv.factor.spline <- function(x,
   if(n - dim.bs(basis=basis,kernel=TRUE,degree=K[,1],segments=K[,2],include=I,categories=categories) <= cv.df.min)
     return(sqrt(.Machine$double.xmax))
 
-  if(is.null(weights)) weights <- rep(1,n)
-
   ## Otherwise, compute the cross-validation function
 
   if(any(K[,1] > 0)||any(I > 0)) {
@@ -1531,31 +1540,49 @@ cv.factor.spline <- function(x,
       ## Additive spline regression models have an intercept in the
       ## lm() model (though not in the gsl.bs function)
       if(is.null(tau)) {
-        model <- lm.wfit(cbind(1,P),y,weights)
+        if(is.null(weights))
+          model <- lm.fit(cbind(1,P),y)
+        else
+          model <- lm.wfit(cbind(1,P),y,weights)          
         ## Test for rank-deficient fit
         if(model$rank < (NCOL(P)+1)) return(sqrt(.Machine$double.xmax))
       } else {
         ## Test for full column rank
         if(!is.fullrank(cbind(1,P)))
           return(sqrt(.Machine$double.xmax))      
-        model <- tryCatch(rq.wfit(cbind(1,P),y,tau=tau,weights,method="fn"),error=function(e){FALSE})
+        if(is.null(weights))
+          model <- tryCatch(rq.fit(cbind(1,P),y,tau=tau,method="fn"),error=function(e){FALSE})
+        else
+          model <- tryCatch(rq.wfit(cbind(1,P),y,tau=tau,weights,method="fn"),error=function(e){FALSE})          
         if(is.logical(model))
           return(sqrt(.Machine$double.xmax))            
-        model.hat <- lm.wfit(cbind(1,P),y,weights)
+        if(is.null(weights))
+          model.hat <- lm.fit(cbind(1,P),y)
+        else
+          model.hat <- lm.wfit(cbind(1,P),y,weights)          
       }
     } else {
       if(is.null(tau)) {
-        model <- lm.wfit(P,y,weights)
+        if(is.null(weights))
+          model <- lm.fit(P,y)
+        else
+          model <- lm.wfit(P,y,weights)          
         ## Test for rank-deficient fit
         if(model$rank < NCOL(P)) return(sqrt(.Machine$double.xmax))
       } else {
         ## Test for full column rank
         if(!is.fullrank(P))
           return(sqrt(.Machine$double.xmax))      
-        model <- tryCatch(rq.wfit(P,y,tau=tau,weights,method="fn"),error=function(e){FALSE})
+        if(is.null(weights))
+          model <- tryCatch(rq.fit(P,y,tau=tau,method="fn"),error=function(e){FALSE})
+        else
+          model <- tryCatch(rq.wfit(P,y,tau=tau,weights,method="fn"),error=function(e){FALSE})        
         if(is.logical(model))
           return(sqrt(.Machine$double.xmax))            
-        model.hat <- lm.wfit(P,y,weights)
+        if(is.null(weights))
+          model.hat <- lm.fit(P,y)
+        else
+          model.hat <- lm.wfit(P,y,weights)
       }
     }
     if(is.null(tau))

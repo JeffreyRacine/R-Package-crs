@@ -67,6 +67,12 @@ crsEst <- function(xz,
 
   y <- as.numeric(y)
 
+  ## If weights are provided and there are NA values in the data, we
+  ## need only those weights corresponding to the complete cases
+
+  if(!is.null(weights))
+    weights <- na.omit(data.frame(xz,y,weights))$weights
+
   if(!kernel) {
 
     model <- predict.factor.spline(x=x,
@@ -419,6 +425,14 @@ crs.formula <- function(formula,
   mt <- attr(mf, "terms")
   y <- model.response(mf)
   xz <- mf[, attr(attr(mf, "terms"),"term.labels"), drop = FALSE]
+
+  ## If a weights vector is provided and there exists missing data
+  ## then the weight vector must be parsed to contain weights
+  ## corresponding to the non-missing observations only.
+
+  rows.omit <- as.vector(attr(mf,"na.action"))
+  if(!is.null(weights) && !is.null(rows.omit))
+    weights <- weights[-rows.omit]
 
   if(!kernel) {
     xztmp <- splitFrame(xz)
