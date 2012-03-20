@@ -26,6 +26,7 @@ crs(\dots)
     prune = FALSE,
     model.return = FALSE,
     tau = NULL,
+    weights = NULL,
     \dots)
 
 \method{crs}{formula}(formula,
@@ -61,6 +62,7 @@ crs(\dots)
                 "MIN_POLL_SIZE"=paste("r",sqrt(.Machine$double.eps),sep="")),
     nmulti = 5,
     tau = NULL,
+    weights = NULL,
     \dots)
 }
 \arguments{
@@ -215,6 +217,13 @@ in \code{x} are included or omitted from the resulting estimate }
     regression spline is to be estimated rather than estimating the
     conditional mean (default \code{tau=NULL}). Criterion function set
     by \code{cv.func=} are modified accordingly to admit quantile regression.
+  }
+
+  \item{weights}{
+    an optional vector of weights to be used in the fitting process.
+    Should be `NULL' or a numeric vector.  If non-NULL, weighted least
+    squares is used with weights `weights' (that is, minimizing
+    `sum(w*e^2)'); otherwise ordinary least squares is used.
   }
  
   \item{\dots}{ optional arguments }

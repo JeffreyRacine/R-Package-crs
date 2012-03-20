@@ -20,7 +20,8 @@ frscv <- function(xz,
                   cv.func=c("cv.ls","cv.gcv","cv.aic"),
                   degree=degree,
                   segments=segments,
-                  tau=NULL) {
+                  tau=NULL,
+                  weights=NULL) {
 
   complexity <- match.arg(complexity)
   knots <- match.arg(knots)
@@ -47,7 +48,8 @@ frscv <- function(xz,
                       basis=basis,
                       cv.func=cv.func,
                       cv.df.min=1,
-                      tau=tau) {
+                      tau=tau,
+                      weights=weights) {
 
     if(missing(input) || missing(x) || missing(y)) stop(" you must provide input, x, y")
 
@@ -84,7 +86,8 @@ frscv <- function(xz,
                                    basis=basis,
                                    cv.func=cv.func,
                                    cv.df.min=1,
-                                   tau=tau)
+                                   tau=tau,
+                                   weights=weights)
     
     ## Some i/o unless options(crs.messages=FALSE)
 
@@ -302,7 +305,8 @@ frscv <- function(xz,
                         basis="additive",
                         cv.func=cv.func,
                         cv.df.min=1,
-                        tau=tau)
+                        tau=tau,
+                        weights=weights)
 
       if(output < cv.vec[j]) {
         basis.vec[j] <- "additive"
@@ -329,7 +333,8 @@ frscv <- function(xz,
                         basis="tensor",
                         cv.func=cv.func,
                         cv.df.min=1,
-                        tau=tau)
+                        tau=tau,
+                        weights=weights)
 
       if(output < cv.vec[j]) {
         basis.vec[j] <- "tensor"
@@ -356,7 +361,8 @@ frscv <- function(xz,
                         basis="glp",
                         cv.func=cv.func,
                         cv.df.min=1,
-                        tau=tau)
+                        tau=tau,
+                        weights=weights)
 
       if(output < cv.vec[j]) {
         basis.vec[j] <- "glp"
@@ -387,7 +393,8 @@ frscv <- function(xz,
                         basis=basis,
                         cv.func=cv.func,
                         cv.df.min=1,
-                        tau=tau)
+                        tau=tau,
+                        weights=weights)
 
       if(output < cv.vec[j]) {
         basis.vec[j] <- basis

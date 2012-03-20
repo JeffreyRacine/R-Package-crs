@@ -21,7 +21,8 @@ krscv <- function(xz,
                   cv.func=c("cv.ls","cv.gcv","cv.aic"),
                   degree=degree,
                   segments=segments,
-                  tau=NULL) {
+                  tau=NULL,
+                  weights=NULL) {
 
   complexity <- match.arg(complexity)
   knots <- match.arg(knots)
@@ -56,7 +57,8 @@ krscv <- function(xz,
                       basis=basis,
                       cv.func=cv.func,
                       cv.df.min=1,
-                      tau=tau) {
+                      tau=tau,
+                      weights=weights) {
 
     ## K is a matrix, column 1 degree, column 2 segments, either or
     ## both can be determined via cv so need to take care to allow
@@ -90,7 +92,8 @@ krscv <- function(xz,
                                    basis=basis,
                                    cv.func=cv.func,
                                    cv.df.min=1,
-                                   tau=tau)
+                                   tau=tau,
+                                   weights=weights)
 
     ## Some i/o unless options(crs.messages=FALSE)
 
@@ -275,7 +278,8 @@ krscv <- function(xz,
                         basis="additive",
                         cv.func=cv.func,
                         cv.df.min=1,
-                        tau=tau)
+                        tau=tau,
+                        weights=weights)
 
       }
 
@@ -315,7 +319,8 @@ krscv <- function(xz,
                                     basis="additive",
                                     cv.func=cv.func,
                                     cv.df.min=1,
-                                    tau=tau)
+                                    tau=tau,
+                                    weights=weights)
 
           }
 
@@ -365,7 +370,8 @@ krscv <- function(xz,
                         basis="tensor",
                         cv.func=cv.func,
                         cv.df.min=1,
-                        tau=tau)
+                        tau=tau,
+                        weights=weights)
 
       }
 
@@ -405,7 +411,8 @@ krscv <- function(xz,
                                     basis="tensor",
                                     cv.func=cv.func,
                                     cv.df.min=1,
-                                    tau=tau)
+                                    tau=tau,
+                                    weights=weights)
 
           }
 
@@ -455,7 +462,8 @@ krscv <- function(xz,
                         basis="glp",
                         cv.func=cv.func,
                         cv.df.min=1,
-                        tau=tau)
+                        tau=tau,
+                        weights=weights)
 
       }
 
@@ -495,7 +503,8 @@ krscv <- function(xz,
                                     basis="glp",
                                     cv.func=cv.func,
                                     cv.df.min=1,
-                                    tau=tau)
+                                    tau=tau,
+                                    weights=weights)
 
           }
 
@@ -548,7 +557,8 @@ krscv <- function(xz,
                         basis=basis,
                         cv.func=cv.func,
                         cv.df.min=1,
-                        tau=tau)
+                        tau=tau,
+                        weights=weights)
 
       }
 
@@ -588,7 +598,8 @@ krscv <- function(xz,
                                     basis=basis,
                                     cv.func=cv.func,
                                     cv.df.min=1,
-                                    tau=tau)
+                                    tau=tau,
+                                    weights=weights)
 
           }
 
@@ -650,7 +661,8 @@ krscv <- function(xz,
 																					 basis=basis.opt,
 																					 cv.func=cv.func,
                                            cv.df.min=1,
-                                           tau=tau)
+                                           tau=tau,
+                                           weights=weights)
 
 			knots.opt <- attributes(cv.knots)$knots.opt
 	}

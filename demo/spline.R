@@ -167,7 +167,8 @@ predict.kernel.spline <- function(x,
                                   knots=c("quantiles","uniform"),
                                   basis=c("additive","tensor","glp"),
                                   model.return=FALSE,
-                                  tau=NULL){
+                                  tau=NULL,
+                                  weights=NULL){
 
   if(missing(x) || missing(y) || missing (K)) stop(" must provide x, y and K")
   if(!is.matrix(K)) stop(" K must be a two-column matrix")
@@ -201,14 +202,14 @@ predict.kernel.spline <- function(x,
 
       if(basis=="additive" || basis=="glp") {
         if(is.null(tau))
-          model <- lm(y~P)
+          model <- lm(y~P,weights=weights)
         else
-          suppressWarnings(model <- rq(y~P,tau=tau,method="fn"))
+          suppressWarnings(model <- rq(y~P,tau=tau,method="fn",weights=weights))
       } else {
         if(is.null(tau))
-          model <- lm(y~P-1)
+          model <- lm(y~P-1,weights=weights)
         else
-          suppressWarnings(model <- rq(y~P-1,tau=tau,method="fn"))
+          suppressWarnings(model <- rq(y~P-1,tau=tau,method="fn",weights=weights))
       }
       if(is.null(xeval)) {
         fit.spline <- predict(model,interval="confidence",se.fit=TRUE)
@@ -222,9 +223,9 @@ predict.kernel.spline <- function(x,
       ## Degree == 0
 
       if(is.null(tau))
-        model <- lm(y~1)
+        model <- lm(y~1,weights=weights)
       else
-        suppressWarnings(model <- rq(y~1,tau=tau,method="fn"))
+        suppressWarnings(model <- rq(y~1,tau=tau,method="fn",weights=weights))
       if(is.null(xeval)) {
         fit.spline <- predict(model,interval="confidence",se.fit=TRUE)
       } else {
@@ -276,6 +277,7 @@ predict.kernel.spline <- function(x,
         for(i in 1:nrow.z.unique) {
           zz <- ind == ind.vals[i]
           L <- prod.kernel(Z=z,z=z.unique[ind.vals[i],],lambda=lambda,is.ordered.z=is.ordered.z)
+          if(!is.null(weights)) L <- weights*L  ## Mar 20 2012 - need to dig into this - will likely barf on non-null weights
           P <- prod.spline(x=x,K=K,knots=knots,basis=basis)
           k <- NCOL(P)
           if(basis=="additive" || basis=="glp") {
@@ -325,6 +327,7 @@ predict.kernel.spline <- function(x,
         for(i in 1:nrow.zeval.unique) {
           zz <- ind.zeval == ind.zeval.vals[i]
           L <- prod.kernel(Z=z,z=zeval.unique[ind.zeval.vals[i],],lambda=lambda,is.ordered.z=is.ordered.z)
+          if(!is.null(weights)) L <- weights*L  ## Mar 20 2012 - need to dig into this - will likely barf on non-null weights
           P <- prod.spline(x=x,K=K,knots=knots,basis=basis)
           k <- NCOL(P)
           if(basis=="additive" || basis=="glp") {
@@ -364,6 +367,7 @@ predict.kernel.spline <- function(x,
         for(i in 1:nrow.z.unique) {
           zz <- ind == ind.vals[i]
           L <- prod.kernel(Z=z,z=z.unique[ind.vals[i],],lambda=lambda,is.ordered.z=is.ordered.z)
+          if(!is.null(weights)) L <- weights*L  ## Mar 20 2012 - need to dig into this - will likely barf on non-null weights
           k <- 0
           ## Whether we use additive, glp, or tensor products, this
           ## model has no continuous predictors hence the intercept is
@@ -408,6 +412,7 @@ predict.kernel.spline <- function(x,
         for(i in 1:nrow.zeval.unique) {
           zz <- ind.zeval == ind.zeval.vals[i]
           L <- prod.kernel(Z=z,z=zeval.unique[ind.zeval.vals[i],],lambda=lambda,is.ordered.z=is.ordered.z)
+          if(!is.null(weights)) L <- weights*L  ## Mar 20 2012 - need to dig into this - will likely barf on non-null weights
           k <- 0
           if(is.null(tau))
             model.z.unique <- lm(y~x.intercept-1,weights=L)
@@ -472,7 +477,8 @@ deriv.kernel.spline <- function(x,
                                 basis=c("additive","tensor","glp"),
                                 deriv.index=1,
                                 deriv=0,
-                                tau=NULL) {
+                                tau=NULL,
+                                weights=NULL) {
 
   if(deriv == 0) stop(" deriv must be greater than zero")
 
@@ -512,9 +518,9 @@ deriv.kernel.spline <- function(x,
 
       if(basis=="additive") {
         if(is.null(tau))
-          model <- lm(y~P)
+          model <- lm(y~P,weights=weights)
         else
-          suppressWarnings(model <- rq(y~P,tau=tau,method="fn"))
+          suppressWarnings(model <- rq(y~P,tau=tau,method="fn",weights=weights))
 
         dim.P.deriv <- sum(K.additive[deriv.index,])
         deriv.start <- ifelse(deriv.index!=1,sum(K.additive[1:(deriv.index-1),])+1,1)
@@ -530,9 +536,9 @@ deriv.kernel.spline <- function(x,
         se.deriv <- sapply(1:NROW(P.deriv), function(i){ sqrt(P.deriv[i,deriv.ind.vec,drop=FALSE]%*%vcov.model[deriv.ind.vec,deriv.ind.vec]%*%t(P.deriv[i,deriv.ind.vec,drop=FALSE])) })
       } else if(basis=="tensor") {
         if(is.null(tau))
-          model <- lm(y~P-1)
+          model <- lm(y~P-1,weights=weights)
         else
-          suppressWarnings(model <- rq(y~P-1,tau=tau,method="fn"))
+          suppressWarnings(model <- rq(y~P-1,tau=tau,method="fn",weights=weights))
 
         deriv.spline <- P.deriv%*%coef(model)
 
@@ -544,9 +550,9 @@ deriv.kernel.spline <- function(x,
         se.deriv <- sapply(1:NROW(P.deriv), function(i){ sqrt(P.deriv[i,,drop=FALSE]%*%vcov.model%*%t(P.deriv[i,,drop=FALSE])) })
       } else if(basis=="glp") {
         if(is.null(tau))
-          model <- lm(y~P)
+          model <- lm(y~P,weights=weights)
         else
-          suppressWarnings(model <- rq(y~P,tau=tau,method="fn"))
+          suppressWarnings(model <- rq(y~P,tau=tau,method="fn",weights=weights))
         deriv.spline <- P.deriv%*%coef(model)[-1]
 
         if(is.null(tau))
@@ -588,6 +594,7 @@ deriv.kernel.spline <- function(x,
         for(i in 1:nrow.z.unique) {
           zz <- ind == ind.vals[i]
           L <- prod.kernel(Z=z,z=z.unique[ind.vals[i],],lambda=lambda,is.ordered.z=is.ordered.z)
+          if(!is.null(weights)) L <- weights*L  ## Mar 20 2012 - need to dig into this - will likely barf on non-null weights
           P <- prod.spline(x=x,K=K,knots=knots,basis=basis)
           P.deriv <- prod.spline(x=x,K=K,xeval=x[zz,,drop=FALSE],knots=knots,basis=basis,deriv.index=deriv.index,deriv=deriv)
           k <- NCOL(P)
@@ -596,9 +603,9 @@ deriv.kernel.spline <- function(x,
 
           if(basis=="additive") {
             if(is.null(tau))
-              model <- lm(y~P)
+              model <- lm(y~P,weights=L)
             else
-              suppressWarnings(model <- rq(y~P,tau=tau,method="fn"))
+              suppressWarnings(model <- rq(y~P,tau=tau,method="fn",weights=L))
             dim.P.deriv <- sum(K.additive[deriv.index,])
             deriv.start <- ifelse(deriv.index!=1,sum(K.additive[1:(deriv.index-1),])+1,1)
             deriv.end <- deriv.start+sum(K.additive[deriv.index,])-1
@@ -612,9 +619,9 @@ deriv.kernel.spline <- function(x,
             se.deriv[zz] <- sapply(1:NROW(P.deriv), function(i){ sqrt(P.deriv[i,deriv.ind.vec,drop=FALSE]%*%vcov.model[deriv.ind.vec,deriv.ind.vec]%*%t(P.deriv[i,deriv.ind.vec,drop=FALSE])) })
           } else if(basis=="tensor") {
             if(is.null(tau))
-              model <- lm(y~P-1)
+              model <- lm(y~P-1,weights=L)
             else
-              suppressWarnings(model <- rq(y~P-1,tau=tau,method="fn"))
+              suppressWarnings(model <- rq(y~P-1,tau=tau,method="fn",weights=L))
 
             deriv.spline[zz] <- P.deriv%*%coef(model)
 
@@ -626,9 +633,9 @@ deriv.kernel.spline <- function(x,
             se.deriv[zz] <- sapply(1:NROW(P.deriv), function(i){ sqrt(P.deriv[i,,drop=FALSE]%*%vcov.model%*%t(P.deriv[i,,drop=FALSE])) })
           } else if(basis=="glp") {
             if(is.null(tau))
-              model <- lm(y~P)
+              model <- lm(y~P,weights=L)
             else
-              suppressWarnings(model <- rq(y~P,tau=tau,method="fn"))
+              suppressWarnings(model <- rq(y~P,tau=tau,method="fn",weights=L))
 
             deriv.spline[zz] <- P.deriv%*%coef(model)[-1]
 
@@ -658,6 +665,7 @@ deriv.kernel.spline <- function(x,
         for(i in 1:nrow.zeval.unique) {
           zz <- ind.zeval == ind.zeval.vals[i]
           L <- prod.kernel(Z=z,z=zeval.unique[ind.zeval.vals[i],],lambda=lambda,is.ordered.z=is.ordered.z)
+          if(!is.null(weights)) L <- weights*L ## Mar 20 2012 - need to dig into this - will likely barf on non-null weights
           P <- prod.spline(x=x,K=K,knots=knots,basis=basis)
           P.deriv <- prod.spline(x=x,K=K,xeval=xeval[zz,,drop=FALSE],knots=knots,basis=basis,deriv.index=deriv.index,deriv=deriv)
           k <- NCOL(P)
@@ -753,7 +761,8 @@ predict.factor.spline <- function(x,
                                   prune=FALSE,
                                   prune.index=NULL,
                                   trace=0,
-                                  tau=NULL){
+                                  tau=NULL,
+                                  weights=NULL){
 
   if(missing(x) || missing(y) || missing (K)) stop(" must provide x, y and K")
   if(!is.matrix(K)) stop(" K must be a two-column matrix")
@@ -791,14 +800,14 @@ predict.factor.spline <- function(x,
       names(P.df) <- paste("P",seq(1,NCOL(P.df)),sep="")
       if(basis=="additive" || basis=="glp") {
         if(is.null(tau))
-          model <- lm(y~.,data=P.df)
+          model <- lm(y~.,data=P.df,weights=weights)
         else
-          suppressWarnings(model <- rq(y~.,data=P.df,tau=tau,method="fn"))
+          suppressWarnings(model <- rq(y~.,data=P.df,tau=tau,method="fn",weights=weights))
       } else {
         if(is.null(tau))
-          model <- lm(y~.-1,data=P.df)
+          model <- lm(y~.-1,data=P.df,weights=weights)
         else
-          suppressWarnings(model <- rq(y~.-1,data=P.df,tau=tau,method="fn"))
+          suppressWarnings(model <- rq(y~.-1,data=P.df,tau=tau,method="fn",weights=weights))
       }
       if(is.null(tau))
         cv <- mean(residuals(model)^2/(1-hatvalues(model))^2)
@@ -808,12 +817,12 @@ predict.factor.spline <- function(x,
       console <- printPush("Pruning...",console = console)
       if(basis=="additive" || basis=="glp") {
         if(is.null(tau))
-          model.pruned <- stepCV(lm(y~.,data=P.df),
+          model.pruned <- stepCV(lm(y~.,data=P.df,weights=weights),
                                  scope=list(upper=~.,lower=~1),
                                  k=log(length(y)),
                                  trace=trace)
         else
-          suppressWarnings(model.pruned <- stepCV(rq(y~.,data=P.df,tau=tau,method="fn"),
+          suppressWarnings(model.pruned <- stepCV(rq(y~.,data=P.df,tau=tau,method="fn",weights=weights),
                                                   scope=list(upper=~.,lower=~1),
                                                   k=log(length(y)),
                                                   trace=trace))
@@ -821,12 +830,12 @@ predict.factor.spline <- function(x,
 
       } else {
         if(is.null(tau))
-          model.pruned <- stepCV(lm(y~.-1,data=P.df),
+          model.pruned <- stepCV(lm(y~.-1,data=P.df,weights=weights),
                                  scope=list(upper=~.,lower=~1),
                                  k=log(length(y)),
                                  trace=trace)
         else
-          suppressWarnings(model.pruned <- stepCV(rq(y~.-1,data=P.df,tau=tau,method="fn"),
+          suppressWarnings(model.pruned <- stepCV(rq(y~.-1,data=P.df,tau=tau,method="fn",weights=weights),
                                                   scope=list(upper=~.,lower=~1),
                                                   k=log(length(y)),
                                                   trace=trace))
@@ -842,28 +851,28 @@ predict.factor.spline <- function(x,
         for(i in 1:NCOL(P.df)) IND[i] <- any(names(P.df)[i]==names(model.pruned$model[,-1,drop=FALSE]))
         if(basis=="additive" || basis=="glp") {
           if(is.null(tau))
-            model <- lm(y~P[,IND,drop=FALSE])
+            model <- lm(y~P[,IND,drop=FALSE],weights=weights)
           else
-            suppressWarnings(model <- rq(y~P[,IND,drop=FALSE],tau=tau,method="fn"))
+            suppressWarnings(model <- rq(y~P[,IND,drop=FALSE],tau=tau,method="fn",weights=weights))
         } else {
           if(is.null(tau))
-            model <- lm(y~P[,IND,drop=FALSE]-1)
+            model <- lm(y~P[,IND,drop=FALSE]-1,weights=weights)
           else
-            suppressWarnings(model <- rq(y~P[,IND,drop=FALSE]-1,tau=tau,method="fn"))
+            suppressWarnings(model <- rq(y~P[,IND,drop=FALSE]-1,tau=tau,method="fn",weights=weights))
         }
       } else {
         warning(" pruned model did not lower cross-validation score, using non-pruned bases")
         IND <- !logical(length=NCOL(P))
         if(basis=="additive" || basis=="glp") {
           if(is.null(tau))
-            model <- lm(y~P)
+            model <- lm(y~P,weights=weights)
           else
-            suppressWarnings(model <- rq(y~P,tau=tau,method="fn"))
+            suppressWarnings(model <- rq(y~P,tau=tau,method="fn",weights=weights))
         } else {
           if(is.null(tau))
-            model <- lm(y~P-1)
+            model <- lm(y~P-1,weights=weights)
           else
-            suppressWarnings(model <- rq(y~P-1,tau=tau,method="fn"))
+            suppressWarnings(model <- rq(y~P-1,tau=tau,method="fn",weights=weights))
         }
       }
     } else if(prune) {
@@ -871,14 +880,14 @@ predict.factor.spline <- function(x,
       IND <- prune.index
       if(basis=="additive" || basis=="glp") {
         if(is.null(tau))
-          model <- lm(y~P[,IND,drop=FALSE])
+          model <- lm(y~P[,IND,drop=FALSE],weights=weights)
         else
-          suppressWarnings(model <- rq(y~P[,IND,drop=FALSE],tau=tau,method="fn"))
+          suppressWarnings(model <- rq(y~P[,IND,drop=FALSE],tau=tau,method="fn",weights=weights))
       } else {
         if(is.null(tau))
-          model <- lm(y~P[,IND,drop=FALSE]-1)
+          model <- lm(y~P[,IND,drop=FALSE]-1,weights=weights)
         else
-          suppressWarnings(model <- rq(y~P[,IND,drop=FALSE]-1,tau=tau,method="fn"))
+          suppressWarnings(model <- rq(y~P[,IND,drop=FALSE]-1,tau=tau,method="fn",weights=weights))
       }
       cv <- NULL
       if(is.null(tau))
@@ -890,14 +899,14 @@ predict.factor.spline <- function(x,
       IND <- !logical(length=NCOL(P))
       if(basis=="additive" || basis=="glp") {
         if(is.null(tau))
-          model <- lm(y~P)
+          model <- lm(y~P,weights=weights)
         else
-          suppressWarnings(model <- rq(y~P,tau=tau,method="fn"))
+          suppressWarnings(model <- rq(y~P,tau=tau,method="fn",weights=weights))
       } else {
         if(is.null(tau))
-          model <- lm(y~P-1)
+          model <- lm(y~P-1,weights=weights)
         else
-          suppressWarnings(model <- rq(y~P-1,tau=tau,method="fn"))
+          suppressWarnings(model <- rq(y~P-1,tau=tau,method="fn",weights=weights))
       }
       cv.pruned <- NULL
       if(is.null(tau))
@@ -919,9 +928,9 @@ predict.factor.spline <- function(x,
     IND <- TRUE
 
     if(is.null(tau))
-      model <- lm(y~1)
+      model <- lm(y~1,weights=weights)
     else
-      suppressWarnings(model <- rq(y~1,tau=tau,method="fn"))
+      suppressWarnings(model <- rq(y~1,tau=tau,method="fn",weights=weights))
 
 
     if(is.null(tau))
@@ -983,7 +992,8 @@ deriv.factor.spline <- function(x,
                                 deriv.index=1,
                                 deriv=0,
                                 prune.index=NULL,
-                                tau=NULL) {
+                                tau=NULL,
+                                weights=NULL) {
 
   if(missing(x) || missing(y) || missing (K)) stop(" must provide x, y and K")
   if(deriv == 0) stop(" derivative must be a positive integer")
@@ -1026,9 +1036,9 @@ deriv.factor.spline <- function(x,
     vcov.mat.model <- matrix(0,nrow=NCOL(P),ncol=NCOL(P))
     if(basis=="additive") {
       if(is.null(tau))
-        model <- lm(y~P[,prune.index,drop=FALSE])
+        model <- lm(y~P[,prune.index,drop=FALSE],weights=weights)
       else
-        suppressWarnings(model <- rq(y~P[,prune.index,drop=FALSE],tau=tau,method="fn"))
+        suppressWarnings(model <- rq(y~P[,prune.index,drop=FALSE],tau=tau,weights=weights,method="fn"))
 
       coef.vec.model[prune.index] <- coef(model)[-1]
 
@@ -1044,9 +1054,9 @@ deriv.factor.spline <- function(x,
       deriv.ind.vec <- ifelse(prune.index,deriv.ind.vec,FALSE)
     } else if(basis=="tensor") {
       if(is.null(tau))
-        model <- lm(y~P[,prune.index,drop=FALSE]-1)
+        model <- lm(y~P[,prune.index,drop=FALSE]-1,weights=weights)
       else
-        suppressWarnings(model <- rq(y~P[,prune.index,drop=FALSE]-1,tau=tau,method="fn"))
+        suppressWarnings(model <- rq(y~P[,prune.index,drop=FALSE]-1,tau=tau,weights=weights,method="fn"))
       coef.vec.model[prune.index] <- coef(model)
 
       if(is.null(tau))
@@ -1058,9 +1068,9 @@ deriv.factor.spline <- function(x,
       deriv.ind.vec <- ifelse(prune.index,deriv.ind.vec,FALSE)
     } else if(basis=="glp") {
       if(is.null(tau))
-        model <- lm(y~P[,prune.index,drop=FALSE])
+        model <- lm(y~P[,prune.index,drop=FALSE],weights=weights)
       else
-        suppressWarnings(model <- rq(y~P[,prune.index,drop=FALSE],tau=tau,method="fn"))
+        suppressWarnings(model <- rq(y~P[,prune.index,drop=FALSE],tau=tau,weights=weights,method="fn"))
       coef.vec.model[prune.index] <- coef(model)[-1]
 
       if(is.null(tau))
@@ -1109,7 +1119,8 @@ cv.kernel.spline.wrapper <- function(x,
                                      basis=c("additive","tensor","glp"),
                                      cv.func=c("cv.ls","cv.gcv","cv.aic"),
                                      cv.df.min=1,
-                                     tau=NULL) {
+                                     tau=NULL,
+                                     weights=NULL) {
 
   knots.opt <- knots;
 
@@ -1131,7 +1142,8 @@ cv.kernel.spline.wrapper <- function(x,
                            basis=basis,
                            cv.func=cv.func,
                            cv.df.min=cv.df.min,
-                           tau=tau)
+                           tau=tau,
+                           weights=NULL)
 
     cv.uniform <- cv.kernel.spline(x=x,
                                    y=y,
@@ -1147,7 +1159,8 @@ cv.kernel.spline.wrapper <- function(x,
                                    basis=basis,
                                    cv.func=cv.func,
                                    cv.df.min=cv.df.min,
-                                   tau=tau)
+                                   tau=tau,
+                                   weights=NULL)
     if(cv > cv.uniform) {
       cv <- cv.uniform
       knots.opt <- "uniform"
@@ -1169,7 +1182,8 @@ cv.kernel.spline.wrapper <- function(x,
                            basis=basis,
                            cv.func=cv.func,
                            cv.df.min=cv.df.min,
-                           tau=tau)
+                           tau=tau,
+                           weights=NULL)
 
   }
 
@@ -1203,7 +1217,8 @@ cv.kernel.spline <- function(x,
 														 basis=c("additive","tensor","glp"),
 														 cv.func=c("cv.ls","cv.gcv","cv.aic"),
                              cv.df.min=1,
-                             tau=NULL) {
+                             tau=NULL,
+                             weights=NULL) {
 
   if(missing(x) || missing(y) || missing (K)) stop(" must provide x, y and K")
 
@@ -1227,7 +1242,11 @@ cv.kernel.spline <- function(x,
   ## Otherwise, compute the cross-validation function
 
   if(is.null(z)) {
-    ## No categorical predictors
+    ## Here we need to use lm.wfit throughout with weights, but lm.wfit
+    ## needs non-null weights, so if weights are null create a vector of
+    ## ones
+    if(is.null(weights)) weights <- rep(1,n)
+    ## No categorical predictors, never reached when called by crs()
     if(any(K[,1] > 0)) {
       ## Check for rank-deficient fit
       P <- prod.spline(x=x,K=K,knots=knots,basis=basis)
@@ -1238,27 +1257,27 @@ cv.kernel.spline <- function(x,
         ## Additive spline regression models have an intercept in the lm()
         ## model (though not in the gsl.bs function)
         if(is.null(tau)) {
-          epsilon <- residuals(model <- lm.fit(cbind(1,P),y))
+          epsilon <- residuals(model <- lm.wfit(cbind(1,P),y,weights))
           if(model$rank < (NCOL(P)+1))
             return(sqrt(.Machine$double.xmax))
         } else {
           ## Test for full column rank
           if(!is.fullrank(cbind(1,P)))
             return(sqrt(.Machine$double.xmax))         
-          residuals <- tryCatch(residuals(rq.fit(cbind(1,P),y,tau=tau,method="fn")),error=function(e){FALSE})
+          residuals <- tryCatch(residuals(rq.wfit(cbind(1,P),y,tau=tau,weights,method="fn")),error=function(e){FALSE})
           if(is.logical(residuals))
             return(sqrt(.Machine$double.xmax))            
         }
       } else {
         if(is.null(tau)) {
-          epsilon <- residuals(model <- lm.fit(P,y))
+          epsilon <- residuals(model <- lm.wfit(P,y,weights))
           if(model$rank < NCOL(P))
             return(sqrt(.Machine$double.xmax))
         } else {
           ## Test for full column rank
           if(!is.fullrank(P))
             return(sqrt(.Machine$double.xmax))         
-          residuals <- tryCatch(residuals(rq.fit(P,y,tau=tau,method="fn")),error=function(e){FALSE})
+          residuals <- tryCatch(residuals(rq.wfit(P,y,tau=tau,weights,method="fn")),error=function(e){FALSE})
           if(is.logical(residuals))
             return(sqrt(.Machine$double.xmax))            
         }
@@ -1286,6 +1305,7 @@ cv.kernel.spline <- function(x,
        for(i in 1:nrow.z.unique) {
         zz <- ind == ind.vals[i]
         L <- prod.kernel(Z=z,z=z.unique[ind.vals[i],],lambda=lambda,is.ordered.z=is.ordered.z)
+        if(!is.null(weights)) L <- weights*L  ## Mar 20 2012 - need to dig into this - will likely barf on non-null weights
         if(basis=="additive" || basis=="glp") {
           ## Additive spline regression models have an intercept in
           ## the lm() model (though not in the gsl.bs function)
@@ -1331,6 +1351,7 @@ cv.kernel.spline <- function(x,
       for(i in 1:nrow.z.unique) {
         zz <- ind == ind.vals[i]
         L <- prod.kernel(Z=z,z=z.unique[ind.vals[i],],lambda=lambda,is.ordered.z=is.ordered.z)
+        if(!is.null(weights)) L <- weights*L  ## Mar 20 2012 - need to dig into this - will likely barf on non-null weights
         ## Test for full column rank
         if(!is.fullrank(matrix(1,n,1)*L))
           return(sqrt(.Machine$double.xmax))                        
@@ -1398,7 +1419,8 @@ cv.factor.spline.wrapper <- function(x,
 																		 basis=c("additive","tensor","glp"),
 																		 cv.func=c("cv.ls","cv.gcv","cv.aic"),
                                      cv.df.min=1,
-                                     tau=NULL) {
+                                     tau=NULL,
+                                     weights=NULL) {
 
   knots.opt <- knots
 
@@ -1415,7 +1437,8 @@ cv.factor.spline.wrapper <- function(x,
                            basis=basis,
                            cv.func=cv.func,
                            cv.df.min=cv.df.min,
-                           tau=tau)
+                           tau=tau,
+                           weights=weights)
 
     cv.uniform <- cv.factor.spline(x=x,
                                    y=y,
@@ -1426,7 +1449,8 @@ cv.factor.spline.wrapper <- function(x,
                                    basis=basis,
                                    cv.func=cv.func,
                                    cv.df.min=cv.df.min,                                   
-                                   tau=tau)
+                                   tau=tau,
+                                   weights=weights)
     if(cv > cv.uniform) {
       cv <- cv.uniform
       knots.opt <- "uniform"
@@ -1443,7 +1467,8 @@ cv.factor.spline.wrapper <- function(x,
                            basis=basis,
                            cv.func=cv.func,
                            cv.df.min=cv.df.min,
-                           tau=tau)
+                           tau=tau,
+                           weights=weights)
 
   }
 
@@ -1466,7 +1491,8 @@ cv.factor.spline <- function(x,
 														 basis=c("additive","tensor","glp"),
 														 cv.func=c("cv.ls","cv.gcv","cv.aic"),
                              cv.df.min=1,
-                             tau=NULL) {
+                             tau=NULL,
+                             weights=NULL) {
 
   if(missing(x) || missing(y) || missing (K)) stop(" must provide x, y and K")
   if(!is.matrix(K)) stop(" K must be a two-column matrix")
@@ -1490,6 +1516,8 @@ cv.factor.spline <- function(x,
   if(n - dim.bs(basis=basis,kernel=TRUE,degree=K[,1],segments=K[,2],include=I,categories=categories) <= cv.df.min)
     return(sqrt(.Machine$double.xmax))
 
+  if(is.null(weights)) weights <- rep(1,n)
+
   ## Otherwise, compute the cross-validation function
 
   if(any(K[,1] > 0)||any(I > 0)) {
@@ -1503,31 +1531,31 @@ cv.factor.spline <- function(x,
       ## Additive spline regression models have an intercept in the
       ## lm() model (though not in the gsl.bs function)
       if(is.null(tau)) {
-        model <- lm.fit(cbind(1,P),y)
+        model <- lm.wfit(cbind(1,P),y,weights)
         ## Test for rank-deficient fit
         if(model$rank < (NCOL(P)+1)) return(sqrt(.Machine$double.xmax))
       } else {
         ## Test for full column rank
         if(!is.fullrank(cbind(1,P)))
           return(sqrt(.Machine$double.xmax))      
-        model <- tryCatch(rq.fit(cbind(1,P),y,tau=tau,method="fn"),error=function(e){FALSE})
+        model <- tryCatch(rq.wfit(cbind(1,P),y,tau=tau,weights,method="fn"),error=function(e){FALSE})
         if(is.logical(model))
           return(sqrt(.Machine$double.xmax))            
-        model.hat <- lm.fit(cbind(1,P),y)
+        model.hat <- lm.wfit(cbind(1,P),y,weights)
       }
     } else {
       if(is.null(tau)) {
-        model <- lm.fit(P,y)
+        model <- lm.wfit(P,y,weights)
         ## Test for rank-deficient fit
         if(model$rank < NCOL(P)) return(sqrt(.Machine$double.xmax))
       } else {
         ## Test for full column rank
         if(!is.fullrank(P))
           return(sqrt(.Machine$double.xmax))      
-        model <- tryCatch(rq.fit(P,y,tau=tau,method="fn"),error=function(e){FALSE})
+        model <- tryCatch(rq.wfit(P,y,tau=tau,weights,method="fn"),error=function(e){FALSE})
         if(is.logical(model))
           return(sqrt(.Machine$double.xmax))            
-        model.hat <- lm.fit(P,y)
+        model.hat <- lm.wfit(P,y,weights)
       }
     }
     if(is.null(tau))

@@ -36,7 +36,8 @@ crsEst <- function(xz,
                    prune=FALSE,
                    prune.index=NULL,
                    model.return=FALSE,
-                   tau=NULL) {
+                   tau=NULL,
+                   weights=NULL) {
   
   ## Take data frame xz and parse into factors (z) and numeric (x).
 
@@ -76,7 +77,8 @@ crsEst <- function(xz,
                                    knots=knots,
                                    basis=basis,
                                    prune=prune,
-                                   tau=tau)
+                                   tau=tau,
+                                   weights=weights)
 
     prune.index <- model$prune.index
 
@@ -100,7 +102,8 @@ crsEst <- function(xz,
                                        deriv.index=m,
                                        deriv=deriv,
                                        prune.index=prune.index,
-                                       tau=tau)
+                                       tau=tau,
+                                       weights=weights)
           } else {
             tmp <- matrix(0,length(y),3)
           }
@@ -122,7 +125,8 @@ crsEst <- function(xz,
                                          basis=basis,
                                          prune=prune,
                                          prune.index=prune.index,
-                                         tau=tau)$fitted.values
+                                         tau=tau,
+                                         weights=weights)$fitted.values
 
           zpred.base <- predict.factor.spline(x=x,
                                               y=y,
@@ -135,7 +139,8 @@ crsEst <- function(xz,
                                               basis=basis,
                                               prune=prune,
                                               prune.index=prune.index,
-                                              tau=tau)$fitted.values
+                                              tau=tau,
+                                              weights=weights)$fitted.values
 
           deriv.mat[,i] <- zpred[,1]-zpred.base[,1]
           deriv.mat.lwr[,i] <- deriv.mat[,i] - qnorm(0.975)*sqrt(zpred[,4]^2+zpred.base[,4]^2)
@@ -162,7 +167,8 @@ crsEst <- function(xz,
                                    knots=knots,
                                    basis=basis,
                                    model.return=model.return,
-                                   tau=tau)
+                                   tau=tau,
+                                   weights=weights)
 
     prune.index <- NULL
 
@@ -186,7 +192,8 @@ crsEst <- function(xz,
                                        basis=basis,
                                        deriv.index=m,
                                        deriv=deriv,
-                                       tau=tau)
+                                       tau=tau,
+                                       weights=weights)
           } else {
             tmp <- matrix(0,length(y),3)
           }
@@ -208,7 +215,8 @@ crsEst <- function(xz,
                                          knots=knots,
                                          basis=basis,
                                          model.return=model.return,
-                                         tau=tau)$fitted.values
+                                         tau=tau,
+                                         weights=weights)$fitted.values
 
           zpred.base <- predict.kernel.spline(x=x,
                                               y=y,
@@ -221,7 +229,8 @@ crsEst <- function(xz,
                                               knots=knots,
                                               basis=basis,
                                               model.return=model.return,
-                                              tau=tau)$fitted.values
+                                              tau=tau,
+                                              weights=weights)$fitted.values
 
           deriv.mat[,i] <- zpred[,1]-zpred.base[,1]
           deriv.mat.lwr[,i] <- deriv.mat[,i] - qnorm(0.975)*sqrt(zpred[,4]^2+zpred.base[,4]^2)
@@ -285,7 +294,8 @@ crsEst <- function(xz,
               prune=prune,
               prune.index=prune.index,
               P.hat=model$P.hat,
-              tau=tau))
+              tau=tau,
+              weights=weights))
 
 }
 
@@ -308,6 +318,7 @@ crs.default <- function(xz,
                         prune=FALSE,
                         model.return=FALSE,
                         tau=NULL,
+                        weights=NULL,
                         ...) {
 
   complexity <- match.arg(complexity)
@@ -330,7 +341,8 @@ crs.default <- function(xz,
                 data.return=data.return,
                 prune=prune,
                 model.return=model.return,
-                tau=tau)
+                tau=tau,
+                weights=weights)
 
   ## Add results to estimated object.
 
@@ -390,6 +402,7 @@ crs.formula <- function(formula,
                                   "MIN_POLL_SIZE"=paste("r",sqrt(.Machine$double.eps),sep="")),
                         nmulti=5,
                         tau=NULL,
+                        weights=NULL,
                         ...) {
 
   cv <- match.arg(cv)  
@@ -490,7 +503,8 @@ crs.formula <- function(formula,
                                                        random.seed=random.seed,
                                                        opts=opts,
                                                        nmulti=nmulti,
-                                                       tau=tau))
+                                                       tau=tau,
+                                                       weights=weights))
 
       cv.min <- cv.return$cv.objc
       degree <- cv.return$degree
@@ -513,7 +527,8 @@ crs.formula <- function(formula,
                                                   cv.func=cv.func,
                                                   degree=degree,
                                                   segments=segments,
-                                                  tau=tau))
+                                                  tau=tau,
+                                                  weights=weights))
       
       cv.min <- cv.return$cv.objc
       degree <- cv.return$degree
@@ -549,7 +564,8 @@ crs.formula <- function(formula,
                                                        random.seed=random.seed,
                                                        opts=opts,
                                                        nmulti=nmulti,
-                                                       tau=tau))
+                                                       tau=tau,
+                                                       weights=weights))
       
       cv.min <- cv.return$cv.objc
       degree <- cv.return$degree
@@ -575,7 +591,8 @@ crs.formula <- function(formula,
                                                   degree=degree,
                                                   segments=segments,
                                                   restarts=restarts,
-                                                  tau=tau))
+                                                  tau=tau,
+                                                  weights=weights))
       
       cv.min <- cv.return$cv.objc
       degree <- cv.return$degree
@@ -605,6 +622,7 @@ crs.formula <- function(formula,
                                               prune=prune,
                                               model.return=model.return,
                                               tau=tau,
+                                              weights=weights,
                                               ...))
 
 
@@ -654,6 +672,7 @@ predict.crs <- function(object,
     prune <- object$prune
     prune.index <- object$prune.index
     tau <- object$tau
+    weights <- object$weights
 
     xz <- object$xz
     y <- object$y
@@ -710,7 +729,8 @@ predict.crs <- function(object,
                                    knots=knots,
                                    prune=prune,
                                    prune.index=prune.index,
-                                   tau=tau)$fitted.values
+                                   tau=tau,
+                                   weights=weights)$fitted.values
 
       fitted.values <- tmp[,1]
       lwr <- tmp[,2]
@@ -739,7 +759,8 @@ predict.crs <- function(object,
                                          deriv.index=m,
                                          deriv=deriv,
                                          prune.index=prune.index,
-                                         tau=tau)
+                                         tau=tau,
+                                         weights=weights)
             } else {
               tmp <- matrix(0,nrow(xeval),3)
             }
@@ -762,7 +783,8 @@ predict.crs <- function(object,
                                            basis=basis,
                                            prune=prune,
                                            prune.index=prune.index,
-                                           tau=tau)$fitted.values
+                                           tau=tau,
+                                           weights=weights)$fitted.values
 
             zpred.base <- predict.factor.spline(x=x,
                                                 y=y,
@@ -775,7 +797,8 @@ predict.crs <- function(object,
                                                 basis=basis,
                                                 prune=prune,
                                                 prune.index=prune.index,
-                                                tau=tau)$fitted.values
+                                                tau=tau,
+                                                weights=weights)$fitted.values
 
             deriv.mat[,i] <- zpred[,1]-zpred.base[,1]
             deriv.mat.lwr[,i] <- deriv.mat[,i] - qnorm(0.975)*sqrt(zpred[,4]^2+zpred.base[,4]^2)
@@ -817,7 +840,8 @@ predict.crs <- function(object,
                                    zeval=zeval,
                                    knots=knots,
                                    basis=basis,
-                                   tau=tau)$fitted.values
+                                   tau=tau,
+                                   weights=weights)$fitted.values
 
       fitted.values <- tmp[,1]
       lwr <- tmp[,2]
@@ -846,7 +870,8 @@ predict.crs <- function(object,
                                          basis=basis,
                                          deriv.index=m,
                                          deriv=deriv,
-                                         tau=tau)
+                                         tau=tau,
+                                         weights=weights)
             } else {
               tmp <- matrix(0,nrow(xeval),3)
             }
@@ -868,7 +893,8 @@ predict.crs <- function(object,
                                            zeval=zeval,
                                            knots=knots,
                                            basis=basis,
-                                           tau=tau)$fitted.values
+                                           tau=tau,
+                                           weights=weights)$fitted.values
 
             zpred.base <- predict.kernel.spline(x=x,
                                                 y=y,
@@ -880,7 +906,8 @@ predict.crs <- function(object,
                                                 zeval=zevaltmp,
                                                 knots=knots,
                                                 basis=basis,
-                                                tau=tau)$fitted.values
+                                                tau=tau,
+                                                weights=weights)$fitted.values
 
             deriv.mat[,i] <- zpred[,1]-zpred.base[,1]
             deriv.mat.lwr[,i] <- deriv.mat[,i] - qnorm(0.975)*sqrt(zpred[,4]^2+zpred.base[,4]^2)
@@ -1122,6 +1149,7 @@ plot.crs <- function(x,
     lambda <- object$lambda
     is.ordered.z <- object$is.ordered.z
     tau <- object$tau
+    weights <- object$weights
 
     ## End information required to compute predictions
         
@@ -1184,7 +1212,8 @@ plot.crs <- function(x,
                                        knots=knots,
                                        prune=prune,
                                        prune.index=prune.index,
-                                       tau=tau)$fitted.values
+                                       tau=tau,
+                                       weights=weights)$fitted.values
           
           fitted.values <- tmp[,1]
           lwr <- tmp[,2]
@@ -1206,7 +1235,8 @@ plot.crs <- function(x,
                                        zeval=zeval,
                                        knots=knots,
                                        basis=basis,
-                                       tau=tau)$fitted.values
+                                       tau=tau,
+                                       weights=weights)$fitted.values
           
           fitted.values <- tmp[,1]
           lwr <- tmp[,2]
@@ -1390,6 +1420,7 @@ plot.crs <- function(x,
     lambda <- object$lambda
     is.ordered.z <- object$is.ordered.z
     tau <- object$tau
+    weights <- object$weights
 
     ## End information required to compute predictions
         
@@ -1475,7 +1506,8 @@ plot.crs <- function(x,
                                          deriv.index=m,
                                          deriv=deriv,
                                          prune.index=prune.index,
-                                         tau=tau)
+                                         tau=tau,
+                                         weights=weights)
             } else {
               tmp <- matrix(0,nrow(newdata),3)
             }
@@ -1495,7 +1527,8 @@ plot.crs <- function(x,
                                            basis=basis,
                                            prune=prune,
                                            prune.index=prune.index,
-                                           tau=tau)$fitted.values
+                                           tau=tau,
+                                           weights=weights)$fitted.values
             
             zpred.base <- predict.factor.spline(x=x,
                                                 y=y,
@@ -1508,7 +1541,8 @@ plot.crs <- function(x,
                                                 basis=basis,
                                                 prune=prune,
                                                 prune.index=prune.index,
-                                                tau=tau)$fitted.values
+                                                tau=tau,
+                                                weights=weights)$fitted.values
             
             deriv.est <- zpred[,1]-zpred.base[,1]
             deriv.lwr <- deriv.est - qnorm(0.975)*sqrt(zpred[,4]^2+zpred.base[,4]^2)
@@ -1532,7 +1566,8 @@ plot.crs <- function(x,
                                          basis=basis,
                                          deriv.index=m,
                                          deriv=deriv,
-                                         tau=tau)
+                                         tau=tau,
+                                         weights=weights)
     
             } else {
               tmp <- matrix(0,nrow(newdata),3)
@@ -1552,7 +1587,8 @@ plot.crs <- function(x,
                                            zeval=zeval,
                                            knots=knots,
                                            basis=basis,
-                                           tau=tau)$fitted.values
+                                           tau=tau,
+                                           weights=weights)$fitted.values
             
             zpred.base <- predict.kernel.spline(x=x,
                                                 y=y,
@@ -1564,7 +1600,8 @@ plot.crs <- function(x,
                                                 zeval=zeval.base,
                                                 knots=knots,
                                                 basis=basis,
-                                                tau=tau)$fitted.values
+                                                tau=tau,
+                                                weights=weights)$fitted.values
 
             deriv.est <- zpred[,1]-zpred.base[,1]
             deriv.lwr <- deriv.est - qnorm(0.975)*sqrt(zpred[,4]^2+zpred.base[,4]^2)

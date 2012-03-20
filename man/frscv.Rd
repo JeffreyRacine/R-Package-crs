@@ -26,7 +26,8 @@ frscv(xz,
       cv.func = c("cv.ls","cv.gcv","cv.aic"),
       degree = degree,
       segments = segments,
-      tau = NULL)
+      tau = NULL,
+      weights = NULL)
 }
 
 \arguments{
@@ -98,6 +99,12 @@ frscv(xz,
     conditional mean (default \code{tau=NULL})
   }
   
+  \item{weights}{
+    an optional vector of weights to be used in the fitting process.
+    Should be `NULL' or a numeric vector.  If non-NULL, weighted least
+    squares is used with weights `weights' (that is, minimizing
+    `sum(w*e^2)'); otherwise ordinary least squares is used.
+  }
 }
 
 \details{

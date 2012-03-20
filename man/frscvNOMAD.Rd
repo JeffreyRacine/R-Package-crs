@@ -30,7 +30,8 @@ frscvNOMAD(xz,
            random.seed = 42,
            opts = list(),
            nmulti = 0,
-           tau = NULL)
+           tau = NULL,
+           weights = NULL)
 }
 
 \arguments{
@@ -123,6 +124,13 @@ frscvNOMAD(xz,
     conditional mean (default \code{tau=NULL})
   }
   
+  \item{weights}{
+    an optional vector of weights to be used in the fitting process.
+    Should be `NULL' or a numeric vector.  If non-NULL, weighted least
+    squares is used with weights `weights' (that is, minimizing
+    `sum(w*e^2)'); otherwise ordinary least squares is used.
+  }
+
 }
 
 \details{
