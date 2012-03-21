@@ -923,7 +923,10 @@ predict.factor.spline <- function(x,
           model.hat <- lm(y~P-1,weights=weights)
         htt <- hat(model.hat$qr)
         ## Note - this is defined in util.R so if you modify there you must modify here also
-        cv <- mean(check.function(residuals(model),tau)/(1-htt)^(1/sqrt(tau*(1-tau))))
+        if(is.null(weights))
+          cv <- mean(check.function(residuals(model),tau)/(1-htt)^(1/sqrt(tau*(1-tau))))
+        else
+          cv <- mean(check.function(residuals(model)*sqrt(weights),tau)/(1-htt)^(1/sqrt(tau*(1-tau))))          
       }
     }
 
@@ -939,15 +942,19 @@ predict.factor.spline <- function(x,
     ## Degree == 0, no pruning possible
     IND <- TRUE
 
-    if(is.null(tau))
+    if(is.null(tau)) {
       model <- lm(y~1,weights=weights)
-    else
-      suppressWarnings(model <- rq(y~1,tau=tau,method="fn",weights=weights))
-
-    if(is.null(tau))
       cv <- mean(residuals(model)^2/(1-hatvalues(model))^2) ## Added
-    else
-      suppressWarnings(cv <- cv.rq(model,tau=tau,weights=weights))
+    } else {
+      suppressWarnings(model <- rq(y~1,tau=tau,method="fn",weights=weights))
+      model.hat <- lm(y~1,weights=weights)
+      htt <- hat(model.hat$qr)
+      ## Note - this is defined in util.R so if you modify there you must modify here also
+      if(is.null(weights))
+        cv <- mean(check.function(residuals(model),tau)/(1-htt)^(1/sqrt(tau*(1-tau))))
+      else
+        cv <- mean(check.function(residuals(model)*sqrt(weights),tau)/(1-htt)^(1/sqrt(tau*(1-tau))))          
+    }
 
     cv.pruned <- NULL
     if(is.null(xeval)) {
@@ -969,7 +976,7 @@ predict.factor.spline <- function(x,
   if(is.null(tau))
     htt <- hatvalues(model)
   else
-    htt <- hat(model$qr)
+    htt <- hatvalues(model.hat)
 
   return(list(fitted.values=fit.spline,
               df.residual=model$df.residual,
