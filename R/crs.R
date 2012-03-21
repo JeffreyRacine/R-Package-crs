@@ -1020,6 +1020,7 @@ summary.crs <- function(object,
     df2 <- (object$nobs-round(sum(object$hatvalues)))
     F <- (df2/df1)*(sum((object$y-mean(object$y))^2)-sum(residuals(object)^2))/sum(residuals(object)^2)
     if(is.null(object$tau)) cat(paste("\nF-statistic: ", format(F,digits=4), " on ", df1, " and ", df2, " DF, p-value: ", format(pf(F,df1=df1,df2=df2,lower.tail=FALSE),digits=4), sep=""))
+    if(!is.null(object$cv.score)) cat(paste("\n\nCross-validation score: ", format(object$cv.score,digits=8), sep=""))  
   } else {
     if(is.null(object$tau)) cat(paste("\n\nResidual standard error (weighted): ", format(sqrt(sum((object$residuals^2)*object$weights)/object$df.residual),digits=4)," on ", format(object$df.residual)," degrees of freedom",sep=""))
     adjusted.r.squared <- 1-(1-object$r.squared)*(length(object$fitted.values)-1)/object$df.residual
@@ -1028,9 +1029,9 @@ summary.crs <- function(object,
     df2 <- (object$nobs-round(sum(object$hatvalues)))
     F <- (df2/df1)*(sum((object$y-mean(object$y))^2*object$weights)-sum(residuals(object)^2*object$weights))/sum(residuals(object)^2*object$weights)
     if(is.null(object$tau)) cat(paste("\nF-statistic (weighted): ", format(F,digits=4), " on ", df1, " and ", df2, " DF, p-value: ", format(pf(F,df1=df1,df2=df2,lower.tail=FALSE),digits=4), sep=""))
+    if(!is.null(object$cv.score)) cat(paste("\n\nCross-validation score (weighted): ", format(object$cv.score,digits=8), sep=""))  
   }
 
-  if(!is.null(object$cv.score)) cat(paste("\n\nCross-validation score: ", format(object$cv.score,digits=8), sep=""))  
   if(object$cv != "none") cat(paste("\nNumber of multistarts: ", format(object$nmulti), sep=""))
 
   if(sigtest&!object$kernel) {

@@ -1399,6 +1399,10 @@ cv.kernel.spline <- function(x,
 
   }
 
+  ## If weights exist, need to use weighted residuals
+
+  if(!is.null(weights)) epsilon <- epsilon*sqrt(weights)
+
   if(cv.func == "cv.ls") {
     if(is.null(tau)) 
       cv <- mean(epsilon^2/(1-htt)^2)
@@ -1606,6 +1610,10 @@ cv.factor.spline <- function(x,
     htt <- rep(1/n,n)
     epsilon <- y-mean(y)
   }
+
+  ## If weights exist, need to use weighted residuals
+
+  if(!is.null(weights)) epsilon <- epsilon*sqrt(weights)
 
   if(cv.func == "cv.ls") {
     if(is.null(tau)) 
