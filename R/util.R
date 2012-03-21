@@ -159,9 +159,13 @@ uocquantile = function(x, prob) {
 
 ## statistical functions
 
-RSQfunc <- function(y,y.pred) {
+RSQfunc <- function(y,y.pred,weights=NULL) {
+  if(!is.null(weights)) {
+    y <- y*sqrt(weights)
+    y.pred <- y.pred*sqrt(weights)
+  }
   y.mean <- mean(y)
-  (sum((y-y.mean)*(y.pred-y.mean))^2)/(sum((y-y.mean)^2)*sum((y.pred-y.mean)^2))
+  return((sum((y-y.mean)*(y.pred-y.mean))^2)/(sum((y-y.mean)^2)*sum((y.pred-y.mean)^2)))
 }
 
 MSEfunc <- function(y,y.fit) {

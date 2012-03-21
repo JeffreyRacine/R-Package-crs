@@ -796,6 +796,11 @@ predict.factor.spline <- function(x,
       ## a data frame so that we can readily determine columns that
       ## have been removed and assign logical values to all columns in
       ## P.
+
+      ## Note - this code is not reachable by crs() since pruning and
+      ## regression quantiles is not supported by stepCV (currently we
+      ## test and stop())
+
       P.df <- data.frame(P)
       names(P.df) <- paste("P",seq(1,NCOL(P.df)),sep="")
       if(basis=="additive" || basis=="glp") {
@@ -895,7 +900,7 @@ predict.factor.spline <- function(x,
       else
         suppressWarnings(cv.pruned <- cv.rq(model,tau=tau,weights=weights))
     } else {
-      ## No pruning
+      ## No pruning, default case
       IND <- !logical(length=NCOL(P))
       if(basis=="additive" || basis=="glp") {
         if(is.null(tau))
@@ -909,10 +914,17 @@ predict.factor.spline <- function(x,
           suppressWarnings(model <- rq(y~P-1,tau=tau,method="fn",weights=weights,x=TRUE))
       }
       cv.pruned <- NULL
-      if(is.null(tau))
+      if(is.null(tau)) {
         cv <- mean(residuals(model)^2/(1-hatvalues(model))^2)
-      else
-        suppressWarnings(cv <- cv.rq(model,tau=tau,weights=weights))
+      } else {
+        if(basis=="additive" || basis=="glp")
+          model.hat <- lm(y~P,weights=weights)
+        else
+          model.hat <- lm(y~P-1,weights=weights)
+        htt <- hat(model.hat$qr)
+        ## Note - this is defined in util.R so if you modify there you must modify here also
+        cv <- mean(check.function(residuals(model),tau)/(1-htt)^(1/sqrt(tau*(1-tau))))
+      }
     }
 
     if(is.null(xeval)) {

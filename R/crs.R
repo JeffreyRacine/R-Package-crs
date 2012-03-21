@@ -353,7 +353,7 @@ crs.default <- function(xz,
   ## Add results to estimated object.
 
   est$residuals <- y - est$fitted.values
-  est$r.squared <- RSQfunc(y,est$fitted.values)
+  est$r.squared <- RSQfunc(y,est$fitted.values,weights)
   est$call <- match.call()
   class(est) <- "crs"
 
@@ -1006,14 +1006,25 @@ summary.crs <- function(object,
   if(!object$kernel) cat(paste("\nPruning of final model: ",format(ifelse(object$prune,"TRUE","FALSE")),sep=""))
   cat(paste("\nTraining observations: ", format(object$nobs), sep=""))
   if(is.null(object$tau)) cat(paste("\nRank of model frame: ", format(object$k), sep=""))
-  cat(paste("\nTrace of smoother matrix: ", format(round(sum(object$hatvalues))), sep=""))    
-  if(is.null(object$tau)) cat(paste("\n\nResidual standard error: ", format(sqrt(sum(object$residuals^2)/object$df.residual),digits=4)," on ", format(object$df.residual)," degrees of freedom",sep=""))
-  adjusted.r.squared <- 1-(1-object$r.squared)*(length(object$fitted.values)-1)/object$df.residual
-  if(is.null(object$tau)) cat(paste("\nMultiple R-squared: ", format(object$r.squared,digits=4),",   Adjusted R-squared: ",format(adjusted.r.squared,digits=4), sep=""))
-  df1 <- round(sum(object$hatvalues))-1
-  df2 <- (object$nobs-round(sum(object$hatvalues)))
-  F <- (df2/df1)*(sum((object$y-mean(object$y))^2)-sum(residuals(object)^2))/sum(residuals(object)^2)
-  if(is.null(object$tau)) cat(paste("\nF-statistic: ", format(F,digits=4), " on ", df1, " and ", df2, " DF, p-value: ", format(pf(F,df1=df1,df2=df2,lower.tail=FALSE),digits=4), sep=""))
+  cat(paste("\nTrace of smoother matrix: ", format(round(sum(object$hatvalues))), sep=""))
+
+  if(is.null(object$weights)) {
+    if(is.null(object$tau)) cat(paste("\n\nResidual standard error: ", format(sqrt(sum(object$residuals^2)/object$df.residual),digits=4)," on ", format(object$df.residual)," degrees of freedom",sep=""))
+    adjusted.r.squared <- 1-(1-object$r.squared)*(length(object$fitted.values)-1)/object$df.residual
+    if(is.null(object$tau)) cat(paste("\nMultiple R-squared: ", format(object$r.squared,digits=4),",   Adjusted R-squared: ",format(adjusted.r.squared,digits=4), sep=""))
+    df1 <- round(sum(object$hatvalues))-1
+    df2 <- (object$nobs-round(sum(object$hatvalues)))
+    F <- (df2/df1)*(sum((object$y-mean(object$y))^2)-sum(residuals(object)^2))/sum(residuals(object)^2)
+    if(is.null(object$tau)) cat(paste("\nF-statistic: ", format(F,digits=4), " on ", df1, " and ", df2, " DF, p-value: ", format(pf(F,df1=df1,df2=df2,lower.tail=FALSE),digits=4), sep=""))
+  } else {
+    if(is.null(object$tau)) cat(paste("\n\nResidual standard error (weighted): ", format(sqrt(sum((object$residuals^2)*object$weights)/object$df.residual),digits=4)," on ", format(object$df.residual)," degrees of freedom",sep=""))
+    adjusted.r.squared <- 1-(1-object$r.squared)*(length(object$fitted.values)-1)/object$df.residual
+    if(is.null(object$tau)) cat(paste("\nMultiple R-squared (weighted): ", format(object$r.squared,digits=4),",   Adjusted R-squared (weighted): ",format(adjusted.r.squared,digits=4), sep=""))
+    df1 <- round(sum(object$hatvalues))-1
+    df2 <- (object$nobs-round(sum(object$hatvalues)))
+    F <- (df2/df1)*(sum((object$y-mean(object$y))^2*object$weights)-sum(residuals(object)^2*object$weights))/sum(residuals(object)^2*object$weights)
+    if(is.null(object$tau)) cat(paste("\nF-statistic (weighted): ", format(F,digits=4), " on ", df1, " and ", df2, " DF, p-value: ", format(pf(F,df1=df1,df2=df2,lower.tail=FALSE),digits=4), sep=""))
+  }
 
   if(!is.null(object$cv.score)) cat(paste("\n\nCross-validation score: ", format(object$cv.score,digits=8), sep=""))  
   if(object$cv != "none") cat(paste("\nNumber of multistarts: ", format(object$nmulti), sep=""))
