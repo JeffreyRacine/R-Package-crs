@@ -1073,7 +1073,7 @@ plot.crs <- function(x,
 
   ## Check for proper derivative
 
-  if(deriv < 1) stop("derivative order must be a positive integer")
+  if(deriv < 0) stop("derivative order must be a non-negative integer")
 
   ## Default - basic residual plots
 
