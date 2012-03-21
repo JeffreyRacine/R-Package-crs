@@ -8,6 +8,8 @@ Changes from Version 0.15-13 to 0.15-14 [XXX]
 * Test for coexistence of pruning and quantile regression splines and
   stop with a message that these cannot coexist
 
+* Check for positive derivative integer in plots
+
 Changes from Version 0.15-12 to 0.15-13 [05-Mar-2012]
 
 * Added new function crsivderiv()

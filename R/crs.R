@@ -88,7 +88,7 @@ crsEst <- function(xz,
 
     prune.index <- model$prune.index
 
-    if(deriv!=0) {
+    if(deriv > 0) {
 
       deriv.mat <- xz ## copy for dimension only
       deriv.mat.lwr <- deriv.mat
@@ -178,7 +178,7 @@ crsEst <- function(xz,
 
     prune.index <- NULL
 
-    if(deriv!=0) {
+    if(deriv > 0) {
 
       deriv.mat <- xz ## copy for dimension only
       deriv.mat.lwr <- deriv.mat
@@ -492,6 +492,10 @@ crs.formula <- function(formula,
   if((cv=="nomad" && complexity=="degree-knots") && (segments.min==segments.max)) stop("NOMAD search selected with complexity degree-knots but segments.min and segments.max are equal")
   if((cv=="nomad" && complexity=="degree-knots") && (degree.min==degree.max)) stop("NOMAD search selected with complexity degree-knots but degree.min and degree.max are equal")
 
+  ## Check for proper derivative
+
+  if(deriv < 0) stop("derivative order must be a non-negative integer")
+
   cv.min <- NULL
   ptm <- system.time("")
   
@@ -752,7 +756,7 @@ predict.crs <- function(object,
       upr <- tmp[,3]
       rm(tmp)
 
-      if(deriv!=0) {
+      if(deriv > 0) {
 
         deriv.mat <- matrix(NA,nrow=NROW(newdata),ncol=NCOL(newdata))
         deriv.mat.lwr <- deriv.mat
@@ -863,7 +867,7 @@ predict.crs <- function(object,
       upr <- tmp[,3]
       rm(tmp)
 
-      if(deriv!=0) {
+      if(deriv > 0) {
 
         deriv.mat <- matrix(NA,nrow=NROW(newdata),ncol=NCOL(newdata))
         deriv.mat.lwr <- deriv.mat
@@ -1065,6 +1069,10 @@ plot.crs <- function(x,
   console <- printPop(console)
 
   xq <- double(ncol(object$xz)) + xq
+
+  ## Check for proper derivative
+
+  if(deriv < 1) stop("derivative order must be a positive integer")
 
   ## Default - basic residual plots
 
