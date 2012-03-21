@@ -484,6 +484,7 @@ crs.formula <- function(formula,
   if(cv!="none"&&basis!="auto"&&num.x>1) warning(paste(" Multiple continuous predictor cv and basis is ", basis, ": you could consider basis=\"auto\"",sep=""),immediate.=TRUE)
 
   if(kernel==TRUE&&prune==TRUE) warning(" pruning cannot coexist with categorical kernel smoothing (pruning ignored)")
+  if(!is.null(tau)&&prune==TRUE) stop(" pruning is not supported for quantile regression splines")
 
   ## Check for cv="nomad" and complexity="degree-knots" but
   ## degree.min==degree.max or segments==segments.max

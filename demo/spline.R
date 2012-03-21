@@ -812,7 +812,7 @@ predict.factor.spline <- function(x,
       if(is.null(tau))
         cv <- mean(residuals(model)^2/(1-hatvalues(model))^2)
       else
-        suppressWarnings(cv <- cv.rq(model,tau=tau))
+        suppressWarnings(cv <- cv.rq(model,tau=tau,weights=weights))
       console <- printClear(console)
       console <- printPush("Pruning...",console = console)
       if(basis=="additive" || basis=="glp") {
@@ -844,7 +844,7 @@ predict.factor.spline <- function(x,
       if(is.null(tau))
         cv.pruned <- mean(residuals(model.pruned)^2/(1-hatvalues(model.pruned))^2)
       else
-        suppressWarnings(cv.pruned <- cv.rq(model.pruned,tau=tau))
+        suppressWarnings(cv.pruned <- cv.rq(model.pruned,tau=tau,weights=weights))
 
       if(cv.pruned <= cv) {
         IND <- logical()
@@ -893,7 +893,7 @@ predict.factor.spline <- function(x,
       if(is.null(tau))
         cv.pruned <- mean(residuals(model)^2/(1-hatvalues(model))^2)
       else
-        suppressWarnings(cv.pruned <- cv.rq(model,tau=tau))
+        suppressWarnings(cv.pruned <- cv.rq(model,tau=tau,weights=weights))
     } else {
       ## No pruning
       IND <- !logical(length=NCOL(P))
@@ -906,13 +906,13 @@ predict.factor.spline <- function(x,
         if(is.null(tau))
           model <- lm(y~P-1,weights=weights)
         else
-          suppressWarnings(model <- rq(y~P-1,tau=tau,method="fn",weights=weights))
+          suppressWarnings(model <- rq(y~P-1,tau=tau,method="fn",weights=weights,x=TRUE))
       }
       cv.pruned <- NULL
       if(is.null(tau))
         cv <- mean(residuals(model)^2/(1-hatvalues(model))^2)
       else
-        suppressWarnings(cv <- cv.rq(model,tau=tau))
+        suppressWarnings(cv <- cv.rq(model,tau=tau,weights=weights))
     }
 
     if(is.null(xeval)) {
@@ -932,11 +932,10 @@ predict.factor.spline <- function(x,
     else
       suppressWarnings(model <- rq(y~1,tau=tau,method="fn",weights=weights))
 
-
     if(is.null(tau))
       cv <- mean(residuals(model)^2/(1-hatvalues(model))^2) ## Added
     else
-      suppressWarnings(cv <- cv.rq(model,tau=tau))
+      suppressWarnings(cv <- cv.rq(model,tau=tau,weights=weights))
 
     cv.pruned <- NULL
     if(is.null(xeval)) {
