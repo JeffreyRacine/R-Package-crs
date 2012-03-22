@@ -2,13 +2,13 @@ Changes from Version 0.15-13 to 0.15-14 [22-Mar-2012]
 
 * Added support for weights to crs()
 
-* Corrected issue with reporting of cv function value with quantile
-  regression splines
+* Corrected issue with reporting of cv function value by summary()
+  with quantile regression splines
 
 * Test for coexistence of pruning and quantile regression splines and
   stop with a message that these cannot coexist
 
-* Check for valid derivative integer in plots
+* Check for valid derivative integer
 
 Changes from Version 0.15-12 to 0.15-13 [05-Mar-2012]
 
