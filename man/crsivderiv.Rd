@@ -201,6 +201,7 @@ further notice.
 \code{\link[np]{npreg}}, \code{\link{crsiv}}, \code{\link{crs}}
 }
 \examples{
+\dontrun{
 ## This illustration was made possible by Samuele Centorrino
 ## <samuele.centorrino@univ-tlse1.fr>
 
@@ -269,6 +270,7 @@ plot(z,model.ivderiv$phi.prime,
      ylab="Derivative",
      type="l",
      lwd=2)
-rug(z)     
+rug(z)
+} % end dontrun
 }
 \keyword{ instrument }
