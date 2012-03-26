@@ -394,7 +394,7 @@ crs.formula <- function(formula,
                         lambda.discrete.num=100,
                         complexity=c("degree-knots","degree","knots"),
                         knots=c("quantiles","uniform","auto"),
-                        basis=c("additive","tensor","glp","auto"),
+                        basis=c("auto","additive","tensor","glp"),
                         deriv=0,
                         data.return=FALSE,
                         prune=FALSE,
@@ -460,7 +460,6 @@ crs.formula <- function(formula,
   if(cv=="nomad" && is.null(num.z) && ((degree.max-degree.min)*(segments.max-segments.min))**num.x <= cv.threshold) {
     warning(" Dynamically changing search from nomad to exhaustive (if unwanted set cv.threshold to 0)")
     cv <- "exhaustive"
-    if(nmulti > 0) warning(" Exhaustive search, nmulti ignored...")
   }
 
   ## If no degree nor include nor lambda, return cubic spline
@@ -473,15 +472,45 @@ crs.formula <- function(formula,
   if(lambda.discrete && (lambda.discrete.num < 1)) stop(" lambda.discrete.num must be a positive integer")
 
   if(cv=="none"){
-      if(is.null(degree)&!is.null(x)) degree <- rep(3,num.x)
-      if(is.null(segments)&!is.null(x)) segments <- rep(1,num.x)
-      if(is.null(include)&!is.null(z)&!kernel) include <- rep(1,num.z)
-      if(is.null(lambda)&!is.null(z)&kernel) lambda <- rep(0,num.z)
-      if(basis=="auto") basis <- "additive"  
-      if(knots=="auto") knots <- "quantiles"
-  }
 
-  if(cv!="none"&&basis!="auto"&&num.x>1) warning(paste(" Multiple continuous predictor cv and basis is ", basis, ": you could consider basis=\"auto\"",sep=""),immediate.=TRUE)
+    ## When no cross-validation is selected and no defaults are set
+    ## for various parameters, we set them to ad hoc defaults and warn
+    ## the user to this effect.
+
+    if(is.null(degree)&!is.null(x)) {
+        warning(paste(" cv=\"none\" selected but no degree provided, using degree=rep(3,num.x): you might consider other degree settings",sep=""),immediate.=TRUE)
+        degree <- rep(3,num.x)
+      }
+      if(is.null(segments)&!is.null(x)) {
+        warning(paste(" cv=\"none\" selected but no segments provided, using segments=rep(1,num.x): you might consider other segment settings",sep=""),immediate.=TRUE)
+        segments <- rep(1,num.x)
+      }
+      if(is.null(include)&!is.null(z)&!kernel) {
+        warning(paste(" cv=\"none\" selected but no inclusion for factors indicated, using include=rep(1,num.z): you might consider other include settings",sep=""),immediate.=TRUE)
+        include <- rep(1,num.z)
+      }
+      if(is.null(lambda)&!is.null(z)&&kernel) {
+        warning(paste(" cv=\"none\" selected but no bandwidths for factors indicated, using lambda=rep(0,num.z): you might consider other lambda settings",sep=""),immediate.=TRUE)
+        lambda <- rep(0,num.z)
+      }
+
+      ## With one continuous predictor all bases are identical, so
+      ## simply set the basis to additive and be done (no warning
+      ## necessary)
+  
+      if(basis=="auto"&&num.x==1) basis <- "additive"
+  
+      if(basis=="auto"&&num.x>1) {
+        warning(paste(" cv=\"none\" selected, basis=\"auto\" changed to basis=\"additive\": you might consider basis=\"tensor\" etc.",sep=""),immediate.=TRUE)
+        basis <- "additive"
+      }
+
+      if(knots=="auto"&&num.x>1) {
+        warning(paste(" cv=\"none\" selected, knots=\"auto\" changed to knots=\"quantiles\": you might consider knots=\"uniform\" etc.",sep=""),immediate.=TRUE)
+        knots <- "quantiles"
+      }
+
+  }
 
   if(kernel==TRUE&&prune==TRUE) warning(" pruning cannot coexist with categorical kernel smoothing (pruning ignored)")
   if(!is.null(tau)&&prune==TRUE) stop(" pruning is not supported for quantile regression splines")
@@ -1006,7 +1035,7 @@ summary.crs <- function(object,
     cat(paste("\nBandwidth for ",format(object$znames[j]),": ",format(object$lambda[j]),sep=""),sep="")
   cat(paste("\nModel complexity proxy: ", format(object$complexity), sep=""))
   cat(paste("\nKnot type: ", format(object$knots), sep=""))
-  cat(paste("\nBasis type: ",format(object$basis),sep=""))
+  if(object$num.x > 1) cat(paste("\nBasis type: ",format(object$basis),sep=""))
   if(!object$kernel) cat(paste("\nPruning of final model: ",format(ifelse(object$prune,"TRUE","FALSE")),sep=""))
   cat(paste("\nTraining observations: ", format(object$nobs), sep=""))
   if(is.null(object$tau)) cat(paste("\nRank of model frame: ", format(object$k), sep=""))

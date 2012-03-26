@@ -23,7 +23,6 @@ dgp <- sin(sqrt(x1^2+x2^2))/sqrt(x1^2+x2^2)
 y <- dgp + rnorm(n,sd=.1)
 
 model <- crs(y~x1+x2,
-             basis="auto",
              cv=cv,
              complexity="degree-knots",
              knots="uniform",

@@ -48,7 +48,7 @@ crs(\dots)
     lambda.discrete.num = 100,
     complexity = c("degree-knots","degree","knots"),
     knots = c("quantiles","uniform","auto"),
-    basis = c("additive","tensor","glp","auto"),
+    basis = c("auto","additive","tensor","glp"),
     deriv = 0,
     data.return = FALSE,
     prune = FALSE,
@@ -162,7 +162,7 @@ in \code{x} are included or omitted from the resulting estimate }
   equally spaced intervals. If \code{knots="auto"}, the knot type will
   be automatically determined by cross-validation }
 
-\item{basis}{ a character string (default \code{basis="additive"})
+\item{basis}{ a character string (default \code{basis="auto"})
     indicating whether the additive or tensor product B-spline basis
     matrix for a multivariate polynomial spline or generalized B-spline
     polynomial basis should be used. Note this can be automatically
@@ -239,7 +239,7 @@ in \code{x} are included or omitted from the resulting estimate }
     ## cross-validation (i.e. cross-validation will determine whether to
     ## use the additive, generalized, or tensor product basis)
     
-    model <- crs(y~x1+x2,basis="auto")
+    model <- crs(y~x1+x2)
     
     ## Estimate the model for a specified degree/segment/bandwidth
     ## combination and do not run cross-validation (will use the

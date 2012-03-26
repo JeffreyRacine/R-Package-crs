@@ -23,7 +23,6 @@ dgp <- sin(pi*(x1+x2))^4*sin(pi*x1)^2
 y <- dgp + rnorm(n,sd=.1)
 
 model <- crs(y~x1+x2,
-             basis="auto",
              cv=cv,
              complexity="degree-knots",
              knots="uniform",

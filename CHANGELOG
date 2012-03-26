@@ -1,3 +1,14 @@
+Changes from Version 0.15-14 to 0.15-15 [XXX]
+
+* Default basis set to "auto" from "additive" for more robust results
+  (at the cost of additional computation for all supported
+  bases). Warnings changed to reflect this, additional warnings
+  provided, but mainly when cv="none" (i.e. user is doing things
+  manually and failing to provide defaults)
+
+* No longer report basis type for one continuous predictor as all
+  bases are identical in this case
+
 Changes from Version 0.15-13 to 0.15-14 [22-Mar-2012]
 
 * Added support for weights to crs()

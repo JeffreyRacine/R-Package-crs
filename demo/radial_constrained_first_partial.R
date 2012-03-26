@@ -50,7 +50,6 @@ data.eval <- data.frame(y=0,expand.grid(x1=x1.seq,x2=x2.seq))
 
 model.unres <- crs(y~x1+x2,
                    deriv=1,
-                   basis="auto",
                    data=data.train,
                    nmulti=5)
 
