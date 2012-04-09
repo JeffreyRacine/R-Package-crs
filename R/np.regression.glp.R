@@ -438,7 +438,7 @@ summary.npglpreg <- function(object,
   }
 
   if(object$cv.shrink)
-    cat("\nUsing Seifert & Gasser shrinkage for cross-validation")
+    cat("\nUsing (local) Seifert & Gasser shrinkage for cross-validation")
 
   if(object$num.numeric == 1){
     cat(paste("\nThere is ",format(object$num.numeric), " continuous predictor",sep=""),sep="")
