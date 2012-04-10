@@ -26,11 +26,11 @@ check.max.spline.degree <- function(xdat=NULL,degree=NULL,issue.warning=FALSE) {
       if(degree[i]>0) {
         X <- gsl.bs(xdat[,numeric.index[i]],degree=degree[i],nbreak=2)
         d[i] <- degree[i]
-        if(rcond(t(X)%*%X)<.Machine$double.eps) {
+        if(!is.fullrank(X)) {
           for(j in 1:degree[i]) {
             d[i] <- j
             X <- gsl.bs(xdat[,numeric.index[i]],degree=d[i],nbreak=2)
-            if(rcond(t(X)%*%X)<.Machine$double.eps) {
+            if(!is.fullrank(X)) {
               d[i] <- j-1
               break()
             }
