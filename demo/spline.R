@@ -1271,6 +1271,9 @@ cv.kernel.spline <- function(x,
       if(NCOL(P) >= (n-1))
         return(sqrt(.Machine$double.xmax))
       if(basis=="additive" || basis=="glp") {
+        ## Test for full column rank
+        if(!is.fullrank(cbind(1,P)))
+          return(sqrt(.Machine$double.xmax))         
         ## Additive spline regression models have an intercept in the lm()
         ## model (though not in the gsl.bs function)
         if(is.null(tau)) {
@@ -1278,12 +1281,7 @@ cv.kernel.spline <- function(x,
             epsilon <- residuals(model <- lm.fit(cbind(1,P),y))
           else
             epsilon <- residuals(model <- lm.wfit(cbind(1,P),y,weights))            
-          if(model$rank < (NCOL(P)+1))
-            return(sqrt(.Machine$double.xmax))
         } else {
-          ## Test for full column rank
-          if(!is.fullrank(cbind(1,P)))
-            return(sqrt(.Machine$double.xmax))         
           if(is.null(weights))
             residuals <- tryCatch(residuals(rq.fit(cbind(1,P),y,tau=tau,method="fn")),error=function(e){FALSE})
           else
@@ -1292,17 +1290,15 @@ cv.kernel.spline <- function(x,
             return(sqrt(.Machine$double.xmax))            
         }
       } else {
+        ## Test for full column rank
+        if(!is.fullrank(P))
+          return(sqrt(.Machine$double.xmax))         
         if(is.null(tau)) {
           if(is.null(weights))
             epsilon <- residuals(model <- lm.fit(P,y))
           else
             epsilon <- residuals(model <- lm.wfit(P,y,weights))            
-          if(model$rank < NCOL(P))
-            return(sqrt(.Machine$double.xmax))
         } else {
-          ## Test for full column rank
-          if(!is.fullrank(P))
-            return(sqrt(.Machine$double.xmax))         
           if(is.null(weights))
             residuals <- tryCatch(residuals(rq.fit(P,y,tau=tau,method="fn")),error=function(e){FALSE})
           else
@@ -1336,30 +1332,26 @@ cv.kernel.spline <- function(x,
         L <- prod.kernel(Z=z,z=z.unique[ind.vals[i],],lambda=lambda,is.ordered.z=is.ordered.z)
         if(!is.null(weights)) L <- weights*L
         if(basis=="additive" || basis=="glp") {
+          ## Test for full column rank
+          if(!is.fullrank(cbind(1,P)*L))
+            return(sqrt(.Machine$double.xmax))         
           ## Additive spline regression models have an intercept in
           ## the lm() model (though not in the gsl.bs function)
           if(is.null(tau)) {
             model <- lm.wfit(cbind(1,P),y,L)
-            if(model$rank < (NCOL(P)+1))
-              return(sqrt(.Machine$double.xmax))
           } else {
-            ## Test for full column rank
-            if(!is.fullrank(cbind(1,P)*L))
-              return(sqrt(.Machine$double.xmax))         
             model <- tryCatch(rq.wfit(cbind(1,P),y,weights=L,tau=tau,method="fn"),error=function(e){FALSE})
             if(is.logical(model))
               return(sqrt(.Machine$double.xmax))            
             model.hat <- lm.wfit(cbind(1,P),y,L)
           }
         } else {
+          ## Test for full column rank
+          if(!is.fullrank(P*L))
+            return(sqrt(.Machine$double.xmax))         
           if(is.null(tau)) {
             model <- lm.wfit(P,y,L)
-            if(model$rank < NCOL(P))
-              return(sqrt(.Machine$double.xmax))
           } else {
-            ## Test for full column rank
-            if(!is.fullrank(P*L))
-              return(sqrt(.Machine$double.xmax))         
             model <- tryCatch(rq.wfit(P,y,weights=L,tau=tau,method="fn"),error=function(e){FALSE})
             if(is.logical(model))
               return(sqrt(.Machine$double.xmax))            
@@ -1559,6 +1551,9 @@ cv.factor.spline <- function(x,
     if(NCOL(P) >= (n-1))
       return(sqrt(.Machine$double.xmax))
     if(basis=="additive" || basis=="glp") {
+      ## Test for full column rank
+      if(!is.fullrank(cbind(1,P)))
+        return(sqrt(.Machine$double.xmax))      
       ## Additive spline regression models have an intercept in the
       ## lm() model (though not in the gsl.bs function)
       if(is.null(tau)) {
@@ -1566,12 +1561,7 @@ cv.factor.spline <- function(x,
           model <- lm.fit(cbind(1,P),y)
         else
           model <- lm.wfit(cbind(1,P),y,weights)          
-        ## Test for rank-deficient fit
-        if(model$rank < (NCOL(P)+1)) return(sqrt(.Machine$double.xmax))
       } else {
-        ## Test for full column rank
-        if(!is.fullrank(cbind(1,P)))
-          return(sqrt(.Machine$double.xmax))      
         if(is.null(weights))
           model <- tryCatch(rq.fit(cbind(1,P),y,tau=tau,method="fn"),error=function(e){FALSE})
         else
@@ -1584,17 +1574,15 @@ cv.factor.spline <- function(x,
           model.hat <- lm.wfit(cbind(1,P),y,weights)          
       }
     } else {
+      ## Test for full column rank
+      if(!is.fullrank(P))
+        return(sqrt(.Machine$double.xmax))      
       if(is.null(tau)) {
         if(is.null(weights))
           model <- lm.fit(P,y)
         else
           model <- lm.wfit(P,y,weights)          
-        ## Test for rank-deficient fit
-        if(model$rank < NCOL(P)) return(sqrt(.Machine$double.xmax))
       } else {
-        ## Test for full column rank
-        if(!is.fullrank(P))
-          return(sqrt(.Machine$double.xmax))      
         if(is.null(weights))
           model <- tryCatch(rq.fit(P,y,tau=tau,method="fn"),error=function(e){FALSE})
         else

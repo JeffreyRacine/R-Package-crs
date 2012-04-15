@@ -1,10 +1,19 @@
 Changes from Version 0.15-14 to 0.15-15 [XXX]
 
+* More stringent checking for ill-conditioned bases during
+  cross-validation - previous checks were insufficient allowing poorly
+  conditioned bases to creep into the final model (this may result in
+  increased runtime for large datasets and multivariate tensor models)
+
 * Default basis set to "auto" from "additive" for more robust results
   (at the cost of additional computation for all supported
   bases). Warnings changed to reflect this, additional warnings
   provided, but mainly when cv="none" (i.e. user is doing things
   manually and failing to provide defaults)
+
+* Smaller memory footprint and potential runtime improvement for large
+  bases (test for ill conditioned bases was relying on rcond(), now
+  using eigen() thus avoiding matrix multiplication)
 
 * No longer report basis type for one continuous predictor as all
   bases are identical in this case
