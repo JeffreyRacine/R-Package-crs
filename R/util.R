@@ -220,7 +220,8 @@ cv.rq <- function (model, tau = 0.5, weights = NULL) {
 ## (ratio of max/min eigenvalue) using .Machine$double.eps rather than
 ## their 1e-13 constant. Note that for weighted regression you simply
 ## use x*L which conducts row-wise multiplication (i.e. diag(L)%*%X
-## not necessary)
+## not necessary). Note also that crossprod(X) is significantly faster
+## than t(X)%*%X.
 
 is.fullrank <- function (x) 
 {

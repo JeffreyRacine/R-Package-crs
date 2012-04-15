@@ -499,7 +499,7 @@ deriv.kernel.spline <- function(x,
 
   if(basis=="additive" || basis=="glp") {
     K.additive <- K
-    K.additive[,2] <- ifelse(K[,1]==0,0,K[,2])    
+    K.additive[,2] <- ifelse(K[,1]==0,0,K[,2])
     K.additive[,1] <- ifelse(K[,1]>0,K[,1]-1,K[,1])
   }
 
@@ -926,7 +926,7 @@ predict.factor.spline <- function(x,
         if(is.null(weights))
           cv <- mean(check.function(residuals(model),tau)/(1-htt)^(1/sqrt(tau*(1-tau))))
         else
-          cv <- mean(check.function(residuals(model)*sqrt(weights),tau)/(1-htt)^(1/sqrt(tau*(1-tau))))          
+          cv <- mean(check.function(residuals(model)*sqrt(weights),tau)/(1-htt)^(1/sqrt(tau*(1-tau))))
       }
     }
 
@@ -953,7 +953,7 @@ predict.factor.spline <- function(x,
       if(is.null(weights))
         cv <- mean(check.function(residuals(model),tau)/(1-htt)^(1/sqrt(tau*(1-tau))))
       else
-        cv <- mean(check.function(residuals(model)*sqrt(weights),tau)/(1-htt)^(1/sqrt(tau*(1-tau))))          
+        cv <- mean(check.function(residuals(model)*sqrt(weights),tau)/(1-htt)^(1/sqrt(tau*(1-tau))))
     }
 
     cv.pruned <- NULL
@@ -1030,7 +1030,7 @@ deriv.factor.spline <- function(x,
 
   if(basis=="additive" || basis=="glp") {
     K.additive <- K
-    K.additive[,2] <- ifelse(K[,1]==0,0,K[,2])    
+    K.additive[,2] <- ifelse(K[,1]==0,0,K[,2])
     K.additive[,1] <- ifelse(K[,1]>0,K[,1]-1,K[,1])
   }
   if(K[deriv.index,1]!=0) {
@@ -1138,7 +1138,8 @@ cv.kernel.spline.wrapper <- function(x,
                                      cv.func=c("cv.ls","cv.gcv","cv.aic"),
                                      cv.df.min=1,
                                      tau=NULL,
-                                     weights=NULL) {
+                                     weights=NULL,
+                                     singular.ok=FALSE) {
 
   knots.opt <- knots;
 
@@ -1161,7 +1162,8 @@ cv.kernel.spline.wrapper <- function(x,
                            cv.func=cv.func,
                            cv.df.min=cv.df.min,
                            tau=tau,
-                           weights=weights)
+                           weights=weights,
+                           singular.ok=singular.ok)
 
     cv.uniform <- cv.kernel.spline(x=x,
                                    y=y,
@@ -1178,7 +1180,8 @@ cv.kernel.spline.wrapper <- function(x,
                                    cv.func=cv.func,
                                    cv.df.min=cv.df.min,
                                    tau=tau,
-                                   weights=weights)
+                                   weights=weights,
+                                   singular.ok=singular.ok)
     if(cv > cv.uniform) {
       cv <- cv.uniform
       knots.opt <- "uniform"
@@ -1201,7 +1204,8 @@ cv.kernel.spline.wrapper <- function(x,
                            cv.func=cv.func,
                            cv.df.min=cv.df.min,
                            tau=tau,
-                           weights=weights)
+                           weights=weights,
+                           singular.ok=singular.ok)
 
   }
 
@@ -1236,7 +1240,8 @@ cv.kernel.spline <- function(x,
 														 cv.func=c("cv.ls","cv.gcv","cv.aic"),
                              cv.df.min=1,
                              tau=NULL,
-                             weights=NULL) {
+                             weights=NULL,
+                             singular.ok=FALSE) {
 
   if(missing(x) || missing(y) || missing (K)) stop(" must provide x, y and K")
 
@@ -1272,39 +1277,43 @@ cv.kernel.spline <- function(x,
         return(sqrt(.Machine$double.xmax))
       if(basis=="additive" || basis=="glp") {
         ## Test for full column rank
-        if(!is.fullrank(cbind(1,P)))
-          return(sqrt(.Machine$double.xmax))         
+        if(!singular.ok) {
+          if(!is.fullrank(cbind(1,P)))
+            return(sqrt(.Machine$double.xmax))
+        }
         ## Additive spline regression models have an intercept in the lm()
         ## model (though not in the gsl.bs function)
         if(is.null(tau)) {
           if(is.null(weights))
             epsilon <- residuals(model <- lm.fit(cbind(1,P),y))
           else
-            epsilon <- residuals(model <- lm.wfit(cbind(1,P),y,weights))            
+            epsilon <- residuals(model <- lm.wfit(cbind(1,P),y,weights))
         } else {
           if(is.null(weights))
             residuals <- tryCatch(residuals(rq.fit(cbind(1,P),y,tau=tau,method="fn")),error=function(e){FALSE})
           else
-            residuals <- tryCatch(residuals(rq.wfit(cbind(1,P),y,tau=tau,weights,method="fn")),error=function(e){FALSE})            
+            residuals <- tryCatch(residuals(rq.wfit(cbind(1,P),y,tau=tau,weights,method="fn")),error=function(e){FALSE})
           if(is.logical(residuals))
-            return(sqrt(.Machine$double.xmax))            
+            return(sqrt(.Machine$double.xmax))
         }
       } else {
         ## Test for full column rank
-        if(!is.fullrank(P))
-          return(sqrt(.Machine$double.xmax))         
+        if(!singular.ok) {
+          if(!is.fullrank(P))
+            return(sqrt(.Machine$double.xmax))
+        }
         if(is.null(tau)) {
           if(is.null(weights))
             epsilon <- residuals(model <- lm.fit(P,y))
           else
-            epsilon <- residuals(model <- lm.wfit(P,y,weights))            
+            epsilon <- residuals(model <- lm.wfit(P,y,weights))
         } else {
           if(is.null(weights))
             residuals <- tryCatch(residuals(rq.fit(P,y,tau=tau,method="fn")),error=function(e){FALSE})
           else
-            residuals <- tryCatch(residuals(rq.wfit(P,y,tau=tau,weights,method="fn")),error=function(e){FALSE})            
+            residuals <- tryCatch(residuals(rq.wfit(P,y,tau=tau,weights,method="fn")),error=function(e){FALSE})
           if(is.logical(residuals))
-            return(sqrt(.Machine$double.xmax))            
+            return(sqrt(.Machine$double.xmax))
         }
       }
       htt <- hat(P)
@@ -1333,8 +1342,10 @@ cv.kernel.spline <- function(x,
         if(!is.null(weights)) L <- weights*L
         if(basis=="additive" || basis=="glp") {
           ## Test for full column rank
-          if(!is.fullrank(cbind(1,P)*L))
-            return(sqrt(.Machine$double.xmax))         
+          if(!singular.ok) {
+            if(!is.fullrank(cbind(1,P)*L))
+              return(sqrt(.Machine$double.xmax))
+          }
           ## Additive spline regression models have an intercept in
           ## the lm() model (though not in the gsl.bs function)
           if(is.null(tau)) {
@@ -1342,19 +1353,21 @@ cv.kernel.spline <- function(x,
           } else {
             model <- tryCatch(rq.wfit(cbind(1,P),y,weights=L,tau=tau,method="fn"),error=function(e){FALSE})
             if(is.logical(model))
-              return(sqrt(.Machine$double.xmax))            
+              return(sqrt(.Machine$double.xmax))
             model.hat <- lm.wfit(cbind(1,P),y,L)
           }
         } else {
           ## Test for full column rank
-          if(!is.fullrank(P*L))
-            return(sqrt(.Machine$double.xmax))         
+          if(!singular.ok) {
+            if(!is.fullrank(P*L))
+              return(sqrt(.Machine$double.xmax))
+          }
           if(is.null(tau)) {
             model <- lm.wfit(P,y,L)
           } else {
             model <- tryCatch(rq.wfit(P,y,weights=L,tau=tau,method="fn"),error=function(e){FALSE})
             if(is.logical(model))
-              return(sqrt(.Machine$double.xmax))            
+              return(sqrt(.Machine$double.xmax))
             model.hat <- lm.wfit(P,y,L)
           }
         }
@@ -1364,7 +1377,7 @@ cv.kernel.spline <- function(x,
         else
           htt[zz] <- hat(model.hat$qr)[zz]
       }
-      
+
     } else {
       ## No predictors for which degree > 0
       z.factor <- data.frame(factor(z[,1]))
@@ -1374,8 +1387,10 @@ cv.kernel.spline <- function(x,
         L <- prod.kernel(Z=z,z=z.unique[ind.vals[i],],lambda=lambda,is.ordered.z=is.ordered.z)
         if(!is.null(weights)) L <- weights*L
         ## Test for full column rank
-        if(!is.fullrank(matrix(1,n,1)*L))
-          return(sqrt(.Machine$double.xmax))                        
+        if(!singular.ok) {
+          if(!is.fullrank(matrix(1,n,1)*L))
+            return(sqrt(.Machine$double.xmax))
+        }
         ## Whether we use additive, glp, or tensor products, this
         ## model has no continuous predictors hence the intercept is
         ## the parameter that may shift with the categorical
@@ -1386,7 +1401,7 @@ cv.kernel.spline <- function(x,
         } else {
           model <- tryCatch(rq.wfit(matrix(1,n,1),y,weights=L,tau=tau,method="fn"),error=function(e){FALSE})
           if(is.logical(model))
-            return(sqrt(.Machine$double.xmax))            
+            return(sqrt(.Machine$double.xmax))
           model.hat <- lm.wfit(matrix(1,n,1),y,L)
           htt[zz] <- hat(model.hat$qr)[zz]
         }
@@ -1403,17 +1418,17 @@ cv.kernel.spline <- function(x,
   if(!is.null(weights)) epsilon <- epsilon*sqrt(weights)
 
   if(cv.func == "cv.ls") {
-    if(is.null(tau)) 
+    if(is.null(tau))
       cv <- mean(epsilon^2/(1-htt)^2)
     else
       ## Note - this is defined in util.R so if you modify there you must modify here also
       cv <- mean(check.function(epsilon,tau)/(1-htt)^(1/sqrt(tau*(1-tau))))
   } else if(cv.func == "cv.gcv"){
-    if(is.null(tau)) 
+    if(is.null(tau))
       cv <- mean(epsilon^2/(1-mean(htt))^2)
     else
-      ## Note - this is defined in util.R so if you modify there you must modify here also        
-      cv <- mean(check.function(epsilon,tau)/(1-mean(htt))^(1/sqrt(tau*(1-tau))))        
+      ## Note - this is defined in util.R so if you modify there you must modify here also
+      cv <- mean(check.function(epsilon,tau)/(1-mean(htt))^(1/sqrt(tau*(1-tau))))
   } else if(cv.func == "cv.aic"){
     traceH <- sum(htt)
     if(is.null(tau)) {
@@ -1425,7 +1440,7 @@ cv.kernel.spline <- function(x,
     }
     cv <- ifelse(penalty < 0, .Machine$double.xmax, log(sigmasq)+penalty);
   }
-  
+
   return(ifelse(!is.na(cv),cv,.Machine$double.xmax))
 
 }
@@ -1445,7 +1460,8 @@ cv.factor.spline.wrapper <- function(x,
 																		 cv.func=c("cv.ls","cv.gcv","cv.aic"),
                                      cv.df.min=1,
                                      tau=NULL,
-                                     weights=NULL) {
+                                     weights=NULL,
+                                     singular.ok=FALSE) {
 
   knots.opt <- knots
 
@@ -1463,7 +1479,8 @@ cv.factor.spline.wrapper <- function(x,
                            cv.func=cv.func,
                            cv.df.min=cv.df.min,
                            tau=tau,
-                           weights=weights)
+                           weights=weights,
+                           singular.ok=singular.ok)
 
     cv.uniform <- cv.factor.spline(x=x,
                                    y=y,
@@ -1473,9 +1490,10 @@ cv.factor.spline.wrapper <- function(x,
                                    knots="uniform",
                                    basis=basis,
                                    cv.func=cv.func,
-                                   cv.df.min=cv.df.min,                                   
+                                   cv.df.min=cv.df.min,
                                    tau=tau,
-                                   weights=weights)
+                                   weights=weights,
+                                   singular.ok=singular.ok)
     if(cv > cv.uniform) {
       cv <- cv.uniform
       knots.opt <- "uniform"
@@ -1493,7 +1511,8 @@ cv.factor.spline.wrapper <- function(x,
                            cv.func=cv.func,
                            cv.df.min=cv.df.min,
                            tau=tau,
-                           weights=weights)
+                           weights=weights,
+                           singular.ok=singular.ok)
 
   }
 
@@ -1517,7 +1536,8 @@ cv.factor.spline <- function(x,
 														 cv.func=c("cv.ls","cv.gcv","cv.aic"),
                              cv.df.min=1,
                              tau=NULL,
-                             weights=NULL) {
+                             weights=NULL,
+                             singular.ok=FALSE) {
 
   if(missing(x) || missing(y) || missing (K)) stop(" must provide x, y and K")
   if(!is.matrix(K)) stop(" K must be a two-column matrix")
@@ -1552,43 +1572,47 @@ cv.factor.spline <- function(x,
       return(sqrt(.Machine$double.xmax))
     if(basis=="additive" || basis=="glp") {
       ## Test for full column rank
-      if(!is.fullrank(cbind(1,P)))
-        return(sqrt(.Machine$double.xmax))      
+      if(!singular.ok) {
+        if(!is.fullrank(cbind(1,P)))
+          return(sqrt(.Machine$double.xmax))
+      }
       ## Additive spline regression models have an intercept in the
       ## lm() model (though not in the gsl.bs function)
       if(is.null(tau)) {
         if(is.null(weights))
           model <- lm.fit(cbind(1,P),y)
         else
-          model <- lm.wfit(cbind(1,P),y,weights)          
+          model <- lm.wfit(cbind(1,P),y,weights)
       } else {
         if(is.null(weights))
           model <- tryCatch(rq.fit(cbind(1,P),y,tau=tau,method="fn"),error=function(e){FALSE})
         else
-          model <- tryCatch(rq.wfit(cbind(1,P),y,tau=tau,weights,method="fn"),error=function(e){FALSE})          
+          model <- tryCatch(rq.wfit(cbind(1,P),y,tau=tau,weights,method="fn"),error=function(e){FALSE})
         if(is.logical(model))
-          return(sqrt(.Machine$double.xmax))            
+          return(sqrt(.Machine$double.xmax))
         if(is.null(weights))
           model.hat <- lm.fit(cbind(1,P),y)
         else
-          model.hat <- lm.wfit(cbind(1,P),y,weights)          
+          model.hat <- lm.wfit(cbind(1,P),y,weights)
       }
     } else {
       ## Test for full column rank
-      if(!is.fullrank(P))
-        return(sqrt(.Machine$double.xmax))      
+      if(!singular.ok) {
+        if(!is.fullrank(P))
+          return(sqrt(.Machine$double.xmax))
+      }
       if(is.null(tau)) {
         if(is.null(weights))
           model <- lm.fit(P,y)
         else
-          model <- lm.wfit(P,y,weights)          
+          model <- lm.wfit(P,y,weights)
       } else {
         if(is.null(weights))
           model <- tryCatch(rq.fit(P,y,tau=tau,method="fn"),error=function(e){FALSE})
         else
-          model <- tryCatch(rq.wfit(P,y,tau=tau,weights,method="fn"),error=function(e){FALSE})        
+          model <- tryCatch(rq.wfit(P,y,tau=tau,weights,method="fn"),error=function(e){FALSE})
         if(is.logical(model))
-          return(sqrt(.Machine$double.xmax))            
+          return(sqrt(.Machine$double.xmax))
         if(is.null(weights))
           model.hat <- lm.fit(P,y)
         else
@@ -1611,17 +1635,17 @@ cv.factor.spline <- function(x,
   if(!is.null(weights)) epsilon <- epsilon*sqrt(weights)
 
   if(cv.func == "cv.ls") {
-    if(is.null(tau)) 
+    if(is.null(tau))
       cv <- mean(epsilon^2/(1-htt)^2)
     else
       ## Note - this is defined in util.R so if you modify there you must modify here also
       cv <- mean(check.function(epsilon,tau)/(1-htt)^(1/sqrt(tau*(1-tau))))
   } else if(cv.func == "cv.gcv"){
-    if(is.null(tau)) 
+    if(is.null(tau))
       cv <- mean(epsilon^2/(1-mean(htt))^2)
     else
-      ## Note - this is defined in util.R so if you modify there you must modify here also        
-      cv <- mean(check.function(epsilon,tau)/(1-mean(htt))^(1/sqrt(tau*(1-tau))))        
+      ## Note - this is defined in util.R so if you modify there you must modify here also
+      cv <- mean(check.function(epsilon,tau)/(1-mean(htt))^(1/sqrt(tau*(1-tau))))
   } else if(cv.func == "cv.aic"){
     traceH <- sum(htt)
     if(is.null(tau)) {
@@ -1633,7 +1657,7 @@ cv.factor.spline <- function(x,
     }
     cv <- ifelse(penalty < 0, .Machine$double.xmax, log(sigmasq)+penalty);
   }
-  
+
   return(ifelse(!is.na(cv),cv,.Machine$double.xmax))
 
 }

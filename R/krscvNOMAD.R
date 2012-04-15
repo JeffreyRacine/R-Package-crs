@@ -28,7 +28,8 @@ krscvNOMAD <- function(xz,
                        opts=list(),
                        nmulti=0,
                        tau=NULL,
-                       weights=NULL) {
+                       weights=NULL,
+                       singular.ok=FALSE) {
 
     complexity <- match.arg(complexity)
     knots <- match.arg(knots)
@@ -79,7 +80,8 @@ krscvNOMAD <- function(xz,
                          nmulti=nmulti,
                          cv.df.min=cv.df.min,
                          tau=tau,
-                         weights=weights) {
+                         weights=weights,
+                         singular.ok=singular.ok) {
 
         if( missing(x) || missing(y)  ) stop(" you must provide input, x, y")
 
@@ -117,6 +119,7 @@ krscvNOMAD <- function(xz,
             cv.df.min <- params$cv.df.min
             tau <- params$tau
             weights <- params$weights
+            singular.ok <- params$singular.ok
 
             num.x <- NCOL(x)
             num.z <- NCOL(z)
@@ -163,7 +166,8 @@ krscvNOMAD <- function(xz,
                                              cv.df.min=cv.df.min,
                                              cv.func=cv.func,
                                              tau=tau,
-                                             weights=weights)
+                                             weights=weights,
+                                             singular.ok=singular.ok)
               
               cv.tensor <- cv.kernel.spline.wrapper(x=x,
                                                     y=y,
@@ -180,7 +184,8 @@ krscvNOMAD <- function(xz,
                                                     cv.func=cv.func,
                                                     cv.df.min=cv.df.min,
                                                     tau=tau,
-                                                    weights=weights)
+                                                    weights=weights,
+                                                    singular.ok=singular.ok)
               if(cv > cv.tensor){
                 cv <- cv.tensor
                 basis.opt <-"tensor"
@@ -201,7 +206,8 @@ krscvNOMAD <- function(xz,
                                                  cv.func=cv.func,
                                                  cv.df.min=cv.df.min,
                                                  tau=tau,
-                                                 weights=weights)
+                                                 weights=weights,
+                                                 singular.ok=singular.ok)
               if(cv > cv.glp){
                 cv <- cv.glp
                 basis.opt <-"glp"
@@ -223,7 +229,8 @@ krscvNOMAD <- function(xz,
                                              cv.func=cv.func,
                                              cv.df.min=cv.df.min,
                                              tau=tau,
-                                             weights=weights)
+                                             weights=weights,
+                                             singular.ok=singular.ok)
             }
             
             attr(cv, "basis.opt")<-basis.opt
@@ -257,6 +264,7 @@ krscvNOMAD <- function(xz,
         params$lambda.discrete <- lambda.discrete
         params$tau <- tau
         params$weights <- weights
+        params$singular.ok <- singular.ok
         params$cv.df.min <- cv.df.min
 
         # initial value
@@ -489,7 +497,8 @@ krscvNOMAD <- function(xz,
                              nmulti=nmulti,
                              cv.df.min=cv.df.min,
                              tau=tau,
-                             weights=weights) 
+                             weights=weights,
+                             singular.ok=singular.ok) 
 
     t2 <- Sys.time()
 

@@ -22,7 +22,8 @@ krscv <- function(xz,
                   degree=degree,
                   segments=segments,
                   tau=NULL,
-                  weights=NULL) {
+                  weights=NULL,
+                  singular.ok=FALSE) {
 
   complexity <- match.arg(complexity)
   knots <- match.arg(knots)
@@ -58,7 +59,8 @@ krscv <- function(xz,
                       cv.func=cv.func,
                       cv.df.min=1,
                       tau=tau,
-                      weights=weights) {
+                      weights=weights,
+                      singular.ok=singular.ok) {
 
     ## K is a matrix, column 1 degree, column 2 segments, either or
     ## both can be determined via cv so need to take care to allow
@@ -93,7 +95,8 @@ krscv <- function(xz,
                                    cv.func=cv.func,
                                    cv.df.min=1,
                                    tau=tau,
-                                   weights=weights)
+                                   weights=weights,
+                                   singular.ok=singular.ok)
 
     ## Some i/o unless options(crs.messages=FALSE)
 
@@ -279,7 +282,8 @@ krscv <- function(xz,
                         cv.func=cv.func,
                         cv.df.min=1,
                         tau=tau,
-                        weights=weights)
+                        weights=weights,
+                        singular.ok=singular.ok)
 
       }
 
@@ -320,7 +324,8 @@ krscv <- function(xz,
                                     cv.func=cv.func,
                                     cv.df.min=1,
                                     tau=tau,
-                                    weights=weights)
+                                    weights=weights,
+                                    singular.ok=singular.ok)
 
           }
 
@@ -371,7 +376,8 @@ krscv <- function(xz,
                         cv.func=cv.func,
                         cv.df.min=1,
                         tau=tau,
-                        weights=weights)
+                        weights=weights,
+                        singular.ok=singular.ok)
 
       }
 
@@ -412,7 +418,8 @@ krscv <- function(xz,
                                     cv.func=cv.func,
                                     cv.df.min=1,
                                     tau=tau,
-                                    weights=weights)
+                                    weights=weights,
+                                    singular.ok=singular.ok)
 
           }
 
@@ -463,7 +470,8 @@ krscv <- function(xz,
                         cv.func=cv.func,
                         cv.df.min=1,
                         tau=tau,
-                        weights=weights)
+                        weights=weights,
+                        singular.ok=singular.ok)
 
       }
 
@@ -504,7 +512,8 @@ krscv <- function(xz,
                                     cv.func=cv.func,
                                     cv.df.min=1,
                                     tau=tau,
-                                    weights=weights)
+                                    weights=weights,
+                                    singular.ok=singular.ok)
 
           }
 
@@ -558,7 +567,8 @@ krscv <- function(xz,
                         cv.func=cv.func,
                         cv.df.min=1,
                         tau=tau,
-                        weights=weights)
+                        weights=weights,
+                        singular.ok=singular.ok)
 
       }
 
@@ -599,7 +609,8 @@ krscv <- function(xz,
                                     cv.func=cv.func,
                                     cv.df.min=1,
                                     tau=tau,
-                                    weights=weights)
+                                    weights=weights,
+                                    singular.ok=singular.ok)
 
           }
 
@@ -662,7 +673,8 @@ krscv <- function(xz,
 																					 cv.func=cv.func,
                                            cv.df.min=1,
                                            tau=tau,
-                                           weights=weights)
+                                           weights=weights,
+                                           singular.ok=singular.ok)
 
 			knots.opt <- attributes(cv.knots)$knots.opt
 	}

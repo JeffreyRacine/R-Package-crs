@@ -34,7 +34,8 @@ krscvNOMAD(xz,
            opts = list(),
            nmulti = 0,
            tau = NULL,
-           weights = NULL)
+           weights = NULL,
+           singular.ok = FALSE)
 }
 
 \arguments{
@@ -141,7 +142,12 @@ krscvNOMAD(xz,
     squares is used with weights `weights' (that is, minimizing
     `sum(w*e^2)'); otherwise ordinary least squares is used.
   }
-
+  
+  \item{singular.ok}{
+    a logical value (default \code{singular.ok=FALSE}) that, when
+    \code{FALSE}, discards singular bases during cross-validation (a check
+    for ill-conditioned bases is performed).
+  }
 }
 
 \details{

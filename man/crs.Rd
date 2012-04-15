@@ -63,6 +63,7 @@ crs(\dots)
     nmulti = 5,
     tau = NULL,
     weights = NULL,
+    singular.ok = FALSE,
     \dots)
 }
 \arguments{
@@ -224,6 +225,12 @@ in \code{x} are included or omitted from the resulting estimate }
     Should be `NULL' or a numeric vector.  If non-NULL, weighted least
     squares is used with weights `weights' (that is, minimizing
     `sum(w*e^2)'); otherwise ordinary least squares is used.
+  }
+
+  \item{singular.ok}{
+    a logical value (default \code{singular.ok=FALSE}) that, when
+    \code{FALSE}, discards singular bases during cross-validation (a check
+    for ill-conditioned bases is performed).
   }
  
   \item{\dots}{ optional arguments }

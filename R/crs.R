@@ -38,7 +38,7 @@ crsEst <- function(xz,
                    model.return=FALSE,
                    tau=NULL,
                    weights=NULL) {
-  
+
   ## Take data frame xz and parse into factors (z) and numeric (x).
 
   complexity <- match.arg(complexity)
@@ -380,9 +380,9 @@ crs.formula <- function(formula,
                         degree=NULL,
                         segments=NULL,
                         include=NULL,
-                        degree.max=10, 
-                        segments.max=10, 
-                        degree.min=0, 
+                        degree.max=10,
+                        segments.max=10,
+                        degree.min=0,
                         segments.min=1,
                         cv.df.min=1,
                         cv=c("nomad","exhaustive","none"),
@@ -409,9 +409,10 @@ crs.formula <- function(formula,
                         nmulti=5,
                         tau=NULL,
                         weights=NULL,
+                        singular.ok=FALSE,
                         ...) {
 
-  cv <- match.arg(cv)  
+  cv <- match.arg(cv)
   cv.func <- match.arg(cv.func)
   complexity <- match.arg(complexity)
   knots <- match.arg(knots)
@@ -497,9 +498,9 @@ crs.formula <- function(formula,
       ## With one continuous predictor all bases are identical, so
       ## simply set the basis to additive and be done (no warning
       ## necessary)
-  
+
       if(basis=="auto"&&num.x==1) basis <- "additive"
-  
+
       if(basis=="auto"&&num.x>1) {
         warning(paste(" cv=\"none\" selected, basis=\"auto\" changed to basis=\"additive\": you might consider basis=\"tensor\" etc.",sep=""),immediate.=TRUE)
         basis <- "additive"
@@ -525,20 +526,24 @@ crs.formula <- function(formula,
 
   if(deriv < 0) stop("derivative order must be a non-negative integer")
 
+  ## Check for logical singular.ok
+
+  if(!is.logical(singular.ok)) stop("singular.ok must be logical (TRUE/FALSE)")
+
   cv.min <- NULL
   ptm <- system.time("")
-  
+
   if(!kernel) {
 
     ## indicator bases and B-spline bases cross-validation
-    
+
     if(cv=="nomad") {
-      
+
       ptm <- ptm + system.time(cv.return <- frscvNOMAD(xz=xz,
                                                        y=y,
-                                                       degree.max=degree.max, 
-                                                       segments.max=segments.max, 
-                                                       degree.min=degree.min, 
+                                                       degree.max=degree.max,
+                                                       segments.max=segments.max,
+                                                       degree.min=degree.min,
                                                        segments.min=segments.min,
                                                        cv.df.min=cv.df.min,
                                                        complexity=complexity,
@@ -546,13 +551,14 @@ crs.formula <- function(formula,
                                                        basis=basis,
                                                        cv.func=cv.func,
                                                        degree=degree,
-                                                       segments=segments, 
-                                                       include=include, 
+                                                       segments=segments,
+                                                       include=include,
                                                        random.seed=random.seed,
                                                        opts=opts,
                                                        nmulti=nmulti,
                                                        tau=tau,
-                                                       weights=weights))
+                                                       weights=weights,
+                                                       singular.ok=singular.ok))
 
       cv.min <- cv.return$cv.objc
       degree <- cv.return$degree
@@ -565,10 +571,10 @@ crs.formula <- function(formula,
 
       ptm <- ptm + system.time(cv.return <- frscv(xz=xz,
                                                   y=y,
-                                                  degree.max=degree.max, 
-                                                  segments.max=segments.max, 
-                                                  degree.min=degree.min, 
-                                                  segments.min=segments.min, 
+                                                  degree.max=degree.max,
+                                                  segments.max=segments.max,
+                                                  degree.min=degree.min,
+                                                  segments.min=segments.min,
                                                   complexity=complexity,
                                                   knots=knots,
                                                   basis=basis,
@@ -576,8 +582,9 @@ crs.formula <- function(formula,
                                                   degree=degree,
                                                   segments=segments,
                                                   tau=tau,
-                                                  weights=weights))
-      
+                                                  weights=weights,
+                                                  singular.ok=singular.ok))
+
       cv.min <- cv.return$cv.objc
       degree <- cv.return$degree
       segments <- cv.return$segments
@@ -590,14 +597,14 @@ crs.formula <- function(formula,
   } else {
 
     ## kernel smooth and B-spline bases cross-validation
-    
+
     if(cv=="nomad") {
 
       ptm <- ptm + system.time(cv.return <- krscvNOMAD(xz=xz,
                                                        y=y,
-                                                       degree.max=degree.max, 
-                                                       segments.max=segments.max, 
-                                                       degree.min=degree.min, 
+                                                       degree.max=degree.max,
+                                                       segments.max=segments.max,
+                                                       degree.min=degree.min,
                                                        segments.min=segments.min,
                                                        cv.df.min=cv.df.min,
                                                        complexity=complexity,
@@ -613,8 +620,9 @@ crs.formula <- function(formula,
                                                        opts=opts,
                                                        nmulti=nmulti,
                                                        tau=tau,
-                                                       weights=weights))
-      
+                                                       weights=weights,
+                                                       singular.ok=singular.ok))
+
       cv.min <- cv.return$cv.objc
       degree <- cv.return$degree
       segments <- cv.return$segments
@@ -623,15 +631,15 @@ crs.formula <- function(formula,
       basis <- cv.return$basis
       knots <- cv.return$knots
       if(isTRUE(all.equal(cv.min,sqrt(.Machine$double.xmax)))) stop(" Search failed: restart with larger nmulti or smaller degree.max")
-    
+
     } else if(cv=="exhaustive") {
-      
+
       ptm <- ptm + system.time(cv.return <- krscv(xz=xz,
                                                   y=y,
-                                                  degree.max=degree.max, 
-                                                  segments.max=segments.max, 
-                                                  degree.min=degree.min, 
-                                                  segments.min=segments.min, 
+                                                  degree.max=degree.max,
+                                                  segments.max=segments.max,
+                                                  degree.min=degree.min,
+                                                  segments.min=segments.min,
                                                   complexity=complexity,
                                                   knots=knots,
                                                   basis=basis,
@@ -640,8 +648,9 @@ crs.formula <- function(formula,
                                                   segments=segments,
                                                   restarts=restarts,
                                                   tau=tau,
-                                                  weights=weights))
-      
+                                                  weights=weights,
+                                                  singular.ok=singular.ok))
+
       cv.min <- cv.return$cv.objc
       degree <- cv.return$degree
       segments <- cv.return$segments
@@ -650,11 +659,11 @@ crs.formula <- function(formula,
       basis <- cv.return$basis
       knots <- cv.return$knots
       if(isTRUE(all.equal(cv.min,sqrt(.Machine$double.xmax)))) stop(" Search failed: restart with smaller degree.max")
-    
+
     }
-    
+
   }
-  
+
   ptm <- ptm + system.time(est <- crs.default(xz=xz,
                                               y=y,
                                               degree=degree,
@@ -687,7 +696,7 @@ crs.formula <- function(formula,
   est$restarts <- restarts
   est$ptm <- ptm
   est$nmulti <- nmulti
-  
+
   return(est)
 
 }
@@ -708,7 +717,7 @@ predict.crs <- function(object,
     lwr <- NULL
     upr <- NULL
     deriv.mat.lwr <- NULL
-    deriv.mat.upr <- NULL    
+    deriv.mat.upr <- NULL
 
   } else{
 
@@ -750,7 +759,7 @@ predict.crs <- function(object,
     }
     xeval <- xztmp$x
     zeval <- xztmp$z
-    is.ordered.z <- xztmp$is.ordered.z    
+    is.ordered.z <- xztmp$is.ordered.z
     rm(xztmp)
 
     ## Compute the predicted values.
@@ -815,7 +824,7 @@ predict.crs <- function(object,
             deriv.mat[,i] <- tmp[,1]
             deriv.mat.lwr[,i] <- tmp[,2]
             deriv.mat.upr[,i] <- tmp[,3]
-            rm(tmp) 
+            rm(tmp)
             m <- m + 1
           } else {
             zevaltmp <- zeval
@@ -926,7 +935,7 @@ predict.crs <- function(object,
             deriv.mat[,i] <- tmp[,1]
             deriv.mat.lwr[,i] <- tmp[,2]
             deriv.mat.upr[,i] <- tmp[,3]
-            rm(tmp) 
+            rm(tmp)
             m <- m + 1
           } else {
             zevaltmp <- zeval
@@ -968,7 +977,7 @@ predict.crs <- function(object,
       } else {
         deriv.mat <- NULL
         deriv.mat.lwr <- NULL
-        deriv.mat.upr <- NULL        
+        deriv.mat.upr <- NULL
       }
 
     }
@@ -1006,15 +1015,15 @@ summary.crs <- function(object,
   cat("Call:\n")
   print(object$call)
   if(!object$kernel) {
-    if(is.null(object$tau)) 
+    if(is.null(object$tau))
       cat("\nIndicator Bases/B-spline Bases Regression Spline\n",sep="")
     else
-      cat("\nIndicator Bases/B-spline Bases Quantile Regression Spline\n",sep="")      
+      cat("\nIndicator Bases/B-spline Bases Quantile Regression Spline\n",sep="")
   } else {
-    if(is.null(object$tau)) 
+    if(is.null(object$tau))
       cat("\nKernel Weighting/B-spline Bases Regression Spline\n",sep="")
     else
-      cat("\nKernel Weighting/B-spline Bases Quantile Regression Spline\n",sep="")      
+      cat("\nKernel Weighting/B-spline Bases Quantile Regression Spline\n",sep="")
   }
   if(!is.null(object$tau)) cat(paste("\nQuantile estimated: tau = ",format(object$tau),sep=""),sep="")
   if(object$num.x==1){
@@ -1049,7 +1058,7 @@ summary.crs <- function(object,
     df2 <- (object$nobs-round(sum(object$hatvalues)))
     F <- (df2/df1)*(sum((object$y-mean(object$y))^2)-sum(residuals(object)^2))/sum(residuals(object)^2)
     if(is.null(object$tau)) cat(paste("\nF-statistic: ", format(F,digits=4), " on ", df1, " and ", df2, " DF, p-value: ", format(pf(F,df1=df1,df2=df2,lower.tail=FALSE),digits=4), sep=""))
-    if(!is.null(object$cv.score)) cat(paste("\n\nCross-validation score: ", format(object$cv.score,digits=8), sep=""))  
+    if(!is.null(object$cv.score)) cat(paste("\n\nCross-validation score: ", format(object$cv.score,digits=8), sep=""))
   } else {
     if(is.null(object$tau)) cat(paste("\n\nResidual standard error (weighted): ", format(sqrt(sum((object$residuals^2)*object$weights)/object$df.residual),digits=4)," on ", format(object$df.residual)," degrees of freedom",sep=""))
     adjusted.r.squared <- 1-(1-object$r.squared)*(length(object$fitted.values)-1)/object$df.residual
@@ -1058,7 +1067,7 @@ summary.crs <- function(object,
     df2 <- (object$nobs-round(sum(object$hatvalues)))
     F <- (df2/df1)*(sum((object$y-mean(object$y))^2*object$weights)-sum(residuals(object)^2*object$weights))/sum(residuals(object)^2*object$weights)
     if(is.null(object$tau)) cat(paste("\nF-statistic (weighted): ", format(F,digits=4), " on ", df1, " and ", df2, " DF, p-value: ", format(pf(F,df1=df1,df2=df2,lower.tail=FALSE),digits=4), sep=""))
-    if(!is.null(object$cv.score)) cat(paste("\n\nCross-validation score (weighted): ", format(object$cv.score,digits=8), sep=""))  
+    if(!is.null(object$cv.score)) cat(paste("\n\nCross-validation score (weighted): ", format(object$cv.score,digits=8), sep=""))
   }
 
   if(object$cv != "none") cat(paste("\nNumber of multistarts: ", format(object$nmulti), sep=""))
@@ -1156,7 +1165,7 @@ plot.crs <- function(x,
 
 
     if(!object$kernel) {
-      
+
       console <- printClear(console)
       console <- printPop(console)
       console <- printPush("\rWorking...",console = console)
@@ -1169,12 +1178,12 @@ plot.crs <- function(x,
            xlab = "Observation Number",
            ylab = "Cook's Distance",
            ...)
-      
+
     }
 
     console <- printClear(console)
     console <- printPop(console)
-      
+
   }
 
   ## Mean
@@ -1186,12 +1195,12 @@ plot.crs <- function(x,
     basis <- object$basis
     prune <- object$prune
     prune.index <- object$prune.index
-    
+
     xz <- object$xz
     y <- object$y
-    
+
     ## Divide into factors and numeric
-    
+
     if(!object$kernel) {
       xztmp <- splitFrame(xz)
     } else {
@@ -1199,11 +1208,11 @@ plot.crs <- function(x,
     }
     x <- xztmp$x
     z <- xztmp$z
-    is.ordered.z <- xztmp$is.ordered.z    
+    is.ordered.z <- xztmp$is.ordered.z
     rm(xztmp)
 
     ## Get degree vector and lambda vector
-          
+
     complexity <- object$complexity
     knots <- object$knots
     K <- object$K
@@ -1216,11 +1225,11 @@ plot.crs <- function(x,
     weights <- object$weights
 
     ## End information required to compute predictions
-        
+
     if(!persp.rgl) {
 
       mg <- list()
-      
+
       for(i in 1:NCOL(object$xz)) {
 
         if(!is.factor(object$xz[,i])) {
@@ -1230,16 +1239,16 @@ plot.crs <- function(x,
           newdata <- matrix(NA,nrow=length(levels(object$xz[,i])),ncol=NCOL(object$xz))
           neval <- length(levels(object$xz[,i]))
         }
-        
+
         newdata <- data.frame(newdata)
-        
+
         if(!is.factor(object$xz[,i])) {
           xlim <- trim.quantiles(object$xz[,i],xtrim)
           newdata[,i] <- seq(xlim[1],xlim[2],length=neval)
         } else {
           newdata[,i] <- factor(levels(object$xz[,i]),levels=levels(object$xz[,i]))
         }
-        
+
         for(j in (1:NCOL(object$xz))[-i]) {
           if(!is.factor(object$xz[,j])) {
             newdata[,j] <- rep(uocquantile(object$xz[,j],prob=xq[j]),neval)
@@ -1247,7 +1256,7 @@ plot.crs <- function(x,
             newdata[,j] <- factor(rep(uocquantile(object$xz[,j],prob=xq[j]),neval),levels=levels(object$xz[,j]))
           }
         }
-        
+
         newdata <- data.frame(newdata)
         names(newdata) <- names(object$xz)
 
@@ -1258,13 +1267,13 @@ plot.crs <- function(x,
         }
         xeval <- xztmp$x
         zeval <- xztmp$z
-        is.ordered.z <- xztmp$is.ordered.z        
+        is.ordered.z <- xztmp$is.ordered.z
         rm(xztmp)
-        
+
         ## Compute the predicted values.
-        
+
         if(!object$kernel) {
-          
+
           tmp <- predict.factor.spline(x=x,
                                        y=y,
                                        z=z,
@@ -1278,17 +1287,17 @@ plot.crs <- function(x,
                                        prune.index=prune.index,
                                        tau=tau,
                                        weights=weights)$fitted.values
-          
+
           fitted.values <- tmp[,1]
           lwr <- tmp[,2]
           upr <- tmp[,3]
           rm(tmp)
-          
+
         } else {
-                
+
           z <- as.matrix(z)
           zeval <- as.matrix(zeval)
-          
+
           tmp <- predict.kernel.spline(x=x,
                                        y=y,
                                        z=z,
@@ -1301,29 +1310,29 @@ plot.crs <- function(x,
                                        basis=basis,
                                        tau=tau,
                                        weights=weights)$fitted.values
-          
+
           fitted.values <- tmp[,1]
           lwr <- tmp[,2]
           upr <- tmp[,3]
           rm(tmp)
-          
+
         }
-        
+
         if(!ci) {
-          
+
           mg[[i]] <- data.frame(newdata[,i],fitted.values)
           names(mg[[i]]) <- c(names(newdata)[i],"mean")
-          
+
         } else {
           mg[[i]] <- data.frame(newdata[,i],fitted.values,lwr,upr)
           names(mg[[i]]) <- c(names(newdata)[i],"mean","lwr","upr")
         }
-        
+
         console <- printClear(console)
         console <- printPop(console)
-        
+
       }
-      
+
       if(common.scale) {
         min.mg <- Inf
         max.mg <- -Inf
@@ -1335,13 +1344,13 @@ plot.crs <- function(x,
       } else {
         ylim <- NULL
       }
-      
+
       if(plot.behavior!="data") {
-        
+
         if(!is.null(object$num.z)||(object$num.x>1)) par(mfrow=dim.plot(NCOL(object$xz)))
-      
+
         for(i in 1:NCOL(object$xz)) {
-          
+
           if(!ci) {
             plot(mg[[i]][,1],mg[[i]][,2],
                  xlab=names(newdata)[i],
@@ -1349,7 +1358,7 @@ plot.crs <- function(x,
                  ylim=ylim,
                  type="l",
                  ...)
-            
+
           } else {
             if(!common.scale) ylim <- c(min(mg[[i]][,-1]),max(mg[[i]][,-1]))
             plot(mg[[i]][,1],mg[[i]][,2],
@@ -1380,74 +1389,74 @@ plot.crs <- function(x,
                  col=2,
                  ...)
           }
-          
+
         }
-        
+
       }
-      
+
     } else {
-      
-      
+
+
       if(!require(rgl)) stop(" Error: you must first install the rgl package")
-      
+
       if(!is.null(object$num.z)) stop(" Error: persp3d is for continuous predictors only")
       if(object$num.x != 2) stop(" Error: persp3d is for cases involving two continuous predictors only")
-      
+
       newdata <- matrix(NA,nrow=num.eval,ncol=2)
       newdata <- data.frame(newdata)
-      
+
       xlim <- trim.quantiles(object$xz[,1],xtrim)
-      ylim <- trim.quantiles(object$xz[,2],xtrim)      
-      
+      ylim <- trim.quantiles(object$xz[,2],xtrim)
+
       x1.seq <- seq(xlim[1],xlim[2],length=num.eval)
-      x2.seq <- seq(ylim[1],ylim[2],length=num.eval)    
+      x2.seq <- seq(ylim[1],ylim[2],length=num.eval)
 
       x.grid <- expand.grid(x1.seq,x2.seq)
       newdata <- data.frame(x.grid[,1],x.grid[,2])
       names(newdata) <- names(object$xz)
-      
+
       z <- matrix(predict(object,newdata=newdata),num.eval,num.eval)
-      
+
       mg <- list()
 
       mg[[1]] <- data.frame(newdata,z)
 
       if(plot.behavior!="data") {
-      
+
         num.colors <- 1000
-        colorlut <- topo.colors(num.colors) 
+        colorlut <- topo.colors(num.colors)
         col <- colorlut[ (num.colors-1)*(z-min(z))/(max(z)-min(z)) + 1 ]
-        
+
         open3d()
-        
+
         par3d(windowRect=c(900,100,900+640,100+640))
         rgl.viewpoint(theta = 0, phi = -70, fov = 80)
-        
+
         persp3d(x=x1.seq,y=x2.seq,z=z,
                 xlab=names(object$xz)[1],ylab=names(object$xz)[2],zlab="Y",
-                ticktype="detailed",      
+                ticktype="detailed",
                 border="red",
                 color=col,
                 alpha=.7,
                 back="lines",
                 main=ifelse(is.null(tau),"Conditional Mean",paste("Conditional Quantile (tau = ",format(tau),")",sep="")))
-        
+
         grid3d(c("x", "y+", "z"))
-        
+
         play3d(spin3d(axis=c(0,0,1), rpm=5), duration=15)
-        
+
       }
-      
+
     }
-    
+
     if(plot.behavior!="plot") {
       console <- printClear(console)
       console <- printPop(console)
       return(mg)
     }
-      
+
   }
-    
+
   ## deriv
 
   if(deriv > 0) {
@@ -1457,12 +1466,12 @@ plot.crs <- function(x,
     basis <- object$basis
     prune <- object$prune
     prune.index <- object$prune.index
-    
+
     xz <- object$xz
     y <- object$y
-    
+
     ## Divide into factors and numeric
-    
+
     if(!object$kernel) {
       xztmp <- splitFrame(xz)
     } else {
@@ -1470,11 +1479,11 @@ plot.crs <- function(x,
     }
     x <- xztmp$x
     z <- xztmp$z
-    is.ordered.z <- xztmp$is.ordered.z    
+    is.ordered.z <- xztmp$is.ordered.z
     rm(xztmp)
 
     ## Get degree vector and lambda vector
-          
+
     complexity <- object$complexity
     knots <- object$knots
     K <- object$K
@@ -1487,7 +1496,7 @@ plot.crs <- function(x,
     weights <- object$weights
 
     ## End information required to compute predictions
-        
+
     if(deriv > 0) {
 
       rg <- list()
@@ -1523,7 +1532,7 @@ plot.crs <- function(x,
             newdata.base[,j] <- rep(uocquantile(object$xz[,j],prob=xq[j]),neval)
           } else {
             newdata[,j] <- factor(rep(uocquantile(object$xz[,j],prob=xq[j]),neval),levels=levels(object$xz[,j]))
-            newdata.base[,j] <- factor(rep(uocquantile(object$xz[,j],prob=xq[j]),neval),levels=levels(object$xz[,j]))            
+            newdata.base[,j] <- factor(rep(uocquantile(object$xz[,j],prob=xq[j]),neval),levels=levels(object$xz[,j]))
           }
         }
 
@@ -1539,9 +1548,9 @@ plot.crs <- function(x,
         }
         xeval <- xztmp$x
         zeval <- xztmp$z
-        is.ordered.z <- xztmp$is.ordered.z            
+        is.ordered.z <- xztmp$is.ordered.z
         rm(xztmp)
-        
+
         if(!object$kernel) {
           xztmp <- splitFrame(data.frame(newdata.base))
         } else {
@@ -1549,11 +1558,11 @@ plot.crs <- function(x,
         }
         xeval.base <- xztmp$x
         zeval.base <- xztmp$z
-        is.ordered.z <- xztmp$is.ordered.z            
+        is.ordered.z <- xztmp$is.ordered.z
         rm(xztmp)
-        
+
         ## Compute the predicted values.
-        
+
         if(!object$kernel) {
 
           if(!is.factor(newdata[,i])) {
@@ -1578,7 +1587,7 @@ plot.crs <- function(x,
             deriv.est <- tmp[,1]
             deriv.lwr <- tmp[,2]
             deriv.upr <- tmp[,3]
-            rm(tmp) 
+            rm(tmp)
           } else {
             zpred <- predict.factor.spline(x=x,
                                            y=y,
@@ -1593,7 +1602,7 @@ plot.crs <- function(x,
                                            prune.index=prune.index,
                                            tau=tau,
                                            weights=weights)$fitted.values
-            
+
             zpred.base <- predict.factor.spline(x=x,
                                                 y=y,
                                                 z=z,
@@ -1607,15 +1616,15 @@ plot.crs <- function(x,
                                                 prune.index=prune.index,
                                                 tau=tau,
                                                 weights=weights)$fitted.values
-            
+
             deriv.est <- zpred[,1]-zpred.base[,1]
             deriv.lwr <- deriv.est - qnorm(0.975)*sqrt(zpred[,4]^2+zpred.base[,4]^2)
             deriv.upr <- deriv.est + qnorm(0.975)*sqrt(zpred[,4]^2+zpred.base[,4]^2)
-            
-          }          
-          
+
+          }
+
         } else {
-          
+
           if(!is.factor(newdata[,i])) {
             if(deriv <= degree[i.numeric]) {
               tmp <- deriv.kernel.spline(x=x,
@@ -1632,14 +1641,14 @@ plot.crs <- function(x,
                                          deriv=deriv,
                                          tau=tau,
                                          weights=weights)
-    
+
             } else {
               tmp <- matrix(0,nrow(newdata),3)
             }
             deriv.est <- tmp[,1]
             deriv.lwr <- tmp[,2]
             deriv.upr <- tmp[,3]
-            rm(tmp) 
+            rm(tmp)
           } else {
             zpred <- predict.kernel.spline(x=x,
                                            y=y,
@@ -1653,7 +1662,7 @@ plot.crs <- function(x,
                                            basis=basis,
                                            tau=tau,
                                            weights=weights)$fitted.values
-            
+
             zpred.base <- predict.kernel.spline(x=x,
                                                 y=y,
                                                 z=z,
@@ -1670,26 +1679,26 @@ plot.crs <- function(x,
             deriv.est <- zpred[,1]-zpred.base[,1]
             deriv.lwr <- deriv.est - qnorm(0.975)*sqrt(zpred[,4]^2+zpred.base[,4]^2)
             deriv.upr <- deriv.est + qnorm(0.975)*sqrt(zpred[,4]^2+zpred.base[,4]^2)
-            
+
           }
-          
-        } 
-        
+
+        }
+
         if(!ci) {
-          
+
           rg[[i]] <- data.frame(newdata[,i],deriv.est)
           names(rg[[i]]) <- c(names(newdata)[i],"deriv")
-          
+
         } else {
-          
+
           rg[[i]] <- data.frame(newdata[,i],
                                 deriv.est,
                                 deriv.lwr,
                                 deriv.upr)
           names(rg[[i]]) <- c(names(newdata)[i],"deriv","lwr","upr")
-          
+
         }
-      
+
         console <- printClear(console)
         console <- printPop(console)
 
@@ -1716,7 +1725,7 @@ plot.crs <- function(x,
         if(!is.null(object$num.z)||(object$num.x>1)) par(mfrow=dim.plot(NCOL(object$xz)))
 
         for(i in 1:NCOL(object$xz)) {
-          
+
           if(!ci) {
             plot(rg[[i]][,1],rg[[i]][,2],
                  xlab=names(newdata)[i],
@@ -1724,7 +1733,7 @@ plot.crs <- function(x,
                  ylim=ylim,
                  type="l",
                  ...)
-            
+
           } else {
             if(!common.scale) ylim <- c(min(rg[[i]][,-1]),max(rg[[i]][,-1]))
             plot(rg[[i]][,1],rg[[i]][,2],
@@ -1755,23 +1764,23 @@ plot.crs <- function(x,
                  col=2,
                  ...)
           }
-          
+
         }
-        
+
       }
-      
+
       if(plot.behavior!="plot") {
         console <- printClear(console)
         console <- printPop(console)
         return(rg)
       }
-      
+
     }
-    
+
   }
 
   ## Reset par to 1,1 (can be modified above)
-  
+
   console <- printClear(console)
   console <- printPop(console)
 
@@ -1793,10 +1802,10 @@ crs.sigtest <- function(object,...) {
   ## Conduct the significance test in order variable by variable
 
   j.num.x <- 1
-  j.num.z <- 1  
+  j.num.z <- 1
 
   for(i in 1:NCOL(object$xz)) {
-    
+
     if(!is.factor(object$xz[,i])) {
       degree <- object$degree
       degree[j.num.x] <- 0
@@ -1808,11 +1817,11 @@ crs.sigtest <- function(object,...) {
       include[j.num.z] <- 0
       model.res <- crs(object$formula,cv="none",degree=object$degree,include=include,basis=object$basis,prune=object$prune,data=eval(object$call$data))
       sg[[i]] <- anova(model.res$model.lm,object$model.lm)
-      j.num.z <- j.num.z + 1      
+      j.num.z <- j.num.z + 1
     }
 
     cat(paste("Predictor ", format(names(object$xz)[i]), ": Df = ", sg[[i]]$Df[2], ", F = ", format(sg[[i]]$F[2],digits=4), ", Pr(>F) = ", format(sg[[i]][[6]][2],digits=4), "\n", sep=""))
-    
+
   }
 
 }
