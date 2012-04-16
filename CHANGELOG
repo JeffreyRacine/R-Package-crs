@@ -1,11 +1,12 @@
-Changes from Version 0.15-14 to 0.15-15 [XXX]
+Changes from Version 0.15-14 to 0.15-15 [16-Apr-2012]
 
 * NOTE: ** major change in default setting ** Default basis set to
   "auto" from "additive" for more robust results when using default
-  settings (at the cost of additional computation for all supported
-  bases, more memory required). Warnings changed to reflect this,
-  additional warnings provided, but mainly when cv="none" (i.e. user
-  is doing things manually and failing to provide defaults)
+  settings with more than one continuous predictor (at the cost of
+  additional computation for all supported bases, more memory
+  required). Warnings changed to reflect this, additional warnings
+  provided, but mainly when cv="none" (i.e. user is doing things
+  manually and failing to provide defaults)
 
 * Added switch for discarding singular bases during cross-validation
   (singular.ok=FALSE is default, so default is to discard singular
@@ -17,9 +18,9 @@ Changes from Version 0.15-14 to 0.15-15 [XXX]
   increased runtime for large datasets and multivariate tensor models)
 
 * Potential runtime improvement for large bases (test for ill
-  conditioned bases was relying partly on rcond(t(B)%*%B), now using
-  crossprod(B) which is more computationally efficient than
-  rcond(t(B)%*%B))
+  conditioned bases was still relying in parts on rcond(t(B)%*%B), now
+  using crossprod(B) which is more computationally efficient than
+  rcond(t(B)%*%B) and has a substantially smaller memory footprint)
 
 * No longer report basis type for one continuous predictor as all
   bases are identical in this case
