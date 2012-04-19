@@ -57,7 +57,7 @@ mypoly <- function(x,
     } else {
       Z <- outer(x,1L:degree,"^")
     }
-    
+
   } else {
     ## Bernstein polynomials and their derivatives (i.e. Bezier curves
     ## i.e. B-splines with no interior knots)
@@ -174,7 +174,7 @@ W.glp <- function(xdat = NULL,
       if(gradient.compute && gradient.vec[i] != 0) res.deriv <- res.deriv * cbind(1,matrix(NA,1,degree[i]))[, 1 + z[, i],drop=FALSE]
       if(gradient.compute && gradient.vec[i] == 0) res.deriv <- res.deriv *cbind(1,matrix(0,1,degree[i]))[, 1 + z[, i],drop=FALSE]
     }
-    
+
     if(is.null(exdat)) {
       res <- matrix(res,nrow=NROW(xdat))
     } else {
@@ -185,8 +185,8 @@ W.glp <- function(xdat = NULL,
     if(gradient.compute) colnames(res.deriv) <- apply(z, 1L, function(x) paste(x, collapse = "."))
 
     if(gradient.compute) res[,!is.na(as.numeric(res.deriv))] <- 0
-    return(cbind(1,res))    
-    
+    return(cbind(1,res))
+
   }
 
 }
@@ -237,7 +237,7 @@ check.max.degree <- function(xdat=NULL,degree=NULL,issue.warning=FALSE,Bernstein
   ill.conditioned <- FALSE
 
   xdat.numeric <- sapply(1:ncol(xdat),function(i){is.numeric(xdat[,i])})
-  numeric.index <- which(xdat.numeric==TRUE)  
+  numeric.index <- which(xdat.numeric==TRUE)
   num.numeric <- sum(sapply(1:NCOL(xdat),function(i){is.numeric(xdat[,i])})==TRUE)
   d <- numeric(num.numeric)
 
@@ -290,6 +290,7 @@ npglpreg.default <- function(tydat=NULL,
                              bws=NULL,
                              degree=NULL,
                              leave.one.out=FALSE,
+                             ckertype=c("gaussian", "epanechnikov","uniform"),
                              ukertype=c("liracine","aitchisonaitken"),
                              okertype=c("liracine","wangvanryzin"),
                              bwtype = c("fixed","generalized_nn","adaptive_nn","auto"),
@@ -301,6 +302,7 @@ npglpreg.default <- function(tydat=NULL,
                              mpi=FALSE,
                              ...) {
 
+  ckertype <- match.arg(ckertype)
   ukertype <- match.arg(ukertype)
   okertype <- match.arg(okertype)
   bwtype <- match.arg(bwtype)
@@ -319,12 +321,13 @@ npglpreg.default <- function(tydat=NULL,
                    bws=bws,
                    degree=degree,
                    leave.one.out=leave.one.out,
+                   ckertype=ckertype,
                    ukertype=ukertype,
                    okertype=okertype,
                    bwtype=bwtype,
                    gradient.vec=gradient.vec,
                    cv.shrink=TRUE, ## Override
-                   cv.warning=cv.warning,                   
+                   cv.warning=cv.warning,
                    Bernstein=Bernstein,
                    ...)
 
@@ -371,12 +374,13 @@ npglpreg.default <- function(tydat=NULL,
                               bws=bws,
                               degree=degree,
                               leave.one.out=leave.one.out,
+                              ckertype=ckertype,
                               ukertype=ukertype,
                               okertype=okertype,
                               bwtype=bwtype,
                               gradient.vec=NULL,
                               cv.shrink=TRUE, ## Override
-                              cv.warning=cv.warning,                   
+                              cv.warning=cv.warning,
                               Bernstein=Bernstein,
                               ...)
 
@@ -402,7 +406,7 @@ npglpreg.default <- function(tydat=NULL,
     est$r.squared <- NULL
     est$residuals <- NULL
   }
-    
+
   est$call <- match.call()
 
   ## Return object of type npglpreg
@@ -453,7 +457,7 @@ summary.npglpreg <- function(object,
       if(object$bwtype=="fixed") {
         cat(paste("\nBandwidth for ",format(object$xnames[object$numeric.index][j]),": ",format(object$bws[object$numeric.index][j]),sep=""),sep="")
         if(!is.null(object$bws.sf))
-          cat(paste(" (scale factor = ", format(object$bws.sf[object$numeric.index][j]),")",sep=""),sep="")          
+          cat(paste(" (scale factor = ", format(object$bws.sf[object$numeric.index][j]),")",sep=""),sep="")
       } else {
         cat(paste("\nKth nearest neighbor for ",format(object$xnames[object$numeric.index][j]),": ",format(object$bws[object$numeric.index][j]),sep=""),sep="")
       }
@@ -463,15 +467,15 @@ summary.npglpreg <- function(object,
   for(j in 1:object$num.numeric)
     cat(paste("\nDegree for ",format(object$xnames[object$numeric.index][j]),": ",format(object$degree[j]),sep=""),sep="")
 
-  ## Summarize categorical predictors  
-    
+  ## Summarize categorical predictors
+
   if(object$num.categorical==1) {
     cat(paste("\nThere is ",format(object$num.categorical), " categorical predictor",sep=""),sep="")
   } else if(object$num.categorical > 1) {
     cat(paste("\nThere are ",format(object$num.categorical), " categorical predictors",sep=""),sep="")
   }
 
-  if(object$num.categorical >= 1) for(j in 1:(object$num.categorical)) 
+  if(object$num.categorical >= 1) for(j in 1:(object$num.categorical))
     cat(paste("\nBandwidth for ",format(object$xnames[object$categorical.index][j]),": ",format(object$bws[object$categorical.index][j]),sep=""),sep="")
 
 
@@ -496,28 +500,29 @@ predict.npglpreg <- function(object,
                              ...) {
 
   if(is.null(newdata)) {
-    
+
     ## If no new data provided, return sample fit.
     fitted.values <- fitted(object)
     gradient <- object$gradient
     gradient.categorical.mat <- object$gradient.categorical.mat
-    
+
   } else{
 
     ## Get training data from object (xz and y) and parse into factors
     ## and numeric.
-    
+
     degree <- object$degree
     bws <- object$bws
     bwtype <- object$bwtype
+    ckertype <- object$ckertype
     ukertype <- object$ukertype
     okertype <- object$okertype
     Bernstein <- object$Bernstein
     mpi <- object$mpi
     if(is.null(gradient.vec)) {
       gradient.vec <- object$gradient.vec
-    } 
-    
+    }
+
     txdat <- object$x
     tydat <- object$y
 
@@ -527,7 +532,7 @@ predict.npglpreg <- function(object,
       eydat <- model.response(model.frame(tt,newdata))
     } else {
       eydat <- NULL
-    }      
+    }
     exdat <- model.frame(delete.response(tt),newdata,xlev=object$xlevels)
 
     ## Return the predicted values.
@@ -540,6 +545,7 @@ predict.npglpreg <- function(object,
                             eydat=eydat,
                             bws=bws,
                             degree=degree,
+                            ckertype=ckertype,
                             ukertype=ukertype,
                             okertype=okertype,
                             bwtype=bwtype,
@@ -547,11 +553,11 @@ predict.npglpreg <- function(object,
                             Bernstein=Bernstein,
                             mpi=mpi,
                             ...)
-    
+
     fitted.values <- est$fitted.values
     gradient <- est$gradient
     gradient.categorical.mat <- est$gradient.categorical.mat
-    
+
   }
 
   attr(fitted.values, "gradient") <- gradient
@@ -571,6 +577,7 @@ npglpreg.formula <- function(formula,
                              bws=NULL,
                              degree=NULL,
                              leave.one.out=FALSE,
+                             ckertype=c("gaussian", "epanechnikov","uniform"),
                              ukertype=c("liracine","aitchisonaitken"),
                              okertype=c("liracine","wangvanryzin"),
                              bwtype = c("fixed","generalized_nn","adaptive_nn","auto"),
@@ -599,7 +606,7 @@ npglpreg.formula <- function(formula,
   if(!is.logical(Bernstein)) stop(" Error: Bernstein must be logical (TRUE/FALSE)")
   if(!is.logical(gradient.categorical)) stop(" Error: gradient.categorical must be logical (TRUE/FALSE)")
   if(!is.logical(cv.warning)) stop(" Error: cv.warning must be logical (TRUE/FALSE)")
-  if(!is.logical(leave.one.out)) stop(" Error: leave.one.out must be logical (TRUE/FALSE)")    
+  if(!is.logical(leave.one.out)) stop(" Error: leave.one.out must be logical (TRUE/FALSE)")
   if(degree.max > 100) stop(paste(" degree.max (",degree.max,") exceeds reasonable value (",100,")",sep=""))
 
   if(!mpi) {
@@ -607,7 +614,8 @@ npglpreg.formula <- function(formula,
   } else {
     if(!require(npRmpi)) stop(" Error: you must install the npRmpi package to use this function")
   }
-  
+
+  ckertype <- match.arg(ckertype)
   ukertype <- match.arg(ukertype)
   okertype <- match.arg(okertype)
   bwtype <- match.arg(bwtype)
@@ -627,7 +635,7 @@ npglpreg.formula <- function(formula,
   if(cv=="none"&&bwtype=="auto") stop(" Error: you cannot use bwtype==\"auto\" without running cross-validation")
 
   if(cv!="none"&&bwtype!="auto") warning(paste(" bwtype is ", bwtype, ": you could consider bwtype=\"auto\"",sep=""),immediate.=TRUE)
-  
+
   if(cv!="none") {
     if(bwtype!="auto") {
       ptm <- ptm + system.time(model.cv <-glpcvNOMAD(ydat=tydat,
@@ -637,6 +645,9 @@ npglpreg.formula <- function(formula,
                                                      degree=degree,
                                                      bandwidth=bws,
                                                      bwmethod=cv.func,
+                                                     ckertype=ckertype,
+                                                     ukertype=ukertype,
+                                                     okertype=okertype,
                                                      bwtype=bwtype,
                                                      nmulti=nmulti,
                                                      random.seed=random.seed,
@@ -644,7 +655,7 @@ npglpreg.formula <- function(formula,
                                                      degree.min=degree.min,
                                                      bandwidth.max=bandwidth.max,
                                                      bandwidth.min=bandwidth.min,
-                                                     cv.shrink=cv.shrink,                                                   
+                                                     cv.shrink=cv.shrink,
                                                      cv.warning=cv.warning,
                                                      Bernstein=Bernstein,
                                                      mpi=mpi,
@@ -657,6 +668,9 @@ npglpreg.formula <- function(formula,
                                                      degree=degree,
                                                      bandwidth=bws,
                                                      bwmethod=cv.func,
+                                                     ckertype=ckertype,
+                                                     ukertype=ukertype,
+                                                     okertype=okertype,
                                                      bwtype="fixed",
                                                      nmulti=nmulti,
                                                      random.seed=random.seed,
@@ -664,7 +678,7 @@ npglpreg.formula <- function(formula,
                                                      degree.min=degree.min,
                                                      bandwidth.max=bandwidth.max,
                                                      bandwidth.min=bandwidth.min,
-                                                     cv.shrink=cv.shrink,                                                   
+                                                     cv.shrink=cv.shrink,
                                                      cv.warning=cv.warning,
                                                      Bernstein=Bernstein,
                                                      mpi=mpi,
@@ -680,6 +694,9 @@ npglpreg.formula <- function(formula,
                                                   degree=degree,
                                                   bandwidth=bws,
                                                   bwmethod=cv.func,
+                                                  ckertype=ckertype,
+                                                  ukertype=ukertype,
+                                                  okertype=okertype,
                                                   bwtype="generalized_nn",
                                                   nmulti=nmulti,
                                                   random.seed=random.seed,
@@ -687,7 +704,7 @@ npglpreg.formula <- function(formula,
                                                   degree.min=degree.min,
                                                   bandwidth.max=bandwidth.max,
                                                   bandwidth.min=bandwidth.min,
-                                                  cv.shrink=cv.shrink,                                                   
+                                                  cv.shrink=cv.shrink,
                                                   cv.warning=cv.warning,
                                                   Bernstein=Bernstein,
                                                   mpi=mpi,
@@ -697,7 +714,7 @@ npglpreg.formula <- function(formula,
         model.cv <- model
         bwtype <- "generalized_nn"
       }
-      
+
       ptm <- ptm + system.time(model <-glpcvNOMAD(ydat=tydat,
                                                   xdat=txdat,
                                                   opts=opts,
@@ -705,6 +722,9 @@ npglpreg.formula <- function(formula,
                                                   degree=degree,
                                                   bandwidth=bws,
                                                   bwmethod=cv.func,
+                                                  ckertype=ckertype,
+                                                  ukertype=ukertype,
+                                                  okertype=okertype,
                                                   bwtype="adaptive_nn",
                                                   nmulti=nmulti,
                                                   random.seed=random.seed,
@@ -712,7 +732,7 @@ npglpreg.formula <- function(formula,
                                                   degree.min=degree.min,
                                                   bandwidth.max=bandwidth.max,
                                                   bandwidth.min=bandwidth.min,
-                                                  cv.shrink=cv.shrink,                                                   
+                                                  cv.shrink=cv.shrink,
                                                   cv.warning=cv.warning,
                                                   Bernstein=Bernstein,
                                                   mpi=mpi,
@@ -721,7 +741,7 @@ npglpreg.formula <- function(formula,
         model.cv <- model
         bwtype <- "adaptive_nn"
       }
-      
+
     }
 
     degree <- model.cv$degree
@@ -744,6 +764,7 @@ npglpreg.formula <- function(formula,
                                                    bws=bws,
                                                    degree=degree,
                                                    leave.one.out=leave.one.out,
+                                                   ckertype=ckertype,
                                                    ukertype=ukertype,
                                                    okertype=okertype,
                                                    bwtype=bwtype,
@@ -754,7 +775,7 @@ npglpreg.formula <- function(formula,
                                                    Bernstein=Bernstein,
                                                    mpi=mpi,
                                                    ...))
-  
+
 
   est$call <- match.call()
   est$formula <- formula
@@ -778,6 +799,7 @@ glpregEst <- function(tydat=NULL,
                       bws=NULL,
                       degree=NULL,
                       leave.one.out=FALSE,
+                      ckertype=c("gaussian", "epanechnikov","uniform"),
                       ukertype=c("liracine","aitchisonaitken"),
                       okertype=c("liracine","wangvanryzin"),
                       bwtype=c("fixed","generalized_nn","adaptive_nn"),
@@ -787,6 +809,7 @@ glpregEst <- function(tydat=NULL,
                       Bernstein=TRUE,
                       ...) {
 
+  ckertype <- match.arg(ckertype)
   ukertype <- match.arg(ukertype)
   okertype <- match.arg(okertype)
   bwtype <- match.arg(bwtype)
@@ -813,7 +836,7 @@ glpregEst <- function(tydat=NULL,
 
   xdat.numeric <- sapply(1:ncol(txdat),function(i){is.numeric(txdat[,i])})
   categorical.index <- which(xdat.numeric==FALSE)
-  numeric.index <- which(xdat.numeric==TRUE)  
+  numeric.index <- which(xdat.numeric==TRUE)
   num.numeric <- sum(sapply(1:NCOL(txdat),function(i){is.numeric(txdat[,i])})==TRUE)
   num.categorical <- NCOL(txdat)-num.numeric
 
@@ -856,9 +879,10 @@ glpregEst <- function(tydat=NULL,
                     bws = bws,
                     bandwidth.divide = TRUE,
                     leave.one.out = leave.one.out,
+                    ckertype = ckertype,
                     ukertype = ukertype,
                     okertype = okertype,
-                    bwtype = bwtype,                    
+                    bwtype = bwtype,
                     ...)$ksum
 
     } else {
@@ -870,9 +894,10 @@ glpregEst <- function(tydat=NULL,
                     bws = bws,
                     bandwidth.divide = TRUE,
                     leave.one.out = leave.one.out,
+                    ckertype = ckertype,
                     ukertype = ukertype,
                     okertype = okertype,
-                    bwtype = bwtype,                    
+                    bwtype = bwtype,
                     ...)$ksum
 
     }
@@ -889,6 +914,7 @@ glpregEst <- function(tydat=NULL,
                 gradient = NULL,
                 coef.mat = NULL,
                 bwtype = bwtype,
+                ckertype = ckertype,
                 ukertype = ukertype,
                 okertype = okertype,
                 degree = degree,
@@ -902,13 +928,13 @@ glpregEst <- function(tydat=NULL,
                 gradient.vec = gradient.vec,
                 cv.shrink = cv.shrink,
                 Bernstein = Bernstein))
-    
+
   } else {
 
     ## Test for negative degrees of freedom
 
     if(dim.bs(basis="glp",kernel=TRUE,degree=degree,segments=rep(1,length(degree)))>n.train-1)
-      stop(" Ill-conditioned polynomial basis encountered: modify polynomial order")      
+      stop(" Ill-conditioned polynomial basis encountered: modify polynomial order")
 
     W <- W.glp(xdat=txdat,
                degree=degree,
@@ -933,7 +959,7 @@ glpregEst <- function(tydat=NULL,
                       exdat=exdat,
                       degree=degree,
                       Bernstein=Bernstein)
-      
+
       if(!is.null(gradient.vec)) {
         W.eval.deriv <- W.glp(xdat=txdat,
                               exdat=exdat,
@@ -942,7 +968,7 @@ glpregEst <- function(tydat=NULL,
                               Bernstein=Bernstein)
       }
     }
-    
+
     ## Local polynomial via smooth coefficient formulation and one
     ## call to npksum
 
@@ -957,9 +983,10 @@ glpregEst <- function(tydat=NULL,
                     bws = bws,
                     bandwidth.divide = TRUE,
                     leave.one.out = leave.one.out,
+                    ckertype = ckertype,
                     ukertype = ukertype,
                     okertype = okertype,
-                    bwtype = bwtype,                    
+                    bwtype = bwtype,
                     ...)$ksum
 
     } else {
@@ -971,9 +998,10 @@ glpregEst <- function(tydat=NULL,
                     bws = bws,
                     bandwidth.divide = TRUE,
                     leave.one.out = leave.one.out,
+                    ckertype = ckertype,
                     ukertype = ukertype,
                     okertype = okertype,
-                    bwtype = bwtype,                    
+                    bwtype = bwtype,
                     ...)$ksum
 
     }
@@ -994,7 +1022,7 @@ glpregEst <- function(tydat=NULL,
         }
       }
     }
-      
+
     ## This traps the case with one evaluation point where we need to
     ## keep the extra dimension.
 
@@ -1047,6 +1075,7 @@ glpregEst <- function(tydat=NULL,
                 gradient = gradient,
                 coef.mat = t(coef.mat[-1,]),
                 bwtype = bwtype,
+                ckertype = ckertype,
                 ukertype = ukertype,
                 okertype = okertype,
                 degree = degree,
@@ -1060,7 +1089,7 @@ glpregEst <- function(tydat=NULL,
                 gradient.vec = gradient.vec,
                 cv.shrink = cv.shrink,
                 Bernstein = Bernstein))
-    
+
   }
 
 }
@@ -1072,6 +1101,7 @@ minimand.cv.ls <- function(bws=NULL,
                            xdat=NULL,
                            degree=NULL,
                            W=NULL,
+                           ckertype=c("gaussian", "epanechnikov","uniform"),
                            ukertype=c("liracine","aitchisonaitken"),
                            okertype=c("liracine","wangvanryzin"),
                            bwtype = c("fixed","generalized_nn","adaptive_nn"),
@@ -1079,9 +1109,10 @@ minimand.cv.ls <- function(bws=NULL,
                            cv.warning=FALSE,
                            ...) {
 
+  ckertype <- match.arg(ckertype)
   ukertype <- match.arg(ukertype)
   okertype <- match.arg(okertype)
-  bwtype <- match.arg(bwtype)  
+  bwtype <- match.arg(bwtype)
 
   if(is.null(ydat)) stop(" Error: You must provide y data")
   if(is.null(xdat)) stop(" Error: You must provide X data")
@@ -1096,7 +1127,7 @@ minimand.cv.ls <- function(bws=NULL,
   maxPenalty <- sqrt(.Machine$double.xmax)
 
   if(!is.null(W)) {
-    ## Check for positive degrees of freedom  
+    ## Check for positive degrees of freedom
     if(ncol(W) >= nrow(W)-1) {
       if(cv.warning) console <- printPush(paste("\rWarning: negative degrees of freedom                           ",sep=""),console = console)
       return(maxPenalty)
@@ -1128,13 +1159,14 @@ minimand.cv.ls <- function(bws=NULL,
                     bws = bws,
                     leave.one.out = TRUE,
                     bandwidth.divide = TRUE,
+                    ckertype = ckertype,
                     ukertype = ukertype,
                     okertype = okertype,
-                    bwtype = bwtype,                    
+                    bwtype = bwtype,
                     ...)$ksum
 
       mean.loo <- tww[2,]/NZD(tww[1,])
-      
+
       if (!any(mean.loo == maxPenalty)){
         fv <- mean((ydat-mean.loo)^2)
       } else {
@@ -1160,9 +1192,10 @@ minimand.cv.ls <- function(bws=NULL,
                     bws = bws,
                     leave.one.out = TRUE,
                     bandwidth.divide = TRUE,
+                    ckertype = ckertype,
                     ukertype = ukertype,
                     okertype = okertype,
-                    bwtype = bwtype,                    
+                    bwtype = bwtype,
                     ...)$ksum
 
       tyw <- array(tww,dim = c(ncol(W)+1,ncol(W),n))[1,,]
@@ -1181,7 +1214,7 @@ minimand.cv.ls <- function(bws=NULL,
           }
         }
       }
-      
+
       mean.loo <- rep(maxPenalty,n)
       epsilon <- 1.0/n
       ridge <- double(n)
@@ -1234,6 +1267,7 @@ minimand.cv.aic <- function(bws=NULL,
                             xdat=NULL,
                             degree=NULL,
                             W=NULL,
+                            ckertype=c("gaussian", "epanechnikov","uniform"),
                             ukertype=c("liracine","aitchisonaitken"),
                             okertype=c("liracine","wangvanryzin"),
                             bwtype = c("fixed","generalized_nn","adaptive_nn"),
@@ -1241,9 +1275,10 @@ minimand.cv.aic <- function(bws=NULL,
                             cv.warning=FALSE,
                             ...) {
 
+  ckertype <- match.arg(ckertype)
   ukertype <- match.arg(ukertype)
   okertype <- match.arg(okertype)
-  bwtype <- match.arg(bwtype)  
+  bwtype <- match.arg(bwtype)
 
   if(is.null(ydat)) stop(" Error: You must provide y data")
   if(is.null(xdat)) stop(" Error: You must provide X data")
@@ -1258,7 +1293,7 @@ minimand.cv.aic <- function(bws=NULL,
   maxPenalty <- sqrt(.Machine$double.xmax)
 
   if(!is.null(W)) {
-    ## Check for positive degrees of freedom  
+    ## Check for positive degrees of freedom
     if(ncol(W) >= nrow(W)-1) {
       if(cv.warning) console <- printPush(paste("\rWarning: negative degrees of freedom                           ",sep=""),console = console)
       return(maxPenalty)
@@ -1287,9 +1322,10 @@ minimand.cv.aic <- function(bws=NULL,
                             tydat = 1,
                             bws = bws,
                             bandwidth.divide = TRUE,
+                            ckertype = ckertype,
                             ukertype = ukertype,
                             okertype = okertype,
-                            bwtype = bwtype,                    
+                            bwtype = bwtype,
                             ...)$ksum[1,1]
 
     if(all(degree == 0)) {
@@ -1301,9 +1337,10 @@ minimand.cv.aic <- function(bws=NULL,
                     tydat = rep(1,n),
                     bws = bws,
                     bandwidth.divide = TRUE,
+                    ckertype = ckertype,
                     ukertype = ukertype,
                     okertype = okertype,
-                    bwtype = bwtype,                    
+                    bwtype = bwtype,
                     ...)$ksum
 
       ghat <- tww[2,]/NZD(tww[1,])
@@ -1330,9 +1367,10 @@ minimand.cv.aic <- function(bws=NULL,
                     weights = W,
                     bws = bws,
                     bandwidth.divide = TRUE,
+                    ckertype = ckertype,
                     ukertype = ukertype,
                     okertype = okertype,
-                    bwtype = bwtype,                    
+                    bwtype = bwtype,
                     ...)$ksum
 
       tyw <- array(tww,dim = c(ncol(W)+1,ncol(W),n))[1,,]
@@ -1407,6 +1445,7 @@ glpcv <- function(ydat=NULL,
                   xdat=NULL,
                   degree=NULL,
                   bwmethod=c("cv.ls","cv.aic"),
+                  ckertype=c("gaussian", "epanechnikov","uniform"),
                   ukertype=c("liracine","aitchisonaitken"),
                   okertype=c("liracine","wangvanryzin"),
                   bwtype = c("fixed","generalized_nn","adaptive_nn"),
@@ -1441,9 +1480,10 @@ glpcv <- function(ydat=NULL,
 
   bwmethod <- match.arg(bwmethod)
 
+  ckertype <- match.arg(ckertype)
   ukertype <- match.arg(ukertype)
   okertype <- match.arg(okertype)
-  bwtype <- match.arg(bwtype)  
+  bwtype <- match.arg(bwtype)
 
   optim.method <- match.arg(optim.method)
   optim.control <- list(abstol = optim.abstol,
@@ -1497,6 +1537,7 @@ glpcv <- function(ydat=NULL,
       lscv <- minimand.cv.ls(bws=bw.gamma,
                              ydat=ydat,
                              xdat=xdat,
+                             ckertype=ckertype,
                              ukertype=ukertype,
                              okertype=okertype,
                              bwtype=bwtype,
@@ -1519,9 +1560,10 @@ glpcv <- function(ydat=NULL,
       aicc <- minimand.cv.aic(bws=bw.gamma,
                               ydat=ydat,
                               xdat=xdat,
+                              ckertype=ckertype,
                               ukertype=ukertype,
                               okertype=okertype,
-                              bwtype=bwtype,                    
+                              bwtype=bwtype,
                               ...)
     } else {
       aicc <- maxPenalty
@@ -1568,9 +1610,10 @@ glpcv <- function(ydat=NULL,
                                              control=optim.control,
                                              degree=degree,
                                              W=W,
+                                             ckertype=ckertype,
                                              ukertype=ukertype,
                                              okertype=okertype,
-                                             bwtype=bwtype,                    
+                                             bwtype=bwtype,
                                              ...))
 
       attempts <- 0
@@ -1588,9 +1631,10 @@ glpcv <- function(ydat=NULL,
                                                control=optim.control,
                                                degree=degree,
                                                W=W,
+                                               ckertype=ckertype,
                                                ukertype=ukertype,
                                                okertype=okertype,
-                                               bwtype=bwtype,                    
+                                               bwtype=bwtype,
                                                ...))
       }
 
@@ -1602,9 +1646,10 @@ glpcv <- function(ydat=NULL,
                                              control=optim.control,
                                              degree=degree,
                                              W=W,
+                                             ckertype=ckertype,
                                              ukertype=ukertype,
                                              okertype=okertype,
-                                             bwtype=bwtype,                    
+                                             bwtype=bwtype,
                                              ...))
 
       attempts <- 0
@@ -1621,9 +1666,10 @@ glpcv <- function(ydat=NULL,
                                                method=optim.method,
                                                control = optim.control,
                                                W=W,
+                                               ckertype=ckertype,
                                                ukertype=ukertype,
                                                okertype=okertype,
-                                               bwtype=bwtype,                    
+                                               bwtype=bwtype,
                                                ...))
       }
     }
@@ -1663,6 +1709,7 @@ glpcvNOMAD <- function(ydat=NULL,
                        degree=NULL,
                        bandwidth=NULL,
                        bwmethod=c("cv.ls","cv.aic"),
+                       ckertype=c("gaussian", "epanechnikov","uniform"),
                        ukertype=c("liracine","aitchisonaitken"),
                        okertype=c("liracine","wangvanryzin"),
                        bwtype = c("fixed","generalized_nn","adaptive_nn"),
@@ -1695,9 +1742,10 @@ glpcvNOMAD <- function(ydat=NULL,
 
   set.seed(random.seed)
 
+  ckertype <- match.arg(ckertype)
   ukertype <- match.arg(ukertype)
   okertype <- match.arg(okertype)
-  bwtype <- match.arg(bwtype)  
+  bwtype <- match.arg(bwtype)
   bwmethod <- match.arg(bwmethod)
   cv <- match.arg(cv)
 
@@ -1717,7 +1765,7 @@ glpcvNOMAD <- function(ydat=NULL,
     if(!is.null(degree) && any(degree>degree.max)) stop(" Error: degree supplied but exceeds degree.max")
     if(!is.null(degree) && any(degree<degree.min)) stop(" Error: degree supplied but less than degree.min")
   }
-  
+
   maxPenalty <- sqrt(.Machine$double.xmax)
 
   ## For nearest neighbour bandwidths override default bandwidth.min
@@ -1725,14 +1773,14 @@ glpcvNOMAD <- function(ydat=NULL,
 
   num.bw <- ncol(xdat)
   num.obs <- nrow(xdat)
-  
+
   if(bwtype!="fixed") {
     bandwidth.min <- 1
     bandwidth.max <- num.obs-1
   }
 
   xdat <- as.data.frame(xdat)
-  
+
   if(!is.null(bandwidth) && (length(bandwidth) != num.bw)) stop(" Error: bandwidth supplied but length not compatible with X data")
 
   if(is.null(nmulti)) nmulti <- min(5,num.bw)
@@ -1831,11 +1879,12 @@ glpcvNOMAD <- function(ydat=NULL,
     maxPenalty <- params$maxPenalty
     degree <- params$degree
     cv <- params$cv
+    ckertype <- params$ckertype
     ukertype <- params$ukertype
     okertype <- params$okertype
     bwtype <- params$bwtype
     cv.shrink <- params$cv.shrink
-    cv.warning <- params$cv.warning    
+    cv.warning <- params$cv.warning
     Bernstein <- params$Bernstein
 
     bw.gamma <- input[1:num.bw]
@@ -1857,6 +1906,7 @@ glpcvNOMAD <- function(ydat=NULL,
                              xdat=xdat,
                              degree=degree,
                              W=W,
+                             ckertype=ckertype,
                              ukertype=ukertype,
                              okertype=okertype,
                              bwtype=bwtype,
@@ -1880,13 +1930,14 @@ glpcvNOMAD <- function(ydat=NULL,
     maxPenalty <- params$maxPenalty
     degree <- params$degree
     cv <- params$cv
+    ckertype <- params$ckertype
     ukertype <- params$ukertype
     okertype <- params$okertype
     bwtype <- params$bwtype
     cv.shrink <- params$cv.shrink
-    cv.warning <- params$cv.warning    
+    cv.warning <- params$cv.warning
     Bernstein <- params$Bernstein
-    
+
     bw.gamma <- input[1:num.bw]
     if(cv=="degree-bandwidth")
       degree <- round(input[(num.bw+1):(num.bw+num.numeric)])
@@ -1904,6 +1955,7 @@ glpcvNOMAD <- function(ydat=NULL,
                               xdat=xdat,
                               degree=degree,
                               W=W,
+                              ckertype=ckertype,
                               ukertype=ukertype,
                               okertype=okertype,
                               bwtype=bwtype,
@@ -1928,10 +1980,11 @@ glpcvNOMAD <- function(ydat=NULL,
   params$maxPenalty <- maxPenalty
   params$cv <- cv
   params$degree <- degree
+  params$ckertype <- ckertype
   params$ukertype <- ukertype
   params$okertype <- okertype
   params$bwtype <- bwtype
-  params$cv.shrink <- cv.shrink  
+  params$cv.shrink <- cv.shrink
   params$cv.warning <- cv.warning
   params$Bernstein <- Bernstein
 
@@ -1965,7 +2018,7 @@ glpcvNOMAD <- function(ydat=NULL,
     for(i in 1:num.bw) {
       if(xdat.numeric[i]==TRUE && bwtype=="fixed") {
         init.search.vals[i] <- bandwidth.min + runif(1,.5,1.5)*sd.robust(xdat[,i])*nrow(xdat)^{-1/(4+num.numeric)}
-      } 
+      }
       if(xdat.numeric[i]==TRUE && bwtype!="fixed") {
         init.search.vals[i] <- round(runif(1,2,sqrt(ub[i])))
       }
@@ -1997,20 +2050,20 @@ glpcvNOMAD <- function(ydat=NULL,
         }
       }
     }
-    
+
     if(cv == "degree-bandwidth" && iMulti != 1) {
       for(i in 1:num.numeric) {
         degree[i] <- sample(degree.min:ub[(num.bw+1):(num.bw+num.numeric)][i], 1)
       }
     }
-    
+
     if(cv =="degree-bandwidth"){
       x0.pts[iMulti, ] <- c(init.search.vals, degree)
 		}
     else {
       x0.pts[iMulti, ] <- c(init.search.vals)
 		}
-    
+
 	}
 
 	if(bwmethod == "cv.ls" ) {
@@ -2087,6 +2140,7 @@ glpcvNOMAD <- function(ydat=NULL,
               fv.vec=fv.vec,
               degree=degree.opt,
               bwtype=bwtype,
+              ckertype=ckertype,
               ukertype=ukertype,
               okertype=okertype))
 
@@ -2098,6 +2152,7 @@ compute.bootstrap.errors <- function(tydat,
                                      eydat,
                                      bws,
                                      degree,
+                                     ckertype,
                                      ukertype,
                                      okertype,
                                      bwtype,boot.object=c("fitted","gradient","gradient.categorical"),
@@ -2110,7 +2165,7 @@ compute.bootstrap.errors <- function(tydat,
                                      gradient.categorical.index=NULL,
                                      Bernstein=TRUE,
                                      ...){
-  
+
   plot.errors.type <- match.arg(plot.errors.type)
   boot.object <- match.arg(boot.object)
 
@@ -2131,6 +2186,7 @@ compute.bootstrap.errors <- function(tydat,
                          exdat=exdat,
                          bws=bws,
                          degree=degree,
+                         ckertype=ckertype,
                          ukertype=ukertype,
                          okertype=okertype,
                          bwtype=bwtype,
@@ -2147,25 +2203,26 @@ compute.bootstrap.errors <- function(tydat,
       return(est.boot$gradient.categorical.mat[,gradient.categorical.index])
     }
   }
-  
+
   ## Fitted values for the training data required
-  
+
   est <- npglpreg(tydat=tydat,
                   txdat=txdat,
                   bws=bws,
                   degree=degree,
+                  ckertype=ckertype,
                   ukertype=ukertype,
                   okertype=okertype,
                   bwtype=bwtype,
                   Bernstein=Bernstein,
                   ...)
-  
+
   model.fitted <- est$fitted.values
-  
+
   boot.out <- boot(data = model.fitted,
                    statistic = boot.func.mean,
                    R = plot.errors.boot.num)
-  
+
   if (plot.errors.type == "standard") {
     boot.err[,1:2] <- qnorm(1-alpha/2)*sqrt(diag(cov(boot.out$t)))
     boot.err[,1] <- boot.out$t0 - boot.err[,1]
@@ -2177,7 +2234,7 @@ compute.bootstrap.errors <- function(tydat,
                                  quantile(y,probs = plot.errors.quantiles)
                                }))
   }
-  
+
   return(cbind(boot.out$t0,boot.err))
 
 }
@@ -2196,7 +2253,7 @@ plot.npglpreg <- function(x,
                           plot.errors.quantiles=c(.025,.975),
                           persp.rgl=FALSE,
                           ...) {
-  
+
   plot.behavior <- match.arg(plot.behavior)
   plot.errors.type <- match.arg(plot.errors.type)
 
@@ -2207,10 +2264,11 @@ plot.npglpreg <- function(x,
   degree <- object$degree
   bws <- object$bws
   bwtype <- object$bwtype
+  ckertype <- object$ckertype
   ukertype <- object$ukertype
   okertype <- object$okertype
   Bernstein <- object$Bernstein
-  
+
   txdat <- object$x
   tydat <- object$y
 
@@ -2222,15 +2280,15 @@ plot.npglpreg <- function(x,
   console <- printPush("\rWorking...",console = console)
 
   ## Mean
-  
+
   if(mean==TRUE && deriv==0) {
 
     if(!persp.rgl) {
-      
+
       mg <- list()
-      
+
       for(i in 1:NCOL(object$x)) {
-        
+
         if(!is.factor(object$x[,i])) {
           exdat <- matrix(NA,nrow=num.eval,ncol=NCOL(object$x))
           neval <- num.eval
@@ -2238,16 +2296,16 @@ plot.npglpreg <- function(x,
           neval <- length(unique(object$x[,i]))
           exdat <- matrix(NA,nrow=neval,ncol=NCOL(object$x))
         }
-        
+
         exdat <- data.frame(exdat)
-        
+
         if(!is.factor(object$x[,i])) {
-          xlim <- trim.quantiles(object$x[,i],xtrim)          
+          xlim <- trim.quantiles(object$x[,i],xtrim)
           exdat[,i] <- seq(xlim[1],xlim[2],length=neval)
         } else {
           exdat[,i] <- sort(unique(object$x[,i]))
         }
-        
+
         for(j in (1:NCOL(object$x))[-i]) {
           exdat[,j] <- rep(uocquantile(object$x[,j],prob=xq[j]),neval)
         }
@@ -2259,6 +2317,7 @@ plot.npglpreg <- function(x,
                                 exdat=exdat,
                                 bws=bws,
                                 degree=degree,
+                                ckertype=ckertype,
                                 ukertype=ukertype,
                                 okertype=okertype,
                                 bwtype=bwtype,
@@ -2268,21 +2327,22 @@ plot.npglpreg <- function(x,
         fitted.values <- est$fitted.values
 
         if(!ci) {
-          
+
           mg[[i]] <- data.frame(exdat[,i],fitted.values)
           names(mg[[i]]) <- c(names(exdat)[i],"mean")
-          
+
         } else {
 
           console <- printClear(console)
           console <- printPop(console)
           console <- printPush(paste("\rConducting ",plot.errors.boot.num," bootstrap resamples for predictor ",i,"...",sep=""),console = console)
-          
+
           ci.out <- compute.bootstrap.errors(tydat=tydat,
                                              txdat=txdat,
                                              exdat=exdat,
                                              bws=bws,
                                              degree=degree,
+                                             ckertype=ckertype,
                                              ukertype=ukertype,
                                              okertype=okertype,
                                              bwtype=bwtype,
@@ -2290,14 +2350,14 @@ plot.npglpreg <- function(x,
                                              plot.errors.boot.num=plot.errors.boot.num,
                                              plot.errors.type=plot.errors.type,
                                              plot.errors.quantiles=plot.errors.quantiles)
-          
+
           mg[[i]] <- data.frame(exdat[,i],ci.out)
           names(mg[[i]]) <- c(names(exdat)[i],"mean","lwr","upr")
-          
+
         }
 
       }
-      
+
       if(common.scale) {
         min.mg <- Inf
         max.mg <- -Inf
@@ -2309,21 +2369,21 @@ plot.npglpreg <- function(x,
       } else {
         ylim <- NULL
       }
-      
+
       if(plot.behavior!="data") {
 
         if(!is.null(object$num.categorical)||(object$num.numeric>1)) par(mfrow=dim.plot(NCOL(object$x)))
-      
+
         for(i in 1:NCOL(object$x)) {
 
           if(!ci) {
-        
+
             plot(mg[[i]][,1],mg[[i]][,2],
                  xlab=names(exdat)[i],
                  ylab="Conditional Mean",
                  ylim=ylim,
                  type="l")
-            
+
           } else {
             if(!common.scale) ylim <- c(min(mg[[i]][,-1]),max(mg[[i]][,-1]))
             plot(mg[[i]][,1],mg[[i]][,2],
@@ -2351,30 +2411,30 @@ plot.npglpreg <- function(x,
                  lty=2,
                  col=2)
           }
-          
+
         }
-        
+
       }
-      
+
     } else {
-      
+
       if(!require(rgl)) stop(" Error: you must first install the rgl package")
-      
+
       if(object$num.categorical != 0) stop(" Error: persp3d is for continuous predictors only")
       if(object$num.numeric != 2) stop(" Error: persp3d is for cases involving two continuous predictors only")
-      
+
       newdata <- matrix(NA,nrow=num.eval,ncol=2)
       newdata <- data.frame(newdata)
-      
+
       xlim <- trim.quantiles(object$x[,1],xtrim)
-      ylim <- trim.quantiles(object$x[,2],xtrim)      
-      
+      ylim <- trim.quantiles(object$x[,2],xtrim)
+
       x1.seq <- seq(xlim[1],xlim[2],length=num.eval)
-      x2.seq <- seq(ylim[1],ylim[2],length=num.eval)    
+      x2.seq <- seq(ylim[1],ylim[2],length=num.eval)
       x.grid <- expand.grid(x1.seq,x2.seq)
       newdata <- data.frame(x.grid[,1],x.grid[,2])
       names(newdata) <- names(object$x)
-      
+
       z <- matrix(predict(object,newdata=newdata),num.eval,num.eval)
 
       mg <- list()
@@ -2382,54 +2442,54 @@ plot.npglpreg <- function(x,
       mg[[1]] <- data.frame(newdata,z)
 
       if(plot.behavior!="data") {
-        
+
         num.colors <- 1000
-        colorlut <- topo.colors(num.colors) 
+        colorlut <- topo.colors(num.colors)
         col <- colorlut[ (num.colors-1)*(z-min(z))/(max(z)-min(z)) + 1 ]
-        
+
         open3d()
-        
+
         par3d(windowRect=c(900,100,900+640,100+640))
         rgl.viewpoint(theta = 0, phi = -70, fov = 80)
-        
+
         persp3d(x=x1.seq,y=x2.seq,z=z,
                 xlab=names(object$x)[1],ylab=names(object$x)[2],zlab="Y",
-                ticktype="detailed",      
+                ticktype="detailed",
                 border="red",
                 color=col,
                 alpha=.7,
                 back="lines",
                 main="Conditional Mean")
-        
+
         grid3d(c("x", "y+", "z"))
-        
+
         play3d(spin3d(axis=c(0,0,1), rpm=5), duration=15)
-        
+
       }
 
     }
-    
+
     if(plot.behavior!="plot") {
       console <- printClear(console)
       console <- printPop(console)
       return(mg)
     }
-      
+
   }
-    
+
   ## deriv
 
   if(deriv > 0) {
-    
+
     rg <- list()
 
     i.numeric <- 1
     i.categorical <- 1
-    
+
     for(i in 1:NCOL(object$x)) {
 
       gradient.vec <- NULL
-      
+
       if(!is.factor(object$x[,i])) {
         newdata <- matrix(NA,nrow=num.eval,ncol=NCOL(object$x))
         neval <- num.eval
@@ -2441,18 +2501,18 @@ plot.npglpreg <- function(x,
       }
 
       newdata <- data.frame(newdata)
-      
+
       if(!is.factor(object$x[,i])) {
-        xlim <- trim.quantiles(object$x[,i],xtrim)        
+        xlim <- trim.quantiles(object$x[,i],xtrim)
         newdata[,i] <- seq(xlim[1],xlim[2],length=neval)
       } else {
         newdata[,i] <- sort(unique(object$x[,i]))
       }
-      
+
       for(j in (1:NCOL(object$x))[-i]) {
         newdata[,j] <- rep(uocquantile(object$x[,j],prob=xq[j]),neval)
       }
-      
+
       names(newdata) <- object$xnames
 
       est <- npglpreg.default(tydat=tydat,
@@ -2460,6 +2520,7 @@ plot.npglpreg <- function(x,
                               exdat=newdata,
                               bws=bws,
                               degree=degree,
+                              ckertype=ckertype,
                               ukertype=ukertype,
                               okertype=okertype,
                               bwtype=bwtype,
@@ -2473,25 +2534,26 @@ plot.npglpreg <- function(x,
       } else {
         fitted.values <- est$gradient.categorical.mat[,i.categorical]
       }
-        
+
 
       if(!ci) {
-        
+
         rg[[i]] <- data.frame(newdata[,i],fitted.values)
         names(rg[[i]]) <- c(names(newdata)[i],"deriv")
-        
+
       } else {
-        
+
         console <- printClear(console)
         console <- printPop(console)
         console <- printPush(paste("\rConducting ",plot.errors.boot.num," bootstrap resamples for predictor ",i,"...",sep=""),console = console)
-          
+
         if(!is.factor(object$x[,i])) {
           ci.out <- compute.bootstrap.errors(tydat=tydat,
                                              txdat=txdat,
                                              exdat=newdata,
                                              bws=bws,
                                              degree=degree,
+                                             ckertype=ckertype,
                                              ukertype=ukertype,
                                              okertype=okertype,
                                              bwtype=bwtype,
@@ -2506,6 +2568,7 @@ plot.npglpreg <- function(x,
                                              exdat=newdata,
                                              bws=bws,
                                              degree=degree,
+                                             ckertype=ckertype,
                                              ukertype=ukertype,
                                              okertype=okertype,
                                              bwtype=bwtype,
@@ -2513,23 +2576,23 @@ plot.npglpreg <- function(x,
                                              plot.errors.boot.num=plot.errors.boot.num,
                                              plot.errors.type=plot.errors.type,
                                              plot.errors.quantiles=plot.errors.quantiles,
-                                             gradient.categorical=TRUE,                                
+                                             gradient.categorical=TRUE,
                                              gradient.categorical.index=i.categorical)
         }
-        
+
         rg[[i]] <- data.frame(newdata[,i],ci.out)
         names(rg[[i]]) <- c(names(newdata)[i],"deriv","lwr","upr")
-        
+
       }
-      
+
       if(!is.factor(object$x[,i])) {
         i.numeric <- i.numeric + 1
       } else {
         i.categorical <- i.categorical + 1
-      }          
-        
+      }
+
     }
-    
+
     if(common.scale) {
       min.rg <- Inf
       max.rg <- -Inf
@@ -2541,20 +2604,20 @@ plot.npglpreg <- function(x,
     } else {
       ylim <- NULL
     }
-    
+
     if(plot.behavior!="data") {
-      
+
       if(!is.null(object$num.categorical)||(object$num.numeric>1)) par(mfrow=dim.plot(NCOL(object$x)))
-    
+
       for(i in 1:NCOL(object$x)) {
-        
+
           if(!ci) {
           plot(rg[[i]][,1],rg[[i]][,2],
                xlab=names(newdata)[i],
                ylab=ifelse(!is.factor(newdata[,i]), paste("Order", deriv,"Gradient"), "Difference in Levels"),
                ylim=ylim,
                type="l")
-          
+
         } else {
           if(!common.scale) ylim <- c(min(rg[[i]][,-1]),max(rg[[i]][,-1]))
           plot(rg[[i]][,1],rg[[i]][,2],
@@ -2582,24 +2645,24 @@ plot.npglpreg <- function(x,
                lty=2,
                col=2)
         }
-        
+
       }
-      
+
     }
-    
+
     if(plot.behavior!="plot") {
       console <- printClear(console)
       console <- printPop(console)
       return(rg)
     }
-    
+
   }
 
   console <- printClear(console)
   console <- printPop(console)
 
   ## Reset par to 1,1 (can be modified above)
-  
+
   if(!persp.rgl) par(mfrow=c(1,1))
-  
+
 }

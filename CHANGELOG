@@ -17,9 +17,9 @@ Changes from Version 0.15-14 to 0.15-15 [16-Apr-2012]
   conditioned bases to creep into the final model (this may result in
   increased runtime for large datasets and multivariate tensor models)
 
-* Potential runtime improvement for large bases (test for ill
-  conditioned bases was still relying in parts on rcond(t(B)%*%B), now
-  using crossprod(B) which is more computationally efficient than
+* Potential runtime improvement for large bases (test for
+  ill-conditioned bases was still relying in parts on rcond(t(B)%*%B),
+  now using crossprod(B) which is more computationally efficient than
   rcond(t(B)%*%B) and has a substantially smaller memory footprint)
 
 * No longer report basis type for one continuous predictor as all
