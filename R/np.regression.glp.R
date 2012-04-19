@@ -608,7 +608,7 @@ npglpreg.formula <- function(formula,
   if(!is.logical(cv.warning)) stop(" Error: cv.warning must be logical (TRUE/FALSE)")
   if(!is.logical(leave.one.out)) stop(" Error: leave.one.out must be logical (TRUE/FALSE)")
   if(degree.max > 100) stop(paste(" degree.max (",degree.max,") exceeds reasonable value (",100,")",sep=""))
-
+  if(degree.max < 1) stop(paste(" degree.max (",degree.max,") must be a positive integer",sep=""))
   if(!mpi) {
     if(!require(np)) stop(" Error: you must install the np package to use this function")
   } else {
