@@ -291,6 +291,7 @@ npglpreg.default <- function(tydat=NULL,
                              degree=NULL,
                              leave.one.out=FALSE,
                              ckertype=c("gaussian", "epanechnikov","uniform"),
+                             ckerorder=2,
                              ukertype=c("liracine","aitchisonaitken"),
                              okertype=c("liracine","wangvanryzin"),
                              bwtype = c("fixed","generalized_nn","adaptive_nn","auto"),
@@ -306,6 +307,7 @@ npglpreg.default <- function(tydat=NULL,
   ukertype <- match.arg(ukertype)
   okertype <- match.arg(okertype)
   bwtype <- match.arg(bwtype)
+  if(!any(ckerorder==c(2,4,6,8))) stop("ckerorder must be 2, 4, 6, or 8")
 
   ### Nov. 23, issue is that if you don't shrink for estimation you
   ### can barf, so we only set shrink=FALSE when conducting CV. This
@@ -322,6 +324,7 @@ npglpreg.default <- function(tydat=NULL,
                    degree=degree,
                    leave.one.out=leave.one.out,
                    ckertype=ckertype,
+                   ckerorder=ckerorder,
                    ukertype=ukertype,
                    okertype=okertype,
                    bwtype=bwtype,
@@ -375,6 +378,7 @@ npglpreg.default <- function(tydat=NULL,
                               degree=degree,
                               leave.one.out=leave.one.out,
                               ckertype=ckertype,
+                              ckerorder=ckerorder,
                               ukertype=ukertype,
                               okertype=okertype,
                               bwtype=bwtype,
@@ -452,7 +456,9 @@ summary.npglpreg <- function(object,
 
   cat(paste("\nBandwidth type: ", object$bwtype, sep=""))
 
-  if(object$num.numeric >= 1) {
+  if(object$num.numeric >= 1) { 
+    cat(paste("\nContinuous kernel type: ", object$ckertype, sep=""))
+    cat(paste("\nContinuous kernel order: ", object$ckerorder, sep=""))       
     for(j in 1:object$num.numeric) {
       if(object$bwtype=="fixed") {
         cat(paste("\nBandwidth for ",format(object$xnames[object$numeric.index][j]),": ",format(object$bws[object$numeric.index][j]),sep=""),sep="")
@@ -475,8 +481,12 @@ summary.npglpreg <- function(object,
     cat(paste("\nThere are ",format(object$num.categorical), " categorical predictors",sep=""),sep="")
   }
 
-  if(object$num.categorical >= 1) for(j in 1:(object$num.categorical))
-    cat(paste("\nBandwidth for ",format(object$xnames[object$categorical.index][j]),": ",format(object$bws[object$categorical.index][j]),sep=""),sep="")
+  if(object$num.categorical >= 1) {
+    cat(paste("\nUnordered kernel type: ", object$ukertype, sep=""))
+    cat(paste("\nOrdered kernel type: ", object$okertype, sep=""))    
+    for(j in 1:(object$num.categorical))
+      cat(paste("\nBandwidth for ",format(object$xnames[object$categorical.index][j]),": ",format(object$bws[object$categorical.index][j]),sep=""),sep="")
+  }
 
 
   ## Summary statistics
@@ -515,6 +525,7 @@ predict.npglpreg <- function(object,
     bws <- object$bws
     bwtype <- object$bwtype
     ckertype <- object$ckertype
+    ckerorder <- object$ckerorder
     ukertype <- object$ukertype
     okertype <- object$okertype
     Bernstein <- object$Bernstein
@@ -546,6 +557,7 @@ predict.npglpreg <- function(object,
                             bws=bws,
                             degree=degree,
                             ckertype=ckertype,
+                            ckerorder=ckerorder,
                             ukertype=ukertype,
                             okertype=okertype,
                             bwtype=bwtype,
@@ -578,6 +590,7 @@ npglpreg.formula <- function(formula,
                              degree=NULL,
                              leave.one.out=FALSE,
                              ckertype=c("gaussian", "epanechnikov","uniform"),
+                             ckerorder=2,
                              ukertype=c("liracine","aitchisonaitken"),
                              okertype=c("liracine","wangvanryzin"),
                              bwtype = c("fixed","generalized_nn","adaptive_nn","auto"),
@@ -619,6 +632,8 @@ npglpreg.formula <- function(formula,
   ukertype <- match.arg(ukertype)
   okertype <- match.arg(okertype)
   bwtype <- match.arg(bwtype)
+  if(!any(ckerorder==c(2,4,6,8))) stop("ckerorder must be 2, 4, 6, or 8")
+  
   cv <- match.arg(cv)
   cv.func <- match.arg(cv.func)
 
@@ -646,6 +661,7 @@ npglpreg.formula <- function(formula,
                                                      bandwidth=bws,
                                                      bwmethod=cv.func,
                                                      ckertype=ckertype,
+                                                     ckerorder=ckerorder,
                                                      ukertype=ukertype,
                                                      okertype=okertype,
                                                      bwtype=bwtype,
@@ -669,6 +685,7 @@ npglpreg.formula <- function(formula,
                                                      bandwidth=bws,
                                                      bwmethod=cv.func,
                                                      ckertype=ckertype,
+                                                     ckerorder=ckerorder,
                                                      ukertype=ukertype,
                                                      okertype=okertype,
                                                      bwtype="fixed",
@@ -695,6 +712,7 @@ npglpreg.formula <- function(formula,
                                                   bandwidth=bws,
                                                   bwmethod=cv.func,
                                                   ckertype=ckertype,
+                                                  ckerorder=ckerorder,
                                                   ukertype=ukertype,
                                                   okertype=okertype,
                                                   bwtype="generalized_nn",
@@ -723,6 +741,7 @@ npglpreg.formula <- function(formula,
                                                   bandwidth=bws,
                                                   bwmethod=cv.func,
                                                   ckertype=ckertype,
+                                                  ckerorder=ckerorder,
                                                   ukertype=ukertype,
                                                   okertype=okertype,
                                                   bwtype="adaptive_nn",
@@ -765,6 +784,7 @@ npglpreg.formula <- function(formula,
                                                    degree=degree,
                                                    leave.one.out=leave.one.out,
                                                    ckertype=ckertype,
+                                                   ckerorder=ckerorder,
                                                    ukertype=ukertype,
                                                    okertype=okertype,
                                                    bwtype=bwtype,
@@ -800,6 +820,7 @@ glpregEst <- function(tydat=NULL,
                       degree=NULL,
                       leave.one.out=FALSE,
                       ckertype=c("gaussian", "epanechnikov","uniform"),
+                      ckerorder=2,
                       ukertype=c("liracine","aitchisonaitken"),
                       okertype=c("liracine","wangvanryzin"),
                       bwtype=c("fixed","generalized_nn","adaptive_nn"),
@@ -813,6 +834,7 @@ glpregEst <- function(tydat=NULL,
   ukertype <- match.arg(ukertype)
   okertype <- match.arg(okertype)
   bwtype <- match.arg(bwtype)
+  if(!any(ckerorder==c(2,4,6,8))) stop("ckerorder must be 2, 4, 6, or 8")
 
   if(is.null(tydat)) stop(" Error: You must provide y data")
   if(is.null(txdat)) stop(" Error: You must provide X data")
@@ -880,6 +902,7 @@ glpregEst <- function(tydat=NULL,
                     bandwidth.divide = TRUE,
                     leave.one.out = leave.one.out,
                     ckertype = ckertype,
+                    ckerorder=ckerorder,
                     ukertype = ukertype,
                     okertype = okertype,
                     bwtype = bwtype,
@@ -895,6 +918,7 @@ glpregEst <- function(tydat=NULL,
                     bandwidth.divide = TRUE,
                     leave.one.out = leave.one.out,
                     ckertype = ckertype,
+                    ckerorder=ckerorder,
                     ukertype = ukertype,
                     okertype = okertype,
                     bwtype = bwtype,
@@ -915,6 +939,7 @@ glpregEst <- function(tydat=NULL,
                 coef.mat = NULL,
                 bwtype = bwtype,
                 ckertype = ckertype,
+                ckerorder=ckerorder,
                 ukertype = ukertype,
                 okertype = okertype,
                 degree = degree,
@@ -984,6 +1009,7 @@ glpregEst <- function(tydat=NULL,
                     bandwidth.divide = TRUE,
                     leave.one.out = leave.one.out,
                     ckertype = ckertype,
+                    ckerorder=ckerorder,
                     ukertype = ukertype,
                     okertype = okertype,
                     bwtype = bwtype,
@@ -999,6 +1025,7 @@ glpregEst <- function(tydat=NULL,
                     bandwidth.divide = TRUE,
                     leave.one.out = leave.one.out,
                     ckertype = ckertype,
+                    ckerorder=ckerorder,
                     ukertype = ukertype,
                     okertype = okertype,
                     bwtype = bwtype,
@@ -1076,6 +1103,7 @@ glpregEst <- function(tydat=NULL,
                 coef.mat = t(coef.mat[-1,]),
                 bwtype = bwtype,
                 ckertype = ckertype,
+                ckerorder=ckerorder,
                 ukertype = ukertype,
                 okertype = okertype,
                 degree = degree,
@@ -1102,6 +1130,7 @@ minimand.cv.ls <- function(bws=NULL,
                            degree=NULL,
                            W=NULL,
                            ckertype=c("gaussian", "epanechnikov","uniform"),
+                           ckerorder=2,
                            ukertype=c("liracine","aitchisonaitken"),
                            okertype=c("liracine","wangvanryzin"),
                            bwtype = c("fixed","generalized_nn","adaptive_nn"),
@@ -1113,6 +1142,7 @@ minimand.cv.ls <- function(bws=NULL,
   ukertype <- match.arg(ukertype)
   okertype <- match.arg(okertype)
   bwtype <- match.arg(bwtype)
+  if(!any(ckerorder==c(2,4,6,8))) stop("ckerorder must be 2, 4, 6, or 8")
 
   if(is.null(ydat)) stop(" Error: You must provide y data")
   if(is.null(xdat)) stop(" Error: You must provide X data")
@@ -1160,6 +1190,7 @@ minimand.cv.ls <- function(bws=NULL,
                     leave.one.out = TRUE,
                     bandwidth.divide = TRUE,
                     ckertype = ckertype,
+                    ckerorder=ckerorder,
                     ukertype = ukertype,
                     okertype = okertype,
                     bwtype = bwtype,
@@ -1193,6 +1224,7 @@ minimand.cv.ls <- function(bws=NULL,
                     leave.one.out = TRUE,
                     bandwidth.divide = TRUE,
                     ckertype = ckertype,
+                    ckerorder=ckerorder,
                     ukertype = ukertype,
                     okertype = okertype,
                     bwtype = bwtype,
@@ -1268,6 +1300,7 @@ minimand.cv.aic <- function(bws=NULL,
                             degree=NULL,
                             W=NULL,
                             ckertype=c("gaussian", "epanechnikov","uniform"),
+                            ckerorder=2,
                             ukertype=c("liracine","aitchisonaitken"),
                             okertype=c("liracine","wangvanryzin"),
                             bwtype = c("fixed","generalized_nn","adaptive_nn"),
@@ -1279,6 +1312,7 @@ minimand.cv.aic <- function(bws=NULL,
   ukertype <- match.arg(ukertype)
   okertype <- match.arg(okertype)
   bwtype <- match.arg(bwtype)
+  if(!any(ckerorder==c(2,4,6,8))) stop("ckerorder must be 2, 4, 6, or 8")
 
   if(is.null(ydat)) stop(" Error: You must provide y data")
   if(is.null(xdat)) stop(" Error: You must provide X data")
@@ -1323,6 +1357,7 @@ minimand.cv.aic <- function(bws=NULL,
                             bws = bws,
                             bandwidth.divide = TRUE,
                             ckertype = ckertype,
+                            ckerorder=ckerorder,
                             ukertype = ukertype,
                             okertype = okertype,
                             bwtype = bwtype,
@@ -1338,6 +1373,7 @@ minimand.cv.aic <- function(bws=NULL,
                     bws = bws,
                     bandwidth.divide = TRUE,
                     ckertype = ckertype,
+                    ckerorder=ckerorder,
                     ukertype = ukertype,
                     okertype = okertype,
                     bwtype = bwtype,
@@ -1368,6 +1404,7 @@ minimand.cv.aic <- function(bws=NULL,
                     bws = bws,
                     bandwidth.divide = TRUE,
                     ckertype = ckertype,
+                    ckerorder=ckerorder,
                     ukertype = ukertype,
                     okertype = okertype,
                     bwtype = bwtype,
@@ -1446,6 +1483,7 @@ glpcv <- function(ydat=NULL,
                   degree=NULL,
                   bwmethod=c("cv.ls","cv.aic"),
                   ckertype=c("gaussian", "epanechnikov","uniform"),
+                  ckerorder=2,
                   ukertype=c("liracine","aitchisonaitken"),
                   okertype=c("liracine","wangvanryzin"),
                   bwtype = c("fixed","generalized_nn","adaptive_nn"),
@@ -1484,6 +1522,7 @@ glpcv <- function(ydat=NULL,
   ukertype <- match.arg(ukertype)
   okertype <- match.arg(okertype)
   bwtype <- match.arg(bwtype)
+  if(!any(ckerorder==c(2,4,6,8))) stop("ckerorder must be 2, 4, 6, or 8")
 
   optim.method <- match.arg(optim.method)
   optim.control <- list(abstol = optim.abstol,
@@ -1538,6 +1577,7 @@ glpcv <- function(ydat=NULL,
                              ydat=ydat,
                              xdat=xdat,
                              ckertype=ckertype,
+                             ckerorder=ckerorder,
                              ukertype=ukertype,
                              okertype=okertype,
                              bwtype=bwtype,
@@ -1561,6 +1601,7 @@ glpcv <- function(ydat=NULL,
                               ydat=ydat,
                               xdat=xdat,
                               ckertype=ckertype,
+                              ckerorder=ckerorder,
                               ukertype=ukertype,
                               okertype=okertype,
                               bwtype=bwtype,
@@ -1611,6 +1652,7 @@ glpcv <- function(ydat=NULL,
                                              degree=degree,
                                              W=W,
                                              ckertype=ckertype,
+                                             ckerorder=ckerorder,
                                              ukertype=ukertype,
                                              okertype=okertype,
                                              bwtype=bwtype,
@@ -1632,6 +1674,7 @@ glpcv <- function(ydat=NULL,
                                                degree=degree,
                                                W=W,
                                                ckertype=ckertype,
+                                               ckerorder=ckerorder,
                                                ukertype=ukertype,
                                                okertype=okertype,
                                                bwtype=bwtype,
@@ -1647,6 +1690,7 @@ glpcv <- function(ydat=NULL,
                                              degree=degree,
                                              W=W,
                                              ckertype=ckertype,
+                                             ckerorder=ckerorder,
                                              ukertype=ukertype,
                                              okertype=okertype,
                                              bwtype=bwtype,
@@ -1667,6 +1711,7 @@ glpcv <- function(ydat=NULL,
                                                control = optim.control,
                                                W=W,
                                                ckertype=ckertype,
+                                               ckerorder=ckerorder,
                                                ukertype=ukertype,
                                                okertype=okertype,
                                                bwtype=bwtype,
@@ -1710,6 +1755,7 @@ glpcvNOMAD <- function(ydat=NULL,
                        bandwidth=NULL,
                        bwmethod=c("cv.ls","cv.aic"),
                        ckertype=c("gaussian", "epanechnikov","uniform"),
+                       ckerorder=2,
                        ukertype=c("liracine","aitchisonaitken"),
                        okertype=c("liracine","wangvanryzin"),
                        bwtype = c("fixed","generalized_nn","adaptive_nn"),
@@ -1746,6 +1792,8 @@ glpcvNOMAD <- function(ydat=NULL,
   ukertype <- match.arg(ukertype)
   okertype <- match.arg(okertype)
   bwtype <- match.arg(bwtype)
+  if(!any(ckerorder==c(2,4,6,8))) stop("ckerorder must be 2, 4, 6, or 8")
+  
   bwmethod <- match.arg(bwmethod)
   cv <- match.arg(cv)
 
@@ -1880,6 +1928,7 @@ glpcvNOMAD <- function(ydat=NULL,
     degree <- params$degree
     cv <- params$cv
     ckertype <- params$ckertype
+    ckerorder <- params$ckerorder
     ukertype <- params$ukertype
     okertype <- params$okertype
     bwtype <- params$bwtype
@@ -1907,6 +1956,7 @@ glpcvNOMAD <- function(ydat=NULL,
                              degree=degree,
                              W=W,
                              ckertype=ckertype,
+                             ckerorder=ckerorder,
                              ukertype=ukertype,
                              okertype=okertype,
                              bwtype=bwtype,
@@ -1931,6 +1981,7 @@ glpcvNOMAD <- function(ydat=NULL,
     degree <- params$degree
     cv <- params$cv
     ckertype <- params$ckertype
+    ckerorder <- params$ckerorder
     ukertype <- params$ukertype
     okertype <- params$okertype
     bwtype <- params$bwtype
@@ -1956,6 +2007,7 @@ glpcvNOMAD <- function(ydat=NULL,
                               degree=degree,
                               W=W,
                               ckertype=ckertype,
+                              ckerorder=ckerorder,
                               ukertype=ukertype,
                               okertype=okertype,
                               bwtype=bwtype,
@@ -1981,6 +2033,7 @@ glpcvNOMAD <- function(ydat=NULL,
   params$cv <- cv
   params$degree <- degree
   params$ckertype <- ckertype
+  params$ckerorder <- ckerorder
   params$ukertype <- ukertype
   params$okertype <- okertype
   params$bwtype <- bwtype
@@ -2141,6 +2194,7 @@ glpcvNOMAD <- function(ydat=NULL,
               degree=degree.opt,
               bwtype=bwtype,
               ckertype=ckertype,
+              ckerorder=ckerorder,
               ukertype=ukertype,
               okertype=okertype))
 
@@ -2153,6 +2207,7 @@ compute.bootstrap.errors <- function(tydat,
                                      bws,
                                      degree,
                                      ckertype,
+                                     ckerorder,
                                      ukertype,
                                      okertype,
                                      bwtype,boot.object=c("fitted","gradient","gradient.categorical"),
@@ -2187,6 +2242,7 @@ compute.bootstrap.errors <- function(tydat,
                          bws=bws,
                          degree=degree,
                          ckertype=ckertype,
+                         ckerorder=ckerorder,
                          ukertype=ukertype,
                          okertype=okertype,
                          bwtype=bwtype,
@@ -2211,6 +2267,7 @@ compute.bootstrap.errors <- function(tydat,
                   bws=bws,
                   degree=degree,
                   ckertype=ckertype,
+                  ckerorder=ckerorder,
                   ukertype=ukertype,
                   okertype=okertype,
                   bwtype=bwtype,
@@ -2265,6 +2322,7 @@ plot.npglpreg <- function(x,
   bws <- object$bws
   bwtype <- object$bwtype
   ckertype <- object$ckertype
+  ckerorder <- object$ckerorder
   ukertype <- object$ukertype
   okertype <- object$okertype
   Bernstein <- object$Bernstein
@@ -2318,6 +2376,7 @@ plot.npglpreg <- function(x,
                                 bws=bws,
                                 degree=degree,
                                 ckertype=ckertype,
+                                ckerorder=ckerorder,
                                 ukertype=ukertype,
                                 okertype=okertype,
                                 bwtype=bwtype,
@@ -2343,6 +2402,7 @@ plot.npglpreg <- function(x,
                                              bws=bws,
                                              degree=degree,
                                              ckertype=ckertype,
+                                             ckerorder=ckerorder,
                                              ukertype=ukertype,
                                              okertype=okertype,
                                              bwtype=bwtype,
@@ -2521,6 +2581,7 @@ plot.npglpreg <- function(x,
                               bws=bws,
                               degree=degree,
                               ckertype=ckertype,
+                              ckerorder=ckerorder,
                               ukertype=ukertype,
                               okertype=okertype,
                               bwtype=bwtype,
@@ -2554,6 +2615,7 @@ plot.npglpreg <- function(x,
                                              bws=bws,
                                              degree=degree,
                                              ckertype=ckertype,
+                                             ckerorder=ckerorder,
                                              ukertype=ukertype,
                                              okertype=okertype,
                                              bwtype=bwtype,
@@ -2569,6 +2631,7 @@ plot.npglpreg <- function(x,
                                              bws=bws,
                                              degree=degree,
                                              ckertype=ckertype,
+                                             ckerorder=ckerorder,
                                              ukertype=ukertype,
                                              okertype=okertype,
                                              bwtype=bwtype,
