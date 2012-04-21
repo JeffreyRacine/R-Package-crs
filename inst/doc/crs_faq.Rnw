@@ -1,0 +1,941 @@
+%% $Id: crs_faq.tex,v 1.27 2012/03/25 20:58:55 jracine Exp jracine $
+
+%\VignetteIndexEntry{Frequently Asked Questions (crs)}
+%\VignetteDepends{crs}
+%\VignetteKeywords{nonparametric, spline, categorical}
+%\VignettePackage{crs}
+
+\documentclass[12pt]{amsart}
+
+\tolerance=5000
+
+\usepackage{setspace,srcltx,hyperref}
+
+\newcommand{\field}[1]{\mathbb{#1}} \newcommand{\R}{\field{R}}
+
+%% Change the default page sizes.
+
+\setlength{\topmargin}{-0.25in} \setlength{\textheight}{8.5in}
+\setlength{\oddsidemargin}{.0in} \setlength{\evensidemargin}{.0in}
+\setlength{\textwidth}{6.5in} \setlength{\footskip}{.5in}
+
+\title{Package \texttt{crs} FAQ} \date{\today} \author{Jeffrey S.~Racine}
+
+\begin{document}
+
+\maketitle
+
+\tableofcontents
+
+\onehalfspacing
+
+\section{Overview and Current Version}
+
+This set of frequently asked questions is intended to help users who
+are encountering unexpected or undesired behavior when trying to use
+the \texttt{crs} package.
+
+Kindly report any issues you encounter to me, and please include your
+code, data, version of the package and version of R used so that I can
+help track down any such issues
+(\href{mailto:racinej@mcmaster.ca}{racinej@mcmaster.ca}). And, of
+course, if you encounter an issue that you think might be of interest
+to others, kindly email me the relevant information and I will
+incorporate it into this FAQ.
+
+This FAQ refers to the most recent version, which as of this writing
+is 0.15-15. Kindly update your version should you not be using the most
+current (from within R, \texttt{update.packages()} ought to do it, though
+also see \ref{update} below.). See the appendix in this file for
+cumulative changes between this and previous versions of the \texttt{crs}
+package.
+
+\section{Frequently Asked Questions}
+
+\subsection{How do I cite the \texttt{crs} package?}
+
+Once you have installed the \texttt{crs} package ({\tt
+  install.packages("crs")}), if you load the \texttt{crs} package ({\tt
+  library("crs")}) and type \texttt{citation("crs")} you will
+be presented with the following information.
+
+  \begin{singlespacing}
+\begin{verbatim}
+> citation("crs")
+
+To cite package `crs' in publications use:
+
+  Jeffrey S. Racine <racinej@mcmaster.ca> and Zhenghua Nie
+  <niez@mcmaster.ca> (2011). crs: Categorical Regression Splines. R
+  package version 0.15-15.
+
+A BibTeX entry for LaTeX users is
+
+  @Manual{,
+    title = {crs: Categorical Regression Splines},
+    author = {Jeffrey S. Racine and Zhenghua Nie},
+    year = {2012},
+    note = {R package version 0.15-15},
+  }
+\end{verbatim}
+  \end{singlespacing}
+
+\subsection{I have never used \texttt{R} before. Can you direct me to some
+    introductory material that will guide me through the basics?}
+
+  There are many excellent introductions to the \texttt{R} environment
+  with more on the way. First, I would recommend going directly to the
+  \texttt{R} website (\url{http://www.r-project.org}) and looking under
+  Documentation/Manuals (\url{http://cran.r-project.org/manuals.html})
+  where you will discover a wealth of documentation for \texttt{R} users
+  of all levels. See also the \texttt{R} task views summary page
+  (\url{http://cran.nedmirror.nl/web/views/index.html}) for
+  information grouped under field of interest. A few documents that I
+  mention to my students which are tailored to econometricians include
+  \url{http://cran.r-project.org/doc/contrib/Verzani-SimpleR.pdf},
+  Cribari-Neto \& Zarkos (1999) \cite{CRIBARI_NETO_ZARKOS:1999},
+  Racine \& Hyndman (2002) \cite{RACINE_HYNDMAN:2002} and Farnsworth
+  (2006) \cite{FARNSWORTH:2006}, to name but a few.
+
+  Those looking for exemplar data sets outside of those contained in
+  the \texttt{crs} package are directed to the \texttt{Ecdat} \cite{Ecdat}
+  and \texttt{AER} \cite{AER} packages.
+
+  Often the best resource is right down the hall. Ask a colleague
+  whether they use or know anyone who uses R, then offer to buy that
+  person a coffee and along the way drop something like ``I keep
+  hearing about the \texttt{R} project\dots I feel like such a
+  Luddite\dots''
+
+  \subsection{\label{update}How do I keep all \texttt{R} packages on my
+    system current?}
+
+  Run the command \texttt{update.packages(checkBuilt=TRUE,ask=FALSE)},
+  which will not only update all packages that are no longer current,
+  but will also update all packages built under outdated installed
+  versions of R, if appropriate.
+
+\subsection{It seems that there are a lot of packages that must be
+    installed in order to conduct econometric analysis (tseries,
+    lmtest, np, etc.). Is there a way to avoid having to individually
+    install each package individually?}
+
+  Certainly. The Comprehensive R Archive Network (CRAN) is a network
+  of ftp and web servers around the world that store identical,
+  up-to-date, versions of code and documentation for \texttt{R}.  The
+  CRAN `task view' for computational econometrics might be of
+  particular interest to econometricians.  The econometric task view
+  provides an excellent summary of both parametric and nonparametric
+  econometric packages that exist for the R environment and provides
+  one-stop installation for these packages.
+
+See
+\href{http://cran.r-project.org/web/views/Econometrics.html}{cran.r-project.org/web/views/Econometrics.html} for further information.
+
+To automatically install a task view, the \texttt{ctv} package first
+needs to be installed and loaded, i.e.,
+\begin{verbatim}
+install.packages("ctv")
+library("ctv")
+\end{verbatim}
+
+The econometric task view can then be installed via {\tt
+  install.views()} and updated via \texttt{update.views()} (which first
+assesses which of the packages are already installed and up-to-date), i.e.,
+\begin{verbatim}
+install.views("Econometrics")
+\end{verbatim}
+or
+\begin{verbatim}
+update.views("Econometrics")
+\end{verbatim}
+
+\subsection{Is there a `gentle guide' to the \texttt{crs} package that
+    contains some easy to follow examples?}
+
+  Perhaps the most gentle introduction is contained in the \texttt{crs}
+  package itself in the form of a `vignette'. To view the vignette run
+  R, install the \texttt{crs} package (\texttt{install.packages("crs")}), then
+  type \texttt{vignette("crs",package="crs")} to view or print the vignette.
+
+  See also \texttt{vignette("spline\_primer",package="crs")} for a vignette
+  that presents a `gentle' introduction to regression splines.
+
+  For a listing of all routines in the \texttt{crs} package type: {\tt
+    library(help="crs")}.
+
+\subsection{I noticed you have placed a new version of the \texttt{crs}
+    package on CRAN. How can I determine what has been changed,
+    modified, fixed etc?}
+
+  See the CHANGELOG on the CRAN site
+  (\url{http://cran.r-project.org/web/packages/crs/ChangeLog}), or go
+  to the end of this document where the CHANGELOG is provided for your
+  convenience.
+
+\subsection{How can I read data stored in various formats such as
+    Stata, SAS, Minitab, SPSS etc.~into the R program?}
+
+  Install the foreign library via \texttt{install.packages("foreign")}
+  then do something like
+  \begin{singlespacing}
+\begin{verbatim}
+mydat <- read.dta("datafile.dta"),
+\end{verbatim}
+  \end{singlespacing}
+  where \texttt{datafile.dta} is the name of your Stata data file. Note
+  that, as of version 0.8-34, the foreign package function {\tt
+    read.dta} supports reading files directly over the Internet making
+  for more portable code. For instance, one could do something like
+\begin{verbatim}
+mydat <- read.dta(file="http://www.principlesofeconometrics.com/stata/mroz.dta")
+\end{verbatim}
+as one could always do with, say, \texttt{read.table()}.
+
+\subsection{Where can I get some examples of R code for the crs
+  package in addition to the examples in the help files?}
+
+Start \texttt{R} then type \verb+demo(package="crs")+ and you will be
+presented with a list of demos for constrained estimation, inference,
+and so forth. To run one of these demos type, for example,
+\verb+demo(radial_rgl)+ (note that you must first install the {\tt
+  rgl} package to run this particular demo).
+
+To find the location of a demo type
+\verb+system.file("demo","radial_rgl.R",package="crs")+ for example,
+then you can take the source code for this demo and modify it for your
+particular application.
+
+\subsection{Can I use crs to perform linear regression?}
+
+Certainly! Simply use the options \texttt{cv="none"},
+\texttt{degree=rep(1,q)} and \texttt{segments=rep(1,q)} where
+\texttt{q} is the number of continuous predictors and
+\texttt{kernel=FALSE} as per the following example:
+\begin{verbatim}
+n <- 1000
+x1 <- runif(n)
+x2 <- runif(n)
+z1 <- rbinom(n,1,.1)
+z2 <- rbinom(n,1,.1)
+y <- x1+x2^2+z1+z2+rnorm(n)
+z1 <- factor(z1)
+z2 <- factor(z2)
+model.lm <- lm(y~x1+x2+z1+z2)
+summary(model.lm)
+model.crs <- crs(y~x1+x2+z1+z2,cv="none",kernel=FALSE,degree=rep(1,2),segments=rep(1,2))
+summary(model.crs)
+\end{verbatim}
+
+You will note that the summary statistics are identical for each
+model. Also, when conducting search the initial values are set so that
+the first model estimated is linear (albeit with \texttt{kernel=TRUE}
+by default) so if the linear model is optimal it will be the one
+chosen by cross-validation in probability.
+
+\subsection{I would like more/less information displayed when
+  conducting search using the NOMAD routines\dots}
+
+This is accomplished by feeding the argument {\tt
+  opts=list("DISPLAY\_DEGREE"=x)} to \texttt{crs} where x is a
+non-negative integer. Setting x=0 produces no information whatsoever
+while integers $x\ge1$ provide successively more information.
+
+\subsection{\texttt{crs} consumes a lot of memory when conducting
+  cross-validation via NOMAD. Can I control this?}
+
+By default, the minimum degrees of freedom possible is set to $n-k=1$
+where $n$ is the sample size and $k$ is the trace of the basis
+matrix. This is done in order to allow for extremely complex
+relationships to be estimated. But for some situations one might not
+want to `go there' for two reasons, namely a) memory consumption and
+b) improbable models having nearly as many predictors as observations.
+
+During the search process if you have a large number of predictors and
+a large number of observations, you will end up computing models
+having a minuscule number of degrees of freedom and, when this occurs,
+the basis function may well consume an inordinate amount of
+memory. Plus the final model determined by the search process may well
+end up being much more parsimonious. By way of illustration if
+\texttt{n=100000}, \texttt{k=20}, \texttt{degree.max=10}, and
+\texttt{segments.max=10} you will likely compute models with spline
+bases of dimension \texttt{100000x99999} when conducting
+cross-validated search (i.e.\ models that hit the minimum number of
+degrees of freedom).
+
+In such cases you might wish to restrict the minimum degrees of
+freedom via setting \texttt{cv.df.min=n-j} where \texttt{n} is your
+sample size and \texttt{j} is, say, \texttt{1000} so that the maximum
+dimension of the B-spline would be less than or equal to \texttt{j}
+(e.g.\ the maximum dimension of the spline basis would now be
+\texttt{100000x1000}). Of course, you ought to make sure that your
+final model does not hit this bound as this would indicate that
+imposing this restriction is binding on the search process which is of
+course undesirable.
+
+\subsection{When I have a large number of regressors/data the function {\tt
+    crs} just `sits there' when conducting cross-validation via NOMAD\dots}
+
+First, if you are concerned that the code is indeed just `sitting
+there', you can verify that search is progressing by changing the
+\verb+"DISPLAY_DEGREE"+ setting in the opts list along the lines of
+the following:
+\begin{verbatim}
+opts <- list("MAX_BB_EVAL"=10000,
+             "EPSILON"=.Machine$double.eps,
+             "INITIAL_MESH_SIZE"="r1.0e-01",
+             "MIN_MESH_SIZE"=paste("r",sqrt(.Machine$double.eps),sep=""),
+             "MIN_POLL_SIZE"=paste("r",sqrt(.Machine$double.eps),sep=""),
+             "DISPLAY_DEGREE"=3)
+
+model <- crs(...,opts=opts)
+\end{verbatim}
+will print out in gory detail exactly what the search engine is doing.
+
+However, if this reveals that there something odd going on (i.e.\ you
+are seeing a lot of \verb+inf+ function values being printed out),
+then you might wish to begin by restricting the dimension of the
+combinatoric search process. By default \texttt{degree.max=10} for each
+predictor and \texttt{segments.max=10} as well. So this can lead to a
+basis with 21 columns for one predictor and when using {\tt
+  basis="tensor"} or \texttt{basis="auto"} (which computes both the
+tensor and additive bases) the dimension of the basis can swamp the
+number of observations in the sample (e.g.\ with 4 regressors we can
+have a tensor product multivariate basis that has up to
+\verb+21^4=194481+ columns when using the default \texttt{degree.max=10}
+for each predictor and \texttt{segments.max=10}). For this illustration,
+the cross-validation function can approach $\infty$ if the sample size
+approaches \verb+194491+ from above and the search process will be
+searching for a non-$\infty$ value in order to proceed or terminate.
+
+So, in such cases begin by restricting the dimension of the spline
+basis matrix by setting, for instance, the minimum degrees of freedom
+via \texttt{cv.df.min=n-j} where \texttt{n} is your sample size and
+\texttt{j=500} so that the maximum dimension of the B-spline would be
+less than or equal to \texttt{j}. Or you can restrict the dimension of
+the spline basis matrix by setting, for instance, \texttt{degree.max=2}
+and \texttt{segments.max=2}. Or begin by searching only over the spline
+degree by setting \texttt{complexity="degree"} (the default is {\tt
+  complexity="degree-knots"}). The routine will throw a warning if you
+have a solution that hits the maximum value of \texttt{degree.max} or
+\texttt{segments.max} and offer some practical advice in these cases.
+
+Alternatively, restrict attention to additive (semiparametric) splines
+by setting \texttt{basis="additive"} (e.g.\ with 4 regressors we can have
+a tensor product multivariate basis that has up to \verb+21x4=84+
+columns when using the default \texttt{degree.max=10} for each predictor
+and \texttt{segments.max=10}) at the cost of imposing additivity which
+can be restrictive.
+
+Alternatively, consider kernel regression that does not suffer from
+this computational limitation (see e.g.\ the \texttt{np} package).
+
+\subsection{\label{nonsmooth}My estimated model is not `smooth' (e.g.\ cross-validation
+  chooses, say, the spline degree=1 and number of segments=3). How can
+  I modify this?}
+
+Unlike, say, smoothing splines \cite{WAHBA:1990} that penalize
+`roughness' (the second derivative of the estimate) and fix the spline
+degree at, say, three, regression splines fitted by cross-validation
+can deliver a model that minimizes the objective function without
+regard to an ad hoc proxy for smoothness (a strength, not a weakness
+in my opinion).
+
+\begin{enumerate}
+
+\item\label{all rel} \texttt{All Predictors Relevant}: If, however,
+  you wish an estimate that is, say, twice continuously
+  differentiable, simply set \texttt{degree.min=3} (one degree higher
+  than the desired degree of smoothness) and then determine the
+  appropriate model via cross-validation subject to this constraint
+  (i.e.\ re-estimate your model with the option \texttt{degree.min=3}
+  for example). Otherwise, you can simply override what
+  cross-validation delivered via \texttt{cv="none"} and
+  \texttt{degree=c(3,3,...)} etc. (i.e.\ set the degree and segments
+  in an ad-hoc fashion, which I would not recommend). Of course, this
+  will not be optimal according to the cross-validation criterion but
+  will achieve the desired degree of smoothness.
+
+\item \texttt{Some Predictors Irrelevant}: In some cases the optimal
+  spline degree will be zero or bandwidth one or inclusion indicator
+  zero (the latter occurring when \texttt{kernel=FALSE} is
+  specified). This means that cross-validation has automatically
+  removed one or more variables.
+
+In this case first remove these variables from the model to be
+estimated, then re-run your model on the subset of relevant variables
+only but following the advice in \eqref{all rel} which will achieve
+the desired degree of smoothness subject to the irrelevant variables
+no longer being present in the final model.
+
+\end{enumerate}
+
+\subsection{The crs package implements `regression splines' and
+  optimizes the spline degree and knot vector by default. But
+  `smoothing splines' \cite{WAHBA:1990} typically set the degree to
+  `cubic' and penalize roughness. Can we use \texttt{crs()}
+  (i.e.\ regression splines) to mirror the cubic smoothing spline
+  approach?}
+
+Certainly. Consider the following illustration:
+
+\begin{verbatim}
+library(crs)
+data(cps71)
+attach(cps71)
+
+model <- crs(logwage~age)
+summary(model)
+\end{verbatim}
+
+You can see that cross-validating both the spline degree and number of
+knots chooses a degree 2 spline for age and, as a consequence,
+\texttt{plot(model,deriv=1)} produces a derivative that is nonsmooth
+(i.e.\ piecewise linear). If one preferred to mirror the cubic spline
+approach (or for that matter, any fixed order spline), then the
+following will optimize knots only holding the degree constant at,
+say, 3 (and will, in general, be faster to solve since we optimize
+over fewer smoothing parameters).
+
+\begin{verbatim}
+model <- crs(logwage~age,complexity="knots",degree=3)
+summary(model)
+\end{verbatim}
+
+This model uses a higher degree than the previous one that optimized
+both the degree and number of knots, but fewer knots. However, note
+that the cross-validation function is minimized (i.e.\ improved) for
+the model that optimizes both the degree and number of knots hence
+this latter model is optimal according to the cross-validation
+criterion. See also \ref{nonsmooth} above for further caveats.
+
+\subsection{I estimated a parametric model using the lm()
+  function. How can I compare the cross-validation score from the
+  crs() approach with that for the parametric model?}
+
+This can be readily achieved for the parametric model as follows:
+\begin{verbatim}
+data(wage1)
+model.lm <- lm(lwage ~ married + female + nonwhite + educ + 
+               exper + tenure, data = wage1)
+cv.lm <- mean(residuals(model.lm)^2/(1-hatvalues(model.lm))^2)
+cv.lm
+\end{verbatim}
+You can then compare this with that for the \verb+crs+ model. If the
+cross-validation score is lower for one model, that indicates that the
+model possessing the lowest score is to be preferred.
+
+\subsection{Why do some runs result in a function value of
+  1.340781e+154 when conducting multistarting?}
+
+As of version 0.15-1 we conduct extensive testing for ill-conditioned
+bases (univariate and multivariate) and adjust search limits
+accordingly. However, when a multivariate basis is ill-conditioned we
+apply a large penalty (\verb+sqrt(.Machine$double.xmax)+ which equals
+1.340781e+154 on most processors). Though the search process will try
+to detect a minimum it can fail here if the objective function is
+`flat' in a neighborhood of the initial values.
+
+When this occurs you can either increase \verb+nmulti+ and/or decrease
+\verb+degree.max+ and restart the search.
+
+Note also that as of version 0.15-1, the initial search values will be
+degree one and segment one (i.e.\ a linear model) unless you provide
+the vectors \verb+degree=c(...)+ and \verb+segments=c(...)+ which will
+then be used instead as the starting values for the first multistart.
+
+\subsection{snomadr appears to be crashing}
+
+If you receive the message 
+\begin{verbatim}
+Calling NOMAD (Nonsmooth Optimization by Mesh Adaptive Direct Search)
+
+ *** caught segfault ***
+address 0x68, cause 'memory not mapped'
+
+Traceback:
+ 1: .Call(smultinomadRSolve, ret)
+\end{verbatim}
+kindly first ensure that you have write privileges in your current
+directory (\texttt{snomadr} creates temporary files in the current
+working directory and if this operation fails you may receive this
+error).
+
+Note this should not occur when using version 0.15-13 or higher since
+temporary files are no longer generated.
+
+\subsection{How do I estimate the conditional quantile rather than
+  the conditional mean?}
+
+Simply specify the option \texttt{tau=0.5} to estimate the conditional
+median regression spline, or any quantile you choose to specify where
+$\tau\in(0,1)$, as in
+\begin{verbatim}
+model <- crs(y~x1+x2,tau=0.5)
+\end{verbatim}
+See also \texttt{demo(cqrs)} for a demonstration.
+
+\subsection{How can I save a PDF of a plot created with the option
+  persp.rgl=TRUE?}
+
+Version 0.15-1 has added support for \verb+RGL+ via the \verb+rgl+
+package which is a 3D real-time rendering device driver system for R
+using OpenGL. These plots are dynamic so you can spin them and resize
+them using your keypad/mouse. However, they are not standard graphics
+objects that can be saved using R commands such as \verb+pdf()+. But
+they can be saved as a PDF by first calling rgl and then issuing the
+command \verb+rgl.postscript("foo.pdf","pdf")+ where \verb+foo.pdf+ is
+the desired name of your PDF file as the following illustrates:
+\begin{verbatim}
+n <- 1000
+x1 <- sort(rnorm(n))
+x2 <- rnorm(n)
+y <- x1^3 + rnorm(n,sd=.1)
+model <- crs(y~x1+x2)
+plot(model,mean=T,persp.rgl=T)
+rgl.postscript("foo.pdf","pdf")
+\end{verbatim}
+However, this pdf driver does not support some features such as
+transparency etc. A better alternative is to create a \verb+png+ file
+as follows:
+\begin{verbatim}
+n <- 1000
+x1 <- sort(rnorm(n))
+x2 <- rnorm(n)
+y <- x1^3 + rnorm(n,sd=.1)
+model <- crs(y~x1+x2)
+plot(model,mean=T,persp.rgl=T)
+rgl.snapshot("foo.png")
+\end{verbatim}
+and then include this in your \LaTeX\ document using
+\verb+\includegraphics[scale=.5]{foo.png}+.
+
+\subsection{Is it possible to use B-splines instead of indicator bases
+  or kernel weighting for discrete predictors?}
+
+Providing the discrete predictors are numeric, certainly. Just make
+sure they are of type numeric and they will be treated the same as
+continuous predictors, as in the following example.
+\begin{verbatim}
+n <- 1000
+x <- runif(n,-2,2)
+z <- rbinom(n,1,.5)
+y <- x^3 + z + rnorm(n,sd=.1)
+model <- crs(y~x+z)
+summary(model)
+\end{verbatim}
+Note in summary that you are told `There are 2 continuous predictors'
+(i.e.\ numeric predictors). Note also that the message `optimal degree
+equals search maximum (10): rerun with larger degree.max optimal
+degree equals search maximum (1): rerun with larger degree.max' will
+appear simply because the default maximum degree is 10 but the program
+automatically checks for the maximum \textsl{well-conditioned} basis
+which, for the binary numeric predictor, is 1 (you can ignore this
+message here).
+
+\subsection{I have noticed that as more categorical predictors are
+  added or as the number of outcomes for each categorical predictor
+  increases, computation time increases when \texttt{kernel=TRUE}. Why
+  is this so and can anything be done?}
+
+When \texttt{kernel=TRUE} we need to compute kernel weighted
+regression for each unique combination of the categorical
+predictors. So if you have one binary predictor, estimation involves
+two calls to the weighted least squares solver. Now suppose that you
+have three categorical predictors each having $c=10$ outcomes. Now
+estimation involves $10^3=1000$ calls to the weighted least squares
+solver. This will affect all aspects of estimation (cross-validation
+etc.) which results in increases in computation time.
+
+As of version 0.15-8 and up, you can potentially reduce computation
+time {\em when you have categorical predictors} by discretizing the
+bandwidth \texttt{lambda} (when \texttt{lambda.discrete=TRUE} we
+divide $\texttt{lambda}\in [0,1]$ into \texttt{lambda.discrete.num=100
+  (+1)} values, $(0/100,1/100,\dots,100/100)$) so that integer
+(discrete) search via NOMAD will be undertaken rather than continuous
+search which is done by setting \texttt{lambda.discrete=TRUE}. This
+can potentially reduce run-time with little expected loss in accuracy
+for the cross-validated search procedure. However, when there are many
+categorical predictors each having $>2$ outcomes, search based on
+\texttt{lambda.discrete=TRUE} may be more likely to become ensnared in
+local minima than the default (i.e.\ properly treating the bandwidths
+for the categorical predictors as continuous).
+
+To reduce computation time further, you can also decrease the number
+of times search is restarted from different (random) starting points
+by setting \texttt{nmulti=$i$} to $i<5$ (the default is 5) but I would
+caution against doing this except when conducting exploratory data
+analysis (the objective function is typically nonsmooth and may
+possess multiple local minima).
+
+\bibliographystyle{plain} \bibliography{crs_faq}
+
+\clearpage
+
+\appendix
+
+\section*{Changes from Version 0.15-14 to 0.15-15 [16-Apr-2012]}
+
+\begin{itemize}
+
+\item NOTE: ** major change in default setting ** Default basis set to
+  \texttt{"auto"} from \texttt{"additive"} for more robust results
+  when using default settings with more than one continuous predictor
+  (at the cost of additional computation for all supported bases, more
+  memory required). Warnings changed to reflect this, additional
+  warnings provided, but mainly when \texttt{cv="none"} (i.e. user is
+  doing things manually and failing to provide defaults)
+
+\item Added switch for discarding singular bases during
+  cross-validation (\texttt{singular.ok=FALSE} is default, so default
+  is to discard singular bases)
+
+\item More stringent checking for ill-conditioned bases during
+  cross-validation - previous checks were insufficient allowing poorly
+  conditioned bases to creep into the final model (this may result in
+  increased runtime for large datasets and multivariate tensor models)
+
+\item Potential runtime improvement for large bases (test for
+  ill-conditioned bases was relying partly on
+  \texttt{rcond(t(B)\%*\%B)}, now using crossprod(B) which is more
+  computationally efficient than \texttt{rcond(t(B)\%*\%B)} and has a
+  substantially smaller memory footprint)
+
+\item No longer report basis type for one continuous predictor as all
+  bases are identical in this case
+
+\end{itemize}
+\section*{Changes from Version 0.15-13 to 0.15-14 [22-Mar-2012]}
+
+\begin{itemize}
+
+\item Added support for weights to \texttt{crs()}
+
+\item Corrected issue with reporting of cv function value by
+  \texttt{summary()} with quantile regression splines
+
+\item Test for coexistence of pruning and quantile regression splines and
+  stop with a message that these cannot coexist
+
+\item Check for valid derivative integer
+
+\end{itemize}
+
+
+\section*{Changes from Version 0.15-12 to 0.15-13 [05-Mar-2012]}
+
+\begin{itemize}
+
+\item Added new function \texttt{crsivderiv()}
+
+\item More options added to \texttt{crsiv()}
+
+\item Modified vignette (\texttt{spline\_primer})
+
+\item Corrected error in demo for IV regression when exhaustive search
+  was selected (nmulti needed to be set though it is not used)
+
+\item Changes to code to improve compliance with R `Writing portable
+  packages' guidelines and correct partial argument matches
+
+\end{itemize}
+
+\section*{Changes from Version 0.15-11 to 0.15-12 [7-Dec-2011]}
+
+\begin{itemize}
+
+\item Added option to limit the minimum degrees of freedom when
+  conducting cross validation (see \texttt{cv.df.min} which defaults
+  to 1) which can save memory and computation time for large sample
+  sizes by avoiding computation of potentially very large dimensioned
+  spline bases
+
+\end{itemize}
+
+\section*{Changes from Version 0.15-10 to 0.15-11 [3-Dec-2011]}
+
+\begin{itemize}
+
+\item Fixed glitch in \texttt{bwtype="auto"} when \texttt{adaptive\_nn}
+  is selected
+
+\end{itemize}
+
+\section*{Changes from Version 0.15-9 to 0.15-10 [3-Dec-2011]}
+
+\begin{itemize}
+
+\item Fixed regression in code when using \texttt{cv.func=cv.aic}
+
+\item Added option \texttt{bwtype="auto"} for \texttt{npglpreg}
+  (automatically determine the bandwidth type via cross-validation)
+
+\end{itemize}
+
+\section*{Changes from Version 0.15-8 to 0.15-9 [25-Nov-2011]}
+
+\begin{itemize}
+
+\item Fixed glitch when computing/plotting derivatives with
+  \texttt{crs} and multiple predictors are of degree zero
+
+\item Added support for parallel \texttt{npglpreg} (calls
+  \texttt{npRmpi} rather than \texttt{np} - see demo)
+
+\item Improved handling of complex bases via dim.bs (test for negative
+  degrees of freedom prior to attempting to construct the basis
+  function - dramatically reduces memory overhead and can cut down on
+  unnecessary computation)
+
+\end{itemize}
+
+\section*{Changes from Version 0.15-7 to 0.15-8 [16-Nov-2011]}
+
+\begin{itemize}
+
+\item Added support for \texttt{is.fullrank} testing for generalized
+  local polynomial kernel regression for cross-validation (default
+  remains ridging a la Seifert \& Gasser), replaced
+  \texttt{rcond(t(X)\%*\%X)} with \texttt{is.fullrank(X)} (smaller
+  memory footprint for large datasets)
+
+\item Fixed glitch with derivative computation when one or more
+  \texttt{degree} is 0 when \texttt{kernel=TRUE} and additionally when
+  one or more factors is excluded when using \texttt{kernel=FALSE}
+
+\item Fixed issue with reported cross-validation score only
+  corresponding to leave-one-out cross-validation by passing back cv
+  function from solver rather than computing post estimation
+
+\item Added ability to estimate quantile regression splines
+
+\item More rigorous testing for rank deficient fit via
+  \texttt{rcond()} in cv function
+
+\item Fixed issue where \texttt{degree.min} was set $> 1$ but initial
+  degree was 1 (corresponding to the linear model which is the default
+  for the initial degree otherwise)
+
+\item Added the option to treat the continuous bandwidths as discrete
+  with \texttt{lambda.discrete.num+1} values in the range [0,1] which
+  can be more computationally efficient when a `quick and dirty'
+  solution is sufficient rather than conducting mixed integer search
+  treating the lambda as real-valued
+
+\item Corrected incorrect warning about using \texttt{basis="auto"}
+  when there was only one continuous predictor
+
+\end{itemize}
+
+\section*{Changes from Version 0.15-6 to 0.15-7 [24-Oct-2011]}
+
+\begin{itemize}
+
+\item Added logical \verb+model.return+ to \verb+crs+ (default
+  \verb+model.return=FALSE+) which previously returned a list of
+  models corresponding to each unique combination of the categorical
+  predictors when \verb+kernel=TRUE+ (the memory footprint could be
+  potentially very large so this allows the user to generate this list
+  if so needed)
+
+\end{itemize}
+
+\section*{Changes from Version 0.15-5 to 0.15-6 [17-Oct-2011]}
+
+\begin{itemize}
+
+\item Compiler error thrown on some systems due to changes in
+  \verb+Eval_Point.hpp+ corrected
+
+\end{itemize}
+
+\section*{Changes from Version 0.15-4 to 0.15-5 [16-Oct-2011]}
+
+\begin{itemize}
+
+\item Thanks to Professor Brian Ripley, additional Solaris C/C++ compiler
+  warnings/issues have been resolved
+
+\item Some internal changes for soon to be deprecated functionality
+  (\verb+sd(<matrix>)+) expected to be deprecated shortly)
+
+\end{itemize}
+
+\section*{Changes from Version 0.15-3 to 0.15-4 [15-Oct-2011]}
+
+\begin{itemize}
+
+\item Extended the \verb+gsl.bs+ functionality to permit out-of-sample
+  prediction of the spline basis and its derivatives
+
+\item Added option \verb+knots="auto"+ to automatically determine via
+  cross-validation whether to use quantile or uniform knots
+
+\item Minor changes to help page examples and descriptions and to the
+  crs vignette
+
+\end{itemize}
+
+\section*{Changes from Version 0.15-2 to 0.15-3 [05-Sept-2011]}
+
+\begin{itemize}
+
+\item Fixed glitch when all degrees are zero when computing the
+  cross-validation function (also fixes glitch when all degrees are
+  zero when plotting the partial surfaces)
+
+\item Added new function \verb+crssigtest+ (to be considered in beta
+  status until further notice)
+
+\item Added F test for no effect (joint test of significance) in
+  \verb+crs summary+
+
+\item Both degree and segments now set to one for first multistart in
+  \verb+crs+ (previously only degree was, but intent was always to
+  begin from a linear model (with interactions where appropriate) so
+  this glitch is corrected)
+
+\item Test for pathological case in npglpreg when initializing
+  bandwidths where \verb+IQR+ is zero but \verb+sd > 0+ (for setting
+  robust sd) which occurs when there exist many repeated values for a
+  continuous predictor
+
+\item Added `typical usage' preformatted illustrations for docs
+
+\end{itemize}
+
+\section*{Changes from Version 0.15-1 to 0.15-2 [30-July-2011]}
+
+\begin{itemize}
+
+\item Renamed COPYING file to COPYRIGHTS
+
+\end{itemize}
+
+\section*{Changes from Version 0.15-0 to 0.15-1 [29-Jul-2011]}
+
+\begin{itemize}
+
+\item Automated detection of ordered/unordered factors implemented
+
+\item Initial degree values set to 1 when conducting NOMAD search
+  (only for initial, when \verb+nmulti > +1 random valid values are
+  generated)
+
+\item Multiple tests for well-conditioned B-spline bases, dynamic
+  modification of search boundaries when ill-conditioned bases are
+  detected, and detection of non-positive degrees of freedom and full
+  column rank of the spline basis (otherwise the penalty
+  \verb+sqrt(.Machine$double.xmax)+ is returned during search) - this
+  can lead to a significant reduction in the memory footprint
+
+\item Added support for generalized B-spline kernel bases (varying
+  order generalized polynomial)
+
+\item Corrected issue with plot when variables were cast as
+  \verb+factor+ in the model formula
+
+\item Fixed glitch with return object and i/o when
+  \verb+cv="bandwidth"+ and \verb+degree=c(0,0,...,0)+
+
+\item Added tests for pathological cases (e.g. optimize degree and
+  knots but set max degree to min degree or max segments to min hence
+  no search possible).
+
+\item Added argument \verb+cv.threshold+ that uses exhaustive search
+  for simple cases where the number of objective function evaluations
+  is less than \verb+cv.threshold+ (currently set to 1000 but user can
+  set). Naturally exhaustive search is always preferred but often
+  unfeasible, so when it is feasible use it.
+
+\item Added additional demos for constrained estimation (Du, Parmeter,
+  and Racine (2011)), inference, and a sine-based function.
+
+\item Substantial reductions in run-time realized.
+
+\begin{itemize}
+
+\item Product kernel computation modified for improved run-time of
+  kernel-based cross-validation and estimation.
+
+\item Moved from \verb+lsfit+ to \verb+lm.fit+ and from \verb+lm+ to
+  \verb+lm.wfit+/\verb+lm.fit+ in \verb+cv.kernel.spline+ and
+  \verb+cv.factor.spline+ (compute objective function values). Two
+  effects - R devel indicates \verb+lm.fit+/\verb+lm.wfit+ are more
+  robust (confirmed for large number of predictors) and much faster
+  \verb+cv.kernel.spline+ function emerges (run-time cut 20-30\%).
+
+\item The combined effects of these changes are noticeable. For
+  instance, run-time for \verb+wage1+ with 7 predictor
+  cross-validation goes from 510 seconds in 0.15-0 to 304 seconds due
+  to use of \verb+lm.fit+/\verb+lm.wfit+ described below to 148
+  seconds due to the modified kernel function.
+
+\end{itemize}
+
+\end{itemize}
+
+\section*{Changes from Version 0.14-9 to 0.15-0 [23-Jun-2011]}
+
+\begin{itemize}
+
+\item Thanks to Professor Brian Ripley, compile on Solaris system
+  issues are resolved, and check/examples are reduced in run time to
+  alleviate the excessive check times by the R development team. Many
+  thanks to them for their patience and guidance.
+
+\item Minor changes to \verb+radial_rgl+ demo
+
+\end{itemize}
+
+\section*{Changes from Version 0.14-8 to 0.14-9 [20-Jun-2011]}
+
+\begin{itemize}
+
+\item Cleaned up issues for creating binary for windows
+
+\item Setting seed in \verb+snomadr.cpp+ via \verb+snomadr.R+ for
+  starting points when \verb+nmulti > 0+
+
+\item Increased default \verb+MAX_BB_EVAL+ from 500 to 10000 (makes a
+  difference for difficult problems) and modified default EPSILON in
+  NOMAD along with other parameters (\verb+MIN_MESH_SIZE+,
+  \verb+MIN_POLL_SIZE+) to reflect actual machine precision (using R's
+  \verb+.Machine$double.eps+ where \verb+NOMAD+ fixed EPSILON at
+  1e-13)
+
+\item Zhenghua added help functionality for retrieving help via snomadr
+
+\item Now default number of restarts in \verb+crs+ is 5 (zero is not
+  reliable and I want sensible defaults in this package - higher is
+  better but for many problems this ought to suffice)
+
+\item Corrected glitches in interactive demos where options were not being
+  passed, updated docs to reflect demos
+
+\end{itemize}
+
+\section*{Changes from Version 0.14-7 to 0.14-8 [10-Jun-2011]}
+
+\begin{itemize}
+
+\item \verb+crsiv+ now returns a crs model object that supports
+  residuals, fitted, predict and other generic functions. Note that
+  this approach is based on first computing the model via
+  regularization and then feeding a transformed response to a {\tt
+    crs} model object. You can test how close the two approaches are
+  to one another by comparing \verb+model$phihat+ with \verb+fitted(model)+ via
+
+  \verb+all.equal(as.numeric(fitted(model)),as.numeric(model$phihat))+
+
+\end{itemize}
+
+\section*{Version 0.14-7 [09-Jun-2011]}
+
+\begin{itemize}
+
+\item Initial release of the \verb+crs+ package on CRAN.
+
+\end{itemize}
+
+\end{document}
