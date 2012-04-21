@@ -2,6 +2,7 @@ cqrs                               R code for fitting and plotting quantile regr
 crsiv                              R code for testing crsiv with one endogenous predictor, no exogenous predictors
 crsiv_exog                         R code for testing crsiv with one endogenous and one exogenous predictor
 crsiv_exog_persp                   R code for testing crsiv with one endogenous and one exogenous predictor then plotting results in a perspective plot
+ggplot_cos                         R code for plotting a model with one numeric and one factor predictor using ggplot2
 glpreg_npRmpi                      R code for running parallel npglpreg jobs presuming npRmpi is installed on your system
 nomad_factor                       R code for testing NOMAD for factor regression splines
 nomad_kernel                       R code for testing NOMAD for categorical regression splines
