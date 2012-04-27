@@ -120,7 +120,7 @@ crsEst <- function(xz,
           m <- m + 1
         } else {
           ztmp <- z
-          ztmp[,l] <- factor(rep(levels(xz[,i])[1],NROW(xz)),levels=levels(xz[,i]))
+          ztmp[,l] <- factor(rep(levels(xz[,i])[1],NROW(xz)),levels=levels(xz[,i]),ordered=is.ordered(xz[,i]))
 
           zpred <- predict.factor.spline(x=x,
                                          y=y,
@@ -209,8 +209,10 @@ crsEst <- function(xz,
           rm(tmp)
           m <- m + 1
         } else {
+
           ztmp <- z
-          ztmp[,l] <- as.numeric(factor(rep(levels(xz[,i])[1],NROW(xz)),levels=levels(xz[,i])))
+          ztmp.l <- factor(rep(levels(xz[,i])[1],NROW(xz)),levels=levels(xz[,i]),ordered=is.ordered(xz[,i]))
+          ztmp[,l] <- as.numeric(levels(ztmp.l))[ztmp.l]
 
           zpred <- predict.kernel.spline(x=x,
                                          y=y,
@@ -828,7 +830,7 @@ predict.crs <- function(object,
             m <- m + 1
           } else {
             zevaltmp <- zeval
-            zevaltmp[,l] <- factor(rep(levels(newdata[,i])[1],NROW(newdata)),levels=levels(newdata[,i]))
+            zevaltmp[,l] <- factor(rep(levels(newdata[,i])[1],NROW(newdata)),levels=levels(newdata[,i]),ordered=is.ordered(newdata[,i]))
             zpred <- predict.factor.spline(x=x,
                                            y=y,
                                            z=z,
@@ -939,7 +941,8 @@ predict.crs <- function(object,
             m <- m + 1
           } else {
             zevaltmp <- zeval
-            zevaltmp[,l] <- as.numeric(factor(rep(levels(newdata[,i])[1],NROW(newdata)),levels=levels(newdata[,i])))
+            zevaltmp.l <- factor(rep(levels(newdata[,i])[1],NROW(newdata)),levels=levels(newdata[,i]))
+            zevaltmp[,l] <- as.numeric(levels(zevaltmp.l))[zevaltmp.l]
             zpred <- predict.kernel.spline(x=x,
                                            y=y,
                                            z=z,
@@ -1246,14 +1249,14 @@ plot.crs <- function(x,
           xlim <- trim.quantiles(object$xz[,i],xtrim)
           newdata[,i] <- seq(xlim[1],xlim[2],length=neval)
         } else {
-          newdata[,i] <- factor(levels(object$xz[,i]),levels=levels(object$xz[,i]))
+          newdata[,i] <- factor(levels(object$xz[,i]),levels=levels(object$xz[,i]),ordered=is.ordered(object$xz[,i]))
         }
 
         for(j in (1:NCOL(object$xz))[-i]) {
           if(!is.factor(object$xz[,j])) {
             newdata[,j] <- rep(uocquantile(object$xz[,j],prob=xq[j]),neval)
           } else {
-            newdata[,j] <- factor(rep(uocquantile(object$xz[,j],prob=xq[j]),neval),levels=levels(object$xz[,j]))
+            newdata[,j] <- factor(rep(uocquantile(object$xz[,j],prob=xq[j]),neval),levels=levels(object$xz[,j]),ordered=is.ordered(object$xz[,j]))
           }
         }
 
@@ -1522,8 +1525,8 @@ plot.crs <- function(x,
           xlim <- trim.quantiles(object$xz[,i],xtrim)
           newdata[,i] <- seq(xlim[1],xlim[2],length=neval)
         } else {
-          newdata[,i] <- factor(levels(object$xz[,i]),levels=levels(object$xz[,i]))
-          newdata.base[,i] <- factor(rep(levels(object$xz[,i])[1],neval),levels=levels(object$xz[,i]))
+          newdata[,i] <- factor(levels(object$xz[,i]),levels=levels(object$xz[,i]),ordered=is.ordered(object$xz[,i]))
+          newdata.base[,i] <- factor(rep(levels(object$xz[,i])[1],neval),levels=levels(object$xz[,i]),ordered=is.ordered(object$xz[,i]))
         }
 
         for(j in (1:NCOL(object$xz))[-i]) {
@@ -1531,8 +1534,8 @@ plot.crs <- function(x,
             newdata[,j] <- rep(uocquantile(object$xz[,j],prob=xq[j]),neval)
             newdata.base[,j] <- rep(uocquantile(object$xz[,j],prob=xq[j]),neval)
           } else {
-            newdata[,j] <- factor(rep(uocquantile(object$xz[,j],prob=xq[j]),neval),levels=levels(object$xz[,j]))
-            newdata.base[,j] <- factor(rep(uocquantile(object$xz[,j],prob=xq[j]),neval),levels=levels(object$xz[,j]))
+            newdata[,j] <- factor(rep(uocquantile(object$xz[,j],prob=xq[j]),neval),levels=levels(object$xz[,j]),ordered=is.ordered(object$xz[,j]))
+            newdata.base[,j] <- factor(rep(uocquantile(object$xz[,j],prob=xq[j]),neval),levels=levels(object$xz[,j]),ordered=is.ordered(object$xz[,j]))
           }
         }
 

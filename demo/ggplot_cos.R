@@ -1,5 +1,9 @@
+## This illustration uses the ggplot2 package to construct plots that
+## convey more information than the default plot function in base R
+
 rm(list=ls())
 library(crs)
+set.seed(42)
 
 ## Simulate data then estimate a crs model having one continuous and
 ## one categorical predictor
