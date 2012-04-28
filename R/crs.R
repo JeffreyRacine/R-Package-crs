@@ -211,9 +211,8 @@ crsEst <- function(xz,
         } else {
 
           ztmp <- z
-          ztmp.l <- factor(rep(levels(xz[,i])[1],NROW(xz)),levels=levels(xz[,i]),ordered=is.ordered(xz[,i]))
-          ztmp[,l] <- as.numeric(levels(ztmp.l))[ztmp.l]
-
+          ztmp[,l] <- rep(sort(unique(z[,l]))[1],NROW(z))
+          
           zpred <- predict.kernel.spline(x=x,
                                          y=y,
                                          z=z,
@@ -941,8 +940,8 @@ predict.crs <- function(object,
             m <- m + 1
           } else {
             zevaltmp <- zeval
-            zevaltmp.l <- factor(rep(levels(newdata[,i])[1],NROW(newdata)),levels=levels(newdata[,i]))
-            zevaltmp[,l] <- as.numeric(levels(zevaltmp.l))[zevaltmp.l]
+            zevaltmp[,l] <- rep(sort(unique(zeval[,l]))[1],NROW(zeval))
+
             zpred <- predict.kernel.spline(x=x,
                                            y=y,
                                            z=z,
