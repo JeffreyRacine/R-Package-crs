@@ -1,4 +1,11 @@
-Changes from Version 0.15-15 to 0.15-16 [XXX]
+Changes from Version 0.15-15 to 0.15-16 [30-Apr-2012]
+
+* Fixed bug when deriv= is used in crs() (derivatives for categorical
+  variables were not correct in some cases - derivatives computed by
+  plot and plot-data were correct however)
+
+* Fixed issue when plot called with "plot-data" or "data" and
+  par(mfrow()) is not reset
 
 * Startup message points to the faq, faq is now a vignette
 

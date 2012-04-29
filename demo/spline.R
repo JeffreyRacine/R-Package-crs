@@ -1380,8 +1380,8 @@ cv.kernel.spline <- function(x,
 
     } else {
       ## No predictors for which degree > 0
-      z.factor <- data.frame(factor(z[,1]))
-      if(num.z > 1) for(i in 2:num.z) z.factor <- data.frame(z.factor,factor(z[,i]))
+      z.factor <- data.frame(factor(z[,1]),ordered=is.ordered.z[1])
+      if(num.z > 1) for(i in 2:num.z) z.factor <- data.frame(z.factor,factor(z[,i],ordered=is.ordered.z[i]))
       for(i in 1:nrow.z.unique) {
         zz <- ind == ind.vals[i]
         L <- prod.kernel(Z=z,z=z.unique[ind.vals[i],],lambda=lambda,is.ordered.z=is.ordered.z)

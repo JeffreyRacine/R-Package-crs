@@ -44,7 +44,7 @@ to others, kindly email me the relevant information and I will
 incorporate it into this FAQ.
 
 This FAQ refers to the most recent version, which as of this writing
-is 0.15-15. Kindly update your version should you not be using the most
+is 0.15-16. Kindly update your version should you not be using the most
 current (from within R, \texttt{update.packages()} ought to do it, though
 also see \ref{update} below.). See the appendix in this file for
 cumulative changes between this and previous versions of the \texttt{crs}
@@ -67,7 +67,7 @@ To cite package `crs' in publications use:
 
   Jeffrey S. Racine <racinej@mcmaster.ca> and Zhenghua Nie
   <niez@mcmaster.ca> (2011). crs: Categorical Regression Splines. R
-  package version 0.15-15.
+  package version 0.15-16.
 
 A BibTeX entry for LaTeX users is
 
@@ -75,7 +75,7 @@ A BibTeX entry for LaTeX users is
     title = {crs: Categorical Regression Splines},
     author = {Jeffrey S. Racine and Zhenghua Nie},
     year = {2012},
-    note = {R package version 0.15-15},
+    note = {R package version 0.15-16},
   }
 \end{verbatim}
   \end{singlespacing}
@@ -573,6 +573,30 @@ possess multiple local minima).
 \clearpage
 
 \appendix
+
+\section*{Changes from Version 0.15-15 to 0.15-16 [30-Apr-2012]}
+
+\begin{itemize}
+
+\item Fixed bug when \texttt{deriv=} is used in \texttt{crs()}
+  (derivatives for categorical variables were not correct in some
+  cases - derivatives computed by plot and plot-data were correct
+  however)
+
+\item Fixed issue when plot called with \texttt{"plot-data"} or
+  \texttt{"data"} and \texttt{par(mfrow())} is not reset
+
+\item Startup message points to the faq, faq is now a vignette
+
+\item Glitch fixed in \texttt{npglpreg()} where kernel types were not
+  being passed to the NOMAD solver...
+
+\item Added ckerorder option to \texttt{npglpreg()}
+
+\item More information output by summary for \texttt{npglpreg()}
+  objects (kernel type, order etc.)
+
+\end{itemize}
 
 \section*{Changes from Version 0.15-14 to 0.15-15 [16-Apr-2012]}
 
