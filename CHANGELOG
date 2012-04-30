@@ -17,6 +17,10 @@ Changes from Version 0.15-15 to 0.15-16 [30-Apr-2012]
 * More information output by summary for npglpreg() objects (kernel
   type, order etc.)
 
+* tol for determining ill-conditioned bases now consistent with
+  Octave/Matlab etc. and uses the tolerance
+  max(dim(x))*max(sqrt(abs(e)))*.Machine$double.eps
+
 Changes from Version 0.15-14 to 0.15-15 [16-Apr-2012]
 
 * NOTE: ** major change in default setting ** Default basis set to

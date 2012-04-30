@@ -596,6 +596,10 @@ possess multiple local minima).
 \item More information output by summary for \texttt{npglpreg()}
   objects (kernel type, order etc.)
 
+\item tol for determining ill-conditioned bases now consistent with
+  Octave/Matlab etc. and uses the tolerance
+  \texttt{max(dim(x))*max(sqrt(abs(e)))*.Machine\$double.eps}
+
 \end{itemize}
 
 \section*{Changes from Version 0.15-14 to 0.15-15 [16-Apr-2012]}
