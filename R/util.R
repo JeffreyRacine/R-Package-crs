@@ -216,18 +216,21 @@ cv.rq <- function (model, tau = 0.5, weights = NULL) {
   return(mean(check.function(residuals(model),tau)/(1-hat(model$x))^(1/sqrt(tau*(1-tau)))))
 }
 
-## From the limma package... check the condition number of a matrix
-## (ratio of max/min eigenvalue) using .Machine$double.eps rather than
-## their 1e-13 constant (.Machine$double.eps is 2.220446e-16 on a 64
-## bit processor). Note that for weighted regression you simply use
-## x*L which conducts row-wise multiplication (i.e. diag(L)%*%X not
-## necessary). Note also that crossprod(X) is significantly faster
-## than t(X)%*%X (matrix is symmetric so only use lower triangle).
+## This function is based on functions in the limma package and
+## corpcor package (is.positive.definite)... check the condition
+## number of a matrix based on the ratio of max/min eigenvalue.  Note
+## that the definition
+## tol=max(dim(x))*max(sqrt(abs(e)))*.Machine$double.eps is exactly
+## compatible with the conventions used in "Octave" or "Matlab".  Note
+## that for weighted regression you simply use x*L which conducts
+## row-wise multiplication (i.e. diag(L)%*%X not necessary). Note also
+## that crossprod(X) is significantly faster than t(X)%*%X (matrix is
+## symmetric so only use lower triangle).
 
-is.fullrank <- function (x) 
+is.fullrank <- function(x)
 {
-    e <- eigen(crossprod(as.matrix(x)), symmetric = TRUE, only.values = TRUE)$values
-    e[1] > 0 && abs(e[length(e)]/e[1]) > .Machine$double.eps
+  e <- eigen(crossprod(as.matrix(x)), symmetric = TRUE, only.values = TRUE)$values
+  e[1] > 0 && abs(e[length(e)]/e[1]) > max(dim(x))*max(sqrt(abs(e)))*.Machine$double.eps
 }
 
 ## Function that determines the dimension of the multivariate basis
