@@ -230,8 +230,9 @@ krscvNOMAD(xz,
   Ma, S. and J.S. Racine and L. Yang (2011), \dQuote{Spline Regression
   in the Presence of Categorical Predictors,} manuscript.
 
-  Ma, S. and J.S. Racine (2011), \dQuote{Additive Regression Splines
-  With Irrelevant Categorical and Continuous Regressors,} manuscript.
+  Ma, S. and J.S. Racine (forthcoming), \dQuote{Additive Regression
+  Splines with Irrelevant Categorical and Continuous Regressors,}
+  Statistica Sinica.
 
 }
 
