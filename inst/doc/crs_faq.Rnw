@@ -63,7 +63,7 @@ be presented with the following information.
 \begin{verbatim}
 > citation("crs")
 
-To cite package ‘crs’ in publications use:
+To cite package `crs' in publications use:
 
   Jeffrey S. Racine and Zhenghua Nie (2012). crs: Categorical
   Regression Splines. R package version 0.15-17.
