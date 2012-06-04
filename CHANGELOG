@@ -1,3 +1,8 @@
+Changes from Version 0.15-16 to 0.15-17 [04-Jun-2012]
+
+* Updated NOMAD from 3.5.0 (released Jan 2011) to 3.5.1 (released Mar
+  2012)
+
 Changes from Version 0.15-15 to 0.15-16 [30-Apr-2012]
 
 * Fixed bug when deriv= is used in crs() (derivatives for categorical

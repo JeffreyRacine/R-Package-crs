@@ -1,6 +1,6 @@
 Package: crs
 Version: 0.15-17
-Date: 2012-05-12
+Date: 2012-06-04
 Depends:
 Suggests: np, npRmpi, rgl, quadprog, quantreg
 Title: Categorical Regression Splines
