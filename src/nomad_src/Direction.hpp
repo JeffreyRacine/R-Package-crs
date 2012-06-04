@@ -1,11 +1,12 @@
 /*-------------------------------------------------------------------------------------*/
-/*  NOMAD - Nonsmooth Optimization by Mesh Adaptive Direct search - version 3.5        */
+/*  NOMAD - Nonlinear Optimization by Mesh Adaptive Direct search - version 3.5.1        */
 /*                                                                                     */
-/*  Copyright (C) 2001-2010  Mark Abramson        - the Boeing Company, Seattle        */
+/*  Copyright (C) 2001-2012  Mark Abramson        - the Boeing Company, Seattle        */
 /*                           Charles Audet        - Ecole Polytechnique, Montreal      */
 /*                           Gilles Couture       - Ecole Polytechnique, Montreal      */
 /*                           John Dennis          - Rice University, Houston           */
 /*                           Sebastien Le Digabel - Ecole Polytechnique, Montreal      */
+/*                           Christophe Tribes    - Ecole Polytechnique, Montreal      */
 /*                                                                                     */
 /*  funded in part by AFOSR and Exxon Mobil                                            */
 /*                                                                                     */
@@ -45,8 +46,7 @@
 #include "Point.hpp"
 
 namespace NOMAD {
-
-using namespace std;
+		using namespace std;  //zhenghua
 
   /// Class describing a polling direction.
   class Direction : public NOMAD::Point {
@@ -82,15 +82,15 @@ using namespace std;
 
     /// Constructor #2.
     /**
-       \param n Dimension -- \b IN.
+       \param n Dimension                         -- \b IN.
        \param v Initial value for all coordinates -- \b IN.
-       \param type Type of direction -- \b IN.
+       \param type Type of direction              -- \b IN.
     */
     Direction ( int n , const NOMAD::Double & v , NOMAD::direction_type type );
 
     /// Constructor #3.
     /**
-       \param x    Coordinates -- \b IN.
+       \param x    Coordinates       -- \b IN.
        \param type Type of direction -- \b IN.
     */
     Direction ( const NOMAD::Point & x , NOMAD::direction_type type );

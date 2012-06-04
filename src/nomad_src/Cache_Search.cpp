@@ -1,11 +1,12 @@
 /*-------------------------------------------------------------------------------------*/
-/*  NOMAD - Nonsmooth Optimization by Mesh Adaptive Direct search - version 3.5        */
+/*  NOMAD - Nonlinear Optimization by Mesh Adaptive Direct search - version 3.5.1        */
 /*                                                                                     */
-/*  Copyright (C) 2001-2010  Mark Abramson        - the Boeing Company, Seattle        */
+/*  Copyright (C) 2001-2012  Mark Abramson        - the Boeing Company, Seattle        */
 /*                           Charles Audet        - Ecole Polytechnique, Montreal      */
 /*                           Gilles Couture       - Ecole Polytechnique, Montreal      */
 /*                           John Dennis          - Rice University, Houston           */
 /*                           Sebastien Le Digabel - Ecole Polytechnique, Montreal      */
+/*                           Christophe Tribes    - Ecole Polytechnique, Montreal      */
 /*                                                                                     */
 /*  funded in part by AFOSR and Exxon Mobil                                            */
 /*                                                                                     */
@@ -40,7 +41,8 @@
   \see    Cache_Search.hpp
 */
 #include "Cache_Search.hpp"
-using namespace std;
+using namespace std;  //zhenghua
+
 /*---------------------------------------------------------*/
 /*                       the search                        */
 /*---------------------------------------------------------*/
@@ -87,7 +89,7 @@ void NOMAD::Cache_Search::search ( NOMAD::Mads              & mads           ,
 
     list_of_extern_pts.push_front ( extern_pt );
 
-    pt = &cache.get_modifiable_point ( *extern_pt );
+    pt = &NOMAD::Cache::get_modifiable_point ( *extern_pt );
     
     if ( extern_pt->get_signature() )
       pt->set_signature ( extern_pt->get_signature() );
@@ -103,7 +105,7 @@ void NOMAD::Cache_Search::search ( NOMAD::Mads              & mads           ,
 				  NOMAD::Double() ,
 				  NOMAD::Double()   );
     else {
-      if ( display_degree != NOMAD::NO_DISPLAY )
+      if ( display_degree != NOMAD::NO_DISPLAY && display_degree != NOMAD::MINIMAL_DISPLAY )
 	out << std::endl << "Warning (Cache_Search.cpp, " << __LINE__
 	    << "): could not use the point " << *pt
 	    << "(no signature)" << std::endl;

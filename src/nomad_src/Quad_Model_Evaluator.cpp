@@ -1,11 +1,12 @@
 /*-------------------------------------------------------------------------------------*/
-/*  NOMAD - Nonsmooth Optimization by Mesh Adaptive Direct search - version 3.5        */
+/*  NOMAD - Nonlinear Optimization by Mesh Adaptive Direct search - version 3.5.1        */
 /*                                                                                     */
-/*  Copyright (C) 2001-2010  Mark Abramson        - the Boeing Company, Seattle        */
+/*  Copyright (C) 2001-2012 Mark Abramson        - the Boeing Company, Seattle        */
 /*                           Charles Audet        - Ecole Polytechnique, Montreal      */
 /*                           Gilles Couture       - Ecole Polytechnique, Montreal      */
 /*                           John Dennis          - Rice University, Houston           */
 /*                           Sebastien Le Digabel - Ecole Polytechnique, Montreal      */
+/*                           Christophe Tribes    - Ecole Polytechnique, Montreal      */
 /*                                                                                     */
 /*  funded in part by AFOSR and Exxon Mobil                                            */
 /*                                                                                     */
@@ -40,7 +41,7 @@
   \see    Quad_Mopel_Evaluator.hpp
 */
 #include "Quad_Model_Evaluator.hpp"
-using namespace std;
+using namespace std;  //zhenghua
 /*-----------------------------*/
 /*         constructor         */
 /*-----------------------------*/
@@ -53,8 +54,8 @@ NOMAD::Quad_Model_Evaluator::Quad_Model_Evaluator
     _m               ( p.get_bb_nb_outputs() ) ,
     _x               ( NULL                  ) ,
     _alpha           ( NULL                  ) ,
-    _model_ready     ( model.check()         )   { 
-
+    _model_ready     ( model.check()         )
+{
   if ( _model_ready ) {
 	
     int i , j , k , k2 , nalpha = (_n+1)*(_n+2)/2 , nfree = model.get_nfree();
@@ -109,7 +110,8 @@ NOMAD::Quad_Model_Evaluator::Quad_Model_Evaluator
 /*-----------------------------*/
 /*          destructor         */
 /*-----------------------------*/
-NOMAD::Quad_Model_Evaluator::~Quad_Model_Evaluator ( void ) {
+NOMAD::Quad_Model_Evaluator::~Quad_Model_Evaluator ( void )
+{
   if ( _model_ready ) {
     for ( int i = 0 ; i < _m ; ++i )
       if ( _alpha[i] )

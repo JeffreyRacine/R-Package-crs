@@ -1,11 +1,12 @@
 /*-------------------------------------------------------------------------------------*/
-/*  NOMAD - Nonsmooth Optimization by Mesh Adaptive Direct search - version 3.5        */
+/*  NOMAD - Nonlinear Optimization by Mesh Adaptive Direct search - version 3.5.1        */
 /*                                                                                     */
-/*  Copyright (C) 2001-2010  Mark Abramson        - the Boeing Company, Seattle        */
+/*  Copyright (C) 2001-2012  Mark Abramson        - the Boeing Company, Seattle        */
 /*                           Charles Audet        - Ecole Polytechnique, Montreal      */
 /*                           Gilles Couture       - Ecole Polytechnique, Montreal      */
 /*                           John Dennis          - Rice University, Houston           */
 /*                           Sebastien Le Digabel - Ecole Polytechnique, Montreal      */
+/*                           Christophe Tribes    - Ecole Polytechnique, Montreal      */
 /*                                                                                     */
 /*  funded in part by AFOSR and Exxon Mobil                                            */
 /*                                                                                     */
@@ -53,19 +54,20 @@ namespace NOMAD {
     
     int    _nb_truth;           ///< Number of truth models.
     int    _nb_sgte;            ///< Number of surrogate models.
-    int    _nb_MFN;             ///< Number of Minimum Frobenius Norm (MFN) models.
-    int    _nb_WP_regression;   ///< Number of well-poised regressions models.
-    int    _nb_regression;      ///< Number of regression_max_nY models.
+    int    _nb_MFN;             ///< Number of quadr. MFN models.
+    int    _nb_WP_regression;   ///< Number of quadr. well-poised regressions models.
+    int    _nb_regression;      ///< Number of quadr. regression_max_nY models.
+    int    _nb_TGP;             ///< Number of TGP models.
     int    _not_enough_pts;     ///< Number of too small \c Y sets.
     int    _nb_Y_sets;          ///< Number of \c Y sets.
     float  _sum_nY;             ///< Total number of \c Y points.
     int    _min_nY;             ///< Minimal \c Y size.
-    int    _max_nY;             ///< Maximal \c Y size ( \c <= \c MODEL_MAX_Y_SIZE ).
+    int    _max_nY;             ///< Maximal \c Y size.
     int    _construction_error; ///< Number of construction errors.
     double _construction_time;  ///< Models construction CPU time.
     double _optimization_time;  ///< Models optimization CPU time.
 
-    /// Number of times that \c cond exceeded \c SVD_MAX_COND:
+    /// Number of times that \c cond exceeded \c SVD_MAX_COND.
     int    _bad_cond;         
 
     // model search (MS):
@@ -102,6 +104,7 @@ public:
 	_nb_MFN              ( s._nb_MFN              ) ,
 	_nb_WP_regression    ( s._nb_WP_regression    ) ,
 	_nb_regression       ( s._nb_regression       ) ,
+	_nb_TGP              ( s._nb_TGP              ) ,
 	_not_enough_pts      ( s._not_enough_pts      ) ,
 	_nb_Y_sets           ( s._nb_Y_sets           ) ,
 	_sum_nY              ( s._sum_nY              ) ,
@@ -200,6 +203,9 @@ public:
 
     /// Add \c 1 to stat \c _nb_regression.
     void add_nb_regression ( void ) { ++_nb_regression; }
+
+    /// Add \c 1 to stat \c _nb_TGP.
+    void add_nb_TGP ( void ) { ++_nb_TGP; }
 
     /// Add \c 1 to stat \c _not_enough_pts.
     void add_not_enough_pts ( void ) { ++_not_enough_pts; }
@@ -329,6 +335,12 @@ public:
        \return \c The stat _nb_regression.
     */
     int get_nb_regression ( void ) const { return _nb_regression; }
+
+    /// Access to stat \c _nb_TGP.
+    /**
+       \return \c The stat _nb_TGP.
+    */
+    int get_nb_TGP ( void ) const { return _nb_TGP; }
 
     /// Display.
     /**

@@ -1,11 +1,12 @@
 /*-------------------------------------------------------------------------------------*/
-/*  NOMAD - Nonsmooth Optimization by Mesh Adaptive Direct search - version 3.5        */
+/*  NOMAD - Nonlinear Optimization by Mesh Adaptive Direct search - version 3.5.1        */
 /*                                                                                     */
-/*  Copyright (C) 2001-2010  Mark Abramson        - the Boeing Company, Seattle        */
+/*  Copyright (C) 2001-2012  Mark Abramson        - the Boeing Company, Seattle        */
 /*                           Charles Audet        - Ecole Polytechnique, Montreal      */
 /*                           Gilles Couture       - Ecole Polytechnique, Montreal      */
 /*                           John Dennis          - Rice University, Houston           */
 /*                           Sebastien Le Digabel - Ecole Polytechnique, Montreal      */
+/*                           Christophe Tribes    - Ecole Polytechnique, Montreal      */
 /*                                                                                     */
 /*  funded in part by AFOSR and Exxon Mobil                                            */
 /*                                                                                     */
@@ -40,13 +41,13 @@
   \see    Speculative.hpp
 */
 #include "Speculative_Search.hpp"
-using namespace std;
+using namespace std;  //zhenghua
 /*-------------------------------------------------------------*/
 /*                     MADS speculative search                 */
 /*-------------------------------------------------------------*/
 /*  x_k = x_{k-1} + \Delta^m_{k-1} d                           */
-/*  s_k = x_{k-1} +        \Delta^m_{k-1} d  if l_{k-1} > 0    */
-/*            or    \tau * \Delta^m_{k-1} d  otherwise         */
+/*  s_k = x_{k-1} +        \Delta^m_k d  if l_{k-1} > 0        */
+/*    or  x_{k-1} + \tau * \Delta^m_k d  otherwise             */
 /*-------------------------------------------------------------*/
 /*  the directions that we use already contain \Delta^m:       */
 /*     dir = \Delta^m_{k-1} d                                  */
@@ -102,7 +103,7 @@ void NOMAD::Speculative_Search::search ( NOMAD::Mads              & mads        
 
       const NOMAD::Direction * dir = x[i]->get_direction();
       if ( dir && ( dir->is_mads() || dir->get_type()==NOMAD::MODEL_SEARCH_DIR ) ) {
-      
+
 	// get the x_k's signature:
 	signature = x[i]->get_signature();
 	if ( !signature )

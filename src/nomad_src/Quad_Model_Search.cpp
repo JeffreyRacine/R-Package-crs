@@ -1,11 +1,12 @@
 /*-------------------------------------------------------------------------------------*/
-/*  NOMAD - Nonsmooth Optimization by Mesh Adaptive Direct search - version 3.5        */
+/*  NOMAD - Nonlinear Optimization by Mesh Adaptive Direct search - version 3.5.1        */
 /*                                                                                     */
-/*  Copyright (C) 2001-2010  Mark Abramson        - the Boeing Company, Seattle        */
+/*  Copyright (C) 2001-2012  Mark Abramson        - the Boeing Company, Seattle        */
 /*                           Charles Audet        - Ecole Polytechnique, Montreal      */
 /*                           Gilles Couture       - Ecole Polytechnique, Montreal      */
 /*                           John Dennis          - Rice University, Houston           */
 /*                           Sebastien Le Digabel - Ecole Polytechnique, Montreal      */
+/*                           Christophe Tribes    - Ecole Polytechnique, Montreal      */
 /*                                                                                     */
 /*  funded in part by AFOSR and Exxon Mobil                                            */
 /*                                                                                     */
@@ -33,14 +34,14 @@
 /*  You can find information on the NOMAD software at www.gerad.ca/nomad               */
 /*-------------------------------------------------------------------------------------*/
 /**
-  \file   Model_Search.cpp
-  \brief  Model search (implementation)
+  \file   Quad_Model_Search.cpp
+  \brief  Quadratic Model search (implementation)
   \author Sebastien Le Digabel
   \date   2010-08-30
-  \see    Model_Search.hpp
+  \see    Quad_Model_Search.hpp
 */
-#include "Model_Search.hpp"
-using namespace std;
+#include "Quad_Model_Search.hpp"
+using namespace std;  //zhenghua
 /*----------------------------------------------------------------*/
 /*                            the search                          */
 /*----------------------------------------------------------------*/
@@ -48,7 +49,7 @@ using namespace std;
 /* ------------------                                             */
 /*                                                                */
 /*  . MODEL_SEARCH: flag to activate the model search (MS)        */
-/*                  default=yes                                   */
+/*                  (here its value is NOMAD::QUADRATIC_MODEL)    */
 /*                                                                */
 /*  . MODEL_SEARCH_OPTIMISTIC: if true, the direction from the    */
 /*                             model center to the trial point    */
@@ -56,15 +57,16 @@ using namespace std;
 /*                             in the speculative search          */
 /*                             default=yes                        */
 /*                                                                */
-/*  . MODEL_PROJ_TO_MESH: project or not to mesh                  */
-/*                        default=yes                             */
+/*  . MODEL_SEARCH_PROJ_TO_MESH: project or not to mesh           */
+/*                               default=yes                      */
+/*                                                                */
+/*  . MODEL_SEARCH_MAX_TRIAL_PTS: limit on the number of trial    */
+/*                                points for one search (in       */
+/*                                {1,2,3,4} and with default=4    */
+/*                                for quadratic models)           */
 /*                                                                */
 /*  . MODEL_RADIUS_FACTOR (r): Y points are in B(xk,r.Delta^p_k)  */
 /*                             default=2.0                        */
-/*                                                                */
-/*  . MODEL_MAX_TRIAL_PTS: limit on the number of trial points    */
-/*                         for one search, in {1,2,3,4}           */
-/*                         default=4                              */
 /*                                                                */
 /*  . MODEL_MAX_Y_SIZE: limit on the size of Y; if equal to       */
 /*                      (n+1)(n+2)/2, regression is never used    */
@@ -76,7 +78,7 @@ using namespace std;
 /*                     trial points.                              */
 /*                     default=yes                                */
 /*                                                                */
-/*  . MODEL_USE_WP: if true, well-poisedness strategy is tried    */
+/*  . MODEL_USE_WP: if true, well-poisedness strategy is applied  */
 /*                  for regression models                         */
 /*                                                                */
 /*  . construct model centered around best_feas and best_infeas   */
@@ -89,14 +91,14 @@ using namespace std;
 /*  . SVD_MAX_MPN: max matrix size: default: m+n <= 1500          */
 /*                                                                */
 /*----------------------------------------------------------------*/
-void NOMAD::Model_Search::search ( NOMAD::Mads              & mads           ,
-				   int                      & nb_search_pts  ,
-				   bool                     & stop           ,
-				   NOMAD::stop_type         & stop_reason    ,
-				   NOMAD::success_type      & success        ,
-				   bool                     & count_search   ,
-				   const NOMAD::Eval_Point *& new_feas_inc   ,
-				   const NOMAD::Eval_Point *& new_infeas_inc   )
+void NOMAD::Quad_Model_Search::search ( NOMAD::Mads              & mads           ,
+					int                      & nb_search_pts  ,
+					bool                     & stop           ,
+					NOMAD::stop_type         & stop_reason    ,
+					NOMAD::success_type      & success        ,
+					bool                     & count_search   ,
+					const NOMAD::Eval_Point *& new_feas_inc   ,
+					const NOMAD::Eval_Point *& new_infeas_inc   )
 {
   new_feas_inc  = new_infeas_inc = NULL;
   nb_search_pts = 0;
@@ -110,7 +112,7 @@ void NOMAD::Model_Search::search ( NOMAD::Mads              & mads           ,
 
   if ( stop ) {
     if ( display_degree == NOMAD::FULL_DISPLAY )
-      out << "Model_Search::search(): not performed (stop flag is active)"
+      out << "Quad_Model_Search::search(): not performed (stop flag is active)"
 	  << std::endl;
     return;
   }
@@ -121,13 +123,13 @@ void NOMAD::Model_Search::search ( NOMAD::Mads              & mads           ,
 
   if ( index_obj_list.empty() ) {
     if ( display_degree == NOMAD::FULL_DISPLAY )
-      out << "Model_Search::search(): not performed with no objective function"
+      out << "Quad_Model_Search::search(): not performed with no objective function"
 	  << std::endl;
     return;
   }
   if ( index_obj_list.size() > 1 ) {
     if ( display_degree == NOMAD::FULL_DISPLAY )
-      out << "Model_Search::search(): not performed with biobjective"
+      out << "Quad_Model_Search::search(): not performed with biobjective"
 	  << std::endl;
     return;
   }
@@ -187,11 +189,11 @@ void NOMAD::Model_Search::search ( NOMAD::Mads              & mads           ,
   int nY[2];
   nY[0] = nY[1] = -1;
 
-  int min_Y_size = _p.get_model_min_Y_size();
-  int max_Y_size = _p.get_model_max_Y_size();
+  int min_Y_size = _p.get_model_quad_min_Y_size();
+  int max_Y_size = _p.get_model_quad_max_Y_size();
 
   // use or not well-poisedness:
-  bool use_WP = _p.get_model_use_WP();
+  bool use_WP = _p.get_model_quad_use_WP();
 
   // flag to detect model errors:
   bool                       model_ok   = false;
@@ -243,7 +245,7 @@ void NOMAD::Model_Search::search ( NOMAD::Mads              & mads           ,
       signature->get_mesh().get_delta_m ( delta_m , mesh_index );
 
       NOMAD::Point interpolation_radius = delta_p;
-      interpolation_radius *= _p.get_model_radius_factor();
+      interpolation_radius *= _p.get_model_quad_radius_factor();
 
       if ( display_degree == NOMAD::FULL_DISPLAY )
 	out << "mesh index           : "   << mesh_index      << std::endl
@@ -286,7 +288,7 @@ void NOMAD::Model_Search::search ( NOMAD::Mads              & mads           ,
 	// ---------------
 	// The min box around the interpolation set Y
 	//   is scaled to [-r;r] with r=MODEL_RADIUS_FACTOR.
-	model.define_scaling ( _p.get_model_radius_factor() );
+	model.define_scaling ( _p.get_model_quad_radius_factor() );
 
 #ifdef DEBUG
 	out << std::endl;
@@ -432,8 +434,10 @@ void NOMAD::Model_Search::search ( NOMAD::Mads              & mads           ,
   nb_search_pts = ev_control.get_nb_eval_points();
 
   // reduce the list of trial points from a maximum
-  // of 4 points to MODEL_MAX_TRIAL_PTS points:
+  // of 4 points to MODEL_SEARCH_MAX_TRIAL_PTS points:
   int max_trial_pts = _p.get_model_search_max_trial_pts();
+  if ( max_trial_pts > 4 )
+    max_trial_pts = 4;
   if ( nb_search_pts > max_trial_pts ) {
     ev_control.reduce_eval_lop ( max_trial_pts );
     nb_search_pts = ev_control.get_nb_eval_points();
@@ -494,7 +498,7 @@ void NOMAD::Model_Search::search ( NOMAD::Mads              & mads           ,
 /*---------------------------------------------------------------*/
 /*        project to mesh and create a trial point (private)     */
 /*---------------------------------------------------------------*/
-void NOMAD::Model_Search::create_trial_point
+void NOMAD::Quad_Model_Search::create_trial_point
 ( NOMAD::Evaluator_Control & ev_control     ,
   NOMAD::Point               x              ,
   const NOMAD::Quad_Model  & model          ,
@@ -607,12 +611,14 @@ void NOMAD::Model_Search::create_trial_point
 				f1                      ,
 				h1                        );
 #ifdef MODEL_STATS
-    tk->set_mod_type ( 1                );
-    tk->set_cond     ( model.get_cond() );
-    tk->set_Yw       ( model.get_Yw  () );
-    tk->set_nY       ( model.get_nY  () );
-    tk->set_mh       ( h1               );
-    tk->set_mf       ( f1               );
+    if ( tk ) {
+      tk->set_mod_use ( 1                ); // 1 for model search
+      tk->set_cond    ( model.get_cond() );
+      tk->set_Yw      ( model.get_Yw  () );
+      tk->set_nY      ( model.get_nY  () );
+      tk->set_mh      ( h1               );
+      tk->set_mf      ( f1               );
+    }
 #endif
 
   }
@@ -632,7 +638,7 @@ void NOMAD::Model_Search::create_trial_point
 /*    in [-1000;1000]                                            */
 /*                                                               */
 /*---------------------------------------------------------------*/
-bool NOMAD::Model_Search::optimize_model
+bool NOMAD::Quad_Model_Search::optimize_model
 ( const NOMAD::Quad_Model  & model          ,
   const NOMAD::Eval_Point ** xk             ,
   int                        i_inc          ,
@@ -826,9 +832,10 @@ bool NOMAD::Model_Search::optimize_model
       if ( st == NOMAD::CTRL_C || st == NOMAD::MAX_CACHE_MEMORY_REACHED ) {
 	std::ostringstream oss;
 	oss << "model optimization: " << st;
-	error_str = oss.str();
-	error     = true;
-	stop      = true;
+	error_str   = oss.str();
+	error       = true;
+	stop        = true;
+	stop_reason = st;
       }
 
       else if ( st == NOMAD::MAX_BB_EVAL_REACHED )

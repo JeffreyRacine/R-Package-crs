@@ -1,11 +1,12 @@
 /*-------------------------------------------------------------------------------------*/
-/*  NOMAD - Nonsmooth Optimization by Mesh Adaptive Direct search - version 3.5        */
+/*  NOMAD - Nonlinear Optimization by Mesh Adaptive Direct search - version 3.5.1        */
 /*                                                                                     */
-/*  Copyright (C) 2001-2010  Mark Abramson        - the Boeing Company, Seattle        */
+/*  Copyright (C) 2001-2012  Mark Abramson        - the Boeing Company, Seattle        */
 /*                           Charles Audet        - Ecole Polytechnique, Montreal      */
 /*                           Gilles Couture       - Ecole Polytechnique, Montreal      */
 /*                           John Dennis          - Rice University, Houston           */
 /*                           Sebastien Le Digabel - Ecole Polytechnique, Montreal      */
+/*                           Christophe Tribes    - Ecole Polytechnique, Montreal      */
 /*                                                                                     */
 /*  funded in part by AFOSR and Exxon Mobil                                            */
 /*                                                                                     */
@@ -45,12 +46,14 @@
 #include "utils.hpp"
 
 namespace NOMAD {
+		using namespace std;
 
   /// Custom display class.
   /**
      - This class is used instead of \c std::ostream ojects.
      - Use \c std::endl as new line character; \c '\\n' will ignore indentation.
      - Do not use \c << \c flush; : it would create a new indentation.
+       Use method \c Display::flush() instead.
      
      \b Two \b examples \b for \b creating \b indented \b blocks:
 
@@ -130,7 +133,7 @@ namespace NOMAD {
                   (can be a \c std::ofstream)
 		  -- \b IN -- \b optional (default = \c std::cout).
      */
-    Display ( std::ostream & out ) // = std::cout )  //R does not like std::cout,  so we comment this default value.
+    Display ( std::ostream & out )	// = std::cout )  //R does not like std::cout,   so we comment this default value.  zhenghua
       : _out          ( out                   ) , // can be a std::ofstream
 	_newline      ( true                  ) ,
 	_open_brace   ( "{"                   ) ,
@@ -157,7 +160,13 @@ namespace NOMAD {
 
     /// Destructor.
     virtual ~Display ( void ) {}
-    
+
+    /// Flush.
+    /**
+       Must be used instead of \c out \c << \c std::flush.
+    */
+    void flush ( void ) const { _out << std::flush; }
+
     /*---------------*/
     /*  GET methods  */
     /*---------------*/
@@ -285,7 +294,7 @@ namespace NOMAD {
     /**
        \return An integer for the current precision.
     */
-    int precision ( void ) const { return _out.precision(); }
+	int precision ( void ) const { return static_cast<int>(_out.precision()); }
 
     /// Set the format flags (1/2).
     /**
@@ -457,7 +466,7 @@ namespace NOMAD {
   /// Operator << for NOMAD::bb_output_type.
   std::ostream & operator << ( std::ostream & , NOMAD::bb_output_type );
 
-/// Operator << for NOMAD::interpolation_type.
+  /// Operator << for NOMAD::interpolation_type.
   std::ostream & operator << ( std::ostream & , NOMAD::interpolation_type );
 
   /// Operator << for NOMAD::hnorm_type.
@@ -465,6 +474,12 @@ namespace NOMAD {
 
   /// Operator << for NOMAD::search_type.
   std::ostream & operator << ( std::ostream & , NOMAD::search_type );
+
+  /// Operator << for NOMAD::model_type.
+  std::ostream & operator << ( std::ostream & , NOMAD::model_type );
+
+  /// Operator << for NOMAD::TGP_mode_type.
+  std::ostream & operator << ( std::ostream & , NOMAD::TGP_mode_type );
 
   /// Operator << for NOMAD::direction_type.
   std::ostream & operator << ( std::ostream & , NOMAD::direction_type );
@@ -490,7 +505,8 @@ namespace NOMAD {
 
   /// Operator <<.
   template <class T>
-  inline const NOMAD::Display & NOMAD::Display::operator << ( const T & t ) const {
+  inline const NOMAD::Display & NOMAD::Display::operator << ( const T & t ) const
+  {
     if ( _newline ) {
       _out << _indent_str;
       _newline = false;
@@ -502,7 +518,7 @@ namespace NOMAD {
   /// Allows the use of \c out \c << \c endl.
   inline const NOMAD::Display & NOMAD::Display::operator << ( StandardEndLine m ) const
   {
-    m ( _out ); // (this could be a std::flush, so don't use it)
+    m ( _out ); // this could be a std::flush, so don't use it: instead use method flush()
     _newline = true;
     return *this;
   }

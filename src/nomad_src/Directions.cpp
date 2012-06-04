@@ -1,11 +1,12 @@
 /*-------------------------------------------------------------------------------------*/
-/*  NOMAD - Nonsmooth Optimization by Mesh Adaptive Direct search - version 3.5        */
+/*  NOMAD - Nonlinear Optimization by Mesh Adaptive Direct search - version 3.5.1        */
 /*                                                                                     */
-/*  Copyright (C) 2001-2010  Mark Abramson        - the Boeing Company, Seattle        */
+/*  Copyright (C) 2001-2012  Mark Abramson        - the Boeing Company, Seattle        */
 /*                           Charles Audet        - Ecole Polytechnique, Montreal      */
 /*                           Gilles Couture       - Ecole Polytechnique, Montreal      */
 /*                           John Dennis          - Rice University, Houston           */
 /*                           Sebastien Le Digabel - Ecole Polytechnique, Montreal      */
+/*                           Christophe Tribes    - Ecole Polytechnique, Montreal      */
 /*                                                                                     */
 /*  funded in part by AFOSR and Exxon Mobil                                            */
 /*                                                                                     */
@@ -40,14 +41,16 @@
   \see    Directions.hpp
 */
 #include "Directions.hpp"
-using namespace std;
+#include "RNG.hpp"
+using namespace std;  //zhenghua
+ 
 /*-----------------------------------*/
 /*   static members initialization   */
 /*-----------------------------------*/
 int NOMAD::Directions::_max_halton_seed = -1;
 
 /*---------------------------------------------------------*/
-/*                        constructor                      */
+/*                       constructor                       */
 /*---------------------------------------------------------*/
 /*  the Halton seed will be automatically computed later   */
 /*  if Parameters::_halton_seed==-1                        */
@@ -66,6 +69,8 @@ NOMAD::Directions::Directions
    _lt_initialized     ( false              ) ,
    _primes             ( NULL               ) ,
    _halton_seed        ( halton_seed        ) ,
+   _ortho_np1_cnt1     ( 0                  ) ,
+   _ortho_np1_cnt2     ( 0                  ) ,
    _out                ( out                )
 {
   // check the directions:
@@ -196,10 +201,14 @@ void NOMAD::Directions::compute_binary_directions
 /*---------------------------------------------------------*/
 /*            get the directions for a given mesh          */
 /*---------------------------------------------------------*/
-void NOMAD::Directions::compute ( std::list<NOMAD::Direction> & dirs         ,
-				  NOMAD::poll_type              poll         ,
-				  int                           mesh_index   ,
-				  int                           halton_index   )
+void NOMAD::Directions::compute ( std::list<NOMAD::Direction> & dirs               ,
+				  NOMAD::poll_type              poll               ,
+				  const NOMAD::Point          & poll_center        ,
+				  const NOMAD::Point          * first_success      ,  // can be NULL
+				  int                           mesh_index         ,
+				  int                           halton_index       ,
+				  const NOMAD::Direction      & feas_success_dir   ,
+				  const NOMAD::Direction      & infeas_success_dir   )
 {
   dirs.clear();
 
@@ -260,9 +269,11 @@ void NOMAD::Directions::compute ( std::list<NOMAD::Direction> & dirs         ,
 				alpha_t_l    ,
 				halton_dir     ) ) {
 
+		  
 #ifdef DEBUG
 	_out << std::endl
 	     << NOMAD::open_block ( "compute Ortho-MADS directions with" )
+	     << "type              = " << *it          << std::endl
 	     << "Halton index (tk) = " << halton_index << std::endl
 	     << "mesh index   (lk) = " << mesh_index   << std::endl
 	     << "alpha     (tk,lk) = " << alpha_t_l    << std::endl
@@ -285,9 +296,127 @@ void NOMAD::Directions::compute ( std::list<NOMAD::Direction> & dirs         ,
 	  }
 
 	  // Householder transformations on the 2n directions:
-	  householder ( halton_dir , H );
+	  householder ( halton_dir ,
+			true       ,     // complete_to_2n = true
+			H            );
 
 	  delete [] H;
+		
+	}
+
+	// Ortho-MADS n+1: based on an idea from Andrea Ianni
+	// ---------------
+	else if ( *it == NOMAD::ORTHO_NP1 ) {
+
+	  // creation of the n directions:
+	  NOMAD::Direction ** H = new NOMAD::Direction * [_nc];
+	  for ( i = 0 ; i < _nc ; ++i ) {
+	    dirs.push_back ( NOMAD::Direction ( _nc , 0.0 , NOMAD::ORTHO_NP1 ) );
+	    H[i] = &(*(--dirs.end()));
+	  }
+
+	  // Householder transformations on the n directions:
+	  householder ( halton_dir ,
+			false      ,    // complete_to_2n = false
+			H            );
+
+	  // target direction:
+	  NOMAD::Point target_dir;
+	  compute_ortho_target_dir ( feas_success_dir   ,
+				     infeas_success_dir ,
+				     first_success      ,
+				     poll_center        ,
+				     target_dir           );
+
+#ifdef DEBUG
+	  {
+	    _out << std::endl
+		 << NOMAD::open_block ( "Ortho-MADS n+1 directions" )
+		 << "feas succ direction   = ";
+	    if ( feas_success_dir.is_defined() )
+	      feas_success_dir.NOMAD::Point::display ( _out , " " , -1 , -1 );
+	    else
+	      _out << "undefined";
+	    _out << std::endl
+		 << "infeas succ direction = ";
+	    if ( infeas_success_dir.is_defined() )
+	      infeas_success_dir.NOMAD::Point::display ( _out , " " , -1 , -1 );
+	    else
+	      _out << "undefined";
+	    _out << std::endl << "first_success         = ";
+	    if ( first_success )
+	      _out << "( " << first_success << " )";
+	    else
+	      _out << "NULL";
+	    _out  << std::endl
+		 << "poll center           = ( " << poll_center  << " )" << std::endl
+		 << "target direction      = ( " << target_dir   << " )" << std::endl
+		 << NOMAD::open_block ( "directions" );
+	  }
+#endif
+
+	  // select nc directions in H or their opposites
+	  // (in the subspace defined by the target directions):
+
+	  NOMAD::Double dot_product;
+	  bool          opposite;
+
+	  for ( i = 0 ; i < _nc ; ++i ) {
+
+	    dot_product = target_dir.dot_product ( *(H[i]) );
+
+	    if ( dot_product > 0.0 )
+	      opposite = false;
+	    else if ( dot_product < 0.0 )
+	      opposite = true;
+	    else {
+
+			((_ortho_np1_cnt2%2)==1) ? opposite=false:opposite=true;
+
+	      ++_ortho_np1_cnt2;
+	      if ( _ortho_np1_cnt2 == INT_MAX )
+		_ortho_np1_cnt2 = 0;
+	    }
+
+#ifdef DEBUG
+	    _out << "dir #";
+	    _out.display_int_w ( i , _nc );
+	    _out << " = ( ";
+	    H[i]->NOMAD::Point::display ( _out , " " , -1 , -1 );
+	    _out << " ) dot_product=" << dot_product;
+#endif
+	    if ( opposite ) {
+	      for ( j = 0 ; j < _nc ; ++j )
+		(*(H[i]))[j] *= -1.0;
+#ifdef DEBUG
+	      _out << " --> new dir = ( ";
+	      H[i]->NOMAD::Point::display ( _out , " " , -1 , -1 );
+	      _out << " )";
+#endif
+	    }
+
+#ifdef DEBUG
+	    _out << std::endl;
+#endif
+	  }
+	  
+	  // compute the (n+1)th direction as the opposite sum of the n first directions:
+	  NOMAD::Direction new_dir ( _nc , 0.0 , NOMAD::ORTHO_NP1 );
+	  for ( i = 0 ; i < _nc ; ++i ) {
+	    for ( j = 0 ; j < _nc ; ++j )
+	      new_dir[i] -= (*(H[j]))[i];
+	  }
+
+	  delete [] H;
+
+	  dirs.push_back ( new_dir );
+
+#ifdef DEBUG
+	  _out << std::endl << "(n+1)th direction = ( ";
+	  new_dir.NOMAD::Point::display ( _out , " " , -1 , -1 );
+	  _out << " )" << std::endl << close_block() << close_block() << std::endl;
+#endif
+
 	}
 
 	// Ortho-MADS 1 or Ortho-MADS 2:
@@ -444,11 +573,11 @@ void NOMAD::Directions::compute ( std::list<NOMAD::Direction> & dirs         ,
 	// random perturbations:
 	for ( i = 1 ; i < _nc ; ++i ) {
      	  if ( rem_col_by_row[i] > 0 ) { 
-	    v = rand()%3 - 1; // v in { -1 , 0 , 1 }
+	    v = NOMAD::RNG::rand()%3 - 1; // v in { -1 , 0 , 1 }   
 	    if ( v ) {
 
 	      // we decide a (i,j) couple:
-	      k    = rand()%(rem_col_by_row[i]);
+	      k    = NOMAD::RNG::rand()%(rem_col_by_row[i]); 
 	      cnt  = 0;
 	      end3 = rem_cols.end();
 	      it3  = rem_cols.begin();
@@ -505,7 +634,7 @@ void NOMAD::Directions::compute ( std::list<NOMAD::Direction> & dirs         ,
 	  dirs.push_back ( NOMAD::Direction ( _nc , 0.0 , NOMAD::GPS_NP1_RAND ) );
 	  pd = &(*(--dirs.end()));
 	  
-	  d = rand()%2 ? -pow_gps : pow_gps;
+	  d = NOMAD::RNG::rand()%2 ? -pow_gps : pow_gps; 
 	  (*pd )[i] =  d;
 	  (*pd1)[i] = -d;
 	}
@@ -587,7 +716,7 @@ void NOMAD::Directions::compute ( std::list<NOMAD::Direction> & dirs         ,
 
 	  if ( i != k && !done[i] ) {
 
-	    chg_sgn = ( rand()%2 != 0 );
+	    chg_sgn = ( NOMAD::RNG::rand()%2 != 0 );  
 
 	    for ( it = dirs.begin() ; it != end2 ; ++it ) {
 	      tmp      = (*it)[i];
@@ -598,7 +727,7 @@ void NOMAD::Directions::compute ( std::list<NOMAD::Direction> & dirs         ,
 	    done[i] = done[k] = true;
 	  }
 	  else
-	    if ( rand()%2 )
+	    if ( NOMAD::RNG::rand()%2 )  
 	      for ( it = dirs.begin() ; it != end2 ; ++it )
 		(*it)[i] = -(*it)[i];
 	}
@@ -628,7 +757,7 @@ bool NOMAD::Directions::compute_one_direction ( NOMAD::Direction & dir          
 
     dir.reset     ( _nc , 0.0         );
     dir.set_type  ( NOMAD::GPS_BINARY );
-    dir[rand()%_nc] = (rand()%2) ? -1.0 : 1.0;
+    dir[NOMAD::RNG::rand()%_nc] = (NOMAD::RNG::rand()%2) ? -1.0 : 1.0; 
   }
 
   /*----------------*/
@@ -639,8 +768,8 @@ bool NOMAD::Directions::compute_one_direction ( NOMAD::Direction & dir          
     if ( !_primes )
       ortho_mads_init ( _halton_seed );
       
-    dir.reset     ( _nc , 0.0      );
-    dir.set_type  ( NOMAD::ORTHO_1 );
+    dir.reset    ( _nc , 0.0      );
+    dir.set_type ( NOMAD::ORTHO_1 );
 
     NOMAD::Double alpha_t_l;
 
@@ -683,7 +812,10 @@ bool NOMAD::Directions::compute_halton_dir ( int                halton_index ,
   norm = norm.sqrt();
 
   // desired squared norm for q:
-  NOMAD::Double target = ( halton_dir.get_type() == NOMAD::ORTHO_2N ) ?
+
+  NOMAD::direction_type hdt = halton_dir.get_type();
+
+  NOMAD::Double target = ( hdt == NOMAD::ORTHO_2N || hdt == NOMAD::ORTHO_NP1 ) ?
     pow ( NOMAD::Mesh::get_mesh_update_basis() , abs(mesh_index) / 2.0 ) :
     pow ( NOMAD::Mesh::get_mesh_update_basis() , abs(mesh_index)       );
 
@@ -837,8 +969,9 @@ NOMAD::Double NOMAD::Directions::get_phi ( int t , int p )
 /*  . compute also H[i+nc] = -H[i] (completion to 2n directions)  */
 /*  . private method                                              */
 /*----------------------------------------------------------------*/
-void NOMAD::Directions::householder ( const NOMAD::Direction  & halton_dir ,
-				      NOMAD::Direction       ** H            ) const
+void NOMAD::Directions::householder ( const NOMAD::Direction  & halton_dir     ,
+				      bool                      complete_to_2n ,
+				      NOMAD::Direction       ** H                ) const
 {
   int i , j;
 
@@ -851,10 +984,11 @@ void NOMAD::Directions::householder ( const NOMAD::Direction  & halton_dir ,
     for ( j = 0 ; j < _nc ; ++j ) {
 
       // H[i]:
-      (*H[i    ])[j] =  v = (i==j) ? norm2 - h2i * halton_dir[j] : - h2i * halton_dir[j];
+      (*H[i])[j] = v = (i==j) ? norm2 - h2i * halton_dir[j] : - h2i * halton_dir[j];
 
       // -H[i]:
-      (*H[i+_nc])[j] = -v;
+      if ( complete_to_2n )
+	(*H[i+_nc])[j] = -v;
     }
   }
 }
@@ -897,19 +1031,19 @@ void NOMAD::Directions::create_lt_direction ( int                   mesh_index ,
 
   // new b(l) direction:
   if ( hat_i < 0 ) {
-    _hat_i [ mesh_index + NOMAD::L_LIMITS ] = diag_i = hat_i = rand()%_nc;
+    _hat_i [ mesh_index + NOMAD::L_LIMITS ] = diag_i = hat_i = NOMAD::RNG::rand()%_nc;  
     _bl    [ mesh_index + NOMAD::L_LIMITS ] = dir
                                             = new NOMAD::Direction ( _nc, 0.0, dtype );
 
     j = 0;
   }
 
-  (*dir)[diag_i] = (rand()%2) ? -i_pow_tau : i_pow_tau;
+  (*dir)[diag_i] = (NOMAD::RNG::rand()%2) ? -i_pow_tau : i_pow_tau;  
 
   for ( int k = j ; k < _nc ; ++k )
     if ( k != hat_i ) {
-      (*dir)[k] = rand()%i_pow_tau;
-      if ( rand()%2 && (*dir)[k] > 0.0 )
+      (*dir)[k] = NOMAD::RNG::rand()%i_pow_tau;       
+      if ( NOMAD::RNG::rand()%2 && (*dir)[k] > 0.0 )  
 	(*dir)[k] = -(*dir)[k];
     }
 
@@ -929,6 +1063,62 @@ void NOMAD::Directions::permute_coords ( NOMAD::Direction & dir                ,
   NOMAD::Point tmp = dir;
   for ( int i = 0 ; i < _nc ; ++i )
     dir [ permutation_vector[i] ] = tmp[i];
+}
+
+/*-------------------------------------------------------------*/
+/*  compute the target direction for Ortho-MADS n+1 (private)  */
+/*-------------------------------------------------------------*/
+void NOMAD::Directions::compute_ortho_target_dir ( const NOMAD::Direction & feas_success_dir   ,
+						   const NOMAD::Direction & infeas_success_dir ,
+						   const NOMAD::Point     * first_success      , // can be NULL
+						   const NOMAD::Point     & poll_center        ,
+						   NOMAD::Point           & target_dir           )
+{
+  if ( ( first_success && first_success->size() != _nc ) || poll_center.size() != _nc ||
+       ( feas_success_dir.is_defined  () && feas_success_dir.size  () != _nc ) ||
+       ( infeas_success_dir.is_defined() && infeas_success_dir.size() != _nc )    ) {
+    throw NOMAD::Exception ( "Directions.cpp" , __LINE__ ,
+			     "compute_ortho_target_dir(): bad dimensions" );
+  }
+
+  target_dir.resize ( _nc );
+
+  // target_dir = feas_success_dir or infeas_success_dir:
+  if ( feas_success_dir.is_defined() ) {
+    target_dir = feas_success_dir;
+    return;
+  }
+  
+  if ( infeas_success_dir.is_defined() ) {
+    target_dir = infeas_success_dir;
+    return;
+  }
+  
+  // target_dir = poll_center - first_success: ( (0,0,...,0) is taken if !first_success )
+  int  i;
+  bool all_zero = true;
+  for ( i = 0 ; i < _nc ; ++i ) {
+    target_dir[i] = poll_center[i] - ( (first_success) ? (*first_success)[i] : 0.0 );
+    if ( target_dir[i] != 0.0 )
+      all_zero = false;
+  }
+  
+  if ( !all_zero )
+    return;      
+  
+  // target dir = one coordinate direction:
+  target_dir.reset ( _nc , 0.0 );
+
+  i = _ortho_np1_cnt1%(2*_nc);
+
+  if ( i < _nc )
+    target_dir[i] = 1.0;
+  else
+    target_dir[i-_nc] = -1.0;
+
+  ++_ortho_np1_cnt1;
+  if ( _ortho_np1_cnt1 == INT_MAX )
+    _ortho_np1_cnt1 = 0;
 }
 
 /*---------------------------------------------------------*/

@@ -1,11 +1,12 @@
 /*-------------------------------------------------------------------------------------*/
-/*  NOMAD - Nonsmooth Optimization by Mesh Adaptive Direct search - version 3.5        */
+/*  NOMAD - Nonlinear Optimization by Mesh Adaptive Direct search - version 3.5.1        */
 /*                                                                                     */
-/*  Copyright (C) 2001-2010  Mark Abramson        - the Boeing Company, Seattle        */
+/*  Copyright (C) 2001-2012  Mark Abramson        - the Boeing Company, Seattle        */
 /*                           Charles Audet        - Ecole Polytechnique, Montreal      */
 /*                           Gilles Couture       - Ecole Polytechnique, Montreal      */
 /*                           John Dennis          - Rice University, Houston           */
 /*                           Sebastien Le Digabel - Ecole Polytechnique, Montreal      */
+/*                           Christophe Tribes    - Ecole Polytechnique, Montreal      */
 /*                                                                                     */
 /*  funded in part by AFOSR and Exxon Mobil                                            */
 /*                                                                                     */
@@ -50,6 +51,28 @@
 #include "Signature.hpp"
 
 namespace NOMAD {
+
+  /// Structure to represent the models parameters.
+  struct model_params_type {
+
+    NOMAD::model_type search1;        ///< First model search (MS) type.
+    NOMAD::model_type search2;        ///< Second model search (MS) type.
+
+    NOMAD::model_type eval_sort;      ///< Use models to sort trial pts (MES).
+
+    bool search_optimistic;           ///< If the MS is optimistic or not. 
+    bool search_proj_to_mesh;         ///< Model solution projected or not to mesh.
+    int  search_max_trial_pts;        ///< Limit on the number of MS trial pts.
+    bool eval_sort_cautious;          ///< Cautious strategy for MES.
+
+    NOMAD::Double quad_radius_factor; ///< Quadratic model radius factor \c r.
+    bool          quad_use_WP;        ///< Use or not a well-poisedness strategy.
+    int           quad_min_Y_size;    ///< Limit inf on the size of \c Y.
+    int           quad_max_Y_size;    ///< Limit sup on the size of \c Y.
+
+    NOMAD::TGP_mode_type tgp_mode;    ///< TGP mode (fast or precise).
+    bool          tgp_reuse_model;    ///< Use the model from MS for the MES.
+  };
 
   /// Class for the NOMAD parameters.
   class Parameters : private NOMAD::Uncopyable {
@@ -135,17 +158,7 @@ namespace NOMAD {
     /*----------------------------------------------------------------------*/
 
   public:
-
-    /// Exception class for a wrong parameters file.
-    class Wrong_Parameters_File : public NOMAD::Exception {
-    public:
-      /// Constructor.
-      Wrong_Parameters_File ( const std::string & file ,
-			      int                 line ,
-			      const std::string & msg    )
-	: NOMAD::Exception ( file , line , msg ) {}
-    };
-    
+   
     /// Exception class for an invalid parameter.
     class Invalid_Parameter : public NOMAD::Exception {
     public:
@@ -223,6 +236,11 @@ namespace NOMAD {
        \param param_file Name of the parameters file -- \b IN.
     */
     void read ( const std::string & param_file );
+
+    /// Read parameters from iostream. This is for snomadr,  zhenghua
+    /**
+       \param fin Name of the io stream -- \b IN.
+    */
     void read ( std::iostream &fin );
 
     /// Check the parameters.
@@ -269,9 +287,11 @@ namespace NOMAD {
     std::string            _problem_dir;   ///< Problem directory.
     std::string            _tmp_dir;       ///< Temporary directory.
     int                    _seed;          ///< Seed.
-    std::list<std::string> _display_stats; ///< Stats keywords for \c DISPLAY_STATS.
     int                    _max_eval;      ///< Maximum number of evaluations.
     int                    _max_bb_eval;   ///< Maximum number of blackbox evaluations.
+
+    std::list<std::string> _display_stats;    ///< Stats keywords for \c DISPLAY_STATS.
+    bool                   _display_all_eval; ///< Parameter \c DISPLAY_ALL_EVAL
 
     /// Equal to \c true if \c _max_bb_eval has been entered.
     bool                   _max_bbe_decided;
@@ -279,16 +299,17 @@ namespace NOMAD {
     /// Maximum number of simulated evaluations.
     int                    _max_sim_bb_eval;
 
-    int                    _max_time;          ///< Maximum time.
-    int                    _max_iterations;    ///< Maximum number of iterations.
-    float                  _max_cache_memory;  ///< Maximum cache memory.
-    bool                   _stop_if_feasible;  ///< Stop if a feasible solution is found.
-    NOMAD::Point           _f_target;          ///< Target for the objective function.
-    NOMAD::Double          _stat_sum_target;   ///< Target for the STAT_SUM stat.
-    NOMAD::Double          _L_curve_target;    ///< Target for the L_CURVE criterion.
-    bool                   _snap_to_bounds;    ///< Snap or not the points to the bounds.
-    bool                   _user_calls_enabled;///< Enable calls to user functions.
-    bool                   _asynchronous;      ///< Asynchronous version for parallelism.
+    int                    _max_time;           ///< Maximum time.
+    int                    _max_iterations;     ///< Maximum number of iterations.
+    int                    _max_cons_failed_it; ///< Maximum number of consecutive failed iterations.
+    float                  _max_cache_memory;   ///< Maximum cache memory.
+    bool                   _stop_if_feasible;   ///< Stop if a feasible solution is found.
+    NOMAD::Point           _f_target;           ///< Target for the objective function.
+    NOMAD::Double          _stat_sum_target;    ///< Target for the STAT_SUM stat.
+    NOMAD::Double          _L_curve_target;     ///< Target for the L_CURVE criterion.
+    bool                   _snap_to_bounds;     ///< Snap or not the points to the bounds.
+    bool                   _user_calls_enabled; ///< Enable calls to user functions.
+    bool                   _asynchronous;       ///< Asynchronous version for parallelism.
     
   public:
 
@@ -325,6 +346,12 @@ namespace NOMAD {
        \return The \c DISPLAY_STATS parameter.
     */
     const std::list<std::string> & get_display_stats ( void ) const;
+
+    /// Access to the \c DISPLAY_ALL_EVAL parameter.
+    /**
+       \return The \c DISPLAY_ALL_EVAL parameter.
+    */
+    bool get_display_all_eval ( void ) const;
 
     /// Access to the \c POINT_DISPLAY_LIMIT parameter.
     /**
@@ -367,6 +394,12 @@ namespace NOMAD {
        \return The maximum number of iterations.
     */
     int get_max_iterations ( void ) const;
+
+    /// Access to the maximum number of consecutive failed iterations.
+    /**
+       \return The maximum number of consecutive failed iterations.
+    */
+    int get_max_consecutive_failed_iterations ( void ) const;
 
     /// Access to the maximum cache memory.
     /**
@@ -441,12 +474,18 @@ namespace NOMAD {
     */
     void set_DISPLAY_STATS ( const std::list<std::string> & ds );
 
-    /// Set the \c DISPLAY_STATS parameter).
+    /// Set the \c DISPLAY_STATS parameter.
     /**
        - From a string.
        \param ds The \c DISPLAY_STATS parameter -- \b IN.
     */
     void set_DISPLAY_STATS ( const std::string & ds );
+
+    /// Set the \c DISPLAY_ALL_EVAL parameter.
+    /**
+       \param dae The \c DISPLAY_ALL_EVAL parameter -- \b IN.
+    */
+    void set_DISPLAY_ALL_EVAL ( bool dae );
 
     /// Set the display degree.
     /**
@@ -523,6 +562,12 @@ namespace NOMAD {
        \param mi The \c MAX_ITERATIONS parameter -- \b IN.
     */
     void set_MAX_ITERATIONS ( int mi );
+
+    /// Set the \c MAX_CONSECUTIVE_FAILED_ITERATIONS parameter.
+    /**
+       \param mcsi The \c MAX_CONSECUTIVE_FAILED_ITERATIONS parameter -- \b IN.
+    */
+    void set_MAX_CONSECUTIVE_FAILED_ITERATIONS ( int mcsi );
 
     /// Set the \c MAX_CACHE_MEMORY parameter.
     /**
@@ -767,23 +812,8 @@ namespace NOMAD {
     /// Speculative search (MADS search).
     bool _speculative_search;    
 
-    // Model search parameters:
-    bool          _model_search;               ///< Flag for the model search (MS).
-    bool          _model_search_proj_to_mesh;  ///< Model sol. projected or not to mesh.
-    bool          _model_search_optimistic;    ///< If the MS is optimistic or not. 
-    int           _model_search_max_trial_pts; ///< Limit on the number of MS trial pts.
-
-    // Model ordering parameters:
-    bool          _model_eval_sort;            ///< Use models to order trial points.
-    bool          _model_eval_sort_cautious;   ///< Cautious strategy for model ordering.
-
-    // Model parameters:
-    NOMAD::Double _model_radius_factor;  ///< Model search radius factor \c r.
-    bool          _model_use_WP;         ///< Use or not a well-poisedness strategy.
-    int           _model_min_Y_size;     ///< Inf limit on the size of \c Y.
-    int           _model_max_Y_size;     ///< Sup limit on the size of \c Y.
-    bool          _model_max_Y_size_usr; ///< If \c MODEL_MAX_Y_SIZE is set by user.
-
+    NOMAD::model_params_type _model_params; ///< Models parameters.
+    
     // VNS search parameters:
     bool          _VNS_search;  ///< Flag for the VNS search.
     NOMAD::Double _VNS_trigger; ///< VNS trigger.
@@ -808,11 +838,18 @@ namespace NOMAD {
     */
     bool get_speculative_search ( void ) const;
 
+    /// Check if a model search is specified.
+    /**
+       \return A boolean equal to \c true if a model search is defined.
+    */
+    bool has_model_search ( void ) const;
+
     /// Access to the \c MODEL_SEARCH parameter.
     /**
+       \param  i Index of the model search (1 or 2) -- \b IN.
        \return The \c MODEL_SEARCH parameter.
     */
-    bool get_model_search ( void ) const;
+    NOMAD::model_type get_model_search ( int i ) const;
 
     /// Access to the \c MODEL_SEARCH_OPTIMISTIC parameter.
     /**
@@ -826,29 +863,41 @@ namespace NOMAD {
     */
     bool get_model_search_proj_to_mesh ( void ) const;
 
-    /// Access to the \c MODEL_RADIUS_FACTOR parameter.
+    /// Access to the \c MODEL_QUAD_RADIUS_FACTOR parameter.
     /**
-       \return The \c MODEL_RADIUS_FACTOR parameter.
+       \return The \c MODEL_QUAD_RADIUS_FACTOR parameter.
     */
-    const NOMAD::Double & get_model_radius_factor ( void ) const;
+    const NOMAD::Double & get_model_quad_radius_factor ( void ) const;
 
-    /// Access to the \c MODEL_USE_WP parameter.
+    /// Access to the \c MODEL_QUAD_USE_WP parameter.
     /**
-       \return The \c MODEL_USE_WP parameter.
+       \return The \c MODEL_QUAD_USE_WP parameter.
     */
-    bool get_model_use_WP ( void ) const;
+    bool get_model_quad_use_WP ( void ) const;
 
-    /// Access to the \c MODEL_MAX_Y_SIZE parameter.
+    /// Access to the \c MODEL_QUAD_MAX_Y_SIZE parameter.
     /**
-       \return The \c MODEL_MAX_Y_SIZE parameter.
+       \return The \c MODEL_QUAD_MAX_Y_SIZE parameter.
     */
-    int get_model_max_Y_size ( void ) const;
+    int get_model_quad_max_Y_size ( void ) const;
 
-    /// Access to the \c MODEL_MIN_Y_SIZE parameter.
+    /// Access to the \c MODEL_QUAD_MIN_Y_SIZE parameter.
     /**
-       \return The \c MODEL_MIN_Y_SIZE parameter.
+       \return The \c MODEL_QUAD_MIN_Y_SIZE parameter.
     */
-    int get_model_min_Y_size ( void ) const;
+    int get_model_quad_min_Y_size ( void ) const;
+
+    /// Access to the \c MODEL_TGP_MODE parameter.
+    /**
+       \return The \c MODEL_TGP_MODE parameter.
+    */
+    NOMAD::TGP_mode_type get_model_tgp_mode ( void ) const;
+
+    /// Access to the \c MODEL_TGP_REUSE_MODEL parameter.
+    /**
+       \return The \c MODEL_TGP_REUSE_MODEL parameter.
+    */
+    bool get_model_tgp_reuse_model ( void ) const;
 
     /// Access to the \c MODEL_SEARCH_MAX_TRIAL_PTS parameter.
     /**
@@ -860,13 +909,19 @@ namespace NOMAD {
     /**
        \return The \c MODEL_EVAL_SORT parameter.
     */
-    bool get_model_eval_sort ( void ) const;
+    NOMAD::model_type get_model_eval_sort ( void ) const;
 
     /// Access to the \c MODEL_EVAL_SORT_CAUTIOUS parameter.
     /**
        \return The \c MODEL_EVAL_SORT_CAUTIOUS parameter.
     */
     bool get_model_eval_sort_cautious ( void ) const;
+
+    /// Access to all the models parameters.
+    /**
+       \param mp The models parameters -- \b OUT.
+    */
+    void get_model_parameters ( NOMAD::model_params_type & mp ) const;
 
     /// Access to the \c VNS_SEARCH parameter.
     /**
@@ -916,7 +971,20 @@ namespace NOMAD {
     */
     void set_SPECULATIVE_SEARCH ( bool ss );
 
-    /// Set the \c MODEL_SEARCH parameter.
+    /// Set all the models parameters.
+    /**
+       \param mp The models parameters -- \b IN.
+    */
+    void set_model_parameters ( const NOMAD::model_params_type & mp );
+
+    /// Set the \c MODEL_SEARCH parameter (1/2).
+    /**
+       \param i  Index of the model search (1 or 2) -- \b IN.
+       \param ms The \c MODEL_SEARCH parameter      -- \b IN.
+    */
+    void set_MODEL_SEARCH ( int i , NOMAD::model_type ms );
+
+    /// Set the \c MODEL_SEARCH parameter (2/2).
     /**
        \param ms The \c MODEL_SEARCH parameter -- \b IN.
     */
@@ -934,29 +1002,41 @@ namespace NOMAD {
     */
     void set_MODEL_SEARCH_PROJ_TO_MESH ( bool ptm );
 
-    /// Set the \c MODEL_RADIUS_FACTOR parameter.
+    /// Set the \c MODEL_QUAD_RADIUS_FACTOR parameter.
     /**
-       \param r The \c MODEL_RADIUS_FACTOR parameter -- \b IN.
+       \param r The \c MODEL_QUAD_RADIUS_FACTOR parameter -- \b IN.
     */
-    void set_MODEL_RADIUS_FACTOR ( const NOMAD::Double & r );
+    void set_MODEL_QUAD_RADIUS_FACTOR ( const NOMAD::Double & r );
     
-    /// Set the \c MODEL_USE_WP parameter.
+    /// Set the \c MODEL_QUAD_USE_WP parameter.
     /**
-       \param uwp The \c MODEL_USE_WP parameter -- \b IN.
+       \param uwp The \c MODEL_QUAD_USE_WP parameter -- \b IN.
     */
-    void set_MODEL_USE_WP ( bool uwp );
+    void set_MODEL_QUAD_USE_WP ( bool uwp );
     
-    /// Set the \c MODEL_MAX_Y_SIZE parameter.
+    /// Set the \c MODEL_QUAD_MAX_Y_SIZE parameter.
     /**
-       \param s The \c MODEL_MAX_Y_SIZE parameter -- \b IN.
+       \param s The \c MODEL_QUAD_MAX_Y_SIZE parameter -- \b IN.
     */
-    void set_MODEL_MAX_Y_SIZE ( int s );
+    void set_MODEL_QUAD_MAX_Y_SIZE ( int s );
 
-    /// Set the \c MODEL_MIN_Y_SIZE parameter.
+    /// Set the \c MODEL_QUAD_MIN_Y_SIZE parameter.
     /**
-       \param s The \c MODEL_MIN_Y_SIZE parameter -- \b IN.
+       \param s The \c MODEL_QUAD_MIN_Y_SIZE parameter -- \b IN.
     */
-    void set_MODEL_MIN_Y_SIZE ( int s );
+    void set_MODEL_QUAD_MIN_Y_SIZE ( int s );
+
+    /// Set the \c MODEL_TGP_MODE parameter.
+    /**
+       \param s The \c MODEL_TGP_MODE parameter -- \b IN.
+    */
+    void set_MODEL_TGP_MODE ( NOMAD::TGP_mode_type m );
+
+    /// Set the \c MODEL_TGP_REUSE_MODEL parameter.
+    /**
+       \param s The \c MODEL_TGP_REUSE_MODEL parameter -- \b IN.
+    */
+    void set_MODEL_TGP_REUSE_MODEL ( bool rm );
 
     /// Set the \c MODEL_SEARCH_MAX_TRIAL_PTS parameter.
     /**
@@ -964,11 +1044,17 @@ namespace NOMAD {
     */
     void set_MODEL_SEARCH_MAX_TRIAL_PTS ( int s );
 
-    /// Set the \c MODEL_EVAL_SORT parameter.
+    /// Set the \c MODEL_EVAL_SORT parameter (1/2).
     /**
        \param mes The \c MODEL_EVAL_SORT parameter -- \b IN.
     */
-    void set_MODEL_EVAL_SORT ( bool mes );
+    void set_MODEL_EVAL_SORT ( NOMAD::model_type mes );  
+
+    /// Set the \c MODEL_EVAL_SORT parameter (2/2).
+    /**
+       \param mes The \c MODEL_EVAL_SORT parameter -- \b IN.
+    */
+    void set_MODEL_EVAL_SORT ( bool mes );  
 
     /// Set the \c MODEL_EVAL_SORT_CAUTIOUS parameter.
     /**

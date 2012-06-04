@@ -1,11 +1,12 @@
 /*-------------------------------------------------------------------------------------*/
-/*  NOMAD - Nonsmooth Optimization by Mesh Adaptive Direct search - version 3.5        */
+/*  NOMAD - Nonlinear Optimization by Mesh Adaptive Direct search - version 3.5.1        */
 /*                                                                                     */
-/*  Copyright (C) 2001-2010  Mark Abramson        - the Boeing Company, Seattle        */
+/*  Copyright (C) 2001-2012  Mark Abramson        - the Boeing Company, Seattle        */
 /*                           Charles Audet        - Ecole Polytechnique, Montreal      */
 /*                           Gilles Couture       - Ecole Polytechnique, Montreal      */
 /*                           John Dennis          - Rice University, Houston           */
 /*                           Sebastien Le Digabel - Ecole Polytechnique, Montreal      */
+/*                           Christophe Tribes    - Ecole Polytechnique, Montreal      */
 /*                                                                                     */
 /*  funded in part by AFOSR and Exxon Mobil                                            */
 /*                                                                                     */
@@ -89,6 +90,14 @@ namespace NOMAD {
   */
   bool string_to_hnorm_type ( const std::string & s , NOMAD::hnorm_type & hn );
 
+  /// Convert a string into a NOMAD::TGP_mode_type.
+  /**
+     \param  s The string               -- \b IN.
+     \param  m The NOMAD::TGP_mode_type -- \b OUT.
+     \return   A boolean equal to \c true if the conversion was possible.
+  */
+  bool string_to_TGP_mode_type ( const std::string & s , NOMAD::TGP_mode_type & m );
+
   /// Convert a string into a multi_formulation_type.
   /**
      \param  s   The string                        -- \b IN.
@@ -117,14 +126,22 @@ namespace NOMAD {
 			       int               * n           = NULL ,
 			       bool                check_order = true   );
 
-  /// Convert a string in {"YES","NO","Y","N"} to a boolean.
+
+  /// Convert a string in {"QUADRATIC","TGP"} to a \c NOMAD::model_type.
+  /**
+     \param  s  The string            -- \b IN.
+     \param  mt The NOMAD::model_type -- \b OUT.
+     \return    A boolean equal to \c true if the conversion was possible.
+  */
+  bool string_to_model_type ( const std::string & s , NOMAD::model_type & mt );
+
+  /// Convert a string in {"YES","NO","Y","N","0","1","TRUE","FALSE"} to a boolean.
   /**
      \param s The string -- \b IN.
      \return  An integer equal to \c 0 for \c false, \c 1 for \c true,
               and \c -1 if the conversion failed.
   */
   int string_to_bool ( const std::string & s );
-  
   
   /// Interpret a list of strings as a direction type.
   /**

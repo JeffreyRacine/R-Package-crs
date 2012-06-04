@@ -1,15 +1,14 @@
 /*-------------------------------------------------------------------------------------*/
-/*  NOMAD - Nonsmooth Optimization by Mesh Adaptive Direct search - version 3.5        */
+/*  NOMAD - Nonsmooth Optimization by Mesh Adaptive Direct search - version 3.5.1        */
 /*                                                                                     */
 /*  Copyright (C) 2001-2010  Mark Abramson        - the Boeing Company, Seattle        */
 /*                           Charles Audet        - Ecole Polytechnique, Montreal      */
 /*                           Gilles Couture       - Ecole Polytechnique, Montreal      */
 /*                           John Dennis          - Rice University, Houston           */
 /*                           Sebastien Le Digabel - Ecole Polytechnique, Montreal      */
+/*                           Christophe Tribes    - Ecole Polytechnique, Montreal      */
 /*                                                                                     */
 /*  funded in part by AFOSR and Exxon Mobil                                            */
-/*                                                                                     */
-/*  Author: Sebastien Le Digabel                                                       */
 /*                                                                                     */
 /*  Contact information:                                                               */
 /*    Ecole Polytechnique de Montreal - GERAD                                          */
@@ -33,55 +32,33 @@
 /*  You can find information on the NOMAD software at www.gerad.ca/nomad               */
 /*-------------------------------------------------------------------------------------*/
 /**
-  \file   Quad_Model_Sorted_Point.cpp
-  \brief  Interpolation point with distance to model center (implementation)
-  \author Sebastien Le Digabel
-  \date   2010-11-15
-  \see    Quad_Model_Sorted_Point.hpp
-*/
-#include "Quad_Model_Sorted_Point.hpp"
+ \file   RNG.hpp
+ \brief  Custom class for random number generator
+ \author Christophe Tribes and Sebastien Le Digabel 
+ \date   2011-09-28
+ \see    RNG.cpp
+ */
+
+#ifndef __RNG__
+#define __RNG__
+
+#include "defines.hpp"
+
 using namespace std;
-/*---------------------------------------------------------*/
-/*                        constructor                      */
-/*---------------------------------------------------------*/
-NOMAD::Quad_Model_Sorted_Point::Quad_Model_Sorted_Point
-( NOMAD::Eval_Point * x , const NOMAD::Point & center ) : _x(x)
-{
-  int i , n = center.size();
-  if ( x && x->size() == n ) {
-    _dist = 0.0;
-    for ( i = 0 ; i < n ; ++i )
-      if ( (*x)[i].is_defined() && center[i].is_defined() ) {
-	_dist += ( (*x)[i] - center[i] ).pow2();
-      }
-      else {
-	_dist.clear();
-	break;
-      }
-  }
+
+namespace NOMAD {
+
+	class RNG {
+		
+	public:
+
+		static bool set_seed(unsigned long s);
+		static uint32_t rand();
+		static double rand(double a, double b){return a+((b-a)*rand())/UINT32_MAX;}
+		
+	private:
+		static uint32_t x,y,z;
+	};
 }
 
-/*---------------------------------------------------------*/
-/*                   affectation operator                  */
-/*---------------------------------------------------------*/
-NOMAD::Quad_Model_Sorted_Point & NOMAD::Quad_Model_Sorted_Point::operator =
-( const NOMAD::Quad_Model_Sorted_Point & x )
-{
-  _x    = x._x;
-  _dist = x._dist;
-  return *this;
-}
-
-/*---------------------------------------------------------*/
-/*                    comparison operator                  */
-/*---------------------------------------------------------*/
-bool NOMAD::Quad_Model_Sorted_Point::operator <
-( const Quad_Model_Sorted_Point & x ) const
-{
-  if ( _dist.is_defined() ) {
-    if ( !x._dist.is_defined() )
-      return true;
-    return _dist < x._dist;
-  }
-  return false;
-}
+#endif

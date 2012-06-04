@@ -1,11 +1,12 @@
 /*-------------------------------------------------------------------------------------*/
-/*  NOMAD - Nonsmooth Optimization by Mesh Adaptive Direct search - version 3.5        */
+/*  NOMAD - Nonlinear Optimization by Mesh Adaptive Direct search - version 3.5.1        */
 /*                                                                                     */
-/*  Copyright (C) 2001-2010  Mark Abramson        - the Boeing Company, Seattle        */
+/*  Copyright (C) 2001-2012  Mark Abramson        - the Boeing Company, Seattle        */
 /*                           Charles Audet        - Ecole Polytechnique, Montreal      */
 /*                           Gilles Couture       - Ecole Polytechnique, Montreal      */
 /*                           John Dennis          - Rice University, Houston           */
 /*                           Sebastien Le Digabel - Ecole Polytechnique, Montreal      */
+/*                           Christophe Tribes    - Ecole Polytechnique, Montreal      */
 /*                                                                                     */
 /*  funded in part by AFOSR and Exxon Mobil                                            */
 /*                                                                                     */
@@ -40,7 +41,8 @@
   \see    Mads.hpp
 */
 #include "Mads.hpp"
-using namespace std;
+#include "RNG.hpp"
+using namespace std;  //zhenghua
 /*-----------------------------------*/
 /*   static members initialization   */
 /*-----------------------------------*/
@@ -57,6 +59,11 @@ void NOMAD::Mads::force_quit ( int signalValue )
 {
   NOMAD::Mads::_force_quit = true;
   NOMAD::Evaluator_Control::force_quit();
+  NOMAD::Evaluator::force_quit();
+
+#ifdef USE_TGP
+  NOMAD::TGP_Output_Model::force_quit();
+#endif
 }
 
 /*---------------------------------------------------------*/
@@ -89,18 +96,36 @@ void NOMAD::Mads::init ( void )
   // Mads::force_quit() will be called if ctrl-c is pressed:
   signal ( SIGINT  , NOMAD::Mads::force_quit );
 #ifndef WINDOWS
-  signal ( SIGPIPE , NOMAD::Mads::force_quit );  // (ctrl-c during a | more)
+  signal ( SIGPIPE , NOMAD::Mads::force_quit );  // (ctrl-c during a "| more")
 #endif
 #ifdef USE_MPI
   signal ( SIGTERM , NOMAD::Mads::force_quit );
 #endif
 
-  // random seed initialization:
-  srand ( _p.get_seed() );
+  // random number generator seed initialization:
+	bool valid_seed=NOMAD::RNG::set_seed(_p.get_seed());
+	if ( !valid_seed )
+		throw NOMAD::Exception ( "Mads.cpp" , __LINE__ ,"seed for random number generator not initialized properly!" );
 
-  // model search initialization:
-  if ( _p.get_model_search() )
-    _model_search = new Model_Search ( _p );
+  // model searches initialization:
+    if ( _p.has_model_search() ) {
+#ifdef USE_TGP
+    if ( _p.get_model_search(1) == NOMAD::TGP_MODEL )
+      _model_search1 = new TGP_Model_Search ( _p );
+#endif
+    if ( _p.get_model_search(1) == NOMAD::QUADRATIC_MODEL )
+      _model_search1 = new Quad_Model_Search ( _p );
+#ifdef USE_TGP
+    if ( _p.get_model_search(2) == NOMAD::TGP_MODEL )
+      _model_search2 = new TGP_Model_Search ( _p );
+#endif
+    if ( _p.get_model_search(2) == NOMAD::QUADRATIC_MODEL )
+      _model_search2 = new Quad_Model_Search ( _p );
+  }
+
+#ifdef USE_TGP
+  _ev_control.set_last_TGP_model ( NULL );
+#endif
 
   // VNS search initialization:
   if ( _p.get_VNS_search() )
@@ -117,10 +142,14 @@ void NOMAD::Mads::init ( void )
 NOMAD::Mads::~Mads ( void )
 {
   delete _pareto_front;
-  delete _model_search;
+  delete _model_search1;
+  delete _model_search2;
   delete _VNS_search;
   delete _cache_search;
   delete _L_curve;
+
+  if ( _extended_poll && !_user_ext_poll)
+    delete _extended_poll;
 }
 
 /*---------------------------------------------------------*/
@@ -131,19 +160,50 @@ NOMAD::Mads::~Mads ( void )
 /*---------------------------------------------------------*/
 void NOMAD::Mads::reset ( bool keep_barriers , bool keep_stats )
 {
+  // evaluator control:
+#ifdef USE_TGP
+  _ev_control.set_last_TGP_model ( NULL );
+#endif
+
   // user search:
   _user_search = NULL;
 
-  // model search:
-  if ( _p.get_model_search() ) {
-    if ( _model_search )
-      _model_search->reset();
-    else
-      _model_search = new Model_Search ( _p );
+  // model search #1:
+  if ( _p.get_model_search(1) != NOMAD::NO_MODEL ) {
+    if ( _model_search1 )
+      _model_search1->reset();
+    else {
+      if ( _p.get_model_search(1) == NOMAD::TGP_MODEL ) {
+#ifdef USE_TGP
+	_model_search1 = new TGP_Model_Search  ( _p ) ;
+#endif
+      }
+      else
+	_model_search1 = new Quad_Model_Search ( _p );
+    }
   }
   else {
-    delete _model_search;
-    _model_search = NULL;
+    delete _model_search1;
+    _model_search1 = NULL;
+  }
+
+  // model search #2:
+  if ( _p.get_model_search(2) != NOMAD::NO_MODEL ) {
+    if ( _model_search2 )
+      _model_search2->reset();
+    else {
+      if ( _p.get_model_search(2) == NOMAD::TGP_MODEL ) {
+#ifdef USE_TGP
+	_model_search2 = new TGP_Model_Search  ( _p ) ;
+#endif
+      }
+      else
+	_model_search2 = new Quad_Model_Search ( _p );
+    }
+  }
+  else {
+    delete _model_search2;
+    _model_search2 = NULL;
   }
 
   // VNS search:
@@ -176,6 +236,9 @@ void NOMAD::Mads::reset ( bool keep_barriers , bool keep_stats )
     _true_barrier.reset();
     _sgte_barrier.reset();
   }
+
+  // first success:
+  _first_succ = NULL;
 
   // stats:
   if ( !keep_stats )
@@ -247,18 +310,21 @@ NOMAD::stop_type NOMAD::Mads::run ( void )
     if ( NOMAD::Mads::_flag_check_bimads && _p.get_nb_obj() > 1 )
       throw NOMAD::Exception ( "Mads.cpp" , __LINE__ ,
 	    "Mads::run() called for multi-objective instead of Mads::multi_run()" );
-    
-    if ( display_degree != NOMAD::NO_DISPLAY )
-      out << std::endl << NOMAD::open_block ( "MADS run" );
-    
+
+#ifndef R_VERSION
+    if ( display_degree == NOMAD::NORMAL_DISPLAY ||  display_degree == NOMAD::FULL_DISPLAY )
+       out << std::endl << NOMAD::open_block ( "MADS run" );
+       
     if ( display_degree == NOMAD::NORMAL_DISPLAY ) {
       _ev_control.display_stats ( true                   ,
-				  out                    ,
-				  _p.get_display_stats() ,
-				  NULL                   ,
-				  NULL                     );
+    				  out                    ,
+    				  _p.get_display_stats() ,
+    				  NULL                   ,
+    				  false                  ,
+    				  NULL                     );
       out << std::endl << std::endl;
     }
+#endif
 
     // barriers init:
     if ( _flag_reset_barriers ) {
@@ -266,13 +332,17 @@ NOMAD::stop_type NOMAD::Mads::run ( void )
       _sgte_barrier.reset();
     }
     
+    // first success reset:
+    const NOMAD::Point * old_fs = _first_succ;
+    _first_succ = NULL;
+
     // evaluator control init:
     _ev_control.reset();
 
     // reset the extended poll:
     if ( _extended_poll && _p.get_extended_poll_enabled() )
       _extended_poll->reset();
-    
+
     // mesh init/reset:
     if ( _flag_reset_mesh )
       NOMAD::Mesh::init ( _p.get_mesh_update_basis().value() ,
@@ -280,7 +350,7 @@ NOMAD::stop_type NOMAD::Mads::run ( void )
 			  _p.get_mesh_refining_exponent   () ,
 			  _p.get_initial_mesh_index       ()   );
     
-    NOMAD::success_type       success;
+    NOMAD::success_type       success , last_success;
     int                       nb_search_pts;
     bool                      count_search;
     bool                      stop           = false;
@@ -288,10 +358,10 @@ NOMAD::stop_type NOMAD::Mads::run ( void )
     const NOMAD::Eval_Point * new_infeas_inc = NULL;
     
     stop_reason = NOMAD::NO_STOP;
-    
+
     // x0 eval:
     eval_x0 ( stop , stop_reason );
-    
+
     // phase one: if no feasible starting point:
     bool phase_one_done = false;
     if ( stop                          &&
@@ -350,16 +420,36 @@ NOMAD::stop_type NOMAD::Mads::run ( void )
       if ( best_feasible )
 	_L_curve->insert ( _stats.get_bb_eval() , best_feasible->get_f() );
     }
-    
+
+    int max_cfi = _p.get_max_consecutive_failed_iterations();
+    int nb_cfi  = 0;
+
+    success = last_success = NOMAD::UNSUCCESSFUL;
+
     // MADS iterations:
-    success = NOMAD::UNSUCCESSFUL;
-    while ( !stop )
+    while ( !stop ) {
+
       iteration ( stop           ,
 		  stop_reason    ,
 		  success        ,
 		  new_feas_inc   ,
 		  new_infeas_inc   );
-    
+
+      if ( success == NOMAD::UNSUCCESSFUL && last_success == NOMAD::UNSUCCESSFUL )
+	++nb_cfi;
+      else
+	nb_cfi = (success == NOMAD::UNSUCCESSFUL) ? 1 : 0;
+
+      last_success = success;
+
+      // check the consecutive number of failed iterations:
+      if ( max_cfi > 0 && nb_cfi > max_cfi ) {
+	stop        = true;
+	stop_reason = NOMAD::MAX_CONS_FAILED_ITER;
+      }
+
+    }
+
     // parallel version:
 #ifdef USE_MPI
     
@@ -394,13 +484,13 @@ NOMAD::stop_type NOMAD::Mads::run ( void )
     const std::string & stats_file_name = _p.get_stats_file_name();
 
     if ( !stats_file_name.empty() ) {
-      if ( write_stats ) {
-	_ev_control.stats_file ( stats_file_name , bf , NULL );
+      if ( write_stats && !_p.get_display_all_eval() ) {
+	_ev_control.stats_file ( stats_file_name , bf , true , NULL );
       }
       if ( !bf ) {
-	std::ofstream fout ( stats_file_name.c_str() );
+	std::ofstream fout ( (_p.get_problem_dir() + stats_file_name).c_str() );
 	if ( fout.fail() ) {
-      	  if ( out.get_gen_dd() != NOMAD::NO_DISPLAY )
+      	  if ( out.get_gen_dd() != NOMAD::NO_DISPLAY && display_degree != NOMAD::MINIMAL_DISPLAY)
 	    out << std::endl
 		<< "Warning (" << "Mads.cpp" << ", " << __LINE__
 		<< "): could not save information in stats file \'"
@@ -414,18 +504,22 @@ NOMAD::stop_type NOMAD::Mads::run ( void )
       }
     }
     
-    if ( display_degree != NOMAD::NO_DISPLAY ) {
+    if ( display_degree != NOMAD::NO_DISPLAY && display_degree != NOMAD::MINIMAL_DISPLAY ) {   
       
       // final stats:
-      if ( display_degree == NOMAD::NORMAL_DISPLAY && bf && write_stats )
+      if ( display_degree == NOMAD::NORMAL_DISPLAY && bf && write_stats &&
+	   !_p.get_display_all_eval() )
 	_ev_control.display_stats ( false                  ,
 				    out                    ,
 				    _p.get_display_stats() ,
 				    bf                     ,
+				    true                   ,
 				    NULL                     );
+#ifndef R_VERSION
       std::ostringstream msg;
       msg << "end of run (" << stop_reason << ")";
       out << std::endl << NOMAD::close_block ( msg.str() );
+#endif
     }
     
     // mono-objective final displays:
@@ -433,13 +527,18 @@ NOMAD::stop_type NOMAD::Mads::run ( void )
       
       if ( display_degree == NOMAD::FULL_DISPLAY )
 	out << std::endl << NOMAD::open_block ( "NOMAD final display" );
-      
+
+#ifndef R_VERSION
       display();
+#endif
       
       if ( display_degree == NOMAD::FULL_DISPLAY )
 	out.close_block();
     }
     
+    // reset the first success to its previous value:
+    _first_succ = old_fs;
+
   } // end of the try block
   
   catch ( std::exception & e ) {
@@ -491,7 +590,7 @@ void NOMAD::Mads::multi_launch_single_opt
   // displays:
   const NOMAD::Display & out = _p.out();
 
-  if ( display_degree != NOMAD::NO_DISPLAY ) {
+  if ( display_degree != NOMAD::NO_DISPLAY && display_degree != NOMAD::MINIMAL_DISPLAY) {
     out << "MADS run " << std::setw(2) << cur_mads_run + 1;
     if ( mads_runs > 0 )
       out << "/" << mads_runs;
@@ -521,7 +620,7 @@ void NOMAD::Mads::multi_launch_single_opt
   int global_bbe = multi_stats.get_bb_eval();
 
   // displays:
-  if ( display_degree != NOMAD::NO_DISPLAY ) {
+  if ( display_degree != NOMAD::NO_DISPLAY && display_degree != NOMAD::MINIMAL_DISPLAY) {
 
     // display basic stats on the terminated run:
     out << "... OK [bb eval="    << std::setw(3) << _stats.get_bb_eval()
@@ -727,7 +826,7 @@ NOMAD::stop_type NOMAD::Mads::multi_run ( void )
     _p.get_signature()->get_mesh().get_delta_p ( delta_p_0                   ,
 						 _p.get_initial_mesh_index()   );
     
-    if ( display_degree != NOMAD::NO_DISPLAY )
+    if ( display_degree != NOMAD::NO_DISPLAY && display_degree != NOMAD::MINIMAL_DISPLAY)
       out << std::endl << NOMAD::open_block ( "multi-MADS run" ) << std::endl;
     
     bool stop   = false;
@@ -1004,7 +1103,7 @@ NOMAD::stop_type NOMAD::Mads::multi_run ( void )
 	  delete x0s[k];
 	}
       }
-      else
+      else if ( !x0_cache_file.empty() )
 	_p.set_X0 ( x0_cache_file );
     }
     _p.set_MAX_BB_EVAL       ( max_bbe );
@@ -1028,11 +1127,13 @@ NOMAD::stop_type NOMAD::Mads::multi_run ( void )
     // final cache save (overwrite=true):
     _ev_control.save_caches ( true );
     
-    if ( display_degree != NOMAD::NO_DISPLAY ) {
+#ifndef R_VERSION
+    if ( display_degree != NOMAD::NO_DISPLAY && display_degree != NOMAD::MINIMAL_DISPLAY) {
       std::ostringstream msg;
       msg << "end of run (" << stop_reason << ")";
       out << std::endl << NOMAD::close_block ( msg.str() ) << std::endl;
     }
+#endif
 
     // multi-objective final displays:
     if ( _p.get_nb_obj() > 1 ) {
@@ -1294,7 +1395,11 @@ void NOMAD::Mads::poll ( bool                     & stop                  ,
       // get directions from the signature:
       std::list<NOMAD::Direction> dirs;
 
-      cur_signature->get_directions ( dirs , i_pc , NOMAD::Mesh::get_mesh_index() );
+      cur_signature->get_directions ( dirs                          ,
+				      i_pc                          ,
+				      *poll_center                  ,
+				      _first_succ                   ,     // can be NULL
+				      NOMAD::Mesh::get_mesh_index()   );
 
       if ( !stop && dirs.empty() ) {
 	if ( display_degree == NOMAD::FULL_DISPLAY )
@@ -1334,17 +1439,20 @@ void NOMAD::Mads::poll ( bool                     & stop                  ,
 	
 	it->set_index ( offset + k );
 	
-	dir = &(*it);  
+	dir = &(*it); 
+		  
 	
 	pt = new NOMAD::Eval_Point ( n , m );
-
+		  
 	// pt = poll_center + dir: with a particular case for binary variables
 	// equal to 1 with dir=1: the variables are set to 0 (1+1=0 in binary):
 	for ( i = 0 ; i < n ; ++i )
+	{
 	  (*pt)[i] =
 	    ( bbit[i]==NOMAD::BINARY && (*dir)[i]==1.0 && (*poll_center)[i]==1.0 ) ?
 	    0.0 : (*pt)[i] = (*poll_center)[i] + (*dir)[i];
-
+	}
+		  
 	// we check that the new poll trial point is different than the poll center
 	// (this happens when the mesh size becomes too small):
 	if ( !stop && pt->Point::operator == ( *poll_center ) ) {
@@ -1592,21 +1700,10 @@ void NOMAD::Mads::update_success_directions
 	    "Mads::update_success_directions(): new incumbent has no signature" );
 
     if ( feasible )
-      new_inc->get_signature()->set_feas_success_dir   ( *dir );
+      new_inc->get_signature()->set_feas_success_dir ( *dir );
     else
       new_inc->get_signature()->set_infeas_success_dir ( *dir );
 
-  }
-  else {
-
-    size_t k , n = signatures.size();
-    
-    if ( feasible )
-      for ( k = 0 ; k < n ; ++k )
-	signatures[k]->reset_feas_success_dir();
-    else
-      for ( k = 0 ; k < n ; ++k )
-	signatures[k]->reset_infeas_success_dir();
   }
 }
 
@@ -1711,8 +1808,8 @@ void NOMAD::Mads::search ( bool                     & stop           ,
     _stats.add_CS_pts ( nb_search_pts );
   }
 
-  // 4. Model Search (stats are updated inside the search):
-  if ( success != NOMAD::FULL_SUCCESS && _p.get_model_search() ) {
+  // 4. Model Searches (stats are updated inside the searches):
+  if ( success != NOMAD::FULL_SUCCESS && _p.has_model_search() ) {
 
 #ifdef USE_MPI
     // asynchronous mode: wait for the evaluations in progress:
@@ -1729,14 +1826,57 @@ void NOMAD::Mads::search ( bool                     & stop           ,
     }
 #endif
 
-    _model_search->search ( *this          ,
-			    nb_search_pts  ,
-			    stop           ,
-			    stop_reason    ,
-			    success        ,
-			    count_search   ,
-			    new_feas_inc   ,
-			    new_infeas_inc   );
+    // model search #1:
+    _model_search1->search ( *this          ,
+			     nb_search_pts  ,
+			     stop           ,
+			     stop_reason    ,
+			     success        ,
+			     count_search   ,
+			     new_feas_inc   ,
+			     new_infeas_inc   );
+
+    // save the TGP model for the model ordering:
+    if ( _p.get_model_search(1) == NOMAD::TGP_MODEL ) {
+#ifdef USE_TGP
+      _ev_control.set_last_TGP_model
+	( static_cast<NOMAD::TGP_Model_Search *>(_model_search1)->get_model() );
+#endif
+    }
+    // model search #2:
+    if ( success != NOMAD::FULL_SUCCESS && _model_search2 ) {
+
+#ifdef USE_MPI
+      // asynchronous mode: wait for the evaluations in progress:
+      if ( _p.get_asynchronous() ) {
+	std::list<const NOMAD::Eval_Point *> evaluated_pts;
+	_ev_control.wait_for_evaluations ( NOMAD::ASYNCHRONOUS ,
+					   _true_barrier       ,
+					   _sgte_barrier       ,
+					   _pareto_front       ,
+					   stop                ,
+					   stop_reason         ,
+					   success             ,
+					   evaluated_pts         );
+      }
+#endif
+      _model_search2->search ( *this          ,
+			       nb_search_pts  ,
+			       stop           ,
+			       stop_reason    ,
+			       success        ,
+			       count_search   ,
+			       new_feas_inc   ,
+			       new_infeas_inc   );
+
+      // save the TGP model for the model ordering:
+      if ( _p.get_model_search(2) == NOMAD::TGP_MODEL ) {
+#ifdef USE_TGP
+	_ev_control.set_last_TGP_model
+	  ( static_cast<NOMAD::TGP_Model_Search *>(_model_search2)->get_model() );
+#endif
+      }
+    }
   }
 
   // 5. VNS search:
@@ -1901,7 +2041,7 @@ void NOMAD::Mads::eval_x0 ( bool             & stop        ,
 				       NOMAD::Double() ,
 				       NOMAD::Double()   );
 	else {
-	  if ( display_degree != NOMAD::NO_DISPLAY )
+	  if ( display_degree != NOMAD::NO_DISPLAY && display_degree != NOMAD::MINIMAL_DISPLAY)
 	    out << std::endl << "Warning (" << "Mads.cpp" << ", " << __LINE__
 		<< "): could not use the starting point " << *pt
 		<< " (no signature)" << std::endl << std::endl;
@@ -1920,7 +2060,7 @@ void NOMAD::Mads::eval_x0 ( bool             & stop        ,
 
       x = cache.begin();
       while ( x ) {
-	pt = &cache.get_modifiable_point ( *x );
+	pt = &NOMAD::Cache::get_modifiable_point ( *x );
 
 	if ( x->get_signature() )
 	  pt->set_signature ( x->get_signature() );
@@ -1936,7 +2076,7 @@ void NOMAD::Mads::eval_x0 ( bool             & stop        ,
 				       NOMAD::Double() ,
 				       NOMAD::Double()    );
 	else {
-	  if ( display_degree != NOMAD::NO_DISPLAY )
+	  if ( display_degree != NOMAD::NO_DISPLAY && display_degree != NOMAD::MINIMAL_DISPLAY)
 	    out << std::endl << "Warning (" << "Mads.cpp" << ", " << __LINE__
 		<< "): could not use the starting point " << *pt
 		<< "(no signature)" << std::endl;
@@ -1982,7 +2122,8 @@ void NOMAD::Mads::eval_x0 ( bool             & stop        ,
 				    new_infeas_inc ,
 				    success          );
   if ( !stop &&
-       ( success == NOMAD::UNSUCCESSFUL ||
+       ( success == NOMAD::UNSUCCESSFUL      ||
+	 (!new_feas_inc && !new_infeas_inc ) ||
 	 ( _p.get_barrier_type() == NOMAD::EB &&
 	   !get_active_barrier().get_best_feasible() ) ) ) {
     stop        = true;
@@ -2019,7 +2160,7 @@ void NOMAD::Mads::display_pareto_front ( void ) const
   NOMAD::dd_type         display_degree  = out.get_gen_dd();
 
   // loop on the Pareto points:
-  if ( display_degree != NOMAD::NO_DISPLAY )
+  if ( display_degree != NOMAD::NO_DISPLAY && display_degree != NOMAD::MINIMAL_DISPLAY)
     out << std::endl << NOMAD::open_block ( "Pareto front" ) << std::endl;
 
   const NOMAD::Eval_Point * cur = _pareto_front->begin();
@@ -2037,19 +2178,20 @@ void NOMAD::Mads::display_pareto_front ( void ) const
 	multi_obj[i++] = bbo[*it];
 
       if ( !stats_file_name.empty() )
-	_ev_control.stats_file ( stats_file_name , cur , &multi_obj );
+	_ev_control.stats_file ( stats_file_name , cur , true , &multi_obj );
 
-      if ( display_degree != NOMAD::NO_DISPLAY && !_p.get_display_stats().empty() )
+      if ( display_degree != NOMAD::NO_DISPLAY && display_degree != NOMAD::MINIMAL_DISPLAY && !_p.get_display_stats().empty() )
 	_ev_control.display_stats ( false                  ,
 				    out                    ,
 				    _p.get_display_stats() ,
 				    cur                    ,
+				    true                   ,
 				    &multi_obj               );
     } 
     cur = _pareto_front->next();
   }
 
-  if ( display_degree != NOMAD::NO_DISPLAY )
+  if ( display_degree != NOMAD::NO_DISPLAY && display_degree != NOMAD::MINIMAL_DISPLAY)
     out << NOMAD::close_block();
 
   // other stats:
@@ -2070,7 +2212,7 @@ void NOMAD::Mads::display_pareto_front ( void ) const
 	  << " (define valid MULTI_F_BOUNDS values to access this output)"
 	  << std::endl;
   }
-  else if ( display_degree != NOMAD::NO_DISPLAY )
+  else if ( display_degree != NOMAD::NO_DISPLAY && display_degree != NOMAD::MINIMAL_DISPLAY)
     out << std::endl << "number of Pareto points: " << _pareto_front->size()
 	<< std::endl;
 }
@@ -2087,7 +2229,7 @@ void NOMAD::Mads::display ( const NOMAD::Display & out ) const
 
   // 0. no display:
   // --------------
-  if ( display_degree == NOMAD::NO_DISPLAY ) {
+  if ( display_degree == NOMAD::NO_DISPLAY || display_degree == NOMAD::MINIMAL_DISPLAY) {
 
     // there may be a pareto front to write as a stats file:
     if ( _pareto_front           &&
@@ -2228,10 +2370,13 @@ void NOMAD::Mads::display ( const NOMAD::Display & out ) const
 /*---------------------------------------------------------*/
 void NOMAD::Mads::display_model_stats ( const NOMAD::Display & out ) const
 {
-  if ( _model_search )
-    out << std::endl << NOMAD::open_block ( "model search stats" )
-	<< *_model_search << NOMAD::close_block();
-  if ( _p.get_model_eval_sort() ) {
+  if ( _model_search1 )
+    out << std::endl << NOMAD::open_block ( "model search #1 stats" )
+	<< *_model_search1 << NOMAD::close_block();
+  if ( _model_search2 )
+    out << std::endl << NOMAD::open_block ( "model search #2 stats" )
+	<< *_model_search2 << NOMAD::close_block();
+  if ( _p.get_model_eval_sort() != NOMAD::NO_MODEL ) {
     out << std::endl << NOMAD::open_block ( "model ordering stats" );
     _ev_control.display_model_ordering_stats ( out );
     out << NOMAD::close_block();

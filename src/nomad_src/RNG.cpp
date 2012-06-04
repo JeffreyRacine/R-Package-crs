@@ -1,7 +1,7 @@
 /*-------------------------------------------------------------------------------------*/
-/*  NOMAD - Nonlinear Optimization by Mesh Adaptive Direct search - version 3.5.1        */
+/*  NOMAD - Nonsmooth Optimization by Mesh Adaptive Direct search - version 3.5.1        */
 /*                                                                                     */
-/*  Copyright (C) 2001-2012  Mark Abramson        - the Boeing Company, Seattle        */
+/*  Copyright (C) 2001-2010  Mark Abramson        - the Boeing Company, Seattle        */
 /*                           Charles Audet        - Ecole Polytechnique, Montreal      */
 /*                           Gilles Couture       - Ecole Polytechnique, Montreal      */
 /*                           John Dennis          - Rice University, Houston           */
@@ -9,9 +9,6 @@
 /*                           Christophe Tribes    - Ecole Polytechnique, Montreal      */
 /*                                                                                     */
 /*  funded in part by AFOSR and Exxon Mobil                                            */
-/*                                                                                     */
-/*  Author: Sebastien Le Digabel                                                       */
-/*                                                                                     */
 /*  Contact information:                                                               */
 /*    Ecole Polytechnique de Montreal - GERAD                                          */
 /*    C.P. 6079, Succ. Centre-ville, Montreal (Quebec) H3C 3A7 Canada                  */
@@ -34,23 +31,50 @@
 /*  You can find information on the NOMAD software at www.gerad.ca/nomad               */
 /*-------------------------------------------------------------------------------------*/
 /**
-  \file   Exception.cpp
-  \brief  custom class for exceptions (implementation)
-  \author Sebastien Le Digabel
-  \date   2010-03-29
-  \see    Exception.hpp
-*/
-#include "Exception.hpp"
+ \file   RNG.cpp
+ \brief  Custom class for random number generator (implementation)
+ \author Christophe Tribes and Sebastien Le Digabel
+ \date   2011-09-28
+ \see    rng.hpp
+ */
+
+#include "RNG.hpp"
 using namespace std;  //zhenghua
-/*----------------------------------------------------------------*/
-/*                     NOMAD::Exception::what()                   */
-/*----------------------------------------------------------------*/
-const char * NOMAD::Exception::what ( void ) const throw()
+
+//** Default values for the random number seed  */
+uint32_t NOMAD::RNG::x = 123456789;
+uint32_t NOMAD::RNG::y = 362436069;
+uint32_t NOMAD::RNG::z = 521288629; 
+
+
+bool NOMAD::RNG::set_seed(unsigned long s)
 {
-  std::ostringstream oss;
-  oss << "NOMAD::Exception thrown (" << _file << ", " << _line << ")";
-  if ( !_what.empty() )
-    oss << " " << _what;
-  _what = oss.str();
-  return _what.c_str();
+	/** This function sets the seed for random number generation \c 
+	 \return A boolean if the seed is acceptable, that is in [0,UINT32_MAX].
+	 */
+	if(s<=UINT32_MAX)
+	{
+		x=s;
+		return true;
+	}
+	else 
+		return false;
 }
+
+uint32_t NOMAD::RNG::rand ( void ) { //period 2^96-1
+	/** This function serves to obtain a random number \c 
+	 \return An integer in the interval [0,UINT32_MAX].
+	 */
+ 	uint32_t t;
+ 	x ^= x << 16;
+ 	x ^= x >> 5;
+ 	x ^= x << 1;
+ 	
+ 	t = x;
+	x = y;
+	y = z;
+	z = t ^ x ^ y;      
+	
+	return z;
+}
+

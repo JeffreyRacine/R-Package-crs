@@ -1,11 +1,12 @@
 /*-------------------------------------------------------------------------------------*/
-/*  NOMAD - Nonsmooth Optimization by Mesh Adaptive Direct search - version 3.5        */
+/*  NOMAD - Nonlinear Optimization by Mesh Adaptive Direct search - version 3.5.1        */
 /*                                                                                     */
-/*  Copyright (C) 2001-2010  Mark Abramson        - the Boeing Company, Seattle        */
+/*  Copyright (C) 2001-2012  Mark Abramson        - the Boeing Company, Seattle        */
 /*                           Charles Audet        - Ecole Polytechnique, Montreal      */
 /*                           Gilles Couture       - Ecole Polytechnique, Montreal      */
 /*                           John Dennis          - Rice University, Houston           */
 /*                           Sebastien Le Digabel - Ecole Polytechnique, Montreal      */
+/*                           Christophe Tribes    - Ecole Polytechnique, Montreal      */
 /*                                                                                     */
 /*  funded in part by AFOSR and Exxon Mobil                                            */
 /*                                                                                     */
@@ -87,6 +88,8 @@ namespace NOMAD {
     /// Number of outputs for each blackbox executable.
     std::vector<int> _bb_nbo;
 
+    static bool _force_quit; ///< Flag equal to \c true if ctrl-c is pressed.
+
     /// Check the constraints to decide if the evaluations have to be stopped.
     /**
        \param x     Point at which the constraints are checked -- \b IN.
@@ -113,6 +116,15 @@ namespace NOMAD {
 
     /// Destructor.
     virtual ~Evaluator ( void ) {}
+
+    /// Force quit (called by pressing ctrl-c).
+    static void force_quit ( void ) { NOMAD::Evaluator::_force_quit = true; }
+
+    /// Access to the \c force_quit flag.
+    /**
+       \return The \c force_quit flag.
+    */
+    static bool get_force_quit ( void ) { return NOMAD::Evaluator::_force_quit; }
 
     /// Access to the multi-objective flag.
     /**

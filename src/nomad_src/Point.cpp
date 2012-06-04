@@ -1,11 +1,12 @@
 /*-------------------------------------------------------------------------------------*/
-/*  NOMAD - Nonsmooth Optimization by Mesh Adaptive Direct search - version 3.5        */
+/*  NOMAD - Nonlinear Optimization by Mesh Adaptive Direct search - version 3.5.1        */
 /*                                                                                     */
-/*  Copyright (C) 2001-2010  Mark Abramson        - the Boeing Company, Seattle        */
+/*  Copyright (C) 2001-2012  Mark Abramson        - the Boeing Company, Seattle        */
 /*                           Charles Audet        - Ecole Polytechnique, Montreal      */
 /*                           Gilles Couture       - Ecole Polytechnique, Montreal      */
 /*                           John Dennis          - Rice University, Houston           */
 /*                           Sebastien Le Digabel - Ecole Polytechnique, Montreal      */
+/*                           Christophe Tribes    - Ecole Polytechnique, Montreal      */
 /*                                                                                     */
 /*  funded in part by AFOSR and Exxon Mobil                                            */
 /*                                                                                     */
@@ -40,7 +41,7 @@
   \see    Point.hpp
 */
 #include "Point.hpp"
-using namespace std;
+using namespace std;  //zhenghua
 /*-----------------------------------*/
 /*   static members initialization   */
 /*-----------------------------------*/
@@ -365,14 +366,6 @@ const NOMAD::Point NOMAD::Point::operator - ( void ) const
   for ( int k = 0 ; k < _n ; ++k , ++p1 , ++p2 )
     *p1 = - *p2;
   return tmp;
-}
-
-/*-----------------------------------------------------------*/
-/*                        dot product                        */
-/*-----------------------------------------------------------*/
-const NOMAD::Double NOMAD::Point::dot_product ( const NOMAD::Point & x ) const
-{
-  return std::inner_product ( _coords , _coords+_n , x._coords , NOMAD::Double(0.0) );
 }
 
 /*----------------------------------------------------------*/

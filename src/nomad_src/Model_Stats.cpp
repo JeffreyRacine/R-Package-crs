@@ -1,11 +1,12 @@
 /*-------------------------------------------------------------------------------------*/
-/*  NOMAD - Nonsmooth Optimization by Mesh Adaptive Direct search - version 3.5        */
+/*  NOMAD - Nonlinear Optimization by Mesh Adaptive Direct search - version 3.5.1        */
 /*                                                                                     */
-/*  Copyright (C) 2001-2010  Mark Abramson        - the Boeing Company, Seattle        */
+/*  Copyright (C) 2001-2012  Mark Abramson        - the Boeing Company, Seattle        */
 /*                           Charles Audet        - Ecole Polytechnique, Montreal      */
 /*                           Gilles Couture       - Ecole Polytechnique, Montreal      */
 /*                           John Dennis          - Rice University, Houston           */
 /*                           Sebastien Le Digabel - Ecole Polytechnique, Montreal      */
+/*                           Christophe Tribes    - Ecole Polytechnique, Montreal      */
 /*                                                                                     */
 /*  funded in part by AFOSR and Exxon Mobil                                            */
 /*                                                                                     */
@@ -40,7 +41,7 @@
   \see    Model_Stats.hpp
 */
 #include "Model_Stats.hpp"
-using namespace std;
+using namespace std;  //zhenghua
 /*---------------------------------------------------------*/
 /*                     affectation operator                */
 /*---------------------------------------------------------*/
@@ -51,6 +52,7 @@ NOMAD::Model_Stats & NOMAD::Model_Stats::operator = ( const NOMAD::Model_Stats &
   _nb_MFN              = s._nb_MFN;
   _nb_WP_regression    = s._nb_WP_regression;
   _nb_regression       = s._nb_regression;
+  _nb_TGP              = s._nb_TGP;
   _not_enough_pts      = s._not_enough_pts;
   _nb_Y_sets           = s._nb_Y_sets;
   _sum_nY              = s._sum_nY;
@@ -89,6 +91,7 @@ void NOMAD::Model_Stats::reset ( void )
     _nb_MFN              =
     _nb_WP_regression    =
     _nb_regression       =
+    _nb_TGP              =
     _not_enough_pts      =
     _construction_error  =
     _bad_cond            =
@@ -127,6 +130,7 @@ void NOMAD::Model_Stats::update ( const NOMAD::Model_Stats & s )
   _nb_MFN              += s._nb_MFN;
   _nb_WP_regression    += s._nb_WP_regression;
   _nb_regression       += s._nb_regression;
+  _nb_TGP              += s._nb_TGP;
   _not_enough_pts      += s._not_enough_pts;
   _construction_error  += s._construction_error;
   _construction_time   += s._construction_time;
@@ -206,26 +210,42 @@ void NOMAD::Model_Stats::update_MS_model_opt ( int eval )
 /*---------------------------------------------------------*/
 void NOMAD::Model_Stats::display ( const NOMAD::Display & out ) const
 {
-  out << "number of models built       : "           << get_nb_models()     << std::endl;
+  out << "number of models built       : "   << get_nb_models()     << std::endl;
   if ( _nb_sgte > 0 )
-    out << "number of truth models       : "         << _nb_truth           << std::endl
-	<< "number of surrogate models   : "         << _nb_sgte            << std::endl;
-  out << "number of MFN interpolations : "           << _nb_MFN             << std::endl
-      << "number of WP regressions     : "           << _nb_WP_regression   << std::endl
-      << "number of regressions        : "           << _nb_regression      << std::endl
-      << "number of construction errors: "           << _construction_error << std::endl
-      << "number of bad cond numbers   : "           << _bad_cond           << std::endl
-      << "number of too small Y sets   : "           << _not_enough_pts     << std::endl
-      << "min Y size                   : "           << _min_nY             << std::endl
-      << "max Y size                   : "           << _max_nY             << std::endl
-      << "avg Y size                   : "           << get_avg_nY()        << std::endl
-      << "construction CPU time (s)    : "           << _construction_time  << std::endl;
+    out << "number of truth models       : " << _nb_truth           << std::endl
+	<< "number of surrogate models   : " << _nb_sgte            << std::endl;
+  out << "number of MFN interpolations : "   << _nb_MFN             << std::endl
+      << "number of WP regressions     : "   << _nb_WP_regression   << std::endl
+      << "number of quadr. regressions : "   << _nb_regression      << std::endl
+      << "number of TGP models         : "   << _nb_TGP             << std::endl
+      << "number of construction errors: "   << _construction_error << std::endl
+      << "number of bad cond numbers   : "   << _bad_cond           << std::endl
+      << "number of too small Y sets   : "   << _not_enough_pts     << std::endl
+      << "min Y size                   : ";
+  if ( _min_nY != INT_MAX )
+    out << _min_nY;
+  else
+    out << "-";
+  out << std::endl
+      << "max Y size                   : ";
+  if ( _max_nY != -1 )
+    out << _max_nY;
+  else
+    out << "-";
+  out << std::endl
+      << "avg Y size                   : ";
+  if ( get_avg_nY() != 0.0 )
+    out << get_avg_nY();
+  else
+    out << "-";
+  out << std::endl
+      << "construction CPU time (s)    : "   << _construction_time  << std::endl;
   if ( _MS_nb_searches > 0 ) {
     out << NOMAD::open_block ( "model searches" )
-	<< "number of searches                 : "   << _MS_nb_searches     << std::endl
-	<< "number of search successes         : "   << _MS_success         << std::endl
-	<< "number of search points            : "   << _MS_pts             << std::endl
-	<< "number of blackbox evaluations     : "   << _MS_bb_eval         << std::endl;
+	<< "number of searches                 : "   << _MS_nb_searches << std::endl
+	<< "number of search successes         : "   << _MS_success     << std::endl
+	<< "number of search points            : "   << _MS_pts         << std::endl
+	<< "number of blackbox evaluations     : "   << _MS_bb_eval     << std::endl;
     if ( _MS_sgte_eval > 0 )
       out << "number of sgte evaluations         : " << _MS_sgte_eval       << std::endl;
     out << "number of cache hits               : "   << _MS_cache_hits      << std::endl

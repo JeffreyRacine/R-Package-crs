@@ -1,11 +1,12 @@
 /*-------------------------------------------------------------------------------------*/
-/*  NOMAD - Nonsmooth Optimization by Mesh Adaptive Direct search - version 3.5        */
+/*  NOMAD - Nonlinear Optimization by Mesh Adaptive Direct search - version 3.5.1        */
 /*                                                                                     */
-/*  Copyright (C) 2001-2010  Mark Abramson        - the Boeing Company, Seattle        */
+/*  Copyright (C) 2001-2012  Mark Abramson        - the Boeing Company, Seattle        */
 /*                           Charles Audet        - Ecole Polytechnique, Montreal      */
 /*                           Gilles Couture       - Ecole Polytechnique, Montreal      */
 /*                           John Dennis          - Rice University, Houston           */
 /*                           Sebastien Le Digabel - Ecole Polytechnique, Montreal      */
+/*                           Christophe Tribes    - Ecole Polytechnique, Montreal      */
 /*                                                                                     */
 /*  funded in part by AFOSR and Exxon Mobil                                            */
 /*                                                                                     */
@@ -43,7 +44,7 @@
 #define __QUAD_MODEL__
 
 #include "Cache.hpp"
-#include "Quad_Model_Sorted_Point.hpp"
+#include "Model_Sorted_Point.hpp"
 
 namespace NOMAD {
 
@@ -109,6 +110,14 @@ namespace NOMAD {
        \param max_Y_size  Max number of interpolation points -- \b IN.
     */
     void reduce_Y  ( const NOMAD::Point & center , int max_Y_size );
+
+    /// Compute condition number.
+    /**
+       \param W   Matrix W given as a vector -- \b IN.
+       \param n   Size of \c W               -- \b IN
+       \param eps Epsilon                    -- \b IN.
+    */
+    void compute_cond ( const double * W , int n , double eps );
 
     /// Compute the cumulated error of a model for one output.
     /**
@@ -227,10 +236,14 @@ namespace NOMAD {
       const std::vector<NOMAD::Eval_Point *> & Y   ) const;
 
 #ifdef MODEL_STATS
-    mutable NOMAD::Double _Yw;
+    mutable NOMAD::Double _Yw; ///< Width of the interpolation set \c Y.
 
   public:
 
+    /// Access to the width of the interpolation set \c X (or \c Y).
+    /**
+       \return The width of the interpolation set.
+    */
     const NOMAD::Double & get_Yw ( void ) const { return _Yw; }
 #endif
 

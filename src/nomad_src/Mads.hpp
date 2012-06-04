@@ -1,11 +1,12 @@
 /*-------------------------------------------------------------------------------------*/
-/*  NOMAD - Nonsmooth Optimization by Mesh Adaptive Direct search - version 3.5        */
+/*  NOMAD - Nonlinear Optimization by Mesh Adaptive Direct search - version 3.5.1        */
 /*                                                                                     */
-/*  Copyright (C) 2001-2010  Mark Abramson        - the Boeing Company, Seattle        */
+/*  Copyright (C) 2001-2012  Mark Abramson        - the Boeing Company, Seattle        */
 /*                           Charles Audet        - Ecole Polytechnique, Montreal      */
 /*                           Gilles Couture       - Ecole Polytechnique, Montreal      */
 /*                           John Dennis          - Rice University, Houston           */
 /*                           Sebastien Le Digabel - Ecole Polytechnique, Montreal      */
+/*                           Christophe Tribes    - Ecole Polytechnique, Montreal      */
 /*                                                                                     */
 /*  funded in part by AFOSR and Exxon Mobil                                            */
 /*                                                                                     */
@@ -42,7 +43,8 @@
 #ifndef __MADS__
 #define __MADS__
 
-#include "Model_Search.hpp"
+#include "Quad_Model_Search.hpp"
+#include "TGP_Model_Search.hpp"
 #include "Speculative_Search.hpp"
 #include "LH_Search.hpp"
 #include "VNS_Search.hpp"
@@ -69,13 +71,17 @@ namespace NOMAD {
     NOMAD::Barrier           _true_barrier;  ///< Barrier for true function evaluations.
     NOMAD::Barrier           _sgte_barrier;  ///< Barrier for surrogate evaluations.
 
+    const NOMAD::Point     * _first_succ;    ///< First success for Ortho-MADS n+1 directions.
+
     /// Pareto front for multi-objective optimization.
-    NOMAD::Pareto_Front * _pareto_front;
+    NOMAD::Pareto_Front  * _pareto_front;
 
     /// User search defined with NOMAD::Mads::set_user_search().
     NOMAD::Search        * _user_search;
 
-    NOMAD::Search        * _model_search;   ///< Model search.
+    NOMAD::Search        * _model_search1;  ///< Model search #1.
+    NOMAD::Search        * _model_search2;  ///< Model search #2.
+
     NOMAD::Search        * _VNS_search;     ///< VNS search.
     NOMAD::Search        * _cache_search;   ///< Cache search.
     NOMAD::L_Curve       * _L_curve;        ///< L-curve target.
@@ -238,9 +244,11 @@ namespace NOMAD {
 	_ev_control            ( p , _stats , ev , NULL , NULL ) ,
 	_true_barrier          ( p , NOMAD::TRUTH              ) ,
 	_sgte_barrier          ( p , NOMAD::SGTE               ) ,
+	_first_succ            ( NULL                          ) ,
 	_pareto_front          ( NULL                          ) ,
 	_user_search           ( NULL                          ) ,
-	_model_search          ( NULL                          ) ,
+	_model_search1         ( NULL                          ) ,
+	_model_search2         ( NULL                          ) ,
 	_VNS_search            ( NULL                          ) ,
 	_cache_search          ( NULL                          ) ,
 	_L_curve               ( NULL                          ) ,
@@ -268,9 +276,11 @@ namespace NOMAD {
 	_ev_control            ( p , _stats , ev , cache , sgte_cache ) ,
 	_true_barrier          ( p , NOMAD::TRUTH                     ) ,
 	_sgte_barrier          ( p , NOMAD::SGTE                      ) ,
+	_first_succ            ( NULL                                 ) ,
 	_pareto_front          ( NULL                                 ) ,
 	_user_search           ( NULL                                 ) ,
-	_model_search          ( NULL                                 ) ,
+	_model_search1         ( NULL                                 ) ,
+	_model_search2         ( NULL                                 ) ,
 	_VNS_search            ( NULL                                 ) ,
 	_cache_search          ( NULL                                 ) ,
 	_L_curve               ( NULL                                 ) ,

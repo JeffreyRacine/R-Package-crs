@@ -1,11 +1,12 @@
 /*-------------------------------------------------------------------------------------*/
-/*  NOMAD - Nonsmooth Optimization by Mesh Adaptive Direct search - version 3.5        */
+/*  NOMAD - Nonlinear Optimization by Mesh Adaptive Direct search - version 3.5.1        */
 /*                                                                                     */
-/*  Copyright (C) 2001-2010  Mark Abramson        - the Boeing Company, Seattle        */
+/*  Copyright (C) 2001-2012  Mark Abramson        - the Boeing Company, Seattle        */
 /*                           Charles Audet        - Ecole Polytechnique, Montreal      */
 /*                           Gilles Couture       - Ecole Polytechnique, Montreal      */
 /*                           John Dennis          - Rice University, Houston           */
 /*                           Sebastien Le Digabel - Ecole Polytechnique, Montreal      */
+/*                           Christophe Tribes    - Ecole Polytechnique, Montreal      */
 /*                                                                                     */
 /*  funded in part by AFOSR and Exxon Mobil                                            */
 /*                                                                                     */
@@ -40,7 +41,7 @@
   \see    VNS_Search.hpp
 */
 #include "VNS_Search.hpp"
-using namespace std;
+using namespace std;  //zhenghua
 /*---------------------------------------------------------*/
 /*                           reset                         */
 /*---------------------------------------------------------*/
@@ -215,6 +216,10 @@ void NOMAD::VNS_Search::search ( NOMAD::Mads              & mads           ,
   // ----------------------------------------------
   std::string old_display_degree;
   _p.out().get_display_degree ( old_display_degree );
+
+  NOMAD::model_params_type old_mp;
+  _p.get_model_parameters ( old_mp );
+
   bool                                old_ses = _p.get_sgte_eval_sort();
   bool                                old_sif = _p.get_stop_if_feasible();
   int                                  old_hs = _p.get_halton_seed();
@@ -224,6 +229,7 @@ void NOMAD::VNS_Search::search ( NOMAD::Mads              & mads           ,
   int                            old_max_eval = _p.get_max_eval();
   int                       old_max_sgte_eval = _p.get_max_sgte_eval();
   int                              old_max_it = _p.get_max_iterations();
+  int                             old_max_cfi = _p.get_max_consecutive_failed_iterations();
   int                               old_LH_p0 = _p.get_LH_search_p0();
   int                               old_LH_pi = _p.get_LH_search_pi();
   bool                             old_opp_LH = _p.get_opportunistic_LH();
@@ -254,8 +260,14 @@ void NOMAD::VNS_Search::search ( NOMAD::Mads              & mads           ,
 
   // modify parameters:
   // ------------------
-  _p.set_DISPLAY_DEGREE ( ( display_degree == NOMAD::FULL_DISPLAY ) ?
-			  NOMAD::NORMAL_DISPLAY : NOMAD::NO_DISPLAY );
+	if (display_degree == NOMAD::FULL_DISPLAY)
+		_p.set_DISPLAY_DEGREE(NOMAD::NORMAL_DISPLAY);
+	else if (display_degree == NOMAD::NORMAL_DISPLAY)
+		_p.set_DISPLAY_DEGREE(NOMAD::MINIMAL_DISPLAY);
+	else
+		_p.set_DISPLAY_DEGREE(display_degree);
+	
+	
   _p.set_HALTON_SEED    ( NOMAD::Mesh::get_max_halton_index()       );
   _p.set_SOLUTION_FILE  ( ""       );
   _p.set_HISTORY_FILE   ( ""       );
@@ -263,9 +275,15 @@ void NOMAD::VNS_Search::search ( NOMAD::Mads              & mads           ,
   _p.set_VNS_SEARCH     ( false    );
   _p.set_CACHE_SEARCH   ( false    );
   _p.set_MAX_ITERATIONS ( -1       );
-  _p.set_OPT_ONLY_SGTE  ( has_sgte );
+  _p.set_MAX_CONSECUTIVE_FAILED_ITERATIONS ( -1 );
   _p.reset_X0();
   _p.reset_stats_file();
+
+  if ( has_sgte ) {
+    _p.set_OPT_ONLY_SGTE   ( true            );
+    _p.set_MODEL_SEARCH    ( false );
+    _p.set_MODEL_EVAL_SORT ( NOMAD::NO_MODEL );
+  }
 
   _p.set_USER_CALLS_ENABLED    ( false );
   _p.set_EXTENDED_POLL_ENABLED ( false );
@@ -387,17 +405,19 @@ void NOMAD::VNS_Search::search ( NOMAD::Mads              & mads           ,
   {
     _p.reset_X0();
     size_t nx0 = x0s.size();
+
     if ( nx0 > 0 ) {
       for ( size_t k = 0 ; k < nx0 ; ++k ) {
 	_p.set_X0 ( *x0s[k] );
 	delete x0s[k];
       }
     }
-    else
+    else if ( !x0_cache_file.empty() )
       _p.set_X0 ( x0_cache_file );
   }
 
   // restore other saved parameters:
+  _p.set_model_parameters           ( old_mp                               );
   _p.set_USER_CALLS_ENABLED         ( old_uce                              );
   _p.set_EXTENDED_POLL_ENABLED      ( old_epe                              );
   _p.set_VNS_SEARCH                 ( old_trigger                          );
@@ -413,6 +433,7 @@ void NOMAD::VNS_Search::search ( NOMAD::Mads              & mads           ,
   _p.set_MAX_EVAL                   ( old_max_eval                         );
   _p.set_MAX_SGTE_EVAL              ( old_max_sgte_eval                    );
   _p.set_MAX_ITERATIONS             ( old_max_it                           );
+  _p.set_MAX_CONSECUTIVE_FAILED_ITERATIONS ( old_max_cfi                   );
   _p.set_STAT_SUM_TARGET            ( old_sst                              );
   _p.set_LH_SEARCH                  ( old_LH_p0 , old_LH_pi                );
   _p.set_OPPORTUNISTIC_LH           ( old_opp_LH                           );
@@ -424,11 +445,11 @@ void NOMAD::VNS_Search::search ( NOMAD::Mads              & mads           ,
   _p.set_MAX_TIME                   ( old_max_time                         );
   _p.set_SGTE_EVAL_SORT             ( old_ses                              );
   _p.set_OPT_ONLY_SGTE              ( opt_only_sgte                        );
-  
+
   _p.check ( false ,    // remove_history_file  = false
 	     false ,    // remove_solution_file = false
 	     false   ); // remove_stats_file    = false
-    
+
   // restore mesh index:
   NOMAD::Mesh::set_mesh_index ( mesh_index ); 
   

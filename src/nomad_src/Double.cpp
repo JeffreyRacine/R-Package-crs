@@ -1,11 +1,12 @@
 /*-------------------------------------------------------------------------------------*/
-/*  NOMAD - Nonsmooth Optimization by Mesh Adaptive Direct search - version 3.5        */
+/*  NOMAD - Nonlinear Optimization by Mesh Adaptive Direct search - version 3.5.1        */
 /*                                                                                     */
-/*  Copyright (C) 2001-2010  Mark Abramson        - the Boeing Company, Seattle        */
+/*  Copyright (C) 2001-2012  Mark Abramson        - the Boeing Company, Seattle        */
 /*                           Charles Audet        - Ecole Polytechnique, Montreal      */
 /*                           Gilles Couture       - Ecole Polytechnique, Montreal      */
 /*                           John Dennis          - Rice University, Houston           */
 /*                           Sebastien Le Digabel - Ecole Polytechnique, Montreal      */
+/*                           Christophe Tribes    - Ecole Polytechnique, Montreal      */
 /*                                                                                     */
 /*  funded in part by AFOSR and Exxon Mobil                                            */
 /*                                                                                     */
@@ -40,8 +41,8 @@
   \see    Double.hpp
 */
 #include "Double.hpp"
-
 using namespace std;
+
 /*-----------------------------------*/
 /*   static members initialization   */
 /*-----------------------------------*/
@@ -388,7 +389,6 @@ void NOMAD::Double::display ( const NOMAD::Display & out ) const
 void NOMAD::Double::display ( const NOMAD::Display & out    ,
 			      const std::string    & format   ) const
 {
-
   // interpret the format:
   // ---------------------
  
@@ -407,6 +407,7 @@ void NOMAD::Double::display ( const NOMAD::Display & out    ,
   // G Use the shorter of %E or %f                              392.65
   // d or i Integer rounded value                               393
 
+	
   std::string format2 = format;
 
   int  w    = -1;
@@ -488,13 +489,36 @@ void NOMAD::Double::display ( const NOMAD::Display & out    ,
       }
 
       else if ( c == 'g' ) {
-	out.unsetf ( std::ios::fixed );
-	out.setf   ( std::ios::floatfield );
+	std::ostringstream streamS,streamF;
+	streamS.precision ( prec );
+	streamF.precision ( prec );
+	streamF.unsetf(std::ios::scientific);
+	streamF.setf( std::ios::fixed );
+	streamS.unsetf(std::ios::fixed);
+	streamS.setf( std::ios::scientific);
+	streamS << _value;
+	streamF << _value;
+	if (streamS.str().length() < streamF.str().length())
+	  out.setf(std::ios::scientific);
+	else
+	  out.setf(std::ios::fixed);
       }
 
       else if ( c == 'G' ) {
-	out.unsetf ( std::ios::fixed );
-	out.setf   ( std::ios::floatfield | std::ios::uppercase );
+	std::ostringstream streamS,streamF;
+	streamS.precision ( prec );
+	streamF.precision ( prec );
+	streamF.unsetf(std::ios::scientific);
+	streamF.setf( std::ios::fixed ); 
+	streamS.unsetf(std::ios::fixed);
+	streamS.setf( std::ios::scientific);
+	streamS << _value ;
+	streamF << _value ;
+	if (streamS.str().length() < streamF.str().length())
+	  out.setf(std::ios::scientific | std::ios::uppercase );
+	else
+	  out.setf(std::ios::fixed | std::ios::uppercase );
+
       }
 
       out << _value;
@@ -553,6 +577,30 @@ const NOMAD::Double NOMAD::Double::sqrt ( void ) const
 		        "NOMAD::Double::sqrt(x): x < 0" );
 
   return std::sqrt ( _value );
+}
+
+/*---------------------------------------------*/
+/*  relative error with another NOMAD::Double  */
+/*---------------------------------------------*/
+const NOMAD::Double NOMAD::Double::rel_err ( const Double & x ) const
+{
+	if ( !_defined || !x._defined )
+		throw Not_Defined ( "Double.cpp" , __LINE__ ,
+						   "NOMAD::Double::rel_err(): one of the values is not defined" );
+	
+	if ( _value * x._value < 0.0 )
+		return 1.0;
+	
+	if ( _value * x._value == 0.0 )
+		return fabs(_value-x._value); 
+	
+	if ( *this == x )
+		return 0.0;
+	
+	double a = fabs ( _value   );
+	double b = fabs ( x._value );
+	
+	return fabs ( _value - x._value ) / ( (a<b) ? b : a );
 }
 
 /*---------------------------------------------------------------------*/

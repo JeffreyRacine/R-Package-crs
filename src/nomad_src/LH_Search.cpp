@@ -1,11 +1,12 @@
 /*-------------------------------------------------------------------------------------*/
-/*  NOMAD - Nonsmooth Optimization by Mesh Adaptive Direct search - version 3.5        */
+/*  NOMAD - Nonlinear Optimization by Mesh Adaptive Direct search - version 3.5.1        */
 /*                                                                                     */
-/*  Copyright (C) 2001-2010  Mark Abramson        - the Boeing Company, Seattle        */
+/*  Copyright (C) 2001-2012  Mark Abramson        - the Boeing Company, Seattle        */
 /*                           Charles Audet        - Ecole Polytechnique, Montreal      */
 /*                           Gilles Couture       - Ecole Polytechnique, Montreal      */
 /*                           John Dennis          - Rice University, Houston           */
 /*                           Sebastien Le Digabel - Ecole Polytechnique, Montreal      */
+/*                           Christophe Tribes    - Ecole Polytechnique, Montreal      */
 /*                                                                                     */
 /*  funded in part by AFOSR and Exxon Mobil                                            */
 /*                                                                                     */
@@ -40,7 +41,8 @@
   \see    LH_Search.hpp
 */
 #include "LH_Search.hpp"
-using namespace std;
+#include "RNG.hpp"  
+using namespace std;  //zhenghua
 /*-----------------------------------------------------------*/
 /*              MADS Latin-Hypercube (LH) search             */
 /*-----------------------------------------------------------*/
@@ -246,7 +248,7 @@ void NOMAD::LH_Search::values_for_var_i ( int                          p        
 
   int                  i;
   NOMAD::Double        v;
-  NOMAD::Random_Pickup rp ( p );
+  NOMAD::Random_Pickup rp (p);
   bool                 rounding = ( bbit != NOMAD::CONTINUOUS );
   bool                 lb_def   = lb.is_defined();
   bool                 ub_def   = ub.is_defined();
@@ -257,16 +259,15 @@ void NOMAD::LH_Search::values_for_var_i ( int                          p        
 
     // both bounds exist:
     if ( lb_def && ub_def )
-      v = lb + ( i + rand()/NOMAD::D_INT_MAX ) * w;
+     v = lb + ( i + NOMAD::RNG::rand()/NOMAD::D_INT_MAX ) * w;  
 
     // one of the bounds does not exist:
     else {
 
       // lb exists, and ub not: mapping [0;1] --> [lb;+INF[
       if ( lb_def )
-	v = lb + 10 *
-	  delta_m_max * sqrt ( - log ( NOMAD::DEFAULT_EPSILON +
-				       ( i + rand()/NOMAD::D_INT_MAX ) * w ) );
+	v = lb + 10 * delta_m_max * sqrt ( - log ( NOMAD::DEFAULT_EPSILON +
+				       ( i + NOMAD::RNG::rand()/NOMAD::D_INT_MAX ) * w ) );
 
       // lb does not exist:
       else {
@@ -275,13 +276,13 @@ void NOMAD::LH_Search::values_for_var_i ( int                          p        
 	if ( ub_def )
 	  v = ub - delta_m_max * 10 *
 	    sqrt ( -log ( NOMAD::DEFAULT_EPSILON +
-			  ( i + rand()/NOMAD::D_INT_MAX ) * w ) );
+			  ( i +NOMAD::RNG::rand()/NOMAD::D_INT_MAX ) * w ) ); 
 	
 	// there are no bounds: mapping [0;1] --> ]-INF;+INF[
 	else
-	  v = (rand()%2 ? -1.0 : 1.0) * delta_m_max * 10 *
+	  v = (NOMAD::RNG::rand()%2 ? -1.0 : 1.0) * delta_m_max * 10 * 
 	    sqrt ( - log ( NOMAD::DEFAULT_EPSILON +
-			   ( i + rand()/NOMAD::D_INT_MAX ) * w ) );
+			   ( i + NOMAD::RNG::rand()/NOMAD::D_INT_MAX ) * w ) );  
       }
     }
 
@@ -295,4 +296,51 @@ void NOMAD::LH_Search::values_for_var_i ( int                          p        
     // affectation + permutation:
     x[rp.pickup()] = v;
   }
+}
+
+/*---------------------------------------------------------*/
+/*  simpler method used to generate a list of p LH points  */
+/*  (it is currently not used by the LH search)            */
+/*  (static)                                               */
+/*---------------------------------------------------------*/
+bool NOMAD::LH_Search::LH_points ( int                                n   ,
+				   int                                m   ,
+				   int                                p   ,
+				   const NOMAD::Point               & lb  ,
+				   const NOMAD::Point               & ub  ,
+				   std::vector<NOMAD::Eval_Point *> & pts   ) {
+  if ( n <= 0           ||
+       p <= 0           ||
+       !lb.is_defined() ||
+       !ub.is_defined() ||
+       lb.size() != n   ||
+       ub.size() != n      )
+    return false;
+
+  for ( size_t j = 0 ; j < pts.size() ; ++j )
+    delete pts[j];
+  pts.clear();
+
+  NOMAD::Eval_Point     * x;
+  int                     i;
+  int                     pm1 = p-1;
+  NOMAD::Random_Pickup ** rps = new NOMAD::Random_Pickup *[n];
+
+  for ( int k = 0 ; k < p ; ++k ) {
+    x = new NOMAD::Eval_Point ( n , m );
+    for ( i = 0 ; i < n ; ++i ) {
+      if ( k==0 )
+	rps[i] = new NOMAD::Random_Pickup(p);
+      (*x)[i] = lb[i] +
+	        (ub[i]-lb[i]) *
+	        ( rps[i]->pickup() + NOMAD::RNG::rand()/(1.0+NOMAD::D_INT_MAX)) / p; 
+      if ( k==pm1 )
+	delete rps[i];
+    }
+    pts.push_back(x);
+  }
+
+  delete [] rps;
+
+  return true;
 }

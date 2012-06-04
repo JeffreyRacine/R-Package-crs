@@ -1,11 +1,12 @@
 /*-------------------------------------------------------------------------------------*/
-/*  NOMAD - Nonsmooth Optimization by Mesh Adaptive Direct search - version 3.5        */
+/*  NOMAD - Nonlinear Optimization by Mesh Adaptive Direct search - version 3.5.1        */
 /*                                                                                     */
-/*  Copyright (C) 2001-2010  Mark Abramson        - the Boeing Company, Seattle        */
+/*  Copyright (C) 2001-2012  Mark Abramson        - the Boeing Company, Seattle        */
 /*                           Charles Audet        - Ecole Polytechnique, Montreal      */
 /*                           Gilles Couture       - Ecole Polytechnique, Montreal      */
 /*                           John Dennis          - Rice University, Houston           */
 /*                           Sebastien Le Digabel - Ecole Polytechnique, Montreal      */
+/*                           Christophe Tribes    - Ecole Polytechnique, Montreal      */
 /*                                                                                     */
 /*  funded in part by AFOSR and Exxon Mobil                                            */
 /*                                                                                     */
@@ -46,6 +47,14 @@
 #include "Pareto_Front.hpp"
 #include "Slave.hpp"
 #include "Quad_Model.hpp"
+#include "TGP_Model.hpp"
+
+#ifdef R_VERSION
+extern "C" {
+  #include <Rinternals.h>
+}
+#endif
+
 
 namespace NOMAD {
 
@@ -98,6 +107,10 @@ namespace NOMAD {
     NOMAD::Slave * _slave; // Slave object for master process
 #endif
 
+#ifdef USE_TGP
+    NOMAD::TGP_Model   * _last_TGP_model;       ///< Last TGP model from the model search.
+#endif
+
     NOMAD::Model_Stats   _model_ordering_stats; ///< Model ordering stats.
     NOMAD::Stats       & _stats;                ///< Algorithm stats.
 
@@ -108,8 +121,11 @@ namespace NOMAD {
     */
     mutable int _last_stats_tag;
 
-    ///< Same as \c this->_last_stats_bbe for the number of blackbox evaluations.
+    /// Same as \c this->_last_stats_bbe for the number of blackbox evaluations.
     mutable int _last_stats_bbe;
+
+    /// Last entry in the history file to avoid cache hits.
+    mutable int _last_history_bbe;
 
     /// Process an already evaluated Eval_Point.
     /**
@@ -205,13 +221,21 @@ namespace NOMAD {
 					 int                  & nb_success       ,
 					 bool                 & one_for_luck ) const;
 
-    /// Model ordering (parameter \c MODEL_EVAL_SORT).
+    /// Quadratic model ordering (parameter \c MODEL_EVAL_SORT).
     /**
        \param display_degree Display degree                              -- \b IN.
        \param modified_list  To indicate a change in the evaluation list -- \b OUT.
     */
-    void model_ordering ( NOMAD::dd_type   display_degree ,
-			  bool           & modified_list    );
+    void quad_model_ordering ( NOMAD::dd_type   display_degree ,
+			       bool           & modified_list    );
+
+    /// TGP model ordering (parameter \c MODEL_EVAL_SORT).
+    /**
+       \param display_degree Display degree                              -- \b IN.
+       \param modified_list  To indicate a change in the evaluation list -- \b OUT.
+    */
+    void TGP_model_ordering ( NOMAD::dd_type   display_degree ,
+			      bool           & modified_list    );
 
     /// Count the output stats (STAT_SUM and STAT_AVG).
     /**
@@ -377,28 +401,32 @@ namespace NOMAD {
 
     /// Display in stats file according to parameter \c STATS_FILE.
     /**
-       \param file_name Name of the output file             -- \b IN.
-       \param x         Pointer to the lattest evaluation   -- \b IN (may be \c NULL).
-       \param multi_obj Pointer to several objective values -- \b IN (may be \c NULL).
+       \param file_name Name of the output file              -- \b IN.
+       \param x         Pointer to the lattest evaluation    -- \b IN (may be \c NULL).
+       \param feasible  Equal to \c true if \c x is feasible -- \b IN.
+       \param multi_obj Pointer to several objective values  -- \b IN (may be \c NULL).
     */
     void stats_file ( const std::string       & file_name ,
 		      const NOMAD::Eval_Point * x         ,
+		      bool                      feasible  ,
 		      const NOMAD::Point      * multi_obj   ) const;
     
     /// Display stats during NOMAD::Mads::run() for minimal and normal display.
     /**
        \param header    Boolean equal to \c true if a header has to be displayed
-                                                            -- \b IN.
-       \param out       Display                             -- \b IN.
-       \param stats     List of stats to display            -- \b IN.
-       \param x         Pointer to the lattest evaluation   -- \b IN (may be \c NULL).
-       \param multi_obj Pointer to several objective values -- \b IN (may be \c NULL).
+                                                             -- \b IN.
+       \param out       Display                              -- \b IN.
+       \param stats     List of stats to display             -- \b IN.
+       \param x         Pointer to the lattest evaluation    -- \b IN (may be \c NULL).
+       \param feasible  Equal to \c true if \c x is feasible -- \b IN.
+       \param multi_obj Pointer to several objective values  -- \b IN (may be \c NULL).
     */
     void display_stats ( bool                           header    ,
 			 const NOMAD::Display         & out       ,
 			 const std::list<std::string> & stats     ,
 			 const NOMAD::Eval_Point      * x         ,
-			 const NOMAD::Point           * multi_obj ) const;
+			 bool                           feasible  ,
+			 const NOMAD::Point           * multi_obj   ) const;
 
     /// Display a real according to parameter \c DISPLAY_STATS.
     /**
@@ -410,7 +438,17 @@ namespace NOMAD {
     void display_stats_real ( const NOMAD::Display & out    ,
 			      const NOMAD::Double  & d      ,
 			      const std::string    & format = ""  ) const;
-
+	  
+	  /// Display a number according to its type \c DISPLAY_STATS.
+	  /**
+       \param out    Display             -- \b IN.
+       \param d      The number to display -- \b IN.
+	   \param bbType The type to display -- \b IN.
+	   */
+	void display_stats_type ( const NOMAD::Display & out         ,
+							  const NOMAD::Double  & d          ,
+							 const NOMAD::bb_input_type  & bbType ) const;	  
+	  
     /// Display an integer according to parameter \c DISPLAY_STATS.
     /**
        \param out    Display                -- \b IN.
@@ -431,11 +469,13 @@ namespace NOMAD {
        \param display_stats List of stats to display       -- \b IN.
        \param it            Iterator for the list \c stats -- \b IN/OUT.
        \param x             Pointer to the point           -- \b IN (may be \c NULL).
+	   \param bbType        Vector of input type           -- \b IN -- \b optional (default = \c empty vector). 
     */
-    void display_stats_point ( const NOMAD::Display                   & out           ,
-			       const std::list<std::string>           & display_stats ,
-			       std::list<std::string>::const_iterator & it            ,
-			       const NOMAD::Point                     * x ) const;
+    void display_stats_point ( const NOMAD::Display        & out           ,
+			       const std::list<std::string>            & display_stats ,
+			       std::list<std::string>::const_iterator  & it            ,
+			       const NOMAD::Point                      * x             ,
+				   const std::vector<NOMAD::bb_input_type> & bbType = std::vector<NOMAD::bb_input_type> (0)      ) const;
 
     /// Display model ordering stats ( parameter \c MODEL_EVAL_SORT ).
     /**
@@ -529,8 +569,16 @@ namespace NOMAD {
     */
     void set_evaluator ( NOMAD::Evaluator * e ) { _ev = e; }
     
+    /// Set the last TGP model from the model search.
+    /**
+       \param m The last TGP model -- \b IN.
+    */
+#ifdef USE_TGP
+    void set_last_TGP_model ( NOMAD::TGP_Model * m ) { _last_TGP_model = m; }
+#endif
+
     /// Reset.
-    void reset ( void ) { _last_stats_tag = _last_stats_bbe = -1; }
+    void reset ( void );
 
     /// Evaluation of a list of points (public version that calls the private version).
     /**

@@ -1,11 +1,12 @@
 /*-------------------------------------------------------------------------------------*/
-/*  NOMAD - Nonsmooth Optimization by Mesh Adaptive Direct search - version 3.5        */
+/*  NOMAD - Nonlinear Optimization by Mesh Adaptive Direct search - version 3.5.1        */
 /*                                                                                     */
-/*  Copyright (C) 2001-2010  Mark Abramson        - the Boeing Company, Seattle        */
+/*  Copyright (C) 2001-2012  Mark Abramson        - the Boeing Company, Seattle        */
 /*                           Charles Audet        - Ecole Polytechnique, Montreal      */
 /*                           Gilles Couture       - Ecole Polytechnique, Montreal      */
 /*                           John Dennis          - Rice University, Houston           */
 /*                           Sebastien Le Digabel - Ecole Polytechnique, Montreal      */
+/*                           Christophe Tribes    - Ecole Polytechnique, Montreal      */
 /*                                                                                     */
 /*  funded in part by AFOSR and Exxon Mobil                                            */
 /*                                                                                     */
@@ -212,7 +213,7 @@ namespace NOMAD {
        \return The size of cache in memory, in bytes.
     */
     float size_of ( void ) const { return _sizeof; }
-    
+
     /// Access to the number of points.
     /**
        \return The number of points in the cache.
@@ -231,6 +232,12 @@ namespace NOMAD {
       return _cache1.empty() && _cache2.empty() && _cache3.empty();
     }
     
+    /// Access to the evaluation type (truth or surrogate).
+    /**
+       \return The evaluation type.
+    */
+    NOMAD::eval_type get_eval_type ( void ) const { return _eval_type; }
+
     /// Const cast for an evaluation point.
     /**
        Transforms a \c const NOMAD::Eval_Point \c & into a NOMAD::Eval_Point \c &.

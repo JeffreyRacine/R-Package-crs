@@ -1,11 +1,12 @@
 /*-------------------------------------------------------------------------------------*/
-/*  NOMAD - Nonsmooth Optimization by Mesh Adaptive Direct search - version 3.5        */
+/*  NOMAD - Nonlinear Optimization by Mesh Adaptive Direct search - version 3.5.1        */
 /*                                                                                     */
-/*  Copyright (C) 2001-2010  Mark Abramson        - the Boeing Company, Seattle        */
+/*  Copyright (C) 2001-2012  Mark Abramson        - the Boeing Company, Seattle        */
 /*                           Charles Audet        - Ecole Polytechnique, Montreal      */
 /*                           Gilles Couture       - Ecole Polytechnique, Montreal      */
 /*                           John Dennis          - Rice University, Houston           */
 /*                           Sebastien Le Digabel - Ecole Polytechnique, Montreal      */
+/*                           Christophe Tribes    - Ecole Polytechnique, Montreal      */
 /*                                                                                     */
 /*  funded in part by AFOSR and Exxon Mobil                                            */
 /*                                                                                     */
@@ -41,7 +42,7 @@
 */
 #include "Parameters.hpp"
 #include "Slave.hpp"
-using namespace std;
+using namespace std;  //zhenghua
 /*----------------------------------------*/
 /*                destructor              */
 /*----------------------------------------*/
@@ -66,6 +67,7 @@ void NOMAD::Parameters::init ( void )
   _max_bbe_decided    = false;
   _max_time           = -1;
   _max_iterations     = -1;
+  _max_cons_failed_it = -1;
   _max_cache_memory   = 2000;
   _cache_save_period  = 25;
   _snap_to_bounds     = true;
@@ -164,22 +166,27 @@ void NOMAD::Parameters::init ( void )
   _multi_f_bounds.reset();
 
   // model search parameters:
-  _model_search               = true;
-  _model_search_proj_to_mesh  = true;
-  _model_search_optimistic    = true;
-  _model_search_max_trial_pts = 4;
+  _model_params.search1 = NOMAD::QUADRATIC_MODEL;
+  _model_params.search2 = NOMAD::NO_MODEL;
+
+  _model_params.search_proj_to_mesh  = true;
+  _model_params.search_optimistic    = true;
+  _model_params.search_max_trial_pts = 10;
 
   // model ordering parameters:
-  _model_eval_sort          = true;
-  _model_eval_sort_cautious = true;
+  _model_params.eval_sort          = NOMAD::QUADRATIC_MODEL;
+  _model_params.eval_sort_cautious = true;
 
-  // model parameters:
-  _model_radius_factor  = 2.0;
-  _model_use_WP         = false;
-  _model_min_Y_size     = -1;
-  _model_max_Y_size     = 500;
-  _model_max_Y_size_usr = false;
+  // quadratic model parameters:
+  _model_params.quad_radius_factor = 2.0;
+  _model_params.quad_use_WP        = false;
+  _model_params.quad_min_Y_size    = -1;
+  _model_params.quad_max_Y_size    = 500;
   
+  // TGP model parameters:
+  _model_params.tgp_mode        = NOMAD::TGP_FAST;
+  _model_params.tgp_reuse_model = true;
+
   // other searches:
   _VNS_trigger.clear();
   _speculative_search         = true;
@@ -212,6 +219,8 @@ void NOMAD::Parameters::init ( void )
 
   _display_stats.clear();
   reset_stats_file();
+
+  _display_all_eval = false;
 }
 
 /*------------------------------------------------------------------*/
@@ -843,7 +852,7 @@ void NOMAD::Parameters::interpret_x0 ( const NOMAD::Parameter_Entries & entries 
 
   while ( pe ) {
 
-    tmp_x0.reset(_dimension);
+    tmp_x0.reset ( _dimension );
 
     // File name:
     if ( pe->get_nb_values() == 1 )
@@ -1010,7 +1019,7 @@ void NOMAD::Parameters::read ( const std::string & param_file )
   }
   if ( !err.empty() ) {
     fin.close();
-    throw Wrong_Parameters_File ( "Parameters.cpp" , __LINE__ , err );
+    throw NOMAD::Exception ( "Parameters.cpp" , __LINE__ , err );
   }
 
   // the set of entries:
@@ -1342,21 +1351,47 @@ void NOMAD::Parameters::read ( const std::string & param_file )
   // model parameters:
   // -----------------
   {
+    // MODEL_SEARCH (can be entered one time or twice):
+    int  i_model_search = 1;
+    bool b_model_search = false;
 
-    // MODEL_SEARCH:
-    {
-      pe = entries.find ( "MODEL_SEARCH" );
-      if ( pe ) {
-	if ( !pe->is_unique() )
+    pe = entries.find ( "MODEL_SEARCH" );
+
+    while ( pe ) {
+
+      if ( pe->get_nb_values() != 1 )
+	throw Invalid_Parameter ( "Parameters.cpp" , __LINE__ ,
+				  "invalid parameter: MODEL_SEARCH" );
+      if ( i_model_search == 3 )
+	throw Invalid_Parameter ( "Parameters.cpp" , __LINE__ ,
+	"invalid parameter: MODEL_SEARCH (cannot be entered more than twice" );
+
+      NOMAD::model_type mt;
+      std::string       smt = *(pe->get_values().begin());
+      int               imt = NOMAD::string_to_bool ( smt );
+
+      // entered as a boolean:
+      if ( imt == 0 || imt == 1 ) {
+	if ( b_model_search || i_model_search == 2 )
 	  throw Invalid_Parameter ( "Parameters.cpp" , __LINE__ ,
-		"invalid parameter: MODEL_SEARCH not unique" );
-	i = NOMAD::string_to_bool ( *(pe->get_values().begin() ) );
-	if ( pe->get_nb_values() != 1 ||  i == -1 )
-	  throw Invalid_Parameter ( "Parameters.cpp" , __LINE__ ,
-				    "invalid parameter: MODEL_SEARCH" );
-	set_MODEL_SEARCH ( i == 1 );
-	pe->set_has_been_interpreted();
+	  "invalid parameter: MODEL_SEARCH (boolean argument can only be used once)" );
+	b_model_search = true;
+	set_MODEL_SEARCH ( imt == 1 );
       }
+
+      // entered as a model type:
+      else {
+
+	if ( !NOMAD::string_to_model_type ( smt , mt ) )
+	  throw Invalid_Parameter ( "Parameters.cpp" , __LINE__ ,
+				    "invalid parameter: MODEL_EVAL_SORT" );
+
+	set_MODEL_SEARCH ( i_model_search , mt );
+      }
+
+      pe->set_has_been_interpreted();
+      pe = pe->get_next();
+      ++i_model_search;
     }
 
     // MODEL_SEARCH_OPTIMISTIC:
@@ -1375,7 +1410,7 @@ void NOMAD::Parameters::read ( const std::string & param_file )
       }
     }
 
-    // MODEL_PROJ_TO_MESH:
+    // MODEL_SEARCH_PROJ_TO_MESH:
     {
       pe = entries.find ( "MODEL_SEARCH_PROJ_TO_MESH" );
       if ( pe ) {
@@ -1391,64 +1426,64 @@ void NOMAD::Parameters::read ( const std::string & param_file )
       }
     }
 
-    // MODEL_RADIUS_FACTOR:
+    // MODEL_QUAD_RADIUS_FACTOR:
     {
-      pe = entries.find ( "MODEL_RADIUS_FACTOR" );
+      pe = entries.find ( "MODEL_QUAD_RADIUS_FACTOR" );
       if ( pe ) {
 	if ( !pe->is_unique() )
 	  throw Invalid_Parameter ( "Parameters.cpp" , __LINE__ ,
-		"invalid parameter: MODEL_RADIUS_FACTOR not unique" );
+		"invalid parameter: MODEL_QUAD_RADIUS_FACTOR not unique" );
 	if ( pe->get_nb_values() != 1 || !d.atof ( *(pe->get_values().begin()) ) )
 	  throw Invalid_Parameter ( "Parameters.cpp" , __LINE__ ,
-				    "invalid parameter: MODEL_RADIUS_FACTOR" );
+				    "invalid parameter: MODEL_QUAD_RADIUS_FACTOR" );
 	pe->set_has_been_interpreted();
-	set_MODEL_RADIUS_FACTOR ( d );
+	set_MODEL_QUAD_RADIUS_FACTOR ( d );
       }
     }
 
-    // MODEL_USE_WP:
+    // MODEL_QUAD_USE_WP:
     {
-      pe = entries.find ( "MODEL_USE_WP" );
+      pe = entries.find ( "MODEL_QUAD_USE_WP" );
       if ( pe ) {
 	if ( !pe->is_unique() )
 	  throw Invalid_Parameter ( "Parameters.cpp" , __LINE__ ,
-				    "invalid parameter: MODEL_USE_WP not unique" );
+				    "invalid parameter: MODEL_QUAD_USE_WP not unique" );
 	i = NOMAD::string_to_bool ( *(pe->get_values().begin() ) );
 	if ( pe->get_nb_values() != 1 ||  i == -1 )
 	  throw Invalid_Parameter ( "Parameters.cpp" , __LINE__ ,
-				    "invalid parameter: MODEL_USE_WP" );
-	set_MODEL_USE_WP ( i == 1 );
+				    "invalid parameter: MODEL_QUAD_USE_WP" );
+	set_MODEL_QUAD_USE_WP ( i == 1 );
 	pe->set_has_been_interpreted();
       }
     }
     
-    // MODEL_MAX_Y_SIZE:
+    // MODEL_QUAD_MAX_Y_SIZE:
     {
-      pe = entries.find ( "MODEL_MAX_Y_SIZE" );
+      pe = entries.find ( "MODEL_QUAD_MAX_Y_SIZE" );
       if ( pe ) {
 	if ( !pe->is_unique() )
 	  throw Invalid_Parameter ( "Parameters.cpp" , __LINE__ ,
-		"invalid parameter: MODEL_MAX_Y_SIZE not unique" );
+		"invalid parameter: MODEL_QUAD_MAX_Y_SIZE not unique" );
 	if ( pe->get_nb_values() != 1 || !NOMAD::atoi (*(pe->get_values().begin()), i) )
 	  throw Invalid_Parameter ( "Parameters.cpp" , __LINE__ ,
-				    "invalid parameter: MODEL_MAX_Y_SIZE" );
+				    "invalid parameter: MODEL_QUAD_MAX_Y_SIZE" );
 	pe->set_has_been_interpreted();
-	set_MODEL_MAX_Y_SIZE (i);
+	set_MODEL_QUAD_MAX_Y_SIZE (i);
       }
     }
 
-    // MODEL_MIN_Y_SIZE:
+    // MODEL_QUAD_MIN_Y_SIZE:
     {
-      pe = entries.find ( "MODEL_MIN_Y_SIZE" );
+      pe = entries.find ( "MODEL_QUAD_MIN_Y_SIZE" );
       if ( pe ) {
 
 	if ( !pe->is_unique() )
 	  throw Invalid_Parameter ( "Parameters.cpp" , __LINE__ ,
-		"invalid parameter: MODEL_MIN_Y_SIZE not unique" );
+		"invalid parameter: MODEL_QUAD_MIN_Y_SIZE not unique" );
 
 	if ( pe->get_nb_values() != 1 )
 	  throw Invalid_Parameter ( "Parameters.cpp" , __LINE__ ,
-				    "invalid parameter: MODEL_MIN_Y_SIZE" );
+				    "invalid parameter: MODEL_QUAD_MIN_Y_SIZE" );
       
 	s = *(pe->get_values().begin());
 	NOMAD::toupper(s);
@@ -1457,10 +1492,44 @@ void NOMAD::Parameters::read ( const std::string & param_file )
 	  i = -1;
 	else if ( !NOMAD::atoi ( s , i ) )
 	  throw Invalid_Parameter ( "Parameters.cpp" , __LINE__ ,
-				    "invalid parameter: MODEL_MIN_Y_SIZE" );
+				    "invalid parameter: MODEL_QUAD_MIN_Y_SIZE" );
 
 	pe->set_has_been_interpreted();
-	set_MODEL_MIN_Y_SIZE (i);
+	set_MODEL_QUAD_MIN_Y_SIZE (i);
+      }
+    }
+
+    // MODEL_TGP_MODE:
+    {
+      pe = entries.find ( "MODEL_TGP_MODE" );
+      if ( pe ) {
+	if ( !pe->is_unique() )
+	  throw Invalid_Parameter ( "Parameters.cpp" , __LINE__ ,
+		"invalid parameter: MODEL_TGP_MODE not unique" );
+
+	NOMAD::TGP_mode_type m;
+	if ( pe->get_nb_values() != 1 ||
+	     !NOMAD::string_to_TGP_mode_type ( *(pe->get_values().begin()) , m ) )
+	  throw Invalid_Parameter ( "Parameters.cpp" , __LINE__ ,
+				    "Invalid parameter: MODEL_TGP_MODE" );
+	pe->set_has_been_interpreted();
+	set_MODEL_TGP_MODE ( m );
+      }
+    }
+
+    // MODEL_TGP_REUSE_MODEL:
+    {
+      pe = entries.find ( "MODEL_TGP_REUSE_MODEL" );
+      if ( pe ) {
+	if ( !pe->is_unique() )
+	  throw Invalid_Parameter ( "Parameters.cpp" , __LINE__ ,
+				    "invalid parameter: MODEL_TGP_REUSE_MODEL not unique" );
+	i = NOMAD::string_to_bool ( *(pe->get_values().begin() ) );
+	if ( pe->get_nb_values() != 1 ||  i == -1 )
+	  throw Invalid_Parameter ( "Parameters.cpp" , __LINE__ ,
+				    "invalid parameter: MODEL_TGP_REUSE_MODEL" );
+	set_MODEL_TGP_REUSE_MODEL ( i == 1 );
+	pe->set_has_been_interpreted();
       }
     }
 
@@ -1485,12 +1554,28 @@ void NOMAD::Parameters::read ( const std::string & param_file )
       if ( pe ) {
 	if ( !pe->is_unique() )
 	  throw Invalid_Parameter ( "Parameters.cpp" , __LINE__ ,
-		"invalid parameter: MODEL_EVAL_SORT not unique" );
-	i = NOMAD::string_to_bool ( *(pe->get_values().begin() ) );
-	if ( pe->get_nb_values() != 1 ||  i == -1 )
+				    "invalid parameter: MODEL_EVAL_SORT not unique" );
+	if ( pe->get_nb_values() != 1 )
 	  throw Invalid_Parameter ( "Parameters.cpp" , __LINE__ ,
 				    "invalid parameter: MODEL_EVAL_SORT" );
-	set_MODEL_EVAL_SORT ( i == 1 );
+
+	NOMAD::model_type mt;
+	std::string       smt = *(pe->get_values().begin());
+	int               imt = NOMAD::string_to_bool ( smt );
+
+	// entered as a boolean:
+	if ( imt == 0 || imt == 1 )
+	  set_MODEL_EVAL_SORT ( imt == 1 );
+
+	// entered as a model type:
+	else {
+
+	  if ( !NOMAD::string_to_model_type ( smt , mt ) )
+	    throw Invalid_Parameter ( "Parameters.cpp" , __LINE__ ,
+				      "invalid parameter: MODEL_EVAL_SORT" );
+	  set_MODEL_EVAL_SORT ( mt );
+	}
+
 	pe->set_has_been_interpreted();
       }
     }
@@ -1749,6 +1834,22 @@ void NOMAD::Parameters::read ( const std::string & param_file )
 				  "invalid parameter: MAX_ITERATIONS" );
       pe->set_has_been_interpreted();
       set_MAX_ITERATIONS (i);
+    }
+  }
+
+  // MAX_CONSECUTIVE_FAILED_ITERATIONS:
+  // ----------------------------------
+  {
+    pe = entries.find ( "MAX_CONSECUTIVE_FAILED_ITERATIONS" );
+    if ( pe ) {
+      if ( !pe->is_unique() )
+	throw Invalid_Parameter ( "Parameters.cpp" , __LINE__ ,
+        "invalid parameter: MAX_CONSECUTIVE_FAILED_ITERATIONS not unique" );
+      if ( pe->get_nb_values() != 1 || !d.atof ( *(pe->get_values().begin()) ) )
+	throw Invalid_Parameter ( "Parameters.cpp" , __LINE__ ,
+				  "invalid parameter: MAX_CONSECUTIVE_FAILED_ITERATIONS" );
+      pe->set_has_been_interpreted();
+      set_MAX_CONSECUTIVE_FAILED_ITERATIONS (static_cast<int>(d.value()));
     }
   }
 
@@ -2534,33 +2635,50 @@ void NOMAD::Parameters::read ( const std::string & param_file )
     }
   }
 
-  // SEED:
-  // -----
+  // DISPLAY_ALL_EVAL:
+  // -----------------
   {
-    pe = entries.find ( "SEED" );
-
+    pe = entries.find ( "DISPLAY_ALL_EVAL" );
     if ( pe ) {
-
       if ( !pe->is_unique() )
 	throw Invalid_Parameter ( "Parameters.cpp" , __LINE__ ,
-				  "invalid parameter: SEED not unique" );
-      
-      if ( pe->get_nb_values() != 1 )
+				  "invalid parameter: DISPLAY_ALL_EVAL not unique" );
+      i = NOMAD::string_to_bool ( *(pe->get_values().begin() ) );
+      if ( pe->get_nb_values() != 1 ||  i == -1 )
 	throw Invalid_Parameter ( "Parameters.cpp" , __LINE__ ,
-				  "invalid parameter: SEED" );
-
-      s = *(pe->get_values().begin());
-      NOMAD::toupper(s);
-
-      if ( s == "NONE" || s == "DIFF" )
-	i = -1;
-      else if ( !NOMAD::atoi ( s , i ) )
-	throw Invalid_Parameter ( "Parameters.cpp" , __LINE__ ,
-				  "invalid parameter: SEED" );
-      set_SEED(i);
+				  "invalid parameter: DISPLAY_ALL_EVAL" );
+      set_DISPLAY_ALL_EVAL ( i == 1 );
       pe->set_has_been_interpreted();
     }
   }
+
+  // SEED:
+  // -----
+	{
+		pe = entries.find ( "SEED" );
+		
+		if ( pe ) {
+			
+			if ( !pe->is_unique() )
+				throw Invalid_Parameter ( "Parameters.cpp" , __LINE__ ,
+										 "invalid parameter: SEED not unique" );
+			
+			if ( pe->get_nb_values() != 1 )
+				throw Invalid_Parameter ( "Parameters.cpp" , __LINE__ ,
+										 "invalid parameter: SEED" );
+			
+			s = *(pe->get_values().begin());
+			NOMAD::toupper(s);
+			
+			if ( s == "NONE" || s == "DIFF" )
+				i = -1;
+			else if ( !NOMAD::atoi ( s , i ) )
+				throw Invalid_Parameter ( "Parameters.cpp" , __LINE__ ,
+										 "invalid parameter: SEED" );
+			set_SEED(i);
+			pe->set_has_been_interpreted();
+		}
+	}
 
   // VARIABLE_GROUP:
   // ---------------
@@ -2974,50 +3092,72 @@ void NOMAD::Parameters::display ( const NOMAD::Display & out ) const
   }
 
   // models:
-  if ( _model_search || _model_eval_sort ) {
+  if ( _model_params.search1   != NOMAD::NO_MODEL ||
+       _model_params.eval_sort != NOMAD::NO_MODEL    ) {
     out << NOMAD::open_block ( "models" );
-    if ( _model_search ) {
-      out << NOMAD::open_block ( "model search" )
-	  << "project to mesh: ";
-      out.display_yes_or_no ( _model_search_proj_to_mesh );
+    if ( _model_params.search1 != NOMAD::NO_MODEL ) {
+      out << NOMAD::open_block ( "model search" );
+      if ( _model_params.search2 == NOMAD::NO_MODEL )
+	out << "models type    : " << _model_params.search1 << std::endl;
+      else
+	out << "models types   : "
+	    << _model_params.search1 << " and "
+	    << _model_params.search2 << std::endl;
+      out << "project to mesh: ";
+      out.display_yes_or_no ( _model_params.search_proj_to_mesh );
       out << std::endl
 	  << "optimistic     : ";
-      out.display_yes_or_no ( _model_search_optimistic );
+      out.display_yes_or_no ( _model_params.search_optimistic );
       out << std::endl
-	  << "max trial pts  : " << _model_search_max_trial_pts
+	  << "max trial pts  : " << _model_params.search_max_trial_pts
 	  << std::endl << NOMAD::close_block();
     }
-    else {
-      out << "model search: ";
-      out.display_yes_or_no ( _model_search );
-      out << std::endl;
+    else
+      out << "no model search" << std::endl;
+
+    //  model ordering:
+    if ( _model_params.eval_sort != NOMAD::NO_MODEL ) {
+      if ( _model_params.eval_sort == NOMAD::QUADRATIC_MODEL ) {
+	out << NOMAD::open_block ( "model ordering" )
+	    << "models type            : " << _model_params.eval_sort
+	    << std::endl << "cautious model ordering: ";
+	out.display_yes_or_no ( _model_params.eval_sort_cautious );
+	out << std::endl << NOMAD::close_block();
+      }
+      else
+	out << "model ordering: " << _model_params.eval_sort << std::endl;
+    }
+    else
+      out << "no model ordering" << std::endl;
+
+    // quadratic model parameters:
+    if ( _model_params.eval_sort == NOMAD::QUADRATIC_MODEL ||
+	 _model_params.search1   == NOMAD::QUADRATIC_MODEL ||
+	 _model_params.search2   == NOMAD::QUADRATIC_MODEL    ) {
+      out << NOMAD::open_block ( "quadratic model parameters" )
+	  << "radius factor: " << _model_params.quad_radius_factor << std::endl
+	  << "use WP       : ";
+      out.display_yes_or_no ( _model_params.quad_use_WP );
+      out	<< std::endl << "min Y size   : ";
+      if ( _model_params.quad_min_Y_size < 0 )
+	out << "n+1";
+      else
+	out << _model_params.quad_min_Y_size;
+      out << std::endl
+	  << "max Y size   : " << _model_params.quad_max_Y_size
+	  << std::endl << NOMAD::close_block();
     }
 
-    if ( _model_eval_sort ) {
-      out << NOMAD::open_block ( "model ordering" )
-	  << "sort trial points with models: ";
-      out.display_yes_or_no ( _model_eval_sort );
-      out << std::endl << "cautious model ordering      : ";
-      out.display_yes_or_no ( _model_eval_sort_cautious );
-      out << std::endl << NOMAD::close_block();
+    // TGP model parameters:
+    if ( _model_params.eval_sort == NOMAD::TGP_MODEL ||
+	 _model_params.search1   == NOMAD::TGP_MODEL ||
+	 _model_params.search2   == NOMAD::TGP_MODEL    ) {
+      out << NOMAD::open_block ( "TGP model parameters" )
+	  << "mode       : " << _model_params.tgp_mode        << std::endl
+	  << "reuse model: " << _model_params.tgp_reuse_model << std::endl
+	  << NOMAD::close_block();
     }
-    else {
-      out << "sort trial points with models: ";
-      out.display_yes_or_no ( _model_eval_sort );
-      out << std::endl;
-    }
-    out << NOMAD::open_block ( "model parameters" )
-	<< "radius factor: " << _model_radius_factor << std::endl
-	<< "use WP       : ";
-    out.display_yes_or_no ( _model_use_WP );
-    out	<< "min_Y_size   : ";
-    if ( _model_min_Y_size < 0 )
-      out << "n+1";
-    else
-      out << _model_min_Y_size;
-    out << std::endl
-	<< "max_Y_size   : " << _model_max_Y_size
-	<< std::endl << NOMAD::close_block() << NOMAD::close_block();
+    out.close_block();
   }
   else {
     out << "use models                       : ";
@@ -3094,6 +3234,11 @@ void NOMAD::Parameters::display ( const NOMAD::Display & out ) const
   }
   out << std::endl;
 
+  // DISPLAY_ALL_EVAL:
+  out << "display all evaluations      : ";
+  out.display_yes_or_no ( _display_all_eval );
+  out << std::endl;
+
   // POINT_DISPLAY_LIMIT:
   out << "point display limit          : ";
   if ( NOMAD::Point::get_display_limit() > 0 )
@@ -3132,6 +3277,10 @@ void NOMAD::Parameters::display ( const NOMAD::Display & out ) const
       out << " (no iterations allowed)";
     out << std::endl;
   }
+
+  // MAX_CONSECUTIVE_FAILED_ITERATIONS:
+  if ( _max_cons_failed_it > 0 )
+    out << "max consecutive failed it.   : " << _max_cons_failed_it << std::endl;
 
   // MAX_CACHE_MEMORY:
   if ( _max_cache_memory > 0 )
@@ -3279,6 +3428,13 @@ void NOMAD::Parameters::check ( bool remove_history_file  ,
   if ( _dimension <= 0 )
     throw Invalid_Parameter ( "Parameters.cpp" , __LINE__ ,
 			      "invalid parameter: DIMENSION" );
+  if ( _dimension > NOMAD::MAX_DIMENSION ) 
+  {
+    std::ostringstream oss;
+    oss << "invalid parameter: DIMENSION (must be <= "
+	<< NOMAD::MAX_DIMENSION << ")";
+    throw Invalid_Parameter ( "Parameters.cpp" , __LINE__ , oss.str() );
+  }
 
   /*----------------------------*/
   /*        BB_INPUT_TYPE       */
@@ -3290,187 +3446,272 @@ void NOMAD::Parameters::check ( bool remove_history_file  ,
   /*----------------------------*/
   /*           BOUNDS           */
   /*----------------------------*/
-  {
-    if ( _lb.size() > _dimension )
-      throw Invalid_Parameter ( "Parameters.cpp" , __LINE__ ,
-				"invalid parameter: LOWER_BOUND" );
-    if ( _lb.size() < _dimension )
-      _lb.resize ( _dimension );
-    
-    if ( _ub.size() > _dimension )
-      throw Invalid_Parameter ( "Parameters.cpp" , __LINE__ ,
-				"invalid parameter: UPPER_BOUND" );
-    if ( _ub.size() < _dimension )
-      _ub.resize ( _dimension );
-    
-    for ( i = 0 ; i < _dimension ; ++i ) {
-      if ( _lb[i].is_defined() && _ub[i].is_defined() ) {
-	if ( _lb[i] > _ub[i] )
-	  throw Invalid_Parameter ( "Parameters.cpp" , __LINE__ ,
-				    "invalid parameter: LOWER_BOUND or UPPER_BOUND" );
-	if ( _lb[i] == _ub[i] )
-	  set_FIXED_VARIABLE ( i , _lb[i] );
-      }
-      
-      // integer, binary, and categorical variables:
-      if ( _bb_input_type[i] != NOMAD::CONTINUOUS ) {
+{
+	if ( _lb.size() > _dimension )
+		throw Invalid_Parameter ( "Parameters.cpp" , __LINE__ ,
+								 "invalid parameter: LOWER_BOUND" );
+	if ( _lb.size() < _dimension )
+		_lb.resize ( _dimension );
 	
-	// binary variables:
-	if ( _bb_input_type[i] == NOMAD::BINARY ) {
-	  _lb[i] = 0.0;
-	  _ub[i] = 1.0;
+	if ( _ub.size() > _dimension )
+		throw Invalid_Parameter ( "Parameters.cpp" , __LINE__ ,
+								 "invalid parameter: UPPER_BOUND" );
+	if ( _ub.size() < _dimension )
+		_ub.resize ( _dimension );
+	
+	for ( i = 0 ; i < _dimension ; ++i ) 
+	{
+		if ( _lb[i].is_defined() && _ub[i].is_defined() ) 
+		{
+			if ( _lb[i] > _ub[i] )
+				throw Invalid_Parameter ( "Parameters.cpp" , __LINE__ ,
+										 "invalid parameter: LOWER_BOUND or UPPER_BOUND" );
+			if ( _lb[i] == _ub[i] )
+				set_FIXED_VARIABLE ( i , _lb[i] );
+			
+		}
+		if(_lb[i].is_defined())
+		{
+			std::vector<NOMAD::Point *>::iterator it;
+			for(it=_x0s.begin();it<_x0s.end();it++)
+			{
+				if ( (**it)[i] < _lb[i] )
+					throw Invalid_Parameter ( "Parameters.cpp" , __LINE__ ,
+											 "invalid parameter: x0 < LOWER_BOUND " );
+			}
+		}
+		if(_ub[i].is_defined())
+		{
+			std::vector<NOMAD::Point *>::iterator it;
+			for(it=_x0s.begin();it<_x0s.end();it++)
+			{
+				if ( (**it)[i] > _ub[i] )
+					throw Invalid_Parameter ( "Parameters.cpp" , __LINE__ ,
+											 "invalid parameter: x0 > UPPER_BOUND " );
+			}
+			
+			// integer, binary, and categorical variables:
+			if ( _bb_input_type[i] != NOMAD::CONTINUOUS )
+			{
+				
+				// binary variables:
+				if ( _bb_input_type[i] == NOMAD::BINARY ) 
+				{
+					_lb[i] = 0.0;
+					_ub[i] = 1.0;
+				}
+				// integer and categorical variables:
+				else {
+					if ( _lb[i].is_defined() )	  
+						_lb[i] = ceil(_lb[i].value());
+					if ( _ub[i].is_defined() )
+						_ub[i] = floor(_ub[i].value());
+				}
+			}
+		}
 	}
+}	
+	
+  /*----------------------------*/
+  /*       FIXED_VARIABLES      */
+  /*----------------------------*/
+  if ( _fixed_variables.size() > _dimension )
+    throw Invalid_Parameter ( "Parameters.cpp" , __LINE__ ,
+			      "invalid parameter: FIXED_VARIABLE" );
 
-	// integer and categorical variables:
-	else {
-	  if ( _lb[i].is_defined() )	  
-	    _lb[i] = ceil(_lb[i].value());
-	  if ( _ub[i].is_defined() )
-	    _ub[i] = floor(_ub[i].value());
-	}
-      }
+  if ( _fixed_variables.size() < _dimension )
+    _fixed_variables.resize ( _dimension );
+
+  int nb_fixed = 0;
+  for ( i = 0; i < _dimension; ++i )
+    if ( _fixed_variables[i].is_defined() ) {
+      ++nb_fixed;
+      if ( (_lb[i].is_defined() && _fixed_variables[i] < _lb[i]) ||
+	   (_ub[i].is_defined() && _fixed_variables[i] > _ub[i]) ||
+	   ( (_bb_input_type[i] == NOMAD::INTEGER     ||
+	      _bb_input_type[i] == NOMAD::CATEGORICAL    )
+	     && !_fixed_variables[i].is_integer() )              ||
+	   ( _bb_input_type[i] == NOMAD::BINARY && !_fixed_variables[i].is_binary() ) )
+	throw Invalid_Parameter ( "Parameters.cpp" , __LINE__ ,
+				  "invalid parameter: FIXED_VARIABLE" );
     }
-  }
+
+  if ( nb_fixed == _dimension )
+    throw Invalid_Parameter ( "Parameters.cpp" , __LINE__ ,
+	  "invalid parameter: FIXED_VARIABLE - all variables are fixed" );
+
+  _nb_free_variables = _dimension - nb_fixed;
 
   /*----------------------------*/
   /*             Mesh           */
   /*----------------------------*/
-  {
-    // mesh sizes:
-    if ( _initial_mesh_size.size() != _dimension )
-      throw Invalid_Parameter ( "Parameters.cpp" , __LINE__ ,
-				"invalid parameter: INITIAL_MESH_SIZE" );
-
-    // initial mesh size:
-    // ------------------
-    bool use_x0 = !_x0s.empty() && _x0s[0]->size() == _dimension;
-
-    for ( i = 0 ; i < _dimension ; ++i ) {
-
-      // continuous variables:
-      // ---------------------
-      if ( _bb_input_type[i] == NOMAD::CONTINUOUS ) {
-
-	// default value for initial mesh size
-	// (r0.1 if there are bounds, max{|x0|,1.0} otherwise):
-	if ( !_initial_mesh_size[i].is_defined() ) {
-	  if ( !_lb[i].is_defined() || !_ub[i].is_defined() ) {
-	    if ( use_x0 && (*_x0s[0])[i].is_defined() && (*_x0s[0])[i].abs() > 1.0 )
-	      _initial_mesh_size[i] = (*_x0s[0])[i].abs();
-	    else
-	      _initial_mesh_size[i] = 1.0;    
-	  }
-	  else
-	    set_INITIAL_MESH_SIZE ( i , 0.1 , true );
+	{
+		// mesh sizes:
+		
+		
+		if ( _initial_mesh_size.size() != _dimension )
+			throw Invalid_Parameter ( "Parameters.cpp" , __LINE__ ,
+									 "invalid parameter: INITIAL_MESH_SIZE must have same dimension as problem" );
+		
+		// initial mesh size:
+		// ------------------
+		bool use_x0 = !_x0s.empty() && _x0s[0]->size() == _dimension;
+		
+		for ( i = 0 ; i < _dimension ; ++i ) 
+		{
+			
+			// continuous variables:
+			// ---------------------
+			if ( _bb_input_type[i] == NOMAD::CONTINUOUS ) 
+			{
+				// default value for initial mesh size
+				if ( !_initial_mesh_size[i].is_defined() ) 
+				{
+					if (_lb[i].is_defined() && _ub[i].is_defined())
+						set_INITIAL_MESH_SIZE ( i , 0.1 , true );
+					else if ( _lb[i].is_defined() && use_x0 && (*_x0s[0])[i].is_defined())
+					{
+						_initial_mesh_size[i] = (*_x0s[0])[i]-_lb[i];   // Case x0 < lb tested elsewhere
+					}
+					else if ( _ub[i].is_defined()&& use_x0 && (*_x0s[0])[i].is_defined())
+					{
+						_initial_mesh_size[i] = _ub[i]-(*_x0s[0])[i];   // Case x0 > ub tested elsewhere
+					}
+					else 
+					{
+						if ( use_x0 && (*_x0s[0])[i].is_defined() )
+							_initial_mesh_size[i] = ( (*_x0s[0])[i].abs()==0.0) ? 1:(*_x0s[0])[i].abs()*0.1;
+						else 
+							_initial_mesh_size[i] = 1.0;
+						
+						if (_initial_mesh_size[i] == 1.0 && _out.get_gen_dd()>=NOMAD::NORMAL_DISPLAY)
+							_out << NOMAD::open_block("Warning:") 
+							<< "Initial mesh size for variable " << i << "has been arbitrarily fixed to 1." << std::endl
+							<< " In the absence of bounds and initial values, it is recommended" << std::endl
+							<< "to explicitely provide this parameter." << std::endl
+							<< NOMAD::close_block();
+					}		
+				}
+				
+				else if ( !_fixed_variables[i].is_defined() &&
+						 ( _initial_mesh_size[i].value() <  NOMAD::Double::get_epsilon() || 
+						  _initial_mesh_size[i].value() <= 0.0                             ) )
+					throw Invalid_Parameter ( "Parameters.cpp" , __LINE__ ,
+											 "invalid parameter: INITIAL_MESH_SIZE" );
+			}
+			
+			// binary/categorical variables:
+			// -----------------------------
+			else if ( _bb_input_type[i] == NOMAD::BINARY      ||
+					 _bb_input_type[i] == NOMAD::CATEGORICAL    )
+			{
+				_initial_mesh_size[i] = 1.0;
+			}
+			
+			// integer variables:
+			// ------------------
+			else 
+			{
+				
+				if ( _initial_mesh_size[i].is_defined() )
+				{
+					if ( _initial_mesh_size[i] < 1.0 )
+						_initial_mesh_size[i] = 1.0;
+				}
+				else 
+				{
+					
+					// default value for initial mesh size
+					// (r0.1 if there are bounds, 1.0 otherwise):
+					if ( !_lb[i].is_defined() || !_ub[i].is_defined() )
+						_initial_mesh_size[i] = 1.0;
+					else 
+					{
+						set_INITIAL_MESH_SIZE ( i , 0.1 , true );
+						if ( _initial_mesh_size[i] < 1.0 )
+							_initial_mesh_size[i] = 1.0;
+					}
+				}
+			}
+		}
+		
+		// min mesh size \Delta^m_min:
+		if ( _min_mesh_size.is_defined() ) 
+		{
+			
+			if ( _min_mesh_size.size() != _dimension )
+				throw Invalid_Parameter ( "Parameters.cpp" , __LINE__ ,
+										 "invalid parameter: MIN_MESH_SIZE" );
+			
+			for ( i = 0 ; i < _dimension ; ++i )
+				if ( _min_mesh_size[i].is_defined() &&
+					(_min_mesh_size[i].value() <  NOMAD::Double::get_epsilon() ||
+					 _min_mesh_size[i].value() <= 0.0                             ) )
+					throw Invalid_Parameter ( "Parameters.cpp" , __LINE__ ,
+											 "invalid parameters: MIN_MESH_SIZE" );
+		}
+		
+		// min poll size \Delta^p_min:
+		if ( _min_poll_size.is_defined() )
+		{
+			
+			_min_poll_size_defined = true;
+			
+			if ( _min_poll_size.size() != _dimension )
+				throw Invalid_Parameter ( "Parameters.cpp" , __LINE__ ,
+										 "invalid parameter: MIN_POLL_SIZE" );
+			
+			for ( i = 0 ; i < _dimension ; ++i )
+			{
+				// continuous variables:
+				if ( _bb_input_type[i] == NOMAD::CONTINUOUS )
+				{
+					if ( _min_poll_size[i].is_defined() &&
+						(_min_poll_size[i].value() <  NOMAD::Double::get_epsilon() ||
+						 _min_poll_size[i].value() <= 0.0                             ) )
+						throw Invalid_Parameter ( "Parameters.cpp" , __LINE__ ,
+												 "invalid parameters: MIN_POLL_SIZE" );
+				}
+				
+				// integer and binary variables:
+				else if ( _bb_input_type[i] != NOMAD::CATEGORICAL ) 
+				{
+					if ( _min_poll_size[i].is_defined() )
+					{   
+						if ( _min_poll_size[i] < 1.0 )
+							_min_poll_size[i] = 1.0;
+					}
+					else
+						_min_poll_size[i] = 1.0;
+				}
+			}
+		}
+		
+		// default min poll size for non-continuous variables:
+		else 
+		{
+			
+			_min_poll_size_defined = false;
+			
+			_min_poll_size = NOMAD::Point ( _dimension );
+			for ( i = 0 ; i < _dimension ; ++i )
+				if ( _bb_input_type[i] != NOMAD::CONTINUOUS  &&
+					_bb_input_type[i] != NOMAD::CATEGORICAL    )
+					_min_poll_size[i] = 1.0;
+		}
+		
+		// default value for _mesh_update_basis (tau):
+		if ( !_mesh_update_basis.is_defined() )
+			_mesh_update_basis = 4.0;
+		else if ( _mesh_update_basis <= 0.0 )
+			throw Invalid_Parameter ( "Parameters.cpp" , __LINE__ ,
+									 "invalid parameters: MESH_UPDATE_BASIS" );
+		
+		// compare l0 and lmax:
+		if ( _max_mesh_index != NOMAD::UNDEFINED_L && _initial_mesh_index > _max_mesh_index )
+			throw Invalid_Parameter ( "Parameters.cpp" , __LINE__ ,
+									 "invalid parameters: MAX_MESH_INDEX or INITIAL_MESH_INDEX" );
 	}
-
-	else if ( _initial_mesh_size[i].value() <  NOMAD::Double::get_epsilon() || 
-		  _initial_mesh_size[i].value() <= 0.0                             )
-	  throw Invalid_Parameter ( "Parameters.cpp" , __LINE__ ,
-				    "invalid parameter: INITIAL_MESH_SIZE" );
-      }
-
-      // binary/categorical variables:
-      // -----------------------------
-      else if ( _bb_input_type[i] == NOMAD::BINARY      ||
-		_bb_input_type[i] == NOMAD::CATEGORICAL    ) {
-	_initial_mesh_size[i] = 1.0;
-      }
-      
-      // integer variables:
-      // ------------------
-      else {
-
-	if ( _initial_mesh_size[i].is_defined() ) {
-	  if ( _initial_mesh_size[i] < 1.0 )
-	    _initial_mesh_size[i] = 1.0;
-	}
-	else {
-	
-	  // default value for initial mesh size
-	  // (r0.1 if there are bounds, 1.0 otherwise):
-	  if ( !_lb[i].is_defined() || !_ub[i].is_defined() )
-	    _initial_mesh_size[i] = 1.0;
-	  else {
-	    set_INITIAL_MESH_SIZE ( i , 0.1 , true );
-	    if ( _initial_mesh_size[i] < 1.0 )
-	      _initial_mesh_size[i] = 1.0;
-	  }
-	}
-      }
-    }
-
-    // min mesh size \Delta^m_min:
-    if ( _min_mesh_size.is_defined() ) {
-
-      if ( _min_mesh_size.size() != _dimension )
-	throw Invalid_Parameter ( "Parameters.cpp" , __LINE__ ,
-				  "invalid parameter: MIN_MESH_SIZE" );
-      
-      for ( i = 0 ; i < _dimension ; ++i )
-	if ( _min_mesh_size[i].is_defined() &&
-	     (_min_mesh_size[i].value() <  NOMAD::Double::get_epsilon() ||
-	      _min_mesh_size[i].value() <= 0.0                             ) )
-	  throw Invalid_Parameter ( "Parameters.cpp" , __LINE__ ,
-				    "invalid parameters: MIN_MESH_SIZE" );
-    }
-
-    // min poll size \Delta^p_min:
-    if ( _min_poll_size.is_defined() ) {
-
-      _min_poll_size_defined = true;
-
-      if ( _min_poll_size.size() != _dimension )
-	throw Invalid_Parameter ( "Parameters.cpp" , __LINE__ ,
-				  "invalid parameter: MIN_POLL_SIZE" );
-      
-      for ( i = 0 ; i < _dimension ; ++i ) {
-
-	// continuous variables:
-	if ( _bb_input_type[i] == NOMAD::CONTINUOUS ) {
-	  if ( _min_poll_size[i].is_defined() &&
-	       (_min_poll_size[i].value() <  NOMAD::Double::get_epsilon() ||
-		_min_poll_size[i].value() <= 0.0                             ) )
-	    throw Invalid_Parameter ( "Parameters.cpp" , __LINE__ ,
-				      "invalid parameters: MIN_POLL_SIZE" );
-	}
-
-	// integer and binary variables:
-	else if ( _bb_input_type[i] != NOMAD::CATEGORICAL ) {
-	  if ( _min_poll_size[i].is_defined() ) {   
-	    if ( _min_poll_size[i] < 1.0 )
-	      _min_poll_size[i] = 1.0;
-	  }
-	  else
-	    _min_poll_size[i] = 1.0;
-	}
-      }
-    }
-    
-    // default min poll size for non-continuous variables:
-    else {
-
-      _min_poll_size_defined = false;
-
-      _min_poll_size = NOMAD::Point ( _dimension );
-      for ( i = 0 ; i < _dimension ; ++i )
-	if ( _bb_input_type[i] != NOMAD::CONTINUOUS  &&
-	     _bb_input_type[i] != NOMAD::CATEGORICAL    )
-	  _min_poll_size[i] = 1.0;
-    }
-
-    // default value for _mesh_update_basis (tau):
-    if ( !_mesh_update_basis.is_defined() )
-      _mesh_update_basis = 4.0;
-    else if ( _mesh_update_basis <= 0.0 )
-      throw Invalid_Parameter ( "Parameters.cpp" , __LINE__ ,
-				"invalid parameters: MESH_UPDATE_BASIS" );
-
-    // compare l0 and lmax:
-    if ( _max_mesh_index != NOMAD::UNDEFINED_L && _initial_mesh_index > _max_mesh_index )
-      throw Invalid_Parameter ( "Parameters.cpp" , __LINE__ ,
-	    "invalid parameters: MAX_MESH_INDEX or INITIAL_MESH_INDEX" );
-  }
 
   int nb_obj = static_cast<int>(_index_obj.size());
 
@@ -3521,36 +3762,6 @@ void NOMAD::Parameters::check ( bool remove_history_file  ,
     if ( _scaling[i].is_defined() && _scaling[i] == 0.0 )
       throw Invalid_Parameter ( "Parameters.cpp" , __LINE__ ,
 	    "invalid parameter: SCALING (zero value)" );
-
-  /*----------------------------*/
-  /*       FIXED_VARIABLES      */
-  /*----------------------------*/
-  if ( _fixed_variables.size() > _dimension )
-    throw Invalid_Parameter ( "Parameters.cpp" , __LINE__ ,
-			      "invalid parameter: FIXED_VARIABLE" );
-
-  if ( _fixed_variables.size() < _dimension )
-    _fixed_variables.resize ( _dimension );
-
-  int nb_fixed = 0;
-  for ( i = 0; i < _dimension; ++i )
-    if ( _fixed_variables[i].is_defined() ) {
-      ++nb_fixed;
-      if ( (_lb[i].is_defined() && _fixed_variables[i] < _lb[i]) ||
-	   (_ub[i].is_defined() && _fixed_variables[i] > _ub[i]) ||
-	   ( (_bb_input_type[i] == NOMAD::INTEGER     ||
-	      _bb_input_type[i] == NOMAD::CATEGORICAL    )
-	     && !_fixed_variables[i].is_integer() )              ||
-	   ( _bb_input_type[i] == NOMAD::BINARY && !_fixed_variables[i].is_binary() ) )
-	throw Invalid_Parameter ( "Parameters.cpp" , __LINE__ ,
-				  "invalid parameter: FIXED_VARIABLE" );
-    }
-
-  if ( nb_fixed == _dimension )
-    throw Invalid_Parameter ( "Parameters.cpp" , __LINE__ ,
-	  "invalid parameter: FIXED_VARIABLE - all variables are fixed" );
-
-  _nb_free_variables = _dimension - nb_fixed;
 
   /*---------------------------*/
   /*      blackbox outputs     */
@@ -3894,7 +4105,7 @@ void NOMAD::Parameters::check ( bool remove_history_file  ,
   /*   opportunistic strategy   */
   /*----------------------------*/
   if ( !_opportunistic_eval ) {
-    _model_eval_sort              = false;
+    _model_params.eval_sort       = NOMAD::NO_MODEL;
     _sgte_eval_sort               = false;
     _opportunistic_lucky_eval     = false;
     _opportunistic_min_nb_success = -1;
@@ -3950,7 +4161,6 @@ void NOMAD::Parameters::check ( bool remove_history_file  ,
   /*----------------------------------*/
   /*  signature (standard or extern)  */
   /*----------------------------------*/
-
   NOMAD::Signature * new_s = new NOMAD::Signature ( _dimension          ,
 						    _bb_input_type      ,
 						    _initial_mesh_size  ,
@@ -4030,40 +4240,41 @@ void NOMAD::Parameters::check ( bool remove_history_file  ,
   /*       model parameters    */
   /*---------------------------*/
   {
-    // disable models for more than 50 variables and for categorical variables:
-    if ( _nb_free_variables >= 50 || has_categorical )
-      _model_search = _model_eval_sort = false;
+    // disable models for more than 50 variables,
+    // for categorical variables, and for surrogate optimization:
+    if ( _nb_free_variables >= 50 || has_categorical || _opt_only_sgte )
+      _model_params.search1 = _model_params.search2 = _model_params.eval_sort
+	= NOMAD::NO_MODEL;
 
     // disable model search in parallel mode:
 #ifdef USE_MPI
-    _model_search = false;
+    _model_params.search1 = _model_params.search2 = NOMAD::NO_MODEL;
 #endif
 
     // other checks:
-    if ( _model_radius_factor <= 0.0 )
+    if ( ( _model_params.search1 == NOMAD::NO_MODEL &&
+	   _model_params.search2 != NOMAD::NO_MODEL    ) ||
+	 ( _model_params.search1 != NOMAD::NO_MODEL &&
+	   _model_params.search1 == _model_params.search2 ) )
       throw Invalid_Parameter ( "Parameters.cpp" , __LINE__ ,
-	    "invalid parameter: MODEL_RADIUS_FACTOR (must be > 0)" );
+      "invalid parameter: MODEL_SEARCH (conflict with the two types of search)" );
 
-    if ( _model_min_Y_size < 0 )
-      _model_min_Y_size = -1;
-    else if ( _model_min_Y_size < 2 )
+    if ( _model_params.quad_radius_factor <= 0.0 )
       throw Invalid_Parameter ( "Parameters.cpp" , __LINE__ ,
-	    "invalid parameter: MODEL_MIN_Y_SIZE (must be in {'N+1',-1,2,3,...})" );
+	    "invalid parameter: MODEL_QUAD_RADIUS_FACTOR (must be > 0)" );
 
-    if ( _model_max_Y_size <= _nb_free_variables ) {
-      if ( _model_max_Y_size_usr ) {
-	std::ostringstream err;
-	err << "invalid parameter: MODEL_MAX_Y_SIZE (must be > "
-	    << _nb_free_variables << ")";
-	throw Invalid_Parameter ( "Parameters.cpp" , __LINE__ , err.str() );
-      }
-      else
-	_model_max_Y_size = _nb_free_variables + 1;
-    }
-
-    if ( _model_search_max_trial_pts < 1 || _model_search_max_trial_pts > 4 )
+    if ( _model_params.quad_min_Y_size < 0 )
+      _model_params.quad_min_Y_size = -1;
+    else if ( _model_params.quad_min_Y_size < 2 )
       throw Invalid_Parameter ( "Parameters.cpp" , __LINE__ ,
-	    "invalid parameter: MODEL_SEARCH_MAX_TRIAL_PTS (must be in {1,2,3,4})" );
+      "invalid parameter: MODEL_QUAD_MIN_Y_SIZE (must be in {'N+1',-1,2,3,...})" );
+
+    if ( _model_params.quad_max_Y_size <= _nb_free_variables )
+      _model_params.quad_max_Y_size = _nb_free_variables + 1;
+
+    if ( _model_params.search_max_trial_pts < 1 )
+	 throw Invalid_Parameter ( "Parameters.cpp" , __LINE__ ,
+	 "invalid parameter: MODEL_SEARCH_MAX_TRIAL_PTS (must be >= 1)" );
   }
 
   /*----------------------*/
@@ -4178,13 +4389,36 @@ bool NOMAD::Parameters::get_cache_search ( void ) const
   return _cache_search;
 }
 
+// access to all the models parameters:
+void NOMAD::Parameters::get_model_parameters ( NOMAD::model_params_type & mp ) const
+{
+  if ( _to_be_checked )
+    throw Bad_Access ( "Parameters.cpp" , __LINE__ ,
+    "Parameters::get_model_parameters(), Parameters::check() must be invoked" );
+  mp = _model_params;
+}
+
 // get_model_search:
-bool NOMAD::Parameters::get_model_search ( void ) const
+NOMAD::model_type NOMAD::Parameters::get_model_search ( int i ) const
 {
   if ( _to_be_checked )
     throw Bad_Access ( "Parameters.cpp" , __LINE__ ,
           "Parameters::get_model_search(), Parameters::check() must be invoked" );
-  return _model_search;
+
+  if ( i != 1 && i != 2 )
+    throw Bad_Access ( "Parameters.cpp" , __LINE__ ,
+          "Parameters::get_model_search(i), i must be 1 or 2" );
+
+  return ( i == 1 ) ? _model_params.search1 : _model_params.search2;
+}
+
+// has_model_search:
+bool NOMAD::Parameters::has_model_search ( void ) const
+{
+  if ( _to_be_checked )
+    throw Bad_Access ( "Parameters.cpp" , __LINE__ ,
+    "Parameters::has_model_search(), Parameters::check() must be invoked" );
+  return _model_params.search1 != NOMAD::NO_MODEL;
 }
 
 // get_model_search_optimistic:
@@ -4193,7 +4427,7 @@ bool NOMAD::Parameters::get_model_search_optimistic ( void ) const
   if ( _to_be_checked )
     throw Bad_Access ( "Parameters.cpp" , __LINE__ ,
     "Parameters::get_model_search_optimistic(), Parameters::check() must be invoked" );
-  return _model_search_optimistic;
+  return _model_params.search_optimistic;
 }
 
 // get_model_search_proj_to_mesh:
@@ -4202,43 +4436,61 @@ bool NOMAD::Parameters::get_model_search_proj_to_mesh ( void ) const
   if ( _to_be_checked )
     throw Bad_Access ( "Parameters.cpp" , __LINE__ ,
     "Parameters::get_model_search_proj_to_mesh(), Parameters::check() must be invoked" );
-  return _model_search_proj_to_mesh;
+  return _model_params.search_proj_to_mesh;
 }
 
-// get_model_radius_factor:
-const NOMAD::Double & NOMAD::Parameters::get_model_radius_factor ( void ) const
+// get_model_quad_radius_factor:
+const NOMAD::Double & NOMAD::Parameters::get_model_quad_radius_factor ( void ) const
 {
   if ( _to_be_checked )
     throw Bad_Access ( "Parameters.cpp" , __LINE__ ,
-    "Parameters::get_model_radius_factor(), Parameters::check() must be invoked" );
-  return _model_radius_factor;
+    "Parameters::get_model_quad_radius_factor(), Parameters::check() must be invoked" );
+  return _model_params.quad_radius_factor;
 }
 
-// get_model_use_WP:
-bool NOMAD::Parameters::get_model_use_WP ( void ) const
+// get_model_quad_use_WP:
+bool NOMAD::Parameters::get_model_quad_use_WP ( void ) const
 {
   if ( _to_be_checked )
     throw Bad_Access ( "Parameters.cpp" , __LINE__ ,
-    "Parameters::get_model_use_WP(), Parameters::check() must be invoked" );
-  return _model_use_WP;
+    "Parameters::get_model_quad_use_WP(), Parameters::check() must be invoked" );
+  return _model_params.quad_use_WP;
 }
 
-// get_model_max_Y_size:
-int NOMAD::Parameters::get_model_max_Y_size ( void ) const
+// get_model_quad_max_Y_size:
+int NOMAD::Parameters::get_model_quad_max_Y_size ( void ) const
 {
   if ( _to_be_checked )
     throw Bad_Access ( "Parameters.cpp" , __LINE__ ,
-    "Parameters::get_model_max_Y_size(), Parameters::check() must be invoked" );
-  return _model_max_Y_size;
+    "Parameters::get_model_quad_max_Y_size(), Parameters::check() must be invoked" );
+  return _model_params.quad_max_Y_size;
 }
 
-// get_model_min_Y_size:
-int NOMAD::Parameters::get_model_min_Y_size ( void ) const
+// get_model_quad_min_Y_size:
+int NOMAD::Parameters::get_model_quad_min_Y_size ( void ) const
 {
   if ( _to_be_checked )
     throw Bad_Access ( "Parameters.cpp" , __LINE__ ,
-    "Parameters::get_model_min_Y_size(), Parameters::check() must be invoked" );
-  return _model_min_Y_size;
+    "Parameters::get_model_quad_min_Y_size(), Parameters::check() must be invoked" );
+  return _model_params.quad_min_Y_size;
+}
+
+// get_model_tgp_mode:
+NOMAD::TGP_mode_type NOMAD::Parameters::get_model_tgp_mode ( void ) const
+{
+  if ( _to_be_checked )
+    throw Bad_Access ( "Parameters.cpp" , __LINE__ ,
+    "Parameters::get_model_tgp_mode(), Parameters::check() must be invoked" );
+  return _model_params.tgp_mode;
+}
+
+// get_model_tgp_reuse_model:
+bool NOMAD::Parameters::get_model_tgp_reuse_model ( void ) const
+{
+  if ( _to_be_checked )
+    throw Bad_Access ( "Parameters.cpp" , __LINE__ ,
+    "Parameters::get_model_tgp_reuse_model(), Parameters::check() must be invoked" );
+  return _model_params.tgp_reuse_model;
 }
 
 // get_model_search_max_trial_pts:
@@ -4246,17 +4498,17 @@ int NOMAD::Parameters::get_model_search_max_trial_pts ( void ) const
 {
   if ( _to_be_checked )
     throw Bad_Access ( "Parameters.cpp" , __LINE__ ,
-    "Parameters::get_model_search_max_trial_pts(), Parameters::check() must be invoked" );
-  return _model_search_max_trial_pts;
+  "Parameters::get_model_search_max_trial_pts(), Parameters::check() must be invoked" );
+  return _model_params.search_max_trial_pts;
 }
 
 // get_model_eval_sort:
-bool NOMAD::Parameters::get_model_eval_sort ( void ) const
+NOMAD::model_type NOMAD::Parameters::get_model_eval_sort ( void ) const
 {
   if ( _to_be_checked )
     throw Bad_Access ( "Parameters.cpp" , __LINE__ ,
     "Parameters::get_model_eval_sort(), Parameters::check() must be invoked" );
-  return _model_eval_sort;
+  return _model_params.eval_sort;
 }
 
 // get_model_eval_sort_cautious:
@@ -4265,7 +4517,7 @@ bool NOMAD::Parameters::get_model_eval_sort_cautious ( void ) const
   if ( _to_be_checked )
     throw Bad_Access ( "Parameters.cpp" , __LINE__ ,
     "Parameters::get_model_eval_sort_cautious(), Parameters::check() must be invoked" );
-  return _model_eval_sort_cautious;
+  return _model_params.eval_sort_cautious;
 }
 
 // get_VNS_search:
@@ -4687,6 +4939,15 @@ int NOMAD::Parameters::get_seed ( void ) const
   return _seed;
 }
 
+// get_display_all_eval:
+bool NOMAD::Parameters::get_display_all_eval ( void ) const
+{
+  if ( _to_be_checked )
+    throw Bad_Access ( "Parameters.cpp" , __LINE__ ,
+	  "Parameters::get_display_all_eval(), Parameters::check() must be invoked" );
+  return _display_all_eval;
+}
+
 // get_display_stats:
 const std::list<std::string> & NOMAD::Parameters::get_display_stats ( void ) const
 {
@@ -4802,6 +5063,15 @@ int NOMAD::Parameters::get_max_iterations ( void ) const
     throw Bad_Access ( "Parameters.cpp" , __LINE__ ,
 	  "Parameters::get_max_iterations(), Parameters::check() must be invoked" );
   return _max_iterations;
+}
+
+// get_max_consecutive_failed_iterations:
+int NOMAD::Parameters::get_max_consecutive_failed_iterations ( void ) const
+{
+  if ( _to_be_checked )
+    throw Bad_Access ( "Parameters.cpp" , __LINE__ ,
+    "Parameters::get_max_consecutive_failed_iterations(), Parameters::check() must be invoked" );
+  return _max_cons_failed_it;
 }
 
 // get_max_cache_memory:
@@ -5263,75 +5533,168 @@ void NOMAD::Parameters::set_CACHE_SEARCH ( bool s )
   _cache_search  = s;
 }
 
-// set_MODEL_SEARCH:
-void NOMAD::Parameters::set_MODEL_SEARCH ( bool ms )
+// set all the models parameters:
+void NOMAD::Parameters::set_model_parameters ( const NOMAD::model_params_type & mp )
 {
   _to_be_checked = true;
-  _model_search  = ms;
+  set_MODEL_SEARCH               ( 1 , mp.search1          );
+  set_MODEL_SEARCH               ( 2 , mp.search2          );
+  set_MODEL_EVAL_SORT            ( mp.eval_sort            );
+  set_MODEL_SEARCH_OPTIMISTIC    ( mp.search_optimistic    );
+  set_MODEL_SEARCH_PROJ_TO_MESH  ( mp.search_proj_to_mesh  );
+  set_MODEL_SEARCH_MAX_TRIAL_PTS ( mp.search_max_trial_pts );
+  set_MODEL_EVAL_SORT_CAUTIOUS   ( mp.eval_sort_cautious   );
+  set_MODEL_QUAD_RADIUS_FACTOR   ( mp.quad_radius_factor   );
+  set_MODEL_QUAD_USE_WP          ( mp.quad_use_WP          );
+  set_MODEL_QUAD_MIN_Y_SIZE      ( mp.quad_min_Y_size      );
+  set_MODEL_QUAD_MAX_Y_SIZE      ( mp.quad_max_Y_size      );
+  set_MODEL_TGP_MODE             ( mp.tgp_mode             );
+  set_MODEL_TGP_REUSE_MODEL      ( mp.tgp_reuse_model      );
+}
+
+// set_MODEL_SEARCH (1/2):
+void NOMAD::Parameters::set_MODEL_SEARCH ( int i , NOMAD::model_type ms )
+{
+  _to_be_checked = true;
+
+#ifndef USE_TGP
+  if ( ms == NOMAD::TGP_MODEL )
+    throw Invalid_Parameter ( "Parameters.cpp" , __LINE__ ,
+    "invalid parameter: MODEL_SEARCH: this version has not been compiled for TGP" );
+#endif
+
+  if ( i != 1 && i != 2 )
+    throw Invalid_Parameter ( "Parameters.cpp" , __LINE__ ,
+    "NOMAD::Parameters::set_MODEL_SEARCH(i,m): bad value for argument i (must be 1 or 2)" );
+
+  if ( i == 1 ) {
+    if ( _model_params.search2 != NOMAD::NO_MODEL )
+      throw Invalid_Parameter ( "Parameters.cpp" , __LINE__ ,
+      "NOMAD::Parameters::set_MODEL_SEARCH(1,m): already a second model search" );
+
+    _model_params.search1 = ms;
+  }
+  else {
+
+    if ( _model_params.search1 == NOMAD::NO_MODEL && ms != NOMAD::NO_MODEL )
+      throw Invalid_Parameter ( "Parameters.cpp" , __LINE__ ,
+      "NOMAD::Parameters::set_MODEL_SEARCH(2,m): no first model search" );
+
+    if ( _model_params.search1 != NOMAD::NO_MODEL && _model_params.search1 == ms )
+      throw Invalid_Parameter ( "Parameters.cpp" , __LINE__ ,
+      "NOMAD::Parameters::set_MODEL_SEARCH(2,m): second model search of the same type" );
+
+    _model_params.search2 = ms;
+  }
+}
+
+// set_MODEL_SEARCH (2/2):
+void NOMAD::Parameters::set_MODEL_SEARCH ( bool ms )
+{
+  if ( ms ) {
+    set_MODEL_SEARCH ( 1 , NOMAD::QUADRATIC_MODEL );
+    set_MODEL_SEARCH ( 2 , NOMAD::NO_MODEL        );
+  }
+  else {
+    set_MODEL_SEARCH ( 1 , NOMAD::NO_MODEL );
+    set_MODEL_SEARCH ( 2 , NOMAD::NO_MODEL );
+  }
+}
+
+// set_MODEL_EVAL_SORT (1/2):
+void NOMAD::Parameters::set_MODEL_EVAL_SORT ( NOMAD::model_type mes )
+{
+#ifndef USE_TGP
+  if ( mes == NOMAD::TGP_MODEL )
+    throw Invalid_Parameter ( "Parameters.cpp" , __LINE__ ,
+    "invalid parameter: MODEL_EVAL_SORT: this version has not been compiled for TGP" );
+#endif
+  _to_be_checked          = true;
+  _model_params.eval_sort = mes;
+}
+
+// set_MODEL_EVAL_SORT (2/2):
+void NOMAD::Parameters::set_MODEL_EVAL_SORT ( bool mes )
+{
+  if ( mes )
+    set_MODEL_EVAL_SORT ( NOMAD::QUADRATIC_MODEL );
+  else
+    set_MODEL_EVAL_SORT ( NOMAD::NO_MODEL );
 }
 
 // set_MODEL_SEARCH_OPTIMISTIC:
 void NOMAD::Parameters::set_MODEL_SEARCH_OPTIMISTIC ( bool mso )
 {
-  _to_be_checked           = true;
-  _model_search_optimistic = mso;
+  _to_be_checked                  = true;
+  _model_params.search_optimistic = mso;
 }
 
 // set_MODEL_SEARCH_PROJ_TO_MESH:
 void NOMAD::Parameters::set_MODEL_SEARCH_PROJ_TO_MESH ( bool ptm )
 {
-  _to_be_checked             = true;
-  _model_search_proj_to_mesh = ptm;
+  _to_be_checked                    = true;
+  _model_params.search_proj_to_mesh = ptm;
 }
 
-// set_MODEL_RADIUS_FACTOR:
-void NOMAD::Parameters::set_MODEL_RADIUS_FACTOR ( const NOMAD::Double & r )
+// set_MODEL_QUAD_RADIUS_FACTOR:
+void NOMAD::Parameters::set_MODEL_QUAD_RADIUS_FACTOR ( const NOMAD::Double & r )
 {
-  _to_be_checked       = true;
-  _model_radius_factor = r;
+  _to_be_checked                   = true;
+  _model_params.quad_radius_factor = r;
 }
 
-// set_MODEL_USE_WP:
-void NOMAD::Parameters::set_MODEL_USE_WP ( bool uwp )
+// set_MODEL_QUAD_USE_WP:
+void NOMAD::Parameters::set_MODEL_QUAD_USE_WP ( bool uwp )
 {
-  _to_be_checked = true;
-  _model_use_WP  = uwp;
+  _to_be_checked            = true;
+  _model_params.quad_use_WP = uwp;
 }
 
-// set_MODEL_MAX_Y_SIZE:
-void NOMAD::Parameters::set_MODEL_MAX_Y_SIZE ( int s )
+// set_MODEL_QUAD_MAX_Y_SIZE:
+void NOMAD::Parameters::set_MODEL_QUAD_MAX_Y_SIZE ( int s )
 {
-  _to_be_checked        = true;
-  _model_max_Y_size_usr = true;
-  _model_max_Y_size     = s;
+  _to_be_checked                = true;
+  _model_params.quad_max_Y_size = s;
 }
 
-// set_MODEL_min_Y_SIZE:
-void NOMAD::Parameters::set_MODEL_MIN_Y_SIZE ( int s )
+// set_MODEL_QUAD_MIN_Y_SIZE:
+void NOMAD::Parameters::set_MODEL_QUAD_MIN_Y_SIZE ( int s )
 {
-  _to_be_checked    = true;
-  _model_min_Y_size = (s < 0) ? -1 : s;
+  _to_be_checked                = true;
+  _model_params.quad_min_Y_size = (s < 0) ? -1 : s;
+}
+
+// set_MODEL_TGP_MODE:
+void NOMAD::Parameters::set_MODEL_TGP_MODE ( NOMAD::TGP_mode_type m )
+{
+  if ( m == NOMAD::TGP_USER ) {
+    throw Invalid_Parameter ( "Parameters.cpp" , __LINE__ ,
+    "invalid parameter: MODEL_TGP_MODE: the TGP user mode is only a debugging option" );
+  }
+
+  _to_be_checked         = true;
+  _model_params.tgp_mode = m;
+}
+
+// set_MODEL_TGP_REUSE_MODEL:
+void NOMAD::Parameters::set_MODEL_TGP_REUSE_MODEL ( bool rm )
+{
+  _to_be_checked                = true;
+  _model_params.tgp_reuse_model = rm;
 }
 
 // set_MODEL_SEARCH_MAX_TRIAL_PTS:
 void NOMAD::Parameters::set_MODEL_SEARCH_MAX_TRIAL_PTS ( int s )
 {
-  _to_be_checked              = true;
-  _model_search_max_trial_pts = s;
-}
-
-// set_MODEL_EVAL_SORT:
-void NOMAD::Parameters::set_MODEL_EVAL_SORT ( bool mes )
-{
-  _to_be_checked   = true;
-  _model_eval_sort = mes;
+  _to_be_checked                     = true;
+  _model_params.search_max_trial_pts = s;
 }
 
 // set_MODEL_EVAL_SORT_CAUTIOUS:
 void NOMAD::Parameters::set_MODEL_EVAL_SORT_CAUTIOUS ( bool mesc )
 {
-  _to_be_checked            = true;
-  _model_eval_sort_cautious = mesc;
+  _to_be_checked                   = true;
+  _model_params.eval_sort_cautious = mesc;
 }
 
 // set_VNS_SEARCH (1/2):
@@ -5875,6 +6238,10 @@ void NOMAD::Parameters::set_X0 ( const std::string & file_name )
 {
   _to_be_checked = true;
 
+  if ( file_name.empty() )
+    throw Invalid_Parameter ( "Parameters.cpp" , __LINE__ ,
+	  "Parameters::set_X0(file_name): file_name is empty" );
+
   if ( _dimension <= 0 )
     throw Invalid_Parameter ( "Parameters.cpp" , __LINE__ ,
 	  "Parameters::set_X0() has been used before setting DIMENSION" );
@@ -5882,7 +6249,7 @@ void NOMAD::Parameters::set_X0 ( const std::string & file_name )
   NOMAD::Point  tmp_x0 ( _dimension );
   std::string   complete_file_name = _problem_dir + file_name;
   std::ifstream fin ( complete_file_name.c_str() );
-	
+
   if ( fin.fail() ) {
     std::string err = "invalid parameter: X0 - could not open file \'"
                       + complete_file_name + "\'";
@@ -5916,6 +6283,13 @@ void NOMAD::Parameters::set_X0 ( const std::string & file_name )
   }
   
   fin.close();
+}
+
+// set_DISPLAY_ALL_EVAL:
+void NOMAD::Parameters::set_DISPLAY_ALL_EVAL ( bool dae )
+{
+  _to_be_checked    = true;
+  _display_all_eval = dae;
 }
 
 // set_DISPLAY_STATS (1/2):
@@ -6008,14 +6382,18 @@ bool NOMAD::Parameters::set_DISPLAY_DEGREE ( const std::string & dd )
       set_DISPLAY_DEGREE ( 0 , 0 , 0 , 0 );
       return true;
     }
-
+    else if ( ddu == "MIN" || ddu == "MINIMAL" || ddu == "MINIMAL_DISPLAY" ) {
+		set_DISPLAY_DEGREE ( 1 , 1 , 1 , 1 );
+		return true;
+    }
+	  
     else if ( ddu == "NORMAL" || ddu == "NORMAL_DISPLAY" ) {
-      set_DISPLAY_DEGREE ( 1 , 1 , 1 , 1 );
+      set_DISPLAY_DEGREE ( 2 , 2 , 2 , 2 );
       return true;
     }
 
     else if ( ddu == "FULL" || ddu == "FULL_DISPLAY" ) {
-      set_DISPLAY_DEGREE ( 2 , 2 , 2 , 2 );
+      set_DISPLAY_DEGREE ( 3 , 3 , 3 , 3 );
       return true;
     }
   }
@@ -6133,6 +6511,13 @@ void NOMAD::Parameters::set_MAX_ITERATIONS ( int it )
 {
   _to_be_checked  = true;
   _max_iterations = ( it < 0 ) ? -1 : it;
+}
+
+// set_MAX_CONSECUTIVE_FAILED_ITERATIONS:
+void NOMAD::Parameters::set_MAX_CONSECUTIVE_FAILED_ITERATIONS ( int it )
+{
+  _to_be_checked  = true;
+  _max_cons_failed_it = ( it <= 0 ) ? -1 : it;
 }
 
 // set_MAX_CACHE_MEMORY::
@@ -6951,7 +7336,8 @@ void NOMAD::Parameters::help ( const std::list<std::string> & pnames ) const
 
   // DIMENSION:
   // ----------
-  if ( display_all || NOMAD::string_find ( "DIMENSION BASIC VARIABLE" , param_names ) )
+  if ( display_all || NOMAD::string_find ( "DIMENSION BASIC VARIABLES" ,
+					   param_names ) )
     {
       _out << std::endl
 	   << NOMAD::open_block ( "DIMENSION (basic)" ) << std::endl
@@ -6972,46 +7358,65 @@ void NOMAD::Parameters::help ( const std::list<std::string> & pnames ) const
                                             RANDOM STATIC UNIFORM ANGLES" ,
 					   param_names ) ) {
     _out << std::endl
-	 << NOMAD::open_block ( "DIRECTION_TYPE (basic)" )             << std::endl
-	 << ". types of directions used in the poll step"              << std::endl
-	 << ". arguments: direction types (see user"                   << std::endl
-	 << "             guide for available types)"                  << std::endl
-	 << ". default: ORTHO (2n OrthoMADS directions)"               << std::endl
-	 << ". several direction types can be defined"                 << std::endl
-	 << "    at the same time (one direction per line)"            << std::endl
-	 << ". " << NOMAD::open_block ( "examples" )                   << std::endl
-	 << "DIRECTION_TYPE ORTHO 1                  #  OrthoMADS, 1"  << std::endl
-	 << "DIRECTION_TYPE ORTHO 2                  #  OrthoMADS, 2"  << std::endl
-	 << "DIRECTION_TYPE ORTHO                    #  OrthoMADS, 2n" << std::endl
-	 << "DIRECTION_TYPE ORTHO 2N                 #  OrthoMADS, 2n" << std::endl
-	 << "DIRECTION_TYPE LT    1                  #  LT-MADS, 1"    << std::endl
-	 << "DIRECTION_TYPE LT    2                  #  LT-MADS, 2"    << std::endl
-	 << "DIRECTION_TYPE LT    N+1                #  LT-MADS, n+1"  << std::endl
-	 << "DIRECTION_TYPE LT                       #  LT-MADS, 2n"   << std::endl
-	 << "DIRECTION_TYPE LT    2N                 #  LT-MADS, 2n"   << std::endl
-	 << "DIRECTION_TYPE GPS   BINARY or BIN      #  GPS, bin var"  << std::endl
-	 << "DIRECTION_TYPE GPS   N+1                #  GPS, n+1,"     << std::endl
-	 << "                                        #  static"        << std::endl
-	 << "DIRECTION_TYPE GPS   N+1 STATIC         #  GPS, n+1,"     << std::endl
-	 << "                                        #  static"        << std::endl
-	 << "DIRECTION_TYPE GPS   N+1 STATIC UNIFORM #  GPS, n+1,"     << std::endl
-	 << "                                        #  static, unif"  << std::endl
-	 << "DIRECTION_TYPE GPS   N+1 RAND           #  GPS, n+1,"     << std::endl
-	 << "                                        #  rand"          << std::endl
-	 << "DIRECTION_TYPE GPS   N+1 RAND   UNIFORM #  GPS, n+1,"     << std::endl
-	 << "                                        #  rand, unif"    << std::endl
-	 << "DIRECTION_TYPE GPS                      #  GPS, 2n,"      << std::endl
-	 << "                                        #  static"        << std::endl
-	 << "DIRECTION_TYPE GPS   2N                 #  GPS, 2n,"      << std::endl
-	 << "                                        #  static"        << std::endl
-	 << "DIRECTION_TYPE GPS   2N  STATIC         #  GPS, 2n,"      << std::endl
-	 << "                                        #  static"        << std::endl
-	 << "DIRECTION_TYPE GPS   2N  RAND           #  GPS, 2n,"      << std::endl
-	 << "                                        #  rand"          << std::endl
+	 << NOMAD::open_block ( "DIRECTION_TYPE (basic)" )              << std::endl
+	 << ". types of directions used in the poll step"               << std::endl
+	 << ". arguments: direction types (see user"                    << std::endl
+	 << "             guide for available types)"                   << std::endl
+	 << ". default: ORTHO (2n OrthoMADS directions)"                << std::endl
+	 << ". several direction types can be defined"                  << std::endl
+	 << "    at the same time (one direction per line)"             << std::endl
+	 << ". " << NOMAD::open_block ( "examples" )                    << std::endl
+	 << "DIRECTION_TYPE ORTHO 1                  #  OrthoMADS, 1"   << std::endl
+	 << "DIRECTION_TYPE ORTHO 2                  #  OrthoMADS, 2"   << std::endl
+	 << "DIRECTION_TYPE ORTHO N+1                #  OrthoMADS, n+1" << std::endl
+	 << "DIRECTION_TYPE ORTHO                    #  OrthoMADS, 2n"  << std::endl
+	 << "DIRECTION_TYPE ORTHO 2N                 #  OrthoMADS, 2n"  << std::endl
+	 << "DIRECTION_TYPE LT    1                  #  LT-MADS, 1"     << std::endl
+	 << "DIRECTION_TYPE LT    2                  #  LT-MADS, 2"     << std::endl
+	 << "DIRECTION_TYPE LT    N+1                #  LT-MADS, n+1"   << std::endl
+	 << "DIRECTION_TYPE LT                       #  LT-MADS, 2n"    << std::endl
+	 << "DIRECTION_TYPE LT    2N                 #  LT-MADS, 2n"    << std::endl
+	 << "DIRECTION_TYPE GPS   BINARY or BIN      #  GPS, bin var"   << std::endl
+	 << "DIRECTION_TYPE GPS   N+1                #  GPS, n+1,"      << std::endl
+	 << "                                        #  static"         << std::endl
+	 << "DIRECTION_TYPE GPS   N+1 STATIC         #  GPS, n+1,"      << std::endl
+	 << "                                        #  static"         << std::endl
+	 << "DIRECTION_TYPE GPS   N+1 STATIC UNIFORM #  GPS, n+1,"      << std::endl
+	 << "                                        #  static, unif"   << std::endl
+	 << "DIRECTION_TYPE GPS   N+1 RAND           #  GPS, n+1,"      << std::endl
+	 << "                                        #  rand"           << std::endl
+	 << "DIRECTION_TYPE GPS   N+1 RAND   UNIFORM #  GPS, n+1,"      << std::endl
+	 << "                                        #  rand, unif"     << std::endl
+	 << "DIRECTION_TYPE GPS                      #  GPS, 2n,"       << std::endl
+	 << "                                        #  static"         << std::endl
+	 << "DIRECTION_TYPE GPS   2N                 #  GPS, 2n,"       << std::endl
+	 << "                                        #  static"         << std::endl
+	 << "DIRECTION_TYPE GPS   2N  STATIC         #  GPS, 2n,"       << std::endl
+	 << "                                        #  static"         << std::endl
+	 << "DIRECTION_TYPE GPS   2N  RAND           #  GPS, 2n,"       << std::endl
+	 << "                                        #  rand"           << std::endl
 	 << NOMAD::close_block() << NOMAD::close_block();
     chk = true;
   }
   
+  // DISPLAY_ALL_EVAL:
+  // -----------------
+  if ( display_all || NOMAD::string_find ( "DISPLAY_ALL_EVAL DISPLAY_STATS \
+                                            STATS_FILE ADVANCED" , param_names ) )
+    {
+      _out << std::endl
+	   << NOMAD::open_block ( "DISPLAY_ALL_EVAL (advanced)" ) << std::endl
+	   << ". if \'yes\', more points are displayed with"      << std::endl
+	   << "    parameters DISPLAY_STATS and STATS_FILE"       << std::endl
+	   << ". points of the phase one with EB constraints"     << std::endl
+	   << "    are not displayed"                             << std::endl
+	   << ". argument: one boolean (\'yes\' or \'no\')"       << std::endl
+	   << ". default: \'no\'"                                 << std::endl
+	   << ". example: DISPLAY_ALL_EVAL yes"                   << std::endl
+	   << NOMAD::close_block();
+      chk = true;
+    }
+
   // DISPLAY_DEGREE:
   // ---------------
   if ( display_all || NOMAD::string_find ( "DISPLAY_DEGREES OUTPUTS \
@@ -7020,17 +7425,19 @@ void NOMAD::Parameters::help ( const std::list<std::string> & pnames ) const
 	 << NOMAD::open_block ( "DISPLAY_DEGREE (basic)" )              << std::endl
 	 << ". " << NOMAD::open_block ( "display degree" )
 	 << "0: no display"                                             << std::endl
-	 << "1: normal display"                                         << std::endl
-	 << "2: full display"                                           << std::endl
+	 << "1: minimal display"										<< std::endl
+	 << "2: normal display"                                         << std::endl
+	 << "3: full display"                                           << std::endl
       	 << NOMAD::close_block()
-	 << ". argument: one integer in { 0, 1, 2 } (basic)"            << std::endl
-	 << "         or one string in { \'NO\', \'NO_DISPLAY\', \'NORMAL\',"
+	 << ". argument: one integer in {0, 1, 2, 3} (basic)"              << std::endl
+	  << "         or one string in {\'NO\', \'NO_DISPLAY\', \'MIN\',"  << std::endl
+	  << "                           \'MINIMAL\', \'MINIMAL_DISPLAY\' ,\'NORMAL\',"
 	 << std::endl
 	 << "                            \'NORMAL_DISPLAY\', \'FULL\'," << std::endl
-	 << "                            \'FULL_DISPLAY\' }"            << std::endl
+	 << "                            \'FULL_DISPLAY\'}"             << std::endl
 	 << "         or one string composed of 4 integers each in"     << std::endl
-	 << "            { 0, 1, 2 } (advanced)"                        << std::endl
-	 << ". default: 1"                                              << std::endl
+	 << "            { 0, 1, 2 ,3} (advanced)"                        << std::endl
+	 << ". default: 2"                                              << std::endl
 	 << ". "
 	 << NOMAD::open_block("advanced use with 4 digits (see user guide for details)")
 	 << "#1 general display degree   (before and after"             << std::endl
@@ -7040,8 +7447,8 @@ void NOMAD::Parameters::help ( const std::list<std::string> & pnames ) const
 	 << "#4 iterative display degree (other displays at"            << std::endl
 	 << "                             each iteration)"              << std::endl
 	 << NOMAD::close_block() << ". " << NOMAD::open_block ( "examples" )
-	 << "DISPLAY_DEGREE 1    # basic   : normal display"            << std::endl
-	 << "DISPLAY_DEGREE 0020 # advanced: display only"              << std::endl
+	 << "DISPLAY_DEGREE 2    # basic   : normal display"            << std::endl
+	 << "DISPLAY_DEGREE 0030 # advanced: display only"              << std::endl
 	 << "                    #           poll info"                 << std::endl
 	 << NOMAD::close_block()
 	 << NOMAD::close_block();
@@ -7058,6 +7465,7 @@ void NOMAD::Parameters::help ( const std::list<std::string> & pnames ) const
 	 << "  (single-objective)"                                     << std::endl
 	 << ". format of the final Pareto front"                       << std::endl
 	 << "  (multi-objective)"                                      << std::endl
+	 << ". displays more points with DISPLAY_ALL_EVAL=true"        << std::endl
 	 << ". arguments: list of strings possibly including"          << std::endl
 	 << "    the following keywords:"                              << std::endl
 	 << "      BBE       : blackbox evaluations"                   << std::endl
@@ -7174,7 +7582,7 @@ void NOMAD::Parameters::help ( const std::list<std::string> & pnames ) const
   
   // FIXED_VARIABLE:
   // ---------------
-  if ( display_all || NOMAD::string_find ( "FIXED_VARIABLE ADVANCED \
+  if ( display_all || NOMAD::string_find ( "FIXED_VARIABLE VARIABLES ADVANCED \
                                             FILES" , param_names ) ) {
     _out << std::endl
 	 << NOMAD::open_block ( "FIXED_VARIABLE (advanced)" )            << std::endl
@@ -7244,13 +7652,13 @@ void NOMAD::Parameters::help ( const std::list<std::string> & pnames ) const
                                             FEASIBILITY \
                                             PROGRESSIVE-BARRIER" , param_names ) ) {
     _out << std::endl
-	 << NOMAD::open_block ( "H_NORM (advanced)" )                  << std::endl
-	 << ". norm used by the F and PB constraints handling"         << std::endl
-	 << "    strategies to compute h(x) (h measures the"           << std::endl
-	 << "    feasibility)"                                         << std::endl
-	 << ". argument: one string in { \'L1\' , \'L2\' , \'Linf\' }" << std::endl
-	 << ". default: \'L2\'"                                        << std::endl
-	 << ". example: H_NORM Linf"                                   << std::endl
+	 << NOMAD::open_block ( "H_NORM (advanced)" )              << std::endl
+	 << ". norm used by the F and PB constraints handling"     << std::endl
+	 << "    strategies to compute h(x) (h measures the"       << std::endl
+	 << "    feasibility)"                                     << std::endl
+	 << ". argument: one string in {\'L1\', \'L2\', \'Linf\'}" << std::endl
+	 << ". default: \'L2\'"                                    << std::endl
+	 << ". example: H_NORM Linf"                               << std::endl
 	 << NOMAD::close_block();
     chk = true;
   }
@@ -7299,7 +7707,7 @@ void NOMAD::Parameters::help ( const std::list<std::string> & pnames ) const
     _out << std::endl
 	 << NOMAD::open_block ( "HISTORY_FILE (basic)" ) << std::endl
 	 << ". history file: contains all trial points"  << std::endl
-	 << ". includes multiple evaluations"            << std::endl
+	 << ". does not include multiple evaluations"    << std::endl
 	 << ". argument: one string"                     << std::endl
 	 << ". no default"                               << std::endl
 	 << ". the seed is added to the file name"       << std::endl
@@ -7458,6 +7866,20 @@ void NOMAD::Parameters::help ( const std::list<std::string> & pnames ) const
 	 << ". default: 2000"                                       << std::endl
 	 << ". example: MAX_CACHE_MEMORY 1024 # limit of 1GB cache" << std::endl
 	 << "                                 # occupation"         << std::endl
+	 << NOMAD::close_block();
+    chk = true;
+  }
+
+  // MAX_CONSECUTIVE_FAILED_ITERATIONS:
+  // ----------------------------------
+  if ( display_all || NOMAD::string_find ( "MAX_CONSECUTIVE_FAILED_ITERATIONS ADVANCED \
+                                            TERMINATION	STOPPING TERMINATES" , param_names ) ) {
+    _out << std::endl
+	 << NOMAD::open_block ( "MAX_CONSECUTIVE_FAILED_ITERATIONS (advanced)" ) << std::endl
+	 << ". maximum number of consecutive failed iterations"                  << std::endl
+	 << ". arguments: one positive integer"                                  << std::endl
+	 << ". no default"                                                       << std::endl
+	 << ". example: MAX_CONSECUTIVE_FAILED_ITERATIONS 5"                     << std::endl
 	 << NOMAD::close_block();
     chk = true;
   }
@@ -7651,15 +8073,19 @@ void NOMAD::Parameters::help ( const std::list<std::string> & pnames ) const
   // ----------------
   if ( display_all || NOMAD::string_find ( "MODEL_ORDERING MODEL_EVAL_SORT BASIC \
                                             MODELS INTERPOLATION REGRESSION \
-                                            MFN FROBENIUS" , param_names ) ) {
+                                            MFN FROBENIUS QUADRATIC \
+                                            TGP" , param_names ) ) {
     _out << std::endl
-	 << NOMAD::open_block ( "MODEL_EVAL_SORT (basic)" ) << std::endl
-	 << ". if models are used to sort the trial points" << std::endl
-	 << ". disabled for more than 50 variables"         << std::endl
-	 << ". disabled with categorical variables"         << std::endl
-	 << ". argument: one boolean (\'yes\' or \'no\')"   << std::endl
-	 << ". default: \'yes\'"                            << std::endl
-	 << ". example: MODEL_EVAL_SORT no"                 << std::endl
+	 << NOMAD::open_block ( "MODEL_EVAL_SORT (basic)" )      << std::endl
+	 << ". if models are used to sort the trial points"      << std::endl
+	 << ". disabled for more than 50 variables"              << std::endl
+	 << ". disabled with categorical variables"              << std::endl
+	 << ". argument: one boolean (\'yes\' or \'no\')"        << std::endl
+	 << "         or one string in {\'QUADRATIC\', \'TGP\'}" << std::endl
+	 << ". default: \'TGP\'"                                 << std::endl
+	 << ". examples: MODEL_EVAL_SORT quadratic"              << std::endl
+      	 << "            MODEL_EVAL_SORT yes # TGP is used"      << std::endl
+	 << "            MODEL_EVAL_SORT no  # no MES"           << std::endl
 	 << NOMAD::close_block();
     chk = true;
   }
@@ -7668,7 +8094,8 @@ void NOMAD::Parameters::help ( const std::list<std::string> & pnames ) const
   // -------------------------
   if ( display_all || NOMAD::string_find ( "MODEL_ORDERING MODEL_EVAL_SORT_CAUTIOUS \
                                             MODELS INTERPOLATION REGRESSION \
-                                            MFN FROBENIUS ADVANCED" , param_names ) ) {
+                                            MFN FROBENIUS ADVANCED \
+                                            QUADRATIC TGP" , param_names ) ) {
     _out << std::endl
 	 << NOMAD::open_block ( "MODEL_EVAL_SORT_CAUTIOUS (advanced)" ) << std::endl
 	 << ". if the model ordering strategy is cautious, meaning"     << std::endl
@@ -7680,79 +8107,49 @@ void NOMAD::Parameters::help ( const std::list<std::string> & pnames ) const
     chk = true;
   }
 
-  // MODEL_MAX_TRIAL_PTS:
-  // --------------------
-  if ( display_all || NOMAD::string_find ( "MODEL_MAX_TRIAL_PTS MODEL_SEARCH ADVANCED \
+  // MODEL_QUAD_MAX_Y_SIZE:
+  // ----------------------
+  if ( display_all || NOMAD::string_find ( "MODEL_QUAD_MAX_Y_SIZE MODEL_SEARCH ADVANCED \
                                             MODELS INTERPOLATION REGRESSION \
-                                            MFN FROBENIUS" , param_names ) ) {
+                                            MFN FROBENIUS QUADRATIC" , param_names ) ) {
     _out << std::endl
-	 << NOMAD::open_block ( "MODEL_MAX_TRIAL_PTS (advanced)" )       << std::endl
-	 << ". limit on the number of trial points for one model search" << std::endl
-	 << ". arguments: one integer in {1,2,3,4}"                      << std::endl
-	 << ". default: 4"                                               << std::endl
-	 << ". example: MODEL_MAX_TRIAL_PTS 1"                           << std::endl
-	 << NOMAD::close_block();
-    chk = true;
-  }
-
-  // MODEL_MAX_Y_SIZE:
-  // -----------------
-  if ( display_all || NOMAD::string_find ( "MODEL_MAX_Y_SIZE MODEL_SEARCH ADVANCED \
-                                            MODELS INTERPOLATION REGRESSION \
-                                            MFN FROBENIUS" , param_names ) ) {
-    _out << std::endl
-	 << NOMAD::open_block ( "MODEL_MAX_Y_SIZE (advanced)" )             << std::endl
-	 << ". Sup. limit on the size of interpolation set Y for models"    << std::endl
+	 << NOMAD::open_block ( "MODEL_QUAD_MAX_Y_SIZE (advanced)" )        << std::endl
+	 << ". Sup. limit on the size of interp. set Y for quadr. models"   << std::endl
 	 << ". arguments: one integer greater than the number of variables" << std::endl
 	 << ". default: 500"                                                << std::endl
-	 << ". example: MODEL_MAX_Y_SIZE 10"                                << std::endl
+	 << ". example: MODEL_QUAD_MAX_Y_SIZE 10"                           << std::endl
 	 << NOMAD::close_block();
     chk = true;
   }
 
-  // MODEL_MIN_Y_SIZE:
-  // -----------------
-  if ( display_all || NOMAD::string_find ( "MODEL_MIN_Y_SIZE MODEL_SEARCH ADVANCED \
+  // MODEL_QUAD_MIN_Y_SIZE:
+  // ----------------------
+  if ( display_all || NOMAD::string_find ( "MODEL_QUAD_MIN_Y_SIZE MODEL_SEARCH ADVANCED \
                                             MODELS INTERPOLATION REGRESSION \
-                                            MFN FROBENIUS" , param_names ) ) {
+                                            MFN FROBENIUS QUADRATIC" , param_names ) ) {
     _out << std::endl
-	 << NOMAD::open_block ( "MODEL_MIN_Y_SIZE (advanced)" )          << std::endl
-	 << ". Inf. limit on the size of interpolation set Y for models" << std::endl
-	 << ". arguments: one integer > 1 or the string \'N+1\'"         << std::endl
-	 << ". default: N+1"                                             << std::endl
-	 << ". examples: MODEL_MIN_Y_SIZE N+1"                           << std::endl
-	 << "            MODEL_MIN_Y_SIZE -1 # same as N+1"              << std::endl
-	 << "            MODEL_MIN_Y_SIZE 2"                             << std::endl
+	 << NOMAD::open_block ( "MODEL_QUAD_MIN_Y_SIZE (advanced)" )      << std::endl
+	 << ". Inf. limit on the size of interp. set Y for quadr. models" << std::endl
+	 << ". arguments: one integer > 1 or the string \'N+1\'"          << std::endl
+	 << ". default: N+1"                                              << std::endl
+	 << ". examples: MODEL_QUAD_MIN_Y_SIZE N+1"                       << std::endl
+	 << "            MODEL_QUAD_MIN_Y_SIZE -1 # same as N+1"          << std::endl
+	 << "            MODEL_QUAD_MIN_Y_SIZE 2"                         << std::endl
 	 << NOMAD::close_block();
     chk = true;
   }
 
-  // MODEL_PROJ_TO_MESH:
-  // -----------------
-  if ( display_all || NOMAD::string_find ( "MODEL_PROJ_TO_MESH MODEL_SEARCH ADVANCED \
-                                            MODELS INTERPOLATION REGRESSION \
-                                            MFN FROBENIUS" , param_names ) ) {
+  // MODEL_QUAD_RADIUS_FACTOR:
+  // -------------------------
+  if ( display_all || NOMAD::string_find ( "MODEL_QUAD_RADIUS_FACTOR MODEL_SEARCH \
+                                            ADVANCED MODELS INTERPOLATION REGRESSION \
+                                            MFN FROBENIUS QUADRATIC" , param_names ) ) {
     _out << std::endl
-	 << NOMAD::open_block ( "MODEL_PROJ_TO_MESH (advanced)" )      << std::endl
-	 << ". if model search trial points are projected to the mesh" << std::endl
-	 << ". argument: one boolean (\'yes\' or \'no\')"              << std::endl
-	 << ". default: \'yes\'"                                       << std::endl
-	 << ". example: MODEL_PROJ_TO_MESH no"                         << std::endl
-	 << NOMAD::close_block();
-    chk = true;
-  }
-
-  // MODEL_RADIUS_FACTOR:
-  // -----------------
-  if ( display_all || NOMAD::string_find ( "MODEL_RADIUS_FACTOR MODEL_SEARCH ADVANCED \
-                                            MODELS INTERPOLATION REGRESSION \
-                                            MFN FROBENIUS" , param_names ) ) {
-    _out << std::endl
-	 << NOMAD::open_block ( "MODEL_RADIUS_FACTOR (advanced)" ) << std::endl
-	 << ". model search radius factor (see user guide)"        << std::endl
-	 << ". arguments: one strictly positive real"              << std::endl
-	 << ". default: 2.0"                                       << std::endl
-	 << ". example: MODEL_RADIUS_FACTOR 1.0"                   << std::endl
+	 << NOMAD::open_block ( "MODEL_QUAD_RADIUS_FACTOR (advanced)" ) << std::endl
+	 << ". quadratic model search radius factor (see user guide)"   << std::endl
+	 << ". arguments: one strictly positive real"                   << std::endl
+	 << ". default: 2.0"                                            << std::endl
+	 << ". example: MODEL_QUAD_RADIUS_FACTOR 1.0"                   << std::endl
 	 << NOMAD::close_block();
     chk = true;
   }
@@ -7761,16 +8158,37 @@ void NOMAD::Parameters::help ( const std::list<std::string> & pnames ) const
   // -------------
   if ( display_all || NOMAD::string_find ( "MODEL_SEARCH BASIC \
                                             MODELS INTERPOLATION REGRESSION \
-                                            MFN FROBENIUS" , param_names ) ) {
+                                            MFN FROBENIUS QUADRATIC \
+                                            TGP" , param_names ) ) {
     _out << std::endl
-	 << NOMAD::open_block ( "MODEL_SEARCH (basic)" )  << std::endl
-	 << ". model search (MS) enabled or disabled"     << std::endl
-	 << ". disabled for more than 50 variables"       << std::endl
-	 << ". disabled with categorical variables"       << std::endl
-	 << ". disabled in parallel mode"                 << std::endl
-	 << ". argument: one boolean (\'yes\' or \'no\')" << std::endl
-	 << ". default: \'yes\'"                          << std::endl
-	 << ". example: MODEL_SEARCH no"                  << std::endl
+	 << NOMAD::open_block ( "MODEL_SEARCH (basic)" )             << std::endl
+	 << ". model search (MS)"                                    << std::endl
+	 << ". can be entered twice in order to define two searches" << std::endl
+	 << ". disabled for more than 50 variables"                  << std::endl
+	 << ". disabled with categorical variables"                  << std::endl
+	 << ". disabled in parallel mode"                            << std::endl
+	 << ". argument: one boolean (\'yes\' or \'no\')"            << std::endl
+	 << "    or one string in {\'QUADRATIC\', \'TGP\'}"          << std::endl
+	 << ". default: \'QUADRATIC\'"                               << std::endl
+	 << ". example: MODEL_SEARCH QUADRATIC"                      << std::endl
+      	 << "           MODEL_SEARCH TGP"                            << std::endl
+	 << NOMAD::close_block();
+    chk = true;
+  }
+
+  // MODEL_SEARCH_MAX_TRIAL_PTS:
+  // ---------------------------
+  if ( display_all || NOMAD::string_find ( "MODEL_SEARCH_MAX_TRIAL_PTS \
+                                            ADVANCED MODELS INTERPOLATION REGRESSION \
+                                            MFN FROBENIUS QUADRATIC \
+                                            TGP" , param_names ) ) {
+    _out << std::endl
+	 << NOMAD::open_block ( "MODEL_SEARCH_MAX_TRIAL_PTS (advanced)" )       << std::endl
+	 << ". limit on the number of trial points for one model search"        << std::endl
+	 << ". arguments: one integer greater than or equal to 1"               << std::endl
+	 << ". the quadratic model search will not generate more than 4 points" << std::endl
+	 << ". default: 10"                                                     << std::endl
+	 << ". example: MODEL_SEARCH_MAX_TRIAL_PTS 1"                           << std::endl
 	 << NOMAD::close_block();
     chk = true;
   }
@@ -7779,7 +8197,8 @@ void NOMAD::Parameters::help ( const std::list<std::string> & pnames ) const
   // ------------------------
   if ( display_all || NOMAD::string_find ( "MODEL_SEARCH_OPTIMISTIC ADVANCED \
                                             MODELS INTERPOLATION REGRESSION \
-                                            MFN FROBENIUS" , param_names ) ) {
+                                            MFN FROBENIUS QUADRATIC \
+                                            TGP" , param_names ) ) {
     _out << std::endl
 	 << NOMAD::open_block ( "MODEL_SEARCH_OPTIMISTIC (advanced)" ) << std::endl
 	 << ". model search (MS) is optimistic or not"                 << std::endl
@@ -7790,18 +8209,65 @@ void NOMAD::Parameters::help ( const std::list<std::string> & pnames ) const
     chk = true;
   }
 
-  // MODEL_USE_WP:
-  // -------------
-  if ( display_all || NOMAD::string_find ( "MODEL_USE_WP ADVANCED \
+  // MODEL_SEARCH_PROJ_TO_MESH:
+  // --------------------------
+  if ( display_all || NOMAD::string_find ( "MODEL_SEARCH_PROJ_TO_MESH ADVANCED \
+                                            MODELS INTERPOLATION REGRESSION \
+                                            MFN FROBENIUS QUADRATIC PROJECTION \
+                                            TGP" , param_names ) ) {
+    _out << std::endl
+	 << NOMAD::open_block ( "MODEL_SEARCH_PROJ_TO_MESH (advanced)" ) << std::endl
+	 << ". if model search trial points are projected to the mesh"   << std::endl
+	 << ". argument: one boolean (\'yes\' or \'no\')"                << std::endl
+	 << ". default: \'yes\'"                                         << std::endl
+	 << ". example: MODEL_SEARCH_PROJ_TO_MESH no"                    << std::endl
+	 << NOMAD::close_block();
+    chk = true;
+  }
+
+  // MODEL_QUAD_USE_WP:
+  // ------------------
+  if ( display_all || NOMAD::string_find ( "MODEL_QUAD_USE_WP ADVANCED \
                                             WELL-POISEDNESS \
                                             MODELS INTERPOLATION REGRESSION \
-                                            MFN FROBENIUS" , param_names ) ) {
+                                            MFN FROBENIUS QUADRATIC" , param_names ) ) {
     _out << std::endl
-	 << NOMAD::open_block ( "MODEL_USE_WP (advanced)" )                 << std::endl
-	 << ". enable the strategy to maintain well-poisedness with models" << std::endl
-	 << ". argument: one boolean (\'yes\' or \'no\')"                   << std::endl
-	 << ". default: \'no\'"                                             << std::endl
-	 << ". example: MODEL_USE_WP yes"                                   << std::endl
+	 << NOMAD::open_block ( "MODEL_QUAD_USE_WP (advanced)" )      << std::endl
+	 << ". enable the strategy to maintain WP with quadr. models" << std::endl
+	 << ". argument: one boolean (\'yes\' or \'no\')"             << std::endl
+	 << ". default: \'no\'"                                       << std::endl
+	 << ". example: MODEL_QUAD_USE_WP yes"                        << std::endl
+	 << NOMAD::close_block();
+    chk = true;
+  }
+
+  // MODEL_TGP_MODE:
+  // ---------------
+  if ( display_all || NOMAD::string_find ( "MODEL_TGP_MODE MODEL_SEARCH ADVANCED \
+                                            MODELS INTERPOLATION REGRESSION \
+                                            TGP" , param_names ) ) {
+    _out << std::endl
+	 << NOMAD::open_block ( "MODEL_TGP_MODE (advanced)" )    << std::endl
+	 << ". TGP mode (fast or precise)"                       << std::endl
+	 << ". arguments: one string in {\'FAST\', \'PRECISE\'}" << std::endl
+	 << ". default: \'FAST\'"                                << std::endl
+	 << ". example: MODEL_TGP_MODE PRECISE"                  << std::endl
+     	 << NOMAD::close_block();
+    chk = true;
+  }
+
+  // MODEL_TGP_REUSE_MODEL:
+  // ----------------------
+  if ( display_all || NOMAD::string_find ( "MODEL_TGP_REUSE_MODEL ADVANCED \
+                                            MODELS INTERPOLATION REGRESSION \
+                                            TGP" , param_names ) ) {
+    _out << std::endl
+	 << NOMAD::open_block ( "MODEL_TGP_REUSE_MODEL (advanced)" )  << std::endl
+	 << ". enable to use the last model from the TGP search for"  << std::endl
+	 << "    the TGP model eval sort strategy"                    << std::endl
+	 << ". argument: one boolean (\'yes\' or \'no\')"             << std::endl
+	 << ". default: \'yes\'"                                      << std::endl
+	 << ". example: MODEL_TGP_REUSE_MODEL no"                     << std::endl
 	 << NOMAD::close_block();
     chk = true;
   }
@@ -7841,9 +8307,9 @@ void NOMAD::Parameters::help ( const std::list<std::string> & pnames ) const
 	 << NOMAD::open_block ( "MULTI_FORMULATION (advanced)" )            << std::endl
 	 << ". multi-objective optimization: single-objective reformulation"
 	 << std::endl
-	 << ". argument: one string in { \'NORMALIZED\', \'PRODUCT\', \'DIST_L1\',"
+	 << ". argument: one string in {\'NORMALIZED\', \'PRODUCT\', \'DIST_L1\',"
 	 << std::endl
-	 << "                            \'DIST_L2\', \'DIST_LINF\' }"      << std::endl
+	 << "                            \'DIST_L2\', \'DIST_LINF\'}"       << std::endl
 	 << "            (\'NORMALIZED\' and \'DIST_LINF\' are equivalent)" << std::endl
 	 << ". default: \'PRODUCT\' or \'DIST_L2\' if VNS_SEARCH is set to \'yes\'"
 	 << std::endl
@@ -8081,7 +8547,7 @@ void NOMAD::Parameters::help ( const std::list<std::string> & pnames ) const
 
   // PERIODIC_VARIABLE:
   // ------------------
-  if ( display_all || NOMAD::string_find ( "PERIODIC_VARIABLE ADVANCED \
+  if ( display_all || NOMAD::string_find ( "PERIODIC_VARIABLE VARIABLES ADVANCED \
                                             BOUNDS LB UB CYCLIC MADS" , param_names ) )
     {
       _out << std::endl
@@ -8270,8 +8736,8 @@ void NOMAD::Parameters::help ( const std::list<std::string> & pnames ) const
 
   // SNAP_TO_BOUNDS:
   // ---------------
-  if ( display_all || NOMAD::string_find ( "SNAP_TO_BOUNDS \
-                                            PROJECT ADVANCED" , param_names ) )
+  if ( display_all || NOMAD::string_find ( "SNAP_TO_BOUNDS PROJECTION \
+                                            ADVANCED" , param_names ) )
     {
       _out << std::endl
 	   << NOMAD::open_block ( "SNAP_TO_BOUNDS (advanced)" ) << std::endl
@@ -8337,15 +8803,16 @@ void NOMAD::Parameters::help ( const std::list<std::string> & pnames ) const
                                             FILES OUTPUTS DISPLAY_STATS" ,
 					   param_names ) ) {
     _out << std::endl
-	 << NOMAD::open_block ( "STATS_FILE (basic)" )        << std::endl
-	 << ". file containing all successes with the same"   << std::endl
-	 << "    format than DISPLAY_STATS"                   << std::endl
-	 << ". arguments: one string (file name) and one"     << std::endl
-	 << "    list of strings (stats)"                     << std::endl
-	 << ". no default"                                    << std::endl
-	 << ". the seed is added to the file name if"         << std::endl
-	 << "    ADD_SEED_TO_FILE_NAMES=\'yes\'"              << std::endl
-	 << ". example: STATS_FILE log.txt BBE SOL f=%.2EOBJ" << std::endl
+	 << NOMAD::open_block ( "STATS_FILE (basic)" )             << std::endl
+	 << ". file containing all successes with the same format" << std::endl
+	 << "    than DISPLAY_STATS"                               << std::endl
+	 << ". displays more points with DISPLAY_ALL_EVAL=true"    << std::endl
+	 << ". arguments: one string (file name) and one"          << std::endl
+	 << "    list of strings (stats)"                          << std::endl
+	 << ". no default"                                         << std::endl
+	 << ". the seed is added to the file name if"              << std::endl
+	 << "    ADD_SEED_TO_FILE_NAMES=\'yes\'"                   << std::endl
+	 << ". example: STATS_FILE log.txt BBE SOL f=%.2EOBJ"      << std::endl
 	<< NOMAD::close_block();
     chk = true;
   }
@@ -8428,7 +8895,7 @@ void NOMAD::Parameters::help ( const std::list<std::string> & pnames ) const
   // VARIABLE_GROUP:
   // --------------
   if ( display_all || NOMAD::string_find ( "VARIABLE_GROUP GROUPS PSD-MADS PSDMADS \
-                                            ADVANCED" , param_names ) ) {
+                                            VARIABLES ADVANCED" , param_names ) ) {
     _out << std::endl
 	 << NOMAD::open_block ( "VARIABLE_GROUP (advanced)" )   << std::endl
 	 << ". defines groups of variables"                     << std::endl
@@ -8451,7 +8918,7 @@ void NOMAD::Parameters::help ( const std::list<std::string> & pnames ) const
 
   // VNS_SEARCH:
   // -----------
-  if ( display_all || NOMAD::string_find ( "VNS_SEARCH VARIABLE NEIGHBORHOOD \
+  if ( display_all || NOMAD::string_find ( "VNS_SEARCH NEIGHBORHOOD \
                                             METAHEURISTICS META-HEURISTICS \
                                             GLOBAL BASIC \
                                             TRIGGER" ,
@@ -8534,18 +9001,19 @@ void NOMAD::Parameters::help ( const std::list<std::string> & pnames ) const
   _out.close_block();
 }
 
-
 /*----------------------------------------*/
-/*          read parameters from iostream        */
+/*          read parameters from iostream       */
+/*  zhenghua nie for snomadr              */
 /*----------------------------------------*/
-void NOMAD::Parameters::read ( std::iostream  &fin )
+void NOMAD::Parameters::read ( std::iostream &fin )
 {
-		fin.seekg(0, std::ios::beg);
+		fin.seekg(0,  std::ios::beg);  //zhenghua
 
 		std::string err;
   // parameters will have to be checked:
   _to_be_checked = true;
-	
+
+
   // the set of entries:
   NOMAD::Parameter_Entries entries;
 
@@ -8574,6 +9042,7 @@ void NOMAD::Parameters::read ( std::iostream  &fin )
       }
     }
   }
+
 
   // entries display:
 #ifdef DEBUG
@@ -8872,21 +9341,47 @@ void NOMAD::Parameters::read ( std::iostream  &fin )
   // model parameters:
   // -----------------
   {
+    // MODEL_SEARCH (can be entered one time or twice):
+    int  i_model_search = 1;
+    bool b_model_search = false;
 
-    // MODEL_SEARCH:
-    {
-      pe = entries.find ( "MODEL_SEARCH" );
-      if ( pe ) {
-	if ( !pe->is_unique() )
+    pe = entries.find ( "MODEL_SEARCH" );
+
+    while ( pe ) {
+
+      if ( pe->get_nb_values() != 1 )
+	throw Invalid_Parameter ( "Parameters.cpp" , __LINE__ ,
+				  "invalid parameter: MODEL_SEARCH" );
+      if ( i_model_search == 3 )
+	throw Invalid_Parameter ( "Parameters.cpp" , __LINE__ ,
+	"invalid parameter: MODEL_SEARCH (cannot be entered more than twice" );
+
+      NOMAD::model_type mt;
+      std::string       smt = *(pe->get_values().begin());
+      int               imt = NOMAD::string_to_bool ( smt );
+
+      // entered as a boolean:
+      if ( imt == 0 || imt == 1 ) {
+	if ( b_model_search || i_model_search == 2 )
 	  throw Invalid_Parameter ( "Parameters.cpp" , __LINE__ ,
-		"invalid parameter: MODEL_SEARCH not unique" );
-	i = NOMAD::string_to_bool ( *(pe->get_values().begin() ) );
-	if ( pe->get_nb_values() != 1 ||  i == -1 )
-	  throw Invalid_Parameter ( "Parameters.cpp" , __LINE__ ,
-				    "invalid parameter: MODEL_SEARCH" );
-	set_MODEL_SEARCH ( i == 1 );
-	pe->set_has_been_interpreted();
+	  "invalid parameter: MODEL_SEARCH (boolean argument can only be used once)" );
+	b_model_search = true;
+	set_MODEL_SEARCH ( imt == 1 );
       }
+
+      // entered as a model type:
+      else {
+
+	if ( !NOMAD::string_to_model_type ( smt , mt ) )
+	  throw Invalid_Parameter ( "Parameters.cpp" , __LINE__ ,
+				    "invalid parameter: MODEL_EVAL_SORT" );
+
+	set_MODEL_SEARCH ( i_model_search , mt );
+      }
+
+      pe->set_has_been_interpreted();
+      pe = pe->get_next();
+      ++i_model_search;
     }
 
     // MODEL_SEARCH_OPTIMISTIC:
@@ -8905,7 +9400,7 @@ void NOMAD::Parameters::read ( std::iostream  &fin )
       }
     }
 
-    // MODEL_PROJ_TO_MESH:
+    // MODEL_SEARCH_PROJ_TO_MESH:
     {
       pe = entries.find ( "MODEL_SEARCH_PROJ_TO_MESH" );
       if ( pe ) {
@@ -8921,64 +9416,64 @@ void NOMAD::Parameters::read ( std::iostream  &fin )
       }
     }
 
-    // MODEL_RADIUS_FACTOR:
+    // MODEL_QUAD_RADIUS_FACTOR:
     {
-      pe = entries.find ( "MODEL_RADIUS_FACTOR" );
+      pe = entries.find ( "MODEL_QUAD_RADIUS_FACTOR" );
       if ( pe ) {
 	if ( !pe->is_unique() )
 	  throw Invalid_Parameter ( "Parameters.cpp" , __LINE__ ,
-		"invalid parameter: MODEL_RADIUS_FACTOR not unique" );
+		"invalid parameter: MODEL_QUAD_RADIUS_FACTOR not unique" );
 	if ( pe->get_nb_values() != 1 || !d.atof ( *(pe->get_values().begin()) ) )
 	  throw Invalid_Parameter ( "Parameters.cpp" , __LINE__ ,
-				    "invalid parameter: MODEL_RADIUS_FACTOR" );
+				    "invalid parameter: MODEL_QUAD_RADIUS_FACTOR" );
 	pe->set_has_been_interpreted();
-	set_MODEL_RADIUS_FACTOR ( d );
+	set_MODEL_QUAD_RADIUS_FACTOR ( d );
       }
     }
 
-    // MODEL_USE_WP:
+    // MODEL_QUAD_USE_WP:
     {
-      pe = entries.find ( "MODEL_USE_WP" );
+      pe = entries.find ( "MODEL_QUAD_USE_WP" );
       if ( pe ) {
 	if ( !pe->is_unique() )
 	  throw Invalid_Parameter ( "Parameters.cpp" , __LINE__ ,
-				    "invalid parameter: MODEL_USE_WP not unique" );
+				    "invalid parameter: MODEL_QUAD_USE_WP not unique" );
 	i = NOMAD::string_to_bool ( *(pe->get_values().begin() ) );
 	if ( pe->get_nb_values() != 1 ||  i == -1 )
 	  throw Invalid_Parameter ( "Parameters.cpp" , __LINE__ ,
-				    "invalid parameter: MODEL_USE_WP" );
-	set_MODEL_USE_WP ( i == 1 );
+				    "invalid parameter: MODEL_QUAD_USE_WP" );
+	set_MODEL_QUAD_USE_WP ( i == 1 );
 	pe->set_has_been_interpreted();
       }
     }
     
-    // MODEL_MAX_Y_SIZE:
+    // MODEL_QUAD_MAX_Y_SIZE:
     {
-      pe = entries.find ( "MODEL_MAX_Y_SIZE" );
+      pe = entries.find ( "MODEL_QUAD_MAX_Y_SIZE" );
       if ( pe ) {
 	if ( !pe->is_unique() )
 	  throw Invalid_Parameter ( "Parameters.cpp" , __LINE__ ,
-		"invalid parameter: MODEL_MAX_Y_SIZE not unique" );
+		"invalid parameter: MODEL_QUAD_MAX_Y_SIZE not unique" );
 	if ( pe->get_nb_values() != 1 || !NOMAD::atoi (*(pe->get_values().begin()), i) )
 	  throw Invalid_Parameter ( "Parameters.cpp" , __LINE__ ,
-				    "invalid parameter: MODEL_MAX_Y_SIZE" );
+				    "invalid parameter: MODEL_QUAD_MAX_Y_SIZE" );
 	pe->set_has_been_interpreted();
-	set_MODEL_MAX_Y_SIZE (i);
+	set_MODEL_QUAD_MAX_Y_SIZE (i);
       }
     }
 
-    // MODEL_MIN_Y_SIZE:
+    // MODEL_QUAD_MIN_Y_SIZE:
     {
-      pe = entries.find ( "MODEL_MIN_Y_SIZE" );
+      pe = entries.find ( "MODEL_QUAD_MIN_Y_SIZE" );
       if ( pe ) {
 
 	if ( !pe->is_unique() )
 	  throw Invalid_Parameter ( "Parameters.cpp" , __LINE__ ,
-		"invalid parameter: MODEL_MIN_Y_SIZE not unique" );
+		"invalid parameter: MODEL_QUAD_MIN_Y_SIZE not unique" );
 
 	if ( pe->get_nb_values() != 1 )
 	  throw Invalid_Parameter ( "Parameters.cpp" , __LINE__ ,
-				    "invalid parameter: MODEL_MIN_Y_SIZE" );
+				    "invalid parameter: MODEL_QUAD_MIN_Y_SIZE" );
       
 	s = *(pe->get_values().begin());
 	NOMAD::toupper(s);
@@ -8987,10 +9482,44 @@ void NOMAD::Parameters::read ( std::iostream  &fin )
 	  i = -1;
 	else if ( !NOMAD::atoi ( s , i ) )
 	  throw Invalid_Parameter ( "Parameters.cpp" , __LINE__ ,
-				    "invalid parameter: MODEL_MIN_Y_SIZE" );
+				    "invalid parameter: MODEL_QUAD_MIN_Y_SIZE" );
 
 	pe->set_has_been_interpreted();
-	set_MODEL_MIN_Y_SIZE (i);
+	set_MODEL_QUAD_MIN_Y_SIZE (i);
+      }
+    }
+
+    // MODEL_TGP_MODE:
+    {
+      pe = entries.find ( "MODEL_TGP_MODE" );
+      if ( pe ) {
+	if ( !pe->is_unique() )
+	  throw Invalid_Parameter ( "Parameters.cpp" , __LINE__ ,
+		"invalid parameter: MODEL_TGP_MODE not unique" );
+
+	NOMAD::TGP_mode_type m;
+	if ( pe->get_nb_values() != 1 ||
+	     !NOMAD::string_to_TGP_mode_type ( *(pe->get_values().begin()) , m ) )
+	  throw Invalid_Parameter ( "Parameters.cpp" , __LINE__ ,
+				    "Invalid parameter: MODEL_TGP_MODE" );
+	pe->set_has_been_interpreted();
+	set_MODEL_TGP_MODE ( m );
+      }
+    }
+
+    // MODEL_TGP_REUSE_MODEL:
+    {
+      pe = entries.find ( "MODEL_TGP_REUSE_MODEL" );
+      if ( pe ) {
+	if ( !pe->is_unique() )
+	  throw Invalid_Parameter ( "Parameters.cpp" , __LINE__ ,
+				    "invalid parameter: MODEL_TGP_REUSE_MODEL not unique" );
+	i = NOMAD::string_to_bool ( *(pe->get_values().begin() ) );
+	if ( pe->get_nb_values() != 1 ||  i == -1 )
+	  throw Invalid_Parameter ( "Parameters.cpp" , __LINE__ ,
+				    "invalid parameter: MODEL_TGP_REUSE_MODEL" );
+	set_MODEL_TGP_REUSE_MODEL ( i == 1 );
+	pe->set_has_been_interpreted();
       }
     }
 
@@ -9015,12 +9544,28 @@ void NOMAD::Parameters::read ( std::iostream  &fin )
       if ( pe ) {
 	if ( !pe->is_unique() )
 	  throw Invalid_Parameter ( "Parameters.cpp" , __LINE__ ,
-		"invalid parameter: MODEL_EVAL_SORT not unique" );
-	i = NOMAD::string_to_bool ( *(pe->get_values().begin() ) );
-	if ( pe->get_nb_values() != 1 ||  i == -1 )
+				    "invalid parameter: MODEL_EVAL_SORT not unique" );
+	if ( pe->get_nb_values() != 1 )
 	  throw Invalid_Parameter ( "Parameters.cpp" , __LINE__ ,
 				    "invalid parameter: MODEL_EVAL_SORT" );
-	set_MODEL_EVAL_SORT ( i == 1 );
+
+	NOMAD::model_type mt;
+	std::string       smt = *(pe->get_values().begin());
+	int               imt = NOMAD::string_to_bool ( smt );
+
+	// entered as a boolean:
+	if ( imt == 0 || imt == 1 )
+	  set_MODEL_EVAL_SORT ( imt == 1 );
+
+	// entered as a model type:
+	else {
+
+	  if ( !NOMAD::string_to_model_type ( smt , mt ) )
+	    throw Invalid_Parameter ( "Parameters.cpp" , __LINE__ ,
+				      "invalid parameter: MODEL_EVAL_SORT" );
+	  set_MODEL_EVAL_SORT ( mt );
+	}
+
 	pe->set_has_been_interpreted();
       }
     }
@@ -9279,6 +9824,22 @@ void NOMAD::Parameters::read ( std::iostream  &fin )
 				  "invalid parameter: MAX_ITERATIONS" );
       pe->set_has_been_interpreted();
       set_MAX_ITERATIONS (i);
+    }
+  }
+
+  // MAX_CONSECUTIVE_FAILED_ITERATIONS:
+  // ----------------------------------
+  {
+    pe = entries.find ( "MAX_CONSECUTIVE_FAILED_ITERATIONS" );
+    if ( pe ) {
+      if ( !pe->is_unique() )
+	throw Invalid_Parameter ( "Parameters.cpp" , __LINE__ ,
+        "invalid parameter: MAX_CONSECUTIVE_FAILED_ITERATIONS not unique" );
+      if ( pe->get_nb_values() != 1 || !d.atof ( *(pe->get_values().begin()) ) )
+	throw Invalid_Parameter ( "Parameters.cpp" , __LINE__ ,
+				  "invalid parameter: MAX_CONSECUTIVE_FAILED_ITERATIONS" );
+      pe->set_has_been_interpreted();
+      set_MAX_CONSECUTIVE_FAILED_ITERATIONS (static_cast<int>(d.value()));
     }
   }
 
@@ -10064,33 +10625,50 @@ void NOMAD::Parameters::read ( std::iostream  &fin )
     }
   }
 
-  // SEED:
-  // -----
+  // DISPLAY_ALL_EVAL:
+  // -----------------
   {
-    pe = entries.find ( "SEED" );
-
+    pe = entries.find ( "DISPLAY_ALL_EVAL" );
     if ( pe ) {
-
       if ( !pe->is_unique() )
 	throw Invalid_Parameter ( "Parameters.cpp" , __LINE__ ,
-				  "invalid parameter: SEED not unique" );
-      
-      if ( pe->get_nb_values() != 1 )
+				  "invalid parameter: DISPLAY_ALL_EVAL not unique" );
+      i = NOMAD::string_to_bool ( *(pe->get_values().begin() ) );
+      if ( pe->get_nb_values() != 1 ||  i == -1 )
 	throw Invalid_Parameter ( "Parameters.cpp" , __LINE__ ,
-				  "invalid parameter: SEED" );
-
-      s = *(pe->get_values().begin());
-      NOMAD::toupper(s);
-
-      if ( s == "NONE" || s == "DIFF" )
-	i = -1;
-      else if ( !NOMAD::atoi ( s , i ) )
-	throw Invalid_Parameter ( "Parameters.cpp" , __LINE__ ,
-				  "invalid parameter: SEED" );
-      set_SEED(i);
+				  "invalid parameter: DISPLAY_ALL_EVAL" );
+      set_DISPLAY_ALL_EVAL ( i == 1 );
       pe->set_has_been_interpreted();
     }
   }
+
+  // SEED:
+  // -----
+	{
+		pe = entries.find ( "SEED" );
+		
+		if ( pe ) {
+			
+			if ( !pe->is_unique() )
+				throw Invalid_Parameter ( "Parameters.cpp" , __LINE__ ,
+										 "invalid parameter: SEED not unique" );
+			
+			if ( pe->get_nb_values() != 1 )
+				throw Invalid_Parameter ( "Parameters.cpp" , __LINE__ ,
+										 "invalid parameter: SEED" );
+			
+			s = *(pe->get_values().begin());
+			NOMAD::toupper(s);
+			
+			if ( s == "NONE" || s == "DIFF" )
+				i = -1;
+			else if ( !NOMAD::atoi ( s , i ) )
+				throw Invalid_Parameter ( "Parameters.cpp" , __LINE__ ,
+										 "invalid parameter: SEED" );
+			set_SEED(i);
+			pe->set_has_been_interpreted();
+		}
+	}
 
   // VARIABLE_GROUP:
   // ---------------
@@ -10111,4 +10689,3 @@ void NOMAD::Parameters::read ( std::iostream  &fin )
 
   // user must check the parameters with Parameters::check()
 }
-

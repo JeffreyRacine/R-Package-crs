@@ -4,11 +4,11 @@ OBJECTS             = RuniqueCombs.o bspline.o gsl_bspline.o snomadr.o $(NOMAD_S
                          $(NOMAD_SRC)/Cache_Search.o $(NOMAD_SRC)/Clock.o $(NOMAD_SRC)/Direction.o $(NOMAD_SRC)/Directions.o $(NOMAD_SRC)/Display.o \
                          $(NOMAD_SRC)/Double.o $(NOMAD_SRC)/Eval_Point.o $(NOMAD_SRC)/Evaluator.o $(NOMAD_SRC)/Evaluator_Control.o \
                          $(NOMAD_SRC)/Exception.o $(NOMAD_SRC)/Extended_Poll.o $(NOMAD_SRC)/L_Curve.o $(NOMAD_SRC)/LH_Search.o $(NOMAD_SRC)/Mads.o \
-                         $(NOMAD_SRC)/Mesh.o $(NOMAD_SRC)/Model_Search.o $(NOMAD_SRC)/Model_Stats.o $(NOMAD_SRC)/Multi_Obj_Evaluator.o \
+                         $(NOMAD_SRC)/Mesh.o $(NOMAD_SRC)/Quad_Model_Search.o $(NOMAD_SRC)/Model_Stats.o $(NOMAD_SRC)/Multi_Obj_Evaluator.o \
                          $(NOMAD_SRC)/Parameters.o $(NOMAD_SRC)/Parameter_Entries.o $(NOMAD_SRC)/Parameter_Entry.o \
                          $(NOMAD_SRC)/Pareto_Front.o $(NOMAD_SRC)/Pareto_Point.o $(NOMAD_SRC)/Phase_One_Evaluator.o \
                          $(NOMAD_SRC)/Phase_One_Search.o $(NOMAD_SRC)/Point.o $(NOMAD_SRC)/Priority_Eval_Point.o $(NOMAD_SRC)/Quad_Model.o \
-                         $(NOMAD_SRC)/Quad_Model_Evaluator.o $(NOMAD_SRC)/Quad_Model_Sorted_Point.o \
+                         $(NOMAD_SRC)/Quad_Model_Evaluator.o   $(NOMAD_SRC)/RNG.o $(NOMAD_SRC)/Model_Sorted_Point.o \
                          $(NOMAD_SRC)/Random_Pickup.o $(NOMAD_SRC)/Signature.o $(NOMAD_SRC)/Slave.o $(NOMAD_SRC)/Speculative_Search.o \
                          $(NOMAD_SRC)/Stats.o $(NOMAD_SRC)/utils.o $(NOMAD_SRC)/Variable_Group.o $(NOMAD_SRC)/VNS_Search.o
 

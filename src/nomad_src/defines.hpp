@@ -1,14 +1,15 @@
 /*-------------------------------------------------------------------------------------*/
-/*  NOMAD - Nonsmooth Optimization by Mesh Adaptive Direct search - version 3.5        */
+/*  NOMAD - Nonlinear Optimization by Mesh Adaptive Direct search - version 3.5.1        */
 /*                                                                                     */
-/*  Copyright (C) 2001-2010  Mark Abramson        - the Boeing Company, Seattle        */
+/*  Copyright (C) 2001-2012  Mark Abramson        - the Boeing Company, Seattle        */
 /*                           Charles Audet        - Ecole Polytechnique, Montreal      */
 /*                           Gilles Couture       - Ecole Polytechnique, Montreal      */
 /*                           John Dennis          - Rice University, Houston           */
 /*                           Sebastien Le Digabel - Ecole Polytechnique, Montreal      */
+/*                           Christophe Tribes    - Ecole Polytechnique, Montreal      */
 /*                                                                                     */
 /*  funded in part by AFOSR and Exxon Mobil                                            */
-/*                                                                                     */
+/*                                                                                      */
 /*  Author: Sebastien Le Digabel                                                       */
 /*                                                                                     */
 /*  Contact information:                                                               */
@@ -48,34 +49,58 @@
 #include <limits.h>
 #include <cstdlib>
 
-// #define DEBUG is obtained by 'make debug'
-// #ifndef DEBUG
-// #define DEBUG // temporary replacement of 'make debug'
-// #endif
+
+#define R_VERSION // defined for the R version only
+
+// Define in order to display debug information
+// #define DEBUG 
 
 // define in order to display memory debug information:
 // #define MEMORY_DEBUG
 
+// define in order to display TGP information.
+// #define TGP_DEBUG
+
+// #define USE_TGP is defined in the makefile
+
 #ifdef DEBUG
 #ifndef MEMORY_DEBUG
 #define MEMORY_DEBUG
+#ifndef TGP_DEBUG
+#define TGP_DEBUG
+#endif
 #endif
 #endif
 
-/*----------------------------------------------------------------------*/
-/*             one of these flags is active in the makefile             */
-/*----------------------------------------------------------------------*/
-/*  #define GCC_X                 // g++         -- Linux/Unix/Mac-osX  */
-/*  #define GCC_WINDOWS           // minGW (gcc) -- Windows             */
-/*  #define _MSC_VER              // visual C++  -- Windows             */
-/*----------------------------------------------------------------------*/
+// CASE Linux using gnu compiler    
+#ifdef __gnu_linux__
+#define GCC_X
+#endif
 
-#ifdef GCC_WINDOWS
+// CASE OSX using gnu compiler    
+#ifdef __APPLE__
+#ifdef __GNUC__
+#define GCC_X
+#endif
+#endif
+
+// CASE minGW using gnu compiler  
+#ifdef __MINGW32__
 #define WINDOWS
+#ifdef __GNUC__
+#define GCC_X
+#endif
 #endif
 
+// CASE Visual Studio C++ compiler    
 #ifdef _MSC_VER
 #define WINDOWS
+#endif
+
+// Max uint32 for random number generator
+#if !defined(UINT32_MAX)
+typedef unsigned int uint32_t;
+#define UINT32_MAX	0xffffffff
 #endif
 
 // to display model stats for each evaluation at
@@ -95,10 +120,24 @@
 namespace NOMAD {
 
   /// Current version:
-#ifdef USE_MPI
-  const std::string VERSION = "3.5.0.MPI";
+  const std::string BASE_VERSION = "3.5.1";
+
+#ifdef R_VERSION
+  const std::string VERSION = BASE_VERSION + ".R";
 #else
-  const std::string VERSION = "3.5.0";
+#ifdef USE_MPI
+#ifdef USE_TGP
+  const std::string VERSION = BASE_VERSION + ".TGP" + ".MPI";
+#else
+  const std::string VERSION = BASE_VERSION + ".MPI";
+#endif
+#else
+#ifdef USE_TGP
+  const std::string VERSION = BASE_VERSION + ".TGP";
+#else
+  const std::string VERSION = BASE_VERSION;
+#endif
+#endif
 #endif
 
   // Directory separator, plus LGPL and user guide files
@@ -147,16 +186,22 @@ namespace NOMAD {
   const char   WAIT_SIGNAL = 'W';  ///< Wait signal
 #endif
 
+  /// Maximum number of variables.
+  const int MAX_DIMENSION = 1000;
+
   // Mesh index constants
-  const int L_LIMITS    = 50;          ///< Limits for the mesh index values
+  const int L_LIMITS    = 50;         ///< Limits for the mesh index values
   const int UNDEFINED_L = L_LIMITS+1;  ///< Undefined value for the mesh index
-  
+
   /// Default epsilon used by NOMAD::Double
   /** Use Parameters::set_EPSILON(), or parameter EPSILON,
       or NOMAD::Double::set_epsilon() to change it
   */
   const double DEFAULT_EPSILON = 1e-13;
   
+  /// Maximal output value for points used for models.
+  const double MODEL_MAX_OUTPUT = 1e10;
+
   /// Default infinity string used by NOMAD::Double
   /** Use Parameters::set_INF_STR(), or parameter INF_STR,
       or NOMAD::Double::set_inf_str() to change it
@@ -167,7 +212,7 @@ namespace NOMAD {
   /** Use Parameters::set_UNDEF_STR(), or parameter UNDEF_STR,
       or NOMAD::Double::set_undef_str() to change it
   */
-  const std::string DEFAULT_UNDEF_STR = "-";
+  const std::string DEFAULT_UNDEF_STR = "NaN";
 
   // VNS constants
   const int VNS_HALTON_INDEX_0 = 997; ///< Initial Halton index for the VNS
@@ -178,7 +223,7 @@ namespace NOMAD {
 
   const double INF = std::numeric_limits<double>::max(); ///< Infinity
 
-  const double D_INT_MAX = INT_MAX; ///< The INT_MAX constant as a \c double
+  const double D_INT_MAX = UINT32_MAX; ///< The UINT32_MAX constant as a \c double   
 
   // Singular Value Decomposition (SVD) constants:
   const double SVD_EPS      = 1e-12;      ///< Epsilon for SVD
@@ -210,6 +255,7 @@ namespace NOMAD {
   enum dd_type
     {
       NO_DISPLAY     , ///< No display
+	  MINIMAL_DISPLAY, ///< Minimal dispay    	
       NORMAL_DISPLAY , ///< Normal display
       FULL_DISPLAY     ///< Full display
     };
@@ -286,6 +332,22 @@ namespace NOMAD {
       UNDEFINED_SEARCH   ///< Undefined search
     };
 
+  /// Model type
+  enum model_type
+    {
+      QUADRATIC_MODEL , ///< Quadratic model
+      TGP_MODEL       , ///< TGP model
+      NO_MODEL          ///< No models
+    };
+
+  /// TGP mode
+  enum TGP_mode_type
+    {
+      TGP_FAST    , ///< TGP fast mode.
+      TGP_PRECISE , ///< TGP precise mode.
+      TGP_USER      ///< TGP user mode.
+    };
+
   /// Success type of an iteration
   // (do not modify this order)
   enum success_type
@@ -325,6 +387,7 @@ namespace NOMAD {
       MAX_EVAL_REACHED           ,  ///< Max number of evaluations
       MAX_SIM_BB_EVAL_REACHED    ,  ///< Max number of sim bb evaluations
       MAX_ITER_REACHED           ,  ///< Max number of iterations
+      MAX_CONS_FAILED_ITER       ,  ///< Max number of consecutive failed iterations
       FEAS_REACHED               ,  ///< Feasibility
       F_TARGET_REACHED           ,  ///< F_TARGET
       STAT_SUM_TARGET_REACHED    ,  ///< STAT_SUM_TARGET
@@ -353,6 +416,7 @@ namespace NOMAD {
       NO_DIRECTION           , ///< No direction
       ORTHO_1                , ///< OrthoMADS 1
       ORTHO_2                , ///< OrthoMADS 2
+      ORTHO_NP1              , ///< OrthoMADS n+1
       ORTHO_2N               , ///< OrthoMADS 2n
       LT_1                   , ///< LT-MADS 1
       LT_2                   , ///< LT-MADS 2

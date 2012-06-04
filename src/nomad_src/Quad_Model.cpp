@@ -1,11 +1,12 @@
 /*-------------------------------------------------------------------------------------*/
-/*  NOMAD - Nonsmooth Optimization by Mesh Adaptive Direct search - version 3.5        */
+/*  NOMAD - Nonlinear Optimization by Mesh Adaptive Direct search - version 3.5.1        */
 /*                                                                                     */
-/*  Copyright (C) 2001-2010  Mark Abramson        - the Boeing Company, Seattle        */
+/*  Copyright (C) 2001-2012  Mark Abramson        - the Boeing Company, Seattle        */
 /*                           Charles Audet        - Ecole Polytechnique, Montreal      */
 /*                           Gilles Couture       - Ecole Polytechnique, Montreal      */
 /*                           John Dennis          - Rice University, Houston           */
 /*                           Sebastien Le Digabel - Ecole Polytechnique, Montreal      */
+/*                           Christophe Tribes    - Ecole Polytechnique, Montreal      */
 /*                                                                                     */
 /*  funded in part by AFOSR and Exxon Mobil                                            */
 /*                                                                                     */
@@ -40,7 +41,7 @@
   \see    Quad_Model.hpp
 */
 #include "Quad_Model.hpp"
-using namespace std;
+using namespace std;  //zhenghua
 /*-----------------------------------------------------------*/
 /*                         constructor                       */
 /*-----------------------------------------------------------*/
@@ -166,7 +167,7 @@ bool NOMAD::Quad_Model::check_outputs ( const NOMAD::Point & bbo , int m ) const
     return false;
 
   for ( int i = 0 ; i < m ; ++i )
-    if ( !bbo[i].is_defined() || bbo[i].value() > 1e20 )
+    if ( !bbo[i].is_defined() || bbo[i].value() > NOMAD::MODEL_MAX_OUTPUT )
       return false;
   
   return true;
@@ -229,26 +230,39 @@ void NOMAD::Quad_Model::construct_Y ( const NOMAD::Point & center               
     reduce_Y ( center , max_Y_size );
 }
 
-/*-----------------------------------------------------------*/
-/*          reduce the number of interpolation points        */
-/*-----------------------------------------------------------*/
+/*-----------------------------------------------------------------*/
+/*             reduce the number of interpolation points           */
+/*-----------------------------------------------------------------*/
+/*                                                                 */
+/* 2011-07-13 -- BUG REPORT (found by Emmanuel Bigeon)             */
+/*                                                                 */
+/* . Ys was declared as a std::set<NOMAD::Model_Sorted_Point>      */
+/*                                                                 */
+/* . During the 'insert' command, for two different points at      */
+/*   the same distance from the center, one of the points was not  */
+/*   inserted into the set, and was not deleted after that.        */
+/*                                                                 */
+/* Solution: replace set by multiset                               */
+/*                                                                 */
+/*-----------------------------------------------------------------*/
 void NOMAD::Quad_Model::reduce_Y ( const NOMAD::Point & center     ,
 				   int                  max_Y_size   )
 {
   int nY = get_nY();
+
   if ( nY <= max_Y_size )
     return;
 
-  std::set<NOMAD::Quad_Model_Sorted_Point> Ys;
+  std::multiset<NOMAD::Model_Sorted_Point> Ys;
   for ( int k = 0 ; k < nY ; ++k )
-    Ys.insert ( NOMAD::Quad_Model_Sorted_Point ( _Y[k] , center ) );
+    Ys.insert ( NOMAD::Model_Sorted_Point ( _Y[k] , center ) );
 
   _Y.clear();
 
-  std::set<NOMAD::Quad_Model_Sorted_Point>::const_iterator it , end = Ys.end();
+  std::multiset<NOMAD::Model_Sorted_Point>::const_iterator it , end = Ys.end();
   for ( it = Ys.begin() ; it != end ; ++it ) {
     if ( get_nY() < max_Y_size )
-      _Y.push_back ( it->get_point() );
+      _Y.push_back ( static_cast<NOMAD::Eval_Point *> ( it->get_point() ) );
     else
       delete it->get_point();
   }
@@ -332,10 +346,12 @@ void NOMAD::Quad_Model::define_scaling ( const NOMAD::Double & r )
     _ref[i] = ( min[i] + max[i] ) / 2.0;
 
 #ifdef MODEL_STATS
-  _Yw = 0.0;
-  for ( i = 0 ; i < _n ; ++i )
-    _Yw += ((max[i]-min[i])/2.0).pow2();
-  _Yw.sqrt();
+  _Yw = NOMAD::Double;
+  for ( i = 0 ; i < _n ; ++i ) {
+    tmp = max[i]-min[i];
+    if ( !_Yw.is_defined() || tmp > _Yw )
+      _Yw = tmp;
+  }
 #endif
 
 #ifdef DEBUG
@@ -852,24 +868,10 @@ bool NOMAD::Quad_Model::construct_regression_model ( double eps        ,
     V[i] = new double[_n_alpha];
 
   std::string error_msg;
-  if ( SVD_decomposition ( error_msg , F , W , V , _n_alpha , _n_alpha , max_mpn ) ) {
+  if ( NOMAD::SVD_decomposition ( error_msg , F , W , V , _n_alpha , _n_alpha , max_mpn ) ) {
 
     // compute condition number:
-    {
-      double min = NOMAD::INF;
-      double max = -min;
-
-      for ( i = 0 ; i < _n_alpha ; ++i ) {
-	if ( W[i] < min )
-	  min = W[i];
-	if ( W[i] > max )
-	  max = W[i];
-      }
-      
-      if ( min < eps )
-      	min = eps;
-      _cond = max / min;
-    }
+    compute_cond ( W , _n_alpha , eps );
 
 #ifdef DEBUG
     _out << std::endl << "F=";
@@ -934,6 +936,33 @@ bool NOMAD::Quad_Model::construct_regression_model ( double eps        ,
 }
 
 /*-------------------------------------------------------------*/
+/*              compute condition number (private)             */
+/*-------------------------------------------------------------*/
+/*                                                             */
+/* 2011-08-16 -- BUG REPORT (found by Etienne Duclos):         */
+/*                                                             */
+/* This function was not a function before, and its code was   */
+/*   used twice with the same "n" for two different values.    */
+/*                                                             */
+/* Solution: create this function with "n" as a parameter      */
+/*                                                             */
+/*-------------------------------------------------------------*/
+void NOMAD::Quad_Model::compute_cond ( const double * W , int n , double eps )
+{
+  double min = NOMAD::INF;
+  double max = -min;
+  for ( int i = 0 ; i < n ; ++i ) {
+    if ( W[i] < min )
+      min = W[i];
+    if ( W[i] > max )
+      max = W[i];
+  }
+  if ( min < eps )
+    min = eps;
+  _cond = max / min;
+}
+
+/*-------------------------------------------------------------*/
 /*  resolution of system F.alpha = M'.f(Y) for the regression  */
 /*  (private)                                                  */
 /*-------------------------------------------------------------*/
@@ -960,6 +989,9 @@ void NOMAD::Quad_Model::solve_regression_system ( double      ** M         ,
   }
 
   double * alpha_tmp2 = new double [_n_alpha];
+
+  // some W values will be zero (or near zero);
+  // each value that is smaller than eps is ignored
 
   for ( i = 0 ; i < _n_alpha ; ++i ) {
     alpha_tmp2[i] = 0.0;
@@ -1094,20 +1126,7 @@ bool NOMAD::Quad_Model::construct_MFN_model ( double eps        ,
   if ( NOMAD::SVD_decomposition ( error_msg , F , W , V , nF , nF , max_mpn ) ) {
 
     // compute condition number:
-    {
-      double min = NOMAD::INF;
-      double max = -min;
-      for ( i = 0 ; i < _n_alpha ; ++i ) {
-	if ( W[i] < min )
-	  min = W[i];
-	if ( W[i] > max )
-	  max = W[i];
-      }
-
-      if ( min < eps )
-      	min = eps;
-      _cond = max / min;
-    }
+    compute_cond ( W , nF , eps );
 
 #ifdef DEBUG
     _out << std::endl << "F=";
@@ -1196,7 +1215,7 @@ void NOMAD::Quad_Model::solve_MFN_system ( double      ** F         ,
   double * mu        = new double [ p1];
 
   // if F is singular, some W values will be zero (or near zero);
-  // each value that is smaller than eps is replaced with 0.0:
+  // each value that is smaller than eps is ignored:
   for ( i = 0 ; i < p1 ; ++i ) {
     mu_tmp[i] = 0.0;
     if ( W[i] > eps )
@@ -1505,60 +1524,72 @@ void NOMAD::Quad_Model::compute_model_error ( int             bbo_index   ,
 #endif
 
   for ( int k = 0 ; k < nY ; ++k )
-    if ( _Y[k] && _Y[k]->get_eval_status() == NOMAD::EVAL_OK ) {
-      
-      truth_value = _Y[k]->get_bb_outputs()[bbo_index];
-      
-      if ( truth_value.is_defined() ) {
-	model_value = eval ( *_Y[k] , *_alpha[bbo_index] );
-	if ( model_value.is_defined() ) {
-
-	  rel_err.clear();
-	  if ( truth_value.abs() != 0.0 ) {
-	    rel_err = (truth_value-model_value).abs() / truth_value.abs();
-	    if ( !max_rel_err.is_defined() || rel_err > max_rel_err )
-	      max_rel_err = rel_err;
-	    if ( !min_rel_err.is_defined() || rel_err < min_rel_err )
-	      min_rel_err = rel_err;
-	    avg_rel_err += rel_err;
-	    ++cnt;
-	  }
+    if ( _Y[k] && _Y[k]->get_eval_status() == NOMAD::EVAL_OK )
+      {
+	truth_value = _Y[k]->get_bb_outputs()[bbo_index];
+	
+	if ( truth_value.is_defined() ) 
+	  {
+	    model_value = eval ( *_Y[k] , *_alpha[bbo_index] );
+	    if ( model_value.is_defined() )
+	      {
+		rel_err.clear();
+		if ( truth_value.abs() != 0.0 ) 
+		  rel_err = (truth_value-model_value).abs() / truth_value.abs();
+		else 
+		  {
+		    if (truth_value.abs()==model_value.abs())
+		      rel_err=0.0;
+		    else 
+		      rel_err=NOMAD::INF;
+		  }
+		if ( !max_rel_err.is_defined() || rel_err > max_rel_err )
+		  max_rel_err = rel_err;
+		if ( !min_rel_err.is_defined() || rel_err < min_rel_err )
+		  min_rel_err = rel_err;
+		avg_rel_err += rel_err;
+		++cnt; 
+		
 #ifdef DEBUG
-	  _out << "Y[" << k << "]= ( ";
-	  _Y[k]->NOMAD::Point::display ( _out );
-	  _out << " )" << " f=" << truth_value
-	       << " m=" << model_value << " error^2="
-	       << ( model_value - truth_value ).pow2()
-	       << " rel_err=" << rel_err
-	       << std::endl;
+		_out << "Y[" << k << "]= ( ";
+		_Y[k]->NOMAD::Point::display ( _out );
+		_out << " )" << " f=" << truth_value
+		     << " m=" << model_value << " error^2="
+		     << ( model_value - truth_value ).pow2()
+		     << " rel_err=" << rel_err
+		     << std::endl;
 #endif
-	  error += ( model_value - truth_value ).pow2();
-	}
-	else {
-	  chk = false;
-	  break;
-	}
+		error += ( model_value - truth_value ).pow2();
+	      }
+	    else
+	      {
+		chk = false;
+		break;
+	      }
+	  }
+	else
+	  {
+	    chk = false;
+	    break;
+	  }
       }
-      else {
-	chk = false;
-	break;
-      }
-    }
-
+  
 #ifdef DEBUG
   _out.close_block();
 #endif
-
-  if ( chk ) {
-    error.sqrt();
-    avg_rel_err = avg_rel_err / cnt;
-  }
-  else {
-    error.clear();
-    min_rel_err.clear();
-    max_rel_err.clear();
-    avg_rel_err.clear();
-  }
+  
+  if ( chk)
+    {  // Case where chk is true (at least one model_value and the corresponding thruth value were defined => cnt != 0)
+      error       = error.sqrt();
+      avg_rel_err = avg_rel_err / cnt;
+    }
+  else
+    {
+      error.clear();
+      min_rel_err.clear();
+      max_rel_err.clear();
+      avg_rel_err.clear();
+    }
 }
 
 /*-----------------------------------------------------------*/
@@ -1627,7 +1658,9 @@ void NOMAD::Quad_Model::display_Y_error ( const NOMAD::Display & out ) const
     return;
   }
 
-  int i , index = -1 , m = static_cast<int> ( _bbot.size() );
+	int i ;
+	int index = -1;
+	int m = static_cast<int> ( _bbot.size() );
 
   for ( i = 0 ; i < m ; ++i )
     if ( _alpha[i] ) {
@@ -1674,8 +1707,10 @@ void NOMAD::Quad_Model::display_Y_error ( const NOMAD::Display & out ) const
 			      max_rel_err_i ,
 			      avg_rel_err_i   );
 
-	error       += error_i;
-	avg_rel_err += avg_rel_err_i;
+	if (error_i.is_defined())       
+	  error       += error_i;
+	if (avg_rel_err_i.is_defined()) 
+	  avg_rel_err += avg_rel_err_i;
 	if ( !min_rel_err.is_defined() || min_rel_err_i < min_rel_err )
 	  min_rel_err = min_rel_err_i;
 	if ( !max_rel_err.is_defined() || max_rel_err_i > max_rel_err )

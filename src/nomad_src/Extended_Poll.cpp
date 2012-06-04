@@ -1,11 +1,12 @@
 /*-------------------------------------------------------------------------------------*/
-/*  NOMAD - Nonsmooth Optimization by Mesh Adaptive Direct search - version 3.5        */
+/*  NOMAD - Nonlinear Optimization by Mesh Adaptive Direct search - version 3.5.1        */
 /*                                                                                     */
-/*  Copyright (C) 2001-2010  Mark Abramson        - the Boeing Company, Seattle        */
+/*  Copyright (C) 2001-2012  Mark Abramson        - the Boeing Company, Seattle        */
 /*                           Charles Audet        - Ecole Polytechnique, Montreal      */
 /*                           Gilles Couture       - Ecole Polytechnique, Montreal      */
 /*                           John Dennis          - Rice University, Houston           */
 /*                           Sebastien Le Digabel - Ecole Polytechnique, Montreal      */
+/*                           Christophe Tribes    - Ecole Polytechnique, Montreal      */
 /*                                                                                     */
 /*  funded in part by AFOSR and Exxon Mobil                                            */
 /*                                                                                     */
@@ -40,7 +41,7 @@
   \see    Extended_Poll.hpp
 */
 #include "Extended_Poll.hpp"
-using namespace std;
+using namespace std;  //zhenghua
 /*----------------------------------------------------------------*/
 /*                            destructor                          */
 /*----------------------------------------------------------------*/
@@ -496,9 +497,11 @@ void NOMAD::Extended_Poll::set_descent_parameters
   bool has_sgte = _p.has_sgte();
   if ( has_sgte ) {
     descent_p.reset_f_target();
-    descent_p.set_HAS_SGTE         ( true  );
-    descent_p.set_OPT_ONLY_SGTE    ( true  );
-    descent_p.set_STOP_IF_FEASIBLE ( false );
+    descent_p.set_HAS_SGTE         ( true            );
+    descent_p.set_OPT_ONLY_SGTE    ( true            );
+    descent_p.set_STOP_IF_FEASIBLE ( false           );
+    descent_p.set_MODEL_SEARCH     ( false );
+    descent_p.set_MODEL_EVAL_SORT  ( NOMAD::NO_MODEL );
   }
   else {
     descent_p.set_F_TARGET         ( _p.get_f_target()         );
@@ -567,9 +570,15 @@ void NOMAD::Extended_Poll::set_descent_parameters
 
   descent_p.set_ADD_SEED_TO_FILE_NAMES ( _p.get_add_seed_to_file_names() );
 
-  descent_p.set_DISPLAY_DEGREE ( ( _p.out().get_poll_dd() == NOMAD::FULL_DISPLAY ) ?
-				 NOMAD::NORMAL_DISPLAY : NOMAD::NO_DISPLAY );
-  if ( has_sgte )
+	descent_p.set_DISPLAY_ALL_EVAL(_p.get_display_all_eval());
+	if ( _p.out().get_poll_dd() == NOMAD::FULL_DISPLAY )
+		descent_p.set_DISPLAY_DEGREE ( NOMAD::NORMAL_DISPLAY );
+	else if (_p.out().get_poll_dd() == NOMAD::NORMAL_DISPLAY )
+		descent_p.set_DISPLAY_DEGREE ( NOMAD::MINIMAL_DISPLAY );
+	else
+		descent_p.set_DISPLAY_DEGREE ( _p.out().get_poll_dd());
+ 
+	if ( has_sgte )
     descent_p.set_DISPLAY_STATS ( NOMAD::itos(sgte_eval) +
  				  "+SGTE OBJ (ext-poll--surrogate)" );
   else
@@ -583,6 +592,8 @@ void NOMAD::Extended_Poll::set_descent_parameters
     int ell = NOMAD::Mesh::get_mesh_index();
     descent_p.set_INITIAL_MESH_INDEX ( ell );
     descent_p.set_MAX_MESH_INDEX     ( ell );
+	descent_p.set_INITIAL_MESH_SIZE ( mesh.get_initial_mesh_size() , false );
+
   }
 
   // check the parameters:
@@ -1009,8 +1020,8 @@ void NOMAD::Extended_Poll::construct_extended_points ( const NOMAD::Eval_Point &
 {
   if ( _neighbors_exe.empty() )
     throw NOMAD::Exception ( "Extended_Poll.cpp" , __LINE__ ,
-    "NOMAD::Extended_Poll::construct_extended_points(): no NEIGHBORS_EXE executable" );
-
+    "NOMAD::Extended_Poll::construct_extended_points(): no NEIGHBORS_EXE executable (batch mode) or no subclass implementation of the method (library mode)" );
+	
   if ( !xk.is_complete() )
     throw NOMAD::Exception ( "Extended_Poll.cpp" , __LINE__ ,
     "NOMAD::Extended_Poll::construct_extended_points(): bad extended poll center");

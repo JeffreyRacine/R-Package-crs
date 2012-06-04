@@ -1,11 +1,12 @@
 /*-------------------------------------------------------------------------------------*/
-/*  NOMAD - Nonsmooth Optimization by Mesh Adaptive Direct search - version 3.5        */
+/*  NOMAD - Nonlinear Optimization by Mesh Adaptive Direct search - version 3.5.1        */
 /*                                                                                     */
-/*  Copyright (C) 2001-2010  Mark Abramson        - the Boeing Company, Seattle        */
+/*  Copyright (C) 2001-2012  Mark Abramson        - the Boeing Company, Seattle        */
 /*                           Charles Audet        - Ecole Polytechnique, Montreal      */
 /*                           Gilles Couture       - Ecole Polytechnique, Montreal      */
 /*                           John Dennis          - Rice University, Houston           */
 /*                           Sebastien Le Digabel - Ecole Polytechnique, Montreal      */
+/*                           Christophe Tribes    - Ecole Polytechnique, Montreal      */
 /*                                                                                     */
 /*  funded in part by AFOSR and Exxon Mobil                                            */
 /*                                                                                     */
@@ -40,7 +41,8 @@
   \see    Display.hpp
 */
 #include "Display.hpp"
-using namespace std;
+using namespace std;  //zhenghua
+
 /*---------------------------------------------------------*/
 /*                    open an indented block               */
 /*---------------------------------------------------------*/
@@ -97,11 +99,15 @@ void NOMAD::Display::set_degrees ( NOMAD::dd_type gen_dd    ,
   if ( max == NOMAD::NO_DISPLAY )
     _gen_dd = _search_dd = _poll_dd = _iter_dd = NOMAD::NO_DISPLAY;
 
-  // max=1: all to 1:
+	// max=1: all to 1:
+  else if ( max == NOMAD::MINIMAL_DISPLAY )
+	  _gen_dd = _search_dd = _poll_dd = _iter_dd = NOMAD::MINIMAL_DISPLAY;
+	
+  // max=2: all to 2:
   else if ( max == NOMAD::NORMAL_DISPLAY )
     _gen_dd = _search_dd = _poll_dd = _iter_dd = NOMAD::NORMAL_DISPLAY;
 
-  // max=2: 0-->0, 1-->0, and 2-->2:
+  // max=3: 0-->0, 1-->0, 2->0 and 3-->3:
   else {
     _gen_dd    = (gen_dd   ==NOMAD::FULL_DISPLAY)? NOMAD::FULL_DISPLAY:NOMAD::NO_DISPLAY;
     _search_dd = (search_dd==NOMAD::FULL_DISPLAY)? NOMAD::FULL_DISPLAY:NOMAD::NO_DISPLAY;
@@ -141,9 +147,11 @@ char NOMAD::Display::dd_to_char ( NOMAD::dd_type dd )
 {
   if ( dd == NOMAD::NO_DISPLAY )
     return '0';
+  if ( dd == NOMAD::MINIMAL_DISPLAY)
+	  return '1';
   if ( dd == NOMAD::NORMAL_DISPLAY )
-    return '1';
-  return '2';
+    return '2';
+  return '3';
 }
 
 /*------------------------------------------*/
@@ -151,11 +159,13 @@ char NOMAD::Display::dd_to_char ( NOMAD::dd_type dd )
 /*------------------------------------------*/
 int NOMAD::Display::dd_to_int ( NOMAD::dd_type dd )
 {
-  if ( dd == NOMAD::NO_DISPLAY )
-    return 0;
-  if ( dd == NOMAD::NORMAL_DISPLAY )
-    return 1;
-  return 2;
+	if ( dd == NOMAD::NO_DISPLAY )
+		return 0;
+	if ( dd == NOMAD::MINIMAL_DISPLAY )
+		return 1;
+	if ( dd == NOMAD::NORMAL_DISPLAY )
+		return 2;
+	return 3;
 }
 
 /*------------------------------------------*/
@@ -163,11 +173,14 @@ int NOMAD::Display::dd_to_int ( NOMAD::dd_type dd )
 /*------------------------------------------*/
 NOMAD::dd_type NOMAD::Display::int_to_dd ( int dd )
 {
-  if ( dd <= 0 )
-    return NOMAD::NO_DISPLAY;
-  if ( dd == 1 )
-    return NOMAD::NORMAL_DISPLAY;
-  return NOMAD::FULL_DISPLAY;
+	if ( dd <= 0 )
+		return NOMAD::NO_DISPLAY;
+	if ( dd == 1 )
+		return NOMAD::MINIMAL_DISPLAY;
+	if ( dd == 2 )
+		return NOMAD::NORMAL_DISPLAY;
+	
+	return NOMAD::FULL_DISPLAY;
 }
 
 /*---------------------------------------------------------*/
@@ -327,18 +340,21 @@ std::string NOMAD::Display::get_display_stats_keyword ( NOMAD::display_stats_typ
 /*-----------------------------------------------------------------*/
 std::ostream & NOMAD::operator << ( std::ostream & out , NOMAD::dd_type dd )
 {
-  switch ( dd ) {
-  case NOMAD::NO_DISPLAY:
-    out << "no display (0)";
-    break;
-  case NOMAD::NORMAL_DISPLAY:
-    out << "normal (1)";
-    break;
-  case NOMAD::FULL_DISPLAY:
-  default:
-    out << "full (2)";
-  }
-  return out;
+	switch ( dd ) {
+		case NOMAD::NO_DISPLAY:
+			out << "no display (0)";
+			break;
+		case NOMAD::MINIMAL_DISPLAY:
+			out << "minimal display (1)";
+			break;
+		case NOMAD::NORMAL_DISPLAY:
+			out << "normal (2)";
+			break;
+		case NOMAD::FULL_DISPLAY:
+		default:
+			out << "full (3)";
+	}
+	return out;
 }
 
 /*-----------------------------------------------------*/
@@ -447,6 +463,43 @@ std::ostream & NOMAD::operator << ( std::ostream & out , NOMAD::search_type st )
 }
 
 /*-----------------------------------------------------------------*/
+/*                     to display a model type                    */
+/*-----------------------------------------------------------------*/
+std::ostream & NOMAD::operator << ( std::ostream & out , NOMAD::model_type mt )
+{
+  switch ( mt ) {
+  case NOMAD::QUADRATIC_MODEL:
+    out << "quadratic";
+    break;
+  case NOMAD::TGP_MODEL:
+    out << "TGP";
+    break;
+  case NOMAD::NO_MODEL:
+    out << "no models";
+  }
+  return out;
+}
+
+/*-----------------------------------------------------------------*/
+/*                      to display a TGP mode                      */
+/*-----------------------------------------------------------------*/
+std::ostream & NOMAD::operator << ( std::ostream & out , NOMAD::TGP_mode_type m )
+{
+  switch ( m ) {
+  case NOMAD::TGP_FAST:
+    out << "fast";
+    break;
+  case NOMAD::TGP_PRECISE:
+    out << "precise";
+    break;
+  case NOMAD::TGP_USER:
+    out << "user";
+    break;
+  }
+  return out;
+}
+
+/*-----------------------------------------------------------------*/
 /*                  to display an evaluation type                  */
 /*-----------------------------------------------------------------*/
 std::ostream & NOMAD::operator << ( std::ostream & out , NOMAD::eval_type et )
@@ -517,6 +570,9 @@ std::ostream & NOMAD::operator << ( std::ostream & out , NOMAD::stop_type st )
     break;
   case NOMAD::MAX_ITER_REACHED:
     out << "max number of iterations";
+    break;
+  case NOMAD::MAX_CONS_FAILED_ITER:
+    out << "max number of consecutive failed iterations";
     break;
   case NOMAD::FEAS_REACHED:
     out << "feasibility achieved";
@@ -690,6 +746,9 @@ std::ostream & NOMAD::operator << ( std::ostream          & out ,
     break;
   case NOMAD::ORTHO_2:
     out << "Ortho-MADS 2";
+    break;
+  case NOMAD::ORTHO_NP1:
+    out << "Ortho-MADS n+1";
     break;
   case NOMAD::ORTHO_2N:
     out << "Ortho-MADS 2n";

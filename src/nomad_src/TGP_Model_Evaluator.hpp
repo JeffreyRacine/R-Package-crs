@@ -1,11 +1,12 @@
 /*-------------------------------------------------------------------------------------*/
-/*  NOMAD - Nonsmooth Optimization by Mesh Adaptive Direct search - version 3.5        */
+/*  NOMAD - Nonlinear Optimization by Mesh Adaptive Direct search - version 3.5.1        */
 /*                                                                                     */
-/*  Copyright (C) 2001-2010  Mark Abramson        - the Boeing Company, Seattle        */
+/*  Copyright (C) 2001-2012  Mark Abramson        - the Boeing Company, Seattle        */
 /*                           Charles Audet        - Ecole Polytechnique, Montreal      */
 /*                           Gilles Couture       - Ecole Polytechnique, Montreal      */
 /*                           John Dennis          - Rice University, Houston           */
 /*                           Sebastien Le Digabel - Ecole Polytechnique, Montreal      */
+/*                           Christophe Tribes    - Ecole Polytechnique, Montreal      */
 /*                                                                                     */
 /*  funded in part by AFOSR and Exxon Mobil                                            */
 /*                                                                                     */
@@ -33,63 +34,65 @@
 /*  You can find information on the NOMAD software at www.gerad.ca/nomad               */
 /*-------------------------------------------------------------------------------------*/
 /**
-  \file   Quad_Model_Sorted_Point.hpp
-  \brief  Interpolation point with distance to model center (headers)
+  \file   TGP_Model_Evaluator.hpp
+  \brief  NOMAD::Evaluator subclass for TGP model optimization (headers)
   \author Sebastien Le Digabel
-  \date   2010-11-15
-  \see    Quad_Model_Sorted_Point.cpp
+  \date   2011-02-17
+  \see    TGP_Model_Evaluator.cpp
 */
-#ifndef __QUAD_MODEL_SORTED_POINT__
-#define __QUAD_MODEL_SORTED_POINT__
+#ifdef USE_TGP
 
-#include "Eval_Point.hpp"
+#ifndef __TGP_MODEL_EVALUATOR__
+#define __TGP_MODEL_EVALUATOR__
+
+#include "Search.hpp"
+#include "Evaluator.hpp"
 
 namespace NOMAD {
 
-  /// Class used to order interpolation points.
-  class Quad_Model_Sorted_Point {
+  /// NOMAD::Evaluator subclass for quadratic model optimization.
+  class TGP_Model_Evaluator : public NOMAD::Evaluator {
 
   private:
 
-    NOMAD::Eval_Point * _x;    ///< The interpolation point.
-    NOMAD::Double       _dist; ///< Distance to model center.
+//     int       _n;           ///< Number of variables.
+//     int       _nm1;         ///< Number of variables minus one.
+//     int       _m;           ///< Number of blackbox outputs.
+//     double  * _x;           ///< An evaluation point.
+//     double ** _alpha;       ///< Model parameters.
+//     bool      _model_ready; ///< \c true if model ready to evaluate.
+
+    NOMAD::TGP_Model & _model; ///< The TGP model.
 
   public:
 
     /// Constructor.
     /**
-       \param x      Interpolaton point -- \b IN.
-       \param center Model center       -- \b IN.
+       \param p     Parameters -- \b IN.
+       \param model Model      -- \b IN.
     */
-    Quad_Model_Sorted_Point ( NOMAD::Eval_Point * x , const NOMAD::Point & center );
+    TGP_Model_Evaluator ( const NOMAD::Parameters & p     ,
+			  NOMAD::TGP_Model        & model   )
+      : NOMAD::Evaluator ( p     ) ,        
+	_model           ( model )   {}
 
-    /// Copy constructor.
-    /**
-       \param x The copied object -- \b IN.
-    */
-    Quad_Model_Sorted_Point ( const Quad_Model_Sorted_Point & x )
-      : _x ( x._x ) , _dist ( x._dist ) {}
-  
-    /// Affectation operator.
-    /**
-       \param x The right-hand side object -- \b IN.
-       \return \c *this as the result of the affectation.
-    */
-    Quad_Model_Sorted_Point & operator = ( const Quad_Model_Sorted_Point & x );
+    /// Destructor.
+    virtual ~TGP_Model_Evaluator ( void ) {}
 
-    /// Comparison operator.
+    /// Evaluate the blackboxes at a given trial point.
     /**
-       \param x The right-hand side object -- \b IN.
-       \return \c true if the current interpolation point is closer to the center.
-    */
-    bool operator < ( const Quad_Model_Sorted_Point & x ) const;
-  
-    /// Access to the interpolation point.
-    /**
-       \return The interpolation point.
-    */
-    NOMAD::Eval_Point * get_point ( void ) const { return _x; }
+       \param x The trial point -- \b IN/OUT.
+       \param h_max      Maximal feasibility value \c h_max -- \b IN.
+       \param count_eval Flag indicating if the evaluation has to be counted
+                         or not -- \b OUT.
+       \return A boolean equal to \c false if the evaluation failed.
+     */
+    virtual bool eval_x ( NOMAD::Eval_Point   & x          ,
+			  const NOMAD::Double & h_max      ,
+			  bool                & count_eval   ) const;
   };
 }
+
+#endif
 
 #endif

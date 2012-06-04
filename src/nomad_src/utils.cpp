@@ -1,11 +1,12 @@
 /*-------------------------------------------------------------------------------------*/
-/*  NOMAD - Nonsmooth Optimization by Mesh Adaptive Direct search - version 3.5        */
+/*  NOMAD - Nonlinear Optimization by Mesh Adaptive Direct search - version 3.5.1        */
 /*                                                                                     */
-/*  Copyright (C) 2001-2010  Mark Abramson        - the Boeing Company, Seattle        */
+/*  Copyright (C) 2001-2012  Mark Abramson        - the Boeing Company, Seattle        */
 /*                           Charles Audet        - Ecole Polytechnique, Montreal      */
 /*                           Gilles Couture       - Ecole Polytechnique, Montreal      */
 /*                           John Dennis          - Rice University, Houston           */
 /*                           Sebastien Le Digabel - Ecole Polytechnique, Montreal      */
+/*                           Christophe Tribes    - Ecole Polytechnique, Montreal      */
 /*                                                                                     */
 /*  funded in part by AFOSR and Exxon Mobil                                            */
 /*                                                                                     */
@@ -40,7 +41,7 @@
   \see    utils.hpp
 */
 #include "utils.hpp"
-using namespace std;
+using namespace std;  //zhenghua
 /*---------------------------------------------------------------*/
 /*               construct the first n prime numbers             */
 /*---------------------------------------------------------------*/
@@ -222,12 +223,13 @@ bool NOMAD::bbot_is_constraint ( NOMAD::bb_output_type bbot )
 /*-----------------------------------------------------------------------*/
 bool NOMAD::dir_is_mads ( NOMAD::direction_type dt )
 {
-  return ( dt == NOMAD::ORTHO_1  ||
-	   dt == NOMAD::ORTHO_2  ||
-	   dt == NOMAD::ORTHO_2N ||
-	   dt == NOMAD::LT_1     ||
-	   dt == NOMAD::LT_2     ||
-	   dt == NOMAD::LT_2N    ||
+  return ( dt == NOMAD::ORTHO_1   ||
+	   dt == NOMAD::ORTHO_2   ||
+	   dt == NOMAD::ORTHO_NP1 ||
+	   dt == NOMAD::ORTHO_2N  ||
+	   dt == NOMAD::LT_1      ||
+	   dt == NOMAD::LT_2      ||
+	   dt == NOMAD::LT_2N     ||
 	   dt == NOMAD::LT_NP1      );
 }
 
@@ -275,9 +277,10 @@ bool NOMAD::dir_is_random ( NOMAD::direction_type dt )
 /*-----------------------------------------------------------------------------*/
 bool NOMAD::dir_is_orthomads ( NOMAD::direction_type dt )
 {
-  return ( dt == NOMAD::ORTHO_1  ||
-	   dt == NOMAD::ORTHO_2  ||
-	   dt == NOMAD::ORTHO_2N    );
+  return ( dt == NOMAD::ORTHO_1   ||
+	   dt == NOMAD::ORTHO_2   ||
+	   dt == NOMAD::ORTHO_NP1 ||
+	   dt == NOMAD::ORTHO_2N     );
 }
 
 /*---------------------------------------------------------------------*/
@@ -335,7 +338,7 @@ bool NOMAD::strings_to_direction_type ( const std::list<std::string> & ls ,
     return true;
   }
 
-  // Ortho-MADS with 1, 2 or 2n directions:
+  // Ortho-MADS with 1, 2, n+1, or 2n directions:
   if ( s == "ORTHO" ) {
     ++it;
     if ( it == end ) {
@@ -352,6 +355,10 @@ bool NOMAD::strings_to_direction_type ( const std::list<std::string> & ls ,
     }
     s = *it;
     NOMAD::toupper ( s );
+    if ( s == "N+1" ) {
+      dt = NOMAD::ORTHO_NP1;
+      return true;
+    }
     if ( s == "2N" ) {
       dt = NOMAD::ORTHO_2N;
       return true;
@@ -493,6 +500,28 @@ bool NOMAD::string_to_hnorm_type ( const std::string & s , NOMAD::hnorm_type & h
   return false;
 }
 
+/*-----------------------------------------*/
+/*  convert a string into a TGP_mode_type  */
+/*-----------------------------------------*/
+bool NOMAD::string_to_TGP_mode_type ( const std::string & s , NOMAD::TGP_mode_type & m )
+{
+  std::string ss = s;
+  NOMAD::toupper(ss);
+  if ( ss == "FAST" ) {
+    m = NOMAD::TGP_FAST;
+    return true;
+  }
+  if ( ss == "PRECISE" ) {
+    m = NOMAD::TGP_PRECISE;
+    return true;
+  }
+  if ( ss == "USER" ) {
+    m = NOMAD::TGP_USER;
+    return true;
+  }
+  return false;
+}
+
 /*--------------------------------------------------*/
 /*  convert a string into a multi_formulation_type  */
 /*--------------------------------------------------*/
@@ -599,6 +628,27 @@ bool NOMAD::string_to_bb_input_type ( const std::string    & s    ,
   return false;
 }
 
+/*-----------------------------------------------------------------*/
+/*                 convert a string into a model_type              */
+/*-----------------------------------------------------------------*/
+bool NOMAD::string_to_model_type ( const std::string & s  ,
+				   NOMAD::model_type & mt   )
+{
+  std::string ss = s;
+  NOMAD::toupper ( ss );
+  if ( ss=="TGP" || ss=="TGP_MODEL" ) {
+    mt = NOMAD::TGP_MODEL;
+    return true;
+  }
+  if ( ss=="QUADRATIC" || ss=="QUADRATIC_MODEL" ) {
+    mt = NOMAD::QUADRATIC_MODEL;
+    return true;
+  }
+
+  mt = NOMAD::NO_MODEL;
+  return false;
+}
+
 /*----------------------------------------------------------------------*/
 /*         convert a string in {"YES","NO","Y","N"} to a bool           */
 /*         value of return: -1: error                                   */
@@ -609,9 +659,9 @@ int NOMAD::string_to_bool ( const std::string & ss )
 {
   std::string s = ss;
   NOMAD::toupper ( s );
-  if ( s=="Y" || s=="YES" || s=="1" )
+  if ( s=="Y" || s=="YES" || s=="1" || s=="TRUE" )
     return 1;
-  if ( s=="N" || s=="NO" || s=="0" )
+  if ( s=="N" || s=="NO" || s=="0" || s=="FALSE" )
     return 0;
   return -1;
 }
@@ -720,6 +770,13 @@ bool NOMAD::string_to_index_range ( const std::string & s           ,
 /*           V is given, not V'                                 */
 /*                                                              */
 /*--------------------------------------------------------------*/
+/* 2011-08-16 -- BUG REPORT (found by Etienne Duclos)           */
+/*                                                              */
+/* the -Wall option gave a warning when nm was not initialized  */
+/*                                                              */
+/* Solution: initialize nm = 0                                  */
+/*                                                              */
+/*--------------------------------------------------------------*/
 bool NOMAD::SVD_decomposition ( std::string & error_msg ,
 				double     ** M         ,
 				double      * W         ,
@@ -743,7 +800,7 @@ bool NOMAD::SVD_decomposition ( std::string & error_msg ,
   int      nm1   = n - 1;
 
   bool   flag;
-  int    i , j , k , l , its , jj , nm;
+  int    i , j , k , l , its , jj , nm = 0;
   double s , f , h , tmp , c , x , y , z , absf , absg , absh;
 
   const int NITER = 30;

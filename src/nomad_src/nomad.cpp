@@ -1,11 +1,12 @@
 /*-------------------------------------------------------------------------------------*/
-/*  NOMAD - Nonsmooth Optimization by Mesh Adaptive Direct search - version 3.5        */
+/*  NOMAD - Nonlinear Optimization by Mesh Adaptive Direct search - version 3.5.1        */
 /*                                                                                     */
-/*  Copyright (C) 2001-2011  Mark Abramson        - the Boeing Company, Seattle        */
+/*  Copyright (C) 2001-2012  Mark Abramson        - the Boeing Company, Seattle        */
 /*                           Charles Audet        - Ecole Polytechnique, Montreal      */
 /*                           Gilles Couture       - Ecole Polytechnique, Montreal      */
 /*                           John Dennis          - Rice University, Houston           */
 /*                           Sebastien Le Digabel - Ecole Polytechnique, Montreal      */
+/*                           Christophe Tribes    - Ecole Polytechnique, Montreal      */
 /*                                                                                     */
 /*  funded in part by AFOSR and Exxon Mobil                                            */
 /*                                                                                     */
@@ -39,7 +40,8 @@
   \date   2010-04-12
 */
 #include "nomad.hpp"
-#include <R.h>
+/* *************************  snomadr  zhenghua *********************** */
+#include <R.h>   
 #include <Rdefines.h>
 #include <R_ext/Utils.h>
 using namespace std;
@@ -52,16 +54,18 @@ class Routbuf: public std::streambuf {
 				}
 
 };
+/* *************************  snomadr  zhenghua *********************** */
+
+
 /*------------------------------------------*/
 /*            NOMAD main function           */
 /*------------------------------------------*/
 int main ( int argc , char ** argv )
 {
-
   // display:
-	Routbuf routbuf;
-	std::ostream rout(&routbuf);
-  NOMAD::Display out ( rout );
+	Routbuf routbuf;                 //zhenghua
+	std::ostream rout(&routbuf);     //zhenghua
+  NOMAD::Display out ( rout );     //zhenghua
   out.precision ( NOMAD::DISPLAY_PRECISION_STD );
 
   std::string error;
@@ -71,7 +75,7 @@ int main ( int argc , char ** argv )
 
     // usage:
     if ( argc < 2 ) {
-      NOMAD::display_usage ( rout );
+      NOMAD::display_usage ( out );  //zhenghua
       NOMAD::end();
       return EXIT_FAILURE;
     }
@@ -91,7 +95,7 @@ int main ( int argc , char ** argv )
     // display info if option '-i' has been specified:
     if ( opt == "-I" || opt == "-INFO" ) {
       NOMAD::display_info  ( out );
-      NOMAD::display_usage ( out );
+      NOMAD::display_usage ( out );  //zhenghua
       NOMAD::end();
       return EXIT_SUCCESS;
     }
@@ -109,7 +113,7 @@ int main ( int argc , char ** argv )
     // check the number of processess:
 #ifdef USE_MPI
     if ( NOMAD::Slave::get_nb_processes() < 2 ) {
-      NOMAD::display_usage ( rout );
+      NOMAD::display_usage ( out );  //zhenghua
       NOMAD::end();
       return EXIT_FAILURE;
     }
@@ -124,12 +128,12 @@ int main ( int argc , char ** argv )
       p.check();
 
       // display NOMAD info:
-      if ( p.get_display_degree() != NOMAD::NO_DISPLAY )
+      if ( p.get_display_degree() != NOMAD::NO_DISPLAY  && p.get_display_degree() != NOMAD::MINIMAL_DISPLAY)
 	NOMAD::display_info ( out );
 
       // parameters display:
       if ( NOMAD::Slave::is_master() &&
-	   p.get_display_degree() == NOMAD::FULL_DISPLAY ) 
+       	   p.get_display_degree() == NOMAD::FULL_DISPLAY ) 
 	out << std::endl
 	    << NOMAD::open_block ( "parameters" ) << std::endl
 	    << p
@@ -150,7 +154,7 @@ int main ( int argc , char ** argv )
     catch ( std::exception & e ) {
       if ( NOMAD::Slave::is_master() ) {
 	error = std::string ( "NOMAD has been interrupted: " ) + e.what();
-	rout << std::endl << error << std::endl << std::endl;
+	rout << std::endl << error << std::endl << std::endl;  //zhenghua
       }
     }
     
@@ -192,8 +196,7 @@ void NOMAD::display_cardinalities ( const NOMAD::Display & out )
   // cardinalities display:
   // ----------------------
   out << std::endl
-      << NOMAD::open_block ( "important objects in memory" )
-      << std::endl;
+      << NOMAD::open_block ( "important objects in memory" );
 
   // NOMAD::Signature:
   out << "Signature              : ";
@@ -272,12 +275,13 @@ void NOMAD::display_info ( const NOMAD::Display & out )
     return;
 #endif
   NOMAD::display_version ( out );
-  out << NOMAD::open_block ( "Copyright (C) 2001-2011" )
+  out << NOMAD::open_block ( "Copyright (C) 2001-2012" )
       << "Mark A. Abramson     - The Boeing Company"              << std::endl
       << "Charles Audet        - Ecole Polytechnique de Montreal" << std::endl
       << "Gilles Couture       - Ecole Polytechnique de Montreal" << std::endl
       << "John E. Dennis, Jr.  - Rice University"                 << std::endl
       << "Sebastien Le Digabel - Ecole Polytechnique de Montreal" << std::endl
+	  << "Christophe Tribes    - Ecole Polytechnique de Montreal" << std::endl
       << NOMAD::close_block()
       << std::endl
       << "Funded in part by AFOSR and Exxon Mobil."               << std::endl
@@ -294,23 +298,30 @@ void NOMAD::display_info ( const NOMAD::Display & out )
 /*------------------------------------------*/
 /*             display NOMAD usage          */
 /*------------------------------------------*/
-void NOMAD::display_usage ( const NOMAD::Display & out )
+void NOMAD::display_usage ( char* exeName, const NOMAD::Display & out )
 {
 #ifdef USE_MPI
   if ( !NOMAD::Slave::is_master() )
     return;
   out << std::endl
-      << "Run NOMAD.MPI: mpirun -np p nomad.MPI parameters_file" << std::endl
-      << "Info         : nomad -i"                    << std::endl
-      << "Help         : nomad -h keyword (or 'all')" << std::endl
-      << "Version      : nomad -v"                    << std::endl
+      << "Run NOMAD.MPI: mpirun -np p " << exeName << " parameters_file" << std::endl
+      << "Info         : " << exeName << " -i"                    << std::endl
+      << "Help         : " << exeName << " -h keyword (or 'all')" << std::endl
+      << "Version      : " << exeName << " -v"                    << std::endl
       << std::endl;  
 #else
   out << std::endl
-      << "Run NOMAD: nomad parameters_file"          << std::endl
-      << "Info     : nomad -i"                       << std::endl
-      << "Help     : nomad -h keyword(s) (or 'all')" << std::endl
-      << "Version  : nomad -v"                       << std::endl
+      << "Run NOMAD: " << exeName << " parameters_file"          << std::endl
+      << "Info     : " << exeName << " -i"                       << std::endl
+      << "Help     : " << exeName << " -h keyword(s) (or 'all')" << std::endl
+      << "Version  : " << exeName << " -v"                       << std::endl
       << std::endl; 
 #endif
+}
+
+void NOMAD::display_usage ( const NOMAD::Display & out ) //zhenghua
+{
+		char exeName[]="snomadr";
+		NOMAD::display_usage(exeName, out);
+		return;
 }

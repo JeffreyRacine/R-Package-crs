@@ -1,11 +1,12 @@
 /*-------------------------------------------------------------------------------------*/
-/*  NOMAD - Nonsmooth Optimization by Mesh Adaptive Direct search - version 3.5        */
+/*  NOMAD - Nonlinear Optimization by Mesh Adaptive Direct search - version 3.5.1        */
 /*                                                                                     */
-/*  Copyright (C) 2001-2010  Mark Abramson        - the Boeing Company, Seattle        */
+/*  Copyright (C) 2001-2012  Mark Abramson        - the Boeing Company, Seattle        */
 /*                           Charles Audet        - Ecole Polytechnique, Montreal      */
 /*                           Gilles Couture       - Ecole Polytechnique, Montreal      */
 /*                           John Dennis          - Rice University, Houston           */
 /*                           Sebastien Le Digabel - Ecole Polytechnique, Montreal      */
+/*                           Christophe Tribes    - Ecole Polytechnique, Montreal      */
 /*                                                                                     */
 /*  funded in part by AFOSR and Exxon Mobil                                            */
 /*                                                                                     */
@@ -40,7 +41,7 @@
   \see    Signature.hpp
 */
 #include "Signature.hpp"
-using namespace std;
+using namespace std;  //zhenghua
 /*-----------------------------------*/
 /*   static members initialization   */
 /*-----------------------------------*/
@@ -436,9 +437,11 @@ bool NOMAD::Signature::is_compatible ( const NOMAD::Point & x ) const
 /*-----------------------------------------------------*/
 /*     compute the directions (they include delta_m)   */
 /*-----------------------------------------------------*/
-void NOMAD::Signature::get_directions ( std::list<NOMAD::Direction> & dirs       ,
-					NOMAD::poll_type              poll       ,
-					int                           mesh_index   ) const
+void NOMAD::Signature::get_directions ( std::list<NOMAD::Direction> & dirs          ,
+					NOMAD::poll_type              poll          ,
+					const NOMAD::Point          & poll_center   ,
+					const NOMAD::Point          * first_success ,  // can be NULL
+					int                           mesh_index      ) const
 {
   NOMAD::Direction                          * pd;
   int                                         i;
@@ -448,7 +451,9 @@ void NOMAD::Signature::get_directions ( std::list<NOMAD::Direction> & dirs      
   // get delta_m (mesh size parameter):
   int          n = get_n();
   NOMAD::Point delta_m (n);
+	NOMAD::Point delta_p(n);	
   _mesh->get_delta_m ( delta_m , mesh_index );
+  _mesh->get_delta_p ( delta_p , mesh_index );	
 
   // loop on variable groups:
   std::list<NOMAD::Variable_Group*>::const_iterator end_vg = _var_groups.end() , it_vg;
@@ -458,7 +463,13 @@ void NOMAD::Signature::get_directions ( std::list<NOMAD::Direction> & dirs      
 
     // get the directions for the current group of variables:
     std::list<NOMAD::Direction> dirs_nc;
-    (*it_vg)->get_directions ( dirs_nc , poll , mesh_index );
+    (*it_vg)->get_directions ( dirs_nc             ,
+			       poll                ,
+			       poll_center         ,
+			       first_success       ,
+			       mesh_index          ,
+			       _feas_success_dir   ,
+			       _infeas_success_dir   );
 
     // scale with delta_m and resize the directions to size n;
     // also round integer and binary variables:
@@ -473,14 +484,19 @@ void NOMAD::Signature::get_directions ( std::list<NOMAD::Direction> & dirs      
 
 	(*pd)[*it_vi] = delta_m[*it_vi] * (*it_dir)[i++];
 
-	// integer variables:
-	if ( _input_types[*it_vi] == NOMAD::INTEGER ) {
-	  if ( (*pd)[*it_vi] >= 0.0 )
-	    (*pd)[*it_vi] = ceil  ( (*pd)[*it_vi].value() );
-	  else
-	    (*pd)[*it_vi] = floor ( (*pd)[*it_vi].value() );
-	}
-
+	// integer variables:		    
+	  if ( _input_types[*it_vi] == NOMAD::INTEGER ) {
+		  if ( (*pd)[*it_vi] >= delta_p[*it_vi]/3.0 )
+			  (*pd)[*it_vi] = ceil  ( (*pd)[*it_vi].value() );
+		  else if ( (*pd)[*it_vi] <= -delta_p[*it_vi]/3.0 )
+			  (*pd)[*it_vi] = floor ( (*pd)[*it_vi].value() );
+		  else	
+		  {
+			  double x=(*pd)[*it_vi].value();
+			  (*pd)[*it_vi] = (x>0)? floor(x+0.5): ceil(x-0.5);
+		  }
+		}		  
+		  
 	// binary variables:
 	else if ( _input_types[*it_vi] == NOMAD::BINARY ) {
 	  if ( (*pd)[*it_vi] != 0.0 )
@@ -502,55 +518,62 @@ void NOMAD::Signature::get_one_direction ( NOMAD::Direction & dir          ,
 					   int                mesh_index   ,
 					   int                halton_index   ) const
 {
-  int                           i;
-  std::set<int>::const_iterator it_vi  , end_vi;
-
-  // get delta_m (mesh size parameter):
-  int          n = get_n();
-  NOMAD::Point delta_m (n);
-  _mesh->get_delta_m ( delta_m , mesh_index );
-
-  dir.reset    ( n , 0.0 );
-  dir.set_type ( NOMAD::UNDEFINED_DIRECTION );
-
-  // loop on variable groups:
-  std::list<NOMAD::Variable_Group*>::const_iterator end_vg = _var_groups.end() , it_vg;
-  for ( it_vg = _var_groups.begin() ; it_vg != end_vg ; ++it_vg ) {
-
-    const std::set<int> & var_indexes = (*it_vg)->get_var_indexes();
-
-    // get the direction for the current group of variables:
-    NOMAD::Direction dir_nc;
-
-    if ( (*it_vg)->get_one_direction ( dir_nc , mesh_index , halton_index++ ) ) {
-
-      // scale with delta_m and round integer and binary variables:
-      end_vi = var_indexes.end();
-      i      = 0;
-      for ( it_vi = var_indexes.begin() ; it_vi != end_vi ; ++it_vi ) {
-
-	dir[*it_vi] = delta_m[*it_vi] * dir_nc[i++];
-
-	// integer variables:
-	if ( _input_types[*it_vi] == NOMAD::INTEGER ) {
-	  if ( dir[*it_vi] >= 0.0 )
-	    dir[*it_vi] = ceil  ( dir[*it_vi].value() );
-	  else
-	    dir[*it_vi] = floor ( dir[*it_vi].value() );
+	int                           i;
+	std::set<int>::const_iterator it_vi  , end_vi;
+	
+	// get delta_m (mesh size parameter):
+	int          n = get_n();
+	NOMAD::Point delta_m (n);
+	NOMAD::Point delta_p(n);	
+	_mesh->get_delta_m ( delta_m , mesh_index );
+	_mesh->get_delta_p ( delta_p , mesh_index );	
+	
+	dir.reset    ( n , 0.0 );
+	dir.set_type ( NOMAD::UNDEFINED_DIRECTION );
+	
+	// loop on variable groups:
+	std::list<NOMAD::Variable_Group*>::const_iterator end_vg = _var_groups.end() , it_vg;
+	for ( it_vg = _var_groups.begin() ; it_vg != end_vg ; ++it_vg ) {
+		
+		const std::set<int> & var_indexes = (*it_vg)->get_var_indexes();
+		
+		// get the direction for the current group of variables:
+		NOMAD::Direction dir_nc;
+		
+		if ( (*it_vg)->get_one_direction ( dir_nc , mesh_index , halton_index++ ) ) {
+			
+			// scale with delta_m and round integer and binary variables:
+			end_vi = var_indexes.end();
+			i      = 0;
+			for ( it_vi = var_indexes.begin() ; it_vi != end_vi ; ++it_vi ) {
+				
+				dir[*it_vi] = delta_m[*it_vi] * dir_nc[i++];
+				
+				// integer variables:		  	  
+				if ( _input_types[*it_vi] == NOMAD::INTEGER ) {
+					if ( dir[*it_vi] >= delta_p[*it_vi]/3.0 )
+						dir[*it_vi] = ceil  ( dir[*it_vi].value() );
+					else if ( dir [*it_vi] <= -delta_p[*it_vi]/3.0 )
+						dir[*it_vi] = floor ( dir[*it_vi].value() );
+					else
+					{
+						double x=dir[*it_vi].value();
+						dir[*it_vi] = (x>0)? floor(x+0.5): ceil(x-0.5);
+					}
+				}
+				
+				// binary variables:
+				else if ( _input_types[*it_vi] == NOMAD::BINARY ) {
+					if ( dir[*it_vi] != 0.0 )
+						dir[*it_vi] = 1.0;
+				}
+				
+				// categorical variables: set direction=0:
+				else if ( _input_types[*it_vi] == NOMAD::CATEGORICAL )
+					dir[*it_vi] = 0.0;
+			}
+		}
 	}
-
-	// binary variables:
-	else if ( _input_types[*it_vi] == NOMAD::BINARY ) {
-	  if ( dir[*it_vi] != 0.0 )
-	    dir[*it_vi] = 1.0;
-	}
-
-	// categorical variables: set direction=0:
-	else if ( _input_types[*it_vi] == NOMAD::CATEGORICAL )
-	  dir[*it_vi] = 0.0;
-      }
-    }
-  }
 }
 
 /*----------------------------------*/

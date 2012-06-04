@@ -1,11 +1,12 @@
 /*-------------------------------------------------------------------------------------*/
-/*  NOMAD - Nonsmooth Optimization by Mesh Adaptive Direct search - version 3.5        */
+/*  NOMAD - Nonlinear Optimization by Mesh Adaptive Direct search - version 3.5.1        */
 /*                                                                                     */
-/*  Copyright (C) 2001-2010  Mark Abramson        - the Boeing Company, Seattle        */
+/*  Copyright (C) 2001-2012  Mark Abramson        - the Boeing Company, Seattle        */
 /*                           Charles Audet        - Ecole Polytechnique, Montreal      */
 /*                           Gilles Couture       - Ecole Polytechnique, Montreal      */
 /*                           John Dennis          - Rice University, Houston           */
 /*                           Sebastien Le Digabel - Ecole Polytechnique, Montreal      */
+/*                           Christophe Tribes    - Ecole Polytechnique, Montreal      */
 /*                                                                                     */
 /*  funded in part by AFOSR and Exxon Mobil                                            */
 /*                                                                                     */
@@ -42,7 +43,8 @@
 #include "Cache_File_Point.hpp"
 #include "Eval_Point.hpp"
 #include "Slave.hpp"
-using namespace std;
+using namespace std;  //zhenghua
+
 /*-----------------------------------*/
 /*   static members initialization   */
 /*-----------------------------------*/
@@ -64,8 +66,8 @@ NOMAD::Eval_Point::Eval_Point ( void )
    _EB_ok            ( true                              )
 {
 #ifdef MODEL_STATS
-  _mod_type = -1;
-  _nY       = -1;
+  _mod_use = -1;
+  _nY      = -1;
 #endif
 }
 
@@ -87,8 +89,8 @@ NOMAD::Eval_Point::Eval_Point ( int n , int m )
     _bb_outputs       ( m                                 )
 {
 #ifdef MODEL_STATS
-  _mod_type = -1;
-  _nY       = -1;
+  _mod_use = -1;
+  _nY      = -1;
 #endif
 }
 
@@ -128,8 +130,8 @@ NOMAD::Eval_Point::Eval_Point ( const NOMAD::Cache_File_Point & x , NOMAD::eval_
   }
 
 #ifdef MODEL_STATS
-  _mod_type = -1;
-  _nY       = -1;
+  _mod_use = -1;
+  _nY      = -1;
 #endif
 }
 
@@ -473,14 +475,17 @@ bool NOMAD::Eval_Point::operator < ( const NOMAD::Eval_Point & x ) const
 bool NOMAD::Eval_Point::check_nan ( void ) const
 {
   int m = _bb_outputs.size();
-  for ( int i = 0 ; i < m ; ++i )
+  for ( int i = 0 ; i < m ; ++i ) {
+    if ( _bb_outputs[i].is_defined() ) {
 #ifdef WINDOWS
-    if ( nomad_isnan ( _bb_outputs[i].value() ) )
-      return true;
+      if ( nomad_isnan ( _bb_outputs[i].value() ) )  //zhenghua
+	return true;
 #else
-    if ( nomad_isnan ( _bb_outputs[i].value() ) )
-      return true;
+      if ( nomad_isnan ( _bb_outputs[i].value() ) )  //zhenghua
+	return true;
 #endif
+    }
+  }
   return false;
 }
 
@@ -491,12 +496,12 @@ bool NOMAD::Eval_Point::check_nan ( void ) const
 /*--------------------------------------------------------------*/
 void NOMAD::Eval_Point::set_model_data ( const NOMAD::Eval_Point & x ) const
 {
-  _mod_type = x._mod_type;
-  _nY       = x._nY;
-  _cond     = x._cond;
-  _Yw       = x._Yw;
-  _mh       = x._mh;
-  _mf       = x._mf;
+  _mod_use = x._mod_use;
+  _nY      = x._nY;
+  _cond    = x._cond;
+  _Yw      = x._Yw;
+  _mh      = x._mh;
+  _mf      = x._mf;
 }
 
 /*--------------------------------------------------------------*/
@@ -504,8 +509,8 @@ void NOMAD::Eval_Point::set_model_data ( const NOMAD::Eval_Point & x ) const
 /*--------------------------------------------------------------*/
 void NOMAD::Eval_Point::clear_model_data ( void ) const
 {
-  _mod_type = -1;
-  _nY       = -1;
+  _mod_use = -1;
+  _nY      = -1;
   _cond.clear();
   _Yw.clear();
   _mh.clear();

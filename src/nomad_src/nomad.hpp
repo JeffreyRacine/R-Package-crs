@@ -1,11 +1,12 @@
 /*-------------------------------------------------------------------------------------*/
-/*  NOMAD - Nonsmooth Optimization by Mesh Adaptive Direct search - version 3.5        */
+/*  NOMAD - Nonlinear Optimization by Mesh Adaptive Direct search - version 3.5.1        */
 /*                                                                                     */
-/*  Copyright (C) 2001-2011  Mark Abramson        - the Boeing Company, Seattle        */
+/*  Copyright (C) 2001-2012  Mark Abramson        - the Boeing Company, Seattle        */
 /*                           Charles Audet        - Ecole Polytechnique, Montreal      */
 /*                           Gilles Couture       - Ecole Polytechnique, Montreal      */
 /*                           John Dennis          - Rice University, Houston           */
 /*                           Sebastien Le Digabel - Ecole Polytechnique, Montreal      */
+/*                           Christophe Tribes    - Ecole Polytechnique, Montreal      */
 /*                                                                                     */
 /*  funded in part by AFOSR and Exxon Mobil                                            */
 /*                                                                                     */
@@ -41,16 +42,8 @@
 #ifndef __NOMAD__
 #define __NOMAD__
 
-#include "VNS_Search.hpp"
-#include "Speculative_Search.hpp"
-#include "LH_Search.hpp"
+#include "Mads.hpp"
 
-/// NOMAD main function.
-/**
-   \param argc Number of command line arguments -- \b IN.
-   \param argv The command line arguments       -- \b IN.
-   \return     An integer equal to \c EXIT_SUCCESS (0) or \c EXIT_FAILURE (1).
-*/
 int main ( int argc , char ** argv );
 
 namespace NOMAD {
@@ -71,7 +64,8 @@ namespace NOMAD {
   /**
      \param out A NOMAD::Display object -- \b IN.
   */
-  void display_usage ( const NOMAD::Display & out );
+  void display_usage ( char* exeName, const NOMAD::Display & out );
+  void display_usage ( const NOMAD::Display & out );	
 
 #ifdef MEMORY_DEBUG
   /// Display NOMAD most important structures in memory.

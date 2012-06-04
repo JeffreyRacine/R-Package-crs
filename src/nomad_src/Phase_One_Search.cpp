@@ -1,11 +1,12 @@
 /*-------------------------------------------------------------------------------------*/
-/*  NOMAD - Nonsmooth Optimization by Mesh Adaptive Direct search - version 3.5        */
+/*  NOMAD - Nonlinear Optimization by Mesh Adaptive Direct search - version 3.5.1        */
 /*                                                                                     */
-/*  Copyright (C) 2001-2010  Mark Abramson        - the Boeing Company, Seattle        */
+/*  Copyright (C) 2001-2012  Mark Abramson        - the Boeing Company, Seattle        */
 /*                           Charles Audet        - Ecole Polytechnique, Montreal      */
 /*                           Gilles Couture       - Ecole Polytechnique, Montreal      */
 /*                           John Dennis          - Rice University, Houston           */
 /*                           Sebastien Le Digabel - Ecole Polytechnique, Montreal      */
+/*                           Christophe Tribes    - Ecole Polytechnique, Montreal      */
 /*                                                                                     */
 /*  funded in part by AFOSR and Exxon Mobil                                            */
 /*                                                                                     */
@@ -92,8 +93,12 @@ void NOMAD::Phase_One_Search::search ( NOMAD::Mads              & mads          
   bool                                      old_sif = _p.get_stop_if_feasible();
   const std::vector<NOMAD::bb_output_type> old_bbot = _p.get_bb_output_type();
   std::vector<NOMAD::bb_output_type>        p1_bbot = old_bbot;
-  if ( display_degree != NOMAD::FULL_DISPLAY )
-    _p.set_DISPLAY_DEGREE ( NOMAD::NO_DISPLAY );
+
+	
+	if ( display_degree == NOMAD::NORMAL_DISPLAY)  // Normal display -> minimal display for Phase one
+		_p.set_DISPLAY_DEGREE( NOMAD::MINIMAL_DISPLAY);
+	else if (display_degree == NOMAD::FULL_DISPLAY)
+		_p.set_DISPLAY_DEGREE( NOMAD::FULL_DISPLAY);// Full display -> full display for Phase one
 
   int  m   = static_cast<int> ( old_bbot.size() );
   int  cnt = 0;
@@ -267,21 +272,14 @@ void NOMAD::Phase_One_Search::search ( NOMAD::Mads              & mads          
 
   // final displays:
   if ( bf ) {
-
-    // display_stats:
-    if ( display_degree == NOMAD::NORMAL_DISPLAY )
-      ev_control.display_stats ( false                  ,
-				 out                    ,
-				 _p.get_display_stats() ,
-				 bf                     ,
-				 NULL                     );
-    // solution file:
+	  
+	  // solution file:
     ev_control.write_solution_file ( *bf );
 
     // stats_file:
     const std::string & stats_file_name = _p.get_stats_file_name();
     if ( !stats_file_name.empty() )
-      ev_control.stats_file ( stats_file_name , bf , NULL );
+      ev_control.stats_file ( stats_file_name , bf , true , NULL );
   }
 
   if ( display_degree == NOMAD::FULL_DISPLAY )

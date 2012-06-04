@@ -1,11 +1,12 @@
 /*-------------------------------------------------------------------------------------*/
-/*  NOMAD - Nonsmooth Optimization by Mesh Adaptive Direct search - version 3.5        */
+/*  NOMAD - Nonlinear Optimization by Mesh Adaptive Direct search - version 3.5.1        */
 /*                                                                                     */
-/*  Copyright (C) 2001-2010  Mark Abramson        - the Boeing Company, Seattle        */
+/*  Copyright (C) 2001-2012  Mark Abramson        - the Boeing Company, Seattle        */
 /*                           Charles Audet        - Ecole Polytechnique, Montreal      */
 /*                           Gilles Couture       - Ecole Polytechnique, Montreal      */
 /*                           John Dennis          - Rice University, Houston           */
 /*                           Sebastien Le Digabel - Ecole Polytechnique, Montreal      */
+/*                           Christophe Tribes    - Ecole Polytechnique, Montreal      */
 /*                                                                                     */
 /*  funded in part by AFOSR and Exxon Mobil                                            */
 /*                                                                                     */
@@ -33,14 +34,14 @@
 /*  You can find information on the NOMAD software at www.gerad.ca/nomad               */
 /*-------------------------------------------------------------------------------------*/
 /**
-  \file   Model_Search.hpp
-  \brief  Model search (headers)
+  \file   Quad_Model_Search.hpp
+  \brief  Quadratic Model search (headers)
   \author Sebastien Le Digabel
   \date   2010-08-30
-  \see    Model_Search.cpp
+  \see    Quad_Model_Search.cpp
 */
-#ifndef __MODEL_SEARCH__
-#define __MODEL_SEARCH__
+#ifndef __QUAD_MODEL_SEARCH__
+#define __QUAD_MODEL_SEARCH__
 
 #include "Mads.hpp"
 #include "Quad_Model_Evaluator.hpp"
@@ -48,25 +49,24 @@
 namespace NOMAD {
 
   /// Model search.
-  class Model_Search : public NOMAD::Search , private NOMAD::Uncopyable {
+  class Quad_Model_Search : public NOMAD::Search , private NOMAD::Uncopyable {
 
   private:
 
     NOMAD::Model_Stats _one_search_stats;   ///< Stats for one search.
     NOMAD::Model_Stats _all_searches_stats; ///< Stats for all searches.
 
-
     /// Model optimization.
     /**
-       \param model          The model                                  -- \b IN.
-       \param xk             The two model centers                      -- \b IN.
-       \param i_inc          Model center index (\c 0 or \c 1 )         -- \b IN.
-       \param display_degree Display degree                             -- \b IN.
-       \param out            The NOMAD::Display object                  -- \b IN.
-       \param xf             Feasible solution \c xf                    -- \b OUT.
-       \param xi             Infeasible solution \c xi                  -- \b OUT.
-       \param stop           Stop flag                                  -- \b OUT.
-       \param stop_reason    Stop reason                                -- \b OUT.
+       \param model          The model                          -- \b IN.
+       \param xk             The two model centers              -- \b IN.
+       \param i_inc          Model center index (\c 0 or \c 1 ) -- \b IN.
+       \param display_degree Display degree                     -- \b IN.
+       \param out            The NOMAD::Display object          -- \b IN.
+       \param xf             Feasible solution \c xf            -- \b OUT.
+       \param xi             Infeasible solution \c xi          -- \b OUT.
+       \param stop           Stop flag                          -- \b OUT.
+       \param stop_reason    Stop reason                        -- \b OUT.
     */
     bool optimize_model ( const NOMAD::Quad_Model  & model          ,
 			  const NOMAD::Eval_Point ** xk             ,
@@ -107,16 +107,16 @@ namespace NOMAD {
     /**
        \param p Parameters -- \b IN.
     */
-    Model_Search ( NOMAD::Parameters & p )
+    Quad_Model_Search ( NOMAD::Parameters & p )
       : NOMAD::Search ( p , NOMAD::MODEL_SEARCH ) {}
     
     /// Destructor.
-    virtual ~Model_Search ( void ) {}
+    virtual ~Quad_Model_Search ( void ) {}
 
     /// Reset.
     virtual void reset ( void ) {}
 
-    /// The Model search.
+    /// The quadratic model search.
     /**
        Based on quadratic regression/MFN interpolation models.
        \param mads           NOMAD::Mads object invoking this search -- \b IN/OUT.

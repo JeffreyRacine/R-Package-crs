@@ -1,11 +1,12 @@
 /*-------------------------------------------------------------------------------------*/
-/*  NOMAD - Nonsmooth Optimization by Mesh Adaptive Direct search - version 3.5        */
+/*  NOMAD - Nonlinear Optimization by Mesh Adaptive Direct search - version 3.5.1        */
 /*                                                                                     */
-/*  Copyright (C) 2001-2010  Mark Abramson        - the Boeing Company, Seattle        */
+/*  Copyright (C) 2001-2012  Mark Abramson        - the Boeing Company, Seattle        */
 /*                           Charles Audet        - Ecole Polytechnique, Montreal      */
 /*                           Gilles Couture       - Ecole Polytechnique, Montreal      */
 /*                           John Dennis          - Rice University, Houston           */
 /*                           Sebastien Le Digabel - Ecole Polytechnique, Montreal      */
+/*                           Christophe Tribes    - Ecole Polytechnique, Montreal      */
 /*                                                                                     */
 /*  funded in part by AFOSR and Exxon Mobil                                            */
 /*                                                                                     */
@@ -130,6 +131,80 @@ bool NOMAD::Variable_Group::check
   }
 
   return true;
+}
+
+/*---------------------------------------------------------*/
+/*                compute the directions                   */
+/*---------------------------------------------------------*/
+void NOMAD::Variable_Group::get_directions  ( std::list<NOMAD::Direction> & dirs               ,
+					      NOMAD::poll_type              poll               ,
+					      const NOMAD::Point          & poll_center        ,
+					      const NOMAD::Point          * first_success      , // can be NULL
+					      int                           mesh_index         ,
+					      const NOMAD::Direction      & feas_success_dir   ,
+					      const NOMAD::Direction      & infeas_success_dir   )
+{
+  int nc = static_cast<int>(_var_indexes.size());	
+	
+	
+  // vectors are of size nc :
+
+  if ( nc == poll_center.size() ) {
+
+    _directions->compute ( dirs               ,
+			   poll               ,
+			   poll_center        ,
+			   first_success      ,
+			   mesh_index         ,
+			   -1                 ,
+			   feas_success_dir   ,
+			   infeas_success_dir   );
+    return;
+  }
+
+  // construct vectors of size nc from vectors of size < nc :
+
+  std::set<int>::const_iterator it ;
+  int                           i = 0;
+      
+  NOMAD::Point     new_poll_center ( nc );
+  NOMAD::Direction new_fsd , new_isd;
+  NOMAD::Point   * new_first_succ = NULL;
+	
+	if ( first_success )
+		new_first_succ = new NOMAD::Point ( nc );
+      
+  if ( feas_success_dir.is_defined() )
+    new_fsd = NOMAD::Direction ( nc , 0.0 , feas_success_dir.get_type() );
+
+  if ( infeas_success_dir.is_defined() )
+    new_isd = NOMAD::Direction ( nc , 0.0 , infeas_success_dir.get_type() );
+
+  for ( it = _var_indexes.begin() ; it != _var_indexes.end() ; ++it ) 
+  {
+	  new_poll_center[i] = poll_center  [*it];
+	  
+    if ( first_success )
+       (*new_first_succ)[i] = (*first_success)[*it];
+		
+	if ( feas_success_dir.is_defined() )
+      new_fsd[i] = feas_success_dir  [*it];
+    if ( infeas_success_dir.is_defined() )
+      new_isd[i] = infeas_success_dir[*it];
+    ++i;
+  }
+  
+  _directions->compute ( dirs            ,
+			 poll            ,
+			 new_poll_center ,
+			 new_first_succ  ,
+			 mesh_index      ,
+			 -1              ,
+			 new_fsd         ,
+			 new_isd           );
+
+  if ( first_success )
+	  delete new_first_succ;
 }
 
 /*---------------------------------------------------------*/

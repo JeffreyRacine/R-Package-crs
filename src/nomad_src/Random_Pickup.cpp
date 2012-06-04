@@ -1,11 +1,12 @@
 /*-------------------------------------------------------------------------------------*/
-/*  NOMAD - Nonsmooth Optimization by Mesh Adaptive Direct search - version 3.5        */
+/*  NOMAD - Nonlinear Optimization by Mesh Adaptive Direct search - version 3.5.1        */
 /*                                                                                     */
-/*  Copyright (C) 2001-2010  Mark Abramson        - the Boeing Company, Seattle        */
+/*  Copyright (C) 2001-2012  Mark Abramson        - the Boeing Company, Seattle        */
 /*                           Charles Audet        - Ecole Polytechnique, Montreal      */
 /*                           Gilles Couture       - Ecole Polytechnique, Montreal      */
 /*                           John Dennis          - Rice University, Houston           */
 /*                           Sebastien Le Digabel - Ecole Polytechnique, Montreal      */
+/*                           Christophe Tribes    - Ecole Polytechnique, Montreal      */
 /*                                                                                     */
 /*  funded in part by AFOSR and Exxon Mobil                                            */
 /*                                                                                     */
@@ -40,7 +41,8 @@
   \see    Random_Pickup.hpp
 */
 #include "Random_Pickup.hpp"
-using namespace std;
+#include "RNG.hpp"  
+using namespace std;  //zhenghua
 /*---------------------------------------------------------*/
 /*                         constructor                     */
 /*---------------------------------------------------------*/
@@ -70,7 +72,7 @@ int NOMAD::Random_Pickup::pickup ( void )
 {
   if ( _n == 0 )
     return 0;
-  int ind = rand()%_n;
+  int ind = NOMAD::RNG::rand()%_n; 
   int tmp = _elts[ind];
   if ( ind < _n - 1 ) {
     _elts[ind ] = _elts[_n-1];

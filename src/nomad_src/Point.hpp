@@ -1,11 +1,12 @@
 /*-------------------------------------------------------------------------------------*/
-/*  NOMAD - Nonsmooth Optimization by Mesh Adaptive Direct search - version 3.5        */
+/*  NOMAD - Nonlinear Optimization by Mesh Adaptive Direct search - version 3.5.1        */
 /*                                                                                     */
-/*  Copyright (C) 2001-2010  Mark Abramson        - the Boeing Company, Seattle        */
+/*  Copyright (C) 2001-2012  Mark Abramson        - the Boeing Company, Seattle        */
 /*                           Charles Audet        - Ecole Polytechnique, Montreal      */
 /*                           Gilles Couture       - Ecole Polytechnique, Montreal      */
 /*                           John Dennis          - Rice University, Houston           */
 /*                           Sebastien Le Digabel - Ecole Polytechnique, Montreal      */
+/*                           Christophe Tribes    - Ecole Polytechnique, Montreal      */
 /*                                                                                     */
 /*  funded in part by AFOSR and Exxon Mobil                                            */
 /*                                                                                     */
@@ -308,7 +309,8 @@ namespace NOMAD {
        \param x The other point \c x -- \b IN.
        \return The dot product \c *this \c . \c x.
     */
-    inline const NOMAD::Double dot_product ( const Point & x ) const;
+    const NOMAD::Double dot_product ( const Point & x ) const
+    { return std::inner_product ( _coords , _coords+_n , x._coords , NOMAD::Double(0.0) ); }
 
     /// Angle with another point \c x.
     /**
@@ -427,6 +429,7 @@ namespace NOMAD {
 			   const std::string    & sep = " " ,
 			   int                    w   = -1  ,
 			   int                    lim = -1    ) const;
+	  
   };
 
   /*---------------------------------------------------------------------------*/

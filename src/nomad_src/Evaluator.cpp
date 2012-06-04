@@ -1,11 +1,12 @@
 /*-------------------------------------------------------------------------------------*/
-/*  NOMAD - Nonsmooth Optimization by Mesh Adaptive Direct search - version 3.5        */
+/*  NOMAD - Nonlinear Optimization by Mesh Adaptive Direct search - version 3.5.1        */
 /*                                                                                     */
-/*  Copyright (C) 2001-2010  Mark Abramson        - the Boeing Company, Seattle        */
+/*  Copyright (C) 2001-2012  Mark Abramson        - the Boeing Company, Seattle        */
 /*                           Charles Audet        - Ecole Polytechnique, Montreal      */
 /*                           Gilles Couture       - Ecole Polytechnique, Montreal      */
 /*                           John Dennis          - Rice University, Houston           */
 /*                           Sebastien Le Digabel - Ecole Polytechnique, Montreal      */
+/*                           Christophe Tribes    - Ecole Polytechnique, Montreal      */
 /*                                                                                     */
 /*  funded in part by AFOSR and Exxon Mobil                                            */
 /*                                                                                     */
@@ -40,7 +41,13 @@
   \see    Evaluator.hpp
 */
 #include "Evaluator.hpp"
-using namespace std;
+using namespace std;  //zhenghua
+
+/*-----------------------------------*/
+/*   static members initialization   */
+/*-----------------------------------*/
+bool NOMAD::Evaluator::_force_quit = false;
+
 /*-----------------------------------------------------------------*/
 /*                            constructor                          */
 /*-----------------------------------------------------------------*/
@@ -53,6 +60,8 @@ NOMAD::Evaluator::Evaluator ( const NOMAD::Parameters & p )
   : _p            ( p     ) ,
     _is_multi_obj ( false )
 {
+  NOMAD::Evaluator::_force_quit = false;
+
   if ( _p.get_bb_exe().empty() )
     return;
 
@@ -348,10 +357,15 @@ bool NOMAD::Evaluator::eval_x ( NOMAD::Eval_Point   & x          ,
     throw NOMAD::Exception ( "Evaluator.cpp" , __LINE__ ,
 	  "Evaluator: no SGTE_EXE is defined (surrogate executable names)" );
 
+  int         pid     = NOMAD::get_pid();
+  int         seed    = _p.get_seed();
   std::string tmp_dir = _p.get_tmp_dir();
 
   std::ostringstream oss;
-  oss << "." << _p.get_seed() << "." << x.get_tag() << ".";
+  oss << "." << seed;
+  if ( pid != seed )
+    oss << "." << pid;
+  oss << "." << x.get_tag() << ".";
   const std::string & sint = oss.str();
 
   // for the parallel version: no need to include the process rank in the names
@@ -376,7 +390,7 @@ bool NOMAD::Evaluator::eval_x ( NOMAD::Eval_Point   & x          ,
 
   // include seed:
   if ( _p.get_bb_input_include_seed() )
-    fout << _p.get_seed() << " ";
+    fout << seed << " ";
 
   // include tag:
   if ( _p.get_bb_input_include_tag() )
@@ -438,7 +452,7 @@ bool NOMAD::Evaluator::eval_x ( NOMAD::Eval_Point   & x          ,
 
       // other evaluation error:
       failed = ( signal != 0 );
-      count_eval  = true;
+      count_eval = true;
     }
 
     // the evaluation failed (we stop the evaluations):

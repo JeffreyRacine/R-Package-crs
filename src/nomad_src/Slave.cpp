@@ -1,11 +1,12 @@
 /*-------------------------------------------------------------------------------------*/
-/*  NOMAD - Nonsmooth Optimization by Mesh Adaptive Direct search - version 3.5        */
+/*  NOMAD - Nonlinear Optimization by Mesh Adaptive Direct search - version 3.5.1        */
 /*                                                                                     */
-/*  Copyright (C) 2001-2010  Mark Abramson        - the Boeing Company, Seattle        */
+/*  Copyright (C) 2001-2012  Mark Abramson        - the Boeing Company, Seattle        */
 /*                           Charles Audet        - Ecole Polytechnique, Montreal      */
 /*                           Gilles Couture       - Ecole Polytechnique, Montreal      */
 /*                           John Dennis          - Rice University, Houston           */
 /*                           Sebastien Le Digabel - Ecole Polytechnique, Montreal      */
+/*                           Christophe Tribes    - Ecole Polytechnique, Montreal      */
 /*                                                                                     */
 /*  funded in part by AFOSR and Exxon Mobil                                            */
 /*                                                                                     */
@@ -40,7 +41,7 @@
   \see    Slave.hpp
 */
 #include "Slave.hpp"
-using namespace std;
+using namespace std;  //zhenghua
 /*-----------------------------------*/
 /*   static members initialization   */
 /*-----------------------------------*/
@@ -66,10 +67,13 @@ void NOMAD::Slave::init ( void ) const
 
   // Slave::force_quit() will be called if ctrl-c is pressed:
   if ( !NOMAD::Slave::is_master() ) {
+
+    NOMAD::Evaluator::force_quit();
+
     signal ( SIGTERM , NOMAD::Slave::force_quit );
     signal ( SIGINT  , NOMAD::Slave::force_quit );
 #ifndef WINDOWS
-    signal ( SIGPIPE , NOMAD::Slave::force_quit ); // (ctrl-c during a | more)
+    signal ( SIGPIPE , NOMAD::Slave::force_quit ); // (ctrl-c during a "| more")
 #endif
   }
 }

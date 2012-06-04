@@ -1,11 +1,12 @@
 /*-------------------------------------------------------------------------------------*/
-/*  NOMAD - Nonsmooth Optimization by Mesh Adaptive Direct search - version 3.5        */
+/*  NOMAD - Nonlinear Optimization by Mesh Adaptive Direct search - version 3.5.1        */
 /*                                                                                     */
-/*  Copyright (C) 2001-2010  Mark Abramson        - the Boeing Company, Seattle        */
+/*  Copyright (C) 2001-2012  Mark Abramson        - the Boeing Company, Seattle        */
 /*                           Charles Audet        - Ecole Polytechnique, Montreal      */
 /*                           Gilles Couture       - Ecole Polytechnique, Montreal      */
 /*                           John Dennis          - Rice University, Houston           */
 /*                           Sebastien Le Digabel - Ecole Polytechnique, Montreal      */
+/*                           Christophe Tribes    - Ecole Polytechnique, Montreal      */
 /*                                                                                     */
 /*  funded in part by AFOSR and Exxon Mobil                                            */
 /*                                                                                     */
@@ -46,11 +47,11 @@
 #include "Cache_File_Point.hpp"
 #include "Set_Element.hpp"
 
-/*#ifdef WINDOWS */ 
-/*  #ifndef isnan */ //we change the name "isnan" to nomad_isnan  to avoid redefined.
+/*  #ifdef WINDOWS */  //zhenghua
+/*  #ifndef isnan */ //we change the name "isnan" to nomad_isnan  to avoid redefined. zhenghua
 inline bool nomad_isnan ( double x ) { return x != x; }
-/*  #endif 
-#endif */
+/*   #endif */
+/*   #endif */  //zhenghua
 
 namespace NOMAD {
 
@@ -483,24 +484,25 @@ namespace NOMAD {
 
   private:
 
-    mutable int           _mod_type , _nY;
+    mutable int           _mod_use; // 1: model search; 2: model eval sort
+    mutable int           _nY;
     mutable NOMAD::Double _cond , _Yw , _mh , _mf;
 
   public:
 
-    void set_mod_type ( int                   mod_type ) const { _mod_type = mod_type; }
-    void set_nY       ( int                   nY       ) const { _nY       = nY;       }
-    void set_cond     ( const NOMAD::Double & cond     ) const { _cond     = cond;     }
-    void set_Yw       ( const NOMAD::Double & Yw       ) const { _Yw       = Yw;       }
-    void set_mh       ( const NOMAD::Double & mh       ) const { _mh       = mh;       }
-    void set_mf       ( const NOMAD::Double & mf       ) const { _mf       = mf;       }
+    void set_mod_use ( int                 mod_use ) const { _mod_use = mod_use; }
+    void set_nY       ( int                     nY ) const { _nY      = nY;      }
+    void set_cond     ( const NOMAD::Double & cond ) const { _cond    = cond;    }
+    void set_Yw       ( const NOMAD::Double &   Yw ) const { _Yw      = Yw;      }
+    void set_mh       ( const NOMAD::Double &   mh ) const { _mh      = mh;      }
+    void set_mf       ( const NOMAD::Double &   mf ) const { _mf      = mf;      }
 
-    int                   get_mod_type ( void ) const    { return _mod_type; }
-    int                   get_nY       ( void ) const    { return _nY;       }
-    const NOMAD::Double & get_cond     ( void ) const    { return _cond;     }
-    const NOMAD::Double & get_Yw       ( void ) const    { return _Yw;       }
-    const NOMAD::Double & get_mh       ( void ) const    { return _mh;       }
-    const NOMAD::Double & get_mf       ( void ) const    { return _mf;       }
+    int                   get_mod_use ( void ) const    { return _mod_use; }
+    int                   get_nY      ( void ) const    { return _nY;      }
+    const NOMAD::Double & get_cond    ( void ) const    { return _cond;    }
+    const NOMAD::Double & get_Yw      ( void ) const    { return _Yw;      }
+    const NOMAD::Double & get_mh      ( void ) const    { return _mh;      }
+    const NOMAD::Double & get_mf      ( void ) const    { return _mf;      }
 
     void set_model_data   ( const NOMAD::Eval_Point & x ) const;
     void clear_model_data ( void                        ) const;

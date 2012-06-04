@@ -1,11 +1,12 @@
 /*-------------------------------------------------------------------------------------*/
-/*  NOMAD - Nonsmooth Optimization by Mesh Adaptive Direct search - version 3.5        */
+/*  NOMAD - Nonlinear Optimization by Mesh Adaptive Direct search - version 3.5.1        */
 /*                                                                                     */
-/*  Copyright (C) 2001-2010  Mark Abramson        - the Boeing Company, Seattle        */
+/*  Copyright (C) 2001-2012  Mark Abramson        - the Boeing Company, Seattle        */
 /*                           Charles Audet        - Ecole Polytechnique, Montreal      */
 /*                           Gilles Couture       - Ecole Polytechnique, Montreal      */
 /*                           John Dennis          - Rice University, Houston           */
 /*                           Sebastien Le Digabel - Ecole Polytechnique, Montreal      */
+/*                           Christophe Tribes    - Ecole Polytechnique, Montreal      */
 /*                                                                                     */
 /*  funded in part by AFOSR and Exxon Mobil                                            */
 /*                                                                                     */
@@ -40,11 +41,13 @@
   \see    Evaluator_Control.hpp
 */
 #include "Evaluator_Control.hpp"
-using namespace std;
+using namespace std;  //zhenghua
+
 /*-----------------------------------*/
 /*   static members initialization   */
 /*-----------------------------------*/
 bool NOMAD::Evaluator_Control::_force_quit = false;
+
 
 /*---------------------------------------------------------*/
 /*                       constructor                       */
@@ -70,9 +73,13 @@ NOMAD::Evaluator_Control::Evaluator_Control
     _slaves_elop_tags ( NULL       ) ,
     _slave            ( NULL       ) ,
 #endif
+#ifdef USE_TGP
+    _last_TGP_model   ( NULL       ) ,
+#endif
     _stats            ( stats      ) ,
     _last_stats_tag   ( -1         ) ,
-    _last_stats_bbe   ( -1         )
+    _last_stats_bbe   ( -1         ) ,
+    _last_history_bbe ( -1         )
 {
   NOMAD::Evaluator_Control::_force_quit = false;
 
@@ -120,7 +127,7 @@ NOMAD::Evaluator_Control::Evaluator_Control
     if ( !_p.get_cache_file().empty() ) {
       file_name = _p.get_problem_dir() + _p.get_cache_file();
       if ( !_cache->load ( file_name , &m , display_degree == NOMAD::FULL_DISPLAY )
-	   && display_degree != NOMAD::NO_DISPLAY )
+	   && display_degree != NOMAD::NO_DISPLAY && display_degree != NOMAD::MINIMAL_DISPLAY)
 	out << std::endl
 	    << "Warning (" << "Evaluator_Control.cpp" << ", " << __LINE__
 	    << "): could not load (or create) the cache file " << file_name
@@ -129,27 +136,26 @@ NOMAD::Evaluator_Control::Evaluator_Control
     
     if ( !_p.get_sgte_cache_file().empty() ) {
       file_name = _p.get_problem_dir() + _p.get_sgte_cache_file();
-      if ( !_sgte_cache->load ( file_name ,
-				&m        ,
-				display_degree==NOMAD::FULL_DISPLAY ) &&
-	   display_degree != NOMAD::NO_DISPLAY )
+      if ( !_sgte_cache->load ( file_name , &m , display_degree==NOMAD::FULL_DISPLAY ) &&
+			display_degree != NOMAD::NO_DISPLAY && display_degree != NOMAD::MINIMAL_DISPLAY )
 	out << std::endl << "Warning (" << "Evaluator_Control.cpp" << ", " << __LINE__
 	    << "): could not load (or create) the surrogate cache file "
 	    << file_name << std::endl << std::endl;
     }
 
 #ifdef MODEL_STATS
-    if ( _p.get_model_search() ||
-	 ( _model_eval_sort && _p.get_model_eval_sort() ) ) {
+    if ( _p.has_model_search() ||
+	 ( _model_eval_sort &&
+	   _p.get_model_eval_sort() != NOMAD::NO_MODEL ) ) {
       out << std::endl
 	  << "MODEL_STATS is active. Displayed model stats are:"
 	  << std::endl
-	  << "type ell nY wY cond";
+	  << "mode ell nY wY cond";
       if ( _p.has_constraints() )
 	out << " h mh eh";
       out << " f mf ef" << std::endl
 	  << NOMAD::open_block()
-	  << "type: model search (1) or model ordering (2)" << std::endl 
+	  << "mode: model search (1) or model ordering (2)" << std::endl 
 	  << "ell : mesh_index"                             << std::endl
 	  << "nY  : cardinality of the interpolation set Y" << std::endl
 	  << "wY  : width of Y"                             << std::endl
@@ -157,10 +163,10 @@ NOMAD::Evaluator_Control::Evaluator_Control
       if ( _p.has_constraints() )
 	out << "h   : h value"           << std::endl
 	    << "mh  : model value for h" << std::endl
-	    << "eh  : relative error"    << std::endl;
+	    << "eh  : relative error(%)" << std::endl;
       out << "f   : f value"             << std::endl
 	  << "mf  : model value for f"   << std::endl
-	  << "ef  : relative error"      << std::endl
+	  << "ef  : relative error(%)"   << std::endl
 	  << NOMAD::close_block()        << std::endl;
     }
 #endif
@@ -201,6 +207,17 @@ NOMAD::Evaluator_Control::~Evaluator_Control ( void )
 }
 
 /*---------------------------------------------------------*/
+/*                           reset                         */
+/*---------------------------------------------------------*/
+void NOMAD::Evaluator_Control::reset ( void )
+{
+  _last_stats_tag = _last_stats_bbe = -1;
+#ifdef USE_TGP
+  _last_TGP_model = NULL;
+#endif
+}
+
+/*---------------------------------------------------------*/
 /*                     save the caches                     */
 /*---------------------------------------------------------*/
 bool NOMAD::Evaluator_Control::save_caches ( bool overwrite )
@@ -211,13 +228,13 @@ bool NOMAD::Evaluator_Control::save_caches ( bool overwrite )
   bool b1 = _cache->save      ( overwrite , display_degree == NOMAD::FULL_DISPLAY );
   bool b2 = _sgte_cache->save ( overwrite , display_degree == NOMAD::FULL_DISPLAY );
 
-  if ( !b1 && display_degree != NOMAD::NO_DISPLAY )
+  if ( !b1 && display_degree != NOMAD::NO_DISPLAY && display_degree != NOMAD::MINIMAL_DISPLAY)
     out << std::endl << "Warning (" << "Evaluator_Control.cpp" << ", " << __LINE__
 	<< "): could not save the cache file "
 	<< _p.get_problem_dir() << _p.get_cache_file()
 	<< std::endl << std::endl;
 
-  if ( !b2 && display_degree != NOMAD::NO_DISPLAY )
+  if ( !b2 && display_degree != NOMAD::NO_DISPLAY && display_degree != NOMAD::MINIMAL_DISPLAY)
     out << std::endl
 	<< "Warning (" << "Evaluator_Control.cpp" << ", " << __LINE__
 	<< "): could not save the surrogate cache file "
@@ -343,7 +360,8 @@ void NOMAD::Evaluator_Control::count_output_stats ( const NOMAD::Eval_Point & x 
 /*-------------------------------------------------------------------*/
 void NOMAD::Evaluator_Control::stats_file ( const std::string       & file_name ,
 					    const NOMAD::Eval_Point * x         ,
-					    const NOMAD::Point      * multi_obj ) const
+					    bool                      feasible  ,
+					    const NOMAD::Point      * multi_obj   ) const
 {
   std::string   fn = _p.get_problem_dir() + file_name;
   std::ofstream fout ( fn.c_str() , std::ios::app );
@@ -351,11 +369,11 @@ void NOMAD::Evaluator_Control::stats_file ( const std::string       & file_name 
   if ( !fout.fail() ) {
     fout.setf      ( std::ios::fixed             );
     fout.precision ( NOMAD::DISPLAY_PRECISION_BB );
-    display_stats  ( false , fout , _p.get_stats_file() , x , multi_obj );
+    display_stats  ( false , fout , _p.get_stats_file() , x , feasible , multi_obj );
   }
   else {
     const NOMAD::Display & out = _p.out();
-    if ( out.get_gen_dd() != NOMAD::NO_DISPLAY )
+    if ( out.get_gen_dd() != NOMAD::NO_DISPLAY && out.get_gen_dd() != NOMAD::MINIMAL_DISPLAY)
       out << std::endl
 	  << "Warning (" << "Evaluator_Control.cpp" << ", " << __LINE__
 	  << "): could not save information in stats file \'"
@@ -372,15 +390,21 @@ void NOMAD::Evaluator_Control::display_stats
   const NOMAD::Display         & out       ,
   const std::list<std::string> & stats     ,
   const NOMAD::Eval_Point      * x         ,
+  bool                           feasible  ,
   const NOMAD::Point           * multi_obj   ) const
 {
   if ( stats.empty() ) {
+#ifndef R_VERSION
     out << std::endl;
+#endif
     return;
   }
 
-  if ( header )
+  if ( header ) {
+#ifndef R_VERSION
     out << std::endl;
+#endif
+  }
 
   NOMAD::Double            f;
   const NOMAD::Point     * sol       = NULL;
@@ -401,7 +425,7 @@ void NOMAD::Evaluator_Control::display_stats
 
   if ( x ) {
     signature       = x->get_signature();
-    f               = x->get_f();
+    f               = (feasible) ? x->get_f() : NOMAD::INF;
     sol             = x;
     bbo             = &(x->get_bb_outputs());
     _last_stats_tag = x->get_tag();
@@ -412,15 +436,19 @@ void NOMAD::Evaluator_Control::display_stats
   std::list<std::string>::const_iterator it , end = stats.end();
   for ( it = stats.begin() ; it != end ; ++it ) {
 
-    if ( it->empty() )
+    if ( it->empty() ) {
+#ifndef R_VERSION
       out << "\t";
-    
+#endif
+    }
     else {
 
       if ( header ) {
+#ifndef R_VERSION
 	s1 = *it;
 	NOMAD::Display::extract_display_format ( s1 , format );
 	out << s1;
+#endif
       }
 
       else {
@@ -451,7 +479,15 @@ void NOMAD::Evaluator_Control::display_stats
 	  if ( multi_obj )
 	    display_stats_point ( out , stats , it , multi_obj );
 	  else {
+#ifdef R_VERSION
+	    {     
+	      std::ostringstream oss;
+	      display_stats_real ( oss , f , format ); 
+	      Rprintf ( "%s" , oss.str().c_str() );
+	    }
+#else
 	    display_stats_real ( out , f , format );
+#endif
 	    format.clear();
 	  }
 	  break;
@@ -493,7 +529,16 @@ void NOMAD::Evaluator_Control::display_stats
 	  format.clear();
 	  break;
 	case NOMAD::DS_BBE:
+
+#ifdef R_VERSION
+	  {
+	    std::ostringstream oss;
+	    display_stats_int ( oss , bbe , max_bbe , format );
+	    Rprintf ( "\t%s " , oss.str().c_str() );
+	  }
+#else
 	  display_stats_int ( out , bbe , max_bbe , format );
+#endif
 	  format.clear();
 	  break;
 	case NOMAD::DS_SGTE:
@@ -520,13 +565,16 @@ void NOMAD::Evaluator_Control::display_stats
 	  display_stats_point ( out , stats , it , bbo );
 	  break;
 	case NOMAD::DS_SOL:
-	  display_stats_point ( out , stats , it , sol );
+	  display_stats_point ( out , stats , it , sol , signature->get_input_type() );
 	  break;
 	case NOMAD::DS_VAR:
 	  ++it;
 	  NOMAD::atoi ( *it , i );
 	  if ( sol )
-	    display_stats_real ( out , (*sol)[i] , format );
+		if (format.empty())
+			display_stats_type ( out , (*sol)[i] , (signature->get_input_type())[i] );
+		else
+			display_stats_real ( out , (*sol)[i] , format );
 	  else
 	    out << "-";
 	  format.clear();
@@ -537,7 +585,37 @@ void NOMAD::Evaluator_Control::display_stats
   }
   
   if ( !header )
-    out << std::endl;
+#ifdef R_VERSION
+    Rprintf("\n");
+#else
+  out << std::endl;
+#endif
+}
+
+/*-----------------------------------------------------*/
+/*  display a number with type                         */
+/*-----------------------------------------------------*/
+void NOMAD::Evaluator_Control::display_stats_type
+( const NOMAD::Display        & out    ,
+  const NOMAD::Double         & d      ,
+  const NOMAD::bb_input_type  & bbType ) const
+{
+	
+	// Default based on bbType
+	std::string format2;
+	switch (bbType)
+	{
+		case NOMAD::CONTINUOUS:
+			format2 = "%0." + NOMAD::itos(DISPLAY_PRECISION_STD) + "g";
+			break;
+		case NOMAD::INTEGER || NOMAD::BINARY || NOMAD::CATEGORICAL:
+			format2 = "%i";
+			break;
+		default:
+			break;
+	}
+	d.display ( out , format2 );
+
 }
 
 /*-----------------------------------------------------*/
@@ -545,16 +623,18 @@ void NOMAD::Evaluator_Control::display_stats
 /*-----------------------------------------------------*/
 void NOMAD::Evaluator_Control::display_stats_real
 ( const NOMAD::Display & out    ,
-  const NOMAD::Double  & d      ,
-  const std::string    & format   ) const
+ const NOMAD::Double  & d      ,
+ const std::string    & format ) const
 {
-  if ( format.empty() ) {
-    std::string format2 = "%0." + NOMAD::itos(DISPLAY_PRECISION_STD) + "g";
-    d.display ( out , format2 );
-  }
-  else
-    d.display ( out , format );
+	if ( format.empty() )
+	{
+		std::string format2 = "%0." + NOMAD::itos(DISPLAY_PRECISION_STD) + "g";
+		d.display ( out , format2 );
+	}
+	else
+		d.display ( out , format );
 }
+
 
 /*---------------------------------------------------------*/
 /*  display an integer with DISPLAY_STATS (or STATS_FILE)  */
@@ -577,19 +657,27 @@ void NOMAD::Evaluator_Control::display_stats_int
 /*    display a point with DISPLAY_STATS (or STATS_FILE)   */
 /*---------------------------------------------------------*/
 void NOMAD::Evaluator_Control::display_stats_point 
-( const NOMAD::Display                   & out           ,
-  const std::list<std::string>           & display_stats ,
-  std::list<std::string>::const_iterator & it            ,
-  const NOMAD::Point                     * x               ) const
+( const NOMAD::Display                      & out           ,
+  const std::list<std::string>              & display_stats ,
+  std::list<std::string>::const_iterator    & it            ,
+  const NOMAD::Point                        * x             ,
+  const std::vector<NOMAD::bb_input_type>   & bbType        ) const  
 {
-  if ( x ) {
+  if ( x ) 
+  {
 
-    int n = x->size();
+    unsigned int n = x->size() , bbn = static_cast<int>(bbType.size());
+	  	  
+	if ( bbn!=0 && n != bbn )   
+		  throw NOMAD::Exception ( "Evaluator_Control.cpp" , __LINE__ ,
+								  "Evaluator_Control::display_stats_point(): bbType and x have different size" );
+	  		
 
     // s1 is the string displayed befores and after
     // one coordinate (it may include format):
     std::string s1;
-    if ( it != display_stats.begin() ) {
+    if ( it != display_stats.begin() )
+	{
       s1 = *(--it);
       ++it;
     }
@@ -606,17 +694,21 @@ void NOMAD::Evaluator_Control::display_stats_point
       s2 = *it;
     else if ( s2.empty() )
       --it;
-    for ( int i = 0 ; i < n ; ++i ) {
-      if ( !s1.empty() && i > 0 )
-	out << s1;
-
-      display_stats_real ( out , (*x)[i] , format );
-
-      if ( !s1.empty() )
-	out << s1;
-      if ( !s2.empty() && i < n-1 )
-	out << " " << s2;
-      out << " ";
+    for ( unsigned int i = 0 ; i < n ; ++i )
+	{
+		if ( !s1.empty() && i > 0 )
+			out << s1;
+		
+		if (bbn!=0 && format.empty())
+			display_stats_type ( out , (*x)[i] , bbType[i]);
+		else
+			display_stats_real (out, (*x)[i] , format );
+		
+		if ( !s1.empty() )
+			out << s1;
+		if ( !s2.empty() && i < n-1 )
+			out << " " << s2;
+		out << " ";
     }
   }
 }
@@ -683,7 +775,7 @@ void NOMAD::Evaluator_Control::write_sol_or_his_file
 
   fout.close();
 
-  if ( failed && _p.out().get_gen_dd() != NOMAD::NO_DISPLAY )
+  if ( failed && _p.out().get_gen_dd() != NOMAD::NO_DISPLAY &&  _p.out().get_gen_dd() != NOMAD::MINIMAL_DISPLAY)
     _p.out() << std::endl
 	     << "Warning (" << "Evaluator_Control.cpp" << ", " << __LINE__
 	     << "): could not "
@@ -703,71 +795,98 @@ void NOMAD::Evaluator_Control::display_eval_result
   NOMAD::success_type       one_eval_success ,
   NOMAD::success_type       success            ) const
 {
-  const NOMAD::Display & out = _p.out();
-
-  // surrogate evaluation:
-  if ( x.get_eval_type() == NOMAD::SGTE ) {
-    if ( display_degree == NOMAD::FULL_DISPLAY ) {
-      out << std::endl << "point #" << x.get_tag() << " sgte eval: ";
-      if ( x.is_eval_ok() ) {
-	out << "h=";
-	if ( x.get_h().is_defined() )
-	  out << x.get_h();
+	const NOMAD::Display & out = _p.out();
+	int cur_bbe;
+	
+	// surrogate evaluation:
+	if ( x.get_eval_type() == NOMAD::SGTE ) 
+	{
+		if ( display_degree == NOMAD::FULL_DISPLAY )
+		{
+			out << std::endl << "point #" << x.get_tag() << " sgte eval: ";
+			if ( x.is_eval_ok() )
+			{
+				out << "h=";
+				if ( x.get_h().is_defined() )
+					out << x.get_h();
+				else
+					out << "inf (extr. barrier)";
+				out << " f=" << x.get_f();
+			}
+			else
+				out << "failed";
+			out << std::endl;
+		}
+		if ( !_p.get_opt_only_sgte() )
+			return;
+		
+		cur_bbe = _sgte_cache->size();
+	}
 	else
-	  out << "inf (extr. barrier)";
-	out << " f=" << x.get_f();
-      }
-      else
-	out << "failed";
-      out << std::endl;
-    }
-    if ( !_p.get_opt_only_sgte() )
-      return;
-  }
-
-  // update the history file:
-  // (contains surrogate evaluations if opt_only_sgte==true)
-  // (history file is disabled during VNS search)
-  const std::string & his_file = _p.get_history_file();
-  if ( !his_file.empty() )
-    write_sol_or_his_file ( _p.get_problem_dir() + his_file , x , false );
-
-  // success displays:
-  if ( one_eval_success != NOMAD::UNSUCCESSFUL &&
-       one_eval_success >= success ) {
-
-    // save the solution file:
-    write_solution_file ( x );
-
-    bool ds_ok = one_eval_success == NOMAD::FULL_SUCCESS &&
-                 x.is_feasible ( _p.get_h_min() );
-
-    // normal display:
-    if ( display_degree == NOMAD::NORMAL_DISPLAY && ds_ok )
-      display_stats ( false , out , _p.get_display_stats() , &x , NULL );
-
-    // detailed display:
-    else if ( display_degree == NOMAD::FULL_DISPLAY )
-      out << std::endl << search << " " << one_eval_success
-	  << " point " << x;
-
-    // stats file:
-    if ( ds_ok ) {
-      const std::string & stats_file_name = _p.get_stats_file_name();
-      if ( !stats_file_name.empty() )
-	stats_file ( stats_file_name , &x , NULL );
-    }
-    
-  }
-  else if ( display_degree == NOMAD::FULL_DISPLAY ) {
-    out << search << " " << one_eval_success
-	<< " point #" << x.get_tag();
-    if ( x.is_eval_ok() )
-      out << " [ h=" << x.get_h()
-	  << " f=" << x.get_f() << " ]" << std::endl;
-    else
-      out << ": evaluation failed" << std::endl;
-  }
+		cur_bbe = _cache->size();
+	
+	const std::string & stats_file_name = _p.get_stats_file_name();
+	bool                feas_x          = x.is_feasible ( _p.get_h_min() );
+	
+	// update the history file:
+	// (contains surrogate evaluations if opt_only_sgte==true)
+	// (history file is disabled during VNS search)
+	const std::string & his_file = _p.get_history_file();
+	if ( !his_file.empty() && cur_bbe > _last_history_bbe ) 
+	{
+		write_sol_or_his_file ( _p.get_problem_dir() + his_file , x , false );
+		_last_history_bbe = cur_bbe;
+	}
+	
+	// success displays:
+	if ( one_eval_success != NOMAD::UNSUCCESSFUL &&
+		one_eval_success >= success )
+	{
+		
+		// save the solution file:
+		write_solution_file ( x );
+		
+		bool ds_ok =	( cur_bbe > _last_stats_bbe ) &&
+		( _p.get_display_all_eval() ||
+		 ( one_eval_success == NOMAD::FULL_SUCCESS && feas_x ) );
+		
+		// normal display and minimal:
+		if ( (display_degree == NOMAD::NORMAL_DISPLAY || display_degree == NOMAD::MINIMAL_DISPLAY )&& ds_ok )
+			display_stats ( false , out , _p.get_display_stats() , &x , feas_x , NULL );
+		// detailed display:
+		else if ( display_degree == NOMAD::FULL_DISPLAY )
+			out << std::endl << search << " " << one_eval_success
+			<< " point " << x;
+		
+		// stats file:
+		if ( ds_ok && !stats_file_name.empty() )
+			stats_file ( stats_file_name , &x , feas_x , NULL );
+		
+	}
+	else
+	{
+		
+		if ( display_degree == NOMAD::FULL_DISPLAY ) 
+		{
+			out << search << " " << one_eval_success
+			<< " point #" << x.get_tag();
+			if ( x.is_eval_ok() )
+				out << " [ h=" << x.get_h()
+				<< " f=" << x.get_f() << " ]" << std::endl;
+			else
+				out << ": evaluation failed" << std::endl;
+		}
+		
+		if ( _p.get_display_all_eval()  && cur_bbe > _last_stats_bbe     ) 
+		{
+			
+			if ( display_degree == NOMAD::NORMAL_DISPLAY || display_degree == NOMAD::MINIMAL_DISPLAY )
+				display_stats ( false , out , _p.get_display_stats() , &x , feas_x , NULL );
+			
+			if ( !stats_file_name.empty() )
+				stats_file ( stats_file_name , &x , feas_x , NULL );
+		}
+	}
 }
 
 /*-------------------------------------------*/
@@ -1615,7 +1734,7 @@ void NOMAD::Evaluator_Control::private_eval_list_of_points
 	if ( !signature ) {
 	  stop        = true;
 	  stop_reason = NOMAD::ERROR;
-	  if ( display_degree != NOMAD::NO_DISPLAY )
+	  if ( display_degree != NOMAD::NO_DISPLAY && display_degree != NOMAD::MINIMAL_DISPLAY)
 	    out << std::endl
 		<< "Error in Evaluator_Control::private_eval_list_of_points():"
 		<< " the point #" << to_be_evaluated[cur]->get_tag()
@@ -1725,7 +1844,8 @@ void NOMAD::Evaluator_Control::private_eval_list_of_points
   std::list<const NOMAD::Eval_Point *>
                                 & evaluated_pts    ) // OUT    : list of processed pts
 {
-  if ( stop || _eval_lop.empty() ) {
+  if ( stop || _eval_lop.empty() )
+  {
     stop_reason = NOMAD::UNKNOWN_STOP_REASON;
     return;
   }
@@ -1736,7 +1856,8 @@ void NOMAD::Evaluator_Control::private_eval_list_of_points
   const NOMAD::Display    & out = _p.out();
   NOMAD::dd_type display_degree = out.get_display_degree ( search );
 
-  if ( display_degree == NOMAD::FULL_DISPLAY ) {
+  if ( display_degree == NOMAD::FULL_DISPLAY )
+  {
     std::ostringstream oss;
     oss << "list of points evaluation (" << search << ")";
     out << std::endl << NOMAD::open_block ( oss.str() );
@@ -1749,8 +1870,7 @@ void NOMAD::Evaluator_Control::private_eval_list_of_points
   const NOMAD::Eval_Point * old_infeasible_incumbent = NULL;
 
   // active barrier:
-  NOMAD::Barrier & barrier = ( _p.get_opt_only_sgte() ) ?
-    sgte_barrier : true_barrier;
+  NOMAD::Barrier & barrier = ( _p.get_opt_only_sgte() ) ?  sgte_barrier : true_barrier;
 
   old_feasible_incumbent   = barrier.get_best_feasible();
   old_infeasible_incumbent = barrier.get_best_infeasible();
@@ -1778,118 +1898,130 @@ void NOMAD::Evaluator_Control::private_eval_list_of_points
 
   // main loop (on the list of points):
   // ----------------------------------
-  std::set<NOMAD::Priority_Eval_Point>::iterator
-    it  = _eval_lop.begin() , end = _eval_lop.end();
-  while ( !stop_evals && !stop && it != end ) {
+  std::set<NOMAD::Priority_Eval_Point>::iterator it  = _eval_lop.begin() , end = _eval_lop.end();
+  while ( !stop_evals && !stop && it != end )
+  {
+	  
+	  x = it->get_point();
+	  
+	  x->set_current_run ( true );
+	  
+	  // displays:
+	  if ( display_degree == NOMAD::FULL_DISPLAY ) 
+	  {
+		  {
+			  // open the evaluation block:
+			  std::ostringstream oss;
+			  if ( x->get_eval_type() == NOMAD::SGTE )
+				  oss << "surrogate ";
+			  oss << "evaluation " << k+1 << "/" << nb_points;
+			  out << std::endl << NOMAD::open_block ( oss.str() );
+		  }
+		  
+		  out << std::endl << "point #" << x->get_tag() << " ( ";
+		  x->Point::display ( out , " " , 2 , NOMAD::Point::get_display_limit() );
+		  out << " )" << std::endl;
+		  if ( x->get_direction() )
+			  out << "direction  : " << *x->get_direction()  << std::endl;
+		  if ( x->get_mesh_index() )
+			  out << "mesh index : " << *x->get_mesh_index() << std::endl;
+		  out << std::endl;
+	  }
+	  
+	  // current point check (# of bb outputs, bounds, integer values, fixed-vars):
+	  if ( x->check ( _p.get_bb_nb_outputs() , check_failed_reason ) )
+	  {
+		  count_eval = true;
+		  
+		  bool has_been_in_cache=cache_check ( x                   ,
+											   true_barrier        ,
+											   sgte_barrier        ,
+											   pareto_front        ,
+											   count_eval          ,
+											   barrier.get_h_max() ,
+											  display_degree        );
+		  
+		  // search in cache or eval the point:
+		  if ( !has_been_in_cache )
+		  {
+			  eval_point ( NOMAD::Cache::get_modifiable_point ( *x ) ,
+						  true_barrier                              ,
+						  sgte_barrier                              ,
+						  pareto_front                              ,
+						  count_eval                                ,
+						  stop                                      ,
+						  stop_reason                               ,
+						  barrier.get_h_max()                         );
+			  
+		  }
+		  
+		  // check stopping criteria:
+		  check_stopping_criteria ( search , count_eval , *x , stop , stop_reason );
+		  
+		  // success:
+		  NOMAD::success_type one_eval_success = barrier.get_one_eval_succ();
+		  success                              = barrier.get_success();
+		  
+		  // list of processed points:
+		  if ( x->is_in_cache() )
+			  evaluated_pts.push_back ( x );
+		  else
+		  {
+			  // this situation may occur on very thin meshes:
+			  // the point has not been found in the cache
+			  // and it failed to be inserted.
+			  one_eval_success = NOMAD::UNSUCCESSFUL;
+		  }
+		  
+		  // displays:
+		  if ( ! has_been_in_cache || display_degree!=NOMAD::MINIMAL_DISPLAY)
+			  display_eval_result ( *x, display_degree, search, one_eval_success, success );
 
-    x = it->get_point();
-    
-    x->set_current_run ( true );
-
-    // displays:
-    if ( display_degree == NOMAD::FULL_DISPLAY ) {
-      {
-	// open the evaluation block:
-	std::ostringstream oss;
-	if ( x->get_eval_type() == NOMAD::SGTE )
-	  oss << "surrogate ";
-	oss << "evaluation " << k+1 << "/" << nb_points;
-	out << std::endl << NOMAD::open_block ( oss.str() );
-      }
-
-      out << std::endl << "point #" << x->get_tag() << " ( ";
-      x->Point::display ( out , " " , 2 , NOMAD::Point::get_display_limit() );
-      out << " )" << std::endl;
-      if ( x->get_direction() )
-	out << "direction  : " << *x->get_direction()  << std::endl;
-      if ( x->get_mesh_index() )
-	out << "mesh index : " << *x->get_mesh_index() << std::endl;
-      out << std::endl;
-    }
-    
-    // current point check (# of bb outputs, bounds, integer values, fixed-vars):
-    if ( x->check ( _p.get_bb_nb_outputs() , check_failed_reason ) ) {
-
-      count_eval = true;
-
-      // search in cache or eval the point:
-      if ( !cache_check ( x                   ,
-			  true_barrier        ,
-			  sgte_barrier        ,
-			  pareto_front        ,
-			  count_eval          ,
-			  barrier.get_h_max() ,
-			  display_degree        ) )
-	eval_point ( NOMAD::Cache::get_modifiable_point ( *x ) ,
-		     true_barrier                              ,
-		     sgte_barrier                              ,
-		     pareto_front                              ,
-		     count_eval                                ,
-		     stop                                      ,
-		     stop_reason                               ,
-		     barrier.get_h_max()                         );
-
-      // check stopping criteria:
-      check_stopping_criteria ( search , count_eval , *x , stop , stop_reason );
-
-      // success:
-      NOMAD::success_type one_eval_success = barrier.get_one_eval_succ();
-      success                              = barrier.get_success();
-
-      // list of processed points:
-      if ( x->is_in_cache() )
-	evaluated_pts.push_back ( x );
-      else {
-	// this situation may occur on very thin meshes:
-	// the point has not been found in the cache
-	// and it failed to be inserted.
-	one_eval_success = NOMAD::UNSUCCESSFUL;
-      }
-
-      // displays:
-      display_eval_result ( *x, display_degree, search, one_eval_success, success );
-
-      // stop the evaluations (opportunistic strategy) ?
-      if ( stop_evaluations ( *x               ,
-			      search           ,
-			      k                ,
-			      nb_points        ,
-			      stop             ,
-			      display_degree   ,
-			      one_eval_success ,
-			      success          ,
-			      init_nb_eval     ,
-			      f0               ,
-			      barrier          ,
-			      nb_success       ,
-			      one_for_luck       ) ) {
-	_stats.add_interrupted_eval();
-	stop_evals = true;
-      }
-    }
-
-    // points[k]->check() failed:
-    else if ( display_degree == NOMAD::FULL_DISPLAY )
-      out << "check failed (" << check_failed_reason << ")" << std::endl;
-
-    // close the evaluation block:
-    if ( display_degree == NOMAD::FULL_DISPLAY )
-      out << NOMAD::close_block();
-
-    ++it;
-    ++k;
-
-    // force quit (by pressing ctrl-c):
-    if ( !stop && NOMAD::Evaluator_Control::_force_quit ) {
-      stop        = true;
-      stop_reason = NOMAD::CTRL_C;
-    }
-
+		  
+		  // stop the evaluations (opportunistic strategy) ?
+		  if ( stop_evaluations ( *x               ,
+								 search           ,
+								 k                ,
+								 nb_points        ,
+								 stop             ,
+								 display_degree   ,
+								 one_eval_success ,
+								 success          ,
+								 init_nb_eval     ,
+								 f0               ,
+								 barrier          ,
+								 nb_success       ,
+								 one_for_luck       ) ) 
+		  {
+			  _stats.add_interrupted_eval();
+			  stop_evals = true;
+		  }
+	  }
+	  
+	  // points[k]->check() failed:
+	  else if ( display_degree == NOMAD::FULL_DISPLAY )
+		  out << "check failed (" << check_failed_reason << ")" << std::endl;
+	  
+	  // close the evaluation block:
+	  if ( display_degree == NOMAD::FULL_DISPLAY )
+		  out << NOMAD::close_block();
+	  
+	  ++it;
+	  ++k;
+	  
+	  // force quit (by pressing ctrl-c):
+	  if ( !stop && NOMAD::Evaluator_Control::_force_quit )
+	  {
+		  stop        = true;
+		  stop_reason = NOMAD::CTRL_C;
+	  }
+	  
   } // end of main loop
     // ----------------
 
   // barriers update:
-  if ( !stop ) {
+  if ( !stop ) 
+  {
     true_barrier.update_and_reset_success();
     sgte_barrier.update_and_reset_success();
   }
@@ -1935,15 +2067,319 @@ void NOMAD::Evaluator_Control::reduce_eval_lop ( int n )
 }
 
 /*-------------------------------------------------*/
-/*               model ordering (private)          */
+/*            TGP model ordering (private)         */
 /*-------------------------------------------------*/
-void NOMAD::Evaluator_Control::model_ordering ( NOMAD::dd_type   display_degree ,
-						bool           & modified_list    )
+void NOMAD::Evaluator_Control::TGP_model_ordering ( NOMAD::dd_type   display_degree ,
+						    bool           & modified_list    )
+{
+  modified_list = false;
+
+  if ( _p.get_opt_only_sgte() )
+    return;
+
+#ifdef USE_TGP
+
+  // display:
+  const NOMAD::Display & out = _p.out();
+
+  // model stats:
+  NOMAD::Model_Stats model_stats;
+  NOMAD::Clock       clock;
+
+#ifdef TGP_DEBUG
+  out << std::endl << NOMAD::open_block ( "TGP model ordering") << std::endl;
+#endif
+  
+  const std::vector<NOMAD::bb_output_type> & bbot = _p.get_bb_output_type();
+  int i , j , n_XX = 0 , m = bbot.size();
+
+  // construct prediction set (XX):
+  // ------------------------------
+  std::vector<NOMAD::Eval_Point *> XX;
+  NOMAD::Point                     lb_XX , ub_XX;
+  
+  // save _eval_lop in XX and other_pts:
+  const NOMAD::Eval_Point            * x;
+  std::list<const NOMAD::Eval_Point *> other_pts;
+  const NOMAD::Signature             * signature = NULL;
+  int                                  n         = -1;
+
+  std::set<NOMAD::Priority_Eval_Point>::const_iterator it , end = _eval_lop.end();
+  for ( it = _eval_lop.begin() ; it != end ; ++it ) {
+    x = it->get_point();
+    if ( n < 0 ) {
+      signature = x->get_signature();
+      if ( !signature ) {
+#ifdef TGP_DEBUG
+	out << NOMAD::close_block ( "failure (no signature)" ) << std::endl;
+#endif
+	return;
+      }
+      n = signature->get_n();
+
+      lb_XX = ub_XX = NOMAD::Point(n);
+    }
+
+    if ( x->size           () == n            &&
+	 x->get_m          () == m            &&
+	 x->get_eval_type  () == NOMAD::TRUTH &&
+	 !x->get_bb_outputs().is_defined()       ) {
+
+      XX.push_back ( &NOMAD::Cache::get_modifiable_point ( *x ) );
+      
+      for ( i = 0 ; i < n ; ++i ) {
+	if ( !lb_XX[i].is_defined() || (*x)[i] < lb_XX[i] )
+	  lb_XX[i] = (*x)[i];
+	if ( !ub_XX[i].is_defined() || (*x)[i] > ub_XX[i] )
+	  ub_XX[i] = (*x)[i];
+      }
+    }
+    else
+      other_pts.push_back ( x );
+  }
+
+  n_XX = XX.size();
+
+  if ( n_XX <= 1 ) {
+#ifdef TGP_DEBUG
+    out << NOMAD::close_block ( "failure (size(XX) <= 1)" ) << std::endl;
+#endif
+    return;
+  }
+
+  // the TGP model:
+  NOMAD::TGP_Model * model;
+
+  // Reuse the last TGP model from the TGP model search:
+  if ( _last_TGP_model && _p.get_model_tgp_reuse_model() ) {
+
+    model = _last_TGP_model;
+    
+    // individual predictions for XX points:
+    for ( i = 0 ; i < n_XX ; ++i )
+      if ( !model->predict ( *XX[i] , false ) ) // pred_outside_bnds = false
+	for ( j = 0 ; j < m ; ++j )
+	  XX[i]->set_bb_output ( j , NOMAD::Double() );
+  }
+
+  // creation of a new TGP model:
+  else {
+    
+    model = new NOMAD::TGP_Model ( n , bbot , out , _p.get_model_tgp_mode() );
+
+    NOMAD::Point center(n);
+    for ( i = 0 ; i < n ; ++i )
+      center[i] = ( lb_XX[i] + ub_XX[i] ) / 2.0;
+
+    // construct interpolation set (X):
+    // --------------------------------
+    if ( !model->set_X ( *_cache       ,
+			 &center       ,
+			 _p.get_seed() ,
+			 true            ) ) { // remove_fv = true
+      
+      if ( model->get_p() <= model->get_n() )
+	model_stats.add_not_enough_pts();
+#ifdef TGP_DEBUG
+      out << NOMAD::close_block ( "failure: " + model->get_error_str() )
+	  << std::endl;
+#endif
+
+      delete model;
+
+      return;
+    }
+    
+    int p = model->get_p();
+
+    // display sets X and XX:
+    // ----------------------
+#ifdef TGP_DEBUG
+    {
+      // max number of points displayed:
+      const int set_display_limit = 15; // set to -1 for no limit
+
+      // X:
+      model->display_X ( out ,  set_display_limit );
+
+      // XX:
+      out << NOMAD::open_block ( "prediction points (XX)");
+      for ( i = 0 ; i < n_XX ; ++i ) {
+	out << "#";
+	out.display_int_w ( i , n_XX );
+	out << " x=(";
+	XX[i]->NOMAD::Point::display ( out , " " , 15 , -1 );
+	out << " )" << std::endl;
+      }
+      std::ostringstream oss;
+      oss << "(size=" << n_XX << ")";
+      out << NOMAD::close_block ( oss.str() ) << std::endl;
+    }
+#endif
+
+    // TGP model construction:
+    // -----------------------
+#ifdef TGP_DEBUG
+    out << "TGP model construction ...";
+    out.flush();
+#endif
+
+    if ( !model->compute ( XX    ,
+			   false ,       // compute_Ds2x      = false
+			   false ,       // compute_improv    = false
+			   false   ) ) { // pred_outside_bnds = false
+    
+      model_stats.add_construction_error();
+
+#ifdef TGP_DEBUG
+      out << "... error: " << model->get_error_str() << std::endl
+	  << NOMAD::close_block() << std::endl;
+#endif
+
+      // reset XX outputs:
+      for ( i = 0 ; i < n_XX ; ++i )
+	for ( j = 0 ; j < m ; ++j )
+	  XX[i]->set_bb_output ( j , NOMAD::Double() );
+      
+      delete model;
+
+      // check if ctrl-c has been pressed:
+      if ( NOMAD::TGP_Output_Model::get_force_quit() )
+	NOMAD::Evaluator_Control::_force_quit = true;
+
+      return;
+    }
+#ifdef TGP_DEBUG
+    out << "... OK" << std::endl << std::endl;
+#endif
+
+    // update model stats:
+    model_stats.add_construction_time ( clock.get_CPU_time() );
+    model_stats.update_nY             ( p                    );
+    model_stats.update_ES_stats       ( n_XX , n_XX          );
+    model_stats.add_nb_truth();
+    model_stats.add_nb_TGP();
+  }
+
+  // open display block for model predictions:
+#ifdef TGP_DEBUG
+  out << NOMAD::open_block ( "TGP predictions (XX+ZZ)"); 
+#endif
+
+  // clear then fill _eval_lop again:
+  // --------------------------------
+  NOMAD::Double         f_model , h_model;
+  const NOMAD::Double & h_min          = _p.get_h_min();
+  NOMAD::hnorm_type     h_norm         = _p.get_h_norm();
+  bool                  snap_to_bounds = _p.get_snap_to_bounds();
+
+  modified_list = true;
+  _eval_lop.clear();
+
+  for ( i = 0 ; i < n_XX ; ++i ) {
+
+    // compute model h and f values:
+    model->eval_hf ( XX[i]->get_bb_outputs() ,
+		     h_min                   ,
+		     h_norm                  ,
+		     h_model                 ,
+		     f_model                   );
+
+    // display model predictions:
+#ifdef TGP_DEBUG
+    out << "#";
+    out.display_int_w ( i , n_XX );
+    out << " x=(";
+    XX[i]->NOMAD::Point::display ( out , " " , 15 , -1 );
+    out << " ) m(x)=[";
+    XX[i]->get_bb_outputs().display ( out , " " , 15 , -1 );
+    out << " ]";
+	      
+    if ( h_model.is_defined() && f_model.is_defined() )
+      out << " hm=" << std::setw(15) << h_model
+	  << " fm=" << std::setw(15) << f_model;
+    else
+      out << " no model value";
+    out << std::endl;
+#endif	    
+      
+    // add the evaluation point:
+    add_eval_point ( XX[i]           ,
+		     display_degree  ,
+		     snap_to_bounds  ,
+		     NOMAD::Double() ,
+		     NOMAD::Double() ,
+		     f_model         ,
+		     h_model           );
+
+#ifdef MODEL_STATS
+    if ( XX[i] && f_model.is_defined() && h_model.is_defined() ) {
+      XX[i]->set_mod_use  ( 2                ); // 2 for model ordering
+      XX[i]->set_Yw       ( model->get_Yw () );
+      XX[i]->set_nY       ( p                );
+      XX[i]->set_mh       ( h_model          );
+      XX[i]->set_mf       ( f_model          );
+    }
+#endif
+  }
+
+#ifdef TGP_DEBUG
+  {
+    // close display block for model predictions:
+    std::ostringstream oss;
+    oss << "(size=" << n_XX << ")";
+    out << NOMAD::close_block ( oss.str() ) << std::endl;
+  
+    // compute and display prediction errors:
+    out << NOMAD::open_block ( "prediction relative errors on X(%)" );
+    model->display_X_errors ( out );
+    out << NOMAD::close_block() << std::endl;
+  }
+#endif
+
+  // other points that have been previously discarded and have no model values:
+  NOMAD::Eval_Point * y;
+  std::list<const NOMAD::Eval_Point *>::const_iterator it2 , end2 = other_pts.end();
+  for ( it2 = other_pts.begin() ; it2 != end2 ; ++it2 ) {
+    y = &NOMAD::Cache::get_modifiable_point (**it2);
+    add_eval_point ( y               ,
+		     display_degree  ,
+		     snap_to_bounds  ,
+		     NOMAD::Double() ,
+		     NOMAD::Double() ,
+		     NOMAD::Double() ,
+		     NOMAD::Double()   );
+  }
+
+  _stats.update_model_stats    ( model_stats );
+  _model_ordering_stats.update ( model_stats );
+
+  if ( model != _last_TGP_model )
+    delete model;
+
+#ifdef TGP_DEBUG
+  out << NOMAD::close_block() << std::endl;
+#else
+  if ( display_degree == NOMAD::FULL_DISPLAY ) {
+    out << std::endl << "model ordering";
+    if ( !modified_list )
+      out << " (no modification)";
+    out << std::endl;
+  }
+#endif
+#endif
+}
+
+/*-------------------------------------------------*/
+/*         quadratic model ordering (private)      */
+/*-------------------------------------------------*/
+void NOMAD::Evaluator_Control::quad_model_ordering ( NOMAD::dd_type display_degree ,
+						     bool         & modified_list    )
 {
   const NOMAD::Display & out = _p.out();
 
 #ifdef DEBUG
-  out << std::endl << NOMAD::open_block ( "model ordering") << std::endl;
+  out << std::endl << NOMAD::open_block ( "quadratic model ordering") << std::endl;
 #endif
 
   // save _eval_lop in pts and other_pts:
@@ -1952,7 +2388,7 @@ void NOMAD::Evaluator_Control::model_ordering ( NOMAD::dd_type   display_degree 
   const NOMAD::Eval_Point *            y;
   std::list<const NOMAD::Eval_Point *> pts , other_pts;
   const NOMAD::Signature  *            signature     = NULL;
-  const NOMAD::Double &                radius_factor = _p.get_model_radius_factor();
+  const NOMAD::Double &                radius_factor = _p.get_model_quad_radius_factor();
   NOMAD::eval_type                     ev_type       = NOMAD::TRUTH;
   int                                  i , n = -1;
 
@@ -1970,10 +2406,10 @@ void NOMAD::Evaluator_Control::model_ordering ( NOMAD::dd_type   display_degree 
       }
       n       = signature->get_n();
       ev_type = y->get_eval_type();
-      min.resize(n);
-      max.resize(n);
-      center.resize(n);
-      interpolation_radius.resize(n);
+      min.resize                  ( n );
+      max.resize                  ( n );
+      center.resize               ( n );
+      interpolation_radius.resize ( n );
     }
 
     if ( y->size() == n && y->get_eval_type() == ev_type ) {
@@ -1986,7 +2422,7 @@ void NOMAD::Evaluator_Control::model_ordering ( NOMAD::dd_type   display_degree 
       }
     }
     else
-      other_pts.push_back(y);
+      other_pts.push_back ( y );
   }
   
   for ( i = 0 ; i < n ; ++i ) {
@@ -2022,9 +2458,9 @@ void NOMAD::Evaluator_Control::model_ordering ( NOMAD::dd_type   display_degree 
 			     (ev_type==NOMAD::TRUTH) ? *_cache : *_sgte_cache ,
 			     *signature                                         );
 
-  int  max_Y_size = _p.get_model_max_Y_size();
-  int  min_Y_size = _p.get_model_min_Y_size();
-  bool use_WP     = _p.get_model_use_WP    ();
+  int  max_Y_size = _p.get_model_quad_max_Y_size();
+  int  min_Y_size = _p.get_model_quad_min_Y_size();
+  bool use_WP     = _p.get_model_quad_use_WP    ();
 
   // construct interpolation set Y:
   model.construct_Y ( center               ,
@@ -2117,6 +2553,7 @@ void NOMAD::Evaluator_Control::model_ordering ( NOMAD::dd_type   display_degree 
 	  out << std::endl;
 	  model.display_Y_error ( out );
 #endif
+
 	  // count model:
 	  if ( ev_type == NOMAD::TRUTH )
 	    model_stats.add_nb_truth();
@@ -2167,6 +2604,7 @@ void NOMAD::Evaluator_Control::model_ordering ( NOMAD::dd_type   display_degree 
 #ifdef DEBUG
 	    out << std::endl << NOMAD::open_block ( "original trial points" );
 #endif
+
 	    for ( it2 = pts.begin() ; it2 != end2 ; ++it2 ) {
 
 	      NOMAD::Point scaled_pt ( **it2 );
@@ -2208,8 +2646,8 @@ void NOMAD::Evaluator_Control::model_ordering ( NOMAD::dd_type   display_degree 
 			       h_model           );
 
 #ifdef MODEL_STATS
-	      if ( f_model.is_defined() && h_model.is_defined() ) {
-		x->set_mod_type ( 2                );
+	      if ( x && f_model.is_defined() && h_model.is_defined() ) {
+		x->set_mod_use  ( 2                ); // 2 for model ordering
 		x->set_cond     ( model.get_cond() );
 		x->set_Yw       ( model.get_Yw  () );
 		x->set_nY       ( model.get_nY  () );
@@ -2269,19 +2707,19 @@ void NOMAD::Evaluator_Control::model_ordering ( NOMAD::dd_type   display_degree 
 /*  evaluation of a list of points (public version that calls the private version)  */
 /*----------------------------------------------------------------------------------*/
 void NOMAD::Evaluator_Control::eval_list_of_points
-( NOMAD::search_type              search             , // IN     : search type
-  NOMAD::Barrier                & true_barrier       , // IN/OUT : truth barrier
-  NOMAD::Barrier                & sgte_barrier       , // IN/OUT : surrogate barrier
-  NOMAD::Pareto_Front           * pareto_front       , // IN/OUT : Pareto front
-                                                       //          (can be NULL)
-  bool                          & stop               , // IN/OUT : stopping criterion
-  NOMAD::stop_type              & stop_reason        , // OUT    : stopping reason
-  const NOMAD::Eval_Point      *& new_feas_inc       , // OUT    : new feas. incumbent
-  const NOMAD::Eval_Point      *& new_infeas_inc     , // OUT    : new infeas. incumb.
-  NOMAD::success_type           & success            , // OUT    : type of success
+( NOMAD::search_type              search             , // IN    : search type
+  NOMAD::Barrier                & true_barrier       , // IN/OUT: truth barrier
+  NOMAD::Barrier                & sgte_barrier       , // IN/OUT: surrogate barrier
+  NOMAD::Pareto_Front           * pareto_front       , // IN/OUT: Pareto front
+                                                       //         (can be NULL)
+  bool                          & stop               , // IN/OUT: stopping criterion
+  NOMAD::stop_type              & stop_reason        , // OUT   : stopping reason
+  const NOMAD::Eval_Point      *& new_feas_inc       , // OUT   : new feas. incumbent
+  const NOMAD::Eval_Point      *& new_infeas_inc     , // OUT   : new infeas. incumb.
+  NOMAD::success_type           & success            , // OUT   : type of success
   std::list<const NOMAD::Eval_Point *>
-                                * evaluated_pts   )    // OUT    : list of processed
-                                                       //          pts (can be NULL)
+                                * evaluated_pts   )    // OUT   : list of processed
+                                                       //         pts (can be NULL)
 {
 
   bool del_evaluated_pts = false;
@@ -2365,11 +2803,29 @@ void NOMAD::Evaluator_Control::eval_list_of_points
   }
 
   // model ordering:
-  if ( !modified_list           &&
-       _model_eval_sort         &&
-       _p.get_model_eval_sort() &&
-       _eval_lop.size() > 1        )
-    model_ordering ( display_degree , modified_list );
+  // ---------------
+  if ( !modified_list && _model_eval_sort && _eval_lop.size() > 1 ) {
+    switch ( _p.get_model_eval_sort() ) {
+    case NOMAD::TGP_MODEL:
+      TGP_model_ordering ( display_degree , modified_list );
+      if ( NOMAD::Evaluator_Control::_force_quit ) {
+	stop        = true;
+	stop_reason = NOMAD::CTRL_C;
+      }
+      break;
+    case NOMAD::QUADRATIC_MODEL:
+      quad_model_ordering ( display_degree , modified_list );
+      break;
+    case NOMAD::NO_MODEL:;
+    }
+  }
+
+  // this test is true if ctrl-c has been pressed:
+  if ( stop ) {
+    if ( del_evaluated_pts )
+      delete evaluated_pts;
+    return;
+  }
 
   // display the re-ordered list of trial points:
   if ( modified_list && display_degree == NOMAD::FULL_DISPLAY ) {
@@ -2556,8 +3012,7 @@ bool NOMAD::Evaluator_Control::check_opportunistic_criterion
 
       if ( f.is_defined() ) {
 		  
-	NOMAD::Double f_imprvmt = ( f != 0.0 ) ?
-	  100.0 * (f0 - f) / f.abs() : 100.0;
+	NOMAD::Double f_imprvmt = f0.rel_err(f) * 100.0;
 	
 	if ( f_imprvmt < min_f_imprvmt ) {
 
@@ -2755,7 +3210,7 @@ void NOMAD::Evaluator_Control::add_eval_point
 /*------------------------------------------------------------------*/
 /*  The displayed stats are:                                        */
 /*                                                                  */
-/*     type (1:model_search, 2:model_ordering)                      */
+/*     use (1:model_search, 2:model_ordering)                       */
 /*     mesh_index                                                   */
 /*     cardinality of Y                                             */
 /*     width of Y                                                   */
@@ -2767,14 +3222,13 @@ void NOMAD::Evaluator_Control::add_eval_point
 void NOMAD::Evaluator_Control::display_model_stats
 ( const std::list<const NOMAD::Eval_Point *> & evaluated_pts ) const
 {
-  
   const NOMAD::Display & out = _p.out();
 
   NOMAD::Double h , mh , eh , f , mf , ef;
 
   std::list<const NOMAD::Eval_Point *>::const_iterator it , end = evaluated_pts.end();
   for ( it = evaluated_pts.begin() ; it != end ; ++it ) {
-    if ( *it && (*it)->get_mod_type() >= 0 ) {
+    if ( *it && (*it)->get_mod_use() >= 0 ) {
 
       if ( _p.has_constraints() ) {
 	h  = (*it)->get_h ();
@@ -2788,23 +3242,9 @@ void NOMAD::Evaluator_Control::display_model_stats
 
       if ( h.is_defined() && mh.is_defined() && f.is_defined() && mf.is_defined() ) {
 
-	if ( _p.has_constraints() ) {
-	  if ( h != 0.0 )
-	    eh = (h-mh).abs() / h;
-	  else if ( mh != 0.0 )
-	    eh = (h-mh).abs() / mh;
-	  else
-	    eh = (h-mh).abs();
-	}
+	ef = f.rel_err ( mf ) * 100.0;
 
-	if ( f != 0.0 )
-	  ef = (f-mf).abs() / f;
-	else if ( mf != 0.0 )
-	  ef = (f-mf).abs() / mf;
-	else
-	  ef = (f-mf).abs();
-
-	out << (*it)->get_mod_type()
+	out << (*it)->get_mod_use()
 	    << " " << std::setw(3) << NOMAD::Mesh::get_mesh_index()
 	    << " " << std::setw(4) << (*it)->get_nY()
 	    << " ";
@@ -2812,6 +3252,7 @@ void NOMAD::Evaluator_Control::display_model_stats
 	(*it)->get_Yw  ().display ( out , "%12.3g" ); out << " ";
 	(*it)->get_cond().display ( out , "%12.3g" ); out << " ";
 	if ( _p.has_constraints() ) {
+	  eh = h.rel_err ( mh ) * 100.0;
 	  h.display  ( out , "%14.3g" ); out << " ";
 	  mh.display ( out , "%14.3g" ); out << " ";
 	  eh.display ( out , "%14.3g" ); out << " ";
