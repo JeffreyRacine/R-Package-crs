@@ -93,6 +93,7 @@ crssigtest(model = NULL,
 }
 
 \examples{
+\dontrun{
 options(crs.messages=FALSE)
 set.seed(42)
 
@@ -109,5 +110,6 @@ summary(model)
 
 model.sigtest <- crssigtest(model)
 summary(model.sigtest)
+}
 }
 \keyword{ nonparametric }

@@ -434,6 +434,7 @@ for each dimension of the continuous \code{x} in \code{txdat}}
 \code{\link[np]{npreg}}
 }
 \examples{
+\dontrun{
 set.seed(42)
 n <- 100
 x1 <- runif(n,-2,2)
@@ -446,7 +447,6 @@ y <- x1^3 + rnorm(n,sd=1)
 model <- npglpreg(y~x1+x2,nmulti=1)
 summary(model)
 
-\dontrun{
 ## Plot the partial means and percentile confidence intervals
 plot(model,ci=T)
 ## Extract the data from the plot object and plot it separately

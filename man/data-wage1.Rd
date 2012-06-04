@@ -49,7 +49,10 @@ are 526 observations in total. }
 \examples{
 data(wage1)
 
-## Cross-validated model selection for spline degree and bandwidths
+## Cross-validated model selection for spline degree and bandwidths Note
+## - we override the default nmulti here to get a quick illustration
+## (we don't advice doing this, in fact advise using more restarts in
+## serious applications)
 
 model <- crs(lwage~married+
              female+
@@ -60,7 +63,8 @@ model <- crs(lwage~married+
              basis="additive",
              complexity="degree",
              data=wage1,
-             segments=c(1,1,1))
+             segments=c(1,1,1),
+             nmulti=1)
 
 summary(model)
 
