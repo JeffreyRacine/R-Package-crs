@@ -2,6 +2,9 @@
 ## data. Presumes continuous regressors, accepts an arbitrary number
 ## of regressors, and accepts arbitrary derivative restrictions.
 
+## IMPORTANT NOTE - the code that follows is only valid for the tensor
+## basis (basis="tensor")
+
 ## Load libraries
 
 require(crs)
@@ -50,7 +53,8 @@ data.eval <- data.frame(y=0,expand.grid(x1=x1.seq,x2=x2.seq))
 
 model.unres <- crs(y~x1+x2,
                    data=data.train,
-                   nmulti=5)
+                   nmulti=5,
+                   basis="tensor")
 
 summary(model.unres)
 

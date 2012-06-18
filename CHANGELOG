@@ -1,3 +1,9 @@
+Changes from Version 0.15-17 to 0.15-18 [XXX]
+
+* Added options to smooth residuals for stopping rule in crsiv
+  (i.e. smooth y-phi(z)~w as opposed to separately smoothing y~w and
+  phi(z)~w)
+
 Changes from Version 0.15-16 to 0.15-17 [04-Jun-2012]
 
 * Updated NOMAD from 3.5.0 (released Jan 2011) to 3.5.1 (released Mar

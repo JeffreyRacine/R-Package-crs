@@ -40,6 +40,7 @@ crsiv <- function(y,
                   iterate.diff.tol=1.0e-08,
                   constant=0.5,
                   stop.on.increase=TRUE,
+                  smooth.residuals=TRUE,
                   method=c("Landweber-Fridman","Tikhonov"),
                   opts=list("MAX_BB_EVAL"=10000,
                             "EPSILON"=.Machine$double.eps,
@@ -424,12 +425,17 @@ crsiv <- function(y,
     if(crs.messages) options(crs.messages=FALSE)
     model.E.y.w <- crs(formula.yw,opts=opts,data=traindata,...)
     E.y.w <- predict(model.E.y.w,newdata=evaldata)
+    phi.mat <- phi.j.m.1
     phi <- phi.j.m.1
     model.E.phi.w <- crs(formula.phiw,opts=opts,data=traindata,...)
     E.phi.w <- predict(model.E.phi.w,newdata=evaldata)
     if(crs.messages) options(crs.messages=TRUE)    
 
-    norm.stop[1] <- mean(((E.y.w-E.phi.w)/E.y.w)^2)
+    if(smooth.residuals) {
+      norm.stop[1] <- mean((predict(model.residphi0,newdata=evaldata)/E.y.w)^2)
+    } else {
+      norm.stop[1] <- mean(((E.y.w-E.phi.w)/E.y.w)^2)
+    }
 
     for(j in 2:iterate.max) {
 
@@ -447,6 +453,7 @@ crsiv <- function(y,
       if(crs.messages) options(crs.messages=TRUE)    
 
       phi <- phi.j.m.1 + constant*predict(model.predict.residw.z,newdata=evaldata)
+      phi.mat <- cbind(phi.mat,phi.j.m.1)
 
       console <- printClear(console)
       console <- printPop(console)
@@ -469,7 +476,12 @@ crsiv <- function(y,
       if(crs.messages) options(crs.messages=TRUE)    
       
       E.phi.w <- predict(model.stop,newdata=evaldata)
-      norm.stop[j] <- mean(((E.y.w-E.phi.w)/E.y.w)^2)
+
+      if(smooth.residuals) {
+        norm.stop[j] <- mean((predict(model.residw,newdata=evaldata)/E.y.w)^2)
+      } else {
+        norm.stop[j] <- mean(((E.y.w-E.phi.w)/E.y.w)^2)
+      }
 
       ## If stopping rule criterion increases or we are below stopping
       ## tolerance then break
@@ -523,6 +535,7 @@ crsiv <- function(y,
 
     model$residuals <- residuals.phi
     model$phi <- phi
+    model$phi.mat <- phi.mat
     model$num.iterations <- j
     model$norm.stop <- norm.stop
     model$convergence <- convergence

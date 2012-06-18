@@ -269,8 +269,8 @@ crsivderiv <- function(y,
 
     phi.prime <- (survivor.weighted.average - S.z*mean.mu)/f.z
 
-  }  
-      
+  }
+
   norm.stop <- numeric()
 
   ## NOTE - this presumes univariate z case... in general this would
@@ -366,6 +366,9 @@ crsivderiv <- function(y,
   
   phi.prime <- phi.prime + constant*T.star.mu
   
+  phi.prime.mat <- phi.prime
+  phi.mat <- phi
+      
   ## This we iterate...
   
   for(j in 2:iterate.max) {
@@ -474,6 +477,8 @@ crsivderiv <- function(y,
     ## Now we update, this provides phi.prime.1, and now we can iterate until convergence...
       
     phi.prime <- phi.prime + constant*T.star.mu
+    phi.prime.mat <- cbind(phi.prime.mat,phi.prime)
+    phi.mat <- cbind(phi.mat,phi)
 
     ## If stopping rule criterion increases or we are below stopping
     ## tolerance then break
@@ -502,6 +507,6 @@ crsivderiv <- function(y,
   
   if(j == iterate.max) warning(" iterate.max reached: increase iterate.max or inspect norm.stop vector")
   
-  return(list(phi=phi,phi.prime=phi.prime,num.iterations=j,norm.stop=norm.stop,convergence=convergence))
+  return(list(phi=phi,phi.prime=phi.prime,phi.mat=phi.mat,phi.prime.mat=phi.prime.mat,num.iterations=j,norm.stop=norm.stop,convergence=convergence))
   
 }

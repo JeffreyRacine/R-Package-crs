@@ -37,6 +37,7 @@ crsiv(y,
       iterate.diff.tol = 1.0e-08,
       constant = 0.5,
       stop.on.increase = TRUE,
+      smooth.residuals = TRUE,
       method = c("Landweber-Fridman","Tikhonov"),
       opts = list("MAX_BB_EVAL"=10000,
                   "EPSILON"=.Machine$double.eps,
@@ -127,6 +128,12 @@ crsiv(y,
   the regularization method employed (default
    \code{"Landweber-Fridman"}, see Horowitz (2011); see Darolles, Fan,
    Florens and Renault (2011) for details for \code{"Tikhonov"})
+ }
+\item{smooth.residuals}{
+  a logical value (defaults to \code{TRUE}) indicating whether to
+  optimize bandwidths for the regression of \eqn{y-\varphi(z)}{y-phi(z)}
+  on \eqn{w} or for the regression of \eqn{\varphi(z)}{phi(z)} on
+  \eqn{w} during iteration
  }
   \item{opts}{
     arguments passed to the NOMAD solver (see \code{\link{snomadr}} for
