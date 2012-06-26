@@ -32,12 +32,14 @@ crsiv(y,
       alpha.min = 1e-10,
       alpha.max = 1e-01,
       alpha.tol = .Machine$double.eps^0.25,
+      deriv = 0,
       iterate.max = 1000,
       iterate.tol = 1.0e-04,
       iterate.diff.tol = 1.0e-08,
       constant = 0.5,
-      stop.on.increase = TRUE,
       smooth.residuals = TRUE,
+      starting.values = NULL,
+      stop.on.increase = TRUE,
       method = c("Landweber-Fridman","Tikhonov"),
       opts = list("MAX_BB_EVAL"=10000,
                   "EPSILON"=.Machine$double.eps,
@@ -45,7 +47,6 @@ crsiv(y,
                   "MIN_MESH_SIZE"=paste("r",sqrt(.Machine$double.eps),sep=""),
                   "MIN_POLL_SIZE"=paste("r",sqrt(.Machine$double.eps),sep=""),
                   "DISPLAY_DEGREE"=0),
-      deriv = 0,
       ...)
 }
 
@@ -118,12 +119,6 @@ crsiv(y,
 \item{constant}{
   the constant to use when using  \code{method="Landweber-Fridman"}
 }
-\item{stop.on.increase}{
-  a logical value (defaults to \code{TRUE}) indicating whether to halt
-  iteration if the stopping criterion (see below) increases over the
-  course of one iteration (i.e. it may be above the iteration tolerance
-  but increased)
-}
 \item{method}{
   the regularization method employed (default
    \code{"Landweber-Fridman"}, see Horowitz (2011); see Darolles, Fan,
@@ -135,6 +130,18 @@ crsiv(y,
   on \eqn{w} or for the regression of \eqn{\varphi(z)}{phi(z)} on
   \eqn{w} during iteration
  }
+\item{starting values}{ a value indicating whether to commence
+  Landweber-Fridman assuming
+  \eqn{\varphi'_{-1}=0}{phi'[-1]=starting.values} (proper
+  Landweber-Fridman) or instead begin from \eqn{E(y|z)} (defaults to
+  \code{NULL}, see details below)
+}
+\item{stop.on.increase}{
+  a logical value (defaults to \code{TRUE}) indicating whether to halt
+  iteration if the stopping criterion (see below) increases over the
+  course of one iteration (i.e. it may be above the iteration tolerance
+  but increased)
+}
   \item{opts}{
     arguments passed to the NOMAD solver (see \code{\link{snomadr}} for
     further details)

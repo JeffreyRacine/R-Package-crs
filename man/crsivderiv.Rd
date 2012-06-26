@@ -29,7 +29,7 @@ crsivderiv(y,
            iterate.tol = 1.0e-04,
            iterate.diff.tol = 1.0e-08,
            constant = 0.5,
-           start.phi.zero = FALSE,
+           starting.values = NULL,
            stop.on.increase = TRUE,
            smooth.residuals = TRUE,
            opts = list("MAX_BB_EVAL"=10000,
@@ -93,12 +93,14 @@ crsivderiv(y,
 \item{constant}{
   the constant to use when using  Landweber-Fridman iteration
 }
-\item{start.phi.zero}{
-  a logical value indicating whether to commence Landweber-Fridman
-  assuming \eqn{\varphi_{-1}=0}{phi[-1]=0} (proper Landweber-Fridman) or
-  instead begin from \eqn{E(y|z)} (defaults to \code{FALSE}, see details
-  below)
+
+\item{starting values}{ a value indicating whether to commence
+  Landweber-Fridman assuming
+  \eqn{\varphi'_{-1}=0}{phi'[-1]=starting.values} (proper
+  Landweber-Fridman) or instead begin from \eqn{E(y|z)} (defaults to
+  \code{NULL}, see details below)
 }
+
 \item{stop.on.increase}{
   a logical value (defaults to \code{TRUE}) indicating whether to halt
   iteration if the stopping criterion (see below) increases over the
@@ -149,8 +151,9 @@ crsivderiv(y,
 }
 \value{
   
-    \code{crsivderiv} returns components \code{phi.prime}, \code{phi},
-    \code{num.iterations}, \code{norm.stop} and \code{convergence}.
+  \code{crsivderiv} returns components \code{phi.prime}, \code{phi},
+    \code{phi.prime.mat}, \code{num.iterations}, \code{norm.stop},
+    \code{norm.value} and \code{convergence}.
     
 }
   
