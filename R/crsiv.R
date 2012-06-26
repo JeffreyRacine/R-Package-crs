@@ -43,6 +43,7 @@ crsiv <- function(y,
                   iterate.tol=1.0e-04,
                   iterate.diff.tol=1.0e-08,
                   constant=0.5,
+                  penalize.iteration=TRUE,
                   smooth.residuals=TRUE,
                   starting.values=NULL,
                   stop.on.increase=TRUE,
@@ -513,7 +514,7 @@ crsiv <- function(y,
       phi <- phi + constant*predict(model.predict.residw.z,newdata=evaldata)
       phi.mat <- cbind(phi.mat,phi)
 
-      norm.stop[j] <- j*sum((E.y.w-E.phi.w)^2)/sum(E.y.w^2)
+      norm.stop[j] <- ifelse(penalize.iteration,j*sum((E.y.w-E.phi.w)^2)/sum(E.y.w^2),sum((E.y.w-E.phi.w)^2)/sum(E.y.w^2))
 
       ## The number of iterations in LF is asymptotically equivalent
       ## to 1/alpha (where alpha is the regularization parameter in

@@ -56,6 +56,7 @@ crsivderiv <- function(y,
                        iterate.tol=1.0e-04,
                        iterate.diff.tol=1.0e-08,
                        constant=0.5,
+                       penalize.iteration=TRUE,
                        starting.values=NULL,
                        stop.on.increase=TRUE,
                        smooth.residuals=TRUE,
@@ -352,7 +353,7 @@ crsivderiv <- function(y,
     if(crs.messages) options(crs.messages=TRUE)    
     
     E.phi.w <- predict(model.E.phi.w,newdata=evaldata)
-    norm.stop[j] <- j*sum((E.y.w-E.phi.w)^2)/sum(E.y.w^2)
+    norm.stop[j] <- ifelse(penalize.iteration,j*sum((E.y.w-E.phi.w)^2)/sum(E.y.w^2),sum((E.y.w-E.phi.w)^2)/sum(E.y.w^2))
     
     ## Now we compute mu.0 (a residual of sorts)
     

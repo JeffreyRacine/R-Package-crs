@@ -37,6 +37,7 @@ crsiv(y,
       iterate.tol = 1.0e-04,
       iterate.diff.tol = 1.0e-08,
       constant = 0.5,
+      penalize.iteration = TRUE,
       smooth.residuals = TRUE,
       starting.values = NULL,
       stop.on.increase = TRUE,
@@ -124,6 +125,10 @@ crsiv(y,
    \code{"Landweber-Fridman"}, see Horowitz (2011); see Darolles, Fan,
    Florens and Renault (2011) for details for \code{"Tikhonov"})
  }
+\item{penalize.iteration}{ a logical value indicating whether to
+    penalize the norm by the number of iterations or not (default
+    \code{TRUE})
+}    
 \item{smooth.residuals}{
   a logical value (defaults to \code{TRUE}) indicating whether to
   optimize bandwidths for the regression of \eqn{y-\varphi(z)}{y-phi(z)}
@@ -191,7 +196,7 @@ crsiv(y,
   \eqn{||(E(y|w)-E(\varphi_k(z,x)|w))/E(y|w)||^2
   }{||(E(y|w)-E(phi(z,x)|w))/E(y|w)||^2 } from iteration to iteration is
   less than \code{iterate.tol} or we hit \code{iterate.max} or
-  \eqn{||E((y|w)-E(\varphi_k(z,x)|w))/E(y|w)||^2
+  \eqn{||(E(y|w)-E(\varphi_k(z,x)|w))/E(y|w)||^2
   }{||(E(y|w)-E(phi(z,x)|w))/E(y|w)||^2 } stops falling in value and
   starts rising.
 

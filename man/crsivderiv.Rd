@@ -29,6 +29,7 @@ crsivderiv(y,
            iterate.tol = 1.0e-04,
            iterate.diff.tol = 1.0e-08,
            constant = 0.5,
+           penalize.iteration = TRUE,
            starting.values = NULL,
            stop.on.increase = TRUE,
            smooth.residuals = TRUE,
@@ -93,7 +94,10 @@ crsivderiv(y,
 \item{constant}{
   the constant to use when using  Landweber-Fridman iteration
 }
-
+\item{penalize.iteration}{ a logical value indicating whether to
+    penalize the norm by the number of iterations or not (default
+    \code{TRUE})
+}    
 \item{starting.values}{ a value indicating whether to commence
   Landweber-Fridman assuming
   \eqn{\varphi'_{-1}=0}{phi'[-1]=starting.values} (proper
@@ -137,7 +141,7 @@ crsivderiv(y,
   \eqn{||(E(y|w)-E(\varphi_k(z,x)|w))/E(y|w)||^2
   }{||(E(y|w)-E(phi(z,x)|w))/E(y|w)||^2 } from iteration to iteration is
   less than \code{iterate.tol} or we hit \code{iterate.max} or
-  \eqn{||E((y|w)-E(\varphi_k(z,x)|w))/E(y|w)||^2
+  \eqn{||(E(y|w)-E(\varphi_k(z,x)|w))/E(y|w)||^2
   }{||(E(y|w)-E(phi(z,x)|w))/E(y|w)||^2 } stops falling in value and
   starts rising.
 
