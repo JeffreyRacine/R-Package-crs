@@ -440,7 +440,7 @@ crsiv <- function(y,
       phi.0.NULL <- FALSE
       phi.0.input <- starting.values
       ## First compute phi (passed in) then phi.0
-      phi <- phi.0
+      phi <- starting.values
       if(crs.messages) options(crs.messages=FALSE)
       phi.0 <- crs(formula.yz,opts=opts,data=traindata,...)
       if(crs.messages) options(crs.messages=TRUE)
