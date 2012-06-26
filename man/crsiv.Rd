@@ -130,7 +130,7 @@ crsiv(y,
   on \eqn{w} or for the regression of \eqn{\varphi(z)}{phi(z)} on
   \eqn{w} during iteration
  }
-\item{starting values}{ a value indicating whether to commence
+\item{starting.values}{ a value indicating whether to commence
   Landweber-Fridman assuming
   \eqn{\varphi'_{-1}=0}{phi'[-1]=starting.values} (proper
   Landweber-Fridman) or instead begin from \eqn{E(y|z)} (defaults to

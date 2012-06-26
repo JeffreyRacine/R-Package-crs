@@ -4,6 +4,10 @@ Changes from Version 0.15-17 to 0.15-18 [XXX]
   (i.e. smooth y-phi(z)~w as opposed to separately smoothing y~w and
   phi(z)~w)
 
+* Added options to input starting values for crsiv and crsivderiv
+
+* Stopping rules for crsiv and crsivderiv modified	
+
 Changes from Version 0.15-16 to 0.15-17 [04-Jun-2012]
 
 * Updated NOMAD from 3.5.0 (released Jan 2011) to 3.5.1 (released Mar
