@@ -224,9 +224,9 @@ crsiv(y,
 
     In addition to the standard \code{\link{crs}} components,
     \code{crsiv} returns components \code{phi} and either \code{alpha}
-    when \code{method="Tikhonov"} or \code{num.iterations},
-    \code{norm.stop} and \code{convergence} when
-    \code{method="Landweber-Fridman"}.
+    when \code{method="Tikhonov"} or \code{phi}, \code{phi.mat},
+    \code{num.iterations}, \code{norm.stop}, \code{norm.value} and
+    \code{convergence} when \code{method="Landweber-Fridman"}.
     
 }
   
