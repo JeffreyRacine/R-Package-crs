@@ -34,11 +34,11 @@ crsiv(y,
       alpha.tol = .Machine$double.eps^0.25,
       deriv = 0,
       iterate.max = 1000,
-      iterate.tol = 1.0e-04,
       iterate.diff.tol = 1.0e-08,
       constant = 0.5,
       penalize.iteration = TRUE,
       smooth.residuals = TRUE,
+      start.from = c("Eyz","EEywz"),
       starting.values = NULL,
       stop.on.increase = TRUE,
       method = c("Landweber-Fridman","Tikhonov"),
@@ -109,9 +109,6 @@ crsiv(y,
   an integer indicating the maximum number of iterations permitted
   before termination occurs when using \code{method="Landweber-Fridman"}
 }
-\item{iterate.tol}{
-  the search tolerance for the stopping rule when using \code{method="Landweber-Fridman"}
-}
 \item{iterate.diff.tol}{
   the search tolerance for the difference in the stopping rule from
   iteration to iteration when using \code{method="Landweber-Fridman"}
@@ -134,7 +131,11 @@ crsiv(y,
   optimize bandwidths for the regression of \eqn{y-\varphi(z)}{y-phi(z)}
   on \eqn{w} or for the regression of \eqn{\varphi(z)}{phi(z)} on
   \eqn{w} during iteration
- }
+}
+\item{start.from}{ a character string indicating whether to start from
+  \eqn{E(Y|z)} (default, \code{"Eyz"}) or from \eqn{E(E(Y|z)|z)} (this can
+  be overridden by providing \code{starting.values} below)
+}  
 \item{starting.values}{ a value indicating whether to commence
   Landweber-Fridman assuming
   \eqn{\varphi_{-1}=starting.values}{phi[-1]=starting.values} (proper
@@ -195,7 +196,7 @@ crsiv(y,
   when either the change in the value of
   \eqn{||(E(y|w)-E(\varphi_k(z,x)|w))/E(y|w)||^2
   }{||(E(y|w)-E(phi(z,x)|w))/E(y|w)||^2 } from iteration to iteration is
-  less than \code{iterate.tol} or we hit \code{iterate.max} or
+  less than \code{iterate.diff.tol} or we hit \code{iterate.max} or
   \eqn{||(E(y|w)-E(\varphi_k(z,x)|w))/E(y|w)||^2
   }{||(E(y|w)-E(phi(z,x)|w))/E(y|w)||^2 } stops falling in value and
   starts rising.

@@ -40,11 +40,11 @@ crsiv <- function(y,
                   alpha.tol=.Machine$double.eps^0.25,
                   deriv=0,
                   iterate.max=1000,
-                  iterate.tol=1.0e-04,
                   iterate.diff.tol=1.0e-08,
                   constant=0.5,
                   penalize.iteration=TRUE,
                   smooth.residuals=TRUE,
+                  start.from=c("Eyz","EEywz"),
                   starting.values=NULL,
                   stop.on.increase=TRUE,
                   method=c("Landweber-Fridman","Tikhonov"),
@@ -155,6 +155,7 @@ crsiv <- function(y,
 
   ## Basic error checking
 
+  start.from <- match.arg(start.from)
   if(!is.logical(stop.on.increase)) stop("stop.on.increase must be logical (TRUE/FALSE)")
 
   if(missing(y)) stop("You must provide y")
@@ -165,7 +166,6 @@ crsiv <- function(y,
   if(!is.null(x) && NROW(y) != NROW(x)) stop("y and x have differing numbers of rows")
   if(iterate.max < 2) stop("iterate.max must be at least 2")
   if(constant <= 0 || constant >=1) stop("constant must lie in (0,1)")
-  if(iterate.tol <= 0) stop("iterate.tol must be positive")
   if(iterate.diff.tol < 0) stop("iterate.diff.tol must be non-negative")
 
   ## Cast as data frames
@@ -219,6 +219,11 @@ crsiv <- function(y,
     formula.Eywz <- as.formula(paste("E.y.w ~ ", paste(znames, collapse= "+")))
     formula.Ephiwz <- as.formula(paste("E.phi.w ~ ", paste(znames, collapse= "+")))
     formula.residwz <- as.formula(paste("residw ~ ", paste(znames, collapse= "+")))
+  } else {
+    formula.yz <- as.formula(paste("y ~ ", paste(znames, collapse= "+"), " + ", paste(xnames, collapse= "+")))
+    formula.Eywz <- as.formula(paste("E.y.w ~ ", paste(znames, collapse= "+"), " + ", paste(xnames, collapse= "+")))
+    formula.Ephiwz <- as.formula(paste("E.phi.w ~ ", paste(znames, collapse= "+"), " + ", paste(xnames, collapse= "+")))
+    formula.residwz <- as.formula(paste("residw ~ ", paste(znames, collapse= "+"), " + ", paste(xnames, collapse= "+")))
   }
 
   if(!is.null(starting.values) && (NROW(starting.values) != NROW(evaldata))) stop(paste("starting.values must be of length",NROW(evaldata)))
@@ -420,25 +425,31 @@ crsiv <- function(y,
       console <- printPush(paste("Computing optimal smoothing and phi(z,x) for iteration 1...",sep=""),console)
     }
 
-    ## Initial value taken from E(Y|z) or overridden and passed in,
-    ## formulae all operate on phi. phi.0.NULL flag set
+    ## Initial value taken from E(E(Y|w)|z) or E(Y|z) or overridden
+    ## and passed in, formulae all operate on phi. phi.0.NULL flag set
 
+    if(crs.messages) options(crs.messages=FALSE)
     if(is.null(starting.values)) {
       phi.0.NULL <- TRUE
-      ## First compute phi.0 (not passed in) then phi
-      if(crs.messages) options(crs.messages=FALSE)
       phi.0 <- crs(formula.yz,opts=opts,data=traindata,...)
-      if(crs.messages) options(crs.messages=TRUE)
-      phi <- fitted(phi.0)
+      ## First compute phi.0 (not passed in) then phi
+      if(start.from == "Eyz") {
+        ## Start from E(Y|z)
+        phi <- predict(phi.0,newdata=evaldata,...)
+      } else {
+        ## Start from E(E(Y|w)|z)
+        E.y.w <- fitted(crs(formula.yw,opts=opts,data=traindata,...))
+        model.E.E.y.w.z <- crs(formula.Eywz,opts=opts,data=traindata,...)
+        phi <- predict(model.E.E.y.w.z,newdata=evaldata,...)
+      }
     } else {
       phi.0.NULL <- FALSE
       phi.0.input <- starting.values
       ## First compute phi (passed in) then phi.0
       phi <- starting.values
-      if(crs.messages) options(crs.messages=FALSE)
       phi.0 <- crs(formula.yz,opts=opts,data=traindata,...)
-      if(crs.messages) options(crs.messages=TRUE)
     }
+    if(crs.messages) options(crs.messages=TRUE)
 
     console <- printClear(console)
     console <- printPop(console)
@@ -511,10 +522,6 @@ crsiv <- function(y,
         ## If stopping rule criterion increases or we are below stopping
         ## tolerance then break
 
-        if(norm.stop[j] < iterate.tol) {
-          convergence <- "ITERATE_TOL"
-          break()
-        }
         if(stop.on.increase && norm.stop[j] > norm.stop[j-1]) {
           convergence <- "STOP_ON_INCREASE"
           break()

@@ -53,10 +53,10 @@ crsivderiv <- function(y,
                        weval=NULL,
                        xeval=NULL,
                        iterate.max=1000,
-                       iterate.tol=1.0e-04,
                        iterate.diff.tol=1.0e-08,
                        constant=0.5,
                        penalize.iteration=TRUE,
+                       start.from=c("Eyz","EEywz"),
                        starting.values=NULL,
                        stop.on.increase=TRUE,
                        smooth.residuals=TRUE,
@@ -75,7 +75,8 @@ crsivderiv <- function(y,
   ## Basic error checking
 
   if(!is.logical(stop.on.increase)) stop("stop.on.increase must be logical (TRUE/FALSE)")
-  if(!is.logical(smooth.residuals)) stop("smooth.residuals must be logical (TRUE/FALSE)")  
+  if(!is.logical(smooth.residuals)) stop("smooth.residuals must be logical (TRUE/FALSE)")
+  start.from <- match.arg(start.from)
 
   if(constant <= 0 || constant >=1) stop("constant must lie in (0,1)")
   if(missing(y)) stop("You must provide y")
@@ -85,7 +86,6 @@ crsivderiv <- function(y,
   if(NROW(y) != NROW(z) || NROW(y) != NROW(w)) stop("y, z, and w have differing numbers of rows")
   if(!is.null(x) && NROW(y) != NROW(x)) stop("y and x have differing numbers of rows")
   if(iterate.max < 2) stop("iterate.max must be at least 2")
-  if(iterate.tol <= 0) stop("iterate.tol must be positive")
   if(iterate.diff.tol < 0) stop("iterate.diff.tol must be non-negative")
 
   ## Cast as data frames
@@ -135,8 +135,10 @@ crsivderiv <- function(y,
   formula.phiw <- as.formula(paste("phi ~ ", paste(wnames, collapse= "+")))
   if(is.null(x)) {
     formula.yz <- as.formula(paste("y ~ ", paste(znames, collapse= "+")))
+    formula.Eywz <- as.formula(paste("E.y.w ~ ", paste(znames, collapse= "+")))
   } else {
     formula.yz <- as.formula(paste("y ~ ", paste(znames, collapse= "+"), " + ", paste(xnames, collapse= "+")))
+    formula.Eywz <- as.formula(paste("E.y.w ~ ", paste(znames, collapse= "+"), " + ", paste(xnames, collapse= "+")))
   }
 
   ## Landweber-Fridman
@@ -184,17 +186,24 @@ crsivderiv <- function(y,
       console <- printPush(paste("Computing optimal smoothing  for E(y|z,x) for iteration 1...",sep=""),console)
     }
     
-    if(crs.messages) options(crs.messages=FALSE)
-    model.E.y.z <- crs(formula.yz,
-                       opts=opts,
-                       data=traindata,
-                       deriv=1,
-                       ...)
-    if(crs.messages) options(crs.messages=TRUE)    
-
-    E.y.z <- predict(model.E.y.z,newdata=evaldata)
-    
-    phi.prime <- attr(E.y.z,"deriv.mat")[,1]
+    if(start.from == "Eyz") {
+      ## Start from E(Y|z)      
+      if(crs.messages) options(crs.messages=FALSE)
+      model.E.y.z <- crs(formula.yz,
+                         opts=opts,
+                         data=traindata,
+                         deriv=1,
+                         ...)
+      if(crs.messages) options(crs.messages=TRUE)    
+      E.y.z <- predict(model.E.y.z,newdata=evaldata)
+      phi.prime <- attr(E.y.z,"deriv.mat")[,1]
+    } else {
+      ## Start from E(E(Y|w)|z)
+      E.y.w <- fitted(crs(formula.yw,opts=opts,data=traindata,...))
+      model.E.E.y.w.z <- crs(formula.Eywz,opts=opts,data=traindata,deriv=1,...)
+      E.E.y.w.z <- predict(model.E.E.y.w.z,newdata=evaldata,...)
+      phi.prime <- attr(E.E.y.w.z,"deriv.mat")[,1]
+    }
 
   } else {
     phi.prime <- starting.values
@@ -432,10 +441,6 @@ crsivderiv <- function(y,
       ## If stopping rule criterion increases or we are below stopping
       ## tolerance then break
       
-      if(norm.stop[j] < iterate.tol) {
-        convergence <- "ITERATE_TOL"
-        break()
-      }
       if(stop.on.increase && norm.stop[j] > norm.stop[j-1]) {
         convergence <- "STOP_ON_INCREASE"
         break()
