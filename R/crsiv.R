@@ -218,14 +218,7 @@ crsiv <- function(y,
     formula.yz <- as.formula(paste("y ~ ", paste(znames, collapse= "+")))
     formula.Eywz <- as.formula(paste("E.y.w ~ ", paste(znames, collapse= "+")))
     formula.Ephiwz <- as.formula(paste("E.phi.w ~ ", paste(znames, collapse= "+")))
-    formula.predictmodelresidwz <- as.formula(paste("predict(model.residw,newdata=evaldata) ~ ", paste(znames, collapse= "+")))
-    formula.E.y.w.m.E.phi.w.z <- as.formula(paste("(fitted(model.E.y.w)-fitted(model.E.phi.w)) ~ ", paste(znames, collapse= "+")))
-  } else {
-    formula.yz <- as.formula(paste("y ~ ", paste(znames, collapse= "+"), " + ", paste(xnames, collapse= "+")))
-    formula.Eywz <- as.formula(paste("E.y.w ~ ", paste(znames, collapse= "+"), " + ", paste(xnames, collapse= "+")))
-    formula.Ephiwz <- as.formula(paste("E.phi.w ~ ", paste(znames, collapse= "+"), " + ", paste(xnames, collapse= "+")))
-    formula.predictmodelresidwz <- as.formula(paste("predict(model.residw,newdata=evaldata) ~ ", paste(znames, collapse= "+"), " + ", paste(xnames, collapse= "+")))
-    formula.E.y.w.m.E.phi.w.z <- as.formula(paste("(fitted(model.E.y.w)-fitted(model.E.phi.w)) ~ ", paste(znames, collapse= "+"), " + ", paste(xnames, collapse= "+")))
+    formula.residwz <- as.formula(paste("residw ~ ", paste(znames, collapse= "+")))
   }
 
   if(!is.null(starting.values) && (NROW(starting.values) != NROW(evaldata))) stop(paste("starting.values must be of length",NROW(evaldata)))
@@ -250,7 +243,7 @@ crsiv <- function(y,
     if(crs.messages) options(crs.messages=FALSE)
     model<-crs(formula.yw,opts=opts,data=traindata,...)
     if(crs.messages) options(crs.messages=TRUE)
-    E.y.w <- predict(model,newdata=evaldata)
+    E.y.w <- predict(model,newdata=evaldata,...)
     B <- model.matrix(model$model.lm)
     KYW <- B%*%solve(t(B)%*%B)%*%t(B)
 
@@ -266,7 +259,7 @@ crsiv <- function(y,
     if(crs.messages) options(crs.messages=FALSE)
     model <- crs(formula.Eywz,opts=opts,data=traindata,...)
     if(crs.messages) options(crs.messages=TRUE)
-    E.E.y.w.z <- predict(model,newdata=evaldata)
+    E.E.y.w.z <- predict(model,newdata=evaldata,...)
     B <- model.matrix(model$model.lm)
     KYWZ <- B%*%solve(t(B)%*%B)%*%t(B)
 
@@ -314,7 +307,7 @@ crsiv <- function(y,
     if(crs.messages) options(crs.messages=FALSE)
     model <- crs(formula.phiw,opts=opts,data=traindata,...)
     if(crs.messages) options(crs.messages=TRUE)
-    E.phi.w <- predict(model,newdata=evaldata)
+    E.phi.w <- predict(model,newdata=evaldata,...)
     B <- model.matrix(model$model.lm)
     KPHIW <- B%*%solve(t(B)%*%B)%*%t(B)
 
@@ -416,7 +409,7 @@ crsiv <- function(y,
 
     if(crs.messages) options(crs.messages=FALSE)
     model.E.y.w <- crs(formula.yw,opts=opts,data=traindata,...)
-    E.y.w <- predict(model.E.y.w,newdata=evaldata)
+    E.y.w <- predict(model.E.y.w,newdata=evaldata,...)
     if(crs.messages) options(crs.messages=TRUE)
 
     console <- printClear(console)
@@ -449,45 +442,31 @@ crsiv <- function(y,
 
     console <- printClear(console)
     console <- printPop(console)
-    console <- printPush(paste("Computing optimal smoothing and E(phi(z)|w) for iteration 1...",sep=""),console)
-
+    if(is.null(x)) {
+      console <- printPush(paste("Computing optimal smoothing for E(Y-phi(z)|w) for iteration 1...",sep=""),console)
+    } else {
+      console <- printPush(paste("Computing optimal smoothing  for E(Y-phi(z,x)|w) for iteration 1...",sep=""),console)
+    }
     if(crs.messages) options(crs.messages=FALSE)
-    model.E.phi.w <- crs(formula.phiw,opts=opts,data=traindata,...)
-    E.phi.w <- predict(model.E.phi.w,newdata=evaldata)
+    if(smooth.residuals) {
+      model.residw <- crs(formula.residw,opts=opts,data=traindata,...)
+      residw <- predict(model.residw,newdata=evaldata,...)
+      model.predict.residw.z <- crs(formula.residwz,opts=opts,data=traindata,...)
+    } else {
+      model.E.phi.w <- crs(formula.phiw,opts=opts,data=traindata,...)
+      residw <- predict(model.E.y.w,newdata=evaldata,...)-predict(model.E.phi.w,newdata=evaldata,...)
+      model.predict.residw.z <- crs(formula.residwz,opts=opts,data=traindata,...)
+    }
     if(crs.messages) options(crs.messages=TRUE)
 
-    console <- printClear(console)
-    console <- printPop(console)
-    if(smooth.residuals) {
-      if(is.null(x)) {
-        console <- printPush(paste("Computing optimal smoothing for E(Y-phi(z)|w) for iteration 1...",sep=""),console)
-      } else {
-        console <- printPush(paste("Computing optimal smoothing  for E(Y-phi(z,x)|w) for iteration 1...",sep=""),console)
-      }
-      if(crs.messages) options(crs.messages=FALSE)
-      model.residw <- crs(formula.residw,opts=opts,data=traindata,...)
-      model.predict.residw.z <- crs(formula.predictmodelresidwz,opts=opts,data=traindata,...)
-      if(crs.messages) options(crs.messages=TRUE)
-    } else {
-      if(is.null(x)) {
-        console <- printPush(paste("Computing optimal smoothing for E(Y|w)-E(phi(z)|w) for iteration 1...",sep=""),console)
-      } else {
-        console <- printPush(paste("Computing optimal smoothing  for E(Y|w)-E(phi(z,x)|w) for iteration 1...",sep=""),console)
-      }
-      if(crs.messages) options(crs.messages=FALSE)
-      model.residw <- crs(formula.E.y.w.m.E.phi.w.z,opts=opts,data=traindata,...)
-      model.predict.residw.z <- crs(formula.predictmodelresidwz,opts=opts,data=traindata,...)
-      if(crs.messages) options(crs.messages=TRUE)
-    }
-
     if(phi.0.NULL) {
-      phi <- predict(phi.0,newdata=evaldata) + constant*predict(model.predict.residw.z,newdata=evaldata)
+      phi <- predict(phi.0,newdata=evaldata,...) + constant*predict(model.predict.residw.z,newdata=evaldata,...)
     } else {
-      phi <- phi.0.input + constant*predict(model.predict.residw.z,newdata=evaldata)
+      phi <- phi.0.input + constant*predict(model.predict.residw.z,newdata=evaldata,...)
     }
 
     phi.mat <- phi
-    norm.stop[1] <- sum((E.y.w-E.phi.w)^2)/sum(E.y.w^2)
+    norm.stop[1] <- sum(residw^2)/sum(E.y.w^2)
 
     for(j in 2:iterate.max) {
 
@@ -500,21 +479,21 @@ crsiv <- function(y,
       }
 
       if(crs.messages) options(crs.messages=FALSE)
-      model.E.phi.w <- crs(formula.phiw,opts=opts,data=traindata,...)
-      E.phi.w <- predict(model.E.phi.w,newdata=evaldata)
       if(smooth.residuals) {
         model.residw <- crs(formula.residw,opts=opts,data=traindata,...)
-        model.predict.residw.z <- crs(formula.predictmodelresidwz,opts=opts,data=traindata,...)
+        residw <- predict(model.residw,newdata=evaldata,...)
+        model.predict.residw.z <- crs(formula.residwz,opts=opts,data=traindata,...)
       } else {
-        model.residw <- crs(formula.E.y.w.m.E.phi.w.z,opts=opts,data=traindata,...)
-        model.predict.residw.z <- crs(formula.predictmodelresidwz,opts=opts,data=traindata,...)
+        model.E.phi.w <- crs(formula.phiw,opts=opts,data=traindata,...)
+        residw <- predict(model.E.y.w,newdata=evaldata,...)-predict(model.E.phi.w,newdata=evaldata,...)
+        model.predict.residw.z <- crs(formula.residwz,opts=opts,data=traindata,...)
       }
       if(crs.messages) options(crs.messages=TRUE)
 
-      phi <- phi + constant*predict(model.predict.residw.z,newdata=evaldata)
+      phi <- phi + constant*predict(model.predict.residw.z,newdata=evaldata,...)
       phi.mat <- cbind(phi.mat,phi)
 
-      norm.stop[j] <- ifelse(penalize.iteration,j*sum((E.y.w-E.phi.w)^2)/sum(E.y.w^2),sum((E.y.w-E.phi.w)^2)/sum(E.y.w^2))
+      norm.stop[j] <- ifelse(penalize.iteration,j*sum(residw^2)/sum(E.y.w^2),sum(residw^2)/sum(E.y.w^2))
 
       ## The number of iterations in LF is asymptotically equivalent
       ## to 1/alpha (where alpha is the regularization parameter in
@@ -527,7 +506,7 @@ crsiv <- function(y,
       ## worst case in which beta = 0 and then the number of
       ## iterations is ~ N^0.5.
 
-      if(j > round(sqrt(nrow(traindata)))) {
+      if(j > round(sqrt(nrow(traindata))) && !is.monotone.increasing(norm.stop)) {
 
         ## If stopping rule criterion increases or we are below stopping
         ## tolerance then break
@@ -558,13 +537,8 @@ crsiv <- function(y,
     ## and take the min from where the initial inflection point occurs
     ## to the length of norm.stop
 
-    is.monotone.increasing <- function(x) {
-      ## Sorted and last value > first value
-      !is.unsorted(x) && x[length(x)] > x[1]
-    }
-  
     if(which.min(norm.stop) == 1 && is.monotone.increasing(norm.stop)) {
-      warning("Stopping rule increases monotonically (consult model$norm.stop):\nThis could be the result of an inspired initial value (unlikely)\nNote: we suggest manually choosing phi.0 and restarting (e.g. set `starting.values' to 0.5*E(Y|z))")
+      warning("Stopping rule increases monotonically (consult model$norm.stop):\nThis could be the result of an inspired initial value (unlikely)\nNote: we suggest manually choosing phi.0 and restarting (e.g. instead set `starting.values' to E[E(Y|w)|z])")
       convergence <- "FAILURE_MONOTONE_INCREASING"
     } else {
       ## Ignore the initial increasing portion, take the min to the

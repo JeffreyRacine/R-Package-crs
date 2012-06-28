@@ -1,3 +1,10 @@
+## This function tests for monotone increasing vectors
+
+is.monotone.increasing <- function(x) {
+  ## Sorted and last value > first value
+  !is.unsorted(x) && x[length(x)] > x[1]
+}
+
 ## This function tests for the maximum well-conditioned spline degree.
 
 ## Note that increasing the number of breaks, other things equal,

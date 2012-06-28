@@ -295,7 +295,9 @@ crsivderiv <- function(y,
     mean.predicted.model.E.mu.w <- mean(E.y.w) - mean(predicted.model.E.mu.w)
     
   }
-  
+
+  norm.stop[1] <- sum(predicted.model.E.mu.w^2)/sum(E.y.w^2)
+    
   ## Now we compute T^* applied to mu
   
   cdf.weighted.average <- npksum(txdat=z,
@@ -319,7 +321,7 @@ crsivderiv <- function(y,
       
   ## This we iterate...
   
-  for(j in 1:iterate.max) {
+  for(j in 2:iterate.max) {
 
     ## Save previous run in case stop norm increases
     
@@ -342,18 +344,6 @@ crsivderiv <- function(y,
     ## the integral with respect to z, so subtract the mean here
     
     phi <- phi - mean(phi) + mean(y)
-    
-    ## For the stopping rule, we require E.phi.w
-    
-    if(crs.messages) options(crs.messages=FALSE)
-    model.E.phi.w <- crs(formula.phiw,
-                         opts=opts,
-                         data=traindata,
-                         ...)
-    if(crs.messages) options(crs.messages=TRUE)    
-    
-    E.phi.w <- predict(model.E.phi.w,newdata=evaldata)
-    norm.stop[j] <- ifelse(penalize.iteration,j*sum((E.y.w-E.phi.w)^2)/sum(E.y.w^2),sum((E.y.w-E.phi.w)^2)/sum(E.y.w^2))
     
     ## Now we compute mu.0 (a residual of sorts)
     
@@ -406,6 +396,8 @@ crsivderiv <- function(y,
       
     }
     
+    norm.stop[j] <- ifelse(penalize.iteration,j*sum(predicted.model.E.mu.w^2)/sum(E.y.w^2),sum(predicted.model.E.mu.w^2)/sum(E.y.w^2))
+    
     ## Now we compute T^* applied to mu
     
     cdf.weighted.average <- npksum(txdat=z,
@@ -434,9 +426,9 @@ crsivderiv <- function(y,
     ## qualification of your regularization method. Take the worst
     ## case in which beta = 0 and then the number of iterations is ~
     ## N^0.5. Note that derivative estimation seems to require more
-    ## iterations hence the heuristic 4*sqrt(N)
+    ## iterations hence the heuristic sqrt(N)
     
-    if(j > 4*round(sqrt(nrow(traindata)))) {
+    if(j > round(sqrt(nrow(traindata)))  && !is.monotone.increasing(norm.stop)) {
       ## If stopping rule criterion increases or we are below stopping
       ## tolerance then break
       
@@ -452,6 +444,7 @@ crsivderiv <- function(y,
         convergence <- "ITERATE_DIFF_TOL"
         break()
       }
+
     }
     
     convergence <- "ITERATE_MAX"
@@ -465,13 +458,8 @@ crsivderiv <- function(y,
   ## and take the min from where the initial inflection point occurs
   ## to the length of norm.stop
 
-  is.monotone.increasing <- function(x) {
-    ## Sorted and last value > first value
-    !is.unsorted(x) && x[length(x)] > x[1]
-  }
-  
   if(which.min(norm.stop) == 1 && is.monotone.increasing(norm.stop)) {
-    warning("Stopping rule increases monotonically (consult model$norm.stop):\nThis could be the result of an inspired initial value (unlikely)\nNote: we suggest manually choosing phi.0 and restarting (e.g. set `starting.values' to 0.5*E(Y|z))")
+    warning("Stopping rule increases monotonically (consult model$norm.stop):\nThis could be the result of an inspired initial value (unlikely)\nNote: we suggest manually choosing phi.0 and restarting (e.g. instead set `starting.values' to E[E(Y|w)|z])")
     convergence <- "FAILURE_MONOTONE_INCREASING"
   } else {
     ## Ignore the initial increasing portion, take the min to the
