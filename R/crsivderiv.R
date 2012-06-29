@@ -325,8 +325,8 @@ crsivderiv <- function(y,
   
   phi.prime <- phi.prime + constant*T.star.mu
   
-  phi.prime.mat <- NULL
-  phi.mat <- NULL
+  phi.prime.mat <- phi.prime
+  phi.mat <- phi
       
   ## This we iterate...
   
@@ -473,7 +473,7 @@ crsivderiv <- function(y,
     while(norm.stop[j+1] > norm.stop[j]) j <- j + 1
     j <- j-1 + which.min(norm.stop[j:length(norm.stop)])
     phi <- phi.mat[,j]
-    phi.prime <- phi.prime.mat[,j]    
+    phi.prime <- phi.prime.mat[,j]
   }
 
   console <- printClear(console)
