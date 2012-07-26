@@ -449,6 +449,9 @@ crsiv <- function(y,
       phi <- starting.values
       phi.0 <- crs(formula.yz,opts=opts,data=traindata,...)
     }
+
+    starting.values.phi <- phi
+    
     if(crs.messages) options(crs.messages=TRUE)
 
     console <- printClear(console)
@@ -537,6 +540,8 @@ crsiv <- function(y,
 
     }
 
+    norm.value <- norm.stop/(1:length(norm.stop))
+
     ## Extract minimum, and check for monotone increasing function and
     ## issue warning in that case. Otherwise allow for an increasing
     ## then decreasing (and potentially increasing thereafter) portion
@@ -547,6 +552,13 @@ crsiv <- function(y,
     if(which.min(norm.stop) == 1 && is.monotone.increasing(norm.stop)) {
       warning("Stopping rule increases monotonically (consult model$norm.stop):\nThis could be the result of an inspired initial value (unlikely)\nNote: we suggest manually choosing phi.0 and restarting (e.g. instead set `starting.values' to E[E(Y|w)|z])")
       convergence <- "FAILURE_MONOTONE_INCREASING"
+      ## Ignore the initial increasing portion, take the min to the
+      ## right of where the initial inflection point occurs
+      j <- 1
+      while(norm.value[j+1] > norm.value[j]) j <- j + 1
+      j <- j-1 + which.min(norm.value[j:length(norm.value)])
+      phi <- phi.mat[,j]
+#      phi <- starting.values.phi
     } else {
       ## Ignore the initial increasing portion, take the min to the
       ## right of where the initial inflection point occurs
@@ -587,9 +599,9 @@ crsiv <- function(y,
     model$phi.mat <- phi.mat
     model$num.iterations <- j
     model$norm.stop <- norm.stop
-    model$norm.value <- norm.stop/(1:length(norm.stop))
+    model$norm.value <- norm.value
     model$convergence <- convergence
-
+    model$starting.values.phi <- starting.values.phi
     console <- printClear(console)
     console <- printPop(console)
 

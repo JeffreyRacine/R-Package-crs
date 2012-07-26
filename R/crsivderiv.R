@@ -221,6 +221,19 @@ crsivderiv <- function(y,
     console <- printPush(paste("Computing optimal smoothing  for E(y|w) (stopping rule) for iteration 1...",sep=""),console)
   }
   
+  ## NOTE - this presumes univariate z case... in general this would
+  ## be a continuous variable's index
+  
+  phi <- integrate.trapezoidal(z[,1],phi.prime)
+  
+  ## In the definition of phi we have the integral minus the mean of
+  ## the integral with respect to z, so subtract the mean here
+  
+  phi <- phi - mean(phi) + mean(y)
+
+  starting.values.phi <- phi
+  starting.values.phi.prime <- phi.prime
+  
   ## For stopping rule...
   
   if(crs.messages) options(crs.messages=FALSE)
@@ -233,16 +246,6 @@ crsivderiv <- function(y,
   E.y.w <- predict(model.E.y.w,newdata=evaldata)
 
   norm.stop <- numeric()
-  
-  ## NOTE - this presumes univariate z case... in general this would
-  ## be a continuous variable's index
-  
-  phi <- integrate.trapezoidal(z[,1],phi.prime)
-  
-  ## In the definition of phi we have the integral minus the mean of
-  ## the integral with respect to z, so subtract the mean here
-  
-  phi <- phi - mean(phi) + mean(y)
   
   ## For the stopping rule, we require E.phi.w
   
@@ -359,9 +362,6 @@ crsivderiv <- function(y,
     mu <- y - phi
     
     ## Now we repeat this entire process using mu = y = phi.0 rather than y
-    
-    mean.mu <- mean(mu)
-    
     ## Next, we regress require \mu_{0,i} W
 
     if(smooth.residuals) {
@@ -417,7 +417,7 @@ crsivderiv <- function(y,
     
     survivor.weighted.average <- mean.predicted.model.E.mu.w - cdf.weighted.average
     
-    T.star.mu <- (survivor.weighted.average-S.z*mean.mu)/f.z
+    T.star.mu <- (survivor.weighted.average-S.z*mean.predicted.model.E.mu.w)/f.z
     
     ## Now we update, this provides phi.prime.1, and now we can iterate until convergence...
       
@@ -463,9 +463,18 @@ crsivderiv <- function(y,
   ## and take the min from where the initial inflection point occurs
   ## to the length of norm.stop
 
+  norm.value <- norm.stop/(1:length(norm.stop))
+
   if(which.min(norm.stop) == 1 && is.monotone.increasing(norm.stop)) {
     warning("Stopping rule increases monotonically (consult model$norm.stop):\nThis could be the result of an inspired initial value (unlikely)\nNote: we suggest manually choosing phi.0 and restarting (e.g. instead set `starting.values' to E[E(Y|w)|z])")
     convergence <- "FAILURE_MONOTONE_INCREASING"
+#    phi <- starting.values.phi
+#    phi.prime <- starting.values.phi.prime
+    j <- 1
+    while(norm.value[j+1] > norm.value[j]) j <- j + 1
+    j <- j-1 + which.min(norm.value[j:length(norm.value)])
+    phi <- phi.mat[,j]
+    phi.prime <- phi.prime.mat[,j]
   } else {
     ## Ignore the initial increasing portion, take the min to the
     ## right of where the initial inflection point occurs
@@ -487,7 +496,9 @@ crsivderiv <- function(y,
               phi.prime.mat=phi.prime.mat,
               num.iterations=j,
               norm.stop=norm.stop,
-              norm.value=norm.stop/(1:length(norm.stop)),
-              convergence=convergence))
+              norm.value=norm.value,
+              convergence=convergence,
+              starting.values.phi=starting.values.phi,
+              starting.values.phi.prime=starting.values.phi.prime))
   
 }
