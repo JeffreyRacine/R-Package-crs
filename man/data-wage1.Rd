@@ -47,6 +47,7 @@ are 526 observations in total. }
 }
 
 \examples{
+\dontrun{
 data(wage1)
 
 ## Cross-validated model selection for spline degree and bandwidths Note
@@ -76,7 +77,6 @@ plot(model,mean=TRUE)
 plot(model,deriv=1)
 ## Partial second derivative plots (control for non axis predictors)
 plot(model,deriv=2)
-\dontrun{
 ## Compare with local linear kernel regression
 require(np)
 model <- npreg(lwage~married+
