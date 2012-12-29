@@ -1,4 +1,6 @@
-Changes from Version 0.15-17 to 0.15-18 [XXX]
+Changes from Version 0.15-17 to 0.15-18 [Dec 29 2012]
+
+* Using .onUnload rather than .Last.lib in zzz.R
 
 * Added options to smooth residuals for stopping rule in crsiv
   (i.e. smooth y-phi(z)~w as opposed to separately smoothing y~w and
@@ -6,7 +8,7 @@ Changes from Version 0.15-17 to 0.15-18 [XXX]
 
 * Added options to input starting values for crsiv and crsivderiv
 
-* Stopping rules for crsiv and crsivderiv modified	
+* Stopping rules for crsiv and crsivderiv modified
 
 Changes from Version 0.15-16 to 0.15-17 [04-Jun-2012]
 

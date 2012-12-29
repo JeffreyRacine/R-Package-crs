@@ -440,6 +440,8 @@ to detect a minimum it can fail here if the objective function is
 When this occurs you can either increase \verb+nmulti+ and/or decrease
 \verb+degree.max+ and restart the search.
 
+Alternatively, you might try \verb+singular.ok=TRUE+.
+
 Note also that as of version 0.15-1, the initial search values will be
 degree one and segment one (i.e.\ a linear model) unless you provide
 the vectors \verb+degree=c(...)+ and \verb+segments=c(...)+ which will

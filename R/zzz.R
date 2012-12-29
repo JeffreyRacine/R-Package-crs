@@ -4,7 +4,6 @@
     options(crs.messages = TRUE)
 
 }
-.Last.lib <- function (lpath){
-  library.dynam.unload("crs", libpath=lpath) 
-  # cat("np unloaded\n")
+.onUnload <- function (lpath){
+  library.dynam.unload("crs", libpath=lpath)
 }
