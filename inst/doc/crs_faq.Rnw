@@ -599,6 +599,24 @@ x.lag.1 <- lag.numeric(x,1)
 
 \appendix
 
+
+
+\section*{Changes from Version 0.15-17 to 0.15-18 [Dec 29 2012]}
+
+\begin{itemize}
+
+\item Using .onUnload rather than .Last.lib in zzz.R
+
+\item Stopping rules for crsiv and crsivderiv modified
+
+\item Added options to smooth residuals for stopping rule in crsiv
+  (i.e. smooth y-phi(z)~w as opposed to separately smoothing y~w and
+  phi(z)~w)
+
+\item Added options to input starting values for crsiv and crsivderiv
+
+\end{itemize}
+
 \section*{Changes from Version 0.15-16 to 0.15-17 [04-Jun-2012]}
 
 \begin{itemize}
