@@ -1,4 +1,4 @@
-%% $Id: spline_primer.Rnw,v 1.28 2011/12/09 16:50:46 jracine Exp jracine $
+%% $Id: spline_primer.Rnw,v 1.29 2013/01/22 17:43:52 jracine Exp jracine $
 
 %\VignetteIndexEntry{A Primer on Spline Regression}
 %\VignetteDepends{crs}
@@ -542,9 +542,8 @@ categorical predictors. See \citeasnoun{MA_RACINE_YANG:2011} and
 We estimate $\beta \left( \mathbf{z}\right) $ by minimizing the
 following weighted least squares criterion,
 \begin{equation*}
-  \widehat{\beta }\left( \mathbf{z}\right) =\arg \min_{\beta \left( \mathbf{z}
-    \right) \in \mathbb{R}^{\mathbf{K}_{n}}}\sum\limits_{i=1}^{n}\left\{ Y_{i}-
-    \mathcal{B}\left( \mathbf{X}_{i}\right) ^{\mathrm{T}}\beta \left( \mathbf{z}\right) \right\} ^{2}L\left( \mathbf{Z}_{i},\mathbf{z},\mathbf{\lambda }
+  \widehat{\beta }\left( \mathbf{z}\right) =\arg \min_{\beta \in \mathbb{R}^{\mathbf{K}_{n}}}\sum\limits_{i=1}^{n}\left\{ Y_{i}-
+    \mathcal{B}\left( \mathbf{X}_{i}\right) ^{\mathrm{T}}\beta \right\} ^{2}L\left( \mathbf{Z}_{i},\mathbf{z},\mathbf{\lambda }
   \right) .
 \end{equation*}
 
@@ -594,7 +593,7 @@ to recurse divine.''  (L.~Peter Deutsch).
 \singlespacing
 {\scriptsize
 \begin{verbatim}
-## $Id: spline_primer.Rnw,v 1.28 2011/12/09 16:50:46 jracine Exp jracine $
+## $Id: spline_primer.Rnw,v 1.29 2013/01/22 17:43:52 jracine Exp jracine $
 
 ## April 23 2011. The code below is based upon an illustration that
 ## can be found in http://www.stat.tamu.edu/~sinha/research/note1.pdf

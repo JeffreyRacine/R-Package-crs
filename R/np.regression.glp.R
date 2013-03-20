@@ -1852,16 +1852,19 @@ glpcvNOMAD <- function(ydat=NULL,
     bbin <- c(rep(0, num.bw), rep(1, num.numeric))
     lb <- c(rep(bandwidth.min, num.bw), rep(degree.min, num.numeric))
     ub <- c(rep(bandwidth.max, num.bw), rep(degree.max, num.numeric))
+    bw.switch <- c(rep(bandwidth.max, num.bw))    
   } else {
     bbin <- c(rep(0, num.bw))
     lb <- c(rep(bandwidth.min, num.bw))
     ub <- c(rep(bandwidth.max, num.bw))
+    bw.switch <- c(rep(bandwidth.max, num.bw))    
   }
 
   if(bwtype!="fixed" && num.numeric > 0) {
     for(i in 1:num.numeric) {
       k.max <- knn.max(xdat[,numeric.index[i]])
       if(ub[numeric.index[i]] > k.max) ub[numeric.index[i]] <- k.max
+      if(bw.switch[numeric.index[i]] > k.max) bw.switch[numeric.index[i]] <- k.max      
     }
   }
 
@@ -1872,6 +1875,11 @@ glpcvNOMAD <- function(ydat=NULL,
       sd.xdat <- sd.robust(xdat[,numeric.index[i]])
       lb[numeric.index[i]] <- lb[numeric.index[i]]*sd.xdat*length(ydat)^{-1/(num.numeric+4)}
       ub[numeric.index[i]] <- ub[numeric.index[i]]*sd.xdat
+      ## When the continuous predictor bandwidth fed to the optimizer
+      ## exceeds 1/2 the max allowable bandwidth (for all variables - here
+      ## by default 500 robust standard deviations) then we switch to
+      ## the global fit
+      bw.switch[numeric.index[i]] <- bw.switch[numeric.index[i]]*sd.xdat*0.5
     }
   }
 
@@ -1882,13 +1890,18 @@ glpcvNOMAD <- function(ydat=NULL,
       bbin[i] <- 1
     }
     if(xdat.numeric[i]!=TRUE) {
-      lb[i] <- 0.0
+      ## The global fit uses kernel weighting so no bound is used
+      ## hence set to lb
+      bw.switch[i] <- lb[i] <- 0.0
       ub[i] <- 1.0
     }
     ## Check for unordered and Aitchison/Aitken kernel
     if(xdat.unordered[i]==TRUE && ukertype=="aitchisonaitken") {
       c.num <- length(unique(xdat[,i]))
       ub[i] <- (c.num-1)/c.num
+      ## The global fit uses kernel weighting so no bound is used
+      ## hence set to lb
+      bw.switch[i] <- 0
     }
   }
 
@@ -1905,7 +1918,8 @@ glpcvNOMAD <- function(ydat=NULL,
     if(cv == "degree-bandwidth") {
       degree <- numeric(num.numeric)
       for(i in 1:num.numeric) {
-        degree[i] <- 1;## Always start from local linear for first attempt...
+        ## Always start from local linear for first attempt...
+        degree[i] <- 1
       }
     }
     else {
@@ -1935,6 +1949,7 @@ glpcvNOMAD <- function(ydat=NULL,
     cv.shrink <- params$cv.shrink
     cv.warning <- params$cv.warning
     Bernstein <- params$Bernstein
+    bw.switch <- params$bw.switch
 
     bw.gamma <- input[1:num.bw]
     if(cv=="degree-bandwidth")
@@ -1950,19 +1965,65 @@ glpcvNOMAD <- function(ydat=NULL,
                Bernstein=Bernstein)
 
     if(all(bw.gamma>=0)&&all(bw.gamma[!xdat.numeric]<=1)) {
-      lscv <- minimand.cv.ls(bws=bw.gamma,
-                             ydat=ydat,
-                             xdat=xdat,
-                             degree=degree,
-                             W=W,
-                             ckertype=ckertype,
-                             ckerorder=ckerorder,
-                             ukertype=ukertype,
-                             okertype=okertype,
-                             bwtype=bwtype,
-                             cv.shrink=cv.shrink,
-                             cv.warning=cv.warning,
-                             ...)
+      if(all(bw.gamma > bw.switch)) {
+        ## If we exceed the bound for a `large bandwidth' for a
+        ## continuous variable, switch to the global B-spline kernel
+        ## weighted regression for speed - produces identical fit
+        if(num.numeric < ncol(xdat)) {
+          z <- as.matrix(xdat[,!xdat.numeric])
+          num.z <- NCOL(z)
+          is.ordered.z <- logical()
+          for(i in 1:NCOL(xdat[,!xdat.numeric])) is.ordered.z[i] <- is.ordered((as.matrix(xdat[,!xdat.numeric]))[,i])
+          z.unique <- uniquecombs(z)
+          ind <-  attr(z.unique,"index")
+          ind.vals <-  unique(ind)
+          nrow.z.unique <- NROW(z.unique)
+          lscv <- cv.kernel.spline.wrapper(x=xdat[,xdat.numeric],
+                                           y=ydat,
+                                           z=if(num.numeric==0){NULL}else{xdat[,!xdat.numeric]},
+                                           K=cbind(degree,rep(1,length(degree))),
+                                           lambda=bw.gamma[xdat.numeric!=TRUE],
+                                           z.unique=z.unique,
+                                           ind=ind,
+                                           ind.vals=ind.vals,
+                                           nrow.z.unique=nrow.z.unique,
+                                           is.ordered.z=is.ordered.z,
+                                           knots="quantiles",
+                                           basis="glp",
+                                           cv.func="cv.ls",
+                                           cv.df.min=1,
+                                           tau=NULL,
+                                           weights=NULL,
+                                           singular.ok=TRUE)
+        } else {
+          lscv <- cv.factor.spline.wrapper(x=xdat,
+                                           y=ydat,
+                                           z=NULL,
+                                           K=cbind(degree,rep(1,length(degree))),
+                                           I=NULL,
+                                           knots="quantiles",
+                                           basis="glp",
+                                           cv.func="cv.ls",
+                                           cv.df.min=1,
+                                           tau=NULL,
+                                           weights=NULL,
+                                           singular.ok=TRUE)
+        }
+      } else {
+        lscv <- minimand.cv.ls(bws=bw.gamma,
+                               ydat=ydat,
+                               xdat=xdat,
+                               degree=degree,
+                               W=W,
+                               ckertype=ckertype,
+                               ckerorder=ckerorder,
+                               ukertype=ukertype,
+                               okertype=okertype,
+                               bwtype=bwtype,
+                               cv.shrink=cv.shrink,
+                               cv.warning=cv.warning,
+                               ...)
+      }
     } else {
       lscv <- maxPenalty
     }
@@ -1988,6 +2049,7 @@ glpcvNOMAD <- function(ydat=NULL,
     cv.shrink <- params$cv.shrink
     cv.warning <- params$cv.warning
     Bernstein <- params$Bernstein
+    bw.switch <- params$bw.switch
 
     bw.gamma <- input[1:num.bw]
     if(cv=="degree-bandwidth")
@@ -2001,19 +2063,65 @@ glpcvNOMAD <- function(ydat=NULL,
                Bernstein=Bernstein)
 
     if(all(bw.gamma>=0)&&all(bw.gamma[!xdat.numeric]<=1)) {
-      aicc <- minimand.cv.aic(bws=bw.gamma,
-                              ydat=ydat,
-                              xdat=xdat,
-                              degree=degree,
-                              W=W,
-                              ckertype=ckertype,
-                              ckerorder=ckerorder,
-                              ukertype=ukertype,
-                              okertype=okertype,
-                              bwtype=bwtype,
-                              cv.shrink=cv.shrink,
-                              cv.warning=cv.warning,
-                              ...)
+      if(all(bw.gamma > bw.switch)) {
+        ## If we exceed the bound for a `large bandwidth' for a
+        ## continuous variable, switch to the global B-spline kernel
+        ## weighted regression for speed - produces identical fit
+        if(num.numeric < ncol(xdat)) {
+          z <- as.matrix(xdat[,!xdat.numeric])
+          num.z <- NCOL(z)
+          is.ordered.z <- logical()
+          for(i in 1:NCOL(xdat[,!xdat.numeric])) is.ordered.z[i] <- is.ordered((as.matrix(xdat[,!xdat.numeric]))[,i])
+          z.unique <- uniquecombs(z)
+          ind <-  attr(z.unique,"index")
+          ind.vals <-  unique(ind)
+          nrow.z.unique <- NROW(z.unique)
+          aicc <- cv.kernel.spline.wrapper(x=xdat[,xdat.numeric],
+                                           y=ydat,
+                                           z=if(num.numeric==0){NULL}else{xdat[,!xdat.numeric]},
+                                           K=cbind(degree,rep(1,length(degree))),
+                                           lambda=bw.gamma[xdat.numeric!=TRUE],
+                                           z.unique=z.unique,
+                                           ind=ind,
+                                           ind.vals=ind.vals,
+                                           nrow.z.unique=nrow.z.unique,
+                                           is.ordered.z=is.ordered.z,
+                                           knots="quantiles",
+                                           basis="glp",
+                                           cv.func="cv.aic",
+                                           cv.df.min=1,
+                                           tau=NULL,
+                                           weights=NULL,
+                                           singular.ok=TRUE)
+        } else {
+          aicc <- cv.factor.spline.wrapper(x=xdat,
+                                           y=ydat,
+                                           z=NULL,
+                                           K=cbind(degree,rep(1,length(degree))),
+                                           I=NULL,
+                                           knots="quantiles",
+                                           basis="glp",
+                                           cv.func="cv.aic",
+                                           cv.df.min=1,
+                                           tau=NULL,
+                                           weights=NULL,
+                                           singular.ok=TRUE)
+        }
+      } else {
+        aicc <- minimand.cv.aic(bws=bw.gamma,
+                                ydat=ydat,
+                                xdat=xdat,
+                                degree=degree,
+                                W=W,
+                                ckertype=ckertype,
+                                ckerorder=ckerorder,
+                                ukertype=ukertype,
+                                okertype=okertype,
+                                bwtype=bwtype,
+                                cv.shrink=cv.shrink,
+                                cv.warning=cv.warning,
+                                ...)
+      }
     } else {
       aicc <- maxPenalty
     }
@@ -2040,6 +2148,7 @@ glpcvNOMAD <- function(ydat=NULL,
   params$cv.shrink <- cv.shrink
   params$cv.warning <- cv.warning
   params$Bernstein <- Bernstein
+  params$bw.switch <- bw.switch
 
   ## No constraints
 
