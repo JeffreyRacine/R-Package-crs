@@ -1931,6 +1931,19 @@ glpcvNOMAD <- function(ydat=NULL,
   ## leave-one-out cross-validation and Hurvich, Simonoff, and Tsai's
   ## AIC_c approach
 
+  ## Whether or not to display the information in snomadr
+  print.output <- FALSE
+  console <- newLineConsole()
+  if(!is.null(opts$DISPLAY_DEGREE)){
+    if(opts$DISPLAY_DEGREE>0){
+      print.output <-TRUE
+      console <- printPush("\rCalling NOMAD (Nonsmooth Optimization by Mesh Adaptive Direct Search)\n",console = console)
+    }
+  } else {
+    print.output <-TRUE
+    console <- printPush("\rCalling NOMAD (Nonsmooth Optimization by Mesh Adaptive Direct Search)\n",console = console)
+  }
+
   eval.lscv <- function(input, params){
 
     ydat <- params$ydat
@@ -1966,6 +1979,9 @@ glpcvNOMAD <- function(ydat=NULL,
 
     if(all(bw.gamma>=0)&&all(bw.gamma[!xdat.numeric]<=1)) {
       if(all(bw.gamma > bw.switch)) {
+        console <- newLineConsole()
+        console <- printClear(console)
+        console <- printPop(console)
         ## If we exceed the bound for a `large bandwidth' for a
         ## continuous variable, switch to the global B-spline kernel
         ## weighted regression for speed - produces identical fit
@@ -2009,6 +2025,8 @@ glpcvNOMAD <- function(ydat=NULL,
                                            weights=NULL,
                                            singular.ok=TRUE)
         }
+        console <- printPush("\r                                                                         ",console = console)
+        console <- printPush(paste("\rfv = ",format(lscv)," ",sep=""),console = console)
       } else {
         lscv <- minimand.cv.ls(bws=bw.gamma,
                                ydat=ydat,
@@ -2064,6 +2082,9 @@ glpcvNOMAD <- function(ydat=NULL,
 
     if(all(bw.gamma>=0)&&all(bw.gamma[!xdat.numeric]<=1)) {
       if(all(bw.gamma > bw.switch)) {
+        console <- newLineConsole()
+        console <- printClear(console)
+        console <- printPop(console)
         ## If we exceed the bound for a `large bandwidth' for a
         ## continuous variable, switch to the global B-spline kernel
         ## weighted regression for speed - produces identical fit
@@ -2107,6 +2128,8 @@ glpcvNOMAD <- function(ydat=NULL,
                                            weights=NULL,
                                            singular.ok=TRUE)
         }
+        console <- printPush("\r                                                                         ",console = console)
+        console <- printPush(paste("\rfv = ",format(lscv)," ",sep=""),console = console)
       } else {
         aicc <- minimand.cv.aic(bws=bw.gamma,
                                 ydat=ydat,
