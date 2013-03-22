@@ -2251,8 +2251,6 @@ glpcvNOMAD <- function(ydat=NULL,
 
 	}
 
-  print(x0.pts)
-
 	if(bwmethod == "cv.ls" ) {
 			solution<-snomadr(eval.f=eval.lscv,
 												n=length(bbin),
