@@ -598,14 +598,14 @@ npglpreg.formula <- function(formula,
                              cv.func=c("cv.ls","cv.gcv","cv.aic"),
                              opts=list("MAX_BB_EVAL"=10000,
                                "EPSILON"=.Machine$double.eps,
-                               "INITIAL_MESH_SIZE"=paste("r",1.0e-03,sep=""),
+                               "INITIAL_MESH_SIZE"=paste("r",1.0e-04,sep=""),
                                "MIN_MESH_SIZE"=paste("r",1.0e-05,sep=""),
                                "MIN_POLL_SIZE"=paste("r",1.0e-05,sep="")),
                              nmulti=5,
                              random.seed=42,
                              degree.max=10,
                              degree.min=0,
-                             bandwidth.max=1.0e+03,
+                             bandwidth.max=1.0e+04,
                              bandwidth.min=1.0e-02,
                              gradient.vec=NULL,
                              gradient.categorical=FALSE,
@@ -1882,7 +1882,18 @@ glpcvNOMAD <- function(ydat=NULL,
       ## by default 500 robust standard deviations) then we switch to
       ## the global fit. Note bw.switch was initialized to bandwidth.max.
       bw.switch[numeric.index[i]] <- min(100*sd.xdat,bw.switch[numeric.index[i]]*sd.xdat/2)
-      SCALING[[i]] <- paste(numeric.index[i]-1,1/(bandwidth.max*sd.xdat))
+      ## Scaling in Nomad is automatically achieved via the mesh and
+      ## poll size parameters which are vectors with one value per
+      ## variable. However, this method relies on the existence of
+      ## bounds. For the case when no bounds are available, or simply
+      ## to give the user more control on the scaling, the parameter
+      ## SCALING has been introduced in the version 3.4.  The
+      ## parameter takes variable indices and values as
+      ## arguments. During the algorithm, variables are multiplied by
+      ## their associated value before an evaluation and the call to
+      ## NOMAD::Evaluator::ev- al x(). The variables are unscaled
+      ## after the evaluation.
+      SCALING[[i]] <- paste(numeric.index[i]-1,1/(max(xdat[,numeric.index[i]])-min(xdat[,numeric.index[i]])))
     }
     opts$"SCALING" <- SCALING
   }
@@ -2288,7 +2299,7 @@ glpcvNOMAD <- function(ydat=NULL,
 
 	bw.opt <- solution$solution[1:num.bw]
   ## Potential bug in current version of snomadr, the first variable does not get rescaled perhaps?
-  bw.opt[numeric.index[1]] <- bw.opt[numeric.index[1]]/(bandwidth.max*sd.xdat)
+  bw.opt[numeric.index[1]] <- bw.opt[numeric.index[1]]/(max(xdat[,numeric.index[1]])-min(xdat[,numeric.index[1]]))
   bw.opt.sf <- NULL
   if(bwtype=="fixed") {
     bw.opt.sf <- bw.opt
