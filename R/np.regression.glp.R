@@ -1886,8 +1886,6 @@ glpcvNOMAD <- function(ydat=NULL,
     opts$"SCALING" <- SCALING
   }
 
-  print(opts)
-
   for(i in 1:num.bw) {
     ## Need to do integer search for numeric predictors when bwtype is
     ## a nearest-neighbour, so set bbin appropriately.
