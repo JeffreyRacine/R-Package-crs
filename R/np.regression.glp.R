@@ -1768,7 +1768,7 @@ glpcvNOMAD <- function(ydat=NULL,
                        bandwidth.min=1.0e-02,
                        opts=list("MAX_BB_EVAL"=10000,
                          "EPSILON"=.Machine$double.eps,
-                         "INITIAL_MESH_SIZE"=paste("r",1.0e-04,sep=""),
+                         "INITIAL_MESH_SIZE"=paste("r",1.0e-01,sep=""),
                          "MIN_MESH_SIZE"=paste("r",1.0e-05,sep=""),
                          "MIN_POLL_SIZE"=paste("r",1.0e-05,sep="")),
                        cv.shrink=TRUE,
@@ -1875,7 +1875,7 @@ glpcvNOMAD <- function(ydat=NULL,
     for(i in 1:num.numeric) {
       sd.xdat <- sd.robust(xdat[,numeric.index[i]])
       lb[numeric.index[i]] <- lb[numeric.index[i]]*sd.xdat*length(ydat)^{-1/(num.numeric+4)}
-      ub[numeric.index[i]] <- ub[numeric.index[i]]*sd.xdat
+      ub[numeric.index[i]] <- ub[numeric.index[i]]*sd.xdat*bandwidth.max
       ## When the continuous predictor bandwidth fed to the optimizer
       ## exceeds 1/2 the max allowable bandwidth (for all variables - here
       ## by default 500 robust standard deviations) then we switch to
