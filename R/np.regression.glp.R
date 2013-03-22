@@ -1871,6 +1871,7 @@ glpcvNOMAD <- function(ydat=NULL,
   ## Scale lb appropriately by n, don't want this for ub.
 
   if(bwtype=="fixed" && num.numeric > 0) {
+    SCALING <- list()
     for(i in 1:num.numeric) {
       sd.xdat <- sd.robust(xdat[,numeric.index[i]])
       lb[numeric.index[i]] <- lb[numeric.index[i]]*sd.xdat*length(ydat)^{-1/(num.numeric+4)}
@@ -1880,8 +1881,12 @@ glpcvNOMAD <- function(ydat=NULL,
       ## by default 500 robust standard deviations) then we switch to
       ## the global fit
       bw.switch[numeric.index[i]] <- bw.switch[numeric.index[i]]*sd.xdat*0.5
+      SCALING[[i]] <- paste(numeric.index[i]-1,1/(sqrt(sd.xdat)))
     }
+    opts$"SCALING" <- SCALING
   }
+
+  print(opts)
 
   for(i in 1:num.bw) {
     ## Need to do integer search for numeric predictors when bwtype is
@@ -2202,7 +2207,7 @@ glpcvNOMAD <- function(ydat=NULL,
     init.search.vals <- runif(num.bw,0,1)
     for(i in 1:num.bw) {
       if(xdat.numeric[i]==TRUE && bwtype=="fixed") {
-        init.search.vals[i] <- lb[numeric.index[i]] + runif(1,.5,1.5)*sd.robust(xdat[,i])*nrow(xdat)^{-1/(4+num.numeric)}
+        init.search.vals[i] <- lb[i] + runif(1,.5,1.5)*sd.robust(xdat[,i])*nrow(xdat)^{-1/(4+num.numeric)}
       }
       if(xdat.numeric[i]==TRUE && bwtype!="fixed") {
         init.search.vals[i] <- round(runif(1,2,sqrt(ub[i])))
@@ -2218,13 +2223,14 @@ glpcvNOMAD <- function(ydat=NULL,
 
   ## Generate all initial points for the multiple restarting
 	x0.pts <- matrix(numeric(1), nmulti, length(bbin))
+
 	for(iMulti in 1:nmulti) {
     ## First initialize to values for factors (`liracine' kernel)
     if(iMulti != 1) {
       init.search.vals <- runif(num.bw,0,1)
       for(i in 1:num.bw) {
         if(xdat.numeric[i]==TRUE && bwtype=="fixed") {
-          init.search.vals[i] <- lb[numeric.index[i]] + runif(1,.5,1.5)*sd.robust(xdat[,i])*nrow(xdat)^{-1/(4+num.numeric)}
+          init.search.vals[i] <- lb[i] + runif(1,.5,1.5)*sd.robust(xdat[,i])*nrow(xdat)^{-1/(4+num.numeric)}          
         }
         if(xdat.numeric[i]==TRUE && bwtype!="fixed") {
           init.search.vals[i] <- round(runif(1,2,sqrt(ub[i])))
@@ -2285,7 +2291,7 @@ glpcvNOMAD <- function(ydat=NULL,
 	bw.opt <- solution$solution[1:num.bw]
   bw.opt.sf <- NULL
   if(bwtype=="fixed") {
-    bw.opt[numeric.index[1]] <- bw.opt[numeric.index[1]]/(bandwidth.max*sd.robust(xdat[,numeric.index[1]]))
+    bw.opt[numeric.index[1]] <- bw.opt[numeric.index[1]]/sqrt(sd.robust(xdat[,numeric.index[1]]))
     bw.opt.sf <- bw.opt
     for(i in 1:num.numeric) {
       sd.xdat <- sd.robust(xdat[,numeric.index[i]])
