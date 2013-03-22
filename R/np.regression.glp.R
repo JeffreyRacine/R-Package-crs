@@ -598,7 +598,7 @@ npglpreg.formula <- function(formula,
                              cv.func=c("cv.ls","cv.gcv","cv.aic"),
                              opts=list("MAX_BB_EVAL"=10000,
                                "EPSILON"=.Machine$double.eps,
-                               "INITIAL_MESH_SIZE"=paste("r",1.0e-04,sep=""),
+                               "INITIAL_MESH_SIZE"=paste("r",1.0e-03,sep=""),
                                "MIN_MESH_SIZE"=paste("r",1.0e-05,sep=""),
                                "MIN_POLL_SIZE"=paste("r",1.0e-05,sep="")),
                              nmulti=5,
@@ -1870,6 +1870,7 @@ glpcvNOMAD <- function(ydat=NULL,
 
   ## Scale lb appropriately by n, don't want this for ub.
 
+  SCALING <- list()
   if(bwtype=="fixed" && num.numeric > 0) {
     for(i in 1:num.numeric) {
       sd.xdat <- sd.robust(xdat[,numeric.index[i]])
@@ -1879,8 +1880,10 @@ glpcvNOMAD <- function(ydat=NULL,
       ## exceeds 1/2 the max allowable bandwidth (for all variables - here
       ## by default 500 robust standard deviations) then we switch to
       ## the global fit
-      bw.switch[numeric.index[i]] <- bw.switch[numeric.index[i]]*sd.xdat*0.5
+      bw.switch[numeric.index[i]] <- bw.switch[numeric.index[i]]*sd.xdat*min(100,bandwidth.max/2)
+      SCALING[[i]] <- paste(numeric.index[i]-1,1/(bandwidth.max*sd.xdat))
     }
+    opts$"SCALING" <- SCALING
   }
 
   for(i in 1:num.bw) {
@@ -2288,6 +2291,7 @@ glpcvNOMAD <- function(ydat=NULL,
     bw.opt.sf <- bw.opt
     for(i in 1:num.numeric) {
       sd.xdat <- sd.robust(xdat[,numeric.index[i]])
+      bw.opt[numeric.index[i]] <- bw.opt[numeric.index[i]]/(bandwidth.max*sd.xdat)
       bw.opt.sf[numeric.index[i]] <- bw.opt[numeric.index[i]]/sd.xdat*length(ydat)^{1/(num.numeric+4)}
     }
   }
