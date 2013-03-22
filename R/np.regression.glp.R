@@ -605,7 +605,7 @@ npglpreg.formula <- function(formula,
                              random.seed=42,
                              degree.max=10,
                              degree.min=0,
-                             bandwidth.max=1.0e+04,
+                             bandwidth.max=1.0e+03,
                              bandwidth.min=1.0e-02,
                              gradient.vec=NULL,
                              gradient.categorical=FALSE,
@@ -1768,7 +1768,7 @@ glpcvNOMAD <- function(ydat=NULL,
                        bandwidth.min=1.0e-02,
                        opts=list("MAX_BB_EVAL"=10000,
                          "EPSILON"=.Machine$double.eps,
-                         "INITIAL_MESH_SIZE"=paste("r",1.0e-01,sep=""),
+                         "INITIAL_MESH_SIZE"=paste("r",1.0e-04,sep=""),
                          "MIN_MESH_SIZE"=paste("r",1.0e-05,sep=""),
                          "MIN_POLL_SIZE"=paste("r",1.0e-05,sep="")),
                        cv.shrink=TRUE,
@@ -1870,32 +1870,17 @@ glpcvNOMAD <- function(ydat=NULL,
 
   ## Scale lb appropriately by n, don't want this for ub.
 
-  SCALING <- list()
   if(bwtype=="fixed" && num.numeric > 0) {
     for(i in 1:num.numeric) {
       sd.xdat <- sd.robust(xdat[,numeric.index[i]])
       lb[numeric.index[i]] <- lb[numeric.index[i]]*sd.xdat*length(ydat)^{-1/(num.numeric+4)}
-      ## Note initially set to bandwidth.max so now rescaling by s
       ub[numeric.index[i]] <- ub[numeric.index[i]]*sd.xdat
       ## When the continuous predictor bandwidth fed to the optimizer
       ## exceeds 1/2 the max allowable bandwidth (for all variables - here
       ## by default 500 robust standard deviations) then we switch to
-      ## the global fit. Note bw.switch was initialized to bandwidth.max.
-      bw.switch[numeric.index[i]] <- min(100*sd.xdat,bw.switch[numeric.index[i]]*sd.xdat/2)
-      ## Scaling in Nomad is automatically achieved via the mesh and
-      ## poll size parameters which are vectors with one value per
-      ## variable. However, this method relies on the existence of
-      ## bounds. For the case when no bounds are available, or simply
-      ## to give the user more control on the scaling, the parameter
-      ## SCALING has been introduced in the version 3.4.  The
-      ## parameter takes variable indices and values as
-      ## arguments. During the algorithm, variables are multiplied by
-      ## their associated value before an evaluation and the call to
-      ## NOMAD::Evaluator::ev- al x(). The variables are unscaled
-      ## after the evaluation.
-      SCALING[[i]] <- paste(numeric.index[i]-1,1/(max(xdat[,numeric.index[i]])-min(xdat[,numeric.index[i]])))
+      ## the global fit
+      bw.switch[numeric.index[i]] <- bw.switch[numeric.index[i]]*sd.xdat*0.5
     }
-    opts$"SCALING" <- SCALING
   }
 
   for(i in 1:num.bw) {
@@ -2217,7 +2202,7 @@ glpcvNOMAD <- function(ydat=NULL,
     init.search.vals <- runif(num.bw,0,1)
     for(i in 1:num.bw) {
       if(xdat.numeric[i]==TRUE && bwtype=="fixed") {
-        init.search.vals[i] <- bandwidth.min + runif(1,.5,1.5)*sd.robust(xdat[,i])*nrow(xdat)^{-1/(4+num.numeric)}
+        init.search.vals[i] <- lb[numeric.index[i]] + runif(1,.5,1.5)*sd.robust(xdat[,i])*nrow(xdat)^{-1/(4+num.numeric)}
       }
       if(xdat.numeric[i]==TRUE && bwtype!="fixed") {
         init.search.vals[i] <- round(runif(1,2,sqrt(ub[i])))
@@ -2239,7 +2224,7 @@ glpcvNOMAD <- function(ydat=NULL,
       init.search.vals <- runif(num.bw,0,1)
       for(i in 1:num.bw) {
         if(xdat.numeric[i]==TRUE && bwtype=="fixed") {
-          init.search.vals[i] <- bandwidth.min + runif(1,.5,1.5)*sd.robust(xdat[,i])*nrow(xdat)^{-1/(4+num.numeric)}
+          init.search.vals[i] <- lb[numeric.index[i]] + runif(1,.5,1.5)*sd.robust(xdat[,i])*nrow(xdat)^{-1/(4+num.numeric)}
         }
         if(xdat.numeric[i]==TRUE && bwtype!="fixed") {
           init.search.vals[i] <- round(runif(1,2,sqrt(ub[i])))
@@ -2265,6 +2250,8 @@ glpcvNOMAD <- function(ydat=NULL,
 		}
 
 	}
+
+  print(x0.pts)
 
 	if(bwmethod == "cv.ls" ) {
 			solution<-snomadr(eval.f=eval.lscv,
@@ -2298,10 +2285,9 @@ glpcvNOMAD <- function(ydat=NULL,
 	fv.vec[1] <- solution$objective
 
 	bw.opt <- solution$solution[1:num.bw]
-  ## Potential bug in current version of snomadr, the first variable does not get rescaled perhaps?
-  bw.opt[numeric.index[1]] <- bw.opt[numeric.index[1]]/(max(xdat[,numeric.index[1]])-min(xdat[,numeric.index[1]]))
   bw.opt.sf <- NULL
   if(bwtype=="fixed") {
+    bw.opt[numeric.index[1]] <- bw.opt[numeric.index[1]]/(bandwidth.max*sd.robust(xdat[,numeric.index[1]]))
     bw.opt.sf <- bw.opt
     for(i in 1:num.numeric) {
       sd.xdat <- sd.robust(xdat[,numeric.index[i]])
