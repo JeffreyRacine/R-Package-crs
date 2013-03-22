@@ -1875,12 +1875,13 @@ glpcvNOMAD <- function(ydat=NULL,
     for(i in 1:num.numeric) {
       sd.xdat <- sd.robust(xdat[,numeric.index[i]])
       lb[numeric.index[i]] <- lb[numeric.index[i]]*sd.xdat*length(ydat)^{-1/(num.numeric+4)}
-      ub[numeric.index[i]] <- ub[numeric.index[i]]*sd.xdat*bandwidth.max
+      ## Note initially set to bandwidth.max so now rescaling by s
+      ub[numeric.index[i]] <- ub[numeric.index[i]]*sd.xdat
       ## When the continuous predictor bandwidth fed to the optimizer
       ## exceeds 1/2 the max allowable bandwidth (for all variables - here
       ## by default 500 robust standard deviations) then we switch to
-      ## the global fit
-      bw.switch[numeric.index[i]] <- bw.switch[numeric.index[i]]*sd.xdat*min(100,bandwidth.max/2)
+      ## the global fit. Note bw.switch was initialized to bandwidth.max.
+      bw.switch[numeric.index[i]] <- min(100*sd.xdat,bw.switch[numeric.index[i]]*sd.xdat/2)
       SCALING[[i]] <- paste(numeric.index[i]-1,1/(bandwidth.max*sd.xdat))
     }
     opts$"SCALING" <- SCALING
@@ -2286,12 +2287,13 @@ glpcvNOMAD <- function(ydat=NULL,
 	fv.vec[1] <- solution$objective
 
 	bw.opt <- solution$solution[1:num.bw]
+  ## Potential bug in current version of snomadr, the first variable does not get rescaled perhaps?
+  bw.opt[numeric.index[1]] <- bw.opt[numeric.index[1]]/(bandwidth.max*sd.xdat)
   bw.opt.sf <- NULL
   if(bwtype=="fixed") {
     bw.opt.sf <- bw.opt
     for(i in 1:num.numeric) {
       sd.xdat <- sd.robust(xdat[,numeric.index[i]])
-      bw.opt[numeric.index[i]] <- bw.opt[numeric.index[i]]/(bandwidth.max*sd.xdat)
       bw.opt.sf[numeric.index[i]] <- bw.opt[numeric.index[i]]/sd.xdat*length(ydat)^{1/(num.numeric+4)}
     }
   }
