@@ -54,14 +54,13 @@ npglpreg(\dots)
          cv.func = c("cv.ls", "cv.gcv", "cv.aic"),
          opts=list("MAX_BB_EVAL"=10000,
                    "EPSILON"=.Machine$double.eps,
-                   "INITIAL_MESH_SIZE"=paste("r",1.0e-04,sep=""),
-                   "MIN_MESH_SIZE"=paste("r",1.0e-05,sep=""),
-                   "MIN_POLL_SIZE"=paste("r",1.0e-05,sep="")),
+                   "INITIAL_MESH_SIZE"="0.05",
+                   "MIN_MESH_SIZE"="1.0e-06")),
          nmulti = 5,
          random.seed = 42,
          degree.max = 10,
          degree.min = 0,
-         bandwidth.max = 1.0e+03,
+         bandwidth.max = .Machine$double.xmax,
          bandwidth.min = 1.0e-02,
          gradient.vec = NULL,
          gradient.categorical = FALSE,
@@ -287,7 +286,6 @@ for each dimension of the continuous \code{x} in \code{txdat}}
                  "MIN_MESH_SIZE"=paste("r",1.0e-12,sep=""),
                  "MIN_POLL_SIZE"=paste("r",1.0e-12,sep=""))
              
-    bandwidth.max <- 1.0e+04
     bandwidth.min <- 1.0e-03
     
   }

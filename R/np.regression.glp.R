@@ -1925,19 +1925,6 @@ glpcvNOMAD <- function(ydat=NULL,
   ## leave-one-out cross-validation and Hurvich, Simonoff, and Tsai's
   ## AIC_c approach
 
-  ## Whether or not to display the information in snomadr
-  print.output <- FALSE
-  console <- newLineConsole()
-  if(!is.null(opts$DISPLAY_DEGREE)){
-    if(opts$DISPLAY_DEGREE>0){
-      print.output <-TRUE
-      console <- printPush("\rCalling NOMAD (Nonsmooth Optimization by Mesh Adaptive Direct Search)\n",console = console)
-    }
-  } else {
-    print.output <-TRUE
-    console <- printPush("\rCalling NOMAD (Nonsmooth Optimization by Mesh Adaptive Direct Search)\n",console = console)
-  }
-
   eval.lscv <- function(input, params){
 
     ydat <- params$ydat
