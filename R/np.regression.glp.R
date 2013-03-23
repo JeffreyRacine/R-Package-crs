@@ -13,17 +13,9 @@ NZD <- function(a) {
 }
 
 sd.robust <- function(x) {
-  if(is.matrix(x)) stop(" sd.robust is to be used with vectors only")
-  iqr.x <- IQR(x)
-  sd.x <- sd(x)
-  if(isTRUE(all.equal(sd.x, 0))) stop(" numeric predictor is a constant not a variable")
-  ## Test for pathological case where sd > 0 but iqr is 0 (many
-  ## repeated values)
-  if(sd.x > 0 && isTRUE(all.equal(iqr.x, 0))) {
-    iqr.x <- sd.x
-    warning(" numeric predictor exists with numerous repeated values (over 50%, IQR = 0)")
-  }
-  min(sd.x,iqr.x/1.34898)
+  sd.vec <- apply(as.matrix(y),2,sd)
+  IQR.vec <- apply(as.matrix(y),2,IQR)/(qnorm(.25,lower.tail=F)*2)
+  return(ifelse(sd.vec<IQR.vec|IQR.vec==0,sd.vec,IQR.vec))
 }
 
 mypoly <- function(x,
@@ -609,15 +601,15 @@ npglpreg.formula <- function(formula,
                              cv.func=c("cv.ls","cv.gcv","cv.aic"),
                              opts=list("MAX_BB_EVAL"=10000,
                                "EPSILON"=.Machine$double.eps,
-                               "INITIAL_MESH_SIZE"=paste("r",1.0e-04,sep=""),## match bandwidth.max
+                               "INITIAL_MESH_SIZE"=paste("r",2.5e-03,sep=""),
                                "MIN_MESH_SIZE"=paste("r",1.0e-06,sep=""),
                                "MIN_POLL_SIZE"=paste("r",1.0e-06,sep="")),
                              nmulti=5,
                              random.seed=42,
                              degree.max=10,
                              degree.min=0,
-                             bandwidth.max=1.0e+04,
-                             bandwidth.min=1.0e-02,
+                             bandwidth.max=2.5e+02,
+                             bandwidth.min=1.0e-01,
                              gradient.vec=NULL,
                              gradient.categorical=FALSE,
                              cv.shrink=TRUE,

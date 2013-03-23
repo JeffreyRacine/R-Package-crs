@@ -1,5 +1,8 @@
 Changes from Version 0.15-18 to 0.15-19 [XXX]
 
+* npglpreg() now optimizes at the level of the bandwidth scaling factors
+  (thanks Sebastien) to bring parameters to a `common scale'
+
 * For cross-validation with npglpreg() we test for very large bandwidths
   for the continuous predictors (> 500 robust standard deviations by
   default) then switch to the global polynomial approximation for
