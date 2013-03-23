@@ -1865,10 +1865,13 @@ glpcvNOMAD <- function(ydat=NULL,
     ub <- c(rep(bandwidth.max, num.bw))
   }
 
-  ## 100 standard deviations will be the trigger to move to the global
-  ## categorical kernel weighted polynomial fit
+  ## 1000 standard deviations will be the trigger to move to the
+  ## global categorical kernel weighted polynomial fit (now that we
+  ## are using absolute initial meshes the upper bound for search is
+  ## .Machine$double.xmax and the algorithm will step quickly into
+  ## this region so this ought to assure k(0) holds...
 
-  bw.switch <- c(rep(100*length(ydat)^{1/(num.numeric+2*ckerorder)}, num.bw))
+  bw.switch <- c(rep(1000*length(ydat)^{1/(num.numeric+2*ckerorder)}, num.bw))
 
   if(bwtype!="fixed" && num.numeric > 0) {
     for(i in 1:num.numeric) {
