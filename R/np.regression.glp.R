@@ -579,6 +579,17 @@ predict.npglpreg <- function(object,
 
 }
 
+## Note that to exploit NOMAD and scaling this function and the
+## functions it calls operate on the scaling factors and not the raw
+## bandwidths to avoid issues of scale associated with variable
+## measurement. In effect we need to put the parameters on which NOMAD
+## operates on the same `scale'. I achieve this by letting the
+## bandwidth scale factors lie in bandwidth.min to bandwidth.max then
+## rescale by this factor. This is the computational breakthrough I
+## have been missing and it took many frustrating days but would not
+## have occurred without some inspiration. But so far it is working
+## brilliantly and much better than before. All other functions
+## operate as one would expect.
 
 npglpreg.formula <- function(formula,
                              data=list(),
@@ -598,14 +609,14 @@ npglpreg.formula <- function(formula,
                              cv.func=c("cv.ls","cv.gcv","cv.aic"),
                              opts=list("MAX_BB_EVAL"=10000,
                                "EPSILON"=.Machine$double.eps,
-                               "INITIAL_MESH_SIZE"=paste("r",1.0e-04,sep=""),
-                               "MIN_MESH_SIZE"=paste("r",1.0e-05,sep=""),
-                               "MIN_POLL_SIZE"=paste("r",1.0e-05,sep="")),
+                               "INITIAL_MESH_SIZE"=paste("r",1.0e-04,sep=""),## match bandwidth.max
+                               "MIN_MESH_SIZE"=paste("r",1.0e-06,sep=""),
+                               "MIN_POLL_SIZE"=paste("r",1.0e-06,sep="")),
                              nmulti=5,
                              random.seed=42,
                              degree.max=10,
                              degree.min=0,
-                             bandwidth.max=1.0e+03,
+                             bandwidth.max=1.0e+04,
                              bandwidth.min=1.0e-02,
                              gradient.vec=NULL,
                              gradient.categorical=FALSE,
@@ -1189,6 +1200,7 @@ minimand.cv.ls <- function(bws=NULL,
                     bws = bws,
                     leave.one.out = TRUE,
                     bandwidth.divide = TRUE,
+                    bwscaling = TRUE,
                     ckertype = ckertype,
                     ckerorder=ckerorder,
                     ukertype = ukertype,
@@ -1223,6 +1235,7 @@ minimand.cv.ls <- function(bws=NULL,
                     bws = bws,
                     leave.one.out = TRUE,
                     bandwidth.divide = TRUE,
+                    bwscaling = TRUE,
                     ckertype = ckertype,
                     ckerorder=ckerorder,
                     ukertype = ukertype,
@@ -1356,6 +1369,7 @@ minimand.cv.aic <- function(bws=NULL,
                             tydat = 1,
                             bws = bws,
                             bandwidth.divide = TRUE,
+                            bwscaling = TRUE,
                             ckertype = ckertype,
                             ckerorder=ckerorder,
                             ukertype = ukertype,
@@ -1372,6 +1386,7 @@ minimand.cv.aic <- function(bws=NULL,
                     tydat = rep(1,n),
                     bws = bws,
                     bandwidth.divide = TRUE,
+                    bwscaling = TRUE,
                     ckertype = ckertype,
                     ckerorder=ckerorder,
                     ukertype = ukertype,
@@ -1403,6 +1418,7 @@ minimand.cv.aic <- function(bws=NULL,
                     weights = W,
                     bws = bws,
                     bandwidth.divide = TRUE,
+                    bwscaling = TRUE,
                     ckertype = ckertype,
                     ckerorder=ckerorder,
                     ukertype = ukertype,
@@ -1769,8 +1785,8 @@ glpcvNOMAD <- function(ydat=NULL,
                        opts=list("MAX_BB_EVAL"=10000,
                          "EPSILON"=.Machine$double.eps,
                          "INITIAL_MESH_SIZE"=paste("r",1.0e-04,sep=""),
-                         "MIN_MESH_SIZE"=paste("r",1.0e-05,sep=""),
-                         "MIN_POLL_SIZE"=paste("r",1.0e-05,sep="")),
+                         "MIN_MESH_SIZE"=paste("r",1.0e-06,sep=""),
+                         "MIN_POLL_SIZE"=paste("r",1.0e-06,sep="")),
                        cv.shrink=TRUE,
                        cv.warning=FALSE,
                        Bernstein=TRUE,
@@ -1852,12 +1868,12 @@ glpcvNOMAD <- function(ydat=NULL,
     bbin <- c(rep(0, num.bw), rep(1, num.numeric))
     lb <- c(rep(bandwidth.min, num.bw), rep(degree.min, num.numeric))
     ub <- c(rep(bandwidth.max, num.bw), rep(degree.max, num.numeric))
-    bw.switch <- c(rep(bandwidth.max, num.bw))    
+    bw.switch <- c(rep(bandwidth.max, num.bw))*0.5
   } else {
     bbin <- c(rep(0, num.bw))
     lb <- c(rep(bandwidth.min, num.bw))
     ub <- c(rep(bandwidth.max, num.bw))
-    bw.switch <- c(rep(bandwidth.max, num.bw))    
+    bw.switch <- c(rep(bandwidth.max, num.bw))*0.5
   }
 
   if(bwtype!="fixed" && num.numeric > 0) {
@@ -1870,20 +1886,12 @@ glpcvNOMAD <- function(ydat=NULL,
 
   ## Scale lb appropriately by n, don't want this for ub.
 
+  SCALING <- list()
+
   if(bwtype=="fixed" && num.numeric > 0) {
-    SCALING <- list()
     for(i in 1:num.numeric) {
-      sd.xdat <- sd.robust(xdat[,numeric.index[i]])
-      lb[numeric.index[i]] <- lb[numeric.index[i]]*sd.xdat*length(ydat)^{-1/(num.numeric+4)}
-      ub[numeric.index[i]] <- ub[numeric.index[i]]*sd.xdat
-      ## When the continuous predictor bandwidth fed to the optimizer
-      ## exceeds 1/2 the max allowable bandwidth (for all variables - here
-      ## by default 500 robust standard deviations) then we switch to
-      ## the global fit
-      bw.switch[numeric.index[i]] <- bw.switch[numeric.index[i]]*sd.xdat*0.5
-      SCALING[[i]] <- paste(numeric.index[i]-1,1/(sqrt(sd.xdat)))
+      SCALING[[i]] <- paste(numeric.index[i]-1,1/ub[numeric.index[i]])
     }
-    opts$"SCALING" <- SCALING
   }
 
   for(i in 1:num.bw) {
@@ -1897,16 +1905,20 @@ glpcvNOMAD <- function(ydat=NULL,
       ## hence set to lb
       bw.switch[i] <- lb[i] <- 0.0
       ub[i] <- 1.0
+      SCALING[[i]] <- paste(i-1,ub[i])      
     }
     ## Check for unordered and Aitchison/Aitken kernel
     if(xdat.unordered[i]==TRUE && ukertype=="aitchisonaitken") {
       c.num <- length(unique(xdat[,i]))
       ub[i] <- (c.num-1)/c.num
+      SCALING[[i]] <- paste(i-1,ub[i])      
       ## The global fit uses kernel weighting so no bound is used
       ## hence set to lb
       bw.switch[i] <- 0
     }
   }
+
+  opts$"SCALING" <- SCALING
 
   ## Use degree for initial values if provided
 
@@ -2205,7 +2217,7 @@ glpcvNOMAD <- function(ydat=NULL,
     init.search.vals <- runif(num.bw,0,1)
     for(i in 1:num.bw) {
       if(xdat.numeric[i]==TRUE && bwtype=="fixed") {
-        init.search.vals[i] <- lb[i] + runif(1,.5,1.5)*sd.robust(xdat[,i])*nrow(xdat)^{-1/(4+num.numeric)}
+        init.search.vals[i] <- lb[i] + runif(1,.5,1.5)
       }
       if(xdat.numeric[i]==TRUE && bwtype!="fixed") {
         init.search.vals[i] <- round(runif(1,2,sqrt(ub[i])))
@@ -2228,7 +2240,7 @@ glpcvNOMAD <- function(ydat=NULL,
       init.search.vals <- runif(num.bw,0,1)
       for(i in 1:num.bw) {
         if(xdat.numeric[i]==TRUE && bwtype=="fixed") {
-          init.search.vals[i] <- lb[i] + runif(1,.5,1.5)*sd.robust(xdat[,i])*nrow(xdat)^{-1/(4+num.numeric)}          
+          init.search.vals[i] <- lb[i] + runif(1,.5,1.5)
         }
         if(xdat.numeric[i]==TRUE && bwtype!="fixed") {
           init.search.vals[i] <- round(runif(1,2,sqrt(ub[i])))
@@ -2286,14 +2298,14 @@ glpcvNOMAD <- function(ydat=NULL,
 
 	fv.vec[1] <- solution$objective
 
-	bw.opt <- solution$solution[1:num.bw]
-  bw.opt.sf <- NULL
+	bw.opt.sf <- solution$solution[1:num.bw]
+  bw.opt <- NULL
   if(bwtype=="fixed") {
-    bw.opt[numeric.index[1]] <- bw.opt[numeric.index[1]]/sqrt(sd.robust(xdat[,numeric.index[1]]))
-    bw.opt.sf <- bw.opt
+    bw.opt.sf[numeric.index[1]] <- bw.opt.sf[numeric.index[1]]/bandwidth.max
+    bw.opt <- bw.opt.sf
     for(i in 1:num.numeric) {
       sd.xdat <- sd.robust(xdat[,numeric.index[i]])
-      bw.opt.sf[numeric.index[i]] <- bw.opt[numeric.index[i]]/sd.xdat*length(ydat)^{1/(num.numeric+4)}
+      bw.opt[numeric.index[i]] <- bw.opt[numeric.index[i]]*sd.xdat*length(ydat)^{-1/(num.numeric+ckerorder)}
     }
   }
 
