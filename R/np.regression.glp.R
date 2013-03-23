@@ -601,9 +601,8 @@ npglpreg.formula <- function(formula,
                              cv.func=c("cv.ls","cv.gcv","cv.aic"),
                              opts=list("MAX_BB_EVAL"=10000,
                                "EPSILON"=.Machine$double.eps,
-                               "INITIAL_MESH_SIZE"=paste("r",1.0e-02,sep=""),
-                               "MIN_MESH_SIZE"=paste("r",1.0e-05,sep=""),
-                               "MIN_POLL_SIZE"=paste("r",1.0e-05,sep="")),
+                               "INITIAL_MESH_SIZE"="0.1",
+                               "MIN_MESH_SIZE"="0.001"),
                              nmulti=5,
                              random.seed=42,
                              degree.max=10,
@@ -614,7 +613,6 @@ npglpreg.formula <- function(formula,
                              gradient.categorical=FALSE,
                              cv.shrink=TRUE,
                              cv.warning=FALSE,
-                             cv.scaling=FALSE,
                              Bernstein=TRUE,
                              mpi=FALSE,
                              ...) {
@@ -1777,12 +1775,11 @@ glpcvNOMAD <- function(ydat=NULL,
                        bandwidth.min=1.0e-02,
                        opts=list("MAX_BB_EVAL"=10000,
                          "EPSILON"=.Machine$double.eps,
-                         "INITIAL_MESH_SIZE"=paste("r",1.0e-02,sep=""),
-                         "MIN_MESH_SIZE"=paste("r",1.0e-05,sep=""),
-                         "MIN_POLL_SIZE"=paste("r",1.0e-05,sep="")),
+                               "EPSILON"=.Machine$double.eps,
+                               "INITIAL_MESH_SIZE"="0.1",
+                               "MIN_MESH_SIZE"="0.001"),
                        cv.shrink=TRUE,
                        cv.warning=FALSE,
-                       cv.scaling=FALSE,
                        Bernstein=TRUE,
                        mpi=FALSE,
                        ...) {
@@ -1880,15 +1877,6 @@ glpcvNOMAD <- function(ydat=NULL,
 
   ## Scale lb appropriately by n, don't want this for ub.
 
-  if(cv.scaling) {
-    SCALING <- list()
-    if(bwtype=="fixed" && num.numeric > 0) {
-      for(i in 1:num.numeric) {
-        SCALING[[i]] <- paste(numeric.index[i]-1,1/ub[numeric.index[i]])
-      }
-    }
-  }
-
   for(i in 1:num.bw) {
     ## Need to do integer search for numeric predictors when bwtype is
     ## a nearest-neighbour, so set bbin appropriately.
@@ -1900,20 +1888,16 @@ glpcvNOMAD <- function(ydat=NULL,
       ## hence set to lb
       bw.switch[i] <- lb[i] <- 0.0
       ub[i] <- 1.0
-      if(cv.scaling) SCALING[[i]] <- paste(i-1,ub[i])      
     }
     ## Check for unordered and Aitchison/Aitken kernel
     if(xdat.unordered[i]==TRUE && ukertype=="aitchisonaitken") {
       c.num <- length(unique(xdat[,i]))
       ub[i] <- (c.num-1)/c.num
-      if(cv.scaling) SCALING[[i]] <- paste(i-1,ub[i])      
       ## The global fit uses kernel weighting so no bound is used
       ## hence set to lb
       bw.switch[i] <- 0
     }
   }
-
-  if(cv.scaling) opts$"SCALING" <- SCALING
 
   ## Use degree for initial values if provided
 
@@ -2296,12 +2280,16 @@ glpcvNOMAD <- function(ydat=NULL,
 	bw.opt.sf <- solution$solution[1:num.bw]
   bw.opt <- NULL
   if(bwtype=="fixed") {
-    ## Bug in NOMAD - does not rescale first variable when using SCALING    
-    if(cv.scaling) bw.opt.sf[numeric.index[1]] <- bw.opt.sf[numeric.index[1]]/bandwidth.max
     bw.opt <- bw.opt.sf
     for(i in 1:num.numeric) {
       sd.xdat <- sd.robust(xdat[,numeric.index[i]])
       bw.opt[numeric.index[i]] <- bw.opt[numeric.index[i]]*sd.xdat*length(ydat)^{-1/(num.numeric+2*ckerorder)}
+    }
+  }
+
+  for(i in 1:num.bw) {
+    if(xdat.numeric[i]!=TRUE) {
+      bw.opt[i] <- bw.opt[i]*sd.xdat*length(ydat)^{-2/(num.numeric+2*ckerorder)}
     }
   }
 
