@@ -13,8 +13,8 @@ NZD <- function(a) {
 }
 
 sd.robust <- function(x) {
-  sd.vec <- apply(as.matrix(y),2,sd)
-  IQR.vec <- apply(as.matrix(y),2,IQR)/(qnorm(.25,lower.tail=F)*2)
+  sd.vec <- apply(as.matrix(x),2,sd)
+  IQR.vec <- apply(as.matrix(x),2,IQR)/(qnorm(.25,lower.tail=F)*2)
   return(ifelse(sd.vec<IQR.vec|IQR.vec==0,sd.vec,IQR.vec))
 }
 
@@ -601,19 +601,20 @@ npglpreg.formula <- function(formula,
                              cv.func=c("cv.ls","cv.gcv","cv.aic"),
                              opts=list("MAX_BB_EVAL"=10000,
                                "EPSILON"=.Machine$double.eps,
-                               "INITIAL_MESH_SIZE"=paste("r",2.5e-03,sep=""),
-                               "MIN_MESH_SIZE"=paste("r",1.0e-06,sep=""),
-                               "MIN_POLL_SIZE"=paste("r",1.0e-06,sep="")),
+                               "INITIAL_MESH_SIZE"=paste("r",1.0e-02,sep=""),
+                               "MIN_MESH_SIZE"=paste("r",1.0e-05,sep=""),
+                               "MIN_POLL_SIZE"=paste("r",1.0e-05,sep="")),
                              nmulti=5,
                              random.seed=42,
                              degree.max=10,
                              degree.min=0,
-                             bandwidth.max=2.5e+02,
+                             bandwidth.max=1.0e+02,
                              bandwidth.min=1.0e-01,
                              gradient.vec=NULL,
                              gradient.categorical=FALSE,
                              cv.shrink=TRUE,
                              cv.warning=FALSE,
+                             cv.scaling=TRUE,
                              Bernstein=TRUE,
                              mpi=FALSE,
                              ...) {
@@ -1776,11 +1777,12 @@ glpcvNOMAD <- function(ydat=NULL,
                        bandwidth.min=1.0e-02,
                        opts=list("MAX_BB_EVAL"=10000,
                          "EPSILON"=.Machine$double.eps,
-                         "INITIAL_MESH_SIZE"=paste("r",1.0e-04,sep=""),
-                         "MIN_MESH_SIZE"=paste("r",1.0e-06,sep=""),
-                         "MIN_POLL_SIZE"=paste("r",1.0e-06,sep="")),
+                         "INITIAL_MESH_SIZE"=paste("r",1.0e-02,sep=""),
+                         "MIN_MESH_SIZE"=paste("r",1.0e-05,sep=""),
+                         "MIN_POLL_SIZE"=paste("r",1.0e-05,sep="")),
                        cv.shrink=TRUE,
                        cv.warning=FALSE,
+                       cv.scaling=TRUE,
                        Bernstein=TRUE,
                        mpi=FALSE,
                        ...) {
@@ -1860,13 +1862,13 @@ glpcvNOMAD <- function(ydat=NULL,
     bbin <- c(rep(0, num.bw), rep(1, num.numeric))
     lb <- c(rep(bandwidth.min, num.bw), rep(degree.min, num.numeric))
     ub <- c(rep(bandwidth.max, num.bw), rep(degree.max, num.numeric))
-    bw.switch <- c(rep(bandwidth.max, num.bw))*0.5
   } else {
     bbin <- c(rep(0, num.bw))
     lb <- c(rep(bandwidth.min, num.bw))
     ub <- c(rep(bandwidth.max, num.bw))
-    bw.switch <- c(rep(bandwidth.max, num.bw))*0.5
   }
+
+  bw.switch <- c(rep(bandwidth.max, num.bw))*0.5
 
   if(bwtype!="fixed" && num.numeric > 0) {
     for(i in 1:num.numeric) {
@@ -1878,11 +1880,12 @@ glpcvNOMAD <- function(ydat=NULL,
 
   ## Scale lb appropriately by n, don't want this for ub.
 
-  SCALING <- list()
-
-  if(bwtype=="fixed" && num.numeric > 0) {
-    for(i in 1:num.numeric) {
-      SCALING[[i]] <- paste(numeric.index[i]-1,1/ub[numeric.index[i]])
+  if(cv.scaling) {
+    SCALING <- list()
+    if(bwtype=="fixed" && num.numeric > 0) {
+      for(i in 1:num.numeric) {
+        SCALING[[i]] <- paste(numeric.index[i]-1,1/ub[numeric.index[i]])
+      }
     }
   }
 
@@ -1897,20 +1900,20 @@ glpcvNOMAD <- function(ydat=NULL,
       ## hence set to lb
       bw.switch[i] <- lb[i] <- 0.0
       ub[i] <- 1.0
-      SCALING[[i]] <- paste(i-1,ub[i])      
+      if(cv.scaling) SCALING[[i]] <- paste(i-1,ub[i])      
     }
     ## Check for unordered and Aitchison/Aitken kernel
     if(xdat.unordered[i]==TRUE && ukertype=="aitchisonaitken") {
       c.num <- length(unique(xdat[,i]))
       ub[i] <- (c.num-1)/c.num
-      SCALING[[i]] <- paste(i-1,ub[i])      
+      if(cv.scaling) SCALING[[i]] <- paste(i-1,ub[i])      
       ## The global fit uses kernel weighting so no bound is used
       ## hence set to lb
       bw.switch[i] <- 0
     }
   }
 
-  opts$"SCALING" <- SCALING
+  if(cv.scaling) opts$"SCALING" <- SCALING
 
   ## Use degree for initial values if provided
 
@@ -2209,7 +2212,7 @@ glpcvNOMAD <- function(ydat=NULL,
     init.search.vals <- runif(num.bw,0,1)
     for(i in 1:num.bw) {
       if(xdat.numeric[i]==TRUE && bwtype=="fixed") {
-        init.search.vals[i] <- lb[i] + runif(1,.5,1.5)
+        init.search.vals[i] <- lb[i] + runif(1)
       }
       if(xdat.numeric[i]==TRUE && bwtype!="fixed") {
         init.search.vals[i] <- round(runif(1,2,sqrt(ub[i])))
@@ -2232,7 +2235,7 @@ glpcvNOMAD <- function(ydat=NULL,
       init.search.vals <- runif(num.bw,0,1)
       for(i in 1:num.bw) {
         if(xdat.numeric[i]==TRUE && bwtype=="fixed") {
-          init.search.vals[i] <- lb[i] + runif(1,.5,1.5)
+          init.search.vals[i] <- lb[i] + runif(1)
         }
         if(xdat.numeric[i]==TRUE && bwtype!="fixed") {
           init.search.vals[i] <- round(runif(1,2,sqrt(ub[i])))
@@ -2293,11 +2296,12 @@ glpcvNOMAD <- function(ydat=NULL,
 	bw.opt.sf <- solution$solution[1:num.bw]
   bw.opt <- NULL
   if(bwtype=="fixed") {
-    bw.opt.sf[numeric.index[1]] <- bw.opt.sf[numeric.index[1]]/bandwidth.max
+    ## Bug in NOMAD - does not rescale first variable when using SCALING    
+    if(cv.scaling) bw.opt.sf[numeric.index[1]] <- bw.opt.sf[numeric.index[1]]/bandwidth.max
     bw.opt <- bw.opt.sf
     for(i in 1:num.numeric) {
       sd.xdat <- sd.robust(xdat[,numeric.index[i]])
-      bw.opt[numeric.index[i]] <- bw.opt[numeric.index[i]]*sd.xdat*length(ydat)^{-1/(num.numeric+ckerorder)}
+      bw.opt[numeric.index[i]] <- bw.opt[numeric.index[i]]*sd.xdat*length(ydat)^{-1/(num.numeric+2*ckerorder)}
     }
   }
 

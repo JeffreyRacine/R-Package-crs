@@ -32,6 +32,7 @@ npglpreg(\dots)
          gradient.categorical = FALSE,
          cv.shrink = TRUE,
          cv.warning = FALSE,
+         cv.scaling = TRUE,
          Bernstein = TRUE,
          mpi = FALSE,
          \dots)
@@ -67,6 +68,7 @@ npglpreg(\dots)
          gradient.categorical = FALSE,
          cv.shrink = TRUE,
          cv.warning = FALSE,
+         cv.scaling = TRUE,
          Bernstein = TRUE,
          mpi = FALSE,
          \dots)
@@ -210,6 +212,11 @@ for each dimension of the continuous \code{x} in \code{txdat}}
 \item{cv.warning}{ a logical value indicating whether to issue an
   immediate warning message when ill conditioned bases are encountered
   during cross-validation (default \code{cv.warning=FALSE}) }
+
+\item{cv.scaling}{ a logical value indicating whether to place the range
+  of the scaling factors for the continuous variables and the bandwidths
+  for the categorical predictors on the same scale (e.g. range) during
+  cross-validation (default \code{cv.scaling=TRUE}) }
 
 \item{Bernstein}{ a logical value indicating whether to use raw
   polynomials or Bernstein polynomials (default) (note that a Bernstein
