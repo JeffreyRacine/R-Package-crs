@@ -1865,7 +1865,10 @@ glpcvNOMAD <- function(ydat=NULL,
     ub <- c(rep(bandwidth.max, num.bw))
   }
 
-  bw.switch <- c(rep(bandwidth.max, num.bw))*0.5
+  ## 100 standard deviations will be the trigger to move to the global
+  ## categorical kernel weighted polynomial fit
+
+  bw.switch <- c(rep(100, num.bw))
 
   if(bwtype!="fixed" && num.numeric > 0) {
     for(i in 1:num.numeric) {
