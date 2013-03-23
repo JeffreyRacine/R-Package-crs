@@ -1868,7 +1868,7 @@ glpcvNOMAD <- function(ydat=NULL,
   ## 100 standard deviations will be the trigger to move to the global
   ## categorical kernel weighted polynomial fit
 
-  bw.switch <- c(rep(100, num.bw))
+  bw.switch <- c(rep(100*length(ydat)^{1/(num.numeric+2*ckerorder)}, num.bw))
 
   if(bwtype!="fixed" && num.numeric > 0) {
     for(i in 1:num.numeric) {
