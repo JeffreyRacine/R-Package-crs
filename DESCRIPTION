@@ -1,5 +1,5 @@
 Package: crs
-Version: 0.15-18
+Version: 0.15-19
 Date: 2013-03-24
 Depends:
 Suggests: np, npRmpi, rgl, quadprog, quantreg
