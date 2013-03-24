@@ -1773,11 +1773,7 @@ glpcvNOMAD <- function(ydat=NULL,
                        degree.min=0,
                        bandwidth.max=.Machine$double.xmax,
                        bandwidth.min=1.0e-02,
-                       opts=list("MAX_BB_EVAL"=10000,
-                         "EPSILON"=.Machine$double.eps,
-                               "EPSILON"=.Machine$double.eps,
-                               "INITIAL_MESH_SIZE"="0.05",
-                               "MIN_MESH_SIZE"="1.0e-06"),
+                       opts=opts,
                        cv.shrink=TRUE,
                        cv.warning=FALSE,
                        Bernstein=TRUE,
@@ -1901,7 +1897,7 @@ glpcvNOMAD <- function(ydat=NULL,
       ub[i] <- (c.num-1)/c.num
       ## The global fit uses kernel weighting so no bound is used
       ## hence set to lb
-      bw.switch[i] <- 0
+      bw.switch[i] <- 0.0
     }
   }
 
@@ -1973,11 +1969,9 @@ glpcvNOMAD <- function(ydat=NULL,
         ## continuous variable, switch to the global B-spline kernel
         ## weighted regression for speed - produces identical fit
         if(num.numeric < ncol(xdat)) {
-          z <- as.matrix(xdat[,!xdat.numeric])
-          num.z <- NCOL(z)
           is.ordered.z <- logical()
-          for(i in 1:NCOL(xdat[,!xdat.numeric])) is.ordered.z[i] <- is.ordered((as.matrix(xdat[,!xdat.numeric]))[,i])
-          z.unique <- uniquecombs(z)
+          for(i in 1:NCOL(xdat[,!xdat.numeric])) is.ordered.z[i] <- is.ordered(xdat[,!xdat.numeric][,i])
+          z.unique <- uniquecombs(data.matrix(xdat[,!xdat.numeric]))
           ind <-  attr(z.unique,"index")
           ind.vals <-  unique(ind)
           nrow.z.unique <- NROW(z.unique)
@@ -2076,11 +2070,9 @@ glpcvNOMAD <- function(ydat=NULL,
         ## continuous variable, switch to the global B-spline kernel
         ## weighted regression for speed - produces identical fit
         if(num.numeric < ncol(xdat)) {
-          z <- as.matrix(xdat[,!xdat.numeric])
-          num.z <- NCOL(z)
           is.ordered.z <- logical()
-          for(i in 1:NCOL(xdat[,!xdat.numeric])) is.ordered.z[i] <- is.ordered((as.matrix(xdat[,!xdat.numeric]))[,i])
-          z.unique <- uniquecombs(z)
+          for(i in 1:NCOL(xdat[,!xdat.numeric])) is.ordered.z[i] <- is.ordered(xdat[,!xdat.numeric][,i])
+          z.unique <- uniquecombs(data.matrix(xdat[,!xdat.numeric]))
           ind <-  attr(z.unique,"index")
           ind.vals <-  unique(ind)
           nrow.z.unique <- NROW(z.unique)
