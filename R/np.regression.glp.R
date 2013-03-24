@@ -1895,12 +1895,12 @@ glpcvNOMAD <- function(ydat=NULL,
       ## The global fit uses kernel weighting so no bound is used
       ## hence set to lb
       bw.switch[i] <- lb[i] <- 0.0
-      ub[i] <- 1.0*length(ydat)^0.5
+      ub[i] <- 1.0*length(ydat)^{2/(num.numeric+2*ckerorder)}
     }
     ## Check for unordered and Aitchison/Aitken kernel
     if(xdat.unordered[i]==TRUE && ukertype=="aitchisonaitken") {
       c.num <- length(unique(xdat[,i]))
-      ub[i] <- (c.num-1)/c.num*length(ydat)^0.5
+      ub[i] <- (c.num-1)/c.num*length(ydat)^{2/(num.numeric+2*ckerorder)}
       ## The global fit uses kernel weighting so no bound is used
       ## hence set to lb
       bw.switch[i] <- 0.0
@@ -2184,7 +2184,7 @@ glpcvNOMAD <- function(ydat=NULL,
   ## Use bandwidth for initial values if provided
 
   if(is.null(bandwidth)) {
-    init.search.vals <- runif(num.bw,0,1)*length(ydat)^0.5
+    init.search.vals <- runif(num.bw,0,1)*length(ydat)^{2/(num.numeric+2*ckerorder)}
     for(i in 1:num.bw) {
       if(xdat.numeric[i]==TRUE && bwtype=="fixed") {
         init.search.vals[i] <- lb[i] + runif(1)
@@ -2194,7 +2194,7 @@ glpcvNOMAD <- function(ydat=NULL,
       }
       if(xdat.unordered[i]==TRUE && ukertype=="aitchisonaitken") {
         c.num <- length(unique(xdat[,i]))
-        init.search.vals[i] <- runif(1,0,(c.num-1)/c.num)*length(ydat)^0.5
+        init.search.vals[i] <- runif(1,0,(c.num-1)/c.num)*length(ydat)^{2/(num.numeric+2*ckerorder)}
       }
     }
   } else {
@@ -2207,7 +2207,7 @@ glpcvNOMAD <- function(ydat=NULL,
 	for(iMulti in 1:nmulti) {
     ## First initialize to values for factors (`liracine' kernel)
     if(iMulti != 1) {
-      init.search.vals <- runif(num.bw,0,1)*length(ydat)^0.5
+      init.search.vals <- runif(num.bw,0,1)*length(ydat)^{2/(num.numeric+2*ckerorder)}
       for(i in 1:num.bw) {
         if(xdat.numeric[i]==TRUE && bwtype=="fixed") {
           init.search.vals[i] <- lb[i] + runif(1)
@@ -2217,7 +2217,7 @@ glpcvNOMAD <- function(ydat=NULL,
         }
         if(xdat.unordered[i]==TRUE && ukertype=="aitchisonaitken") {
           c.num <- length(unique(xdat[,i]))
-          init.search.vals[i] <- runif(1,0,(c.num-1)/c.num)*length(ydat)^0.5
+          init.search.vals[i] <- runif(1,0,(c.num-1)/c.num)*length(ydat)^{2/(num.numeric+2*ckerorder)}
         }
       }
     }
@@ -2280,7 +2280,7 @@ glpcvNOMAD <- function(ydat=NULL,
 
   for(i in 1:num.bw) {
     if(xdat.numeric[i]!=TRUE) {
-      bw.opt[i] <- bw.opt[i]*length(ydat)^{-0.5}
+      bw.opt[i] <- bw.opt[i]*length(ydat)^{-2/(num.numeric+2*ckerorder)}
     }
   }
 
