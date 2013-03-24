@@ -2114,7 +2114,7 @@ glpcvNOMAD <- function(ydat=NULL,
                                            singular.ok=TRUE)
         }
         console <- printPush("\r                                                                         ",console = console)
-        console <- printPush(paste("\rfv = ",format(lscv)," ",sep=""),console = console)
+        console <- printPush(paste("\rfv = ",format(aicc)," ",sep=""),console = console)
       } else {
         aicc <- minimand.cv.aic(bws=bw.gamma,
                                 ydat=ydat,
@@ -2280,7 +2280,7 @@ glpcvNOMAD <- function(ydat=NULL,
 
   for(i in 1:num.bw) {
     if(xdat.numeric[i]!=TRUE) {
-      bw.opt[i] <- bw.opt[i]*sd.xdat*length(ydat)^{-2/(num.numeric+2*ckerorder)}
+      bw.opt[i] <- bw.opt[i]*length(ydat)^{-2/(num.numeric+2*ckerorder)}
     }
   }
 

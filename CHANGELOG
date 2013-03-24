@@ -1,16 +1,18 @@
 Changes from Version 0.15-18 to 0.15-19 [XXX]
 
 * npglpreg() now optimizes at the level of the bandwidth scaling factors
-  (thanks Sebastien) to bring parameters to a `common scale'
+  (thanks to Sebastien Le Digabel for the suggestion) to bring
+  parameters to a `common scale'
 
-* For cross-validation with npglpreg() we test for very large bandwidths
-  for the continuous predictors (> 500 robust standard deviations by
-  default) then switch to the global polynomial approximation for
-  computation speed (produces identical results but uses global
-  least squares rather than local least squares). This can result in
-  substantial improvements when large bandwidths are appropriate. Combined
-  with trees (in progress in np) this could lead to marked reductions
-  in computation time with zero loss in accuracy
+* For cross-validation with npglpreg() we test for very large
+  bandwidths for the continuous predictors (> bandwidth.switch
+  robust standard deviations by default) then switch to the global
+  polynomial approximation for computation speed (produces identical
+  results but uses global least squares rather than local least
+  squares). This can result in substantial improvements when large
+  bandwidths are appropriate. Combined with trees (in progress in
+  np) this could lead to marked reductions in computation time with
+  zero loss in accuracy
 
 Changes from Version 0.15-17 to 0.15-18 [Dec 29 2012]
 
