@@ -185,11 +185,11 @@ for each dimension of the continuous \code{x} in \code{txdat}}
   
     \item{bandwidth.max}{ the maximum bandwidth scale (i.e. number of
     scaled standard deviations) for each of the continuous predictors
-    (default \code{bandwidth.max=1.0e+03})}
+    (default \code{bandwidth.max=.Machine$double.xmax})}
   
   \item{bandwidth.min}{ the minimum bandwidth scale (i.e. number of
     scaled standard deviations) for each of the continuous predictors
-    (default \code{bandwidth.min=1.0e-02})}
+    (default \code{bandwidth.min=1.0e-01})}
 
   \item{bandwidth.switch}{ the minimum bandwidth (i.e. number of
     standard deviations) for each of the continuous predictors (default

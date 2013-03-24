@@ -28,7 +28,7 @@ int gsl_bspline(double *x,
   int i, j;
 
   gsl_bspline_workspace *bw = gsl_bspline_alloc(k, *nbreak);
-  ncoeffs = gsl_bspline_ncoeffs(bw);  /* *nbreak+k-2 */
+  ncoeffs = (int)gsl_bspline_ncoeffs(bw);  /* *nbreak+k-2 */
   gsl_vector *B = gsl_vector_alloc(ncoeffs);
   gsl_vector *quantile_vec = gsl_vector_alloc(*nbreak);
 
@@ -84,7 +84,7 @@ int gsl_bspline_deriv(double *x,
   size_t i, j;
 
   gsl_bspline_workspace *bw = gsl_bspline_alloc(k, *nbreak);
-  ncoeffs = gsl_bspline_ncoeffs(bw);
+  ncoeffs = (int)gsl_bspline_ncoeffs(bw);
   gsl_vector *dBorder = gsl_vector_alloc(ncoeffs);
   gsl_bspline_deriv_workspace *derivWS = gsl_bspline_deriv_alloc(k);
 	gsl_matrix *dB = gsl_matrix_alloc(ncoeffs, *order_max+1);

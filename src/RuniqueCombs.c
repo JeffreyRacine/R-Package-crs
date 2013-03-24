@@ -262,7 +262,7 @@ int *Xd_strip(matrix *Xd)
   start=stop=0;ok=1;
   while(ok)
   { /* look for start of run of equal rows ..... */
-    while(start<Xd->r-1&&!Xd_row_comp(Xd->M[start],Xd->M[start+1],Xd->c-1)) 
+    while(start<Xd->r-1&&!Xd_row_comp(Xd->M[start],Xd->M[start+1],(int)Xd->c-1)) 
     { /* Xd->M[start] not tied with anything, nothing to erase.... */
       xi=Xd->M[start][Xd->c-1];
       yxindex[ROUND(xi)]=start;
@@ -275,7 +275,7 @@ int *Xd_strip(matrix *Xd)
     }
     if (ok) /* search for end of run */
     { stop=start+1;
-      while(stop<Xd->r-1&&Xd_row_comp(Xd->M[stop],Xd->M[stop+1],Xd->c-1)) stop++;
+      while(stop<Xd->r-1&&Xd_row_comp(Xd->M[stop],Xd->M[stop+1],(int)Xd->c-1)) stop++;
       for (i=start;i<=stop;i++) /* fill out the index array */
       { xi=Xd->M[i][Xd->c-1];
         yxindex[ROUND(xi)]=start;
@@ -330,7 +330,7 @@ void msort(matrix a)
 */
 
 { double z=0.0;
-  real_elemcmp(&z,&z,a.c); 
+  real_elemcmp(&z,&z,(int)a.c); 
   qsort(a.M,(size_t)a.r,sizeof(a.M[0]),melemcmp);
 }
 

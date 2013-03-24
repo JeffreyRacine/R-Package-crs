@@ -1004,7 +1004,7 @@ void NOMAD::Parameters::read ( const std::string & param_file )
   // ------------
   _problem_dir.clear();
   size_t k = param_file.find_last_of ( NOMAD::DIR_SEP );
-  if ( k >= 0 && k < param_file.size() )
+  if ( k > (string::npos) && k < param_file.size() )
     _problem_dir = param_file.substr (0,k) + NOMAD::DIR_SEP;
   else
     _problem_dir = std::string(".") + NOMAD::DIR_SEP;
@@ -6014,7 +6014,7 @@ void  NOMAD::Parameters::set_BB_INPUT_TYPE ( int index , NOMAD::bb_input_type bb
 void NOMAD::Parameters::set_BB_INPUT_TYPE
 ( const std::vector<NOMAD::bb_input_type > & bbit )
 {
-  int n = bbit.size();
+  int n = (int)bbit.size();
   for ( int i = 0 ; i < n ; ++i )
     set_BB_INPUT_TYPE ( i , bbit[i] );
 }

@@ -638,7 +638,8 @@ void NOMAD::Double::project_to_mesh ( const NOMAD::Double & ref   ,
   if ( !_defined )
     return;
 
-  NOMAD::Double v0 = ( ref._defined ) ? ref : v0;
+  NOMAD::Double v0 = 0.0;
+	v0 = ( ref._defined ) ? ref : v0;
   
   if ( delta._defined && delta != 0.0 ) {
 
