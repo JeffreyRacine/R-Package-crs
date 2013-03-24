@@ -2278,12 +2278,6 @@ glpcvNOMAD <- function(ydat=NULL,
     }
   }
 
-  for(i in 1:num.bw) {
-    if(xdat.numeric[i]!=TRUE) {
-      bw.opt[i] <- bw.opt[i]*length(ydat)^{-2/(num.numeric+2*ckerorder)}
-    }
-  }
-
 	if(cv == "degree-bandwidth") {
     degree.opt <- solution$solution[(num.bw+1):(num.bw+num.numeric)]
     for(i in num.numeric){
