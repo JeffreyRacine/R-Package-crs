@@ -62,6 +62,7 @@ npglpreg(\dots)
          degree.min = 0,
          bandwidth.max = .Machine$double.xmax,
          bandwidth.min = 1.0e-02,
+         bandwidth.switch = 1.0e+05,
          gradient.vec = NULL,
          gradient.categorical = FALSE,
          cv.shrink = TRUE,
@@ -183,12 +184,19 @@ for each dimension of the continuous \code{x} in \code{txdat}}
     each of the continuous predictors (default \code{degree.min=0})}
   
     \item{bandwidth.max}{ the maximum bandwidth scale (i.e. number of
-    standard deviations) for each of the continuous predictors (default
-    \code{bandwidth.max=1.0e+03} standard deviations)}
+    scaled standard deviations) for each of the continuous predictors
+    (default \code{bandwidth.max=1.0e+03})}
   
   \item{bandwidth.min}{ the minimum bandwidth scale (i.e. number of
     scaled standard deviations) for each of the continuous predictors
-    (default \code{bandwidth.min=1.0e-02} scaled standard deviations)}
+    (default \code{bandwidth.min=1.0e-02})}
+
+  \item{bandwidth.switch}{ the minimum bandwidth (i.e. number of
+    standard deviations) for each of the continuous predictors (default
+    \code{bandwidth.switch=1.0e+05}) before the local polynomial is
+    treated as global during cross-validation at which point a global
+    categorical kernel weighted least squares fit is used for
+    computational efficiency}
   
 \item{gradient.vec}{
   a vector corresponding to the order of the partial (or cross-partial)
