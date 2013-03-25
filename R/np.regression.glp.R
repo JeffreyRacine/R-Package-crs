@@ -608,11 +608,11 @@ npglpreg.formula <- function(formula,
                              bandwidth.switch=1.0e+05,
                              max.bb.eval=10000,
                              initial.mesh.size.real="1",
-                             initial.mesh.size.integer="2",
-                             min.mesh.size.real="1.0e-06",
+                             initial.mesh.size.integer="1",
+                             min.mesh.size.real="1.0e-05",
                              min.mesh.size.integer="1",
-                             min.poll.size.real="1.0e-06",
-                             min.poll.size.integer="1",                         
+                             min.poll.size.real="1.0e-08",
+                             min.poll.size.integer="1",
                              gradient.vec=NULL,
                              gradient.categorical=FALSE,
                              cv.shrink=TRUE,
@@ -1825,11 +1825,11 @@ glpcvNOMAD <- function(ydat=NULL,
                        bandwidth.switch=1.0e+05,
                        max.bb.eval=10000,
                        initial.mesh.size.real="1",
-                       initial.mesh.size.integer="2",
-                       min.mesh.size.real="1.0e-06",
+                       initial.mesh.size.integer="1",
+                       min.mesh.size.real="1.0e-05",
                        min.mesh.size.integer="1",
-                       min.poll.size.real="1.0e-06",
-                       min.poll.size.integer="1",                         
+                       min.poll.size.real="1.0e-08",
+                       min.poll.size.integer="1",
                        cv.shrink=TRUE,
                        cv.warning=FALSE,
                        Bernstein=TRUE,
@@ -2254,7 +2254,7 @@ glpcvNOMAD <- function(ydat=NULL,
     init.search.vals <- runif(num.bw,0,1)*length(ydat)^{2/(num.numeric+2*ckerorder)}
     for(i in 1:num.bw) {
       if(xdat.numeric[i]==TRUE && bwtype=="fixed") {
-        init.search.vals[i] <- lb[i] + runif(1,0.5,1.5)
+        init.search.vals[i] <- lb[i] + runif(1,0.5,1.5)*length(ydat)^{2/(num.numeric+2*ckerorder)}
       }
       if(xdat.numeric[i]==TRUE && bwtype!="fixed") {
         init.search.vals[i] <- round(runif(1,2,sqrt(ub[i])))
@@ -2278,7 +2278,7 @@ glpcvNOMAD <- function(ydat=NULL,
       init.search.vals <- runif(num.bw,0,1)*length(ydat)^{2/(num.numeric+2*ckerorder)}
       for(i in 1:num.bw) {
         if(xdat.numeric[i]==TRUE && bwtype=="fixed") {
-          init.search.vals[i] <- lb[i] + runif(1,0.5,1.5)
+          init.search.vals[i] <- lb[i] + runif(1,0.5,1.5)*length(ydat)^{2/(num.numeric+2*ckerorder)}
         }
         if(xdat.numeric[i]==TRUE && bwtype!="fixed") {
           init.search.vals[i] <- round(runif(1,2,sqrt(ub[i])))
@@ -2363,6 +2363,11 @@ glpcvNOMAD <- function(ydat=NULL,
       if(isTRUE(all.equal(degree.opt[i],ub[num.bw+i]))) warning(paste(" Optimal degree for numeric predictor ",i," equals search upper bound (", ub[num.bw+i],")",sep=""))
     }
 	}
+
+  if(!is.null(opts$MAX_BB_EVAL)){
+    if(nmulti>0) {if(nmulti*opts$MAX_BB_EVAL <= solution$bbe) warning(paste(" MAX_BB_EVAL reached in NOMAD: perhaps use a larger value...", sep=""))} 
+    if(nmulti==0) {if(opts$MAX_BB_EVAL <= solution$bbe) warning(paste(" MAX_BB_EVAL reached in NOMAD: perhaps use a larger value...", sep="")) }
+  }
 
 	fv <- solution$objective
 
