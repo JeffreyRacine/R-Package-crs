@@ -25,7 +25,13 @@ krscvNOMAD <- function(xz,
                        lambda.discrete=FALSE, 
                        lambda.discrete.num=100,
                        random.seed=42,
-                       opts=list(),
+                       max.bb.eval=10000,
+                       initial.mesh.size.real="1e-06",
+                       initial.mesh.size.integer="r0.1",
+                       min.mesh.size.real="1.0e-06",
+                       min.mesh.size.integer="1e-06",
+                       min.poll.size.real="1.0e-06",
+                       min.poll.size.integer="1e-06",                         
                        nmulti=0,
                        tau=NULL,
                        weights=NULL,
@@ -123,7 +129,6 @@ krscvNOMAD <- function(xz,
 
             num.x <- NCOL(x)
             num.z <- NCOL(z)
-
 
             if(complexity=="degree-knots") {
                 K <- round(cbind(input[1:num.x],input[(num.x+1):(2*num.x)]))
@@ -448,6 +453,41 @@ krscvNOMAD <- function(xz,
         else
             segments <- NULL
     }
+
+    opts <- list()
+    INITIAL.MESH.SIZE <- list()
+    MIN.MESH.SIZE <- list()
+    MIN.POLL.SIZE <- list()
+
+    if(complexity=="degree-knots") {
+      for(i in 1:(2*num.x)) {
+        INITIAL.MESH.SIZE[[i]] <- initial.mesh.size.integer
+        MIN.MESH.SIZE[[i]] <- min.mesh.size.integer
+        MIN.POLL.SIZE[[i]] <- min.poll.size.integer                                
+      }
+      for(i in (2*num.x+1):(2*num.x+num.z)) {
+        INITIAL.MESH.SIZE[[i]] <- initial.mesh.size.real
+        MIN.MESH.SIZE[[i]] <- min.mesh.size.real
+        MIN.POLL.SIZE[[i]] <- min.poll.size.real                
+      }
+    }  
+    else if(complexity=="degree"|complexity=="knots") {
+      for(i in 1:num.x) {
+        INITIAL.MESH.SIZE[[i]] <- initial.mesh.size.integer
+        MIN.MESH.SIZE[[i]] <- min.mesh.size.integer
+        MIN.POLL.SIZE[[i]] <- min.poll.size.integer                                
+      }
+      for(i in (num.x+1):(num.x+num.z)) {
+        INITIAL.MESH.SIZE[[i]] <- initial.mesh.size.real
+        MIN.MESH.SIZE[[i]] <- min.mesh.size.real
+        MIN.POLL.SIZE[[i]] <- min.poll.size.real                
+      }
+    }  
+    
+    opts$"MAX_BB_EVAL" <- max.bb.eval
+    opts$"INITIAL_MESH_SIZE" <- INITIAL.MESH.SIZE
+    opts$"MIN_MESH_SIZE" <- MIN.MESH.SIZE
+    opts$"MIN_POLL_SIZE" <- MIN.POLL.SIZE
 
     ## For kernel regression spline, if there is only one continuous
     ## predictor (i.e. num.x==1) disable auto, set to additive (which is

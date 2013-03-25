@@ -31,7 +31,13 @@ krscvNOMAD(xz,
            lambda.discrete = FALSE, 
            lambda.discrete.num = 100, 
            random.seed = 42,
-           opts = list(),
+           max.bb.eval = 10000,
+           initial.mesh.size.real = "1",
+           initial.mesh.size.integer = "2",
+           min.mesh.size.real = "1.0e-06",
+           min.mesh.size.integer = "1",
+           min.poll.size.real = "1.0e-06",
+           min.poll.size.integer = "1",
            nmulti = 0,
            tau = NULL,
            weights = NULL,
@@ -120,10 +126,41 @@ krscvNOMAD(xz,
   be generated using this seed when \code{nmulti > 0}
 }
       
-\item{opts}{
-  arguments passed to the NOMAD solver
+  \item{max.bb.eval}{
+    argument passed to the NOMAD solver (see \code{\link{snomadr}} for
+    further details)
   }
-  
+
+  \item{initial.mesh.size.real}{
+    argument passed to the NOMAD solver (see \code{\link{snomadr}} for
+    further details)
+  }
+
+  \item{initial.mesh.size.integer}{
+    argument passed to the NOMAD solver (see \code{\link{snomadr}} for
+    further details)
+  }
+
+  \item{min.mesh.size.real}{
+    argument passed to the NOMAD solver (see \code{\link{snomadr}} for
+    further details)
+  }
+
+  \item{min.mesh.size.integer}{
+    arguments passed to the NOMAD solver (see \code{\link{snomadr}} for
+    further details)
+  }
+
+  \item{min.poll.size.real}{
+    arguments passed to the NOMAD solver (see \code{\link{snomadr}} for
+    further details)
+  }
+
+  \item{min.poll.size.integer}{
+    arguments passed to the NOMAD solver (see \code{\link{snomadr}} for
+    further details)
+  }      
+
   \item{nmulti}{
     integer number of times to restart the process of finding extrema of
     the cross-validation function from different (random) initial

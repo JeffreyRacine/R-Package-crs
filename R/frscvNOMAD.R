@@ -24,7 +24,10 @@ frscvNOMAD <- function(xz,
                        segments=segments, 
                        include=include,
                        random.seed=42,
-                       opts=list(),
+                       max.bb.eval=10000,
+                       initial.mesh.size.integer="1",
+                       min.mesh.size.integer="1",
+                       min.poll.size.integer="1",                         
                        nmulti=0,
                        tau=NULL,
                        weights=NULL,
@@ -45,7 +48,6 @@ frscvNOMAD <- function(xz,
     if(missing(degree)) degree <- NULL
     if(missing(segments)) segments <- NULL
 
-
     t1 <- Sys.time()
 
     cv.nomad <- function(x,
@@ -62,7 +64,6 @@ frscvNOMAD <- function(xz,
                          degree=degree, 
                          segments=segments,
                          include=include, 
-                         opts=opts,
                          print.output=print.output, 
                          nmulti=nmulti,
                          cv.df.min=cv.df.min,
@@ -289,8 +290,6 @@ frscvNOMAD <- function(xz,
         #no constraints
         bbout <-c(0)
 
-        ## This could be a passable parameter or set appropriately
-
         ## Manual says precede by r means relative to up and lb... not
         ## quite what I was looking for
 
@@ -324,6 +323,12 @@ frscvNOMAD <- function(xz,
 
         return(solution)
     }
+
+    opts <- list()
+    opts$"MAX_BB_EVAL" <- max.bb.eval
+    opts$"INITIAL_MESH_SIZE" <- initial.mesh.size.integer
+    opts$"MIN_MESH_SIZE" <-  min.mesh.size.integer
+    opts$"MIN_POLL_SIZE" <- min.poll.size.integer
 
     console <- newLineConsole()
     print.output <- FALSE
@@ -427,7 +432,6 @@ frscvNOMAD <- function(xz,
                                degree=degree, 
                                segments=segments, 
                                include=include, 
-                               opts=opts,
                                print.output=print.output, 
                                nmulti=nmulti,
                                cv.df.min=cv.df.min,
