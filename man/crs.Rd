@@ -55,11 +55,13 @@ crs(\dots)
     model.return = FALSE,
     restarts = 0,
     random.seed = 42,
-    opts = list("MAX_BB_EVAL"=10000,
-                "EPSILON"=.Machine$double.eps,
-                "INITIAL_MESH_SIZE"="r1.0e-01",
-                "MIN_MESH_SIZE"=paste("r",sqrt(.Machine$double.eps),sep=""),
-                "MIN_POLL_SIZE"=paste("r",sqrt(.Machine$double.eps),sep="")),
+    max.bb.eval = 10000,
+    initial.mesh.size.real = "r0.1",
+    initial.mesh.size.integer = "1",
+    min.mesh.size.real = "1.0e-06",
+    min.mesh.size.integer = "1",
+    min.poll.size.real = "1.0e-08",
+    min.poll.size.integer = "1",
     nmulti = 5,
     tau = NULL,
     weights = NULL,
@@ -204,10 +206,41 @@ in \code{x} are included or omitted from the resulting estimate }
     \code{\link{frscvNOMAD}} or \code{\link{krscvNOMAD}} and
     \code{nmulti > 0} }
       
-  \item{opts}{
+  \item{max.bb.eval}{
+    argument passed to the NOMAD solver (see \code{\link{snomadr}} for
+    further details)
+  }
+
+  \item{initial.mesh.size.real}{
+    argument passed to the NOMAD solver (see \code{\link{snomadr}} for
+    further details)
+  }
+
+  \item{initial.mesh.size.integer}{
+    argument passed to the NOMAD solver (see \code{\link{snomadr}} for
+    further details)
+  }
+
+  \item{min.mesh.size.real}{
+    argument passed to the NOMAD solver (see \code{\link{snomadr}} for
+    further details)
+  }
+
+  \item{min.mesh.size.integer}{
     arguments passed to the NOMAD solver (see \code{\link{snomadr}} for
     further details)
   }
+
+  \item{min.poll.size.real}{
+    arguments passed to the NOMAD solver (see \code{\link{snomadr}} for
+    further details)
+  }
+
+  \item{min.poll.size.integer}{
+    arguments passed to the NOMAD solver (see \code{\link{snomadr}} for
+    further details)
+  }      
+
   \item{nmulti}{
     integer number of times to restart the process of finding extrema of
     the cross-validation function from different (random) initial
