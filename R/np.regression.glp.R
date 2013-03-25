@@ -1966,74 +1966,71 @@ glpcvNOMAD <- function(ydat=NULL,
                degree=degree,
                Bernstein=Bernstein)
     
-    if(all(bw.gamma>=0)&&all(bw.gamma[!xdat.numeric]<=ub[(1:num.bw)[!xdat.numeric]])) {
-      if(all(bw.gamma > bw.switch)) {
-        console <- newLineConsole()
-        console <- printClear(console)
-        console <- printPop(console)
-        ## If we exceed the bound for a `large bandwidth' for a
-        ## continuous variable, switch to the global B-spline kernel
-        ## weighted regression for speed - produces identical fit
-        if(num.numeric < ncol(xdat)) {
-          is.ordered.z <- logical()
-          for(i in 1:NCOL(xdat[,!xdat.numeric])) is.ordered.z[i] <- is.ordered(xdat[,!xdat.numeric][,i])
-          z.unique <- uniquecombs(data.matrix(xdat[,!xdat.numeric]))
-          ind <-  attr(z.unique,"index")
-          ind.vals <-  unique(ind)
-          nrow.z.unique <- NROW(z.unique)
-          lscv <- cv.kernel.spline.wrapper(x=xdat[,xdat.numeric],
-                                           y=ydat,
-                                           z=if(num.numeric==0){NULL}else{xdat[,!xdat.numeric]},
-                                           K=cbind(degree,rep(1,length(degree))),
-                                           lambda=bw.gamma[xdat.numeric!=TRUE],
-                                           z.unique=z.unique,
-                                           ind=ind,
-                                           ind.vals=ind.vals,
-                                           nrow.z.unique=nrow.z.unique,
-                                           is.ordered.z=is.ordered.z,
-                                           knots="quantiles",
-                                           basis="glp",
-                                           cv.func="cv.ls",
-                                           cv.df.min=1,
-                                           tau=NULL,
-                                           weights=NULL,
-                                           singular.ok=TRUE)
-        } else {
-          lscv <- cv.factor.spline.wrapper(x=xdat,
-                                           y=ydat,
-                                           z=NULL,
-                                           K=cbind(degree,rep(1,length(degree))),
-                                           I=NULL,
-                                           knots="quantiles",
-                                           basis="glp",
-                                           cv.func="cv.ls",
-                                           cv.df.min=1,
-                                           tau=NULL,
-                                           weights=NULL,
-                                           singular.ok=TRUE)
-        }
-        console <- printPush("\r                                                                         ",console = console)
-        console <- printPush(paste("\rfv = ",format(lscv)," ",sep=""),console = console)
+    if(all(bw.gamma > bw.switch)) {
+      console <- newLineConsole()
+      console <- printClear(console)
+      console <- printPop(console)
+      ## If we exceed the bound for a `large bandwidth' for a
+      ## continuous variable, switch to the global B-spline kernel
+      ## weighted regression for speed - produces identical fit
+      if(num.numeric < ncol(xdat)) {
+        is.ordered.z <- logical()
+        for(i in 1:NCOL(xdat[,!xdat.numeric])) is.ordered.z[i] <- is.ordered(xdat[,!xdat.numeric][,i])
+        z.unique <- uniquecombs(data.matrix(xdat[,!xdat.numeric]))
+        ind <-  attr(z.unique,"index")
+        ind.vals <-  unique(ind)
+        nrow.z.unique <- NROW(z.unique)
+        lscv <- cv.kernel.spline.wrapper(x=xdat[,xdat.numeric],
+                                         y=ydat,
+                                         z=if(num.numeric==0){NULL}else{xdat[,!xdat.numeric]},
+                                         K=cbind(degree,rep(1,length(degree))),
+                                         lambda=bw.gamma[xdat.numeric!=TRUE],
+                                         z.unique=z.unique,
+                                         ind=ind,
+                                         ind.vals=ind.vals,
+                                         nrow.z.unique=nrow.z.unique,
+                                         is.ordered.z=is.ordered.z,
+                                         knots="quantiles",
+                                         basis="glp",
+                                         cv.func="cv.ls",
+                                         cv.df.min=1,
+                                         tau=NULL,
+                                         weights=NULL,
+                                         singular.ok=TRUE)
       } else {
-        lscv <- minimand.cv.ls(bws=bw.gamma,
-                               ydat=ydat,
-                               xdat=xdat,
-                               degree=degree,
-                               W=W,
-                               ckertype=ckertype,
-                               ckerorder=ckerorder,
-                               ukertype=ukertype,
-                               okertype=okertype,
-                               bwtype=bwtype,
-                               cv.shrink=cv.shrink,
-                               cv.warning=cv.warning,
-                               ...)
+        lscv <- cv.factor.spline.wrapper(x=xdat,
+                                         y=ydat,
+                                         z=NULL,
+                                         K=cbind(degree,rep(1,length(degree))),
+                                         I=NULL,
+                                         knots="quantiles",
+                                         basis="glp",
+                                         cv.func="cv.ls",
+                                         cv.df.min=1,
+                                         tau=NULL,
+                                         weights=NULL,
+                                         singular.ok=TRUE)
       }
+      console <- printPush("\r                                                                         ",console = console)
+      console <- printPush(paste("\rfv = ",format(lscv)," ",sep=""),console = console)
     } else {
-      lscv <- maxPenalty
+      lscv <- minimand.cv.ls(bws=bw.gamma,
+                             ydat=ydat,
+                             xdat=xdat,
+                             degree=degree,
+                             W=W,
+                             ckertype=ckertype,
+                             ckerorder=ckerorder,
+                             ukertype=ukertype,
+                             okertype=okertype,
+                             bwtype=bwtype,
+                             cv.shrink=cv.shrink,
+                             cv.warning=cv.warning,
+                             ...)
     }
-
+    
     return(lscv)
+
   }
 
   eval.aicc <- function(input, params){
@@ -2067,74 +2064,71 @@ glpcvNOMAD <- function(ydat=NULL,
                degree=degree,
                Bernstein=Bernstein)
 
-    if(all(bw.gamma>=0)&&all(bw.gamma[!xdat.numeric]<=ub[(1:num.bw)[!xdat.numeric]])) {
-      if(all(bw.gamma > bw.switch)) {
-        console <- newLineConsole()
-        console <- printClear(console)
-        console <- printPop(console)
-        ## If we exceed the bound for a `large bandwidth' for a
-        ## continuous variable, switch to the global B-spline kernel
-        ## weighted regression for speed - produces identical fit
-        if(num.numeric < ncol(xdat)) {
-          is.ordered.z <- logical()
-          for(i in 1:NCOL(xdat[,!xdat.numeric])) is.ordered.z[i] <- is.ordered(xdat[,!xdat.numeric][,i])
-          z.unique <- uniquecombs(data.matrix(xdat[,!xdat.numeric]))
-          ind <-  attr(z.unique,"index")
-          ind.vals <-  unique(ind)
-          nrow.z.unique <- NROW(z.unique)
-          aicc <- cv.kernel.spline.wrapper(x=xdat[,xdat.numeric],
-                                           y=ydat,
-                                           z=if(num.numeric==0){NULL}else{xdat[,!xdat.numeric]},
-                                           K=cbind(degree,rep(1,length(degree))),
-                                           lambda=bw.gamma[xdat.numeric!=TRUE],
-                                           z.unique=z.unique,
-                                           ind=ind,
-                                           ind.vals=ind.vals,
-                                           nrow.z.unique=nrow.z.unique,
-                                           is.ordered.z=is.ordered.z,
-                                           knots="quantiles",
-                                           basis="glp",
-                                           cv.func="cv.aic",
-                                           cv.df.min=1,
-                                           tau=NULL,
-                                           weights=NULL,
-                                           singular.ok=TRUE)
-        } else {
-          aicc <- cv.factor.spline.wrapper(x=xdat,
-                                           y=ydat,
-                                           z=NULL,
-                                           K=cbind(degree,rep(1,length(degree))),
-                                           I=NULL,
-                                           knots="quantiles",
-                                           basis="glp",
-                                           cv.func="cv.aic",
-                                           cv.df.min=1,
-                                           tau=NULL,
-                                           weights=NULL,
-                                           singular.ok=TRUE)
-        }
-        console <- printPush("\r                                                                         ",console = console)
-        console <- printPush(paste("\rfv = ",format(aicc)," ",sep=""),console = console)
+    if(all(bw.gamma > bw.switch)) {
+      console <- newLineConsole()
+      console <- printClear(console)
+      console <- printPop(console)
+      ## If we exceed the bound for a `large bandwidth' for a
+      ## continuous variable, switch to the global B-spline kernel
+      ## weighted regression for speed - produces identical fit
+      if(num.numeric < ncol(xdat)) {
+        is.ordered.z <- logical()
+        for(i in 1:NCOL(xdat[,!xdat.numeric])) is.ordered.z[i] <- is.ordered(xdat[,!xdat.numeric][,i])
+        z.unique <- uniquecombs(data.matrix(xdat[,!xdat.numeric]))
+        ind <-  attr(z.unique,"index")
+        ind.vals <-  unique(ind)
+        nrow.z.unique <- NROW(z.unique)
+        aicc <- cv.kernel.spline.wrapper(x=xdat[,xdat.numeric],
+                                         y=ydat,
+                                         z=if(num.numeric==0){NULL}else{xdat[,!xdat.numeric]},
+                                         K=cbind(degree,rep(1,length(degree))),
+                                         lambda=bw.gamma[xdat.numeric!=TRUE],
+                                         z.unique=z.unique,
+                                         ind=ind,
+                                         ind.vals=ind.vals,
+                                         nrow.z.unique=nrow.z.unique,
+                                         is.ordered.z=is.ordered.z,
+                                         knots="quantiles",
+                                         basis="glp",
+                                         cv.func="cv.aic",
+                                         cv.df.min=1,
+                                         tau=NULL,
+                                         weights=NULL,
+                                         singular.ok=TRUE)
       } else {
-        aicc <- minimand.cv.aic(bws=bw.gamma,
-                                ydat=ydat,
-                                xdat=xdat,
-                                degree=degree,
-                                W=W,
-                                ckertype=ckertype,
-                                ckerorder=ckerorder,
-                                ukertype=ukertype,
-                                okertype=okertype,
-                                bwtype=bwtype,
-                                cv.shrink=cv.shrink,
-                                cv.warning=cv.warning,
-                                ...)
+        aicc <- cv.factor.spline.wrapper(x=xdat,
+                                         y=ydat,
+                                         z=NULL,
+                                         K=cbind(degree,rep(1,length(degree))),
+                                         I=NULL,
+                                         knots="quantiles",
+                                         basis="glp",
+                                         cv.func="cv.aic",
+                                         cv.df.min=1,
+                                         tau=NULL,
+                                         weights=NULL,
+                                         singular.ok=TRUE)
       }
+      console <- printPush("\r                                                                         ",console = console)
+      console <- printPush(paste("\rfv = ",format(aicc)," ",sep=""),console = console)
     } else {
-      aicc <- maxPenalty
+      aicc <- minimand.cv.aic(bws=bw.gamma,
+                              ydat=ydat,
+                              xdat=xdat,
+                              degree=degree,
+                              W=W,
+                              ckertype=ckertype,
+                              ckerorder=ckerorder,
+                              ukertype=ukertype,
+                              okertype=okertype,
+                              bwtype=bwtype,
+                              cv.shrink=cv.shrink,
+                              cv.warning=cv.warning,
+                              ...)
     }
-
+    
     return(aicc)
+
   }
 
   ## Generate the params fed to the snomadr solver
