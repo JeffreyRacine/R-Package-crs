@@ -1965,8 +1965,8 @@ glpcvNOMAD <- function(ydat=NULL,
     W <- W.glp(xdat=xdat,
                degree=degree,
                Bernstein=Bernstein)
-
-    if(all(bw.gamma>=0)&&all(bw.gamma[!xdat.numeric]<=ub[!xdat.numeric])) {
+    
+    if(all(bw.gamma>=0)&&all(bw.gamma[!xdat.numeric]<=ub[(1:num.bw)[!xdat.numeric]])) {
       if(all(bw.gamma > bw.switch)) {
         console <- newLineConsole()
         console <- printClear(console)
@@ -2067,7 +2067,7 @@ glpcvNOMAD <- function(ydat=NULL,
                degree=degree,
                Bernstein=Bernstein)
 
-    if(all(bw.gamma>=0)&&all(bw.gamma[!xdat.numeric]<=ub[!xdat.numeric])) {
+    if(all(bw.gamma>=0)&&all(bw.gamma[!xdat.numeric]<=ub[(1:num.bw)[!xdat.numeric]])) {
       if(all(bw.gamma > bw.switch)) {
         console <- newLineConsole()
         console <- printClear(console)
