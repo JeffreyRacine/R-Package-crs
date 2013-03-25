@@ -599,10 +599,6 @@ npglpreg.formula <- function(formula,
                              bwtype = c("fixed","generalized_nn","adaptive_nn","auto"),
                              cv=c("degree-bandwidth","bandwidth","none"),
                              cv.func=c("cv.ls","cv.gcv","cv.aic"),
-                             opts=list("MAX_BB_EVAL"=10000,
-                               "EPSILON"=.Machine$double.eps,
-                               "INITIAL_MESH_SIZE"="0.1",
-                               "MIN_MESH_SIZE"="1.0e-05"),
                              nmulti=5,
                              random.seed=42,
                              degree.max=10,
@@ -610,6 +606,13 @@ npglpreg.formula <- function(formula,
                              bandwidth.max=.Machine$double.xmax,
                              bandwidth.min=1.0e-01,
                              bandwidth.switch=1.0e+05,
+                             max.bb.eval=10000,
+                             initial.mesh.size.real="1",
+                             initial.mesh.size.integer="2",
+                             min.mesh.size.real="1.0e-06",
+                             min.mesh.size.integer="1",
+                             min.poll.size.real="1.0e-06",
+                             min.poll.size.integer="1",                         
                              gradient.vec=NULL,
                              gradient.categorical=FALSE,
                              cv.shrink=TRUE,
@@ -675,6 +678,13 @@ npglpreg.formula <- function(formula,
                                                      bandwidth.max=bandwidth.max,
                                                      bandwidth.min=bandwidth.min,
                                                      bandwidth.switch=bandwidth.switch,
+                                                     max.bb.eval=max.bb.eval,
+                                                     initial.mesh.size.real=initial.mesh.size.real,
+                                                     initial.mesh.size.integer=initial.mesh.size.integer,
+                                                     min.mesh.size.real=min.mesh.size.real,
+                                                     min.mesh.size.integer=min.mesh.size.integer,
+                                                     min.poll.size.real=min.poll.size.real,
+                                                     min.poll.size.integer=min.poll.size.integer,
                                                      cv.shrink=cv.shrink,
                                                      cv.warning=cv.warning,
                                                      Bernstein=Bernstein,
@@ -700,6 +710,13 @@ npglpreg.formula <- function(formula,
                                                      bandwidth.max=bandwidth.max,
                                                      bandwidth.min=bandwidth.min,
                                                      bandwidth.switch=bandwidth.switch,
+                                                     max.bb.eval=max.bb.eval,
+                                                     initial.mesh.size.real=initial.mesh.size.real,
+                                                     initial.mesh.size.integer=initial.mesh.size.integer,
+                                                     min.mesh.size.real=min.mesh.size.real,
+                                                     min.mesh.size.integer=min.mesh.size.integer,
+                                                     min.poll.size.real=min.poll.size.real,
+                                                     min.poll.size.integer=min.poll.size.integer,
                                                      cv.shrink=cv.shrink,
                                                      cv.warning=cv.warning,
                                                      Bernstein=Bernstein,
@@ -728,6 +745,13 @@ npglpreg.formula <- function(formula,
                                                   bandwidth.max=bandwidth.max,
                                                   bandwidth.min=bandwidth.min,
                                                   bandwidth.switch=bandwidth.switch,
+                                                  max.bb.eval=max.bb.eval,
+                                                  initial.mesh.size.real=initial.mesh.size.real,
+                                                  initial.mesh.size.integer=initial.mesh.size.integer,
+                                                  min.mesh.size.real=min.mesh.size.real,
+                                                  min.mesh.size.integer=min.mesh.size.integer,
+                                                  min.poll.size.real=min.poll.size.real,
+                                                  min.poll.size.integer=min.poll.size.integer,
                                                   cv.shrink=cv.shrink,
                                                   cv.warning=cv.warning,
                                                   Bernstein=Bernstein,
@@ -758,6 +782,13 @@ npglpreg.formula <- function(formula,
                                                   bandwidth.max=bandwidth.max,
                                                   bandwidth.min=bandwidth.min,
                                                   bandwidth.switch=bandwidth.switch,
+                                                  max.bb.eval=max.bb.eval,
+                                                  initial.mesh.size.real=initial.mesh.size.real,
+                                                  initial.mesh.size.integer=initial.mesh.size.integer,
+                                                  min.mesh.size.real=min.mesh.size.real,
+                                                  min.mesh.size.integer=min.mesh.size.integer,
+                                                  min.poll.size.real=min.poll.size.real,
+                                                  min.poll.size.integer=min.poll.size.integer,
                                                   cv.shrink=cv.shrink,
                                                   cv.warning=cv.warning,
                                                   Bernstein=Bernstein,
@@ -1796,7 +1827,13 @@ glpcvNOMAD <- function(ydat=NULL,
                        bandwidth.max=.Machine$double.xmax,
                        bandwidth.min=1.0e-02,
                        bandwidth.switch=1.0e+05,
-                       opts=opts,
+                       max.bb.eval=10000,
+                       initial.mesh.size.real="1",
+                       initial.mesh.size.integer="2",
+                       min.mesh.size.real="1.0e-06",
+                       min.mesh.size.integer="1",
+                       min.poll.size.real="1.0e-06",
+                       min.poll.size.integer="1",                         
                        cv.shrink=TRUE,
                        cv.warning=FALSE,
                        Bernstein=TRUE,
@@ -1902,7 +1939,14 @@ glpcvNOMAD <- function(ydat=NULL,
 
   ## Scale upper bounds appropriately
 
+  INITIAL.MESH.SIZE <- list()
+  MIN.MESH.SIZE <- list()
+  MIN.POLL.SIZE <- list()  
+
   for(i in 1:num.bw) {
+    INITIAL.MESH.SIZE[[i]] <- initial.mesh.size.real
+    MIN.MESH.SIZE[[i]] <- min.mesh.size.real
+    MIN.POLL.SIZE[[i]] <- min.poll.size.real        
     ## Need to do integer search for numeric predictors when bwtype is
     ## a nearest-neighbour, so set bbin appropriately.
     if(xdat.numeric[i]==TRUE && bwtype!="fixed") {
@@ -1914,6 +1958,9 @@ glpcvNOMAD <- function(ydat=NULL,
       ## bw.switch to lb
       bw.switch[i] <- lb[i] <- 0.0
       ub[i] <- 1.0*length(ydat)^{2/(num.numeric+2*ckerorder)}
+      INITIAL.MESH.SIZE[[i]] <- initial.mesh.size.integer      
+      MIN.MESH.SIZE[[i]] <- min.mesh.size.integer
+      MIN.POLL.SIZE[[i]] <- min.poll.size.integer     
     }
     ## Check for unordered and Aitchison/Aitken kernel
     if(xdat.unordered[i]==TRUE && ukertype=="aitchisonaitken") {
@@ -1933,7 +1980,18 @@ glpcvNOMAD <- function(ydat=NULL,
 
   if(cv == "degree-bandwidth") {
     ub[(num.bw+1):(num.bw+num.numeric)] <- ifelse(ub[(num.bw+1):(num.bw+num.numeric)] > degree.max.vec, degree.max.vec, ub[(num.bw+1):(num.bw+num.numeric)])
+    for(i in (num.bw+1):(num.bw+num.numeric)) {
+      INITIAL.MESH.SIZE[[i]] <- initial.mesh.size.integer
+      MIN.MESH.SIZE[[i]] <- min.mesh.size.integer
+      MIN.POLL.SIZE[[i]] <- min.poll.size.integer
+    }
   }
+
+  opts <- list()
+  opts$"MAX_BB_EVAL" <- max.bb.eval
+  opts$"INITIAL_MESH_SIZE" <- INITIAL.MESH.SIZE
+  opts$"MIN_MESH_SIZE" <- MIN.MESH.SIZE
+  opts$"MIN_POLL_SIZE" <- MIN.POLL.SIZE
 
   if(is.null(degree)) {
     if(cv == "degree-bandwidth") {
@@ -2200,7 +2258,7 @@ glpcvNOMAD <- function(ydat=NULL,
     init.search.vals <- runif(num.bw,0,1)*length(ydat)^{2/(num.numeric+2*ckerorder)}
     for(i in 1:num.bw) {
       if(xdat.numeric[i]==TRUE && bwtype=="fixed") {
-        init.search.vals[i] <- lb[i] + runif(1)
+        init.search.vals[i] <- lb[i] + runif(1,0.5,1.5)
       }
       if(xdat.numeric[i]==TRUE && bwtype!="fixed") {
         init.search.vals[i] <- round(runif(1,2,sqrt(ub[i])))
@@ -2215,6 +2273,7 @@ glpcvNOMAD <- function(ydat=NULL,
   }
 
   ## Generate all initial points for the multiple restarting
+
 	x0.pts <- matrix(numeric(1), nmulti, length(bbin))
 
 	for(iMulti in 1:nmulti) {
@@ -2223,7 +2282,7 @@ glpcvNOMAD <- function(ydat=NULL,
       init.search.vals <- runif(num.bw,0,1)*length(ydat)^{2/(num.numeric+2*ckerorder)}
       for(i in 1:num.bw) {
         if(xdat.numeric[i]==TRUE && bwtype=="fixed") {
-          init.search.vals[i] <- lb[i] + runif(1)
+          init.search.vals[i] <- lb[i] + runif(1,0.5,1.5)
         }
         if(xdat.numeric[i]==TRUE && bwtype!="fixed") {
           init.search.vals[i] <- round(runif(1,2,sqrt(ub[i])))
