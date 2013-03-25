@@ -484,6 +484,7 @@ krscvNOMAD <- function(xz,
       }
     }  
     
+    opts$"EPSILON" <- .Machine$double.eps
     opts$"MAX_BB_EVAL" <- max.bb.eval
     opts$"INITIAL_MESH_SIZE" <- INITIAL.MESH.SIZE
     opts$"MIN_MESH_SIZE" <- MIN.MESH.SIZE

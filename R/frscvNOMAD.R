@@ -325,6 +325,7 @@ frscvNOMAD <- function(xz,
     }
 
     opts <- list()
+    opts$"EPSILON" <- .Machine$double.eps
     opts$"MAX_BB_EVAL" <- max.bb.eval
     opts$"INITIAL_MESH_SIZE" <- initial.mesh.size.integer
     opts$"MIN_MESH_SIZE" <-  min.mesh.size.integer
