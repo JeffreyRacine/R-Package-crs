@@ -1952,7 +1952,7 @@ glpcvNOMAD <- function(ydat=NULL,
     if(xdat.numeric[i]==TRUE && bwtype!="fixed") {
       bbin[i] <- 1
     }
-    if(xdat.numeric[i]!=TRUE) {
+    if(!xdat.numeric[i]) {
       ## The global fit uses kernel weighting for categorical
       ## variables so no switching bound is possible hence set
       ## bw.switch to lb
@@ -2052,16 +2052,16 @@ glpcvNOMAD <- function(ydat=NULL,
       ## weighted regression for speed - produces identical fit
       if(num.numeric < ncol(xdat)) {
         is.ordered.z <- logical()
-        for(i in 1:NCOL(xdat[,!xdat.numeric])) is.ordered.z[i] <- is.ordered(xdat[,!xdat.numeric][,i])
-        z.unique <- uniquecombs(data.matrix(xdat[,!xdat.numeric]))
+        for(i in 1:NCOL(xdat[,!xdat.numeric,drop=FALSE])) is.ordered.z[i] <- is.ordered(xdat[,!xdat.numeric,drop=FALSE][,i])
+        z.unique <- uniquecombs(data.matrix(xdat[,!xdat.numeric,drop=FALSE]))
         ind <-  attr(z.unique,"index")
         ind.vals <-  unique(ind)
         nrow.z.unique <- NROW(z.unique)
-        lscv <- cv.kernel.spline.wrapper(x=xdat[,xdat.numeric],
+        lscv <- cv.kernel.spline.wrapper(x=xdat[,xdat.numeric,drop=FALSE],
                                          y=ydat,
-                                         z=if(num.numeric==0){NULL}else{xdat[,!xdat.numeric]},
+                                         z=if(num.numeric==0){NULL}else{xdat[,!xdat.numeric,drop=FALSE]},
                                          K=cbind(degree,rep(1,length(degree))),
-                                         lambda=bw.gamma[xdat.numeric!=TRUE],
+                                         lambda=bw.gamma[!xdat.numeric],
                                          z.unique=z.unique,
                                          ind=ind,
                                          ind.vals=ind.vals,
@@ -2150,16 +2150,16 @@ glpcvNOMAD <- function(ydat=NULL,
       ## weighted regression for speed - produces identical fit
       if(num.numeric < ncol(xdat)) {
         is.ordered.z <- logical()
-        for(i in 1:NCOL(xdat[,!xdat.numeric])) is.ordered.z[i] <- is.ordered(xdat[,!xdat.numeric][,i])
-        z.unique <- uniquecombs(data.matrix(xdat[,!xdat.numeric]))
+        for(i in 1:NCOL(xdat[,!xdat.numeric,drop=FALSE])) is.ordered.z[i] <- is.ordered(xdat[,!xdat.numeric,drop=FALSE][,i])
+        z.unique <- uniquecombs(data.matrix(xdat[,!xdat.numeric,drop=FALSE]))
         ind <-  attr(z.unique,"index")
         ind.vals <-  unique(ind)
         nrow.z.unique <- NROW(z.unique)
-        aicc <- cv.kernel.spline.wrapper(x=xdat[,xdat.numeric],
+        aicc <- cv.kernel.spline.wrapper(x=xdat[,xdat.numeric,drop=FALSE],
                                          y=ydat,
-                                         z=if(num.numeric==0){NULL}else{xdat[,!xdat.numeric]},
+                                         z=if(num.numeric==0){NULL}else{xdat[,!xdat.numeric,drop=FALSE]},
                                          K=cbind(degree,rep(1,length(degree))),
-                                         lambda=bw.gamma[xdat.numeric!=TRUE],
+                                         lambda=bw.gamma[!xdat.numeric],
                                          z.unique=z.unique,
                                          ind=ind,
                                          ind.vals=ind.vals,
@@ -2356,7 +2356,7 @@ glpcvNOMAD <- function(ydat=NULL,
   }
 
   for(i in 1:num.bw) {
-    if(xdat.numeric[i]!=TRUE) {
+    if(!xdat.numeric[i]) {
       bw.opt[i] <- bw.opt[i]*length(ydat)^{-2/(num.numeric+2*ckerorder)}
     }
   }
