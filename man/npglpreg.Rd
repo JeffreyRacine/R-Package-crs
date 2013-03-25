@@ -52,10 +52,6 @@ npglpreg(\dots)
          bwtype = c("fixed", "generalized_nn", "adaptive_nn", "auto"),
          cv = c("degree-bandwidth", "bandwidth", "none"),
          cv.func = c("cv.ls", "cv.gcv", "cv.aic"),
-         opts=list("MAX_BB_EVAL"=10000,
-                   "EPSILON"=.Machine$double.eps,
-                   "INITIAL_MESH_SIZE"="0.1",
-                   "MIN_MESH_SIZE"="1.0e-05"),
          nmulti = 5,
          random.seed = 42,
          degree.max = 10,
@@ -63,6 +59,13 @@ npglpreg(\dots)
          bandwidth.max = .Machine$double.xmax,
          bandwidth.min = 1.0e-01,
          bandwidth.switch = 1.0e+05,
+         max.bb.eval = 10000,
+         initial.mesh.size.real = "1",
+         initial.mesh.size.integer = "2",
+         min.mesh.size.real = "1.0e-06",
+         min.mesh.size.integer = "1",
+         min.poll.size.real = "1.0e-06",
+         min.poll.size.integer = "1",                         
          gradient.vec = NULL,
          gradient.categorical = FALSE,
          cv.shrink = TRUE,
@@ -164,10 +167,42 @@ for each dimension of the continuous \code{x} in \code{txdat}}
     Kullback-Leibler cross-validation (Hurvich, Simonoff, and Tsai
     (1998)), and \code{cv.ls} specifies least-squares
     cross-validation }
-  \item{opts}{
+
+  \item{max.bb.eval}{
+    argument passed to the NOMAD solver (see \code{\link{snomadr}} for
+    further details)
+  }
+
+  \item{initial.mesh.size.real}{
+    argument passed to the NOMAD solver (see \code{\link{snomadr}} for
+    further details)
+  }
+
+  \item{initial.mesh.size.integer}{
+    argument passed to the NOMAD solver (see \code{\link{snomadr}} for
+    further details)
+  }
+
+  \item{min.mesh.size.real}{
+    argument passed to the NOMAD solver (see \code{\link{snomadr}} for
+    further details)
+  }
+
+  \item{min.mesh.size.integer}{
     arguments passed to the NOMAD solver (see \code{\link{snomadr}} for
     further details)
   }
+
+  \item{min.poll.size.real}{
+    arguments passed to the NOMAD solver (see \code{\link{snomadr}} for
+    further details)
+  }
+
+  \item{min.poll.size.integer}{
+    arguments passed to the NOMAD solver (see \code{\link{snomadr}} for
+    further details)
+  }      
+
   \item{nmulti}{
     integer number of times to restart the process of finding extrema of
     the cross-validation function from different (random) initial
@@ -281,23 +316,6 @@ for each dimension of the continuous \code{x} in \code{txdat}}
   Eventually it will be rolled into the np/npRmpi packages after the
   final status of snomadr/NOMAD gets sorted out.
 
-  Note that setting \code{opts}, \code{bandwidth.max}, and
-  \code{bandwidth.min} to the following will result in more refined
-  optimization of the objective function than the default though at the
-  cost of longer optimization times.
-
-  \preformatted{
-
-    opts <- list("MAX_BB_EVAL"=10000,
-                 "EPSILON"=.Machine$double.eps,
-                 "INITIAL_MESH_SIZE"=paste("r",1.0e-08,sep=""),
-                 "MIN_MESH_SIZE"=paste("r",1.0e-12,sep=""),
-                 "MIN_POLL_SIZE"=paste("r",1.0e-12,sep=""))
-             
-    bandwidth.min <- 1.0e-03
-    
-  }
-  
 }
 \value{
   
