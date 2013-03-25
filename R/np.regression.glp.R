@@ -1761,6 +1761,23 @@ glpcv <- function(ydat=NULL,
 
 }
 
+## 03/24/2013: Note that for the function below which uses NOMAD for
+## optimization we cross-validate on scale factors throughout
+## (i.e. bandwidths for continuous predictors are scaled according to
+## length(ydat)^{-1/(num.numeric+2*ckerorder)} while those for
+## caategorical are scaled by
+## length(ydat)^{-2/(num.numeric+2*ckerorder)}. We adjust the upper
+## bounds for the categorical variables accordingly (i.e. 1 and
+## (c-1)/c). This is done so that the grid search takes place on a
+## somewhat common scale and also allows us to sidestep the issue with
+## upper bounds where we were previously using relative tolerance (I
+## am grateful for Sebastien Le Digabel for providing hints that
+## allowed me to overcome this issue). This appears to resolve a
+## longstanding issue caused by the use of relative tolerance and
+## bounds and appears to put npglpreg() on equal footing with npreg()
+## in the np package. But npglpreg() may in fact scale better with n
+## while it admits generalized polynomials that npreg() lacks.
+
 glpcvNOMAD <- function(ydat=NULL,
                        xdat=NULL,
                        degree=NULL,
@@ -1867,11 +1884,11 @@ glpcvNOMAD <- function(ydat=NULL,
     ub <- c(rep(bandwidth.max, num.bw))
   }
 
-  ## 1000 standard deviations will be the trigger to move to the
-  ## global categorical kernel weighted polynomial fit (now that we
-  ## are using absolute initial meshes the upper bound for search is
-  ## .Machine$double.xmax and the algorithm will step quickly into
-  ## this region so this ought to assure k(0) holds...
+  ## bandwidth.switch standard deviations will be the trigger to move
+  ## to the global categorical kernel weighted polynomial fit (now
+  ## that we are using absolute initial meshes the upper bound for
+  ## search is .Machine$double.xmax and the algorithm will step
+  ## quickly into this region so this ought to assure k(0) holds).
 
   bw.switch <- c(rep(bandwidth.switch*length(ydat)^{1/(num.numeric+2*ckerorder)}, num.bw))
 
@@ -1883,7 +1900,7 @@ glpcvNOMAD <- function(ydat=NULL,
     }
   }
 
-  ## Scale lb appropriately by n, don't want this for ub.
+  ## Scale upper bounds appropriately
 
   for(i in 1:num.bw) {
     ## Need to do integer search for numeric predictors when bwtype is
@@ -1892,18 +1909,20 @@ glpcvNOMAD <- function(ydat=NULL,
       bbin[i] <- 1
     }
     if(xdat.numeric[i]!=TRUE) {
-      ## The global fit uses kernel weighting so no bound is used
-      ## hence set to lb
+      ## The global fit uses kernel weighting for categorical
+      ## variables so no switching bound is possible hence set
+      ## bw.switch to lb
       bw.switch[i] <- lb[i] <- 0.0
       ub[i] <- 1.0*length(ydat)^{2/(num.numeric+2*ckerorder)}
     }
     ## Check for unordered and Aitchison/Aitken kernel
     if(xdat.unordered[i]==TRUE && ukertype=="aitchisonaitken") {
+      ## The global fit uses kernel weighting for categorical
+      ## variables so no switching bound is possible hence set
+      ## bw.switch to lb
+      bw.switch[i] <- 0.0
       c.num <- length(unique(xdat[,i]))
       ub[i] <- (c.num-1)/c.num*length(ydat)^{2/(num.numeric+2*ckerorder)}
-      ## The global fit uses kernel weighting so no bound is used
-      ## hence set to lb
-      bw.switch[i] <- 0.0
     }
   }
 
@@ -2263,7 +2282,12 @@ glpcvNOMAD <- function(ydat=NULL,
 	fv.vec[1] <- solution$objective
 
 	bw.opt.sf <- solution$solution[1:num.bw]
+
+  ## We optimize at the level of scaling factors (multiples of
+  ## bandwidths) so we need to back out the unscaled (raw) bandwidths.
+  
   bw.opt <- NULL
+
   if(bwtype=="fixed") {
     bw.opt <- bw.opt.sf
     for(i in 1:num.numeric) {
@@ -2284,6 +2308,7 @@ glpcvNOMAD <- function(ydat=NULL,
       if(isTRUE(all.equal(degree.opt[i],ub[num.bw+i]))) warning(paste(" Optimal degree for numeric predictor ",i," equals search upper bound (", ub[num.bw+i],")",sep=""))
     }
 	}
+
 	fv <- solution$objective
 
 	best <- NULL
