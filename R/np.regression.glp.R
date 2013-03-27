@@ -2341,15 +2341,14 @@ glpcvNOMAD <- function(ydat=NULL,
   ## We optimize at the level of scaling factors (multiples of
   ## bandwidths) so we need to back out the unscaled (raw) bandwidths.
   
-  bw.opt <- NULL
+  bw.opt <- bw.opt.sf
 
   if(bwtype=="fixed") {
-    bw.opt <- bw.opt.sf
     for(i in 1:num.numeric) {
       sd.xdat <- sd.robust(xdat[,numeric.index[i]])
       bw.opt[numeric.index[i]] <- bw.opt[numeric.index[i]]*sd.xdat*length(ydat)^{-1/(num.numeric+2*ckerorder)}
     }
-  }
+  } 
 
   for(i in 1:num.bw) {
     if(!xdat.numeric[i]) {
