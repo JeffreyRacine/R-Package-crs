@@ -1949,6 +1949,7 @@ glpcvNOMAD <- function(ydat=NULL,
       bbin[i] <- 1
     }
     if(!xdat.numeric[i]) {
+      lb[i] <- 0.0
       ub[i] <- 1.0*length(ydat)^{2/(num.numeric+2*ckerorder)}
       bw.switch[i] <- ub[i]
       INITIAL.MESH.SIZE[[i]] <- initial.mesh.size.integer      
@@ -2054,12 +2055,14 @@ glpcvNOMAD <- function(ydat=NULL,
       if(any(bw.gamma[xdat.numeric]>=bw.switch[xdat.numeric])) {
         if(!all(bw.gamma[xdat.numeric]>=bw.switch[xdat.numeric])) {
           ## If there exist continuous numeric predictors that are not
-          ## smoothed out, recompute W.
+          ## smoothed out, use W (needed for the correct order of the
+          ## polynomial) but only retain those x's for the kernel
+          ## smooth that are relevant
           lscv <- minimand.cv.ls(bws=bw.gamma[bw.gamma<bw.switch],
                                  ydat=ydat,
                                  xdat=xdat[,bw.gamma<bw.switch,drop=FALSE],
                                  degree=degree[xdat.numeric[bw.gamma<bw.switch]],
-                                 W=W.glp(xdat=xdat[,bw.gamma<bw.switch,drop=FALSE],degree=degree[xdat.numeric[bw.gamma<bw.switch]],Bernstein=Bernstein),
+                                 W=W,
                                  ckertype=ckertype,
                                  ckerorder=ckerorder,
                                  ukertype=ukertype,
@@ -2158,12 +2161,14 @@ glpcvNOMAD <- function(ydat=NULL,
       if(any(bw.gamma[xdat.numeric]>=bw.switch[xdat.numeric])) {
         if(!all(bw.gamma[xdat.numeric]>=bw.switch[xdat.numeric])) {
           ## If there exist continuous numeric predictors that are not
-          ## smoothed out, recompute W.
+          ## smoothed out, use W (needed for the correct order of the
+          ## polynomial) but only retain those x's for the kernel
+          ## smooth that are relevant
           aicc <- minimand.cv.aic(bws=bw.gamma[bw.gamma<bw.switch],
                                   ydat=ydat,
                                   xdat=xdat[,bw.gamma<bw.switch,drop=FALSE],
                                   degree=degree[xdat.numeric[bw.gamma<bw.switch]],
-                                  W=W.glp(xdat=xdat[,bw.gamma<bw.switch,drop=FALSE],degree=degree[xdat.numeric[bw.gamma<bw.switch]],Bernstein=Bernstein),
+                                  W=W,
                                   ckertype=ckertype,
                                   ckerorder=ckerorder,
                                   ukertype=ukertype,
