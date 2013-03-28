@@ -1790,13 +1790,13 @@ glpcv <- function(ydat=NULL,
 ## optimization we cross-validate on scale factors throughout
 ## (i.e. bandwidths for continuous predictors are scaled according to
 ## length(ydat)^{-1/(num.numeric+2*ckerorder)} while those for
-## caategorical are scaled by
+## categorical are scaled by
 ## length(ydat)^{-2/(num.numeric+2*ckerorder)}. We adjust the upper
 ## bounds for the categorical variables accordingly (i.e. 1 and
 ## (c-1)/c). This is done so that the grid search takes place on a
-## somewhat common scale and also allows us to sidestep the issue with
-## upper bounds where we were previously using relative tolerance (I
-## am grateful for Sebastien Le Digabel for providing hints that
+## _somewhat_ common scale and also allows us to sidestep the issue
+## with upper bounds where we were previously using relative tolerance
+## (I am grateful for Sebastien Le Digabel for providing hints that
 ## allowed me to overcome this issue). This appears to resolve a
 ## longstanding issue caused by the use of relative tolerance and
 ## bounds and appears to put npglpreg() on equal footing with npreg()
@@ -1891,7 +1891,7 @@ glpcvNOMAD <- function(ydat=NULL,
   if(is.null(nmulti)) nmulti <- min(5,num.bw)
 
   ## Determine which predictors are categorical and which are
-  ## discrete... we care about unordered categorical kernels if the
+  ## numeric... we care about unordered categorical kernels if the
   ## Aitchison & Aitken kernel is used since its bandwidth bounds are
   ## [0,(c-1)/c] and not 0/1 as are the rest of the unordered and
   ## ordered kernel bandwidth bounds.
@@ -1915,11 +1915,15 @@ glpcvNOMAD <- function(ydat=NULL,
     ub <- c(rep(bandwidth.max, num.bw))
   }
 
-  ## bandwidth.switch standard deviations will be the trigger to move
-  ## to the global categorical kernel weighted polynomial fit (now
-  ## that we are using absolute initial meshes the upper bound for
-  ## search is .Machine$double.xmax and the algorithm will step
-  ## quickly into this region so this ought to assure k(0) holds).
+  ## The input `bandwidth.switch' is the number of (scaled) standard
+  ## deviations that will trigger the move to the global categorical
+  ## kernel weighted polynomial fit for numeric predictors (now that
+  ## we are using absolute initial meshes the upper bound for search
+  ## is .Machine$double.xmax and the algorithm will step quickly into
+  ## this region so this ought to assure k(0) holds). ub will be used
+  ## for the categorical predictors. This helps speed up kd-guided
+  ## search in the presence of large bandwidths (which otherwise would
+  ## descend to the root of the tree).
 
   bw.switch <- c(rep(bandwidth.switch*length(ydat)^{1/(num.numeric+2*ckerorder)}, num.bw))
 
@@ -1931,7 +1935,8 @@ glpcvNOMAD <- function(ydat=NULL,
     }
   }
 
-  ## Scale upper bounds appropriately
+  ## Set parameters for NOMAD per variables, and the upper bounds,
+  ## `trigger' for switching etc.
 
   INITIAL.MESH.SIZE <- list()
   MIN.MESH.SIZE <- list()
@@ -1961,7 +1966,9 @@ glpcvNOMAD <- function(ydat=NULL,
     }
   }
 
-  ## Use degree for initial values if provided
+  ## Use degree for initial values if provided, and check whether the
+  ## polynomial basis is well-conditioned or not. If it is, use the
+  ## maximum well-conditioned basis.
 
   ill.conditioned <- check.max.degree(xdat,rep(degree.max,num.numeric),Bernstein=Bernstein)
   degree.max.vec <- attr(ill.conditioned, "degree.max.vec")
@@ -1975,6 +1982,8 @@ glpcvNOMAD <- function(ydat=NULL,
     }
   }
 
+  ## Assign the NOMAD parameters to opts which is passed to snomadr()
+
   opts <- list()
   opts$"EPSILON" <- .Machine$double.eps
   opts$"MAX_BB_EVAL" <- max.bb.eval
@@ -1986,7 +1995,8 @@ glpcvNOMAD <- function(ydat=NULL,
     if(cv == "degree-bandwidth") {
       degree <- numeric(num.numeric)
       for(i in 1:num.numeric) {
-        ## Always start from local linear for first attempt...
+        ## We adopt the convention to always start from a polynomial
+        ## or degree 1 for the first search attempt
         degree[i] <- 1
       }
     }
@@ -1995,17 +2005,16 @@ glpcvNOMAD <- function(ydat=NULL,
     }
   }
 
-  ## Here we do some smart branching during search. If the bandwidth
-  ## for a categorical predictor hits its upper bound it is
-  ## `smoothed out', its kernel becomes a constant function, and the
-  ## categorical predictor and does not influence the fit,
+  ## Here we attempt to do some `smart' branching during search. If
+  ## the bandwidth for a categorical predictor hits its upper bound it
+  ## is `smoothed out', its kernel becomes a constant function, and
+  ## the categorical predictor and does not influence the fit,
   ## delete-one or otherwise. If the bandwidth for any continuous
-  ## predictor is `large' (> bandwidth.max), the variable is
-  ## smoothed out if its polynomial degree is zero otherwise it is
-  ## the global polynomial fit (W) in that dimension If all
-  ## bandwidths hit their upper bound/are large, we get the global
-  ## polynomial OLS fit. Note we have both the ls.cv and aic.cv
-  ## methods.
+  ## predictor is `large' (> bandwidth.max), the variable is smoothed
+  ## out if its polynomial degree is zero otherwise it is the global
+  ## polynomial fit (W) in that dimension If all bandwidths hit their
+  ## upper bound/are large, we get the global polynomial OLS fit. Note
+  ## we have both the ls.cv and aic.cv methods.
     
   ## Create the function wrappers to be fed to the snomadr solver for
   ## leave-one-out cross-validation and Hurvich, Simonoff, and Tsai's
@@ -2200,15 +2209,12 @@ glpcvNOMAD <- function(ydat=NULL,
   params$Bernstein <- Bernstein
   params$bw.switch <- bw.switch
 
-  ## No constraints
-
-  bbout <-c(0)
-
   ## Multistarting
 
   fv.vec <- numeric(nmulti)
 
   ## Whether or not to display the information in snomadr
+
   print.output <- FALSE
   console <- newLineConsole()
   if(!is.null(opts$DISPLAY_DEGREE)){
@@ -2221,22 +2227,23 @@ glpcvNOMAD <- function(ydat=NULL,
     console <- printPush("\rCalling NOMAD (Nonsmooth Optimization by Mesh Adaptive Direct Search)\n",console = console)
   }
 
-  degree.opt <- degree
-
   ## Use bandwidth for initial values if provided
 
   if(is.null(bandwidth)) {
-    init.search.vals <- runif(num.bw,0,1)*length(ydat)^{2/(num.numeric+2*ckerorder)}
+    init.search.vals <- numeric()
     for(i in 1:num.bw) {
       if(xdat.numeric[i]==TRUE && bwtype=="fixed") {
-        init.search.vals[i] <- lb[i] + runif(1,0.5,1.5)*length(ydat)^{2/(num.numeric+2*ckerorder)}
+        init.search.vals[i] <- runif(1,0.5+lb[i],1.5)*length(ydat)^{2/(num.numeric+2*ckerorder)}
       }
       if(xdat.numeric[i]==TRUE && bwtype!="fixed") {
-        init.search.vals[i] <- round(runif(1,2,sqrt(ub[i])))
+        init.search.vals[i] <- round(runif(1,lb[i],sqrt(ub[i])))
+      }
+      if(xdat.numeric[i]!=TRUE) {
+        init.search.vals[i] <- runif(1,lb[i],1)*length(ydat)^{2/(num.numeric+2*ckerorder)}
       }
       if(xdat.unordered[i]==TRUE && ukertype=="aitchisonaitken") {
         c.num <- length(unique(xdat[,i]))
-        init.search.vals[i] <- runif(1,0,(c.num-1)/c.num)*length(ydat)^{2/(num.numeric+2*ckerorder)}
+        init.search.vals[i] <- runif(1,lb[i],(c.num-1)/c.num-lb[i])*length(ydat)^{2/(num.numeric+2*ckerorder)}
       }
     }
   } else {
@@ -2248,19 +2255,21 @@ glpcvNOMAD <- function(ydat=NULL,
 	x0.pts <- matrix(numeric(1), nmulti, length(bbin))
 
 	for(iMulti in 1:nmulti) {
-    ## First initialize to values for factors (`liracine' kernel)
     if(iMulti != 1) {
-      init.search.vals <- runif(num.bw,0,1)*length(ydat)^{2/(num.numeric+2*ckerorder)}
+      init.search.vals <- numeric()
       for(i in 1:num.bw) {
         if(xdat.numeric[i]==TRUE && bwtype=="fixed") {
-          init.search.vals[i] <- lb[i] + runif(1,0.5,1.5)*length(ydat)^{2/(num.numeric+2*ckerorder)}
+          init.search.vals[i] <- runif(1,0.5+lb[i],1.5)*length(ydat)^{2/(num.numeric+2*ckerorder)}
         }
         if(xdat.numeric[i]==TRUE && bwtype!="fixed") {
-          init.search.vals[i] <- round(runif(1,2,sqrt(ub[i])))
+          init.search.vals[i] <- round(runif(1,lb[i],sqrt(ub[i])))
+        }
+        if(xdat.numeric[i]!=TRUE) {
+          init.search.vals[i] <- runif(1,lb[i],1)*length(ydat)^{2/(num.numeric+2*ckerorder)}
         }
         if(xdat.unordered[i]==TRUE && ukertype=="aitchisonaitken") {
           c.num <- length(unique(xdat[,i]))
-          init.search.vals[i] <- runif(1,0,(c.num-1)/c.num)*length(ydat)^{2/(num.numeric+2*ckerorder)}
+          init.search.vals[i] <- runif(1,lb[i],(c.num-1)/c.num-lb[i])*length(ydat)^{2/(num.numeric+2*ckerorder)}
         }
       }
     }
@@ -2285,7 +2294,7 @@ glpcvNOMAD <- function(ydat=NULL,
 												n=length(bbin),
 												x0=as.numeric(x0.pts),
 												bbin=bbin,
-												bbout=bbout,
+												bbout=0,
 												lb=lb,
 												ub=ub,
 												nmulti=ifelse(nmulti==1,0,nmulti),
@@ -2299,7 +2308,7 @@ glpcvNOMAD <- function(ydat=NULL,
 												n=length(bbin),
 												x0=as.numeric(x0.pts),
 												bbin=bbin,
-												bbout=bbout,
+												bbout=0,
 												lb=lb,
 												ub=ub,
 												nmulti=ifelse(nmulti==1,0,nmulti),
