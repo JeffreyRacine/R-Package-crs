@@ -9,7 +9,7 @@
 ## are identical though.
 
 NZD <- function(a) {
-  sapply(1:NROW(a), function(i) {if(a[i] < 0) min(-.Machine$double.xmin,a[i]) else max(.Machine$double.xmin,a[i])})
+  sapply(1:NROW(a), function(i) {if(a[i] < 0) min(-.Machine$double.eps,a[i]) else max(.Machine$double.eps,a[i])})
 }
 
 sd.robust <- function(x) {
@@ -603,8 +603,8 @@ npglpreg.formula <- function(formula,
                              degree.max=10,
                              degree.min=0,
                              bandwidth.max=.Machine$double.xmax,
-                             bandwidth.min=1.0e-02,
-                             bandwidth.switch=1.0e+05,
+                             bandwidth.min=.Machine$double.eps,
+                             bandwidth.switch=1.0e+06,
                              max.bb.eval=10000,
                              initial.mesh.size.real="1",
                              initial.mesh.size.integer="1",
@@ -1819,8 +1819,8 @@ glpcvNOMAD <- function(ydat=NULL,
                        degree.max=10,
                        degree.min=0,
                        bandwidth.max=.Machine$double.xmax,
-                       bandwidth.min=1.0e-02,
-                       bandwidth.switch=1.0e+05,
+                       bandwidth.min=.Machine$double.eps,
+                       bandwidth.switch=1.0e+06,
                        max.bb.eval=10000,
                        initial.mesh.size.real="1",
                        initial.mesh.size.integer="1",
