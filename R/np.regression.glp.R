@@ -603,15 +603,15 @@ npglpreg.formula <- function(formula,
                              degree.max=10,
                              degree.min=0,
                              bandwidth.max=.Machine$double.xmax,
-                             bandwidth.min=1e-02,
-                             bandwidth.switch=1e+05,
+                             bandwidth.min=1.0e-02,
+                             bandwidth.switch=1.0e+05,
                              max.bb.eval=10000,
                              initial.mesh.size.real="1",
                              initial.mesh.size.integer="1",
-                             min.mesh.size.real="1e-06",
-                             min.mesh.size.integer="1e-06",
-                             min.poll.size.real="1e-08",
-                             min.poll.size.integer="1e-08",
+                             min.mesh.size.real="1.0e-06",
+                             min.mesh.size.integer="1.0e-06",
+                             min.poll.size.real="1.0e-08",
+                             min.poll.size.integer="1.0e-08",
                              gradient.vec=NULL,
                              gradient.categorical=FALSE,
                              cv.shrink=TRUE,
@@ -1092,7 +1092,7 @@ glpregEst <- function(tydat=NULL,
     }
 
     coef.mat <- matrix(maxPenalty,ncol(W),n.eval)
-    epsilon <- 1/n.eval
+    epsilon <- 1.0/n.eval
     ridge <- double(n.eval)
     doridge <- !logical(n.eval)
 
@@ -1282,7 +1282,7 @@ minimand.cv.ls <- function(bws=NULL,
       }
 
       mean.loo <- rep(maxPenalty,n)
-      epsilon <- 1/n
+      epsilon <- 1.0/n
       ridge <- double(n)
       doridge <- !logical(n)
 
@@ -1465,7 +1465,7 @@ minimand.cv.aic <- function(bws=NULL,
       }
 
       ghat <- rep(maxPenalty,n)
-      epsilon <- 1/n
+      epsilon <- 1.0/n
       ridge <- double(n)
       doridge <- !logical(n)
 
@@ -1819,15 +1819,15 @@ glpcvNOMAD <- function(ydat=NULL,
                        degree.max=10,
                        degree.min=0,
                        bandwidth.max=.Machine$double.xmax,
-                       bandwidth.min=1e-02,
-                       bandwidth.switch=1e+05,
+                       bandwidth.min=1.0e-02,
+                       bandwidth.switch=1.0e+05,
                        max.bb.eval=10000,
                        initial.mesh.size.real="1",
                        initial.mesh.size.integer="1",
-                       min.mesh.size.real="1e-06",
-                       min.mesh.size.integer="1e-06",
-                       min.poll.size.real="1e-08",
-                       min.poll.size.integer="1e-08",
+                       min.mesh.size.real="1.0e-06",
+                       min.mesh.size.integer="1.0e-06",
+                       min.poll.size.real="1.0e-08",
+                       min.poll.size.integer="1.0e-08",
                        cv.shrink=TRUE,
                        cv.warning=FALSE,
                        Bernstein=TRUE,
@@ -1947,11 +1947,7 @@ glpcvNOMAD <- function(ydat=NULL,
       bbin[i] <- 1
     }
     if(!xdat.numeric[i]) {
-      ## 03/28/13, New Haven - scale down but not too small otherwise
-      ## for very small bandwidths for categorical predictors this
-      ## creates havoc
-      lb[i] <- lb[i]*length(ydat)^{-2/(num.numeric+2*ckerorder)}
-      ub[i] <- length(ydat)^{2/(num.numeric+2*ckerorder)}
+      ub[i] <- 1.0*length(ydat)^{2/(num.numeric+2*ckerorder)}
       bw.switch[i] <- ub[i]
       INITIAL.MESH.SIZE[[i]] <- initial.mesh.size.integer      
       MIN.MESH.SIZE[[i]] <- min.mesh.size.integer
@@ -2001,13 +1997,16 @@ glpcvNOMAD <- function(ydat=NULL,
 
   ## Here we do some smart branching during search. If the bandwidth
   ## for a categorical predictor hits its upper bound it is
-  ## `irrelevant' its kernel becomes a constant function, and the
-  ## categorical predictor and does not influence the fit, delete-one
-  ## or otherwise. If the bandwidth for any continuous predictor is
-  ## `large' (> bandwidth.max), the effect of the predictor is that of
-  ## a global polynomial fit (W) in that dimension. If all bandwidths
-  ## hit their upper bound/are large, we get the global polynomial OLS
-  ## fit. Note we have both the ls.cv and aic.cv methods.  Below we
+  ## `smoothed out', its kernel becomes a constant function, and the
+  ## categorical predictor and does not influence the fit,
+  ## delete-one or otherwise. If the bandwidth for any continuous
+  ## predictor is `large' (> bandwidth.max), the variable is
+  ## smoothed out if its polynomial degree is zero otherwise it is
+  ## the global polynomial fit (W) in that dimension If all
+  ## bandwidths hit their upper bound/are large, we get the global
+  ## polynomial OLS fit. Note we have both the ls.cv and aic.cv
+  ## methods.
+    
   ## Create the function wrappers to be fed to the snomadr solver for
   ## leave-one-out cross-validation and Hurvich, Simonoff, and Tsai's
   ## AIC_c approach
