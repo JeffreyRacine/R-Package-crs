@@ -541,8 +541,6 @@ predict.npglpreg <- function(object,
 
     ## Return the predicted values.
 
-    ## Nov 22 XXX - do we need to feed cv.shrink and cv.warning here???
-
     est <- npglpreg.default(tydat=tydat,
                             txdat=txdat,
                             exdat=exdat,
@@ -605,15 +603,15 @@ npglpreg.formula <- function(formula,
                              degree.max=10,
                              degree.min=0,
                              bandwidth.max=.Machine$double.xmax,
-                             bandwidth.min=1.0e-02,
-                             bandwidth.switch=1.0e+05,
+                             bandwidth.min=1e-02,
+                             bandwidth.switch=1e+05,
                              max.bb.eval=10000,
                              initial.mesh.size.real="1",
                              initial.mesh.size.integer="1",
-                             min.mesh.size.real="1.0e-06",
-                             min.mesh.size.integer="1.0e-06",
-                             min.poll.size.real="1.0e-08",
-                             min.poll.size.integer="1.0e-08",
+                             min.mesh.size.real="1e-06",
+                             min.mesh.size.integer="1e-06",
+                             min.poll.size.real="1e-08",
+                             min.poll.size.integer="1e-08",
                              gradient.vec=NULL,
                              gradient.categorical=FALSE,
                              cv.shrink=TRUE,
@@ -1094,7 +1092,7 @@ glpregEst <- function(tydat=NULL,
     }
 
     coef.mat <- matrix(maxPenalty,ncol(W),n.eval)
-    epsilon <- 1.0/n.eval
+    epsilon <- 1/n.eval
     ridge <- double(n.eval)
     doridge <- !logical(n.eval)
 
@@ -1191,6 +1189,10 @@ minimand.cv.ls <- function(bws=NULL,
 
   maxPenalty <- sqrt(.Machine$double.xmax)
 
+  console <- newLineConsole()
+  console <- printClear(console)
+  console <- printPop(console)
+
   if(!is.null(W)) {
     ## Check for positive degrees of freedom
     if(ncol(W) >= nrow(W)-1) {
@@ -1203,10 +1205,6 @@ minimand.cv.ls <- function(bws=NULL,
       return(maxPenalty)
     }
   }
-
-  console <- newLineConsole()
-  console <- printClear(console)
-  console <- printPop(console)
 
   if(any(bws<=0)) {
 
@@ -1284,7 +1282,7 @@ minimand.cv.ls <- function(bws=NULL,
       }
 
       mean.loo <- rep(maxPenalty,n)
-      epsilon <- 1.0/n
+      epsilon <- 1/n
       ridge <- double(n)
       doridge <- !logical(n)
 
@@ -1467,7 +1465,7 @@ minimand.cv.aic <- function(bws=NULL,
       }
 
       ghat <- rep(maxPenalty,n)
-      epsilon <- 1.0/n
+      epsilon <- 1/n
       ridge <- double(n)
       doridge <- !logical(n)
 
@@ -1821,15 +1819,15 @@ glpcvNOMAD <- function(ydat=NULL,
                        degree.max=10,
                        degree.min=0,
                        bandwidth.max=.Machine$double.xmax,
-                       bandwidth.min=1.0e-02,
-                       bandwidth.switch=1.0e+05,
+                       bandwidth.min=1e-02,
+                       bandwidth.switch=1e+05,
                        max.bb.eval=10000,
                        initial.mesh.size.real="1",
                        initial.mesh.size.integer="1",
-                       min.mesh.size.real="1.0e-06",
-                       min.mesh.size.integer="1.0e-06",
-                       min.poll.size.real="1.0e-08",
-                       min.poll.size.integer="1.0e-08",
+                       min.mesh.size.real="1e-06",
+                       min.mesh.size.integer="1e-06",
+                       min.poll.size.real="1e-08",
+                       min.poll.size.integer="1e-08",
                        cv.shrink=TRUE,
                        cv.warning=FALSE,
                        Bernstein=TRUE,
@@ -1949,8 +1947,11 @@ glpcvNOMAD <- function(ydat=NULL,
       bbin[i] <- 1
     }
     if(!xdat.numeric[i]) {
-      lb[i] <- 0.0
-      ub[i] <- 1.0*length(ydat)^{2/(num.numeric+2*ckerorder)}
+      ## 03/28/13, New Haven - scale down but not too small otherwise
+      ## for very small bandwidths for categorical predictors this
+      ## creates havoc
+      lb[i] <- lb[i]*length(ydat)^{-2/(num.numeric+2*ckerorder)}
+      ub[i] <- length(ydat)^{2/(num.numeric+2*ckerorder)}
       bw.switch[i] <- ub[i]
       INITIAL.MESH.SIZE[[i]] <- initial.mesh.size.integer      
       MIN.MESH.SIZE[[i]] <- min.mesh.size.integer
@@ -1998,6 +1999,15 @@ glpcvNOMAD <- function(ydat=NULL,
     }
   }
 
+  ## Here we do some smart branching during search. If the bandwidth
+  ## for a categorical predictor hits its upper bound it is
+  ## `irrelevant' its kernel becomes a constant function, and the
+  ## categorical predictor and does not influence the fit, delete-one
+  ## or otherwise. If the bandwidth for any continuous predictor is
+  ## `large' (> bandwidth.max), the effect of the predictor is that of
+  ## a global polynomial fit (W) in that dimension. If all bandwidths
+  ## hit their upper bound/are large, we get the global polynomial OLS
+  ## fit. Note we have both the ls.cv and aic.cv methods.  Below we
   ## Create the function wrappers to be fed to the snomadr solver for
   ## leave-one-out cross-validation and Hurvich, Simonoff, and Tsai's
   ## AIC_c approach
@@ -2035,76 +2045,54 @@ glpcvNOMAD <- function(ydat=NULL,
                degree=degree,
                Bernstein=Bernstein)
 
-    ## Here we do some smart branching during search. If any variable
-    ## is smoothed out its kernel becomes a constant function and does
-    ## not influence the fit, delete-one or otherwise. So we compute
-    ## the delete-one fit (cv function) only on the remaining relevant
-    ## predictors. And if all are smoothed out the CV function is
-    ## trivial.
-    
-    if(all(bw.gamma >= bw.switch)) {
-      ## All predictors, numeric and categorical, are smoothed out
-      console <- newLineConsole()
-      console <- printClear(console)
-      console <- printPop(console)
-      lscv <- mean((ydat-mean(ydat))^2)
-      
-      console <- printPush("\r                                                                         ",console = console)
-      console <- printPush(paste("\rfv = ",format(lscv)," ",sep=""),console = console)
-    } else {
-      if(any(bw.gamma[xdat.numeric]>=bw.switch[xdat.numeric])) {
-        if(!all(bw.gamma[xdat.numeric]>=bw.switch[xdat.numeric])) {
-          ## If there exist continuous numeric predictors that are not
-          ## smoothed out, use W (needed for the correct order of the
-          ## polynomial) but only retain those x's for the kernel
-          ## smooth that are relevant
-          lscv <- minimand.cv.ls(bws=bw.gamma[bw.gamma<bw.switch],
-                                 ydat=ydat,
-                                 xdat=xdat[,bw.gamma<bw.switch,drop=FALSE],
-                                 degree=degree[bw.gamma[xdat.numeric]<bw.switch[xdat.numeric]],
-                                 W=W,
-                                 ckertype=ckertype,
-                                 ckerorder=ckerorder,
-                                 ukertype=ukertype,
-                                 okertype=okertype,
-                                 bwtype=bwtype,
-                                 cv.shrink=cv.shrink,
-                                 cv.warning=cv.warning,
-                                 ...)
-        } else {
-          ## If all continuous numeric predictors that are smoothed
-          ## out, conduct constant regression
-          lscv <- minimand.cv.ls(bws=bw.gamma[bw.gamma<bw.switch],
-                                 ydat=ydat,
-                                 xdat=xdat[,bw.gamma<bw.switch,drop=FALSE],
-                                 degree=0,
-                                 W=as.matrix(1),## dummy to trick cv.ls to conduct local constant estimation (degree==0)
-                                 ckertype=ckertype,
-                                 ckerorder=ckerorder,
-                                 ukertype=ukertype,
-                                 okertype=okertype,
-                                 bwtype=bwtype,
-                                 cv.shrink=cv.shrink,
-                                 cv.warning=cv.warning,
-                                 ...)
-        }
+    console <- newLineConsole()
+    console <- printClear(console)
+    console <- printPop(console)
+
+    if(all(bw.gamma < bw.switch)) {
+      ## No bandwidths hit their upper bounds
+      lscv <- minimand.cv.ls(bws=bw.gamma,
+                             ydat=ydat,
+                             xdat=xdat,
+                             degree=degree,
+                             W=W,
+                             ckertype=ckertype,
+                             ckerorder=ckerorder,
+                             ukertype=ukertype,
+                             okertype=okertype,
+                             bwtype=bwtype,
+                             cv.shrink=cv.shrink,
+                             cv.warning=cv.warning,
+                             ...)
+    } else if(all(bw.gamma >= bw.switch)) {
+      ## All bandwidths hit their upper bounds
+      if(all(degree==0)) {
+        lscv <- mean((ydat-mean(ydat))^2)
       } else {
-        ## If none are smoothed out, compute the whole enchilada
-        lscv <- minimand.cv.ls(bws=bw.gamma,
-                               ydat=ydat,
-                               xdat=xdat,
-                               degree=degree,
-                               W=W,
-                               ckertype=ckertype,
-                               ckerorder=ckerorder,
-                               ukertype=ukertype,
-                               okertype=okertype,
-                               bwtype=bwtype,
-                               cv.shrink=cv.shrink,
-                               cv.warning=cv.warning,
-                               ...)
+        model <- lm(ydat~W-1)
+        htt <- hatvalues(model)
+        htt <- ifelse(htt < 1, htt, 1-.Machine$double.eps)
+        lscv <- mean((residuals(model)/(1-htt))^2)
       }
+    } else {
+      ## Some bandwidths hit their upper bounds
+      degree.sub <- degree[bw.gamma[xdat.numeric]<bw.switch[xdat.numeric]]
+      lscv <- minimand.cv.ls(bws=bw.gamma[bw.gamma<bw.switch],
+                             ydat=ydat,
+                             xdat=xdat[,bw.gamma<bw.switch,drop=FALSE],
+                             degree=if(length(degree.sub)==0){0}else{degree.sub},
+                             W=W,
+                             ckertype=ckertype,
+                             ckerorder=ckerorder,
+                             ukertype=ukertype,
+                             okertype=okertype,
+                             bwtype=bwtype,
+                             cv.shrink=cv.shrink,
+                             cv.warning=cv.warning,
+                             ...)
     }
+    console <- printPush("\r                                                                         ",console = console)
+    console <- printPush(paste("\rfv = ",format(lscv)," ",sep=""),console = console)
     return(lscv)
   }
 
@@ -2141,76 +2129,54 @@ glpcvNOMAD <- function(ydat=NULL,
                degree=degree,
                Bernstein=Bernstein)
 
-    ## Here we do some smart branching during search. If any variable
-    ## is smoothed out its kernel becomes a constant function and does
-    ## not influence the fit, delete-one or otherwise. So we compute
-    ## the delete-one fit (cv function) only on the remaining relevant
-    ## predictors. And if all are smoothed out the CV function is
-    ## trivial.
-    
-    if(all(bw.gamma >= bw.switch)) {
-      ## All predictors, numeric and categorical, are smoothed out
-      console <- newLineConsole()
-      console <- printClear(console)
-      console <- printPop(console)
-      aicc <- mean((ydat-mean(ydat))^2)
-      
-      console <- printPush("\r                                                                         ",console = console)
-      console <- printPush(paste("\rfv = ",format(aicc)," ",sep=""),console = console)
-    } else {
-      if(any(bw.gamma[xdat.numeric]>=bw.switch[xdat.numeric])) {
-        if(!all(bw.gamma[xdat.numeric]>=bw.switch[xdat.numeric])) {
-          ## If there exist continuous numeric predictors that are not
-          ## smoothed out, use W (needed for the correct order of the
-          ## polynomial) but only retain those x's for the kernel
-          ## smooth that are relevant
-          aicc <- minimand.cv.aic(bws=bw.gamma[bw.gamma<bw.switch],
-                                  ydat=ydat,
-                                  xdat=xdat[,bw.gamma<bw.switch,drop=FALSE],
-                                  degree=degree[bw.gamma[xdat.numeric]<bw.switch[xdat.numeric]],
-                                  W=W,
-                                  ckertype=ckertype,
-                                  ckerorder=ckerorder,
-                                  ukertype=ukertype,
-                                  okertype=okertype,
-                                  bwtype=bwtype,
-                                  cv.shrink=cv.shrink,
-                                  cv.warning=cv.warning,
-                                  ...)
-        } else {
-          ## If all continuous numeric predictors that are smoothed
-          ## out, conduct constant regression
-          aicc <- minimand.cv.aic(bws=bw.gamma[bw.gamma<bw.switch],
-                                  ydat=ydat,
-                                  xdat=xdat[,bw.gamma<bw.switch,drop=FALSE],
-                                  degree=0,
-                                  W=as.matrix(1),## dummy to trick cv.ls to conduct local constant estimation (degree==0)
-                                  ckertype=ckertype,
-                                  ckerorder=ckerorder,
-                                  ukertype=ukertype,
-                                  okertype=okertype,
-                                  bwtype=bwtype,
-                                  cv.shrink=cv.shrink,
-                                  cv.warning=cv.warning,
-                                  ...)
-        }
+    console <- newLineConsole()
+    console <- printClear(console)
+    console <- printPop(console)
+
+    if(all(bw.gamma < bw.switch)) {
+      ## No bandwidths hit their upper bounds
+      aicc <- minimand.cv.aic(bws=bw.gamma,
+                              ydat=ydat,
+                              xdat=xdat,
+                              degree=degree,
+                              W=W,
+                              ckertype=ckertype,
+                              ckerorder=ckerorder,
+                              ukertype=ukertype,
+                              okertype=okertype,
+                              bwtype=bwtype,
+                              cv.shrink=cv.shrink,
+                              cv.warning=cv.warning,
+                              ...)
+    } else if(all(bw.gamma >= bw.switch)) {
+      ## All bandwidths hit their upper bounds
+      if(all(degree==0)) {
+        aicc <- mean((ydat-mean(ydat))^2)
       } else {
-        ## If none are smoothed out, compute the whole enchilada
-        aicc <- minimand.cv.aic(bws=bw.gamma,
-                                ydat=ydat,
-                                xdat=xdat,
-                                degree=degree,
-                                W=W,
-                                ckertype=ckertype,
-                                ckerorder=ckerorder,
-                                ukertype=ukertype,
-                                okertype=okertype,
-                                bwtype=bwtype,
-                                cv.shrink=cv.shrink,
-                                cv.warning=cv.warning,
-                                ...)
+        model <- lm(ydat~W-1)
+        htt <- hatvalues(model)
+        htt <- ifelse(htt < 1, htt, 1-.Machine$double.eps)
+        aicc <- mean((residuals(model)/(1-htt))^2)
       }
+    } else {
+      ## Some bandwidths hit their upper bounds
+      degree.sub <- degree[bw.gamma[xdat.numeric]<bw.switch[xdat.numeric]]
+      aicc <- minimand.cv.aic(bws=bw.gamma[bw.gamma<bw.switch],
+                              ydat=ydat,
+                              xdat=xdat[,bw.gamma<bw.switch,drop=FALSE],
+                              degree=if(length(degree.sub)==0){0}else{degree.sub},
+                              W=W,
+                              ckertype=ckertype,
+                              ckerorder=ckerorder,
+                              ukertype=ukertype,
+                              okertype=okertype,
+                              bwtype=bwtype,
+                              cv.shrink=cv.shrink,
+                              cv.warning=cv.warning,
+                              ...)
     }
+    console <- printPush("\r                                                                         ",console = console)
+    console <- printPush(paste("\rfv = ",format(aicc)," ",sep=""),console = console)
     return(aicc)
   }
 
