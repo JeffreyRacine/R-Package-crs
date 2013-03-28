@@ -2345,7 +2345,9 @@ glpcvNOMAD <- function(ydat=NULL,
     for(i in num.numeric){
       if(isTRUE(all.equal(degree.opt[i],ub[num.bw+i]))) warning(paste(" Optimal degree for numeric predictor ",i," equals search upper bound (", ub[num.bw+i],")",sep=""))
     }
-	}
+	} else {
+    degree.opt <- degree
+  }
 
   if(!is.null(opts$MAX_BB_EVAL)){
     if(nmulti>0) {if(nmulti*opts$MAX_BB_EVAL <= solution$bbe) warning(paste(" MAX_BB_EVAL reached in NOMAD: perhaps use a larger value...", sep=""))} 
