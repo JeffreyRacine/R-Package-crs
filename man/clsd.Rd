@@ -104,9 +104,11 @@ clsd(x=NULL,
      the tails (default \code{1/log(n)})
    }
 
-   \item{linearize}{
-     a logical value indicating whether to linearize the first and last
-     bases (default \code{TRUE}
+   \item{linearize}{ a logical value indicating whether to linearize the
+     first and last bases (default \code{TRUE}) - note that when using
+     \code{linearize=FALSE} it is advisable to use multistarting
+     (e.g. nmulti=5) to attempt ensure successful maximization of the
+     likelihood function (all weights are restricted to be negative)
    }
 
    \item{n.integrate}{
@@ -148,17 +150,16 @@ clsd(x=NULL,
 \value{
 
   \code{clsd} returns a \code{clsd} object.  The generic functions
-    \code{\link{fitted}} and \code{\link{residuals}} extract (or
-    generate) estimated values and residuals. Furthermore, the functions
-    \code{\link{summary}}, \code{\link{predict}}, and \code{\link{plot}}
-    (options \code{mean=FALSE}, \code{deriv=i} where \eqn{i} is an
-    integer, \code{ci=FALSE}, \code{persp.rgl=FALSE},
-    \code{plot.behavior=c("plot","plot-data","data")},
-    \code{xtrim=0.0},\code{xq=0.5}) support objects of this type. The
-    returned object has the following components:
+    \code{\link{summary}} and \code{\link{plot}} support objects of this
+    type. The returned object has the following components:
 
-  \item{fitted.values}{ estimates of the regression function
-    (conditional mean) at the sample points or evaluation points }
+  \item{density}{ estimates of the density function
+    at the sample points}
+
+  \item{density.xnorm}{ the density evaluated on the `extended range'
+  of the data }
+
+  \item{xnorm}{ the `extended range' of the data }
 
   \item{degree}{ integer/vector specifying the degree of the B-spline
     basis for each dimension of the continuous \code{x}}
@@ -166,14 +167,20 @@ clsd(x=NULL,
   \item{segments}{ integer/vector specifying the number of segments of
   the B-spline basis for each dimension of the continuous \code{x}}
 
-  \item{deriv.mat}{ a matrix of derivatives (or differences in levels
-  for the categorical \code{z}) whose order is determined by
-  \code{deriv=} in the \code{clsd} call }
-
 }
   
 \section{Usage Issues}{
 
+  The use of a single linear segment for the left and rightmost spline
+  bases can have lead to undesirable tail behavior beyond the range of
+  the data. If the estimated density projected beyond the range of the
+  data is unsatisfactory, you might consider \code{linearize=FALSE}
+  which uses the full basis restricted to have negative weights ensuring
+  decaying tails outside of the range of the data though be forewarned
+  that the restriction to negative weights may result in bizarre results
+  for certain distributions so verify that the results on the interior
+  are comparable to those with \code{linearize=TRUE} (see one of the
+  examples below for an illustration).
 
 }
 \references{
@@ -237,25 +244,28 @@ legend("topright",c("DGP",paste("Cubic Logspline Density (package `logspline', k
        bty="n",
        cex=0.75)
 
-## Old Faithful eruptions data histogram and clsd density
+## Old Faithful eruptions data histogram and clsd density using
+## linearized spline basis
+library(MASS)
+data(faithful)
+clsd.out <- clsd(eruptions,degree.max=5,segments.max=5)
+ylim <- c(0,max(clsd.out$density,hist(eruptions,breaks=20,plot=FALSE)$density))
+plot(clsd.out,ylim=ylim)
+hist(eruptions,breaks=20,freq=FALSE,add=TRUE,lty=2)
+rug(eruptions)
+summary(clsd.out)
+
+## Old Faithful eruptions data histogram and clsd density using
+## full spline basis outside the range of the data
 library(MASS)
 data(faithful)
 eruptions <- sort(faithful$eruptions)
+clsd.out <- clsd(eruptions,degree.max=5,segments.max=5,linearize=FALSE)
+ylim <- c(0,max(clsd.out$density,hist(eruptions,breaks=20,plot=FALSE)$density))
+plot(clsd.out,er=TRUE,ylim=ylim)
+hist(eruptions,breaks=20,freq=FALSE,add=TRUE,lty=2)
+summary(clsd.out)
 
-clsd.out <- clsd(eruptions,degree.max=5,segments.max=5)
-f.clsd <- clsd.out$density
-## Compute ylimits for plot
-ylim <- c(0,max(f.clsd,hist(eruptions,breaks=20,plot=FALSE)$density))
-
-plot(eruptions,f.clsd,
-     ylim=ylim,
-     type="l",
-     ylab="Density",
-     xlab="Eruptions")
-
-hist(eruptions,freq=FALSE,add=TRUE,breaks=20,lty=2)
-
-rug(eruptions)
 } %% End dontrun
 }
 \keyword{nonparametric}
