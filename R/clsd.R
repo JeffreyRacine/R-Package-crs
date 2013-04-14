@@ -656,21 +656,22 @@ summary.clsd <- function(object,
 
 plot.clsd <- function(object,
                       er=FALSE,
+                      distribution=FALSE,
                       ...) {
 
   if(!er) {
     order.x <- order(object$x)
     x <- plot(object$x[order.x],
-              object$density[order.x],
-              ylab="Density",
+              if(distribution){object$distribution[order.x]}else{object$density[order.x]},
+              ylab=if(distribution){"Distribution"}else{"Density"},
               xlab="Data",
               type="l",
               ...)
   } else {
     order.xnorm <- order(object$xnorm)
     xnorm <- plot(object$xnorm[order.xnorm],
-                  object$density.norm[order.xnorm],
-                  ylab="Density",
+                  if(distribution){object$distribution.norm[order.xnorm]}else{object$density.norm[order.xnorm]},
+                  ylab=if(distribution){"Distribution"}else{"Density"},
                   xlab="Data",
                   type="l",
                   ...)

@@ -106,7 +106,8 @@ clsd(x=NULL,
 
    \item{er}{
      a scalar indicating the fraction of data range to extend
-     the tails (default \code{1/log(n)})
+     the tails (default \code{1/log(n)}, see \link{extendrange} for
+     further details)
    }
 
    \item{linearize}{ a logical value indicating whether to linearize the
@@ -155,13 +156,21 @@ clsd(x=NULL,
 \value{
 
   \code{clsd} returns a \code{clsd} object.  The generic functions
-    \code{\link{summary}} and \code{\link{plot}} support objects of this
-    type. The returned object has the following components:
+    \code{\link{summary}} and \code{\link{plot}} (\code{er=TRUE} plots
+    the density on `extended range' data, see \code{er} above,
+    \code{distribution=TRUE} plots the distribution) support objects of
+    this type. The returned object has the following components:
 
   \item{density}{ estimates of the density function
     at the sample points}
 
   \item{density.xnorm}{ the density evaluated on the `extended range'
+  of the data }
+
+  \item{distribution}{ estimates of the distribution function
+    at the sample points}
+
+  \item{distribution.xnorm}{ the distribution evaluated on the `extended range'
   of the data }
 
   \item{xnorm}{ the `extended range' of the data }
