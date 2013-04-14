@@ -51,7 +51,7 @@ par.init <- function(degree,segments,linearize=TRUE) {
 
   } else {
 
-    lb <- 100
+    lb <- 1000
 
     par.init <- runif(dim.p,-lb,0)
     par.lower <- rep(-lb,dim.p)
