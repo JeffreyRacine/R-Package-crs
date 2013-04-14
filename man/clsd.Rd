@@ -200,6 +200,7 @@ clsd(x=NULL,
 
 \examples{
 \dontrun{
+## Simulated data
 set.seed(42)
 require(logspline)
 ## Example - simulated data
@@ -230,6 +231,35 @@ lines(x,f.clsd,col=3,lty=3)
 rug(x)
 
 legend("topright",c("DGP",paste("Cubic Logspline Density (package `logspline', knots = ",fit.cub$nknots,")",sep=""),
+                    paste("clsd Density (degree = ", clsd.out$degree, ", segments = ",clsd.out$segments,", cv = ",clsd.out$penalty,")",sep="")),
+       lty=1:3,
+       col=1:3,
+       bty="n",
+       cex=0.75)
+
+## Old Faithful eruptions data
+library(MASS)
+data(faithful)
+x <- sort(faithful$eruptions)
+
+clsd.out <- clsd(x,degree.max=5,segments.max=5)
+f.clsd <- clsd.out$density
+## Standard (cubic) estimate taken from the logspline package
+f.lsc <- dlogspline(x,fit.cub<-logspline(x))
+## Compute ylimits for plot
+ylim <- c(0,max(f.clsd,f.lsc))
+
+plot(x,f.lsc,
+     ylim=ylim,
+     type="l",
+     ylab="Density",
+     xlab="X")
+
+lines(x,f.clsd,col=2,lty=2)
+
+rug(x)
+
+legend("topright",c(paste("Cubic Logspline Density (package `logspline', knots = ",fit.cub$nknots,")",sep=""),
                     paste("clsd Density (degree = ", clsd.out$degree, ", segments = ",clsd.out$segments,", cv = ",clsd.out$penalty,")",sep="")),
        lty=1:3,
        col=1:3,
