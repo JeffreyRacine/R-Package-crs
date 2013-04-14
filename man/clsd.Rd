@@ -176,10 +176,10 @@ clsd(x=NULL,
   the data. If the estimated density projected beyond the range of the
   data is unsatisfactory, you might consider \code{linearize=FALSE}
   which uses the full basis restricted to have negative weights ensuring
-  decaying tails outside of the range of the data though be forewarned
-  that the restriction to negative weights may result in bizarre results
-  for certain distributions so verify that the results on the interior
-  are comparable to those with \code{linearize=TRUE} (see one of the
+  decaying tails outside of the range of the data.  Be forewarned that
+  the restriction to negative weights may result in bizarre results for
+  certain distributions so verify that the results on the interior are
+  comparable to those with \code{linearize=TRUE} (see one of the
   examples below for an illustration).
 
 }
