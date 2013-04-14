@@ -19,6 +19,8 @@ export(clsd,
        tensor.prod.model.matrix,
        uniquecombs)
 
+S3method(summary,clsd)
+
 S3method(print,sigtest.crs)
 S3method(summary,sigtest.crs)
 

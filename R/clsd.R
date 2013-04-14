@@ -323,23 +323,30 @@ clsd <- function(x=NULL,
     P.beta <- Pnorm.beta[rank.xnorm][1:length(xeval)]
   }
 
-  return(list(density=f,
-              density.deriv=f.deriv,
-              distribution=F,
-              density.norm=f.norm,
-              distribution.norm=F.norm,
-              xnorm=xnorm,
-              Basis.beta=P.beta,
-              Basis.beta.norm=Pnorm.beta,
-              P=P,
-              Pnorm=Pnorm,
-              logl=sum(P.beta-log.norm.constant),
-              constant=norm.constant,
-              degree=degree,
-              segments=segments,
-              beta=beta,
-              er=er,
-              penalty=penalty))
+  clsd.return <- list(density=f,
+                      density.deriv=f.deriv,
+                      distribution=F,
+                      density.norm=f.norm,
+                      distribution.norm=F.norm,
+                      xnorm=xnorm,
+                      Basis.beta=P.beta,
+                      Basis.beta.norm=Pnorm.beta,
+                      P=P,
+                      Pnorm=Pnorm,
+                      logl=sum(P.beta-log.norm.constant),
+                      constant=norm.constant,
+                      degree=degree,
+                      segments=segments,
+                      knots=knots,
+                      basis=basis,
+                      nobs=length(x),
+                      beta=beta,
+                      er=er,
+                      penalty=penalty,
+                      nmulti=nmulti)
+  
+  class(clsd.return) <- "clsd"
+  return(clsd.return)
 
 }
 
@@ -627,3 +634,22 @@ ls.ml <- function(x,
   return(list(degree=d.opt,segments=s.opt,beta=par.opt,fv=value.opt))
 
 }
+
+summary.clsd <- function(object,
+                         ...) {
+
+  cat("Call:\n")
+  print(object$call)
+  cat("\nCategorical Logspline Density\n",sep="")
+  cat(paste("\nModel penalty: ", format(object$penalty), sep=""))
+  cat(paste("\nModel degree/segments: ", format(object$degree),"/",format(object$segments), sep=""))
+  cat(paste("\nKnot type: ", format(object$knots), sep=""))
+  cat(paste("\nBasis type: ",format(object$basis),sep=""))
+  cat(paste("\nTraining observations: ", format(object$nobs), sep=""))
+  cat(paste("\nLog-likelihood: ", format(object$logl), sep=""))
+  cat(paste("\nNumber of multistarts: ", format(object$nmulti), sep=""))
+
+  cat("\n\n")
+
+}
+
