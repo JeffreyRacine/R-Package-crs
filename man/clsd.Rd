@@ -185,6 +185,10 @@ clsd(x=NULL,
   
 \section{Usage Issues}{
 
+  Information regarding bounds \code{lbound,ubound} ought to be used if
+  available/known (for example, if a variable is non-negative provide
+  \code{lbound=0}).
+
   The use of a single linear segment for the left and rightmost spline
   bases can have lead to undesirable tail behavior beyond the range of
   the data. If the estimated density projected beyond the range of the
