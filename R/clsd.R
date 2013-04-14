@@ -45,7 +45,7 @@ par.init <- function(degree,segments,linearize=TRUE) {
   if(linearize) {
 
     lb <- 100
-    par.init <- c(runif(1,-lb,0),rnorm(dim.p-2),runif(1,-lb,0))
+    par.init <- c(runif(1,-lb,0),rnorm(dim.p-2,sd=lb/2),runif(1,-lb,0))
     par.lower <- c(-lb,rep(-Inf,dim.p-2),-lb)
     par.upper <- c(0,rep(Inf,dim.p-2),0)
 
@@ -491,7 +491,8 @@ ls.ml <- function(x,
                   knots="quantiles",
                   penalty=c("aic","sic","cv","none"),
                   linearize=TRUE,
-                  debug=FALSE) {
+                  debug=FALSE,
+                  max.attempts=25) {
 
   ## This function conducts log spline maximum
   ## likelihood. Multistarting is supported as is breaking out to
@@ -545,6 +546,9 @@ ls.ml <- function(x,
 
         optim.out <- list()
         optim.out[[4]] <- 9999
+        optim.out$value <- Inf
+
+        m.attempts <- 0
 
         while(tryCatch(suppressWarnings(optim.out <- optim(par=par.init,
                                                            fn=sum.log.density,
@@ -562,7 +566,7 @@ ls.ml <- function(x,
                                                            n.integrate=n.integrate,
                                                            linearize=linearize,
                                                            control=list(maxit=maxit,if(debug){trace=1}else{trace=0}))),
-                       error = function(e){return(optim.out)})[[4]]!=0){
+                       error = function(e){return(optim.out)})[[4]]!=0 && m.attempts < max.attempts){
 
           ## If optim fails to converge, display a message, reset
           ## initial parameters, and try again.
@@ -576,6 +580,8 @@ ls.ml <- function(x,
           par.init <- par.init.out$par.init
           par.lower <- par.init.out$par.lower
           par.upper <- par.init.out$par.upper
+
+          m.attempts <- m.attempts+1
 
         }
 

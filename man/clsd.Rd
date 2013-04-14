@@ -28,9 +28,11 @@ clsd(x=NULL,
 }
 \arguments{
 
-  \item{x}{ a numeric vector of training data. }
+  \item{x}{ a numeric vector of training data }
 
-  \item{x}{ a numeric vector of evaluation data. }  
+  \item{beta}{ a numeric vector of coefficients (default \code{NULL}) }
+
+  \item{xeval}{ a numeric vector of evaluation data }  
 
   \item{degree}{ integer/vector specifying the polynomial degree of the
     B-spline basis for each dimension of the continuous \code{x} (default
@@ -52,10 +54,6 @@ clsd(x=NULL,
 
   \item{segments.min}{ the minimum segments of the B-spline basis for
     each of the continuous predictors (default \code{segments.min=1})}
-
-  \item{cv.df.min}{ the minimum degrees of freedom to allow when
-    conducting NOMAD-based cross-validation (default
-    \code{cv.df.min=1})}
 
 \item{basis}{ a character string (default \code{basis="auto"})
     indicating whether the additive or tensor product B-spline basis
@@ -83,6 +81,10 @@ clsd(x=NULL,
   \code{deriv} is higher than the spline degree of the associated
   continuous predictor then the derivative will be zero and a warning
   issued to this effect }
+
+  \item{deriv.index}{ an integer \code{l} (default \code{deriv.index=1})
+  specifying the index (currently only supports 1) of the variable whose
+  derivative is requested  }
 
   \item{nmulti}{
     integer number of times to restart the process of finding extrema of
@@ -201,30 +203,29 @@ clsd(x=NULL,
 set.seed(42)
 require(logspline)
 ## Example - simulated data
-n <- 1000
-df <- 2
-x <- sort(rchisq(n,df=df))
-f.dgp <- dchisq(x,df=df)
+n <- 250
+x <- sort(rnorm(n))
+f.dgp <- dnorm(x)
 
 clsd.out <- clsd(x,degree.max=3,segments.max=3)
-f.hat <- clsd.out$density
+f.clsd <- clsd.out$density
 ## Standard (cubic) estimate taken from the logspline package
 f.lsc <- dlogspline(x,fit.cub<-logspline(x))
 ## Compute MSEs
-mse.f.hat <- mean((f.hat-f.dgp)^2)
+mse.f.clsd <- mean((f.clsd-f.dgp)^2)
 mse.f.lsc <- mean((f.lsc-f.dgp)^2)
 ## Compute ylimits for plot
-ylim <- c(0,max(f.hat,f.lsc,f.dgp))
+ylim <- c(0,max(f.clsd,f.lsc,f.dgp))
 
 plot(x,f.dgp,
      ylim=ylim,
      type="l",
      ylab="Density",
      xlab="X",
-     sub=paste("MSE: Cubic = ",format(mse.f.lsc),", Proposed = ", format(mse.f.hat)))
+     sub=paste("MSE: logspline = ",format(mse.f.lsc),", clsd = ", format(mse.f.clsd)))
 
 lines(x,f.lsc,col=2,lty=2)
-lines(x,f.hat,col=3,lty=3)
+lines(x,f.clsd,col=3,lty=3)
 
 rug(x)
 
