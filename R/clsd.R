@@ -492,14 +492,26 @@ ls.ml <- function(x,
                   penalty=c("aic","sic","cv","none"),
                   linearize=TRUE,
                   debug=FALSE,
-                  max.attempts=25) {
+                  max.attempts=25,
+                  random.seed=42) {
 
   ## This function conducts log spline maximum
   ## likelihood. Multistarting is supported as is breaking out to
   ## potentially avoid wasted computation (be careful when using this,
   ## however, as it is prone to stopping early).
 
-  penalty <- match.arg(penalty)
+  ## Save seed prior to setting
+  
+  if(exists(".Random.seed", .GlobalEnv)) {
+    save.seed <- get(".Random.seed", .GlobalEnv)
+    exists.seed = TRUE
+  } else {
+    exists.seed = FALSE
+  }
+  
+  set.seed(random.seed)
+
+    penalty <- match.arg(penalty)
   if(missing(x)) stop(" You must provide data")
 
   ## We set some initial parameters that are placeholders to get
@@ -608,6 +620,10 @@ ls.ml <- function(x,
   if(s.opt==segments.max) warning(paste(" optimal segment equals search maximum (", segments.max,"): rerun with larger segments.max",sep=""))
   if(par.opt[1]>0|par.opt[length(par.opt)]>0) warning(" optim() delivered a positive weight for linear segment (supposed to be negative)")
 
+  ## Restore seed
+
+  if(exists.seed) assign(".Random.seed", save.seed, .GlobalEnv)
+    
   return(list(degree=d.opt,segments=s.opt,beta=par.opt,fv=value.opt))
 
 }

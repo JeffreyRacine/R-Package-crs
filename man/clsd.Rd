@@ -242,7 +242,7 @@ library(MASS)
 data(faithful)
 x <- sort(faithful$eruptions)
 
-clsd.out <- clsd(x,degree.max=5,segments.max=5)
+clsd.out <- clsd(x,degree.max=4,segments.max=4)
 f.clsd <- clsd.out$density
 ## Standard (cubic) estimate taken from the logspline package
 f.lsc <- dlogspline(x,fit.cub<-logspline(x))
