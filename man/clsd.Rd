@@ -111,7 +111,7 @@ clsd(x=NULL,
 
    \item{n.integrate}{
      the number of integration points in addition to the sample
-     realizations evenly spaced on the extended range specificed by
+     realizations evenly spaced on the extended range specified by
      \code{er} (defaults to \code{1.0e+03})
    }
 
@@ -237,34 +237,26 @@ legend("topright",c("DGP",paste("Cubic Logspline Density (package `logspline', k
        bty="n",
        cex=0.75)
 
-## Old Faithful eruptions data
+## Old Faithful eruptions data histogram and clsd density
 library(MASS)
 data(faithful)
-x <- sort(faithful$eruptions)
+eruptions <- sort(faithful$eruptions)
 
-clsd.out <- clsd(x,degree.max=4,segments.max=4)
+clsd.out <- clsd(eruptions,degree.max=5,segments.max=5)
 f.clsd <- clsd.out$density
-## Standard (cubic) estimate taken from the logspline package
-f.lsc <- dlogspline(x,fit.cub<-logspline(x))
 ## Compute ylimits for plot
-ylim <- c(0,max(f.clsd,f.lsc))
+ylim <- c(0,max(f.clsd,hist(eruptions,breaks=20,plot=FALSE)$density))
 
-plot(x,f.lsc,
+plot(x,f.clsd,
      ylim=ylim,
      type="l",
      ylab="Density",
-     xlab="X")
+     xlab="Eruptions",
+     lwd=2)
 
-lines(x,f.clsd,col=2,lty=2)
+hist(eruptions,freq=FALSE,add=TRUE,breaks=20,lty=2)
 
-rug(x)
-
-legend("topright",c(paste("Cubic Logspline Density (package `logspline', knots = ",fit.cub$nknots,")",sep=""),
-                    paste("clsd Density (degree = ", clsd.out$degree, ", segments = ",clsd.out$segments,", cv = ",clsd.out$penalty,")",sep="")),
-       lty=1:3,
-       col=1:3,
-       bty="n",
-       cex=0.75)
+rug(eruptions)
 } %% End dontrun
 }
 \keyword{nonparametric}
