@@ -343,7 +343,8 @@ clsd <- function(x=NULL,
                       beta=beta,
                       er=er,
                       penalty=penalty,
-                      nmulti=nmulti)
+                      nmulti=nmulti,
+                      x=x)
   
   class(clsd.return) <- "clsd"
   return(clsd.return)
@@ -638,8 +639,6 @@ ls.ml <- function(x,
 summary.clsd <- function(object,
                          ...) {
 
-  cat("Call:\n")
-  print(object$call)
   cat("\nCategorical Logspline Density\n",sep="")
   cat(paste("\nModel penalty: ", format(object$penalty), sep=""))
   cat(paste("\nModel degree/segments: ", format(object$degree),"/",format(object$segments), sep=""))
@@ -653,3 +652,15 @@ summary.clsd <- function(object,
 
 }
 
+plot.clsd <- function(object,
+                      ...) {
+
+  order.x <- order(object$x)
+  x <- plot(object$x[order.x],
+            object$density[order.x],
+            ylab="Density",
+            xlab="Data",
+            type="l")
+  
+
+}

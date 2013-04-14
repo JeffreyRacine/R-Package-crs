@@ -20,6 +20,7 @@ export(clsd,
        uniquecombs)
 
 S3method(summary,clsd)
+S3method(plot,clsd)
 
 S3method(print,sigtest.crs)
 S3method(summary,sigtest.crs)
