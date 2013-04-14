@@ -1,6 +1,6 @@
 \name{clsd}
 \alias{clsd}
-\title{Categorical Regression Splines}
+\title{Categorical Logspline Density}
 
 \description{ \code{clsd} computes a logspline density estimate of a one
     (1) dimensional continuous variable.}
@@ -247,12 +247,11 @@ f.clsd <- clsd.out$density
 ## Compute ylimits for plot
 ylim <- c(0,max(f.clsd,hist(eruptions,breaks=20,plot=FALSE)$density))
 
-plot(x,f.clsd,
+plot(eruptions,f.clsd,
      ylim=ylim,
      type="l",
      ylab="Density",
-     xlab="Eruptions",
-     lwd=2)
+     xlab="Eruptions")
 
 hist(eruptions,freq=FALSE,add=TRUE,breaks=20,lty=2)
 
