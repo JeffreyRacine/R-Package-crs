@@ -543,6 +543,9 @@ ls.ml <- function(x,
         ## points, display message if needed (trace>0 up to 6 provides
         ## ever more detailed information for L-BFGS-B)
 
+        optim.out <- list()
+        optim.out[[4]] <- 9999
+
         while(tryCatch(suppressWarnings(optim.out <- optim(par=par.init,
                                                            fn=sum.log.density,
                                                            gr=if(do.gradient){sum.log.density.gradient}else{NULL},
