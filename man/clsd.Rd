@@ -266,6 +266,7 @@ legend("topright",c("DGP",paste("Cubic Logspline Density (package `logspline', k
 ## linearized spline basis
 library(MASS)
 data(faithful)
+attach(faithful)
 clsd.out <- clsd(eruptions,degree.max=5,segments.max=5)
 ylim <- c(0,max(clsd.out$density,hist(eruptions,breaks=20,plot=FALSE)$density))
 plot(clsd.out,ylim=ylim)
@@ -277,6 +278,7 @@ summary(clsd.out)
 ## full spline basis outside the range of the data
 library(MASS)
 data(faithful)
+attach(faithful)
 eruptions <- sort(faithful$eruptions)
 clsd.out <- clsd(eruptions,degree.max=5,segments.max=5,linearize=FALSE)
 ylim <- c(0,max(clsd.out$density,hist(eruptions,breaks=20,plot=FALSE)$density))
