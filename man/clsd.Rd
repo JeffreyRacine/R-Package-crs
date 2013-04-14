@@ -17,6 +17,8 @@ clsd(x=NULL,
      segments.max=10,
      lbound=NULL,
      ubound=NULL,
+     lbound.pd=FALSE,
+     ubound.nd=FALSE,
      basis="tensor",
      knots="quantiles",
      penalty=c("aic","sic","cv","none"),
@@ -59,6 +61,14 @@ clsd(x=NULL,
     of 0, and has a discontinuity at 0, the user could specify lbound =
     0. However, if the density is essentially zero near 0, one does not
     need to specify lbound }
+
+  \item{lbound.nd,ubound.pd}{
+    check for negative/positive derivative of the estimated density at
+    the min/max of the data and penalize to ensure the resulting density
+    satisfies these constraints (for densities that are monotonically
+    decreasing at the left bound or monotonically increasing at the
+    right bound one would want these to be \code{FALSE} (default is
+    \code{FALSE})}
 
   \item{basis}{ a character string (default \code{basis="auto"})
     indicating whether the additive or tensor product B-spline basis

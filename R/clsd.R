@@ -74,6 +74,8 @@ clsd <- function(x=NULL,
                  segments.max=10,
                  lbound=NULL,
                  ubound=NULL,
+                 lbound.pd=FALSE,
+                 ubound.nd=FALSE,
                  basis="tensor",
                  knots="quantiles",
                  penalty=c("aic","sic","cv","none"),
@@ -98,7 +100,7 @@ clsd <- function(x=NULL,
   ## non-finite integration and issues a message when this occurs
   ## along with a suggestion.
 
-  if(!is.null(er)&& er < 0) stop(" er must be non-negative")
+  if(!is.null(er) && er < 0) stop(" er must be non-negative")
   if(is.null(er)) er <- 1/log(length(x))
 
   penalty <- match.arg(penalty)
@@ -113,6 +115,10 @@ clsd <- function(x=NULL,
                        degree.max=degree.max,
                        segments.min=segments.min,
                        segments.max=segments.max,
+                       lbound=lbound,
+                       ubound=ubound,
+                       lbound.pd=lbound.pd,
+                       ubound.nd=ubound.nd,
                        nmulti=nmulti,
                        er=er,
                        do.break=do.break,
@@ -356,6 +362,10 @@ sum.log.density <- function(beta,
                             x,
                             degree,
                             segments,
+                            lbound=NULL,
+                            ubound=NULL,
+                            lbound.pd=FALSE,
+                            ubound.nd=FALSE,
                             basis="tensor",
                             knots="quantiles",
                             er=1.0e+00,
@@ -369,15 +379,25 @@ sum.log.density <- function(beta,
   if(missing(degree)) stop(" You must provide spline degree")
   if(missing(segments)) stop(" You must provide number of segments")
 
+  if(lbound.pd||ubound.nd) {do.deriv<-1}else{do.deriv<-0}
+
   output <- clsd(beta=beta,
                  x=x,
                  degree=degree,
                  segments=segments,
+                 lbound=lbound,
+                 ubound=ubound,
+                 lbound.pd=lbound.pd,
+                 ubound.nd=ubound.nd,
+                 deriv=do.deriv,
                  basis=basis,
                  knots=knots,
                  er=er,
                  n.integrate=n.integrate,
                  linearize=TRUE)
+
+  if(lbound.pd && output$density.deriv[1]<=0) return(-log(.Machine$double.xmin))
+  if(ubound.nd && output$density.deriv[length(x)]>=0) return(-log(.Machine$double.xmin))  
 
   logl <- output$logl
   f.hat <- output$density
@@ -441,6 +461,10 @@ sum.log.density.gradient <- function(beta,
                                      x,
                                      degree,
                                      segments,
+                                     lbound=NULL,
+                                     ubound=NULL,
+                                     lbound.pd=FALSE,
+                                     ubound.nd=FALSE,
                                      basis="tensor",
                                      knots="quantiles",
                                      er=1.0e+00,
@@ -461,6 +485,10 @@ sum.log.density.gradient <- function(beta,
                  x=x,
                  degree=degree,
                  segments=segments,
+                 lbound=lbound,
+                 ubound=ubound,
+                 lbound.pd=lbound.pd,
+                 ubound.nd=ubound.nd,
                  basis=basis,
                  knots=knots,
                  er=er,
@@ -490,6 +518,10 @@ ls.ml <- function(x,
                   segments.min=1,
                   degree.max=10,
                   segments.max=10,
+                  lbound=NULL,
+                  ubound=NULL,
+                  lbound.pd=FALSE,
+                  ubound.nd=FALSE,
                   do.break=FALSE,
                   do.gradient=TRUE,
                   maxit=10^5,
@@ -520,7 +552,8 @@ ls.ml <- function(x,
   
   set.seed(random.seed)
 
-    penalty <- match.arg(penalty)
+  penalty <- match.arg(penalty)
+
   if(missing(x)) stop(" You must provide data")
 
   ## We set some initial parameters that are placeholders to get
@@ -586,6 +619,10 @@ ls.ml <- function(x,
                                                            knots=knots,
                                                            n.integrate=n.integrate,
                                                            linearize=linearize,
+                                                           lbound=lbound,
+                                                           ubound=ubound,
+                                                           lbound.pd=lbound.pd,
+                                                           ubound.nd=ubound.nd,
                                                            control=list(maxit=maxit,if(debug){trace=1}else{trace=0}))),
                        error = function(e){return(optim.out)})[[4]]!=0 && m.attempts < max.attempts){
 
