@@ -15,6 +15,8 @@ clsd(x=NULL,
      degree.max=10,
      segments.min=1,
      segments.max=10,
+     lbound=NULL,
+     ubound=NULL,
      basis="tensor",
      knots="quantiles",
      penalty=c("aic","sic","cv","none"),
@@ -43,19 +45,22 @@ clsd(x=NULL,
     (i.e. number of knots minus one) (default \code{segments=1}, i.e. Bezier
     curve)}
 
-  \item{degree.max}{ the maximum degree of the B-spline basis for
-    each of the continuous predictors (default \code{degree.max=10})}
-  
-  \item{segments.max}{ the maximum segments of the B-spline basis for
-    each of the continuous predictors (default \code{segments.max=10})}
+  \item{segments.min,segments.max}{ the minimum/maximum segments of the
+    B-spline basis for each of the continuous predictors (default
+    \code{segments.min=1},\code{segments.max=10})}
 
-  \item{degree.min}{ the minimum degree of the B-spline basis for
-    each of the continuous predictors (default \code{degree.min=0})}
+  \item{degree.min,degree.max}{ the minimum/maximum degree of the
+    B-spline basis for each of the continuous predictors (default
+    \code{degree.min=2}, \code{degree.max=10})}
 
-  \item{segments.min}{ the minimum segments of the B-spline basis for
-    each of the continuous predictors (default \code{segments.min=1})}
+  \item{lbound,ubound}{
+    lower/upper bound for the support of the density. For example, if
+    there is a priori knowledge that the density equals zero to the left
+    of 0, and has a discontinuity at 0, the user could specify lbound =
+    0. However, if the density is essentially zero near 0, one does not
+    need to specify lbound }
 
-\item{basis}{ a character string (default \code{basis="auto"})
+  \item{basis}{ a character string (default \code{basis="auto"})
     indicating whether the additive or tensor product B-spline basis
     matrix for a multivariate polynomial spline or generalized B-spline
     polynomial basis should be used. Note this can be automatically

@@ -74,6 +74,8 @@ clsd <- function(x=NULL,
                  degree.max=10,
                  segments.min=1,
                  segments.max=10,
+                 lbound=NULL,
+                 ubound=NULL,
                  basis="tensor",
                  knots="quantiles",
                  penalty=c("aic","sic","cv","none"),
@@ -136,6 +138,8 @@ clsd <- function(x=NULL,
   if(is.null(xeval)) {
     ## x will be the first 1:length(x) elements in object[rank.xnorm]
     er <- extendrange(x,f=er)
+    if(!is.null(lbound)) er[1] <- lbound
+    if(!is.null(ubound)) er[2] <- ubound    
     xnorm <- c(x,seq(er[1],er[2],length=n.integrate))
     rank.xnorm <- rank(xnorm)
     order.xnorm <- order(xnorm)
@@ -144,6 +148,8 @@ clsd <- function(x=NULL,
     ## xeval will be the first 1:length(xeval) elements in
     ## object[rank.xnorm]
     er <- extendrange(c(x,xeval),f=er)
+    if(!is.null(lbound)) er[1] <- lbound
+    if(!is.null(ubound)) er[2] <- ubound    
     xnorm <- c(xeval,x,seq(er[1],er[2],length=n.integrate))
     rank.xnorm <- rank(xnorm)
     order.xnorm <- order(xnorm)
@@ -222,10 +228,6 @@ clsd <- function(x=NULL,
     P.left <- as.matrix((P.left-1)*slope.poly.left/slope.linear.left+1)
     P.right <- as.matrix((P.right-1)*slope.poly.right/slope.linear.right+1)
 
-    ## Before setting to zero save endpoints for potential matching
-
-    P.left.min <- P.left[xnorm==min(x)]
-    P.right.max <- P.right[xnorm==max(x)]
     P.left[xnorm>=min(x),1] <- 0
     P.right[xnorm<=max(x),1] <- 0
 
