@@ -338,7 +338,8 @@ clsd <- function(x=NULL,
               degree=degree,
               segments=segments,
               beta=beta,
-              er=er))
+              er=er,
+              penalty=penalty))
 
 }
 

@@ -224,16 +224,16 @@ plot(x,f.dgp,
      sub=paste("MSE: Cubic = ",format(mse.f.lsc),", Proposed = ", format(mse.f.hat)))
 
 lines(x,f.lsc,col=2,lty=2)
-lines(x,f.hat,col=3,lty=1)
+lines(x,f.hat,col=3,lty=3)
 
 rug(x)
 
-legend("topright",c("DGP",paste("Cubic Logspline Density (knots = ",fit.cub$nknots,")",sep=""),
-                    paste("Logspline Density (degree = ", clsd.out$degree, ", segments = ",clsd.out$segments,", cv = ",scan("penalty.dat",what="char"),")",sep="")),
-       lty=c(1:3,1),
+legend("topright",c("DGP",paste("Cubic Logspline Density (package `logspline', knots = ",fit.cub$nknots,")",sep=""),
+                    paste("clsd Density (degree = ", clsd.out$degree, ", segments = ",clsd.out$segments,", cv = ",clsd.out$penalty,")",sep="")),
+       lty=1:3,
        col=1:3,
        bty="n",
-       cex=0.6)
+       cex=0.75)
 } %% End dontrun
 }
 \keyword{nonparametric}
