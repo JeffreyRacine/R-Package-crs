@@ -206,7 +206,7 @@ df <- 2
 x <- sort(rchisq(n,df=df))
 f.dgp <- dchisq(x,df=df)
 
-clsd.out <- clsd(x)
+clsd.out <- clsd(x,degree.max=3,segments.max=3)
 f.hat <- clsd.out$density
 ## Standard (cubic) estimate taken from the logspline package
 f.lsc <- dlogspline(x,fit.cub<-logspline(x))
@@ -221,7 +221,7 @@ plot(x,f.dgp,
      type="l",
      ylab="Density",
      xlab="X",
-     sub=paste("MSE: kernel = ",format(mse.f.kernel),", Cubic = ",format(mse.f.lsc),", Proposed = ", format(mse.f.hat)))
+     sub=paste("MSE: Cubic = ",format(mse.f.lsc),", Proposed = ", format(mse.f.hat)))
 
 lines(x,f.lsc,col=2,lty=2)
 lines(x,f.hat,col=3,lty=1)
