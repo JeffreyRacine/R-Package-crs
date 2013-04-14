@@ -13,9 +13,7 @@ integrate.trapezoidal <- function(x,y) {
   ## realization using the Newton-Cotes trapezoidal rule and the
   ## cumsum function as we need to compute this in a computationally
   ## efficient manner. It can be used to return the distribution
-  ## function from the density function etc. Note presumes lower bound
-  ## is zero, but very computationally efficient and well-suited to
-  ## the task at hand.
+  ## function from the density function etc.
 
   n <- length(x)
   rank.x <- rank(x)
@@ -23,7 +21,6 @@ integrate.trapezoidal <- function(x,y) {
   y <- y[order.x]
   x <- x[order.x]
   int.vec <- numeric(length(x))
-  int.vec[1] <- 0
   int.vec[2:n] <- cumsum((x[2:n] - x[2:n-1]) * (y[2:n] + y[2:n-1]) / 2)
 
   return(int.vec[rank.x])
@@ -42,20 +39,21 @@ par.init <- function(degree,segments,linearize=TRUE) {
   ## to die off. Trial and error suggests the values below seem to be
   ## appropriate for a wide range of (univariate) distributions.
 
+  ub <- 0
+
   if(linearize) {
 
     lb <- 100
-    par.init <- c(runif(1,-lb,0),rnorm(dim.p-2,sd=lb/2),runif(1,-lb,0))
+    par.init <- c(runif(1,-lb,ub),rnorm(dim.p-2,sd=lb/2),runif(1,-lb,ub))
     par.lower <- c(-lb,rep(-Inf,dim.p-2),-lb)
-    par.upper <- c(0,rep(Inf,dim.p-2),0)
+    par.upper <- c(ub,rep(Inf,dim.p-2),ub)
 
   } else {
 
     lb <- 1000
-
-    par.init <- runif(dim.p,-lb,0)
+    par.init <- runif(dim.p,-lb,ub)
     par.lower <- rep(-lb,dim.p)
-    par.upper <- rep(0,dim.p)
+    par.upper <- rep(ub,dim.p)
 
   }
 
@@ -100,6 +98,7 @@ clsd <- function(x=NULL,
   ## non-finite integration and issues a message when this occurs
   ## along with a suggestion.
 
+  if(!is.null(er)&& er < 0) stop(" er must be non-negative")
   if(is.null(er)) er <- 1/log(length(x))
 
   penalty <- match.arg(penalty)
@@ -197,13 +196,13 @@ clsd <- function(x=NULL,
     ## hence conduct some carpentry at the left boundary.
 
     index <- which(xnorm==min(x))
-    index.l <- index+3
-    index.u <- index+8
+    index.l <- index+1
+    index.u <- index+5
     x.l <- xnorm[index.l]
     x.u <- xnorm[index.u]
     slope.poly.left <- as.numeric((Pnorm[index.u,1]-Pnorm[index.l,1])/(x.u-x.l))
-    index.l <- index-3
-    index.u <- index-8
+    index.l <- index+1
+    index.u <- index+5
     x.l <- xnorm[index.l]
     x.u <- xnorm[index.u]
     slope.linear.left <- as.numeric((P.left[index.u]-P.left[index.l])/(x.u-x.l))
@@ -211,22 +210,22 @@ clsd <- function(x=NULL,
     ## Complete carpentry at the right boundary.
 
     index <- which(xnorm==max(x))
-    index.l <- index-3
-    index.u <- index-8
+    index.l <- index-1
+    index.u <- index-5
     x.l <- xnorm[index.l]
     x.u <- xnorm[index.u]
     slope.poly.right <- as.numeric((Pnorm[index.u,ncol(Pnorm)]-Pnorm[index.l,ncol(Pnorm)])/(x.u-x.l))
-    index.l <- index+3
-    index.u <- index+8
+    index.l <- index-1
+    index.u <- index-5
     x.l <- xnorm[index.l]
     x.u <- xnorm[index.u]
     slope.linear.right <- as.numeric((P.right[index.u]-P.right[index.l])/(x.u-x.l))
 
     ## Here are the linear segments with matching slopes XXX patch up
-    ## deriv as well
+    ## deriv outside range of data needed as well XXX
 
-    P.left <- as.matrix((P.left-1)*slope.poly.left/slope.linear.left+1)
-    P.right <- as.matrix((P.right-1)*slope.poly.right/slope.linear.right+1)
+    P.left <- as.matrix(P.left-1)*slope.poly.left/slope.linear.left+1
+    P.right <- as.matrix(P.right-1)*slope.poly.right/slope.linear.right+1
 
     P.left[xnorm>=min(x),1] <- 0
     P.right[xnorm<=max(x),1] <- 0
@@ -328,13 +327,13 @@ clsd <- function(x=NULL,
   clsd.return <- list(density=f,
                       density.deriv=f.deriv,
                       distribution=F,
-                      density.norm=f.norm,
-                      distribution.norm=F.norm,
-                      xnorm=xnorm,
+                      density.er=f.norm,
+                      distribution.er=F.norm,
+                      xer=xnorm,
                       Basis.beta=P.beta,
-                      Basis.beta.norm=Pnorm.beta,
+                      Basis.beta.er=Pnorm.beta,
                       P=P,
-                      Pnorm=Pnorm,
+                      Per=Pnorm,
                       logl=sum(P.beta-log.norm.constant),
                       constant=norm.constant,
                       degree=degree,
@@ -661,16 +660,20 @@ plot.clsd <- function(object,
 
   if(!er) {
     order.x <- order(object$x)
+    if(distribution){y <- object$distribution[order.x]}else{y <- object$density[order.x]}
     x <- plot(object$x[order.x],
-              if(distribution){object$distribution[order.x]}else{object$density[order.x]},
+              y,
+              ylim=c(0,max(y)),
               ylab=if(distribution){"Distribution"}else{"Density"},
               xlab="Data",
               type="l",
               ...)
   } else {
     order.xnorm <- order(object$xnorm)
+    if(distribution){y <- object$distribution.norm[order.xnorm]}else{y <- object$density.norm[order.xnorm]}
     xnorm <- plot(object$xnorm[order.xnorm],
-                  if(distribution){object$distribution.norm[order.xnorm]}else{object$density.norm[order.xnorm]},
+                  y,
+                  ylim=c(0,max(y)),
                   ylab=if(distribution){"Distribution"}else{"Density"},
                   xlab="Data",
                   type="l",

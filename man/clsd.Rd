@@ -21,7 +21,7 @@ clsd(x=NULL,
      knots="quantiles",
      penalty=c("aic","sic","cv","none"),
      deriv.index=1,
-     deriv=0,
+     deriv=1,
      do.break=FALSE,
      er=NULL,
      linearize=TRUE,
@@ -164,16 +164,19 @@ clsd(x=NULL,
   \item{density}{ estimates of the density function
     at the sample points}
 
-  \item{density.xnorm}{ the density evaluated on the `extended range'
+  \item{density.xer}{ the density evaluated on the `extended range'
   of the data }
+
+  \item{density.deriv}{ estimates of the derivative of the density function
+    at the sample points}
 
   \item{distribution}{ estimates of the distribution function
     at the sample points}
 
-  \item{distribution.xnorm}{ the distribution evaluated on the `extended range'
+  \item{distribution.xer}{ the distribution evaluated on the `extended range'
   of the data }
 
-  \item{xnorm}{ the `extended range' of the data }
+  \item{xer}{ the `extended range' of the data }
 
   \item{degree}{ integer/vector specifying the degree of the B-spline
     basis for each dimension of the continuous \code{x}}
