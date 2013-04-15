@@ -172,11 +172,20 @@ clsd <- function(x=NULL,
     if(min(xeval) < er[1] | max(xeval) > er[2]) warning(" evaluation data extends beyond the range of `er'")
   }
 
+  ## Charles Kooperberg has a manuscript "Statistical Modeling with
+  ## Spline Functions', Jan 5 2006 on his web page. Chapter 6, page
+  ## 286, figure 6.7 reveals a hybrid spline basis that in essence
+  ## appears to drop two columns from my B-spline with 2 segments
+  ## added artificially. This has the effect of removing the two bases
+  ## that were delivering weight in tails leading to `kinks'. Hat-tip
+  ## to Charles for his clear descriptions. Note we require the same
+  ## for the derivatives below.
+
   suppressWarnings(Pnorm <- prod.spline(x=x,
                                         xeval=xnorm,
-                                        K=cbind(degree,segments),
+                                        K=cbind(degree,segments+2),
                                         knots=knots,
-                                        basis=basis))
+                                        basis=basis)[,-c(2,degree+segments+1)])
 
   if(linearize) {
 
@@ -258,11 +267,11 @@ clsd <- function(x=NULL,
 
     suppressWarnings(Pnorm.deriv <- prod.spline(x=x,
                                                 xeval=xnorm,
-                                                K=cbind(degree,segments),
+                                                K=cbind(degree,segments+2),
                                                 knots=knots,
                                                 basis=basis,
                                                 deriv.index=deriv.index,
-                                                deriv=deriv))
+                                                deriv=deriv)[,-c(2,degree+segments+1)])
 
     if(linearize) {
 
