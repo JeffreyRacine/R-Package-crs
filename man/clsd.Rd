@@ -12,9 +12,9 @@ clsd(x=NULL,
      degree=NULL,
      segments=NULL,
      degree.min=2,
-     degree.max=10,
+     degree.max=5,
      segments.min=1,
-     segments.max=10,
+     segments.max=5,
      lbound=NULL,
      ubound=NULL,
      lbound.pd=FALSE,
@@ -49,11 +49,11 @@ clsd(x=NULL,
 
   \item{segments.min,segments.max}{ the minimum/maximum segments of the
     B-spline basis for each of the continuous predictors (default
-    \code{segments.min=1},\code{segments.max=10})}
+    \code{segments.min=1},\code{segments.max=5})}
 
   \item{degree.min,degree.max}{ the minimum/maximum degree of the
     B-spline basis for each of the continuous predictors (default
-    \code{degree.min=2}, \code{degree.max=10})}
+    \code{degree.min=2}, \code{degree.max=5})}
 
   \item{lbound,ubound}{
     lower/upper bound for the support of the density. For example, if
@@ -70,24 +70,16 @@ clsd(x=NULL,
     right bound one would want these to be \code{FALSE} (default is
     \code{FALSE}))}
 
-  \item{basis}{ a character string (default \code{basis="auto"})
+  \item{basis}{ a character string (default \code{basis="tensor"})
     indicating whether the additive or tensor product B-spline basis
     matrix for a multivariate polynomial spline or generalized B-spline
-    polynomial basis should be used. Note this can be automatically
-    determined by cross-validation if \code{cv="nomad"} or
-    \code{cv="exhaustive"} and \code{basis="auto"}, and is an
-    \sQuote{all or none} proposition (i.e. interaction terms for all
-    predictors or for no predictors given the nature of \sQuote{tensor
-    products}). Note also that if there is only one predictor this
-    defaults to \code{basis="additive"} to avoid unnecessary computation
-    as the spline bases are equivalent in this case }
+    polynomial basis should be used }
 
    \item{knots}{ a character string (default \code{knots="quantiles"})
   specifying where knots are to be placed. \sQuote{quantiles} specifies
   knots placed at equally spaced quantiles (equal number of observations
   lie in each segment) and \sQuote{uniform} specifies knots placed at
-  equally spaced intervals. If \code{knots="auto"}, the knot type will
-  be automatically determined by cross-validation }
+  equally spaced intervals }
 
   \item{deriv}{ an integer \code{l} (default \code{deriv=0}) specifying
   whether to compute the univariate \code{l}th partial derivative for
