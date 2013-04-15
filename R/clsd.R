@@ -703,6 +703,11 @@ summary.clsd <- function(object,
 
 }
 
+print.clsd <- function(x,...)
+{
+        summary.clsd(x)
+}
+
 plot.clsd <- function(object,
                       er=FALSE,
                       distribution=FALSE,
