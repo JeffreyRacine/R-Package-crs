@@ -68,7 +68,7 @@ clsd(x=NULL,
     satisfies these constraints (for densities that are monotonically
     decreasing at the left bound or monotonically increasing at the
     right bound one would want these to be \code{FALSE} (default is
-    \code{FALSE})}
+    \code{FALSE}))}
 
   \item{basis}{ a character string (default \code{basis="auto"})
     indicating whether the additive or tensor product B-spline basis
@@ -166,10 +166,10 @@ clsd(x=NULL,
 \value{
 
   \code{clsd} returns a \code{clsd} object.  The generic functions
-    \code{\link{summary}} and \code{\link{plot}} (\code{er=TRUE} plots
-    the density on `extended range' data, see \code{er} above,
-    \code{distribution=TRUE} plots the distribution) support objects of
-    this type. The returned object has the following components:
+    \code{\link{summary}} and \code{\link{plot}} support objects of this
+    type (\code{er=TRUE} plots the density on `extended range' data, see
+    \code{er} above, \code{distribution=TRUE} plots the
+    distribution). The returned object has the following components:
 
   \item{density}{ estimates of the density function
     at the sample points}

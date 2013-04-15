@@ -706,9 +706,9 @@ plot.clsd <- function(object,
               type="l",
               ...)
   } else {
-    order.xnorm <- order(object$xnorm)
-    if(distribution){y <- object$distribution.norm[order.xnorm]}else{y <- object$density.norm[order.xnorm]}
-    xnorm <- plot(object$xnorm[order.xnorm],
+    order.xer <- order(object$xer)
+    if(distribution){y <- object$distribution.er[order.xer]}else{y <- object$density.er[order.xer]}
+    xer <- plot(object$xer[order.xer],
                   y,
                   ylim=c(0,max(y)),
                   ylab=if(distribution){"Distribution"}else{"Density"},
