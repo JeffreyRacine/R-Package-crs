@@ -42,20 +42,21 @@ par.init <- function(degree,segments,linearize=TRUE) {
   ## constraint theta < 0 use theta <= -epsilon for some small epsilon
   ## > 0. We therefore use sqrt machine epsilon.
 
-  ub <- - sqrt(.Machine$double.eps)
-  lb <- 1000
+  par.ub <- - sqrt(.Machine$double.eps)
 
   if(linearize) {
 
-    par.init <- c(runif(1,-lb,ub),rnorm(dim.p-2,sd=lb/2),runif(1,-lb,ub))
-    par.lower <- c(-lb,rep(-Inf,dim.p-2),-lb)
-    par.upper <- c(ub,rep(Inf,dim.p-2),ub)
+    par.lb <- -100
+    par.init <- c(runif(1,par.lb,par.ub),rnorm(dim.p-2,sd=-par.lb/2),runif(1,par.lb,par.ub))
+    par.lower <- c(par.lb,rep(-Inf,dim.p-2),par.lb)
+    par.upper <- c(par.ub,rep(Inf,dim.p-2),par.ub)
 
   } else {
 
-    par.init <- runif(dim.p,-lb,ub)
-    par.lower <- rep(-lb,dim.p)
-    par.upper <- rep(ub,dim.p)
+    par.lb <- -1000
+    par.init <- runif(dim.p,par.lb,par.ub)
+    par.lower <- rep(par.lb,dim.p)
+    par.upper <- rep(par.ub,dim.p)
 
   }
 
@@ -84,6 +85,7 @@ clsd <- function(x=NULL,
                  deriv.index=1,
                  deriv=0,
                  do.break=FALSE,
+                 do.gradient=FALSE, ## fragile, can be switched off to test
                  er=NULL,
                  linearize=TRUE,
                  n.integrate=1.0e+03,
@@ -131,6 +133,7 @@ clsd <- function(x=NULL,
                        ubound.nd=ubound.nd,
                        deriv=deriv,
                        nmulti=nmulti,
+                       do.gradient=do.gradient,
                        er=er,
                        do.break=do.break,
                        penalty=penalty,
