@@ -37,20 +37,22 @@ par.init <- function(degree,segments,linearize=TRUE) {
   ## The weights for the linear tails must be non-positive. The lower
   ## bound places a maximum bound on how quickly the tails are allowed
   ## to die off. Trial and error suggests the values below seem to be
-  ## appropriate for a wide range of (univariate) distributions.
+  ## appropriate for a wide range of (univariate)
+  ## distributions. Kooperberg suggests that in order to get the
+  ## constraint theta < 0 use theta <= -epsilon for some small epsilon
+  ## > 0. We therefore use sqrt machine epsilon.
 
-  ub <- 0
+  ub <- - sqrt(.Machine$double.eps)
+  lb <- 1000
 
   if(linearize) {
 
-    lb <- 100
     par.init <- c(runif(1,-lb,ub),rnorm(dim.p-2,sd=lb/2),runif(1,-lb,ub))
     par.lower <- c(-lb,rep(-Inf,dim.p-2),-lb)
     par.upper <- c(ub,rep(Inf,dim.p-2),ub)
 
   } else {
 
-    lb <- 1000
     par.init <- runif(dim.p,-lb,ub)
     par.lower <- rep(-lb,dim.p)
     par.upper <- rep(ub,dim.p)
@@ -179,7 +181,9 @@ clsd <- function(x=NULL,
   ## added artificially. This has the effect of removing the two bases
   ## that were delivering weight in tails leading to `kinks'. Hat-tip
   ## to Charles for his clear descriptions. Note we require the same
-  ## for the derivatives below.
+  ## for the derivatives below. Note that this logspline basis does
+  ## not have the B-spline property that the pointwise sum of the
+  ## bases is 1 everywhere.
 
   suppressWarnings(Pnorm <- prod.spline(x=x,
                                         xeval=xnorm,
