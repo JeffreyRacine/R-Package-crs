@@ -105,10 +105,18 @@ clsd <- function(x=NULL,
 
   penalty <- match.arg(penalty)
 
+  ## Note that deriv will be overridden if derivative constraints on
+  ## the upper/lower tails are provided. XXX could provide a warning
+  ## in this instance but this code may be moot IF I figure out an
+  ## elegant way to get smooth tails (April 15 2013 this eludes me)
+
+  if(lbound.pd||ubound.nd) deriv <- 1
+
   if(is.null(beta)) {
 
     ## If no parameters are provided presume intention is to run
-    ## maximum likelihood estimation to obtain the parameter estimates.
+    ## maximum likelihood estimation to obtain the parameter
+    ## estimates.
 
     ls.ml.out <- ls.ml(x=x,
                        degree.min=degree.min,
@@ -119,6 +127,7 @@ clsd <- function(x=NULL,
                        ubound=ubound,
                        lbound.pd=lbound.pd,
                        ubound.nd=ubound.nd,
+                       deriv=deriv,
                        nmulti=nmulti,
                        er=er,
                        do.break=do.break,
@@ -280,7 +289,7 @@ clsd <- function(x=NULL,
       P.right[xnorm<=max(x),1] <- 0
       Pnorm.deriv[,1] <- Pnorm.deriv[,1]+P.left
       Pnorm.deriv[,ncol(Pnorm.deriv)] <- Pnorm.deriv[,ncol(Pnorm.deriv)]+P.right
-      f.norm.deriv <- as.numeric(Pnorm.deriv%*%beta)
+      P.deriv.beta <- as.numeric(Pnorm.deriv%*%beta)
 
     }
 
@@ -312,6 +321,7 @@ clsd <- function(x=NULL,
 
   f.norm <- exp(Pnorm.beta-log.norm.constant)
   F.norm <- integrate.trapezoidal(xnorm,f.norm)
+  if(deriv>0) f.norm.deriv <- as.numeric(f.norm*P.deriv.beta)
 
   ## Next, strip off the values of the distribution corresponding to
   ## either sample x or evaluation xeval
@@ -340,7 +350,7 @@ clsd <- function(x=NULL,
                       Basis.beta.er=Pnorm.beta,
                       P=P,
                       Per=Pnorm,
-                      logl=sum(P.beta-log.norm.constant),
+                      logl=sum(P.beta-log.norm.constant),## issue XXXX this is potentially for evaluation data
                       constant=norm.constant,
                       degree=degree,
                       segments=segments,
@@ -366,6 +376,7 @@ sum.log.density <- function(beta,
                             ubound=NULL,
                             lbound.pd=FALSE,
                             ubound.nd=FALSE,
+                            deriv=0,
                             basis="tensor",
                             knots="quantiles",
                             er=1.0e+00,
@@ -379,8 +390,6 @@ sum.log.density <- function(beta,
   if(missing(degree)) stop(" You must provide spline degree")
   if(missing(segments)) stop(" You must provide number of segments")
 
-  if(lbound.pd||ubound.nd) {do.deriv<-1}else{do.deriv<-0}
-
   output <- clsd(beta=beta,
                  x=x,
                  degree=degree,
@@ -389,15 +398,15 @@ sum.log.density <- function(beta,
                  ubound=ubound,
                  lbound.pd=lbound.pd,
                  ubound.nd=ubound.nd,
-                 deriv=do.deriv,
+                 deriv=deriv,
                  basis=basis,
                  knots=knots,
                  er=er,
                  n.integrate=n.integrate,
                  linearize=TRUE)
 
-  if(lbound.pd && output$density.deriv[1]<0) return(-log(.Machine$double.xmin))
-  if(ubound.nd && output$density.deriv[length(x)]>0) return(-log(.Machine$double.xmin))  
+  if(lbound.pd && output$density.deriv[which(x==min(x))]<0) return(-length(x)*log(.Machine$double.eps))
+  if(ubound.nd && output$density.deriv[which(x==max(x))]>0) return(-length(x)*log(.Machine$double.eps))
 
   logl <- output$logl
   f.hat <- output$density
@@ -465,6 +474,7 @@ sum.log.density.gradient <- function(beta,
                                      ubound=NULL,
                                      lbound.pd=FALSE,
                                      ubound.nd=FALSE,
+                                     deriv=0,
                                      basis="tensor",
                                      knots="quantiles",
                                      er=1.0e+00,
@@ -489,6 +499,7 @@ sum.log.density.gradient <- function(beta,
                  ubound=ubound,
                  lbound.pd=lbound.pd,
                  ubound.nd=ubound.nd,
+                 deriv=deriv,
                  basis=basis,
                  knots=knots,
                  er=er,
@@ -522,6 +533,7 @@ ls.ml <- function(x,
                   ubound=NULL,
                   lbound.pd=FALSE,
                   ubound.nd=FALSE,
+                  deriv=0,
                   do.break=FALSE,
                   do.gradient=TRUE,
                   maxit=10^5,
@@ -623,6 +635,7 @@ ls.ml <- function(x,
                                                            ubound=ubound,
                                                            lbound.pd=lbound.pd,
                                                            ubound.nd=ubound.nd,
+                                                           deriv=deriv,
                                                            control=list(maxit=maxit,if(debug){trace=1}else{trace=0}))),
                        error = function(e){return(optim.out)})[[4]]!=0 && m.attempts < max.attempts){
 
