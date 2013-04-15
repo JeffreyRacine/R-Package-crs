@@ -396,8 +396,8 @@ sum.log.density <- function(beta,
                  n.integrate=n.integrate,
                  linearize=TRUE)
 
-  if(lbound.pd && output$density.deriv[1]<=0) return(-log(.Machine$double.xmin))
-  if(ubound.nd && output$density.deriv[length(x)]>=0) return(-log(.Machine$double.xmin))  
+  if(lbound.pd && output$density.deriv[1]<0) return(-log(.Machine$double.xmin))
+  if(ubound.nd && output$density.deriv[length(x)]>0) return(-log(.Machine$double.xmin))  
 
   logl <- output$logl
   f.hat <- output$density
@@ -693,6 +693,7 @@ summary.clsd <- function(object,
 plot.clsd <- function(object,
                       er=FALSE,
                       distribution=FALSE,
+                      ylim,
                       ...) {
 
   if(!er) {
@@ -700,7 +701,7 @@ plot.clsd <- function(object,
     if(distribution){y <- object$distribution[order.x]}else{y <- object$density[order.x]}
     x <- plot(object$x[order.x],
               y,
-              ylim=c(0,max(y)),
+              ylim=if(missing(ylim)){c(0,max(y))}else{ylim},
               ylab=if(distribution){"Distribution"}else{"Density"},
               xlab="Data",
               type="l",
@@ -710,7 +711,7 @@ plot.clsd <- function(object,
     if(distribution){y <- object$distribution.er[order.xer]}else{y <- object$density.er[order.xer]}
     xer <- plot(object$xer[order.xer],
                   y,
-                  ylim=c(0,max(y)),
+                  ylim=if(missing(ylim)){c(0,max(y))}else{ylim},
                   ylab=if(distribution){"Distribution"}else{"Density"},
                   xlab="Data",
                   type="l",
