@@ -17,18 +17,19 @@ clsd(x=NULL,
      segments.max=5,
      lbound=NULL,
      ubound=NULL,
-     lbound.pd=FALSE,
-     ubound.nd=FALSE,
      basis="tensor",
      knots="quantiles",
      penalty=c("aic","sic","cv","none"),
      deriv.index=1,
      deriv=0,
      do.break=FALSE,
+     do.gradient=TRUE,
      er=NULL,
      monotone=TRUE,
      n.integrate=1.0e+03,
-     nmulti=1)
+     nmulti=1,
+     method = c("L-BFGS-B", "Nelder-Mead", "BFGS", "CG", "SANN"),
+     verbose=FALSE)
 }
 \arguments{
 
@@ -61,14 +62,6 @@ clsd(x=NULL,
     of 0, and has a discontinuity at 0, the user could specify lbound =
     0. However, if the density is essentially zero near 0, one does not
     need to specify lbound }
-
-  \item{lbound.nd,ubound.pd}{
-    check for negative/positive derivative of the estimated density at
-    the min/max of the data and penalize to ensure the resulting density
-    satisfies these constraints (for densities that are monotonically
-    decreasing at the left bound or monotonically increasing at the
-    right bound one would want these to be \code{FALSE} (default is
-    \code{FALSE}))}
 
   \item{basis}{ a character string (default \code{basis="tensor"})
     indicating whether the additive or tensor product B-spline basis
@@ -103,8 +96,11 @@ clsd(x=NULL,
     likelihood}
 
   \item{do.break}{ a logical value indicating whether or not to stop
-     search for a global minimum once the objective function stops
+     search for a global maximum once the objective function stops
      improving}
+
+  \item{do.gradient}{ a logical value indicating whether or not to use
+     the analytical gradient during optimization }
 
    \item{er}{
      a scalar indicating the fraction of data range to extend
@@ -112,17 +108,24 @@ clsd(x=NULL,
      further details)
    }
 
-   \item{monotone}{ a logical value indicating whether to monotone the
-     first and last bases (default \code{TRUE}) - note that when using
-     \code{monotone=FALSE} it is advisable to use multistarting
-     (e.g. nmulti=5) to attempt ensure successful maximization of the
-     likelihood function (all weights are restricted to be negative)
+   \item{monotone}{ a logical value indicating whether modify
+     the standard B-spline basis function so that it is better suited to
+     density estimation (default \code{TRUE})
    }
 
    \item{n.integrate}{
      the number of integration points in addition to the sample
      realizations evenly spaced on the extended range specified by
      \code{er} (defaults to \code{1.0e+03})
+   }
+
+   \item{method}{
+     see \link{optim} for details
+   }
+
+   \item{verbose}{
+     a logical value which when \code{TRUE} produces verbose output
+     during optimization
    }
 
   
@@ -190,20 +193,11 @@ clsd(x=NULL,
   
 \section{Usage Issues}{
 
-  Information regarding bounds \code{lbound,ubound} ought to be used if
-  available/known (for example, if a variable is non-negative provide
-  \code{lbound=0}).
-
   The use of a single linear segment for the left and rightmost spline
   bases can have lead to undesirable tail behavior beyond the range of
-  the data. If the estimated density projected beyond the range of the
-  data is unsatisfactory, you might consider \code{monotone=FALSE}
-  which uses the full basis restricted to have negative weights ensuring
-  decaying tails outside of the range of the data.  Be forewarned that
-  the restriction to negative weights may result in bizarre results for
-  certain distributions so verify that the results on the interior are
-  comparable to those with \code{monotone=TRUE} (see one of the
-  examples below for an illustration).
+  the data when \code{monotone=FALSE} (the standard B-spline bases are
+  vertical at the min/max of \code{x} which can lead to kinks in the
+  estimated density at these points).
 
 }
 \references{
@@ -267,8 +261,7 @@ legend("topright",c("DGP",paste("Cubic Logspline Density (package `logspline', k
        bty="n",
        cex=0.75)
 
-## Old Faithful eruptions data histogram and clsd density using
-## monotoned spline basis
+## Old Faithful eruptions data histogram and clsd density
 library(MASS)
 data(faithful)
 attach(faithful)
@@ -278,19 +271,6 @@ plot(clsd.out,ylim=ylim)
 hist(eruptions,breaks=20,freq=FALSE,add=TRUE,lty=2)
 rug(eruptions)
 summary(clsd.out)
-
-## Old Faithful eruptions data histogram and clsd density using
-## full spline basis outside the range of the data
-library(MASS)
-data(faithful)
-attach(faithful)
-eruptions <- sort(faithful$eruptions)
-clsd.out <- clsd(eruptions,monotone=FALSE)
-ylim <- c(0,max(clsd.out$density,hist(eruptions,breaks=20,plot=FALSE)$density))
-plot(clsd.out,er=TRUE,ylim=ylim)
-hist(eruptions,breaks=20,freq=FALSE,add=TRUE,lty=2)
-summary(clsd.out)
-
 } %% End dontrun
 }
 \keyword{nonparametric}
