@@ -26,7 +26,7 @@ clsd(x=NULL,
      deriv=0,
      do.break=FALSE,
      er=NULL,
-     linearize=TRUE,
+     monotone=TRUE,
      n.integrate=1.0e+03,
      nmulti=1)
 }
@@ -112,9 +112,9 @@ clsd(x=NULL,
      further details)
    }
 
-   \item{linearize}{ a logical value indicating whether to linearize the
+   \item{monotone}{ a logical value indicating whether to monotone the
      first and last bases (default \code{TRUE}) - note that when using
-     \code{linearize=FALSE} it is advisable to use multistarting
+     \code{monotone=FALSE} it is advisable to use multistarting
      (e.g. nmulti=5) to attempt ensure successful maximization of the
      likelihood function (all weights are restricted to be negative)
    }
@@ -197,12 +197,12 @@ clsd(x=NULL,
   The use of a single linear segment for the left and rightmost spline
   bases can have lead to undesirable tail behavior beyond the range of
   the data. If the estimated density projected beyond the range of the
-  data is unsatisfactory, you might consider \code{linearize=FALSE}
+  data is unsatisfactory, you might consider \code{monotone=FALSE}
   which uses the full basis restricted to have negative weights ensuring
   decaying tails outside of the range of the data.  Be forewarned that
   the restriction to negative weights may result in bizarre results for
   certain distributions so verify that the results on the interior are
-  comparable to those with \code{linearize=TRUE} (see one of the
+  comparable to those with \code{monotone=TRUE} (see one of the
   examples below for an illustration).
 
 }
@@ -268,7 +268,7 @@ legend("topright",c("DGP",paste("Cubic Logspline Density (package `logspline', k
        cex=0.75)
 
 ## Old Faithful eruptions data histogram and clsd density using
-## linearized spline basis
+## monotoned spline basis
 library(MASS)
 data(faithful)
 attach(faithful)
@@ -285,7 +285,7 @@ library(MASS)
 data(faithful)
 attach(faithful)
 eruptions <- sort(faithful$eruptions)
-clsd.out <- clsd(eruptions,linearize=FALSE)
+clsd.out <- clsd(eruptions,monotone=FALSE)
 ylim <- c(0,max(clsd.out$density,hist(eruptions,breaks=20,plot=FALSE)$density))
 plot(clsd.out,er=TRUE,ylim=ylim)
 hist(eruptions,breaks=20,freq=FALSE,add=TRUE,lty=2)

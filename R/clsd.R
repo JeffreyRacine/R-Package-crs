@@ -27,7 +27,7 @@ integrate.trapezoidal <- function(x,y) {
 
 }
 
-par.init <- function(degree,segments,linearize=TRUE) {
+par.init <- function(degree,segments,monotone=TRUE) {
 
   ## This function initializes parameters for search along with upper
   ## and lower bounds if appropriate.
@@ -44,7 +44,7 @@ par.init <- function(degree,segments,linearize=TRUE) {
 
   par.ub <- - sqrt(.Machine$double.eps)
 
-  if(linearize) {
+  if(monotone) {
 
     par.lb <- -100
     par.init <- c(runif(1,par.lb,par.ub),rnorm(dim.p-2,sd=-par.lb/2),runif(1,par.lb,par.ub))
@@ -87,9 +87,10 @@ clsd <- function(x=NULL,
                  do.break=FALSE,
                  do.gradient=FALSE, ## fragile, can be switched off to test
                  er=NULL,
-                 linearize=TRUE,
+                 monotone=TRUE,
                  n.integrate=1.0e+03,
-                 nmulti=1) {
+                 nmulti=1,
+                 verbose=FALSE) {
   
   if(is.null(x)) stop(" You must provide data")
 
@@ -137,7 +138,8 @@ clsd <- function(x=NULL,
                        er=er,
                        do.break=do.break,
                        penalty=penalty,
-                       linearize=linearize)
+                       monotone=monotone,
+                       verbose=verbose)
 
     beta <- ls.ml.out$beta
     degree <- ls.ml.out$degree
@@ -190,82 +192,79 @@ clsd <- function(x=NULL,
 
   suppressWarnings(Pnorm <- prod.spline(x=x,
                                         xeval=xnorm,
-                                        K=cbind(degree,segments+2),
+                                        K=cbind(degree,segments+if(monotone){2}else{0}),
                                         knots=knots,
-                                        basis=basis)[,-c(2,degree+segments+1)])
+                                        basis=basis))
 
-  if(linearize) {
+  if(monotone) Pnorm <- Pnorm[,-c(2,degree+segments+1)]
 
-    ## Linearize the spline basis beyond the knots a la Kooperberg and
-    ## Stone (1991), then compute the normalizing constant so that the
-    ## estimate integrates to one. We append linear splines to the
-    ## B-spline basis to generate exponentially declining tails
-    ## (K=cbind(1,1) creates the linear basis).
+  ## Compute the normalizing constant so that the estimate
+  ## integrates to one. We append linear splines to the B-spline
+  ## basis to generate exponentially declining tails (K=cbind(1,1)
+  ## creates the linear basis).
 
-    suppressWarnings(P.lin <- prod.spline(x=x,
-                                          xeval=xnorm,
-                                          K=cbind(1,1),
-                                          knots=knots,
-                                          basis=basis))
-
-    ## We append the linear basis to the left and rightmost polynomial
-    ## bases. We match the slope of the linear basis to that of the
-    ## polynomial basis at xmin/xmax (note that
-    ## Pnorm[xnorm==max(x),-ncol(Pnorm)] <- 0 is there because the
-    ## gsl.bspline values at the right endpoint are very small but not
-    ## exactly zero but want to rule out any potential issues hence
-    ## set them correctly to zero)
-
-    Pnorm[xnorm<min(x),] <- 0
-    Pnorm[xnorm>max(x),] <- 0
-    Pnorm[xnorm==max(x),-ncol(Pnorm)] <- 0
-    P.left <- as.matrix(P.lin[,1])
-    P.right <- as.matrix(P.lin[,2])
-
-    ## We want the linear segment to have the same slope as the
-    ## polynomial segment it connects with and to match at the joint
-    ## hence conduct some carpentry at the left boundary.
-
-    index <- which(xnorm==min(x))
-    index.l <- index+1
-    index.u <- index+5
-    x.l <- xnorm[index.l]
-    x.u <- xnorm[index.u]
-    slope.poly.left <- as.numeric((Pnorm[index.u,1]-Pnorm[index.l,1])/(x.u-x.l))
-    index.l <- index+1
-    index.u <- index+5
-    x.l <- xnorm[index.l]
-    x.u <- xnorm[index.u]
-    slope.linear.left <- as.numeric((P.left[index.u]-P.left[index.l])/(x.u-x.l))
-
-    ## Complete carpentry at the right boundary.
-
-    index <- which(xnorm==max(x))
-    index.l <- index-1
-    index.u <- index-5
-    x.l <- xnorm[index.l]
-    x.u <- xnorm[index.u]
-    slope.poly.right <- as.numeric((Pnorm[index.u,ncol(Pnorm)]-Pnorm[index.l,ncol(Pnorm)])/(x.u-x.l))
-    index.l <- index-1
-    index.u <- index-5
-    x.l <- xnorm[index.l]
-    x.u <- xnorm[index.u]
-    slope.linear.right <- as.numeric((P.right[index.u]-P.right[index.l])/(x.u-x.l))
-
-    ## Here are the linear segments with matching slopes XXX patch up
-    ## deriv outside range of data needed as well XXX
-
-    P.left <- as.matrix(P.left-1)*slope.poly.left/slope.linear.left+1
-    P.right <- as.matrix(P.right-1)*slope.poly.right/slope.linear.right+1
-
-    P.left[xnorm>=min(x),1] <- 0
-    P.right[xnorm<=max(x),1] <- 0
-
-    Pnorm[,1] <- Pnorm[,1]+P.left
-    Pnorm[,ncol(Pnorm)] <- Pnorm[,ncol(Pnorm)]+P.right
-
-  }
-
+  suppressWarnings(P.lin <- prod.spline(x=x,
+                                        xeval=xnorm,
+                                        K=cbind(1,1),
+                                        knots=knots,
+                                        basis=basis))
+  
+  ## We append the linear basis to the left and rightmost polynomial
+  ## bases. We match the slope of the linear basis to that of the
+  ## polynomial basis at xmin/xmax (note that
+  ## Pnorm[xnorm==max(x),-ncol(Pnorm)] <- 0 is there because the
+  ## gsl.bspline values at the right endpoint are very small but not
+  ## exactly zero but want to rule out any potential issues hence
+  ## set them correctly to zero)
+  
+  Pnorm[xnorm<min(x),] <- 0
+  Pnorm[xnorm>max(x),] <- 0
+  Pnorm[xnorm==max(x),-ncol(Pnorm)] <- 0
+  P.left <- as.matrix(P.lin[,1])
+  P.right <- as.matrix(P.lin[,2])
+  
+  ## We want the linear segment to have the same slope as the
+  ## polynomial segment it connects with and to match at the joint
+  ## hence conduct some carpentry at the left boundary.
+  
+  index <- which(xnorm==min(x))
+  index.l <- index+1
+  index.u <- index+5
+  x.l <- xnorm[index.l]
+  x.u <- xnorm[index.u]
+  slope.poly.left <- as.numeric((Pnorm[index.u,1]-Pnorm[index.l,1])/(x.u-x.l))
+  index.l <- index+1
+  index.u <- index+5
+  x.l <- xnorm[index.l]
+  x.u <- xnorm[index.u]
+  slope.linear.left <- as.numeric((P.left[index.u]-P.left[index.l])/(x.u-x.l))
+  
+  ## Complete carpentry at the right boundary.
+  
+  index <- which(xnorm==max(x))
+  index.l <- index-1
+  index.u <- index-5
+  x.l <- xnorm[index.l]
+  x.u <- xnorm[index.u]
+  slope.poly.right <- as.numeric((Pnorm[index.u,ncol(Pnorm)]-Pnorm[index.l,ncol(Pnorm)])/(x.u-x.l))
+  index.l <- index-1
+  index.u <- index-5
+  x.l <- xnorm[index.l]
+  x.u <- xnorm[index.u]
+  slope.linear.right <- as.numeric((P.right[index.u]-P.right[index.l])/(x.u-x.l))
+  
+  ## Here are the linear segments with matching slopes XXX patch up
+  ## deriv outside range of data needed as well XXX
+  
+  P.left <- as.matrix(P.left-1)*slope.poly.left/slope.linear.left+1
+  P.right <- as.matrix(P.right-1)*slope.poly.right/slope.linear.right+1
+  
+  P.left[xnorm>=min(x),1] <- 0
+  P.right[xnorm<=max(x),1] <- 0
+  
+  Pnorm[,1] <- Pnorm[,1]+P.left
+  Pnorm[,ncol(Pnorm)] <- Pnorm[,ncol(Pnorm)]+P.right
+  
   if(ncol(Pnorm)!=length(beta)) stop(paste(" Incompatible arguments: beta must be of dimension ",ncol(Pnorm),sep=""))
 
   Pnorm.beta <- as.numeric(Pnorm%*%as.matrix(beta))
@@ -274,40 +273,38 @@ clsd <- function(x=NULL,
 
     suppressWarnings(Pnorm.deriv <- prod.spline(x=x,
                                                 xeval=xnorm,
-                                                K=cbind(degree,segments+2),
+                                                K=cbind(degree,segments+if(monotone){2}else{0}),
                                                 knots=knots,
                                                 basis=basis,
                                                 deriv.index=deriv.index,
-                                                deriv=deriv)[,-c(2,degree+segments+1)])
+                                                deriv=deriv))
 
-    if(linearize) {
+    if(monotone) Pnorm.deriv <- Pnorm.deriv[,-c(2,degree+segments+1)]
 
-      suppressWarnings(P.lin <- prod.spline(x=x,
-                                            xeval=xnorm,
-                                            K=cbind(1,1),
-                                            knots=knots,
-                                            basis=basis,
-                                            deriv.index=deriv.index,
-                                            deriv=deriv))
-
-      ## For the derivative bases on the extended range `xnorm', above
-      ## and below max(x)/min(x) we assign the bases to constants
-      ## (zero). We append the linear basis to the left and right of the
-      ## bases. The left basis takes on linear values to the left of
-      ## min(x), zero elsewhere, the right zero to the left of max(x),
-      ## linear elsewhere.
-
-      Pnorm.deriv[xnorm<min(x),] <- 0
-      Pnorm.deriv[xnorm>max(x),] <- 0
-      P.left <- as.matrix(P.lin[,1])
-      P.left[xnorm>=min(x),1] <- 0
-      P.right <- as.matrix(P.lin[,2])
-      P.right[xnorm<=max(x),1] <- 0
-      Pnorm.deriv[,1] <- Pnorm.deriv[,1]+P.left
-      Pnorm.deriv[,ncol(Pnorm.deriv)] <- Pnorm.deriv[,ncol(Pnorm.deriv)]+P.right
-      P.deriv.beta <- as.numeric(Pnorm.deriv%*%beta)
-
-    }
+    suppressWarnings(P.lin <- prod.spline(x=x,
+                                          xeval=xnorm,
+                                          K=cbind(1,1),
+                                          knots=knots,
+                                          basis=basis,
+                                          deriv.index=deriv.index,
+                                          deriv=deriv))
+    
+    ## For the derivative bases on the extended range `xnorm', above
+    ## and below max(x)/min(x) we assign the bases to constants
+    ## (zero). We append the linear basis to the left and right of the
+    ## bases. The left basis takes on linear values to the left of
+    ## min(x), zero elsewhere, the right zero to the left of max(x),
+    ## linear elsewhere.
+    
+    Pnorm.deriv[xnorm<min(x),] <- 0
+    Pnorm.deriv[xnorm>max(x),] <- 0
+    P.left <- as.matrix(P.lin[,1])
+    P.left[xnorm>=min(x),1] <- 0
+    P.right <- as.matrix(P.lin[,2])
+    P.right[xnorm<=max(x),1] <- 0
+    Pnorm.deriv[,1] <- Pnorm.deriv[,1]+P.left
+    Pnorm.deriv[,ncol(Pnorm.deriv)] <- Pnorm.deriv[,ncol(Pnorm.deriv)]+P.right
+    P.deriv.beta <- as.numeric(Pnorm.deriv%*%beta)
 
   } else {
 
@@ -395,10 +392,10 @@ sum.log.density <- function(beta,
                             deriv=0,
                             basis="tensor",
                             knots="quantiles",
-                            er=1.0e+00,
+                            er=NULL,
                             n.integrate=1.0e+03,
                             penalty=c("aic","sic","cv","none"),
-                            linearize=TRUE) {
+                            monotone=TRUE) {
 
   penalty <- match.arg(penalty)
   if(missing(x)) stop(" You must provide data")
@@ -419,7 +416,7 @@ sum.log.density <- function(beta,
                  knots=knots,
                  er=er,
                  n.integrate=n.integrate,
-                 linearize=TRUE)
+                 monotone=TRUE)
 
   if(lbound.pd && output$density.deriv[which(x==min(x))]<0) return(-length(x)*log(.Machine$double.eps))
   if(ubound.nd && output$density.deriv[which(x==max(x))]>0) return(-length(x)*log(.Machine$double.eps))
@@ -493,10 +490,10 @@ sum.log.density.gradient <- function(beta,
                                      deriv=0,
                                      basis="tensor",
                                      knots="quantiles",
-                                     er=1.0e+00,
+                                     er=NULL,
                                      n.integrate=1.0e+03,
                                      penalty=c("aic","sic","cv","none"),
-                                     linearize=TRUE) {
+                                     monotone=TRUE) {
 
   ## Note - gradients are only ever computed for the sample
   ## realizations used to compute the log likelihood function
@@ -520,7 +517,7 @@ sum.log.density.gradient <- function(beta,
                  knots=knots,
                  er=er,
                  n.integrate=n.integrate,
-                 linearize=TRUE)
+                 monotone=TRUE)
 
   ## This returns the correct signs it appears but magnitude leaves
   ## much to be desired... XXX needs work
@@ -554,13 +551,13 @@ ls.ml <- function(x,
                   do.gradient=TRUE,
                   maxit=10^5,
                   nmulti=1,
-                  er=1.0e+00,
+                  er=NULL,
                   n.integrate=1.0e+03,
                   basis="tensor",
                   knots="quantiles",
                   penalty=c("aic","sic","cv","none"),
-                  linearize=TRUE,
-                  debug=FALSE,
+                  monotone=TRUE,
+                  verbose=FALSE,
                   max.attempts=25,
                   random.seed=42) {
 
@@ -617,7 +614,7 @@ ls.ml <- function(x,
         ## Can restart to see if we can improve on min... note initial
         ## values totally ad-hoc...
 
-        par.init.out <- par.init(d,s,linearize)
+        par.init.out <- par.init(d,s,monotone)
         par.init <- par.init.out$par.init
         par.upper <- par.init.out$par.upper
         par.lower <- par.init.out$par.lower
@@ -646,24 +643,24 @@ ls.ml <- function(x,
                                                            basis=basis,
                                                            knots=knots,
                                                            n.integrate=n.integrate,
-                                                           linearize=linearize,
+                                                           monotone=monotone,
                                                            lbound=lbound,
                                                            ubound=ubound,
                                                            lbound.pd=lbound.pd,
                                                            ubound.nd=ubound.nd,
                                                            deriv=deriv,
-                                                           control=list(maxit=maxit,if(debug){trace=1}else{trace=0}))),
+                                                           control=list(maxit=maxit,if(verbose){trace=1}else{trace=0}))),
                        error = function(e){return(optim.out)})[[4]]!=0 && m.attempts < max.attempts){
 
           ## If optim fails to converge, display a message, reset
           ## initial parameters, and try again.
 
-          if(debug) {
-            print(optim.out$message)
-            cat("\r optim failed (degree = ",d,", segments = ",s,", convergence = ", optim.out[[4]],") re-running with new initial values",sep="")
+          if(verbose && optim.out[[4]]!=0) {
+            if(!is.null(optim.out$message)) cat("\n optim message = ",optim.out$message,sep="")
+            cat("\n optim failed (degree = ",d,", segments = ",s,", convergence = ", optim.out[[4]],") re-running with new initial values",sep="")
           }
 
-          par.init.out <- par.init(d,s,linearize)
+          par.init.out <- par.init(d,s,monotone)
           par.init <- par.init.out$par.init
           par.lower <- par.init.out$par.lower
           par.upper <- par.init.out$par.upper
@@ -676,6 +673,7 @@ ls.ml <- function(x,
         ## new values.
 
         if(optim.out$value < value.opt) {
+          if(verbose) cat("\n optim improved: d = ",d,", s = ",s,", old = ",formatC(value.opt,format="g",digits=16),", new = ",formatC(optim.out$value,format="g",digits=16),", diff = ",formatC(value.opt-optim.out$value,format="g",digits=16),sep="")
           par.opt <- optim.out$par
           d.opt <- d
           s.opt <- s
