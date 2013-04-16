@@ -90,6 +90,7 @@ clsd <- function(x=NULL,
                  monotone=TRUE,
                  n.integrate=1.0e+03,
                  nmulti=1,
+                 method="BFGS",
                  verbose=FALSE) {
   
   if(is.null(x)) stop(" You must provide data")
@@ -132,6 +133,7 @@ clsd <- function(x=NULL,
                        ubound=ubound,
                        lbound.pd=lbound.pd,
                        ubound.nd=ubound.nd,
+                       method=method,
                        deriv=deriv,
                        nmulti=nmulti,
                        do.gradient=do.gradient,
@@ -552,6 +554,7 @@ ls.ml <- function(x,
                   maxit=10^5,
                   nmulti=1,
                   er=NULL,
+                  method="BFGS",
                   n.integrate=1.0e+03,
                   basis="tensor",
                   knots="quantiles",
@@ -628,12 +631,33 @@ ls.ml <- function(x,
 
         m.attempts <- 0
 
+        if(verbose) {
+          require(maxLik)
+          compareDerivatives(t0=par.init,
+                             f=sum.log.density,
+                             grad=sum.log.density.gradient,
+                             x=x,
+                             degree=d,
+                             segments=s,
+                             er=er,
+                             penalty=penalty,
+                             basis=basis,
+                             knots=knots,
+                             n.integrate=n.integrate,
+                             monotone=monotone,
+                             lbound=lbound,
+                             ubound=ubound,
+                             lbound.pd=lbound.pd,
+                             ubound.nd=ubound.nd,
+                             deriv=deriv)
+        }
+
         while(tryCatch(suppressWarnings(optim.out <- optim(par=par.init,
                                                            fn=sum.log.density,
                                                            gr=if(do.gradient){sum.log.density.gradient}else{NULL},
                                                            lower=par.lower,
                                                            upper=par.upper,
-                                                           method="L-BFGS-B",
+                                                           method=method,
                                                            x=x,
                                                            degree=d,
                                                            segments=s,
