@@ -77,8 +77,6 @@ clsd <- function(x=NULL,
                  segments.max=5,
                  lbound=NULL,
                  ubound=NULL,
-                 lbound.pd=FALSE,
-                 ubound.nd=FALSE,
                  basis="tensor",
                  knots="quantiles",
                  penalty=c("aic","sic","cv","none"),
@@ -112,13 +110,6 @@ clsd <- function(x=NULL,
   penalty <- match.arg(penalty)
   method <- match.arg(method)
 
-  ## Note that deriv will be overridden if derivative constraints on
-  ## the upper/lower tails are provided. XXX could provide a warning
-  ## in this instance but this code may be moot IF I figure out an
-  ## elegant way to get smooth tails (April 15 2013 this eludes me)
-
-  if(lbound.pd||ubound.nd) deriv <- 1
-
   fv <- NULL
 
   if(is.null(beta)) {
@@ -134,10 +125,7 @@ clsd <- function(x=NULL,
                        segments.max=segments.max,
                        lbound=lbound,
                        ubound=ubound,
-                       lbound.pd=lbound.pd,
-                       ubound.nd=ubound.nd,
                        method=method,
-                       deriv=deriv,
                        nmulti=nmulti,
                        do.gradient=do.gradient,
                        er=er,
@@ -394,9 +382,6 @@ sum.log.density <- function(beta,
                             segments,
                             lbound=NULL,
                             ubound=NULL,
-                            lbound.pd=FALSE,
-                            ubound.nd=FALSE,
-                            deriv=0,
                             basis="tensor",
                             knots="quantiles",
                             er=NULL,
@@ -416,17 +401,11 @@ sum.log.density <- function(beta,
                  segments=segments,
                  lbound=lbound,
                  ubound=ubound,
-                 lbound.pd=lbound.pd,
-                 ubound.nd=ubound.nd,
-                 deriv=deriv,
                  basis=basis,
                  knots=knots,
                  er=er,
                  n.integrate=n.integrate,
                  monotone=TRUE)
-
-  if(lbound.pd && output$density.deriv[which(x==min(x))]<0) return(-length(x)*log(.Machine$double.eps))
-  if(ubound.nd && output$density.deriv[which(x==max(x))]>0) return(-length(x)*log(.Machine$double.eps))
 
   logl <- output$logl
   f.hat <- output$density
@@ -492,9 +471,6 @@ sum.log.density.gradient <- function(beta,
                                      segments,
                                      lbound=NULL,
                                      ubound=NULL,
-                                     lbound.pd=FALSE,
-                                     ubound.nd=FALSE,
-                                     deriv=0,
                                      basis="tensor",
                                      knots="quantiles",
                                      er=NULL,
@@ -517,9 +493,6 @@ sum.log.density.gradient <- function(beta,
                  segments=segments,
                  lbound=lbound,
                  ubound=ubound,
-                 lbound.pd=lbound.pd,
-                 ubound.nd=ubound.nd,
-                 deriv=deriv,
                  basis=basis,
                  knots=knots,
                  er=er,
@@ -551,9 +524,6 @@ ls.ml <- function(x,
                   segments.max=5,
                   lbound=NULL,
                   ubound=NULL,
-                  lbound.pd=FALSE,
-                  ubound.nd=FALSE,
-                  deriv=0,
                   do.break=FALSE,
                   do.gradient=TRUE,
                   maxit=10^5,
@@ -651,10 +621,7 @@ ls.ml <- function(x,
                              n.integrate=n.integrate,
                              monotone=monotone,
                              lbound=lbound,
-                             ubound=ubound,
-                             lbound.pd=lbound.pd,
-                             ubound.nd=ubound.nd,
-                             deriv=deriv)
+                             ubound=ubound)
         }
 
         while(tryCatch(suppressWarnings(optim.out <- optim(par=par.init,
@@ -674,9 +641,6 @@ ls.ml <- function(x,
                                                            monotone=monotone,
                                                            lbound=lbound,
                                                            ubound=ubound,
-                                                           lbound.pd=lbound.pd,
-                                                           ubound.nd=ubound.nd,
-                                                           deriv=deriv,
                                                            control=list(fnscale=-1,maxit=maxit,if(verbose){trace=1}else{trace=0}))),
                        error = function(e){return(optim.out)})[[4]]!=0 && m.attempts < max.attempts){
 
