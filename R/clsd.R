@@ -27,7 +27,7 @@ integrate.trapezoidal <- function(x,y) {
 
 }
 
-par.init <- function(degree,segments,par.lb=-10) {
+par.init <- function(degree,segments) {
 
   ## This function initializes parameters for search along with upper
   ## and lower bounds if appropriate.
@@ -43,13 +43,11 @@ par.init <- function(degree,segments,par.lb=-10) {
   ## > 0. We therefore use sqrt machine epsilon.
 
   par.ub <- - sqrt(.Machine$double.eps)
-  par.init <- c(runif(1,par.lb,par.ub),rnorm(dim.p-2,sd=-par.lb/2),runif(1,par.lb,par.ub))
-  par.lower <- c(par.lb,rep(-Inf,dim.p-2),par.lb)
+  par.init <- c(runif(1,-10,par.ub),rnorm(dim.p-2),runif(1,-10,par.ub))
   par.upper <- c(par.ub,rep(Inf,dim.p-2),par.ub)
 
   return(list(par.init=par.init,
-              par.upper=par.upper,
-              par.lower=par.lower))
+              par.upper=par.upper))
 
 }
 
@@ -76,8 +74,7 @@ clsd <- function(x=NULL,
                  n.integrate=1.0e+03,
                  nmulti=1,
                  method = c("L-BFGS-B", "Nelder-Mead", "BFGS", "CG", "SANN"),
-                 verbose=FALSE,
-                 par.lb=-10) {
+                 verbose=FALSE) {
   
   if(is.null(x)) stop(" You must provide data")
 
@@ -120,8 +117,7 @@ clsd <- function(x=NULL,
                        do.break=do.break,
                        penalty=penalty,
                        monotone=monotone,
-                       verbose=verbose,
-                       par.lb=par.lb)
+                       verbose=verbose)
 
     beta <- ls.ml.out$beta
     degree <- ls.ml.out$degree
@@ -376,8 +372,7 @@ sum.log.density <- function(beta,
                             er=NULL,
                             n.integrate=1.0e+03,
                             penalty=c("aic","sic","cv","none"),
-                            monotone=TRUE,
-                            par.lb=-10) {
+                            monotone=TRUE) {
 
   penalty <- match.arg(penalty)
   if(missing(x)) stop(" You must provide data")
@@ -466,8 +461,7 @@ sum.log.density.gradient <- function(beta,
                                      er=NULL,
                                      n.integrate=1.0e+03,
                                      penalty=c("aic","sic","cv","none"),
-                                     monotone=TRUE,
-                                     par.lb=-10) {
+                                     monotone=TRUE) {
 
   ## Note - gradients are only ever computed for the sample
   ## realizations used to compute the log likelihood function
@@ -488,8 +482,7 @@ sum.log.density.gradient <- function(beta,
                  knots=knots,
                  er=er,
                  n.integrate=n.integrate,
-                 monotone=TRUE,
-                 par.lb=par.lb)
+                 monotone=TRUE)
 
   exp.P.beta.P <- exp(output$Basis.beta.er)*output$Per
   int.exp.P.beta.P <- numeric(length=ncol(output$Per))
@@ -522,7 +515,6 @@ ls.ml <- function(x,
                   penalty=c("aic","sic","cv","none"),
                   monotone=TRUE,
                   verbose=FALSE,
-                  par.lb=NULL,
                   max.attempts=25,
                   random.seed=42) {
 
@@ -581,7 +573,6 @@ ls.ml <- function(x,
         par.init.out <- par.init(d,s)
         par.init <- par.init.out$par.init
         par.upper <- par.init.out$par.upper
-        par.lower <- par.init.out$par.lower
 
         ## Trap non-convergence, restart from different initial
         ## points, display message if needed (trace>0 up to 6 provides
@@ -596,7 +587,6 @@ ls.ml <- function(x,
         while(tryCatch(suppressWarnings(optim.out <- optim(par=par.init,
                                                            fn=sum.log.density,
                                                            gr=if(do.gradient){sum.log.density.gradient}else{NULL},
-                                                           lower=par.lower,
                                                            upper=par.upper,
                                                            method=method,
                                                            x=x,
@@ -610,7 +600,6 @@ ls.ml <- function(x,
                                                            monotone=monotone,
                                                            lbound=lbound,
                                                            ubound=ubound,
-                                                           par.lb=par.lb,
                                                            control=list(fnscale=-1,maxit=maxit,if(verbose){trace=1}else{trace=0}))),
                        error = function(e){return(optim.out)})[[4]]!=0 && m.attempts < max.attempts){
 
@@ -624,7 +613,6 @@ ls.ml <- function(x,
 
           par.init.out <- par.init(d,s)
           par.init <- par.init.out$par.init
-          par.lower <- par.init.out$par.lower
           par.upper <- par.init.out$par.upper
 
           m.attempts <- m.attempts+1
