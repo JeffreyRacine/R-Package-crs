@@ -593,8 +593,6 @@ ls.ml <- function(x,
   ## Loop through all degrees for every segment starting at
   ## segments.min.
 
-  cat("\r                                                                            ")
-
   for(s in segments.min:segments.max) {
 
     if(do.break & s > 1 & d.opt < d & s.opt < s) break
@@ -604,6 +602,7 @@ ls.ml <- function(x,
 
     for(d in degree.min:degree.max) {
 
+      cat("\r                                                                                                  ")
       cat("\rOptimizing, degree = ",d,", segments = ",s,", degree.opt = ",d.opt, ", segments.opt = ",s.opt," ",sep="")
       dim.p <- dim.bs(basis=basis,degree=d,segments=s)
 
@@ -652,8 +651,8 @@ ls.ml <- function(x,
                                                            control=list(maxit=maxit,if(verbose){trace=1}else{trace=0}))),
                        error = function(e){return(optim.out)})[[4]]!=0 && m.attempts < max.attempts){
 
-          ## If optim fails to converge, display a message, reset
-          ## initial parameters, and try again.
+          ## If optim fails to converge, reset initial parameters and
+          ## try again.
 
           if(verbose && optim.out[[4]]!=0) {
             if(!is.null(optim.out$message)) cat("\n optim message = ",optim.out$message,sep="")
@@ -673,7 +672,10 @@ ls.ml <- function(x,
         ## new values.
 
         if(optim.out$value < value.opt) {
-          if(verbose) cat("\n optim improved: d = ",d,", s = ",s,", old = ",formatC(value.opt,format="g",digits=16),", new = ",formatC(optim.out$value,format="g",digits=16),", diff = ",formatC(value.opt-optim.out$value,format="g",digits=16),sep="")
+          if(verbose && n==1) cat("\n optim improved: d = ",d,", s = ",s,", old = ",formatC(value.opt,format="g",digits=6),", new = ",formatC(optim.out$value,format="g",digits=6),", diff = ",formatC(value.opt-optim.out$value,format="g",digits=6),sep="")
+
+          if(verbose && n>1) cat("\n optim improved (ms ",n,"/",nmulti,"): d = ",d,", s = ",s,", old = ",formatC(value.opt,format="g",digits=6),", new = ",formatC(optim.out$value,format="g",digits=6),", diff = ",formatC(value.opt-optim.out$value,format="g",digits=6),sep="")
+
           par.opt <- optim.out$par
           d.opt <- d
           s.opt <- s
