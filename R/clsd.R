@@ -85,12 +85,12 @@ clsd <- function(x=NULL,
                  deriv.index=1,
                  deriv=0,
                  do.break=FALSE,
-                 do.gradient=FALSE, ## fragile, can be switched off to test
+                 do.gradient=TRUE,
                  er=NULL,
                  monotone=TRUE,
                  n.integrate=1.0e+03,
                  nmulti=1,
-                 method="BFGS",
+                 method = c("L-BFGS-B", "Nelder-Mead", "BFGS", "CG", "SANN"),
                  verbose=FALSE) {
   
   if(is.null(x)) stop(" You must provide data")
@@ -110,6 +110,7 @@ clsd <- function(x=NULL,
   if(is.null(er)) er <- 1/log(length(x))
 
   penalty <- match.arg(penalty)
+  method <- match.arg(method)
 
   ## Note that deriv will be overridden if derivative constraints on
   ## the upper/lower tails are provided. XXX could provide a warning
@@ -117,6 +118,8 @@ clsd <- function(x=NULL,
   ## elegant way to get smooth tails (April 15 2013 this eludes me)
 
   if(lbound.pd||ubound.nd) deriv <- 1
+
+  fv <- NULL
 
   if(is.null(beta)) {
 
@@ -146,6 +149,7 @@ clsd <- function(x=NULL,
     beta <- ls.ml.out$beta
     degree <- ls.ml.out$degree
     segments <- ls.ml.out$segments
+    fv <- ls.ml.out$fv
 
   }
 
@@ -373,6 +377,7 @@ clsd <- function(x=NULL,
                       basis=basis,
                       nobs=length(x),
                       beta=beta,
+                      fv=fv,
                       er=er,
                       penalty=penalty,
                       nmulti=nmulti,
@@ -440,7 +445,7 @@ sum.log.density <- function(beta,
     ## cubic spline itself. My segments is his number of knots minus
     ## one.
 
-    return(-2*logl+2*complexity)
+    return(2*logl-2*complexity)
 
   } else if(penalty=="sic") {
 
@@ -449,7 +454,7 @@ sum.log.density <- function(beta,
     ## family).  Note the penalty log(n) is Schwarz-Bayes. The penalty
     ## 3 is used by Kooperberg & Stone, while 2 corresponds to LSCV.
 
-    return(-2*logl+log(length(f.hat))*complexity)
+    return(2*logl-log(length(f.hat))*complexity)
 
   } else if(penalty=="cv") {
 
@@ -469,13 +474,13 @@ sum.log.density <- function(beta,
 
     ## Use the delete-one estimator for the ml-cv function
 
-    return(-sum(log(f.hat/one.minus.h)))
+    return(sum(log(f.hat/one.minus.h)))
 
   } else {
 
     ## No penalty
 
-    return(-logl)
+    return(logl)
 
   }
 
@@ -532,9 +537,9 @@ sum.log.density.gradient <- function(beta,
   ## the gradient and adjust by any constants needed
 
   if(penalty=="aic"|penalty=="sic") {
-    return(-2*(colSums(output$P)-length(x)*int.exp.P.beta.P/output$constant))
+    return(2*(colSums(output$P)-length(x)*int.exp.P.beta.P/output$constant))
   } else {
-    return(-(colSums(output$P)-length(x)*int.exp.P.beta.P/output$constant))
+    return(colSums(output$P)-length(x)*int.exp.P.beta.P/output$constant)
   }
 
 }
@@ -554,7 +559,7 @@ ls.ml <- function(x,
                   maxit=10^5,
                   nmulti=1,
                   er=NULL,
-                  method="BFGS",
+                  method=NULL,
                   n.integrate=1.0e+03,
                   basis="tensor",
                   knots="quantiles",
@@ -591,7 +596,7 @@ ls.ml <- function(x,
   s.opt <- 0
   d <- 1
   par.opt <- Inf
-  value.opt <- Inf
+  value.opt <- -Inf
 
   ## Loop through all degrees for every segment starting at
   ## segments.min.
@@ -627,7 +632,7 @@ ls.ml <- function(x,
 
         optim.out <- list()
         optim.out[[4]] <- 9999
-        optim.out$value <- Inf
+        optim.out$value <- -Inf
 
         m.attempts <- 0
 
@@ -672,7 +677,7 @@ ls.ml <- function(x,
                                                            lbound.pd=lbound.pd,
                                                            ubound.nd=ubound.nd,
                                                            deriv=deriv,
-                                                           control=list(maxit=maxit,if(verbose){trace=1}else{trace=0}))),
+                                                           control=list(fnscale=-1,maxit=maxit,if(verbose){trace=1}else{trace=0}))),
                        error = function(e){return(optim.out)})[[4]]!=0 && m.attempts < max.attempts){
 
           ## If optim fails to converge, reset initial parameters and
@@ -695,10 +700,10 @@ ls.ml <- function(x,
         ## Check for a new optimum, overwrite existing values with
         ## new values.
 
-        if(optim.out$value < value.opt) {
-          if(verbose && n==1) cat("\n optim improved: d = ",d,", s = ",s,", old = ",formatC(value.opt,format="g",digits=6),", new = ",formatC(optim.out$value,format="g",digits=6),", diff = ",formatC(value.opt-optim.out$value,format="g",digits=6),sep="")
+        if(optim.out$value > value.opt) {
+          if(verbose && n==1) cat("\n optim improved: d = ",d,", s = ",s,", old = ",formatC(value.opt,format="g",digits=6),", new = ",formatC(optim.out$value,format="g",digits=6),", diff = ",formatC(optim.out$value-value.opt,format="g",digits=6),sep="")
 
-          if(verbose && n>1) cat("\n optim improved (ms ",n,"/",nmulti,"): d = ",d,", s = ",s,", old = ",formatC(value.opt,format="g",digits=6),", new = ",formatC(optim.out$value,format="g",digits=6),", diff = ",formatC(value.opt-optim.out$value,format="g",digits=6),sep="")
+          if(verbose && n>1) cat("\n optim improved (ms ",n,"/",nmulti,"): d = ",d,", s = ",s,", old = ",formatC(value.opt,format="g",digits=6),", new = ",formatC(optim.out$value,format="g",digits=6),", diff = ",formatC(optim.out$value-value.opt,format="g",digits=6),sep="")
 
           par.opt <- optim.out$par
           d.opt <- d
