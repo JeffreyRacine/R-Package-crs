@@ -78,7 +78,8 @@ clsd <- function(x=NULL,
                  n.integrate=1.0e+03,
                  nmulti=1,
                  method = c("L-BFGS-B", "Nelder-Mead", "BFGS", "CG", "SANN"),
-                 verbose=FALSE) {
+                 verbose=FALSE,
+                 quantile.seq=seq(0.01,0.99,length=99)) {
   
   ptm <- system.time("")
 
@@ -322,6 +323,18 @@ clsd <- function(x=NULL,
   F.norm <- integrate.trapezoidal(xnorm,f.norm)
   if(deriv>0) f.norm.deriv <- as.numeric(f.norm*P.deriv.beta)
 
+  ## Compute quantiles using the the quasi-inverse (Definition 2.3.6,
+  ## Nelson (2006))
+  
+  quantile.vec <- numeric(length(quantile.seq))
+  for(i in 1:length(quantile.seq)) {
+    if(quantile.seq[i]>=0.5) {
+      quantile.vec[i] <- max(xnorm[F.norm<=quantile.seq[i]])
+    } else {
+      quantile.vec[i] <-  min(xnorm[F.norm>=quantile.seq[i]])
+    }
+  }
+
   ## Next, strip off the values of the distribution corresponding to
   ## either sample x or evaluation xeval
 
@@ -362,6 +375,8 @@ clsd <- function(x=NULL,
                       penalty=penalty,
                       nmulti=nmulti,
                       x=x,
+                      xq=quantile.vec,
+                      tau=quantile.seq,
                       ptm=ptm)
   
   class(clsd.return) <- "clsd"
