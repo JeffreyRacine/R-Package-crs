@@ -680,7 +680,7 @@ print.clsd <- function(x,...)
 }
 
 plot.clsd <- function(object,
-                      er=FALSE,
+                      er=TRUE,
                       distribution=FALSE,
                       ylim,
                       ...) {
@@ -709,3 +709,13 @@ plot.clsd <- function(object,
   
 
 }
+
+coef.clsd <- function(object, ...) {
+  tc <- object$beta
+  return(tc)
+}
+
+fitted.clsd <- function(object, ...){
+ object$density
+}
+

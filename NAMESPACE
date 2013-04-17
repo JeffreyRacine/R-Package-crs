@@ -19,12 +19,14 @@ export(clsd,
        tensor.prod.model.matrix,
        uniquecombs)
 
-S3method(summary,clsd)
-S3method(plot,clsd)
-S3method(print,clsd)
+S3method(coef, clsd)
+S3method(fitted, clsd)
+S3method(plot, clsd)
+S3method(print, clsd)
+S3method(summary, clsd)
 
-S3method(print,sigtest.crs)
-S3method(summary,sigtest.crs)
+S3method(print, sigtest.crs)
+S3method(summary, sigtest.crs)
 
 S3method(crs, formula)
 S3method(crs, default)

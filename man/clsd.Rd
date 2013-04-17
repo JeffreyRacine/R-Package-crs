@@ -161,10 +161,11 @@ clsd(x=NULL,
 \value{
 
   \code{clsd} returns a \code{clsd} object.  The generic functions
-    \code{\link{summary}} and \code{\link{plot}} support objects of this
-    type (\code{er=TRUE} plots the density on `extended range' data, see
-    \code{er} above, \code{distribution=TRUE} plots the
-    distribution). The returned object has the following components:
+    \code{\link{coef}}, \code{\link{fitted}}, \code{\link{plot}} and
+    \code{\link{summary}} support objects of this type (\code{er=FALSE}
+    plots the density on the sample realizations (default is `extended
+    range' data), see \code{er} above, \code{distribution=TRUE} plots
+    the distribution). The returned object has the following components:
 
   \item{density}{ estimates of the density function
     at the sample points}
@@ -232,45 +233,62 @@ n <- 250
 x <- sort(rnorm(n))
 f.dgp <- dnorm(x)
 
-clsd.out <- clsd(x,degree.max=3,segments.max=3)
-f.clsd <- clsd.out$density
+model <- clsd(x,degree.max=3,segments.max=3)
+
 ## Standard (cubic) estimate taken from the logspline package
-f.lsc <- dlogspline(x,fit.cub<-logspline(x))
 ## Compute MSEs
-mse.f.clsd <- mean((f.clsd-f.dgp)^2)
-mse.f.lsc <- mean((f.lsc-f.dgp)^2)
-## Compute ylimits for plot
-ylim <- c(0,max(f.clsd,f.lsc,f.dgp))
 
-plot(x,f.dgp,
+mse.clsd <- mean((f.clsd-fitted(model))^2)
+
+model.logspline <- logspline(x)
+
+mse.logspline <- mean((dlogspline(x,model.logspline))-f.dgp)^2)
+
+ylim <- c(0,max(fitted(model),dlogspline(x,model.logspline),f.dgp))
+
+plot(model,
      ylim=ylim,
-     type="l",
-     ylab="Density",
-     xlab="X",
-     sub=paste("MSE: logspline = ",format(mse.f.lsc),", clsd = ", format(mse.f.clsd)))
+     sub=paste("MSE: logspline = ",format(mse.f.lsc),", clsd = ",
+     format(mse.f.clsd)),
+     lty=3,
+     col=3)
 
-lines(x,f.lsc,col=2,lty=2)
-lines(x,f.clsd,col=3,lty=3)
+xer <- model$xer
+
+lines(xer,dlogspline(xer,model.logspline),col=2,lty=2)
+lines(xer,dnorm(xer),col=1,lty=1)
 
 rug(x)
 
-legend("topright",c("DGP",paste("Cubic Logspline Density (package `logspline', knots = ",fit.cub$nknots,")",sep=""),
-                    paste("clsd Density (degree = ", clsd.out$degree, ", segments = ",clsd.out$segments,", cv = ",clsd.out$penalty,")",sep="")),
+legend("topright",c("DGP",paste("Cubic Logspline Density (package `logspline', knots = ",model.logspline$nknots,")",sep=""),
+                    paste("clsd Density (degree = ", model$degree, ", segments = ",model$segments,", cv = ",model$penalty,")",sep="")),
        lty=1:3,
        col=1:3,
        bty="n",
        cex=0.75)
 
+summary(model)
+
+coef(model)
+
 ## Old Faithful eruptions data histogram and clsd density
 library(MASS)
 data(faithful)
 attach(faithful)
-clsd.out <- clsd(eruptions)
-ylim <- c(0,max(clsd.out$density,hist(eruptions,breaks=20,plot=FALSE)$density))
-plot(clsd.out,ylim=ylim)
+
+model <- clsd(eruptions)
+
+ylim <- c(0,max(model$density,hist(eruptions,breaks=20,plot=FALSE)$density))
+
+plot(model,ylim=ylim)
+
 hist(eruptions,breaks=20,freq=FALSE,add=TRUE,lty=2)
+
 rug(eruptions)
-summary(clsd.out)
+
+summary(model)
+
+coef(model)
 } %% End dontrun
 }
 \keyword{nonparametric}
