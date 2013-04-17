@@ -31,7 +31,7 @@ clsd(x = NULL,
      nmulti = 1,
      method = c("L-BFGS-B", "Nelder-Mead", "BFGS", "CG", "SANN"),
      verbose = FALSE,
-     quantile.seq = seq(0.01,0.99,length=99))
+     quantile.seq = seq(.01,.99,by=.01))
 }
 \arguments{
 
