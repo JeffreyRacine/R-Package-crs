@@ -2,8 +2,10 @@
 \alias{clsd}
 \title{Categorical Logspline Density}
 
-\description{ \code{clsd} computes a logspline density estimate of a one
-    (1) dimensional continuous variable using the approach of Racine (2013).}
+\description{ \code{clsd} computes the logspline density, density
+    derivative, distribution, and smoothed quantiles for a one (1)
+    dimensional continuous variable using the approach of Racine
+    (2013).}
 
 \usage{
 clsd(x = NULL,
