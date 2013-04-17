@@ -27,7 +27,7 @@ integrate.trapezoidal <- function(x,y) {
 
 }
 
-par.init <- function(degree,segments) {
+par.init <- function(degree,segments,monotone,monotone.lb) {
 
   ## This function initializes parameters for search along with upper
   ## and lower bounds if appropriate.
@@ -43,11 +43,14 @@ par.init <- function(degree,segments) {
   ## > 0. We therefore use sqrt machine epsilon.
 
   par.ub <- - sqrt(.Machine$double.eps)
+  par.lb <- monotone.lb
   par.init <- c(runif(1,-10,par.ub),rnorm(dim.p-2),runif(1,-10,par.ub))
   par.upper <- c(par.ub,rep(Inf,dim.p-2),par.ub)
+  par.lower <- if(monotone){rep(-Inf,dim.p)}else{c(par.lb,rep(-Inf,dim.p-2),par.lb)}
 
   return(list(par.init=par.init,
-              par.upper=par.upper))
+              par.upper=par.upper,
+              par.lower=par.lower))
 
 }
 
@@ -71,6 +74,7 @@ clsd <- function(x=NULL,
                  do.gradient=TRUE,
                  er=NULL,
                  monotone=TRUE,
+                 monotone.lb=-250,
                  n.integrate=1.0e+03,
                  nmulti=1,
                  method = c("L-BFGS-B", "Nelder-Mead", "BFGS", "CG", "SANN"),
@@ -119,6 +123,7 @@ clsd <- function(x=NULL,
                                                 do.break=do.break,
                                                 penalty=penalty,
                                                 monotone=monotone,
+                                                monotone.lb=monotone.lb,
                                                 verbose=verbose))
     
     beta <- ls.ml.out$beta
@@ -375,7 +380,8 @@ sum.log.density <- function(beta,
                             er=NULL,
                             n.integrate=1.0e+03,
                             penalty=c("aic","sic","cv","none"),
-                            monotone=TRUE) {
+                            monotone=TRUE,
+                            monotone.lb=NULL) {
 
   penalty <- match.arg(penalty)
   if(missing(x)) stop(" You must provide data")
@@ -393,7 +399,8 @@ sum.log.density <- function(beta,
                  knots=knots,
                  er=er,
                  n.integrate=n.integrate,
-                 monotone=monotone)
+                 monotone=monotone,
+                 monotone.lb=monotone.lb)
 
   logl <- output$logl
   f.hat <- output$density
@@ -464,7 +471,8 @@ sum.log.density.gradient <- function(beta,
                                      er=NULL,
                                      n.integrate=1.0e+03,
                                      penalty=c("aic","sic","cv","none"),
-                                     monotone=TRUE) {
+                                     monotone=TRUE,
+                                     monotone.lb=NULL) {
 
   ## Note - gradients are only ever computed for the sample
   ## realizations used to compute the log likelihood function
@@ -485,7 +493,8 @@ sum.log.density.gradient <- function(beta,
                  knots=knots,
                  er=er,
                  n.integrate=n.integrate,
-                 monotone=monotone)
+                 monotone=monotone,
+                 monotone.lb=monotone.lb)
 
   exp.P.beta.P <- exp(output$Basis.beta.er)*output$Per
   int.exp.P.beta.P <- numeric(length=ncol(output$Per))
@@ -517,6 +526,7 @@ ls.ml <- function(x,
                   knots="quantiles",
                   penalty=c("aic","sic","cv","none"),
                   monotone=TRUE,
+                  monotone.lb=NULL,
                   verbose=FALSE,
                   max.attempts=25,
                   random.seed=42) {
@@ -573,10 +583,11 @@ ls.ml <- function(x,
         ## Can restart to see if we can improve on min... note initial
         ## values totally ad-hoc...
 
-        par.init.out <- par.init(d,s)
+        par.init.out <- par.init(d,s,monotone,monotone.lb)
         par.init <- par.init.out$par.init
         par.upper <- par.init.out$par.upper
-
+        par.lower <- par.init.out$par.lower
+        
         ## Trap non-convergence, restart from different initial
         ## points, display message if needed (trace>0 up to 6 provides
         ## ever more detailed information for L-BFGS-B)
@@ -591,6 +602,7 @@ ls.ml <- function(x,
                                                            fn=sum.log.density,
                                                            gr=if(do.gradient){sum.log.density.gradient}else{NULL},
                                                            upper=par.upper,
+                                                           lower=par.lower,
                                                            method=method,
                                                            x=x,
                                                            degree=d,
@@ -601,6 +613,7 @@ ls.ml <- function(x,
                                                            knots=knots,
                                                            n.integrate=n.integrate,
                                                            monotone=monotone,
+                                                           monotone.lb=monotone.lb,
                                                            lbound=lbound,
                                                            ubound=ubound,
                                                            control=list(fnscale=-1,maxit=maxit,if(verbose){trace=1}else{trace=0}))),
@@ -614,9 +627,10 @@ ls.ml <- function(x,
             cat("\n optim failed (degree = ",d,", segments = ",s,", convergence = ", optim.out[[4]],") re-running with new initial values",sep="")
           }
 
-          par.init.out <- par.init(d,s)
+          par.init.out <- par.init(d,s,monotone,monotone.lb)
           par.init <- par.init.out$par.init
           par.upper <- par.init.out$par.upper
+          par.lower <- par.init.out$par.lower
 
           m.attempts <- m.attempts+1
 
@@ -645,9 +659,11 @@ ls.ml <- function(x,
   }
 
   cat("\r                                                                            ")
-  if(d.opt==degree.max) warning(paste(" optimal degree equals search maximum (", degree.max,"): rerun with larger degree.max",sep=""))
-  if(s.opt==segments.max) warning(paste(" optimal segment equals search maximum (", segments.max,"): rerun with larger segments.max",sep=""))
+  if(d.opt==degree.max) warning(paste(" optimal degree equals search maximum (", d.opt,"): rerun with larger degree.max",sep=""))
+  if(s.opt==segments.max) warning(paste(" optimal segment equals search maximum (", s.opt,"): rerun with larger segments.max",sep=""))
   if(par.opt[1]>0|par.opt[length(par.opt)]>0) warning(" optim() delivered a positive weight for linear segment (supposed to be negative)")
+  if(!monotone&&par.opt[1]<=monotone.lb) warning(paste(" optimal weight for left nonmonotone basis equals search minimum (",par.opt[1],"): rerun with smaller monotone.lb",sep=""))
+  if(!monotone&&par.opt[length(par.opt)]<=monotone.lb) warning(paste(" optimal weight for right nonmonotone basis equals search minimum (",par.opt[length(par.opt)],"): rerun with smaller monotone.lb",sep=""))  
 
   ## Restore seed
 

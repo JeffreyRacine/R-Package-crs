@@ -26,6 +26,7 @@ clsd(x=NULL,
      do.gradient=TRUE,
      er=NULL,
      monotone=TRUE,
+     monotone.lb=-250,
      n.integrate=1.0e+03,
      nmulti=1,
      method = c("L-BFGS-B", "Nelder-Mead", "BFGS", "CG", "SANN"),
@@ -111,6 +112,10 @@ clsd(x=NULL,
    \item{monotone}{ a logical value indicating whether modify
      the standard B-spline basis function so that it is better suited to
      density estimation (default \code{TRUE})
+   }
+
+   \item{monotone.lb}{ a negative bound specifying the lower bound on
+     the linear segment coefficients used when (\code{monotone=FALSE})
    }
 
    \item{n.integrate}{
