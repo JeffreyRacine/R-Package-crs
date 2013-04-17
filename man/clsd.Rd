@@ -242,7 +242,7 @@ mse.clsd <- mean((f.clsd-fitted(model))^2)
 
 model.logspline <- logspline(x)
 
-mse.logspline <- mean((dlogspline(x,model.logspline))-f.dgp)^2)
+mse.logspline <- mean((dlogspline(x,model.logspline)-f.dgp)^2)
 
 ylim <- c(0,max(fitted(model),dlogspline(x,model.logspline),f.dgp))
 
