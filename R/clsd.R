@@ -76,6 +76,8 @@ clsd <- function(x=NULL,
                  method = c("L-BFGS-B", "Nelder-Mead", "BFGS", "CG", "SANN"),
                  verbose=FALSE) {
   
+  ptm <- system.time("")
+
   if(is.null(x)) stop(" You must provide data")
 
   ## If no er is provided use the following ad-hoc rule which attempts
@@ -102,23 +104,23 @@ clsd <- function(x=NULL,
     ## If no parameters are provided presume intention is to run
     ## maximum likelihood estimation to obtain the parameter
     ## estimates.
-
-    ls.ml.out <- ls.ml(x=x,
-                       degree.min=degree.min,
-                       degree.max=degree.max,
-                       segments.min=segments.min,
-                       segments.max=segments.max,
-                       lbound=lbound,
-                       ubound=ubound,
-                       method=method,
-                       nmulti=nmulti,
-                       do.gradient=do.gradient,
-                       er=er,
-                       do.break=do.break,
-                       penalty=penalty,
-                       monotone=monotone,
-                       verbose=verbose)
-
+    
+    ptm <- ptm + system.time(ls.ml.out <- ls.ml(x=x,
+                                                degree.min=degree.min,
+                                                degree.max=degree.max,
+                                                segments.min=segments.min,
+                                                segments.max=segments.max,
+                                                lbound=lbound,
+                                                ubound=ubound,
+                                                method=method,
+                                                nmulti=nmulti,
+                                                do.gradient=do.gradient,
+                                                er=er,
+                                                do.break=do.break,
+                                                penalty=penalty,
+                                                monotone=monotone,
+                                                verbose=verbose))
+    
     beta <- ls.ml.out$beta
     degree <- ls.ml.out$degree
     segments <- ls.ml.out$segments
@@ -169,12 +171,12 @@ clsd <- function(x=NULL,
   ## not have the B-spline property that the pointwise sum of the
   ## bases is 1 everywhere.
 
-  suppressWarnings(Pnorm <- prod.spline(x=x,
-                                        xeval=xnorm,
-                                        K=cbind(degree,segments+if(monotone){2}else{0}),
-                                        knots=knots,
-                                        basis=basis))
-
+  ptm <- ptm + system.time(suppressWarnings(Pnorm <- prod.spline(x=x,
+                                                                 xeval=xnorm,
+                                                                 K=cbind(degree,segments+if(monotone){2}else{0}),
+                                                                 knots=knots,
+                                                                 basis=basis)))
+  
   if(monotone) Pnorm <- Pnorm[,-c(2,degree+segments+1)]
 
   ## Compute the normalizing constant so that the estimate
@@ -182,11 +184,11 @@ clsd <- function(x=NULL,
   ## basis to generate exponentially declining tails (K=cbind(1,1)
   ## creates the linear basis).
 
-  suppressWarnings(P.lin <- prod.spline(x=x,
-                                        xeval=xnorm,
-                                        K=cbind(1,1),
-                                        knots=knots,
-                                        basis=basis))
+  ptm <- ptm + system.time(suppressWarnings(P.lin <- prod.spline(x=x,
+                                                                 xeval=xnorm,
+                                                                 K=cbind(1,1),
+                                                                 knots=knots,
+                                                                 basis=basis)))
   
   ## We append the linear basis to the left and rightmost polynomial
   ## bases. We match the slope of the linear basis to that of the
@@ -250,23 +252,23 @@ clsd <- function(x=NULL,
 
   if(deriv > 0) {
 
-    suppressWarnings(Pnorm.deriv <- prod.spline(x=x,
-                                                xeval=xnorm,
-                                                K=cbind(degree,segments+if(monotone){2}else{0}),
-                                                knots=knots,
-                                                basis=basis,
-                                                deriv.index=deriv.index,
-                                                deriv=deriv))
-
+    ptm <- ptm + system.time(suppressWarnings(Pnorm.deriv <- prod.spline(x=x,
+                                                                         xeval=xnorm,
+                                                                         K=cbind(degree,segments+if(monotone){2}else{0}),
+                                                                         knots=knots,
+                                                                         basis=basis,
+                                                                         deriv.index=deriv.index,
+                                                                         deriv=deriv)))
+    
     if(monotone) Pnorm.deriv <- Pnorm.deriv[,-c(2,degree+segments+1)]
 
-    suppressWarnings(P.lin <- prod.spline(x=x,
-                                          xeval=xnorm,
-                                          K=cbind(1,1),
-                                          knots=knots,
-                                          basis=basis,
-                                          deriv.index=deriv.index,
-                                          deriv=deriv))
+    ptm <- ptm + system.time(suppressWarnings(P.lin <- prod.spline(x=x,
+                                                                   xeval=xnorm,
+                                                                   K=cbind(1,1),
+                                                                   knots=knots,
+                                                                   basis=basis,
+                                                                   deriv.index=deriv.index,
+                                                                   deriv=deriv)))
     
     ## For the derivative bases on the extended range `xnorm', above
     ## and below max(x)/min(x) we assign the bases to constants
@@ -354,7 +356,8 @@ clsd <- function(x=NULL,
                       er=er,
                       penalty=penalty,
                       nmulti=nmulti,
-                      x=x)
+                      x=x,
+                      ptm=ptm)
   
   class(clsd.return) <- "clsd"
   return(clsd.return)
@@ -665,6 +668,7 @@ summary.clsd <- function(object,
   cat(paste("\nTraining observations: ", format(object$nobs), sep=""))
   cat(paste("\nLog-likelihood: ", format(object$logl), sep=""))
   cat(paste("\nNumber of multistarts: ", format(object$nmulti), sep=""))
+  cat(paste("\nEstimation time: ", formatC(object$ptm[1],digits=1,format="f"), " seconds",sep=""))
 
   cat("\n\n")
 
