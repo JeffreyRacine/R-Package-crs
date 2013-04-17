@@ -238,7 +238,7 @@ model <- clsd(x,degree.max=3,segments.max=3)
 ## Standard (cubic) estimate taken from the logspline package
 ## Compute MSEs
 
-mse.clsd <- mean((f.clsd-fitted(model))^2)
+mse.clsd <- mean((fitted(model)-f.dgp)^2)
 
 model.logspline <- logspline(x)
 
