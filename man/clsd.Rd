@@ -3,7 +3,7 @@
 \title{Categorical Logspline Density}
 
 \description{ \code{clsd} computes a logspline density estimate of a one
-    (1) dimensional continuous variable.}
+    (1) dimensional continuous variable using the approach of Racine (2013).}
 
 \usage{
 clsd(x=NULL,
@@ -209,12 +209,8 @@ clsd(x=NULL,
 }
 \references{
 
-  Ma, S. and J.S. Racine and L. Yang (2011), \dQuote{Spline Regression
-  in the Presence of Categorical Predictors,} manuscript.
-
-  Ma, S. and J.S. Racine (forthcoming), \dQuote{Additive Regression
-  Splines with Irrelevant Categorical and Continuous Regressors,}
-  Statistica Sinica.
+  Racine, J.S. (2013), \dQuote{Logspline Mixed Data Density Estimation,}
+  manuscript.
 
 }
 
