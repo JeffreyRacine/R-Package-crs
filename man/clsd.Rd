@@ -199,11 +199,12 @@ clsd(x=NULL,
   
 \section{Usage Issues}{
 
-  The use of a single linear segment for the left and rightmost spline
-  bases can have lead to undesirable tail behavior beyond the range of
-  the data when \code{monotone=FALSE} (the standard B-spline bases are
-  vertical at the min/max of \code{x} which can lead to kinks in the
-  estimated density at these points).
+  This function should be considered to be in `beta' status until
+  further notice.
+
+  The use of `regression' B-splines can lead to undesirable behavior at
+  the endpoints of the data (i.e. when \code{monotone=FALSE}). The
+  default `density' B-splines ought to be well-behaved in these regions.
 
 }
 \references{
