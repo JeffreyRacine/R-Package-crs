@@ -393,7 +393,7 @@ sum.log.density <- function(beta,
                  knots=knots,
                  er=er,
                  n.integrate=n.integrate,
-                 monotone=TRUE)
+                 monotone=monotone)
 
   logl <- output$logl
   f.hat <- output$density
@@ -485,7 +485,7 @@ sum.log.density.gradient <- function(beta,
                  knots=knots,
                  er=er,
                  n.integrate=n.integrate,
-                 monotone=TRUE)
+                 monotone=monotone)
 
   exp.P.beta.P <- exp(output$Basis.beta.er)*output$Per
   int.exp.P.beta.P <- numeric(length=ncol(output$Per))
