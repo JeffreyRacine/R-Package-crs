@@ -710,16 +710,16 @@ print.clsd <- function(x,...)
         summary.clsd(x)
 }
 
-plot.clsd <- function(object,
+plot.clsd <- function(x,
                       er=TRUE,
                       distribution=FALSE,
                       ylim,
                       ...) {
 
   if(!er) {
-    order.x <- order(object$x)
-    if(distribution){y <- object$distribution[order.x]}else{y <- object$density[order.x]}
-    x <- plot(object$x[order.x],
+    order.x <- order(x$x)
+    if(distribution){y <- x$distribution[order.x]}else{y <- x$density[order.x]}
+    x <- plot(x$x[order.x],
               y,
               ylim=if(missing(ylim)){c(0,max(y))}else{ylim},
               ylab=if(distribution){"Distribution"}else{"Density"},
@@ -727,9 +727,9 @@ plot.clsd <- function(object,
               type="l",
               ...)
   } else {
-    order.xer <- order(object$xer)
-    if(distribution){y <- object$distribution.er[order.xer]}else{y <- object$density.er[order.xer]}
-    xer <- plot(object$xer[order.xer],
+    order.xer <- order(x$xer)
+    if(distribution){y <- x$distribution.er[order.xer]}else{y <- x$density.er[order.xer]}
+    xer <- plot(x$xer[order.xer],
                   y,
                   ylim=if(missing(ylim)){c(0,max(y))}else{ylim},
                   ylab=if(distribution){"Distribution"}else{"Density"},
