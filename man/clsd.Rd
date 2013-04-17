@@ -248,8 +248,8 @@ ylim <- c(0,max(fitted(model),dlogspline(x,model.logspline),f.dgp))
 
 plot(model,
      ylim=ylim,
-     sub=paste("MSE: logspline = ",format(mse.f.lsc),", clsd = ",
-     format(mse.f.clsd)),
+     sub=paste("MSE: logspline = ",format(mse.logspline),", clsd = ",
+     format(mse.clsd)),
      lty=3,
      col=3)
 
