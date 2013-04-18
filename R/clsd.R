@@ -54,6 +54,197 @@ par.init <- function(degree,segments,monotone,monotone.lb) {
 
 }
 
+gen.xnorm <- function(x=NULL,
+                      xeval=NULL,
+                      lbound=NULL,
+                      ubound=NULL,
+                      er=NULL,
+                      n.integrate=NULL) {
+  
+  if(is.null(xeval)) {
+    ## x will be the first 1:length(x) elements in object[rank.xnorm]
+    er <- extendrange(x,f=er)
+    if(!is.null(lbound)) er[1] <- lbound
+    if(!is.null(ubound)) er[2] <- ubound    
+    xnorm <- c(x,seq(er[1],er[2],length=n.integrate))
+    rank.xnorm <- rank(xnorm)
+    order.xnorm <- order(xnorm)
+    xnorm <- xnorm[order.xnorm]
+  } else {
+    ## xeval will be the first 1:length(xeval) elements in
+    ## object[rank.xnorm]
+    er <- extendrange(c(x,xeval),f=er)
+    if(!is.null(lbound)) er[1] <- lbound
+    if(!is.null(ubound)) er[2] <- ubound    
+    xnorm <- c(xeval,x,seq(er[1],er[2],length=n.integrate))
+    rank.xnorm <- rank(xnorm)
+    order.xnorm <- order(xnorm)
+    xnorm <- xnorm[order.xnorm]
+
+    if(min(xeval) < er[1] | max(xeval) > er[2]) warning(" evaluation data extends beyond the range of `er'")
+  }
+
+  return(list(xnorm=xnorm,
+              rank.xnorm=rank.xnorm,
+              order.xnorm=order.xnorm))
+
+}
+
+density.basis <- function(x=NULL,
+                          xeval=NULL,
+                          xnorm=xnorm,
+                          degree=NULL,
+                          segments=NULL,
+                          basis="tensor",
+                          knots="quantiles",
+                          monotone=TRUE) {
+  
+  ## To obtain the constant of integration for B-spline bases, we need
+  ## to compute log(integral exp(P%*%beta)) so we take an equally
+  ## spaced extended range grid of length n plus the sample
+  ## realizations (min and max of sample therefore present for what
+  ## follows), and evaluation points xeval if they exist.
+
+  ## Charles Kooperberg has a manuscript "Statistical Modeling with
+  ## Spline Functions', Jan 5 2006 on his web page. Chapter 6, page
+  ## 286, figure 6.7 reveals a hybrid spline basis that in essence
+  ## appears to drop two columns from my B-spline with 2 segments
+  ## added artificially. This has the effect of removing the two bases
+  ## that were delivering weight in tails leading to `kinks'. Hat-tip
+  ## to Charles for his clear descriptions. Note we require the same
+  ## for the derivatives below. Note that this logspline basis does
+  ## not have the B-spline property that the pointwise sum of the
+  ## bases is 1 everywhere.
+
+  suppressWarnings(Pnorm <- prod.spline(x=x,
+                                        xeval=xnorm,
+                                        K=cbind(degree,segments+if(monotone){2}else{0}),
+                                        knots=knots,
+                                        basis=basis))
+  
+  if(monotone) Pnorm <- Pnorm[,-c(2,degree+segments+1)]
+
+  ## Compute the normalizing constant so that the estimate
+  ## integrates to one. We append linear splines to the B-spline
+  ## basis to generate exponentially declining tails (K=cbind(1,1)
+  ## creates the linear basis).
+
+  suppressWarnings(P.lin <- prod.spline(x=x,
+                                        xeval=xnorm,
+                                        K=cbind(1,1),
+                                        knots=knots,
+                                        basis=basis))
+
+  ## We append the linear basis to the left and rightmost polynomial
+  ## bases. We match the slope of the linear basis to that of the
+  ## polynomial basis at xmin/xmax (note that
+  ## Pnorm[xnorm==max(x),-ncol(Pnorm)] <- 0 is there because the
+  ## gsl.bspline values at the right endpoint are very small but not
+  ## exactly zero but want to rule out any potential issues hence
+  ## set them correctly to zero)
+  
+  Pnorm[xnorm<min(x),] <- 0
+  Pnorm[xnorm>max(x),] <- 0
+  Pnorm[xnorm==max(x),-ncol(Pnorm)] <- 0
+  P.left <- as.matrix(P.lin[,1])
+  P.right <- as.matrix(P.lin[,2])
+  
+  ## We want the linear segment to have the same slope as the
+  ## polynomial segment it connects with and to match at the joint
+  ## hence conduct some carpentry at the left boundary.
+  
+  index <- which(xnorm==min(x))
+  index.l <- index+1
+  index.u <- index+5
+  x.l <- xnorm[index.l]
+  x.u <- xnorm[index.u]
+  slope.poly.left <- as.numeric((Pnorm[index.u,1]-Pnorm[index.l,1])/(x.u-x.l))
+  index.l <- index+1
+  index.u <- index+5
+  x.l <- xnorm[index.l]
+  x.u <- xnorm[index.u]
+  slope.linear.left <- as.numeric((P.left[index.u]-P.left[index.l])/(x.u-x.l))
+  
+  ## Complete carpentry at the right boundary.
+  
+  index <- which(xnorm==max(x))
+  index.l <- index-1
+  index.u <- index-5
+  x.l <- xnorm[index.l]
+  x.u <- xnorm[index.u]
+  slope.poly.right <- as.numeric((Pnorm[index.u,ncol(Pnorm)]-Pnorm[index.l,ncol(Pnorm)])/(x.u-x.l))
+  index.l <- index-1
+  index.u <- index-5
+  x.l <- xnorm[index.l]
+  x.u <- xnorm[index.u]
+  slope.linear.right <- as.numeric((P.right[index.u]-P.right[index.l])/(x.u-x.l))
+  
+  ## Here are the linear segments with matching slopes XXX patch up
+  ## deriv outside range of data needed as well XXX
+  
+  P.left <- as.matrix(P.left-1)*slope.poly.left/slope.linear.left+1
+  P.right <- as.matrix(P.right-1)*slope.poly.right/slope.linear.right+1
+  
+  P.left[xnorm>=min(x),1] <- 0
+  P.right[xnorm<=max(x),1] <- 0
+  
+  Pnorm[,1] <- Pnorm[,1]+P.left
+  Pnorm[,ncol(Pnorm)] <- Pnorm[,ncol(Pnorm)]+P.right
+
+  return(Pnorm)
+
+}
+
+density.deriv.basis <- function(x=NULL,
+                                xeval=NULL,
+                                xnorm=xnorm,
+                                degree=NULL,
+                                segments=NULL,
+                                basis="tensor",
+                                knots="quantiles",
+                                monotone=TRUE,
+                                deriv.index=1,
+                                deriv=0) {
+
+    ptm <- ptm + system.time(suppressWarnings(Pnorm.deriv <- prod.spline(x=x,
+                                                                         xeval=xnorm,
+                                                                         K=cbind(degree,segments+if(monotone){2}else{0}),
+                                                                         knots=knots,
+                                                                         basis=basis,
+                                                                         deriv.index=deriv.index,
+                                                                         deriv=deriv)))
+    
+    if(monotone) Pnorm.deriv <- Pnorm.deriv[,-c(2,degree+segments+1)]
+
+    ptm <- ptm + system.time(suppressWarnings(P.lin <- prod.spline(x=x,
+                                                                   xeval=xnorm,
+                                                                   K=cbind(1,1),
+                                                                   knots=knots,
+                                                                   basis=basis,
+                                                                   deriv.index=deriv.index,
+                                                                   deriv=deriv)))
+    
+    ## For the derivative bases on the extended range `xnorm', above
+    ## and below max(x)/min(x) we assign the bases to constants
+    ## (zero). We append the linear basis to the left and right of the
+    ## bases. The left basis takes on linear values to the left of
+    ## min(x), zero elsewhere, the right zero to the left of max(x),
+    ## linear elsewhere.
+    
+    Pnorm.deriv[xnorm<min(x),] <- 0
+    Pnorm.deriv[xnorm>max(x),] <- 0
+    P.left <- as.matrix(P.lin[,1])
+    P.left[xnorm>=min(x),1] <- 0
+    P.right <- as.matrix(P.lin[,2])
+    P.right[xnorm<=max(x),1] <- 0
+    Pnorm.deriv[,1] <- Pnorm.deriv[,1]+P.left
+    Pnorm.deriv[,ncol(Pnorm.deriv)] <- Pnorm.deriv[,ncol(Pnorm.deriv)]+P.right
+
+    return(Pnorm.deriv)
+
+  }
+  
+
 clsd <- function(x=NULL,
                  beta=NULL,
                  xeval=NULL,
@@ -137,167 +328,29 @@ clsd <- function(x=NULL,
   if(is.null(degree)) stop(" You must provide spline degree")
   if(is.null(segments)) stop(" You must provide number of segments")
 
-  ## To obtain the constant of integration for B-spline bases, we need
-  ## to compute log(integral exp(P%*%beta)) so we take an equally
-  ## spaced extended range grid of length n plus the sample
-  ## realizations (min and max of sample therefore present for what
-  ## follows), and evaluation points xeval if they exist.
+  gen.xnorm.out <- gen.xnorm(x=x,
+                             xeval=xeval,
+                             lbound=lbound,
+                             ubound=ubound,
+                             er=er,
+                             n.integrate=n.integrate)
 
-  if(is.null(xeval)) {
-    ## x will be the first 1:length(x) elements in object[rank.xnorm]
-    er <- extendrange(x,f=er)
-    if(!is.null(lbound)) er[1] <- lbound
-    if(!is.null(ubound)) er[2] <- ubound    
-    xnorm <- c(x,seq(er[1],er[2],length=n.integrate))
-    rank.xnorm <- rank(xnorm)
-    order.xnorm <- order(xnorm)
-    xnorm <- xnorm[order.xnorm]
-  } else {
-    ## xeval will be the first 1:length(xeval) elements in
-    ## object[rank.xnorm]
-    er <- extendrange(c(x,xeval),f=er)
-    if(!is.null(lbound)) er[1] <- lbound
-    if(!is.null(ubound)) er[2] <- ubound    
-    xnorm <- c(xeval,x,seq(er[1],er[2],length=n.integrate))
-    rank.xnorm <- rank(xnorm)
-    order.xnorm <- order(xnorm)
-    xnorm <- xnorm[order.xnorm]
+  xnorm <- gen.xnorm.out$xnorm
+  rank.xnorm <- gen.xnorm.out$rank.xnorm
+  order.xnorm <- gen.xnorm.out$order.xnorm    
+  
+  ptm <- ptm + system.time(Pnorm <- density.basis(x=x,
+                                                  xeval=xeval,
+                                                  xnorm=xnorm,
+                                                  degree=degree,
+                                                  segments=segments,
+                                                  basis=basis,
+                                                  knots=knots,
+                                                  monotone=monotone))
 
-    if(min(xeval) < er[1] | max(xeval) > er[2]) warning(" evaluation data extends beyond the range of `er'")
-  }
-
-  ## Charles Kooperberg has a manuscript "Statistical Modeling with
-  ## Spline Functions', Jan 5 2006 on his web page. Chapter 6, page
-  ## 286, figure 6.7 reveals a hybrid spline basis that in essence
-  ## appears to drop two columns from my B-spline with 2 segments
-  ## added artificially. This has the effect of removing the two bases
-  ## that were delivering weight in tails leading to `kinks'. Hat-tip
-  ## to Charles for his clear descriptions. Note we require the same
-  ## for the derivatives below. Note that this logspline basis does
-  ## not have the B-spline property that the pointwise sum of the
-  ## bases is 1 everywhere.
-
-  ptm <- ptm + system.time(suppressWarnings(Pnorm <- prod.spline(x=x,
-                                                                 xeval=xnorm,
-                                                                 K=cbind(degree,segments+if(monotone){2}else{0}),
-                                                                 knots=knots,
-                                                                 basis=basis)))
-  
-  if(monotone) Pnorm <- Pnorm[,-c(2,degree+segments+1)]
-
-  ## Compute the normalizing constant so that the estimate
-  ## integrates to one. We append linear splines to the B-spline
-  ## basis to generate exponentially declining tails (K=cbind(1,1)
-  ## creates the linear basis).
-
-  ptm <- ptm + system.time(suppressWarnings(P.lin <- prod.spline(x=x,
-                                                                 xeval=xnorm,
-                                                                 K=cbind(1,1),
-                                                                 knots=knots,
-                                                                 basis=basis)))
-  
-  ## We append the linear basis to the left and rightmost polynomial
-  ## bases. We match the slope of the linear basis to that of the
-  ## polynomial basis at xmin/xmax (note that
-  ## Pnorm[xnorm==max(x),-ncol(Pnorm)] <- 0 is there because the
-  ## gsl.bspline values at the right endpoint are very small but not
-  ## exactly zero but want to rule out any potential issues hence
-  ## set them correctly to zero)
-  
-  Pnorm[xnorm<min(x),] <- 0
-  Pnorm[xnorm>max(x),] <- 0
-  Pnorm[xnorm==max(x),-ncol(Pnorm)] <- 0
-  P.left <- as.matrix(P.lin[,1])
-  P.right <- as.matrix(P.lin[,2])
-  
-  ## We want the linear segment to have the same slope as the
-  ## polynomial segment it connects with and to match at the joint
-  ## hence conduct some carpentry at the left boundary.
-  
-  index <- which(xnorm==min(x))
-  index.l <- index+1
-  index.u <- index+5
-  x.l <- xnorm[index.l]
-  x.u <- xnorm[index.u]
-  slope.poly.left <- as.numeric((Pnorm[index.u,1]-Pnorm[index.l,1])/(x.u-x.l))
-  index.l <- index+1
-  index.u <- index+5
-  x.l <- xnorm[index.l]
-  x.u <- xnorm[index.u]
-  slope.linear.left <- as.numeric((P.left[index.u]-P.left[index.l])/(x.u-x.l))
-  
-  ## Complete carpentry at the right boundary.
-  
-  index <- which(xnorm==max(x))
-  index.l <- index-1
-  index.u <- index-5
-  x.l <- xnorm[index.l]
-  x.u <- xnorm[index.u]
-  slope.poly.right <- as.numeric((Pnorm[index.u,ncol(Pnorm)]-Pnorm[index.l,ncol(Pnorm)])/(x.u-x.l))
-  index.l <- index-1
-  index.u <- index-5
-  x.l <- xnorm[index.l]
-  x.u <- xnorm[index.u]
-  slope.linear.right <- as.numeric((P.right[index.u]-P.right[index.l])/(x.u-x.l))
-  
-  ## Here are the linear segments with matching slopes XXX patch up
-  ## deriv outside range of data needed as well XXX
-  
-  P.left <- as.matrix(P.left-1)*slope.poly.left/slope.linear.left+1
-  P.right <- as.matrix(P.right-1)*slope.poly.right/slope.linear.right+1
-  
-  P.left[xnorm>=min(x),1] <- 0
-  P.right[xnorm<=max(x),1] <- 0
-  
-  Pnorm[,1] <- Pnorm[,1]+P.left
-  Pnorm[,ncol(Pnorm)] <- Pnorm[,ncol(Pnorm)]+P.right
-  
   if(ncol(Pnorm)!=length(beta)) stop(paste(" Incompatible arguments: beta must be of dimension ",ncol(Pnorm),sep=""))
 
   Pnorm.beta <- as.numeric(Pnorm%*%as.matrix(beta))
-
-  if(deriv > 0) {
-
-    ptm <- ptm + system.time(suppressWarnings(Pnorm.deriv <- prod.spline(x=x,
-                                                                         xeval=xnorm,
-                                                                         K=cbind(degree,segments+if(monotone){2}else{0}),
-                                                                         knots=knots,
-                                                                         basis=basis,
-                                                                         deriv.index=deriv.index,
-                                                                         deriv=deriv)))
-    
-    if(monotone) Pnorm.deriv <- Pnorm.deriv[,-c(2,degree+segments+1)]
-
-    ptm <- ptm + system.time(suppressWarnings(P.lin <- prod.spline(x=x,
-                                                                   xeval=xnorm,
-                                                                   K=cbind(1,1),
-                                                                   knots=knots,
-                                                                   basis=basis,
-                                                                   deriv.index=deriv.index,
-                                                                   deriv=deriv)))
-    
-    ## For the derivative bases on the extended range `xnorm', above
-    ## and below max(x)/min(x) we assign the bases to constants
-    ## (zero). We append the linear basis to the left and right of the
-    ## bases. The left basis takes on linear values to the left of
-    ## min(x), zero elsewhere, the right zero to the left of max(x),
-    ## linear elsewhere.
-    
-    Pnorm.deriv[xnorm<min(x),] <- 0
-    Pnorm.deriv[xnorm>max(x),] <- 0
-    P.left <- as.matrix(P.lin[,1])
-    P.left[xnorm>=min(x),1] <- 0
-    P.right <- as.matrix(P.lin[,2])
-    P.right[xnorm<=max(x),1] <- 0
-    Pnorm.deriv[,1] <- Pnorm.deriv[,1]+P.left
-    Pnorm.deriv[,ncol(Pnorm.deriv)] <- Pnorm.deriv[,ncol(Pnorm.deriv)]+P.right
-    P.deriv.beta <- as.numeric(Pnorm.deriv%*%beta)
-
-  } else {
-
-    f.deriv <- NULL
-
-  }
 
   ## Compute the constant of integration to normalize the density
   ## estimate so that it integrates to one.
@@ -321,7 +374,28 @@ clsd <- function(x=NULL,
 
   f.norm <- exp(Pnorm.beta-log.norm.constant)
   F.norm <- integrate.trapezoidal(xnorm,f.norm)
-  if(deriv>0) f.norm.deriv <- as.numeric(f.norm*P.deriv.beta)
+
+  if(deriv > 0) {
+
+    ptm <- ptm + system.time(P.deriv <- density.derivative.basis(x=x,
+                                                                 xeval=xeval,
+                                                                 xnorm=xnorm,
+                                                                 degree=degree,
+                                                                 segments=segments,
+                                                                 basis=basis,
+                                                                 knots=knots,
+                                                                 monotone=monotone,
+                                                                 deriv.index=deriv.index,
+                                                                 deriv=deriv))
+    
+    P.deriv.beta <- as.numeric(Pnorm.deriv%*%beta)
+    f.norm.deriv <- as.numeric(f.norm*P.deriv.beta)
+
+  } else {
+
+    f.deriv <- NULL
+
+  }
 
   ## Compute quantiles using the the quasi-inverse (Definition 2.3.6,
   ## Nelson (2006))
