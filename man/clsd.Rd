@@ -24,7 +24,8 @@ clsd(x = NULL,
      penalty = c("aic","sic","cv","none"),
      deriv.index = 1,
      deriv = 0,
-     do.break = FALSE,
+     elastic.max = TRUE,
+     elastic.diff = 3,
      do.gradient = TRUE,
      er = NULL,
      monotone = TRUE,
@@ -99,9 +100,10 @@ clsd(x = NULL,
   \item{penalty}{ the penalty function to use when conducting maximum
     likelihood}
 
-  \item{do.break}{ a logical value indicating whether or not to stop
-     search for a global maximum once the objective function stops
-     improving}
+  \item{elastic.max,elastic.diff}{ a logical value/integer indicating
+     whether to use `elastic' search bounds such that the optimal
+     degree/segment must like \code{elastic.diff} units from the
+     respective search bounds }
 
   \item{do.gradient}{ a logical value indicating whether or not to use
      the analytical gradient during optimization }
