@@ -377,16 +377,16 @@ clsd <- function(x=NULL,
 
   if(deriv > 0) {
 
-    ptm <- ptm + system.time(P.deriv <- density.derivative.basis(x=x,
-                                                                 xeval=xeval,
-                                                                 xnorm=xnorm,
-                                                                 degree=degree,
-                                                                 segments=segments,
-                                                                 basis=basis,
-                                                                 knots=knots,
-                                                                 monotone=monotone,
-                                                                 deriv.index=deriv.index,
-                                                                 deriv=deriv))
+    ptm <- ptm + system.time(P.deriv <- density.deriv.basis(x=x,
+                                                            xeval=xeval,
+                                                            xnorm=xnorm,
+                                                            degree=degree,
+                                                            segments=segments,
+                                                            basis=basis,
+                                                            knots=knots,
+                                                            monotone=monotone,
+                                                            deriv.index=deriv.index,
+                                                            deriv=deriv))
     
     P.deriv.beta <- as.numeric(Pnorm.deriv%*%beta)
     f.norm.deriv <- as.numeric(f.norm*P.deriv.beta)
