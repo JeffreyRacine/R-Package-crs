@@ -8,10 +8,6 @@
 ## different form purely for computational simplicity. Both approaches
 ## are identical though.
 
-NZD <- function(a) {
-  sapply(1:NROW(a), function(i) {if(a[i] < 0) min(-.Machine$double.eps,a[i]) else max(.Machine$double.eps,a[i])})
-}
-
 sd.robust <- function(x) {
   sd.vec <- apply(as.matrix(x),2,sd)
   IQR.vec <- apply(as.matrix(x),2,IQR)/(qnorm(.25,lower.tail=F)*2)

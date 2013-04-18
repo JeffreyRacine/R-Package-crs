@@ -23,28 +23,6 @@
 ## norm.value: the norm not multiplied by the number of iterations
 ## convergence: a character string indicating whether/why iteration terminated
 
-## This function will compute the cumulative integral at each sample
-## realization using the trapezoidal rule and the cumsum function as
-## we need to compute this in a computationally efficient manner.
-
-integrate.trapezoidal <- function(x,y) {
-  n <- length(x)
-  rank.x <- rank(x)
-  order.x <- order(x)
-  y <- y[order.x]
-  x <- x[order.x]
-  int.vec <- numeric(length(x))
-  int.vec[1] <- 0
-  int.vec[2:n] <- cumsum((x[2:n] - x[2:n-1]) * (y[2:n] + y[2:n-1]) / 2)
-  return(int.vec[rank.x])
-}
-
-## Avoid division by zero - for numerical integration etc.
-
-NZD <- function(a) {
-  sapply(1:NROW(a), function(i) {if(a[i] < 0) min(-.Machine$double.xmin,a[i]) else max(.Machine$double.xmin,a[i])})
-}
-
 crsivderiv <- function(y,
                        z,
                        w,

@@ -1,5 +1,11 @@
 Changes from Version 0.15-18 to 0.15-19 [XXX]
 
+* Added new function clsd() that does logspline regression jointly
+  choosing the degree and number of segments (knots) - this is to be
+  treated as beta but the univariate continuous only case currently
+  implemented is capable of outperforming existing logspline methods that
+  set the spline degree to an ad hoc value (3)
+
 * Cast a few parameters that were producing warnings when compiling on the
   Clang compiler
 

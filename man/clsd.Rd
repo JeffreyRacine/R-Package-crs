@@ -104,7 +104,7 @@ clsd(x = NULL,
 
   \item{elastic.max,elastic.diff}{ a logical value/integer indicating
      whether to use `elastic' search bounds such that the optimal
-     degree/segment must like \code{elastic.diff} units from the
+     degree/segment must lie \code{elastic.diff} units from the
      respective search bounds }
 
   \item{do.gradient}{ a logical value indicating whether or not to use

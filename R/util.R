@@ -1,3 +1,35 @@
+## No zero divide
+
+NZD <- function(a) {
+  sapply(1:NROW(a), function(i) {if(a[i] < 0) min(-.Machine$double.eps,a[i]) else max(.Machine$double.eps,a[i])})
+}
+
+integrate.trapezoidal <- function(x,y) {
+
+  ## This function will compute the cumulative integral at each sample
+  ## realization using the Newton-Cotes trapezoidal rule and the
+  ## cumsum function as we need to compute this in a computationally
+  ## efficient manner. It can be used to return the distribution
+  ## function from the density function etc. We test for unsorted data.
+
+  n <- length(x)
+  if(x.unsorted <- is.unsorted(x)) {
+    rank.x <- rank(x)
+    order.x <- order(x)
+    y <- y[order.x]
+    x <- x[order.x]
+  }
+  int.vec <- numeric(length(x))
+  int.vec[2:n] <- cumsum((x[2:n] - x[2:n-1]) * (y[2:n] + y[2:n-1]) / 2)
+
+  if(x.unsorted) {
+    return(int.vec[rank.x])
+  } else {
+    return(int.vec)
+  }
+    
+}
+
 ## This function tests for monotone increasing vectors
 
 is.monotone.increasing <- function(x) {

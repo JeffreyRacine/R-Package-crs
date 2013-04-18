@@ -7,26 +7,6 @@
 ## more computationally demanding, the estimators are more efficient
 ## on average.
 
-integrate.trapezoidal <- function(x,y) {
-
-  ## This function will compute the cumulative integral at each sample
-  ## realization using the Newton-Cotes trapezoidal rule and the
-  ## cumsum function as we need to compute this in a computationally
-  ## efficient manner. It can be used to return the distribution
-  ## function from the density function etc.
-
-  n <- length(x)
-  rank.x <- rank(x)
-  order.x <- order(x)
-  y <- y[order.x]
-  x <- x[order.x]
-  int.vec <- numeric(length(x))
-  int.vec[2:n] <- cumsum((x[2:n] - x[2:n-1]) * (y[2:n] + y[2:n-1]) / 2)
-
-  return(int.vec[rank.x])
-
-}
-
 par.init <- function(degree,segments,monotone,monotone.lb) {
 
   ## This function initializes parameters for search along with upper
@@ -271,7 +251,9 @@ clsd <- function(x=NULL,
                  nmulti=1,
                  method = c("L-BFGS-B", "Nelder-Mead", "BFGS", "CG", "SANN"),
                  verbose=FALSE,
-                 quantile.seq=seq(.01,.99,by=.01)) {
+                 quantile.seq=seq(.01,.99,by=.01),
+                 random.seed=42,
+                 maxit=10^5) {
 
   if(elastic.max) {
     degree.max <- 3
@@ -299,42 +281,6 @@ clsd <- function(x=NULL,
   penalty <- match.arg(penalty)
   method <- match.arg(method)
 
-  fv <- NULL
-
-  if(is.null(beta)) {
-
-    ## If no parameters are provided presume intention is to run
-    ## maximum likelihood estimation to obtain the parameter
-    ## estimates.
-
-    ptm <- ptm + system.time(ls.ml.out <- ls.ml(x=x,
-                                                degree.min=degree.min,
-                                                degree.max=degree.max,
-                                                segments.min=segments.min,
-                                                segments.max=segments.max,
-                                                lbound=lbound,
-                                                ubound=ubound,
-                                                method=method,
-                                                nmulti=nmulti,
-                                                do.gradient=do.gradient,
-                                                er=er,
-                                                elastic.max=elastic.max,
-                                                elastic.diff=elastic.diff,
-                                                penalty=penalty,
-                                                monotone=monotone,
-                                                monotone.lb=monotone.lb,
-                                                verbose=verbose))
-
-    beta <- ls.ml.out$beta
-    degree <- ls.ml.out$degree
-    segments <- ls.ml.out$segments
-    fv <- ls.ml.out$fv
-
-  }
-
-  if(is.null(degree)) stop(" You must provide spline degree")
-  if(is.null(segments)) stop(" You must provide number of segments")
-
   gen.xnorm.out <- gen.xnorm(x=x,
                              xeval=xeval,
                              lbound=lbound,
@@ -345,6 +291,50 @@ clsd <- function(x=NULL,
   xnorm <- gen.xnorm.out$xnorm
   rank.xnorm <- gen.xnorm.out$rank.xnorm
   order.xnorm <- gen.xnorm.out$order.xnorm
+
+  fv <- NULL
+
+  if(is.null(beta)) {
+
+    ## If no parameters are provided presume intention is to run
+    ## maximum likelihood estimation to obtain the parameter
+    ## estimates.
+
+    ptm <- ptm + system.time(ls.ml.out <- ls.ml(x=x,
+                                                xnorm=xnorm,
+                                                rank.xnorm=rank.xnorm,
+                                                degree.min=degree.min,
+                                                segments.min=segments.min,
+                                                degree.max=degree.max,
+                                                segments.max=segments.max,
+                                                lbound=lbound,
+                                                ubound=ubound,
+                                                elastic.max=elastic.max,
+                                                elastic.diff=elastic.diff,
+                                                do.gradient=do.gradient,
+                                                maxit=maxit,
+                                                nmulti=nmulti,
+                                                er=er,
+                                                method=method,
+                                                n.integrate=n.integrate,
+                                                basis=basis,
+                                                knots=knots,
+                                                penalty=penalty,
+                                                monotone=monotone,
+                                                monotone.lb=monotone.lb,
+                                                verbose=verbose,
+                                                max.attempts=25,
+                                                random.seed=random.seed))
+
+    beta <- ls.ml.out$beta
+    degree <- ls.ml.out$degree
+    segments <- ls.ml.out$segments
+    fv <- ls.ml.out$fv
+
+  }
+
+  if(is.null(degree)) stop(" You must provide spline degree")
+  if(is.null(segments)) stop(" You must provide number of segments")
 
   ptm <- ptm + system.time(Pnorm <- density.basis(x=x,
                                                   xeval=xeval,
@@ -557,29 +547,31 @@ sum.log.density.gradient <- function(beta=NULL,
 
 }
 
-ls.ml <- function(x,
-                  degree.min=2,
-                  segments.min=1,
-                  degree.max=5,
-                  segments.max=5,
+ls.ml <- function(x=NULL,
+                  xnorm=NULL,
+                  rank.xnorm=NULL,
+                  degree.min=NULL,
+                  segments.min=NULL,
+                  degree.max=NULL,
+                  segments.max=NULL,
                   lbound=NULL,
                   ubound=NULL,
                   elastic.max=FALSE,
-                  elastic.diff=3,
+                  elastic.diff=NULL,
                   do.gradient=TRUE,
-                  maxit=10^5,
-                  nmulti=1,
+                  maxit=NULL,
+                  nmulti=NULL,
                   er=NULL,
                   method=NULL,
-                  n.integrate=1.0e+03,
-                  basis="tensor",
-                  knots="quantiles",
-                  penalty=c("sic","aic","cv","none"),
+                  n.integrate=NULL,
+                  basis=NULL,
+                  knots=NULL,
+                  penalty=NULL,
                   monotone=TRUE,
                   monotone.lb=NULL,
-                  verbose=FALSE,
-                  max.attempts=25,
-                  random.seed=42) {
+                  verbose=NULL,
+                  max.attempts=NULL,
+                  random.seed=NULL) {
 
   ## This function conducts log spline maximum
   ## likelihood. Multistarting is supported as is breaking out to
@@ -597,8 +589,6 @@ ls.ml <- function(x,
 
   set.seed(random.seed)
 
-  penalty <- match.arg(penalty)
-
   if(missing(x)) stop(" You must provide data")
 
   ## We set some initial parameters that are placeholders to get
@@ -608,6 +598,8 @@ ls.ml <- function(x,
   s.opt <- Inf
   par.opt <- Inf
   value.opt <- -Inf
+  length.x <- length(x)
+  length.xnorm <- length(xnorm)
 
   ## Loop through all degrees for every segment starting at
   ## segments.min.
@@ -630,16 +622,6 @@ ls.ml <- function(x,
       ## Generate objects that need not be recomputed for a given d
       ## and s
 
-      gen.xnorm.out <- gen.xnorm(x=x,
-                                 lbound=lbound,
-                                 ubound=ubound,
-                                 er=er,
-                                 n.integrate=n.integrate)
-
-      xnorm <- gen.xnorm.out$xnorm
-      rank.xnorm <- gen.xnorm.out$rank.xnorm
-      order.xnorm <- gen.xnorm.out$order.xnorm
-
       Pnorm <- density.basis(x=x,
                              xnorm=xnorm,
                              degree=d,
@@ -647,9 +629,6 @@ ls.ml <- function(x,
                              basis=basis,
                              knots=knots,
                              monotone=monotone)
-
-      length.x <- length(x)
-      length.xnorm <- length(xnorm)
       complexity <- d+s-3
 
       ## Multistart if desired.
