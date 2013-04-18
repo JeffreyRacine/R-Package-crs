@@ -352,8 +352,7 @@ clsd <- function(x=NULL,
   ## Compute the constant of integration to normalize the density
   ## estimate so that it integrates to one.
 
-  norm.cumsum.integrate <- integrate.trapezoidal(xnorm,exp(Pnorm.beta))
-  norm.constant <- norm.cumsum.integrate[length(xnorm)]
+  norm.constant <- integrate.trapezoidal.sum(xnorm,exp(Pnorm.beta))
   log.norm.constant <- log(norm.constant)
 
   if(!is.finite(log.norm.constant))
@@ -464,7 +463,7 @@ sum.log.density <- function(beta=NULL,
                             complexity=NULL) {
 
   Pnorm.beta <- as.numeric(Pnorm%*%beta)
-  log.norm.constant <- log(integrate.trapezoidal(xnorm,exp(Pnorm.beta))[length.xnorm])
+  log.norm.constant <- log(integrate.trapezoidal.sum(xnorm,exp(Pnorm.beta)))
   logl <- sum(Pnorm.beta[rank.xnorm][1:length.x]-log.norm.constant)
 
   if(penalty=="aic") {
@@ -533,11 +532,11 @@ sum.log.density.gradient <- function(beta=NULL,
                                      ...) {
 
   Pnorm.beta <- as.numeric(Pnorm%*%beta)
-  norm.constant <- integrate.trapezoidal(xnorm,exp(Pnorm.beta))[length.xnorm]
+  norm.constant <- integrate.trapezoidal.sum(xnorm,exp(Pnorm.beta))
 
   exp.P.beta.P <- exp(Pnorm.beta)*Pnorm
   int.exp.P.beta.P <- numeric(length=ncol(Pnorm))
-  for(i in 1:ncol(Pnorm)) int.exp.P.beta.P[i] <- integrate.trapezoidal(xnorm,exp.P.beta.P[,i])[length.xnorm]
+  for(i in 1:ncol(Pnorm)) int.exp.P.beta.P[i] <- integrate.trapezoidal.sum(xnorm,exp.P.beta.P[,i])
 
   if(penalty=="aic"|penalty=="sic") {
     return(2*(colSums(Pnorm[rank.xnorm,][1:length.x,])-length.x*int.exp.P.beta.P/norm.constant))
