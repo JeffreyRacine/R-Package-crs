@@ -206,24 +206,24 @@ density.deriv.basis <- function(x=NULL,
                                 deriv.index=1,
                                 deriv=0) {
 
-    ptm <- ptm + system.time(suppressWarnings(Pnorm.deriv <- prod.spline(x=x,
-                                                                         xeval=xnorm,
-                                                                         K=cbind(degree,segments+if(monotone){2}else{0}),
-                                                                         knots=knots,
-                                                                         basis=basis,
-                                                                         deriv.index=deriv.index,
-                                                                         deriv=deriv)))
-    
-    if(monotone) Pnorm.deriv <- Pnorm.deriv[,-c(2,degree+segments+1)]
+  suppressWarnings(Pnorm.deriv <- prod.spline(x=x,
+                                              xeval=xnorm,
+                                              K=cbind(degree,segments+if(monotone){2}else{0}),
+                                              knots=knots,
+                                              basis=basis,
+                                              deriv.index=deriv.index,
+                                              deriv=deriv))
+  
+  if(monotone) Pnorm.deriv <- Pnorm.deriv[,-c(2,degree+segments+1)]
 
-    ptm <- ptm + system.time(suppressWarnings(P.lin <- prod.spline(x=x,
-                                                                   xeval=xnorm,
-                                                                   K=cbind(1,1),
-                                                                   knots=knots,
-                                                                   basis=basis,
-                                                                   deriv.index=deriv.index,
-                                                                   deriv=deriv)))
-    
+  suppressWarnings(P.lin <- prod.spline(x=x,
+                                        xeval=xnorm,
+                                        K=cbind(1,1),
+                                        knots=knots,
+                                        basis=basis,
+                                        deriv.index=deriv.index,
+                                        deriv=deriv))
+  
     ## For the derivative bases on the extended range `xnorm', above
     ## and below max(x)/min(x) we assign the bases to constants
     ## (zero). We append the linear basis to the left and right of the
