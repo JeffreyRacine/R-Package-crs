@@ -463,8 +463,7 @@ sum.log.density <- function(beta=NULL,
                             x=NULL,
                             xnorm=NULL,
                             rank.xnorm=NULL,
-                            penalty=NULL,
-                            ...) {
+                            penalty=NULL) {
 
   Pnorm.beta <- as.numeric(Pnorm%*%beta)
   log.norm.constant <- log(integrate.trapezoidal(xnorm,exp(Pnorm.beta))[length(xnorm)])
@@ -533,8 +532,7 @@ sum.log.density.gradient <- function(beta=NULL,
                                      x=NULL,
                                      xnorm=NULL,
                                      rank.xnorm=NULL,
-                                     penalty=NULL,
-                                     ...) {
+                                     penalty=NULL) {
 
   Pnorm.beta <- as.numeric(Pnorm%*%beta)
   norm.constant <- integrate.trapezoidal(xnorm,exp(Pnorm.beta))[length(xnorm)]
@@ -661,29 +659,6 @@ ls.ml <- function(x,
 
         m.attempts <- 0
 
-optim.out <- optim(par=par.init,
-                                                           fn=sum.log.density,
-                                                           gr=if(do.gradient){sum.log.density.gradient}else{NULL},
-                                                           upper=par.upper,
-                                                           lower=par.lower,
-                                                           method=method,
-                                                           x=x,
-                                                           xnorm=xnorm,
-                                                           degree=d,
-                                                           segments=s,
-                                                           er=er,
-                                                           penalty=penalty,
-                                                           basis=basis,
-                                                           knots=knots,
-                                                           n.integrate=n.integrate,
-                                                           monotone=monotone,
-                                                           monotone.lb=monotone.lb,
-                                                           lbound=lbound,
-                                                           ubound=ubound,
-                                                           rank.xnorm=rank.xnorm,
-                                                           Pnorm=Pnorm,
-                                                           control=list(fnscale=-1,maxit=maxit,if(verbose){trace=1}else{trace=0}))        
-
         while(tryCatch(suppressWarnings(optim.out <- optim(par=par.init,
                                                            fn=sum.log.density,
                                                            gr=if(do.gradient){sum.log.density.gradient}else{NULL},
@@ -692,17 +667,7 @@ optim.out <- optim(par=par.init,
                                                            method=method,
                                                            x=x,
                                                            xnorm=xnorm,
-                                                           degree=d,
-                                                           segments=s,
-                                                           er=er,
                                                            penalty=penalty,
-                                                           basis=basis,
-                                                           knots=knots,
-                                                           n.integrate=n.integrate,
-                                                           monotone=monotone,
-                                                           monotone.lb=monotone.lb,
-                                                           lbound=lbound,
-                                                           ubound=ubound,
                                                            rank.xnorm=rank.xnorm,
                                                            Pnorm=Pnorm,
                                                            control=list(fnscale=-1,maxit=maxit,if(verbose){trace=1}else{trace=0}))),
