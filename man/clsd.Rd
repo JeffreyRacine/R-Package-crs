@@ -14,14 +14,14 @@ clsd(x = NULL,
      degree = NULL,
      segments = NULL,
      degree.min = 2,
-     degree.max = 5,
+     degree.max = 10,
      segments.min = 1,
-     segments.max = 5,
+     segments.max = 10,
      lbound = NULL,
      ubound = NULL,
      basis = "tensor",
      knots = "quantiles",
-     penalty = c("aic","sic","cv","none"),
+     penalty = c("sic","aic","cv","none"),
      deriv.index = 1,
      deriv = 0,
      elastic.max = TRUE,
@@ -53,13 +53,15 @@ clsd(x = NULL,
     (i.e. number of knots minus one) (default \code{segments=1}, i.e. Bezier
     curve)}
 
-  \item{segments.min,segments.max}{ the minimum/maximum segments of the
-    B-spline basis for each of the continuous predictors (default
-    \code{segments.min=1},\code{segments.max=5})}
+  \item{segments.min,segments.max}{ when \code{elastic.max=FALSE}, the
+    minimum/maximum segments of the B-spline basis for each of the
+    continuous predictors (default
+    \code{segments.min=1},\code{segments.max=10})}
 
-  \item{degree.min,degree.max}{ the minimum/maximum degree of the
-    B-spline basis for each of the continuous predictors (default
-    \code{degree.min=2}, \code{degree.max=5})}
+  \item{degree.min,degree.max}{ when \code{elastic.max=FALSE} the
+    minimum/maximum degree of the B-spline basis for each of the
+    continuous predictors (default \code{degree.min=2},
+    \code{degree.max=10})}
 
   \item{lbound,ubound}{
     lower/upper bound for the support of the density. For example, if
@@ -98,7 +100,7 @@ clsd(x = NULL,
   }
 
   \item{penalty}{ the penalty function to use when conducting maximum
-    likelihood}
+    likelihood }
 
   \item{elastic.max,elastic.diff}{ a logical value/integer indicating
      whether to use `elastic' search bounds such that the optimal
@@ -251,7 +253,7 @@ n <- 250
 x <- sort(rnorm(n))
 f.dgp <- dnorm(x)
 
-model <- clsd(x,degree.max=3,segments.max=3)
+model <- clsd(x)
 
 ## Standard (cubic) estimate taken from the logspline package
 ## Compute MSEs
