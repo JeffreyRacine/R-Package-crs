@@ -124,10 +124,10 @@ density.basis <- function(x=NULL,
   
   if(monotone) Pnorm <- Pnorm[,-c(2,degree+segments+1)]
 
-  ## Compute the normalizing constant so that the estimate
-  ## integrates to one. We append linear splines to the B-spline
-  ## basis to generate exponentially declining tails (K=cbind(1,1)
-  ## creates the linear basis).
+  ## Compute the normalizing constant so that the estimate integrates
+  ## to one. We append linear splines to the B-spline basis to
+  ## generate exponentially declining tails (K=cbind(1,1) creates the
+  ## linear basis).
 
   suppressWarnings(P.lin <- prod.spline(x=x,
                                         xeval=xnorm,
@@ -140,8 +140,8 @@ density.basis <- function(x=NULL,
   ## polynomial basis at xmin/xmax (note that
   ## Pnorm[xnorm==max(x),-ncol(Pnorm)] <- 0 is there because the
   ## gsl.bspline values at the right endpoint are very small but not
-  ## exactly zero but want to rule out any potential issues hence
-  ## set them correctly to zero)
+  ## exactly zero but want to rule out any potential issues hence set
+  ## them correctly to zero)
   
   Pnorm[xnorm<min(x),] <- 0
   Pnorm[xnorm>max(x),] <- 0
@@ -436,7 +436,7 @@ clsd <- function(x=NULL,
                       Basis.beta.er=Pnorm.beta,
                       P=P,
                       Per=Pnorm,
-                      logl=sum(P.beta-log.norm.constant),## issue XXXX this is potentially for evaluation data
+                      logl=sum(P.beta-log.norm.constant),
                       constant=norm.constant,
                       degree=degree,
                       segments=segments,
@@ -458,43 +458,19 @@ clsd <- function(x=NULL,
 
 }
 
-sum.log.density <- function(beta,
-                            x,
-                            degree,
-                            segments,
-                            lbound=NULL,
-                            ubound=NULL,
-                            basis="tensor",
-                            knots="quantiles",
-                            er=NULL,
-                            n.integrate=1.0e+03,
-                            penalty=c("aic","sic","cv","none"),
-                            monotone=TRUE,
-                            monotone.lb=NULL) {
+sum.log.density <- function(beta=NULL,
+                            Pnorm=NULL,
+                            x=NULL,
+                            xnorm=NULL,
+                            rank.xnorm=NULL,
+                            penalty=NULL,
+                            ...) {
 
-  penalty <- match.arg(penalty)
-  if(missing(x)) stop(" You must provide data")
-  if(missing(beta)) stop(" You must provide coefficients")
-  if(missing(degree)) stop(" You must provide spline degree")
-  if(missing(segments)) stop(" You must provide number of segments")
+  Pnorm.beta <- as.numeric(Pnorm%*%beta)
+  log.norm.constant <- log(integrate.trapezoidal(xnorm,exp(Pnorm.beta))[length(xnorm)])
+  logl <- sum(Pnorm.beta[rank.xnorm][1:length(x)]-log.norm.constant)
 
-  output <- clsd(beta=beta,
-                 x=x,
-                 degree=degree,
-                 segments=segments,
-                 lbound=lbound,
-                 ubound=ubound,
-                 basis=basis,
-                 knots=knots,
-                 er=er,
-                 n.integrate=n.integrate,
-                 monotone=monotone,
-                 monotone.lb=monotone.lb)
-
-  logl <- output$logl
-  f.hat <- output$density
-
-  complexity <- degree+segments-3
+  complexity <- ncol(Pnorm)-3
 
   if(penalty=="aic") {
 
@@ -517,7 +493,7 @@ sum.log.density <- function(beta,
     ## family).  Note the penalty log(n) is Schwarz-Bayes. The penalty
     ## 3 is used by Kooperberg & Stone, while 2 corresponds to LSCV.
 
-    return(2*logl-log(length(f.hat))*complexity)
+    return(2*logl-log(length(x))*complexity)
 
   } else if(penalty=="cv") {
 
@@ -528,7 +504,10 @@ sum.log.density <- function(beta,
     ## parameters. Delete-one ML (call to lm.influence verified to
     ## produce diag[P%*%solve(t(P)%*%P)%*%t(P)]...)
 
-    h <- lm.influence(lm(rep(1,nrow(output$P))~output$P))$hat
+    f.hat <- exp(Pnorm.beta[rank.xnorm][1:length(x)]-log.norm.constant)
+    P <- Pnorm[rank.xnorm,][1:length(x),]
+
+    h <- lm.influence(lm(rep(1,nrow(P))~P))$hat
     k <- round(sum(h))
 
     ## Compute 1-h, check for case where h=1
@@ -549,50 +528,25 @@ sum.log.density <- function(beta,
 
 }
 
-sum.log.density.gradient <- function(beta,
-                                     x,
-                                     degree,
-                                     segments,
-                                     lbound=NULL,
-                                     ubound=NULL,
-                                     basis="tensor",
-                                     knots="quantiles",
-                                     er=NULL,
-                                     n.integrate=1.0e+03,
-                                     penalty=c("aic","sic","cv","none"),
-                                     monotone=TRUE,
-                                     monotone.lb=NULL) {
+sum.log.density.gradient <- function(beta=NULL,
+                                     Pnorm=NULL,
+                                     x=NULL,
+                                     xnorm=NULL,
+                                     rank.xnorm=NULL,
+                                     penalty=NULL,
+                                     ...) {
 
-  ## Note - gradients are only ever computed for the sample
-  ## realizations used to compute the log likelihood function
+  Pnorm.beta <- as.numeric(Pnorm%*%beta)
+  norm.constant <- integrate.trapezoidal(xnorm,exp(Pnorm.beta))[length(xnorm)]
 
-  penalty <- match.arg(penalty)
-  if(missing(x)) stop(" You must provide data")
-  if(missing(beta)) stop(" You must provide coefficients")
-  if(missing(degree)) stop(" You must provide spline degree")
-  if(missing(segments)) stop(" You must provide number of segments")
-
-  output <- clsd(beta=beta,
-                 x=x,
-                 degree=degree,
-                 segments=segments,
-                 lbound=lbound,
-                 ubound=ubound,
-                 basis=basis,
-                 knots=knots,
-                 er=er,
-                 n.integrate=n.integrate,
-                 monotone=monotone,
-                 monotone.lb=monotone.lb)
-
-  exp.P.beta.P <- exp(output$Basis.beta.er)*output$Per
-  int.exp.P.beta.P <- numeric(length=ncol(output$Per))
-  for(i in 1:ncol(output$P)) int.exp.P.beta.P[i] <- integrate.trapezoidal(output$xer,exp.P.beta.P[,i])[length(output$xer)]
+  exp.P.beta.P <- exp(Pnorm.beta)*Pnorm
+  int.exp.P.beta.P <- numeric(length=ncol(Pnorm))
+  for(i in 1:ncol(Pnorm)) int.exp.P.beta.P[i] <- integrate.trapezoidal(xnorm,exp.P.beta.P[,i])[length(xnorm)]
 
   if(penalty=="aic"|penalty=="sic") {
-    return(2*(colSums(output$P)-length(x)*int.exp.P.beta.P/output$constant))
+    return(2*(colSums(Pnorm[rank.xnorm,][1:length(x),])-length(x)*int.exp.P.beta.P/norm.constant))
   } else {
-    return(colSums(output$P)-length(x)*int.exp.P.beta.P/output$constant)
+    return(colSums(Pnorm[rank.xnorm,][1:length(x),])-length(x)*int.exp.P.beta.P/norm.constant)
   }
 
 }
@@ -663,7 +617,27 @@ ls.ml <- function(x,
       if(verbose) cat("\n")
       cat("\r                                                                                                  ")
       cat("\rOptimizing, degree = ",d,", segments = ",s,", degree.opt = ",d.opt, ", segments.opt = ",s.opt," ",sep="")
-      dim.p <- dim.bs(basis=basis,degree=d,segments=s)
+
+      ## Generate objects that need not be recomputed for a given d
+      ## and s
+
+      gen.xnorm.out <- gen.xnorm(x=x,
+                                 lbound=lbound,
+                                 ubound=ubound,
+                                 er=er,
+                                 n.integrate=n.integrate)
+      
+      xnorm <- gen.xnorm.out$xnorm
+      rank.xnorm <- gen.xnorm.out$rank.xnorm
+      order.xnorm <- gen.xnorm.out$order.xnorm    
+      
+      Pnorm <- density.basis(x=x,
+                             xnorm=xnorm,
+                             degree=d,
+                             segments=s,
+                             basis=basis,
+                             knots=knots,
+                             monotone=monotone)
 
       ## Multistart if desired.
 
@@ -687,13 +661,14 @@ ls.ml <- function(x,
 
         m.attempts <- 0
 
-        while(tryCatch(suppressWarnings(optim.out <- optim(par=par.init,
+optim.out <- optim(par=par.init,
                                                            fn=sum.log.density,
                                                            gr=if(do.gradient){sum.log.density.gradient}else{NULL},
                                                            upper=par.upper,
                                                            lower=par.lower,
                                                            method=method,
                                                            x=x,
+                                                           xnorm=xnorm,
                                                            degree=d,
                                                            segments=s,
                                                            er=er,
@@ -705,6 +680,31 @@ ls.ml <- function(x,
                                                            monotone.lb=monotone.lb,
                                                            lbound=lbound,
                                                            ubound=ubound,
+                                                           rank.xnorm=rank.xnorm,
+                                                           Pnorm=Pnorm,
+                                                           control=list(fnscale=-1,maxit=maxit,if(verbose){trace=1}else{trace=0}))        
+
+        while(tryCatch(suppressWarnings(optim.out <- optim(par=par.init,
+                                                           fn=sum.log.density,
+                                                           gr=if(do.gradient){sum.log.density.gradient}else{NULL},
+                                                           upper=par.upper,
+                                                           lower=par.lower,
+                                                           method=method,
+                                                           x=x,
+                                                           xnorm=xnorm,
+                                                           degree=d,
+                                                           segments=s,
+                                                           er=er,
+                                                           penalty=penalty,
+                                                           basis=basis,
+                                                           knots=knots,
+                                                           n.integrate=n.integrate,
+                                                           monotone=monotone,
+                                                           monotone.lb=monotone.lb,
+                                                           lbound=lbound,
+                                                           ubound=ubound,
+                                                           rank.xnorm=rank.xnorm,
+                                                           Pnorm=Pnorm,
                                                            control=list(fnscale=-1,maxit=maxit,if(verbose){trace=1}else{trace=0}))),
                        error = function(e){return(optim.out)})[[4]]!=0 && m.attempts < max.attempts){
 
