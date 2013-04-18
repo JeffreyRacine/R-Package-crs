@@ -261,7 +261,8 @@ clsd <- function(x=NULL,
                  penalty=c("aic","sic","cv","none"),
                  deriv.index=1,
                  deriv=0,
-                 do.break=FALSE,
+                 elastic.max=FALSE,
+                 elastic.diff=3,
                  do.gradient=TRUE,
                  er=NULL,
                  monotone=TRUE,
@@ -271,6 +272,11 @@ clsd <- function(x=NULL,
                  method = c("L-BFGS-B", "Nelder-Mead", "BFGS", "CG", "SANN"),
                  verbose=FALSE,
                  quantile.seq=seq(.01,.99,by=.01)) {
+
+  if(elastic.max) {
+    degree.max <- 3
+    segments.max <- 3
+  }
   
   ptm <- system.time("")
 
@@ -312,7 +318,8 @@ clsd <- function(x=NULL,
                                                 nmulti=nmulti,
                                                 do.gradient=do.gradient,
                                                 er=er,
-                                                do.break=do.break,
+                                                elastic.max=elastic.max,
+                                                elastic.diff=elastic.diff,
                                                 penalty=penalty,
                                                 monotone=monotone,
                                                 monotone.lb=monotone.lb,
@@ -388,8 +395,7 @@ clsd <- function(x=NULL,
                                                                 deriv.index=deriv.index,
                                                                 deriv=deriv))
     
-    P.deriv.beta <- as.numeric(Pnorm.deriv%*%beta)
-    f.norm.deriv <- as.numeric(f.norm*P.deriv.beta)
+    f.norm.deriv <- as.numeric(f.norm*Pnorm.deriv%*%beta)
 
   } else {
 
@@ -556,7 +562,8 @@ ls.ml <- function(x,
                   segments.max=5,
                   lbound=NULL,
                   ubound=NULL,
-                  do.break=FALSE,
+                  elastic.max=FALSE,
+                  elastic.diff=3,
                   do.gradient=TRUE,
                   maxit=10^5,
                   nmulti=1,
@@ -595,23 +602,25 @@ ls.ml <- function(x,
   ## We set some initial parameters that are placeholders to get
   ## things rolling.
 
-  d.opt <- 0
-  s.opt <- 0
-  d <- 1
+  d.opt <- Inf
+  s.opt <- Inf
   par.opt <- Inf
   value.opt <- -Inf
 
   ## Loop through all degrees for every segment starting at
   ## segments.min.
 
-  for(s in segments.min:segments.max) {
+  s <- segments.min
 
-    if(do.break & s > 1 & d.opt < d & s.opt < s) break
+  while(s <= segments.max) {
 
     ## For smooth densities one can simply restrict degree to at least
     ## 2 (or 3 to be consistent with cubic splines)
 
-    for(d in degree.min:degree.max) {
+    d <- degree.min
+
+    while(d <= degree.max) {
+
       if(verbose) cat("\n")
       cat("\r                                                                                                  ")
       cat("\rOptimizing, degree = ",d,", segments = ",s,", degree.opt = ",d.opt, ", segments.opt = ",s.opt," ",sep="")
@@ -706,9 +715,17 @@ ls.ml <- function(x,
 
       }
 
-      if(do.break & d.opt < d & s.opt < s) break
+      d <- d+1
 
+      if(elastic.max && d.opt == degree.max) degree.max <- degree.max+elastic.diff
+      if(elastic.max && d.opt < degree.max+elastic.diff) degree.max <- d.opt+elastic.diff
+      
     }
+
+    if(elastic.max && s.opt == segments.max) segments.max <- segments.max+elastic.diff
+    if(elastic.max && s.opt < segments.max+elastic.diff) segments.max <- s.opt+elastic.diff
+
+    s <- s+1
 
   }
 
