@@ -34,7 +34,9 @@ clsd(x = NULL,
      nmulti = 1,
      method = c("L-BFGS-B", "Nelder-Mead", "BFGS", "CG", "SANN"),
      verbose = FALSE,
-     quantile.seq = seq(.01,.99,by=.01))
+     quantile.seq = seq(.01,.99,by=.01),
+     random.seed = 42,
+     maxit = 10^5)
 }
 \arguments{
 
@@ -46,7 +48,7 @@ clsd(x = NULL,
 
   \item{degree}{ integer/vector specifying the polynomial degree of the
     B-spline basis for each dimension of the continuous \code{x} (default
-    \code{degree=3}, i.e. cubic spline)}
+    \code{degree=2})}
 
   \item{segments}{ integer/vector specifying the number of segments of the
     B-spline basis for each dimension of the continuous \code{x}
@@ -100,7 +102,8 @@ clsd(x = NULL,
   }
 
   \item{penalty}{ the penalty function to use when conducting maximum
-    likelihood }
+    likelihood (defaults to \code{sic}, the Schwarz-Bayes Information
+    Criterion)}
 
   \item{elastic.max,elastic.diff}{ a logical value/integer indicating
      whether to use `elastic' search bounds such that the optimal
@@ -145,6 +148,13 @@ clsd(x = NULL,
      the logspline distribution are obtained
    }
 
+   \item{random.seed}{ seeds the random number generator for initial
+     parameter values when \code{\link{optim}} is called }
+
+  \item{maxit}{
+    maximum number of iterations used by \code{\link{optim}}
+   }
+   
   
 }
 
