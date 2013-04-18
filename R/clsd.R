@@ -281,19 +281,18 @@ clsd <- function(x=NULL,
   penalty <- match.arg(penalty)
   method <- match.arg(method)
 
+  fv <- NULL
+
   gen.xnorm.out <- gen.xnorm(x=x,
-                             xeval=xeval,
                              lbound=lbound,
                              ubound=ubound,
                              er=er,
                              n.integrate=n.integrate)
-
+  
   xnorm <- gen.xnorm.out$xnorm
   rank.xnorm <- gen.xnorm.out$rank.xnorm
   order.xnorm <- gen.xnorm.out$order.xnorm
-
-  fv <- NULL
-
+  
   if(is.null(beta)) {
 
     ## If no parameters are provided presume intention is to run
@@ -330,6 +329,21 @@ clsd <- function(x=NULL,
     degree <- ls.ml.out$degree
     segments <- ls.ml.out$segments
     fv <- ls.ml.out$fv
+
+  }
+
+  if(!is.null(xeval)) {
+
+    gen.xnorm.out <- gen.xnorm(x=x,
+                               xeval=xeval,
+                               lbound=lbound,
+                               ubound=ubound,
+                               er=er,
+                               n.integrate=n.integrate)
+
+    xnorm <- gen.xnorm.out$xnorm
+    rank.xnorm <- gen.xnorm.out$rank.xnorm
+    order.xnorm <- gen.xnorm.out$order.xnorm
 
   }
 
