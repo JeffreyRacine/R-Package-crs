@@ -98,7 +98,7 @@ clsd(x = NULL,
   \item{nmulti}{
     integer number of times to restart the process of finding extrema of
     the cross-validation function from different (random) initial
-    points (default \code{nmulti=5})
+    points (default \code{nmulti=1})
   }
 
   \item{penalty}{ the penalty function to use when conducting maximum
@@ -111,16 +111,16 @@ clsd(x = NULL,
      respective search bounds }
 
   \item{do.gradient}{ a logical value indicating whether or not to use
-     the analytical gradient during optimization }
+     the analytical gradient during optimization (defaults to \code{TRUE})}
 
    \item{er}{
      a scalar indicating the fraction of data range to extend
-     the tails (default \code{1/log(n)}, see \link{extendrange} for
+     the tails (default \code{1/log(n)}, see \code{\link{extendrange}} for
      further details)
    }
 
    \item{monotone}{ a logical value indicating whether modify
-     the standard B-spline basis function so that it is better suited to
+     the standard B-spline basis function so that it is tailored for
      density estimation (default \code{TRUE})
    }
 
@@ -129,13 +129,11 @@ clsd(x = NULL,
    }
 
    \item{n.integrate}{
-     the number of integration points in addition to the sample
-     realizations evenly spaced on the extended range specified by
-     \code{er} (defaults to \code{1.0e+03})
+     the number of evenly spaced integration points on the extended range specified by \code{er} (defaults to \code{1.0e+03})
    }
 
    \item{method}{
-     see \link{optim} for details
+     see \code{\link{optim}} for details
    }
 
    \item{verbose}{
@@ -197,7 +195,7 @@ clsd(x = NULL,
   \item{density}{ estimates of the density function
     at the sample points}
 
-  \item{density.xer}{ the density evaluated on the `extended range'
+  \item{density.er}{ the density evaluated on the `extended range'
   of the data }
 
   \item{density.deriv}{ estimates of the derivative of the density function
@@ -206,7 +204,7 @@ clsd(x = NULL,
   \item{distribution}{ estimates of the distribution function
     at the sample points}
 
-  \item{distribution.xer}{ the distribution evaluated on the `extended range'
+  \item{distribution.er}{ the distribution evaluated on the `extended range'
   of the data }
 
   \item{xer}{ the `extended range' of the data }
@@ -255,10 +253,33 @@ clsd(x = NULL,
 
 \examples{
 \dontrun{
+## Old Faithful eruptions data histogram and clsd density
+
+library(MASS)
+data(faithful)
+attach(faithful)
+
+model <- clsd(eruptions)
+
+ylim <- c(0,max(model$density,hist(eruptions,breaks=20,plot=FALSE)$density))
+
+plot(model,ylim=ylim)
+
+hist(eruptions,breaks=20,freq=FALSE,add=TRUE,lty=2)
+
+rug(eruptions)
+
+summary(model)
+
+coef(model)
+
 ## Simulated data
+
 set.seed(42)
 require(logspline)
+
 ## Example - simulated data
+
 n <- 250
 x <- sort(rnorm(n))
 f.dgp <- dnorm(x)
@@ -296,25 +317,6 @@ legend("topright",c("DGP",paste("Cubic Logspline Density (package `logspline', k
        col=1:3,
        bty="n",
        cex=0.75)
-
-summary(model)
-
-coef(model)
-
-## Old Faithful eruptions data histogram and clsd density
-library(MASS)
-data(faithful)
-attach(faithful)
-
-model <- clsd(eruptions)
-
-ylim <- c(0,max(model$density,hist(eruptions,breaks=20,plot=FALSE)$density))
-
-plot(model,ylim=ylim)
-
-hist(eruptions,breaks=20,freq=FALSE,add=TRUE,lty=2)
-
-rug(eruptions)
 
 summary(model)
 
