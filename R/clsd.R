@@ -44,7 +44,7 @@ gen.xnorm <- function(x=NULL,
   if(is.null(xeval)) {
     ## x will be the first 1:length(x) elements in object[rank.xnorm]
     er <- extendrange(x,f=er)
-    if(!is.null(lbound)) er[1] <- lbound
+    if(!is.null(lbound)) er[1] <- lbound ## not right as x can lie below bound... XXXX come back and patch up
     if(!is.null(ubound)) er[2] <- ubound
     xnorm <- c(x,seq(er[1],er[2],length=n.integrate))
     rank.xnorm <- rank(xnorm)
@@ -424,12 +424,18 @@ clsd <- function(x=NULL,
   if(is.null(xeval)) {
     f <-   f.norm[rank.xnorm][1:length(x)]
     F <-   F.norm[rank.xnorm][1:length(x)]
+    f.norm <- f.norm[rank.xnorm][(length(x)+1):length(f.norm)]
+    F.norm <- F.norm[rank.xnorm][(length(x)+1):length(F.norm)]
+    xnorm <- xnorm[rank.xnorm][(length(x)+1):length(xnorm)]
     if(deriv>0) f.deriv <- f.norm.deriv[rank.xnorm][1:length(x)]
     P <-   Pnorm[rank.xnorm,][1:length(x),]
     P.beta <- Pnorm.beta[rank.xnorm][1:length(x)]
   } else {
     f <-   f.norm[rank.xnorm][1:length(xeval)]
     F <-   F.norm[rank.xnorm][1:length(xeval)]
+    f.norm <- f.norm[rank.xnorm][(length(xeval)+1):length(f.norm)]
+    F.norm <- F.norm[rank.xnorm][(length(xeval)+1):length(F.norm)]
+    xnorm <- xnorm[rank.xnorm][(length(xeval)+1):length(xnorm)]
     if(deriv>0) f.deriv <- f.norm.deriv[rank.xnorm][1:length(xeval)]
     P <-   Pnorm[rank.xnorm,][1:length(xeval),]
     P.beta <- Pnorm.beta[rank.xnorm][1:length(xeval)]
