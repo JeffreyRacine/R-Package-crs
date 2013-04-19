@@ -468,17 +468,15 @@ clsd <- function(x=NULL,
 }
 
 sum.log.density <- function(beta=NULL,
-                            Pnorm=NULL,
+                            P=NULL,
+                            Pint=NULL,
                             length.x=NULL,
-                            length.xnorm=NULL,
-                            xnorm=NULL,
-                            rank.xnorm=NULL,
+                            xint=NULL,
                             penalty=NULL,
                             complexity=NULL) {
 
-  Pnorm.beta <- as.numeric(Pnorm%*%beta)
-  log.norm.constant <- log(integrate.trapezoidal.sum(xnorm,exp(Pnorm.beta)))
-  logl <- sum(Pnorm.beta[rank.xnorm][1:length.x]-log.norm.constant)
+  Pbeta.m.logC <- P%*%beta-log(integrate.trapezoidal.sum(xint,exp(Pint%*%beta)))
+  logl <- sum(Pbeta.m.logC)
 
   if(penalty=="aic") {
 
@@ -512,8 +510,7 @@ sum.log.density <- function(beta=NULL,
     ## parameters. Delete-one ML (call to lm.influence verified to
     ## produce diag[P%*%solve(t(P)%*%P)%*%t(P)]...)
 
-    f.hat <- exp(Pnorm.beta[rank.xnorm][1:length.x]-log.norm.constant)
-    P <- Pnorm[rank.xnorm,][1:length.x,]
+    f.hat <- exp(Pbeta.m.logC)
 
     h <- lm.influence(lm(rep(1,nrow(P))~P))$hat
     k <- round(sum(h))
@@ -537,25 +534,26 @@ sum.log.density <- function(beta=NULL,
 }
 
 sum.log.density.gradient <- function(beta=NULL,
-                                     Pnorm=NULL,
+                                     P=NULL,
+                                     Pint=NULL,
                                      length.x=NULL,
-                                     length.xnorm=NULL,
-                                     xnorm=NULL,
-                                     rank.xnorm=NULL,
+                                     xint=NULL,
                                      penalty=NULL,
                                      ...) {
 
-  Pnorm.beta <- as.numeric(Pnorm%*%beta)
-  norm.constant <- integrate.trapezoidal.sum(xnorm,exp(Pnorm.beta))
 
-  exp.P.beta.P <- exp(Pnorm.beta)*Pnorm
-  int.exp.P.beta.P <- numeric(length=ncol(Pnorm))
-  for(i in 1:ncol(Pnorm)) int.exp.P.beta.P[i] <- integrate.trapezoidal.sum(xnorm,exp.P.beta.P[,i])
+  Pint.beta <- as.numeric(Pint%*%beta)
+  norm.constant <- integrate.trapezoidal.sum(xint,exp(Pint.beta))
+
+  exp.Pint.beta.Pint <- exp(Pint.beta)*Pint
+
+  int.exp.Pint.beta.Pint <- numeric()
+  for(i in 1:ncol(Pint)) int.exp.Pint.beta.Pint[i] <- integrate.trapezoidal.sum(xint,exp.Pint.beta.Pint[,i])
 
   if(penalty=="aic"|penalty=="sic") {
-    return(2*(colSums(Pnorm[rank.xnorm,][1:length.x,])-length.x*int.exp.P.beta.P/norm.constant))
+    return(2*(colSums(P)-length.x*int.exp.Pint.beta.Pint/norm.constant))
   } else {
-    return(colSums(Pnorm[rank.xnorm,][1:length.x,])-length.x*int.exp.P.beta.P/norm.constant)
+    return(colSums(P)-length.x*int.exp.Pint.beta.Pint/norm.constant)
   }
 
 }
@@ -642,6 +640,11 @@ ls.ml <- function(x=NULL,
                              basis=basis,
                              knots=knots,
                              monotone=monotone)
+
+      P <- Pnorm[rank.xnorm,][1:length.x,]
+      Pint <- Pnorm[rank.xnorm,][(length.x+1):nrow(Pnorm),]
+      xint <- xnorm[rank.xnorm][(length.x+1):nrow(Pnorm)]
+      
       complexity <- d+s-3
 
       ## Multistart if desired.
@@ -672,12 +675,11 @@ ls.ml <- function(x=NULL,
                                                            upper=par.upper,
                                                            lower=par.lower,
                                                            method=method,
-                                                           length.x=length.x,
-                                                           length.xnorm=length.xnorm,
-                                                           xnorm=xnorm,
                                                            penalty=penalty,
-                                                           rank.xnorm=rank.xnorm,
-                                                           Pnorm=Pnorm,
+                                                           P=P,
+                                                           Pint=Pint,
+                                                           length.x=length.x,
+                                                           xint=xint,
                                                            complexity=complexity,
                                                            control=list(fnscale=-1,maxit=maxit,if(verbose){trace=1}else{trace=0}))),
                        error = function(e){return(optim.out)})[[4]]!=0 && m.attempts < max.attempts){
