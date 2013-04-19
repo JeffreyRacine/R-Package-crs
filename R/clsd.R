@@ -44,12 +44,13 @@ gen.xnorm <- function(x=NULL,
   if(is.null(xeval)) {
     ## x will be the first 1:length(x) elements in object[rank.xnorm]
     er <- extendrange(x,f=er)
-    if(!is.null(lbound)) er[1] <- lbound ## not right as x can lie below bound... XXXX come back and patch up
+    if(!is.null(lbound)) er[1] <- lbound
     if(!is.null(ubound)) er[2] <- ubound
     xnorm <- c(x,seq(er[1],er[2],length=n.integrate))
     rank.xnorm <- rank(xnorm)
     order.xnorm <- order(xnorm)
     xnorm <- xnorm[order.xnorm]
+    if(min(x) < er[1] | max(x) > er[2]) warning(" evaluation data extends beyond the range of `er'")
   } else {
     ## xeval will be the first 1:length(xeval) elements in
     ## object[rank.xnorm]
@@ -60,7 +61,7 @@ gen.xnorm <- function(x=NULL,
     rank.xnorm <- rank(xnorm)
     order.xnorm <- order(xnorm)
     xnorm <- xnorm[order.xnorm]
-
+    if(min(x) < er[1] | max(x) > er[2]) warning(" evaluation data extends beyond the range of `er'")
     if(min(xeval) < er[1] | max(xeval) > er[2]) warning(" evaluation data extends beyond the range of `er'")
   }
 
@@ -159,9 +160,6 @@ density.basis <- function(x=NULL,
   x.u <- xnorm[index.u]
   slope.linear.right <- as.numeric((P.right[index.u]-P.right[index.l])/(x.u-x.l))
 
-  ## Here are the linear segments with matching slopes XXX patch up
-  ## deriv outside range of data needed as well XXX
-
   P.left <- as.matrix(P.left-1)*slope.poly.left/slope.linear.left+1
   P.right <- as.matrix(P.right-1)*slope.poly.right/slope.linear.right+1
 
@@ -203,26 +201,26 @@ density.deriv.basis <- function(x=NULL,
                                         basis=basis,
                                         deriv.index=deriv.index,
                                         deriv=deriv))
-
-    ## For the derivative bases on the extended range `xnorm', above
-    ## and below max(x)/min(x) we assign the bases to constants
-    ## (zero). We append the linear basis to the left and right of the
-    ## bases. The left basis takes on linear values to the left of
-    ## min(x), zero elsewhere, the right zero to the left of max(x),
-    ## linear elsewhere.
-
-    Pnorm.deriv[xnorm<min(x),] <- 0
-    Pnorm.deriv[xnorm>max(x),] <- 0
-    P.left <- as.matrix(P.lin[,1])
-    P.left[xnorm>=min(x),1] <- 0
-    P.right <- as.matrix(P.lin[,2])
-    P.right[xnorm<=max(x),1] <- 0
-    Pnorm.deriv[,1] <- Pnorm.deriv[,1]+P.left
-    Pnorm.deriv[,ncol(Pnorm.deriv)] <- Pnorm.deriv[,ncol(Pnorm.deriv)]+P.right
-
-    return(Pnorm.deriv)
-
-  }
+  
+  ## For the derivative bases on the extended range `xnorm', above
+  ## and below max(x)/min(x) we assign the bases to constants
+  ## (zero). We append the linear basis to the left and right of the
+  ## bases. The left basis takes on linear values to the left of
+  ## min(x), zero elsewhere, the right zero to the left of max(x),
+  ## linear elsewhere.
+  
+  Pnorm.deriv[xnorm<min(x),] <- 0
+  Pnorm.deriv[xnorm>max(x),] <- 0
+  P.left <- as.matrix(P.lin[,1])
+  P.left[xnorm>=min(x),1] <- 0
+  P.right <- as.matrix(P.lin[,2])
+  P.right[xnorm<=max(x),1] <- 0
+  Pnorm.deriv[,1] <- Pnorm.deriv[,1]+P.left
+  Pnorm.deriv[,ncol(Pnorm.deriv)] <- Pnorm.deriv[,ncol(Pnorm.deriv)]+P.right
+  
+  return(Pnorm.deriv)
+  
+}
 
 
 clsd <- function(x=NULL,
@@ -725,21 +723,21 @@ ls.ml <- function(x=NULL,
 
       d <- d+1
 
-      if(elastic.max && d.opt == degree.max) degree.max <- degree.max+elastic.diff
-      if(elastic.max && d.opt < degree.max+elastic.diff) degree.max <- d.opt+elastic.diff
+      if(!(degree.min==degree.max) && elastic.max && d.opt == degree.max) degree.max <- degree.max+elastic.diff
+      if(!(degree.min==degree.max) && elastic.max && d.opt < degree.max+elastic.diff) degree.max <- d.opt+elastic.diff
 
     }
 
-    if(elastic.max && s.opt == segments.max) segments.max <- segments.max+elastic.diff
-    if(elastic.max && s.opt < segments.max+elastic.diff) segments.max <- s.opt+elastic.diff
+    if(!(segments.min==segments.max) && elastic.max && s.opt == segments.max) segments.max <- segments.max+elastic.diff
+    if(!(segments.min==segments.max) && elastic.max && s.opt < segments.max+elastic.diff) segments.max <- s.opt+elastic.diff
 
     s <- s+1
 
   }
 
   cat("\r                                                                            ")
-  if(d.opt==degree.max) warning(paste(" optimal degree equals search maximum (", d.opt,"): rerun with larger degree.max",sep=""))
-  if(s.opt==segments.max) warning(paste(" optimal segment equals search maximum (", s.opt,"): rerun with larger segments.max",sep=""))
+  if(!(degree.min==degree.max) && (d.opt==degree.max)) warning(paste(" optimal degree equals search maximum (", d.opt,"): rerun with larger degree.max",sep=""))
+  if(!(segments.min==segments.max) && (s.opt==segments.max)) warning(paste(" optimal segment equals search maximum (", s.opt,"): rerun with larger segments.max",sep=""))
   if(par.opt[1]>0|par.opt[length(par.opt)]>0) warning(" optim() delivered a positive weight for linear segment (supposed to be negative)")
   if(!monotone&&par.opt[1]<=monotone.lb) warning(paste(" optimal weight for left nonmonotone basis equals search minimum (",par.opt[1],"): rerun with smaller monotone.lb",sep=""))
   if(!monotone&&par.opt[length(par.opt)]<=monotone.lb) warning(paste(" optimal weight for right nonmonotone basis equals search minimum (",par.opt[length(par.opt)],"): rerun with smaller monotone.lb",sep=""))
