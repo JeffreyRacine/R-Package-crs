@@ -36,7 +36,8 @@ clsd(x = NULL,
      verbose = FALSE,
      quantile.seq = seq(.01,.99,by=.01),
      random.seed = 42,
-     maxit = 10^5)
+     maxit = 10^5,
+     max.attempts = 25)
 }
 \arguments{
 
@@ -151,6 +152,12 @@ clsd(x = NULL,
 
   \item{maxit}{
     maximum number of iterations used by \code{\link{optim}}
+   }
+   
+   \item{max.attempts}{
+     maximum number of attempts to undertake if \code{\link{optim}}
+     fails for any set of initial parameters for each value of
+     \code{nmulti}
    }
    
   

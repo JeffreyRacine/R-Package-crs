@@ -251,7 +251,8 @@ clsd <- function(x=NULL,
                  verbose=FALSE,
                  quantile.seq=seq(.01,.99,by=.01),
                  random.seed=42,
-                 maxit=10^5) {
+                 maxit=10^5,
+                 max.attempts=25) {
 
   if(elastic.max) {
     degree.max <- 3
@@ -320,7 +321,7 @@ clsd <- function(x=NULL,
                                                 monotone=monotone,
                                                 monotone.lb=monotone.lb,
                                                 verbose=verbose,
-                                                max.attempts=25,
+                                                max.attempts=max.attempts,
                                                 random.seed=random.seed))
 
     beta <- ls.ml.out$beta
@@ -648,8 +649,8 @@ ls.ml <- function(x=NULL,
       P <- Pnorm[rank.xnorm,][1:length.x,]
       Pint <- Pnorm[rank.xnorm,][(length.x+1):nrow(Pnorm),]
       xint <- xnorm[rank.xnorm][(length.x+1):nrow(Pnorm)]
-      
-      complexity <- d+s-3
+
+      complexity <- d+s
 
       ## Multistart if desired.
 
