@@ -13,7 +13,7 @@ clsd(x = NULL,
      xeval = NULL,
      degree = NULL,
      segments = NULL,
-     degree.min = 2,
+     degree.min = 1,
      degree.max = 10,
      segments.min = 1,
      segments.max = 10,
@@ -63,7 +63,7 @@ clsd(x = NULL,
 
   \item{degree.min,degree.max}{ when \code{elastic.max=FALSE} the
     minimum/maximum degree of the B-spline basis for each of the
-    continuous predictors (default \code{degree.min=2},
+    continuous predictors (default \code{degree.min=1},
     \code{degree.max=10})}
 
   \item{lbound,ubound}{
@@ -235,6 +235,9 @@ clsd(x = NULL,
   This function should be considered to be in `beta' status until
   further notice.
 
+  If smooth estimates are desired, set \code{degree.min} equal to
+  \code{degree.min=2} or \code{degree.min=3}.
+
   The use of `regression' B-splines can lead to undesirable behavior at
   the endpoints of the data (i.e. when \code{monotone=FALSE}). The
   default `density' B-splines ought to be well-behaved in these regions.
@@ -328,6 +331,16 @@ legend("topright",c("DGP",paste("Cubic Logspline Density (package `logspline', k
 summary(model)
 
 coef(model)
+
+## Simulate data with known bounds
+
+set.seed(42)
+n <- 10000
+x <- runif(n,0,1)
+
+model <- clsd(x,lbound=0,ubound=1)
+
+plot(model)
 } %% End dontrun
 }
 \keyword{nonparametric}
