@@ -46,22 +46,27 @@ gen.xnorm <- function(x=NULL,
     er <- extendrange(x,f=er)
     if(!is.null(lbound)) er[1] <- lbound
     if(!is.null(ubound)) er[2] <- ubound
-    xnorm <- c(x,seq(er[1],er[2],length=n.integrate))
+    xnorm <- as.numeric(c(x,
+                          seq(er[1],er[2],length=round(n.integrate/2)),
+                          quantile(x,seq(sqrt(.Machine$double.eps),1-sqrt(.Machine$double.eps),length=round(n.integrate/2)))))
     rank.xnorm <- rank(xnorm)
     order.xnorm <- order(xnorm)
     xnorm <- xnorm[order.xnorm]
-    if(min(x) < er[1] | max(x) > er[2]) warning(" evaluation data extends beyond the range of `er'")
+    if(min(x) < er[1] | max(x) > er[2]) warning(" data extends beyond the range of `er'")
   } else {
     ## xeval will be the first 1:length(xeval) elements in
     ## object[rank.xnorm]
-    er <- extendrange(c(x,xeval),f=er)
+    er <- extendrange(x,f=er)
     if(!is.null(lbound)) er[1] <- lbound
     if(!is.null(ubound)) er[2] <- ubound
-    xnorm <- c(xeval,x,seq(er[1],er[2],length=n.integrate))
+    xnorm <- as.numeric(c(xeval,
+                          x,
+                          seq(er[1],er[2],length=round(n.integrate/4)),
+                          quantile(x,seq(sqrt(.Machine$double.eps),1-sqrt(.Machine$double.eps),length=round(n.integrate/2)))))
     rank.xnorm <- rank(xnorm)
     order.xnorm <- order(xnorm)
     xnorm <- xnorm[order.xnorm]
-    if(min(x) < er[1] | max(x) > er[2]) warning(" evaluation data extends beyond the range of `er'")
+    if(min(x) < er[1] | max(x) > er[2]) warning(" data extends beyond the range of `er'")
     if(min(xeval) < er[1] | max(xeval) > er[2]) warning(" evaluation data extends beyond the range of `er'")
   }
 
