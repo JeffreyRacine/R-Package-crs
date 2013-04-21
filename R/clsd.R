@@ -432,9 +432,9 @@ clsd <- function(x=NULL,
   } else {
     f <-   f.norm[rank.xnorm][1:length(xeval)]
     F <-   F.norm[rank.xnorm][1:length(xeval)]
-    f.norm <- f.norm[rank.xnorm][(length(xeval)+1):length(f.norm)]
-    F.norm <- F.norm[rank.xnorm][(length(xeval)+1):length(F.norm)]
-    xnorm <- xnorm[rank.xnorm][(length(xeval)+1):length(xnorm)]
+    f.norm <- f.norm[rank.xnorm][(length(x)+length(xeval)+1):length(f.norm)]
+    F.norm <- F.norm[rank.xnorm][(length(x)+length(xeval)+1):length(F.norm)]
+    xnorm <- xnorm[rank.xnorm][(length(x)+length(xeval)+1):length(xnorm)]
     if(deriv>0) f.deriv <- f.norm.deriv[rank.xnorm][1:length(xeval)]
     P <-   Pnorm[rank.xnorm,][1:length(xeval),]
     P.beta <- Pnorm.beta[rank.xnorm][1:length(xeval)]
