@@ -21,7 +21,7 @@ clsd(x = NULL,
      ubound = NULL,
      basis = "tensor",
      knots = "quantiles",
-     penalty = c("sic","aic","cv","none"),
+     penalty = NULL,
      deriv.index = 1,
      deriv = 0,
      elastic.max = TRUE,
@@ -30,7 +30,7 @@ clsd(x = NULL,
      er = NULL,
      monotone = TRUE,
      monotone.lb = -250,
-     n.integrate = 1.0e+03,
+     n.integrate = 500,
      nmulti = 1,
      method = c("L-BFGS-B", "Nelder-Mead", "BFGS", "CG", "SANN"),
      verbose = FALSE,
@@ -102,10 +102,12 @@ clsd(x = NULL,
     points (default \code{nmulti=1})
   }
 
-  \item{penalty}{ the penalty function to use when conducting maximum
-    likelihood (defaults to \code{sic}, the Schwarz-Bayes Information
-    Criterion)}
-
+  \item{penalty}{ the parameter to be used in the AIC criterion. The
+    method chooses the number of degrees plus number of segments
+    (knots-1) that maximizes \code{2*logl-penalty*(degree+segments)}. The
+    default is to use the penalty parameter of \code{log(n)/2} (\code{2}
+    would deliver standard AIC, \code{log(n)} standard BIC)}
+  
   \item{elastic.max,elastic.diff}{ a logical value/integer indicating
      whether to use `elastic' search bounds such that the optimal
      degree/segment must lie \code{elastic.diff} units from the
@@ -130,7 +132,7 @@ clsd(x = NULL,
    }
 
    \item{n.integrate}{
-     the number of evenly spaced integration points on the extended range specified by \code{er} (defaults to \code{1.0e+03})
+     the number of evenly spaced integration points on the extended range specified by \code{er} (defaults to \code{500})
    }
 
    \item{method}{

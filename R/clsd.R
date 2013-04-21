@@ -236,7 +236,7 @@ clsd <- function(x=NULL,
                  ubound=NULL,
                  basis="tensor",
                  knots="quantiles",
-                 penalty=c("sic","aic","cv","none"),
+                 penalty=NULL,
                  deriv.index=1,
                  deriv=0,
                  elastic.max=TRUE,
@@ -245,7 +245,7 @@ clsd <- function(x=NULL,
                  er=NULL,
                  monotone=TRUE,
                  monotone.lb=-250,
-                 n.integrate=1.0e+03,
+                 n.integrate=500,
                  nmulti=1,
                  method = c("L-BFGS-B", "Nelder-Mead", "BFGS", "CG", "SANN"),
                  verbose=FALSE,
@@ -277,7 +277,7 @@ clsd <- function(x=NULL,
   if(!is.null(er) && er < 0) stop(" er must be non-negative")
   if(is.null(er)) er <- 1/log(length(x))
 
-  penalty <- match.arg(penalty)
+  if(is.null(penalty)) penalty <- log(length(x))/2
   method <- match.arg(method)
 
   fv <- NULL
@@ -475,91 +475,30 @@ clsd <- function(x=NULL,
 sum.log.density <- function(beta=NULL,
                             P=NULL,
                             Pint=NULL,
-                            length.x=NULL,
                             xint=NULL,
                             penalty=NULL,
-                            complexity=NULL) {
+                            complexity=NULL,
+                            ...) {
 
-  Pbeta.m.logC <- P%*%beta-log(integrate.trapezoidal.sum(xint,exp(Pint%*%beta)))
-  logl <- sum(Pbeta.m.logC)
-
-  if(penalty=="aic") {
-
-    ## AIC (note the penalty log(n) is Schwarz-Bayes which heavily
-    ## penalizes overfitting, while the penalty 3 is used by
-    ## Kooperberg & Stone (1991), while 2 corresponds to LSCV)
-
-    ## In his R package Kooperberg (which cites his 1997 Annals paper)
-    ## uses -2 * loglikelihood + penalty * (number of knots - 1) with
-    ## default log(samplesize) as in BIC. There is no penalty for the
-    ## cubic spline itself. My segments is his number of knots minus
-    ## one.
-
-    return(2*(logl-complexity))
-
-  } else if(penalty=="sic") {
-
-    ## Schwarz-Bayes IC (The BIC is an asymptotic result derived under
-    ## the assumptions that the data distribution is in an exponential
-    ## family).  Note the penalty log(n) is Schwarz-Bayes. The penalty
-    ## 3 is used by Kooperberg & Stone, while 2 corresponds to LSCV.
-
-    return(2*logl-log(length.x)*complexity/2)
-
-  } else if(penalty=="cv") {
-
-    ## For delete-one-cross-validation, to compute the diagonal of the
-    ## hat matrix we invoke a ghost call to lm to get the LU
-    ## decomposition etc. which simply computes
-    ## P%*%solve(t(P)%*%P)%*%t(P)) to provide the effective number of
-    ## parameters. Delete-one ML (call to lm.influence verified to
-    ## produce diag[P%*%solve(t(P)%*%P)%*%t(P)]...)
-
-    f.hat <- exp(Pbeta.m.logC)
-
-    h <- lm.influence(lm(rep(1,nrow(P))~P))$hat
-    k <- round(sum(h))
-
-    ## Compute 1-h, check for case where h=1
-
-    one.minus.h <- (1-ifelse(h < 1, h, h-.Machine$double.eps))
-
-    ## Use the delete-one estimator for the ml-cv function
-
-    return(sum(log(f.hat/one.minus.h)))
-
-  } else {
-
-    ## No penalty
-
-    return(logl)
-
-  }
+  return(2*sum(P%*%beta-log(integrate.trapezoidal.sum(xint,exp(Pint%*%beta))))-penalty*complexity)
 
 }
 
 sum.log.density.gradient <- function(beta=NULL,
-                                     P=NULL,
+                                     colSumsP=NULL,
                                      Pint=NULL,
                                      length.x=NULL,
                                      xint=NULL,
                                      penalty=NULL,
+                                     complexity=NULL,
                                      ...) {
 
 
-  Pint.beta <- as.numeric(Pint%*%beta)
-  norm.constant <- integrate.trapezoidal.sum(xint,exp(Pint.beta))
-
-  exp.Pint.beta.Pint <- exp(Pint.beta)*Pint
-
+  exp.Pint.beta <- as.numeric(exp(Pint%*%beta))
+  exp.Pint.beta.Pint <- exp.Pint.beta*Pint
   int.exp.Pint.beta.Pint <- numeric()
-  for(i in 1:ncol(Pint)) int.exp.Pint.beta.Pint[i] <- integrate.trapezoidal.sum(xint,exp.Pint.beta.Pint[,i])
-
-  if(penalty=="aic"|penalty=="sic") {
-    return(2*(colSums(P)-length.x*int.exp.Pint.beta.Pint/norm.constant))
-  } else {
-    return(colSums(P)-length.x*int.exp.Pint.beta.Pint/norm.constant)
-  }
+  for(i in 1:complexity) int.exp.Pint.beta.Pint[i] <- integrate.trapezoidal.sum(xint,exp.Pint.beta.Pint[,i])
+  return(2*(colSumsP-length.x*int.exp.Pint.beta.Pint/integrate.trapezoidal.sum(xint,exp.Pint.beta)))
 
 }
 
@@ -647,6 +586,7 @@ ls.ml <- function(x=NULL,
                              monotone=monotone)
 
       P <- Pnorm[rank.xnorm,][1:length.x,]
+      colSumsP <- colSums(P)
       Pint <- Pnorm[rank.xnorm,][(length.x+1):nrow(Pnorm),]
       xint <- xnorm[rank.xnorm][(length.x+1):nrow(Pnorm)]
 
@@ -682,6 +622,7 @@ ls.ml <- function(x=NULL,
                                                            method=method,
                                                            penalty=penalty,
                                                            P=P,
+                                                           colSumsP=colSumsP,
                                                            Pint=Pint,
                                                            length.x=length.x,
                                                            xint=xint,
