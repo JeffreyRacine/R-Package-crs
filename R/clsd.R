@@ -504,7 +504,7 @@ sum.log.density <- function(beta=NULL,
     ## family).  Note the penalty log(n) is Schwarz-Bayes. The penalty
     ## 3 is used by Kooperberg & Stone, while 2 corresponds to LSCV.
 
-    return(2*logl-log(length.x)*complexity)
+    return(2*logl-log(length.x)*complexity/2)
 
   } else if(penalty=="cv") {
 
