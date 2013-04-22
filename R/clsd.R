@@ -564,16 +564,16 @@ ls.ml <- function(x=NULL,
   ## Loop through all degrees for every segment starting at
   ## segments.min.
 
-  s <- segments.min
+  d <- degree.min
 
-  while(s <= segments.max) {
+  while(d <= degree.max) {
 
     ## For smooth densities one can simply restrict degree to at least
     ## 2 (or 3 to be consistent with cubic splines)
-
-    d <- degree.min
-
-    while(d <= degree.max) {
+    
+    s <- segments.min
+    
+    while(s <= segments.max) {
 
       if(verbose) cat("\n")
       cat("\r                                                                                                  ")
@@ -667,21 +667,21 @@ ls.ml <- function(x=NULL,
         }
 
       }
-
-      d <- d+1
-
-      if(!(degree.min==degree.max) && elastic.max && d.opt == degree.max) degree.max <- degree.max+elastic.diff
-      if(!(degree.min==degree.max) && elastic.max && d.opt < degree.max+elastic.diff) degree.max <- d.opt+elastic.diff
-
+      
+      if(!(segments.min==segments.max) && elastic.max && s.opt == segments.max) segments.max <- segments.max+elastic.diff
+      if(!(segments.min==segments.max) && elastic.max && s.opt < segments.max+elastic.diff) segments.max <- s.opt+elastic.diff
+      
+      s <- s+1
+      
     }
-
-    if(!(segments.min==segments.max) && elastic.max && s.opt == segments.max) segments.max <- segments.max+elastic.diff
-    if(!(segments.min==segments.max) && elastic.max && s.opt < segments.max+elastic.diff) segments.max <- s.opt+elastic.diff
-
-    s <- s+1
-
+    
+    d <- d+1
+    
+    if(!(degree.min==degree.max) && elastic.max && d.opt == degree.max) degree.max <- degree.max+elastic.diff
+    if(!(degree.min==degree.max) && elastic.max && d.opt < degree.max+elastic.diff) degree.max <- d.opt+elastic.diff
+    
   }
-
+  
   cat("\r                                                                            ")
   if(!(degree.min==degree.max) && (d.opt==degree.max)) warning(paste(" optimal degree equals search maximum (", d.opt,"): rerun with larger degree.max",sep=""))
   if(!(segments.min==segments.max) && (s.opt==segments.max)) warning(paste(" optimal segment equals search maximum (", s.opt,"): rerun with larger segments.max",sep=""))
