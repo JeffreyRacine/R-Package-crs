@@ -190,14 +190,14 @@ density.deriv.basis <- function(x=NULL,
                                         basis=basis,
                                         deriv.index=deriv.index,
                                         deriv=deriv))
-  
+
   ## For the derivative bases on the extended range `xnorm', above
   ## and below max(x)/min(x) we assign the bases to constants
   ## (zero). We append the linear basis to the left and right of the
   ## bases. The left basis takes on linear values to the left of
   ## min(x), zero elsewhere, the right zero to the left of max(x),
   ## linear elsewhere.
-  
+
   Pnorm.deriv[xnorm<min(x),] <- 0
   Pnorm.deriv[xnorm>max(x),] <- 0
   P.left <- as.matrix(P.lin[,1])
@@ -206,9 +206,9 @@ density.deriv.basis <- function(x=NULL,
   P.right[xnorm<=max(x),1] <- 0
   Pnorm.deriv[,1] <- Pnorm.deriv[,1]+P.left
   Pnorm.deriv[,ncol(Pnorm.deriv)] <- Pnorm.deriv[,ncol(Pnorm.deriv)]+P.right
-  
+
   return(Pnorm.deriv)
-  
+
 }
 
 
@@ -276,10 +276,10 @@ clsd <- function(x=NULL,
                              ubound=ubound,
                              er=er,
                              n.integrate=n.integrate)
-  
+
   xnorm <- gen.xnorm.out$xnorm
   rank.xnorm <- gen.xnorm.out$rank.xnorm
-  
+
   if(is.null(beta)) {
 
     ## If no parameters are provided presume intention is to run
@@ -389,6 +389,7 @@ clsd <- function(x=NULL,
   } else {
 
     f.deriv <- NULL
+    f.deriv.er <- NULL
 
   }
 
@@ -413,7 +414,10 @@ clsd <- function(x=NULL,
     f.norm <- f.norm[rank.xnorm][(length(x)+1):length(f.norm)]
     F.norm <- F.norm[rank.xnorm][(length(x)+1):length(F.norm)]
     xnorm <- xnorm[rank.xnorm][(length(x)+1):length(xnorm)]
-    if(deriv>0) f.deriv <- f.norm.deriv[rank.xnorm][1:length(x)]
+    if(deriv>0) {
+      f.deriv <- f.norm.deriv[rank.xnorm][1:length(x)]
+      f.norm.deriv <- f.norm.deriv[rank.xnorm][(length(x)+1):length(f.norm.deriv)]
+    }
     P <-   Pnorm[rank.xnorm,][1:length(x),]
     P.beta <- Pnorm.beta[rank.xnorm][1:length(x)]
   } else {
@@ -422,7 +426,10 @@ clsd <- function(x=NULL,
     f.norm <- f.norm[rank.xnorm][(length(x)+length(xeval)+1):length(f.norm)]
     F.norm <- F.norm[rank.xnorm][(length(x)+length(xeval)+1):length(F.norm)]
     xnorm <- xnorm[rank.xnorm][(length(x)+length(xeval)+1):length(xnorm)]
-    if(deriv>0) f.deriv <- f.norm.deriv[rank.xnorm][1:length(xeval)]
+    if(deriv>0) {
+      f.deriv <- f.norm.deriv[rank.xnorm][1:length(xeval)]
+      f.norm.deriv <- f.norm.deriv[rank.xnorm][(length(x)+length(xeval)+1):length(f.norm.deriv)]
+    }
     P <-   Pnorm[rank.xnorm,][1:length(xeval),]
     P.beta <- Pnorm.beta[rank.xnorm][1:length(xeval)]
   }
@@ -431,6 +438,7 @@ clsd <- function(x=NULL,
                       density.deriv=f.deriv,
                       distribution=F,
                       density.er=f.norm,
+                      density.deriv.er=f.norm.deriv,
                       distribution.er=F.norm,
                       xer=xnorm,
                       Basis.beta=P.beta,
@@ -553,9 +561,9 @@ ls.ml <- function(x=NULL,
 
     ## For smooth densities one can simply restrict degree to at least
     ## 2 (or 3 to be consistent with cubic splines)
-    
+
     s <- segments.min
-    
+
     while(s <= segments.max) {
 
       if(verbose) cat("\n")
@@ -650,21 +658,21 @@ ls.ml <- function(x=NULL,
         }
 
       }
-      
+
       if(!(segments.min==segments.max) && elastic.max && s.opt == segments.max) segments.max <- segments.max+elastic.diff
       if(!(segments.min==segments.max) && elastic.max && s.opt < segments.max+elastic.diff) segments.max <- s.opt+elastic.diff
-      
+
       s <- s+1
-      
+
     }
-    
+
     d <- d+1
-    
+
     if(!(degree.min==degree.max) && elastic.max && d.opt == degree.max) degree.max <- degree.max+elastic.diff
     if(!(degree.min==degree.max) && elastic.max && d.opt < degree.max+elastic.diff) degree.max <- d.opt+elastic.diff
-    
+
   }
-  
+
   cat("\r                                                                            ")
   if(!(degree.min==degree.max) && (d.opt==degree.max)) warning(paste(" optimal degree equals search maximum (", d.opt,"): rerun with larger degree.max",sep=""))
   if(!(segments.min==segments.max) && (s.opt==segments.max)) warning(paste(" optimal segment equals search maximum (", s.opt,"): rerun with larger segments.max",sep=""))
@@ -705,31 +713,61 @@ print.clsd <- function(x,...)
 plot.clsd <- function(x,
                       er=TRUE,
                       distribution=FALSE,
+                      derivative=FALSE,
                       ylim,
+                      ylab,
+                      xlab,
+                      type,
                       ...) {
+
+  if(missing(xlab)) xlab <- "Data"
+  if(missing(type)) type <- "l"
 
   if(!er) {
     order.x <- order(x$x)
-    if(distribution){y <- x$distribution[order.x]}else{y <- x$density[order.x]}
-    x <- plot(x$x[order.x],
-              y,
-              ylim=if(missing(ylim)){c(0,max(y))}else{ylim},
-              ylab=if(distribution){"Distribution"}else{"Density"},
-              xlab="Data",
-              type="l",
-              ...)
+    if(distribution){
+      y <- x$distribution[order.x]
+      if(missing(ylab)) ylab <- "Distribution"
+      if(missing(ylim)) ylim <- c(0,1)
+    }
+    if(!distribution&&!derivative) {
+      y <- x$density[order.x]
+      if(missing(ylab)) ylab <- "Density"
+      if(missing(ylim)) ylim <- c(0,max(y))
+    }
+    if(derivative) {
+      y <- x$density.deriv[order.x]
+      if(missing(ylab)) ylab <- "Density Derivative"
+      if(missing(ylim)) ylim <- c(min(y),max(y))
+    }
+    x <- x$x[order.x]
   } else {
     order.xer <- order(x$xer)
-    if(distribution){y <- x$distribution.er[order.xer]}else{y <- x$density.er[order.xer]}
-    xer <- plot(x$xer[order.xer],
-                  y,
-                  ylim=if(missing(ylim)){c(0,max(y))}else{ylim},
-                  ylab=if(distribution){"Distribution"}else{"Density"},
-                  xlab="Data",
-                  type="l",
-                  ...)
+    if(distribution){
+      y <- x$distribution.er[order.xer]
+      if(missing(ylab)) ylab <- "Distribution"
+      if(missing(ylim)) ylim <- c(0,1)      
+    }
+    if(!distribution&&!derivative) {
+      y <- x$density.er[order.xer]
+      if(missing(ylab)) ylab <- "Density"
+      if(missing(ylim)) ylim <- c(0,max(y))      
+    }
+    if(derivative){
+      y <- x$density.deriv.er[order.xer]
+      if(missing(ylab)) ylab <- "Density Derivative"
+      if(missing(ylim)) ylim <- c(min(y),max(y))      
+    }
+    x <- x$xer[order.xer]
   }
 
+  x <- plot(x,
+            y,
+            ylim=ylim,
+            ylab=ylab,
+            xlab=xlab,
+            type=type,
+            ...)
 
 }
 

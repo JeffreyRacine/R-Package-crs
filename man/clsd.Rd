@@ -210,6 +210,9 @@ clsd(x = NULL,
   \item{density.deriv}{ estimates of the derivative of the density function
     at the sample points}
 
+  \item{density.deriv.er}{ estimates of the derivative of the density
+    function evaluated on the `extended range' of the data }
+
   \item{distribution}{ estimates of the distribution function
     at the sample points}
 
