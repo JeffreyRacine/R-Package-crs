@@ -171,7 +171,7 @@ density.deriv.basis <- function(x=NULL,
                                 knots="quantiles",
                                 monotone=TRUE,
                                 deriv.index=1,
-                                deriv=0) {
+                                deriv=1) {
 
   suppressWarnings(Pnorm.deriv <- prod.spline(x=x,
                                               xeval=xnorm,

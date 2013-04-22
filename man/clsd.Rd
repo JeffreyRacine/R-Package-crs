@@ -23,7 +23,7 @@ clsd(x = NULL,
      knots = "quantiles",
      penalty = NULL,
      deriv.index = 1,
-     deriv = 0,
+     deriv = 1,
      elastic.max = TRUE,
      elastic.diff = 3,
      do.gradient = TRUE,
@@ -84,7 +84,7 @@ clsd(x = NULL,
   lie in each segment) and \sQuote{uniform} specifies knots placed at
   equally spaced intervals }
 
-  \item{deriv}{ an integer \code{l} (default \code{deriv=0}) specifying
+  \item{deriv}{ an integer \code{l} (default \code{deriv=1}) specifying
   whether to compute the univariate \code{l}th partial derivative for
   each continuous predictor (and difference in levels for each
   categorical predictor) or not and if so what order. Note that if
