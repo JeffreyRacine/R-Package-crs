@@ -389,7 +389,7 @@ clsd <- function(x=NULL,
   } else {
 
     f.deriv <- NULL
-    f.deriv.er <- NULL
+    f.norm.deriv <- NULL
 
   }
 
