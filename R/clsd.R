@@ -41,38 +41,22 @@ gen.xnorm <- function(x=NULL,
                       er=NULL,
                       n.integrate=NULL) {
 
+  er <- extendrange(x,f=er)
+  if(!is.null(lbound)) er[1] <- lbound
+  if(!is.null(ubound)) er[2] <- ubound
+  if(min(x) < er[1] | max(x) > er[2]) warning(" data extends beyond the range of `er'")
+  xint <- sort(as.numeric(c(seq(er[1],er[2],length=round(n.integrate/2)),
+                 quantile(x,seq(sqrt(.Machine$double.eps),1-sqrt(.Machine$double.eps),length=round(n.integrate/2))))))
   if(is.null(xeval)) {
-    ## x will be the first 1:length(x) elements in object[rank.xnorm]
-    er <- extendrange(x,f=er)
-    if(!is.null(lbound)) er[1] <- lbound
-    if(!is.null(ubound)) er[2] <- ubound
-    xnorm <- as.numeric(c(x,
-                          seq(er[1],er[2],length=round(n.integrate/2)),
-                          quantile(x,seq(sqrt(.Machine$double.eps),1-sqrt(.Machine$double.eps),length=round(n.integrate/2)))))
-    rank.xnorm <- rank(xnorm)
-    order.xnorm <- order(xnorm)
-    xnorm <- xnorm[order.xnorm]
-    if(min(x) < er[1] | max(x) > er[2]) warning(" data extends beyond the range of `er'")
+    xnorm <- c(x,xint)
   } else {
-    ## xeval will be the first 1:length(xeval) elements in
-    ## object[rank.xnorm]
-    er <- extendrange(x,f=er)
-    if(!is.null(lbound)) er[1] <- lbound
-    if(!is.null(ubound)) er[2] <- ubound
-    xnorm <- as.numeric(c(xeval,
-                          x,
-                          seq(er[1],er[2],length=round(n.integrate/4)),
-                          quantile(x,seq(sqrt(.Machine$double.eps),1-sqrt(.Machine$double.eps),length=round(n.integrate/2)))))
-    rank.xnorm <- rank(xnorm)
-    order.xnorm <- order(xnorm)
-    xnorm <- xnorm[order.xnorm]
-    if(min(x) < er[1] | max(x) > er[2]) warning(" data extends beyond the range of `er'")
+    xnorm <- c(xeval,x,xint)
     if(min(xeval) < er[1] | max(xeval) > er[2]) warning(" evaluation data extends beyond the range of `er'")
   }
-
-  return(list(xnorm=xnorm,
-              rank.xnorm=rank.xnorm,
-              order.xnorm=order.xnorm))
+  ## Either x will be the first 1:length(x) elements in
+  ## object[rank.xnorm] or xeval will be the first 1:length(xeval)
+  ## elements in object[rank.xnorm]
+  return(list(xnorm=xnorm[order(xnorm)],rank.xnorm=rank(xnorm)))
 
 }
 
@@ -233,7 +217,7 @@ clsd <- function(x=NULL,
                  xeval=NULL,
                  degree=NULL,
                  segments=NULL,
-                 degree.min=1,
+                 degree.min=2,
                  degree.max=10,
                  segments.min=1,
                  segments.max=10,
@@ -295,7 +279,6 @@ clsd <- function(x=NULL,
   
   xnorm <- gen.xnorm.out$xnorm
   rank.xnorm <- gen.xnorm.out$rank.xnorm
-  order.xnorm <- gen.xnorm.out$order.xnorm
   
   if(is.null(beta)) {
 
@@ -347,7 +330,6 @@ clsd <- function(x=NULL,
 
     xnorm <- gen.xnorm.out$xnorm
     rank.xnorm <- gen.xnorm.out$rank.xnorm
-    order.xnorm <- gen.xnorm.out$order.xnorm
 
   }
 
@@ -481,19 +463,20 @@ sum.log.density <- function(beta=NULL,
                             P=NULL,
                             Pint=NULL,
                             xint=NULL,
+                            length.x=NULL,
                             penalty=NULL,
                             complexity=NULL,
                             ...) {
 
-  return(2*sum(P%*%beta-log(integrate.trapezoidal.sum(xint,exp(Pint%*%beta))))-penalty*complexity)
+  return(2*sum(P%*%beta)-2*length.x*log(integrate.trapezoidal.sum(xint,exp(Pint%*%beta)))-penalty*complexity)
 
 }
 
 sum.log.density.gradient <- function(beta=NULL,
                                      colSumsP=NULL,
                                      Pint=NULL,
-                                     length.x=NULL,
                                      xint=NULL,
+                                     length.x=NULL,
                                      penalty=NULL,
                                      complexity=NULL,
                                      ...) {

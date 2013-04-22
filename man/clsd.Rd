@@ -13,7 +13,7 @@ clsd(x = NULL,
      xeval = NULL,
      degree = NULL,
      segments = NULL,
-     degree.min = 1,
+     degree.min = 2,
      degree.max = 10,
      segments.min = 1,
      segments.max = 10,
@@ -63,7 +63,7 @@ clsd(x = NULL,
 
   \item{degree.min,degree.max}{ when \code{elastic.max=FALSE} the
     minimum/maximum degree of the B-spline basis for each of the
-    continuous predictors (default \code{degree.min=1},
+    continuous predictors (default \code{degree.min=2},
     \code{degree.max=10})}
 
   \item{lbound,ubound}{
@@ -237,8 +237,8 @@ clsd(x = NULL,
   This function should be considered to be in `beta' status until
   further notice.
 
-  If smooth estimates are desired, set \code{degree.min} equal to
-  \code{degree.min=2} or \code{degree.min=3}.
+  If smoother estimates are desired and \code{degree=degree.min}, increase
+  \code{degree.min} to, say, \code{degree.min=3}.
 
   The use of `regression' B-splines can lead to undesirable behavior at
   the endpoints of the data (i.e. when \code{monotone=FALSE}). The
@@ -255,9 +255,6 @@ clsd(x = NULL,
 \author{
   Jeffrey S. Racine \email{racinej@mcmaster.ca}
 }
-
-%\section{Usage Issues}{
-%}
 
 \seealso{
   \code{\link[logspline]{logspline}}
@@ -324,7 +321,7 @@ lines(xer,dnorm(xer),col=1,lty=1)
 rug(x)
 
 legend("topright",c("DGP",paste("Cubic Logspline Density (package `logspline', knots = ",model.logspline$nknots,")",sep=""),
-                    paste("clsd Density (degree = ", model$degree, ", segments = ",model$segments,", cv = ",model$penalty,")",sep="")),
+                    paste("clsd Density (degree = ", model$degree, ", segments = ",model$segments,", penalty = ",round(model$penalty,2),")",sep="")),
        lty=1:3,
        col=1:3,
        bty="n",
