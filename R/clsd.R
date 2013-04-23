@@ -356,7 +356,7 @@ clsd <- function(x=NULL,
   log.norm.constant <- log(norm.constant)
 
   if(!is.finite(log.norm.constant))
-    stop(" integration not finite - perhaps try reducing `er'")
+    stop(paste(" integration not finite - perhaps try reducing `er' (current value = ",round(er,3),")",sep=""))
 
   ## For the distribution, compute the density over the extended
   ## range, then return values corresponding to either the sample x or
