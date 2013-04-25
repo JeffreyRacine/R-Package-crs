@@ -1990,6 +1990,8 @@ glpcvNOMAD <- function(ydat=NULL,
     }
   }
 
+  if(any(lb>ub)) stop(" at least one lb exceeds ub")
+
   ## Assign the NOMAD parameters to opts which is passed to snomadr()
 
   opts <- list()
@@ -2241,7 +2243,7 @@ glpcvNOMAD <- function(ydat=NULL,
     init.search.vals <- numeric()
     for(i in 1:num.bw) {
       if(xdat.numeric[i]==TRUE && bwtype=="fixed") {
-        init.search.vals[i] <- runif(1,0.5+lb[i],1.5)*length(ydat)^{1/(num.numeric+2*ckerorder)}
+        init.search.vals[i] <- (lb[i]+runif(1,0.5,1.5))*length(ydat)^{1/(num.numeric+2*ckerorder)}/sd.robust(xdat[,i])
       }
       if(xdat.numeric[i]==TRUE && bwtype!="fixed") {
         init.search.vals[i] <- round(runif(1,lb[i],sqrt(ub[i])))
@@ -2267,7 +2269,7 @@ glpcvNOMAD <- function(ydat=NULL,
       init.search.vals <- numeric()
       for(i in 1:num.bw) {
         if(xdat.numeric[i]==TRUE && bwtype=="fixed") {
-          init.search.vals[i] <- runif(1,0.5+lb[i],1.5)*length(ydat)^{1/(num.numeric+2*ckerorder)}
+          init.search.vals[i] <- (lb[i]+runif(1,0.5,1.5))*length(ydat)^{1/(num.numeric+2*ckerorder)}/sd.robust(xdat[,i])
         }
         if(xdat.numeric[i]==TRUE && bwtype!="fixed") {
           init.search.vals[i] <- round(runif(1,lb[i],sqrt(ub[i])))
@@ -2337,8 +2339,7 @@ glpcvNOMAD <- function(ydat=NULL,
 
   if(bwtype=="fixed") {
     for(i in 1:num.numeric) {
-      sd.xdat <- sd.robust(xdat[,numeric.index[i]])
-      bw.opt[numeric.index[i]] <- bw.opt[numeric.index[i]]*sd.xdat*length(ydat)^{-1/(num.numeric+2*ckerorder)}
+      bw.opt[numeric.index[i]] <- bw.opt[numeric.index[i]]*sd.robust(xdat[,numeric.index[i]])*length(ydat)^{-1/(num.numeric+2*ckerorder)}
     }
   } 
 
