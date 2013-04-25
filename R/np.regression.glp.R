@@ -600,6 +600,7 @@ npglpreg.formula <- function(formula,
                              degree.min=0,
                              bandwidth.max=.Machine$double.xmax,
                              bandwidth.min=sqrt(.Machine$double.eps),
+                             bandwidth.min.numeric=0.1,
                              bandwidth.switch=1.0e+06,
                              max.bb.eval=10000,
                              initial.mesh.size.real="1",
@@ -671,6 +672,7 @@ npglpreg.formula <- function(formula,
                                                      degree.min=degree.min,
                                                      bandwidth.max=bandwidth.max,
                                                      bandwidth.min=bandwidth.min,
+                                                     bandwidth.min.numeric=bandwidth.min.numeric,
                                                      bandwidth.switch=bandwidth.switch,
                                                      max.bb.eval=max.bb.eval,
                                                      initial.mesh.size.real=initial.mesh.size.real,
@@ -702,6 +704,7 @@ npglpreg.formula <- function(formula,
                                                      degree.min=degree.min,
                                                      bandwidth.max=bandwidth.max,
                                                      bandwidth.min=bandwidth.min,
+                                                     bandwidth.min.numeric=bandwidth.min.numeric,
                                                      bandwidth.switch=bandwidth.switch,
                                                      max.bb.eval=max.bb.eval,
                                                      initial.mesh.size.real=initial.mesh.size.real,
@@ -736,6 +739,7 @@ npglpreg.formula <- function(formula,
                                                   degree.min=degree.min,
                                                   bandwidth.max=bandwidth.max,
                                                   bandwidth.min=bandwidth.min,
+                                                  bandwidth.min.numeric=bandwidth.min.numeric,
                                                   bandwidth.switch=bandwidth.switch,
                                                   max.bb.eval=max.bb.eval,
                                                   initial.mesh.size.real=initial.mesh.size.real,
@@ -772,6 +776,7 @@ npglpreg.formula <- function(formula,
                                                   degree.min=degree.min,
                                                   bandwidth.max=bandwidth.max,
                                                   bandwidth.min=bandwidth.min,
+                                                  bandwidth.min.numeric=bandwidth.min.numeric,
                                                   bandwidth.switch=bandwidth.switch,
                                                   max.bb.eval=max.bb.eval,
                                                   initial.mesh.size.real=initial.mesh.size.real,
@@ -1809,6 +1814,7 @@ glpcvNOMAD <- function(ydat=NULL,
                        degree.min=0,
                        bandwidth.max=.Machine$double.xmax,
                        bandwidth.min=sqrt(.Machine$double.eps),
+                       bandwidth.min.numeric=NULL,
                        bandwidth.switch=1.0e+06,
                        max.bb.eval=10000,
                        initial.mesh.size.real="1",
@@ -1902,6 +1908,19 @@ glpcvNOMAD <- function(ydat=NULL,
     bbin <- c(rep(0, num.bw))
     lb <- c(rep(bandwidth.min, num.bw))
     ub <- c(rep(bandwidth.max, num.bw))
+  }
+
+  ## This is to provide flexibility wrt ridging... very small
+  ## bandwidths will wreak havoc on local polynomial regression. But
+  ## sensible lower bounds exist. They could be data-driven (minimum
+  ## unique distance between observations, say) or not. Regardless,
+  ## using the default for both categorical and numeric bandwidths is
+  ## likely not sensible.
+  
+  if(!is.null(bandwidth.min.numeric)) {
+    for(i in 1:num.numeric) {
+      lb[numeric.index[i]] <- bandwidth.min.numeric
+    }
   }
 
   ## The input `bandwidth.switch' is the number of (scaled) standard
@@ -2222,7 +2241,7 @@ glpcvNOMAD <- function(ydat=NULL,
     init.search.vals <- numeric()
     for(i in 1:num.bw) {
       if(xdat.numeric[i]==TRUE && bwtype=="fixed") {
-        init.search.vals[i] <- runif(1,0.5+lb[i],1.5)*length(ydat)^{2/(num.numeric+2*ckerorder)}
+        init.search.vals[i] <- runif(1,0.5+lb[i],1.5)*length(ydat)^{1/(num.numeric+2*ckerorder)}
       }
       if(xdat.numeric[i]==TRUE && bwtype!="fixed") {
         init.search.vals[i] <- round(runif(1,lb[i],sqrt(ub[i])))
@@ -2248,7 +2267,7 @@ glpcvNOMAD <- function(ydat=NULL,
       init.search.vals <- numeric()
       for(i in 1:num.bw) {
         if(xdat.numeric[i]==TRUE && bwtype=="fixed") {
-          init.search.vals[i] <- runif(1,0.5+lb[i],1.5)*length(ydat)^{2/(num.numeric+2*ckerorder)}
+          init.search.vals[i] <- runif(1,0.5+lb[i],1.5)*length(ydat)^{1/(num.numeric+2*ckerorder)}
         }
         if(xdat.numeric[i]==TRUE && bwtype!="fixed") {
           init.search.vals[i] <- round(runif(1,lb[i],sqrt(ub[i])))
@@ -2906,3 +2925,5 @@ plot.npglpreg <- function(x,
   if(!persp.rgl) par(mfrow=c(1,1))
 
 }
+
+warnings()

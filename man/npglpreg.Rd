@@ -58,6 +58,7 @@ npglpreg(\dots)
          degree.min = 0,
          bandwidth.max = .Machine$double.xmax,
          bandwidth.min = sqrt(.Machine$double.eps),
+         bandwidth.min.numeric = 0.1,
          bandwidth.switch = 1.0e+06,
          max.bb.eval = 10000,
          initial.mesh.size.real = "1",
@@ -222,9 +223,12 @@ for each dimension of the continuous \code{x} in \code{txdat}}
     scaled standard deviations) for each of the continuous predictors
     (default \code{bandwidth.max=.Machine$double.xmax})}
   
-  \item{bandwidth.min}{ the minimum bandwidth scale (i.e. number of
+  \item{bandwidth.min}{ the minimum bandwidth scale for all categorical
+    predictors (default \code{sqrt(.Machine$double.eps)})}
+
+  \item{bandwidth.min.numeric}{ the minimum bandwidth scale (i.e. number of
     scaled standard deviations) for each of the continuous predictors
-    (default \code{bandwidth.min=1.0e-01})}
+    (default \code{bandwidth.min=0.1})}
 
   \item{bandwidth.switch}{ the minimum bandwidth (i.e. number of
     standard deviations) for each of the continuous predictors (default
