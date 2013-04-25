@@ -1814,7 +1814,7 @@ glpcvNOMAD <- function(ydat=NULL,
                        degree.min=0,
                        bandwidth.max=.Machine$double.xmax,
                        bandwidth.min=sqrt(.Machine$double.eps),
-                       bandwidth.min.numeric=NULL,
+                       bandwidth.min.numeric=0.1,
                        bandwidth.switch=1.0e+06,
                        max.bb.eval=10000,
                        initial.mesh.size.real="1",
@@ -2243,7 +2243,7 @@ glpcvNOMAD <- function(ydat=NULL,
     init.search.vals <- numeric()
     for(i in 1:num.bw) {
       if(xdat.numeric[i]==TRUE && bwtype=="fixed") {
-        init.search.vals[i] <- (lb[i]+runif(1,0.5,1.5))*length(ydat)^{1/(num.numeric+2*ckerorder)}/sd.robust(xdat[,i])
+        init.search.vals[i] <- (lb[i]+runif(1,1.0,2.5))*length(ydat)^{1/(num.numeric+2*ckerorder)}/sd.robust(xdat[,i])
       }
       if(xdat.numeric[i]==TRUE && bwtype!="fixed") {
         init.search.vals[i] <- round(runif(1,lb[i],sqrt(ub[i])))
@@ -2269,7 +2269,7 @@ glpcvNOMAD <- function(ydat=NULL,
       init.search.vals <- numeric()
       for(i in 1:num.bw) {
         if(xdat.numeric[i]==TRUE && bwtype=="fixed") {
-          init.search.vals[i] <- (lb[i]+runif(1,0.5,1.5))*length(ydat)^{1/(num.numeric+2*ckerorder)}/sd.robust(xdat[,i])
+          init.search.vals[i] <- (lb[i]+runif(1,1.0,2.5))*length(ydat)^{1/(num.numeric+2*ckerorder)}/sd.robust(xdat[,i])
         }
         if(xdat.numeric[i]==TRUE && bwtype!="fixed") {
           init.search.vals[i] <- round(runif(1,lb[i],sqrt(ub[i])))
