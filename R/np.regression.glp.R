@@ -600,7 +600,7 @@ npglpreg.formula <- function(formula,
                              degree.min=0,
                              bandwidth.max=.Machine$double.xmax,
                              bandwidth.min=sqrt(.Machine$double.eps),
-                             bandwidth.min.numeric=0.1,
+                             bandwidth.min.numeric=1.0e-02,
                              bandwidth.switch=1.0e+06,
                              max.bb.eval=10000,
                              initial.mesh.size.real="1",
@@ -930,7 +930,8 @@ glpregEst <- function(tydat=NULL,
       ## for cross-validation hence no exdat
 
       tww <- npksum(txdat = txdat,
-                    tydat = cbind(1,tydat),
+                    weights = as.matrix(data.frame(1,tydat)),
+                    tydat = rep(1,length(tydat)),
                     bws = bws,
                     bandwidth.divide = TRUE,
                     leave.one.out = leave.one.out,
@@ -945,7 +946,8 @@ glpregEst <- function(tydat=NULL,
 
       tww <- npksum(txdat = txdat,
                     exdat = exdat,
-                    tydat = cbind(1,tydat),
+                    weights = as.matrix(data.frame(1,tydat)),
+                    tydat = rep(1,length(tydat)),
                     bws = bws,
                     bandwidth.divide = TRUE,
                     leave.one.out = leave.one.out,
@@ -959,7 +961,12 @@ glpregEst <- function(tydat=NULL,
     }
 
 
-    mhat <- tww[,2]/NZD(tww[,1])
+    ## Note that as bandwidth approaches zero the local constant
+    ## estimator undersmooths and approaches each sample realization,
+    ## so use the convention that when the sum of the kernel weights
+    ## equals 0, return y. This is unique to this code.
+
+    mhat <- tww[2,]/NZD(tww[1,])
 
     return(list(fitted.values = mhat,
                 gradient = NULL,
@@ -1211,7 +1218,8 @@ minimand.cv.ls <- function(bws=NULL,
       ## Local constant via one call to npksum
 
       tww <- npksum(txdat = xdat,
-                    tydat = cbind(1,ydat),
+                    weights = as.matrix(data.frame(1,ydat)),
+                    tydat = rep(1,n),
                     bws = bws,
                     leave.one.out = TRUE,
                     bandwidth.divide = TRUE,
@@ -1223,7 +1231,7 @@ minimand.cv.ls <- function(bws=NULL,
                     bwtype = bwtype,
                     ...)$ksum
 
-      mean.loo <- tww[,2]/NZD(tww[,1])
+      mean.loo <- tww[2,]/NZD(tww[1,])
 
       if (!any(mean.loo == maxPenalty)){
         fv <- mean((ydat-mean.loo)^2)
@@ -1378,8 +1386,6 @@ minimand.cv.aic <- function(bws=NULL,
 
     ## This computes the kernel function when i=j (i.e., K(0))
 
-    ##??? why not [1,1]??? 4/25/13?
-
     kernel.i.eq.j <- npksum(txdat = xdat[1,],
                             weights = as.matrix(data.frame(1,ydat)[1,]),
                             tydat = 1,
@@ -1398,7 +1404,8 @@ minimand.cv.aic <- function(bws=NULL,
       ## Local constant via one call to npksum
 
       tww <- npksum(txdat = xdat,
-                    tydat = cbind(1,ydat),
+                    weights = as.matrix(data.frame(1,ydat)),
+                    tydat = rep(1,n),
                     bws = bws,
                     bandwidth.divide = TRUE,
                     bwscaling = TRUE,
@@ -1409,9 +1416,9 @@ minimand.cv.aic <- function(bws=NULL,
                     bwtype = bwtype,
                     ...)$ksum
 
-      ghat <- tww[,2]/NZD(tww[,1])
+      ghat <- tww[2,]/NZD(tww[1,])
 
-      trH <- kernel.i.eq.j*sum(1/NZD(tww[,1]))
+      trH <- kernel.i.eq.j*sum(1/NZD(tww[1,]))
 
       aic.penalty <- (1+trH/n)/(1-(trH+2)/n)
 
@@ -1814,7 +1821,7 @@ glpcvNOMAD <- function(ydat=NULL,
                        degree.min=0,
                        bandwidth.max=.Machine$double.xmax,
                        bandwidth.min=sqrt(.Machine$double.eps),
-                       bandwidth.min.numeric=0.1,
+                       bandwidth.min.numeric=1.0e-02,
                        bandwidth.switch=1.0e+06,
                        max.bb.eval=10000,
                        initial.mesh.size.real="1",
@@ -1922,7 +1929,6 @@ glpcvNOMAD <- function(ydat=NULL,
       lb[numeric.index[i]] <- bandwidth.min.numeric
     }
   }
-
   ## The input `bandwidth.switch' is the number of (scaled) standard
   ## deviations that will trigger the move to the global categorical
   ## kernel weighted polynomial fit for numeric predictors (now that
@@ -1989,8 +1995,6 @@ glpcvNOMAD <- function(ydat=NULL,
       MIN.POLL.SIZE[[i]] <- min.poll.size.integer
     }
   }
-
-  if(any(lb>ub)) stop(" at least one lb exceeds ub")
 
   ## Assign the NOMAD parameters to opts which is passed to snomadr()
 
@@ -2243,7 +2247,7 @@ glpcvNOMAD <- function(ydat=NULL,
     init.search.vals <- numeric()
     for(i in 1:num.bw) {
       if(xdat.numeric[i]==TRUE && bwtype=="fixed") {
-        init.search.vals[i] <- (lb[i]+runif(1,1.0,2.5))*length(ydat)^{1/(num.numeric+2*ckerorder)}/sd.robust(xdat[,i])
+        init.search.vals[i] <- runif(1,0.5+lb[i],1.5)*length(ydat)^{2/(num.numeric+2*ckerorder)}
       }
       if(xdat.numeric[i]==TRUE && bwtype!="fixed") {
         init.search.vals[i] <- round(runif(1,lb[i],sqrt(ub[i])))
@@ -2269,7 +2273,7 @@ glpcvNOMAD <- function(ydat=NULL,
       init.search.vals <- numeric()
       for(i in 1:num.bw) {
         if(xdat.numeric[i]==TRUE && bwtype=="fixed") {
-          init.search.vals[i] <- (lb[i]+runif(1,1.0,2.5))*length(ydat)^{1/(num.numeric+2*ckerorder)}/sd.robust(xdat[,i])
+          init.search.vals[i] <- runif(1,0.5+lb[i],1.5)*length(ydat)^{2/(num.numeric+2*ckerorder)}
         }
         if(xdat.numeric[i]==TRUE && bwtype!="fixed") {
           init.search.vals[i] <- round(runif(1,lb[i],sqrt(ub[i])))
@@ -2339,7 +2343,8 @@ glpcvNOMAD <- function(ydat=NULL,
 
   if(bwtype=="fixed") {
     for(i in 1:num.numeric) {
-      bw.opt[numeric.index[i]] <- bw.opt[numeric.index[i]]*sd.robust(xdat[,numeric.index[i]])*length(ydat)^{-1/(num.numeric+2*ckerorder)}
+      sd.xdat <- sd.robust(xdat[,numeric.index[i]])
+      bw.opt[numeric.index[i]] <- bw.opt[numeric.index[i]]*sd.xdat*length(ydat)^{-1/(num.numeric+2*ckerorder)}
     }
   } 
 
@@ -2926,5 +2931,3 @@ plot.npglpreg <- function(x,
   if(!persp.rgl) par(mfrow=c(1,1))
 
 }
-
-warnings()

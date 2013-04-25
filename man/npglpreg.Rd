@@ -58,7 +58,7 @@ npglpreg(\dots)
          degree.min = 0,
          bandwidth.max = .Machine$double.xmax,
          bandwidth.min = sqrt(.Machine$double.eps),
-         bandwidth.min.numeric = 0.1,
+         bandwidth.min.numeric = 1.0e-02,
          bandwidth.switch = 1.0e+06,
          max.bb.eval = 10000,
          initial.mesh.size.real = "1",
@@ -223,29 +223,27 @@ for each dimension of the continuous \code{x} in \code{txdat}}
     scaled standard deviations) for each of the continuous predictors
     (default \code{bandwidth.max=.Machine$double.xmax})}
   
-  \item{bandwidth.min}{ the minimum bandwidth scale for all categorical
-    predictors (default \code{sqrt(.Machine$double.eps)})}
+  \item{bandwidth.min}{ the minimum bandwidth scale for each of the
+    categorical predictors (default \code{1.0e-08})}
 
-  \item{bandwidth.min.numeric}{ the minimum bandwidth scale (i.e. number of
+  \item{bandwidth.min.numeric}{ the minimum bandwidth scale (i.e. number
+    of scaled standard deviations) for each of the continuous predictors
+    (default \code{bandwidth.min=1.0e-02})}
+
+  \item{bandwidth.switch}{ the minimum bandwidth scale (i.e. number of
     scaled standard deviations) for each of the continuous predictors
-    (default \code{bandwidth.min=0.1})}
-
-  \item{bandwidth.switch}{ the minimum bandwidth (i.e. number of
-    standard deviations) for each of the continuous predictors (default
-    \code{bandwidth.switch=1.0e+05}) before the local polynomial is
-    treated as global during cross-validation at which point a global
+    (default \code{bandwidth.switch=1.0e+05}) before the local polynomial
+    is treated as global during cross-validation at which point a global
     categorical kernel weighted least squares fit is used for
     computational efficiency}
   
-\item{gradient.vec}{
-  a vector corresponding to the order of the partial (or cross-partial)
-  and which variable the partial (or cross-partial) derivative(s) are required
-}
-\item{gradient.categorical}{
-  a logical value indicating whether discrete gradients
-  (i.e. differences in the response from the base value for each
-  categorical predictor) are to be computed
-}
+  \item{gradient.vec}{ a vector corresponding to the order of the
+    partial (or cross-partial) and which variable the partial (or
+    cross-partial) derivative(s) are required }
+
+  \item{gradient.categorical}{ a logical value indicating whether
+  discrete gradients (i.e. differences in the response from the base
+  value for each categorical predictor) are to be computed }
 
 \item{cv.shrink}{ a logical value indicating whether to use ridging
   (Seifert and Gasser (2000)) for ill-conditioned inversion during
@@ -260,8 +258,7 @@ for each dimension of the continuous \code{x} in \code{txdat}}
 \item{Bernstein}{ a logical value indicating whether to use raw
   polynomials or Bernstein polynomials (default) (note that a Bernstein
   polynomial is also know as a Bezier curve which is also a
-  B-spline with no interior knots)
-}
+  B-spline with no interior knots)}
 
 \item{mpi}{ a logical value (default \code{mpi=FALSE}) that, when
   \code{mpi=TRUE}, can call the \code{npRmpi} rather than the \code{np}
@@ -270,7 +267,7 @@ for each dimension of the continuous \code{x} in \code{txdat}}
   \code{crs} package, and need \code{.Rprofile} in your current
   directory)}
 
-\item{\dots}{
+  \item{\dots}{
     additional arguments supplied to specify the regression type,
     bandwidth type, kernel types, training data, and so on, detailed
     below
