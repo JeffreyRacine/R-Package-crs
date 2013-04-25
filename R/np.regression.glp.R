@@ -1213,8 +1213,7 @@ minimand.cv.ls <- function(bws=NULL,
       ## Local constant via one call to npksum
 
       tww <- npksum(txdat = xdat,
-                    weights = as.matrix(data.frame(1,ydat)),
-                    tydat = rep(1,n),
+                    tydat = cbind(1,ydat),
                     bws = bws,
                     leave.one.out = TRUE,
                     bandwidth.divide = TRUE,
@@ -1226,7 +1225,7 @@ minimand.cv.ls <- function(bws=NULL,
                     bwtype = bwtype,
                     ...)$ksum
 
-      mean.loo <- tww[2,]/NZD(tww[1,])
+      mean.loo <- tww[,2]/NZD(tww[,1])
 
       if (!any(mean.loo == maxPenalty)){
         fv <- mean((ydat-mean.loo)^2)
@@ -1399,8 +1398,7 @@ minimand.cv.aic <- function(bws=NULL,
       ## Local constant via one call to npksum
 
       tww <- npksum(txdat = xdat,
-                    weights = as.matrix(data.frame(1,ydat)),
-                    tydat = rep(1,n),
+                    tydat = cbind(1,ydat),
                     bws = bws,
                     bandwidth.divide = TRUE,
                     bwscaling = TRUE,
@@ -1411,9 +1409,9 @@ minimand.cv.aic <- function(bws=NULL,
                     bwtype = bwtype,
                     ...)$ksum
 
-      ghat <- tww[2,]/NZD(tww[1,])
+      ghat <- tww[,2]/NZD(tww[,1])
 
-      trH <- kernel.i.eq.j*sum(1/NZD(tww[1,]))
+      trH <- kernel.i.eq.j*sum(1/NZD(tww[,1]))
 
       aic.penalty <- (1+trH/n)/(1-(trH+2)/n)
 
