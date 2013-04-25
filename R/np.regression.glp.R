@@ -925,8 +925,7 @@ glpregEst <- function(tydat=NULL,
       ## for cross-validation hence no exdat
 
       tww <- npksum(txdat = txdat,
-                    weights = as.matrix(data.frame(1,tydat)),
-                    tydat = rep(1,length(tydat)),
+                    tydat = cbind(1,tydat),
                     bws = bws,
                     bandwidth.divide = TRUE,
                     leave.one.out = leave.one.out,
@@ -941,8 +940,7 @@ glpregEst <- function(tydat=NULL,
 
       tww <- npksum(txdat = txdat,
                     exdat = exdat,
-                    weights = as.matrix(data.frame(1,tydat)),
-                    tydat = rep(1,length(tydat)),
+                    tydat = cbind(1,tydat),
                     bws = bws,
                     bandwidth.divide = TRUE,
                     leave.one.out = leave.one.out,
@@ -956,12 +954,7 @@ glpregEst <- function(tydat=NULL,
     }
 
 
-    ## Note that as bandwidth approaches zero the local constant
-    ## estimator undersmooths and approaches each sample realization,
-    ## so use the convention that when the sum of the kernel weights
-    ## equals 0, return y. This is unique to this code.
-
-    mhat <- tww[2,]/NZD(tww[1,])
+    mhat <- tww[,2]/NZD(tww[,1])
 
     return(list(fitted.values = mhat,
                 gradient = NULL,
@@ -1379,6 +1372,8 @@ minimand.cv.aic <- function(bws=NULL,
   } else {
 
     ## This computes the kernel function when i=j (i.e., K(0))
+
+    ##??? why not [1,1]??? 4/25/13?
 
     kernel.i.eq.j <- npksum(txdat = xdat[1,],
                             weights = as.matrix(data.frame(1,ydat)[1,]),
