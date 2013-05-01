@@ -224,7 +224,7 @@ for each dimension of the continuous \code{x} in \code{txdat}}
     (default \code{bandwidth.max=.Machine$double.xmax})}
   
   \item{bandwidth.min}{ the minimum bandwidth scale for each of the
-    categorical predictors (default \code{1.0e-08})}
+    categorical predictors (default \code{sqrt(.Machine$double.eps)})}
 
   \item{bandwidth.min.numeric}{ the minimum bandwidth scale (i.e. number
     of scaled standard deviations) for each of the continuous predictors

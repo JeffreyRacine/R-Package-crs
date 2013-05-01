@@ -241,9 +241,10 @@ clsd <- function(x=NULL,
                  quantile.seq=seq(.01,.99,by=.01),
                  random.seed=42,
                  maxit=10^5,
-                 max.attempts=25) {
+                 max.attempts=25,
+                 NOMAD=FALSE) {
 
-  if(elastic.max) {
+  if(elastic.max && !NOMAD) {
     degree.max <- 3
     segments.max <- 3
   }
@@ -310,7 +311,8 @@ clsd <- function(x=NULL,
                                                 monotone.lb=monotone.lb,
                                                 verbose=verbose,
                                                 max.attempts=max.attempts,
-                                                random.seed=random.seed))
+                                                random.seed=random.seed,
+                                                NOMAD=NOMAD))
 
     beta <- ls.ml.out$beta
     degree <- ls.ml.out$degree
@@ -522,7 +524,8 @@ ls.ml <- function(x=NULL,
                   monotone.lb=NULL,
                   verbose=NULL,
                   max.attempts=NULL,
-                  random.seed=NULL) {
+                  random.seed=NULL,
+                  NOMAD=FALSE) {
 
   ## This function conducts log spline maximum
   ## likelihood. Multistarting is supported as is breaking out to
@@ -542,36 +545,170 @@ ls.ml <- function(x=NULL,
 
   if(missing(x)) stop(" You must provide data")
 
-  ## We set some initial parameters that are placeholders to get
-  ## things rolling.
+  if(!NOMAD) {
 
-  d.opt <- Inf
-  s.opt <- Inf
-  par.opt <- Inf
-  value.opt <- -Inf
-  length.x <- length(x)
-  length.xnorm <- length(xnorm)
+    ## We set some initial parameters that are placeholders to get
+    ## things rolling.
+    
+    d.opt <- Inf
+    s.opt <- Inf
+    par.opt <- Inf
+    value.opt <- -Inf
+    length.x <- length(x)
+    length.xnorm <- length(xnorm)
+    
+    ## Loop through all degrees for every segment starting at
+    ## segments.min.
+    
+    d <- degree.min
+    
+    while(d <= degree.max) {
+      
+      ## For smooth densities one can simply restrict degree to at least
+      ## 2 (or 3 to be consistent with cubic splines)
+      
+      s <- segments.min
+      
+      while(s <= segments.max) {
+        
+        if(verbose) cat("\n")
+        cat("\r                                                                                                  ")
+        cat("\rOptimizing, degree = ",d,", segments = ",s,", degree.opt = ",d.opt, ", segments.opt = ",s.opt," ",sep="")
+        
+        ## Generate objects that need not be recomputed for a given d
+        ## and s
+        
+        Pnorm <- density.basis(x=x,
+                               xnorm=xnorm,
+                               degree=d,
+                               segments=s,
+                               basis=basis,
+                               knots=knots,
+                               monotone=monotone)
+        
+        P <- Pnorm[rank.xnorm,][1:length.x,]
+        colSumsP <- colSums(P)
+        Pint <- Pnorm[rank.xnorm,][(length.x+1):nrow(Pnorm),]
+        xint <- xnorm[rank.xnorm][(length.x+1):nrow(Pnorm)]
+        
+        complexity <- d+s
+        
+        ## Multistart if desired.
+        
+        for(n in 1:nmulti) {
+          
+          ## Can restart to see if we can improve on min... note initial
+          ## values totally ad-hoc...
+          
+          par.init.out <- par.init(d,s,monotone,monotone.lb)
+          par.init <- par.init.out$par.init
+          par.upper <- par.init.out$par.upper
+          par.lower <- par.init.out$par.lower
+          
+          ## Trap non-convergence, restart from different initial
+          ## points, display message if needed (trace>0 up to 6 provides
+          ## ever more detailed information for L-BFGS-B)
+          
+          optim.out <- list()
+          optim.out[[4]] <- 9999
+          optim.out$value <- -Inf
+          
+          m.attempts <- 0
+          
+          while(tryCatch(suppressWarnings(optim.out <- optim(par=par.init,
+                                                             fn=sum.log.density,
+                                                             gr=if(do.gradient){sum.log.density.gradient}else{NULL},
+                                                             upper=par.upper,
+                                                             lower=par.lower,
+                                                             method=method,
+                                                             penalty=penalty,
+                                                             P=P,
+                                                             colSumsP=colSumsP,
+                                                             Pint=Pint,
+                                                             length.x=length.x,
+                                                             xint=xint,
+                                                             complexity=complexity,
+                                                             control=list(fnscale=-1,maxit=maxit,if(verbose){trace=1}else{trace=0}))),
+                         error = function(e){return(optim.out)})[[4]]!=0 && m.attempts < max.attempts){
+            
+            ## If optim fails to converge, reset initial parameters and
+            ## try again.
+            
+            if(verbose && optim.out[[4]]!=0) {
+              if(!is.null(optim.out$message)) cat("\n optim message = ",optim.out$message,sep="")
+              cat("\n optim failed (degree = ",d,", segments = ",s,", convergence = ", optim.out[[4]],") re-running with new initial values",sep="")
+            }
+            
+            par.init.out <- par.init(d,s,monotone,monotone.lb)
+            par.init <- par.init.out$par.init
+            par.upper <- par.init.out$par.upper
+            par.lower <- par.init.out$par.lower
+            
+            m.attempts <- m.attempts+1
+            
+          }
+          
+          ## Check for a new optimum, overwrite existing values with
+          ## new values.
+          
+          if(optim.out$value > value.opt) {
+            if(verbose && n==1) cat("\n optim improved: d = ",d,", s = ",s,", old = ",formatC(value.opt,format="g",digits=6),", new = ",formatC(optim.out$value,format="g",digits=6),", diff = ",formatC(optim.out$value-value.opt,format="g",digits=6),sep="")
+            
+            if(verbose && n>1) cat("\n optim improved (ms ",n,"/",nmulti,"): d = ",d,", s = ",s,", old = ",formatC(value.opt,format="g",digits=6),", new = ",formatC(optim.out$value,format="g",digits=6),", diff = ",formatC(optim.out$value-value.opt,format="g",digits=6),sep="")
+            
+            par.opt <- optim.out$par
+            d.opt <- d
+            s.opt <- s
+            value.opt <- optim.out$value
+          }
+          
+        }
+        
+        if(!(segments.min==segments.max) && elastic.max && s.opt == segments.max) segments.max <- segments.max+elastic.diff
+        if(!(segments.min==segments.max) && elastic.max && s.opt < segments.max+elastic.diff) segments.max <- s.opt+elastic.diff
+        
+        s <- s+1
+        
+      }
+      
+      d <- d+1
+      
+      if(!(degree.min==degree.max) && elastic.max && d.opt == degree.max) degree.max <- degree.max+elastic.diff
+      if(!(degree.min==degree.max) && elastic.max && d.opt < degree.max+elastic.diff) degree.max <- d.opt+elastic.diff
+      
+    }
+    
+  } else {
 
-  ## Loop through all degrees for every segment starting at
-  ## segments.min.
+    eval.f <- function(input, params) {
 
-  d <- degree.min
+      sum.log.density <- params$sum.log.density
+      sum.log.density.gradient <- params$sum.log.density.gradient
+      method <- params$method
+      penalty <- params$penalty
+      x <- params$x
+      xnorm <- params$xnorm
+      knots <- params$knots
+      basis <- params$basis
+      monotone <- params$monotone
+      monotone.lb <- params$monotone.lb
+      rank.xnorm <- params$rank.xnorm
+      do.gradient <- params$do.gradient
+      maxit <- params$maxit
+      verbose <- params$verbose                  
+      
+      length.x <- length(x)
+      length.xnorm <- length(xnorm)
 
-  while(d <= degree.max) {
-
-    ## For smooth densities one can simply restrict degree to at least
-    ## 2 (or 3 to be consistent with cubic splines)
-
-    s <- segments.min
-
-    while(s <= segments.max) {
-
-      if(verbose) cat("\n")
-      cat("\r                                                                                                  ")
-      cat("\rOptimizing, degree = ",d,", segments = ",s,", degree.opt = ",d.opt, ", segments.opt = ",s.opt," ",sep="")
-
-      ## Generate objects that need not be recomputed for a given d
-      ## and s
+      d <- input[1]
+      s <- input[2]
+      
+      complexity <- d+s
+        
+      par.init.out <- par.init(d,s,monotone,monotone.lb)
+      par.init <- par.init.out$par.init
+      par.upper <- par.init.out$par.upper
+      par.lower <- par.init.out$par.lower
 
       Pnorm <- density.basis(x=x,
                              xnorm=xnorm,
@@ -580,106 +717,146 @@ ls.ml <- function(x=NULL,
                              basis=basis,
                              knots=knots,
                              monotone=monotone)
-
+      
       P <- Pnorm[rank.xnorm,][1:length.x,]
       colSumsP <- colSums(P)
       Pint <- Pnorm[rank.xnorm,][(length.x+1):nrow(Pnorm),]
       xint <- xnorm[rank.xnorm][(length.x+1):nrow(Pnorm)]
+      
+      ## NOMAD minimizes only
 
-      complexity <- d+s
+      if(verbose) cat("\n")
+      cat("\r                                                                                                  ")
+      cat("\rOptimizing, degree = ",d,", segments = ",s," ",sep="")
 
-      ## Multistart if desired.
+      suppressWarnings(fv <- -optim(par=par.init,
+                                    fn=sum.log.density,
+                                    gr=if(do.gradient){sum.log.density.gradient}else{NULL},
+                                    upper=par.upper,
+                                    lower=par.lower,
+                                    method=method,
+                                    penalty=penalty,
+                                    P=P,
+                                    colSumsP=colSumsP,
+                                    Pint=Pint,
+                                    length.x=length.x,
+                                    xint=xint,
+                                    complexity=complexity,
+                                    control=list(fnscale=-1,maxit=maxit,if(verbose){trace=1}else{trace=0}))$value)
 
-      for(n in 1:nmulti) {
-
-        ## Can restart to see if we can improve on min... note initial
-        ## values totally ad-hoc...
-
-        par.init.out <- par.init(d,s,monotone,monotone.lb)
-        par.init <- par.init.out$par.init
-        par.upper <- par.init.out$par.upper
-        par.lower <- par.init.out$par.lower
-
-        ## Trap non-convergence, restart from different initial
-        ## points, display message if needed (trace>0 up to 6 provides
-        ## ever more detailed information for L-BFGS-B)
-
-        optim.out <- list()
-        optim.out[[4]] <- 9999
-        optim.out$value <- -Inf
-
-        m.attempts <- 0
-
-        while(tryCatch(suppressWarnings(optim.out <- optim(par=par.init,
-                                                           fn=sum.log.density,
-                                                           gr=if(do.gradient){sum.log.density.gradient}else{NULL},
-                                                           upper=par.upper,
-                                                           lower=par.lower,
-                                                           method=method,
-                                                           penalty=penalty,
-                                                           P=P,
-                                                           colSumsP=colSumsP,
-                                                           Pint=Pint,
-                                                           length.x=length.x,
-                                                           xint=xint,
-                                                           complexity=complexity,
-                                                           control=list(fnscale=-1,maxit=maxit,if(verbose){trace=1}else{trace=0}))),
-                       error = function(e){return(optim.out)})[[4]]!=0 && m.attempts < max.attempts){
-
-          ## If optim fails to converge, reset initial parameters and
-          ## try again.
-
-          if(verbose && optim.out[[4]]!=0) {
-            if(!is.null(optim.out$message)) cat("\n optim message = ",optim.out$message,sep="")
-            cat("\n optim failed (degree = ",d,", segments = ",s,", convergence = ", optim.out[[4]],") re-running with new initial values",sep="")
-          }
-
-          par.init.out <- par.init(d,s,monotone,monotone.lb)
-          par.init <- par.init.out$par.init
-          par.upper <- par.init.out$par.upper
-          par.lower <- par.init.out$par.lower
-
-          m.attempts <- m.attempts+1
-
-        }
-
-        ## Check for a new optimum, overwrite existing values with
-        ## new values.
-
-        if(optim.out$value > value.opt) {
-          if(verbose && n==1) cat("\n optim improved: d = ",d,", s = ",s,", old = ",formatC(value.opt,format="g",digits=6),", new = ",formatC(optim.out$value,format="g",digits=6),", diff = ",formatC(optim.out$value-value.opt,format="g",digits=6),sep="")
-
-          if(verbose && n>1) cat("\n optim improved (ms ",n,"/",nmulti,"): d = ",d,", s = ",s,", old = ",formatC(value.opt,format="g",digits=6),", new = ",formatC(optim.out$value,format="g",digits=6),", diff = ",formatC(optim.out$value-value.opt,format="g",digits=6),sep="")
-
-          par.opt <- optim.out$par
-          d.opt <- d
-          s.opt <- s
-          value.opt <- optim.out$value
-        }
-
+      if(is.finite(fv)) {
+        return(fv)
+      } else {
+        return(.Machine$double.xmax)
       }
-
-      if(!(segments.min==segments.max) && elastic.max && s.opt == segments.max) segments.max <- segments.max+elastic.diff
-      if(!(segments.min==segments.max) && elastic.max && s.opt < segments.max+elastic.diff) segments.max <- s.opt+elastic.diff
-
-      s <- s+1
 
     }
 
-    d <- d+1
+    ## Initial values
+    x0 <- c(degree.min,segments.min)
+    ## Types of variables
+    bbin <-c(1, 1)
+    ## Bounds
+    lb <- c(degree.min,segments.min)
+    ub <- c(degree.max,segments.max)
+    ## Type of output
+    bbout <- c(0, 2, 1)
+    ## Options
+    opts <-list("MAX_BB_EVAL"=500,
+                "MIN_MESH_SIZE"=1,
+                "INITIAL_MESH_SIZE"=1,
+                "MIN_POLL_SIZE"=1)
 
-    if(!(degree.min==degree.max) && elastic.max && d.opt == degree.max) degree.max <- degree.max+elastic.diff
-    if(!(degree.min==degree.max) && elastic.max && d.opt < degree.max+elastic.diff) degree.max <- d.opt+elastic.diff
+    ## Generate params
+
+    params <- list()
+
+    params$sum.log.density <- sum.log.density
+    params$sum.log.density.gradient <- sum.log.density.gradient
+    params$method <- method
+    params$penalty <- penalty
+    params$x <- x
+    params$xnorm <- xnorm
+    params$knots <- knots
+    params$basis <- basis    
+    params$monotone <- monotone
+    params$monotone.lb <- monotone.lb
+    params$rank.xnorm <- rank.xnorm
+    params$do.gradient <- do.gradient
+    params$maxit <- maxit
+    params$verbose <- verbose            
+
+    solution <- snomadr(eval.f=eval.f,
+                        n=2,## number of variables
+                        x0=x0,
+                        bbin=bbin,
+                        bbout=bbout,
+                        lb=lb,
+                        ub=ub,
+                        nmulti=nmulti,
+                        print.output=FALSE,
+                        opts=opts,
+                        params=params)
+
+    value.opt <- solution$objective
+
+    d <- solution$solution[1]
+    s <- solution$solution[2]
+
+    ## Final call to optim to retrieve beta
+    
+    length.x <- length(x)
+    length.xnorm <- length(xnorm)
+    
+    complexity <- d+s
+    
+    par.init.out <- par.init(d,s,monotone,monotone.lb)
+    par.init <- par.init.out$par.init
+    par.upper <- par.init.out$par.upper
+    par.lower <- par.init.out$par.lower
+    
+    Pnorm <- density.basis(x=x,
+                           xnorm=xnorm,
+                           degree=d,
+                           segments=s,
+                           basis=basis,
+                           knots=knots,
+                           monotone=monotone)
+    
+    P <- Pnorm[rank.xnorm,][1:length.x,]
+    colSumsP <- colSums(P)
+    Pint <- Pnorm[rank.xnorm,][(length.x+1):nrow(Pnorm),]
+    xint <- xnorm[rank.xnorm][(length.x+1):nrow(Pnorm)]
+    
+    suppressWarnings(optim.out <-  optim(par=par.init,
+                                         fn=sum.log.density,
+                                         gr=if(do.gradient){sum.log.density.gradient}else{NULL},
+                                         upper=par.upper,
+                                         lower=par.lower,
+                                         method=method,
+                                         penalty=penalty,
+                                         P=P,
+                                         colSumsP=colSumsP,
+                                         Pint=Pint,
+                                         length.x=length.x,
+                                         xint=xint,
+                                         complexity=complexity,
+                                         control=list(fnscale=-1,maxit=maxit,if(verbose){trace=1}else{trace=0})))
+    
+    d.opt <- d
+    s.opt <- s
+    par.opt <- optim.out$par
+    value.opt <- optim.out$value
 
   }
-
+  
   cat("\r                                                                            ")
   if(!(degree.min==degree.max) && (d.opt==degree.max)) warning(paste(" optimal degree equals search maximum (", d.opt,"): rerun with larger degree.max",sep=""))
   if(!(segments.min==segments.max) && (s.opt==segments.max)) warning(paste(" optimal segment equals search maximum (", s.opt,"): rerun with larger segments.max",sep=""))
   if(par.opt[1]>0|par.opt[length(par.opt)]>0) warning(" optim() delivered a positive weight for linear segment (supposed to be negative)")
   if(!monotone&&par.opt[1]<=monotone.lb) warning(paste(" optimal weight for left nonmonotone basis equals search minimum (",par.opt[1],"): rerun with smaller monotone.lb",sep=""))
   if(!monotone&&par.opt[length(par.opt)]<=monotone.lb) warning(paste(" optimal weight for right nonmonotone basis equals search minimum (",par.opt[length(par.opt)],"): rerun with smaller monotone.lb",sep=""))
-
+  
   ## Restore seed
 
   if(exists.seed) assign(".Random.seed", save.seed, .GlobalEnv)

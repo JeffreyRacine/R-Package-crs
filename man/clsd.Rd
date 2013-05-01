@@ -37,7 +37,8 @@ clsd(x = NULL,
      quantile.seq = seq(.01,.99,by=.01),
      random.seed = 42,
      maxit = 10^5,
-     max.attempts = 25)
+     max.attempts = 25,
+     NOMAD = FALSE)
 }
 \arguments{
 
@@ -161,7 +162,11 @@ clsd(x = NULL,
      fails for any set of initial parameters for each value of
      \code{nmulti}
    }
-   
+
+   \item{NOMAD}{
+     a logical value which when \code{TRUE} calls \code{\link{snomadr}}
+     to determine the optimal \code{degree} and \code{segments}
+     }
   
 }
 
