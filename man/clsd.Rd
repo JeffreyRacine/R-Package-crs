@@ -14,9 +14,9 @@ clsd(x = NULL,
      degree = NULL,
      segments = NULL,
      degree.min = 2,
-     degree.max = 10,
+     degree.max = 25,
      segments.min = 1,
-     segments.max = 10,
+     segments.max = 100,
      lbound = NULL,
      ubound = NULL,
      basis = "tensor",
@@ -60,12 +60,12 @@ clsd(x = NULL,
   \item{segments.min,segments.max}{ when \code{elastic.max=FALSE}, the
     minimum/maximum segments of the B-spline basis for each of the
     continuous predictors (default
-    \code{segments.min=1},\code{segments.max=10})}
+    \code{segments.min=1},\code{segments.max=100})}
 
   \item{degree.min,degree.max}{ when \code{elastic.max=FALSE} the
     minimum/maximum degree of the B-spline basis for each of the
     continuous predictors (default \code{degree.min=2},
-    \code{degree.max=10})}
+    \code{degree.max=25})}
 
   \item{lbound,ubound}{
     lower/upper bound for the support of the density. For example, if

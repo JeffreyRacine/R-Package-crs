@@ -218,9 +218,9 @@ clsd <- function(x=NULL,
                  degree=NULL,
                  segments=NULL,
                  degree.min=2,
-                 degree.max=10,
+                 degree.max=25,
                  segments.min=1,
-                 segments.max=25,
+                 segments.max=100,
                  lbound=NULL,
                  ubound=NULL,
                  basis="tensor",
@@ -721,11 +721,6 @@ ls.ml <- function(x=NULL,
       
       ## NOMAD minimizes only
 
-      if(verbose) cat("\n")
-      cat("\r                                                                                                  ")
-      cat("\rOptimizing, degree = ",d,", segments = ",s," ",sep="")
-
-
       optim.out <- list()
       optim.out[[4]] <- 9999
       optim.out$value <- -Inf
@@ -764,6 +759,10 @@ ls.ml <- function(x=NULL,
         m.attempts <- m.attempts+1
         
       }
+
+      if(verbose) cat("\n")
+      cat("\r                                                                                                  ")
+      cat("\rOptimizing, degree = ",d,", segments = ",s,", log likelihood = ",optim.out$value,sep="")
 
       fv <- -optim.out$value
       
