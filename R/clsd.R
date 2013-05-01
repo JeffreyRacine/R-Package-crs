@@ -220,7 +220,7 @@ clsd <- function(x=NULL,
                  degree.min=2,
                  degree.max=10,
                  segments.min=1,
-                 segments.max=10,
+                 segments.max=25,
                  lbound=NULL,
                  ubound=NULL,
                  basis="tensor",
@@ -695,8 +695,9 @@ ls.ml <- function(x=NULL,
       rank.xnorm <- params$rank.xnorm
       do.gradient <- params$do.gradient
       maxit <- params$maxit
-      verbose <- params$verbose                  
-      
+      max.attempts <- params$max.attempts
+      verbose <- params$verbose
+
       length.x <- length(x)
       length.xnorm <- length(xnorm)
 
@@ -705,11 +706,6 @@ ls.ml <- function(x=NULL,
       
       complexity <- d+s
         
-      par.init.out <- par.init(d,s,monotone,monotone.lb)
-      par.init <- par.init.out$par.init
-      par.upper <- par.init.out$par.upper
-      par.lower <- par.init.out$par.lower
-
       Pnorm <- density.basis(x=x,
                              xnorm=xnorm,
                              degree=d,
@@ -729,27 +725,48 @@ ls.ml <- function(x=NULL,
       cat("\r                                                                                                  ")
       cat("\rOptimizing, degree = ",d,", segments = ",s," ",sep="")
 
-      suppressWarnings(fv <- -optim(par=par.init,
-                                    fn=sum.log.density,
-                                    gr=if(do.gradient){sum.log.density.gradient}else{NULL},
-                                    upper=par.upper,
-                                    lower=par.lower,
-                                    method=method,
-                                    penalty=penalty,
-                                    P=P,
-                                    colSumsP=colSumsP,
-                                    Pint=Pint,
-                                    length.x=length.x,
-                                    xint=xint,
-                                    complexity=complexity,
-                                    control=list(fnscale=-1,maxit=maxit,if(verbose){trace=1}else{trace=0}))$value)
 
-      if(is.finite(fv)) {
-        return(fv)
-      } else {
-        return(.Machine$double.xmax)
+      optim.out <- list()
+      optim.out[[4]] <- 9999
+      optim.out$value <- -Inf
+      
+      m.attempts <- 0
+          
+      while(tryCatch(suppressWarnings(optim.out <- optim(par=par.init,
+                                                         fn=sum.log.density,
+                                                         gr=if(do.gradient){sum.log.density.gradient}else{NULL},
+                                                         upper=par.upper,
+                                                         lower=par.lower,
+                                                         method=method,
+                                                         penalty=penalty,
+                                                         P=P,
+                                                         colSumsP=colSumsP,
+                                                         Pint=Pint,
+                                                         length.x=length.x,
+                                                         xint=xint,
+                                                         complexity=complexity,
+                                                         control=list(fnscale=-1,maxit=maxit,if(verbose){trace=1}else{trace=0}))),
+                     error = function(e){return(optim.out)})[[4]]!=0 && m.attempts < max.attempts){
+        
+        ## If optim fails to converge, reset initial parameters and
+        ## try again.
+        
+        if(verbose && optim.out[[4]]!=0) {
+          if(!is.null(optim.out$message)) cat("\n optim message = ",optim.out$message,sep="")
+          cat("\n optim failed (degree = ",d,", segments = ",s,", convergence = ", optim.out[[4]],") re-running with new initial values",sep="")
+        }
+        
+        par.init.out <- par.init(d,s,monotone,monotone.lb)
+        par.init <- par.init.out$par.init
+        par.upper <- par.init.out$par.upper
+        par.lower <- par.init.out$par.lower
+        
+        m.attempts <- m.attempts+1
+        
       }
 
+      fv <- -optim.out$value
+      
     }
 
     ## Initial values
@@ -762,10 +779,7 @@ ls.ml <- function(x=NULL,
     ## Type of output
     bbout <- c(0, 2, 1)
     ## Options
-    opts <-list("MAX_BB_EVAL"=500,
-                "MIN_MESH_SIZE"=1,
-                "INITIAL_MESH_SIZE"=1,
-                "MIN_POLL_SIZE"=1)
+    opts <-list("MAX_BB_EVAL"=10000)
 
     ## Generate params
 
@@ -784,6 +798,7 @@ ls.ml <- function(x=NULL,
     params$rank.xnorm <- rank.xnorm
     params$do.gradient <- do.gradient
     params$maxit <- maxit
+    params$max.attempts <- max.attempts
     params$verbose <- verbose            
 
     solution <- snomadr(eval.f=eval.f,
@@ -828,26 +843,50 @@ ls.ml <- function(x=NULL,
     Pint <- Pnorm[rank.xnorm,][(length.x+1):nrow(Pnorm),]
     xint <- xnorm[rank.xnorm][(length.x+1):nrow(Pnorm)]
     
-    suppressWarnings(optim.out <-  optim(par=par.init,
-                                         fn=sum.log.density,
-                                         gr=if(do.gradient){sum.log.density.gradient}else{NULL},
-                                         upper=par.upper,
-                                         lower=par.lower,
-                                         method=method,
-                                         penalty=penalty,
-                                         P=P,
-                                         colSumsP=colSumsP,
-                                         Pint=Pint,
-                                         length.x=length.x,
-                                         xint=xint,
-                                         complexity=complexity,
-                                         control=list(fnscale=-1,maxit=maxit,if(verbose){trace=1}else{trace=0})))
+    optim.out <- list()
+    optim.out[[4]] <- 9999
+    optim.out$value <- -Inf
+    
+    m.attempts <- 0
+    
+    while(tryCatch(suppressWarnings(optim.out <- optim(par=par.init,
+                                                       fn=sum.log.density,
+                                                       gr=if(do.gradient){sum.log.density.gradient}else{NULL},
+                                                       upper=par.upper,
+                                                       lower=par.lower,
+                                                       method=method,
+                                                       penalty=penalty,
+                                                       P=P,
+                                                       colSumsP=colSumsP,
+                                                       Pint=Pint,
+                                                       length.x=length.x,
+                                                       xint=xint,
+                                                       complexity=complexity,
+                                                       control=list(fnscale=-1,maxit=maxit,if(verbose){trace=1}else{trace=0}))),
+                   error = function(e){return(optim.out)})[[4]]!=0 && m.attempts < max.attempts){
+      
+      ## If optim fails to converge, reset initial parameters and
+      ## try again.
+      
+      if(verbose && optim.out[[4]]!=0) {
+        if(!is.null(optim.out$message)) cat("\n optim message = ",optim.out$message,sep="")
+        cat("\n optim failed (degree = ",d,", segments = ",s,", convergence = ", optim.out[[4]],") re-running with new initial values",sep="")
+      }
+      
+      par.init.out <- par.init(d,s,monotone,monotone.lb)
+      par.init <- par.init.out$par.init
+      par.upper <- par.init.out$par.upper
+      par.lower <- par.init.out$par.lower
+      
+      m.attempts <- m.attempts+1
+      
+    }
     
     d.opt <- d
     s.opt <- s
     par.opt <- optim.out$par
     value.opt <- optim.out$value
-
+    
   }
   
   cat("\r                                                                            ")
