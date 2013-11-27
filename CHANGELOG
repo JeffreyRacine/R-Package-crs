@@ -1,4 +1,4 @@
-Changes from Version 0.15-18 to 0.15-19 [XXX]
+Changes from Version 0.15-18 to 0.15-19 [October 30 2013]
 
 * Added new function clsd() that does logspline regression jointly
   choosing the degree and number of segments (knots) - this is to be
