@@ -123,13 +123,13 @@ QP.output <- solve.QP(Dmat=diag(n),dvec=rep(1,n),Amat=Amat,bvec=bvec)
 
 rm(Amat,bvec)
 
-## Get the solution and update the uniform weights
+## Get the solution
 
-p.updated <- QP.output$solution
+p.hat <- QP.output$solution
 
 ## Now estimate the restricted model
 
-data.trans <- data.frame(y=p.updated*data.train$y,data.train[,2:ncol(data.train),drop=FALSE])
+data.trans <- data.frame(y=p.hat*data.train$y,data.train[,2:ncol(data.train),drop=FALSE])
 
 model.res <- crs(y~x1+x2,cv="none",
                  degree=model.unres$degree,

@@ -8,6 +8,7 @@
 ## Load libraries
 
 require(crs)
+options(crs.messages=FALSE)
 require(quadprog)
 
 num.boot <- 999
@@ -41,7 +42,7 @@ x.max <- 5
 ## upper to 0.5 and you would expect to reject the null, while setting
 ## lower and upper to those below and you would expect to fail to
 ## reject the null). Note also that imposing nonbinding constraints
-## can be checked by inspecting p.updated prior to conducting the
+## can be checked by inspecting p.hat prior to conducting the
 ## bootstrap... if they are all equal to 1/n then you have imposed a
 ## non-binding constraint and in this case the null distribution is
 ## degenerate.
@@ -101,17 +102,17 @@ QP.output <- solve.QP(Dmat=diag(n),dvec=rep(1,n),Amat=Amat,bvec=bvec)
 
 rm(Amat,bvec)
 
-## Get the solution and update the uniform weights
+## Get the solution
 
-p.updated <- QP.output$solution
+p.hat <- QP.output$solution
 
-D.stat <- D(p.updated)
+D.stat <- D(p.hat)
 
 if(D.stat > 0) {
   
   ## Generate fitted values and data from constrained model
   
-  data.trans <- data.frame(y=p.updated*data.train$y,data.train[,2:ncol(data.train)])
+  data.trans <- data.frame(y=p.hat*data.train$y,data.train[,2:ncol(data.train)])
   names(data.trans) <- names(data.train) ## Necessary when there is only 1 regressor
   model.res <- crs(y~x1+x2,cv="none",
                    degree=model.unres$degree,
@@ -155,11 +156,11 @@ if(D.stat > 0) {
     
     QP.output <- solve.QP(Dmat=diag(n),dvec=rep(1,n),Amat=Amat,bvec=bvec)
 
-    ## Get the solution and update the uniform weights
+    ## Get the solution
     
-    p.updated <- QP.output$solution
+    p.hat <- QP.output$solution
     
-    D.boot[b] <- D(p.updated)
+    D.boot[b] <- D(p.hat)
     
   }
   
