@@ -73,25 +73,23 @@ summary(model.unres)
 
 ## B <- model.matrix(model.unres$model.lm)
 
-source(paste(path.package("crs"),"/demo/spline.R", sep="")) 
+B <- crs:::prod.spline(x=data.train[,-1],
+                       K=cbind(model.unres$degree,model.unres$segments),
+                       basis=model.unres$basis)
 
-B <- prod.spline(x=data.train[,-1],
-                 K=cbind(model.unres$degree,model.unres$segments),
-                 basis=model.unres$basis)
-
-B.x1 <- prod.spline(x=data.train[,-1],
-                 K=cbind(model.unres$degree,model.unres$segments),
-                 basis=model.unres$basis,
-                 deriv.index=1,
-                 deriv=1)
+B.x1 <- crs:::prod.spline(x=data.train[,-1],
+                          K=cbind(model.unres$degree,model.unres$segments),
+                          basis=model.unres$basis,
+                          deriv.index=1,
+                          deriv=1)
 
 Aymat.res.x1 <- t(B.x1%*%solve(t(B)%*%B)%*%t(B))*data.train$y
 
-B.x2 <- prod.spline(x=data.train[,-1],
-                 K=cbind(model.unres$degree,model.unres$segments),
-                 basis=model.unres$basis,
-                 deriv.index=2,
-                 deriv=1)
+B.x2 <- crs:::prod.spline(x=data.train[,-1],
+                          K=cbind(model.unres$degree,model.unres$segments),
+                          basis=model.unres$basis,
+                          deriv.index=2,
+                          deriv=1)
 
 Aymat.res.x2 <- t(B.x2%*%solve(t(B)%*%B)%*%t(B))*data.train$y
 
