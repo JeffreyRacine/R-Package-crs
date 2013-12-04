@@ -35,8 +35,17 @@ This set of frequently asked questions is intended to help users who
 are encountering unexpected or undesired behavior when trying to use
 the \texttt{crs} package.
 
-Kindly report any issues you encounter to me, and please include your
-code, data, version of the package and version of R used so that I can
+If you encounter any issues with the \texttt{crs} package, kindly
+first ensure that you have the most recent version of \texttt{crs},
+\texttt{R}, and \texttt{RStudio} (if appropriate) installed. Sometimes
+issues encountered using outdated versions of software have been
+resolved in the current versions, so this is the first thing one ought
+to investigate when the unexpected occurs.
+
+Having ensured that the problem persists with the most recently
+available versions of all software involved, kindly report any issues
+you encounter to me, and please include your code, data, version of
+the \texttt{crs} package and version of \texttt{R} used so that I can
 help track down any such issues
 (\href{mailto:racinej@mcmaster.ca}{racinej@mcmaster.ca}). And, of
 course, if you encounter an issue that you think might be of interest
