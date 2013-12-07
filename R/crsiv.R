@@ -250,7 +250,7 @@ crsiv <- function(y,
     if(crs.messages) options(crs.messages=TRUE)
     E.y.w <- predict(model,newdata=evaldata,...)
     B <- model.matrix(model$model.lm)
-    KYW <- B%*%solve(t(B)%*%B)%*%t(B)
+    KYW <- B%*%chol2inv(chol(t(B)%*%B))%*%t(B)
 
     ## Next, we conduct the regression spline of E(y|w) on z
 
@@ -266,7 +266,7 @@ crsiv <- function(y,
     if(crs.messages) options(crs.messages=TRUE)
     E.E.y.w.z <- predict(model,newdata=evaldata,...)
     B <- model.matrix(model$model.lm)
-    KYWZ <- B%*%solve(t(B)%*%B)%*%t(B)
+    KYWZ <- B%*%chol2inv(chol(t(B)%*%B))%*%t(B)
 
     ## Next, we minimize the function ittik to obtain the optimal value
     ## of alpha (here we use the iterated Tikhonov function) to
@@ -314,7 +314,7 @@ crsiv <- function(y,
     if(crs.messages) options(crs.messages=TRUE)
     E.phi.w <- predict(model,newdata=evaldata,...)
     B <- model.matrix(model$model.lm)
-    KPHIW <- B%*%solve(t(B)%*%B)%*%t(B)
+    KPHIW <- B%*%chol2inv(chol(t(B)%*%B))%*%t(B)
 
     ## Conduct kernel regression of E(phi(z)|w) on z
 
@@ -329,7 +329,7 @@ crsiv <- function(y,
     model <- crs(formula.Ephiwz,opts=opts,data=traindata,...)
     if(crs.messages) options(crs.messages=TRUE)
     B <- model.matrix(model$model.lm)
-    KPHIWZ <- B%*%solve(t(B)%*%B)%*%t(B)
+    KPHIWZ <- B%*%chol2inv(chol(t(B)%*%B))%*%t(B)
 
     ## Next, we minimize the function ittik to obtain the optimal value of
     ## alpha (here we use the iterated Tikhonov approach) to determine the
