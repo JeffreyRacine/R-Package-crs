@@ -111,7 +111,7 @@ crsiv <- function(y,
   ## phi:   the vector of estimated values for the unknown function at the evaluation points
 
   tikh <- function(alpha,CZ,CY,Cr.r){
-    return(solve(alpha*diag(length(Cr.r)) + CY%*%CZ) %*% Cr.r) ## This must be computable via ridge... step 1, step 2, same alpha...
+    return(chol2inv(chol(alpha*diag(length(Cr.r)) + CY%*%CZ) %*% Cr.r)) ## This must be computable via ridge... step 1, step 2, same alpha...
   }
 
   ## This function applies the iterated Tikhonov approach which
@@ -145,7 +145,7 @@ crsiv <- function(y,
   ## Cr.r is always E.E.y.w.z, r is always E.y.w
 
   ittik <- function(alpha,CZ,CY,Cr.r,r) {
-    invmat <- solve(alpha*diag(length(Cr.r)) + CY%*%CZ)
+    invmat <- chol2inv(chol(alpha*diag(length(Cr.r)) + CY%*%CZ))
     tikh.val <- invmat %*% Cr.r
     phi <- tikh.val + alpha * invmat %*% tikh.val ## Not sure about this...
     return(sum((CZ%*%phi - r)^2)/alpha)     ## This is a sum of squared values so CZ%*%phi can be computed with fitted(crs())...

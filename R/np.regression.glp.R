@@ -173,8 +173,12 @@ W.glp <- function(xdat = NULL,
     colnames(res) <- apply(z, 1L, function(x) paste(x, collapse = "."))
     if(gradient.compute) colnames(res.deriv) <- apply(z, 1L, function(x) paste(x, collapse = "."))
 
-    if(gradient.compute) res[,!is.na(as.numeric(res.deriv))] <- 0
-    return(cbind(1,res))
+    if(gradient.compute) {
+      res[,!is.na(as.numeric(res.deriv))] <- 0
+      return(cbind(0,res))
+    } else {
+      return(cbind(1,res))
+    }
 
   }
 
