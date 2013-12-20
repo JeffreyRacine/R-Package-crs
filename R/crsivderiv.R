@@ -148,10 +148,16 @@ crsivderiv <- function(y,
   ## considerations (sensitivity analysis indicates this is not
   ## problematic).
   
-  bw <- npudensbw(dat=z,bwmethod="normal-reference")
-  model.fz <- npudens(tdat=z,bws=bw)
+  bw <- npudensbw(dat=z,
+                  bwmethod="normal-reference",
+                  ...)
+  model.fz <- npudens(tdat=z,
+                      bws=bw$bw,
+                      ...)
   f.z <- predict(model.fz,newdata=evaldata)
-  model.Sz <- npudist(tdat=z,bws=bw)
+  model.Sz <- npudist(tdat=z,
+                      bws=bw$bw,
+                      ...)
   S.z <- 1-predict(model.Sz,newdata=evaldata)
 
   if(is.null(starting.values)) {
