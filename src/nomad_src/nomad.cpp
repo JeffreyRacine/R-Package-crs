@@ -1,5 +1,5 @@
 /*-------------------------------------------------------------------------------------*/
-/*  NOMAD - Nonlinear Optimization by Mesh Adaptive Direct search - version 3.5.1        */
+/*  NOMAD - Nonlinear Optimization by Mesh Adaptive Direct search - version 3.6.2      */
 /*                                                                                     */
 /*  Copyright (C) 2001-2012  Mark Abramson        - the Boeing Company, Seattle        */
 /*                           Charles Audet        - Ecole Polytechnique, Montreal      */
@@ -46,27 +46,23 @@
 #include <R_ext/Utils.h>
 using namespace std;
 
-class Routbuf: public std::streambuf {
-		private:
-				int overflow(int c){
-								if(c!=EOF) Rprintf("%.1s", (char *)&c);  //this is for the class Display in NOMAD. cout will be redirected to this class and output by Rprintf.
-								return c;
-				}
+namespace NOMAD {
+NOMAD::Routbuf routbuf;
+std::ostream rout(&routbuf);
+}
 
-};
 /* *************************  snomadr  zhenghua *********************** */
-
 
 /*------------------------------------------*/
 /*            NOMAD main function           */
 /*------------------------------------------*/
 int main ( int argc , char ** argv )
 {
+	
   // display:
-	Routbuf routbuf;                 //zhenghua
-	std::ostream rout(&routbuf);     //zhenghua
-  NOMAD::Display out ( rout );     //zhenghua
+  NOMAD::Display out ( NOMAD::rout );     //zhenghua
   out.precision ( NOMAD::DISPLAY_PRECISION_STD );
+	
 
   std::string error;
   {
@@ -75,7 +71,7 @@ int main ( int argc , char ** argv )
 
     // usage:
     if ( argc < 2 ) {
-      NOMAD::display_usage ( out );  //zhenghua
+      NOMAD::display_usage ( out); //zhenghua
       NOMAD::end();
       return EXIT_FAILURE;
     }
@@ -85,8 +81,16 @@ int main ( int argc , char ** argv )
     std::string opt             = param_file_name;
     NOMAD::toupper ( opt );
 
+	  // display version if option '-v' has been specified:
+	  if ( opt == "-U" ) {
+		  NOMAD::display_usage ( out );
+		  NOMAD::end();
+		  return EXIT_SUCCESS;
+	  }
+	  
+	  
     // display version if option '-v' has been specified:
-    if ( opt == "-V" ) {
+    if ( opt == "-V" || opt =="-VERSION") {
       NOMAD::display_version ( out );
       NOMAD::end();
       return EXIT_SUCCESS;
@@ -95,7 +99,7 @@ int main ( int argc , char ** argv )
     // display info if option '-i' has been specified:
     if ( opt == "-I" || opt == "-INFO" ) {
       NOMAD::display_info  ( out );
-      NOMAD::display_usage ( out );  //zhenghua
+      NOMAD::display_usage ( out ); //zhenghua
       NOMAD::end();
       return EXIT_SUCCESS;
     }
@@ -110,10 +114,19 @@ int main ( int argc , char ** argv )
       return EXIT_SUCCESS;
     }
 
+	  // display developer help on parameters if option '-d' has been specified:
+	  if ( opt == "-D" ) {
+		  p.help ( argc , argv,true );
+		  NOMAD::end();
+		  return EXIT_SUCCESS;
+	  }  
+	  
+	  
     // check the number of processess:
 #ifdef USE_MPI
     if ( NOMAD::Slave::get_nb_processes() < 2 ) {
-      NOMAD::display_usage ( out );  //zhenghua
+				NOMAD::rout << "ERROR: Incorrect command to run with MPI." << std::endl; //zhenghua
+      NOMAD::display_usage ( out ); //zhenghua
       NOMAD::end();
       return EXIT_FAILURE;
     }
@@ -121,15 +134,16 @@ int main ( int argc , char ** argv )
     
     try {
 
+	
       // read parameters file:
       p.read ( param_file_name );
 
       // parameters check:
       p.check();
 
-      // display NOMAD info:
-      if ( p.get_display_degree() != NOMAD::NO_DISPLAY  && p.get_display_degree() != NOMAD::MINIMAL_DISPLAY)
-	NOMAD::display_info ( out );
+	  // display NOMAD info:
+	  if ( p.get_display_degree() > NOMAD::MINIMAL_DISPLAY)
+		NOMAD::display_info ( out );
 
       // parameters display:
       if ( NOMAD::Slave::is_master() &&
@@ -154,7 +168,7 @@ int main ( int argc , char ** argv )
     catch ( std::exception & e ) {
       if ( NOMAD::Slave::is_master() ) {
 	error = std::string ( "NOMAD has been interrupted: " ) + e.what();
-	rout << std::endl << error << std::endl << std::endl;  //zhenghua
+	NOMAD::rout << std::endl << error << std::endl << std::endl;  //zhenghua
       }
     }
     
@@ -275,7 +289,7 @@ void NOMAD::display_info ( const NOMAD::Display & out )
     return;
 #endif
   NOMAD::display_version ( out );
-  out << NOMAD::open_block ( "Copyright (C) 2001-2012" )
+  out << NOMAD::open_block ( "Copyright (C) 2001-2013" )
       << "Mark A. Abramson     - The Boeing Company"              << std::endl
       << "Charles Audet        - Ecole Polytechnique de Montreal" << std::endl
       << "Gilles Couture       - Ecole Polytechnique de Montreal" << std::endl
@@ -304,17 +318,21 @@ void NOMAD::display_usage ( char* exeName, const NOMAD::Display & out )
   if ( !NOMAD::Slave::is_master() )
     return;
   out << std::endl
-      << "Run NOMAD.MPI: mpirun -np p " << exeName << " parameters_file" << std::endl
-      << "Info         : " << exeName << " -i"                    << std::endl
-      << "Help         : " << exeName << " -h keyword (or 'all')" << std::endl
-      << "Version      : " << exeName << " -v"                    << std::endl
+      << "Run NOMAD.MPI  : mpirun -np p " << exeName << " parameters_file" << std::endl
+	  << "Info           : " << exeName << " -i"                           << std::endl
+	  << "Help           : " << exeName << " -h keyword(s) (or 'all')"     << std::endl
+	  << "Developer help : " << exeName << " -d keyword(s) (or 'all')"     << std::endl
+      << "Version        : " << exeName << " -v"                           << std::endl
+	  << "Usage          : " << exeName << " -u"                          << std::endl
       << std::endl;  
 #else
   out << std::endl
-      << "Run NOMAD: " << exeName << " parameters_file"          << std::endl
-      << "Info     : " << exeName << " -i"                       << std::endl
-      << "Help     : " << exeName << " -h keyword(s) (or 'all')" << std::endl
-      << "Version  : " << exeName << " -v"                       << std::endl
+      << "Run NOMAD      : " << exeName << " parameters_file"          << std::endl
+      << "Info           : " << exeName << " -i"                       << std::endl
+      << "Help           : " << exeName << " -h keyword(s) (or 'all')" << std::endl
+	  << "Developer help : " << exeName << " -d keyword(s) (or 'all')" << std::endl
+      << "Version        : " << exeName << " -v"                       << std::endl
+	  << "Usage          : " << exeName << " -u"                       << std::endl
       << std::endl; 
 #endif
 }

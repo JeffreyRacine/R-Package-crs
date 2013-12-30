@@ -1,5 +1,5 @@
 /*-------------------------------------------------------------------------------------*/
-/*  NOMAD - Nonlinear Optimization by Mesh Adaptive Direct search - version 3.5.1        */
+/*  NOMAD - Nonlinear Optimization by Mesh Adaptive Direct search - version 3.6.2        */
 /*                                                                                     */
 /*  Copyright (C) 2001-2012  Mark Abramson        - the Boeing Company, Seattle        */
 /*                           Charles Audet        - Ecole Polytechnique, Montreal      */
@@ -67,7 +67,7 @@ namespace NOMAD {
     /// Constructor 2/2.
     /**
        \param x      Interpolaton point          -- \b IN.
-       \param center Custom distance with center -- \b IN.
+       \param dist   Custom distance with center -- \b IN.
     */
     Model_Sorted_Point ( NOMAD::Point * x , const NOMAD::Double & dist )
       : _x ( x ) , _dist ( dist ) {}

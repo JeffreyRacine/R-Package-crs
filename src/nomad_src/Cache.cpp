@@ -1,5 +1,5 @@
 /*-------------------------------------------------------------------------------------*/
-/*  NOMAD - Nonlinear Optimization by Mesh Adaptive Direct search - version 3.5.1        */
+/*  NOMAD - Nonlinear Optimization by Mesh Adaptive Direct search - version 3.6.2        */
 /*                                                                                     */
 /*  Copyright (C) 2001-2012  Mark Abramson        - the Boeing Company, Seattle        */
 /*                           Charles Audet        - Ecole Polytechnique, Montreal      */
@@ -41,7 +41,8 @@
   \see    Cache.hpp
 */
 #include "Cache.hpp"
-using namespace std;  //zhenghua
+using namespace std; // zhenghua
+
 /*-----------------------------------*/
 /*   static members initialization   */
 /*-----------------------------------*/
@@ -713,7 +714,7 @@ void NOMAD::Cache::update ( NOMAD::Eval_Point       & cache_x ,
 /*---------------------------------------------------------*/
 void NOMAD::Cache::display_extern_pts ( const NOMAD::Display & out ) const
 {
-  int  nb = _extern_pts.size();
+  int  nb = static_cast<int>(_extern_pts.size());
   int cnt = 0;
   std::list<const NOMAD::Eval_Point *>::const_iterator it , end = _extern_pts.end();
   for ( it = _extern_pts.begin() ; it != end ; ++it ) {

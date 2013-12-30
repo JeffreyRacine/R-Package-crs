@@ -1,5 +1,5 @@
 /*-------------------------------------------------------------------------------------*/
-/*  NOMAD - Nonlinear Optimization by Mesh Adaptive Direct search - version 3.5.1        */
+/*  NOMAD - Nonlinear Optimization by Mesh Adaptive Direct search - version 3.6.2        */
 /*                                                                                     */
 /*  Copyright (C) 2001-2012  Mark Abramson        - the Boeing Company, Seattle        */
 /*                           Charles Audet        - Ecole Polytechnique, Montreal      */
@@ -41,7 +41,7 @@
   \see    Double.hpp
 */
 #include "Double.hpp"
-using namespace std;
+using namespace std; // zhenghua
 
 /*-----------------------------------*/
 /*   static members initialization   */
@@ -220,7 +220,7 @@ bool NOMAD::Double::is_integer ( void ) const
 {
   if ( !_defined )
     return false;
-  return ( NOMAD::Double(floor(_value))) == ( NOMAD::Double(ceil(_value)) );
+  return ( NOMAD::Double(std::floor(_value))) == ( NOMAD::Double(std::ceil(_value)) );
 }
 
 /*-----------------------------------------------*/
@@ -374,7 +374,7 @@ void NOMAD::Double::display ( const NOMAD::Display & out ) const
       out << NOMAD::Double::_inf_str;
     else if ( _value == -NOMAD::INF )
       out << "-" << NOMAD::Double::_inf_str;
-    else if ( floor(_value) == ceil(_value) && fabs(_value) < INT_MAX-1 )
+    else if ( std::floor(_value) == std::ceil(_value) && fabs(_value) < INT_MAX-1 )
       out << static_cast<int>(_value);
     else
       out << _value;
@@ -389,146 +389,159 @@ void NOMAD::Double::display ( const NOMAD::Display & out ) const
 void NOMAD::Double::display ( const NOMAD::Display & out    ,
 			      const std::string    & format   ) const
 {
-  // interpret the format:
-  // ---------------------
- 
-  // %f      w=-1 prec=-1 c='f'
-  // %4.5f   w= 4 prec= 5 c='f'
-  // %4f     w= 4 prec= 1 c='f'
-  // %.5f    w=-1 prec= 5 c='f'
-  // %.f     w=-1 prec= 0 c='f'
-
-  // c may be in 'e', 'E', 'f', 'g', 'G', 'd', or 'i'
-
-  // e Scientific notation (mantise/exponent) using e character 3.9265e+2
-  // E Scientific notation (mantise/exponent) using E character 3.9265E+2
-  // f Decimal floating point                                   392.65
-  // g Use the shorter of %e or %f                              392.65
-  // G Use the shorter of %E or %f                              392.65
-  // d or i Integer rounded value                               393
-
-	
-  std::string format2 = format;
-
-  int  w    = -1;
-  int  prec = -1;
-  char c    =  0;
-
-  if ( !format2.empty() && format2[0]=='%' ) {
-
-    size_t n = format2.size();
-
-    c = format2[n-1];
+    // interpret the format:
+    // ---------------------
     
-    if ( c!='e' && c!='E' && c!='f' && c!='g' && c!='G' && c!='d' && c!='i' ) {
-      c = ( floor(_value) == ceil(_value) && fabs(_value) < INT_MAX-1 ) ?
-	'd' : 'f';
-      format2.push_back(c);
-      ++n;
+    // %f      w=-1 prec=-1 c='f'
+    // %4.5f   w= 4 prec= 5 c='f'
+    // %4f     w= 4 prec= 1 c='f'
+    // %.5f    w=-1 prec= 5 c='f'
+    // %.f     w=-1 prec= 0 c='f'
+    
+    // c may be in 'e', 'E', 'f', 'g', 'G', 'd', or 'i'
+    
+    // e Scientific notation (mantise/exponent) using e character 3.9265e+2
+    // E Scientific notation (mantise/exponent) using E character 3.9265E+2
+    // f Decimal floating point                                   392.65
+    // g Use the shorter of %e or %f                              392.65
+    // G Use the shorter of %E or %f                              392.65
+    // d or i Integer rounded value                               393
+    
+	
+    std::string format2 = format;
+    
+    int  w    = -1;
+    int  prec = -1;
+    char c    =  0;
+    
+    if ( !format2.empty() && format2[0]=='%' )
+    {
+        
+        size_t n = format2.size();
+        
+        c = format2[n-1];
+        
+        if ( c!='e' && c!='E' && c!='f' && c!='g' && c!='G' && c!='d' && c!='i' )
+        {
+            c = ( std::floor(_value) == std::ceil(_value) && fabs(_value) < INT_MAX-1 ) ?
+            'd' : 'f';
+            format2.push_back(c);
+            ++n;
+        }
+        
+        if ( n > 2 )
+        {
+            
+            std::string sw , sprec;
+            
+            size_t k = format2.find(".");
+            
+            if ( k > 0 && k < n-1 )
+            {
+                if ( n==3 )
+                {
+                    sprec = "0";
+                }
+                else
+                {
+                    if ( k > 1 )
+                        sw = format2.substr ( 1 , k-1 );
+                    sprec = format2.substr ( k+1 , n-k-2 );
+                }
+            }
+            else
+            {
+                sw = format2.substr ( 1 , n-2 );
+            }
+            
+            if ( !NOMAD::atoi ( sw , w ) )
+                w = -1;
+            
+            if ( !NOMAD::atoi ( sprec , prec ) )
+                prec = -1;
+        }
+        
+        if ( c=='d' || c=='i' )
+            prec = 0;
     }
-
-    if ( n > 2 ) {
-
-      std::string sw , sprec;
-
-      size_t k = format2.find(".");
-      
-      if ( k > 0 && k < n-1 ) {
-	if ( n==3 ) {
-	  sprec = "0";
-	}
-	else {
-	  if ( k > 1 )
-	    sw = format2.substr ( 1 , k-1 );
-	  sprec = format2.substr ( k+1 , n-k-2 );
-	}
-      }
-      else {
-	sw = format2.substr ( 1 , n-2 );
-      }
-      
-      if ( !NOMAD::atoi ( sw , w ) )
-	w = -1;
-
-      if ( !NOMAD::atoi ( sprec , prec ) )
-	prec = -1;
+    
+    // display the value:
+    out << std::setw(w);
+    if ( _defined )
+    {
+        if ( _value == NOMAD::INF )
+            out << NOMAD::Double::_inf_str;
+        else if ( c=='d' || c=='i' ||
+                 ( format2.empty() &&
+                  std::floor(_value) == std::ceil(_value) && fabs(_value) < INT_MAX-1 ) )
+            out << round();
+        else
+        {
+            
+            int                     old_prec  = out.precision();
+            std::ios_base::fmtflags old_flags = out.flags();
+            
+            if ( prec >= 0 )
+                out.precision ( prec );
+            
+            if ( c == 'f' )
+                out.setf ( std::ios::fixed );
+            
+            else if ( c == 'e' )
+            {
+                out.unsetf ( std::ios::fixed );
+                out.setf   ( std::ios::scientific );
+            }
+            
+            else if ( c == 'E' )
+            {
+                out.unsetf ( std::ios::fixed );
+                out.setf   ( std::ios::scientific | std::ios::uppercase );
+            }
+            
+            else if ( c == 'g' )
+            {
+                std::ostringstream streamS,streamF;
+                streamS.precision ( prec );
+                streamF.precision ( prec );
+                streamF.unsetf(std::ios::scientific);
+                streamF.setf( std::ios::fixed );
+                streamS.unsetf(std::ios::fixed);
+                streamS.setf( std::ios::scientific);
+                streamS << _value;
+                streamF << _value;
+                if (streamS.str().length() < streamF.str().length())
+                    out.setf(std::ios::scientific);
+                else
+                    out.setf(std::ios::fixed);
+                
+            }
+            
+            else if ( c == 'G' )
+            {
+                std::ostringstream streamS,streamF;
+                streamS.precision ( prec );
+                streamF.precision ( prec );
+                streamF.unsetf(std::ios::scientific);
+                streamF.setf( std::ios::fixed ); 
+                streamS.unsetf(std::ios::fixed);
+                streamS.setf( std::ios::scientific);
+                streamS << _value ;
+                streamF << _value ;
+                if (streamS.str().length() < streamF.str().length())
+                    out.setf(std::ios::scientific | std::ios::uppercase );
+                else
+                    out.setf(std::ios::fixed | std::ios::uppercase );
+            }
+            
+            out << _value;
+            
+            out.precision ( old_prec  );
+            out.flags     ( old_flags );
+        }
     }
-
-    if ( c=='d' || c=='i' )
-      prec = 0;
-  }
-
-  // display the value:
-  out << std::setw(w);
-  if ( _defined ) {
-    if ( _value == NOMAD::INF )
-      out << NOMAD::Double::_inf_str;
-    else if ( c=='d' || c=='i' ||
-	      ( format2.empty() &&
-		floor(_value) == ceil(_value) && fabs(_value) < INT_MAX-1 ) )
-      out << round();
-    else {
-      
-      int                     old_prec  = out.precision();
-      std::ios_base::fmtflags old_flags = out.flags();
-
-      if ( prec >= 0 )
-	out.precision ( prec );
-
-      if ( c == 'f' )
-	out.setf ( std::ios::fixed );
-
-      else if ( c == 'e' ) {
-	out.unsetf ( std::ios::fixed );
-	out.setf   ( std::ios::scientific );
-      }
-
-      else if ( c == 'E' ) {
-	out.unsetf ( std::ios::fixed );
-	out.setf   ( std::ios::scientific | std::ios::uppercase );
-      }
-
-      else if ( c == 'g' ) {
-	std::ostringstream streamS,streamF;
-	streamS.precision ( prec );
-	streamF.precision ( prec );
-	streamF.unsetf(std::ios::scientific);
-	streamF.setf( std::ios::fixed );
-	streamS.unsetf(std::ios::fixed);
-	streamS.setf( std::ios::scientific);
-	streamS << _value;
-	streamF << _value;
-	if (streamS.str().length() < streamF.str().length())
-	  out.setf(std::ios::scientific);
-	else
-	  out.setf(std::ios::fixed);
-      }
-
-      else if ( c == 'G' ) {
-	std::ostringstream streamS,streamF;
-	streamS.precision ( prec );
-	streamF.precision ( prec );
-	streamF.unsetf(std::ios::scientific);
-	streamF.setf( std::ios::fixed ); 
-	streamS.unsetf(std::ios::fixed);
-	streamS.setf( std::ios::scientific);
-	streamS << _value ;
-	streamF << _value ;
-	if (streamS.str().length() < streamF.str().length())
-	  out.setf(std::ios::scientific | std::ios::uppercase );
-	else
-	  out.setf(std::ios::fixed | std::ios::uppercase );
-
-      }
-
-      out << _value;
-
-      out.precision ( old_prec  );
-      out.flags     ( old_flags );
-    }
-  }
-  else
-    out << NOMAD::Double::_undef_str;
+    else
+        out << NOMAD::Double::_undef_str;
 }
 
 /*------------------------------------------*/
@@ -539,7 +552,30 @@ int NOMAD::Double::round ( void ) const
   if ( !_defined )
     throw Not_Defined ( "Double.cpp" , __LINE__ ,
 			"NOMAD::Double::round(): value not defined" );
-  return static_cast<int>(_value < 0.0 ? -floor(.5-_value) : floor(.5+_value));
+  return static_cast<int>(_value < 0.0 ? -std::floor(.5-_value) : std::floor(.5+_value));
+}
+
+
+/*------------------------------------------*/
+/*                  Ceil                  */
+/*------------------------------------------*/
+const NOMAD::Double NOMAD::Double::ceil ( void ) const
+{
+  if ( !_defined )
+    throw Not_Defined ( "Double.cpp" , __LINE__ ,
+			"NOMAD::Double::ceil(): value not defined" );
+  return NOMAD::Double(std::ceil(_value));
+}
+
+/*------------------------------------------*/
+/*                  Floor                  */
+/*------------------------------------------*/
+const NOMAD::Double NOMAD::Double::floor ( void ) const
+{
+  if ( !_defined )
+    throw Not_Defined ( "Double.cpp" , __LINE__ ,
+			"NOMAD::Double::floor(): value not defined" );
+  return NOMAD::Double(std::floor(_value));
 }
 
 /*------------------------------------------*/
@@ -582,25 +618,53 @@ const NOMAD::Double NOMAD::Double::sqrt ( void ) const
 /*---------------------------------------------*/
 /*  relative error with another NOMAD::Double  */
 /*---------------------------------------------*/
+//
+// This error computation is based on:
+//
+// A. Ziv. Relative distance–an error measure in round-off error analysis. Mathematics
+// of Computation, 39(160):563–569, 1982. doi:10.1090/S0025-5718-1982-0669649-2.
+//
+// The error will be in [0;2]
+//
+// Modified: 2012-06-07, S. Le Digabel
+//
 const NOMAD::Double NOMAD::Double::rel_err ( const Double & x ) const
 {
 	if ( !_defined || !x._defined )
 		throw Not_Defined ( "Double.cpp" , __LINE__ ,
 						   "NOMAD::Double::rel_err(): one of the values is not defined" );
 	
-	if ( _value * x._value < 0.0 )
-		return 1.0;
-	
-	if ( _value * x._value == 0.0 )
-		return fabs(_value-x._value); 
-	
-	if ( *this == x )
+	// 1. test if x==y:
+	if ( this == &x || _value == x._value )
 		return 0.0;
 	
-	double a = fabs ( _value   );
-	double b = fabs ( x._value );
+	double diff = fabs ( _value - x._value );
 	
-	return fabs ( _value - x._value ) / ( (a<b) ? b : a );
+	// 2. test if one of the values is zero:
+	if ( _value == 0.0 || x._value == 0.0 ) {
+		
+		// we return min{2,|x-y|} (instead of 1):
+		if ( diff > 2.0 )
+			return 2.0;
+		return diff;
+	}
+	
+	// 3. compute the original error:
+	double a   = fabs ( _value   );
+	double b   = fabs ( x._value );
+	double err = diff / ( (a<b) ? b : a );  
+	
+	// 4. test if we have opposite signs:
+	if ( _value * x._value < 0.0 ) {
+		
+		// the original error gives err in ]1;2] : we check if |x-y| < 1
+		// and if so we return |x-y| :
+		if ( diff < 1.0 )
+			return diff;
+	}
+	
+	// we return the original error:
+	return err;
 }
 
 /*---------------------------------------------------------------------*/
@@ -638,8 +702,7 @@ void NOMAD::Double::project_to_mesh ( const NOMAD::Double & ref   ,
   if ( !_defined )
     return;
 
-  NOMAD::Double v0 = 0.0;
-	v0 = ( ref._defined ) ? ref : v0;
+  NOMAD::Double v0 = ( ref._defined ) ? ref : 0.0;
   
   if ( delta._defined && delta != 0.0 ) {
 

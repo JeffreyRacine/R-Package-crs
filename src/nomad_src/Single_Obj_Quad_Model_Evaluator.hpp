@@ -1,5 +1,6 @@
+
 /*-------------------------------------------------------------------------------------*/
-/*  NOMAD - Nonlinear Optimization by Mesh Adaptive Direct search - version 3.6.2        */
+/*  NOMAD - Nonlinear Optimization by Mesh Adaptive Direct search - version (3.6.2.beta)*/
 /*                                                                                     */
 /*  Copyright (C) 2001-2012  Mark Abramson        - the Boeing Company, Seattle        */
 /*                           Charles Audet        - Ecole Polytechnique, Montreal      */
@@ -34,75 +35,50 @@
 /*  You can find information on the NOMAD software at www.gerad.ca/nomad               */
 /*-------------------------------------------------------------------------------------*/
 /**
-  \file   Parameter_Entries.cpp
-  \brief  Parameter entries (implementation)
-  \author Sebastien Le Digabel
-  \date   2010-04-05
-  \see    Parameter_Entries.hpp
-*/
-#include "Parameter_Entries.hpp"
-using namespace std; // zhenghua
+ \file   Single_Obj_Quad_Model_Evaluator.hpp
+ \brief  NOMAD::Evaluator subclass for quadratic model optimization (headers)
+ \author Christophe Tribes 
+ \date   2012-06-19
+ \see    Single_Obj_Quad_Model_Evaluator.cpp
+ */
+#ifndef __SINGLE_OBJ_QUAD_MODEL_EVALUATOR__
+#define __SINGLE_OBJ_QUAD_MODEL_EVALUATOR__
 
-/*--------------------------------------------*/
-/*                 destructor                 */
-/*--------------------------------------------*/
-NOMAD::Parameter_Entries::~Parameter_Entries ( void )
-{
-  std::multiset<NOMAD::Parameter_Entry*, NOMAD::Parameter_Entry_Comp>::iterator
-    end = _entries.end() , it;
-  for ( it = _entries.begin() ; it != end ; ++it)
-    delete *it;
+#include "Quad_Model_Evaluator.hpp"
+#include "Evaluator.hpp"
+
+namespace NOMAD {
+	
+	/// Single objective NOMAD::Evaluator subclass for quadratic model.
+	class Single_Obj_Quad_Model_Evaluator : public NOMAD::Quad_Model_Evaluator, public NOMAD::Evaluator {     
+				
+	public:
+		
+		/// Constructor.
+		/**
+		 \param p     Parameters -- \b IN.
+		 \param model Model      -- \b IN.
+		 */
+		Single_Obj_Quad_Model_Evaluator ( const NOMAD::Parameters & p     ,
+										 const NOMAD::Quad_Model & model   ) : NOMAD::Quad_Model_Evaluator(p,model),NOMAD::Evaluator(p){_is_model_evaluator=true;}
+		
+		/// Destructor.
+		virtual ~Single_Obj_Quad_Model_Evaluator ( void ){;}
+		
+		
+		///  Evaluate the blackboxes quad model at a given trial point
+		/**
+		 \param x          point to evaluate     -- \b IN/OUT.
+		 \param h_max      h_max for barrier     -- \b IN.
+		 \param count_eval Count eval if true    -- \b IN.
+		 */		
+		virtual bool eval_x ( NOMAD::Eval_Point   & x          ,
+							 const NOMAD::Double & h_max      ,
+							 bool                & count_eval   ) const {return Quad_Model_Evaluator::eval_x(x,h_max,count_eval);}
+		
+				
+		
+	};
 }
 
-/*--------------------------------------------*/
-/*      finds a specific entry in the set     */
-/*--------------------------------------------*/
-NOMAD::Parameter_Entry * NOMAD::Parameter_Entries::find ( const std::string & name ) const
-{
-  NOMAD::Parameter_Entry p (name);
-  std::multiset<NOMAD::Parameter_Entry*, NOMAD::Parameter_Entry_Comp>::const_iterator
-    it = _entries.find ( &p );
-  if ( it != _entries.end() )
-    return (*it);
-  return NULL;
-}
-
-/*----------------------------------------*/
-/*      inserts an entry into the set     */
-/*----------------------------------------*/
-void NOMAD::Parameter_Entries::insert ( NOMAD::Parameter_Entry * entry )
-{
-  NOMAD::Parameter_Entry * cur = find ( entry->get_name() );
-  if ( cur ) {
-    entry->set_unique ( false );
-    cur->set_unique   ( false );
-    while ( cur->get_next() )
-      cur = cur->get_next();
-    cur->set_next ( entry );
-  }
-  _entries.insert ( entry );
-}
-
-/*----------------------------------------*/
-/*       find a non-interpreted entry     */
-/*----------------------------------------*/
-NOMAD::Parameter_Entry * NOMAD::Parameter_Entries::find_non_interpreted ( void ) const
-{
-  std::multiset<NOMAD::Parameter_Entry*, NOMAD::Parameter_Entry_Comp>::const_iterator
-    end = _entries.end() , it;
-  for ( it = _entries.begin() ; it != end ; ++it )
-    if ( !(*it)->has_been_interpreted() )
-      return *it;
-  return NULL;
-}
-
-/*--------------------------------------------*/
-/*                   display                  */
-/*--------------------------------------------*/
-void NOMAD::Parameter_Entries::display ( const NOMAD::Display & out ) const
-{
-  std::multiset<NOMAD::Parameter_Entry*,NOMAD::Parameter_Entry_Comp>::const_iterator
-    end = _entries.end() , it;
-  for ( it = _entries.begin() ; it != end ; ++it )
-    out << **it << std::endl;
-}
+#endif

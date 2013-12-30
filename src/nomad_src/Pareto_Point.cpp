@@ -1,5 +1,5 @@
 /*-------------------------------------------------------------------------------------*/
-/*  NOMAD - Nonlinear Optimization by Mesh Adaptive Direct search - version 3.5.1        */
+/*  NOMAD - Nonlinear Optimization by Mesh Adaptive Direct search - version 3.6.2        */
 /*                                                                                     */
 /*  Copyright (C) 2001-2012  Mark Abramson        - the Boeing Company, Seattle        */
 /*                           Charles Audet        - Ecole Polytechnique, Montreal      */
@@ -41,7 +41,8 @@
   \see    Pareto_Point.hpp
 */
 #include "Pareto_Point.hpp"
-using namespace std;  //zhenghua
+using namespace std; // zhenghua
+
 /*--------------------------------------------------------*/
 /* comparison operator:                                   */
 /*  . supposes that argument fp is a Pareto_Point         */

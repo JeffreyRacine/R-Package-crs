@@ -1,5 +1,5 @@
 /*-------------------------------------------------------------------------------------*/
-/*  NOMAD - Nonlinear Optimization by Mesh Adaptive Direct search - version 3.5.1        */
+/*  NOMAD - Nonlinear Optimization by Mesh Adaptive Direct search - version 3.6.2        */
 /*                                                                                     */
 /*  Copyright (C) 2001-2012  Mark Abramson        - the Boeing Company, Seattle        */
 /*                           Charles Audet        - Ecole Polytechnique, Montreal      */
@@ -42,7 +42,8 @@
 */
 #include "Cache_File_Point.hpp"
 #include "Eval_Point.hpp"
-using namespace std;  //zhenghua
+using namespace std; // zhenghua
+
 /*-----------------------------------*/
 /*   static members initialization   */
 /*-----------------------------------*/
@@ -82,65 +83,68 @@ NOMAD::Cache_File_Point::Cache_File_Point ( const NOMAD::Eval_Point & x )
     _bbo_def   ( NULL     ) ,
     _bbo_index ( NULL     )
 {
-  int i;
-  
-  // eval_status:
-  switch ( x.get_eval_status() ) {
-  case NOMAD::EVAL_FAIL:
-    _eval_status = 0;
-    break;
-  case NOMAD::EVAL_OK:
-    _eval_status = 1;
-    break;
-  case NOMAD::EVAL_IN_PROGRESS:
-    _eval_status = 2;
-    break;
-  case NOMAD::UNDEFINED_STATUS:
-    _eval_status = 3;
-    break;
-  }
-
-  // inputs:
-  if ( _n > 0 ) {
-    _coords = new double [_n];
-    for ( i = 0 ; i < _n ; ++i )
-      _coords[i] = x[i].value();
-  }
-  else
-    _n = 0;
-
-  // outputs:
-  const NOMAD::Point & bbo = x.get_bb_outputs();
-  _m = bbo.size();
-  if ( _m > 0 ) {
-
-    std::vector<double> vd;
-    std::vector<int>    vi;
-
-    for ( i = 0 ; i < _m ; ++i )
-      if ( bbo[i].is_defined() ) {
-	vd.push_back ( bbo[i].value() );
-	vi.push_back ( i              );
-      }
-
-    _m_def = static_cast<int> ( vd.size() );
-    if ( _m_def > 0 ) {
-      _bbo_def   = new double [_m_def];
-      _bbo_index = new int    [_m_def];
-      for ( i = 0 ; i < _m_def ; ++i ) {
-	_bbo_def  [i] = vd[i];
-	_bbo_index[i] = vi[i];
-      }
-    }
-  }
-  else
-    _m = 0;
-
+	int i;
+	
+	// eval_status:
+	switch ( x.get_eval_status() ) {
+		case NOMAD::EVAL_FAIL:
+			_eval_status = 0;
+			break;
+		case NOMAD::EVAL_OK:
+			_eval_status = 1;
+			break;
+		case NOMAD::EVAL_IN_PROGRESS:
+			_eval_status = 2;
+			break;
+		case NOMAD::UNDEFINED_STATUS:
+			_eval_status = 3;
+			break;
+		case NOMAD::EVAL_USER_REJECT:
+			_eval_status = 3;
+			break;
+	}
+	
+	// inputs:
+	if ( _n > 0 ) {
+		_coords = new double [_n];
+		for ( i = 0 ; i < _n ; ++i )
+			_coords[i] = x[i].value();
+	}
+	else
+		_n = 0;
+	
+	// outputs:
+	const NOMAD::Point & bbo = x.get_bb_outputs();
+	_m = bbo.size();
+	if ( _m > 0 ) {
+		
+		std::vector<double> vd;
+		std::vector<int>    vi;
+		
+		for ( i = 0 ; i < _m ; ++i )
+			if ( bbo[i].is_defined() ) {
+				vd.push_back ( bbo[i].value() );
+				vi.push_back ( i              );
+			}
+		
+		_m_def = static_cast<int> ( vd.size() );
+		if ( _m_def > 0 ) {
+			_bbo_def   = new double [_m_def];
+			_bbo_index = new int    [_m_def];
+			for ( i = 0 ; i < _m_def ; ++i ) {
+				_bbo_def  [i] = vd[i];
+				_bbo_index[i] = vi[i];
+			}
+		}
+	}
+	else
+		_m = 0;
+	
 #ifdef MEMORY_DEBUG
-  ++NOMAD::Cache_File_Point::_cardinality;
-  if ( NOMAD::Cache_File_Point::_cardinality >
-       NOMAD::Cache_File_Point::_max_cardinality )
-    ++NOMAD::Cache_File_Point::_max_cardinality;
+	++NOMAD::Cache_File_Point::_cardinality;
+	if ( NOMAD::Cache_File_Point::_cardinality >
+		NOMAD::Cache_File_Point::_max_cardinality )
+		++NOMAD::Cache_File_Point::_max_cardinality;
 #endif
 }
 

@@ -1,5 +1,5 @@
 /*-------------------------------------------------------------------------------------*/
-/*  NOMAD - Nonlinear Optimization by Mesh Adaptive Direct search - version 3.5.1        */
+/*  NOMAD - Nonlinear Optimization by Mesh Adaptive Direct search - version 3.6.2        */
 /*                                                                                     */
 /*  Copyright (C) 2001-2012  Mark Abramson        - the Boeing Company, Seattle        */
 /*                           Charles Audet        - Ecole Polytechnique, Montreal      */
@@ -43,6 +43,10 @@
 #ifndef __UTILS__
 #define __UTILS__
 
+#ifdef USE_MPI
+#include <mpi.h>
+#endif
+
 #include <cctype>
 #include <vector>
 #include <set>
@@ -58,11 +62,8 @@
 #include <unistd.h>
 #endif
 
-#ifdef USE_MPI
-#include <mpi.h>
-#endif
-
 #include "defines.hpp"
+
 
 namespace NOMAD {
 
@@ -202,8 +203,19 @@ namespace NOMAD {
      least one direction in the set is
      of type Ortho-MADS.
   */
-  bool dirs_are_orthomads ( const std::set<NOMAD::direction_type> & dir_types );
+  bool dirs_have_orthomads ( const std::set<NOMAD::direction_type> & dir_types );
 
+	/// Check if a set of directions include Ortho-MADS N+1 direction.
+	/**
+     \param dir_types Set of direction types -- \b IN.
+     \return A boolean equal to \c true if at
+     least one direction in the set is
+     of type Ortho-MADS N+1.
+	 */
+	bool dirs_have_orthomads_np1 ( const std::set<NOMAD::direction_type> & dir_types );	
+
+
+	
   /// Construct the n first prime numbers.
   /**
      \param n      The integer \c n-- \b IN.
@@ -257,6 +269,15 @@ namespace NOMAD {
   */
   std::string itos ( int i );
 
+    
+    /// Transform a unsigned long (size_t) into a string.
+    /**
+     \param i The unsigned long -- \b IN.
+     \return  The string.
+     */
+    std::string itos ( size_t i );
+
+    
   /// Put a string into upper cases.
   /**
      \param s The string -- \b IN/OUT.
@@ -300,6 +321,15 @@ namespace NOMAD {
      \return    A boolean equal to \c true if \c s2 is in \c s1.
   */
   bool string_find ( const std::string & s1 , const std::string & s2 );
+	
+	/// Search if a string matches an element in a list of string.
+	/**
+     \param  s  A string -- \b IN.
+     \param  ls A list of strings -- \b IN.
+     \return    A boolean equal to \c true if \c s matches an element in \c ls.
+	 */
+	bool string_match ( const std::string & s , const std::list<std::string> & ls );
+	
 
   /// SVD decomposition.
   /**
@@ -321,6 +351,21 @@ namespace NOMAD {
 			   int           m              ,
 			   int           n              ,
 			   int           max_mpn = 1500   );
+	
+	
+	// Get rank of a matrix  using SVD decomposition
+	/**
+     - The \c mxn \c M matrix is decomposed into \c M=U.W.V'. The rank equals the size of W
+     \param M         The input \c mxn matrix								-- \b IN.
+     \param m         Number of rows in M                                 -- \b IN.
+     \param n         Number of columns in M                              -- \b IN.
+     \return The rank>0 if the decomposition worked else 0.
+	 */	
+	int get_rank(double **M,
+				 size_t m,
+				 size_t n);
+	
+	
 }
 
 #endif

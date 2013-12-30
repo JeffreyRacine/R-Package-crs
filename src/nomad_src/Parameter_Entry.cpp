@@ -1,5 +1,5 @@
 /*-------------------------------------------------------------------------------------*/
-/*  NOMAD - Nonlinear Optimization by Mesh Adaptive Direct search - version 3.5.1        */
+/*  NOMAD - Nonlinear Optimization by Mesh Adaptive Direct search - version 3.6.2        */
 /*                                                                                     */
 /*  Copyright (C) 2001-2012  Mark Abramson        - the Boeing Company, Seattle        */
 /*                           Charles Audet        - Ecole Polytechnique, Montreal      */
@@ -41,7 +41,8 @@
   \see    Parameter_Entry.hpp
 */
 #include "Parameter_Entry.hpp"
-using namespace std;  //zhenghua
+using namespace std; // zhenghua
+
 /*-----------------------------------*/
 /*  . constructor (from a string)    */
 /*  . ignores all entries after '#'  */
@@ -57,6 +58,10 @@ NOMAD::Parameter_Entry::Parameter_Entry ( const std::string & entry           ,
   std::string        s;
   std::istringstream in ( entry );
   in >> _name;
+	
+	if (_name.size()==0)
+		return;
+	
   if ( remove_comments && _name[0] == '#' )
     _name.clear();
   else {

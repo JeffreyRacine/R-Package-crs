@@ -1,5 +1,5 @@
 /*-------------------------------------------------------------------------------------*/
-/*  NOMAD - Nonlinear Optimization by Mesh Adaptive Direct search - version 3.5.1        */
+/*  NOMAD - Nonlinear Optimization by Mesh Adaptive Direct search - version 3.6.2        */
 /*                                                                                     */
 /*  Copyright (C) 2001-2012  Mark Abramson        - the Boeing Company, Seattle        */
 /*                           Charles Audet        - Ecole Polytechnique, Montreal      */
@@ -244,6 +244,20 @@ namespace NOMAD {
        \return An integer with the rounding result.
     */
     int round ( void ) const;
+	  
+
+	/// Ceil.
+    /**
+       \return A NOMAD::double with the rounding result.
+    */
+    const Double ceil ( void ) const;
+
+	/// Floor.
+    /**
+       \return A NOMAD::double with the rounding result.
+    */
+    const Double floor ( void ) const;
+
 
     /// Absolute value.
     /**

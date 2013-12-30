@@ -1,5 +1,5 @@
 /*-------------------------------------------------------------------------------------*/
-/*  NOMAD - Nonlinear Optimization by Mesh Adaptive Direct search - version 3.5.1        */
+/*  NOMAD - Nonlinear Optimization by Mesh Adaptive Direct search - version 3.6.2        */
 /*                                                                                     */
 /*  Copyright (C) 2001-2012  Mark Abramson        - the Boeing Company, Seattle        */
 /*                           Charles Audet        - Ecole Polytechnique, Montreal      */
@@ -41,8 +41,7 @@
   \see    Directions.hpp
 */
 #include "Directions.hpp"
-#include "RNG.hpp"
-using namespace std;  //zhenghua
+using namespace std; // zhenghua
  
 /*-----------------------------------*/
 /*   static members initialization   */
@@ -69,8 +68,6 @@ NOMAD::Directions::Directions
    _lt_initialized     ( false              ) ,
    _primes             ( NULL               ) ,
    _halton_seed        ( halton_seed        ) ,
-   _ortho_np1_cnt1     ( 0                  ) ,
-   _ortho_np1_cnt2     ( 0                  ) ,
    _out                ( out                )
 {
   // check the directions:
@@ -80,9 +77,9 @@ NOMAD::Directions::Directions
     _sec_poll_dir_types.clear();
 
   // is_orthomads: true if at least one direction is of type Ortho-MADS:
-  _is_orthomads = NOMAD::dirs_are_orthomads ( _direction_types );
+  _is_orthomads = NOMAD::dirs_have_orthomads ( _direction_types );
   if ( !_is_orthomads )
-    _is_orthomads = NOMAD::dirs_are_orthomads ( _sec_poll_dir_types );
+    _is_orthomads = NOMAD::dirs_have_orthomads ( _sec_poll_dir_types );
 }
 
 /*---------------------------------------------------------*/
@@ -204,591 +201,502 @@ void NOMAD::Directions::compute_binary_directions
 void NOMAD::Directions::compute ( std::list<NOMAD::Direction> & dirs               ,
 				  NOMAD::poll_type              poll               ,
 				  const NOMAD::Point          & poll_center        ,
-				  const NOMAD::Point          * first_success      ,  // can be NULL
 				  int                           mesh_index         ,
 				  int                           halton_index       ,
 				  const NOMAD::Direction      & feas_success_dir   ,
 				  const NOMAD::Direction      & infeas_success_dir   )
 {
-  dirs.clear();
-
-  // categorical variables: do nothing:
-  if ( _is_categorical )
-    return;
-
-  // binary variables: we use special directions:
-  if ( _is_binary ) {
-    compute_binary_directions ( dirs );
-    return;
-  }
-
-  NOMAD::Double                               pow_gps , cst;
-  const NOMAD::Direction                    * bl;
-  NOMAD::Direction                          * pd;
-  int                                         i , j , k , hat_i;
-  std::list<NOMAD::Direction>::const_iterator it2 , end2;
-
-  /*-----------------------------------*/
-  /*  loop on the types of directions  */
-  /*-----------------------------------*/
-  const std::set<NOMAD::direction_type> & dir_types =
-    (poll == NOMAD::PRIMARY) ? _direction_types : _sec_poll_dir_types;
-
-  std::set<NOMAD::direction_type>::const_iterator it , end = dir_types.end() ;
-  for ( it = dir_types.begin() ; it != end ; ++it ) {
-
-    if ( *it == NOMAD::UNDEFINED_DIRECTION ||
-	 *it == NOMAD::NO_DIRECTION        ||
-	 *it == NOMAD::MODEL_SEARCH_DIR       )
-      continue;
-
-    /*--------------*/
-    /*  Ortho-MADS  */
-    /*--------------*/
-    if ( NOMAD::dir_is_orthomads (*it) ) {
-
-      // Ortho-MADS initializations:
-      if ( !_primes )
-	ortho_mads_init ( _halton_seed );
-
-      // halton index:
-      if ( halton_index < 0 ) {	
-	int max_halton_index = NOMAD::Mesh::get_max_halton_index();
-	halton_index = ( mesh_index >= NOMAD::Mesh::get_max_mesh_index() ) ?
-	  mesh_index + _halton_seed :
-	  max_halton_index + 1;  
-	if ( halton_index > max_halton_index )
-	  NOMAD::Mesh::set_max_halton_index ( halton_index );
-      }
-  
-      NOMAD::Direction halton_dir ( _nc , 0.0 , *it );
-      NOMAD::Double    alpha_t_l;
-
-      if ( compute_halton_dir ( halton_index ,
-				mesh_index   ,
-				alpha_t_l    ,
-				halton_dir     ) ) {
-
-		  
-#ifdef DEBUG
-	_out << std::endl
-	     << NOMAD::open_block ( "compute Ortho-MADS directions with" )
-	     << "type              = " << *it          << std::endl
-	     << "Halton index (tk) = " << halton_index << std::endl
-	     << "mesh index   (lk) = " << mesh_index   << std::endl
-	     << "alpha     (tk,lk) = " << alpha_t_l    << std::endl
-	     << "Halton direction  = ( ";
-	halton_dir.NOMAD::Point::display ( _out , " " , -1 , -1 );
-	_out << " )" << std::endl << NOMAD::close_block();
-#endif
-
-	// Ortho-MADS 2n:
-	// --------------
-	if ( *it == NOMAD::ORTHO_2N ) {
-
-	  // creation of the 2n directions:
-	  NOMAD::Direction ** H = new NOMAD::Direction * [2*_nc];
-	  for ( i = 0 ; i < _nc ; ++i ) {
-	    dirs.push_back ( NOMAD::Direction ( _nc , 0.0 , NOMAD::ORTHO_2N ) );
-	    H[i    ] = &(*(--dirs.end()));
-	    dirs.push_back ( NOMAD::Direction ( _nc , 0.0 , NOMAD::ORTHO_2N ) );
-	    H[i+_nc] = &(*(--dirs.end()));
-	  }
-
-	  // Householder transformations on the 2n directions:
-	  householder ( halton_dir ,
-			true       ,     // complete_to_2n = true
-			H            );
-
-	  delete [] H;
-		
-	}
-
-	// Ortho-MADS n+1: based on an idea from Andrea Ianni
-	// ---------------
-	else if ( *it == NOMAD::ORTHO_NP1 ) {
-
-	  // creation of the n directions:
-	  NOMAD::Direction ** H = new NOMAD::Direction * [_nc];
-	  for ( i = 0 ; i < _nc ; ++i ) {
-	    dirs.push_back ( NOMAD::Direction ( _nc , 0.0 , NOMAD::ORTHO_NP1 ) );
-	    H[i] = &(*(--dirs.end()));
-	  }
-
-	  // Householder transformations on the n directions:
-	  householder ( halton_dir ,
-			false      ,    // complete_to_2n = false
-			H            );
-
-	  // target direction:
-	  NOMAD::Point target_dir;
-	  compute_ortho_target_dir ( feas_success_dir   ,
-				     infeas_success_dir ,
-				     first_success      ,
-				     poll_center        ,
-				     target_dir           );
-
-#ifdef DEBUG
-	  {
-	    _out << std::endl
-		 << NOMAD::open_block ( "Ortho-MADS n+1 directions" )
-		 << "feas succ direction   = ";
-	    if ( feas_success_dir.is_defined() )
-	      feas_success_dir.NOMAD::Point::display ( _out , " " , -1 , -1 );
-	    else
-	      _out << "undefined";
-	    _out << std::endl
-		 << "infeas succ direction = ";
-	    if ( infeas_success_dir.is_defined() )
-	      infeas_success_dir.NOMAD::Point::display ( _out , " " , -1 , -1 );
-	    else
-	      _out << "undefined";
-	    _out << std::endl << "first_success         = ";
-	    if ( first_success )
-	      _out << "( " << first_success << " )";
-	    else
-	      _out << "NULL";
-	    _out  << std::endl
-		 << "poll center           = ( " << poll_center  << " )" << std::endl
-		 << "target direction      = ( " << target_dir   << " )" << std::endl
-		 << NOMAD::open_block ( "directions" );
-	  }
-#endif
-
-	  // select nc directions in H or their opposites
-	  // (in the subspace defined by the target directions):
-
-	  NOMAD::Double dot_product;
-	  bool          opposite;
-
-	  for ( i = 0 ; i < _nc ; ++i ) {
-
-	    dot_product = target_dir.dot_product ( *(H[i]) );
-
-	    if ( dot_product > 0.0 )
-	      opposite = false;
-	    else if ( dot_product < 0.0 )
-	      opposite = true;
-	    else {
-
-			((_ortho_np1_cnt2%2)==1) ? opposite=false:opposite=true;
-
-	      ++_ortho_np1_cnt2;
-	      if ( _ortho_np1_cnt2 == INT_MAX )
-		_ortho_np1_cnt2 = 0;
-	    }
-
-#ifdef DEBUG
-	    _out << "dir #";
-	    _out.display_int_w ( i , _nc );
-	    _out << " = ( ";
-	    H[i]->NOMAD::Point::display ( _out , " " , -1 , -1 );
-	    _out << " ) dot_product=" << dot_product;
-#endif
-	    if ( opposite ) {
-	      for ( j = 0 ; j < _nc ; ++j )
-		(*(H[i]))[j] *= -1.0;
-#ifdef DEBUG
-	      _out << " --> new dir = ( ";
-	      H[i]->NOMAD::Point::display ( _out , " " , -1 , -1 );
-	      _out << " )";
-#endif
-	    }
-
-#ifdef DEBUG
-	    _out << std::endl;
-#endif
-	  }
-	  
-	  // compute the (n+1)th direction as the opposite sum of the n first directions:
-	  NOMAD::Direction new_dir ( _nc , 0.0 , NOMAD::ORTHO_NP1 );
-	  for ( i = 0 ; i < _nc ; ++i ) {
-	    for ( j = 0 ; j < _nc ; ++j )
-	      new_dir[i] -= (*(H[j]))[i];
-	  }
-
-	  delete [] H;
-
-	  dirs.push_back ( new_dir );
-
-#ifdef DEBUG
-	  _out << std::endl << "(n+1)th direction = ( ";
-	  new_dir.NOMAD::Point::display ( _out , " " , -1 , -1 );
-	  _out << " )" << std::endl << close_block() << close_block() << std::endl;
-#endif
-
-	}
-
-	// Ortho-MADS 1 or Ortho-MADS 2:
-	// -----------------------------
-	else {
-	  dirs.push_back ( halton_dir );
-	  if ( *it == NOMAD::ORTHO_2 )
-	    dirs.push_back ( -halton_dir );
-	}
-      }
-    }
-
-    /*-----------*/
-    /*  LT-MADS  */
-    /*-----------*/
-    else if ( NOMAD::dir_is_ltmads (*it) ) {
-
-      if ( !_lt_initialized)
-	lt_mads_init();
-
-      bl = get_bl ( mesh_index , *it , hat_i );
-      
-      // LT-MADS 1 or LT-MADS 2: -b(l) and/or b(l):
-      // ------------------------------------------
-      if ( *it == NOMAD::LT_1 || *it == NOMAD::LT_2 ) {
-	dirs.push_back ( - *bl );
-	if ( *it == NOMAD::LT_2 )
-	  dirs.push_back ( *bl );
-      }
-
-      // LT-MADS 2n or LT-MADS n+1:
-      // --------------------------
-      else {
-
-	// row permutation vector:
-	int * row_permutation_vector  = new int [_nc];
-	row_permutation_vector[hat_i] = hat_i;
-
-	NOMAD::Random_Pickup rp ( _nc );
-
-	for ( i = 0 ; i < _nc ; ++i )
-	  if ( i != hat_i ) {
-	    j = rp.pickup();
-	    if ( j == hat_i )
-	      j = rp.pickup();
-	    row_permutation_vector[i] = j;
-	  }
- 
-	rp.reset();
-
-	for ( j = 0 ; j < _nc ; ++j ) {
-
-	  i = rp.pickup();
-
-	  if ( i != hat_i ) {
-
-	    dirs.push_back ( NOMAD::Direction ( _nc , 0.0 , *it ) );
-	    pd = &(*(--dirs.end()));
-
-	    create_lt_direction ( mesh_index , *it , i , hat_i , pd );
-
-	    permute_coords ( *pd , row_permutation_vector );
-	  }
-	  else
-	    dirs.push_back ( *bl );
-
-	  // completion to maximal basis:
-	  if ( *it == NOMAD::LT_2N )
-	    dirs.push_back ( NOMAD::Direction ( - *(--dirs.end()) , NOMAD::LT_2N ) );
-	}
-
-	delete [] row_permutation_vector;
-
-	// completion to minimal basis:
-	if ( *it == NOMAD::LT_NP1 ) {
-
-	  dirs.push_back ( NOMAD::Direction ( _nc , 0.0 , NOMAD::LT_NP1 ) );
-	  pd = &(*(--dirs.end()));
-
-	  end2 = --dirs.end();
-	  for ( it2 = dirs.begin() ; it2 != end2 ; ++it2 ) {
-	    for ( i = 0 ; i < _nc ; ++i )
-	      (*pd)[i] -= (*it2)[i];
-	  }
-	}
-      }
-    }
-
-    /*-------*/
-    /*  GPS  */
-    /*-------*/
-    else {
-
-      // GPS for binary variables: should'nt be here:
-      if ( *it == NOMAD::GPS_BINARY ) {
-#ifdef DEBUG
-	_out << std::endl << "Warning (" << "Directions.cpp" << ", " << __LINE__
-	     << "): tried to generate binary directions at the wrong place)"
-	     << std::endl << std::endl;
-#endif
+	
 	dirs.clear();
-	return;
-      }
-
-      // this value represents the non-zero values in GPS directions
-      // (it is tau^{|ell_k|/2}, and it is such that Delta^m_k * pow_gps = Delta^p_k):
-      if ( !pow_gps.is_defined() )
-	pow_gps = pow ( NOMAD::Mesh::get_mesh_update_basis() , abs(mesh_index) / 2.0 );
-
-      // GPS 2n, static:
-      // ---------------
-      if ( *it == NOMAD::GPS_2N_STATIC ) {
-
-	for ( i = 0 ; i < _nc ; ++i ) {
-
-	  dirs.push_back ( NOMAD::Direction ( _nc , 0.0 , NOMAD::GPS_2N_STATIC ) );
-	  pd = &(*(--dirs.end()));
-	  (*pd)[i] = pow_gps;
-
-	  dirs.push_back ( NOMAD::Direction ( _nc , 0.0 , NOMAD::GPS_2N_STATIC ) );
-	  pd = &(*(--dirs.end()));
-	  (*pd)[i] = -pow_gps;
-	}
-      }
-
-      // GPS 2n, random:
-      // ---------------
-      else if ( *it == NOMAD::GPS_2N_RAND ) {
 	
-	int v , cnt;
-
-	std::list  <int>::const_iterator end3;
-	std::list  <int>::iterator       it3;
-	std::list  <int> rem_cols;
-	std::vector<int> rem_col_by_row ( _nc );
-
-	// creation of the 2n directions:
-	std::vector<NOMAD::Direction *> pdirs ( 2 * _nc );
-
-	for ( i = 0 ; i < _nc ; ++i ) {
-
-	  dirs.push_back ( NOMAD::Direction ( _nc , 0.0 , NOMAD::GPS_2N_RAND ) );
-	  pdirs[i] = &(*(--dirs.end()));
-	  (*pdirs[i])[i] = pow_gps;
-
-	  dirs.push_back ( NOMAD::Direction ( _nc , 0.0 , NOMAD::GPS_2N_RAND ) );
-	  pdirs[i+_nc] = &(*(--dirs.end()));
-	  (*pdirs[i+_nc])[i] = -pow_gps;
-
-	  rem_cols.push_back(i);
-	  rem_col_by_row[i] = i;
-	}
-      
-	// random perturbations:
-	for ( i = 1 ; i < _nc ; ++i ) {
-     	  if ( rem_col_by_row[i] > 0 ) { 
-	    v = NOMAD::RNG::rand()%3 - 1; // v in { -1 , 0 , 1 }   
-	    if ( v ) {
-
-	      // we decide a (i,j) couple:
-	      k    = NOMAD::RNG::rand()%(rem_col_by_row[i]); 
-	      cnt  = 0;
-	      end3 = rem_cols.end();
-	      it3  = rem_cols.begin();
-	      while ( cnt != k ) {
-		++it3;
-		++cnt;
-	      }
-	      j = *it3;
-
-	      // the perturbation:
-	      (*pdirs[i])[j] = (*pdirs[j+_nc])[i] = -v * pow_gps;
-	      (*pdirs[j])[i] = (*pdirs[i+_nc])[j] =  v * pow_gps;
-	      
-	      // updates:
-	      rem_cols.erase(it3);      
-	      it3 = rem_cols.begin();
-	      while ( *it3 != i )
-		++it3;
-	      rem_cols.erase(it3);
-	      for ( k = i+1 ; k < _nc ; ++k )
-		rem_col_by_row[k] -= j<k ? 2 : 1;
-	    }       
-	  }
-	}
-      }
-      
-      // GPS n+1, static:
-      // ----------------
-      else if ( *it == NOMAD::GPS_NP1_STATIC ) {
-
-	// (n+1)^st direction:
-	dirs.push_back ( NOMAD::Direction ( _nc , -pow_gps , NOMAD::GPS_NP1_STATIC ) );
-
-	// first n directions:
-	for ( i = 0 ; i < _nc ; ++i ) {
-	  dirs.push_back ( NOMAD::Direction ( _nc , 0.0 , NOMAD::GPS_NP1_STATIC ) );
-	  pd = &(*(--dirs.end()));
-	  (*pd)[i] = pow_gps;
-	}
-      }
-
-      // GPS n+1, random:
-      // ----------------
-      else if ( *it == NOMAD::GPS_NP1_RAND ) {
-
-	// (n+1)^st direction:
-	dirs.push_back ( NOMAD::Direction ( _nc , 0.0 , NOMAD::GPS_NP1_RAND ) );
-	NOMAD::Direction * pd1 = &(*(--dirs.end()));
+	// categorical variables: do nothing:
+	if ( _is_categorical )
+		return;
 	
-	NOMAD::Double d;
-
-	// first n directions:
-	for ( i = 0 ; i < _nc ; ++i ) {
-	  dirs.push_back ( NOMAD::Direction ( _nc , 0.0 , NOMAD::GPS_NP1_RAND ) );
-	  pd = &(*(--dirs.end()));
-	  
-	  d = NOMAD::RNG::rand()%2 ? -pow_gps : pow_gps; 
-	  (*pd )[i] =  d;
-	  (*pd1)[i] = -d;
+	// binary variables: we use special directions:
+	if ( _is_binary )
+	{
+		compute_binary_directions ( dirs );
+		return;
 	}
-      }
-
-      // GPS n+1, static, uniform angles:
-      // --------------------------------
-      else if ( *it == NOMAD::GPS_NP1_STATIC_UNIFORM ) {
-
-	cst = pow_gps * sqrt(static_cast<double>(_nc)*(_nc+1))/_nc;
-
-	// n first directions:
-	for ( j = _nc-1 ; j >= 0 ; --j ) {
-	  dirs.push_back ( NOMAD::Direction ( _nc , 0.0 , NOMAD::GPS_NP1_STATIC_UNIFORM ) );
-	  pd = &(*(--dirs.end()));
-	  
-	  k = _nc-j-1;
-
-	  for ( i = 0 ; i < k ; ++i )
-	    (*pd)[i] = -cst / sqrt(static_cast<double>(_nc-i)*(_nc-i+1));
-
-	  (*pd)[k] = (cst * (j+1)) / sqrt(static_cast<double>(j+1)*(j+2));
-
-	}
-
-	// (n+1)^st direction:
-	dirs.push_back ( NOMAD::Direction ( _nc , 0.0 , NOMAD::GPS_NP1_STATIC_UNIFORM ) );
-	pd = &(*(--dirs.end()));
-	for ( i = 0 ; i < _nc ; ++i )
-	  (*pd)[i] = -cst / sqrt(static_cast<double>(_nc-i)*(_nc-i+1));
-
-      }
-
-      // GPS n+1, random, uniform angles:
-      // --------------------------------
-      // (we apply the procedure defined in
-      // "Pattern Search Methods for user-provided points:
-      // application to molecular geometry problems",
-      // by Alberto, Nogueira, Rocha and Vicente,
-      // SIOPT 14-4, 1216-1236, 2004, doi:10.1137/S1052623400377955)
-      else if ( *it == NOMAD::GPS_NP1_RAND_UNIFORM ) {
-
-	cst = pow_gps * sqrt(static_cast<double>(_nc)*(_nc+1))/_nc;
-
-	// n first directions:
-	for ( j = _nc-1 ; j >= 0 ; --j ) {
-	  dirs.push_back ( NOMAD::Direction ( _nc , 0.0 , NOMAD::GPS_NP1_STATIC_UNIFORM ) );
-	  pd = &(*(--dirs.end()));
-
-	  k = _nc-j-1;
-
-	  for ( i = 0 ; i < k ; ++i )
-	    (*pd)[i] = -cst / sqrt(static_cast<double>(_nc-i)*(_nc-i+1));
-
-	  (*pd)[k] = (cst * (j+1)) / sqrt(static_cast<double>(j+1)*(j+2));
-
-	}
-
-	// (n+1)^st direction:
-	dirs.push_back ( NOMAD::Direction ( _nc , 0.0 , NOMAD::GPS_NP1_STATIC_UNIFORM ) );
-	pd = &(*(--dirs.end()));
-	for ( i = 0 ; i < _nc ; ++i )
-	  (*pd)[i] = -cst / sqrt(static_cast<double>(_nc-i)*(_nc-i+1));
-
-	// random perturbations:
-	NOMAD::Random_Pickup                  rp   ( _nc );
-	std::vector<bool>                     done ( _nc );
-	bool                                  chg_sgn;
-	std::list<NOMAD::Direction>::iterator it;
-	NOMAD::Double                         tmp;
-
-	end2 = dirs.end();
-	for ( i = 0 ; i < _nc ; ++i )
-	  done[i] = false;
-
-	for ( i = 0 ; i < _nc ; ++i ) {
-    
-	  k = rp.pickup();
-
-	  if ( i != k && !done[i] ) {
-
-	    chg_sgn = ( NOMAD::RNG::rand()%2 != 0 );  
-
-	    for ( it = dirs.begin() ; it != end2 ; ++it ) {
-	      tmp      = (*it)[i];
-	      (*it)[i] = ( chg_sgn ? -1.0 : 1.0 ) * (*it)[k];
-	      (*it)[k] = tmp;
-	    }
-
-	    done[i] = done[k] = true;
-	  }
-	  else
-	    if ( NOMAD::RNG::rand()%2 )  
-	      for ( it = dirs.begin() ; it != end2 ; ++it )
-		(*it)[i] = -(*it)[i];
-	}
-      }
-    }
-  } // end of loop on the types of directions
+	
+	NOMAD::Double                               pow_gps , cst;
+	const NOMAD::Direction                    * bl;
+	NOMAD::Direction                          * pd;
+	int                                         i , j , k , hat_i;
+	std::list<NOMAD::Direction>::const_iterator it2 , end2;
+	
+	/*-----------------------------------*/
+	/*  loop on the types of directions  */
+	/*-----------------------------------*/
+	const std::set<NOMAD::direction_type> & dir_types =
+    (poll == NOMAD::PRIMARY) ? _direction_types : _sec_poll_dir_types;
+	
+	std::set<NOMAD::direction_type>::const_iterator it , end = dir_types.end() ;
+	for ( it = dir_types.begin() ; it != end ; ++it )
+	{
+		
+		if ( *it == NOMAD::UNDEFINED_DIRECTION ||
+			*it == NOMAD::NO_DIRECTION        ||
+			*it == NOMAD::MODEL_SEARCH_DIR       )
+			continue;
+		
+		/*--------------*/
+		/*  Ortho-MADS  */
+		/*--------------*/
+		if ( NOMAD::dir_is_orthomads (*it) )
+		{
+			
+			// Ortho-MADS initializations:
+			if ( !_primes )
+				ortho_mads_init ( _halton_seed );
+			
+			// halton index:
+			if ( halton_index < 0 )
+			{	
+				int max_halton_index = NOMAD::Mesh::get_max_halton_index();
+				
+				// mesh_index+ _halton_seed -> used to make sure that the sequence of strictly increasing mesh_index produces a non biased sequence of halton_index 
+				halton_index = ( mesh_index >= NOMAD::Mesh::get_max_mesh_index() ) ? mesh_index + _halton_seed : max_halton_index + 1;  
+				if ( halton_index > max_halton_index )
+					NOMAD::Mesh::set_max_halton_index ( halton_index );
+			}
+			
+			NOMAD::Direction halton_dir ( _nc , 0.0 , *it );
+			NOMAD::Double    alpha_t_l;
+			
+			if ( compute_halton_dir ( halton_index ,
+									 mesh_index   ,
+									 alpha_t_l    ,
+									 halton_dir     ) ) 
+			{
+				
+#ifdef DEBUG
+				_out << std::endl
+				<< NOMAD::open_block ( "compute Ortho-MADS directions with" )
+				<< "type              = " << *it          << std::endl
+				<< "Halton index (tk) = " << halton_index << std::endl
+				<< "mesh index   (lk) = " << mesh_index   << std::endl
+				<< "alpha     (tk,lk) = " << alpha_t_l    << std::endl
+				<< "Halton direction  = ( ";
+				halton_dir.NOMAD::Point::display ( _out , " " , -1 , -1 );
+				_out << " )" << std::endl << NOMAD::close_block();
+#endif
+				
+				
+				
+				// Ortho-MADS 2n and n+1:
+				// ----------------------
+				if ( *it == NOMAD::ORTHO_2N || *it == NOMAD::ORTHO_NP1_QUAD || *it == NOMAD::ORTHO_NP1_NEG )
+				{
+					
+					// creation of the 2n directions:
+					// For ORTHO_NP1 the reduction from 2N to N+1 is done in MADS::POLL
+					NOMAD::Direction ** H = new NOMAD::Direction * [2*_nc];
+					
+					// Ordering D_k alternates Hk and -Hk instead of [H_k -H_k] 
+					for ( i = 0 ; i < _nc ; ++i )
+					{
+						dirs.push_back ( NOMAD::Direction ( _nc , 0.0 , *it ) );
+						H[i    ] = &(*(--dirs.end()));
+						dirs.push_back ( NOMAD::Direction ( _nc , 0.0 , *it ) );
+						H[i+_nc] = &(*(--dirs.end()));
+					}
+					
+					// Householder transformations on the 2n directions:
+					householder ( halton_dir ,
+								 true       ,     // complete_to_2n = true
+								 H            );
+					
+					delete [] H;
+					
+					
+				}
+				
+				// Ortho-MADS 1 or Ortho-MADS 2:
+				// -----------------------------
+				else
+				{
+					dirs.push_back ( halton_dir );
+					if ( *it == NOMAD::ORTHO_2 )
+						dirs.push_back ( -halton_dir );
+				}
+			}
+		}
+		
+		/*-----------*/
+		/*  LT-MADS  */
+		/*-----------*/
+		else if ( NOMAD::dir_is_ltmads (*it) ) {
+			
+			if ( !_lt_initialized)
+				lt_mads_init();
+			
+			bl = get_bl ( mesh_index , *it , hat_i );
+			
+			// LT-MADS 1 or LT-MADS 2: -b(l) and/or b(l):
+			// ------------------------------------------
+			if ( *it == NOMAD::LT_1 || *it == NOMAD::LT_2 ) {
+				dirs.push_back ( - *bl );
+				if ( *it == NOMAD::LT_2 )
+					dirs.push_back ( *bl );
+			}
+			
+			// LT-MADS 2n or LT-MADS n+1:
+			// --------------------------
+			else {
+				
+				// row permutation vector:
+				int * row_permutation_vector  = new int [_nc];
+				row_permutation_vector[hat_i] = hat_i;
+				
+				NOMAD::Random_Pickup rp ( _nc );
+				
+				for ( i = 0 ; i < _nc ; ++i )
+					if ( i != hat_i ) {
+						j = rp.pickup();
+						if ( j == hat_i )
+							j = rp.pickup();
+						row_permutation_vector[i] = j;
+					}
+				
+				rp.reset();
+				
+				for ( j = 0 ; j < _nc ; ++j ) {
+					
+					i = rp.pickup();
+					
+					if ( i != hat_i ) {
+						
+						dirs.push_back ( NOMAD::Direction ( _nc , 0.0 , *it ) );
+						pd = &(*(--dirs.end()));
+						
+						create_lt_direction ( mesh_index , *it , i , hat_i , pd );
+						
+						permute_coords ( *pd , row_permutation_vector );
+					}
+					else
+						dirs.push_back ( *bl );
+					
+					// completion to maximal basis:
+					if ( *it == NOMAD::LT_2N )
+						dirs.push_back ( NOMAD::Direction ( - *(--dirs.end()) , NOMAD::LT_2N ) );
+				}
+				
+				delete [] row_permutation_vector;
+				
+				// completion to minimal basis:
+				if ( *it == NOMAD::LT_NP1 ) {
+					
+					dirs.push_back ( NOMAD::Direction ( _nc , 0.0 , NOMAD::LT_NP1 ) );
+					pd = &(*(--dirs.end()));
+					
+					end2 = --dirs.end();
+					for ( it2 = dirs.begin() ; it2 != end2 ; ++it2 ) {
+						for ( i = 0 ; i < _nc ; ++i )
+							(*pd)[i] -= (*it2)[i];
+					}
+				}
+			}
+		}
+		
+		/*-------*/
+		/*  GPS  */
+		/*-------*/
+		else {
+			
+			// GPS for binary variables: should'nt be here:
+			if ( *it == NOMAD::GPS_BINARY ) {
+#ifdef DEBUG
+				_out << std::endl << "Warning (" << "Directions.cpp" << ", " << __LINE__
+				<< "): tried to generate binary directions at the wrong place)"
+				<< std::endl << std::endl;
+#endif
+				dirs.clear();
+				return;
+			}
+			
+			// this value represents the non-zero values in GPS directions
+			// (it is tau^{|ell_k|/2}, and it is such that Delta^m_k * pow_gps = Delta^p_k):
+			if ( !pow_gps.is_defined() )
+				pow_gps = pow ( NOMAD::Mesh::get_mesh_update_basis() , abs(mesh_index) / 2.0 );
+			
+			// GPS 2n, static:
+			// ---------------
+			if ( *it == NOMAD::GPS_2N_STATIC ) {
+				
+				for ( i = 0 ; i < _nc ; ++i ) {
+					
+					dirs.push_back ( NOMAD::Direction ( _nc , 0.0 , NOMAD::GPS_2N_STATIC ) );
+					pd = &(*(--dirs.end()));
+					(*pd)[i] = pow_gps;
+					
+					dirs.push_back ( NOMAD::Direction ( _nc , 0.0 , NOMAD::GPS_2N_STATIC ) );
+					pd = &(*(--dirs.end()));
+					(*pd)[i] = -pow_gps;
+				}
+			}
+			
+			// GPS 2n, random:
+			// ---------------
+			else if ( *it == NOMAD::GPS_2N_RAND ) {
+				
+				int v , cnt;
+				
+				std::list  <int>::const_iterator end3;
+				std::list  <int>::iterator       it3;
+				std::list  <int> rem_cols;
+				std::vector<int> rem_col_by_row ( _nc );
+				
+				// creation of the 2n directions:
+				std::vector<NOMAD::Direction *> pdirs ( 2 * _nc );
+				
+				for ( i = 0 ; i < _nc ; ++i ) {
+					
+					dirs.push_back ( NOMAD::Direction ( _nc , 0.0 , NOMAD::GPS_2N_RAND ) );
+					pdirs[i] = &(*(--dirs.end()));
+					(*pdirs[i])[i] = pow_gps;
+					
+					dirs.push_back ( NOMAD::Direction ( _nc , 0.0 , NOMAD::GPS_2N_RAND ) );
+					pdirs[i+_nc] = &(*(--dirs.end()));
+					(*pdirs[i+_nc])[i] = -pow_gps;
+					
+					rem_cols.push_back(i);
+					rem_col_by_row[i] = i;
+				}
+				
+				// random perturbations:
+				for ( i = 1 ; i < _nc ; ++i ) {
+					if ( rem_col_by_row[i] > 0 ) { 
+						v = NOMAD::RNG::rand()%3 - 1; // v in { -1 , 0 , 1 }  
+						if ( v ) {
+							
+							// we decide a (i,j) couple:
+							k    = NOMAD::RNG::rand()%(rem_col_by_row[i]); 
+							cnt  = 0;
+							end3 = rem_cols.end();
+							it3  = rem_cols.begin();
+							while ( cnt != k ) {
+								++it3;
+								++cnt;
+							}
+							j = *it3;
+							
+							// the perturbation:
+							(*pdirs[i])[j] = (*pdirs[j+_nc])[i] = -v * pow_gps;
+							(*pdirs[j])[i] = (*pdirs[i+_nc])[j] =  v * pow_gps;
+							
+							// updates:
+							rem_cols.erase(it3);      
+							it3 = rem_cols.begin();
+							while ( *it3 != i )
+								++it3;
+							rem_cols.erase(it3);
+							for ( k = i+1 ; k < _nc ; ++k )
+								rem_col_by_row[k] -= j<k ? 2 : 1;
+						}       
+					}
+				}
+			}
+			
+			// GPS n+1, static:
+			// ----------------
+			else if ( *it == NOMAD::GPS_NP1_STATIC ) {
+				
+				// (n+1)^st direction:
+				dirs.push_back ( NOMAD::Direction ( _nc , -pow_gps , NOMAD::GPS_NP1_STATIC ) );
+				
+				// first n directions:
+				for ( i = 0 ; i < _nc ; ++i ) {
+					dirs.push_back ( NOMAD::Direction ( _nc , 0.0 , NOMAD::GPS_NP1_STATIC ) );
+					pd = &(*(--dirs.end()));
+					(*pd)[i] = pow_gps;
+				}
+			}
+			
+			// GPS n+1, random:
+			// ----------------
+			else if ( *it == NOMAD::GPS_NP1_RAND )
+			{
+				
+				// (n+1)^st direction:
+				dirs.push_back ( NOMAD::Direction ( _nc , 0.0 , NOMAD::GPS_NP1_RAND ) );
+				NOMAD::Direction * pd1 = &(*(--dirs.end()));
+				
+				NOMAD::Double d;
+				
+				// first n directions:
+				for ( i = 0 ; i < _nc ; ++i ) 
+				{
+					dirs.push_back ( NOMAD::Direction ( _nc , 0.0 , NOMAD::GPS_NP1_RAND ) );
+					pd = &(*(--dirs.end()));
+					
+					d = NOMAD::RNG::rand()%2 ? -pow_gps : pow_gps;  
+					(*pd )[i] =  d;
+					(*pd1)[i] = -d;
+				}
+			}
+			
+			// GPS n+1, static, uniform angles:
+			// --------------------------------
+			else if ( *it == NOMAD::GPS_NP1_STATIC_UNIFORM ) 
+			{
+				
+				cst = pow_gps * sqrt(static_cast<double>(_nc)*(_nc+1))/_nc;
+				
+				// n first directions:
+				for ( j = _nc-1 ; j >= 0 ; --j )
+				{
+					dirs.push_back ( NOMAD::Direction ( _nc , 0.0 , NOMAD::GPS_NP1_STATIC_UNIFORM ) );
+					pd = &(*(--dirs.end()));
+					
+					k = _nc-j-1;
+					
+					for ( i = 0 ; i < k ; ++i )
+						(*pd)[i] = -cst / sqrt(static_cast<double>(_nc-i)*(_nc-i+1));
+					
+					(*pd)[k] = (cst * (j+1)) / sqrt(static_cast<double>(j+1)*(j+2));
+					
+				}
+				
+				// (n+1)^st direction:
+				dirs.push_back ( NOMAD::Direction ( _nc , 0.0 , NOMAD::GPS_NP1_STATIC_UNIFORM ) );
+				pd = &(*(--dirs.end()));
+				for ( i = 0 ; i < _nc ; ++i )
+					(*pd)[i] = -cst / sqrt(static_cast<double>(_nc-i)*(_nc-i+1));
+				
+			}
+			
+			// GPS n+1, random, uniform angles:
+			// --------------------------------
+			// (we apply the procedure defined in
+			// "Pattern Search Methods for user-provided points:
+			// application to molecular geometry problems",
+			// by Alberto, Nogueira, Rocha and Vicente,
+			// SIOPT 14-4, 1216-1236, 2004, doi:10.1137/S1052623400377955)
+			else if ( *it == NOMAD::GPS_NP1_RAND_UNIFORM ) 
+			{
+				
+				cst = pow_gps * sqrt(static_cast<double>(_nc)*(_nc+1))/_nc;
+				
+				// n first directions:
+				for ( j = _nc-1 ; j >= 0 ; --j )
+				{
+					dirs.push_back ( NOMAD::Direction ( _nc , 0.0 , NOMAD::GPS_NP1_STATIC_UNIFORM ) );
+					pd = &(*(--dirs.end()));
+					
+					k = _nc-j-1;
+					
+					for ( i = 0 ; i < k ; ++i )
+						(*pd)[i] = -cst / sqrt(static_cast<double>(_nc-i)*(_nc-i+1));
+					
+					(*pd)[k] = (cst * (j+1)) / sqrt(static_cast<double>(j+1)*(j+2));
+					
+				}
+				
+				// (n+1)^st direction:
+				dirs.push_back ( NOMAD::Direction ( _nc , 0.0 , NOMAD::GPS_NP1_STATIC_UNIFORM ) );
+				pd = &(*(--dirs.end()));
+				for ( i = 0 ; i < _nc ; ++i )
+					(*pd)[i] = -cst / sqrt(static_cast<double>(_nc-i)*(_nc-i+1));
+				
+				// random perturbations:
+				NOMAD::Random_Pickup                  rp   ( _nc );
+				std::vector<bool>                     done ( _nc );
+				bool                                  chg_sgn;
+				std::list<NOMAD::Direction>::iterator it;
+				NOMAD::Double                         tmp;
+				
+				end2 = dirs.end();
+				for ( i = 0 ; i < _nc ; ++i )
+					done[i] = false;
+				
+				for ( i = 0 ; i < _nc ; ++i ) 
+				{
+					
+					k = rp.pickup();
+					
+					if ( i != k && !done[i] ) 
+					{
+						
+						chg_sgn = ( NOMAD::RNG::rand()%2 != 0 );  
+						
+						for ( it = dirs.begin() ; it != end2 ; ++it ) 
+						{
+							tmp      = (*it)[i];
+							(*it)[i] = ( chg_sgn ? -1.0 : 1.0 ) * (*it)[k];
+							(*it)[k] = tmp;
+						}
+						
+						done[i] = done[k] = true;
+					}
+					else
+						if ( NOMAD::RNG::rand()%2 )   
+							for ( it = dirs.begin() ; it != end2 ; ++it )
+								(*it)[i] = -(*it)[i];
+				}
+			}
+		}
+	} // end of loop on the types of directions
 }
 
 /*----------------------------------------------------------------*/
 /*  get just one direction for a given mesh (used by VNS search)  */
 /*----------------------------------------------------------------*/
-bool NOMAD::Directions::compute_one_direction ( NOMAD::Direction & dir          ,
-						int                mesh_index   ,
-						int                halton_index   )
+bool NOMAD::Directions::compute_one_direction ( NOMAD::Direction & dir,
+											   int mesh_index,
+											   int halton_index  )    
 {
-  dir.clear();
-
-  // categorical variables: do nothing:
-  if ( _is_categorical )
-    return false;
-
-  /*-------------------------------*/
-  /*        binary variables       */
-  /*  (we use a random direction)  */
-  /*-------------------------------*/
-  if ( _is_binary ) {
-
-    dir.reset     ( _nc , 0.0         );
-    dir.set_type  ( NOMAD::GPS_BINARY );
-    dir[NOMAD::RNG::rand()%_nc] = (NOMAD::RNG::rand()%2) ? -1.0 : 1.0; 
-  }
-
-  /*----------------*/
-  /*  Ortho-MADS 1  */
-  /*----------------*/
-  else if ( _is_orthomads ) {
-
-    if ( !_primes )
-      ortho_mads_init ( _halton_seed );
-      
-    dir.reset    ( _nc , 0.0      );
-    dir.set_type ( NOMAD::ORTHO_1 );
-
-    NOMAD::Double alpha_t_l;
-
-    if ( !compute_halton_dir ( halton_index , mesh_index , alpha_t_l , dir ) )
-      return false;
-  }
-
-  /*-------------*/
-  /*  LT-MADS 1  */
-  /*-------------*/
-  else {
-    if ( !_lt_initialized)
-      lt_mads_init();
-    int hat_i;
-    dir = *get_bl ( mesh_index , NOMAD::LT_1 , hat_i );  
-  }
-
-  return true;
+	dir.clear();
+	
+	// categorical variables: do nothing:
+	if ( _is_categorical )
+		return false;
+	
+	/*-------------------------------*/
+	/*        binary variables       */
+	/*  (we use a random direction)  */
+	/*-------------------------------*/
+	if ( _is_binary ) {
+		
+		dir.reset     ( _nc , 0.0         );
+		dir.set_type  ( NOMAD::GPS_BINARY );
+		dir[NOMAD::RNG::rand()%_nc] = (NOMAD::RNG::rand()%2) ? -1.0 : 1.0; 
+	}
+	
+	/*----------------*/
+	/*  Ortho-MADS  */
+	/*----------------*/
+	else if ( _is_orthomads ) {
+			
+			if ( !_primes )
+				ortho_mads_init ( _halton_seed );
+			
+			dir.reset    ( _nc , 0.0      );
+			dir.set_type ( NOMAD::ORTHO_1 );
+			
+			NOMAD::Double alpha_t_l;
+			
+			if ( !compute_halton_dir ( halton_index , mesh_index , alpha_t_l , dir ) )
+				return false;		  
+//		}
+	}
+	
+	/*-------------*/
+	/*  LT-MADS 1  */
+	/*-------------*/
+	else {
+		if ( !_lt_initialized)
+			lt_mads_init();
+		int hat_i;
+		dir = *get_bl ( mesh_index , NOMAD::LT_1 , hat_i );  
+	}
+	
+	return true;
 }
+
+
+
 
 /*---------------------------------------------------------*/
 /*       compute the Halton direction q(t,l)  (private)    */
@@ -804,7 +712,8 @@ bool NOMAD::Directions::compute_halton_dir ( int                halton_index ,
   NOMAD::Double d , norm = 0.0;
   NOMAD::Point  b ( _nc );
 
-  for ( i = 0 ; i < _nc ; ++i ) {
+  for ( i = 0 ; i < _nc ; ++i ) 
+  {
     d = Directions::get_phi ( halton_index , _primes[i] );
     b[i] = 2*d - 1.0;
     norm += b[i].pow2();
@@ -815,9 +724,10 @@ bool NOMAD::Directions::compute_halton_dir ( int                halton_index ,
 
   NOMAD::direction_type hdt = halton_dir.get_type();
 
-  NOMAD::Double target = ( hdt == NOMAD::ORTHO_2N || hdt == NOMAD::ORTHO_NP1 ) ?
+  NOMAD::Double target = ( hdt == NOMAD::ORTHO_2N || hdt == NOMAD::ORTHO_NP1_QUAD || hdt == NOMAD::ORTHO_NP1_NEG ) ?
     pow ( NOMAD::Mesh::get_mesh_update_basis() , abs(mesh_index) / 2.0 ) :
     pow ( NOMAD::Mesh::get_mesh_update_basis() , abs(mesh_index)       );
+	
 
   NOMAD::Double x  = target.sqrt();
   NOMAD::Double fx = eval_ortho_norm ( x , norm , b , halton_dir );
@@ -825,98 +735,104 @@ bool NOMAD::Directions::compute_halton_dir ( int                halton_index ,
   bool          inc , possible , set_eps = false;
   int           cnt = 0;
 
-  while ( fx != target ) {
-
-    // safety test:
-    if ( ++cnt > 1000 ) {
-#ifdef DEBUG
-      _out << std::endl << "Warning (" << "Directions.cpp" << ", " << __LINE__
-	   << "): could not compute Halton direction for (t="
-	   << halton_index << ", ell=" << mesh_index
-	   << ")" << std::endl << std::endl;
-#endif
-      alpha_t_l.clear();
-      halton_dir.clear();
-      return false;
-    }
-
-    if ( set_eps ) {
-      eps     = 1e-8;
-      set_eps = false;
-    }
-    else
-      eps = 0.0;
-
-    inc = ( fx < target );
-     
-    possible = false;
-    min      = 1e+20;
-    for ( i = 0 ; i < _nc ; ++i ) {
-      
-      if ( b[i] != 0.0 ) {
-	
-	if ( b[i] > 0.0 ) {
-	  if ( inc )
-	    diff  =  0.5+eps;
-	  else
-	    diff  = -0.5-eps;
+  while ( fx != target )
+  {
 	  
-	}
-	else {
-	  if ( inc )
-	    diff  = -0.5-eps;
-	  else
-	    diff  =  0.5+eps;
-	}
-	
-	delta_x = norm * ( halton_dir[i] + diff) / b[i] - x;
-	
-	y = x + delta_x;
-
-	if ( y > 0 ) {
-	  abs_dx = delta_x.abs();
-	  if ( abs_dx < min ) {
-	    min       = abs_dx;
-	    delta_min = delta_x;
-	    possible  = true;
-	  }
-	}
-      }
-    }
-
-    if ( !possible ) {
+	  // safety test:
+	  if ( ++cnt > 1000 )
+	  {
 #ifdef DEBUG
-      _out << std::endl << "Warning (" << "Directions.cpp" << ", " << __LINE__
-	   << "): could not compute Halton direction for (t="
-	   << halton_index << ", ell=" << mesh_index << ")"
-	   << std::endl << std::endl;
+		  _out << std::endl << "Warning (" << "Directions.cpp" << ", " << __LINE__
+		  << "): could not compute Halton direction for (t="
+		  << halton_index << ", ell=" << mesh_index
+		  << ")" << std::endl << std::endl;
 #endif
-      alpha_t_l.clear();
-      halton_dir.clear();
-      return false;
-    }
-
-    y  = x + delta_min;
-    fy = eval_ortho_norm ( y , norm , b , halton_dir );
-
-    if ( fx == fy ) {
-      set_eps = true;
-      continue;
-    }
-    
-    if ( fy==target )
-      break;
-    
-    if ( inc && fy > target && fx > 0 ) {
-      eval_ortho_norm ( x , norm , b , halton_dir );
-      break;
-    }
-    
-    if ( !inc && fy < target && fy > 0 )
-      break;
-    
-    x  = y;
-    fx = fy;
+		  alpha_t_l.clear();
+		  halton_dir.clear();
+		  return false;
+	  }
+	  
+	  if ( set_eps ) 
+	  {
+		  eps     = 1e-8;
+		  set_eps = false;
+	  }
+	  else
+		  eps = 0.0;
+	  
+	  inc = ( fx < target );
+	  
+	  possible = false;
+	  min      = 1e+20;
+	  for ( i = 0 ; i < _nc ; ++i ) 
+	  {
+		  if ( b[i] != 0.0 ) 
+		  {
+			  if ( b[i] > 0.0 )
+			  {
+				  if ( inc )
+					  diff  =  0.5+eps;
+				  else
+					  diff  = -0.5-eps;
+			  }
+			  else 
+			  {
+				  if ( inc )
+					  diff  = -0.5-eps;
+				  else
+					  diff  =  0.5+eps;
+			  }
+			  
+			  delta_x = norm * ( halton_dir[i] + diff) / b[i] - x;
+			  
+			  y = x + delta_x;
+			  
+			  if ( y > 0 )
+			  {
+				  abs_dx = delta_x.abs();
+				  if ( abs_dx < min )
+				  {
+					  min       = abs_dx;
+					  delta_min = delta_x;
+					  possible  = true;
+				  }
+			  }
+		  }
+	  }
+	  
+	  if ( !possible ) {
+#ifdef DEBUG
+		  _out << std::endl << "Warning (" << "Directions.cpp" << ", " << __LINE__
+		  << "): could not compute Halton direction for (t="
+		  << halton_index << ", ell=" << mesh_index << ")"
+		  << std::endl << std::endl;
+#endif
+		  alpha_t_l.clear();
+		  halton_dir.clear();
+		  return false;
+	  }
+	  
+	  y  = x + delta_min;
+	  fy = eval_ortho_norm ( y , norm , b , halton_dir );
+	  
+	  if ( fx == fy ) {
+		  set_eps = true;
+		  continue;
+	  }
+	  
+	  if ( fy==target )
+		  break;
+	  
+	  if ( inc && fy > target && fx > 0 ) {
+		  eval_ortho_norm ( x , norm , b , halton_dir );
+		  break;
+	  }
+	  
+	  if ( !inc && fy < target && fy > 0 )
+		  break;
+	  
+	  x  = y;
+	  fx = fy;
   }
 
   alpha_t_l = y;
@@ -1065,61 +981,6 @@ void NOMAD::Directions::permute_coords ( NOMAD::Direction & dir                ,
     dir [ permutation_vector[i] ] = tmp[i];
 }
 
-/*-------------------------------------------------------------*/
-/*  compute the target direction for Ortho-MADS n+1 (private)  */
-/*-------------------------------------------------------------*/
-void NOMAD::Directions::compute_ortho_target_dir ( const NOMAD::Direction & feas_success_dir   ,
-						   const NOMAD::Direction & infeas_success_dir ,
-						   const NOMAD::Point     * first_success      , // can be NULL
-						   const NOMAD::Point     & poll_center        ,
-						   NOMAD::Point           & target_dir           )
-{
-  if ( ( first_success && first_success->size() != _nc ) || poll_center.size() != _nc ||
-       ( feas_success_dir.is_defined  () && feas_success_dir.size  () != _nc ) ||
-       ( infeas_success_dir.is_defined() && infeas_success_dir.size() != _nc )    ) {
-    throw NOMAD::Exception ( "Directions.cpp" , __LINE__ ,
-			     "compute_ortho_target_dir(): bad dimensions" );
-  }
-
-  target_dir.resize ( _nc );
-
-  // target_dir = feas_success_dir or infeas_success_dir:
-  if ( feas_success_dir.is_defined() ) {
-    target_dir = feas_success_dir;
-    return;
-  }
-  
-  if ( infeas_success_dir.is_defined() ) {
-    target_dir = infeas_success_dir;
-    return;
-  }
-  
-  // target_dir = poll_center - first_success: ( (0,0,...,0) is taken if !first_success )
-  int  i;
-  bool all_zero = true;
-  for ( i = 0 ; i < _nc ; ++i ) {
-    target_dir[i] = poll_center[i] - ( (first_success) ? (*first_success)[i] : 0.0 );
-    if ( target_dir[i] != 0.0 )
-      all_zero = false;
-  }
-  
-  if ( !all_zero )
-    return;      
-  
-  // target dir = one coordinate direction:
-  target_dir.reset ( _nc , 0.0 );
-
-  i = _ortho_np1_cnt1%(2*_nc);
-
-  if ( i < _nc )
-    target_dir[i] = 1.0;
-  else
-    target_dir[i-_nc] = -1.0;
-
-  ++_ortho_np1_cnt1;
-  if ( _ortho_np1_cnt1 == INT_MAX )
-    _ortho_np1_cnt1 = 0;
-}
 
 /*---------------------------------------------------------*/
 /*                           display                       */
@@ -1137,7 +998,8 @@ void NOMAD::Directions::display ( const NOMAD::Display & out ) const
   for ( it = _sec_poll_dir_types.begin() ; it != end ; ++it )
     out << "[" << *it << "] ";
   out << "}" << std::endl;
-  if ( _is_orthomads ) {
+  if ( _is_orthomads )
+  {
     out << "halton_seed   : ";
     if ( _halton_seed >= 0 )
       out << _halton_seed;
@@ -1214,3 +1076,4 @@ bool NOMAD::Directions::operator < ( const NOMAD::Directions & d ) const
   
   return false;
 }
+

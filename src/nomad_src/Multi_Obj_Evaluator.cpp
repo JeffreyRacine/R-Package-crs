@@ -1,5 +1,5 @@
 /*-------------------------------------------------------------------------------------*/
-/*  NOMAD - Nonlinear Optimization by Mesh Adaptive Direct search - version 3.5.1        */
+/*  NOMAD - Nonlinear Optimization by Mesh Adaptive Direct search - version 3.6.2        */
 /*                                                                                     */
 /*  Copyright (C) 2001-2012  Mark Abramson        - the Boeing Company, Seattle        */
 /*                           Charles Audet        - Ecole Polytechnique, Montreal      */
@@ -41,7 +41,8 @@
   \see    Multi_Obj_Evaluator.hpp
 */
 #include "Multi_Obj_Evaluator.hpp"
-using namespace std;  //zhenghua
+using namespace std; // zhenghua
+
 /*-----------------------------------*/
 /*   static members initialization   */
 /*-----------------------------------*/
@@ -82,83 +83,84 @@ void NOMAD::Multi_Obj_Evaluator::compute_f ( NOMAD::Eval_Point & x ) const
   const NOMAD::Point & bbo = x.get_bb_outputs();
 
   // a reference is available:
-  if ( _ref ) {
+  if ( _ref ) 
+  {
       
-    NOMAD::multi_formulation_type mft = _p.get_multi_formulation();
-
-    if ( mft == NOMAD::UNDEFINED_FORMULATION )
-      throw NOMAD::Exception ( "Multi_Obj_Evaluator.cpp" , __LINE__ ,
-	    "Multi_Obj_Evaluator::compute_f(): no formulation type is defined" );
-
-    // normalized formulation:
-    if ( mft == NOMAD::NORMALIZED || mft == NOMAD::DIST_LINF ) {
-
-      // f1 - r1:
-      NOMAD::Double d = bbo[obj_index[0]] - (*_ref)[0];
-
-      // f2 - r2:
-      NOMAD::Double f2mr2 = bbo[obj_index[1]] - (*_ref)[1];
-
-      // we take the max:
-      if ( f2mr2 > d )
-	d = f2mr2;
-
-      x.set_f ( d );
-    }
-    
-    // product formulation:
-    else if ( mft == NOMAD::PRODUCT ) {
-
-      NOMAD::Double prod = 1.0 , ri , fi;
-      
-      for ( int i = 0 ; i < 2 ; ++i ) {
-	
- 	ri = (*_ref)[i];
- 	fi = bbo[obj_index[i]];
-	
- 	if ( fi > ri ) {
- 	  prod = 0.0;
- 	  break;
- 	}
- 	prod = prod * (ri-fi).pow2();
-      }
-      
-      x.set_f ( -prod );
-    }
-    
-    // distance formulation:
-    else {
-
-      NOMAD::Double d;  
-      NOMAD::Double r1mf1 = (*_ref)[0] - bbo[obj_index[0]];
-      NOMAD::Double r2mf2 = (*_ref)[1] - bbo[obj_index[1]];
-
-      if ( r1mf1 >= 0.0 && r2mf2 >= 0.0 ) {
- 	d = r1mf1.pow2();
- 	NOMAD::Double tmp = r2mf2.pow2();
- 	if ( tmp < d )
- 	  d = tmp;
- 	d = -d;
-      }
-      else if ( r1mf1 <= 0.0 && r2mf2 <= 0.0 ) {
-
-	// with L2 norm:
-	if ( mft == NOMAD::DIST_L2 )
-	  d = r1mf1.pow2() + r2mf2.pow2();
-	
-	// with L1 norm:
-	else
-	  d = (r1mf1.abs() + r2mf2.abs()).pow2();
-
-	// Linf norm: treated as NORMALIZED
-      }
-      else if ( r1mf1 > 0.0 )
- 	d = r2mf2.pow2();
-      else
- 	d = r1mf1.pow2();
-      
-      x.set_f ( d );
-    }
+	  NOMAD::multi_formulation_type mft = _p.get_multi_formulation();
+	  
+	  if ( mft == NOMAD::UNDEFINED_FORMULATION )
+		  throw NOMAD::Exception ( "Multi_Obj_Evaluator.cpp" , __LINE__ ,
+								  "Multi_Obj_Evaluator::compute_f(): no formulation type is defined" );
+	  
+	  // normalized formulation:
+	  if ( mft == NOMAD::NORMALIZED || mft == NOMAD::DIST_LINF ) {
+		  
+		  // f1 - r1:
+		  NOMAD::Double d = bbo[obj_index[0]] - (*_ref)[0];
+		  
+		  // f2 - r2:
+		  NOMAD::Double f2mr2 = bbo[obj_index[1]] - (*_ref)[1];
+		  
+		  // we take the max:
+		  if ( f2mr2 > d )
+			  d = f2mr2;
+		  
+		  x.set_f ( d );
+	  }
+	  
+	  // product formulation:
+	  else if ( mft == NOMAD::PRODUCT ) {
+		  
+		  NOMAD::Double prod = 1.0 , ri , fi;
+		  
+		  for ( int i = 0 ; i < 2 ; ++i ) {
+			  
+			  ri = (*_ref)[i];
+			  fi = bbo[obj_index[i]];
+			  
+			  if ( fi > ri ) {
+				  prod = 0.0;
+				  break;
+			  }
+			  prod = prod * (ri-fi).pow2();
+		  }
+		  
+		  x.set_f ( -prod );
+	  }
+	  
+	  // distance formulation:
+	  else {
+		  
+		  NOMAD::Double d;  
+		  NOMAD::Double r1mf1 = (*_ref)[0] - bbo[obj_index[0]];
+		  NOMAD::Double r2mf2 = (*_ref)[1] - bbo[obj_index[1]];
+		  
+		  if ( r1mf1 >= 0.0 && r2mf2 >= 0.0 ) {
+			  d = r1mf1.pow2();
+			  NOMAD::Double tmp = r2mf2.pow2();
+			  if ( tmp < d )
+				  d = tmp;
+			  d = -d;
+		  }
+		  else if ( r1mf1 <= 0.0 && r2mf2 <= 0.0 ) {
+			  
+			  // with L2 norm:
+			  if ( mft == NOMAD::DIST_L2 )
+				  d = r1mf1.pow2() + r2mf2.pow2();
+			  
+			  // with L1 norm:
+			  else
+				  d = (r1mf1.abs() + r2mf2.abs()).pow2();
+			  
+			  // Linf norm: treated as NORMALIZED
+		  }
+		  else if ( r1mf1 > 0.0 )
+			  d = r2mf2.pow2();
+		  else
+			  d = r1mf1.pow2();
+		  
+		  x.set_f ( d );
+	  }
   }
     
   // no reference is available (use weights):

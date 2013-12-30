@@ -1,5 +1,5 @@
 /*-------------------------------------------------------------------------------------*/
-/*  NOMAD - Nonlinear Optimization by Mesh Adaptive Direct search - version 3.5.1        */
+/*  NOMAD - Nonlinear Optimization by Mesh Adaptive Direct search - version 3.6.2        */
 /*                                                                                     */
 /*  Copyright (C) 2001-2012  Mark Abramson        - the Boeing Company, Seattle        */
 /*                           Charles Audet        - Ecole Polytechnique, Montreal      */
@@ -46,6 +46,7 @@
 #include "Random_Pickup.hpp"
 #include "Direction.hpp"
 #include "Mesh.hpp"
+#include "RNG.hpp" 
 
 namespace NOMAD {
 
@@ -76,8 +77,7 @@ namespace NOMAD {
     // Ortho-MADS members:
     int      * _primes;           ///< \c nc first prime numbers.
     int        _halton_seed;      ///< Halton seed \c t_0.
-    int        _ortho_np1_cnt1;   ///< First counter for Ortho-MADS n+1 directions.
-    int        _ortho_np1_cnt2;   ///< Second counter for Ortho-MADS n+1 directions.
+
     static int _max_halton_seed;  ///< Max Halton seed for all NOMAD::Directions objects.
     
     const NOMAD::Display & _out;  ///< Display.
@@ -140,24 +140,10 @@ namespace NOMAD {
        \param halton_dir   Halton direction           -- \b OUT.
        \return A boolean equal to \c true if the computation went well.
     */
-    bool compute_halton_dir ( int                halton_index ,
-			      int                mesh_index   ,
-			      NOMAD::Double    & alpha_t_l    ,
-			      NOMAD::Direction & halton_dir     ) const;
-
-    /// Compute the target direction for Ortho-MADS n+1.
-    /**
-       \param feas_success_dir   Feasible success direction             -- \b IN.
-       \param infeas_success_dir Infeasible success direction           -- \b IN.
-       \param first_success      First success of the run (can be NULL) -- \b IN.
-       \param poll_center        Poll center                            -- \b IN.
-       \param target_dir         The target direction                   -- \b OUT.
-    */
-    void compute_ortho_target_dir ( const NOMAD::Direction & feas_success_dir   ,
-				    const NOMAD::Direction & infeas_success_dir ,
-				    const NOMAD::Point     * first_success      ,
-				    const NOMAD::Point     & poll_center        ,
-				    NOMAD::Point           & target_dir           );
+    bool compute_halton_dir (	int halton_index ,
+								int mesh_index,
+								NOMAD::Double    & alpha_t_l,
+								NOMAD::Direction & halton_dir ) const;
 
     /// Access to the LT-MADS \c b(ell) direction.
     /**
@@ -235,8 +221,6 @@ namespace NOMAD {
 	_lt_initialized     ( false                 ) ,
 	_primes             ( NULL                  ) ,
 	_halton_seed        ( d._halton_seed        ) ,
-	_ortho_np1_cnt1     ( d._ortho_np1_cnt1     ) ,
-	_ortho_np1_cnt2     ( d._ortho_np1_cnt2     ) ,
 	_out                ( d._out                )   {}
     
     /// Destructor.
@@ -247,7 +231,6 @@ namespace NOMAD {
        \param dirs               Set of directions                                          -- \b OUT.
        \param poll               Type of poll (primary or secondary)                        -- \b IN.
        \param poll_center        Poll center                                                -- \b IN.
-       \param first_success      First success of the run (for Ortho-MADS n+1; can be NULL) -- \b IN.    
        \param mesh_index         Mesh index \c ell                                          -- \b IN.
        \param halton_index       Halton index \c t (set to \c -1 for a default value)       -- \b IN.
        \param feas_success_dir   Feasible success direction                                 -- \b IN.
@@ -256,23 +239,23 @@ namespace NOMAD {
     void compute ( std::list<NOMAD::Direction> & dirs               ,
 		   NOMAD::poll_type              poll               ,
 		   const NOMAD::Point          & poll_center        ,
-		   const NOMAD::Point          * first_success      ,
 		   int                           mesh_index         ,
 		   int                           halton_index       ,
 		   const NOMAD::Direction      & feas_success_dir   ,
 		   const NOMAD::Direction      & infeas_success_dir   );
     
-    /// Compute just one direction for a given mesh (used by VNS search).
+
+    /// Compute just one direction for a given mesh and provided evaluated pts (used by VNS search and ortho_np1dyn).
     /**
-       \param dir          One direction                       -- \b OUT.
-       \param mesh_index   Mesh index \c ell                   -- \b IN.
-       \param halton_index Halton index \c t (must be \c >0)   -- \b IN.
+       \param dir           One direction                            -- \b OUT.
+       \param mesh_index    Mesh index \c ell                        -- \b IN.
+       \param halton_index  Halton index \c t (must be \c >0)        -- \b IN. 
        \return A boolean equal to \c true if the computation went well.
     */
-    bool compute_one_direction ( NOMAD::Direction & dir          ,
-				 int                mesh_index   ,
-				 int                halton_index   );
-    
+    bool compute_one_direction ( NOMAD::Direction & dir,
+								int mesh_index,
+								int halton_index );        
+	  
     /// Method for computing a Halton seed.
     /**
        The Halton seed for \c n variables is computed as the \c n th prime number.

@@ -1,5 +1,5 @@
 /*-------------------------------------------------------------------------------------*/
-/*  NOMAD - Nonlinear Optimization by Mesh Adaptive Direct search - version 3.5.1        */
+/*  NOMAD - Nonlinear Optimization by Mesh Adaptive Direct search - version 3.6.2        */
 /*                                                                                     */
 /*  Copyright (C) 2001-2012  Mark Abramson        - the Boeing Company, Seattle        */
 /*                           Charles Audet        - Ecole Polytechnique, Montreal      */
@@ -41,7 +41,8 @@
   \see    Stats.hpp
 */
 #include "Stats.hpp"
-using namespace std;  //zhenghua
+using namespace std; // zhenghua
+
 /*---------------------------------------------------------*/
 /*                     affectation operator                */
 /*---------------------------------------------------------*/
@@ -51,6 +52,7 @@ NOMAD::Stats & NOMAD::Stats::operator = ( const NOMAD::Stats & s )
   _sim_bb_eval       = s._sim_bb_eval;
   _sgte_eval         = s._sgte_eval;
   _bb_eval           = s._bb_eval;
+  _block_eval         = s._block_eval;	
   _failed_eval       = s._failed_eval;
   _cache_hits        = s._cache_hits;
   _interrupted_eval  = s._interrupted_eval;
@@ -58,6 +60,7 @@ NOMAD::Stats & NOMAD::Stats::operator = ( const NOMAD::Stats & s )
   _nb_poll_searches  = s._nb_poll_searches;
   _poll_pts          = s._poll_pts;
   _poll_success      = s._poll_success;
+  _nb_success_dyn_dir= s._nb_success_dyn_dir;
   _nb_ext_polls      = s._nb_ext_polls;
   _ext_poll_pts      = s._ext_poll_pts;
   _ext_poll_succ     = s._ext_poll_succ;
@@ -106,6 +109,7 @@ void NOMAD::Stats::reset ( void )
     _sim_bb_eval       =
     _sgte_eval         =
     _bb_eval           =
+	_block_eval         =
     _failed_eval       =
     _cache_hits        =
     _interrupted_eval  =
@@ -137,6 +141,7 @@ void NOMAD::Stats::reset ( void )
     _usr_srch_success  =
     _p1_iterations     =
     _p1_bbe            =
+	_nb_success_dyn_dir =
     _mads_runs         = 0;
 
   _model_stats.reset();
@@ -165,6 +170,7 @@ void NOMAD::Stats::update ( const NOMAD::Stats & s , bool for_search )
   _sim_bb_eval       += s._sim_bb_eval;
   _sgte_eval         += s._sgte_eval;
   _bb_eval           += s._bb_eval;
+  _block_eval        += s._block_eval;	
   _failed_eval       += s._failed_eval;
   _cache_hits        += s._cache_hits;
   _interrupted_eval  += s._interrupted_eval;
@@ -182,6 +188,7 @@ void NOMAD::Stats::update ( const NOMAD::Stats & s , bool for_search )
   _nb_usr_searches   += s._nb_usr_searches;
   _usr_srch_pts      += s._usr_srch_pts;
   _usr_srch_success  += s._usr_srch_success;
+  _nb_success_dyn_dir += s._nb_success_dyn_dir;
 
 #ifdef USE_MPI
   _asynchronous_success += s._asynchronous_success;
@@ -253,6 +260,9 @@ void NOMAD::Stats::display ( const NOMAD::Display & out ) const
     out << "bb evaluations (with sgte cost) : " << get_bb_eval();
   else
     out << "blackbox evaluations            : " << _bb_eval;
+  out << std::endl;
+  if ( _block_eval > 0)
+	  out << "Block of evaluations            : " << _block_eval;
   if ( _p1_bbe > 0 )
     out << " (phase one: " << _p1_bbe << ")";
   out << std::endl;
@@ -276,7 +286,10 @@ void NOMAD::Stats::display ( const NOMAD::Display & out ) const
       << "number of poll searches         : "   << _nb_poll_searches    << std::endl;
   if ( _nb_poll_searches > 0 )
     out << "poll successes                  : " << _poll_success        << std::endl
-	<< "poll points                     : " << _poll_pts            << std::endl;
+	  << "poll points                     : " << _poll_pts            << std::endl;
+	  
+  out << "dyn. direction successes        : " << _nb_success_dyn_dir <<  std::endl;
+	  
   if ( _nb_ext_polls > 0 )
     out << "number of extended polls        : " << _nb_ext_polls        << std::endl
 	<< "number of ext. poll descents    : " << _ext_poll_descents   << std::endl

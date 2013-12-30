@@ -1,5 +1,5 @@
 /*-------------------------------------------------------------------------------------*/
-/*  NOMAD - Nonlinear Optimization by Mesh Adaptive Direct search - version 3.5.1        */
+/*  NOMAD - Nonlinear Optimization by Mesh Adaptive Direct search - version 3.6.2        */
 /*                                                                                     */
 /*  Copyright (C) 2001-2012  Mark Abramson        - the Boeing Company, Seattle        */
 /*                           Charles Audet        - Ecole Polytechnique, Montreal      */
@@ -44,12 +44,12 @@
 #define __QUAD_MODEL_EVALUATOR__
 
 #include "Search.hpp"
-#include "Evaluator.hpp"
+
 
 namespace NOMAD {
 
   /// NOMAD::Evaluator subclass for quadratic model optimization.
-  class Quad_Model_Evaluator : public NOMAD::Evaluator {
+	class Quad_Model_Evaluator  { 
 
   private:
 
@@ -81,10 +81,25 @@ namespace NOMAD {
                          or not -- \b OUT.
        \return A boolean equal to \c false if the evaluation failed.
      */
-		using NOMAD::Evaluator::eval_x;  //zhenghua
     virtual bool eval_x ( NOMAD::Eval_Point   & x          ,
-			  const NOMAD::Double & h_max      ,
+						 const NOMAD::Double & h_max      ,
 			  bool                & count_eval   ) const;
+
+	  /// Evaluate the gradient of a blackboxe at a given trial point.
+	  /**
+       \param x The trial point -- \b IN/OUT.
+       \param g The gradient of a bb model at the trial point \c x -- \b OUT.
+	   \param output_index The index of the black box.           -- \b IN.
+       \param count_eval Flag indicating if the evaluation has to be counted
+	   or not -- \b OUT.
+       \return A boolean equal to \c false if the evaluation failed.
+	   */
+	  
+	  virtual bool evalGrad_x (const NOMAD::Point   & x   ,
+							   NOMAD::Point   & g         ,
+							   const int & output_index   ,
+							   bool                & count_eval   ) const;
+	  
   };
 }
 

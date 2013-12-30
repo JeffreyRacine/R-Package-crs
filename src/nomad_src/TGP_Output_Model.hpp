@@ -1,5 +1,5 @@
 /*-------------------------------------------------------------------------------------*/
-/*  NOMAD - Nonlinear Optimization by Mesh Adaptive Direct search - version 3.5.1        */
+/*  NOMAD - Nonlinear Optimization by Mesh Adaptive Direct search - version 3.6.2        */
 /*                                                                                     */
 /*  Copyright (C) 2001-2012  Mark Abramson        - the Boeing Company, Seattle        */
 /*                           Charles Audet        - Ecole Polytechnique, Montreal      */
@@ -61,8 +61,6 @@ extern "C"
 
 namespace NOMAD {
 
-  /// NOMAD-TGP callback function (called regularly by TGP).
-  void TGP_callback ( bool & TGP_interrupt );
 
   /// TGP models for one output.
   class TGP_Output_Model : private NOMAD::Uncopyable {

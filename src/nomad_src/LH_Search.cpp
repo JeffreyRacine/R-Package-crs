@@ -1,5 +1,5 @@
 /*-------------------------------------------------------------------------------------*/
-/*  NOMAD - Nonlinear Optimization by Mesh Adaptive Direct search - version 3.5.1        */
+/*  NOMAD - Nonlinear Optimization by Mesh Adaptive Direct search - version 3.6.2        */
 /*                                                                                     */
 /*  Copyright (C) 2001-2012  Mark Abramson        - the Boeing Company, Seattle        */
 /*                           Charles Audet        - Ecole Polytechnique, Montreal      */
@@ -41,8 +41,8 @@
   \see    LH_Search.hpp
 */
 #include "LH_Search.hpp"
-#include "RNG.hpp"  
-using namespace std;  //zhenghua
+using namespace std; // zhenghua
+
 /*-----------------------------------------------------------*/
 /*              MADS Latin-Hypercube (LH) search             */
 /*-----------------------------------------------------------*/
@@ -99,15 +99,18 @@ void NOMAD::LH_Search::search ( NOMAD::Mads              & mads           ,
   }
 
   // no reference point is available (we consider the standard signature):
-  if ( !ref ) {
+  if ( !ref )
+  {
 
     // it is not sufficient with categorical variables:
-    if ( signature->has_categorical() ) {
-      if ( display_degree == NOMAD::FULL_DISPLAY ) {
-	std::ostringstream oss;
-	oss << "end of LH " << ( _initial_search ? "initial " : "")
-	    << "search (no available reference point)";
-	out << std::endl << NOMAD::close_block ( oss.str() ) << std::endl;
+    if ( signature->has_categorical() ) 
+	{
+      if ( display_degree == NOMAD::FULL_DISPLAY )
+	  {
+		  std::ostringstream oss;
+		  oss << "end of LH " << ( _initial_search ? "initial " : "")
+		  << "search (no available reference point)";
+		  out << std::endl << NOMAD::close_block ( oss.str() ) << std::endl;
       }
       return;
     }
@@ -115,6 +118,17 @@ void NOMAD::LH_Search::search ( NOMAD::Mads              & mads           ,
   else
     signature = ref->get_signature();
 
+	// Change Display stats style
+	const std::list<std::string>         old_ds = _p.get_display_stats();
+	std::list<std::string>                 ds    = old_ds;
+	ds.push_back ( " (LH)" );
+	_p.set_DISPLAY_STATS ( ds );
+
+	// check the parameters:
+	_p.check ( false ,    // remove_history_file  = false
+			  false ,    // remove_solution_file = false
+			  false   ); // remove_stats_file    = false
+	
   int                      i;
   NOMAD::Eval_Point      * x;
   int                      n          = signature->get_n();
@@ -218,6 +232,17 @@ void NOMAD::LH_Search::search ( NOMAD::Mads              & mads           ,
 				   new_infeas_inc          ,
 				   success                   );
 
+
+	_p.get_display_stats();
+	
+	// restore stats style
+	_p.set_DISPLAY_STATS              ( old_ds                               );
+	_p.check ( false ,    // remove_history_file  = false
+			  false ,    // remove_solution_file = false
+			  false   ); // remove_stats_file    = false
+	
+	
+	
   // final displays:
   if ( display_degree == NOMAD::FULL_DISPLAY ) {
     std::ostringstream oss;
@@ -242,60 +267,62 @@ void NOMAD::LH_Search::values_for_var_i ( int                          p        
 					  const NOMAD::Double        & ub          ,
 					  NOMAD::Point               & x      ) const
 {
-  // categorical variables have already been treated as fixed variables:
-  if ( bbit == NOMAD::CATEGORICAL )
-    return;
-
-  int                  i;
-  NOMAD::Double        v;
-  NOMAD::Random_Pickup rp (p);
-  bool                 rounding = ( bbit != NOMAD::CONTINUOUS );
-  bool                 lb_def   = lb.is_defined();
-  bool                 ub_def   = ub.is_defined();
-  double               w        = ( ( lb_def && ub_def ) ?
-				    ub.value()-lb.value() : 1.0 ) / p;
-  // main loop:
-  for ( i = 0 ; i < p ; ++i ) {
-
-    // both bounds exist:
-    if ( lb_def && ub_def )
-     v = lb + ( i + NOMAD::RNG::rand()/NOMAD::D_INT_MAX ) * w;  
-
-    // one of the bounds does not exist:
-    else {
-
-      // lb exists, and ub not: mapping [0;1] --> [lb;+INF[
-      if ( lb_def )
-	v = lb + 10 * delta_m_max * sqrt ( - log ( NOMAD::DEFAULT_EPSILON +
-				       ( i + NOMAD::RNG::rand()/NOMAD::D_INT_MAX ) * w ) );
-
-      // lb does not exist:
-      else {
-
-	// ub exists, and lb not: mapping [0;1] --> ]-INF;ub]
-	if ( ub_def )
-	  v = ub - delta_m_max * 10 *
-	    sqrt ( -log ( NOMAD::DEFAULT_EPSILON +
-			  ( i +NOMAD::RNG::rand()/NOMAD::D_INT_MAX ) * w ) ); 
-	
-	// there are no bounds: mapping [0;1] --> ]-INF;+INF[
-	else
-	  v = (NOMAD::RNG::rand()%2 ? -1.0 : 1.0) * delta_m_max * 10 * 
-	    sqrt ( - log ( NOMAD::DEFAULT_EPSILON +
-			   ( i + NOMAD::RNG::rand()/NOMAD::D_INT_MAX ) * w ) );  
-      }
+    // categorical variables have already been treated as fixed variables:
+    if ( bbit == NOMAD::CATEGORICAL )
+        return;
+    
+    int                  i;
+    NOMAD::Double        v;
+    NOMAD::Random_Pickup rp (p);
+    bool                 rounding = ( bbit != NOMAD::CONTINUOUS );
+    bool                 lb_def   = lb.is_defined();
+    bool                 ub_def   = ub.is_defined();
+    double               w        = ( ( lb_def && ub_def ) ?
+                                     ub.value()-lb.value() : 1.0 ) / p;
+    // main loop:
+    for ( i = 0 ; i < p ; ++i )
+    {
+        
+        // both bounds exist:
+        if ( lb_def && ub_def )
+            v = lb + ( i + NOMAD::RNG::rand()/NOMAD::D_INT_MAX ) * w;
+        // one of the bounds does not exist:
+        else
+        {
+            
+            // lb exists, and ub not: mapping [0;1] --> [lb;+INF[
+            if ( lb_def )
+                v = lb + 10 * delta_m_max * sqrt ( - log ( NOMAD::DEFAULT_EPSILON +
+                                                          ( i + NOMAD::RNG::rand()/NOMAD::D_INT_MAX ) * w ) );
+            
+            // lb does not exist:
+            else
+            {
+                
+                // ub exists, and lb not: mapping [0;1] --> ]-INF;ub]
+                if ( ub_def )
+                    v = ub - delta_m_max * 10 *
+                    sqrt ( -log ( NOMAD::DEFAULT_EPSILON +
+                                 ( i +NOMAD::RNG::rand()/NOMAD::D_INT_MAX ) * w ) );
+                
+                // there are no bounds: mapping [0;1] --> ]-INF;+INF[
+                else
+                    v = (NOMAD::RNG::rand()%2 ? -1.0 : 1.0) * delta_m_max * 10 *
+                    sqrt ( - log ( NOMAD::DEFAULT_EPSILON +
+                                  ( i + NOMAD::RNG::rand()/NOMAD::D_INT_MAX ) * w ) );
+            }
+        }
+        
+        // rounding:
+        if ( rounding )
+            v = v.round();
+        
+        // projection to mesh (with ref=0):
+        v.project_to_mesh ( 0.0 , delta_m , lb , ub );
+        
+        // affectation + permutation:
+        x[rp.pickup()] = v;
     }
-
-    // rounding:
-    if ( rounding )
-      v = v.round();
-   
-    // projection to mesh (with ref=0):
-    v.project_to_mesh ( 0.0 , delta_m , lb , ub );
-
-    // affectation + permutation:
-    x[rp.pickup()] = v;
-  }
 }
 
 /*---------------------------------------------------------*/
@@ -308,39 +335,42 @@ bool NOMAD::LH_Search::LH_points ( int                                n   ,
 				   int                                p   ,
 				   const NOMAD::Point               & lb  ,
 				   const NOMAD::Point               & ub  ,
-				   std::vector<NOMAD::Eval_Point *> & pts   ) {
-  if ( n <= 0           ||
-       p <= 0           ||
-       !lb.is_defined() ||
-       !ub.is_defined() ||
-       lb.size() != n   ||
-       ub.size() != n      )
-    return false;
-
-  for ( size_t j = 0 ; j < pts.size() ; ++j )
-    delete pts[j];
-  pts.clear();
-
-  NOMAD::Eval_Point     * x;
-  int                     i;
-  int                     pm1 = p-1;
-  NOMAD::Random_Pickup ** rps = new NOMAD::Random_Pickup *[n];
-
-  for ( int k = 0 ; k < p ; ++k ) {
-    x = new NOMAD::Eval_Point ( n , m );
-    for ( i = 0 ; i < n ; ++i ) {
-      if ( k==0 )
-	rps[i] = new NOMAD::Random_Pickup(p);
-      (*x)[i] = lb[i] +
+				   std::vector<NOMAD::Eval_Point *> & pts   )
+{
+    if ( n <= 0           ||
+        p <= 0           ||
+        !lb.is_defined() ||
+        !ub.is_defined() ||
+        lb.size() != n   ||
+        ub.size() != n      )
+        return false;
+    
+    for ( size_t j = 0 ; j < pts.size() ; ++j )
+        delete pts[j];
+    pts.clear();
+    
+    NOMAD::Eval_Point     * x;
+    int                     i;
+    int                     pm1 = p-1;
+    NOMAD::Random_Pickup ** rps = new NOMAD::Random_Pickup *[n];
+    
+    for ( int k = 0 ; k < p ; ++k )
+    {
+        x = new NOMAD::Eval_Point ( n , m );
+        for ( i = 0 ; i < n ; ++i )
+        {
+            if ( k==0 )
+                rps[i] = new NOMAD::Random_Pickup(p);
+            (*x)[i] = lb[i] +
 	        (ub[i]-lb[i]) *
-	        ( rps[i]->pickup() + NOMAD::RNG::rand()/(1.0+NOMAD::D_INT_MAX)) / p; 
-      if ( k==pm1 )
-	delete rps[i];
+	        ( rps[i]->pickup() + NOMAD::RNG::rand()/(1.0+NOMAD::D_INT_MAX)) / p;
+            if ( k==pm1 )
+                delete rps[i];
+        }
+        pts.push_back(x);
     }
-    pts.push_back(x);
-  }
-
-  delete [] rps;
-
-  return true;
+    
+    delete [] rps;
+    
+    return true;
 }

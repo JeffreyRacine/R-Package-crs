@@ -1,5 +1,5 @@
 /*-------------------------------------------------------------------------------------*/
-/*  NOMAD - Nonlinear Optimization by Mesh Adaptive Direct search - version 3.5.1        */
+/*  NOMAD - Nonlinear Optimization by Mesh Adaptive Direct search - version 3.6.2        */
 /*                                                                                     */
 /*  Copyright (C) 2001-2012  Mark Abramson        - the Boeing Company, Seattle        */
 /*                           Charles Audet        - Ecole Polytechnique, Montreal      */
@@ -66,6 +66,8 @@ namespace NOMAD {
     
     bool _all_continuous;  ///< Flag equal to \c true if all variables are continuous.
     bool _has_categorical; ///< Flag equal to \c true if there are categorical variables.
+	  
+	static bool _warning_has_been_displayed;  ///< Flag equal to \c true if the warning has already been displayed
 
     std::vector<bool> _periodic_variables; ///< Periodic variables.
 
@@ -97,6 +99,13 @@ namespace NOMAD {
        \c operator \c < and have to be often changed.
     */
     mutable NOMAD::Direction _infeas_success_dir;
+	  
+	  
+	// Direction group index
+	  int _dir_group_index;
+	  
+	 // Display
+	  NOMAD::Display _out;
 
     /*---------------------------------------------------------------------------*/
 
@@ -125,7 +134,7 @@ namespace NOMAD {
       const NOMAD::Point                                    & scaling            ,
       const NOMAD::Point                                    & fixed_variables    ,
       const std::vector<bool>                               & periodic_variables ,
-      const std::set<NOMAD::Variable_Group*,NOMAD::VG_Comp> & var_groups           );
+      std::set<NOMAD::Variable_Group*,NOMAD::VG_Comp> & var_groups           );
 
     /// Reset groups of variables.
     void reset_var_groups ( void );
@@ -173,6 +182,7 @@ namespace NOMAD {
        \param fixed_variables    Fixed variables        -- \b IN.
        \param periodic_variables Periodic variables     -- \b IN.
        \param var_groups         Groups of variables    -- \b IN.
+	   \param out                Display                                -- \b IN.
     */
     Signature
     ( int                                                     n                  ,
@@ -185,7 +195,9 @@ namespace NOMAD {
       const NOMAD::Point                                    & scaling            ,
       const NOMAD::Point                                    & fixed_variables    ,
       const std::vector<bool>                               & periodic_variables ,
-      const std::set<NOMAD::Variable_Group*,NOMAD::VG_Comp> & var_groups           );
+      std::set<NOMAD::Variable_Group*,NOMAD::VG_Comp> & var_groups         ,
+	 const NOMAD::Display									& out  =NOMAD::Display()   
+	 );
     
     /// Constructor #2.
     /**
@@ -208,7 +220,8 @@ namespace NOMAD {
 		const std::set<NOMAD::direction_type>   & direction_types    ,
 		const std::set<NOMAD::direction_type>   & sec_poll_dir_types ,
 		int                                       halton_seed        ,
-		const NOMAD::Display                    & out                  );
+		const NOMAD::Display                    & out  = NOMAD::Display() 
+	);
     
     /// Copy constructor.
     /**
@@ -244,7 +257,7 @@ namespace NOMAD {
       const NOMAD::Point                                    & scaling            ,
       const NOMAD::Point                                    & fixed_variables    ,
       const std::vector<bool>                               & periodic_variables ,
-      const std::set<NOMAD::Variable_Group*,NOMAD::VG_Comp> & var_groups );
+      std::set<NOMAD::Variable_Group*,NOMAD::VG_Comp> & var_groups );
     
     /// Define a signature to be standard.
     void set_std ( void ) { _std = true; }
@@ -260,13 +273,13 @@ namespace NOMAD {
        \param dir The direction -- \b IN.
     */
     void set_infeas_success_dir ( const NOMAD::Direction & dir );
-
+	  
     /// Reset the feasible successful direction.
     void reset_feas_success_dir ( void ) const { _feas_success_dir.clear(); }
 
     /// Reset the infeasible successful direction.
     void reset_infeas_success_dir ( void ) const { _infeas_success_dir.clear(); }
-    
+	  
     /// Scaling.
     /**
        Performed before an evaluation.
@@ -370,7 +383,13 @@ namespace NOMAD {
        \return A boolean equal to \c true if there are categorical variables.
     */
     bool has_categorical ( void ) const { return _has_categorical; }
-
+ 
+	/// Access to the number of categorical variables.
+	/**
+       \return Integer equal to the number of categorical variables.
+	*/
+	int get_n_categorical ( void ) const ;
+	  
     /// Access to the number of variables.
     /**
        \return The number of variables.
@@ -424,18 +443,17 @@ namespace NOMAD {
     /// Access to the directions.
     /**
        - The computed directions already include Delta^k_m.
-       \param dirs          List of directions                     -- \b OUT.
-       \param poll          Type of poll (primary or secondary)    -- \b IN.
-       \param poll_center   Poll center                            -- \b IN.
-       \param first_success First success of the run (can be NULL) -- \b IN.
-       \param mesh_index    Mesh index ell                         -- \b IN.
+       \param dirs              List of directions                      -- \b OUT.
+       \param poll              Type of poll (primary or secondary)     -- \b IN.
+       \param poll_center       Poll center                             -- \b IN.
+       \param mesh_index        Mesh index ell                          -- \b IN.
     */
-    void get_directions ( std::list<NOMAD::Direction> & dirs          ,
-			  NOMAD::poll_type              poll          ,
-			  const NOMAD::Point          & poll_center   ,
-			  const NOMAD::Point          * first_success ,
-			  int                           mesh_index      ) const;
-    
+    void get_directions ( std::list<NOMAD::Direction> & dirs              ,
+			  NOMAD::poll_type              poll              ,
+			  const NOMAD::Point          & poll_center       ,
+			  int                           mesh_index          );
+
+
     /// Access to one direction for a given mesh.
     /**
        Used for example in the VNS search.
@@ -446,7 +464,8 @@ namespace NOMAD {
     void get_one_direction ( NOMAD::Direction & dir          ,
 			     int                mesh_index   ,
 			     int                halton_index   ) const;
-    
+      
+	  
     /// Comparison operator \c < .
     /**
        Successful directions are not considered.

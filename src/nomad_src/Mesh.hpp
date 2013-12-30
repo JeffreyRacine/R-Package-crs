@@ -1,5 +1,5 @@
 /*-------------------------------------------------------------------------------------*/
-/*  NOMAD - Nonlinear Optimization by Mesh Adaptive Direct search - version 3.5.1        */
+/*  NOMAD - Nonlinear Optimization by Mesh Adaptive Direct search - version 3.6.2        */
 /*                                                                                     */
 /*  Copyright (C) 2001-2012  Mark Abramson        - the Boeing Company, Seattle        */
 /*                           Charles Audet        - Ecole Polytechnique, Montreal      */
@@ -180,6 +180,14 @@ namespace NOMAD {
     */
     static int get_max_mesh_index ( void ) { return Mesh::_max_mesh_index; }
 
+
+    /// Manually set the maximum mesh index.
+    /**
+       This corresponds to the maximum value of ell_k reached so far.
+       \param h The maximum mesh index -- \b IN.
+	   */
+	  static void set_max_mesh_index ( int h ) { _max_mesh_index = h; }
+	  
     /// Access to the minimal mesh index.
     /**
        This corresponds to the minimal value of ell_k reached so far.
@@ -187,6 +195,21 @@ namespace NOMAD {
     */
     static int get_min_mesh_index ( void ) { return Mesh::_min_mesh_index; }
     
+	  /// Manually set the minimum mesh index.
+	  /**
+       This corresponds to the minimum value of ell_k reached so far.
+       \param h The minimum mesh index -- \b IN.
+    */
+    static void set_min_mesh_index ( int h ) { _min_mesh_index = h; }
+
+    /// Test if mesh index<max_mesh_index so far.
+    /**
+       \return True if mesh index lower than maximal mesh index False otherwise.
+    */	
+    // Use 1- Apply dynamic reduction of poll dir only if true
+    // use 2- Ortho n+1. Apply selection n directions out of 2n based on target dir only if true. Otherwise the selection alternates +/-.  
+    static bool mesh_index_is_not_max(void){return Mesh::_mesh_index<Mesh::_max_mesh_index; /*true*/ }  
+	      
     /// Access to the mesh update basis tau.
     /**
        \return A double with the mesh update basis tau.
@@ -244,7 +267,7 @@ namespace NOMAD {
 	       mesh size Delta^m_min
 	       (stopping criterion MIN_MESH_SIZE).
     */
-    bool get_delta_m ( NOMAD::Point & delta_m                        ,
+    virtual bool get_delta_m ( NOMAD::Point & delta_m                        ,
 		       int            mesh_index = Mesh::_mesh_index   ) const;
 
     /// Access to the mesh size parameter Delta^m_k.
@@ -280,7 +303,7 @@ namespace NOMAD {
 	       poll size Delta^p_min
 	       (stopping criterion MIN_POLL_SIZE).
     */
-    bool get_delta_p ( NOMAD::Point & delta_p                        ,
+    virtual bool get_delta_p ( NOMAD::Point & delta_p                        ,
 		       int            mesh_index = Mesh::_mesh_index   ) const;
     
     /// Access to the poll size parameter Delta^p_k.

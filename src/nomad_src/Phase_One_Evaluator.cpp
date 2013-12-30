@@ -1,5 +1,5 @@
 /*-------------------------------------------------------------------------------------*/
-/*  NOMAD - Nonlinear Optimization by Mesh Adaptive Direct search - version 3.5.1        */
+/*  NOMAD - Nonlinear Optimization by Mesh Adaptive Direct search - version 3.6.2        */
 /*                                                                                     */
 /*  Copyright (C) 2001-2012  Mark Abramson        - the Boeing Company, Seattle        */
 /*                           Charles Audet        - Ecole Polytechnique, Montreal      */
@@ -34,42 +34,45 @@
 /*  You can find information on the NOMAD software at www.gerad.ca/nomad               */
 /*-------------------------------------------------------------------------------------*/
 /**
-  \file   Phase_One_Evaluator.cpp
-  \brief  NOMAD::Evaluator subclass for the phase one (implementation)
-  \author Sebastien Le Digabel
-  \date   2010-04-09
-  \see    Phase_One_Evaluator.hpp
-*/
+ \file   Phase_One_Evaluator.cpp
+ \brief  NOMAD::Evaluator subclass for the phase one (implementation)
+ \author Sebastien Le Digabel
+ \date   2010-04-09
+ \see    Phase_One_Evaluator.hpp
+ */
 #include "Phase_One_Evaluator.hpp"
-using namespace std;  //zhenghua
+using namespace std; // zhenghua
+
 /*------------------------------------------------------------------*/
 /*         compute f(x) from the blackbox outputs of a point        */
 /*              (special objective for MADS phase 1)                */
 /*------------------------------------------------------------------*/
 void NOMAD::Phase_One_Evaluator::compute_f ( NOMAD::Eval_Point & x ) const
 {
-  if ( x.get_bb_outputs().size() != _p.get_bb_nb_outputs() ) {
-    std::ostringstream err;
-    err << "Phase_One_Evaluator::compute_f(x): "
-	<< "x has a wrong number of blackbox outputs ("
-	<< x.get_bb_outputs().size() <<  " != " << _p.get_bb_nb_outputs() << ")";
-    throw NOMAD::Exception ( "Phase_One_Evaluator.cpp" , __LINE__ , err.str() );
-  }
-
-  // objective value for MADS phase 1: the squared sum of all EB constraint violations
-  // (each EB constraint has been previously transformed into OBJ values):
-  const std::list<int>               & index_obj = _p.get_index_obj();
-  const std::list<int>::const_iterator end       = index_obj.end();
-  const NOMAD::Point                 & bbo       = x.get_bb_outputs();
-  NOMAD::Double                        h_min     = _p.get_h_min();
-  NOMAD::Double                        sum       = 0.0;
-  NOMAD::Double                        v;
-
-  for ( std::list<int>::const_iterator it = index_obj.begin() ; it != end ; ++it ) {
-    v = bbo[*it];
-    if ( v > h_min )
-      sum += v.pow2();
-  }
-
-  x.set_f ( sum );
+	if ( x.get_bb_outputs().size() != _p.get_bb_nb_outputs() )
+	{
+		std::ostringstream err;
+		err << "Phase_One_Evaluator::compute_f(x): "
+		<< "x has a wrong number of blackbox outputs ("
+		<< x.get_bb_outputs().size() <<  " != " << _p.get_bb_nb_outputs() << ")";
+		throw NOMAD::Exception ( "Phase_One_Evaluator.cpp" , __LINE__ , err.str() );
+	}
+	
+	// objective value for MADS phase 1: the squared sum of all EB constraint violations
+	// (each EB constraint has been previously transformed into OBJ values):
+	const std::list<int>               & index_obj = _p.get_index_obj();
+	const std::list<int>::const_iterator end       = index_obj.end();
+	const NOMAD::Point                 & bbo       = x.get_bb_outputs();
+	NOMAD::Double                        h_min     = _p.get_h_min();
+	NOMAD::Double                        sum       = 0.0;
+	NOMAD::Double                        v;
+	
+	for ( std::list<int>::const_iterator it = index_obj.begin() ; it != end ; ++it )
+	{
+		v = bbo[*it];
+		if ( v > h_min )
+			sum += v.pow2();
+	}
+	
+	x.set_f ( sum );
 }

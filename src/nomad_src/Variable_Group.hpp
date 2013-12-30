@@ -1,5 +1,5 @@
 /*-------------------------------------------------------------------------------------*/
-/*  NOMAD - Nonlinear Optimization by Mesh Adaptive Direct search - version 3.5.1        */
+/*  NOMAD - Nonlinear Optimization by Mesh Adaptive Direct search - version 3.6.2        */
 /*                                                                                     */
 /*  Copyright (C) 2001-2012  Mark Abramson        - the Boeing Company, Seattle        */
 /*                           Charles Audet        - Ecole Polytechnique, Montreal      */
@@ -115,11 +115,13 @@ namespace NOMAD {
        \param bbit       Input types     -- \b IN.
        \param in_group   A pointer to a vector indicating if variables
                          belong to a group (may be \c NULL) -- \b OUT.
+	   \param mod        True if the variable group has been modified    -- \b out
        \return A boolean equal to \c true if the verification is valid.
     */
     bool check ( const NOMAD::Point                      & fixed_vars ,
 		 const std::vector<NOMAD::bb_input_type> & bbit       ,
-		 std::vector<bool>                       * in_group     );
+		 std::vector<bool>                       * in_group   ,
+		 bool 									 & mod            );
     
     /// Check if the directions are Ortho-MADS directions.
     /**
@@ -160,22 +162,21 @@ namespace NOMAD {
     /// Access to the directions.
     /**
        - The computed directions already include Delta^k_m.
-       \param dirs               List of directions                     -- \b OUT.
-       \param poll               Type of poll (primary or secondary)    -- \b IN.
-       \param poll_center        Poll center                            -- \b IN.
-       \param first_success      First success of the run (can be NULL) -- \b IN.
-       \param mesh_index         Mesh index ell                         -- \b IN.
-       \param feas_success_dir   Feasible success direction             -- \b IN.
-       \param infeas_success_dir Infeasible success direction           -- \b IN.
+       \param dirs               List of directions                      -- \b OUT.
+       \param poll               Type of poll (primary or secondary)     -- \b IN.
+       \param poll_center        Poll center                             -- \b IN.
+       \param mesh_index         Mesh index ell                          -- \b IN.
+       \param feas_success_dir   Feasible success direction              -- \b IN.
+       \param infeas_success_dir Infeasible success direction            -- \b IN.
     */
     void get_directions  ( std::list<NOMAD::Direction> & dirs               ,
 			   NOMAD::poll_type              poll               ,
 			   const NOMAD::Point          & poll_center        ,
-			   const NOMAD::Point          * first_success      ,
 			   int                           mesh_index         ,
 			   const NOMAD::Direction      & feas_success_dir   ,
 			   const NOMAD::Direction      & infeas_success_dir   );
-    
+
+
     /// Access to one direction for a given mesh.
     /**
        Used for example in the VNS search.

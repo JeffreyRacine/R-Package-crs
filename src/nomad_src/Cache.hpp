@@ -1,5 +1,5 @@
 /*-------------------------------------------------------------------------------------*/
-/*  NOMAD - Nonlinear Optimization by Mesh Adaptive Direct search - version 3.5.1        */
+/*  NOMAD - Nonlinear Optimization by Mesh Adaptive Direct search - version 3.6.2        */
 /*                                                                                     */
 /*  Copyright (C) 2001-2012  Mark Abramson        - the Boeing Company, Seattle        */
 /*                           Charles Audet        - Ecole Polytechnique, Montreal      */
@@ -259,7 +259,7 @@ namespace NOMAD {
     /**
        \return The number of extern points.
     */
-    virtual int get_nb_extern_points ( void ) const { return _extern_pts.size(); }
+    virtual int get_nb_extern_points ( void ) const { return static_cast<int>(_extern_pts.size()); }
 
     /// Access to an extern point.
     /**

@@ -370,7 +370,7 @@ extern "C" {
 						else 
 								strcpy(argv[2], "all");
 
-						param.help(3, argv);
+						param.help(3, argv, false);
 						delete(argv);
 				}
 

@@ -1,5 +1,5 @@
 /*-------------------------------------------------------------------------------------*/
-/*  NOMAD - Nonlinear Optimization by Mesh Adaptive Direct search - version 3.5.1        */
+/*  NOMAD - Nonlinear Optimization by Mesh Adaptive Direct search - version 3.6.2        */
 /*                                                                                     */
 /*  Copyright (C) 2001-2012  Mark Abramson        - the Boeing Company, Seattle        */
 /*                           Charles Audet        - Ecole Polytechnique, Montreal      */
@@ -41,7 +41,8 @@
   \see    Signature.hpp
 */
 #include "Signature.hpp"
-using namespace std;  //zhenghua
+using namespace std; // zhenghua
+
 /*-----------------------------------*/
 /*   static members initialization   */
 /*-----------------------------------*/
@@ -49,6 +50,8 @@ using namespace std;  //zhenghua
 int NOMAD::Signature::_cardinality     = 0;
 int NOMAD::Signature::_max_cardinality = 0;
 #endif
+
+bool NOMAD::Signature::_warning_has_been_displayed=false;
 
 /*--------------------------------------------------*/
 /*                    constructor 1                 */
@@ -64,9 +67,11 @@ NOMAD::Signature::Signature
   const NOMAD::Point                                    & scaling            ,
   const NOMAD::Point                                    & fixed_variables    ,
   const std::vector<bool>                               & periodic_variables ,
-  const std::set<NOMAD::Variable_Group*,NOMAD::VG_Comp> & var_groups )
+  std::set<NOMAD::Variable_Group*,NOMAD::VG_Comp> & var_groups               ,   
+  const NOMAD::Display                                  & out )
   :  _mesh ( NULL  ) ,
-     _std  ( false )
+     _std  ( false ) ,
+     _out (out)
 {
   init ( n                  ,
 	 input_types        ,
@@ -101,7 +106,8 @@ NOMAD::Signature::Signature
   int                                       halton_seed        ,
   const NOMAD::Display                    & out                  )
   : _mesh ( NULL  ) ,
-    _std  ( false )
+    _std  ( false ) ,
+    _out  ( out )
 {
   if ( static_cast<int> ( input_types.size() ) != n )
     throw NOMAD::Signature::Signature_Error ( "Signature.cpp" , __LINE__ , *this ,
@@ -136,6 +142,7 @@ NOMAD::Signature::Signature
 						      sec_poll_dir_types,
 						      -1                , // no Halton seed
 						      out                 ) );
+	  
   }
 
   // init:
@@ -153,7 +160,7 @@ NOMAD::Signature::Signature
 	 var_groups            );
 
   // delete the temporary groups of variables:
-  std::set<NOMAD::Variable_Group*,NOMAD::VG_Comp>::const_iterator
+  std::set<NOMAD::Variable_Group*,NOMAD::VG_Comp>::iterator
     it , end = var_groups.end();
 
   for ( it = var_groups.begin() ; it != end ; ++it )
@@ -181,7 +188,8 @@ NOMAD::Signature::Signature ( const NOMAD::Signature & s )
      _mesh               ( new NOMAD::Mesh(*s._mesh) ) ,
      _std                ( false                     ) ,
      _feas_success_dir   ( s._feas_success_dir       ) ,
-     _infeas_success_dir ( s._infeas_success_dir     )
+     _infeas_success_dir ( s._infeas_success_dir     ) ,
+     _out (s._out)
 {
   std::list<NOMAD::Variable_Group *>::const_iterator it , end = s._var_groups.end();
   for ( it = s._var_groups.begin() ; it != end ; ++it )
@@ -248,6 +256,7 @@ void NOMAD::Signature::set_infeas_success_dir ( const NOMAD::Direction & d )
   _infeas_success_dir = d;
 }
 
+
 /*--------------------------------------------------*/
 /*               initializations (private)          */
 /*--------------------------------------------------*/
@@ -262,122 +271,192 @@ void NOMAD::Signature::init
   const NOMAD::Point                      & scaling            ,
   const NOMAD::Point                      & fixed_variables    ,
   const std::vector<bool>                 & periodic_variables ,
-  const std::set<NOMAD::Variable_Group*,NOMAD::VG_Comp> & var_groups )
+  std::set<NOMAD::Variable_Group*,NOMAD::VG_Comp> & var_groups )
 {
-  // reset success directions:
-  _feas_success_dir.clear();
-  _infeas_success_dir.clear();
+	// reset directions:
+	_feas_success_dir.clear();
+	_infeas_success_dir.clear();
+	
+	// check the dimension (n):
+	if ( n <= 0 )
+		throw NOMAD::Signature::Signature_Error ( "Signature.cpp" , __LINE__ , *this ,
+												 "NOMAD::Signature::init(): bad argument: n" );
+	
+	// bounds:
+	if ( lb.empty() )
+		_lb.reset ( n );
+	else if ( lb.size() == n )
+		_lb = lb;
+	else
+		throw NOMAD::Signature::Signature_Error ( "Signature.cpp" , __LINE__ , *this ,
+												 "NOMAD::Signature::init(): bad argument: lb" );
+	if ( ub.empty() )
+		_ub.reset ( n );
+	else if ( ub.size() == n )
+		_ub = ub;
+	else
+		throw NOMAD::Signature::Signature_Error ( "Signature.cpp" , __LINE__ , *this ,
+												 "NOMAD::Signature::init(): bad argument: ub" );
+	
+	// scaling:
+	if ( scaling.empty() )
+		_scaling.reset ( n );
+	else if ( scaling.size() == n )
+		_scaling = scaling;
+	else
+		throw NOMAD::Signature::Signature_Error ( "Signature.cpp" , __LINE__ , *this ,
+												 "NOMAD::Signature::init(): bad argument: scaling" );
+	int i;
+	for ( i = 0 ; i < n ; ++i )
+		if ( _scaling[i].is_defined() && _scaling[i] == 0.0 )
+			throw NOMAD::Signature::Signature_Error ( "Signature.cpp" , __LINE__ , *this ,
+													 "NOMAD::Signature::init(): bad argument: scaling (zero value)" );
+	
+	// fixed variables:
+	if ( fixed_variables.empty() )
+		_fixed_variables.reset ( n );
+	else if ( fixed_variables.size() == n )
+		_fixed_variables = fixed_variables;
+	else
+		throw NOMAD::Signature::Signature_Error ( "Signature.cpp" , __LINE__ , *this ,
+												 "NOMAD::Signature::init(): bad argument: fixed_variables" );
+	
+	// periodic variables:
+	_periodic_variables = periodic_variables;
+	if ( !_periodic_variables.empty() ) {
+		
+		if ( static_cast<int>(periodic_variables.size()) != n )
+			throw NOMAD::Signature::Signature_Error ( "Signature.cpp" , __LINE__ , *this ,
+													 "NOMAD::Signature::init(): bad argument: periodic_variables" );
+		
+		for ( i = 0 ; i < n ; ++i )
+			if ( _periodic_variables[i] && ( !_lb[i].is_defined() || !_ub[i].is_defined() ) )
+				throw NOMAD::Signature::Signature_Error ( "Signature.cpp" , __LINE__ , *this ,
+														 "NOMAD::Signature::init(): incompatible periodic variables" );
+	}
+	
+	// input types:
+	if ( static_cast<int>(input_types.size()) != n )
+		throw NOMAD::Signature::Signature_Error ( "Signature.cpp" , __LINE__ , *this ,
+												 "NOMAD::Signature::init(): bad argument: input_types" );
+	_input_types     = input_types;
+	_all_continuous  = true;
+	_has_categorical = false;
+	
+	for ( i = 0 ; i < n ; ++i ) 
+	{
+		
+		if ( (_lb[i].is_defined() || _ub[i].is_defined() ) && _input_types[i] == NOMAD::CATEGORICAL && _out.get_gen_dd()>=NOMAD::NORMAL_DISPLAY && !_warning_has_been_displayed  )
+		{	
+			_out << NOMAD::open_block("Warning:") 
+			<< "NOMAD::Signature::init(): Providing bounds for categorical variables is not recommended!" << std::endl
+			<< NOMAD::close_block();
+			_warning_has_been_displayed=true;
+		}
+		
+		if ( _fixed_variables[i].is_defined() && ((_lb[i].is_defined() && _fixed_variables[i] < _lb[i]) || (_ub[i].is_defined() && _fixed_variables[i] > _ub[i]) ||
+			( (_input_types[i] == NOMAD::INTEGER     ||   _input_types[i] == NOMAD::CATEGORICAL    )
+			 && !_fixed_variables[i].is_integer() )  ||
+			( _input_types[i] == NOMAD::BINARY && !_fixed_variables[i].is_binary() ) ) )
+			throw NOMAD::Signature::Signature_Error ( "Signature.cpp" , __LINE__ , *this ,
+													 "NOMAD::Signature::init(): bad argument: fixed variable inconsistent with bounds or input types" );
 
-  // check the dimension (n):
-  if ( n <= 0 )
-    throw NOMAD::Signature::Signature_Error ( "Signature.cpp" , __LINE__ , *this ,
-				   "NOMAD::Signature::init(): bad argument: n" );
-
-  // bounds:
-  if ( lb.empty() )
-    _lb.reset ( n );
-  else if ( lb.size() == n )
-    _lb = lb;
-  else
-    throw NOMAD::Signature::Signature_Error ( "Signature.cpp" , __LINE__ , *this ,
-				   "NOMAD::Signature::init(): bad argument: lb" );
-  if ( ub.empty() )
-    _ub.reset ( n );
-  else if ( ub.size() == n )
-    _ub = ub;
-  else
-    throw NOMAD::Signature::Signature_Error ( "Signature.cpp" , __LINE__ , *this ,
-				   "NOMAD::Signature::init(): bad argument: ub" );
-
-  // scaling:
-  if ( scaling.empty() )
-    _scaling.reset ( n );
-  else if ( scaling.size() == n )
-    _scaling = scaling;
-  else
-    throw NOMAD::Signature::Signature_Error ( "Signature.cpp" , __LINE__ , *this ,
-				   "NOMAD::Signature::init(): bad argument: scaling" );
-  int i;
-  for ( i = 0 ; i < n ; ++i )
-    if ( _scaling[i].is_defined() && _scaling[i] == 0.0 )
-      throw NOMAD::Signature::Signature_Error ( "Signature.cpp" , __LINE__ , *this ,
-	    "NOMAD::Signature::init(): bad argument: scaling (zero value)" );
-
-  // fixed variables:
-  if ( fixed_variables.empty() )
-    _fixed_variables.reset ( n );
-  else if ( fixed_variables.size() == n )
-    _fixed_variables = fixed_variables;
-  else
-    throw NOMAD::Signature::Signature_Error ( "Signature.cpp" , __LINE__ , *this ,
-	  "NOMAD::Signature::init(): bad argument: fixed_variables" );
-
-  // periodic variables:
-  _periodic_variables = periodic_variables;
-  if ( !_periodic_variables.empty() ) {
-    
-    if ( static_cast<int>(periodic_variables.size()) != n )
-      throw NOMAD::Signature::Signature_Error ( "Signature.cpp" , __LINE__ , *this ,
-	    "NOMAD::Signature::init(): bad argument: periodic_variables" );
-
-    for ( i = 0 ; i < n ; ++i )
-      if ( _periodic_variables[i] && ( !_lb[i].is_defined() || !_ub[i].is_defined() ) )
-	throw NOMAD::Signature::Signature_Error ( "Signature.cpp" , __LINE__ , *this ,
-	      "NOMAD::Signature::init(): incompatible periodic variables" );
-  }
-
-  // input types:
-  if ( static_cast<int>(input_types.size()) != n )
-    throw NOMAD::Signature::Signature_Error ( "Signature.cpp" , __LINE__ , *this ,
-	  "NOMAD::Signature::init(): bad argument: input_types" );
-  _input_types     = input_types;
-  _all_continuous  = true;
-  _has_categorical = false;
-
-  for ( i = 0 ; i < n ; ++i ) {
-    if ( _input_types[i] == NOMAD::CATEGORICAL ) {
-      _has_categorical = true;
-      _all_continuous  = false;
-      break;
-    }
-    if ( _input_types[i] != NOMAD::CONTINUOUS ) {
-      _all_continuous = false;
-      if ( _has_categorical )
-	break;
-    }
-  }
-
-  // variable groups:
-  reset_var_groups();
-
-  std::set<NOMAD::Variable_Group*,NOMAD::VG_Comp>::const_iterator
+		if ( _lb[i].is_defined() && _ub[i].is_defined() ) 
+		{
+			if ( _lb[i].is_defined() && _ub[i].is_defined() && _lb[i].value()> ub[i].value() )
+			{	
+				throw NOMAD::Signature::Signature_Error ( "Signature.cpp" , __LINE__ , *this ,
+														 "NOMAD::Signature::init(): bad argument: lower bound must be lower than upper bound!" );
+			}
+			if ( _lb[i] == _ub[i] )
+				_fixed_variables[i]=_lb[i];
+		}
+	}
+	for ( i = 0 ; i < n ; ++i ) 
+	{	
+		if ( _input_types[i] == NOMAD::CATEGORICAL )
+		{
+			_has_categorical = true;
+			_all_continuous  = false;
+			break;
+		}
+		if ( _input_types[i] != NOMAD::CONTINUOUS )
+		{
+			_all_continuous = false;
+			if ( _has_categorical )
+				break;
+		}
+		
+		
+	}
+	
+	// variable groups:
+	reset_var_groups();
+	
+	std::set<NOMAD::Variable_Group*,NOMAD::VG_Comp>::iterator
     end = var_groups.end() , it;
-  for ( it = var_groups.begin() ; it != end ; ++it ) {
+	bool mod=false;
+	for ( it = var_groups.begin() ; it != end ; ++it )
+	{
+		
+		
+		if ( !(*it)->check ( _fixed_variables , input_types , NULL, mod ) )
+			throw NOMAD::Signature::Signature_Error ( "Signature.cpp" , __LINE__ , *this ,
+													 "NOMAD::Signature::init(): incompatible variable group" );
+			
+	}
+	
+	if (mod)
+	{
+		std::set<NOMAD::Variable_Group*,NOMAD::VG_Comp> tmp_var_groups;
+		for ( it = var_groups.begin() ; it != end ; ++it )
+		{
+			tmp_var_groups.insert(*it);
+		}
+		var_groups.clear();
+		var_groups=tmp_var_groups;
+		tmp_var_groups.clear();
+		
+	}
+	
+	for ( it = var_groups.begin() ; it != end ; ++it )
+		_var_groups.push_back( new NOMAD::Variable_Group (**it) );
 
-    if ( !(*it)->check ( _fixed_variables , input_types , NULL ) )
-      throw NOMAD::Signature::Signature_Error ( "Signature.cpp" , __LINE__ , *this ,
-	    "NOMAD::Signature::init(): incompatible variable group" );
-
-    _var_groups.push_back ( new NOMAD::Variable_Group (**it) );
-  }
-
-  // mesh:
-  if ( initial_mesh_size.size() != n                             ||
-       (min_mesh_size.is_defined() && min_mesh_size.size() != n) ||
-       (min_poll_size.is_defined() && min_poll_size.size() != n)    )
-    throw NOMAD::Signature::Signature_Error ( "Signature.cpp" , __LINE__ , *this ,
-	  "NOMAD::Signature::init(): mesh arguments with different sizes" );
-  delete _mesh;
-  
-  try {
-    _mesh = new NOMAD::Mesh ( initial_mesh_size , min_mesh_size , min_poll_size );
-  }
-  catch ( NOMAD::Exception & e ) {
-    throw NOMAD::Signature::Signature_Error ( "Signature.cpp" , __LINE__ ,
-					      *this , e.what() );
-  }
-
+	// mesh:
+	if ( initial_mesh_size.size() != n                             ||
+		(min_mesh_size.is_defined() && min_mesh_size.size() != n) ||
+		(min_poll_size.is_defined() && min_poll_size.size() != n)    )
+		throw NOMAD::Signature::Signature_Error ( "Signature.cpp" , __LINE__ , *this ,
+												 "NOMAD::Signature::init(): mesh arguments with different sizes" );
+	delete _mesh;
+	
+	try {
+		_mesh = new NOMAD::Mesh ( initial_mesh_size , min_mesh_size , min_poll_size );
+	}
+	catch ( NOMAD::Exception & e )
+	{
+		throw NOMAD::Signature::Signature_Error ( "Signature.cpp" , __LINE__ ,
+												 *this , e.what() );
+	}
+	
 }
+
+/*--------------------------------------------------*/
+/* Access to the number of categorical variables */
+/*--------------------------------------------------*/
+int NOMAD::Signature::get_n_categorical ( void ) const
+{ 
+	int n_cat=0;
+	for (int i = 0 ; i < get_n() ; ++i ) {
+		if ( _input_types[i] == NOMAD::CATEGORICAL )
+			n_cat++;
+	}
+	
+	return n_cat;
+}
+	
+
+
 
 /*--------------------------------------------------*/
 /*                       reset                      */
@@ -393,7 +472,7 @@ void NOMAD::Signature::reset
   const NOMAD::Point                      & scaling                  ,
   const NOMAD::Point                      & fixed_variables          ,
   const std::vector<bool>                 & periodic_variables       ,
-  const std::set<NOMAD::Variable_Group*,NOMAD::VG_Comp> & var_groups   )
+  std::set<NOMAD::Variable_Group*,NOMAD::VG_Comp> & var_groups   )
 {
   reset_var_groups();
   init ( n                  ,
@@ -437,86 +516,97 @@ bool NOMAD::Signature::is_compatible ( const NOMAD::Point & x ) const
 /*-----------------------------------------------------*/
 /*     compute the directions (they include delta_m)   */
 /*-----------------------------------------------------*/
-void NOMAD::Signature::get_directions ( std::list<NOMAD::Direction> & dirs          ,
-					NOMAD::poll_type              poll          ,
-					const NOMAD::Point          & poll_center   ,
-					const NOMAD::Point          * first_success ,  // can be NULL
-					int                           mesh_index      ) const
+void NOMAD::Signature::get_directions ( std::list<NOMAD::Direction> & dirs              ,
+					NOMAD::poll_type              poll              ,
+					const NOMAD::Point          & poll_center       ,
+					int                           mesh_index          )
 {
-  NOMAD::Direction                          * pd;
-  int                                         i;
-  std::list<NOMAD::Direction>::const_iterator it_dir , end_dir;
-  std::set<int>::const_iterator               it_vi  , end_vi;
+	
+	
+	NOMAD::Direction                          * pd;
+	int                                         i;
+	std::list<NOMAD::Direction>::const_iterator it_dir , end_dir;
+	std::set<int>::const_iterator               it_vi  , end_vi;
+	
+	// get delta_m (mesh size parameter):
+	int          n = get_n();
+	NOMAD::Point delta_m (n);
+	NOMAD::Point delta_p (n);
+	_mesh->get_delta_m ( delta_m , mesh_index );
+	_mesh->get_delta_p ( delta_p , mesh_index );
+	
+	
+	
+	// Reset dir_group_index.
+	//	For each signature, a variable_group has a  unique set of directions generated and a unique dir_group_index starting by zero (-1 if no dirs)	
+	_dir_group_index=-1;
+	
+	// loop on variable groups:
+	std::list<NOMAD::Variable_Group*>::const_iterator end_vg = _var_groups.end() , it_vg;
+	for ( it_vg = _var_groups.begin() ; it_vg != end_vg ; ++it_vg )
+	{
+		
+		const std::set<int> & var_indexes = (*it_vg)->get_var_indexes();
+		
+		// get the directions for the current group of variables:
+		std::list<NOMAD::Direction> dirs_nc;
+		(*it_vg)->get_directions ( dirs_nc,
+								  poll                ,
+								  poll_center         ,
+								  mesh_index          ,
+								  _feas_success_dir   ,
+								  _infeas_success_dir   );
+		
+		// scale with delta_m and resize the directions to size n;
+		// also round integer and binary variables:
+		end_dir = dirs_nc.end();
+		if (static_cast<int>(dirs_nc.size())!=0) 
+			++_dir_group_index;   
+		for ( it_dir = dirs_nc.begin() ; it_dir != end_dir ; ++it_dir ) 
+		{
+			
+			dirs.push_back ( NOMAD::Direction ( n , 0.0 , it_dir->get_type(),_dir_group_index) );  
+			
+			pd = &(*(--dirs.end()));
+			
+			end_vi = var_indexes.end();
+			i      = 0;
+			for ( it_vi = var_indexes.begin() ; it_vi != end_vi ; ++it_vi ) {
+				
+				(*pd)[*it_vi] = delta_m[*it_vi] * (*it_dir)[i++];
+				
+				// integer variables:
+				if ( _input_types[*it_vi] == NOMAD::INTEGER )
+				{
+					if ( (*pd)[*it_vi] >= delta_p[*it_vi]/3.0 )
+						(*pd)[*it_vi] =  (*pd)[*it_vi].ceil();
+					else if ( (*pd)[*it_vi] <= -delta_p[*it_vi]/3.0 )
+						(*pd)[*it_vi] =  (*pd)[*it_vi].floor();
+					else
+						(*pd)[*it_vi] =  (*pd)[*it_vi].round();
+				}
 
-  // get delta_m (mesh size parameter):
-  int          n = get_n();
-  NOMAD::Point delta_m (n);
-	NOMAD::Point delta_p(n);	
-  _mesh->get_delta_m ( delta_m , mesh_index );
-  _mesh->get_delta_p ( delta_p , mesh_index );	
-
-  // loop on variable groups:
-  std::list<NOMAD::Variable_Group*>::const_iterator end_vg = _var_groups.end() , it_vg;
-  for ( it_vg = _var_groups.begin() ; it_vg != end_vg ; ++it_vg ) {
-
-    const std::set<int> & var_indexes = (*it_vg)->get_var_indexes();
-
-    // get the directions for the current group of variables:
-    std::list<NOMAD::Direction> dirs_nc;
-    (*it_vg)->get_directions ( dirs_nc             ,
-			       poll                ,
-			       poll_center         ,
-			       first_success       ,
-			       mesh_index          ,
-			       _feas_success_dir   ,
-			       _infeas_success_dir   );
-
-    // scale with delta_m and resize the directions to size n;
-    // also round integer and binary variables:
-    end_dir = dirs_nc.end();
-    for ( it_dir = dirs_nc.begin() ; it_dir != end_dir ; ++it_dir ) {
-      dirs.push_back ( NOMAD::Direction ( n , 0.0 , it_dir->get_type() ) );
-      pd = &(*(--dirs.end()));
-
-      end_vi = var_indexes.end();
-      i      = 0;
-      for ( it_vi = var_indexes.begin() ; it_vi != end_vi ; ++it_vi ) {
-
-	(*pd)[*it_vi] = delta_m[*it_vi] * (*it_dir)[i++];
-
-	// integer variables:		    
-	  if ( _input_types[*it_vi] == NOMAD::INTEGER ) {
-		  if ( (*pd)[*it_vi] >= delta_p[*it_vi]/3.0 )
-			  (*pd)[*it_vi] = ceil  ( (*pd)[*it_vi].value() );
-		  else if ( (*pd)[*it_vi] <= -delta_p[*it_vi]/3.0 )
-			  (*pd)[*it_vi] = floor ( (*pd)[*it_vi].value() );
-		  else	
-		  {
-			  double x=(*pd)[*it_vi].value();
-			  (*pd)[*it_vi] = (x>0)? floor(x+0.5): ceil(x-0.5);
-		  }
-		}		  
-		  
-	// binary variables:
-	else if ( _input_types[*it_vi] == NOMAD::BINARY ) {
-	  if ( (*pd)[*it_vi] != 0.0 )
-	    (*pd)[*it_vi] = 1.0;
+				// binary variables: 
+				else if ( _input_types[*it_vi] == NOMAD::BINARY ) 
+				{
+					if ( (*pd)[*it_vi] != 0.0 )
+						(*pd)[*it_vi] = 1.0;
+				}
+				
+				// categorical variables: set direction=0:
+				else if ( _input_types[*it_vi] == NOMAD::CATEGORICAL )
+					(*pd)[*it_vi] = 0.0;
+			}
+		}
 	}
-
-	// categorical variables: set direction=0:
-	else if ( _input_types[*it_vi] == NOMAD::CATEGORICAL )
-	  (*pd)[*it_vi] = 0.0;
-      }
-    }
-  }
 }
 
 /*----------------------------------------------------------------*/
 /*  get just one direction for a given mesh (used by VNS search)  */
 /*----------------------------------------------------------------*/
-void NOMAD::Signature::get_one_direction ( NOMAD::Direction & dir          ,
-					   int                mesh_index   ,
-					   int                halton_index   ) const
+void NOMAD::Signature::get_one_direction ( NOMAD::Direction & dir,
+										  int mesh_index,
+										  int halton_index ) const
 {
 	int                           i;
 	std::set<int>::const_iterator it_vi  , end_vi;
@@ -524,9 +614,9 @@ void NOMAD::Signature::get_one_direction ( NOMAD::Direction & dir          ,
 	// get delta_m (mesh size parameter):
 	int          n = get_n();
 	NOMAD::Point delta_m (n);
-	NOMAD::Point delta_p(n);	
 	_mesh->get_delta_m ( delta_m , mesh_index );
-	_mesh->get_delta_p ( delta_p , mesh_index );	
+	NOMAD::Point delta_p (n);
+	_mesh->get_delta_p( delta_p , mesh_index );
 	
 	dir.reset    ( n , 0.0 );
 	dir.set_type ( NOMAD::UNDEFINED_DIRECTION );
@@ -817,8 +907,8 @@ bool NOMAD::Signature::operator < ( const NOMAD::Signature & s ) const
 
   // dimension:
   // ----------
-  int  n = _lb.size();
-  int sn = s._lb.size();
+  int  n = static_cast<int>(_lb.size());
+  int sn = static_cast<int>(s._lb.size());
   
   if ( n < sn )
     return true;
@@ -827,8 +917,8 @@ bool NOMAD::Signature::operator < ( const NOMAD::Signature & s ) const
 
   // variable groups:
   // ----------------
-  int nvg1 = _var_groups.size();
-  int nvg2 = s._var_groups.size();
+  size_t nvg1 = _var_groups.size();
+  size_t nvg2 = s._var_groups.size();
   if ( nvg1 != nvg2 )
     return (nvg1 < nvg2);
 
@@ -918,22 +1008,25 @@ bool NOMAD::Signature::operator < ( const NOMAD::Signature & s ) const
 
     // mesh:
     // -----
-    if ( _mesh != s._mesh ) {
+    if ( _mesh != s._mesh )
+	{
       if ( delta_m_0[i].comp_with_undef ( s_delta_m_0[i] ) )
-	return true;
+		  return true;
       if ( s_delta_m_0[i].comp_with_undef ( delta_m_0[i] ) )
-	return false;
-      if ( chkm ) {
-	if ( delta_m_min[i].comp_with_undef ( s_delta_m_min[i] ) )
-	  return true;
-	if ( s_delta_m_min[i].comp_with_undef ( delta_m_min[i] ) )
-	  return false;
+		  return false;
+      if ( chkm )
+	  {
+		  if ( delta_m_min[i].comp_with_undef ( s_delta_m_min[i] ) )
+			  return true;
+		  if ( s_delta_m_min[i].comp_with_undef ( delta_m_min[i] ) )
+			  return false;
       }
-      if ( chkp ) {
-	if ( delta_p_min[i].comp_with_undef ( s_delta_p_min[i] ) )
-	  return true;
-	if ( s_delta_p_min[i].comp_with_undef ( delta_p_min[i] ) )
-	  return false;
+      if ( chkp )
+	  {
+		  if ( delta_p_min[i].comp_with_undef ( s_delta_p_min[i] ) )
+			  return true;
+		  if ( s_delta_p_min[i].comp_with_undef ( delta_p_min[i] ) )
+			  return false;
       }
     }
   }

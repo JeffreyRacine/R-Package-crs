@@ -1,5 +1,5 @@
 /*-------------------------------------------------------------------------------------*/
-/*  NOMAD - Nonsmooth Optimization by Mesh Adaptive Direct search - version 3.5.1        */
+/*  NOMAD - Nonsmooth Optimization by Mesh Adaptive Direct search - version 3.6.2        */
 /*                                                                                     */
 /*  Copyright (C) 2001-2010  Mark Abramson        - the Boeing Company, Seattle        */
 /*                           Charles Audet        - Ecole Polytechnique, Montreal      */
@@ -39,7 +39,8 @@
  */
 
 #include "RNG.hpp"
-using namespace std;  //zhenghua
+using namespace std; // zhenghua
+
 
 //** Default values for the random number seed  */
 uint32_t NOMAD::RNG::x = 123456789;
@@ -47,24 +48,22 @@ uint32_t NOMAD::RNG::y = 362436069;
 uint32_t NOMAD::RNG::z = 521288629; 
 
 
-bool NOMAD::RNG::set_seed(unsigned long s)
+bool NOMAD::RNG::set_seed(int s)
 {
-	/** This function sets the seed for random number generation \c 
-	 \return A boolean if the seed is acceptable, that is in [0,UINT32_MAX].
-	 */
-	if(s<=UINT32_MAX)
-	{
-		x=s;
+    x=static_cast<uint32_t>(s);
+	if(x<=UINT32_MAX && s>=0)
 		return true;
-	}
-	else 
+	else
+    {
+        throw NOMAD::Exception ( "RNG.cpp" , __LINE__ ,
+                                "NOMAD::RNG::set_seed(): invalid seed. Seed should be in [0,UINT32_MAX]" );
 		return false;
+    }
 }
 
-uint32_t NOMAD::RNG::rand ( void ) { //period 2^96-1
-	/** This function serves to obtain a random number \c 
-	 \return An integer in the interval [0,UINT32_MAX].
-	 */
+uint32_t NOMAD::RNG::rand ( void )
+{ //period 2^96-1
+
  	uint32_t t;
  	x ^= x << 16;
  	x ^= x >> 5;

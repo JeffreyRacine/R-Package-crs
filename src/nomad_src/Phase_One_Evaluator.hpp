@@ -1,5 +1,5 @@
 /*-------------------------------------------------------------------------------------*/
-/*  NOMAD - Nonlinear Optimization by Mesh Adaptive Direct search - version 3.5.1        */
+/*  NOMAD - Nonlinear Optimization by Mesh Adaptive Direct search - version 3.6.2        */
 /*                                                                                     */
 /*  Copyright (C) 2001-2012  Mark Abramson        - the Boeing Company, Seattle        */
 /*                           Charles Audet        - Ecole Polytechnique, Montreal      */
@@ -87,7 +87,7 @@ namespace NOMAD {
                          or not -- \b OUT.
        \return A boolean equal to \c false if the evaluation failed.
      */
-		using NOMAD::Evaluator::eval_x;   //zhenghua
+		using NOMAD::Evaluator::eval_x;   // zhenghua
     virtual bool eval_x ( NOMAD::Eval_Point   & x          ,
 			  const NOMAD::Double & h_max      ,
 			  bool                & count_eval   ) const
@@ -95,6 +95,23 @@ namespace NOMAD {
       return _basic_ev.eval_x ( x , h_max , count_eval );
     }
 
+	  
+	  /// Evaluate the blackboxes at a given list of trial points.
+	  /**
+       \param list_x The list of trial points -- \b IN/OUT.
+       \param h_max      Maximal feasibility value \c h_max -- \b IN.
+       \param list_count_eval Flags indicating if the evaluations have to be counted
+	   or not -- \b OUT.
+       \return A boolean equal to \c false if the evaluation failed.
+	   */
+	  virtual bool eval_x ( std::list<NOMAD::Eval_Point *>   & list_x          ,
+						   const NOMAD::Double & h_max      ,
+						   std::list<bool>                & list_count_eval   ) const
+	  {
+		  return _basic_ev.eval_x ( list_x , h_max , list_count_eval );
+	  }
+	  
+	  
     /// User preprocessing of points before evaluations.
     /**
        This method is called before the evaluation of a list of points.
@@ -105,6 +122,17 @@ namespace NOMAD {
     {
       _basic_ev.list_of_points_preprocessing ( pts );
     }
+	  
+	  
+	  /// Access to the model evaluator flag.
+	  /**
+	   \return The model evaluator flag.
+	   */
+	  virtual bool is_model_evaluator ( void ) const 
+	  { 
+		  return _basic_ev.is_model_evaluator(); 
+	  }
+	  
     
     /// Objective computation.
     /**

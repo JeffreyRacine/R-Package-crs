@@ -1,5 +1,5 @@
 /*-------------------------------------------------------------------------------------*/
-/*  NOMAD - Nonlinear Optimization by Mesh Adaptive Direct search - version 3.5.1        */
+/*  NOMAD - Nonlinear Optimization by Mesh Adaptive Direct search - version 3.6.2        */
 /*                                                                                     */
 /*  Copyright (C) 2001-2012  Mark Abramson        - the Boeing Company, Seattle        */
 /*                           Charles Audet        - Ecole Polytechnique, Montreal      */
@@ -86,7 +86,7 @@ namespace NOMAD {
 
     /// The VNS search.
     /**
-       Principle: x --[shaking(k)]--> x' --[descent]--> x" .
+       Principle: x --[shaking(k)]--> x' --[descent]--> x'' .
        \param mads           NOMAD::Mads object invoking this search -- \b IN/OUT.
        \param nb_search_pts  Number of generated search points       -- \b OUT.
        \param stop           Stop flag                               -- \b IN/OUT.

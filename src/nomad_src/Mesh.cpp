@@ -1,5 +1,5 @@
 /*-------------------------------------------------------------------------------------*/
-/*  NOMAD - Nonlinear Optimization by Mesh Adaptive Direct search - version 3.5.1        */
+/*  NOMAD - Nonlinear Optimization by Mesh Adaptive Direct search - version 3.6.2        */
 /*                                                                                     */
 /*  Copyright (C) 2001-2012  Mark Abramson        - the Boeing Company, Seattle        */
 /*                           Charles Audet        - Ecole Polytechnique, Montreal      */
@@ -41,7 +41,8 @@
   \see    Mesh.hpp
 */
 #include "Mesh.hpp"
-using namespace std;
+using namespace std; // zhenghua
+
 /*-----------------------------------*/
 /*   static members initialization   */
 /*-----------------------------------*/
@@ -131,14 +132,14 @@ void NOMAD::Mesh::init ( double mesh_update_basis        ,
 			 int    mesh_refining_exponent   ,
 			 int    initial_mesh_index         )
 {
-  NOMAD::Mesh::_mesh_update_basis        = mesh_update_basis;
-  NOMAD::Mesh::_mesh_coarsening_exponent = mesh_coarsening_exponent;
-  NOMAD::Mesh::_mesh_refining_exponent   = mesh_refining_exponent;
-  NOMAD::Mesh::_mesh_index           =
-    NOMAD::Mesh::_initial_mesh_index =
+	NOMAD::Mesh::_mesh_update_basis        = mesh_update_basis;
+	NOMAD::Mesh::_mesh_coarsening_exponent = mesh_coarsening_exponent;
+	NOMAD::Mesh::_mesh_refining_exponent   = mesh_refining_exponent;
+	NOMAD::Mesh::_mesh_index           =
+	NOMAD::Mesh::_initial_mesh_index =
     NOMAD::Mesh::_min_mesh_index     =
     NOMAD::Mesh::_max_mesh_index     = initial_mesh_index;
-  NOMAD::Mesh::_max_halton_index     = -1;
+	NOMAD::Mesh::_max_halton_index     = -1;
 }
 
 /*-----------------------------------------------------------*/
@@ -146,24 +147,24 @@ void NOMAD::Mesh::init ( double mesh_update_basis        ,
 /*-----------------------------------------------------------*/
 void NOMAD::Mesh::update ( NOMAD::success_type success , int & mesh_index )
 {
-  // defaults:
-  //  full success: lk = lk - 1
-  //  failure     : lk = lk + 1
-
-  if ( success == NOMAD::FULL_SUCCESS ) {
-    mesh_index -= NOMAD::Mesh::_mesh_coarsening_exponent;
-    if ( mesh_index < -NOMAD::L_LIMITS )
-      mesh_index = -NOMAD::L_LIMITS;
-  }
-
-  else if ( success == NOMAD::UNSUCCESSFUL )
-    mesh_index -= NOMAD::Mesh::_mesh_refining_exponent;
-
-  if ( mesh_index > _max_mesh_index )
-    _max_mesh_index = mesh_index;
-
-  if ( mesh_index < _min_mesh_index )
-    _min_mesh_index = mesh_index;
+	// defaults:
+	//  full success: lk = lk - 1
+	//  failure     : lk = lk + 1
+	
+	if ( success == NOMAD::FULL_SUCCESS ) {
+		mesh_index -= NOMAD::Mesh::_mesh_coarsening_exponent;
+		if ( mesh_index < -NOMAD::L_LIMITS )
+			mesh_index = -NOMAD::L_LIMITS;
+	}	
+	else if ( success == NOMAD::UNSUCCESSFUL )
+		mesh_index -= NOMAD::Mesh::_mesh_refining_exponent;
+	
+	if ( mesh_index > _max_mesh_index )
+		_max_mesh_index = mesh_index;
+	
+	
+	if ( mesh_index < _min_mesh_index )
+		_min_mesh_index = mesh_index;
 }
 
 /*-----------------------------------------------------------*/
@@ -217,23 +218,27 @@ void NOMAD::Mesh::check_min_mesh_sizes ( int                max_mesh_index ,
     return;
 
   // 1. mesh index tests:
-  if ( abs ( mesh_index ) > NOMAD::L_LIMITS ) {
+  if ( abs ( mesh_index ) > NOMAD::L_LIMITS )
+  {
     stop        = true;
     stop_reason = NOMAD::L_LIMITS_REACHED;
   }
-  if ( max_mesh_index != NOMAD::UNDEFINED_L && mesh_index > max_mesh_index ) {
+  if ( max_mesh_index != NOMAD::UNDEFINED_L && mesh_index > max_mesh_index ) 
+  {
     stop        = true;
     stop_reason = NOMAD::L_MAX_REACHED;
   }
 
   // 2. delta_k^p (poll size) tests:
-  if ( check_min_poll_size_criterion ( mesh_index ) ) {
+  if ( check_min_poll_size_criterion ( mesh_index ) ) 
+  {
     stop        = true;
     stop_reason = NOMAD::DELTA_P_MIN_REACHED;
   }
 
   // 3. delta_k^m (mesh size) tests:
-  if ( check_min_mesh_size_criterion ( mesh_index ) ) {
+  if ( check_min_mesh_size_criterion ( mesh_index ) ) 
+  {
     stop        = true;
     stop_reason = NOMAD::DELTA_M_MIN_REACHED;
   }
@@ -265,31 +270,31 @@ bool NOMAD::Mesh::check_min_mesh_size_criterion ( int mesh_index ) const
 /*  get delta_m (mesh size parameter)                             */
 /*       Delta^m_k = Delta^m_0 \tau^{ell_0^+ - ell_k^+}           */
 /*----------------------------------------------------------------*/
-/*  the function also returns true if all values are < delta_min  */
-/*  (stopping criterion MIN_MESH_SIZE)                            */
-/*----------------------------------------------------------------*/
 bool NOMAD::Mesh::get_delta_m ( NOMAD::Point & delta_m , int mesh_index ) const
 {
-  int n = get_n();
-  delta_m.reset ( n );
-
-  // power_of_tau = tau^{ max{0,l0} - max{0,lk} }:
-  NOMAD::Double power_of_tau
+	int n = get_n();
+	delta_m.reset ( n );
+	
+	// power_of_tau = tau^{ max{0,l0} - max{0,lk} }:
+	NOMAD::Double power_of_tau
     = pow ( _mesh_update_basis ,
-	    ( (_initial_mesh_index > 0) ? _initial_mesh_index : 0) -
-	    ( (mesh_index          > 0) ? mesh_index          : 0)   );
-
-  bool stop    = true;
-  bool mms_def = _min_mesh_size.is_defined();
-
-  // Delta^m_k = power_of_tau * Delta^m_0:
-  for ( int i = 0 ; i < n ; ++i ) {
-    delta_m[i] = _initial_mesh_size[i] * power_of_tau;
-    if ( !mms_def || !_min_mesh_size[i].is_defined() || delta_m[i] >= _min_mesh_size[i] )
-      stop = false;
-  }
-
-  return stop;
+		   ( (_initial_mesh_index > 0) ? _initial_mesh_index : 0) -
+		   ( (mesh_index          > 0) ? mesh_index          : 0)   );
+	
+	bool stop    = false;
+	bool mms_def = _min_mesh_size.is_defined();
+	
+	// Delta^m_k = power_of_tau * Delta^m_0:
+	for ( int i = 0 ; i < n ; ++i )
+	{
+		delta_m[i] = _initial_mesh_size[i] * power_of_tau;
+		
+		if ( mms_def && !stop && _min_mesh_size[i].is_defined() && delta_m[i] < _min_mesh_size[i] )
+			stop = true;
+		
+	}
+	
+	return stop;
 }
 
 /*----------------------------------------------------------------*/
@@ -302,20 +307,21 @@ void NOMAD::Mesh::get_delta_m ( NOMAD::Point       & delta_m            ,
 				const NOMAD::Point & initial_mesh_size  ,
 				double               mesh_update_basis  ,
 				int                  initial_mesh_index ,
-				int                  mesh_index           ) {
-
-  int n = initial_mesh_size.size();
-  delta_m.reset ( n );
-
-  // power_of_tau = tau^{ max{0,l0} - max{0,lk} }:
-  NOMAD::Double power_of_tau
+				int                  mesh_index           )
+{
+	
+	int n = initial_mesh_size.size();
+	delta_m.reset ( n );
+	
+	// power_of_tau = tau^{ max{0,l0} - max{0,lk} }:
+	NOMAD::Double power_of_tau
     = pow ( mesh_update_basis ,
-	    ( (initial_mesh_index > 0) ? initial_mesh_index : 0) -
-	    ( (mesh_index         > 0) ? mesh_index         : 0)   );
-
-  // Delta^m_k = power_of_tau * Delta^m_0:
-  for ( int i = 0 ; i < n ; ++i )
-    delta_m[i] = initial_mesh_size[i] * power_of_tau;
+		   ( (initial_mesh_index > 0) ? initial_mesh_index : 0) -
+		   ( (mesh_index         > 0) ? mesh_index         : 0)   );
+	
+	// Delta^m_k = power_of_tau * Delta^m_0:
+	for ( int i = 0 ; i < n ; ++i )
+		delta_m[i] = initial_mesh_size[i] * power_of_tau;
 }
 
 /*-------------------------------------------------------------------*/
@@ -324,30 +330,31 @@ void NOMAD::Mesh::get_delta_m ( NOMAD::Point       & delta_m            ,
 /*                 = Delta^m_0 \tau^{ell_0^+ - ell_k^+ + |ell_k|/2}  */
 /*-------------------------------------------------------------------*/
 /*  the function also returns true if all values are < delta_p_min   */
-/*  (stopping criterion MIN_POLL_SIZE)                               */
 /*-------------------------------------------------------------------*/
 bool NOMAD::Mesh::get_delta_p ( NOMAD::Point & delta_p , int mesh_index ) const
 {
-  int n = get_n();
-  delta_p.reset ( n );
-
-  // power_of_tau = tau^{ max{0,l0} - max{0,lk} + |lk|/2}:
-  NOMAD::Double power_of_tau
+	int n = get_n();
+	delta_p.reset ( n );
+	
+	// power_of_tau = tau^{ max{0,l0} - max{0,lk} + |lk|/2}:
+	NOMAD::Double power_of_tau
     = pow ( _mesh_update_basis , abs(mesh_index) / 2.0             +
-	    ( (_initial_mesh_index > 0) ? _initial_mesh_index : 0) -
-	    ( (mesh_index          > 0) ? mesh_index          : 0)   );
-
-  bool stop    = true;
-  bool mps_def = _min_poll_size.is_defined();
-
-  // Delta^p_k = power_of_tau * Delta^m_0:
-  for ( int i = 0 ; i < n ; ++i ) {
-    delta_p[i] = _initial_mesh_size[i] * power_of_tau;
-    if ( !mps_def || !_min_poll_size[i].is_defined() || delta_p[i] >= _min_poll_size[i] )
-      stop = false;
-  }
-
-  return stop;
+		   ( (_initial_mesh_index > 0) ? _initial_mesh_index : 0) -
+		   ( (mesh_index          > 0) ? mesh_index          : 0)   );
+	
+	bool stop    = true;
+	
+	bool mps_def = _min_poll_size.is_defined();
+	
+	// Delta^p_k = power_of_tau * Delta^m_0:
+	for ( int i = 0 ; i < n ; ++i ) 
+	{
+		delta_p[i] = _initial_mesh_size[i] * power_of_tau;
+		if ( !mps_def || !_min_poll_size[i].is_defined() || delta_p[i] >= _min_poll_size[i] )
+			stop = false;
+	}
+	
+	return stop;
 }
 
 /*-------------------------------------------------------------------*/

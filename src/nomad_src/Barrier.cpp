@@ -1,5 +1,5 @@
 /*-------------------------------------------------------------------------------------*/
-/*  NOMAD - Nonlinear Optimization by Mesh Adaptive Direct search - version 3.5.1        */
+/*  NOMAD - Nonlinear Optimization by Mesh Adaptive Direct search - version 3.6.2        */
 /*                                                                                     */
 /*  Copyright (C) 2001-2012  Mark Abramson        - the Boeing Company, Seattle        */
 /*                           Charles Audet        - Ecole Polytechnique, Montreal      */
@@ -41,7 +41,7 @@
   \see    Barrier.hpp
 */
 #include "Barrier.hpp"
-using namespace std;   //zhenghua
+using namespace std; // zhenghua
 /*---------------------------------------------------------*/
 /*                    reset the barrier                    */
 /*---------------------------------------------------------*/
@@ -305,9 +305,9 @@ NOMAD::success_type NOMAD::Barrier::insert_infeasible ( const NOMAD::Eval_Point 
       return NOMAD::UNSUCCESSFUL;
     if ( old_bi ) {
       if ( bi->get_h().value() < old_bi->get_h().value() )
-	return NOMAD::FULL_SUCCESS;
+		  return NOMAD::FULL_SUCCESS;
       if ( insert )
-	return NOMAD::PARTIAL_SUCCESS;
+		  return NOMAD::PARTIAL_SUCCESS;
       return NOMAD::UNSUCCESSFUL;
     }
     return NOMAD::FULL_SUCCESS;
@@ -351,10 +351,27 @@ const NOMAD::Eval_Point * NOMAD::Barrier::get_best_infeasible ( void ) const
     return NULL;
 
   if ( _p.get_barrier_type() == NOMAD::FILTER )
-    return _filter.begin()->get_point();
+	return _filter.begin()->get_point();  // original
 
-  return (--_filter.end())->get_point();
+	return (--_filter.end())->get_point(); // original
 }
+
+
+/*---------------------------------------------------------*/
+/*                    get_best_infeasible_min_viol()                */
+/*---------------------------------------------------------*/
+const NOMAD::Eval_Point * NOMAD::Barrier::get_best_infeasible_min_viol ( void ) const
+{
+	if ( _filter.empty() || _p.get_barrier_type() == NOMAD::EB )
+		return NULL;
+	
+	if ( _p.get_barrier_type() == NOMAD::FILTER )
+		return (--_filter.end())->get_point();
+	
+	return _filter.begin()->get_point();
+}
+
+
 
 /*---------------------------------------------------------*/
 /*                  poll center selection                  */

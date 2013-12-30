@@ -1,5 +1,5 @@
 /*-------------------------------------------------------------------------------------*/
-/*  NOMAD - Nonlinear Optimization by Mesh Adaptive Direct search - version 3.5.1        */
+/*  NOMAD - Nonlinear Optimization by Mesh Adaptive Direct search - version 3.6.2        */
 /*                                                                                     */
 /*  Copyright (C) 2001-2012  Mark Abramson        - the Boeing Company, Seattle        */
 /*                           Charles Audet        - Ecole Polytechnique, Montreal      */
@@ -41,7 +41,7 @@
   \see    Direction.hpp
 */
 #include "Direction.hpp"
-using namespace std;  //zhenghua
+using namespace std; // zhenghua
 
 /*-----------------------------------*/
 /*   static members initialization   */
@@ -57,7 +57,8 @@ int NOMAD::Direction::_max_cardinality = 0;
 NOMAD::Direction::Direction ( void )
   : NOMAD::Point  (                            ) ,
     _type         ( NOMAD::UNDEFINED_DIRECTION ) ,
-    _index        ( -1                         )
+_index        ( -1                         ),
+_dir_group_index (-1)
 {
 #ifdef MEMORY_DEBUG
   ++NOMAD::Direction::_cardinality;
@@ -71,10 +72,30 @@ NOMAD::Direction::Direction ( void )
 /*---------------------------------------------------------*/
 NOMAD::Direction::Direction ( int                     n    ,
 			      const NOMAD::Double   & v    ,
-			      NOMAD::direction_type   type   )
+			      NOMAD::direction_type   type ,		 
+					int dir_group_index		 )
   : NOMAD::Point  ( n , v ) ,
     _type         ( type  ) ,
-    _index        ( -1    )
+    _index        ( -1   ) ,
+    _dir_group_index (dir_group_index)
+{
+#ifdef MEMORY_DEBUG
+  ++NOMAD::Direction::_cardinality;
+  if ( NOMAD::Direction::_cardinality > NOMAD::Direction::_max_cardinality )
+    ++NOMAD::Direction::_max_cardinality;
+#endif
+}
+
+/*---------------------------------------------------------*/
+/*                       constructor 2b                    */
+/*---------------------------------------------------------*/
+NOMAD::Direction::Direction ( int                     n    ,
+							 const NOMAD::Double   & v    ,
+							 NOMAD::direction_type   type   )
+: NOMAD::Point  ( n , v ) ,
+_type         ( type  ) ,
+_index        ( -1    ),
+_dir_group_index (-1)
 {
 #ifdef MEMORY_DEBUG
   ++NOMAD::Direction::_cardinality;
@@ -90,7 +111,8 @@ NOMAD::Direction::Direction ( const NOMAD::Point    & x    ,
 			      NOMAD::direction_type   type   )
   : NOMAD::Point  ( x    ) ,
     _type         ( type ) ,
-    _index        ( -1   )
+_index        ( -1   ),
+_dir_group_index (-1)
 {
 #ifdef MEMORY_DEBUG
   ++NOMAD::Direction::_cardinality;
@@ -105,7 +127,8 @@ NOMAD::Direction::Direction ( const NOMAD::Point    & x    ,
 NOMAD::Direction::Direction ( const Direction & d )
   : NOMAD::Point  ( d        ) ,
     _type         ( d._type  ) ,
-    _index        ( d._index )
+    _index        ( d._index ),
+_dir_group_index (d._dir_group_index)
 {
 #ifdef MEMORY_DEBUG
   ++NOMAD::Direction::_cardinality;

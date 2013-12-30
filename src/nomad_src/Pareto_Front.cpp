@@ -1,5 +1,5 @@
 /*-------------------------------------------------------------------------------------*/
-/*  NOMAD - Nonlinear Optimization by Mesh Adaptive Direct search - version 3.5.1        */
+/*  NOMAD - Nonlinear Optimization by Mesh Adaptive Direct search - version 3.6.2        */
 /*                                                                                     */
 /*  Copyright (C) 2001-2012  Mark Abramson        - the Boeing Company, Seattle        */
 /*                           Charles Audet        - Ecole Polytechnique, Montreal      */
@@ -41,7 +41,8 @@
   \see    Pareto_Front.hpp
 */
 #include "Pareto_Front.hpp"
-using namespace std;  //zhenghua
+using namespace std; // zhenghua
+
 /*------------------------------------------------------*/
 /*                 insertion of a point                 */
 /*   (returns true if the point is a new Pareto point)  */
@@ -397,7 +398,7 @@ void NOMAD::Pareto_Front::display ( const NOMAD::Display & out ) const
   std::set<NOMAD::Pareto_Point>::const_iterator it , end = _pareto_pts.end();
   for ( it = _pareto_pts.begin() ; it != end ; ++it ) {
     out << "#";
-    out.display_int_w ( cnt++ , nb );
+    out.display_int_w ( cnt++ , static_cast<int>(nb) );
     out << " ";
     it->display ( out );
     out << std::endl;
