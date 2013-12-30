@@ -294,8 +294,8 @@ snomadr(n                  =1,
 ## Solve using algebra
 cat( paste( "Minimizing f(x) = ax^2 + bx + c\n" ) )
 cat( paste( "Optimal value of control is -b/(2a) = ", -params[2]/(2*params[1]), "\n" ) )
-cat( paste( "With value of the objective function f(-b/(2a)) = ", eval.f.ex1( -params[2]/(2*params[1]), params ), "\n" ) )
-
+cat( paste( "With value of the objective function f(-b/(2a)) = ",
+           eval.f.ex1( -params[2]/(2*params[1]), params ), "\n" ) )
 
 ## The following example is NOMAD/examples/advanced/multi_start/multi.cpp
 ## This will call smultinomadRSolve to resolve the problem.  
