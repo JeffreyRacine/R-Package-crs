@@ -1,13 +1,13 @@
-Changes from Version 0.15-18 to 0.15-19 [October 30 2013]
+Changes from Version 0.15-18 to 0.15-19 [December 30 2013]
+
+* Updated snomadr to NOMAD 3.6.2 (released Dec 2013) which resolves
+  crash/incompatibility with the clang compiler on Mac OS X Mavericks 10.9.1
 
 * Added new function clsd() that does logspline regression jointly
   choosing the degree and number of segments (knots) - this is to be
   treated as beta but the univariate continuous only case currently
   implemented is capable of outperforming existing logspline methods that
   set the spline degree to an ad hoc value (3)
-
-* Cast a few parameters that were producing warnings when compiling on the
-  Clang compiler
 
 * npglpreg() now optimizes at the level of the bandwidth scaling factors
   (thanks to Sebastien Le Digabel for the suggestion) to bring

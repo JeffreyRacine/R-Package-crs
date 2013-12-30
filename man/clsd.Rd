@@ -38,7 +38,7 @@ clsd(x = NULL,
      random.seed = 42,
      maxit = 10^5,
      max.attempts = 25,
-     NOMAD = TRUE)
+     NOMAD = FALSE)
 }
 \arguments{
 

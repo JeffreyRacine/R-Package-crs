@@ -53,7 +53,7 @@ to others, kindly email me the relevant information and I will
 incorporate it into this FAQ.
 
 This FAQ refers to the most recent version, which as of this writing
-is 0.15-17. Kindly update your version should you not be using the most
+is 0.15-19. Kindly update your version should you not be using the most
 current (from within R, \texttt{update.packages()} ought to do it, though
 also see \ref{update} below.). See the appendix in this file for
 cumulative changes between this and previous versions of the \texttt{crs}
@@ -72,10 +72,10 @@ be presented with the following information.
 \begin{verbatim}
 > citation("crs")
 
-To cite package `crs' in publications use:
+To cite package ‘crs’ in publications use:
 
-  Jeffrey S. Racine and Zhenghua Nie (2012). crs: Categorical
-  Regression Splines. R package version 0.15-17.
+  Jeffrey S. Racine and Zhenghua Nie (2013). crs: Categorical
+  Regression Splines. R package version 0.15-19.
   https://github.com/JeffreyRacine/R-Package-crs/
 
 A BibTeX entry for LaTeX users is
@@ -83,8 +83,8 @@ A BibTeX entry for LaTeX users is
   @Manual{,
     title = {crs: Categorical Regression Splines},
     author = {Jeffrey S. Racine and Zhenghua Nie},
-    year = {2012},
-    note = {R package version 0.15-17},
+    year = {2013},
+    note = {R package version 0.15-19},
     url = {https://github.com/JeffreyRacine/R-Package-crs/},
   }
 \end{verbatim}
@@ -613,8 +613,37 @@ x.lag.1 <- lag.numeric(x,1)
 \appendix
 
 
+\section*{Changes from Version 0.15-18 to 0.15-19 [30-Dec-2013]}
 
-\section*{Changes from Version 0.15-17 to 0.15-18 [Dec 29 2012]}
+\begin{itemize}
+
+\item Updated snomadr to NOMAD 3.6.2 (released December 2013) which
+  resolves crash/incompatibility with the clang compiler on Mac OS X
+  Mavericks 10.9.1
+
+\item Added new function \texttt{clsd()} that does logspline
+  regression jointly choosing the degree and number of segments
+  (knots) - this is to be treated as beta but the univariate
+  continuous only case currently implemented is capable of
+  outperforming existing logspline methods that set the spline degree
+  to an ad hoc value (3)
+
+\item \texttt{npglpreg()} now optimizes at the level of the bandwidth
+  scaling factors (thanks to Sebastien Le Digabel for the suggestion)
+  to bring parameters to a `common scale'
+
+\item For cross-validation with \texttt{npglpreg()} we test for very
+  large bandwidths for the continuous predictors ($>$ bandwidth.switch
+  robust standard deviations) then switch to the global polynomial
+  approximation for computation speed (produces identical results but
+  uses global least squares rather than local least squares). This can
+  result in substantial improvements when large bandwidths are
+  appropriate. Combined with trees (in progress in np) this could lead
+  to marked reductions in computation time with zero loss in accuracy
+
+\end{itemize}
+
+\section*{Changes from Version 0.15-17 to 0.15-18 [29-Dec-2012]}
 
 \begin{itemize}
 
