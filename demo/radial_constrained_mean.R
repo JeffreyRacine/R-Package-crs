@@ -84,7 +84,7 @@ bvec <- c(rep(lower,n),
 
 QP.output <- solve.QP(Dmat=diag(n),dvec=rep(1,n),Amat=Amat,bvec=bvec)
 
-if(is.nan(output.QP$value)) stop(" solve.QP failed. Try smoother curve (larger bandwidths or polynomial order)")
+if(is.nan(QP.output$value)) stop(" solve.QP failed. Try smoother curve (larger bandwidths or polynomial order)")
 
 ## No longer needed...
 
