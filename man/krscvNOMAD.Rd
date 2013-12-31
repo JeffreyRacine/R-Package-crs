@@ -264,8 +264,9 @@ krscvNOMAD(xz,
   Li, Q. and J.S. Racine (2007), \emph{Nonparametric Econometrics:
     Theory and Practice,} Princeton University Press.
 
-  Ma, S. and J.S. Racine and L. Yang (2011), \dQuote{Spline Regression
-  in the Presence of Categorical Predictors,} manuscript.
+  Ma, S. and J.S. Racine and L. Yang (under revision), \dQuote{Spline
+  Regression in the Presence of Categorical Predictors,} Journal of
+  Applied Econometrics.
 
   Ma, S. and J.S. Racine (2013), \dQuote{Additive Regression
   Splines with Irrelevant Categorical and Continuous Regressors,}

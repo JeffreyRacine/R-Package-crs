@@ -7,7 +7,7 @@
 \description{
   
   \code{npglpreg} computes a generalized local polynomial kernel
-    regression estimate (Hall and Racine (2013)) of a one (1)
+    regression estimate (Hall and Racine (forthcoming)) of a one (1)
     dimensional dependent variable on an \code{r}-dimensional vector of
     continuous and categorical
     (\code{\link{factor}}/\code{\link{ordered}}) predictors.
@@ -372,8 +372,8 @@ for each dimension of the continuous \code{x} in \code{txdat}}
   Global Functionals and a Measure of the Explanatory Power of
   Covariates in Regression,} The Annals of Statistics, 23 1443-1473.
 
-  Hall, P. and J.S. Racine (2013), \dQuote{Infinite-Order
-  Cross-Validated Local Polynomial Regression,} Manuscript.
+  Hall, P. and J.S. Racine (forthcoming), \dQuote{Cross-Validated
+  Generalized Local Polynomial Regression,} Journal of Econometrics.
 
   Li, Q. and J.S. Racine (2007), \emph{Nonparametric Econometrics:
   Theory and Practice,} Princeton University Press.
