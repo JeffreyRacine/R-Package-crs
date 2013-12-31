@@ -62,18 +62,14 @@ crsiv <- function(y,
   ## <samuele.centorrino@univ-tlse1.fr>
   ## the following papers:
 
-  ## A) Econometrica (forthcoming, article date February 25 2011)
-
-  ## "Nonparametric Instrumental Regression"
-  ## S. Darolles, Y. Fan, J.P. Florens, E. Renault
+  ## A) Econometrica (2011) "Nonparametric Instrumental Regression"
+  ## S. Darolles, Y. Fan, J.P. Florens, E. Renault, Volume 79,
+  ## 1541-1565.
 
   ## B) Econometrics Journal (2010), volume 13, pp. S1–S27. doi:
-  ## 10.1111/j.1368-423X.2010.00314.x
-
-  ## "The practice of non-parametric estimation by solving inverse
-  ## problems: the example of transformation models"
-
-  ## FREDERIQUE FEVE AND JEAN-PIERRE FLORENS
+  ## 10.1111/j.1368-423X.2010.00314.x "The practice of non-parametric
+  ## estimation by solving inverse problems: the example of
+  ## transformation models" Frederique Feve and Jean-Pierre Florens,
   ## IDEI and Toulouse School of Economics, Universite de Toulouse
   ## Capitole 21 alle de de Brienne, 31000 Toulouse, France. E-mails:
   ## feve@cict.fr, florens@cict.fr
@@ -98,9 +94,8 @@ crsiv <- function(y,
 
   ## NOTE: for Cr, in the transformation model case treated in Feve &
   ## Florens (2010) this maps Z onto the Y space. In the IV case
-  ## (Darrolles, Fan, Florens & Renault (2011, forthcoming Econometrica)
-  ## it maps W (the instrument) onto the space of the endogenous
-  ## regressor Z.
+  ## (Darrolles, Fan, Florens & Renault (2011) it maps W (the
+  ## instrument) onto the space of the endogenous regressor Z.
 
   ## NOTE: for r, in the transformation model it will be equivalent to
   ## the vector of exogenous covariates, and in the endogenous case r is
@@ -127,9 +122,8 @@ crsiv <- function(y,
 
   ## NOTE: for Cr, in the transformation model case treated in Feve &
   ## Florens (2010) this maps Z onto the Y space. In the IV case
-  ## (Darrolles, Fan, Florens & Renault (2011, forthcoming Econometrica)
-  ## it maps W (the instrument) onto the space of the endogenous
-  ## regressor Z.
+  ## (Darrolles, Fan, Florens & Renault (2011) it maps W (the
+  ## instrument) onto the space of the endogenous regressor Z.
 
   ## NOTE: for r, in the transformation model it will be equivalent to
   ## the vector of exogenous covariates, and in the endogenous case r is

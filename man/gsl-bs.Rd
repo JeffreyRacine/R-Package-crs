@@ -78,9 +78,9 @@ basis; default is \sQuote{FALSE} }
   Ma, S. and J.S. Racine and L. Yang (2011), \dQuote{Spline Regression
   in the Presence of Categorical Predictors,} manuscript.
 
-  Ma, S. and J.S. Racine (forthcoming), \dQuote{Additive Regression
+  Ma, S. and J.S. Racine (2013), \dQuote{Additive Regression
   Splines with Irrelevant Categorical and Continuous Regressors,}
-  Statistica Sinica.
+  Statistica Sinica, Volume 23, 515-541.
 
 }
 
