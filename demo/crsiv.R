@@ -99,4 +99,5 @@ legend(x="top",inset=c(.01,.01),
          "Nonparametric E(y|z)"),
        lty=c(1,2,4),
        col=c("black","blue","red"),
-       lwd=c(1,2,2))
+       lwd=c(1,2,2),
+       bty="n")

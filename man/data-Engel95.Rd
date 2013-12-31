@@ -94,6 +94,7 @@ legend(quantile(logexp,trim),quantile(food,1-trim),
          "Nonparametric Regression: E(food | logexp)"),
        lty=c(2,4),
        col=c("blue","red"),
-       lwd=c(2,2))
+       lwd=c(2,2),
+       bty="n")
 }
 }

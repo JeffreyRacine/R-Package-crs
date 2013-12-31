@@ -30,7 +30,11 @@ for(t in seq(along=taus)) {
   s.opt[t] <- model.rq$segments
 }
 
-legend(min(x),max(y),paste("tau=",taus,", d=",j.opt,", s=",s.opt,sep=""),lty=1:length(taus),col=1:length(taus),lwd=rep(2,length(taus)))
+legend(min(x),max(y),paste("tau=",taus,", d=",j.opt,", s=",s.opt,sep=""),
+       lty=1:length(taus),
+       col=1:length(taus),
+       lwd=rep(2,length(taus)),
+       bty="n")
 
 
 
