@@ -537,7 +537,7 @@ function, $L(\cdot )$ is a product categorical kernel function, and
 $\mathbf{\lambda }=(\lambda _{1},\lambda _{2},\dots ,\lambda
 _{r})^{\mathrm{T}}$ is the vector of bandwidths for each of the
 categorical predictors. See \citeasnoun{MA_RACINE_YANG:2011} and
-\citeasnoun{MA_RACINE:2011} for further details.
+\citeasnoun{MA_RACINE:2013} for further details.
 
 We estimate $\beta \left( \mathbf{z}\right) $ by minimizing the
 following weighted least squares criterion,

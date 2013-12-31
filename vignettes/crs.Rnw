@@ -82,7 +82,7 @@ spline basis matrix, while kernel weighting does not.
 
 This package implements the approaches described in
 \citeauthor{MA_RACINE_YANG:2011} \citeyear{MA_RACINE_YANG:2011} and
-\citeauthor{MA_RACINE:2011} \citeyear{MA_RACINE:2011} when the option
+\citeauthor{MA_RACINE:2013} \citeyear{MA_RACINE:2013} when the option
 \code{kernel=TRUE} is selected as described below. As well, this
 package implements a range of related methods and has options that
 (hopefully) make it appealing for applied projects, research, and
