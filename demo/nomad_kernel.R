@@ -17,6 +17,7 @@ y <- dgp + rnorm(n,sd=.5)
 
 model.kernel <- crs(y~x1+x2+z,
                     degree=c(5,5),
+                    segments=c(1,1),                    
                     lambda=c(0.1),
                     basis="additive",
                     complexity="degree-knots",
