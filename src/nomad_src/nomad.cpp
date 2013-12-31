@@ -47,7 +47,22 @@
 using namespace std;
 
 namespace NOMAD {
-NOMAD::Routbuf routbuf;
+
+/* *************************  snomadr  zhenghua *********************** */
+class Routbuf: public std::streambuf {
+		private:
+				int overflow(int c){
+#ifdef R_VERSION
+								if(c!=EOF) Rprintf("%.1s", (char *)&c);  //this is for the class Display in NOMAD. cout will be redirected to this class and output by Rprintf.
+#else
+								if(c!=EOF) printf("%.1s", (char *)&c);  //this is for the class Display in NOMAD. cout will be redirected to this class and output by Rprintf.
+#endif
+								return c;
+				}
+
+};
+
+Routbuf routbuf;
 std::ostream rout(&routbuf);
 }
 

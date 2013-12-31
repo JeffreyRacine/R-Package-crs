@@ -122,30 +122,9 @@ typedef unsigned int uint32_t;
 
 // #define MODEL_STATS
 
-//*************zhenghua**********
-#ifdef R_VERSION
-#include <R_ext/Print.h>
-#endif
-//*************zhenghua**********
-
 namespace NOMAD {
 
-//*************zhenghua**********
-class Routbuf: public std::streambuf {
-		private:
-				int overflow(int c){
-#ifdef R_VERSION
-								if(c!=EOF) Rprintf("%.1s", (char *)&c);  //this is for the class Display in NOMAD. cout will be redirected to this class and output by Rprintf.
-#else
-								if(c!=EOF) printf("%.1s", (char *)&c);  //this is for the class Display in NOMAD. cout will be redirected to this class and output by Rprintf.
-#endif
-								return c;
-				}
-
-};
-
 	extern std::ostream rout;     //zhenghua
-//*************zhenghua**********
 	
 	/// Current version:
 	const std::string BASE_VERSION = "3.6.2";
