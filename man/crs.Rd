@@ -8,7 +8,7 @@
     one (1) dimensional dependent variable on an \code{r}-dimensional
     vector of continuous and categorical
     (\code{\link{factor}}/\code{\link{ordered}}) predictors (Ma and
-    Racine (2013), Ma, Racing and Yang (under revision).}
+    Racine (2013), Ma, Racine and Yang (under revision)).}
 
 \usage{
 crs(\dots)
