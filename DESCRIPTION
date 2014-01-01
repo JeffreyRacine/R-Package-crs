@@ -1,11 +1,14 @@
 Package: crs
-Version: 0.15-19
-Date: 2013-12-31
+Version: 0.15-20
+Date: 2014-01-01
 Depends:
 Imports: boot, stats
 Suggests: np, npRmpi, rgl, quadprog, quantreg, logspline
 Title: Categorical Regression Splines
-Author: Jeffrey S. Racine <racinej@mcmaster.ca> and Zhenghua Nie <niez@mcmaster.ca>
+Author: Jeffrey S. Racine <racinej@mcmaster.ca> and Zhenghua Nie <niez@mcmaster.ca> with contributions from Brian D. Ripley (stepCV.R) 
+Authors@R: c(person(given = "Jeffrey S.", family = "Racine", role = c("aut","cre"), email = "racinej@mcmaster.ca"),
+             person(given = "Zhenghua", family = "Nie", role = c("aut"), email = "niez@mcmaster.ca"),
+             person(given = "Brian D.", family = "Ripley", role = c("aut")))
 Maintainer: Jeffrey S. Racine <racinej@mcmaster.ca> 
 Description: This package provides for estimating regression splines that handle a mix of continuous and categorical (discrete) data often encountered in applied settings. I would like to gratefully acknowledge support from  the Natural Sciences and Engineering Research Council of Canada (NSERC:www.nserc.ca), the Social Sciences and Humanities Research Council of Canada (SSHRC:www.sshrc.ca), and the Shared Hierarchical Academic Research Computing Network (SHARCNET:www.sharcnet.ca).
 License: GPL

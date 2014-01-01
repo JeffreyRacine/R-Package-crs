@@ -694,7 +694,8 @@ dropterm.lm <-
   function(object, scope = drop.scope(object), scale = 0,
            test = c("none", "Chisq", "F"), k = 2, sorted = FALSE, ...)
 {
-    aod <- stats:::drop1.lm(object, scope=scope, scale=scale)[, -4]
+#    aod <- stats:::drop1.lm(object, scope=scope, scale=scale)[, -4]
+    aod <- drop1(object, scope=scope, scale=scale)[, -4]  
     dfs <-  object$rank - c(0, aod$Df[-1L]); RSS <- aod$RSS
     n <- length(object$residuals)
     aod$CV <- if(scale > 0)RSS/scale - n + k*dfs
