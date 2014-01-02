@@ -7,7 +7,7 @@ Suggests: np, npRmpi, rgl, quadprog, quantreg, logspline
 Title: Categorical Regression Splines
 Authors@R: c(person(given = "Jeffrey S.", family = "Racine", role = c("aut","cre"), email = "racinej@mcmaster.ca"),
              person(given = "Zhenghua", family = "Nie", role = c("aut"), email = "niez@mcmaster.ca"),
-             person(given = "Brian D.", family = "Ripley", role = c("ctb"), comment = "(stepCV.R)"))
+             person(given = "Brian D.", family = "Ripley", role = c("ctb"), comment = "stepCV.R"))
 Description: This package provides for estimating regression splines that handle a mix of continuous and categorical (discrete) data often encountered in applied settings. I would like to gratefully acknowledge support from  the Natural Sciences and Engineering Research Council of Canada (NSERC:www.nserc.ca), the Social Sciences and Humanities Research Council of Canada (SSHRC:www.sshrc.ca), and the Shared Hierarchical Academic Research Computing Network (SHARCNET:www.sharcnet.ca).
 License: GPL
 URL: https://github.com/JeffreyRacine/R-Package-crs/
