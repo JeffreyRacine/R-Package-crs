@@ -554,19 +554,30 @@ The figure below plots the resulting estimate. The discontinuity
 occurs when $x_1>0.5$ but the nature of the discontinuity is unknown
 as is the functional form on either side of the potential
 discontinuity. The categorical regression spline is able to detect
-this `break' and testing for a significant break involves nothing more
-than an (asymptotic) F-test as the following illustrates (note the
+this `break'. 
+
+On a related note, testing for a significant break could be
+accomplished with an (asymptotic) F-test (to do so we must set
+\code{kernel=FALSE} however) as the following illustrates (note the
 argument \code{include=0} says to drop the one categorical predictor
 or, say, \code{c(1,1,\dots,0,1\dots,1)} for multivariate categorical
 predictors).
 
 <<echo=TRUE,keep.source=TRUE>>=
 ## When kernel=FALSE, we could use the anova() function
+## Unrestricted model:
+model <- crs(y~x1+x2+z,cv="none",
+             degree=model$degree,
+             segments=model$segments,
+             basis=model$basis,
+             kernel=FALSE,
+             include=1)
+## Restricted model:
 model.res <- crs(y~x1+x2+z,cv="none",
                  degree=model$degree,
                  segments=model$segments,
-                 lambda=model$lambda,                 
                  basis=model$basis,
+                 kernel=FALSE,
                  include=0)
 ## anova(model.res$model.lm,model$model.lm)
 ## We could also do this manually...
