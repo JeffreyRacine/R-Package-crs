@@ -514,8 +514,12 @@ dgp <- cos(2*pi*x1)+sin(2*pi*x2)+z
 z <- factor(z)
 y <- dgp + rnorm(n,sd=.5)
 
-## Estimate a model with specified degree and bandwidth
-model <- crs(y~x1+x2+z,degree=c(5,5),lambda=c(0.1),cv="none",kernel=TRUE)
+## Estimate a model with specified degree, segments, and bandwidth
+model <- crs(y~x1+x2+z,degree=c(5,5),
+                       segments=c(1,1),
+                       lambda=0.1,
+                       cv="none",
+                       kernel=TRUE)
 summary(model)
 
 ## Perspective plot

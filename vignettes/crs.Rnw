@@ -562,7 +562,12 @@ predictors).
 
 <<echo=TRUE,keep.source=TRUE>>=
 ## When kernel=FALSE, we could use the anova() function
-model.res <- crs(y~x1+x2+z,cv="none",degree=model$degree,basis=model$basis,include=0)
+model.res <- crs(y~x1+x2+z,cv="none",
+                 degree=model$degree,
+                 segments=model$segments,
+                 lambda=model$lambda,                 
+                 basis=model$basis,
+                 include=0)
 ## anova(model.res$model.lm,model$model.lm)
 ## We could also do this manually...
 F <- model$df.residual*(sum(residuals(model.res)^2)
