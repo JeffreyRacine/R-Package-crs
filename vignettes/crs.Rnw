@@ -565,28 +565,24 @@ predictors).
 
 <<echo=TRUE,keep.source=TRUE>>=
 ## When kernel=FALSE, we could use the anova() function
+## and set model.return=TRUE.
 ## Unrestricted model:
 model <- crs(y~x1+x2+z,cv="none",
              degree=model$degree,
              segments=model$segments,
              basis=model$basis,
              kernel=FALSE,
-             include=1)
+             include=1,
+             model.return=TRUE)
 ## Restricted model:
 model.res <- crs(y~x1+x2+z,cv="none",
                  degree=model$degree,
                  segments=model$segments,
                  basis=model$basis,
                  kernel=FALSE,
-                 include=0)
-## anova(model.res$model.lm,model$model.lm)
-## We could also do this manually...
-F <- model$df.residual*(sum(residuals(model.res)^2)
-                        -sum(residuals(model)^2))/sum(residuals(model)^2)
-F
-## Compute the P-value for the F-statistic
-P <- 1-pf(F,1,model$df.residual)
-P
+                 include=0,
+                 model.return=TRUE)
+anova(model.res$model.lm,model$model.lm)
 @ 
 
 \setkeys{Gin}{width=0.75\textwidth}
