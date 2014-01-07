@@ -1,5 +1,5 @@
 /*-------------------------------------------------------------------------------------*/
-/*  NOMAD - Nonlinear Optimization by Mesh Adaptive Direct search - version 3.6.2        */
+/*  NOMAD - Nonlinear Optimization by Mesh Adaptive Direct search - version 3.6.2  + patch to prevent dereferencing a null pointer      */
 /*                                                                                     */
 /*  Copyright (C) 2001-2012  Mark Abramson        - the Boeing Company, Seattle        */
 /*                           Charles Audet        - Ecole Polytechnique, Montreal      */
@@ -1336,13 +1336,29 @@ void NOMAD::Mads::iteration ( bool                     & stop           ,
     if ( _p.get_user_calls_enabled() )
     {
         bool stop_before = stop;
+        
+        // C.Tribes jan 06, 2014 --- Modif to prevent dereferencing a NULL pointer
+        // BEFORE
+        //      _ev_control.get_evaluator()->update_iteration ( success        ,
+        //                                                     _stats         ,
+        //                                                     _ev_control    ,
+        //                                                     _true_barrier  ,
+        //                                                     _sgte_barrier  ,
+        //                                                     * _pareto_front,
+        //                                                     stop             );
+        // AFTER
+        NOMAD::Pareto_Front * pf = ( ( _pareto_front ) ? _pareto_front:(new NOMAD::Pareto_Front) );
         _ev_control.get_evaluator()->update_iteration ( success        ,
                                                        _stats         ,
                                                        _ev_control    ,
                                                        _true_barrier  ,
                                                        _sgte_barrier  ,
-                                                       *_pareto_front ,
+                                                       *pf               ,
                                                        stop             );
+        if ( ! _pareto_front )
+            delete pf;
+        
+
         if ( !stop_before && stop )
             stop_reason = NOMAD::USER_STOPPED;
     }
