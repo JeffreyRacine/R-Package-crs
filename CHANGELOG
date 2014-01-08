@@ -1,4 +1,12 @@
-Changes from Version 0.15-18 to 0.15-19 [December 30 2013]
+Changes from Version 0.15-19 to 0.15-21 [08-Jan-2014]
+
+* Addressed issues with certain non-package files being included via use
+  of .Rbuildignore
+
+* NOMAD team corrected dereferencing null pointer in Mads.cpp that was
+  uncovered through the use of UB sanitizer checks with clang
+
+Changes from Version 0.15-18 to 0.15-19 [30-Dec-2013]
 
 * Updated snomadr to NOMAD 3.6.2 (released Dec 2013) which resolves
   crash/incompatibility with the clang compiler on Mac OS X Mavericks 10.9.1
@@ -23,7 +31,7 @@ Changes from Version 0.15-18 to 0.15-19 [December 30 2013]
   np) this could lead to marked reductions in computation time with
   zero loss in accuracy
 
-Changes from Version 0.15-17 to 0.15-18 [Dec 29 2012]
+Changes from Version 0.15-17 to 0.15-18 [29-Dec-2012]
 
 * Using .onUnload rather than .Last.lib in zzz.R
 

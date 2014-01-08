@@ -1,4 +1,4 @@
-%% $Id: crs_faq.tex,v 1.31 2013/12/30 12:10:21 jracine Exp jracine $
+%% $Id: crs_faq.tex,v 1.32 2014/01/08 16:43:22 jracine Exp jracine $
 
 %\VignetteIndexEntry{Frequently Asked Questions (crs)}
 %\VignetteDepends{crs}
@@ -53,11 +53,11 @@ to others, kindly email me the relevant information and I will
 incorporate it into this FAQ.
 
 This FAQ refers to the most recent version, which as of this writing
-is 0.15-19. Kindly update your version should you not be using the most
-current (from within R, \texttt{update.packages()} ought to do it, though
-also see \ref{update} below.). See the appendix in this file for
-cumulative changes between this and previous versions of the \texttt{crs}
-package.
+is 0.15-21. Kindly update your version should you not be using the
+most current (from within R, \texttt{update.packages()} ought to do
+it, though also see \ref{update} below.). See the appendix in this
+file for cumulative changes between this and previous versions of the
+\texttt{crs} package.
 
 \section{Frequently Asked Questions}
 
@@ -74,8 +74,8 @@ be presented with the following information.
 
 To cite package `crs' in publications use:
 
-  Jeffrey S. Racine and Zhenghua Nie (2013). crs: Categorical
-  Regression Splines. R package version 0.15-19.
+  Jeffrey S. Racine and Zhenghua Nie (2014). crs: Categorical
+  Regression Splines. R package version 0.15-21.
   https://github.com/JeffreyRacine/R-Package-crs/
 
 A BibTeX entry for LaTeX users is
@@ -83,8 +83,8 @@ A BibTeX entry for LaTeX users is
   @Manual{,
     title = {crs: Categorical Regression Splines},
     author = {Jeffrey S. Racine and Zhenghua Nie},
-    year = {2013},
-    note = {R package version 0.15-19},
+    year = {2014},
+    note = {R package version 0.15-21},
     url = {https://github.com/JeffreyRacine/R-Package-crs/},
   }
 \end{verbatim}
@@ -612,6 +612,19 @@ x.lag.1 <- lag.numeric(x,1)
 
 \appendix
 
+
+\section*{Changes from Version 0.15-19 to 0.15-21 [08-Jan-2014]}
+
+\begin{itemize}
+
+\item Addressed issues with certain non-package files being included
+  via use of \texttt{.Rbuildignore}
+
+\item NOMAD team corrected dereferencing null pointer in
+  \texttt{Mads.cpp} that was uncovered through the use of UB sanitizer
+  checks with clang 3.4
+
+\end{itemize}
 
 \section*{Changes from Version 0.15-18 to 0.15-19 [30-Dec-2013]}
 
