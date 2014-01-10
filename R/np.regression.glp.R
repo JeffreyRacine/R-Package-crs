@@ -1201,25 +1201,22 @@ minimand.cv.ls <- function(bws=NULL,
   num.numeric <- ncol(as.data.frame(xdat[,xdat.numeric]))
   xdat.unordered <- sapply(1:num.bw,function(i){is.factor(xdat[,i])&!is.ordered(xdat[,i])})
 
-  bwscaling <- numeric()
+  bwscaling <- bws
 
   for(i in 1:num.bw) {
     if(xdat.numeric[i]==TRUE && bwtype=="fixed") {
-      bwscaling[i] <- sd.robust(xdat[,i])*length(ydat)^{-2/(num.numeric+2*ckerorder)}
+      bws[i] <- bws[i]*sd.robust(xdat[,i])*length(ydat)^{-2/(num.numeric+2*ckerorder)}
     }
     if(xdat.numeric[i]==TRUE && bwtype!="fixed") {
-      bwscaling[i] <- 1
+      bws[i] <- bws[i]
     }
     if(xdat.numeric[i]!=TRUE) {
-      bwscaling[i] <- length(ydat)^{-2/(num.numeric+2*ckerorder)}
+      bws[i] <- bws[i]*length(ydat)^{-2/(num.numeric+2*ckerorder)}
     }
     if(xdat.unordered[i]==TRUE && ukertype=="aitchisonaitken") {
-      c.num <- length(unique(xdat[,i]))
-      bwscaling[i] <- length(ydat)^{-2/(num.numeric+2*ckerorder)}
+      bws[i] <- bws[i]*length(ydat)^{-2/(num.numeric+2*ckerorder)}
     }
   }
-
-  bws <- bws*bwscaling
 
   console <- newLineConsole()
   console <- printClear(console)
