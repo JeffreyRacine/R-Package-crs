@@ -1399,6 +1399,29 @@ minimand.cv.aic <- function(bws=NULL,
     }
   }
 
+  ## Manually conduct bandwidth scaling so that NOMAD is operating on
+  ## a scale free level.
+
+  num.bw <- ncol(xdat)
+  xdat.numeric <- sapply(1:num.bw,function(i){is.numeric(xdat[,i])})
+  num.numeric <- ncol(as.data.frame(xdat[,xdat.numeric]))
+  xdat.unordered <- sapply(1:num.bw,function(i){is.factor(xdat[,i])&!is.ordered(xdat[,i])})
+
+  for(i in 1:num.bw) {
+    if(xdat.numeric[i]==TRUE && bwtype=="fixed") {
+      bws[i] <- bws[i]*sd.robust(xdat[,i])*length(ydat)^{-1/(num.numeric+2*ckerorder)}
+    }
+    if(xdat.numeric[i]==TRUE && bwtype!="fixed") {
+      bws[i] <- bws[i]
+    }
+    if(xdat.numeric[i]!=TRUE) {
+      bws[i] <- bws[i]*length(ydat)^{-2/(num.numeric+2*ckerorder)}
+    }
+    if(xdat.unordered[i]==TRUE && ukertype=="aitchisonaitken") {
+      bws[i] <- bws[i]*length(ydat)^{-2/(num.numeric+2*ckerorder)}
+    }
+  }
+
   console <- newLineConsole()
   console <- printClear(console)
   console <- printPop(console)
@@ -2086,23 +2109,23 @@ glpcvNOMAD <- function(ydat=NULL,
 
 	fv.vec[1] <- solution$objective
 
-	bw.opt <- solution$solution[1:num.bw]
+	bw.opt.sf <- solution$solution[1:num.bw]
 
   ## We optimize at the level of scaling factors (multiples of
   ## bandwidths) so we need to back out the unscaled (raw) bandwidths.
   
-  bw.opt.sf <- bw.opt
+  bw.opt <- bw.opt.sf
 
   if(bwtype=="fixed") {
     for(i in 1:num.numeric) {
-      bw.opt.sf[numeric.index[i]] <- bw.opt.sf[numeric.index[i]]
-      bw.opt[numeric.index[i]] <- sd.robust(xdat[,numeric.index[i]])*bw.opt.sf[numeric.index[i]]*length(ydat)^{-1/(num.numeric+2*ckerorder)}
+      sd.xdat <- sd.robust(xdat[,numeric.index[i]])
+      bw.opt[numeric.index[i]] <- bw.opt[numeric.index[i]]*sd.xdat*length(ydat)^{-1/(num.numeric+2*ckerorder)}
     }
   } 
 
   for(i in 1:num.bw) {
     if(!xdat.numeric[i]) {
-      bw.opt.sf[i] <- bw.opt.sf[i]*length(ydat)^{-2/(num.numeric+2*ckerorder)}
+      bw.opt[i] <- bw.opt[i]*length(ydat)^{-2/(num.numeric+2*ckerorder)}
     }
   }
 
