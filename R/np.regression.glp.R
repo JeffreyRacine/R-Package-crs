@@ -1194,6 +1194,33 @@ minimand.cv.ls <- function(bws=NULL,
 
   maxPenalty <- sqrt(.Machine$double.xmax)
 
+  ## xxx
+
+  num.bw <- ncol(xdat)
+  xdat.numeric <- sapply(1:num.bw,function(i){is.numeric(xdat[,i])})
+  num.numeric <- ncol(as.data.frame(xdat[,xdat.numeric]))
+  xdat.unordered <- sapply(1:num.bw,function(i){is.factor(xdat[,i])&!is.ordered(xdat[,i])})
+
+  bwscaling <- numeric()
+
+  for(i in 1:num.bw) {
+    if(xdat.numeric[i]==TRUE && bwtype=="fixed") {
+      bwscaling[i] <- sd.robust(xdat[,i])*length(ydat)^{-2/(num.numeric+2*ckerorder)}
+    }
+    if(xdat.numeric[i]==TRUE && bwtype!="fixed") {
+      bwscaling[i] <- 1
+    }
+    if(xdat.numeric[i]!=TRUE) {
+      bwscaling[i] <- length(ydat)^{-2/(num.numeric+2*ckerorder)}
+    }
+    if(xdat.unordered[i]==TRUE && ukertype=="aitchisonaitken") {
+      c.num <- length(unique(xdat[,i]))
+      bwscaling[i] <- length(ydat)^{-2/(num.numeric+2*ckerorder)}
+    }
+  }
+
+  bws <- bws*bwscaling
+
   console <- newLineConsole()
   console <- printClear(console)
   console <- printPop(console)
@@ -1227,7 +1254,7 @@ minimand.cv.ls <- function(bws=NULL,
                     bws = bws,
                     leave.one.out = TRUE,
                     bandwidth.divide = TRUE,
-                    bwscaling = TRUE,
+#                    bwscaling = TRUE,
                     ckertype = ckertype,
                     ckerorder=ckerorder,
                     ukertype = ukertype,
@@ -1261,7 +1288,7 @@ minimand.cv.ls <- function(bws=NULL,
                     bws = bws,
                     leave.one.out = TRUE,
                     bandwidth.divide = TRUE,
-                    bwscaling = TRUE,
+#                    bwscaling = TRUE,
                     ckertype = ckertype,
                     ckerorder=ckerorder,
                     ukertype = ukertype,
@@ -1395,7 +1422,7 @@ minimand.cv.aic <- function(bws=NULL,
                             tydat = 1,
                             bws = bws,
                             bandwidth.divide = TRUE,
-                            bwscaling = TRUE,
+#                            bwscaling = TRUE,
                             ckertype = ckertype,
                             ckerorder=ckerorder,
                             ukertype = ukertype,
@@ -1412,7 +1439,7 @@ minimand.cv.aic <- function(bws=NULL,
                     tydat = rep(1,n),
                     bws = bws,
                     bandwidth.divide = TRUE,
-                    bwscaling = TRUE,
+#                    bwscaling = TRUE,
                     ckertype = ckertype,
                     ckerorder=ckerorder,
                     ukertype = ukertype,
@@ -1444,7 +1471,7 @@ minimand.cv.aic <- function(bws=NULL,
                     weights = W,
                     bws = bws,
                     bandwidth.divide = TRUE,
-                    bwscaling = TRUE,
+#                    bwscaling = TRUE,
                     ckertype = ckertype,
                     ckerorder=ckerorder,
                     ukertype = ukertype,
@@ -2067,23 +2094,23 @@ glpcvNOMAD <- function(ydat=NULL,
 
 	fv.vec[1] <- solution$objective
 
-	bw.opt.sf <- solution$solution[1:num.bw]
+	bw.opt <- solution$solution[1:num.bw]
 
   ## We optimize at the level of scaling factors (multiples of
   ## bandwidths) so we need to back out the unscaled (raw) bandwidths.
   
-  bw.opt <- bw.opt.sf
+  bw.opt.sf <- bw.opt
 
   if(bwtype=="fixed") {
     for(i in 1:num.numeric) {
-      sd.xdat <- sd.robust(xdat[,numeric.index[i]])
-      bw.opt[numeric.index[i]] <- bw.opt[numeric.index[i]]*sd.xdat*length(ydat)^{-1/(num.numeric+2*ckerorder)}
+      bw.opt.sf[numeric.index[i]] <- bw.opt.sf[numeric.index[i]]*length(ydat)^{-1/(num.numeric+2*ckerorder)}
+      bw.opt[numeric.index[i]] <- sd.robust(xdat[,numeric.index[i]])*bw.opt.sf[numeric.index[i]]*length(ydat)^{-1/(num.numeric+2*ckerorder)} ## Fucked up...
     }
   } 
 
   for(i in 1:num.bw) {
     if(!xdat.numeric[i]) {
-      bw.opt[i] <- bw.opt[i]*length(ydat)^{-2/(num.numeric+2*ckerorder)}
+      bw.opt.sf[i] <- bw.opt.sf[i]*length(ydat)^{-2/(num.numeric+2*ckerorder)}
     }
   }
 
