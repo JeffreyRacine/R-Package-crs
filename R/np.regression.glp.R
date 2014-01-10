@@ -1194,18 +1194,17 @@ minimand.cv.ls <- function(bws=NULL,
 
   maxPenalty <- sqrt(.Machine$double.xmax)
 
-  ## xxx
+  ## Manually conduct bandwidth scaling so that NOMAD is operating on
+  ## a scale free level.
 
   num.bw <- ncol(xdat)
   xdat.numeric <- sapply(1:num.bw,function(i){is.numeric(xdat[,i])})
   num.numeric <- ncol(as.data.frame(xdat[,xdat.numeric]))
   xdat.unordered <- sapply(1:num.bw,function(i){is.factor(xdat[,i])&!is.ordered(xdat[,i])})
 
-  bwscaling <- bws
-
   for(i in 1:num.bw) {
     if(xdat.numeric[i]==TRUE && bwtype=="fixed") {
-      bws[i] <- bws[i]*sd.robust(xdat[,i])*length(ydat)^{-2/(num.numeric+2*ckerorder)}
+      bws[i] <- bws[i]*sd.robust(xdat[,i])*length(ydat)^{-1/(num.numeric+2*ckerorder)}
     }
     if(xdat.numeric[i]==TRUE && bwtype!="fixed") {
       bws[i] <- bws[i]
@@ -1251,7 +1250,6 @@ minimand.cv.ls <- function(bws=NULL,
                     bws = bws,
                     leave.one.out = TRUE,
                     bandwidth.divide = TRUE,
-#                    bwscaling = TRUE,
                     ckertype = ckertype,
                     ckerorder=ckerorder,
                     ukertype = ukertype,
@@ -1285,7 +1283,6 @@ minimand.cv.ls <- function(bws=NULL,
                     bws = bws,
                     leave.one.out = TRUE,
                     bandwidth.divide = TRUE,
-#                    bwscaling = TRUE,
                     ckertype = ckertype,
                     ckerorder=ckerorder,
                     ukertype = ukertype,
@@ -1419,7 +1416,6 @@ minimand.cv.aic <- function(bws=NULL,
                             tydat = 1,
                             bws = bws,
                             bandwidth.divide = TRUE,
-#                            bwscaling = TRUE,
                             ckertype = ckertype,
                             ckerorder=ckerorder,
                             ukertype = ukertype,
@@ -1436,7 +1432,6 @@ minimand.cv.aic <- function(bws=NULL,
                     tydat = rep(1,n),
                     bws = bws,
                     bandwidth.divide = TRUE,
-#                    bwscaling = TRUE,
                     ckertype = ckertype,
                     ckerorder=ckerorder,
                     ukertype = ukertype,
@@ -1468,7 +1463,6 @@ minimand.cv.aic <- function(bws=NULL,
                     weights = W,
                     bws = bws,
                     bandwidth.divide = TRUE,
-#                    bwscaling = TRUE,
                     ckertype = ckertype,
                     ckerorder=ckerorder,
                     ukertype = ukertype,
@@ -1723,7 +1717,7 @@ glpcvNOMAD <- function(ydat=NULL,
       bbin[i] <- 1
     }
     if(!xdat.numeric[i]) {
-      ub[i] <- 1.0*length(ydat)^{2/(num.numeric+2*ckerorder)}
+      ub[i] <- length(ydat)^{2/(num.numeric+2*ckerorder)}
       bw.switch[i] <- ub[i]
       INITIAL.MESH.SIZE[[i]] <- initial.mesh.size.integer      
       MIN.MESH.SIZE[[i]] <- min.mesh.size.integer
@@ -1998,13 +1992,14 @@ glpcvNOMAD <- function(ydat=NULL,
     console <- printPush("\rCalling NOMAD (Nonsmooth Optimization by Mesh Adaptive Direct Search)\n",console = console)
   }
 
-  ## Use bandwidth for initial values if provided
+  ## Use bandwidth for initial values if provided - note scaling is
+  ## potentially off? categorigal square of numeric?
 
   if(is.null(bandwidth)) {
     init.search.vals <- numeric()
     for(i in 1:num.bw) {
       if(xdat.numeric[i]==TRUE && bwtype=="fixed") {
-        init.search.vals[i] <- runif(1,0.5+lb[i],1.5)*length(ydat)^{2/(num.numeric+2*ckerorder)}
+        init.search.vals[i] <- runif(1,0.5+lb[i],1.5)*length(ydat)^{1/(num.numeric+2*ckerorder)}
       }
       if(xdat.numeric[i]==TRUE && bwtype!="fixed") {
         init.search.vals[i] <- round(runif(1,lb[i],sqrt(ub[i])))
@@ -2030,7 +2025,7 @@ glpcvNOMAD <- function(ydat=NULL,
       init.search.vals <- numeric()
       for(i in 1:num.bw) {
         if(xdat.numeric[i]==TRUE && bwtype=="fixed") {
-          init.search.vals[i] <- runif(1,0.5+lb[i],1.5)*length(ydat)^{2/(num.numeric+2*ckerorder)}
+          init.search.vals[i] <- runif(1,0.5+lb[i],1.5)*length(ydat)^{1/(num.numeric+2*ckerorder)}
         }
         if(xdat.numeric[i]==TRUE && bwtype!="fixed") {
           init.search.vals[i] <- round(runif(1,lb[i],sqrt(ub[i])))
@@ -2100,8 +2095,8 @@ glpcvNOMAD <- function(ydat=NULL,
 
   if(bwtype=="fixed") {
     for(i in 1:num.numeric) {
-      bw.opt.sf[numeric.index[i]] <- bw.opt.sf[numeric.index[i]]*length(ydat)^{-1/(num.numeric+2*ckerorder)}
-      bw.opt[numeric.index[i]] <- sd.robust(xdat[,numeric.index[i]])*bw.opt.sf[numeric.index[i]]*length(ydat)^{-1/(num.numeric+2*ckerorder)} ## Fucked up...
+      bw.opt.sf[numeric.index[i]] <- bw.opt.sf[numeric.index[i]]
+      bw.opt[numeric.index[i]] <- sd.robust(xdat[,numeric.index[i]])*bw.opt.sf[numeric.index[i]]*length(ydat)^{-1/(num.numeric+2*ckerorder)}
     }
   } 
 
