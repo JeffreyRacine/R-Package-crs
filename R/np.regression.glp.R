@@ -1514,7 +1514,7 @@ minimand.cv.aic <- function(bws=NULL,
       }
 
       trH <- kernel.i.eq.j*sum(sapply(1:n,function(i){
-        W[i,, drop = FALSE] %*% solve(tww[,,i]+diag(rep(ridge[i],nc)),tol=.Machine$double.eps) %*% t(W[i,, drop = FALSE])
+        W[i,, drop = FALSE] %*% chol2inv(chol(tww[,,i]+diag(rep(ridge[i],nc)))) %*% t(W[i,, drop = FALSE])
       }))
 
       aic.penalty <- (1+trH/n)/(1-(trH+2)/n)
