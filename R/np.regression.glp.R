@@ -449,9 +449,9 @@ summary.npglpreg <- function(object,
 
   cat(paste("\nBandwidth type: ", object$bwtype, sep=""))
 
-  if(object$num.numeric >= 1) { 
+  if(object$num.numeric >= 1) {
     cat(paste("\nContinuous kernel type: ", object$ckertype, sep=""))
-    cat(paste("\nContinuous kernel order: ", object$ckerorder, sep=""))       
+    cat(paste("\nContinuous kernel order: ", object$ckerorder, sep=""))
     for(j in 1:object$num.numeric) {
       if(object$bwtype=="fixed") {
         cat(paste("\nBandwidth for ",format(object$xnames[object$numeric.index][j]),": ",format(object$bws[object$numeric.index][j]),sep=""),sep="")
@@ -476,11 +476,10 @@ summary.npglpreg <- function(object,
 
   if(object$num.categorical >= 1) {
     cat(paste("\nUnordered kernel type: ", object$ukertype, sep=""))
-    cat(paste("\nOrdered kernel type: ", object$okertype, sep=""))    
+    cat(paste("\nOrdered kernel type: ", object$okertype, sep=""))
     for(j in 1:(object$num.categorical))
       cat(paste("\nBandwidth for ",format(object$xnames[object$categorical.index][j]),": ",format(object$bws[object$categorical.index][j]),sep=""),sep="")
   }
-
 
   ## Summary statistics
 
@@ -639,7 +638,7 @@ npglpreg.formula <- function(formula,
   okertype <- match.arg(okertype)
   bwtype <- match.arg(bwtype)
   if(!any(ckerorder==c(2,4,6,8))) stop("ckerorder must be 2, 4, 6, or 8")
-  
+
   cv <- match.arg(cv)
   cv.func <- match.arg(cv.func)
 
@@ -834,7 +833,6 @@ npglpreg.formula <- function(formula,
                                                    mpi=mpi,
                                                    ...))
 
-
   est$call <- match.call()
   est$formula <- formula
   est$terms <- mt
@@ -963,7 +961,6 @@ glpregEst <- function(tydat=NULL,
                     ...)$ksum
 
     }
-
 
     ## Note that as bandwidth approaches zero the local constant
     ## estimator undersmooths and approaches each sample realization,
@@ -1541,14 +1538,12 @@ minimand.cv.aic <- function(bws=NULL,
 
 }
 
-## 03/24/2013: Note that for the function below which uses NOMAD for
-## optimization we cross-validate on scale factors throughout
-## (i.e. bandwidths for continuous predictors are scaled according to
-## length(ydat)^{-1/(num.numeric+2*ckerorder)} while those for
-## categorical are scaled by
-## length(ydat)^{-2/(num.numeric+2*ckerorder)}. We adjust the upper
-## bounds for the categorical variables accordingly (i.e. 1 and
-## (c-1)/c). This is done so that the grid search takes place on a
+## Note that for the function below which uses NOMAD for optimization
+## we cross-validate on scale factors throughout (i.e. bandwidths for
+## continuous predictors are scaled according to
+## sd.robust()*length(ydat)^{-1/(num.numeric+2*ckerorder)}). We adjust
+## the upper bounds for the categorical variables accordingly (i.e. 1
+## and (c-1)/c). This is done so that the grid search takes place on a
 ## _somewhat_ common scale and also allows us to sidestep the issue
 ## with upper bounds where we were previously using relative tolerance
 ## (I am grateful for Sebastien Le Digabel for providing hints that
@@ -1606,7 +1601,7 @@ glpcvNOMAD <- function(ydat=NULL,
   okertype <- match.arg(okertype)
   bwtype <- match.arg(bwtype)
   if(!any(ckerorder==c(2,4,6,8))) stop("ckerorder must be 2, 4, 6, or 8")
-  
+
   bwmethod <- match.arg(bwmethod)
   cv <- match.arg(cv)
 
@@ -1677,7 +1672,7 @@ glpcvNOMAD <- function(ydat=NULL,
   ## unique distance between observations, say) or not. Regardless,
   ## using the default for both categorical and numeric bandwidths is
   ## likely not sensible.
-  
+
   if(!is.null(bandwidth.min.numeric)) {
     for(i in 1:num.numeric) {
       lb[numeric.index[i]] <- bandwidth.min.numeric
@@ -1699,7 +1694,7 @@ glpcvNOMAD <- function(ydat=NULL,
     for(i in 1:num.numeric) {
       k.max <- knn.max(xdat[,numeric.index[i]])
       if(ub[numeric.index[i]] > k.max) ub[numeric.index[i]] <- k.max
-      if(bw.switch[numeric.index[i]] > k.max) bw.switch[numeric.index[i]] <- k.max      
+      if(bw.switch[numeric.index[i]] > k.max) bw.switch[numeric.index[i]] <- k.max
     }
   }
 
@@ -1708,12 +1703,12 @@ glpcvNOMAD <- function(ydat=NULL,
 
   INITIAL.MESH.SIZE <- list()
   MIN.MESH.SIZE <- list()
-  MIN.POLL.SIZE <- list()  
+  MIN.POLL.SIZE <- list()
 
   for(i in 1:num.bw) {
     INITIAL.MESH.SIZE[[i]] <- initial.mesh.size.real
     MIN.MESH.SIZE[[i]] <- min.mesh.size.real
-    MIN.POLL.SIZE[[i]] <- min.poll.size.real        
+    MIN.POLL.SIZE[[i]] <- min.poll.size.real
     ## Need to do integer search for numeric predictors when bwtype is
     ## a nearest-neighbour, so set bbin appropriately.
     if(xdat.numeric[i]==TRUE && bwtype!="fixed") {
@@ -1722,9 +1717,9 @@ glpcvNOMAD <- function(ydat=NULL,
     if(!xdat.numeric[i]) {
       ub[i] <- 1
       bw.switch[i] <- ub[i]
-      INITIAL.MESH.SIZE[[i]] <- initial.mesh.size.integer      
+      INITIAL.MESH.SIZE[[i]] <- initial.mesh.size.integer
       MIN.MESH.SIZE[[i]] <- min.mesh.size.integer
-      MIN.POLL.SIZE[[i]] <- min.poll.size.integer     
+      MIN.POLL.SIZE[[i]] <- min.poll.size.integer
     }
     ## Check for unordered and Aitchison/Aitken kernel
     if(xdat.unordered[i]==TRUE && ukertype=="aitchisonaitken") {
@@ -1783,7 +1778,7 @@ glpcvNOMAD <- function(ydat=NULL,
   ## polynomial fit (W) in that dimension If all bandwidths hit their
   ## upper bound/are large, we get the global polynomial OLS fit. Note
   ## we have both the ls.cv and aic.cv methods.
-    
+
   ## Create the function wrappers to be fed to the snomadr solver for
   ## leave-one-out cross-validation and Hurvich, Simonoff, and Tsai's
   ## AIC_c approach
@@ -2016,7 +2011,15 @@ glpcvNOMAD <- function(ydat=NULL,
       }
     }
   } else {
+    ## If bandwidths are provided, need to convert those for the
+    ## numeric variables into scale factors (level on which snomadr is
+    ## optimizing)
     init.search.vals <- bandwidth
+    for(i in 1:num.bw) {
+      if(xdat.numeric[i]==TRUE && bwtype=="fixed") {
+        init.search.vals[i] <- bandwidth[i]/(sd.robust(xdat[,i])*length(ydat)^{-1/(num.numeric+2*ckerorder)})
+      }
+    }
   }
 
   ## Generate all initial points for the multiple restarting
@@ -2093,7 +2096,7 @@ glpcvNOMAD <- function(ydat=NULL,
 
   ## We optimize at the level of scaling factors (multiples of
   ## bandwidths) so we need to back out the unscaled (raw) bandwidths.
-  
+
   bw.opt <- bw.opt.sf
 
   if(bwtype=="fixed") {
@@ -2101,7 +2104,7 @@ glpcvNOMAD <- function(ydat=NULL,
       sd.xdat <- sd.robust(xdat[,numeric.index[i]])
       bw.opt[numeric.index[i]] <- bw.opt[numeric.index[i]]*sd.xdat*length(ydat)^{-1/(num.numeric+2*ckerorder)}
     }
-  } 
+  }
 
   for(i in 1:num.bw) {
     if(!xdat.numeric[i]) {
@@ -2119,7 +2122,7 @@ glpcvNOMAD <- function(ydat=NULL,
   }
 
   if(!is.null(opts$MAX_BB_EVAL)){
-    if(nmulti>0) {if(nmulti*opts$MAX_BB_EVAL <= solution$bbe) warning(paste(" MAX_BB_EVAL reached in NOMAD: perhaps use a larger value...", sep=""))} 
+    if(nmulti>0) {if(nmulti*opts$MAX_BB_EVAL <= solution$bbe) warning(paste(" MAX_BB_EVAL reached in NOMAD: perhaps use a larger value...", sep=""))}
     if(nmulti==0) {if(opts$MAX_BB_EVAL <= solution$bbe) warning(paste(" MAX_BB_EVAL reached in NOMAD: perhaps use a larger value...", sep="")) }
   }
 
@@ -2552,7 +2555,6 @@ plot.npglpreg <- function(x,
       } else {
         fitted.values <- est$gradient.categorical.mat[,i.categorical]
       }
-
 
       if(!ci) {
 
