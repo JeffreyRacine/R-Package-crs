@@ -1,3 +1,8 @@
+* bwscaling is deprecated in latest (development) version of np which
+  necessitated changes to npglpreg. In the process the way scaling is
+  performed is potentially enhanced, and definitely uses better starting
+  values
+
 Changes from Version 0.15-19 to 0.15-21 [08-Jan-2014]
 
 * Addressed issues with certain non-package files being included via use

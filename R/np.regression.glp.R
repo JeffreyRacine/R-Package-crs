@@ -1157,8 +1157,6 @@ glpregEst <- function(tydat=NULL,
 
 }
 
-## Could we just call glpregEst within (here and cv.aic?)
-
 minimand.cv.ls <- function(bws=NULL,
                            ydat=NULL,
                            xdat=NULL,
@@ -1519,8 +1517,10 @@ minimand.cv.aic <- function(bws=NULL,
         W[i,, drop = FALSE] %*% solve(tww[,,i]+diag(rep(ridge[i],nc)),tol=.Machine$double.eps) %*% t(W[i,, drop = FALSE])
       }))
 
-      if (!any(ghat == maxPenalty)){
-        fv <- log(mean((ydat-ghat)^2)) + (1+trH/n)/(1-(trH+2)/n)
+      aic.penalty <- (1+trH/n)/(1-(trH+2)/n)
+
+      if (!any(ghat == maxPenalty) && (aic.penalty > 0)){
+        fv <- log(mean((ydat-ghat)^2)) + aic.penalty
       } else {
         fv <- maxPenalty
       }
