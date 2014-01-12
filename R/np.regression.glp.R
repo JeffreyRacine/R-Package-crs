@@ -898,6 +898,8 @@ glpregEst <- function(tydat=NULL,
   num.numeric <- sum(sapply(1:NCOL(txdat),function(i){is.numeric(txdat[,i])})==TRUE)
   num.categorical <- NCOL(txdat)-num.numeric
 
+  if(num.numeric == 0) stop("generalized local polynomial regression requires at least one numeric predictor")
+
   ## Test for invalid knn values
 
   ## Below is the worst case scenario where
@@ -1650,6 +1652,8 @@ glpcvNOMAD <- function(ydat=NULL,
   xdat.numeric <- sapply(1:num.bw,function(i){is.numeric(xdat[,i])})
   num.numeric <- ncol(as.data.frame(xdat[,xdat.numeric]))
   numeric.index <- which(xdat.numeric==TRUE)
+
+  if(num.numeric == 0) stop("generalized local polynomial regression requires at least one numeric predictor")
 
   if(!is.null(degree) && length(degree) != num.numeric) stop(paste(" Error: degree vector supplied has ", length(degree), " elements but there exist ", num.numeric," numeric.predictors",sep=""))
 
