@@ -1,3 +1,8 @@
+Changes from Version 0.15-21 to 0.15-22 [XX-XX-20XX]
+
+* Fixed glitch in npglpreg where cv.aic was only working properly for
+  local constant (degree=0)
+
 * bwscaling is deprecated in latest (development) version of np which
   necessitated changes to npglpreg. In the process the way scaling is
   performed is potentially enhanced, and definitely uses better starting

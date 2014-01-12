@@ -61,7 +61,7 @@ npglpreg(\dots)
          bandwidth.min.numeric = 1.0e-02,
          bandwidth.switch = 1.0e+06,
          max.bb.eval = 10000,
-         initial.mesh.size.real = "1",
+         initial.mesh.size.real = "0.1",
          initial.mesh.size.integer = "1",
          min.mesh.size.real = "1.0e-05",
          min.mesh.size.integer = "1.0e-05",
