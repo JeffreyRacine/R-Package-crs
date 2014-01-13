@@ -1163,7 +1163,6 @@ minimand.cv.ls <- function(bws=NULL,
                            ydat=NULL,
                            xdat=NULL,
                            degree=NULL,
-                           degree.max=degree.max,
                            W=NULL,
                            ckertype=c("gaussian", "epanechnikov","uniform","truncated gaussian"),
                            ckerorder=2,
@@ -1204,11 +1203,7 @@ minimand.cv.ls <- function(bws=NULL,
       bws[i] <- bws[i]*sd.robust(xdat[,i])*length(ydat)^{-1/(num.numeric+2*ckerorder)}
     }
     if(xdat.numeric[i]!=TRUE) {
-<<<<<<< HEAD
       bws[i] <- bws[i]/100
-=======
-      bws[i] <- bws[i]/degree.max
->>>>>>> 56b00a345a4351f388dce9f9b8ba35844d3dfe11
     }
   }
 
@@ -1353,7 +1348,6 @@ minimand.cv.aic <- function(bws=NULL,
                             ydat=NULL,
                             xdat=NULL,
                             degree=NULL,
-                            degree.max=degree.max,
                             W=NULL,
                             ckertype=c("gaussian", "epanechnikov","uniform","truncated gaussian"),
                             ckerorder=2,
@@ -1407,11 +1401,7 @@ minimand.cv.aic <- function(bws=NULL,
       bws[i] <- bws[i]*sd.robust(xdat[,i])*length(ydat)^{-1/(num.numeric+2*ckerorder)}
     }
     if(xdat.numeric[i]!=TRUE) {
-<<<<<<< HEAD
       bws[i] <- bws[i]/100
-=======
-      bws[i] <- bws[i]/degree.max
->>>>>>> 56b00a345a4351f388dce9f9b8ba35844d3dfe11
     }
   }
 
@@ -1735,11 +1725,7 @@ glpcvNOMAD <- function(ydat=NULL,
       bbin[i] <- 1
     }
     if(!xdat.numeric[i]) {
-<<<<<<< HEAD
       ub[i] <- 1*100
-=======
-      ub[i] <- 1*degree.max
->>>>>>> 56b00a345a4351f388dce9f9b8ba35844d3dfe11
       bw.switch[i] <- ub[i]
       INITIAL.MESH.SIZE[[i]] <- initial.mesh.size.integer
       MIN.MESH.SIZE[[i]] <- min.mesh.size.integer
@@ -1748,11 +1734,7 @@ glpcvNOMAD <- function(ydat=NULL,
     ## Check for unordered and Aitchison/Aitken kernel
     if(xdat.unordered[i]==TRUE && ukertype=="aitchisonaitken") {
       c.num <- length(unique(xdat[,i]))
-<<<<<<< HEAD
       ub[i] <- (c.num-1)/c.num*100
-=======
-      ub[i] <- (c.num-1)/c.num*degree.max
->>>>>>> 56b00a345a4351f388dce9f9b8ba35844d3dfe11
       bw.switch[i] <- ub[i]
     }
   }
@@ -1820,7 +1802,6 @@ glpcvNOMAD <- function(ydat=NULL,
     num.numeric <- params$num.numeric
     maxPenalty <- params$maxPenalty
     degree <- params$degree
-    degree.max <- params$degree.max
     cv <- params$cv
     ckertype <- params$ckertype
     ckerorder <- params$ckerorder
@@ -1855,7 +1836,6 @@ glpcvNOMAD <- function(ydat=NULL,
                              ydat=ydat,
                              xdat=xdat,
                              degree=degree,
-                             degree.max=degree.max,                             
                              W=W,
                              ckertype=ckertype,
                              ckerorder=ckerorder,
@@ -1882,7 +1862,6 @@ glpcvNOMAD <- function(ydat=NULL,
                              ydat=ydat,
                              xdat=xdat[,bw.gamma<bw.switch,drop=FALSE],
                              degree=if(length(degree.sub)==0){0}else{degree.sub},
-                             degree.max=degree.max,                             
                              W=W,
                              ckertype=ckertype,
                              ckerorder=ckerorder,
@@ -1907,7 +1886,6 @@ glpcvNOMAD <- function(ydat=NULL,
     num.numeric <- params$num.numeric
     maxPenalty <- params$maxPenalty
     degree <- params$degree
-    degree.max <- params$degree.max    
     cv <- params$cv
     ckertype <- params$ckertype
     ckerorder <- params$ckerorder
@@ -1942,7 +1920,6 @@ glpcvNOMAD <- function(ydat=NULL,
                               ydat=ydat,
                               xdat=xdat,
                               degree=degree,
-                              degree.max=degree.max,                             
                               W=W,
                               ckertype=ckertype,
                               ckerorder=ckerorder,
@@ -1969,7 +1946,6 @@ glpcvNOMAD <- function(ydat=NULL,
                               ydat=ydat,
                               xdat=xdat[,bw.gamma<bw.switch,drop=FALSE],
                               degree=if(length(degree.sub)==0){0}else{degree.sub},
-                              degree.max=degree.max,                             
                               W=W,
                               ckertype=ckertype,
                               ckerorder=ckerorder,
@@ -1996,7 +1972,6 @@ glpcvNOMAD <- function(ydat=NULL,
   params$maxPenalty <- maxPenalty
   params$cv <- cv
   params$degree <- degree
-  params$degree.max <- degree.max  
   params$ckertype <- ckertype
   params$ckerorder <- ckerorder
   params$ukertype <- ukertype
@@ -2038,19 +2013,11 @@ glpcvNOMAD <- function(ydat=NULL,
         init.search.vals[i] <- round(runif(1,lb[i],sqrt(ub[i])))
       }
       if(xdat.numeric[i]!=TRUE) {
-<<<<<<< HEAD
         init.search.vals[i] <- runif(1,lb[i],1)*100
       }
       if(xdat.unordered[i]==TRUE && ukertype=="aitchisonaitken") {
         c.num <- length(unique(xdat[,i]))
         init.search.vals[i] <- runif(1,lb[i],(c.num-1)/c.num-lb[i])*100
-=======
-        init.search.vals[i] <- runif(1,lb[i],1)*degree.max
-      }
-      if(xdat.unordered[i]==TRUE && ukertype=="aitchisonaitken") {
-        c.num <- length(unique(xdat[,i]))
-        init.search.vals[i] <- runif(1,lb[i],(c.num-1)/c.num-lb[i])*degree.max
->>>>>>> 56b00a345a4351f388dce9f9b8ba35844d3dfe11
       }
     }
   } else {
@@ -2080,19 +2047,11 @@ glpcvNOMAD <- function(ydat=NULL,
           init.search.vals[i] <- round(runif(1,lb[i],sqrt(ub[i])))
         }
         if(xdat.numeric[i]!=TRUE) {
-<<<<<<< HEAD
           init.search.vals[i] <- runif(1,lb[i],1)*100
         }
         if(xdat.unordered[i]==TRUE && ukertype=="aitchisonaitken") {
           c.num <- length(unique(xdat[,i]))
           init.search.vals[i] <- runif(1,lb[i],(c.num-1)/c.num-lb[i])*100
-=======
-          init.search.vals[i] <- runif(1,lb[i],1)*degree.max
-        }
-        if(xdat.unordered[i]==TRUE && ukertype=="aitchisonaitken") {
-          c.num <- length(unique(xdat[,i]))
-          init.search.vals[i] <- runif(1,lb[i],(c.num-1)/c.num-lb[i])*degree.max
->>>>>>> 56b00a345a4351f388dce9f9b8ba35844d3dfe11
         }
       }
     }
@@ -2159,11 +2118,7 @@ glpcvNOMAD <- function(ydat=NULL,
 
   for(i in 1:num.bw) {
     if(!xdat.numeric[i]) {
-<<<<<<< HEAD
       bw.opt[i] <- bw.opt[i]/100
-=======
-      bw.opt[i] <- bw.opt[i]/degree.max
->>>>>>> 56b00a345a4351f388dce9f9b8ba35844d3dfe11
     }
   }
 
