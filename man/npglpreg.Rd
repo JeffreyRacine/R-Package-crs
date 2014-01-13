@@ -68,8 +68,10 @@ npglpreg(\dots)
          min.mesh.size.integer = "1",
          min.poll.size.real = "1.0e-08",
          min.poll.size.integer = "1.0e-08",
+         restart.from.min = TRUE,
          gradient.vec = NULL,
          gradient.categorical = FALSE,
+         restart.from.min = TRUE,
          cv.shrink = TRUE,
          cv.warning = FALSE,
          Bernstein = TRUE,
@@ -244,6 +246,11 @@ for each dimension of the continuous \code{x} in \code{txdat}}
   the scale of the search parameters as much as possible, so when very
   large scale factors are selected for the continuous predictors, a
   larger value may improve search}
+
+  \item{restart.from.min}{ a logical value indicating to recommence
+  \code{\link{snomadr}} with the optimal values found from its first
+  invocation (typically quick but often recommended in the field of
+  optimization)}
   
   \item{gradient.vec}{ a vector corresponding to the order of the
     partial (or cross-partial) and which variable the partial (or
