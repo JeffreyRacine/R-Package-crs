@@ -609,7 +609,7 @@ npglpreg.formula <- function(formula,
                              initial.mesh.size.real="1",
                              initial.mesh.size.integer="1",
                              min.mesh.size.real="1.0e-05",
-                             min.mesh.size.integer="1.0e-05",
+                             min.mesh.size.integer="1",
                              min.poll.size.real="1.0e-08",
                              min.poll.size.integer="1.0e-08",
                              gradient.vec=NULL,
@@ -2028,6 +2028,9 @@ glpcvNOMAD <- function(ydat=NULL,
     for(i in 1:num.bw) {
       if(xdat.numeric[i]==TRUE && bwtype=="fixed") {
         init.search.vals[i] <- bandwidth[i]/(sd.robust(xdat[,i])*length(ydat)^{-1/(num.numeric+2*ckerorder)})
+      }
+      if(xdat.numeric[i]!=TRUE) {
+        init.search.vals[i] <- bandwidth[i]*100
       }
     }
   }

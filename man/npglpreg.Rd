@@ -64,7 +64,7 @@ npglpreg(\dots)
          initial.mesh.size.real = "1",
          initial.mesh.size.integer = "1",
          min.mesh.size.real = "1.0e-05",
-         min.mesh.size.integer = "1.0e-05",
+         min.mesh.size.integer = "1",
          min.poll.size.real = "1.0e-08",
          min.poll.size.integer = "1.0e-08",
          gradient.vec = NULL,
