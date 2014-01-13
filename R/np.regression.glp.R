@@ -613,7 +613,7 @@ npglpreg.formula <- function(formula,
                              min.mesh.size.integer="1",
                              min.poll.size.real="1.0e-08",
                              min.poll.size.integer="1.0e-08",
-                             restart.from.min=TRUE,
+                             restart.from.min=FALSE,
                              gradient.vec=NULL,
                              gradient.categorical=FALSE,
                              cv.shrink=TRUE,
@@ -1604,7 +1604,7 @@ glpcvNOMAD <- function(ydat=NULL,
                        cv.warning=FALSE,
                        Bernstein=TRUE,
                        mpi=FALSE,
-                       restart.from.min=TRUE,
+                       restart.from.min=FALSE,
                        ...) {
 
   ## Save the seed prior to setting
