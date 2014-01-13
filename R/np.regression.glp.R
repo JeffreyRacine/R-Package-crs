@@ -606,7 +606,7 @@ npglpreg.formula <- function(formula,
                              bandwidth.min.numeric=1.0e-02,
                              bandwidth.switch=1.0e+06,
                              max.bb.eval=10000,
-                             initial.mesh.size.real="0.1",
+                             initial.mesh.size.real="1",
                              initial.mesh.size.integer="1",
                              min.mesh.size.real="1.0e-05",
                              min.mesh.size.integer="1.0e-05",
@@ -1203,7 +1203,7 @@ minimand.cv.ls <- function(bws=NULL,
       bws[i] <- bws[i]*sd.robust(xdat[,i])*length(ydat)^{-1/(num.numeric+2*ckerorder)}
     }
     if(xdat.numeric[i]!=TRUE) {
-      bws[i] <- bws[i]/10
+      bws[i] <- bws[i]/100
     }
   }
 
@@ -1401,7 +1401,7 @@ minimand.cv.aic <- function(bws=NULL,
       bws[i] <- bws[i]*sd.robust(xdat[,i])*length(ydat)^{-1/(num.numeric+2*ckerorder)}
     }
     if(xdat.numeric[i]!=TRUE) {
-      bws[i] <- bws[i]/10
+      bws[i] <- bws[i]/100
     }
   }
 
@@ -1581,7 +1581,7 @@ glpcvNOMAD <- function(ydat=NULL,
                        bandwidth.min.numeric=1.0e-02,
                        bandwidth.switch=1.0e+06,
                        max.bb.eval=10000,
-                       initial.mesh.size.real="0.1",
+                       initial.mesh.size.real="1",
                        initial.mesh.size.integer="1",
                        min.mesh.size.real="1.0e-05",
                        min.mesh.size.integer="1.0e-05",
@@ -1725,7 +1725,7 @@ glpcvNOMAD <- function(ydat=NULL,
       bbin[i] <- 1
     }
     if(!xdat.numeric[i]) {
-      ub[i] <- 1*10
+      ub[i] <- 1*100
       bw.switch[i] <- ub[i]
       INITIAL.MESH.SIZE[[i]] <- initial.mesh.size.integer
       MIN.MESH.SIZE[[i]] <- min.mesh.size.integer
@@ -1734,7 +1734,7 @@ glpcvNOMAD <- function(ydat=NULL,
     ## Check for unordered and Aitchison/Aitken kernel
     if(xdat.unordered[i]==TRUE && ukertype=="aitchisonaitken") {
       c.num <- length(unique(xdat[,i]))
-      ub[i] <- (c.num-1)/c.num*10
+      ub[i] <- (c.num-1)/c.num*100
       bw.switch[i] <- ub[i]
     }
   }
@@ -2013,11 +2013,11 @@ glpcvNOMAD <- function(ydat=NULL,
         init.search.vals[i] <- round(runif(1,lb[i],sqrt(ub[i])))
       }
       if(xdat.numeric[i]!=TRUE) {
-        init.search.vals[i] <- runif(1,lb[i],1)*10
+        init.search.vals[i] <- runif(1,lb[i],1)*100
       }
       if(xdat.unordered[i]==TRUE && ukertype=="aitchisonaitken") {
         c.num <- length(unique(xdat[,i]))
-        init.search.vals[i] <- runif(1,lb[i],(c.num-1)/c.num-lb[i])*10
+        init.search.vals[i] <- runif(1,lb[i],(c.num-1)/c.num-lb[i])*100
       }
     }
   } else {
@@ -2047,11 +2047,11 @@ glpcvNOMAD <- function(ydat=NULL,
           init.search.vals[i] <- round(runif(1,lb[i],sqrt(ub[i])))
         }
         if(xdat.numeric[i]!=TRUE) {
-          init.search.vals[i] <- runif(1,lb[i],1)*10
+          init.search.vals[i] <- runif(1,lb[i],1)*100
         }
         if(xdat.unordered[i]==TRUE && ukertype=="aitchisonaitken") {
           c.num <- length(unique(xdat[,i]))
-          init.search.vals[i] <- runif(1,lb[i],(c.num-1)/c.num-lb[i])*10
+          init.search.vals[i] <- runif(1,lb[i],(c.num-1)/c.num-lb[i])*100
         }
       }
     }
@@ -2118,7 +2118,7 @@ glpcvNOMAD <- function(ydat=NULL,
 
   for(i in 1:num.bw) {
     if(!xdat.numeric[i]) {
-      bw.opt[i] <- bw.opt[i]/10
+      bw.opt[i] <- bw.opt[i]/100
     }
   }
 
