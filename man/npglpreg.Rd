@@ -60,9 +60,10 @@ npglpreg(\dots)
          bandwidth.min = sqrt(.Machine$double.eps),
          bandwidth.min.numeric = 1.0e-02,
          bandwidth.switch = 1.0e+06,
+         bandwidth.scale.categorical = 1.0e+04,
          max.bb.eval = 10000,
-         initial.mesh.size.real = "1",
-         initial.mesh.size.integer = "1",
+         initial.mesh.size.real = "1.0",
+         initial.mesh.size.integer = "1.0",
          min.mesh.size.real = "1.0e-05",
          min.mesh.size.integer = "1",
          min.poll.size.real = "1.0e-08",
@@ -236,6 +237,13 @@ for each dimension of the continuous \code{x} in \code{txdat}}
     is treated as global during cross-validation at which point a global
     categorical kernel weighted least squares fit is used for
     computational efficiency}
+
+  \item{bandwidth.scale.categorical}{ the upper end for the rescaled
+  bandwidths for the categorical predictors (default
+  \code{bandwidth.scale.categorical=1.0e+04}) - the aim is to `even up'
+  the scale of the search parameters as much as possible, so when very
+  large scale factors are selected for the continuous predictors, a
+  larger value may improve search}
   
   \item{gradient.vec}{ a vector corresponding to the order of the
     partial (or cross-partial) and which variable the partial (or

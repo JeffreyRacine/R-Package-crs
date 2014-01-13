@@ -605,9 +605,10 @@ npglpreg.formula <- function(formula,
                              bandwidth.min=sqrt(.Machine$double.eps),
                              bandwidth.min.numeric=1.0e-02,
                              bandwidth.switch=1.0e+06,
+                             bandwidth.scale.categorical=1.0e+04,
                              max.bb.eval=10000,
-                             initial.mesh.size.real="1",
-                             initial.mesh.size.integer="1",
+                             initial.mesh.size.real="1.0",
+                             initial.mesh.size.integer="1.0",
                              min.mesh.size.real="1.0e-05",
                              min.mesh.size.integer="1",
                              min.poll.size.real="1.0e-08",
@@ -677,6 +678,7 @@ npglpreg.formula <- function(formula,
                                                      bandwidth.min=bandwidth.min,
                                                      bandwidth.min.numeric=bandwidth.min.numeric,
                                                      bandwidth.switch=bandwidth.switch,
+                                                     bandwidth.scale.categorical=bandwidth.scale.categorical,
                                                      max.bb.eval=max.bb.eval,
                                                      initial.mesh.size.real=initial.mesh.size.real,
                                                      initial.mesh.size.integer=initial.mesh.size.integer,
@@ -709,6 +711,7 @@ npglpreg.formula <- function(formula,
                                                      bandwidth.min=bandwidth.min,
                                                      bandwidth.min.numeric=bandwidth.min.numeric,
                                                      bandwidth.switch=bandwidth.switch,
+                                                     bandwidth.scale.categorical=bandwidth.scale.categorical,
                                                      max.bb.eval=max.bb.eval,
                                                      initial.mesh.size.real=initial.mesh.size.real,
                                                      initial.mesh.size.integer=initial.mesh.size.integer,
@@ -744,6 +747,7 @@ npglpreg.formula <- function(formula,
                                                   bandwidth.min=bandwidth.min,
                                                   bandwidth.min.numeric=bandwidth.min.numeric,
                                                   bandwidth.switch=bandwidth.switch,
+                                                  bandwidth.scale.categorical=bandwidth.scale.categorical,
                                                   max.bb.eval=max.bb.eval,
                                                   initial.mesh.size.real=initial.mesh.size.real,
                                                   initial.mesh.size.integer=initial.mesh.size.integer,
@@ -781,6 +785,7 @@ npglpreg.formula <- function(formula,
                                                   bandwidth.min=bandwidth.min,
                                                   bandwidth.min.numeric=bandwidth.min.numeric,
                                                   bandwidth.switch=bandwidth.switch,
+                                                  bandwidth.scale.categorical=bandwidth.scale.categorical,
                                                   max.bb.eval=max.bb.eval,
                                                   initial.mesh.size.real=initial.mesh.size.real,
                                                   initial.mesh.size.integer=initial.mesh.size.integer,
@@ -1168,9 +1173,10 @@ minimand.cv.ls <- function(bws=NULL,
                            ckerorder=2,
                            ukertype=c("liracine","aitchisonaitken"),
                            okertype=c("liracine","wangvanryzin"),
-                           bwtype = c("fixed","generalized_nn","adaptive_nn"),
+                           bwtype=c("fixed","generalized_nn","adaptive_nn"),
                            cv.shrink=TRUE,
                            cv.warning=FALSE,
+                           bandwidth.scale.categorical=NULL,
                            ...) {
 
   ckertype <- match.arg(ckertype)
@@ -1203,7 +1209,7 @@ minimand.cv.ls <- function(bws=NULL,
       bws[i] <- bws[i]*sd.robust(xdat[,i])*length(ydat)^{-1/(num.numeric+2*ckerorder)}
     }
     if(xdat.numeric[i]!=TRUE) {
-      bws[i] <- bws[i]/100
+      bws[i] <- bws[i]/bandwidth.scale.categorical
     }
   }
 
@@ -1356,6 +1362,7 @@ minimand.cv.aic <- function(bws=NULL,
                             bwtype = c("fixed","generalized_nn","adaptive_nn"),
                             cv.shrink=TRUE,
                             cv.warning=FALSE,
+                            bandwidth.scale.categorical=NULL,
                             ...) {
 
   ckertype <- match.arg(ckertype)
@@ -1401,7 +1408,7 @@ minimand.cv.aic <- function(bws=NULL,
       bws[i] <- bws[i]*sd.robust(xdat[,i])*length(ydat)^{-1/(num.numeric+2*ckerorder)}
     }
     if(xdat.numeric[i]!=TRUE) {
-      bws[i] <- bws[i]/100
+      bws[i] <- bws[i]/bandwidth.scale.categorical
     }
   }
 
@@ -1580,6 +1587,7 @@ glpcvNOMAD <- function(ydat=NULL,
                        bandwidth.min=sqrt(.Machine$double.eps),
                        bandwidth.min.numeric=1.0e-02,
                        bandwidth.switch=1.0e+06,
+                       bandwidth.scale.categorical=1.0e+04,
                        max.bb.eval=10000,
                        initial.mesh.size.real="1",
                        initial.mesh.size.integer="1",
@@ -1725,7 +1733,7 @@ glpcvNOMAD <- function(ydat=NULL,
       bbin[i] <- 1
     }
     if(!xdat.numeric[i]) {
-      ub[i] <- 1*100
+      ub[i] <- 1*bandwidth.scale.categorical
       bw.switch[i] <- ub[i]
       INITIAL.MESH.SIZE[[i]] <- initial.mesh.size.integer
       MIN.MESH.SIZE[[i]] <- min.mesh.size.integer
@@ -1734,7 +1742,7 @@ glpcvNOMAD <- function(ydat=NULL,
     ## Check for unordered and Aitchison/Aitken kernel
     if(xdat.unordered[i]==TRUE && ukertype=="aitchisonaitken") {
       c.num <- length(unique(xdat[,i]))
-      ub[i] <- (c.num-1)/c.num*100
+      ub[i] <- (c.num-1)/c.num*bandwidth.scale.categorical
       bw.switch[i] <- ub[i]
     }
   }
@@ -1812,6 +1820,7 @@ glpcvNOMAD <- function(ydat=NULL,
     cv.warning <- params$cv.warning
     Bernstein <- params$Bernstein
     bw.switch <- params$bw.switch
+    bandwidth.scale.categorical=params$bandwidth.scale.categorical
 
     bw.gamma <- input[1:num.bw]
     if(cv=="degree-bandwidth")
@@ -1844,6 +1853,7 @@ glpcvNOMAD <- function(ydat=NULL,
                              bwtype=bwtype,
                              cv.shrink=cv.shrink,
                              cv.warning=cv.warning,
+                             bandwidth.scale.categorical=bandwidth.scale.categorical,
                              ...)
     } else if(all(bw.gamma >= bw.switch)) {
       ## All bandwidths hit their upper bounds
@@ -1870,6 +1880,7 @@ glpcvNOMAD <- function(ydat=NULL,
                              bwtype=bwtype,
                              cv.shrink=cv.shrink,
                              cv.warning=cv.warning,
+                             bandwidth.scale.categorical=bandwidth.scale.categorical,
                              ...)
     }
     console <- printPush("\r                                                                         ",console = console)
@@ -1896,6 +1907,7 @@ glpcvNOMAD <- function(ydat=NULL,
     cv.warning <- params$cv.warning
     Bernstein <- params$Bernstein
     bw.switch <- params$bw.switch
+    bandwidth.scale.categorical=params$bandwidth.scale.categorical
 
     bw.gamma <- input[1:num.bw]
     if(cv=="degree-bandwidth")
@@ -1928,6 +1940,7 @@ glpcvNOMAD <- function(ydat=NULL,
                               bwtype=bwtype,
                               cv.shrink=cv.shrink,
                               cv.warning=cv.warning,
+                              bandwidth.scale.categorical=bandwidth.scale.categorical,
                               ...)
     } else if(all(bw.gamma >= bw.switch)) {
       ## All bandwidths hit their upper bounds
@@ -1954,6 +1967,7 @@ glpcvNOMAD <- function(ydat=NULL,
                               bwtype=bwtype,
                               cv.shrink=cv.shrink,
                               cv.warning=cv.warning,
+                              bandwidth.scale.categorical=bandwidth.scale.categorical,
                               ...)
     }
     console <- printPush("\r                                                                         ",console = console)
@@ -1981,6 +1995,7 @@ glpcvNOMAD <- function(ydat=NULL,
   params$cv.warning <- cv.warning
   params$Bernstein <- Bernstein
   params$bw.switch <- bw.switch
+  params$bandwidth.scale.categorical=bandwidth.scale.categorical
 
   ## Multistarting
 
@@ -2013,11 +2028,11 @@ glpcvNOMAD <- function(ydat=NULL,
         init.search.vals[i] <- round(runif(1,lb[i],sqrt(ub[i])))
       }
       if(xdat.numeric[i]!=TRUE) {
-        init.search.vals[i] <- runif(1,lb[i],1)*100
+        init.search.vals[i] <- runif(1,lb[i],1)*bandwidth.scale.categorical
       }
       if(xdat.unordered[i]==TRUE && ukertype=="aitchisonaitken") {
         c.num <- length(unique(xdat[,i]))
-        init.search.vals[i] <- runif(1,lb[i],(c.num-1)/c.num-lb[i])*100
+        init.search.vals[i] <- runif(1,lb[i],(c.num-1)/c.num-lb[i])*bandwidth.scale.categorical
       }
     }
   } else {
@@ -2030,7 +2045,7 @@ glpcvNOMAD <- function(ydat=NULL,
         init.search.vals[i] <- bandwidth[i]/(sd.robust(xdat[,i])*length(ydat)^{-1/(num.numeric+2*ckerorder)})
       }
       if(xdat.numeric[i]!=TRUE) {
-        init.search.vals[i] <- bandwidth[i]*100
+        init.search.vals[i] <- bandwidth[i]*bandwidth.scale.categorical
       }
     }
   }
@@ -2050,11 +2065,11 @@ glpcvNOMAD <- function(ydat=NULL,
           init.search.vals[i] <- round(runif(1,lb[i],sqrt(ub[i])))
         }
         if(xdat.numeric[i]!=TRUE) {
-          init.search.vals[i] <- runif(1,lb[i],1)*100
+          init.search.vals[i] <- runif(1,lb[i],1)*bandwidth.scale.categorical
         }
         if(xdat.unordered[i]==TRUE && ukertype=="aitchisonaitken") {
           c.num <- length(unique(xdat[,i]))
-          init.search.vals[i] <- runif(1,lb[i],(c.num-1)/c.num-lb[i])*100
+          init.search.vals[i] <- runif(1,lb[i],(c.num-1)/c.num-lb[i])*bandwidth.scale.categorical
         }
       }
     }
@@ -2121,7 +2136,7 @@ glpcvNOMAD <- function(ydat=NULL,
 
   for(i in 1:num.bw) {
     if(!xdat.numeric[i]) {
-      bw.opt[i] <- bw.opt[i]/100
+      bw.opt[i] <- bw.opt[i]/bandwidth.scale.categorical
     }
   }
 
