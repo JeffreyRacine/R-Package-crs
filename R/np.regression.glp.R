@@ -1202,6 +1202,9 @@ minimand.cv.ls <- function(bws=NULL,
     if(xdat.numeric[i]==TRUE && bwtype=="fixed") {
       bws[i] <- bws[i]*sd.robust(xdat[,i])*length(ydat)^{-1/(num.numeric+2*ckerorder)}
     }
+    if(xdat.numeric[i]!=TRUE) {
+      bws[i] <- bws[i]/10
+    }
   }
 
   console <- newLineConsole()
@@ -1396,6 +1399,9 @@ minimand.cv.aic <- function(bws=NULL,
   for(i in 1:num.bw) {
     if(xdat.numeric[i]==TRUE && bwtype=="fixed") {
       bws[i] <- bws[i]*sd.robust(xdat[,i])*length(ydat)^{-1/(num.numeric+2*ckerorder)}
+    }
+    if(xdat.numeric[i]!=TRUE) {
+      bws[i] <- bws[i]/10
     }
   }
 
@@ -1719,7 +1725,7 @@ glpcvNOMAD <- function(ydat=NULL,
       bbin[i] <- 1
     }
     if(!xdat.numeric[i]) {
-      ub[i] <- 1
+      ub[i] <- 1*10
       bw.switch[i] <- ub[i]
       INITIAL.MESH.SIZE[[i]] <- initial.mesh.size.integer
       MIN.MESH.SIZE[[i]] <- min.mesh.size.integer
@@ -1728,7 +1734,7 @@ glpcvNOMAD <- function(ydat=NULL,
     ## Check for unordered and Aitchison/Aitken kernel
     if(xdat.unordered[i]==TRUE && ukertype=="aitchisonaitken") {
       c.num <- length(unique(xdat[,i]))
-      ub[i] <- (c.num-1)/c.num
+      ub[i] <- (c.num-1)/c.num*10
       bw.switch[i] <- ub[i]
     }
   }
@@ -2007,11 +2013,11 @@ glpcvNOMAD <- function(ydat=NULL,
         init.search.vals[i] <- round(runif(1,lb[i],sqrt(ub[i])))
       }
       if(xdat.numeric[i]!=TRUE) {
-        init.search.vals[i] <- runif(1,lb[i],1-0.1)
+        init.search.vals[i] <- runif(1,lb[i],1)*10
       }
       if(xdat.unordered[i]==TRUE && ukertype=="aitchisonaitken") {
         c.num <- length(unique(xdat[,i]))
-        init.search.vals[i] <- runif(1,lb[i],(c.num-1)/c.num-lb[i]-0.1)
+        init.search.vals[i] <- runif(1,lb[i],(c.num-1)/c.num-lb[i])*10
       }
     }
   } else {
@@ -2041,11 +2047,11 @@ glpcvNOMAD <- function(ydat=NULL,
           init.search.vals[i] <- round(runif(1,lb[i],sqrt(ub[i])))
         }
         if(xdat.numeric[i]!=TRUE) {
-          init.search.vals[i] <- runif(1,lb[i],1-0.1)
+          init.search.vals[i] <- runif(1,lb[i],1)*10
         }
         if(xdat.unordered[i]==TRUE && ukertype=="aitchisonaitken") {
           c.num <- length(unique(xdat[,i]))
-          init.search.vals[i] <- runif(1,lb[i],(c.num-1)/c.num-lb[i]-0.1)
+          init.search.vals[i] <- runif(1,lb[i],(c.num-1)/c.num-lb[i])*10
         }
       }
     }
@@ -2112,7 +2118,7 @@ glpcvNOMAD <- function(ydat=NULL,
 
   for(i in 1:num.bw) {
     if(!xdat.numeric[i]) {
-      bw.opt[i] <- bw.opt[i]
+      bw.opt[i] <- bw.opt[i]/10
     }
   }
 
