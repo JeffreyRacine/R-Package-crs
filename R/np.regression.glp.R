@@ -1772,7 +1772,6 @@ glpcvNOMAD <- function(ydat=NULL,
   ## Assign the NOMAD parameters to opts which is passed to snomadr()
 
   opts <- list()
-  opts$"EPSILON" <- .Machine$double.eps
   opts$"MAX_BB_EVAL" <- max.bb.eval
   opts$"INITIAL_MESH_SIZE" <- INITIAL.MESH.SIZE
   opts$"MIN_MESH_SIZE" <- MIN.MESH.SIZE

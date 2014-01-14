@@ -234,7 +234,7 @@ for each dimension of the continuous \code{x} in \code{txdat}}
 
   \item{bandwidth.switch}{ the minimum bandwidth scale (i.e. number of
     scaled standard deviations) for each of the continuous predictors
-    (default \code{bandwidth.switch=1.0e+05}) before the local polynomial
+    (default \code{bandwidth.switch=1.0e+06}) before the local polynomial
     is treated as global during cross-validation at which point a global
     categorical kernel weighted least squares fit is used for
     computational efficiency}
