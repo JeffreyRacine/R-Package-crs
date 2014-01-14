@@ -62,12 +62,13 @@ npglpreg(\dots)
          bandwidth.switch = 1.0e+06,
          bandwidth.scale.categorical = 1.0e+04,
          max.bb.eval = 10000,
-         initial.mesh.size.real = "1.0",
-         initial.mesh.size.integer = "1.0",
-         min.mesh.size.real = "1.0e-05",
-         min.mesh.size.integer = "1",
-         min.poll.size.real = "1.0e-08",
-         min.poll.size.integer = "1.0e-08",
+         min.epsilon = paste(.Machine$double.eps),
+         initial.mesh.size.real = "1",
+         initial.mesh.size.integer = "1",
+         min.mesh.size.real = paste(sqrt(.Machine$double.eps)),
+         min.mesh.size.integer = paste(sqrt(.Machine$double.eps)),
+         min.poll.size.real = paste(sqrt(.Machine$double.eps)),
+         min.poll.size.integer = paste(sqrt(.Machine$double.eps)),
          restart.from.min = FALSE,
          gradient.vec = NULL,
          gradient.categorical = FALSE,
@@ -172,6 +173,11 @@ for each dimension of the continuous \code{x} in \code{txdat}}
     cross-validation }
 
   \item{max.bb.eval}{
+    argument passed to the NOMAD solver (see \code{\link{snomadr}} for
+    further details)
+  }
+
+  \item{min.epsilon}{
     argument passed to the NOMAD solver (see \code{\link{snomadr}} for
     further details)
   }
