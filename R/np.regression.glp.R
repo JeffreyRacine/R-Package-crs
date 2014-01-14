@@ -2020,14 +2020,13 @@ glpcvNOMAD <- function(ydat=NULL,
     console <- printPush("\rCalling NOMAD (Nonsmooth Optimization by Mesh Adaptive Direct Search)\n",console = console)
   }
 
-  ## Use bandwidth for initial values if provided - note scaling is
-  ## potentially off? categorigal square of numeric?
+  ## Use bandwidth for initial values if provided
 
   if(is.null(bandwidth)) {
     init.search.vals <- numeric()
     for(i in 1:num.bw) {
       if(xdat.numeric[i]==TRUE && bwtype=="fixed") {
-        init.search.vals[i] <- runif(1,0.5+lb[i],1.5)
+        init.search.vals[i] <- runif(1,lb[i],2.5)
       }
       if(xdat.numeric[i]==TRUE && bwtype!="fixed") {
         init.search.vals[i] <- round(runif(1,lb[i],sqrt(ub[i])))
@@ -2064,7 +2063,7 @@ glpcvNOMAD <- function(ydat=NULL,
       init.search.vals <- numeric()
       for(i in 1:num.bw) {
         if(xdat.numeric[i]==TRUE && bwtype=="fixed") {
-          init.search.vals[i] <- runif(1,0.5+lb[i],1.5)
+          init.search.vals[i] <- runif(1,lb[i],2.5)
         }
         if(xdat.numeric[i]==TRUE && bwtype!="fixed") {
           init.search.vals[i] <- round(runif(1,lb[i],sqrt(ub[i])))
