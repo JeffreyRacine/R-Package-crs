@@ -63,6 +63,7 @@ crs(\dots)
     min.mesh.size.integer = paste(sqrt(.Machine$double.eps)),
     min.poll.size.real = paste(sqrt(.Machine$double.eps)),
     min.poll.size.integer = paste(sqrt(.Machine$double.eps)),
+    opts=list(),
     nmulti = 5,
     tau = NULL,
     weights = NULL,
@@ -241,6 +242,9 @@ in \code{x} are included or omitted from the resulting estimate }
     arguments passed to the NOMAD solver (see \code{\link{snomadr}} for
     further details)
   }      
+
+  \item{opts}{ list of optional arguments to be passed to
+  \code{\link{snomadr}} }
 
   \item{nmulti}{
     integer number of times to restart the process of finding extrema of

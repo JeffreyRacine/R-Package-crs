@@ -29,6 +29,7 @@ frscvNOMAD <- function(xz,
                        min.mesh.size.integer=paste("r",sqrt(.Machine$double.eps),sep=""),
                        min.poll.size.integer=paste("r",sqrt(.Machine$double.eps),sep=""),
                        nmulti=0,
+                       opts=list(),
                        tau=NULL,
                        weights=NULL,
                        singular.ok=FALSE) {
@@ -324,7 +325,6 @@ frscvNOMAD <- function(xz,
         return(solution)
     }
 
-    opts <- list()
     opts$"EPSILON" <- .Machine$double.eps
     opts$"MAX_BB_EVAL" <- max.bb.eval
     opts$"INITIAL_MESH_SIZE" <- initial.mesh.size.integer

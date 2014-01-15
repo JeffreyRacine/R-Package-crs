@@ -38,6 +38,7 @@ krscvNOMAD(xz,
            min.mesh.size.integer = paste("r",sqrt(.Machine$double.eps),sep=""),
            min.poll.size.real = paste("r",sqrt(.Machine$double.eps),sep=""),
            min.poll.size.integer = paste("r",sqrt(.Machine$double.eps),sep=""),
+           opts=list(),
            nmulti = 0,
            tau = NULL,
            weights = NULL,
@@ -160,6 +161,9 @@ krscvNOMAD(xz,
     arguments passed to the NOMAD solver (see \code{\link{snomadr}} for
     further details)
   }      
+
+  \item{opts}{ list of optional arguments to be passed to
+  \code{\link{snomadr}} }
 
   \item{nmulti}{
     integer number of times to restart the process of finding extrema of

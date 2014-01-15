@@ -32,6 +32,7 @@ krscvNOMAD <- function(xz,
                        min.mesh.size.integer=paste("r",sqrt(.Machine$double.eps),sep=""),
                        min.poll.size.real=paste("r",sqrt(.Machine$double.eps),sep=""),
                        min.poll.size.integer=paste("r",sqrt(.Machine$double.eps),sep=""),
+                       opts=list(),
                        nmulti=0,
                        tau=NULL,
                        weights=NULL,
@@ -454,7 +455,6 @@ krscvNOMAD <- function(xz,
             segments <- NULL
     }
 
-    opts <- list()
     INITIAL.MESH.SIZE <- list()
     MIN.MESH.SIZE <- list()
     MIN.POLL.SIZE <- list()
