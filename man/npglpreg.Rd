@@ -51,7 +51,7 @@ npglpreg(\dots)
          okertype = c("liracine", "wangvanryzin"),
          bwtype = c("fixed", "generalized_nn", "adaptive_nn", "auto"),
          cv = c("degree-bandwidth", "bandwidth", "none"),
-         cv.func = c("cv.ls", "cv.gcv", "cv.aic"),
+         cv.func = c("cv.ls", "cv.aic"),
          nmulti = 5,
          random.seed = 42,
          degree.max = 10,
@@ -69,6 +69,7 @@ npglpreg(\dots)
          min.mesh.size.integer = paste(sqrt(.Machine$double.eps)),
          min.poll.size.real = paste(sqrt(.Machine$double.eps)),
          min.poll.size.integer = paste(sqrt(.Machine$double.eps)),
+         opts=list(),
          restart.from.min = FALSE,
          gradient.vec = NULL,
          gradient.categorical = FALSE,
@@ -159,18 +160,18 @@ for each dimension of the continuous \code{x} in \code{txdat}}
     \code{generalized_nn}: compute generalized nearest neighbor bandwidths \cr
     \code{adaptive_nn}: compute adaptive nearest neighbor bandwidths
   }
-  \item{cv}{
-  a character string (default \code{cv="nomad"}) indicating whether to
-  use nonsmooth mesh adaptive direct search, or no search (i.e. use 
-  supplied values for \code{degree} and \code{bws})
-}
+
+  \item{cv}{ a character string (default \code{cv="nomad"}) indicating
+    whether to use nonsmooth mesh adaptive direct search, or no search
+    (i.e. use supplied values for \code{degree} and \code{bws})
+  }
+
   \item{cv.func}{a character string (default \code{cv.func="cv.ls"})
     indicating which method to use to select smoothing
-    parameters. \code{cv.gcv} specifies generalized cross-validation
-    (Craven and Wahba (1979)), \code{cv.aic} specifies expected
-    Kullback-Leibler cross-validation (Hurvich, Simonoff, and Tsai
-    (1998)), and \code{cv.ls} specifies least-squares
-    cross-validation }
+    parameters. \code{cv.aic} specifies expected Kullback-Leibler
+    cross-validation (Hurvich, Simonoff, and Tsai (1998)), and
+    \code{cv.ls} specifies least-squares cross-validation
+  }
 
   \item{max.bb.eval}{
     argument passed to the NOMAD solver (see \code{\link{snomadr}} for
@@ -212,11 +213,15 @@ for each dimension of the continuous \code{x} in \code{txdat}}
     further details)
   }      
 
+  \item{opts}{ list of optional arguments passed to the NOMAD solver
+    (see \code{\link{snomadr}} for further details) }
+
   \item{nmulti}{
     integer number of times to restart the process of finding extrema of
     the cross-validation function from different (random) initial
     points (default \code{nmulti=5})
   }
+  
   \item{random.seed}{ when it is not missing and not equal to 0, the
     initial points will be generated using this seed when using
     \code{\link{snomadr}} }
