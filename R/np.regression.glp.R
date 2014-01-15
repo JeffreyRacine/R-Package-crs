@@ -630,6 +630,10 @@ npglpreg.formula <- function(formula,
   if(!is.logical(leave.one.out)) stop(" Error: leave.one.out must be logical (TRUE/FALSE)")
   if(degree.max > 100) stop(paste(" degree.max (",degree.max,") exceeds reasonable value (",100,")",sep=""))
   if(degree.max < 1) stop(paste(" degree.max (",degree.max,") must be a positive integer",sep=""))
+  if(as.numeric(min.epsilon) >= as.numeric(min.mesh.size.real)) stop(" min.epsilon must be less than min.mesh.size.real")
+  if(as.numeric(min.epsilon) >= as.numeric(min.mesh.size.integer)) stop(" min.epsilon must be less than min.mesh.size.integer")
+  if(as.numeric(min.epsilon) >= as.numeric(min.poll.size.real)) stop(" min.epsilon must be less than min.poll.size.real")
+  if(as.numeric(min.epsilon) >= as.numeric(min.poll.size.integer)) stop(" min.epsilon must be less than min.poll.size.integer")
   if(!mpi) {
     if(!require(np)) stop(" Error: you must install the np package to use this function")
   } else {
@@ -2030,7 +2034,7 @@ glpcvNOMAD <- function(ydat=NULL,
     init.search.vals <- numeric()
     for(i in 1:num.bw) {
       if(xdat.numeric[i]==TRUE && bwtype=="fixed") {
-        init.search.vals[i] <- runif(1,lb[i],2.5)
+        init.search.vals[i] <- runif(1,lb[i],1.5)
       }
       if(xdat.numeric[i]==TRUE && bwtype!="fixed") {
         init.search.vals[i] <- round(runif(1,lb[i],sqrt(ub[i])))
@@ -2067,7 +2071,7 @@ glpcvNOMAD <- function(ydat=NULL,
       init.search.vals <- numeric()
       for(i in 1:num.bw) {
         if(xdat.numeric[i]==TRUE && bwtype=="fixed") {
-          init.search.vals[i] <- runif(1,lb[i],2.5)
+          init.search.vals[i] <- runif(1,lb[i],1.5)
         }
         if(xdat.numeric[i]==TRUE && bwtype!="fixed") {
           init.search.vals[i] <- round(runif(1,lb[i],sqrt(ub[i])))
