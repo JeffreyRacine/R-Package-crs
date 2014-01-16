@@ -1752,6 +1752,7 @@ glpcvNOMAD <- function(ydat=NULL,
       bbin[i] <- 1
     }
     if(!xdat.numeric[i]) {
+      lb[i] <- lb[i]*bandwidth.scale.categorical
       ub[i] <- 1*bandwidth.scale.categorical
       bw.switch[i] <- ub[i]
       INITIAL.MESH.SIZE[[i]] <- initial.mesh.size.integer
