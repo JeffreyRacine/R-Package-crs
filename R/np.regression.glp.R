@@ -2046,11 +2046,7 @@ glpcvNOMAD <- function(ydat=NULL,
         init.search.vals[i] <- round(runif(1,lb[i],sqrt(ub[i])))
       }
       if(xdat.numeric[i]!=TRUE) {
-        init.search.vals[i] <- runif(1,lb[i],1)*bandwidth.scale.categorical
-      }
-      if(xdat.unordered[i]==TRUE && ukertype=="aitchisonaitken") {
-        c.num <- length(unique(xdat[,i]))
-        init.search.vals[i] <- runif(1,lb[i],(c.num-1)/c.num-lb[i])*bandwidth.scale.categorical
+        init.search.vals[i] <- runif(1,lb[i],ub[i])
       }
     }
   } else {
@@ -2083,11 +2079,7 @@ glpcvNOMAD <- function(ydat=NULL,
           init.search.vals[i] <- round(runif(1,lb[i],sqrt(ub[i])))
         }
         if(xdat.numeric[i]!=TRUE) {
-          init.search.vals[i] <- runif(1,lb[i],1)*bandwidth.scale.categorical
-        }
-        if(xdat.unordered[i]==TRUE && ukertype=="aitchisonaitken") {
-          c.num <- length(unique(xdat[,i]))
-          init.search.vals[i] <- runif(1,lb[i],(c.num-1)/c.num-lb[i])*bandwidth.scale.categorical
+          init.search.vals[i] <- runif(1,lb[i],ub[i])
         }
       }
     }
