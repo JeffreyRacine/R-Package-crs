@@ -624,6 +624,8 @@ npglpreg.formula <- function(formula,
                              mpi=FALSE,
                              ...) {
 
+  ## Basic error trapping...
+
   if(!is.logical(mpi)) stop(" Error: mpi must be logical (TRUE/FALSE)")
   if(!is.logical(Bernstein)) stop(" Error: Bernstein must be logical (TRUE/FALSE)")
   if(!is.logical(gradient.categorical)) stop(" Error: gradient.categorical must be logical (TRUE/FALSE)")
@@ -631,10 +633,25 @@ npglpreg.formula <- function(formula,
   if(!is.logical(leave.one.out)) stop(" Error: leave.one.out must be logical (TRUE/FALSE)")
   if(degree.max > 100) stop(paste(" degree.max (",degree.max,") exceeds reasonable value (",100,")",sep=""))
   if(degree.max < 1) stop(paste(" degree.max (",degree.max,") must be a positive integer",sep=""))
+  if(degree.max < degree.min) stop(" degree.max must be greater than or equal to degree.min")
+  if(as.numeric(initial.mesh.size.real) <= 0) stop(" initial.mesh.size.real must be positive")
+  if(as.numeric(initial.mesh.size.integer) <= 0) stop(" initial.mesh.size.integer must be positive")
+  if(as.numeric(min.mesh.size.integer) <= 0) stop(" min.mesh.size.integer must be positive")
+  if(as.numeric(min.mesh.size.real) <= 0) stop(" min.mesh.size.real must be positive")
+  if(as.numeric(min.poll.size.integer) <= 0) stop(" min.poll.size.integer must be positive")
+  if(as.numeric(min.poll.size.real) <= 0) stop(" min.poll.size.real must be positive")
+  if(as.numeric(bandwidth.scale.categorical) <= 0) stop(" bandwidth.scale.categorical must be positive")
+  if(as.numeric(bandwidth.min) <= 0) stop(" bandwidth.min must be positive")
+  if(as.numeric(bandwidth.min.numeric) <= 0) stop(" bandwidth.min.numeric must be positive")
+  if(as.numeric(bandwidth.switch) <= 0) stop(" bandwidth.switch must be positive")    
+  if(as.numeric(bandwidth.max) <= 0) stop(" bandwidth.max must be positive")
+  if(as.numeric(bandwidth.max) <= as.numeric(bandwidth.min)) stop(" bandwidth.max must exceed bandwidth.min")        
+  if(as.numeric(min.epsilon) <= 0) stop(" min.epsilon must be positive")  
   if(as.numeric(min.epsilon) >= as.numeric(min.mesh.size.real)) stop(" min.epsilon must be less than min.mesh.size.real")
   if(as.numeric(min.epsilon) >= as.numeric(min.mesh.size.integer)) stop(" min.epsilon must be less than min.mesh.size.integer")
   if(as.numeric(min.epsilon) >= as.numeric(min.poll.size.real)) stop(" min.epsilon must be less than min.poll.size.real")
   if(as.numeric(min.epsilon) >= as.numeric(min.poll.size.integer)) stop(" min.epsilon must be less than min.poll.size.integer")
+  if(as.numeric(max.bb.eval) <= 0) stop(" max.bb.eval must be positive")    
   if(!mpi) {
     if(!require(np)) stop(" Error: you must install the np package to use this function")
   } else {
@@ -723,7 +740,8 @@ npglpreg.formula <- function(formula,
                                                      bandwidth.switch=bandwidth.switch,
                                                      bandwidth.scale.categorical=bandwidth.scale.categorical,
                                                      max.bb.eval=max.bb.eval,
-                                                     min.epsilon=min.epsilon,                                                     initial.mesh.size.real=initial.mesh.size.real,
+                                                     min.epsilon=min.epsilon,
+                                                     initial.mesh.size.real=initial.mesh.size.real,
                                                      initial.mesh.size.integer=initial.mesh.size.integer,
                                                      min.mesh.size.real=min.mesh.size.real,
                                                      min.mesh.size.integer=min.mesh.size.integer,
@@ -761,7 +779,8 @@ npglpreg.formula <- function(formula,
                                                   bandwidth.switch=bandwidth.switch,
                                                   bandwidth.scale.categorical=bandwidth.scale.categorical,
                                                   max.bb.eval=max.bb.eval,
-                                                  min.epsilon=min.epsilon,                                                  initial.mesh.size.real=initial.mesh.size.real,
+                                                  min.epsilon=min.epsilon,
+                                                  initial.mesh.size.real=initial.mesh.size.real,
                                                   initial.mesh.size.integer=initial.mesh.size.integer,
                                                   min.mesh.size.real=min.mesh.size.real,
                                                   min.mesh.size.integer=min.mesh.size.integer,
@@ -801,7 +820,8 @@ npglpreg.formula <- function(formula,
                                                   bandwidth.switch=bandwidth.switch,
                                                   bandwidth.scale.categorical=bandwidth.scale.categorical,
                                                   max.bb.eval=max.bb.eval,
-                                                  min.epsilon=min.epsilon,                                                  initial.mesh.size.real=initial.mesh.size.real,
+                                                  min.epsilon=min.epsilon,
+                                                  initial.mesh.size.real=initial.mesh.size.real,
                                                   initial.mesh.size.integer=initial.mesh.size.integer,
                                                   min.mesh.size.real=min.mesh.size.real,
                                                   min.mesh.size.integer=min.mesh.size.integer,
