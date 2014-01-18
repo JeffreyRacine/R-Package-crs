@@ -31,6 +31,7 @@ npglpreg(\dots)
          gradient.vec = NULL,
          gradient.categorical = FALSE,
          cv.shrink = TRUE,
+         cv.maxPenalty = sqrt(.Machine$double.xmax),
          cv.warning = FALSE,
          Bernstein = TRUE,
          mpi = FALSE,
@@ -74,6 +75,7 @@ npglpreg(\dots)
          gradient.vec = NULL,
          gradient.categorical = FALSE,
          cv.shrink = TRUE,
+         cv.maxPenalty = sqrt(.Machine$double.xmax),
          cv.warning = FALSE,
          Bernstein = TRUE,
          mpi = FALSE,
@@ -275,6 +277,10 @@ for each dimension of the continuous \code{x} in \code{txdat}}
   cross-validation (default \code{cv.shrink=TRUE}) or to instead test
   for ill-conditioned matrices and penalize heavily when this is the
   case (much stronger condition imposed on cross-validation)}
+
+\item{cv.maxPenalty}{ a penalty applied during cross-validation when a
+  delete-one estimate is not finite or the polynomial basis is not of
+  full column rank }
 
 \item{cv.warning}{ a logical value indicating whether to issue an
   immediate warning message when ill conditioned bases are encountered

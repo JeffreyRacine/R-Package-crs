@@ -619,6 +619,7 @@ npglpreg.formula <- function(formula,
                              gradient.vec=NULL,
                              gradient.categorical=FALSE,
                              cv.shrink=TRUE,
+                             cv.maxPenalty=sqrt(.Machine$double.xmax),
                              cv.warning=FALSE,
                              Bernstein=TRUE,
                              mpi=FALSE,
@@ -845,7 +846,7 @@ npglpreg.formula <- function(formula,
     bws <- model.cv$bws
     bws.sf <- model.cv$bws.sf
     fv <- model.cv$fv
-    if(isTRUE(all.equal(fv,sqrt(.Machine$double.xmax)))) stop(" Search failed: restart with larger nmulti or smaller degree.max (or degree if provided)")
+    if(isTRUE(all.equal(fv,cv.maxPenalty))) stop(" Search failed: restart with larger nmulti or smaller degree.max (or degree if provided)")
   }
 
   if(!is.null(degree))    {
@@ -903,6 +904,7 @@ glpregEst <- function(tydat=NULL,
                       bwtype=c("fixed","generalized_nn","adaptive_nn"),
                       gradient.vec=NULL,
                       cv.shrink=TRUE,
+                      cv.maxPenalty=sqrt(.Machine$double.xmax),
                       cv.warning=FALSE,
                       Bernstein=TRUE,
                       ...) {
@@ -927,8 +929,6 @@ glpregEst <- function(tydat=NULL,
 
   txdat <- as.data.frame(txdat)
   exdat <- as.data.frame(exdat)
-
-  maxPenalty <- sqrt(.Machine$double.xmax)
 
   n.train <- nrow(txdat)
   n.eval <- nrow(exdat)
@@ -1123,7 +1123,7 @@ glpregEst <- function(tydat=NULL,
       for(i in 1:n.eval) {
         if(!is.fullrank(tww[,,i])) {
           if(cv.warning) console <- printPush(paste("\rWarning: is.fullrank required for inversion at obs. ", i," failed      ",sep=""),console = console)
-          return(maxPenalty)
+          return(cv.maxPenalty)
         }
       }
     }
@@ -1136,7 +1136,7 @@ glpregEst <- function(tydat=NULL,
       tww <- array(tww,dim = c(ncol(W),ncol(W),n.eval))
     }
 
-    coef.mat <- matrix(maxPenalty,ncol(W),n.eval)
+    coef.mat <- matrix(cv.maxPenalty,ncol(W),n.eval)
     epsilon <- 1.0/n.eval
     ridge <- double(n.eval)
     doridge <- !logical(n.eval)
@@ -1152,7 +1152,7 @@ glpregEst <- function(tydat=NULL,
                  ridge[i] <<- ridge[i]+epsilon
                  doridge[i] <<- TRUE
                  if(cv.warning) console <- printPush(paste("\rWarning: ridging required for inversion at obs. ", i, ", ridge = ",formatC(ridge[i],digits=4,format="f"),"        ",sep=""),console = console)
-                 return(rep(maxPenalty,nc))
+                 return(rep(cv.maxPenalty,nc))
                })
     }
 
@@ -1211,6 +1211,7 @@ minimand.cv.ls <- function(bws=NULL,
                            okertype=c("liracine","wangvanryzin"),
                            bwtype=c("fixed","generalized_nn","adaptive_nn"),
                            cv.shrink=TRUE,
+                           cv.maxPenalty=sqrt(.Machine$double.xmax),
                            cv.warning=FALSE,
                            bandwidth.scale.categorical=NULL,
                            ...) {
@@ -1230,8 +1231,6 @@ minimand.cv.ls <- function(bws=NULL,
   xdat <- as.data.frame(xdat)
 
   n <- length(ydat)
-
-  maxPenalty <- sqrt(.Machine$double.xmax)
 
   ## Manually conduct bandwidth scaling so that NOMAD is operating on
   ## a scale free level.
@@ -1257,18 +1256,18 @@ minimand.cv.ls <- function(bws=NULL,
     ## Check for positive degrees of freedom
     if(ncol(W) >= nrow(W)-1) {
       if(cv.warning) console <- printPush(paste("\rWarning: negative degrees of freedom                           ",sep=""),console = console)
-      return(maxPenalty)
+      return(cv.maxPenalty)
     }
     ## Check for full column rank
     if(!is.fullrank(W)) {
       if(cv.warning) console <- printPush(paste("\rWarning: negative degrees of freedom                           ",sep=""),console = console)
-      return(maxPenalty)
+      return(cv.maxPenalty)
     }
   }
 
   if(any(bws<=0)) {
 
-    return(maxPenalty)
+    return(cv.maxPenalty)
 
   } else {
 
@@ -1291,13 +1290,13 @@ minimand.cv.ls <- function(bws=NULL,
 
       mean.loo <- tww[2,]/NZD(tww[1,])
 
-      if (!any(mean.loo == maxPenalty)){
+      if (!any(mean.loo == cv.maxPenalty)){
         fv <- mean((ydat-mean.loo)^2)
       } else {
-        fv <- maxPenalty
+        fv <- cv.maxPenalty
       }
 
-      fv <- ifelse(is.finite(fv),fv,maxPenalty)
+      fv <- ifelse(is.finite(fv),fv,cv.maxPenalty)
 
       console <- printPush("\r                                                                         ",console = console)
       console <- printPush(paste("\rfv = ",format(fv)," ",sep=""),console = console)
@@ -1334,12 +1333,12 @@ minimand.cv.ls <- function(bws=NULL,
         for(i in 1:n) {
           if(!is.fullrank(tww[,,i])) {
             if(cv.warning) console <- printPush(paste("\rWarning: is.fullrank required for inversion at obs. ", i," failed      ",sep=""),console = console)
-            return(maxPenalty)
+            return(cv.maxPenalty)
           }
         }
       }
 
-      mean.loo <- rep(maxPenalty,n)
+      mean.loo <- rep(cv.maxPenalty,n)
       epsilon <- 1.0/n
       ridge <- double(n)
       doridge <- !logical(n)
@@ -1358,7 +1357,7 @@ minimand.cv.ls <- function(bws=NULL,
                   ridge[i] <<- ridge[i]+epsilon
                   doridge[i] <<- TRUE
                   if(cv.warning) console <- printPush(paste("\rWarning: ridging required for inversion at obs. ", i, ", ridge = ",formatC(ridge[i],digits=4,format="f"),"        ",sep=""),console = console)
-                  return(rep(maxPenalty,nc))
+                  return(rep(cv.maxPenalty,nc))
                 })
       }
 
@@ -1367,13 +1366,13 @@ minimand.cv.ls <- function(bws=NULL,
         mean.loo[iloo] <- sapply(iloo, ridger)
       }
 
-      if (!any(mean.loo == maxPenalty)){
+      if (!any(mean.loo == cv.maxPenalty)){
         fv <- mean((ydat-mean.loo)^2)
       } else {
-        fv <- maxPenalty
+        fv <- cv.maxPenalty
       }
 
-      fv <- ifelse(is.finite(fv),fv,maxPenalty)
+      fv <- ifelse(is.finite(fv),fv,cv.maxPenalty)
 
       console <- printPush("\r                                                                         ",console = console)
       console <- printPush(paste("\rfv = ",format(fv)," ",sep=""),console = console)
@@ -1397,6 +1396,7 @@ minimand.cv.aic <- function(bws=NULL,
                             okertype=c("liracine","wangvanryzin"),
                             bwtype = c("fixed","generalized_nn","adaptive_nn"),
                             cv.shrink=TRUE,
+                            cv.maxPenalty=sqrt(.Machine$double.xmax),
                             cv.warning=FALSE,
                             bandwidth.scale.categorical=NULL,
                             ...) {
@@ -1417,18 +1417,16 @@ minimand.cv.aic <- function(bws=NULL,
 
   n <- length(ydat)
 
-  maxPenalty <- sqrt(.Machine$double.xmax)
-
   if(!is.null(W)) {
     ## Check for positive degrees of freedom
     if(ncol(W) >= nrow(W)-1) {
       if(cv.warning) console <- printPush(paste("\rWarning: negative degrees of freedom                           ",sep=""),console = console)
-      return(maxPenalty)
+      return(cv.maxPenalty)
     }
     ## Check for full column rank
     if(!is.fullrank(W)) {
       if(cv.warning) console <- printPush(paste("\rWarning: is.fullrank required for inversion at obs. ", i," failed      ",sep=""),console = console)
-      return(maxPenalty)
+      return(cv.maxPenalty)
     }
   }
 
@@ -1454,7 +1452,7 @@ minimand.cv.aic <- function(bws=NULL,
 
   if(any(bws<=0)) {
 
-    return(maxPenalty)
+    return(cv.maxPenalty)
 
   } else {
 
@@ -1494,13 +1492,13 @@ minimand.cv.aic <- function(bws=NULL,
 
       aic.penalty <- (1+trH/n)/(1-(trH+2)/n)
 
-      if (!any(ghat == maxPenalty) && (aic.penalty > 0)){
+      if (!any(ghat == cv.maxPenalty) && (aic.penalty > 0)){
         fv <- log(mean((ydat-ghat)^2)) + aic.penalty
       } else {
-        fv <- maxPenalty
+        fv <- cv.maxPenalty
       }
 
-      return(ifelse(is.finite(fv),fv,maxPenalty))
+      return(ifelse(is.finite(fv),fv,cv.maxPenalty))
 
     } else {
 
@@ -1531,12 +1529,12 @@ minimand.cv.aic <- function(bws=NULL,
         for(i in 1:n) {
           if(!is.fullrank(tww[,,i])) {
             if(cv.warning) console <- printPush(paste("\rWarning: is.fullrank required for inversion at obs. ", i," failed      ",sep=""),console = console)
-            return(maxPenalty)
+            return(cv.maxPenalty)
           }
         }
       }
 
-      ghat <- rep(maxPenalty,n)
+      ghat <- rep(cv.maxPenalty,n)
       epsilon <- 1.0/n
       ridge <- double(n)
       doridge <- !logical(n)
@@ -1555,7 +1553,7 @@ minimand.cv.aic <- function(bws=NULL,
                   ridge[i] <<- ridge[i]+epsilon
                   doridge[i] <<- TRUE
                   if(cv.warning) console <- printPush(paste("\rWarning: ridging required for inversion at obs. ", i, ", ridge = ",formatC(ridge[i],digits=4,format="f"),"        ",sep=""),console = console)
-                  return(rep(maxPenalty,nc))
+                  return(rep(cv.maxPenalty,nc))
                 })
       }
 
@@ -1570,13 +1568,13 @@ minimand.cv.aic <- function(bws=NULL,
 
       aic.penalty <- (1+trH/n)/(1-(trH+2)/n)
 
-      if (!any(ghat == maxPenalty) && (aic.penalty > 0)){
+      if (!any(ghat == cv.maxPenalty) && (aic.penalty > 0)){
         fv <- log(mean((ydat-ghat)^2)) + aic.penalty
       } else {
-        fv <- maxPenalty
+        fv <- cv.maxPenalty
       }
 
-      fv <- ifelse(is.finite(fv),fv,maxPenalty)
+      fv <- ifelse(is.finite(fv),fv,cv.maxPenalty)
 
       console <- printPush("\r                                                                         ",console = console)
       console <- printPush(paste("\rfv = ",format(fv)," ",sep=""),console = console)
@@ -1600,7 +1598,7 @@ eval.lscv <- function(input, params){
   xdat.numeric <- params$xdat.numeric
   num.bw <- params$num.bw
   num.numeric <- params$num.numeric
-  maxPenalty <- params$maxPenalty
+  cv.maxPenalty <- params$cv.maxPenalty
   degree <- params$degree
   cv <- params$cv
   ckertype <- params$ckertype
@@ -1621,7 +1619,7 @@ eval.lscv <- function(input, params){
   ## Test for negative degrees of freedom
 
   if(dim.bs(basis="glp",kernel=TRUE,degree=degree,segments=rep(1,length(degree)))>length(ydat)-1)
-    return(maxPenalty)
+    return(cv.maxPenalty)
 
   W <- W.glp(xdat=xdat,
              degree=degree,
@@ -1687,7 +1685,7 @@ eval.aicc <- function(input, params){
   xdat.numeric <- params$xdat.numeric
   num.bw <- params$num.bw
   num.numeric <- params$num.numeric
-  maxPenalty <- params$maxPenalty
+  cv.maxPenalty <- params$cv.maxPenalty
   degree <- params$degree
   cv <- params$cv
   ckertype <- params$ckertype
@@ -1708,7 +1706,7 @@ eval.aicc <- function(input, params){
   ## Test for negative degrees of freedom
 
   if(dim.bs(basis="glp",kernel=TRUE,degree=degree,segments=rep(1,length(degree)))>length(ydat)-1)
-    return(maxPenalty)
+    return(cv.maxPenalty)
 
   W <- W.glp(xdat=xdat,
              degree=degree,
@@ -1811,6 +1809,7 @@ glpcvNOMAD <- function(ydat=NULL,
                        min.poll.size.real=sqrt(.Machine$double.eps),
                        min.poll.size.integer=sqrt(.Machine$double.eps),
                        cv.shrink=TRUE,
+                       cv.maxPenalty=sqrt(.Machine$double.xmax),
                        cv.warning=FALSE,
                        Bernstein=TRUE,
                        mpi=FALSE,
@@ -1854,8 +1853,6 @@ glpcvNOMAD <- function(ydat=NULL,
     if(!is.null(degree) && any(degree>degree.max)) stop(" Error: degree supplied but exceeds degree.max")
     if(!is.null(degree) && any(degree<degree.min)) stop(" Error: degree supplied but less than degree.min")
   }
-
-  maxPenalty <- sqrt(.Machine$double.xmax)
 
   ## For nearest neighbour bandwidths override default bandwidth.min
   ## and bandwidth.max and use sample size information.
@@ -2022,7 +2019,7 @@ glpcvNOMAD <- function(ydat=NULL,
   params$xdat.numeric <- xdat.numeric
   params$num.bw <- num.bw
   params$num.numeric <- num.numeric
-  params$maxPenalty <- maxPenalty
+  params$cv.maxPenalty <- cv.maxPenalty
   params$cv <- cv
   params$degree <- degree
   params$ckertype <- ckertype
@@ -2227,7 +2224,7 @@ glpcvNOMAD <- function(ydat=NULL,
 
   if(exists.seed) assign(".Random.seed", save.seed, .GlobalEnv)
 
-  if(isTRUE(all.equal(fv,maxPenalty))) stop(" Search failed: restart with larger nmulti or smaller degree.max")
+  if(isTRUE(all.equal(fv,cv.maxPenalty))) stop(" Search failed: restart with larger nmulti or smaller degree.max")
 
   return(list(bws=bw.opt,
               bws.sf=bw.opt.sf,
