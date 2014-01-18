@@ -1,12 +1,16 @@
 Changes from Version 0.15-21 to 0.15-22 [XX-XX-20XX]
 
+* Default settings for tuning parameters for snomadr in npglpreg have been
+  optimized based on extensive simulations for simulated and real datasets
+  (we `optimized the optimizer' so to speak)
+
 * Fixed glitch in npglpreg where cv.aic was only working properly for
   local constant (degree=0)
 
 * bwscaling is deprecated in latest (development) version of np which
   necessitated changes to npglpreg. In the process the way scaling is
-  performed is potentially enhanced, and definitely uses better starting
-  values
+  performed ought to be more robust in general due to changes to default
+  starting values for numeric predictors
 
 Changes from Version 0.15-19 to 0.15-21 [08-Jan-2014]
 

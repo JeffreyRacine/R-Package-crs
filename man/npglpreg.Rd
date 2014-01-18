@@ -337,10 +337,31 @@ for each dimension of the continuous \code{x} in \code{txdat}}
     
   }
   
-  This function is in beta status until further notice.
+  This function is in beta status until further notice (eventually it
+  will be rolled into the np/npRmpi packages after the final status of
+  snomadr/NOMAD gets sorted out).
 
-  Eventually it will be rolled into the np/npRmpi packages after the
-  final status of snomadr/NOMAD gets sorted out.
+  Optimizing the cross-validation function jointly for bandwidths
+  (vectors of continuous parameters) and polynomial degrees (vectors of
+  integer parameters) constitutes a mixed-integer optimization
+  problem. These problems are not only \sQuote{hard} from the numerical
+  optimization perspective, but are also computationally intensive
+  (contrast this to where we conduct, say, local linear regression which
+  sets the degree of the polynomial vector to a global value
+  \code{degree=1} hence we only need to optimize with respect to the
+  continuous bandwidths). Because of this we must be mindful of the
+  presence of local optima (the objective function is non-convex and
+  non-differentiable). Restarting search from different initial starting
+  points is recommended (see \code{nmulti}) and by default this is done
+  more than once. We encourage users to adopt \sQuote{multistarting} and
+  to investigate the impact of changing defaults search parameters such
+  as \code{initial.mesh.size.real}, \code{initial.mesh.size.integer},
+  \code{min.mesh.size.real},
+  \code{min.mesh.size.integer},\code{min.poll.size.real}, and
+  \code{min.poll.size.integer}. The default values were chosen based on
+  extensive simulation experiments and were chosen so as to yield robust
+  performance while being mindful of excessive computation - of course,
+  no one setting can be globally optimal.
 
 }
 \value{
