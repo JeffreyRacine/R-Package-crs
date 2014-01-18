@@ -2227,7 +2227,7 @@ glpcvNOMAD <- function(ydat=NULL,
 
   if(exists.seed) assign(".Random.seed", save.seed, .GlobalEnv)
 
-  if(isTRUE(all.equal(fv,sqrt(.Machine$double.xmax)))) stop(" Search failed: restart with larger nmulti or smaller degree.max")
+  if(isTRUE(all.equal(fv,maxPenalty))) stop(" Search failed: restart with larger nmulti or smaller degree.max")
 
   return(list(bws=bw.opt,
               bws.sf=bw.opt.sf,
