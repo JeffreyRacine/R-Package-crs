@@ -360,7 +360,7 @@ for each dimension of the continuous \code{x} in \code{txdat}}
   non-differentiable). Restarting search from different initial starting
   points is recommended (see \code{nmulti}) and by default this is done
   more than once. We encourage users to adopt \sQuote{multistarting} and
-  to investigate the impact of changing defaults search parameters such
+  to investigate the impact of changing default search parameters such
   as \code{initial.mesh.size.real}, \code{initial.mesh.size.integer},
   \code{min.mesh.size.real},
   \code{min.mesh.size.integer},\code{min.poll.size.real}, and
@@ -398,9 +398,6 @@ for each dimension of the continuous \code{x} in \code{txdat}}
   \item{degree}{ integer/vector specifying the degree of the polynomial
      for each dimension of the continuous \code{x}}
   
-  \item{kernel}{ a logical value indicating whether kernel smoothing was
-    used (\code{kernel=TRUE}) or not }
-
   \item{gradient}{ the estimated gradient (vector) corresponding to the vector
     \code{gradient.vec}}
 

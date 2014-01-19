@@ -1003,7 +1003,7 @@ glpregEst <- function(tydat=NULL,
                     bandwidth.divide = TRUE,
                     leave.one.out = leave.one.out,
                     ckertype = ckertype,
-                    ckerorder=ckerorder,
+                    ckerorder = ckerorder,
                     ukertype = ukertype,
                     okertype = okertype,
                     bwtype = bwtype,
@@ -1597,188 +1597,6 @@ minimand.cv.aic <- function(bws=NULL,
 
 }
 
-eval.lscv <- function(input,
-                      params,
-                      ...){
-
-  ydat <- params$ydat
-  xdat <- params$xdat
-  xdat.numeric <- params$xdat.numeric
-  num.bw <- params$num.bw
-  num.numeric <- params$num.numeric
-  cv.maxPenalty <- params$cv.maxPenalty
-  degree <- params$degree
-  cv <- params$cv
-  ckertype <- params$ckertype
-  ckerorder <- params$ckerorder
-  ukertype <- params$ukertype
-  okertype <- params$okertype
-  bwtype <- params$bwtype
-  cv.shrink <- params$cv.shrink
-  cv.warning <- params$cv.warning
-  Bernstein <- params$Bernstein
-  bw.switch <- params$bw.switch
-  bandwidth.scale.categorical=params$bandwidth.scale.categorical
-
-  bw.gamma <- input[1:num.bw]
-  if(cv=="degree-bandwidth")
-    degree <- round(input[(num.bw+1):(num.bw+num.numeric)])
-
-  ## Test for negative degrees of freedom
-
-  if(dim.bs(basis="glp",kernel=TRUE,degree=degree,segments=rep(1,length(degree)))>length(ydat)-1)
-    return(cv.maxPenalty)
-
-  W <- W.glp(xdat=xdat,
-             degree=degree,
-             Bernstein=Bernstein)
-
-  console <- newLineConsole()
-  console <- printClear(console)
-  console <- printPop(console)
-
-  if(all(bw.gamma < bw.switch)) {
-    ## No bandwidths hit their upper bounds
-    lscv <- minimand.cv.ls(bws=bw.gamma,
-                           ydat=ydat,
-                           xdat=xdat,
-                           degree=degree,
-                           W=W,
-                           ckertype=ckertype,
-                           ckerorder=ckerorder,
-                           ukertype=ukertype,
-                           okertype=okertype,
-                           bwtype=bwtype,
-                           cv.shrink=cv.shrink,
-                           cv.maxPenalty=cv.maxPenalty,
-                           cv.warning=cv.warning,
-                           bandwidth.scale.categorical=bandwidth.scale.categorical,
-                           ...)
-  } else if(all(bw.gamma >= bw.switch)) {
-    ## All bandwidths hit their upper bounds
-    if(all(degree==0)) {
-      lscv <- mean((ydat-mean(ydat))^2)
-    } else {
-      model <- lm(ydat~W-1)
-      htt <- hatvalues(model)
-      htt <- ifelse(htt < 1, htt, 1-.Machine$double.eps)
-      lscv <- mean((residuals(model)/(1-htt))^2)
-    }
-  } else {
-    ## Some bandwidths hit their upper bounds
-    degree.sub <- degree[bw.gamma[xdat.numeric]<bw.switch[xdat.numeric]]
-    lscv <- minimand.cv.ls(bws=bw.gamma[bw.gamma<bw.switch],
-                           ydat=ydat,
-                           xdat=xdat[,bw.gamma<bw.switch,drop=FALSE],
-                           degree=if(length(degree.sub)==0){0}else{degree.sub},
-                           W=W,
-                           ckertype=ckertype,
-                           ckerorder=ckerorder,
-                           ukertype=ukertype,
-                           okertype=okertype,
-                           bwtype=bwtype,
-                           cv.shrink=cv.shrink,
-                           cv.maxPenalty=cv.maxPenalty,
-                           cv.warning=cv.warning,
-                           bandwidth.scale.categorical=bandwidth.scale.categorical,
-                           ...)
-  }
-  console <- printPush("\r                                                                         ",console = console)
-  console <- printPush(paste("\rfv = ",format(lscv)," ",sep=""),console = console)
-  return(lscv)
-}
-
-eval.aicc <- function(input,
-                      params,
-                      ...){
-
-  ydat <- params$ydat
-  xdat <- params$xdat
-  xdat.numeric <- params$xdat.numeric
-  num.bw <- params$num.bw
-  num.numeric <- params$num.numeric
-  cv.maxPenalty <- params$cv.maxPenalty
-  degree <- params$degree
-  cv <- params$cv
-  ckertype <- params$ckertype
-  ckerorder <- params$ckerorder
-  ukertype <- params$ukertype
-  okertype <- params$okertype
-  bwtype <- params$bwtype
-  cv.shrink <- params$cv.shrink
-  cv.warning <- params$cv.warning
-  Bernstein <- params$Bernstein
-  bw.switch <- params$bw.switch
-  bandwidth.scale.categorical=params$bandwidth.scale.categorical
-
-  bw.gamma <- input[1:num.bw]
-  if(cv=="degree-bandwidth")
-    degree <- round(input[(num.bw+1):(num.bw+num.numeric)])
-
-  ## Test for negative degrees of freedom
-
-  if(dim.bs(basis="glp",kernel=TRUE,degree=degree,segments=rep(1,length(degree)))>length(ydat)-1)
-    return(cv.maxPenalty)
-
-  W <- W.glp(xdat=xdat,
-             degree=degree,
-             Bernstein=Bernstein)
-
-  console <- newLineConsole()
-  console <- printClear(console)
-  console <- printPop(console)
-
-  if(all(bw.gamma < bw.switch)) {
-    ## No bandwidths hit their upper bounds
-    aicc <- minimand.cv.aic(bws=bw.gamma,
-                            ydat=ydat,
-                            xdat=xdat,
-                            degree=degree,
-                            W=W,
-                            ckertype=ckertype,
-                            ckerorder=ckerorder,
-                            ukertype=ukertype,
-                            okertype=okertype,
-                            bwtype=bwtype,
-                            cv.shrink=cv.shrink,
-                            cv.maxPenalty=cv.maxPenalty,
-                            cv.warning=cv.warning,
-                            bandwidth.scale.categorical=bandwidth.scale.categorical,
-                            ...)
-  } else if(all(bw.gamma >= bw.switch)) {
-    ## All bandwidths hit their upper bounds
-    if(all(degree==0)) {
-      aicc <- mean((ydat-mean(ydat))^2)
-    } else {
-      model <- lm(ydat~W-1)
-      htt <- hatvalues(model)
-      htt <- ifelse(htt < 1, htt, 1-.Machine$double.eps)
-      aicc <- mean((residuals(model)/(1-htt))^2)
-    }
-  } else {
-    ## Some bandwidths hit their upper bounds
-    degree.sub <- degree[bw.gamma[xdat.numeric]<bw.switch[xdat.numeric]]
-    aicc <- minimand.cv.aic(bws=bw.gamma[bw.gamma<bw.switch],
-                            ydat=ydat,
-                            xdat=xdat[,bw.gamma<bw.switch,drop=FALSE],
-                            degree=if(length(degree.sub)==0){0}else{degree.sub},
-                            W=W,
-                            ckertype=ckertype,
-                            ckerorder=ckerorder,
-                            ukertype=ukertype,
-                            okertype=okertype,
-                            bwtype=bwtype,
-                            cv.shrink=cv.shrink,
-                            cv.maxPenalty=cv.maxPenalty,
-                            cv.warning=cv.warning,
-                            bandwidth.scale.categorical=bandwidth.scale.categorical,
-                            ...)
-  }
-  console <- printPush("\r                                                                         ",console = console)
-  console <- printPush(paste("\rfv = ",format(aicc)," ",sep=""),console = console)
-  return(aicc)
-}
-
 ## Note that for the function below which uses NOMAD for optimization
 ## we cross-validate on scale factors throughout (i.e. bandwidths for
 ## continuous predictors are scaled according to
@@ -1830,6 +1648,205 @@ glpcvNOMAD <- function(ydat=NULL,
                        restart.from.min=FALSE,
                        opts=list(),
                        ...) {
+
+  ## Functions which, if defined outside, cause R warnings currently
+  ## (Jan 19 2014, reported to Zhenghua)
+
+  ## Jan 19 2014, optional args error reported to zhenghua... want to
+  ## pass ... but having ... in eval.lscv and in snomadr causes an error
+  ## message thrown by checkFunctionArguments
+  
+  ## In snomadr() we write wrappers around user-defined functions to
+  ## pass additional arguments
+  ##  eval.f.wrapper <- function(x){ eval.f(x,...) }
+  
+  eval.lscv <- function(input,
+                        params){
+  
+    ydat <- params$ydat
+    xdat <- params$xdat
+    xdat.numeric <- params$xdat.numeric
+    num.bw <- params$num.bw
+    num.numeric <- params$num.numeric
+    cv.maxPenalty <- params$cv.maxPenalty
+    degree <- params$degree
+    cv <- params$cv
+    ckertype <- params$ckertype
+    ckerorder <- params$ckerorder
+    ukertype <- params$ukertype
+    okertype <- params$okertype
+    bwtype <- params$bwtype
+    cv.shrink <- params$cv.shrink
+    cv.warning <- params$cv.warning
+    Bernstein <- params$Bernstein
+    bw.switch <- params$bw.switch
+    bandwidth.scale.categorical=params$bandwidth.scale.categorical
+  
+    bw.gamma <- input[1:num.bw]
+    if(cv=="degree-bandwidth")
+      degree <- round(input[(num.bw+1):(num.bw+num.numeric)])
+  
+    ## Test for negative degrees of freedom
+  
+    if(dim.bs(basis="glp",kernel=TRUE,degree=degree,segments=rep(1,length(degree)))>length(ydat)-1)
+      return(cv.maxPenalty)
+  
+    W <- W.glp(xdat=xdat,
+               degree=degree,
+               Bernstein=Bernstein)
+  
+    console <- newLineConsole()
+    console <- printClear(console)
+    console <- printPop(console)
+  
+    if(all(bw.gamma < bw.switch)) {
+      ## No bandwidths hit their upper bounds
+      lscv <- minimand.cv.ls(bws=bw.gamma,
+                             ydat=ydat,
+                             xdat=xdat,
+                             degree=degree,
+                             W=W,
+                             ckertype=ckertype,
+                             ckerorder=ckerorder,
+                             ukertype=ukertype,
+                             okertype=okertype,
+                             bwtype=bwtype,
+                             cv.shrink=cv.shrink,
+                             cv.maxPenalty=cv.maxPenalty,
+                             cv.warning=cv.warning,
+                             bandwidth.scale.categorical=bandwidth.scale.categorical,
+                             ...)
+    } else if(all(bw.gamma >= bw.switch)) {
+      ## All bandwidths hit their upper bounds
+      if(all(degree==0)) {
+        lscv <- mean((ydat-mean(ydat))^2)
+      } else {
+        model <- lm(ydat~W-1)
+        htt <- hatvalues(model)
+        htt <- ifelse(htt < 1, htt, 1-.Machine$double.eps)
+        lscv <- mean((residuals(model)/(1-htt))^2)
+      }
+    } else {
+      ## Some bandwidths hit their upper bounds
+      degree.sub <- degree[bw.gamma[xdat.numeric]<bw.switch[xdat.numeric]]
+      lscv <- minimand.cv.ls(bws=bw.gamma[bw.gamma<bw.switch],
+                             ydat=ydat,
+                             xdat=xdat[,bw.gamma<bw.switch,drop=FALSE],
+                             degree=if(length(degree.sub)==0){0}else{degree.sub},
+                             W=W,
+                             ckertype=ckertype,
+                             ckerorder=ckerorder,
+                             ukertype=ukertype,
+                             okertype=okertype,
+                             bwtype=bwtype,
+                             cv.shrink=cv.shrink,
+                             cv.maxPenalty=cv.maxPenalty,
+                             cv.warning=cv.warning,
+                             bandwidth.scale.categorical=bandwidth.scale.categorical,
+                             ...)
+    }
+    console <- printPush("\r                                                                         ",console = console)
+    console <- printPush(paste("\rfv = ",format(lscv)," ",sep=""),console = console)
+    return(lscv)
+  }
+  
+  ## Jan 19 2014, optional args error reported to zhenghua... want to
+  ## pass ... but having ... in eval.aicc and in snomadr causes an error
+  ## message thrown by checkFunctionArguments
+  
+  ## In snomadr() we write wrappers around user-defined functions to
+  ## pass additional arguments
+  ##  eval.f.wrapper <- function(x){ eval.f(x,...) }
+  
+  eval.aicc <- function(input,
+                        params){
+  
+    ydat <- params$ydat
+    xdat <- params$xdat
+    xdat.numeric <- params$xdat.numeric
+    num.bw <- params$num.bw
+    num.numeric <- params$num.numeric
+    cv.maxPenalty <- params$cv.maxPenalty
+    degree <- params$degree
+    cv <- params$cv
+    ckertype <- params$ckertype
+    ckerorder <- params$ckerorder
+    ukertype <- params$ukertype
+    okertype <- params$okertype
+    bwtype <- params$bwtype
+    cv.shrink <- params$cv.shrink
+    cv.warning <- params$cv.warning
+    Bernstein <- params$Bernstein
+    bw.switch <- params$bw.switch
+    bandwidth.scale.categorical=params$bandwidth.scale.categorical
+  
+    bw.gamma <- input[1:num.bw]
+    if(cv=="degree-bandwidth")
+      degree <- round(input[(num.bw+1):(num.bw+num.numeric)])
+  
+    ## Test for negative degrees of freedom
+  
+    if(dim.bs(basis="glp",kernel=TRUE,degree=degree,segments=rep(1,length(degree)))>length(ydat)-1)
+      return(cv.maxPenalty)
+  
+    W <- W.glp(xdat=xdat,
+               degree=degree,
+               Bernstein=Bernstein)
+  
+    console <- newLineConsole()
+    console <- printClear(console)
+    console <- printPop(console)
+  
+    if(all(bw.gamma < bw.switch)) {
+      ## No bandwidths hit their upper bounds
+      aicc <- minimand.cv.aic(bws=bw.gamma,
+                              ydat=ydat,
+                              xdat=xdat,
+                              degree=degree,
+                              W=W,
+                              ckertype=ckertype,
+                              ckerorder=ckerorder,
+                              ukertype=ukertype,
+                              okertype=okertype,
+                              bwtype=bwtype,
+                              cv.shrink=cv.shrink,
+                              cv.maxPenalty=cv.maxPenalty,
+                              cv.warning=cv.warning,
+                              bandwidth.scale.categorical=bandwidth.scale.categorical,
+                              ...)
+    } else if(all(bw.gamma >= bw.switch)) {
+      ## All bandwidths hit their upper bounds
+      if(all(degree==0)) {
+        aicc <- mean((ydat-mean(ydat))^2)
+      } else {
+        model <- lm(ydat~W-1)
+        htt <- hatvalues(model)
+        htt <- ifelse(htt < 1, htt, 1-.Machine$double.eps)
+        aicc <- mean((residuals(model)/(1-htt))^2)
+      }
+    } else {
+      ## Some bandwidths hit their upper bounds
+      degree.sub <- degree[bw.gamma[xdat.numeric]<bw.switch[xdat.numeric]]
+      aicc <- minimand.cv.aic(bws=bw.gamma[bw.gamma<bw.switch],
+                              ydat=ydat,
+                              xdat=xdat[,bw.gamma<bw.switch,drop=FALSE],
+                              degree=if(length(degree.sub)==0){0}else{degree.sub},
+                              W=W,
+                              ckertype=ckertype,
+                              ckerorder=ckerorder,
+                              ukertype=ukertype,
+                              okertype=okertype,
+                              bwtype=bwtype,
+                              cv.shrink=cv.shrink,
+                              cv.maxPenalty=cv.maxPenalty,
+                              cv.warning=cv.warning,
+                              bandwidth.scale.categorical=bandwidth.scale.categorical,
+                              ...)
+    }
+    console <- printPush("\r                                                                         ",console = console)
+    console <- printPush(paste("\rfv = ",format(aicc)," ",sep=""),console = console)
+    return(aicc)
+  }
 
   ## Save the seed prior to setting
 
