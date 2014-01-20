@@ -241,11 +241,13 @@ krscvNOMAD <- function(xz,
             
             attr(cv, "basis.opt")<-basis.opt
             
-            console <- newLineConsole()
-            console <- printClear(console)
-            console <- printPop(console)
-            console <- printPush("\r                                                ",console = console)
-            console <- printPush(paste("\rfv = ",format(cv)," ", sep=""),console = console)
+            if(options('crs.messages')$crs.messages) {
+                console <- newLineConsole()
+                console <- printClear(console)
+                console <- printPop(console)
+                console <- printPush("\r                                                ",console = console)
+                console <- printPush(paste("\rfv = ",format(cv)," ", sep=""),console = console)
+            }
 
             return(cv)
         }
@@ -498,17 +500,19 @@ krscvNOMAD <- function(xz,
 
     if(degree.max < 1 || segments.max < 1 ) stop(" degree.max or segments.max must be greater than or equal to 1")
 
-    print.output <- FALSE
-    console <- newLineConsole()
-    if(!is.null(opts$DISPLAY_DEGREE)){
-        if(opts$DISPLAY_DEGREE>0){
+    if(options('crs.messages')$crs.messages) {
+        print.output <- FALSE
+        console <- newLineConsole()
+        if(!is.null(opts$DISPLAY_DEGREE)){
+            if(opts$DISPLAY_DEGREE>0){
+                print.output <-TRUE
+                console <- printPush("Calling NOMAD (Nonsmooth Optimization by Mesh Adaptive Direct Search)\n",console = console)
+            }
+        }
+        else {
             print.output <-TRUE
             console <- printPush("Calling NOMAD (Nonsmooth Optimization by Mesh Adaptive Direct Search)\n",console = console)
         }
-    }
-    else {
-        print.output <-TRUE
-        console <- printPush("Calling NOMAD (Nonsmooth Optimization by Mesh Adaptive Direct Search)\n",console = console)
     }
 
     ## solve by NOMAD
@@ -579,8 +583,10 @@ krscvNOMAD <- function(xz,
 
     lambda.opt <- ifelse(lambda.opt <= 0, .Machine$double.eps, lambda.opt)
 
-    console <- printClear(console)
-    console <- printPop(console)
+    if(options('crs.messages')$crs.messages) {
+        console <- printClear(console)
+        console <- printPop(console)
+    }
 
     ## Set number of segments when degree==0 to 1 (or NA)
 
