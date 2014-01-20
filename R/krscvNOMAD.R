@@ -500,8 +500,9 @@ krscvNOMAD <- function(xz,
 
     if(degree.max < 1 || segments.max < 1 ) stop(" degree.max or segments.max must be greater than or equal to 1")
 
+    print.output <- FALSE
+
     if(options('crs.messages')$crs.messages) {
-        print.output <- FALSE
         console <- newLineConsole()
         if(!is.null(opts$DISPLAY_DEGREE)){
             if(opts$DISPLAY_DEGREE>0){

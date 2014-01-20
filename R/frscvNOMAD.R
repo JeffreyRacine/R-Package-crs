@@ -333,9 +333,9 @@ frscvNOMAD <- function(xz,
     opts$"MIN_MESH_SIZE" <-  min.mesh.size.integer
     opts$"MIN_POLL_SIZE" <- min.poll.size.integer
 
+    print.output <- FALSE
     if(options('crs.messages')$crs.messages) {
         console <- newLineConsole()
-        print.output <- FALSE
         if(!is.null(opts$DISPLAY_DEGREE)){
             if(opts$DISPLAY_DEGREE>0){
                 print.output <- TRUE
