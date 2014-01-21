@@ -206,8 +206,10 @@ frscvNOMAD <- function(xz,
                 console <- printPop(console)
                 console <- printPush("\r                                                ",console = console)
                 console <- printPush(paste("\rfv = ",format(cv)," ", sep=""),console = console)
-                return(cv)
             }
+
+            return(cv)
+
         }
 
         ##generate params

@@ -250,6 +250,7 @@ krscvNOMAD <- function(xz,
             }
 
             return(cv)
+
         }
 
         ##generate params
