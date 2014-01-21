@@ -205,10 +205,8 @@ krscv <- function(xz,
 
   if(degree.max < 1 || segments.max < 1 ) stop(" degree.max or segments.max must be greater than or equal to 1")
 
-  if(options('crs.messages')$crs.messages) {
-      console <- newLineConsole()
-      console <- printPush("Working...",console = console)
-  }
+  console <- newLineConsole()
+  console <- printPush("Working...",console = console)
 
   ## Exhaustive evaluation over all combinations of K, search over
   ## lambda for each combination
@@ -647,10 +645,8 @@ krscv <- function(xz,
   segments <- K.opt[(num.x+1):(2*num.x)]
   if(!is.null(z)) I.opt <- K.opt[(2*num.x+1):(2*num.x+num.z)]
 
-  if(options('crs.messages')$crs.messages) {
-      console <- printClear(console)
-      console <- printPop(console)
-  }
+  console <- printClear(console)
+  console <- printPop(console)
 
   ## Set number of segments when degree==0 to 1 (or NA)
   segments[degree==0] <- 1

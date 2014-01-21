@@ -476,6 +476,12 @@ crs.formula <- function(formula,
   if(degree.max > 100) stop(paste(" degree.max (",degree.max,") exceeds reasonable value (",100,")",sep=""))
   if(lambda.discrete && (lambda.discrete.num < 1)) stop(" lambda.discrete.num must be a positive integer")
 
+  ## check for crs.messages=FALSE and no DISPLAY_DEGREE being passed
+  ## in then turn off all messages - note I would prefer this be done
+  ## in snomadr() ideally.
+
+  if(!options('crs.messages')$crs.messages & !exists("opts$DISPLAY_DEGREE")) opts$"DISPLAY_DEGREE"=0
+
   if(cv=="none"){
 
     ## When no cross-validation is selected and no defaults are set

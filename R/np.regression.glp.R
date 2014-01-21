@@ -659,6 +659,11 @@ npglpreg.formula <- function(formula,
   } else {
     if(!require(npRmpi)) stop(" Error: you must install the npRmpi package to use this function")
   }
+  ## check for crs.messages=FALSE and no DISPLAY_DEGREE being passed
+  ## in then turn off all messages - note I would prefer this be done
+  ## in snomadr() ideally.
+
+  if(!options('crs.messages')$crs.messages & !exists("opts$DISPLAY_DEGREE")) opts$"DISPLAY_DEGREE"=0
 
   ckertype <- match.arg(ckertype)
   ukertype <- match.arg(ukertype)

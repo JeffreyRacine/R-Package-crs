@@ -170,11 +170,8 @@ frscv <- function(xz,
 
   }
 
-
-  if(options('crs.messages')$crs.messages) {
-      console <- newLineConsole()
-      console <- printPush("Working...",console = console)
-  }
+  console <- newLineConsole()
+  console <- printPush("Working...",console = console)
 
   ## Take data frame x and parse into factors (z) and numeric (x)
 
@@ -430,10 +427,8 @@ frscv <- function(xz,
 
   if(!is.null(z)) I.opt <- K.opt[(2*num.x+1):(2*num.x+num.z)]
 
-  if(options('crs.messages')$crs.messages) {
-      console <- printClear(console)
-      console <- printPop(console)
-  }
+  console <- printClear(console)
+  console <- printPop(console)
 
   ## Set number of segments when degree==0 to 1 (or NA)
 
