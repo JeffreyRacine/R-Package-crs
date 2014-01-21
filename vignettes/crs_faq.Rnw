@@ -1,4 +1,4 @@
-%% $Id: crs_faq.tex,v 1.32 2014/01/08 16:43:22 jracine Exp jracine $
+%% $Id: crs_faq.tex,v 1.33 2014/01/21 15:54:18 jracine Exp jracine $
 
 %\VignetteIndexEntry{Frequently Asked Questions (crs)}
 %\VignetteDepends{crs}
@@ -605,6 +605,28 @@ lag.numeric <- function(x,l=1,pad.NA=TRUE) {
 x <- 1:10
 x.lag.1 <- lag.numeric(x,1)
 \end{verbatim}
+
+\subsection{How can I turn off all console I/O?}
+
+To disable all console I/O, set \texttt{options(crs.messages=FALSE)}
+and wrap the function call in \texttt{suppressWarnings} to disable any
+warnings printed to the console. For instance
+\begin{verbatim}
+library(crs)
+options(crs.messages=FALSE)
+set.seed(42)
+n <- 100
+x <- sort(rnorm(n))
+z <- factor(rbinom(n,1,.5))
+y <- x^3 + rnorm(n)
+model.crs <- suppressWarnings(crs(y~x+z))
+\end{verbatim}
+ought to produce no console I/O whatsoever in the call to
+\texttt{crs}.
+
+Note that for direct calls to \texttt{snomadr} you instead need to set
+\texttt{opts=list("DISPLAY_DEGREE"=0)} (see \texttt{?snomadr} for
+details).
 
 \bibliographystyle{plain} \bibliography{crs_faq}
 
