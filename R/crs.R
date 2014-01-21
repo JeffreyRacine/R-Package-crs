@@ -431,6 +431,11 @@ crs.formula <- function(formula,
   y <- model.response(mf)
   xz <- mf[, attr(attr(mf, "terms"),"term.labels"), drop = FALSE]
 
+  ## Set DISPLAY_DEGREE to 0 if crs.messages=FALSE and DISPLAY_DEGREE
+  ## is not provided
+
+  if(!options('crs.messages')$crs.messages && is.null(opts[["DISPLAY_DEGREE"]])) opts$"DISPLAY_DEGREE"=0
+
   ## If a weights vector is provided and there exists missing data
   ## then the weight vector must be parsed to contain weights
   ## corresponding to the non-missing observations only.
@@ -475,12 +480,6 @@ crs.formula <- function(formula,
   if(!is.null(segments)&&length(segments)!=num.x) stop(" segments vector must be the same length as x")
   if(degree.max > 100) stop(paste(" degree.max (",degree.max,") exceeds reasonable value (",100,")",sep=""))
   if(lambda.discrete && (lambda.discrete.num < 1)) stop(" lambda.discrete.num must be a positive integer")
-
-  ## check for crs.messages=FALSE and no DISPLAY_DEGREE being passed
-  ## in then turn off all messages - note I would prefer this be done
-  ## in snomadr() ideally.
-
-  if(!options('crs.messages')$crs.messages & !exists("opts$DISPLAY_DEGREE")) opts$"DISPLAY_DEGREE"=0
 
   if(cv=="none"){
 
