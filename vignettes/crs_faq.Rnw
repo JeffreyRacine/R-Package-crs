@@ -609,7 +609,7 @@ x.lag.1 <- lag.numeric(x,1)
 \subsection{How can I turn off all console I/O?}
 
 To disable all console I/O, set \texttt{options(crs.messages=FALSE)}
-and wrap the function call in \texttt{suppressWarnings} to disable any
+and wrap the function call in \texttt{suppressWarnings()} to disable any
 warnings printed to the console. For instance
 \begin{verbatim}
 library(crs)
@@ -625,7 +625,7 @@ ought to produce no console I/O whatsoever in the call to
 \texttt{crs}.
 
 Note that for direct calls to \texttt{snomadr} you instead need to set
-\texttt{opts=list("DISPLAY_DEGREE"=0)} (see \texttt{?snomadr} for
+\texttt{opts=list("DISPLAY\_DEGREE"=0)} (see \texttt{?snomadr} for
 details).
 
 \bibliographystyle{plain} \bibliography{crs_faq}
