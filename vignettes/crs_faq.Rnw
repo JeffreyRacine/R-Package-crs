@@ -53,7 +53,7 @@ to others, kindly email me the relevant information and I will
 incorporate it into this FAQ.
 
 This FAQ refers to the most recent version, which as of this writing
-is 0.15-21. Kindly update your version should you not be using the
+is 0.15-22. Kindly update your version should you not be using the
 most current (from within R, \texttt{update.packages()} ought to do
 it, though also see \ref{update} below.). See the appendix in this
 file for cumulative changes between this and previous versions of the
@@ -75,7 +75,7 @@ be presented with the following information.
 To cite package `crs' in publications use:
 
   Jeffrey S. Racine and Zhenghua Nie (2014). crs: Categorical
-  Regression Splines. R package version 0.15-21.
+  Regression Splines. R package version 0.15-22.
   https://github.com/JeffreyRacine/R-Package-crs/
 
 A BibTeX entry for LaTeX users is
@@ -84,7 +84,7 @@ A BibTeX entry for LaTeX users is
     title = {crs: Categorical Regression Splines},
     author = {Jeffrey S. Racine and Zhenghua Nie},
     year = {2014},
-    note = {R package version 0.15-21},
+    note = {R package version 0.15-22},
     url = {https://github.com/JeffreyRacine/R-Package-crs/},
   }
 \end{verbatim}
@@ -634,6 +634,32 @@ details).
 
 \appendix
 
+
+\section*{Changes from Version 0.15-21 to 0.15-22 [22-Jan-2014]}
+
+\begin{itemize}
+
+\item \texttt{crs.messages=FALSE} was being ignored in \texttt{frscv},
+  \texttt{krscv}, \texttt{frscvNOMAD}, and \texttt{krscvNOMAD}, as was
+  the passing of additional arguments via \texttt{opts=list()} to
+  \texttt{snomadr} from certain functions
+
+\item Default settings for tuning parameters for \texttt{snomadr} in
+  \texttt{npglpreg} have been optimized based on extensive simulations
+  for simulated and real datasets (we `optimized the optimizer' so to
+  speak)
+
+\item Fixed glitch in \texttt{npglpreg} where \texttt{cv.aic} was only
+  working properly for the local constant estimator
+  (i.e. \texttt{degree=0})
+
+\item \texttt{bwscaling} is deprecated in the latest (development)
+  version of np which necessitated changes to \texttt{npglpreg}. In
+  the process the way scaling is performed ought to be more robust in
+  general due to changes to default starting values for numeric
+  predictors
+
+\end{itemize}
 
 \section*{Changes from Version 0.15-19 to 0.15-21 [08-Jan-2014]}
 

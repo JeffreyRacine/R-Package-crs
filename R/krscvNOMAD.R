@@ -59,6 +59,11 @@ krscvNOMAD <- function(xz,
         if(lambda.discrete.num < 1) lambda.discrete.num <- 10
     }
 
+    ## Set DISPLAY_DEGREE to 0 if crs.messages=FALSE and
+    ## DISPLAY_DEGREE is not provided
+
+    if(!options('crs.messages')$crs.messages && is.null(opts[["DISPLAY_DEGREE"]])) opts$"DISPLAY_DEGREE"=0
+
     t1 <- Sys.time()
 
     cv.nomad <- function(x,
