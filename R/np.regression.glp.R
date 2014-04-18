@@ -290,7 +290,7 @@ npglpreg.default <- function(tydat=NULL,
                              bwtype = c("fixed","generalized_nn","adaptive_nn","auto"),
                              gradient.vec=NULL,
                              gradient.categorical=FALSE,
-                             cv.shrink=TRUE,
+                             cv.shrink=FALSE,
                              cv.maxPenalty=sqrt(.Machine$double.xmax),
                              cv.warning=FALSE,
                              Bernstein=TRUE,
@@ -619,7 +619,7 @@ npglpreg.formula <- function(formula,
                              restart.from.min=FALSE,
                              gradient.vec=NULL,
                              gradient.categorical=FALSE,
-                             cv.shrink=TRUE,
+                             cv.shrink=FALSE,
                              cv.maxPenalty=sqrt(.Machine$double.xmax),
                              cv.warning=FALSE,
                              Bernstein=TRUE,
@@ -1157,7 +1157,7 @@ glpregEst <- function(tydat=NULL,
       doridge[i] <<- FALSE
       ridge.val <- ridge[i]*tyw[1,i][1]/NZD(tww[,,i][1,1])
       tryCatch(solve(tww[,,i]+diag(rep(ridge[i],nc)),
-                     tyw[,i]+c(ridge.val,rep(0,nc-1)),tol=.Machine$double.eps),
+                     tyw[,i],tol=.Machine$double.eps),
                error = function(e){
                  ridge[i] <<- ridge[i]+epsilon
                  doridge[i] <<- TRUE
@@ -1366,7 +1366,7 @@ minimand.cv.ls <- function(bws=NULL,
         doridge[i] <<- FALSE
         ridge.val <- ridge[i]*tyw[1,i][1]/NZD(tww[,,i][1,1])
         W[i,, drop = FALSE] %*% tryCatch(solve(tww[,,i]+diag(rep(ridge[i],nc)),
-                tyw[,i]+c(ridge.val,rep(0,nc-1)),tol=.Machine$double.eps),
+                tyw[,i],tol=.Machine$double.eps),
                 error = function(e){
                   ridge[i] <<- ridge[i]+epsilon
                   doridge[i] <<- TRUE
@@ -1562,7 +1562,7 @@ minimand.cv.aic <- function(bws=NULL,
         doridge[i] <<- FALSE
         ridge.val <- ridge[i]*tyw[1,i][1]/NZD(tww[,,i][1,1])
         W[i,, drop = FALSE] %*% tryCatch(solve(tww[,,i]+diag(rep(ridge[i],nc)),
-                tyw[,i]+c(ridge.val,rep(0,nc-1)),tol=.Machine$double.eps),
+                tyw[,i],tol=.Machine$double.eps),
                 error = function(e){
                   ridge[i] <<- ridge[i]+epsilon
                   doridge[i] <<- TRUE

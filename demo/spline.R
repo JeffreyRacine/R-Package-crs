@@ -236,7 +236,7 @@ predict.kernel.spline <- function(x,
     if(is.null(tau))
       fit.spline <- cbind(fit.spline[[1]],se=fit.spline[[2]])
     else
-      fit.spline <- cbind(fit.spline,se=ifelse(NCOL(fit.spline)>1,(fit.spline[,3]-fit.spline[,1])/1.96,NA))
+      fit.spline <- cbind(fit.spline,se=ifelse(NCOL(fit.spline)>1,(fit.spline[,3]-fit.spline[,1])/qnorm(0.975),NA))
 
     if(is.null(tau))
       htt <- hatvalues(model)
@@ -306,7 +306,7 @@ predict.kernel.spline <- function(x,
           if(is.null(tau))
             fit.spline[zz,] <- cbind(tmp[[1]],tmp[[2]])
           else
-            fit.spline[zz,] <- cbind(tmp,(tmp[,3]-tmp[,1])/1.96)
+            fit.spline[zz,] <- cbind(tmp,(tmp[,3]-tmp[,1])/qnorm(0.975))
           rm(tmp)
         }
       } else {
@@ -348,7 +348,7 @@ predict.kernel.spline <- function(x,
           if(is.null(tau))
             fit.spline[zz,] <- cbind(tmp[[1]],tmp[[2]])
           else
-            fit.spline[zz,] <- cbind(tmp,(tmp[,3]-tmp[,1])/1.96)
+            fit.spline[zz,] <- cbind(tmp,(tmp[,3]-tmp[,1])/qnorm(0.975))
 
           rm(tmp)
         }
@@ -389,7 +389,7 @@ predict.kernel.spline <- function(x,
           if(is.null(tau))
             fit.spline[zz,] <- cbind(tmp[[1]],tmp[[2]])
           else
-            fit.spline[zz,] <- cbind(tmp,(tmp[,3]-tmp[,1])/1.96)
+            fit.spline[zz,] <- cbind(tmp,(tmp[,3]-tmp[,1])/qnorm(0.975))
 
           rm(tmp)
         }
@@ -424,7 +424,7 @@ predict.kernel.spline <- function(x,
           if(is.null(tau))
             fit.spline[zz,] <- cbind(tmp[[1]],tmp[[2]])
           else
-            fit.spline[zz,] <- cbind(tmp,(tmp[,3]-tmp[,1])/1.96)
+            fit.spline[zz,] <- cbind(tmp,(tmp[,3]-tmp[,1])/qnorm(0.975))
 
           rm(tmp)
         }
@@ -968,7 +968,7 @@ predict.factor.spline <- function(x,
   if(is.null(tau))
     fit.spline <- cbind(fit.spline[[1]],se=fit.spline[[2]])
   else
-    fit.spline <- cbind(fit.spline,se=ifelse(NCOL(fit.spline)>1,(fit.spline[,3]-fit.spline[,1])/1.96,NA))
+    fit.spline <- cbind(fit.spline,se=ifelse(NCOL(fit.spline)>1,(fit.spline[,3]-fit.spline[,1])/qnorm(0.975),NA))
 
   console <- printClear(console)
   console <- printPop(console)
