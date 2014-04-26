@@ -290,7 +290,7 @@ npglpreg.default <- function(tydat=NULL,
                              bwtype = c("fixed","generalized_nn","adaptive_nn","auto"),
                              gradient.vec=NULL,
                              gradient.categorical=FALSE,
-                             cv.shrink=FALSE,
+                             cv.shrink=TRUE,
                              cv.maxPenalty=sqrt(.Machine$double.xmax),
                              cv.warning=FALSE,
                              Bernstein=TRUE,
@@ -619,7 +619,7 @@ npglpreg.formula <- function(formula,
                              restart.from.min=FALSE,
                              gradient.vec=NULL,
                              gradient.categorical=FALSE,
-                             cv.shrink=FALSE,
+                             cv.shrink=TRUE,
                              cv.maxPenalty=sqrt(.Machine$double.xmax),
                              cv.warning=FALSE,
                              Bernstein=TRUE,
@@ -627,6 +627,11 @@ npglpreg.formula <- function(formula,
                              ...) {
 
   ## Basic error trapping...
+
+  if(cv.func=="cv.aic" && cv.shrink==TRUE) {
+      warning("cv.shrink and cv.aic currently incompatible, cv.shrink set to FALSE")
+      cv.shrink <- FALSE
+  }
 
   if(!is.logical(mpi)) stop(" Error: mpi must be logical (TRUE/FALSE)")
   if(!is.logical(Bernstein)) stop(" Error: Bernstein must be logical (TRUE/FALSE)")

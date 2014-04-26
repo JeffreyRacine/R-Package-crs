@@ -23,7 +23,7 @@ npglpreg(\dots)
          bws = NULL,
          degree = NULL,
          leave.one.out = FALSE,
-         ckertype = c("gaussian", "epanechnikov","uniform","truncated gaussian"),
+         ckertype = c("gaussian", "epanechnikov", "uniform", "truncated gaussian"),
          ckerorder = 2,
          ukertype = c("liracine", "aitchisonaitken"),
          okertype = c("liracine", "wangvanryzin"),
