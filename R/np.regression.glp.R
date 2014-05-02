@@ -1154,16 +1154,15 @@ glpregEst <- function(tydat=NULL,
     coef.mat <- matrix(cv.maxPenalty,ncol(W),n.eval)
     epsilon <- 1.0/n.eval
     ridge <- double(n.eval)
-    ridge.val <- double(n.eval)    
+    ridge.lc <- double(n.eval)    
     doridge <- !logical(n.eval)
 
     nc <- ncol(tww[,,1])
 
     ridger <- function(i) {
       doridge[i] <<- FALSE
-      ridge.val[i] <- ridge[i]*tyw[1,i][1]/NZD(tww[,,i][1,1])
-      tryCatch(solve(tww[,,i]+diag(rep(ridge[i],nc)),
-                     tyw[,i],tol=.Machine$double.eps),
+      ridge.lc[i] <- ridge[i]*tyw[1,i][1]/NZD(tww[,,i][1,1])
+      tryCatch(solve(tww[,,i]+diag(rep(ridge[i],nc)),tyw[,i]),
                error = function(e){
                  ridge[i] <<- ridge[i]+epsilon
                  doridge[i] <<- TRUE
@@ -1181,11 +1180,11 @@ glpregEst <- function(tydat=NULL,
     }
 
     ## Shrinking towards the local constant mean is accomplished via
-    ## ridge.val[i] which is ridge[i] times the local constant
+    ## ridge.lc[i] which is ridge[i] times the local constant
     ## estimator
 
     mhat <- sapply(1:n.eval, function(i) {
-      W.eval[i,, drop = FALSE] %*% coef.mat[,i] + ridge.val[i]
+      W.eval[i,, drop = FALSE] %*% coef.mat[,i] + ridge.lc[i]
     })
 
     ## Ought to have a correction here for derivative when shrinking
@@ -1368,7 +1367,7 @@ minimand.cv.ls <- function(bws=NULL,
       mean.loo <- rep(cv.maxPenalty,n)
       epsilon <- 1.0/n
       ridge <- double(n)
-      ridge.val <- double(n)      
+      ridge.lc <- double(n)      
       doridge <- !logical(n)
 
       nc <- ncol(tww[,,1])
@@ -1378,9 +1377,8 @@ minimand.cv.ls <- function(bws=NULL,
 
       ridger <- function(i) {
         doridge[i] <<- FALSE
-        ridge.val[i] <- ridge[i]*tyw[1,i][1]/NZD(tww[,,i][1,1])
-        W[i,, drop = FALSE] %*% tryCatch(solve(tww[,,i]+diag(rep(ridge[i],nc)),
-                tyw[,i],tol=.Machine$double.eps),
+        ridge.lc[i] <- ridge[i]*tyw[1,i][1]/NZD(tww[,,i][1,1])
+        W[i,, drop = FALSE] %*% tryCatch(solve(tww[,,i]+diag(rep(ridge[i],nc)),tyw[,i]),
                 error = function(e){
                   ridge[i] <<- ridge[i]+epsilon
                   doridge[i] <<- TRUE
@@ -1390,12 +1388,12 @@ minimand.cv.ls <- function(bws=NULL,
       }
 
       ## Shrinking towards the local constant mean is accomplished via
-      ## ridge.val[i] which is ridge[i] times the local constant
+      ## ridge.lc[i] which is ridge[i] times the local constant
       ## estimator
 
       while(any(doridge)){
         iloo <- (1:n)[doridge]
-        mean.loo[iloo] <- sapply(iloo, ridger) + ridge.val[i]
+        mean.loo[iloo] <- sapply(iloo, ridger) + ridge.lc[i]
       }
 
       if (!any(mean.loo == cv.maxPenalty)){
@@ -1569,7 +1567,7 @@ minimand.cv.aic <- function(bws=NULL,
       ghat <- rep(cv.maxPenalty,n)
       epsilon <- 1.0/n
       ridge <- double(n)
-      ridge.val <- double(n)      
+      ridge.lc <- double(n)      
       doridge <- !logical(n)
 
       nc <- ncol(tww[,,1])
@@ -1579,9 +1577,8 @@ minimand.cv.aic <- function(bws=NULL,
 
       ridger <- function(i) {
         doridge[i] <<- FALSE
-        ridge.val[i] <- ridge[i]*tyw[1,i][1]/NZD(tww[,,i][1,1])
-        W[i,, drop = FALSE] %*% tryCatch(solve(tww[,,i]+diag(rep(ridge[i],nc)),
-                tyw[,i],tol=.Machine$double.eps),
+        ridge.lc[i] <- ridge[i]*tyw[1,i][1]/NZD(tww[,,i][1,1])
+        W[i,, drop = FALSE] %*% tryCatch(solve(tww[,,i]+diag(rep(ridge[i],nc)),tyw[,i]),
                 error = function(e){
                   ridge[i] <<- ridge[i]+epsilon
                   doridge[i] <<- TRUE
@@ -1591,16 +1588,16 @@ minimand.cv.aic <- function(bws=NULL,
       }
 
       ## Shrinking towards the local constant mean is accomplished via
-      ## ridge.val[i] which is ridge[i] times the local constant
+      ## ridge.lc[i] which is ridge[i] times the local constant
       ## estimator
 
       while(any(doridge)){
         ii <- (1:n)[doridge]
-        ghat[ii] <- sapply(ii, ridger) + ridge.val[i]
+        ghat[ii] <- sapply(ii, ridger) + ridge.lc[i]
       }
 
       trH <- kernel.i.eq.j*sum(sapply(1:n,function(i){
-        W[i,, drop = FALSE] %*% chol2inv(chol(tww[,,i]+diag(rep(ridge[i],nc)))) %*% t(W[i,, drop = FALSE]) + ridge[i]/NZD(tww[,,i][1,1])
+        W[i,, drop = FALSE] %*% solve(tww[,,i]+diag(rep(ridge[i],nc))) %*% t(W[i,, drop = FALSE]) + ridge[i]/NZD(tww[,,i][1,1])
       }))
 
       aic.penalty <- (1+trH/n)/(1-(trH+2)/n)
