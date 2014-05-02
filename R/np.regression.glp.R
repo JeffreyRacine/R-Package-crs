@@ -628,10 +628,10 @@ npglpreg.formula <- function(formula,
 
   ## Basic error trapping...
 
-  if(cv.func=="cv.aic" && cv.shrink==TRUE) {
-      warning("cv.shrink and cv.aic currently incompatible, cv.shrink set to FALSE")
-      cv.shrink <- FALSE
-  }
+#  if(cv.func=="cv.aic" && cv.shrink==TRUE) {
+#      warning("cv.shrink and cv.aic currently incompatible, cv.shrink set to FALSE")
+#      cv.shrink <- FALSE
+#  }
 
   if(!is.logical(mpi)) stop(" Error: mpi must be logical (TRUE/FALSE)")
   if(!is.logical(Bernstein)) stop(" Error: Bernstein must be logical (TRUE/FALSE)")
@@ -1154,13 +1154,14 @@ glpregEst <- function(tydat=NULL,
     coef.mat <- matrix(cv.maxPenalty,ncol(W),n.eval)
     epsilon <- 1.0/n.eval
     ridge <- double(n.eval)
+    ridge.val <- double(n.eval)    
     doridge <- !logical(n.eval)
 
     nc <- ncol(tww[,,1])
 
     ridger <- function(i) {
       doridge[i] <<- FALSE
-      ridge.val <- ridge[i]*tyw[1,i][1]/NZD(tww[,,i][1,1])
+      ridge.val[i] <- ridge[i]*tyw[1,i][1]/NZD(tww[,,i][1,1])
       tryCatch(solve(tww[,,i]+diag(rep(ridge[i],nc)),
                      tyw[,i],tol=.Machine$double.eps),
                error = function(e){
@@ -1179,9 +1180,16 @@ glpregEst <- function(tydat=NULL,
       coef.mat[,iloo] <- sapply(iloo, ridger)
     }
 
+    ## Shrinking towards the local constant mean is accomplished via
+    ## ridge.val[i] which is ridge[i] times the local constant
+    ## estimator
+
     mhat <- sapply(1:n.eval, function(i) {
-      W.eval[i,, drop = FALSE] %*% coef.mat[,i]
+      W.eval[i,, drop = FALSE] %*% coef.mat[,i] + ridge.val[i]
     })
+
+    ## Ought to have a correction here for derivative when shrinking
+    ## towards the local constant - XXX
 
     if(!is.null(gradient.vec)) {
       gradient <- sapply(1:n.eval, function(i) {
@@ -1334,7 +1342,7 @@ minimand.cv.ls <- function(bws=NULL,
                     leave.one.out = TRUE,
                     bandwidth.divide = TRUE,
                     ckertype = ckertype,
-                    ckerorder=ckerorder,
+                    ckerorder = ckerorder,
                     ukertype = ukertype,
                     okertype = okertype,
                     bwtype = bwtype,
@@ -1360,6 +1368,7 @@ minimand.cv.ls <- function(bws=NULL,
       mean.loo <- rep(cv.maxPenalty,n)
       epsilon <- 1.0/n
       ridge <- double(n)
+      ridge.val <- double(n)      
       doridge <- !logical(n)
 
       nc <- ncol(tww[,,1])
@@ -1369,7 +1378,7 @@ minimand.cv.ls <- function(bws=NULL,
 
       ridger <- function(i) {
         doridge[i] <<- FALSE
-        ridge.val <- ridge[i]*tyw[1,i][1]/NZD(tww[,,i][1,1])
+        ridge.val[i] <- ridge[i]*tyw[1,i][1]/NZD(tww[,,i][1,1])
         W[i,, drop = FALSE] %*% tryCatch(solve(tww[,,i]+diag(rep(ridge[i],nc)),
                 tyw[,i],tol=.Machine$double.eps),
                 error = function(e){
@@ -1380,9 +1389,13 @@ minimand.cv.ls <- function(bws=NULL,
                 })
       }
 
+      ## Shrinking towards the local constant mean is accomplished via
+      ## ridge.val[i] which is ridge[i] times the local constant
+      ## estimator
+
       while(any(doridge)){
         iloo <- (1:n)[doridge]
-        mean.loo[iloo] <- sapply(iloo, ridger)
+        mean.loo[iloo] <- sapply(iloo, ridger) + ridge.val[i]
       }
 
       if (!any(mean.loo == cv.maxPenalty)){
@@ -1556,6 +1569,7 @@ minimand.cv.aic <- function(bws=NULL,
       ghat <- rep(cv.maxPenalty,n)
       epsilon <- 1.0/n
       ridge <- double(n)
+      ridge.val <- double(n)      
       doridge <- !logical(n)
 
       nc <- ncol(tww[,,1])
@@ -1565,7 +1579,7 @@ minimand.cv.aic <- function(bws=NULL,
 
       ridger <- function(i) {
         doridge[i] <<- FALSE
-        ridge.val <- ridge[i]*tyw[1,i][1]/NZD(tww[,,i][1,1])
+        ridge.val[i] <- ridge[i]*tyw[1,i][1]/NZD(tww[,,i][1,1])
         W[i,, drop = FALSE] %*% tryCatch(solve(tww[,,i]+diag(rep(ridge[i],nc)),
                 tyw[,i],tol=.Machine$double.eps),
                 error = function(e){
@@ -1576,13 +1590,17 @@ minimand.cv.aic <- function(bws=NULL,
                 })
       }
 
+      ## Shrinking towards the local constant mean is accomplished via
+      ## ridge.val[i] which is ridge[i] times the local constant
+      ## estimator
+
       while(any(doridge)){
         ii <- (1:n)[doridge]
-        ghat[ii] <- sapply(ii, ridger)
+        ghat[ii] <- sapply(ii, ridger) + ridge.val[i]
       }
 
       trH <- kernel.i.eq.j*sum(sapply(1:n,function(i){
-        W[i,, drop = FALSE] %*% chol2inv(chol(tww[,,i]+diag(rep(ridge[i],nc)))) %*% t(W[i,, drop = FALSE])
+        W[i,, drop = FALSE] %*% chol2inv(chol(tww[,,i]+diag(rep(ridge[i],nc)))) %*% t(W[i,, drop = FALSE]) + ridge[i]/NZD(tww[,,i][1,1])
       }))
 
       aic.penalty <- (1+trH/n)/(1-(trH+2)/n)
