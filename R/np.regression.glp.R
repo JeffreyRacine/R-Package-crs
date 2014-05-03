@@ -1162,7 +1162,7 @@ glpregEst <- function(tydat=NULL,
     ridger <- function(i) {
       doridge[i] <<- FALSE
       ridge.lc[i] <- ridge[i]*tyw[1,i][1]/NZD(tww[,,i][1,1])
-      tryCatch(solve(tww[,,i]+diag(rep(ridge[i],nc)),tyw[,i]),
+      tryCatch(chol2inv(chol(tww[,,i]+diag(rep(ridge[i],nc))))%*%tyw[,i],
                error = function(e){
                  ridge[i] <<- ridge[i]+epsilon
                  doridge[i] <<- TRUE
@@ -1184,7 +1184,7 @@ glpregEst <- function(tydat=NULL,
     ## estimator
 
     mhat <- sapply(1:n.eval, function(i) {
-      W.eval[i,, drop = FALSE] %*% coef.mat[,i] + ridge.lc[i]
+      (1-ridge[i]) * W.eval[i,, drop = FALSE] %*% coef.mat[,i] + ridge.lc[i]
     })
 
     ## Ought to have a correction here for derivative when shrinking
@@ -1378,7 +1378,7 @@ minimand.cv.ls <- function(bws=NULL,
       ridger <- function(i) {
         doridge[i] <<- FALSE
         ridge.lc[i] <- ridge[i]*tyw[1,i][1]/NZD(tww[,,i][1,1])
-        W[i,, drop = FALSE] %*% tryCatch(solve(tww[,,i]+diag(rep(ridge[i],nc)),tyw[,i]),
+        W[i,, drop = FALSE] %*% tryCatch(chol2inv(chol(tww[,,i]+diag(rep(ridge[i],nc))))%*%tyw[,i],
                 error = function(e){
                   ridge[i] <<- ridge[i]+epsilon
                   doridge[i] <<- TRUE
@@ -1393,7 +1393,7 @@ minimand.cv.ls <- function(bws=NULL,
 
       while(any(doridge)){
         iloo <- (1:n)[doridge]
-        mean.loo[iloo] <- sapply(iloo, ridger) + ridge.lc[i]
+        mean.loo[iloo] <- (1-ridge[i])*sapply(iloo, ridger) + ridge.lc[i]
       }
 
       if (!any(mean.loo == cv.maxPenalty)){
@@ -1578,7 +1578,7 @@ minimand.cv.aic <- function(bws=NULL,
       ridger <- function(i) {
         doridge[i] <<- FALSE
         ridge.lc[i] <- ridge[i]*tyw[1,i][1]/NZD(tww[,,i][1,1])
-        W[i,, drop = FALSE] %*% tryCatch(solve(tww[,,i]+diag(rep(ridge[i],nc)),tyw[,i]),
+        W[i,, drop = FALSE] %*% tryCatch(chol2inv(chol(tww[,,i]+diag(rep(ridge[i],nc))))%*%tyw[,i],
                 error = function(e){
                   ridge[i] <<- ridge[i]+epsilon
                   doridge[i] <<- TRUE
@@ -1593,11 +1593,11 @@ minimand.cv.aic <- function(bws=NULL,
 
       while(any(doridge)){
         ii <- (1:n)[doridge]
-        ghat[ii] <- sapply(ii, ridger) + ridge.lc[i]
+        ghat[ii] <- (1-ridge[i])*sapply(ii, ridger) + ridge.lc[i]
       }
 
       trH <- kernel.i.eq.j*sum(sapply(1:n,function(i){
-        W[i,, drop = FALSE] %*% solve(tww[,,i]+diag(rep(ridge[i],nc))) %*% t(W[i,, drop = FALSE]) + ridge[i]/NZD(tww[,,i][1,1])
+        (1-ridge[i]) * W[i,, drop = FALSE] %*% chol2inv(chol(tww[,,i]+diag(rep(ridge[i],nc)))) %*% t(W[i,, drop = FALSE]) + ridge[i]/NZD(tww[,,i][1,1])
       }))
 
       aic.penalty <- (1+trH/n)/(1-(trH+2)/n)
