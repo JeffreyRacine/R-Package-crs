@@ -1,3 +1,11 @@
+Changes from Version 0.15-22 to 0.15-23 [XXX]
+
+* addressed issue with cv.aic and npglpreg where degenerate solution couud
+  occur when shrinking was invoked
+
+* enhanced the robust measure of scale to include mad which is more robust
+  than IQR
+
 Changes from Version 0.15-21 to 0.15-22 [22-Jan-2014]
 
 * crs.messages=FALSE was being ignored in frscv, krscv, frscvNOMAD, and

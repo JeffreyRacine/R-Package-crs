@@ -8,10 +8,16 @@
 ## different form purely for computational simplicity. Both approaches
 ## are identical though.
 
-sd.robust <- function(x) {
-  sd.vec <- apply(as.matrix(x),2,sd)
-  IQR.vec <- apply(as.matrix(x),2,IQR)/(qnorm(.25,lower.tail=F)*2)
-  return(ifelse(sd.vec<IQR.vec|IQR.vec==0,sd.vec,IQR.vec))
+scale.robust <- function(y){
+ if(any(dim(as.matrix(y)) == 0))
+      return(0)
+  sd.vec <- apply(as.matrix(y),2,sd)
+  IQR.vec <- apply(as.matrix(y),2,IQR)/QFAC
+  mad.vec <- apply(as.matrix(y),2,mad)
+  a <- apply(cbind(sd.vec,IQR.vec,mad.vec),1, function(x) min(x))
+  if(any(a<=0)) warning(paste("variable ",which(a<=0)," appears to be constant",sep=""))
+  a <- apply(cbind(sd.vec,IQR.vec,mad.vec),1, function(x) min(x[x>0]))  
+  return(a)
 }
 
 mypoly <- function(x,
@@ -1267,7 +1273,7 @@ minimand.cv.ls <- function(bws=NULL,
 
   for(i in 1:num.bw) {
     if(xdat.numeric[i]==TRUE && bwtype=="fixed") {
-      bws[i] <- bws[i]*sd.robust(xdat[,i])*length(ydat)^{-1/(num.numeric+2*ckerorder)}
+      bws[i] <- bws[i]*scale.robust(xdat[,i])*length(ydat)^{-1/(num.numeric+2*ckerorder)}
     }
     if(xdat.numeric[i]!=TRUE) {
       bws[i] <- bws[i]/bandwidth.scale.categorical
@@ -1469,7 +1475,7 @@ minimand.cv.aic <- function(bws=NULL,
 
   for(i in 1:num.bw) {
     if(xdat.numeric[i]==TRUE && bwtype=="fixed") {
-      bws[i] <- bws[i]*sd.robust(xdat[,i])*length(ydat)^{-1/(num.numeric+2*ckerorder)}
+      bws[i] <- bws[i]*scale.robust(xdat[,i])*length(ydat)^{-1/(num.numeric+2*ckerorder)}
     }
     if(xdat.numeric[i]!=TRUE) {
       bws[i] <- bws[i]/bandwidth.scale.categorical
@@ -1624,7 +1630,7 @@ minimand.cv.aic <- function(bws=NULL,
 ## Note that for the function below which uses NOMAD for optimization
 ## we cross-validate on scale factors throughout (i.e. bandwidths for
 ## continuous predictors are scaled according to
-## sd.robust()*length(ydat)^{-1/(num.numeric+2*ckerorder)}). We adjust
+## scale.robust()*length(ydat)^{-1/(num.numeric+2*ckerorder)}). We adjust
 ## the upper bounds for the categorical variables accordingly (i.e. 1
 ## and (c-1)/c). This is done so that the grid search takes place on a
 ## _somewhat_ common scale and also allows us to sidestep the issue
@@ -2128,7 +2134,7 @@ glpcvNOMAD <- function(ydat=NULL,
     init.search.vals <- bandwidth
     for(i in 1:num.bw) {
       if(xdat.numeric[i]==TRUE && bwtype=="fixed") {
-        init.search.vals[i] <- bandwidth[i]/(sd.robust(xdat[,i])*length(ydat)^{-1/(num.numeric+2*ckerorder)})
+        init.search.vals[i] <- bandwidth[i]/(scale.robust(xdat[,i])*length(ydat)^{-1/(num.numeric+2*ckerorder)})
       }
       if(xdat.numeric[i]!=TRUE) {
         init.search.vals[i] <- bandwidth[i]*bandwidth.scale.categorical
@@ -2241,7 +2247,7 @@ glpcvNOMAD <- function(ydat=NULL,
 
   if(bwtype=="fixed") {
     for(i in 1:num.numeric) {
-      sd.xdat <- sd.robust(xdat[,numeric.index[i]])
+      sd.xdat <- scale.robust(xdat[,numeric.index[i]])
       bw.opt[numeric.index[i]] <- bw.opt[numeric.index[i]]*sd.xdat*length(ydat)^{-1/(num.numeric+2*ckerorder)}
     }
   }
