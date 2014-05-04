@@ -12,7 +12,7 @@ scale.robust <- function(y){
  if(any(dim(as.matrix(y)) == 0))
       return(0)
   sd.vec <- apply(as.matrix(y),2,sd)
-  IQR.vec <- apply(as.matrix(y),2,IQR)/QFAC
+  IQR.vec <- apply(as.matrix(y),2,IQR)/(qnorm(.25,lower.tail=F)*2)
   mad.vec <- apply(as.matrix(y),2,mad)
   a <- apply(cbind(sd.vec,IQR.vec,mad.vec),1, function(x) min(x))
   if(any(a<=0)) warning(paste("variable ",which(a<=0)," appears to be constant",sep=""))
