@@ -14,7 +14,7 @@ scale.robust <- function(y){
   sd.vec <- apply(as.matrix(y),2,sd)
   IQR.vec <- apply(as.matrix(y),2,IQR)/(qnorm(.25,lower.tail=F)*2)
   mad.vec <- apply(as.matrix(y),2,mad)
-  a <- apply(cbind(sd.vec,IQR.vec,mad.vec),1, function(x) min(x))
+  a <- apply(cbind(sd.vec,IQR.vec,mad.vec),1, function(x) max(x))
   if(any(a<=0)) warning(paste("variable ",which(a<=0)," appears to be constant",sep=""))
   a <- apply(cbind(sd.vec,IQR.vec,mad.vec),1, function(x) min(x[x>0]))  
   return(a)
