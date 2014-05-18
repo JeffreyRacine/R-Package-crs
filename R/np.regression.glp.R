@@ -1402,7 +1402,7 @@ minimand.cv.ls <- function(bws=NULL,
         mean.loo[iloo] <- (1-ridge[i])*sapply(iloo, ridger) + ridge.lc[i]
       }
 
-      if (!any(mean.loo == cv.maxPenalty)){
+      if (!is.na(any(mean.loo == cv.maxPenalty)) && !any(mean.loo == cv.maxPenalty)){
         fv <- mean((ydat-mean.loo)^2)
       } else {
         fv <- cv.maxPenalty
