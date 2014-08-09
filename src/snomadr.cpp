@@ -555,7 +555,7 @@ void LH_values_for_var_i ( int     ind ,
 
 		for ( i = 0 ; i < p ; ++i ) {
 				double w = (UB - LB)/p;
-				v = LB + ( i + rand()/NOMAD::D_INT_MAX ) * w;
+				v = LB + ( i + NOMAD::RNG::rand()/NOMAD::D_INT_MAX ) * w;
 				if( bbin[ind]!= NOMAD::CONTINUOUS) 
 				{
 						x[rp.pickup()] =(int) v.value();
@@ -636,7 +636,7 @@ extern "C" {
 
 				if(seed == 0) seed = unsigned(time(NULL));
 
-				srand(seed);
+				NOMAD::RNG::set_seed(seed);
 
 				try{
 						R_CheckUserInterrupt();

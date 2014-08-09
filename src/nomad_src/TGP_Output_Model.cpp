@@ -145,11 +145,11 @@ NOMAD::TGP_Output_Model::TGP_Output_Model
 
     // otherwise use rand() to get three different integers in [0;999]:
     if ( seed != 0 ) {
-      state[0] = rand()%1000;
+      state[0] = NOMAD::RNG::rand()%1000;
       while ( state[1] == state[0] )
-	state[1] = rand()%1000;
+	state[1] = NOMAD::RNG::rand()%1000;
       while ( state[2] == state[0] || state[2] == state[1] )
-	state[2] = rand()%1000;
+	state[2] = NOMAD::RNG::rand()%1000;
     }
     _tgp_state = newRNGstate ( three2lstate ( state ) );
 

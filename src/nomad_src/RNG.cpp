@@ -51,6 +51,10 @@ uint32_t NOMAD::RNG::z = 521288629;
 bool NOMAD::RNG::set_seed(int s)
 {
     x=static_cast<uint32_t>(s);
+
+		NOMAD::RNG::y = 362436069;  //zhenghua
+		NOMAD::RNG::z = 521288629;  //zhenghua
+
 	if(x<=UINT32_MAX && s>=0)
 		return true;
 	else

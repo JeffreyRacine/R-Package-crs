@@ -10,6 +10,7 @@ OBJECTS             = RuniqueCombs.o bspline.o gsl_bspline.o snomadr.o $(NOMAD_S
                          $(NOMAD_SRC)/Phase_One_Search.o $(NOMAD_SRC)/Point.o $(NOMAD_SRC)/Priority_Eval_Point.o $(NOMAD_SRC)/Quad_Model.o \
                          $(NOMAD_SRC)/Quad_Model_Evaluator.o   $(NOMAD_SRC)/RNG.o $(NOMAD_SRC)/Model_Sorted_Point.o \
                          $(NOMAD_SRC)/Random_Pickup.o $(NOMAD_SRC)/Signature.o $(NOMAD_SRC)/Slave.o $(NOMAD_SRC)/Speculative_Search.o \
-                         $(NOMAD_SRC)/Stats.o $(NOMAD_SRC)/utils.o $(NOMAD_SRC)/Variable_Group.o $(NOMAD_SRC)/VNS_Search.o
+                         $(NOMAD_SRC)/Stats.o $(NOMAD_SRC)/utils.o $(NOMAD_SRC)/Variable_Group.o $(NOMAD_SRC)/VNS_Search.o \
+                         $(NOMAD_SRC)/TGP_Model.o $(NOMAD_SRC)/TGP_Model_Evaluator.o $(NOMAD_SRC)/TGP_Model_Search.o $(NOMAD_SRC)/TGP_Output_Model.o
 
 PKG_CXXFLAGS= -I$(NOMAD_SRC)

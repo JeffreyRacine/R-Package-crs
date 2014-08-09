@@ -482,7 +482,7 @@ void NOMAD::TGP_Model_Search::set_XX
   // reduce to 500-1 points (we eliminate randomly):
   while ( n_XX >= 500 ) {
 
-    i = rand()%n_XX;
+    i = NOMAD::RNG::rand()%n_XX;
  
     delete XX[i];
     --n_XX;
