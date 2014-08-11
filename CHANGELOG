@@ -1,9 +1,13 @@
-Changes from Version 0.15-22 to 0.15-23 [XXX]
+Changes from Version 0.15-22 to 0.15-23 [11-Aug-2014]
 
-* addressed issue with cv.aic and npglpreg where degenerate solution couud
+* Fixed bugs on setting seed in snomadr so that successive calls with
+  restarting result in the same solution (thanks to Arne Henningson for
+  detecting and reporting this issue)
+
+* Addressed issue with cv.aic and npglpreg where degenerate solution could
   occur when shrinking was invoked
 
-* enhanced the robust measure of scale to include mad which is more robust
+* Enhanced the robust measure of scale to include mad which is more robust
   than IQR
 
 Changes from Version 0.15-21 to 0.15-22 [22-Jan-2014]
