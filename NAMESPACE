@@ -2,7 +2,7 @@ useDynLib(crs)
 useDynLib(crs, snomadRSolve)
 useDynLib(crs, smultinomadRSolve)
 useDynLib(crs, snomadRInfo)
-import(stats, boot)
+import(stats, boot, np, quantreg, rgl)
 export(clsd,
        crs,
        crsiv,

@@ -53,7 +53,7 @@ to others, kindly email me the relevant information and I will
 incorporate it into this FAQ.
 
 This FAQ refers to the most recent version, which as of this writing
-is 0.15-23. Kindly update your version should you not be using the
+is 0.15-24. Kindly update your version should you not be using the
 most current (from within R, \texttt{update.packages()} ought to do
 it, though also see \ref{update} below.). See the appendix in this
 file for cumulative changes between this and previous versions of the
@@ -75,7 +75,7 @@ be presented with the following information.
 To cite package `crs' in publications use:
 
   Jeffrey S. Racine and Zhenghua Nie (2014). crs: Categorical
-  Regression Splines. R package version 0.15-23.
+  Regression Splines. R package version 0.15-24.
   https://github.com/JeffreyRacine/R-Package-crs/
 
 A BibTeX entry for LaTeX users is
@@ -84,7 +84,7 @@ A BibTeX entry for LaTeX users is
     title = {crs: Categorical Regression Splines},
     author = {Jeffrey S. Racine and Zhenghua Nie},
     year = {2014},
-    note = {R package version 0.15-23},
+    note = {R package version 0.15-24},
     url = {https://github.com/JeffreyRacine/R-Package-crs/},
   }
 \end{verbatim}
@@ -633,6 +633,16 @@ details).
 \clearpage
 
 \appendix
+
+\section*{Changes from Version 0.15-23 to 0.15-24 [18-Dec-2014]}
+
+\begin{itemize}
+
+\item Move option init from .onAttach to .onLoad in zzz.R (Bernd Bischl)
+
+\item Reworded DESCRIPTION (request from Kurt Hornik)
+
+\end{itemize}
 
 \section*{Changes from Version 0.15-22 to 0.15-23 [11-Aug-2014]}
 

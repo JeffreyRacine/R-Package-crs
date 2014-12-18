@@ -139,7 +139,7 @@ crsivderiv <- function(y,
   ## For all results we need the density function for Z and the
   ## survivor function for Z (1-CDF of Z)
   
-  require(np)
+#  require(np)
   
   cat(paste("\rIteration ", 1, " of at most ", iterate.max,sep=""))
 

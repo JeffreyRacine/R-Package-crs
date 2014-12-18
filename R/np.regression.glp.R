@@ -665,11 +665,11 @@ npglpreg.formula <- function(formula,
   if(as.numeric(min.epsilon) >= as.numeric(min.poll.size.real)) stop(" min.epsilon must be less than min.poll.size.real")
   if(as.numeric(min.epsilon) >= as.numeric(min.poll.size.integer)) stop(" min.epsilon must be less than min.poll.size.integer")
   if(as.numeric(max.bb.eval) <= 0) stop(" max.bb.eval must be positive")
-  if(!mpi) {
-    if(!require(np)) stop(" Error: you must install the np package to use this function")
-  } else {
-    if(!require(npRmpi)) stop(" Error: you must install the npRmpi package to use this function")
-  }
+#  if(!mpi) {
+#    if(!require(np)) stop(" Error: you must install the np package to use this function")
+#  } else {
+#    if(!require(npRmpi)) stop(" Error: you must install the npRmpi package to use this function")
+#  }
   ## Set DISPLAY_DEGREE to 0 if crs.messages=FALSE and DISPLAY_DEGREE
   ## is not provided
 
@@ -2584,7 +2584,7 @@ plot.npglpreg <- function(x,
 
     } else {
 
-      if(!require(rgl)) stop(" Error: you must first install the rgl package")
+#      if(!require(rgl)) stop(" Error: you must first install the rgl package")
 
       if(object$num.categorical != 0) stop(" Error: persp3d is for continuous predictors only")
       if(object$num.numeric != 2) stop(" Error: persp3d is for cases involving two continuous predictors only")

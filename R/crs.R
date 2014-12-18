@@ -422,9 +422,9 @@ crs.formula <- function(formula,
   knots <- match.arg(knots)
   basis <- match.arg(basis)
 
-  if(!is.null(tau)) {
-    if(!require(quantreg)) stop(" Error: you must first install the quantreg package")
-  }
+#  if(!is.null(tau)) {
+#    if(!require(quantreg)) stop(" Error: you must first install the quantreg package")
+#  }
 
   mf <- model.frame(formula=formula, data=data)
   mt <- attr(mf, "terms")
@@ -1418,7 +1418,7 @@ plot.crs <- function(x,
     } else {
 
 
-      if(!require(rgl)) stop(" Error: you must first install the rgl package")
+#      if(!require(rgl)) stop(" Error: you must first install the rgl package")
 
       if(!is.null(object$num.z)) stop(" Error: persp3d is for continuous predictors only")
       if(object$num.x != 2) stop(" Error: persp3d is for cases involving two continuous predictors only")
