@@ -170,10 +170,19 @@ of $m=n+1$ terms and is given by
 where ${n\choose i}=\frac{n!}{(n-i)!i!}$, which can be expressed
 recursively as
 \begin{equation*}
-  B(x)=(1-x)\left(\sum_{i=0}^{n-1}\beta_iB_{i,n-1}(x)\right)+x\left(\sum_{i=1}^{n}\beta_iB_{i,n-1}(x)\right),
+  B(x)=(1-x)\left(\sum_{i=0}^{n-1}\beta_iB_{i,n-1}(x)\right)+x\left(\sum_{i=1}^{n}\beta_iB_{i-1,n-1}(x)\right),
 \end{equation*}
 so a degree $n$ B\'ezier curve is a linear interpolation between two
 degree $n-1$ B\'ezier curves.
+
+%% B_{i,n-1} above changed to B_{i-1,n-1} 20/1/15: "Dear Dr. Racine, I
+%% have spotted a small typo in your otherwise excellent Primer on
+%% Regression Splines
+%% (http://cran.r-project.org/web/packages/crs/vignettes/spline_primer.pdf
+%% ): on page 3, in the unnumbered equation below Eq (3) the
+%% parameters of the Bernstein polynomial in the second term should be
+%% B_{i-1,n-1} I believe (not B_{i,n-1}). Tamas
+%% (ferenci.tamas@nik.uni-obuda.hu)"
 
 \begin{example}{A quadratic B\'ezier curve as a linear interpolation
     between two linear B\'ezier curves.}
@@ -210,7 +219,7 @@ coefficients of the regression model.
 \begin{example}{The quadratic B\'ezier curve basis functions.}
 
   The figure below presents the bases $B_{i,n}(x)$ underlying a B\'ezier
-  curve for $i=1,\dots,2$ and $n=2$.
+  curve for $i=0,\dots,2$ and $n=2$.
   
 \begin{center}
 <<fig=TRUE,echo=FALSE>>=

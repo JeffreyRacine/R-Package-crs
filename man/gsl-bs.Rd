@@ -55,14 +55,17 @@ basis; default is \sQuote{FALSE} }
   the examples at the end of this help file)
   \preformatted{
     B <- gsl.bs(x,degree=10)
-    }
+    B.predict <- predict(gsl.bs(x,degree=10),newx=xeval)
+  }
     
 }
 
 \value{
 
   \code{gsl.bs} returns a \code{gsl.bs} object.  A matrix of dimension
-  \sQuote{c(length(x), degree+nbreak-1)}.
+  \sQuote{c(length(x), degree+nbreak-1)}.  The generic function
+  \code{\link{predict}} extracts (or generates) predictions from the
+  returned object.
 
   A primary use is in modelling formulas to directly specify a piecewise
   polynomial term in a model. See \url{http://www.gnu.org/software/gsl/}
