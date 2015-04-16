@@ -65,7 +65,7 @@ snomadr(eval.f,
     
     \item{bbout}{
       types of output of \code{eval.f}.  See the NOMAD User Guide
-      \url{http://www.gerad.ca/NOMAD/Downloads/user_guide.pdf}
+      \url{https://www.gerad.ca/nomad/Downloads/user_guide.pdf}
     }
     
     \item{x0}{
