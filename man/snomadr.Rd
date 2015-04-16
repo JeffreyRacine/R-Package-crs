@@ -90,7 +90,7 @@ snomadr(eval.f,
       }
     \item{opts}{
       list of options for NOMAD, see the NOMAD user guide
-      \url{http://www.gerad.ca/NOMAD/Downloads/user_guide.pdf}.  Options
+      \url{https://www.gerad.ca/nomad/Downloads/user_guide.pdf}.  Options
       can also be set by nomad.opt which should be in the folder where R
       (\code{snomadr}) is executed. Options that affect the solution and
       their defaults and some potential values are
