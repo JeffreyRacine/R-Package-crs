@@ -158,7 +158,7 @@ splitFrame <- function(xz, factor.to.numeric=FALSE) {
     } else {
       ## If factor.to.numeric crudely convert factors to numeric.
       z <- matrix(NA,NROW(xz),NCOL(xz[,IND,drop=FALSE]))
-      ## To “revert” a factor f to its original numeric values,
+      ## To "revert" a factor f to its original numeric values,
       ## as.numeric(levels(f))[f] is recommended. Problem is that for
       ## character strings it produces a warning message. No idea how
       ## to test for this so dropping for the moment. Will affect

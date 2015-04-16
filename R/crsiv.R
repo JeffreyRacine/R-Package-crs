@@ -66,7 +66,7 @@ crsiv <- function(y,
   ## S. Darolles, Y. Fan, J.P. Florens, E. Renault, Volume 79,
   ## 1541-1565.
 
-  ## B) Econometrics Journal (2010), volume 13, pp. S1–S27. doi:
+  ## B) Econometrics Journal (2010), volume 13, pp. S1-S27. doi:
   ## 10.1111/j.1368-423X.2010.00314.x "The practice of non-parametric
   ## estimation by solving inverse problems: the example of
   ## transformation models" Frederique Feve and Jean-Pierre Florens,
