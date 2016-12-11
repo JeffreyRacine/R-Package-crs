@@ -1,4 +1,4 @@
-%% $Id: crs_faq.tex,v 1.35 2015/04/01 15:44:35 jracine Exp jracine $
+%% $Id: crs_faq.tex,v 1.36 2016/05/23 13:09:06 jracine Exp jracine $
 
 %\VignetteIndexEntry{Frequently Asked Questions (crs)}
 %\VignetteDepends{crs}
@@ -627,6 +627,23 @@ ought to produce no console I/O whatsoever in the call to
 Note that for direct calls to \texttt{snomadr} you instead need to set
 \texttt{opts=list("DISPLAY\_DEGREE"=0)} (see \texttt{?snomadr} for
 details).
+
+\subsection{How can I retrieve knots used for each predictor when
+  knots are selected via cross-validation}
+
+ 
+It depends on whether you use uniform or quantile knots. If you have a
+model with two predictors and you are using uniform knots, for the
+first predictor (presumed to be named \texttt{x1}) the knots will be
+\begin{verbatim} 
+seq(min(x1),max(x1),length=model$segments[1]+1)
+\end{verbatim}
+while if you are using quantile knots the knots will be
+\begin{verbatim} 
+quantile(x1,probs=seq(0,1,length=model$segments[1]+1))
+\end{verbatim}
+For the second predictor use \texttt{x2} and
+\texttt{model\$segments[2]} and so forth.
 
 \bibliographystyle{plain} \bibliography{crs_faq}
 

@@ -1,5 +1,7 @@
 # crs
 
+![CRAN downloads](http://cranlogs.r-pkg.org/badges/grand-total/crs)
+
 This is the R package `crs' (Categorical Regression Splines) written and maintained by Jeffrey S. Racine (racinej@mcmaster.ca) with the invaluable assistance of Zhenghua Nie.
 
 ## Installation
