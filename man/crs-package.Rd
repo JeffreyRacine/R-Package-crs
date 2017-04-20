@@ -77,8 +77,8 @@
 
   I would like to gratefully acknowledge support from the Natural
   Sciences and Engineering Research Council of Canada
-  (\url{http://www.nserc.ca}), the Social Sciences and Humanities
-  Research Council of Canada (\url{http://www.sshrc.ca}), and the Shared
+  (\url{http://www.nserc-crsng.gc.ca}), the Social Sciences and Humanities
+  Research Council of Canada (\url{http://www.sshrc-crsh.gc.ca}), and the Shared
   Hierarchical Academic Research Computing Network
   (\url{http://www.sharcnet.ca}).
   
