@@ -1,6 +1,6 @@
-Changes from Version 0.15-24 to 0.15-25 [19-April-2017]
+Changes from Version 0.15-24 to 0.15-25 [20-April-2017]
 
-* fixed glitch that could arise when computing derivatives and
+* Fixed glitch that could arise when computing derivatives and
   multiple predictors have degree 0 when using glp basis
 
 Changes from Version 0.15-23 to 0.15-24 [18-Dec-2014]

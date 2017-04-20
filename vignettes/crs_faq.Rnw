@@ -651,6 +651,15 @@ For the second predictor use \texttt{x2} and
 
 \appendix
 
+\section*{Changes from Version 0.15-24 to 0.15-25 [20-Apr-2017]}
+
+\begin{itemize}
+
+\item Fixed glitch that could arise when computing derivatives and
+  multiple predictors have degree 0 when using glp basis
+
+\end{itemize}
+
 \section*{Changes from Version 0.15-23 to 0.15-24 [18-Dec-2014]}
 
 \begin{itemize}

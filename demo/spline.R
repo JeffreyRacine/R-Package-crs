@@ -128,7 +128,7 @@ prod.spline <- function(x,
         if(deriv!=0) {
           P.deriv <- list()
           for(i in 1:length(tp)) P.deriv[[i]] <- matrix(0,1,ncol(tp[[i]]))
-          deriv.index <- deriv.index - length(which((K[,1]==0)))
+          deriv.index <- deriv.index - length(which((K[1:deriv.index,1]==0)))
           while(deriv.index<=0) deriv.index <- deriv.index + 1
           P.deriv[[deriv.index]] <- matrix(NA,1,ncol(tp[[deriv.index]]))
           P[,!is.na(as.numeric(glp.model.matrix(P.deriv)))] <- 0

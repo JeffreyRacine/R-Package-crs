@@ -2,6 +2,9 @@ useDynLib(crs)
 useDynLib(crs, snomadRSolve)
 useDynLib(crs, smultinomadRSolve)
 useDynLib(crs, snomadRInfo)
+importFrom("grDevices", "extendrange", "topo.colors")
+importFrom("graphics", "par", "plot")
+importFrom("utils", "flush.console")
 import(stats, boot, np, quantreg, rgl)
 export(clsd,
        crs,
