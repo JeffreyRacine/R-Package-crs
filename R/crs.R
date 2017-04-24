@@ -1078,7 +1078,7 @@ summary.crs <- function(object,
     df1 <- round(sum(object$hatvalues))-1
     df2 <- (object$nobs-round(sum(object$hatvalues)))
     F <- (df2/df1)*(sum((object$y-mean(object$y))^2)-sum(residuals(object)^2))/sum(residuals(object)^2)
-    if(is.null(object$tau)) cat(paste("\nF-statistic: ", format(F,digits=4), " on ", df1, " and ", df2, " DF, p-value: ", format(pf(F,df1=df1,df2=df2,lower.tail=FALSE),digits=4), sep=""))
+    if(is.null(object$tau)) cat(paste("\nF-statistic: ", format(F,digits=4), " on ", df1, " and ", df2, " DF, p-value: ", format.pval(pf(F,df1=df1,df2=df2,lower.tail=FALSE),digits=4), sep=""))
     if(!is.null(object$cv.score)) cat(paste("\n\nCross-validation score: ", format(object$cv.score,digits=8), sep=""))
   } else {
     if(is.null(object$tau)) cat(paste("\n\nResidual standard error (weighted): ", format(sqrt(sum((object$residuals^2)*object$weights)/object$df.residual),digits=4)," on ", format(object$df.residual)," degrees of freedom",sep=""))
@@ -1087,7 +1087,7 @@ summary.crs <- function(object,
     df1 <- round(sum(object$hatvalues))-1
     df2 <- (object$nobs-round(sum(object$hatvalues)))
     F <- (df2/df1)*(sum((object$y-mean(object$y))^2*object$weights)-sum(residuals(object)^2*object$weights))/sum(residuals(object)^2*object$weights)
-    if(is.null(object$tau)) cat(paste("\nF-statistic (weighted): ", format(F,digits=4), " on ", df1, " and ", df2, " DF, p-value: ", format(pf(F,df1=df1,df2=df2,lower.tail=FALSE),digits=4), sep=""))
+    if(is.null(object$tau)) cat(paste("\nF-statistic (weighted): ", format(F,digits=4), " on ", df1, " and ", df2, " DF, p-value: ", format.pval(pf(F,df1=df1,df2=df2,lower.tail=FALSE),digits=4), sep=""))
     if(!is.null(object$cv.score)) cat(paste("\n\nCross-validation score (weighted): ", format(object$cv.score,digits=8), sep=""))
   }
 
