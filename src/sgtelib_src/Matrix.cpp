@@ -1574,7 +1574,7 @@ SGTELIB::Matrix SGTELIB::Matrix::random_permutation_matrix ( const int n ) {
   for (int i=0; i<n; ++i) v.push_back(i); // 1 2 3 4 5 6 7 8 9
 
   // shuffle
-  std::random_shuffle ( v.begin(), v.end() );
+  std::random_shuffle ( v.begin(), v.end(), SGTELIB::Matrix::myrandom );
 
   // Fill matrix
   for (int i=0; i<n; ++i) perm.set(i,v.at(i),1.0);

@@ -35,12 +35,16 @@
 #include "Surrogate_Utils.hpp"
 #include "Exception.hpp"
 
+#include "RNG.hpp"   //zhenghua for rand.
+
 namespace SGTELIB {
 
 
   class Matrix {
 
   private:
+
+	static int myrandom(int i){return NOMAD::RNG::rand()%i;}  //zhenghua
 
     std::string _name;
 

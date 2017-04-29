@@ -45,7 +45,16 @@ typedef struct timeval {
 } timeval;
 
 #else
+//zhenghua, for R Windows
+#ifdef __MINGW32__
+#include <_timeval.h>
 #include <unistd.h>
+#define isnan(x) _isnan(x)
+#define isdigit(x) _isdigit(x)
+#define isinf(x) (!_finite(x))
+#else
+#include <unistd.h>
+#endif
 #endif
 
 
