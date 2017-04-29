@@ -1,8 +1,8 @@
 Package: crs
 Version: 0.15-25
-Date: 2017-04-28
+Date: 2017-04-29
 Imports: boot, stats, np, quantreg, rgl
-Suggests: logspline, npRmpi, quadprog
+Suggests: logspline, quadprog
 Title: Categorical Regression Splines
 Authors@R: c(person(given = "Jeffrey S.", family = "Racine", role = c("aut","cre"), email = "racinej@mcmaster.ca"),
              person(given = "Zhenghua", family = "Nie", role = c("aut"), email = "niez@mcmaster.ca"),

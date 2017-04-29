@@ -1,4 +1,4 @@
-useDynLib(crs)
+useDynLib(crs, .registration = TRUE)
 useDynLib(crs, snomadRSolve)
 useDynLib(crs, smultinomadRSolve)
 useDynLib(crs, snomadRInfo)
