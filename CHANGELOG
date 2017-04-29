@@ -1,3 +1,9 @@
+Changes from Version 0.15-25 to 0.15-26 [29-April-2017]
+
+* Zhenghua patched up issues arising with windows build
+
+* crs_init.c attempts to deal with registration issue/note
+
 Changes from Version 0.15-24 to 0.15-25 [29-April-2017]
 
 * Fixed glitch that could potentially arise when computing derivatives and multiple predictors are assigned degree 0 when using the glp basis

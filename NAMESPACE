@@ -1,7 +1,4 @@
-useDynLib(crs, .registration = TRUE)
-useDynLib(crs, snomadRSolve)
-useDynLib(crs, smultinomadRSolve)
-useDynLib(crs, snomadRInfo)
+useDynLib(crs, snomadRSolve, smultinomadRSolve, snomadRInfo, .registration = TRUE)
 importFrom("grDevices", "extendrange", "topo.colors")
 importFrom("graphics", "par", "plot")
 importFrom("utils", "flush.console")
