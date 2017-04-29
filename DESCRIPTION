@@ -9,7 +9,7 @@ Authors@R: c(person(given = "Jeffrey S.", family = "Racine", role = c("aut","cre
              person(given = "Brian D.", family = "Ripley", role = c("ctb"), comment = "stepCV.R"))
 Description: Regression splines that handle a mix of continuous and categorical (discrete) data often encountered in applied settings. I would like to gratefully acknowledge support from  the Natural Sciences and Engineering Research Council of Canada (NSERC:www.nserc-crsng.gc.ca), the Social Sciences and Humanities Research Council of Canada (SSHRC:www.sshrc-crsh.gc.ca), and the Shared Hierarchical Academic Research Computing Network (SHARCNET:www.sharcnet.ca).
 License: GPL
-URL: https://github.com/JeffreyRacine/R-Package-crs
-BugReports: https://github.com/JeffreyRacine/R-Package-crs/issues
+URL: <https://github.com/JeffreyRacine/R-Package-crs>
+BugReports: <https://github.com/JeffreyRacine/R-Package-crs/issues>
 Repository: CRAN
 
