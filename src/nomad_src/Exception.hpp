@@ -1,16 +1,22 @@
 /*-------------------------------------------------------------------------------------*/
-/*  NOMAD - Nonlinear Optimization by Mesh Adaptive Direct search - version 3.6.2        */
+/*  NOMAD - Nonlinear Optimization by Mesh Adaptive Direct search - version 3.8.0      */
 /*                                                                                     */
-/*  Copyright (C) 2001-2012  Mark Abramson        - the Boeing Company, Seattle        */
-/*                           Charles Audet        - Ecole Polytechnique, Montreal      */
-/*                           Gilles Couture       - Ecole Polytechnique, Montreal      */
-/*                           John Dennis          - Rice University, Houston           */
-/*                           Sebastien Le Digabel - Ecole Polytechnique, Montreal      */
-/*                           Christophe Tribes    - Ecole Polytechnique, Montreal      */
 /*                                                                                     */
-/*  funded in part by AFOSR and Exxon Mobil                                            */
+/*  NOMAD - version 3.8.0 has been created by                                          */
+/*                 Charles Audet        - Ecole Polytechnique de Montreal              */
+/*                 Sebastien Le Digabel - Ecole Polytechnique de Montreal              */
+/*                 Christophe Tribes    - Ecole Polytechnique de Montreal              */
 /*                                                                                     */
-/*  Author: Sebastien Le Digabel                                                       */
+/*  The copyright of NOMAD - version 3.8.0 is owned by                                 */
+/*                 Sebastien Le Digabel - Ecole Polytechnique de Montreal              */
+/*                 Christophe Tribes    - Ecole Polytechnique de Montreal              */
+/*                                                                                     */
+/*  NOMAD v3 has been funded by AFOSR and Exxon Mobil.                                 */
+/*                                                                                     */
+/*  NOMAD v3 is a new version of NOMAD v1 and v2. NOMAD v1 and v2 were created and     */
+/*  developed by Mark Abramson, Charles Audet, Gilles Couture and John E. Dennis Jr.,  */
+/*  and were funded by AFOSR and Exxon Mobil.                                          */
+/*                                                                                     */
 /*                                                                                     */
 /*  Contact information:                                                               */
 /*    Ecole Polytechnique de Montreal - GERAD                                          */
@@ -34,62 +40,62 @@
 /*  You can find information on the NOMAD software at www.gerad.ca/nomad               */
 /*-------------------------------------------------------------------------------------*/
 /**
-  \file   Exception.hpp
-  \brief  Custom class for exceptions (headers)
-  \author Sebastien Le Digabel
-  \date   2010-03-29
-  \see    Exception.cpp
-*/
+ \file   Exception.hpp
+ \brief  Custom class for exceptions (headers)
+ \author Sebastien Le Digabel
+ \date   2010-03-29
+ \see    Exception.cpp
+ */
 #ifndef __NOMAD_EXCEPTION__
 #define __NOMAD_EXCEPTION__
 
 #include <sstream>
 
 namespace NOMAD {
-
-  /// Custom class for exceptions.
-  /**
+    
+    /// Custom class for exceptions.
+    /**
      NOMAD uses this type of exceptions.
      It indicates the file and line number at which a throw is made.
-
+     
      \b Example
-
+     
      \code
      throw NOMAD::Exception ( __FILE__ , __LINE__ , "an error message" );
      \endcode
-   */
-  class Exception : public std::exception {
-
-  private:
-
-    mutable std::string _what;  ///< Error message.
-    std::string         _file;  ///< File where the exception is thrown.
-    int                 _line;  ///< Line number at which the exception is thrown.
-
-  public:
-
-    /// Constructor.
-    /**
-       \param file A string corresponding to the file where the
-                     exception is thrown -- \b IN
-       \param line An integer corresponding to the line number
-                     at which the exception is thrown -- \b IN.
-       \param msg  A string corresponding to the error message -- \b IN.
      */
-    Exception ( const std::string & file , int line , const std::string & msg )
-      : _what ( msg  ) ,
-	_file ( file ) ,
-	_line ( line )   {}
-
-    /// Destructor.
-    virtual ~Exception ( void ) throw() {}
-
-    /// Access to the error message.
-    /**
-       \return A string with the error message.
-    */
-    const char * what ( void ) const throw();
-  };
+    class Exception : public std::exception {
+        
+    private:
+        
+        mutable std::string _what;  ///< Error message.
+        std::string         _file;  ///< File where the exception is thrown.
+        int                 _line;  ///< Line number at which the exception is thrown.
+        
+    public:
+        
+        /// Constructor.
+        /**
+         \param file A string corresponding to the file where the
+         exception is thrown -- \b IN
+         \param line An integer corresponding to the line number
+         at which the exception is thrown -- \b IN.
+         \param msg  A string corresponding to the error message -- \b IN.
+         */
+        Exception ( const std::string & file , int line , const std::string & msg )
+        : _what ( msg  ) ,
+        _file ( file ) ,
+        _line ( line )   {}
+        
+        /// Destructor.
+        virtual ~Exception ( void ) throw() {}
+        
+        /// Access to the error message.
+        /**
+         \return A string with the error message.
+         */
+        const char * what ( void ) const throw();
+    };
 }
 
 #endif

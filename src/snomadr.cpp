@@ -412,7 +412,7 @@ extern "C" {
 						// Default options
 						//				param.set_DIRECTION_TYPE(NOMAD::GPS_2N_RAND);
 						//				param.set_OPPORTUNISTIC_EVAL(true);
-						//				param.set_MIN_POLL_SIZE(0.001);
+					//					param.set_MIN_POLL_SIZE(0.001);
 						//				param.set_MIN_MESH_SIZE(0.001);
 						//  			param.set_INITIAL_MESH_SIZE(0.01);
 						param.set_MAX_BB_EVAL(10000);

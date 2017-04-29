@@ -1,16 +1,22 @@
 /*-------------------------------------------------------------------------------------*/
-/*  NOMAD - Nonlinear Optimization by Mesh Adaptive Direct search - version 3.6.2  + patch to prevent dereferencing a null pointer      */
+/*  NOMAD - Nonlinear Optimization by Mesh Adaptive Direct search - version 3.8.0      */
 /*                                                                                     */
-/*  Copyright (C) 2001-2012  Mark Abramson        - the Boeing Company, Seattle        */
-/*                           Charles Audet        - Ecole Polytechnique, Montreal      */
-/*                           Gilles Couture       - Ecole Polytechnique, Montreal      */
-/*                           John Dennis          - Rice University, Houston           */
-/*                           Sebastien Le Digabel - Ecole Polytechnique, Montreal      */
-/*                           Christophe Tribes    - Ecole Polytechnique, Montreal      */
 /*                                                                                     */
-/*  funded in part by AFOSR and Exxon Mobil                                            */
+/*  NOMAD - version 3.8.0 has been created by                                          */
+/*                 Charles Audet        - Ecole Polytechnique de Montreal              */
+/*                 Sebastien Le Digabel - Ecole Polytechnique de Montreal              */
+/*                 Christophe Tribes    - Ecole Polytechnique de Montreal              */
 /*                                                                                     */
-/*  Author: Sebastien Le Digabel                                                       */
+/*  The copyright of NOMAD - version 3.8.0 is owned by                                 */
+/*                 Sebastien Le Digabel - Ecole Polytechnique de Montreal              */
+/*                 Christophe Tribes    - Ecole Polytechnique de Montreal              */
+/*                                                                                     */
+/*  NOMAD v3 has been funded by AFOSR and Exxon Mobil.                                 */
+/*                                                                                     */
+/*  NOMAD v3 is a new version of NOMAD v1 and v2. NOMAD v1 and v2 were created and     */
+/*  developed by Mark Abramson, Charles Audet, Gilles Couture and John E. Dennis Jr.,  */
+/*  and were funded by AFOSR and Exxon Mobil.                                          */
+/*                                                                                     */
 /*                                                                                     */
 /*  Contact information:                                                               */
 /*    Ecole Polytechnique de Montreal - GERAD                                          */
@@ -41,7 +47,7 @@
  \see    Mads.hpp
  */
 #include "Mads.hpp"
-using namespace std; // zhenghua
+#include "Sgtelib_Model_Manager.hpp"
 
 /*-----------------------------------*/
 /*   static members initialization   */
@@ -52,6 +58,7 @@ bool NOMAD::Mads::_flag_reset_mesh     = true;
 bool NOMAD::Mads::_flag_reset_barriers = true;
 bool NOMAD::Mads::_flag_p1_active      = false;
 
+
 /*---------------------------------------------------------*/
 /*       force quit (static, called by pressing ctrl-c)    */
 /*---------------------------------------------------------*/
@@ -61,9 +68,6 @@ void NOMAD::Mads::force_quit ( int signalValue )
     NOMAD::Evaluator_Control::force_quit();
     NOMAD::Evaluator::force_quit();
     
-#ifdef USE_TGP
-    NOMAD::TGP_Output_Model::force_quit();
-#endif
 }
 
 /*---------------------------------------------------------*/
@@ -103,30 +107,35 @@ void NOMAD::Mads::init ( void )
     signal ( SIGTERM , NOMAD::Mads::force_quit );
 #endif
     
-    // random number generator seed initialization:
-	bool valid_seed=NOMAD::RNG::set_seed(_p.get_seed());
-	if ( !valid_seed )
-		throw NOMAD::Exception ( "Mads.cpp" , __LINE__ ,"seed for random number generator not initialized properly!" );
-    
     // model searches initialization:
-    if ( _p.has_model_search() ) {
-#ifdef USE_TGP
-        if ( _p.get_model_search(1) == NOMAD::TGP_MODEL )
-            _model_search1 = new TGP_Model_Search ( _p );
-#endif
+    if ( _p.has_model_search() )
+    {
         if ( _p.get_model_search(1) == NOMAD::QUADRATIC_MODEL )
             _model_search1 = new Quad_Model_Search ( _p );
-#ifdef USE_TGP
-        if ( _p.get_model_search(2) == NOMAD::TGP_MODEL )
-            _model_search2 = new TGP_Model_Search ( _p );
-#endif
         if ( _p.get_model_search(2) == NOMAD::QUADRATIC_MODEL )
             _model_search2 = new Quad_Model_Search ( _p );
     }
-    
-#ifdef USE_TGP
-    _ev_control.set_last_TGP_model ( NULL );
-#endif
+        if ( _p.get_model_search(1) == NOMAD::SGTELIB_MODEL || _p.get_model_search(2) == NOMAD::SGTELIB_MODEL )
+    {
+        
+        _sgtelib_model_manager = new NOMAD::Sgtelib_Model_Manager( _p , &_ev_control ) ;
+        _ev_control.set_sgtelib_model_manager( _sgtelib_model_manager );
+        _ev_control_for_sorting.set_sgtelib_model_manager( _sgtelib_model_manager );
+        
+        if ( _p.has_model_search() )
+        {
+            if ( _p.get_model_search(1) == NOMAD::SGTELIB_MODEL )
+            {
+                _model_search1 = new Sgtelib_Model_Search ( _p );
+                static_cast<NOMAD::Sgtelib_Model_Search *>(_model_search1)->set_sgtelib_model_manager(_sgtelib_model_manager);
+            }
+            if ( _p.get_model_search(2) == NOMAD::SGTELIB_MODEL )
+            {
+                _model_search2 = new Sgtelib_Model_Search ( _p );
+                static_cast<NOMAD::Sgtelib_Model_Search *>(_model_search2)->set_sgtelib_model_manager(_sgtelib_model_manager);
+            }
+        }
+    }
     
     // VNS search initialization:
     if ( _p.get_VNS_search() )
@@ -135,6 +144,11 @@ void NOMAD::Mads::init ( void )
     // cache search initialization:
     if ( _p.get_cache_search() )
         _cache_search = new Cache_Search ( _p );
+    
+    // Orthogonal mesh initialization
+    _mesh->reset();
+    
+    
 }
 
 /*---------------------------------------------------------*/
@@ -148,23 +162,24 @@ NOMAD::Mads::~Mads ( void )
     delete _VNS_search;
     delete _cache_search;
     delete _L_curve;
-	
-    if ( _extended_poll && !_user_ext_poll)
+    
+    if ( _sgtelib_model_manager )
+    {
+        delete _sgtelib_model_manager;
+    }
+        
+    if ( _extended_poll && !_user_ext_poll )
         delete _extended_poll;
 }
 
-/*---------------------------------------------------------*/
-/*                         reset                           */
-/*---------------------------------------------------------*/
-/*  default values for parameters: keep_barriers = false   */
-/*                                 keep_stats    = false   */
-/*---------------------------------------------------------*/
+/*-------------------------------------------------------------*/
+/*                         reset                               */
+/*-------------------------------------------------------------*/
+/*  default values for parameters: keep_barriers     = false   */
+/*                                 keep_stats        = false   */
+/*-------------------------------------------------------------*/
 void NOMAD::Mads::reset ( bool keep_barriers , bool keep_stats )
 {
-    // evaluator control:
-#ifdef USE_TGP
-    _ev_control.set_last_TGP_model ( NULL );
-#endif
     
     // user search:
     _user_search = NULL;
@@ -176,11 +191,10 @@ void NOMAD::Mads::reset ( bool keep_barriers , bool keep_stats )
             _model_search1->reset();
         else
         {
-            if ( _p.get_model_search(1) == NOMAD::TGP_MODEL )
+            if ( _p.get_model_search(1) == NOMAD::SGTELIB_MODEL )
             {
-#ifdef USE_TGP
-                _model_search1 = new TGP_Model_Search  ( _p ) ;
-#endif
+                _model_search1 = new Sgtelib_Model_Search  ( _p ) ;
+                static_cast<NOMAD::Sgtelib_Model_Search *> ( _model_search1 )->set_sgtelib_model_manager( _sgtelib_model_manager );
             }
             else
                 _model_search1 = new Quad_Model_Search ( _p );
@@ -197,18 +211,20 @@ void NOMAD::Mads::reset ( bool keep_barriers , bool keep_stats )
     {
         if ( _model_search2 )
             _model_search2->reset();
-        else {
-            if ( _p.get_model_search(2) == NOMAD::TGP_MODEL )
+        else
+        {
+            if ( _p.get_model_search(2) == NOMAD::SGTELIB_MODEL )
             {
-#ifdef USE_TGP
-                _model_search2 = new TGP_Model_Search  ( _p ) ;
-#endif
+                _model_search2 = new Sgtelib_Model_Search  ( _p ) ;
+                static_cast<NOMAD::Sgtelib_Model_Search *>( _model_search2 )->set_sgtelib_model_manager( _sgtelib_model_manager );
             }
             else
+                
                 _model_search2 = new Quad_Model_Search ( _p );
         }
     }
-    else {
+    else
+    {
         delete _model_search2;
         _model_search2 = NULL;
     }
@@ -221,7 +237,9 @@ void NOMAD::Mads::reset ( bool keep_barriers , bool keep_stats )
         else
             _VNS_search = new VNS_Search ( _p );
     }
-    else {
+    else
+    {
+        
         delete _VNS_search;
         _VNS_search = NULL;
     }
@@ -252,12 +270,8 @@ void NOMAD::Mads::reset ( bool keep_barriers , bool keep_stats )
     if ( !keep_stats )
         _stats.reset();
     
-    // mesh:
-    NOMAD::Mesh::init ( _p.get_mesh_update_basis().value() ,
-                       _p.get_mesh_coarsening_exponent () ,
-                       _p.get_mesh_refining_exponent   () ,
-                       _p.get_initial_mesh_index       ()   );
-    /*---------------------------------------------------------*/
+    
+    _mesh->reset();
     
 }
 
@@ -278,18 +292,21 @@ NOMAD::stop_type NOMAD::Mads::run ( void )
         out << NOMAD::close_block();
         return stop_reason;
     }
-	
-	
+    
+    
     // init the slaves:
     bool stop_slaves_here = false;
     
-    if ( NOMAD::Slave::is_master() ) {
-        if ( !NOMAD::Slave::are_running() ) {
+    if ( NOMAD::Slave::is_master() )
+    {
+        if ( !NOMAD::Slave::are_running() )
+        {
             NOMAD::Slave::init_slaves ( out );
             stop_slaves_here = true;
         }
     }
-    else {
+    else
+    {
         NOMAD::Slave s ( _p , _ev_control.get_evaluator() );
         s.run();
         return stop_reason;
@@ -297,7 +314,8 @@ NOMAD::stop_type NOMAD::Mads::run ( void )
     
 #endif
     
-    try {
+    try
+    {
         
         // check an extended poll if there are categorical
         // variables and disable extended poll otherwise:
@@ -334,7 +352,8 @@ NOMAD::stop_type NOMAD::Mads::run ( void )
         if ( display_degree == NOMAD::NORMAL_DISPLAY ||  display_degree == NOMAD::FULL_DISPLAY )
             out << std::endl << NOMAD::open_block ( "MADS run" );
         
-        if ( display_degree == NOMAD::NORMAL_DISPLAY ) {
+        if ( display_degree == NOMAD::NORMAL_DISPLAY )
+        {
             _ev_control.display_stats ( true                   ,
                                        out                    ,
                                        _p.get_display_stats() ,
@@ -361,10 +380,7 @@ NOMAD::stop_type NOMAD::Mads::run ( void )
         
         // mesh init/reset:
         if ( _flag_reset_mesh )
-            NOMAD::Mesh::init ( _p.get_mesh_update_basis().value() ,
-                               _p.get_mesh_coarsening_exponent () ,
-                               _p.get_mesh_refining_exponent   () ,
-                               _p.get_initial_mesh_index       ()   );
+            _mesh->reset();
         
         NOMAD::success_type       success , last_success;
         int                       nb_search_pts;
@@ -396,10 +412,14 @@ NOMAD::stop_type NOMAD::Mads::run ( void )
                         count_search   ,
                         new_feas_inc   ,
                         new_infeas_inc   );
+            
+            _mesh->reset();
+            
         }
         
         // initial Latin-Hypercube (LH) search:
-        if ( !stop && !phase_one_done && _p.get_LH_search_p0() > 0 ) {
+        if ( !stop && !phase_one_done && _p.get_LH_search_p0() > 0 )
+        {
             
             LH_Search lh ( _p , true , _flag_p1_active );
             int       nb_search_pts;
@@ -423,7 +443,8 @@ NOMAD::stop_type NOMAD::Mads::run ( void )
         }
         
         // no iterations allowed:
-        if ( !stop && _p.get_max_iterations() == 0 ) {
+        if ( !stop && _p.get_max_iterations() == 0 )
+        {
             stop        = true;
             stop_reason = NOMAD::MAX_ITER_REACHED;
         }
@@ -499,7 +520,7 @@ NOMAD::stop_type NOMAD::Mads::run ( void )
         
         // final displays:
         const NOMAD::Eval_Point * bf = get_best_feasible();
-        bool write_stats =	bf &&
+        bool write_stats =    bf &&
         ( bf->get_tag()     != _ev_control.get_last_stats_tag() ||
          _stats.get_bb_eval() != _ev_control.get_last_stats_bbe()    );
         
@@ -511,26 +532,27 @@ NOMAD::stop_type NOMAD::Mads::run ( void )
             {
                 _ev_control.stats_file ( stats_file_name , bf , true , NULL );
             }
-            if ( !bf )
+            
+            if ( !bf && display_degree > NOMAD::MINIMAL_DISPLAY )
             {
                 std::ofstream fout ( (_p.get_problem_dir() + stats_file_name).c_str() );
                 if ( fout.fail() )
                 {
-                    if ( out.get_gen_dd() != NOMAD::NO_DISPLAY && display_degree != NOMAD::MINIMAL_DISPLAY )
-                        out << std::endl
-                        << "Warning (" << "Mads.cpp" << ", " << __LINE__
-                        << "): could not save information in stats file \'"
-                        << stats_file_name << "\'" << std::endl << std::endl;
+                    out << std::endl
+                    << "Warning (" << "Mads.cpp" << ", " << __LINE__
+                    << "): could not save information in stats file \'"
+                    << stats_file_name << "\'" << std::endl << std::endl;
                 }
                 else
-                    fout << "no feasible solution has been found in "
+                    fout << "no feasible solution has been found after "
                     << _stats.get_bb_eval() << " evaluations"
                     << std::endl;
                 fout.close();
             }
+            
         }
         
-        if ( display_degree != NOMAD::NO_DISPLAY && display_degree != NOMAD::MINIMAL_DISPLAY)
+        if ( display_degree > NOMAD::MINIMAL_DISPLAY)
         {
             
             // final stats:
@@ -549,7 +571,8 @@ NOMAD::stop_type NOMAD::Mads::run ( void )
         }
         
         // mono-objective final displays:
-        if ( _p.get_nb_obj() == 1 ) {
+        if ( _p.get_nb_obj() == 1 )
+        {
             
             if ( display_degree == NOMAD::FULL_DISPLAY )
                 out << std::endl << NOMAD::open_block ( "NOMAD final display" );
@@ -558,13 +581,16 @@ NOMAD::stop_type NOMAD::Mads::run ( void )
             display();
 #endif
             
+            
+            
             if ( display_degree == NOMAD::FULL_DISPLAY )
                 out.close_block();
         }
         
     } // end of the try block
     
-    catch ( std::exception & e ) {
+    catch ( std::exception & e )
+    {
         
 #ifdef USE_MPI
         if ( NOMAD::Slave::are_running() )
@@ -591,15 +617,14 @@ NOMAD::stop_type NOMAD::Mads::run ( void )
 /*    been set to zero                                                  */
 /*  . private method                                                    */
 /*----------------------------------------------------------------------*/
-void NOMAD::Mads::multi_launch_single_opt
-( NOMAD::dd_type               display_degree ,
- int                          mads_runs      ,
- int                          overall_bbe    ,
- NOMAD::Multi_Obj_Evaluator & ev             ,
- int                        & stagnation_cnt ,
- NOMAD::Stats               & multi_stats    ,
- bool                       & stop           ,
- NOMAD::stop_type           & stop_reason      )
+void NOMAD::Mads::multi_launch_single_opt ( NOMAD::dd_type               display_degree ,
+                                           int                          mads_runs      ,
+                                           int                          overall_bbe    ,
+                                           NOMAD::Multi_Obj_Evaluator & ev             ,
+                                           int                        & stagnation_cnt ,
+                                           NOMAD::Stats               & multi_stats    ,
+                                           bool                       & stop           ,
+                                           NOMAD::stop_type           & stop_reason      )
 {
     // max number of bb evaluations for one MADS run:
     int max_bbe = _p.get_max_bb_eval();
@@ -613,7 +638,8 @@ void NOMAD::Mads::multi_launch_single_opt
     // displays:
     const NOMAD::Display & out = _p.out();
     
-    if ( display_degree != NOMAD::NO_DISPLAY && display_degree != NOMAD::MINIMAL_DISPLAY) {
+    if ( display_degree != NOMAD::NO_DISPLAY && display_degree != NOMAD::MINIMAL_DISPLAY)
+    {
         out << "MADS run " << std::setw(2) << cur_mads_run + 1;
         if ( mads_runs > 0 )
             out << "/" << mads_runs;
@@ -630,7 +656,8 @@ void NOMAD::Mads::multi_launch_single_opt
         single_run_stop_reason == NOMAD::UNKNOWN_STOP_REASON ||
         single_run_stop_reason == NOMAD::X0_FAIL             ||
         single_run_stop_reason == NOMAD::F_TARGET_REACHED    ||
-        single_run_stop_reason == NOMAD::P1_FAIL                ) {
+        single_run_stop_reason == NOMAD::P1_FAIL                )
+    {
         stop        = true;
         stop_reason = single_run_stop_reason;
     }
@@ -643,7 +670,8 @@ void NOMAD::Mads::multi_launch_single_opt
     int global_bbe = multi_stats.get_bb_eval();
     
     // displays:
-    if ( display_degree != NOMAD::NO_DISPLAY && display_degree != NOMAD::MINIMAL_DISPLAY) {
+    if ( display_degree != NOMAD::NO_DISPLAY && display_degree != NOMAD::MINIMAL_DISPLAY)
+    {
         
         // display basic stats on the terminated run:
         out << "... OK [bb eval="    << std::setw(3) << _stats.get_bb_eval()
@@ -653,7 +681,8 @@ void NOMAD::Mads::multi_launch_single_opt
         
         // display f1, f2, and f:
         const NOMAD::Eval_Point * bf = get_best_feasible();
-        if ( bf ) {
+        if ( bf )
+        {
             
             const NOMAD::Point & bbo = bf->get_bb_outputs();
             
@@ -696,7 +725,8 @@ void NOMAD::Mads::multi_launch_single_opt
         }
     }
     
-    if ( overall_bbe >= 0 && global_bbe >= overall_bbe ) {
+    if ( overall_bbe >= 0 && global_bbe >= overall_bbe )
+    {
         stop        = true;
         stop_reason = NOMAD::MULTI_MAX_BB_REACHED;
     }
@@ -741,30 +771,33 @@ void NOMAD::Mads::multi_launch_single_opt
 /*--------------------------------------------------------------------------*/
 void NOMAD::Mads::multi_set_min_poll_size ( const NOMAD::Point & lb        ,
                                            const NOMAD::Point & ub        ,
-                                           const NOMAD::Point & delta_p_0 ,
+                                           const NOMAD::Point & Delta_0 ,
                                            NOMAD::Double        delta_j     )
 {
-    delta_j /= sqrt ( NOMAD::Mesh::get_mesh_update_basis() );
     
-    int          n = delta_p_0.size();
-    NOMAD::Point delta_p_min (n);
     
-    for ( int i = 0 ; i < n ; ++i ) {
+    delta_j /= sqrt ( _mesh->get_update_basis() );
+    
+    int          n = Delta_0.size();
+    NOMAD::Point Delta_min (n);
+    
+    for ( int i = 0 ; i < n ; ++i )
+    {
         
         // set a relative value:
         if ( lb[i].is_defined() && ub[i].is_defined() )
-            delta_p_min[i] = delta_j * ( ub[i] - lb[i] );
+            Delta_min[i] = delta_j * ( ub[i] - lb[i] );
         
         // set an absolute value:
         else
-            delta_p_min[i] = delta_j;
+            Delta_min[i] = delta_j;
         
-        // compare to delta_p_0:
-        if ( delta_p_min[i] > delta_p_0[i] )
-            delta_p_min[i] = delta_p_0[i];
+        // compare to Delta_0:
+        if ( Delta_min[i] > Delta_0[i] )
+            Delta_min[i] = Delta_0[i];
     }
     
-    _p.set_MIN_POLL_SIZE ( delta_p_min );
+    _p.set_MIN_POLL_SIZE ( Delta_min );
 }
 
 /*---------------------------------------------------------*/
@@ -780,27 +813,31 @@ NOMAD::stop_type NOMAD::Mads::multi_run ( void )
     
 #ifdef USE_MPI
     
-	if ( NOMAD::Slave::get_nb_processes() < 2 )
-	{
-		out << NOMAD::open_block("ERROR:") << "Incorrect command to run with MPI." << std::endl
-		<< "Usage: mpirun -np p exeName" << std::endl ;
-		out << NOMAD::close_block();
-		return stop_reason;
-	}
-	
+    if ( NOMAD::Slave::get_nb_processes() < 2 )
+    {
+        out << NOMAD::open_block("ERROR:") << "Incorrect command to run with MPI." << std::endl
+        << "Usage: mpirun -np p exeName" << std::endl ;
+        out << NOMAD::close_block();
+        return stop_reason;
+    }
+    
     bool stop_slaves_here = false;
     
-    if ( NOMAD::Slave::is_master() ) {
-        if ( !NOMAD::Slave::are_running() ) {
+    if ( NOMAD::Slave::is_master() )
+    {
+        if ( !NOMAD::Slave::are_running() )
+        {
             NOMAD::Slave::init_slaves ( out );
             stop_slaves_here = true;
         }
     }
-    else {
+    else
+    {
         NOMAD::Slave s ( _p , _ev_control.get_evaluator() );
         s.run();
         return stop_reason;
     }
+    
     
 #endif
     
@@ -858,10 +895,8 @@ NOMAD::stop_type NOMAD::Mads::multi_run ( void )
                 x0s.push_back ( new Point ( *x0s_tmp[k] ) );
         }
         
-        // compute delta_p_0:
-        NOMAD::Point delta_p_0 ( _p.get_dimension() );
-        _p.get_signature()->get_mesh().get_delta_p ( delta_p_0                   ,
-                                                    _p.get_initial_mesh_index()   );
+        NOMAD::Point Delta_0 = _mesh->get_initial_poll_size ();
+        
         
         if ( display_degree != NOMAD::NO_DISPLAY && display_degree != NOMAD::MINIMAL_DISPLAY)
             out << std::endl << NOMAD::open_block ( "multi-MADS run" ) << std::endl;
@@ -905,9 +940,11 @@ NOMAD::stop_type NOMAD::Mads::multi_run ( void )
         _p.set_L_CURVE_TARGET ( NOMAD::Double() );
         
         // LH_SEARCH and MAX_BB_EVAL adjustment:
-        if ( lh_p0 > 0 ) {
+        if ( lh_p0 > 0 )
+        {
             _p.set_LH_SEARCH ( lh_p0 , 0 );
-            if ( max_bbe >= 0 ) {
+            if ( max_bbe >= 0 )
+            {
                 int bbe = max_bbe + lh_p0;
                 if ( overall_bbe >= 0 && bbe > overall_bbe )
                     bbe = overall_bbe;
@@ -923,6 +960,9 @@ NOMAD::stop_type NOMAD::Mads::multi_run ( void )
         // Pareto front initialization:
         delete _pareto_front;
         _pareto_front = new NOMAD::Pareto_Front;
+        
+        // Problem has categorical variables ? (Si why this flag is needed below)
+        bool hasCategoricalVar=_p.get_signature()->has_categorical();
         
         // initial optimizations ( minimize f1(x) or f2(x) ):
         // --------------------------------------------------
@@ -955,9 +995,11 @@ NOMAD::stop_type NOMAD::Mads::multi_run ( void )
                     _p.set_LH_SEARCH ( 0 , 0 );
                 
                 // MAX_BB_EVAL:
-                if ( max_bbe >= 0 ) {
+                if ( max_bbe >= 0 )
+                {
                     int bbe = max_bbe + ( (lh_pi > 0 ) ? lh_pi : 0 );
-                    if ( overall_bbe >= 0 ) {
+                    if ( overall_bbe >= 0 )
+                    {
                         if ( bbe > overall_bbe )
                             bbe = overall_bbe;
                         int global_bbe = multi_stats.get_bb_eval();
@@ -971,6 +1013,9 @@ NOMAD::stop_type NOMAD::Mads::multi_run ( void )
                     _p.check ( false ,    // remove_history_file  = false
                               true  ,    // remove_solution_file = true
                               true    ); // remove_stats_file    = true
+                
+                _mesh=_p.get_signature()->get_mesh();
+                
             }
             
             // set weights/reference:
@@ -1021,16 +1066,18 @@ NOMAD::stop_type NOMAD::Mads::multi_run ( void )
             // get the reference point from the Pareto front:
             ref = _pareto_front->get_ref ( xj , delta_j );
             
-            if ( !xj ) {
+            if ( !xj )
+            {
                 stop        = true;
                 stop_reason = NOMAD::MULTI_NO_PARETO_PTS;
                 break;
             }
             
             // use delta as stopping criterion:
-            if ( use_delta_crit ) {
+            if ( use_delta_crit )
+            {
                 if ( delta_j.is_defined() && delta_j > 0.0 )
-                    multi_set_min_poll_size ( lb , ub , delta_p_0 , delta_j );
+                    multi_set_min_poll_size ( lb , ub , Delta_0 , delta_j );
                 else
                     _p.set_MIN_POLL_SIZE ( original_min_poll_size );
             }
@@ -1047,7 +1094,8 @@ NOMAD::stop_type NOMAD::Mads::multi_run ( void )
             
             // a reference point has been found: optimization
             // with reference-based function:
-            if ( ref ) {
+            if ( ref )
+            {
                 
                 // set reference:
                 ev->set_ref ( ref );
@@ -1067,7 +1115,8 @@ NOMAD::stop_type NOMAD::Mads::multi_run ( void )
             }
             
             // no reference available: two optimizations ( f1(x) and f2(x) ):
-            else {
+            else
+            {
                 
                 // for the stagnation check:
                 const NOMAD::Eval_Point * pp_before;
@@ -1075,17 +1124,20 @@ NOMAD::stop_type NOMAD::Mads::multi_run ( void )
                 bool check_1 = false;
                 
                 // loop on f1 and f2:
-                for ( i = 0 ; i < 2 ; ++i ) {
+                for ( i = 0 ; i < 2 ; ++i )
+                {
                     
                     if ( stop )
                         break;
                     
                     // minimize f2:
-                    if ( i == 1 ) {
+                    if ( i == 1 )
+                    {
                         
                         // new starting point:
                         best_f2 = _pareto_front->get_best_f2();
-                        if ( best_f2 ) {
+                        if ( best_f2 )
+                        {
                             _p.set_EXTERN_SIGNATURE ( best_f2->get_signature() );
                             _p.reset_X0();
                             _p.set_X0 ( *best_f2 );
@@ -1121,11 +1173,13 @@ NOMAD::stop_type NOMAD::Mads::multi_run ( void )
                     if ( stagnation_cnt > stagnation_cnt_before &&
                         overall_bbe == overall_bbe_before      &&
                         _pareto_front->size() == 1             &&
-                        _pareto_front->begin() == pp_before       ) {
+                        _pareto_front->begin() == pp_before       )
+                    {
                         
                         if ( i == 0 )
                             check_1 = true;
-                        else if ( check_1 ) {
+                        else if ( check_1 )
+                        {
                             stop        = true;
                             stop_reason = NOMAD::MULTI_STAGNATION;
                         }
@@ -1136,18 +1190,26 @@ NOMAD::stop_type NOMAD::Mads::multi_run ( void )
         } // end of MULTI-MADS main loop
         // ---------------------------
         
+        
         // parameters re-initialization and final displays:
+        if ( ! hasCategoricalVar )  // Dimension may change when categorical variables are present. This may pose problem for the check. Hence we add a test -> when categorical variables are present, the parameters are not set back to their initial state at the end of the multi-objective optimization.
         {
             _p.reset_X0();
             size_t nx0 = x0s.size();
-            if ( nx0 > 0 ) {
-                for ( size_t k = 0 ; k < nx0 ; ++k ) {
+            if ( nx0 > 0 )
+            {
+                for ( size_t k = 0 ; k < nx0 ; ++k )
+                {
                     _p.set_X0 ( *x0s[k] );
                     delete x0s[k];
                 }
             }
             else if ( !x0_cache_file.empty() )
                 _p.set_X0 ( x0_cache_file );
+            
+            if ( use_delta_crit )
+                _p.set_MIN_POLL_SIZE ( original_min_poll_size );
+            
         }
         _p.set_MAX_BB_EVAL       ( max_bbe );
         _p.set_DISPLAY_DEGREE    ( old_dd  );
@@ -1157,8 +1219,6 @@ NOMAD::stop_type NOMAD::Mads::multi_run ( void )
         _p.set_CACHE_SAVE_PERIOD ( old_csp );
         _p.set_L_CURVE_TARGET    ( old_lct );
         
-        if ( use_delta_crit )
-            _p.set_MIN_POLL_SIZE ( original_min_poll_size );
         
         _p.check ( false ,    // remove_history_file  = false
                   true  ,    // remove_solution_file = true
@@ -1171,15 +1231,18 @@ NOMAD::stop_type NOMAD::Mads::multi_run ( void )
         _ev_control.save_caches ( true );
         
 #ifndef R_VERSION
-        if ( display_degree != NOMAD::NO_DISPLAY && display_degree != NOMAD::MINIMAL_DISPLAY) {
+        if ( display_degree != NOMAD::NO_DISPLAY && display_degree != NOMAD::MINIMAL_DISPLAY)
+        {
             std::ostringstream msg;
             msg << "end of run (" << stop_reason << ")";
             out << std::endl << NOMAD::close_block ( msg.str() ) << std::endl;
         }
 #endif
         
+        
         // multi-objective final displays:
-        if ( _p.get_nb_obj() > 1 ) {
+        if ( _p.get_nb_obj() > 1 )
+        {
             
             if ( display_degree == NOMAD::FULL_DISPLAY )
                 out.open_block ( "NOMAD final display" );
@@ -1192,7 +1255,8 @@ NOMAD::stop_type NOMAD::Mads::multi_run ( void )
         
     } // end of the try block
     
-    catch ( std::exception & e ) {
+    catch ( std::exception & e )
+    {
         
 #ifdef USE_MPI
         if ( NOMAD::Slave::are_running() )
@@ -1204,8 +1268,9 @@ NOMAD::stop_type NOMAD::Mads::multi_run ( void )
     
     // stop the slaves:
 #ifdef USE_MPI
+
     if ( NOMAD::Slave::are_running() && stop_slaves_here )
-        NOMAD::Slave::stop_slaves ( out );
+        NOMAD::Slave::stop_slaves ( out );    
 #endif
     
     return stop_reason;
@@ -1215,10 +1280,10 @@ NOMAD::stop_type NOMAD::Mads::multi_run ( void )
 /*                 one MADS iteration (private)            */
 /*---------------------------------------------------------*/
 void NOMAD::Mads::iteration ( bool                     & stop           ,
-							 NOMAD::stop_type         & stop_reason    ,
-							 NOMAD::success_type      & success        ,
-							 const NOMAD::Eval_Point *& new_feas_inc   ,
-							 const NOMAD::Eval_Point *& new_infeas_inc   )
+                             NOMAD::stop_type         & stop_reason    ,
+                             NOMAD::success_type      & success        ,
+                             const NOMAD::Eval_Point *& new_feas_inc   ,
+                             const NOMAD::Eval_Point *& new_infeas_inc   )
 {
     
     bool forbid_poll_size_stop = false;
@@ -1246,11 +1311,11 @@ void NOMAD::Mads::iteration ( bool                     & stop           ,
     
     // SEARCH:
     // -------
-	search ( stop , stop_reason , success , new_feas_inc , new_infeas_inc );
-	
+    search ( stop , stop_reason , success , new_feas_inc , new_infeas_inc );
+    
     // POLL:
     // -----
-    if ( success != NOMAD::FULL_SUCCESS )
+    if ( success != NOMAD::FULL_SUCCESS && success != NOMAD::CACHE_UPDATE_SUCCESS )
         poll ( stop                  ,
               stop_reason           ,
               success               ,
@@ -1260,19 +1325,29 @@ void NOMAD::Mads::iteration ( bool                     & stop           ,
     
     // UPDATES:
     // --------
-    int old_ell = NOMAD::Mesh::get_mesh_index();
+    
+    NOMAD::Point old_r=_mesh->get_mesh_indices();
     
     if ( !stop )
     {
         
-        // mesh update:
-        NOMAD::Mesh::update ( success );
+        // OrthogonalMesh update using success status and direction of success (when present)
+        if ( new_feas_inc )
+        {
+            _mesh=new_feas_inc->get_signature()->get_mesh();
+            _mesh->update ( success, new_feas_inc->get_direction() );
+        }
+        else if ( new_infeas_inc )
+        {
+            _mesh=new_infeas_inc->get_signature()->get_mesh();
+            _mesh->update ( success, new_infeas_inc->get_direction());
+        }
+        else
+            _mesh->update ( success );
         
-        // check the min mesh/poll sizes stopping criteria:
-        _p.get_signature()->get_mesh().check_min_mesh_sizes ( _p.get_max_mesh_index()      ,
-                                                             NOMAD::Mesh::get_mesh_index(),
-                                                             stop                         ,
-                                                             stop_reason );
+        // check the min mesh/poll sizes stopping criteria
+        _mesh->check_min_mesh_sizes( stop , stop_reason );
+        
         
         // if the Delta_k^p stopping criterion is met with integer variables,
         // the last set of directions must have a minimal coordinate of 1;
@@ -1285,10 +1360,12 @@ void NOMAD::Mads::iteration ( bool                     & stop           ,
         
         // display:
         if ( _p.out().get_iter_dd() == NOMAD::FULL_DISPLAY )
-            _p.out() << std::endl << NOMAD::open_block ( "Mesh update" )
-            << "previous mesh index: " << old_ell << std::endl
-            << "new mesh index     : " << NOMAD::Mesh::get_mesh_index() << std::endl
+        {
+            _p.out() << std::endl << NOMAD::open_block ( "OrthogonalMesh update" )
+            << "previous mesh indices: ( " << old_r << " )" << std::endl
+            << "new mesh indices     : ( " << _mesh->get_mesh_indices() << " )" << std::endl
             << NOMAD::close_block() << std::endl;
+        }
         
         // periodic cache save (overwrite=false):
         if ( _p.get_cache_save_period() > 0 &&
@@ -1337,17 +1414,8 @@ void NOMAD::Mads::iteration ( bool                     & stop           ,
     {
         bool stop_before = stop;
         
-        // C.Tribes jan 06, 2014 --- Modif to prevent dereferencing a NULL pointer
-        // BEFORE
-        //      _ev_control.get_evaluator()->update_iteration ( success        ,
-        //                                                     _stats         ,
-        //                                                     _ev_control    ,
-        //                                                     _true_barrier  ,
-        //                                                     _sgte_barrier  ,
-        //                                                     * _pareto_front,
-        //                                                     stop             );
-        // AFTER
         NOMAD::Pareto_Front * pf = ( ( _pareto_front ) ? _pareto_front:(new NOMAD::Pareto_Front) );
+        
         _ev_control.get_evaluator()->update_iteration ( success        ,
                                                        _stats         ,
                                                        _ev_control    ,
@@ -1355,10 +1423,10 @@ void NOMAD::Mads::iteration ( bool                     & stop           ,
                                                        _sgte_barrier  ,
                                                        *pf               ,
                                                        stop             );
+        
         if ( ! _pareto_front )
             delete pf;
         
-
         if ( !stop_before && stop )
             stop_reason = NOMAD::USER_STOPPED;
     }
@@ -1366,7 +1434,7 @@ void NOMAD::Mads::iteration ( bool                     & stop           ,
     // if the algorithms stops, we set the mesh index to the value
     // it had before the mesh update:
     if ( stop )
-        Mesh::set_mesh_index ( old_ell );
+        _mesh->set_mesh_indices( old_r );
     
     // displays at the end of an iteration:
     display_iteration_end ( stop           ,
@@ -1374,9 +1442,9 @@ void NOMAD::Mads::iteration ( bool                     & stop           ,
                            success        ,
                            new_feas_inc   ,
                            new_infeas_inc   );
-	
-	
-	
+    
+    
+    
     // displays:
     if ( out.get_iter_dd() == NOMAD::FULL_DISPLAY )
         out << std::endl
@@ -1387,93 +1455,90 @@ void NOMAD::Mads::iteration ( bool                     & stop           ,
 /*---------------------------------------------------------*/
 /*                       the poll (private)                */
 /*---------------------------------------------------------*/
-void NOMAD::Mads::poll ( bool         & stop                  ,
-						NOMAD::stop_type         & stop_reason           ,
-						NOMAD::success_type      & success               ,
-						const NOMAD::Eval_Point *& new_feas_inc          ,
-						const NOMAD::Eval_Point *& new_infeas_inc        ,
-						bool                     & forbid_poll_size_stop   )
+void NOMAD::Mads::poll ( bool                    & stop                  ,
+                        NOMAD::stop_type         & stop_reason           ,
+                        NOMAD::success_type      & success               ,
+                        const NOMAD::Eval_Point *& new_feas_inc          ,
+                        const NOMAD::Eval_Point *& new_infeas_inc        ,
+                        bool                     & forbid_poll_size_stop   )
 {
-	forbid_poll_size_stop = false;
-	
-	if ( stop )
-		return;
-	
-	const NOMAD::Display    & out = _p.out();
-	NOMAD::dd_type display_degree = out.get_poll_dd();
-	
-	success            = NOMAD::UNSUCCESSFUL;
-	new_feas_inc       = NULL;
-	new_infeas_inc     = NULL;
-	
-	if ( display_degree == NOMAD::FULL_DISPLAY )
-		out << std::endl << NOMAD::open_block ( "MADS poll" ) << std::endl;
-	
-	
-	const NOMAD::Eval_Point * x;
-	size_t					offset = 0;
-	
-	std::vector<NOMAD::Signature *>  signatures;
-	
-	const NOMAD::Barrier & barrier    = get_active_barrier();
-	std::list<NOMAD::Direction>::const_iterator it , end;
-	
-	
-	// poll centers:
-	const NOMAD::Eval_Point * poll_centers[2] , * poll_center;
-	poll_centers[0] = barrier.get_poll_center();
-	poll_centers[1] = (_p.use_sec_poll_center()) ?
+    forbid_poll_size_stop = false;
+    
+    if ( stop )
+        return;
+    
+    const NOMAD::Display    & out = _p.out();
+    NOMAD::dd_type display_degree = out.get_poll_dd();
+    
+    success            = NOMAD::UNSUCCESSFUL;
+    new_feas_inc       = NULL;
+    new_infeas_inc     = NULL;
+    
+    if ( display_degree == NOMAD::FULL_DISPLAY )
+        out << std::endl << NOMAD::open_block ( "MADS poll" ) << std::endl;
+    
+    
+    const NOMAD::Eval_Point * x;
+    size_t                    offset = 0;
+    
+    std::vector<NOMAD::Signature *>  signatures;
+    
+    const NOMAD::Barrier & barrier    = get_active_barrier();
+    std::list<NOMAD::Direction>::const_iterator it , end;
+    
+    
+    // poll centers:
+    const NOMAD::Eval_Point * poll_centers[2] , * poll_center;
+    poll_centers[0] = barrier.get_poll_center();
+    poll_centers[1] = (_p.use_sec_poll_center()) ?
     barrier.get_sec_poll_center() : NULL;
-	
-	if ( !poll_centers[0] && !poll_centers[1] )
-		throw NOMAD::Exception ( "Mads.cpp" , __LINE__ ,
-								"Mads::poll(): could not get a poll center" );
-	
-	
-	// Keep original directions + reduction in reducedPollDirs
-	std::list<NOMAD::Direction> *dirs=new std::list<NOMAD::Direction>[2];
-	std::list<NOMAD::Direction> *reducedPollDirs=new std::list<NOMAD::Direction>[2];
-	std::list<NOMAD::Direction>::iterator itDir;
-	
-	
-	// loop on the two poll centers for creation of evaluation point
-	// -----------------------------
-	NOMAD::poll_type i_pc = NOMAD::PRIMARY;
-	poll_center           = poll_centers[NOMAD::PRIMARY];
-	
-	bool reducePollToNDir=false;
-	
-	while ( true )
-	{
-	    if ( poll_center )
-		{
-			// add the poll center signature
-			signatures.push_back(poll_center->get_signature());
+    
+    if ( !poll_centers[0] && !poll_centers[1] )
+        throw NOMAD::Exception ( "Mads.cpp" , __LINE__ ,
+                                "Mads::poll(): could not get a poll center" );
+    
+    
+    // Keep original directions + reduction in reducedPollDirs
+    std::list<NOMAD::Direction> *dirs=new std::list<NOMAD::Direction>[2];
+    std::list<NOMAD::Direction> *reducedPollDirs=new std::list<NOMAD::Direction>[2];
+    std::list<NOMAD::Direction>::iterator itDir;
+    
+    
+    // loop on the two poll centers for creation of evaluation point
+    // -----------------------------
+    NOMAD::poll_type i_pc = NOMAD::PRIMARY;
+    poll_center           = poll_centers[NOMAD::PRIMARY];
+    
+    bool reducePollToNDir=false;
+    
+    while ( true )
+    {
+        if ( poll_center )
+        {
+            // add the poll center signature
+            signatures.push_back(poll_center->get_signature());
             
-			// Creation of the poll directions
-			set_poll_directions ( dirs[i_pc] , i_pc , offset , *poll_center , stop , stop_reason );
-			
-			// Reduction is applied only to achieve ortho n+1
-			reducePollToNDir=dirs_have_orthomads_np1(dirs[i_pc]);
-			
+            // Creation of the poll directions
+            set_poll_directions ( dirs[i_pc] , i_pc , offset , *poll_center , stop , stop_reason );
             
-			// creation of the poll trial points in the evaluator control:
-			if (reducePollToNDir)
-			{
-				
-				// Keep poll directions unchanged (store directions even those that will be snaped to bounds)
-				reducedPollDirs[i_pc].assign(dirs[i_pc].begin(),dirs[i_pc].end());
-				
-				_ev_control_for_sorting.clear_eval_lop();
-				
-				
-				// Sort the directions only if mesh is not max
-                if (NOMAD::Mesh::mesh_index_is_not_max() )
+            // Reduction is applied only to achieve ortho n+1
+            reducePollToNDir=dirs_have_orthomads_np1_dyn(dirs[i_pc]);
+            
+            // creation of the poll trial points in the evaluator control:
+            if ( reducePollToNDir )
+            {
+                
+                // Keep poll directions unchanged (store directions even those that will be snaped to bounds)
+                reducedPollDirs[i_pc].assign(dirs[i_pc].begin(),dirs[i_pc].end());
+                
+                _ev_control_for_sorting.clear_eval_lop();
+                
+                if ( ! _mesh->is_finest() )
                 {
                     
                     // 1st sorting of points based on feas. or infeas. success direction. IMPORTANT removes out of bounds -> this justifies to proceede in two steps
                     set_poll_trial_points(dirs[i_pc],offset,*poll_center,stop,stop_reason,true);
-                    if (stop)
+                    if ( stop )
                     {
                         delete[] dirs;
                         delete[] reducedPollDirs;
@@ -1498,313 +1563,321 @@ void NOMAD::Mads::poll ( bool         & stop                  ,
                     
                     // 2nd sorting of points based on model and surrogate if available
                     _ev_control_for_sorting.ordering_lop( NOMAD::POLL,stop,stop_reason,_true_barrier,_sgte_barrier  );
-                    if (stop)
+                    if ( stop )
                     {
                         delete[] dirs;
                         delete[] reducedPollDirs;
                         return;
                     }
                 }
-				
                 
-				
-				// reduce the number of poll direction using dir indices from ev_control_for_sorting and original poll directions (reducedPollDirs)
-				bool hasBeenReduced=set_reduced_poll_to_n_directions(reducedPollDirs[i_pc],*poll_center);
-				
-				
-				// if hasBeenReduced than reassign dirs for setting poll trial points (reduced)
-				// else original dirs are considered
-				if (hasBeenReduced)
-					dirs[i_pc].assign(reducedPollDirs[i_pc].begin(),reducedPollDirs[i_pc].end());
-				
-			}
-			else
-			{
-				
-				
-			}
+                
+                
+                // reduce the number of poll direction using dir indices from ev_control_for_sorting and original poll directions (reducedPollDirs)
+                bool hasBeenReduced=set_reduced_poll_to_n_directions(reducedPollDirs[i_pc],*poll_center);
+                
+                
+                // if hasBeenReduced than reassign dirs for setting poll trial points (reduced)
+                // else original dirs are considered
+                if ( hasBeenReduced )
+                    dirs[i_pc].assign(reducedPollDirs[i_pc].begin(),reducedPollDirs[i_pc].end());
+                
+            }
             
-			
-			set_poll_trial_points(dirs[i_pc],offset,*poll_center,stop,stop_reason,false);
-			offset = dirs[i_pc].size();
-			
-			if (!reducePollToNDir)
-			{
-				// 2nd sorting of points based on model and surrogate if available
-				_ev_control.ordering_lop( NOMAD::POLL,stop,stop_reason,_true_barrier,_sgte_barrier  );
-			}
+            set_poll_trial_points(dirs[i_pc],offset,*poll_center,stop,stop_reason,false);
+            offset = dirs[i_pc].size();
             
-			
-		}
-		
-		if (stop)
-		{
-			delete[] dirs;
-			delete[] reducedPollDirs;
-			return;
-		}
-		
-	    // loop increment:
-	    if ( i_pc == NOMAD::PRIMARY)
-		{
-			i_pc        = NOMAD::SECONDARY;
-			poll_center = poll_centers[NOMAD::SECONDARY];
-		}
-	    else
-			break;
-	}
-	
-	
-	// display the re-ordered list of poll trial points:
-	if ( display_degree == NOMAD::FULL_DISPLAY && !stop )
-	{
-	    const std::set<NOMAD::Priority_Eval_Point> & poll_pts = _ev_control.get_eval_lop();
-	    if (!reducePollToNDir)
-			out << std::endl << NOMAD::open_block ( "re-ordered list of "
-												   + NOMAD::itos ( poll_pts.size() )
-												   + " poll trial points." );
-	    else
-			out << std::endl << NOMAD::open_block ( "re-ordered and reduced (dynamic directions maybe added after evaluations) list of "
-												   + NOMAD::itos ( poll_pts.size() )
-												   + " poll trial points" );
-	    
-	    std::set<NOMAD::Priority_Eval_Point>::const_iterator end2 = poll_pts.end() , it2;
-	    for ( it2 = poll_pts.begin() ; it2 != end2 ; ++it2 )
-		{
-			x =  it2->get_point();
-			x->display_tag ( out );
-			out << " : ( ";
-			x->Point::display ( out , " " , 2 , NOMAD::Point::get_display_limit() );
-			out << " )";
-			if ( x->get_direction() )
-				out << " (dir " << x->get_direction()->get_index() << ")";
-			out << std::endl;
-		}
-	    out.close_block();
-	}
-	
-	
-	_stats.add_poll_pts ( _ev_control.get_nb_eval_points() );
-	
-	// the directions are checked to satisfy a minimum
-	// poll size with integer variables:
-	check_directions ( forbid_poll_size_stop );
-	
-	// eval_list_of_points (poll):
-	// ---------------------------
-	std::list<const NOMAD::Eval_Point *> *evaluated_pts=new std::list<const NOMAD::Eval_Point *>;
-	_ev_control.eval_list_of_points ( NOMAD::POLL    ,
-									 _true_barrier  ,
-									 _sgte_barrier  ,
-									 _pareto_front  ,
-									 stop           ,
-									 stop_reason    ,
-									 new_feas_inc   ,
-									 new_infeas_inc ,
-									 success        ,
-									 evaluated_pts  );
-	
-	
-	// If ortho mads n+1, complete poll with additional evaluations obtained dynamically
-	if (!stop && success !=NOMAD::FULL_SUCCESS && _p.has_dynamic_direction())
-	{
-		_ev_control.reset();
-		
-		// loop again on the two poll centers to obtain dynamic direction
-		// ---------------------------------------------------------------------------
-		i_pc = NOMAD::PRIMARY;
-		poll_center = poll_centers[NOMAD::PRIMARY];
-		offset=0;
-		while ( true )
-		{
-			if ( poll_center && dirs_have_orthomads_np1(reducedPollDirs[i_pc]))
-			{
-				std::list<NOMAD::Direction> dyn_dirs;
-				
+
+            // Intensification only after secondary (or if there is no secondary), but based on primary data
+            if ( ( _p.get_intensification_type() ==  NOMAD::POLL_ONLY || _p.get_intensification_type() == NOMAD::POLL_AND_SEARCH ) 
+                && (  (i_pc == NOMAD::SECONDARY) || (! poll_centers[NOMAD::SECONDARY]) ) )
+            {
+                size_t offset2 = dirs[NOMAD::PRIMARY].size();
+                set_poll_intensification_points( *poll_centers[NOMAD::PRIMARY], offset2, stop, stop_reason );
+            }
+            
+            if ( !reducePollToNDir )
+            {
+                // 2nd sorting of points based on model and surrogate if available
+                _ev_control.ordering_lop( NOMAD::POLL, stop, stop_reason, _true_barrier, _sgte_barrier  );
+            }
+            
+            
+        }
+        
+        if ( stop )
+        {
+            delete[] dirs;
+            delete[] reducedPollDirs;
+            return;
+        }
+        
+        // loop increment:
+        if ( i_pc == NOMAD::PRIMARY)
+        {
+            i_pc        = NOMAD::SECONDARY;
+            poll_center = poll_centers[NOMAD::SECONDARY];
+        }
+        else
+            break;
+    }
+    
+    
+    if ( display_degree == NOMAD::FULL_DISPLAY && !stop )
+    {
+        const std::set<NOMAD::Priority_Eval_Point> & poll_pts = _ev_control.get_eval_lop();
+        
+        if ( !reducePollToNDir )
+            out << std::endl << NOMAD::open_block ( "re-ordered list of "
+                                                   + NOMAD::itos ( poll_pts.size() )
+                                                   + " poll trial points." );
+        else
+            out << std::endl << NOMAD::open_block ( "re-ordered and reduced (dynamic directions may be added after evaluations) list of "
+                                                   + NOMAD::itos ( poll_pts.size() )
+                                                   + " poll trial points" );
+        
+        std::set<NOMAD::Priority_Eval_Point>::const_iterator end2 = poll_pts.end() , it2;
+        for ( it2 = poll_pts.begin() ; it2 != end2 ; ++it2 )
+        {
+            x =  it2->get_point();
+            x->display_tag ( out );
+            out << " : ( ";
+            x->Point::display ( out , " " , 2 , NOMAD::Point::get_display_limit() );
+            out << " )";
+            if ( x->get_direction() )
+                out << " (dir " << x->get_direction()->get_index() << ")";
+            out << std::endl;
+        }
+        out.close_block();
+    }
+    
+    
+    _stats.add_poll_pts ( _ev_control.get_nb_eval_points() );
+    
+    // the directions are checked to satisfy a minimum
+    // poll size with integer variables:
+    check_directions ( forbid_poll_size_stop );
+    
+    // eval_list_of_points (poll):
+    // ---------------------------
+    std::list<const NOMAD::Eval_Point *> *evaluated_pts=new std::list<const NOMAD::Eval_Point *>;
+    _ev_control.eval_list_of_points ( NOMAD::POLL    ,
+                                     _true_barrier  ,
+                                     _sgte_barrier  ,
+                                     _pareto_front  ,
+                                     stop           ,
+                                     stop_reason    ,
+                                     new_feas_inc   ,
+                                     new_infeas_inc ,
+                                     success        ,
+                                     evaluated_pts  );
+    
+    
+    // If ortho mads n+1, complete poll with additional evaluations obtained dynamically
+    if ( !stop && success != NOMAD::FULL_SUCCESS && success != NOMAD::CACHE_UPDATE_SUCCESS && _p.has_dynamic_direction() )
+    {
+        _ev_control.reset();
+        
+        // loop again on the two poll centers to obtain dynamic direction
+        // ---------------------------------------------------------------------------
+        i_pc = NOMAD::PRIMARY;
+        poll_center = poll_centers[NOMAD::PRIMARY];
+        offset=0;
+        while ( true )
+        {
+            if ( poll_center && NOMAD::Mads::dirs_have_orthomads_np1_dyn( reducedPollDirs[i_pc] ) )
+            {
+                std::list<NOMAD::Direction> dyn_dirs;
+                
 #ifdef USE_MPI
-				// asynchronous mode: wait for the evaluations in progress:
-				if ( _p.get_asynchronous() )
-				{
-					_ev_control.wait_for_evaluations ( NOMAD::ASYNCHRONOUS ,
-													  _true_barrier       ,
-													  _sgte_barrier       ,
-													  _pareto_front       ,
-													  stop                ,
-													  stop_reason         ,
-													  success             ,
-													  *evaluated_pts         );
-				}
+                // asynchronous mode: wait for the evaluations in progress:
+                if ( _p.get_asynchronous() )
+                {
+                    _ev_control.wait_for_evaluations ( NOMAD::ASYNCHRONOUS ,
+                                                      _true_barrier       ,
+                                                      _sgte_barrier       ,
+                                                      _pareto_front       ,
+                                                      stop                ,
+                                                      stop_reason         ,
+                                                      success             ,
+                                                      *evaluated_pts         );
+                }
 #endif
                 
-				bool hasNewDynDir=get_dynamic_directions (reducedPollDirs[i_pc],
+                bool hasNewDynDir=get_dynamic_directions (reducedPollDirs[i_pc],
                                                           dyn_dirs,
                                                           *poll_center);
-				
-				
-				// Set new poll points obtained dynamically
-				if (hasNewDynDir)
-				{
-					set_poll_trial_points(dyn_dirs,
-										  offset,
-										  *poll_center,
-										  stop,
-										  stop_reason,
-										  false);
-					
-					if (stop)
-					{
-						delete evaluated_pts;
-						delete[] dirs;
-						delete[] reducedPollDirs;
-						return;
-					}
-				}
-				offset = dyn_dirs.size();
-			}
-			// loop increment:
-			if ( i_pc == NOMAD::PRIMARY )
-			{
-				i_pc = NOMAD::SECONDARY;
-				poll_center = poll_centers[NOMAD::SECONDARY];
-			}
-			else
-				break;
-		}
-		
- 		if ( display_degree == NOMAD::FULL_DISPLAY )
-		{
-			const std::set<NOMAD::Priority_Eval_Point> & poll_pts = _ev_control.get_eval_lop();
-			out << std::endl << NOMAD::open_block ( "re-ordered and complete (dynamic directions added) list of "
-												   + NOMAD::itos ( poll_pts.size() )
-												   + " poll trial points" );
-			
-			std::set<NOMAD::Priority_Eval_Point>::const_iterator end2 = poll_pts.end() , it2;
-			for ( it2 = poll_pts.begin() ; it2 != end2 ; ++it2 ) {
-				x =  it2->get_point();
-				x->display_tag ( out );
-				out << " : ( ";
-				x->Point::display ( out , " " , 2 , NOMAD::Point::get_display_limit() );
-				out << " )";
-				if ( x->get_direction() )
-					out << " (dir " << x->get_direction()->get_index() << ")";
-				out << std::endl;
-			}
-			out.close_block();
-		}
-		
-		
-		
-		
-		// Eval additional point(s) :
-		// ---------------------------
-		_ev_control.eval_list_of_points ( NOMAD::POLL    ,
-										 _true_barrier  ,
-										 _sgte_barrier  ,
-										 _pareto_front  ,
-										 stop           ,
-										 stop_reason    ,
-										 new_feas_inc   ,
-										 new_infeas_inc ,
-										 success        );
-		
-		if (success==NOMAD::FULL_SUCCESS)
-			_stats.add_nb_success_dyn_dir();
-		
-	}
-	
-	delete evaluated_pts;
-	delete[] dirs;
-	delete[] reducedPollDirs;
-	
-	
-	// extended poll for categorical variables:
-	// ----------------------------------------
-	if ( !stop                          &&
-		_extended_poll                  &&
-		success != NOMAD::FULL_SUCCESS  &&
-		_p.get_extended_poll_enabled()    ) {
-		
-		// display:
-		if ( display_degree == NOMAD::FULL_DISPLAY )
-			out << std::endl << NOMAD::open_block ( "MADS extended poll" ) << std::endl;
-   		
+                
+                
+                // Set new poll points obtained dynamically
+                if (hasNewDynDir)
+                {
+                    set_poll_trial_points(dyn_dirs,
+                                          offset,
+                                          *poll_center,
+                                          stop,
+                                          stop_reason,
+                                          false);
+                    
+                    if (stop)
+                    {
+                        delete evaluated_pts;
+                        delete[] dirs;
+                        delete[] reducedPollDirs;
+                        return;
+                    }
+                }
+                offset = dyn_dirs.size();
+            }
+            // loop increment:
+            if ( i_pc == NOMAD::PRIMARY )
+            {
+                i_pc = NOMAD::SECONDARY;
+                poll_center = poll_centers[NOMAD::SECONDARY];
+            }
+            else
+                break;
+        }
+        
+        if ( display_degree == NOMAD::FULL_DISPLAY )
+        {
+            const std::set<NOMAD::Priority_Eval_Point> & poll_pts = _ev_control.get_eval_lop();
+            out << std::endl << NOMAD::open_block ( "re-ordered and complete (dynamic directions added) list of "
+                                                   + NOMAD::itos ( poll_pts.size() )
+                                                   + " poll trial points" );
+            
+            std::set<NOMAD::Priority_Eval_Point>::const_iterator end2 = poll_pts.end() , it2;
+            for ( it2 = poll_pts.begin() ; it2 != end2 ; ++it2 )
+            {
+                x =  it2->get_point();
+                x->display_tag ( out );
+                out << " : ( ";
+                x->Point::display ( out , " " , 2 , NOMAD::Point::get_display_limit() );
+                out << " )";
+                if ( x->get_direction() )
+                    out << " (dir " << x->get_direction()->get_index() << ")";
+                out << std::endl;
+            }
+            out.close_block();
+        }
+        
+        
+        
+        
+        // Eval additional point(s) :
+        // ---------------------------
+        _ev_control.eval_list_of_points ( NOMAD::POLL    ,
+                                         _true_barrier  ,
+                                         _sgte_barrier  ,
+                                         _pareto_front  ,
+                                         stop           ,
+                                         stop_reason    ,
+                                         new_feas_inc   ,
+                                         new_infeas_inc ,
+                                         success        );
+        
+        if ( success == NOMAD::FULL_SUCCESS )
+            _stats.add_nb_success_dyn_dir ();
+        
+    }
+    
+    delete evaluated_pts;
+    delete[] dirs;
+    delete[] reducedPollDirs;
+    
+    
+    // extended poll for categorical variables:
+    // ----------------------------------------
+    if ( !stop                          &&
+        _extended_poll                  &&
+        success != NOMAD::FULL_SUCCESS  &&
+        _p.get_extended_poll_enabled()    )
+    {
+        
+        // display:
+        if ( display_degree == NOMAD::FULL_DISPLAY )
+            out << std::endl << NOMAD::open_block ( "MADS extended poll" ) << std::endl;
+        
 #ifdef USE_MPI
-		// asynchronous mode: wait for the evaluations in progress:
-		if ( _p.get_asynchronous() ) {
-			std::list<const NOMAD::Eval_Point *> evaluated_pts;
-			_ev_control.wait_for_evaluations ( NOMAD::ASYNCHRONOUS ,
-											  _true_barrier       ,
-											  _sgte_barrier       ,
-											  _pareto_front       ,
-											  stop                ,
-											  stop_reason         ,
-											  success             ,
-											  evaluated_pts         );
-		}
+        // asynchronous mode: wait for the evaluations in progress:
+        if ( _p.get_asynchronous() )
+        {
+            std::list<const NOMAD::Eval_Point *> evaluated_pts;
+            _ev_control.wait_for_evaluations ( NOMAD::ASYNCHRONOUS ,
+                                              _true_barrier       ,
+                                              _sgte_barrier       ,
+                                              _pareto_front       ,
+                                              stop                ,
+                                              stop_reason         ,
+                                              success             ,
+                                              evaluated_pts         );
+        }
 #endif
-		
-		// reset the extended poll object:
-		_extended_poll->poll_reset();
-		
-		// call the user defined method changing the categorical variables
-		// (this creates the list of extended poll points):
-		_extended_poll->construct_extended_points ( *barrier.get_poll_center() );
-		
-		// add the signatures in use to the list of poll signatures:
-		{
-			const std::set<NOMAD::Signature_Element> &
-			tmp = _extended_poll->get_poll_signatures();
-			std::set<NOMAD::Signature_Element>::const_iterator it , end = tmp.end();
-			for ( it = tmp.begin() ; it != end ; ++it )
-				signatures.push_back ( it->get_signature() );
-		}
-		
-		// execute the extended poll:
-		int nb_ext_poll_pts;
-		_extended_poll->run ( *this           ,
-							 nb_ext_poll_pts ,
-							 stop            ,
-							 stop_reason     ,
-							 success         ,
-							 new_feas_inc    ,
-							 new_infeas_inc    );
-		
-		// stats updates:
-		_stats.add_ext_poll_pts ( nb_ext_poll_pts );
-		if ( success == NOMAD::FULL_SUCCESS )
-			_stats.add_ext_poll_succ();
-		_stats.add_nb_ext_polls();
-		
-		// display:
-		if ( display_degree == NOMAD::FULL_DISPLAY )
-			out << std::endl << NOMAD::close_block ( "end of extended poll" ) << std::endl;
-	}
-	
-	// stats updates:
-	if ( success == NOMAD::FULL_SUCCESS )
-		_stats.add_poll_success();
-	
-	_stats.add_nb_poll_searches();
-	
-	// success directions (feasible and infeasible):
-	update_success_directions ( new_feas_inc   , true  );
-	update_success_directions ( new_infeas_inc , false );
-	
+        
+        // reset the extended poll object:
+        _extended_poll->poll_reset();
+        
+        // call the user defined method changing the categorical variables
+        // (this creates the list of extended poll points):
+        _extended_poll->construct_extended_points ( *barrier.get_poll_center() );
+        
+        // add the signatures in use to the list of poll signatures:
+        {
+            const std::set<NOMAD::Signature_Element> &
+            tmp = _extended_poll->get_poll_signatures();
+            std::set<NOMAD::Signature_Element>::const_iterator it , end = tmp.end();
+            for ( it = tmp.begin() ; it != end ; ++it )
+                signatures.push_back ( it->get_signature() );
+        }
+        
+        // execute the extended poll:
+        int nb_ext_poll_pts;
+        _extended_poll->run ( *this           ,
+                             nb_ext_poll_pts ,
+                             stop            ,
+                             stop_reason     ,
+                             success         ,
+                             new_feas_inc    ,
+                             new_infeas_inc    );
+        
+        
+        
+        // stats updates:
+        _stats.add_ext_poll_pts ( nb_ext_poll_pts );
+        if ( success == NOMAD::FULL_SUCCESS )
+            _stats.add_ext_poll_succ();
+        _stats.add_nb_ext_polls();
+        
+        // display:
+        if ( display_degree == NOMAD::FULL_DISPLAY )
+            out << std::endl << NOMAD::close_block ( "end of extended poll" ) << std::endl;
+    }
+    
+    // stats updates:
+    if ( success == NOMAD::FULL_SUCCESS || success == NOMAD::CACHE_UPDATE_SUCCESS )
+        _stats.add_poll_success();
+    
+    _stats.add_nb_poll_searches();
+    
+    // success directions (feasible and infeasible):
+    update_success_directions ( new_feas_inc   , true  );
+    update_success_directions ( new_infeas_inc , false );
+    
 #ifdef DEBUG
-	if ( !new_feas_inc && !new_infeas_inc )
-		out << "No new feasible or infeasible incumbent"  << std::endl << std::endl;
+    if ( !new_feas_inc && !new_infeas_inc )
+        out << "No new feasible or infeasible incumbent"  << std::endl << std::endl;
 #endif
-	
-	// check the PEB constraints: if we have a new best infeasible
-	// incumbent from another infeasible incumbent
-	// ( active_barrier.check_PEB_constraints() ):
-	if (	_p.get_barrier_type() == NOMAD::PEB_P && new_infeas_inc &&
-		new_infeas_inc->get_poll_center_type() == NOMAD::INFEASIBLE )
-		( ( _p.get_opt_only_sgte() ) ?  _sgte_barrier : _true_barrier ).check_PEB_constraints( *new_infeas_inc , display_degree==NOMAD::FULL_DISPLAY );
-	
-	// final display:
-	if ( display_degree == NOMAD::FULL_DISPLAY )
-		out << NOMAD::close_block ( "end of poll" );
+    
+    // check the PEB constraints: if we have a new best infeasible
+    // incumbent from another infeasible incumbent
+    // ( active_barrier.check_PEB_constraints() ):
+    if (    _p.get_barrier_type() == NOMAD::PEB_P && new_infeas_inc &&
+        new_infeas_inc->get_poll_center_type() == NOMAD::INFEASIBLE )
+        ( ( _p.get_opt_only_sgte() ) ?  _sgte_barrier : _true_barrier ).check_PEB_constraints( *new_infeas_inc , display_degree==NOMAD::FULL_DISPLAY );
+    
+    // final display:
+    if ( display_degree == NOMAD::FULL_DISPLAY )
+        out << NOMAD::close_block ( "end of poll" );
 }
 
 /*---------------------------------------------------------*/
@@ -1814,138 +1887,165 @@ void NOMAD::Mads::poll ( bool         & stop                  ,
 /*---------------------------------------------------------*/
 // A direction group corresponds to a variable group having directions.
 // A variable group of categorical variables does not possess directions.
-bool NOMAD::Mads::set_reduced_poll_to_n_directions(std::list<NOMAD::Direction>	& dirs,
-												   const NOMAD::Eval_Point		& poll_center)
+bool NOMAD::Mads::set_reduced_poll_to_n_directions(std::list<NOMAD::Direction>    & dirs,
+                                                   const NOMAD::Eval_Point        & poll_center)
 {
-	NOMAD::Signature * cur_signature=poll_center.get_signature();
-	size_t n = _p.get_nb_free_variables() ;
-	size_t n_cat=cur_signature->get_n_categorical();
-	
-	// Verify that enough directions for reduction are provided
-	if (dirs.size()<n-n_cat)
-		return false;
-	
-	// Maximum number of direction groups
-	std::list<NOMAD::Direction>::iterator itDirs;
-	size_t maxDirGroupIndex=0;
-	size_t dgi;
-	for (itDirs=dirs.begin();itDirs!=dirs.end() ; ++itDirs)
-	{
-		dgi=(*itDirs).get_dir_group_index();
-		if (dgi>maxDirGroupIndex) maxDirGroupIndex=dgi;
-	}
-	
-	
-	// Loop on each direction group
-	for (dgi=0;dgi<=maxDirGroupIndex;++dgi)
-	{
+    
+    // get the number of free variables using the signature (because of extended poll and changing signature)
+    NOMAD::Signature * cur_signature = poll_center.get_signature();
+    size_t n = cur_signature->get_n()-cur_signature->get_nb_fixed_variables() ;
+    
+    // No direction for categorical variables
+    size_t n_cat = cur_signature->get_n_categorical();
+    
+    // Verify that enough directions for reduction are provided
+    if ( dirs.size()<n-n_cat )
+        return false;
+    
+    // Maximum number of direction groups
+    std::list<NOMAD::Direction>::iterator itDirs;
+    size_t maxDirGroupIndex=0;
+    size_t dgi;
+    for (itDirs=dirs.begin();itDirs!=dirs.end() ; ++itDirs)
+    {
+        dgi=(*itDirs).get_dir_group_index();
+        if (dgi>maxDirGroupIndex) maxDirGroupIndex=dgi;
+    }
+    
+    std::list<NOMAD::Direction> TmpDirs(dirs);
+    dirs.clear();
+    
+    
+    // Loop on each direction group
+    for (dgi=0;dgi<=maxDirGroupIndex;++dgi)
+    {
         
-		// Get all poll directions with a given direction group index + Get a vector of unique indices for those directions
-		std::vector<NOMAD::Direction> pollDirs;
-		std::vector<int> pollDirIndices;
-		bool containsOrthoMads=false;
-		for (itDirs=dirs.begin();itDirs!=dirs.end() ; ++itDirs)
-		{
-			if ((*itDirs).get_dir_group_index()==dgi)
-			{
-				pollDirs.push_back(*itDirs);
-				pollDirIndices.push_back((*itDirs).get_index());
-				if (!containsOrthoMads)
-					containsOrthoMads=NOMAD::dir_is_orthomads((*itDirs).get_type());
-			}
-		}
-		
-		
-		// Sorted directions only if mesh_index_is_not_max
-		std::vector<NOMAD::Direction> sortedDirs(pollDirs);
-		if ( NOMAD::Mesh::mesh_index_is_not_max())
-		{
-			
-			const std::set<NOMAD::Priority_Eval_Point> & LOP=_ev_control_for_sorting.get_eval_lop();
-			
-			if ( LOP.size()==0 )
-				throw NOMAD::Exception ( "Mads.cpp" , __LINE__ ,
-										"Mads::set_reduced_poll_to_n_directions(): the _ev_control_for_sorting does not have a list of evaluation points." );
-			
+        // Get all poll directions with a given direction group index + Get a vector of unique indices for those directions
+        std::vector<NOMAD::Direction> pollDirs;
+        std::vector<int> pollDirIndices;
+        bool containsOrthoMads=false;
+        for (itDirs=TmpDirs.begin();itDirs!=TmpDirs.end() ; ++itDirs)
+        {
+            if ( static_cast<size_t>((*itDirs).get_dir_group_index()) == dgi )
+            {
+                pollDirs.push_back(*itDirs);
+                pollDirIndices.push_back((*itDirs).get_index());
+                if (!containsOrthoMads)
+                    containsOrthoMads=NOMAD::dir_is_orthomads((*itDirs).get_type());
+            }
+        }
+        
+        
+        std::list<NOMAD::Direction> sortedDirs;
+        std::list<NOMAD::Direction>::iterator itSortedDirs;
+        
+        // Sort the directions only if mesh is not finest
+        if ( !_mesh->is_finest() )
+        {
             
-			// Get all directions from ev_control ordered lop (list of evaluation points) with a given direction group index and given poll center
-			// Get a vector of unique indices for those directions
-			std::vector<int> sortedDirIndices;
-			std::set<NOMAD::Priority_Eval_Point>::const_iterator citLOP;
-			for (citLOP=LOP.begin();citLOP!=LOP.end();++citLOP)
-			{
-				const NOMAD::Eval_Point *eval_point=(*citLOP).get_point();
-				if (eval_point->get_direction()->get_dir_group_index()==dgi &&
-					*(eval_point->get_poll_center())==poll_center)
-				{
-					sortedDirIndices.push_back(eval_point->get_direction()->get_index());
-				}
+            const std::set<NOMAD::Priority_Eval_Point> & LOP=_ev_control_for_sorting.get_eval_lop();
+            
+            if ( LOP.size()==0 )
+                throw NOMAD::Exception ( "Mads.cpp" , __LINE__ ,
+                                        "Mads::set_reduced_poll_to_n_directions(): the _ev_control_for_sorting does not have a list of evaluation points." );
+            
+            
+            // Get all directions from ev_control ordered lop (list of evaluation points) with a given direction group index and given poll center
+            // Get a set of unique indices of those directions
+            std::list<int> sortedDirIndices;
+            std::set<int> indices;
+            std::list<int>::iterator itSortedDirIndices;
+            std::set<NOMAD::Priority_Eval_Point>::const_iterator citLOP;
+            for (citLOP=LOP.begin();citLOP!=LOP.end();++citLOP)
+            {
+                const NOMAD::Eval_Point *eval_point=(*citLOP).get_point();
+                if ( static_cast<size_t>(eval_point->get_direction()->get_dir_group_index()) == dgi &&
+                    *(eval_point->get_poll_center())==poll_center)
+                {
+                    int index=eval_point->get_direction()->get_index();
+                    if ( indices.size() == 0 || indices.find(index) == indices.end()  )  // if the index is already in indices no need to add it in sortedDirIndices to avoid duplicate.
+                        sortedDirIndices.push_back(index);
+                    indices.insert(index); // If the index is already in the set IT IS NOT INSERTED  --> set of unique sort integers
+                    
+                }
                 
-			}
-			
-			if ( sortedDirIndices.size()==0 )
-				throw NOMAD::Exception ( "Mads.cpp" , __LINE__ ,
-										"Mads::set_reduced_poll_to_n_directions(): no directions with proper group index available from _ev_control_for_sorting!" );
-			
-			// A direction from _ev_control may have been suppressed if it does not satisfy bound constraint and is not snapped to bounds
-			// --> complete sorted direction with remaining directions in poll dirs
-			//
-			// 2 - Add poll directions (from tmpDirs) in the same order as sorted direction indices (from ev_control)
-			std::vector<int>::iterator itSortedDirIndices,itPollDirIndices;
-			std::vector<NOMAD::Direction>::iterator itPollDirs=pollDirs.begin();
-			size_t pos,maxPos=0;
-			for (itPollDirIndices=pollDirIndices.begin();itPollDirIndices!=pollDirIndices.end();++itPollDirIndices,++itPollDirs)
-			{
-				itSortedDirIndices=std::find(sortedDirIndices.begin(),sortedDirIndices.end(),(*itPollDirIndices));
-				if (itSortedDirIndices!=sortedDirIndices.end())
-				{
-					pos=distance(sortedDirIndices.begin(),itSortedDirIndices);
-					sortedDirs[pos]=*itPollDirs;
-					if (pos > maxPos) maxPos=pos;
-				}
-				else  // Handle the case where poll direction not in sorted directions
-					sortedDirs[maxPos+1]=*itPollDirs;
-			}
-		}
-		
-		// Make a spanning set of directions (this is slightly different Ortho n+1 paper but still we have the garantee that Dk grows asymptotically dense because D^o_k has not been sorted if mesh_index_is_max)
-		// Sequentially add sorted directions that increase the rank in two situations:
-		// - If mesh_index_is_not_max -> consider all directions for adding -> n directions
-		// - If mesh index_is_max but some ORTHO MADS directions are present -> only consider ortho mads dir for adding -> n directions
-		// - Else, all directions are considered -> more than n directions
-		// See paper Ortho n+1 paper for details
-		std::vector<NOMAD::Direction>::iterator itSortedDirs;
-		dirs.clear();
-		size_t currentRank=0;
-		for (itSortedDirs=sortedDirs.begin();itSortedDirs!=sortedDirs.end();++itSortedDirs)
-		{
-			dirs.push_back(*itSortedDirs);
-			
-			if (NOMAD::Mesh::mesh_index_is_not_max() || (!NOMAD::Mesh::mesh_index_is_not_max() && containsOrthoMads))
-			{
-				size_t rank=get_rank_from_dirs(dirs);
-				if (rank>currentRank && rank<=n-n_cat && NOMAD::dir_is_orthomads((*itSortedDirs).get_type()))
-					currentRank++;
-				else
-					dirs.pop_back();
-			}
-		}
+            }
+            
+            if ( sortedDirIndices.size()==0 )
+                throw NOMAD::Exception ( "Mads.cpp" , __LINE__ ,
+                                        "Mads::set_reduced_poll_to_n_directions(): no directions with proper group index available from _ev_control_for_sorting!" );
+            
+            // A direction from _ev_control may have been suppressed if it does not satisfy bound constraint and is not snapped to bounds
+            // --> complete sorted direction with remaining directions in poll dirs
+            //
+            // 2 - Add poll directions (from tmpDirs) in the same order as sorted direction indices (from ev_control)
+            std::vector<int>::iterator itPollDirIndices;
+            std::vector<NOMAD::Direction>::iterator itPollDirs=pollDirs.begin();
+            size_t pos;
+            for ( itSortedDirIndices = sortedDirIndices.begin() ; itSortedDirIndices != sortedDirIndices.end() ; ++itSortedDirIndices)
+            {
+                itPollDirIndices=find(pollDirIndices.begin(),pollDirIndices.end(),*itSortedDirIndices);
+                if ( itPollDirIndices!=pollDirIndices.end() )
+                {
+                    pos=distance(pollDirIndices.begin(),itPollDirIndices);
+                    itPollDirs=pollDirs.begin();
+                    std::advance(itPollDirs,pos);
+                    sortedDirs.push_back(*itPollDirs);
+                }
+            }
+            // 3 - complete with remaining pollDirs directions
+            if ( sortedDirs.size() != pollDirs.size() )
+            {
+                itPollDirs=pollDirs.begin();
+                for ( itPollDirIndices = pollDirIndices.begin() ; itPollDirIndices != pollDirIndices.end() ; ++itPollDirIndices,++itPollDirs)
+                {
+                    itSortedDirIndices=find(sortedDirIndices.begin(),sortedDirIndices.end(),*itPollDirIndices);
+                    if ( itSortedDirIndices == sortedDirIndices.end() )
+                        // Handle the case where poll direction not in sorted directions --> put it at the end
+                        sortedDirs.push_back(*itPollDirs);
+                }
+            }
+            
+        }
+        else
+            sortedDirs.assign(pollDirs.begin(),pollDirs.end());
         
-		
-	}
-	const NOMAD::Display    & out = _p.out();
-	NOMAD::dd_type display_degree = out.get_poll_dd();
-	if ( dirs.size()!=n-n_cat )
-	{
-		if (display_degree == NOMAD::FULL_DISPLAY )
-		{
-			out << std::endl << NOMAD::open_block ( "The number of reduced directions is lower than n-n_categorical: ");
-			out << dirs.size() << std::endl;
-			out << NOMAD::close_block();
-		}
-		return false;
-	}
-	return true;
+        // Make a spanning set of directions (this is slightly different Ortho n+1 paper but still we have the garantee that Dk grows asymptotically dense because D^o_k has not been sorted if mesh_index_is_max)
+        // Sequentially add sorted directions that increase the rank in two situations:
+        // - If mesh is not finest -> consider all directions for adding -> n directions
+        // - If mesh is finest but some ORTHO MADS directions are present -> only consider ortho mads dir for adding -> n directions
+        // - Else, all directions are considered -> more than n directions
+        // See paper Ortho n+1 paper for details
+        
+        size_t currentRank=get_rank_from_dirs(dirs);
+        for (itSortedDirs=sortedDirs.begin();itSortedDirs!=sortedDirs.end();++itSortedDirs)
+        {
+            dirs.push_back(*itSortedDirs);
+            if ( !_mesh->is_finest() || ( _mesh->is_finest() && containsOrthoMads))
+            {
+                size_t rank=get_rank_from_dirs(dirs);
+                if (rank>currentRank && rank<=n-n_cat && NOMAD::dir_is_orthomads((*itSortedDirs).get_type()))
+                    currentRank++;
+                else
+                    dirs.pop_back();
+            }
+        }
+        
+        
+    }
+    const NOMAD::Display    & out = _p.out();
+    NOMAD::dd_type display_degree = out.get_poll_dd();
+    if ( dirs.size()!=n-n_cat )
+    {
+        if (display_degree == NOMAD::FULL_DISPLAY )
+        {
+            out << std::endl << NOMAD::open_block ( "The number of reduced directions is lower than n-n_categorical: ");
+            out << dirs.size() << ". No reduction is performed." << std::endl;
+            out << NOMAD::close_block();
+        }
+        return false;
+    }
+    return true;
 }
 
 /*----------------------------------------------------------------*/
@@ -1953,31 +2053,34 @@ bool NOMAD::Mads::set_reduced_poll_to_n_directions(std::list<NOMAD::Direction>	&
 /*----------------------------------------------------------------*/
 int NOMAD::Mads::get_rank_from_dirs(const std::list<NOMAD::Direction> & dirs)
 {
-	if (dirs.size()==0)
-		return 0;
-	
-	std::list<NOMAD::Direction>::const_iterator it=dirs.begin();
-	size_t m=(*it).size();
-	size_t n=dirs.size();
-	
-	double ** M = new double *[m];
-	for (size_t i=0 ; i<m ; ++i ) {
-		it=dirs.begin();
-		M[i] = new double[n];
-		for (size_t j = 0 ; j < n ; ++j ){
-			M[i][j] = (*it)[static_cast<int>(i)].value() ;
-			++it;
-		}
-	}
-	
-	int rank=NOMAD::get_rank(M,m,n);
-	
-	for (size_t i = 0 ; i < m ; ++i ) {
-		delete[] M[i];
-	}
-	delete[] M;
-	return rank;
-	
+    if (dirs.size()==0)
+        return 0;
+    
+    std::list<NOMAD::Direction>::const_iterator it=dirs.begin();
+    size_t m=(*it).size();
+    size_t n=dirs.size();
+    
+    double ** M = new double *[m];
+    for (size_t i=0 ; i<m ; ++i )
+    {
+        it=dirs.begin();
+        M[i] = new double[n];
+        for (size_t j = 0 ; j < n ; ++j )
+        {
+            M[i][j] = (*it)[static_cast<int>(i)].value() ;
+            ++it;
+        }
+    }
+    
+    int rank=NOMAD::get_rank(M,m,n);
+    
+    for (size_t i = 0 ; i < m ; ++i )
+    {
+        delete[] M[i];
+    }
+    delete[] M;
+    return rank;
+    
 }
 
 /*---------------------------------------------------------------------------------------*/
@@ -1988,362 +2091,347 @@ bool NOMAD::Mads::optimize_quad_model ( const NOMAD::Eval_Point           & poll
                                        const std::list<NOMAD::Direction> & dirs    ,
                                        NOMAD::Point                      & prospect_point    )
 {
-	const NOMAD::Display & out = _p.out();
-	
-	// surrogate or truth model evaluations:
-	NOMAD::eval_type ev_type =
+    const NOMAD::Display & out = _p.out();
+    
+    // surrogate or truth model evaluations:
+    NOMAD::eval_type ev_type =
     ( _p.get_opt_only_sgte() ) ? NOMAD::SGTE : NOMAD::TRUTH;
-	
-	// active cache:
-	const NOMAD::Cache & cache = get_cache();
-	
-	// mesh index and poll size:
-	int mesh_index = NOMAD::Mesh::get_mesh_index();
-	NOMAD::Point delta_p,delta_m;
-	NOMAD::Signature * signature=poll_center.get_signature();
-	signature->get_mesh().get_delta_p ( delta_p , mesh_index );
-	signature->get_mesh().get_delta_m ( delta_m , mesh_index );
-	
-	// compute the interpolation radius: points in Y must be at
-	// a max distance of ms_radius_factor times Delta^p_k:
-	NOMAD::Point interpolation_radius = delta_p;
-	interpolation_radius *= _p.get_model_quad_radius_factor();
-	
-	// Epsilon for quad model hypercube scaling
-	NOMAD::Double epsilon = _p.get_model_np1_quad_epsilon();
+    
+    // active cache:
+    const NOMAD::Cache & cache = get_cache();
+    
+    NOMAD::Point delta,Delta;
+    NOMAD::Signature * signature=poll_center.get_signature();
+    _mesh->get_delta ( delta );
+    _mesh->get_Delta ( Delta );
+    
+    // compute the interpolation radius: points in Y must be at
+    // a max distance of ms_radius_factor times Delta^k:
+    NOMAD::Point interpolation_radius = Delta;
+    interpolation_radius *= _p.get_model_quad_radius_factor();
+    
+    
+    // Epsilon for quad model hypercube scaling
+    NOMAD::Double epsilon = _p.get_model_np1_quad_epsilon();
     
 #ifdef DEBUG
-	out << std::endl << NOMAD::open_block ( "Quadratic model for (n+1)th prospect point") << std::endl
-	<< "model construction for " << ev_type << std::endl
-	<< "nbr of cache pts: "      << cache.size()                 << std::endl
-	<< "mesh index      : "      << mesh_index                   << std::endl
-	<< "poll center     : ( "    << poll_center          << " )" << std::endl
-	<< "poll size       : ( "    << delta_p              << " )" << std::endl
-	<< "interpol. radius: ( "    << interpolation_radius << " )" << std::endl
-	<< "epsilon hypercube: ( "   << epsilon    << " )" << std::endl;;
+    out << std::endl << NOMAD::open_block ( "Quadratic model for (n+1)th prospect point") << std::endl
+    << "model construction for " << ev_type << std::endl
+    << "nbr of cache pts: "      << cache.size()                 << std::endl
+    << "mesh indices    : ( "    << _mesh->get_mesh_indices ()   << " )" << std::endl
+    << "poll center     : ( "    << poll_center          << " )" << std::endl
+    << "poll size       : ( "    << Delta                << " )" << std::endl
+    << "interpol. radius: ( "    << interpolation_radius << " )" << std::endl
+    << "epsilon hypercube: ( "   << epsilon    << " )" << std::endl;;
 #endif
-	
-	
-	// creation of the model for all bb outputs:
-	std::vector<NOMAD::bb_output_type> bbot = _p.get_bb_output_type();
-	NOMAD::Quad_Model  model ( out , bbot , cache , *signature );
-	NOMAD::Model_Stats tmp_stats;
-	NOMAD::Clock       clock;
-	
-	// flag to detect model or optimization errors:
-	bool error = true;
-	
-	// construct interpolation set Y:
-	int min_Y_size = _p.get_model_quad_min_Y_size();
-	int max_Y_size = _p.get_model_quad_max_Y_size();
-	
-	model.construct_Y ( poll_center , interpolation_radius , max_Y_size );
-	
-	int nY = model.get_nY();
+    
+    
+    // creation of the model for all bb outputs:
+    std::vector<NOMAD::bb_output_type> bbot = _p.get_bb_output_type();
+    NOMAD::Quad_Model  model ( out , bbot , cache , *signature );
+    NOMAD::Model_Stats tmp_stats;
+    NOMAD::Clock       clock;
+    
+    // flag to detect model or optimization errors:
+    bool error = true;
+    
+    // construct interpolation set Y:
+    int min_Y_size = _p.get_model_quad_min_Y_size();
+    int max_Y_size = _p.get_model_quad_max_Y_size();
+    
+    model.construct_Y ( poll_center , interpolation_radius , max_Y_size );
+    
+    int nY = model.get_nY();
     
 #ifdef DEBUG
-	out << std::endl << "number of points in Y: " << nY;
-	if ( nY < 2 || ( min_Y_size < 0 && nY <= model.get_nfree() ) )
-		out << " (not enough)";
-	out << std::endl;
+    out << std::endl << "number of points in Y: " << nY;
+    if ( nY < 2 || ( min_Y_size < 0 && nY <= model.get_nfree() ) )
+        out << " (not enough)";
+    out << std::endl;
 #endif
-	
-	if ( nY < 2 || ( min_Y_size < 0 && nY <= model.get_nfree() ) )
-		tmp_stats.add_not_enough_pts();
-	else
-	{
+    
+    if ( nY < 2 || ( min_Y_size < 0 && nY <= model.get_nfree() ) )
+        tmp_stats.add_not_enough_pts();
+    else
+    {
 #ifdef DEBUG
-		out << std::endl;
-		model.display_Y ( out , "unscaled interpolation set Y" );
+        out << std::endl;
+        model.display_Y ( out , "unscaled interpolation set Y" );
 #endif
-		
-		// define scaling with rotation: obtain an hypercube [0,1]^n formed by truncated directions
-		model.define_scaling_by_directions ( dirs, delta_m,epsilon);
-		
-#ifdef DEBUG
-		out << std::endl;
-		model.display_Y ( out , "scaled interpolation set Ys" );
-#endif
-		
-		// error check:
-		if ( model.get_error_flag() )
-			tmp_stats.add_construction_error();
         
-		// no model error:
-		else {
-			
-			// construct model:
-			model.construct ( _p.get_model_quad_use_WP() , NOMAD::SVD_EPS , NOMAD::SVD_MAX_MPN , max_Y_size );
-			tmp_stats.add_construction_time ( clock.get_CPU_time() );
-			tmp_stats.update_nY ( model.get_nY() );
-			
-			// display model characteristics:
+        // define scaling with rotation: obtain an hypercube [0,1]^n formed by truncated directions
+        model.define_scaling_by_directions ( dirs, delta ,epsilon);
+        
 #ifdef DEBUG
-			out << std::endl;
-			model.display_model_coeffs ( out );
-			out << std::endl;
-			model.display_Y_error ( out );
+        out << std::endl;
+        model.display_Y ( out , "scaled interpolation set Ys" );
 #endif
-			
+        
+        // error check:
+        if ( model.get_error_flag() )
+            tmp_stats.add_construction_error();
+        
+        // no model error:
+        else
+        {
             
-			// count model:
-			if ( ev_type == NOMAD::TRUTH )
-				tmp_stats.add_nb_truth();
-			else
-				tmp_stats.add_nb_sgte();
-			
-			switch ( model.get_interpolation_type() )
-			{
-				case NOMAD::MFN:
-					tmp_stats.add_nb_MFN();
-					break;
-				case NOMAD::WP_REGRESSION:
-					tmp_stats.add_nb_WP_regression();
-					break;
-				case NOMAD::REGRESSION:
-					tmp_stats.add_nb_regression();
-					break;
-				default:
-					break;
-			}
-			
-			// check model error flag:
-			const NOMAD::Double & cond = model.get_cond();
-			if ( model.get_error_flag()     ||
-				!cond.is_defined()         ||
-				cond > NOMAD::SVD_MAX_COND    )
-			{
-				if ( model.get_error_flag() )
-					tmp_stats.add_construction_error();
-				else
-					tmp_stats.add_bad_cond();
-			}
-			else
-			{
-				int         n     = model.get_n();
-				std::string error_str;
-				int         i;
-				
-				// initial displays:
-				if ( _p.get_display_degree() == NOMAD::FULL_DISPLAY )
-				{
-					std::ostringstream oss;
-					oss << "Quad model optimization for prospect point";
-					out << std::endl << NOMAD::open_block ( oss.str() );
-				}
-				
-				// parameters creation:
-				NOMAD::Parameters model_param ( out );
-				
-				// random seed:
-				model_param.set_SEED ( _p.get_seed() + 10 );
-				
-				// number of variables:
-				model_param.set_DIMENSION ( n );
-				
-				// blackbox outputs:
-				model_param.set_BB_OUTPUT_TYPE ( bbot );
-				
-				
-				// barrier parameters:
-				model_param.set_H_MIN  ( _p.get_h_min () );
-				model_param.set_H_NORM ( _p.get_h_norm() );
-				
-				// starting points:
-				model_param.set_X0 ( NOMAD::Point ( n , 500.0 ) );
-                
-				// fixed variables:
-				for ( i = 0 ; i < n ; ++i )
-					if ( model.variable_is_fixed(i) || _p.variable_is_fixed(i) )
-						model_param.set_FIXED_VARIABLE(i);
-				
-				// no model search and no model ordering:
-				model_param.set_MODEL_SEARCH        ( false );
-				model_param.set_MODEL_EVAL_SORT     ( false );
-				model_param.set_DIRECTION_TYPE (NOMAD::ORTHO_2N);   // use 2N for model search rather than the default Ortho n+1
-				
-				// display:
-				model_param.set_DISPLAY_DEGREE ( NOMAD::NO_DISPLAY );
-				
-				// mesh:
-				int mesh_index       = NOMAD::Mesh::get_mesh_index();
-				int min_mesh_index   = NOMAD::Mesh::get_min_mesh_index();
-				int max_mesh_index   = NOMAD::Mesh::get_max_mesh_index();
-				int max_halton_index = NOMAD::Mesh::get_max_halton_index();
-				
-				NOMAD::Mesh::init ( 4.0 , 1 , -1 , 0 );
-				
-				model_param.set_INITIAL_MESH_SIZE ( NOMAD::Point ( n , 100.0 ) );
-				
-				// maximum number of evaluations:
-				model_param.set_MAX_BB_EVAL ( 50000 );
-				
-				model_param.set_SNAP_TO_BOUNDS ( true );
-				
-				// disable user calls:
-				model_param.set_USER_CALLS_ENABLED ( false );
-				
-				// set flags:
-				bool flag_check_bimads , flag_reset_mesh , flag_reset_barriers , flag_p1_active;
-				NOMAD::Mads::get_flags ( flag_check_bimads   ,
-										flag_reset_mesh     ,
-										flag_reset_barriers ,
-										flag_p1_active        );
-				
-				NOMAD::Mads::set_flag_check_bimads  (false  );
-				NOMAD::Mads::set_flag_reset_mesh     ( true  );
-				NOMAD::Mads::set_flag_reset_barriers ( true  );
-				NOMAD::Mads::set_flag_p1_active      ( false );
-				
-				// bounds to optimize away from n first direction
-				// Bound are consistent with model evaluator: x in [0;1000] for optimziation -> x in [-1;1] for model evaluation
-				NOMAD::Point lb ( n , 0.0 );
-				NOMAD::Point ub ( n ,  1000.0 );
-				model_param.set_LOWER_BOUND ( lb );
-				model_param.set_UPPER_BOUND ( ub );
-                
-				try
-				{
-					
-					// parameters validation:
-					model_param.check();
-					
-					// model evaluator creation:
-					NOMAD::Evaluator *ev;
-					
-					if ( model_param.get_nb_obj() == 2)
-						ev =new NOMAD::Multi_Obj_Quad_Model_Evaluator ( model_param , model );
-					else
-						ev=new NOMAD::Single_Obj_Quad_Model_Evaluator ( model_param , model );
-					
-					// algorithm creation and execution:
-					NOMAD::Mads    mads ( model_param , ev );
-                    
-					NOMAD::Phase_One_Evaluator * p1ev=NULL;
-					if ( model_param.get_nb_obj() >= 2 && ! flag_check_bimads )
-					{
-						p1ev   = new NOMAD::Phase_One_Evaluator ( model_param , *ev );
-						mads.get_evaluator_control().set_evaluator ( p1ev );
-					}
-					NOMAD::stop_type st = mads.run();
-                    
-					delete ev;
-					if (p1ev)
-						delete p1ev;
-                    
-					// reset flags:
-					NOMAD::Mads::set_flag_check_bimads   ( flag_check_bimads   );
-					NOMAD::Mads::set_flag_reset_mesh     ( flag_reset_mesh     );
-					NOMAD::Mads::set_flag_reset_barriers ( flag_reset_barriers );
-					NOMAD::Mads::set_flag_p1_active      ( flag_p1_active      );
-					
-					// reset mesh to what it was before:
-					NOMAD::Mesh::init ( _p.get_mesh_update_basis().value() ,
-									   _p.get_mesh_coarsening_exponent()  ,
-									   _p.get_mesh_refining_exponent()    ,
-									   _p.get_initial_mesh_index()          );
-					
-					NOMAD::Mesh::set_max_halton_index ( max_halton_index );
-					NOMAD::Mesh::set_mesh_index     ( mesh_index );
-					NOMAD::Mesh::set_min_mesh_index ( min_mesh_index );
-					NOMAD::Mesh::set_max_mesh_index ( max_mesh_index );
-					
-					
-					// check the stopping criterion:
-					if ( st == NOMAD::CTRL_C || st == NOMAD::MAX_CACHE_MEMORY_REACHED ) {
-						std::ostringstream oss;
-						oss << "quad model optimization for prospect point: " << st;
-						error_str   = oss.str();
-						error       = true;
-					}
-					
-					// display solution:
-					if ( _p.get_display_degree() == NOMAD::FULL_DISPLAY )
-					{
-						NOMAD::Display out_tmp = out;
-						out_tmp.set_degrees ( NOMAD::NORMAL_DISPLAY );
-						out_tmp.open_block("Optimization results");
-						mads.display ( out_tmp );
-					}
-					
-					// get the solution(s):
-					const NOMAD::Eval_Point * best_feas   = mads.get_best_feasible  ();
-					const NOMAD::Eval_Point * best_infeas = mads.get_best_infeasible();
-					
-					
-					if ( best_infeas )
-					{
-						prospect_point  = *best_infeas;
-						prospect_point *= 0.001;
-						model.unscale ( prospect_point );
-						
-						if ( _p.get_display_degree() == NOMAD::FULL_DISPLAY )
-						{
-							out << "best infeasible point before unscaling: ( ";
-							prospect_point.NOMAD::Point::display ( out );
-							out << " )" << std::endl;
-						}
-						
-						
-					}
-					else if ( _p.get_display_degree() == NOMAD::FULL_DISPLAY )
-						out << "no infeasible solution" << std::endl;
-					
-					
-					if ( best_feas )
-					{
-						prospect_point  = *best_feas;
-						prospect_point *= 0.001;
-						model.unscale ( prospect_point );
-						if ( _p.get_display_degree() == NOMAD::FULL_DISPLAY )
-						{
-							out << "best feasible point after unscaling  : ( ";
-							prospect_point.NOMAD::Point::display ( out );
-							out << " )" << std::endl;
-						}
-						
-					}
-					else if ( _p.get_display_degree() == NOMAD::FULL_DISPLAY )
-						out << "no feasible solution" << std::endl;
-					
-					
-					if ( !prospect_point.is_defined() )
-					{
-						error     = true;
-						error_str = "optimization error: no solution";
-					}
-					else
-						error=false;
-				}
-				catch ( std::exception & e )
-				{
-					error     = true;
-					error_str = std::string ( "optimization error: " ) + e.what();
-					throw NOMAD::Exception ( "Mads.cpp" , __LINE__ , error_str );
-				}
-			}
-		}
-	}
-	
-	// update the stats:
-	_stats.update_model_stats ( tmp_stats );
-	
-	if ( _p.get_display_degree() == NOMAD::FULL_DISPLAY )
-	{
-		out << std::endl << "Prospect point. from quad. model: ";
-		if ( !error)
-			out << "( " << prospect_point << " )" << std::endl;
-		else
-			out << "failure" << std::endl;
-        
-		out << NOMAD::close_block() << std::endl;
-	}
-	
+            
+            // construct model:
+            model.construct ( _p.get_model_quad_use_WP() , NOMAD::SVD_EPS , NOMAD::SVD_MAX_MPN , max_Y_size );
+            tmp_stats.add_construction_time ( clock.get_CPU_time() );
+            tmp_stats.update_nY ( model.get_nY() );
+            
+            // display model characteristics:
 #ifdef DEBUG
-	out << NOMAD::close_block() << std::endl;
+            out << std::endl;
+            model.display_model_coeffs ( out );
+            out << std::endl;
+            model.display_Y_error ( out );
 #endif
-	
-	return !error;
+            
+            
+            // count model:
+            if ( ev_type == NOMAD::TRUTH )
+                tmp_stats.add_nb_truth();
+            else
+                tmp_stats.add_nb_sgte();
+            
+            switch ( model.get_interpolation_type() )
+            {
+                case NOMAD::MFN:
+                    tmp_stats.add_nb_MFN();
+                    break;
+                case NOMAD::WP_REGRESSION:
+                    tmp_stats.add_nb_WP_regression();
+                    break;
+                case NOMAD::REGRESSION:
+                    tmp_stats.add_nb_regression();
+                    break;
+                default:
+                    break;
+            }
+            
+            // check model error flag:
+            const NOMAD::Double & cond = model.get_cond();
+            if ( model.get_error_flag()     ||
+                !cond.is_defined()         ||
+                cond > NOMAD::SVD_MAX_COND    )
+            {
+                if ( model.get_error_flag() )
+                    tmp_stats.add_construction_error();
+                else
+                    tmp_stats.add_bad_cond();
+            }
+            else
+            {
+                int         n     = model.get_n();
+                std::string error_str;
+                int         i;
+                
+                // initial displays:
+                if ( _p.get_display_degree() == NOMAD::FULL_DISPLAY )
+                {
+                    std::ostringstream oss;
+                    oss << "Quad model optimization for prospect point";
+                    out << std::endl << NOMAD::open_block ( oss.str() );
+                }
+                
+                // parameters creation:
+                NOMAD::Parameters model_param ( out );
+                
+                // number of variables:
+                model_param.set_DIMENSION ( n );
+                
+                // blackbox outputs:
+                model_param.set_BB_OUTPUT_TYPE ( bbot );
+                
+                // barrier parameters:
+                model_param.set_H_MIN  ( _p.get_h_min () );
+                model_param.set_H_NORM ( _p.get_h_norm() );
+                
+                // starting points:
+                model_param.set_X0 ( NOMAD::Point ( n , 500.0 ) );
+                
+                // fixed variables:
+                for ( i = 0 ; i < n ; ++i )
+                    if ( model.variable_is_fixed(i) || _p.variable_is_fixed(i) )
+                        model_param.set_FIXED_VARIABLE(i);
+                
+                // no model search and no model ordering:
+                model_param.set_MODEL_SEARCH        ( false );
+                model_param.set_MODEL_EVAL_SORT     ( false );
+                model_param.set_DIRECTION_TYPE (NOMAD::ORTHO_2N);   // use 2N for model search rather than the default Ortho n+1
+                
+                // display:
+                model_param.set_DISPLAY_DEGREE ( NOMAD::NO_DISPLAY );
+                
+                // mesh: use isotropic mesh
+                model_param.set_ANISOTROPIC_MESH ( false );
+                model_param.set_MESH_UPDATE_BASIS ( 4.0 );
+                model_param.set_MESH_COARSENING_EXPONENT ( 1 );
+                model_param.set_MESH_REFINING_EXPONENT ( -1 );
+                model_param.set_INITIAL_MESH_INDEX ( 0 );
+                model_param.set_INITIAL_MESH_SIZE ( NOMAD::Point ( n , 100.0 ) );
+                
+                // maximum number of evaluations:
+                model_param.set_MAX_BB_EVAL ( 50000 );
+                
+                model_param.set_SNAP_TO_BOUNDS ( true );
+                
+                // disable user calls:
+                model_param.set_USER_CALLS_ENABLED ( false );
+                
+                // set flags:
+                bool flag_check_bimads , flag_reset_mesh , flag_reset_barriers , flag_p1_active;
+                NOMAD::Mads::get_flags ( flag_check_bimads   ,
+                                        flag_reset_mesh     ,
+                                        flag_reset_barriers ,
+                                        flag_p1_active        );
+                
+                NOMAD::Mads::set_flag_check_bimads  (false  );
+                NOMAD::Mads::set_flag_reset_mesh     ( true  );
+                NOMAD::Mads::set_flag_reset_barriers ( true  );
+                NOMAD::Mads::set_flag_p1_active      ( false );
+                
+                // bounds to optimize away from n first direction
+                // Bound are consistent with model evaluator: x in [0;1000] for optimziation -> x in [-1;1] for model evaluation
+                NOMAD::Point lb ( n , 0.0 );
+                NOMAD::Point ub ( n ,  1000.0 );
+                model_param.set_LOWER_BOUND ( lb );
+                model_param.set_UPPER_BOUND ( ub );
+                
+                try
+                {
+                    
+                    // parameters validation:
+                    model_param.check();
+                    
+                    // model evaluator creation:
+                    NOMAD::Evaluator *ev;
+                    if (model_param.get_nb_obj()==2)
+                        ev =new NOMAD::Multi_Obj_Quad_Model_Evaluator( model_param , model );
+                    else
+                        ev=new NOMAD::Single_Obj_Quad_Model_Evaluator( model_param , model );
+                    
+                    // algorithm creation and execution:
+                    NOMAD::Mads    mads ( model_param , ev );
+                    
+                    NOMAD::Phase_One_Evaluator * p1ev=NULL;
+                    if ( model_param.get_nb_obj() >= 2 && ! flag_check_bimads )
+                    {
+                        p1ev   = new NOMAD::Phase_One_Evaluator ( model_param , *ev );
+                        mads.get_evaluator_control().set_evaluator ( p1ev );
+                    }
+                    NOMAD::stop_type st = mads.run();
+                    
+                    
+                    delete ev;
+                    if (p1ev)
+                        delete p1ev;
+                    
+                    // reset flags:
+                    NOMAD::Mads::set_flag_check_bimads   ( flag_check_bimads   );
+                    NOMAD::Mads::set_flag_reset_mesh     ( flag_reset_mesh     );
+                    NOMAD::Mads::set_flag_reset_barriers ( flag_reset_barriers );
+                    NOMAD::Mads::set_flag_p1_active      ( flag_p1_active      );
+                    
+                    
+                    // check the stopping criterion:
+                    if ( st == NOMAD::CTRL_C || st == NOMAD::MAX_CACHE_MEMORY_REACHED )
+                    {
+                        std::ostringstream oss;
+                        oss << "quad model optimization for prospect point: " << st;
+                        error_str   = oss.str();
+                        error       = true;
+                    }
+                    
+                    // display solution:
+                    if ( _p.get_display_degree() == NOMAD::FULL_DISPLAY )
+                    {
+                        NOMAD::Display out_tmp = out;
+                        out_tmp.set_degrees ( NOMAD::NORMAL_DISPLAY );
+                        out_tmp.open_block("Optimization results");
+                        mads.display ( out_tmp );
+                    }
+                    
+                    // get the solution(s):
+                    const NOMAD::Eval_Point * best_feas   = mads.get_best_feasible  ();
+                    const NOMAD::Eval_Point * best_infeas = mads.get_best_infeasible();
+                    
+                    
+                    if ( best_infeas )
+                    {
+                        prospect_point  = *best_infeas;
+                        prospect_point *= 0.001;
+                        model.unscale ( prospect_point );
+                        
+                        if ( _p.get_display_degree() == NOMAD::FULL_DISPLAY )
+                        {
+                            out << "best infeasible point before unscaling: ( ";
+                            prospect_point.NOMAD::Point::display ( out );
+                            out << " )" << std::endl;
+                        }
+                        
+                        
+                    }
+                    else if ( _p.get_display_degree() == NOMAD::FULL_DISPLAY )
+                        out << "no infeasible solution" << std::endl;
+                    
+                    
+                    if ( best_feas )
+                    {
+                        prospect_point  = *best_feas;
+                        prospect_point *= 0.001;
+                        model.unscale ( prospect_point );
+                        if ( _p.get_display_degree() == NOMAD::FULL_DISPLAY )
+                        {
+                            out << "best feasible point after unscaling  : ( ";
+                            prospect_point.NOMAD::Point::display ( out );
+                            out << " )" << std::endl;
+                        }
+                        
+                    }
+                    else if ( _p.get_display_degree() == NOMAD::FULL_DISPLAY )
+                        out << "no feasible solution" << std::endl;
+                    
+                    
+                    if ( !prospect_point.is_defined() )
+                    {
+                        error     = true;
+                        error_str = "optimization error: no solution";
+                    }
+                    else
+                        error=false;
+                }
+                catch ( std::exception & e )
+                {
+                    error     = true;
+                    error_str = std::string ( "optimization error: " ) + e.what();
+                    throw NOMAD::Exception ( "Mads.cpp" , __LINE__ , error_str );
+                }
+            }
+        }
+    }
+    
+    // update the stats:
+    _stats.update_model_stats ( tmp_stats );
+    
+    if ( _p.get_display_degree() == NOMAD::FULL_DISPLAY )
+    {
+        out << std::endl << "Prospect point. from quad. model: ";
+        if ( !error)
+            out << "( " << prospect_point << " )" << std::endl;
+        else
+            out << "failure" << std::endl;
+        
+        out << NOMAD::close_block() << std::endl;
+    }
+    
+#ifdef DEBUG
+    out << NOMAD::close_block() << std::endl;
+#endif
+    
+    return !error;
 }
 
 
@@ -2352,92 +2440,220 @@ bool NOMAD::Mads::optimize_quad_model ( const NOMAD::Eval_Point           & poll
 /*----------------------------------------------------------------*/
 void NOMAD::Mads::set_poll_directions ( std::list<NOMAD::Direction> & dirs        ,
                                        NOMAD::poll_type              i_pc        ,
-                                       size_t                           offset      ,
+                                       size_t                        offset      ,
                                        const NOMAD::Eval_Point     & poll_center ,
                                        bool                        & stop        ,
                                        NOMAD::stop_type            & stop_reason   )
 {
-	const NOMAD::Display    & out = _p.out();
-	NOMAD::dd_type display_degree = out.get_poll_dd();
-	
-	std::list<NOMAD::Direction>::const_iterator it , end;
-	
-	if ( display_degree == NOMAD::FULL_DISPLAY )
-	{
-		if ( i_pc == NOMAD::SECONDARY )
-			out << "secondary ";
-		out << "poll center: ( ";
-		poll_center.Point::display ( out, " ", 2, NOMAD::Point::get_display_limit() );
-		out << " )" << std::endl;
-	}
-	
-	// get the poll center's signature:
-	NOMAD::Signature * cur_signature = poll_center.get_signature();
-	
-	if ( !cur_signature )
-		throw NOMAD::Exception ( "Mads.cpp" , __LINE__ ,
-								"Mads::poll(): could not get the poll center's signature" );
-	
-	int n = cur_signature->get_n();
-	
-	if ( n != poll_center.size() )
-		throw NOMAD::Exception ( "Mads.cpp" , __LINE__ ,
-								"Mads::poll(): the poll center has an incompatible signature" );
-	
-	// get directions from the signature:
-	cur_signature->get_directions ( dirs                          ,
-								   i_pc                          ,
-								   poll_center                   ,
-								   NOMAD::Mesh::get_mesh_index()   );
-	
-	size_t k = 0;
-	for ( it = dirs.begin() ; it != dirs.end() ; ++it, k++ )
-		it->set_index ( static_cast<int>(offset + k) );
-	
-	if ( !stop && dirs.empty() )
-	{
-		if ( display_degree == NOMAD::FULL_DISPLAY )
-			out << "Mads::poll(): could not get directions: stop"
-			<< std::endl << NOMAD::close_block() << std::endl;
-		stop        = true;
-		stop_reason = NOMAD::MESH_PREC_REACHED;
-		return;
-		
-	}
-	
-	
-	// displays:
-	if ( display_degree == NOMAD::FULL_DISPLAY )
-	{
-		end = dirs.end();
-		
-		int nb_dirs = static_cast<int>(dirs.size());
-		
-		out << std::endl
-		<< NOMAD::open_block ( "poll directions (include mesh size parameter)" );
-		for ( it = dirs.begin() ; it != end ; ++it )
-		{
-			out << "dir ";
-			out.display_int_w ( (*it).get_index() , nb_dirs );
-			out << " : " << *it << std::endl;
-		}
-		out.close_block();
-	}
+    const NOMAD::Display    & out = _p.out();
+    NOMAD::dd_type display_degree = out.get_poll_dd();
+    
+    std::list<NOMAD::Direction>::const_iterator it , end;
+    
+    if ( display_degree == NOMAD::FULL_DISPLAY )
+    {
+        if ( i_pc == NOMAD::SECONDARY )
+            out << "secondary ";
+        out << "poll center: ( ";
+        poll_center.Point::display ( out, " ", 2, NOMAD::Point::get_display_limit() );
+        out << " )" << std::endl;
+    }
+    
+    // get the poll center's signature:
+    NOMAD::Signature * cur_signature = poll_center.get_signature();
+    
+    if ( !cur_signature )
+        throw NOMAD::Exception ( "Mads.cpp" , __LINE__ ,
+                                "Mads::set_poll_directions(): could not get the poll center's signature" );
+    
+    int n = cur_signature->get_n();
+    
+    if ( n != poll_center.size() )
+        throw NOMAD::Exception ( "Mads.cpp" , __LINE__ ,
+                                "Mads::set_poll_directions(): the poll center has an incompatible signature" );
+    
+    
+    // get directions from the signature:
+    cur_signature->get_directions ( dirs       ,
+                                   i_pc        ,
+                                   poll_center );
+    
+    size_t k = 0;
+    for ( it = dirs.begin() ; it != dirs.end() ; ++it, ++k )
+        it->set_index ( static_cast<int>(offset + k) );
+    
+    
+    
+    if ( !stop && dirs.empty() )
+    {
+        if ( display_degree == NOMAD::FULL_DISPLAY )
+            out << "Mads::set_poll_directions(): could not get directions: stop"
+            << std::endl << NOMAD::close_block() << std::endl;
+        stop        = true;
+        stop_reason = NOMAD::MESH_PREC_REACHED;
+        return;
+        
+    }
+    
+    
+    // displays:
+    if ( display_degree == NOMAD::FULL_DISPLAY )
+    {
+        end = dirs.end();
+        
+        int nb_dirs = static_cast<int>(dirs.size());
+        
+        out << std::endl
+        << NOMAD::open_block ( "poll directions (include mesh size parameter)" );
+        for ( it = dirs.begin() ; it != end ; ++it )
+        {
+            out << "dir ";
+            out.display_int_w ( (*it).get_index() , nb_dirs );
+            out << " : " << *it << std::endl;
+        }
+        out.close_block();
+    }
+}
+
+/*----------------------------------------------------------------*/
+/*     set the poll intensification points  (private)                       */
+/*----------------------------------------------------------------*/
+void NOMAD::Mads::set_poll_intensification_points ( const NOMAD::Eval_Point     & poll_center ,
+                                                   size_t &                     offset        ,
+                                                   bool                        & stop        ,
+                                                   NOMAD::stop_type            & stop_reason   )
+{
+    const NOMAD::Display    & out = _p.out();
+    NOMAD::dd_type display_degree = out.get_poll_dd();
+    
+    std::list<NOMAD::Direction>::const_iterator it , end;
+    
+    
+    // get the poll center's signature:
+    NOMAD::Signature * cur_signature = poll_center.get_signature();
+    
+    if ( !cur_signature )
+        throw NOMAD::Exception ( "Mads.cpp" , __LINE__ ,
+                                "Mads::set_poll_intensification_points(): could not get the poll center's signature" );
+    
+    int n = cur_signature->get_n();
+    
+    if ( n != poll_center.size() )
+        throw NOMAD::Exception ( "Mads.cpp" , __LINE__ ,
+                                "Mads::set_poll_intensification_points(): the poll center has an incompatible signature" );
+    
+    // Number of eval points already submitted for polling
+    int n_eval_sub = _ev_control.get_nb_eval_points();
+    
+    // Number of extra intensification points
+    int n_max_size_poll_set = cur_signature->get_max_size_poll_set();
+    int n_eval_tot = std::min( n_max_size_poll_set , _p.get_max_eval_intensification() );
+    int n_extra = n_eval_tot - n_eval_sub ;
+
+    // if n_extra is negative, and intensification > 1, then increase n_extra
+    // Note that here, I assume that max_block_size and max_eval_intensification are equal.
+    if (_p.get_max_eval_intensification()>1)
+    {
+      while (n_extra<0) n_extra += _p.get_max_eval_intensification();
+    }
+
+
+    if ( display_degree == NOMAD::FULL_DISPLAY && n_extra > 0 )
+    {
+        out << std::endl << NOMAD::open_block ( "Poll intensification: " )<< std::endl;
+        
+        if ( n_extra == n_max_size_poll_set )
+            out << "reduced to max size of poll set"<< std::endl;
+        out << "target number of poll points: " << n_extra << std::endl;
+    }
+    if ( display_degree == NOMAD::FULL_DISPLAY && n_extra <= 0 )
+    {
+        out << std::endl << NOMAD::open_block ( "No poll intensification" )<< std::endl;
+        out << close_block();
+    }
+    
+    if ( n_extra <= 0 )
+        return;
+    
+    
+    // Loop for adding extra points
+    size_t k = offset;
+    int n_tries = 0;
+    int n_eval_cur = _ev_control.get_nb_eval_points();
+
+    while (  (n_eval_cur < n_eval_sub+n_extra) && (n_tries < 2 * n_extra) )
+    {
+        
+        NOMAD::Direction dir( n, 0.0, NOMAD::UNDEFINED_DIRECTION );
+        std::list<NOMAD::Direction> dirs;
+        
+        n_tries++;
+        
+        // get a direction for a randomly selected variable group
+        cur_signature->get_variable_group_direction ( dir, poll_center );
+        
+        if ( dir.is_complete() )
+        {
+            dir.set_type( NOMAD::ORTHO_1 );
+            dir.set_index ( static_cast<int>( k++ ) );
+            
+            offset++;
+            
+            dirs.push_back(dir);
+        }
+        
+        
+        if ( display_degree == NOMAD::FULL_DISPLAY )
+        {
+            if ( ! dir.is_defined() )
+                out << "dir "<<k-1<<" : null" << std::endl ;
+            else
+                out << "dir "<<k-1<<" : " << dir << std::endl;
+        }
+        
+        if ( dirs.size() !=0 )
+            set_poll_trial_points( dirs, offset, poll_center, stop, stop_reason, false );
+        
+        int n_eval_tmp = _ev_control.get_nb_eval_points();
+        
+        if ( n_eval_cur == n_eval_tmp )
+        {
+            k--;
+            if ( display_degree == NOMAD::FULL_DISPLAY )
+                out << "reinsert a point"<< std::endl;
+        }
+        else
+            n_eval_cur = n_eval_tmp;
+    }
+    
+    if ( _ev_control.get_nb_eval_points() < n_eval_tot && display_degree == NOMAD::FULL_DISPLAY )
+        out << "cannot reach the target number of points" <<std::endl;
+    
+    if ( display_degree == NOMAD::FULL_DISPLAY )
+        out.close_block();
+    
+    // Failed intensification cannot stop algo. Force the stop to be false.
+    stop = false;
+    stop_reason = NOMAD::NO_STOP;
+    
+    
+    
 }
 
 
-/*----------------------------------------------------------------------------------*/
-/*  check if a set of directions includes one Ortho-MADS N+1 direction (private)    */
-/*  (true if at least one direction in the set is of type Ortho-MADS N+1)           */
-/*----------------------------------------------------------------------------------*/
-bool NOMAD::Mads::dirs_have_orthomads_np1( const std::list<NOMAD::Direction> & dirs)
+
+/*------------------------------------------------------------------------------------------*/
+/*  check if a set of directions includes one Ortho-MADS N+1 dynamic direction (private)    */
+/*  (true if at least one direction in the set is of type Ortho-MADS N+1)                   */
+/*------------------------------------------------------------------------------------------*/
+bool NOMAD::Mads::dirs_have_orthomads_np1_dyn( const std::list<NOMAD::Direction> & dirs)
 {
-	std::list<NOMAD::Direction>::const_iterator it , end = dirs.end();
-	for ( it = dirs.begin() ; it != end ; ++it )
-		if ( (*it).get_type()==NOMAD::ORTHO_NP1_QUAD ||
-			(*it).get_type()==NOMAD::ORTHO_NP1_NEG)
-			return true;
-	return false;
+    std::list<NOMAD::Direction>::const_iterator it , end = dirs.end();
+    for ( it = dirs.begin() ; it != end ; ++it )
+        if ( (*it).get_type()==NOMAD::ORTHO_NP1_QUAD ||
+            (*it).get_type()==NOMAD::ORTHO_NP1_NEG)
+            return true;
+    return false;
 }
 
 
@@ -2447,11 +2663,11 @@ bool NOMAD::Mads::dirs_have_orthomads_np1( const std::list<NOMAD::Direction> & d
 /*-------------------------------------------------------------------------*/
 bool NOMAD::Mads::dir_from_model_opt( const std::list<NOMAD::Direction> & dirs)
 {
-	std::list<NOMAD::Direction>::const_iterator it , end = dirs.end();
-	for ( it = dirs.begin() ; it != end ; ++it )
-		if ( (*it).get_type()!=NOMAD::ORTHO_NP1_QUAD )
-			return false;
-	return true;
+    std::list<NOMAD::Direction>::const_iterator it , end = dirs.end();
+    for ( it = dirs.begin() ; it != end ; ++it )
+        if ( (*it).get_type()!=NOMAD::ORTHO_NP1_QUAD )
+            return false;
+    return true;
 }
 
 
@@ -2460,262 +2676,285 @@ bool NOMAD::Mads::dir_from_model_opt( const std::list<NOMAD::Direction> & dirs)
 /*   set the poll trial points based on poll directions (private) */
 /*----------------------------------------------------------------*/
 void NOMAD::Mads::set_poll_trial_points (std::list<NOMAD::Direction> &dirs,
-										 size_t offset,
-										 const NOMAD::Eval_Point & poll_center,
-										 bool & stop,
-										 NOMAD::stop_type &stop_reason,
-										 bool sorting)
+                                         size_t offset,
+                                         const NOMAD::Eval_Point & poll_center,
+                                         bool & stop,
+                                         NOMAD::stop_type &stop_reason,
+                                         bool sorting)
 {
-	int mesh_index = NOMAD::Mesh::get_mesh_index();
-	NOMAD::Signature * cur_signature=poll_center.get_signature();
-	NOMAD::poll_center_type pc_type=( poll_center.is_feasible ( _p.get_h_min() ) ) ? NOMAD::FEASIBLE : NOMAD::INFEASIBLE;
-	
-	int n = cur_signature->get_n();
-	int m = _p.get_bb_nb_outputs();
-	const std::vector<NOMAD::bb_input_type> & bbit = _p.get_bb_input_type();
-	
-	std::list<NOMAD::Direction>::const_iterator it;
-	
-	const NOMAD::Direction                    * dir;
-	NOMAD::Eval_Point                         * pt;
-	
-	const NOMAD::Display    & out = _p.out();
-	NOMAD::dd_type display_degree = out.get_poll_dd();
-	
-	
-	int k=0;
-	for ( it = dirs.begin() ; it != dirs.end() ; ++it )
-	{
-		dir = &(*it);
-		pt = new NOMAD::Eval_Point ( n , m );
-		
-		// pt = poll_center + dir: with a particular case for binary variables
-		// equal to 1 with dir=1: the variables are set to 0 (1+1=0 in binary):
-		for (int i = 0 ; i < n ; ++i )
-			(*pt)[i] =	( bbit[i]==NOMAD::BINARY && (*dir)[i]==1.0 && (poll_center)[i]==1.0 ) ? 0.0 : (*pt)[i] = (poll_center)[i] + (*dir)[i];
-        
-		if ( !stop && pt->Point::operator == ( poll_center ) )
-		{
-			delete pt;
-			if ( display_degree == NOMAD::FULL_DISPLAY )
-				out << "Mads::poll(): could not generate poll trial points: stop"
-				<< std::endl << NOMAD::close_block() << std::endl;
-			stop        = true;
-			stop_reason = NOMAD::MESH_PREC_REACHED;
-			return;
-		}
-		
-		pt->set_signature        ( cur_signature );
-		pt->set_direction        ( dir           );
-		pt->set_mesh_index       ( &mesh_index   );
-		pt->set_poll_center_type ( pc_type       );
-		pt->set_poll_center		 ( &poll_center );
-		
-		// random direction?
-		if ( NOMAD::dir_is_random ( dir->get_type() ) )
-		{
-			int nb_dirs = static_cast<int>(dirs.size());
-			NOMAD::Random_Pickup rp ( nb_dirs );
-			pt->set_rand_eval_priority ( rp.pickup() );
-		}
-        
-		if (!sorting)
-			_ev_control.add_eval_point ( pt                      ,
-										display_degree          ,
-										_p.get_snap_to_bounds() ,
-										NOMAD::Double()         ,
-										NOMAD::Double()         ,
-										NOMAD::Double()         ,
-										NOMAD::Double()          );
-		else
-		{
-			_ev_control_for_sorting.add_eval_point ( pt                      ,
-													display_degree          ,
-													_p.get_snap_to_bounds() ,
-													NOMAD::Double()         ,
-													NOMAD::Double()         ,
-													NOMAD::Double()         ,
-													NOMAD::Double()         );
-		}
-        
-		++k;
-	}
     
-	return;
+    NOMAD::Signature * cur_signature=poll_center.get_signature();
+    NOMAD::poll_center_type pc_type=( poll_center.is_feasible ( _p.get_h_min() ) ) ? NOMAD::FEASIBLE : NOMAD::INFEASIBLE;
+    
+    int n = cur_signature->get_n();
+    int m = _p.get_bb_nb_outputs();
+    const std::vector<NOMAD::bb_input_type> & bbit = _p.get_bb_input_type();
+    
+    std::list<NOMAD::Direction>::const_iterator it;
+    
+    const NOMAD::Direction                    * dir;
+    NOMAD::Eval_Point                         * pt;
+    
+    const NOMAD::Display    & out = _p.out();
+    NOMAD::dd_type display_degree = out.get_poll_dd();
+    
+    int k=0;
+    for ( it = dirs.begin() ; it != dirs.end() ; ++it )
+    {
+        dir = &(*it);
+        pt = new NOMAD::Eval_Point ( n , m );
+        
+        // pt = poll_center + dir: with a particular case for binary variables
+        // equal to 1 with dir=1: the variables are set to 0 (1+1=0 in binary):
+        for (int i = 0 ; i < n ; ++i )
+            (*pt)[i] =    ( bbit[i]==NOMAD::BINARY && (*dir)[i]==1.0 && (poll_center)[i]==1.0 ) ? 0.0 : (*pt)[i] = (poll_center)[i] + (*dir)[i];
+        
+        // we check that the new poll trial point is different than the poll center
+        // (this happens when the mesh size becomes too small):
+        
+        if ( pt->Point::operator == ( poll_center ) )
+            delete pt;
+        else
+        {
+            pt->set_signature        ( cur_signature );
+            pt->set_direction        ( dir           );
+            pt->set_poll_center_type ( pc_type       );
+            pt->set_poll_center      ( &poll_center  );
+            
+            // random direction?
+            if ( NOMAD::dir_is_random ( dir->get_type() ) )
+            {
+                int nb_dirs = static_cast<int>(dirs.size());
+                NOMAD::Random_Pickup rp ( nb_dirs );
+                pt->set_rand_eval_priority ( rp.pickup() );
+            }
+            
+            if ( !sorting )
+                _ev_control.add_eval_point ( pt                      ,
+                                            display_degree          ,
+                                            _p.get_snap_to_bounds() ,
+                                            NOMAD::Double()         ,
+                                            NOMAD::Double()         ,
+                                            NOMAD::Double()         ,
+                                            NOMAD::Double()          );
+            else
+            {
+                _ev_control_for_sorting.add_eval_point ( pt                      ,
+                                                        display_degree          ,
+                                                        _p.get_snap_to_bounds() ,
+                                                        NOMAD::Double()         ,
+                                                        NOMAD::Double()         ,
+                                                        NOMAD::Double()         ,
+                                                        NOMAD::Double()         );
+            }
+            
+            ++k;
+        }
+    }
+    
+    if ( k==0 )
+    {
+        if ( display_degree == NOMAD::FULL_DISPLAY )
+            out << "Mads::set_poll_trial_points(): could not generate poll trial points" << std::endl; //  << NOMAD::close_block() << std::endl;
+        stop        = true;
+        stop_reason = NOMAD::MESH_PREC_REACHED;
+    }
+    
+    
+    return;
 }
 
 
 /*-------------------------------------------------------------*/
-/*     compute the poll directions dynamically  (private)	   */
+/*     compute the poll directions dynamically  (private)       */
 /*-------------------------------------------------------------*/
-bool NOMAD::Mads::get_dynamic_directions (const std::list<NOMAD::Direction>	&	dirs,
-                                          std::list<NOMAD::Direction>			&	newDirs,
-                                          const NOMAD::Eval_Point				&	poll_center   )
+bool NOMAD::Mads::get_dynamic_directions (const std::list<NOMAD::Direction>    &    dirs,
+                                          std::list<NOMAD::Direction>            &    newDirs,
+                                          const NOMAD::Eval_Point                &    poll_center   )
 {
-	
-	const NOMAD::Signature * cur_signature=poll_center.get_signature();
-	int n=cur_signature->get_n();
-	int n_cat=cur_signature->get_n_categorical();
-	
-	const NOMAD::Display    & out = _p.out();
-	NOMAD::dd_type display_degree = out.get_poll_dd();
-	
-	// Dynamic completion only if sufficient directions provided: (n-n_cat)->(n-n_cat)+1
-	if (static_cast<int>(dirs.size())<n-n_cat)
-		return false;
     
-	
-	// Get the maximum number of direction groups
-	std::list<NOMAD::Direction>::const_iterator itDir;
-	size_t maxDirGroupIndex=0;
-	size_t dgi;
-	for (itDir=dirs.begin();itDir!=dirs.end() ; ++itDir) {
-		dgi=(*itDir).get_dir_group_index();
-		if (dgi>maxDirGroupIndex) maxDirGroupIndex=dgi;
-	}
-	
-	// Loop on each direction group to obtain a new direction
-	for (dgi=0;dgi<=maxDirGroupIndex;++dgi)
-	{
-		int maxIndex=0;
+    const NOMAD::Signature * cur_signature=poll_center.get_signature();
+    
+    // get the number of free variables using the signature (because of extended poll and changing signature)
+    size_t n = cur_signature->get_n()-cur_signature->get_nb_fixed_variables();
+    size_t n_cat = cur_signature->get_n_categorical();
+    
+    const NOMAD::Display    & out = _p.out();
+    NOMAD::dd_type display_degree = out.get_poll_dd();
+    
+    // Dynamic completion only if sufficient directions provided: (n-n_cat)->(n-n_cat)+1
+    if ( dirs.size() < n-n_cat )
+        return false;
+    
+    
+    // Get the maximum number of direction groups
+    std::list<NOMAD::Direction>::const_iterator itDir;
+    int maxDirGroupIndex=0;
+    int dgi;
+    for (itDir=dirs.begin();itDir!=dirs.end() ; ++itDir)
+    {
+        dgi=(*itDir).get_dir_group_index();
+        if (dgi>maxDirGroupIndex)
+            maxDirGroupIndex=dgi;
+    }
+    
+    // Loop on each direction group to obtain a new direction
+    for (dgi=0;dgi<=maxDirGroupIndex;++dgi)
+    {
+        int maxIndex=0;
         
-		// 1 - Search directions having the same direction group index
-		std::list<NOMAD::Direction> rDirs;
-		std::list<NOMAD::Double>::iterator it_fv;
-		for (itDir=dirs.begin();itDir!=dirs.end() ; ++itDir)
-		{
-			if ((*itDir).get_index()>maxIndex)
-				maxIndex=(*itDir).get_index();
-			if ((*itDir).get_dir_group_index()==dgi)
+        // 1 - Search directions having the same direction group index
+        std::list<NOMAD::Direction> rDirs;
+        std::list<NOMAD::Double>::iterator it_fv;
+        for (itDir=dirs.begin();itDir!=dirs.end() ; ++itDir)
+        {
+            if ( (*itDir).get_index()>maxIndex )
+                maxIndex=(*itDir).get_index();
+            if ( (*itDir).get_dir_group_index()==dgi )
                 rDirs.push_back(*itDir);
-		}
-		
-		// 2 - add a dynamic direction from a quad model optimization or sum of direction negatives
-		NOMAD::Direction dyn_dir=get_single_dynamic_direction(rDirs,poll_center);
-		if ( dyn_dir.get_type()==NOMAD::DYN_ADDED )
-		{
-			dyn_dir.set_index(maxIndex+1);
-			newDirs.push_back(dyn_dir);
-		}
-	}
-	
-	if ( display_degree == NOMAD::FULL_DISPLAY ) {
-		out << std::endl
-		<< NOMAD::open_block ( "Added (n+1)th poll direction(s) (include mesh size parameter)" );
-		for ( itDir = newDirs.begin() ; itDir != newDirs.end() ; ++itDir ) {
-			out << "dir ";
-			out.display_int_w ( (*itDir).get_index() , static_cast<int>(newDirs.size()) );
-			out << " : " << *itDir << std::endl;
-		}
-		out.close_block();
-		out << std::endl;
-		
-	}
-	
-	
-	return true;
+        }
+        
+        // 2 - add a dynamic direction from a quad model optimization or sum of direction negatives
+        NOMAD::Direction dyn_dir=get_single_dynamic_direction( rDirs , poll_center );
+        if ( dyn_dir.get_type()==NOMAD::DYN_ADDED )
+        {
+            dyn_dir.set_index(maxIndex+1);
+            newDirs.push_back(dyn_dir);
+        }
+    }
+    
+    if ( display_degree == NOMAD::FULL_DISPLAY )
+    {
+        out << std::endl;
+        if ( newDirs.size()!= 0 )
+            out << NOMAD::open_block ( "Added (n+1)th poll direction(s) (include mesh size parameter)" );
+        else
+            out << NOMAD::open_block ( "Cannot generate a (n+1)th poll direction" );
+        
+        for ( itDir = newDirs.begin() ; itDir != newDirs.end() ; ++itDir )
+        {
+            out << "dir ";
+            out.display_int_w ( (*itDir).get_index() , static_cast<int>(newDirs.size()) );
+            out << " : " << *itDir << std::endl;
+        }
+        out.close_block();
+        out << std::endl;
+        
+    }
+    
+    if ( newDirs.size()==0 )
+        return false;
+    
+    
+    return true;
 }
 
 
 
 /*------------------------------------------------------------------------------*/
-/*     get a single dynamic direction from incomplete poll			        	*/
-/*     directions by optimization of a quad model or sum of negative (private)	*/
+/*     get a single dynamic direction from incomplete poll                        */
+/*     directions by optimization of a quad model or sum of negative (private)    */
 /*------------------------------------------------------------------------------*/
 /*  The new direction calculation is described in paper from      */
 /*  Audet, Ianni, Le Digabel and Tribes : Reducing the number of  */
 /*  function evaluations in Mesh Adaptive Direct Search Algorithms*/
 /*----------------------------------------------------------------*/
-NOMAD::Direction NOMAD::Mads::get_single_dynamic_direction (const std::list<NOMAD::Direction>	&	dirs,
-                                                            const NOMAD::Eval_Point			&	poll_center)
+NOMAD::Direction NOMAD::Mads::get_single_dynamic_direction (const std::list<NOMAD::Direction>    &    dirs,
+                                                            const NOMAD::Eval_Point            &    poll_center)
 {
-	const NOMAD::Signature * cur_signature=poll_center.get_signature();
-	int n=cur_signature->get_n();
-	
-	NOMAD::Direction Vb1( n , 0.0 ,NOMAD::UNDEFINED_DIRECTION);
+    const NOMAD::Signature * cur_signature=poll_center.get_signature();
+    int n=cur_signature->get_n();
     
-	
-	std::vector<NOMAD::Double> alpha;
-	NOMAD::Double f_pc=(poll_center.is_feasible(_p.get_h_min())) ? poll_center.get_f():poll_center.get_h();
-	NOMAD::Double lambda=0;
-	std::list<NOMAD::Direction>::const_iterator itDir;
-	
-	// -sum(d^i)
-	for (itDir=dirs.begin();itDir!=dirs.end();++itDir)
-	{
-		for (int i=0; i<n; i++)
-		{
-			Vb1[i]-=(*itDir)[i].value();
-		}
-	}
-	
-	// New direction
-	size_t dirGroupIndex=(*dirs.begin()).get_dir_group_index();
-	NOMAD::Direction V( n , 0.0 ,NOMAD::DYN_ADDED,static_cast<int>(dirGroupIndex));
-	
-	// New direction obtained by quad model optimization or negative sum of directions
-	NOMAD::Point prospect_point;
-	bool success=false;
-	if (dir_from_model_opt(dirs))
-		success=optimize_quad_model(poll_center,dirs,prospect_point);
-	for (int i=0; i<n; i++)
-	{
-		if (success)
-			V[i]=prospect_point[i].value()-poll_center[i].value();
-		else
-			V[i]=Vb1[i];  // use -sum(d^i) if model optimization unsucessfull or no dynamic direction requested
-		
-	}
-	
-	// Update the new directions depending on the input_types
-	const std::vector<NOMAD::bb_input_type> & input_types=cur_signature->get_input_types();
-	int mesh_index = NOMAD::Mesh::get_mesh_index();
-	NOMAD::Point delta_p;
-	cur_signature->get_mesh().get_delta_p ( delta_p , mesh_index );
-	NOMAD::Point delta_m;
-	cur_signature->get_mesh().get_delta_m ( delta_m , mesh_index );
-	bool isZero=true;
-	for (int i=0; i<n; ++i)
-	{
-		NOMAD::Double v=V[i].value(),vb1=Vb1[i].value(),dm=delta_m[i].value(),dp=delta_p[i].value();
-		// Continous variables  ---> rounding towards mesh node.
-		if (input_types[i]==NOMAD::CONTINUOUS)
-		{
-			if ((vb1/dm).round()>=(v/dm).round())
-				V[i] = (v/dm).ceil()*dm;
-			else
-				V[i] = (v/dm).floor()*dm;
-		}
-		// Integer variables:
-		else if ( input_types[i] == NOMAD::INTEGER )
-		{
-			if ( v >= dp/3.0 )
-				V[i] =  v.ceil();
-			else if ( v <= -dp/3.0 )
-				V[i] =  v.floor();
-			else
-				V[i] =  v.round();
-		}
-		// binary variables:
-		else if ( input_types[i] == NOMAD::BINARY )
-		{
-			if ( v != 0.0 )	V[i] = 1.0;
-		}
-		// categorical variables: set direction=0:
-		else if ( input_types[i] == NOMAD::CATEGORICAL )
-			V[i] = 0.0;
-		
-		if (V[i]!=0)
-			isZero=false;
-	}
-	
-	if (isZero)
-	{
-		NOMAD::Direction Vzero( n , 0.0 ,NOMAD::UNDEFINED_DIRECTION);
-		return Vzero;
-	}
-	else
-		return V;
+    NOMAD::Direction Vb1( n , 0.0 ,NOMAD::UNDEFINED_DIRECTION);
+    
+    
+    std::vector<NOMAD::Double> alpha;
+    NOMAD::Double f_pc=(poll_center.is_feasible(_p.get_h_min())) ? poll_center.get_f():poll_center.get_h();
+    NOMAD::Double lambda=0;
+    std::list<NOMAD::Direction>::const_iterator itDir;
+    
+    // -sum(d^i)
+    for (itDir=dirs.begin();itDir!=dirs.end();++itDir)
+    {
+        for (int i=0; i<n; i++)
+        {
+            Vb1[i]-=(*itDir)[i].value();
+        }
+    }
+    
+    // New direction
+    int dirGroupIndex=(*dirs.begin()).get_dir_group_index();
+    NOMAD::Direction V( n , 0.0 ,NOMAD::DYN_ADDED,dirGroupIndex);
+    
+    // New direction obtained by quad model optimization or negative sum of directions
+    NOMAD::Point prospect_point;
+    bool success=false;
+    if ( dir_from_model_opt(dirs) )
+        success=optimize_quad_model( poll_center, dirs, prospect_point );
+    for (int i=0; i<n; i++)
+    {
+        if ( success )
+            V[i] = prospect_point[i].value() - poll_center[i].value();
+        else
+            V[i] = Vb1[i];  // use -sum(d^i) if model optimization unsucessfull or no dynamic direction requested
+    }
+    
+    // Update the new directions depending on the input_types
+    const std::vector<NOMAD::bb_input_type> & input_types=cur_signature->get_input_types();
+    
+    
+    NOMAD::Point delta = cur_signature->get_mesh()->get_delta ( );
+    NOMAD::Point Delta = cur_signature->get_mesh()->get_Delta ( );
+    bool isZero=true;
+    for (int i=0; i<n; ++i)
+    {
+        NOMAD::Double v=V[i].value(),vb1=Vb1[i].value(),dm=delta[i].value(),dp=Delta[i].value();
+        
+        // categorical variables: set direction=0:
+        if ( input_types[i] == NOMAD::CATEGORICAL )
+            V[i] = 0.0;
+        // Continous variables or GMesh+granularity  ---> rounding towards mesh node.
+        // If GMesh and variable is binary --> it is considered as an integer (ordered) with bounds [0;1] (snap to bound done later)
+        else if ( input_types[i] == NOMAD::CONTINUOUS || ( _p.get_mesh_type()==NOMAD::GMESH && (_p.get_granularity())[i] != 0.0 ) )
+        {
+            NOMAD::Double d1 = vb1/dm;
+            NOMAD::Double d2 = v/dm;
+            NOMAD::Double r1 = ( d1 < 0.0  ? -std::floor(.5-d1.value()) : std::floor(.5+d1.value() ) );
+            NOMAD::Double r2 = ( d2 < 0.0  ? -std::floor(.5-d2.value()) : std::floor(.5+d2.value() ) );
+            if ( r1 >= r2 )
+                V[i] = (v/dm).ceil()*dm;
+            else
+                V[i] = (v/dm).floor()*dm;
+        }
+        // Integer variables:
+        else if ( input_types[i] == NOMAD::INTEGER )
+        {
+            if ( v >= dp/3.0 )
+                V[i] =  v.ceil();
+            else if ( v <= -dp/3.0 )
+                V[i] =  v.floor();
+            else
+                V[i] =  v.roundd();
+ 
+        }
+        // binary variables:
+        else if ( input_types[i] == NOMAD::BINARY )
+        {
+            if ( v != 0.0 )  // ---> this will almost always generate a change (not sure about that)
+                V[i] = 1.0;
+        }
+
+        if ( V[i] != 0 )
+            isZero=false;
+    }
+    
+    if ( isZero )
+    {
+        NOMAD::Direction Vzero( n , 0.0 ,NOMAD::UNDEFINED_DIRECTION);
+        return Vzero;
+    }
+    else
+        return V;
 }
 
 
@@ -2727,7 +2966,8 @@ NOMAD::Direction NOMAD::Mads::get_single_dynamic_direction (const std::list<NOMA
 /*----------------------------------------------------------------*/
 void NOMAD::Mads::check_directions ( bool & forbid_poll_size_stop )
 {
-    if ( !_p.get_min_poll_size_defined() ) {
+    if ( !_p.get_min_poll_size_defined() )
+    {
         
         NOMAD::Double        v , min;
         const NOMAD::Point * dir;
@@ -2737,25 +2977,31 @@ void NOMAD::Mads::check_directions ( bool & forbid_poll_size_stop )
         
         const std::set<NOMAD::Priority_Eval_Point> & poll_pts = _ev_control.get_eval_lop();
         std::set<NOMAD::Priority_Eval_Point>::const_iterator end = poll_pts.end() , it;
-        for ( it = poll_pts.begin() ; it != end ; ++it ) {
+        for ( it = poll_pts.begin() ; it != end ; ++it )
+        {
             
             signature = it->get_point()->get_signature();
             
-            if ( signature ) {
+            if ( signature )
+            {
                 
                 dir = it->get_point()->get_direction();
                 
-                if ( dir ) {
+                if ( dir )
+                {
                     
                     n = dir->size();
                     
-                    if ( n == signature->get_n() ) {
+                    if ( n == signature->get_n() )
+                    {
                         
                         const std::vector<NOMAD::bb_input_type> & bbit
                         = signature->get_input_types();
                         
-                        for ( i = 0 ; i < n ; ++i ) {
-                            if ( bbit[i] == NOMAD::INTEGER ) {
+                        for ( i = 0 ; i < n ; ++i )
+                        {
+                            if ( bbit[i] == NOMAD::INTEGER )
+                            {
                                 v = (*dir)[i].abs();
                                 if ( v.is_defined() && v > 0.0 && ( !min.is_defined() || v < min ) )
                                     min = v;
@@ -2776,15 +3022,15 @@ void NOMAD::Mads::check_directions ( bool & forbid_poll_size_stop )
 /*    (private)                                            */
 /*---------------------------------------------------------*/
 void NOMAD::Mads::update_success_directions ( const NOMAD::Eval_Point         * new_inc    ,
-											 bool                              feasible     ) const
+                                             bool                              feasible     ) const
 {
     if ( new_inc && new_inc->get_direction() )
     {
         
         const NOMAD::Direction * dir       = new_inc->get_direction();
         NOMAD::Signature       * signature = new_inc->get_signature();
-		
-		
+        
+        
         if ( !signature )
             throw NOMAD::Exception ( "Mads.cpp" , __LINE__ ,
                                     "Mads::update_success_directions(): new incumbent has no signature" );
@@ -2802,10 +3048,10 @@ void NOMAD::Mads::update_success_directions ( const NOMAD::Eval_Point         * 
 /*                      the search (private)               */
 /*---------------------------------------------------------*/
 void NOMAD::Mads::search ( bool                     & stop           ,
-						  NOMAD::stop_type         & stop_reason    ,
-						  NOMAD::success_type      & success        ,
-						  const NOMAD::Eval_Point *& new_feas_inc   ,
-						  const NOMAD::Eval_Point *& new_infeas_inc   )
+                          NOMAD::stop_type         & stop_reason    ,
+                          NOMAD::success_type      & success        ,
+                          const NOMAD::Eval_Point *& new_feas_inc   ,
+                          const NOMAD::Eval_Point *& new_infeas_inc   )
 {
     int                    nb_search_pts;
     bool                   count_search;
@@ -2844,10 +3090,12 @@ void NOMAD::Mads::search ( bool                     & stop           ,
     }
     
     // 2. user search:
-    if ( success != NOMAD::FULL_SUCCESS && _user_search ) {
+    if ( success != NOMAD::FULL_SUCCESS && _user_search )
+    {
         
         // initial user search display:
-        if ( display_degree == NOMAD::FULL_DISPLAY ) {
+        if ( display_degree == NOMAD::FULL_DISPLAY )
+        {
             std::ostringstream oss;
             oss << NOMAD::USER_SEARCH;
             out << std::endl << NOMAD::open_block ( oss.str() ) << std::endl;
@@ -2866,12 +3114,14 @@ void NOMAD::Mads::search ( bool                     & stop           ,
         // update stats:
         if ( success == NOMAD::FULL_SUCCESS )
             _stats.add_usr_srch_success();
+        
         if ( count_search )
             _stats.add_nb_usr_searches();
         _stats.add_usr_srch_pts ( nb_search_pts );
         
         // final user search display:
-        if ( display_degree == NOMAD::FULL_DISPLAY ) {
+        if ( display_degree == NOMAD::FULL_DISPLAY )
+        {
             std::ostringstream oss;
             oss << "end of " << NOMAD::USER_SEARCH << " (" << success << ")";
             out << std::endl << NOMAD::close_block ( oss.str() ) << std::endl;
@@ -2879,7 +3129,8 @@ void NOMAD::Mads::search ( bool                     & stop           ,
     }
     
     // 3. cache search:
-    if ( success != NOMAD::FULL_SUCCESS && _p.get_cache_search() ) {
+    if ( success != NOMAD::FULL_SUCCESS && _p.get_cache_search() )
+    {
         
         // the search:
         _cache_search->search ( *this          ,
@@ -2894,17 +3145,20 @@ void NOMAD::Mads::search ( bool                     & stop           ,
         // update stats:
         if ( success == NOMAD::FULL_SUCCESS )
             _stats.add_CS_success();
+        
         if ( count_search )
             _stats.add_nb_cache_searches();
         _stats.add_CS_pts ( nb_search_pts );
     }
     
     // 4. Model Searches (stats are updated inside the searches):
-    if ( success != NOMAD::FULL_SUCCESS && _p.has_model_search() ) {
+    if ( success != NOMAD::FULL_SUCCESS && _p.has_model_search() )
+    {
         
 #ifdef USE_MPI
         // asynchronous mode: wait for the evaluations in progress:
-        if ( _p.get_asynchronous() ) {
+        if ( _p.get_asynchronous() )
+        {
             std::list<const NOMAD::Eval_Point *> evaluated_pts;
             _ev_control.wait_for_evaluations ( NOMAD::ASYNCHRONOUS ,
                                               _true_barrier       ,
@@ -2927,19 +3181,14 @@ void NOMAD::Mads::search ( bool                     & stop           ,
                                 new_feas_inc   ,
                                 new_infeas_inc   );
         
-        // save the TGP model for the model ordering:
-        if ( _p.get_model_search(1) == NOMAD::TGP_MODEL ) {
-#ifdef USE_TGP
-            _ev_control.set_last_TGP_model
-            ( static_cast<NOMAD::TGP_Model_Search *>(_model_search1)->get_model() );
-#endif
-        }
         // model search #2:
-        if ( success != NOMAD::FULL_SUCCESS && _model_search2 ) {
+        if ( success != NOMAD::FULL_SUCCESS && _model_search2 )
+        {
             
 #ifdef USE_MPI
             // asynchronous mode: wait for the evaluations in progress:
-            if ( _p.get_asynchronous() ) {
+            if ( _p.get_asynchronous() )
+            {
                 std::list<const NOMAD::Eval_Point *> evaluated_pts;
                 _ev_control.wait_for_evaluations ( NOMAD::ASYNCHRONOUS ,
                                                   _true_barrier       ,
@@ -2960,13 +3209,6 @@ void NOMAD::Mads::search ( bool                     & stop           ,
                                     new_feas_inc   ,
                                     new_infeas_inc   );
             
-            // save the TGP model for the model ordering:
-            if ( _p.get_model_search(2) == NOMAD::TGP_MODEL ) {
-#ifdef USE_TGP
-                _ev_control.set_last_TGP_model
-                ( static_cast<NOMAD::TGP_Model_Search *>(_model_search2)->get_model() );
-#endif
-            }
         }
     }
     
@@ -2974,17 +3216,20 @@ void NOMAD::Mads::search ( bool                     & stop           ,
     if ( _p.get_VNS_search()                    &&
         success         != NOMAD::FULL_SUCCESS &&
         last_it_success == NOMAD::UNSUCCESSFUL &&
-        NOMAD::Mesh::get_mesh_index() >= 0     &&
-        _stats.get_iterations() > 0               ) {
+        _mesh->is_finer_than_initial()  &&
+        _stats.get_iterations() > 0               )
+    {
         
         // check the VNS_trigger criterion:
         int bbe = _stats.get_bb_eval();
         if ( bbe==0 ||
-            _stats.get_VNS_bb_eval() / static_cast<float>(bbe) < _p.get_VNS_trigger() ) {
+            _stats.get_VNS_bb_eval() / static_cast<float>(bbe) < _p.get_VNS_trigger() )
+        {
             
 #ifdef USE_MPI
             // asynchronous mode: wait for the evaluations in progress:
-            if ( _p.get_asynchronous() ) {
+            if ( _p.get_asynchronous() )
+            {
                 std::list<const NOMAD::Eval_Point *> evaluated_pts;
                 _ev_control.wait_for_evaluations ( NOMAD::ASYNCHRONOUS ,
                                                   _true_barrier       ,
@@ -3008,18 +3253,22 @@ void NOMAD::Mads::search ( bool                     & stop           ,
             
             if ( success == NOMAD::FULL_SUCCESS )
                 _stats.add_VNS_success();
+            
             if ( count_search )
                 _stats.add_nb_VNS_searches();
+            
             _stats.add_VNS_pts ( nb_search_pts );
         }
     }
     
     // 6. Latin-Hypercube (LH) search:
-    if ( success != NOMAD::FULL_SUCCESS && _p.get_LH_search_pi() > 0 ) {
+    if ( success != NOMAD::FULL_SUCCESS && _p.get_LH_search_pi() > 0 )
+    {
         
         // for the first iteration: do not perform the
         // search if there was an initial LH search:
-        if ( mads_iteration > 0 || _p.get_LH_search_p0() <= 0 ) {
+        if ( mads_iteration > 0 || _p.get_LH_search_p0() <= 0 )
+        {
             
             LH_Search lh ( _p , false , _flag_p1_active );
             
@@ -3031,10 +3280,13 @@ void NOMAD::Mads::search ( bool                     & stop           ,
                        count_search   ,
                        new_feas_inc   ,
                        new_infeas_inc   );
+            
             if ( success == NOMAD::FULL_SUCCESS )
                 _stats.add_LH_success();
+            
             if ( count_search )
                 _stats.add_nb_LH_searches();
+            
             _stats.add_LH_pts ( nb_search_pts );
         }
     }
@@ -3047,276 +3299,286 @@ void NOMAD::Mads::search ( bool                     & stop           ,
 /*                       x0 eval (private)                 */
 /*---------------------------------------------------------*/
 void NOMAD::Mads::eval_x0 ( bool             & stop        ,
-						   NOMAD::stop_type & stop_reason   )
+                           NOMAD::stop_type & stop_reason   )
 {
-	const std::vector<NOMAD::Point *> & x0s           = _p.get_x0s();
-	const std::string                 & x0_cache_file = _p.get_x0_cache_file();
-	if ( x0s.empty() && x0_cache_file.empty() )
-		return;
-	
-	const NOMAD::Display    & out = _p.out();
-	NOMAD::dd_type display_degree = out.get_gen_dd();
-	
-	if ( display_degree == NOMAD::FULL_DISPLAY )
-		out << std::endl << NOMAD::open_block ( "starting point evaluation" );
-	
-	NOMAD::Eval_Point * pt;
-	size_t              k;
-	int                 m = _p.get_bb_nb_outputs();
-	int                 n = _p.get_dimension();
-	std::ostringstream  err;
-	
-	// x0s from vector Parameters::_x0s:
-	// ---------------------------------
-	size_t x0s_size = x0s.size();
-	for ( k = 0 ; k < x0s_size ; ++k )
-	{
-		
-		// the current starting point has to be in dimension n:
-		if ( x0s[k]->size() != n )
-		{
-			err << "starting point ( " << *x0s[k] << " ) is not of dimension " << n;
-			throw NOMAD::Exception ( "Mads.cpp" , __LINE__ , err.str() );
-		}
-		
-		// creation of the Eval_Point:
-		pt = new NOMAD::Eval_Point;
-		pt->set           ( *x0s[k] , m        );
-		pt->set_signature ( _p.get_signature() );
-		
-		_ev_control.add_eval_point ( pt              ,
-									display_degree  ,
-									false           ,
-									NOMAD::Double() ,
-									NOMAD::Double() ,
-									NOMAD::Double() ,
-									NOMAD::Double()    );
-	}
-	
-	// x0 from a cache file:
-	// ---------------------
-	if ( !x0_cache_file.empty() )
-	{
-		
-		NOMAD::Cache            & cache = _ev_control.get_cache();
-		const NOMAD::Eval_Point * x;
-		
-		// another cache file (this file won't be modified):
-		if ( x0_cache_file != _p.get_cache_file() )
-		{
-			
-			NOMAD::Cache x0_cache ( out , ( _p.get_opt_only_sgte() ) ? NOMAD::SGTE  : NOMAD::TRUTH   );
-			std::string  file_name = _p.get_problem_dir() + x0_cache_file;
-			
-			if ( !x0_cache.load ( file_name , NULL , display_degree==NOMAD::FULL_DISPLAY ) )
-			{
-				err << "could not load (or create) the cache file " << file_name;
-				throw NOMAD::Exception ( "Mads.cpp" , __LINE__ , err.str() );
-			}
-			
-			// we copy all the temporary cache points
-			// into the list of points to be evaluated:
-			x = x0_cache.begin();
-			while ( x )
-			{
-				
-				pt = new NOMAD::Eval_Point;
-				pt->set ( *x , m );
-				
-				if ( x->get_signature() )
-					pt->set_signature ( x->get_signature() );
-				else if ( x->size() == n )
-					pt->set_signature ( _p.get_signature() );
-				
-				if ( pt->get_signature() )
-					_ev_control.add_eval_point ( pt              ,
-												display_degree  ,
-												false           ,
-												NOMAD::Double() ,
-												NOMAD::Double() ,
-												NOMAD::Double() ,
-												NOMAD::Double()   );
-				else
-				{
-					if ( display_degree != NOMAD::NO_DISPLAY && display_degree != NOMAD::MINIMAL_DISPLAY)
-						out << std::endl << "Warning (" << "Mads.cpp" << ", " << __LINE__
-						<< "): could not use the starting point " << *pt
-						<< " (no signature)" << std::endl << std::endl;
-					delete pt;
-				}
-				
-				x = x0_cache.next();
-			}
-			
-			// insertion of this temporary cache in the algorithm's cache:
-			cache.insert ( x0_cache );
-		}
-		
-		// x0 cache file and the algorithm's cache file are the same:
-		else {
-			
-			x = cache.begin();
-			while ( x ) {
-				pt = &NOMAD::Cache::get_modifiable_point ( *x );
-				
-				if ( x->get_signature() )
-					pt->set_signature ( x->get_signature() );
-				else if ( x->size() == n )
-					pt->set_signature ( _p.get_signature() );
-				
-				if ( pt->get_signature() )
-					_ev_control.add_eval_point ( pt              ,
-												display_degree  ,
-												false           ,
-												NOMAD::Double() ,
-												NOMAD::Double() ,
-												NOMAD::Double() ,
-												NOMAD::Double()    );
-				else {
-					if ( display_degree != NOMAD::NO_DISPLAY && display_degree != NOMAD::MINIMAL_DISPLAY)
-						out << std::endl << "Warning (" << "Mads.cpp" << ", " << __LINE__
-						<< "): could not use the starting point " << *pt
-						<< "(no signature)" << std::endl;
-				}
-				x = cache.next();
-			}
-		}
-	}
-	
-	// display of all starting points:
-	if ( display_degree == NOMAD::FULL_DISPLAY ) {
-		
-		const std::set<NOMAD::Priority_Eval_Point> & pts = _ev_control.get_eval_lop();
-		
-		// one starting point:
-		if ( pts.size() == 1 ) {
-			out << std::endl << "x0 eval point: ( ";
-			pts.begin()->get_point()->Point::display ( out                               ,
-													  " "                               ,
-													  2                                 ,
-													  NOMAD::Point::get_display_limit()   );
-			out << " )" << std::endl;
-		}
-		
-		// several starting points:
-		else
-			_ev_control.display_eval_lop ( NOMAD::X0_EVAL );
-	}
-	
-	NOMAD::success_type       success;   
-	const NOMAD::Eval_Point * new_feas_inc   = NULL;
-	const NOMAD::Eval_Point * new_infeas_inc = NULL;
-	
-	// eval_list_of_points (x0):
-	// -------------------------
-	_ev_control.eval_list_of_points ( NOMAD::X0_EVAL ,
-									 _true_barrier  ,
-									 _sgte_barrier  ,
-									 _pareto_front  ,
-									 stop           ,
-									 stop_reason    ,
-									 new_feas_inc   ,
-									 new_infeas_inc ,
-									 success          );
-	if ( !stop &&
-		( success == NOMAD::UNSUCCESSFUL      ||
-		 (!new_feas_inc && !new_infeas_inc ) ||
-		 ( _p.get_barrier_type() == NOMAD::EB &&
-		  !get_active_barrier().get_best_feasible() ) ) ) {
-			 stop        = true;
-			 stop_reason = NOMAD::X0_FAIL;
-		 }
-	
-	
-	// displays:
-	display_iteration_end ( stop           ,
-						   stop_reason    ,
-						   success        ,
-						   new_feas_inc   ,
-						   new_infeas_inc   );
-	
-	// stop the algorithm if no iterations are allowed:
-	if ( !stop && _p.get_max_iterations() == 0 )
-	{
-		stop        = true;
-		stop_reason = NOMAD::MAX_ITER_REACHED;
-	}
-	
-	if ( display_degree == NOMAD::FULL_DISPLAY ) 
-		out << std::endl << NOMAD::close_block ( "end of starting point evaluation" );
+    const std::vector<NOMAD::Point *> & x0s           = _p.get_x0s();
+    const std::string                 & x0_cache_file = _p.get_x0_cache_file();
+    if ( x0s.empty() && x0_cache_file.empty() )
+        return;
+    
+    const NOMAD::Display    & out = _p.out();
+    NOMAD::dd_type display_degree = out.get_gen_dd();
+    
+    if ( display_degree == NOMAD::FULL_DISPLAY )
+        out << std::endl << NOMAD::open_block ( "starting point evaluation" );
+    
+    NOMAD::Eval_Point * pt;
+    size_t              k;
+    int                 m = _p.get_bb_nb_outputs();
+    int                 n = _p.get_dimension();
+    std::ostringstream  err;
+    
+    // x0s from vector Parameters::_x0s:
+    // ---------------------------------
+    size_t x0s_size = x0s.size();
+    for ( k = 0 ; k < x0s_size ; ++k )
+    {
+        
+        // the current starting point has to be in dimension n:
+        if ( x0s[k]->size() != n )
+        {
+            err << "starting point ( " << *x0s[k] << " ) is not of dimension " << n;
+            throw NOMAD::Exception ( "Mads.cpp" , __LINE__ , err.str() );
+        }
+        
+        // creation of the Eval_Point:
+        pt = new NOMAD::Eval_Point;
+        pt->set           ( *x0s[k] , m        );
+        pt->set_signature ( _p.get_signature() );
+        
+        _ev_control.add_eval_point ( pt              ,
+                                    display_degree  ,
+                                    false           ,
+                                    NOMAD::Double() ,
+                                    NOMAD::Double() ,
+                                    NOMAD::Double() ,
+                                    NOMAD::Double()    );
+    }
+    
+    // x0 from a cache file:
+    // ---------------------
+    if ( !x0_cache_file.empty() )
+    {
+        
+        NOMAD::Cache            & cache = _ev_control.get_cache();
+        const NOMAD::Eval_Point * x;
+        
+        // another cache file (this file won't be modified):
+        if ( x0_cache_file != _p.get_cache_file() )
+        {
+            
+            NOMAD::Cache x0_cache ( out , ( _p.get_opt_only_sgte() ) ? NOMAD::SGTE  : NOMAD::TRUTH   );
+            std::string  file_name = _p.get_problem_dir() + x0_cache_file;
+            
+            if ( !x0_cache.load ( file_name , NULL , display_degree==NOMAD::FULL_DISPLAY ) )
+            {
+                err << "could not load (or create) the cache file " << file_name;
+                throw NOMAD::Exception ( "Mads.cpp" , __LINE__ , err.str() );
+            }
+            
+            // we copy all the temporary cache points
+            // into the list of points to be evaluated:
+            x = x0_cache.begin();
+            while ( x )
+            {
+                
+                pt = new NOMAD::Eval_Point;
+                pt->set ( *x , m );
+                
+                if ( x->get_signature() )
+                    pt->set_signature ( x->get_signature() );
+                else if ( x->size() == n )
+                    pt->set_signature ( _p.get_signature() );
+                
+                if ( pt->get_signature() )
+                    _ev_control.add_eval_point ( pt              ,
+                                                display_degree  ,
+                                                false           ,
+                                                NOMAD::Double() ,
+                                                NOMAD::Double() ,
+                                                NOMAD::Double() ,
+                                                NOMAD::Double()   );
+                else
+                {
+                    if ( display_degree != NOMAD::NO_DISPLAY && display_degree != NOMAD::MINIMAL_DISPLAY)
+                        out << std::endl << "Warning (" << "Mads.cpp" << ", " << __LINE__
+                        << "): could not use the starting point " << *pt
+                        << " (no signature)" << std::endl << std::endl;
+                    delete pt;
+                }
+                
+                x = x0_cache.next();
+            }
+            
+            // insertion of this temporary cache in the algorithm's cache:
+            cache.insert ( x0_cache );
+        }
+        
+        // x0 cache file and the algorithm's cache file are the same:
+        else
+        {
+            x = cache.begin();
+            
+            int npts=0;
+            while ( x )
+            {
+                pt = &NOMAD::Cache::get_modifiable_point ( *x );
+                
+                npts++;
+                
+                if ( x->get_signature() )
+                    pt->set_signature ( x->get_signature() );
+                else if ( x->size() == n )
+                    pt->set_signature ( _p.get_signature() );
+                
+                if ( pt->get_signature() )
+                    _ev_control.add_eval_point ( pt              ,
+                                                display_degree  ,
+                                                false           ,
+                                                NOMAD::Double() ,
+                                                NOMAD::Double() ,
+                                                NOMAD::Double() ,
+                                                NOMAD::Double()    );
+                else
+                {
+                    
+                    if ( display_degree != NOMAD::NO_DISPLAY && display_degree != NOMAD::MINIMAL_DISPLAY)
+                        out << std::endl << "Warning (" << "Mads.cpp" << ", " << __LINE__
+                        << "): could not use the starting point " << *pt
+                        << "(no signature)" << std::endl;
+                }
+                x = cache.next();
+            }
+        }
+    }
+    
+    // display of all starting points:
+    if ( display_degree == NOMAD::FULL_DISPLAY )
+    {
+        
+        const std::set<NOMAD::Priority_Eval_Point> & pts = _ev_control.get_eval_lop();
+        
+        // one starting point:
+        if ( pts.size() == 1 )
+        {
+            out << std::endl << "x0 eval point: ( ";
+            pts.begin()->get_point()->Point::display ( out                               ,
+                                                      " "                               ,
+                                                      2                                 ,
+                                                      NOMAD::Point::get_display_limit()   );
+            out << " )" << std::endl;
+        }
+        
+        // several starting points:
+        else
+            _ev_control.display_eval_lop ( NOMAD::X0_EVAL );
+    }
+    
+    NOMAD::success_type       success;
+    const NOMAD::Eval_Point * new_feas_inc   = NULL;
+    const NOMAD::Eval_Point * new_infeas_inc = NULL;
+    
+    // eval_list_of_points (x0):
+    // -------------------------
+    _ev_control.eval_list_of_points ( NOMAD::X0_EVAL ,
+                                     _true_barrier  ,
+                                     _sgte_barrier  ,
+                                     _pareto_front  ,
+                                     stop           ,
+                                     stop_reason    ,
+                                     new_feas_inc   ,
+                                     new_infeas_inc ,
+                                     success          );
+    if ( !stop &&
+        ( success == NOMAD::UNSUCCESSFUL      ||
+         (!new_feas_inc && !new_infeas_inc ) ||
+         ( _p.get_barrier_type() == NOMAD::EB &&
+          !get_active_barrier().get_best_feasible() ) ) )
+    {
+        stop        = true;
+        stop_reason = NOMAD::X0_FAIL;
+    }
+    
+    
+    // displays:
+    display_iteration_end ( stop           ,
+                           stop_reason    ,
+                           success        ,
+                           new_feas_inc   ,
+                           new_infeas_inc   );
+    
+    // stop the algorithm if no iterations are allowed:
+    if ( !stop && _p.get_max_iterations() == 0 )
+    {
+        stop        = true;
+        stop_reason = NOMAD::MAX_ITER_REACHED;
+    }
+    
+    if ( display_degree == NOMAD::FULL_DISPLAY )
+        out << std::endl << NOMAD::close_block ( "end of starting point evaluation" );
 }
 
 /*---------------------------------------------------------*/
 /*                  display the Pareto front               */
 /*---------------------------------------------------------*/
 void NOMAD::Mads::display_pareto_front ( void ) const
-{   
-	if ( !_pareto_front )
-		return;
-	
-	const std::string    & stats_file_name = _p.get_stats_file_name();
-	const NOMAD::Display & out             = _p.out();
-	NOMAD::dd_type         display_degree  = out.get_gen_dd();
-	
-	// loop on the Pareto points:
-	if ( display_degree != NOMAD::NO_DISPLAY && display_degree != NOMAD::MINIMAL_DISPLAY)
-		out << std::endl << NOMAD::open_block ( "Pareto front" ) << std::endl;
-	
-	const NOMAD::Eval_Point * cur = _pareto_front->begin();
-	while ( cur ) 
-	{
-		
-		if ( cur->is_eval_ok() && cur->is_feasible ( _p.get_h_min() ) )
-		{
-			
-			const std::list<int>           & index_obj = _p.get_index_obj();
-			std::list<int>::const_iterator   it , end  = index_obj.end();
-			const NOMAD::Point             & bbo       = cur->get_bb_outputs();
-			int                              i         = 0;
-			NOMAD::Point multi_obj ( static_cast<int>(index_obj.size()) );
-			
-			for ( it = index_obj.begin() ; it != end ; ++it )
-				multi_obj[i++] = bbo[*it];
-			
-			if ( !stats_file_name.empty() )
-				_ev_control.stats_file ( stats_file_name , cur , true , &multi_obj );
-			
-			if ( display_degree != NOMAD::NO_DISPLAY && display_degree != NOMAD::MINIMAL_DISPLAY && !_p.get_display_stats().empty() )
-				_ev_control.display_stats ( false                  ,
-										   out                    ,
-										   _p.get_display_stats() ,
-										   cur                    ,
-										   true                   ,
-										   &multi_obj               );
-		} 
-		cur = _pareto_front->next();
-	}
-	
-	if ( display_degree != NOMAD::NO_DISPLAY && display_degree != NOMAD::MINIMAL_DISPLAY)
-		out << NOMAD::close_block();
-	
-	// other stats:
-	if ( display_degree == NOMAD::FULL_DISPLAY )
-	{
-		
-		out << std::endl << "number of pts : " << _pareto_front->size() << std::endl;
-		
-		NOMAD::Double delta , surf;
-		_pareto_front->get_delta_surf ( delta , surf  ,
-									   _p.get_multi_f_bounds() ); // f1_min, f1_max,
-		// f2_min, f2_max
-		out << "delta_j       : " << delta << std::endl
-		<< "surf          : ";
-		if ( surf.is_defined() )
-			out << 100*surf << "%" << std::endl;
-		else
-			out << NOMAD::Double()
-			<< " (define valid MULTI_F_BOUNDS values to access this output)"
-			<< std::endl;
-	}
-	else if ( display_degree != NOMAD::NO_DISPLAY && display_degree != NOMAD::MINIMAL_DISPLAY)
-		out << std::endl << "number of Pareto points: " << _pareto_front->size()
-		<< std::endl;
+{
+    if ( !_pareto_front )
+        return;
+    
+    const std::string    & stats_file_name = _p.get_stats_file_name();
+    const NOMAD::Display & out             = _p.out();
+    NOMAD::dd_type         display_degree  = out.get_gen_dd();
+    
+    // loop on the Pareto points:
+    if ( display_degree != NOMAD::NO_DISPLAY && display_degree != NOMAD::MINIMAL_DISPLAY)
+        out << std::endl << NOMAD::open_block ( "Pareto front" ) << std::endl;
+    
+    const NOMAD::Eval_Point * cur = _pareto_front->begin();
+    while ( cur )
+    {
+        
+        if ( cur->is_eval_ok() && cur->is_feasible ( _p.get_h_min() ) )
+        {
+            
+            const std::list<int>           & index_obj = _p.get_index_obj();
+            std::list<int>::const_iterator   it , end  = index_obj.end();
+            const NOMAD::Point             & bbo       = cur->get_bb_outputs();
+            int                              i         = 0;
+            NOMAD::Point multi_obj ( static_cast<int>(index_obj.size()) );
+            
+            for ( it = index_obj.begin() ; it != end ; ++it )
+                multi_obj[i++] = bbo[*it];
+            
+            if ( !stats_file_name.empty() )
+                _ev_control.stats_file ( stats_file_name , cur , true , &multi_obj );
+            
+            if ( display_degree != NOMAD::NO_DISPLAY && display_degree != NOMAD::MINIMAL_DISPLAY && !_p.get_display_stats().empty() )
+                _ev_control.display_stats ( false                  ,
+                                           out                    ,
+                                           _p.get_display_stats() ,
+                                           cur                    ,
+                                           true                   ,
+                                           &multi_obj               );
+        }
+        cur = _pareto_front->next();
+    }
+    
+    if ( display_degree != NOMAD::NO_DISPLAY && display_degree != NOMAD::MINIMAL_DISPLAY)
+        out << NOMAD::close_block();
+    
+    // other stats:
+    if ( display_degree == NOMAD::FULL_DISPLAY )
+    {
+        
+        out << std::endl << "number of pts : " << _pareto_front->size() << std::endl;
+        
+        NOMAD::Double delta , surf;
+        _pareto_front->get_delta_surf ( delta , surf  ,
+                                       _p.get_multi_f_bounds() ); // f1_min, f1_max,
+        // f2_min, f2_max
+        out << "delta_j       : " << delta << std::endl
+        << "surf          : ";
+        if ( surf.is_defined() )
+            out << 100*surf << "%" << std::endl;
+        else
+            out << NOMAD::Double()
+            << " (define valid MULTI_F_BOUNDS values to access this output)"
+            << std::endl;
+    }
+    else if ( display_degree != NOMAD::NO_DISPLAY && display_degree != NOMAD::MINIMAL_DISPLAY)
+        out << std::endl << "number of Pareto points: " << _pareto_front->size()
+        << std::endl;
 }
 
 /*---------------------------------------------------------*/
@@ -3324,168 +3586,174 @@ void NOMAD::Mads::display_pareto_front ( void ) const
 /*---------------------------------------------------------*/
 void NOMAD::Mads::display ( const NOMAD::Display & out ) const
 {
-	NOMAD::dd_type display_degree = out.get_gen_dd();
-	
-	if ( !NOMAD::Slave::is_master() )
-		return;
-	
-	// 0. no display:
-	// --------------
-	if ( display_degree == NOMAD::NO_DISPLAY || display_degree == NOMAD::MINIMAL_DISPLAY) 
-	{
-		
-		// there may be a pareto front to write as a stats file:
-		if ( _pareto_front           &&
-			!_pareto_front->empty() &&
-			!_p.get_stats_file_name().empty() )
-			display_pareto_front();
-		
-		return;
-	}
-	
-	// incumbents:
-	const NOMAD::Eval_Point * bf = get_best_feasible();
-	const NOMAD::Eval_Point * bi = get_best_infeasible();
-	const NOMAD::Eval_Point *bimv = get_best_infeasible_min_viol();
-	
-	// save the solution file:
-	if ( bf ) 
-		_ev_control.write_solution_file ( *bf , false);
-	else if (bimv)
-		_ev_control.write_solution_file ( *bimv , true );
-	
-	
-	
-	// 1. detailed display:
-	// --------------------
-	if ( display_degree == NOMAD::FULL_DISPLAY ) 
-	{
-		
-		// cache:
-		out << std::endl
-		<< NOMAD::open_block ( "cache" )
-		<< ( _p.get_opt_only_sgte() ? _ev_control.get_sgte_cache() : _ev_control.get_cache() )
-		<< NOMAD::close_block();
-		
-		// constraints:
-		if ( _p.has_constraints() )
-			out << std::endl
-			<< NOMAD::open_block ( "constraints handling") << std::endl
-			<< get_active_barrier()
-			<< NOMAD::close_block();
-		
-		// Pareto front:
-		if ( _pareto_front )
-		{
-			if ( _pareto_front->empty() )
-				out << std::endl << "Pareto front empty" << std::endl;
-			else
-				display_pareto_front();
-		}
-		
-		// stats:
-		out << std::endl
-		<< NOMAD::open_block ( "stats" )
-		<< _stats
-		<< NOMAD::close_block();
-		
-		// model stats:
+    NOMAD::dd_type display_degree = out.get_gen_dd();
+    
+    if ( !NOMAD::Slave::is_master() )
+        return;
+    
+    // 0. no display:
+    // --------------
+    if ( display_degree == NOMAD::NO_DISPLAY || display_degree == NOMAD::MINIMAL_DISPLAY)
+    {
+        
+        // there may be a pareto front to write as a stats file:
+        if ( _pareto_front           &&
+            !_pareto_front->empty() &&
+            !_p.get_stats_file_name().empty() )
+            display_pareto_front();
+        
+        return;
+    }
+    
+    // incumbents:
+    const NOMAD::Eval_Point * bf = get_best_feasible();
+    const NOMAD::Eval_Point * bi = get_best_infeasible();
+    const NOMAD::Eval_Point *bimv = get_best_infeasible_min_viol();
+    
+    // save the solution file:
+    if ( bf )
+        _ev_control.write_solution_file ( *bf , false);
+    else if (bimv)
+        _ev_control.write_solution_file ( *bimv , true );
+    
+    
+    
+    // 1. detailed display:
+    // --------------------
+    if ( display_degree == NOMAD::FULL_DISPLAY )
+    {
+        
+        // cache:
+        out << std::endl
+        << NOMAD::open_block ( "cache" )
+        << ( _p.get_opt_only_sgte() ? _ev_control.get_sgte_cache() : _ev_control.get_cache() )
+        << NOMAD::close_block();
+        
+        // constraints:
+        if ( _p.has_constraints() )
+            out << std::endl
+            << NOMAD::open_block ( "constraints handling") << std::endl
+            << get_active_barrier()
+            << NOMAD::close_block();
+        
+        // Pareto front:
+        if ( _pareto_front )
+        {
+            if ( _pareto_front->empty() )
+                out << std::endl << "Pareto front empty" << std::endl;
+            else
+                display_pareto_front();
+        }
+        
+        // stats:
+        out << std::endl
+        << NOMAD::open_block ( "stats" )
+        << _stats
+        << NOMAD::close_block();
+        
+        // model stats:
 #ifdef DEBUG
-		display_model_stats ( out );
+        display_model_stats ( out );
 #endif
-		
-		// miscellaneous:
-		if ( !_pareto_front )
-		{
-			out << std::endl
-			<< NOMAD::open_block ( "miscellaneous" )
-			<< "mesh index                               : min="
-			<< NOMAD::Mesh::get_min_mesh_index() << ", max="
-			<< NOMAD::Mesh::get_max_mesh_index() << ", last="
-			<< NOMAD::Mesh::get_mesh_index() << std::endl;
+        
+        // miscellaneous:
+        if ( !_pareto_front )
+        {
+            out << std::endl
+            << NOMAD::open_block ( "miscellaneous" )
+            << "mesh indices                             : min= ("
+            << _mesh->get_min_mesh_indices() << " ), max = ("
+            << _mesh->get_max_mesh_indices() << " ), last= ( "
+            << _mesh->get_mesh_indices() << " ) " << std::endl;
             
-			if ( bimv )
-			{
-				out << "best infeasible solution (min. violation): ( ";
-				bimv->Point::display ( out , " " , -1 , -1 );
-				out << " ) h=" << bimv->get_h()
-				<< " f="  << bimv->get_f() << std::endl;
-			}
-			
-			out << "best feasible solution                   : ";
-			
-			if ( bf )
-			{
-				out << "( ";
-				bf->Point::display ( out , " " , -1 , -1 );
-				out << " ) h=" << bf->get_h()
-				<< " f="  << bf->get_f() << std::endl;
-			}
-			else
-				out << "no feasible solution has been found" << std::endl;
-			
-			
-			out.close_block();
-		}
-	}
-	
-	// 2. normal display:
-	// ------------------
-	else
-	{
-		
-		// blackbox evaluations:
-		out << std::endl
-		<< "blackbox evaluations                     : " << _stats.get_bb_eval() << std::endl;
-		
-		// output stats:
-		if ( _stats.get_stat_sum().is_defined() )
-			out << "stat sum                                 : " << _stats.get_stat_sum() << std::endl;
-		if ( _stats.get_stat_avg().is_defined() )
-			out << "stat avg                                 : " << _stats.get_stat_avg() << std::endl;
-		
-		// Pareto front (multi-objective optimization):
-		if ( _pareto_front ) 
-		{
-			out << "number of MADS runs                      : " << _stats.get_mads_runs() << std::endl;
-			if ( _pareto_front->empty() )
-				out << "Pareto front                             : empty" << std::endl;
-			else
-				display_pareto_front();
-		}
-		
-		// single-objective optimization (display of best solutions):
-		else 
-		{
-			
-			if ( !bf && !bi )
-				out << "no solution" << std::endl;
-			else
-			{
-				if ( bimv ) 
-				{
-					out << "best infeasible solution (min. violation): ( ";
-					bimv->Point::display ( out , " " , -1 , -1 );
-					out << " ) h=" << bimv->get_h()
-					<< " f="  << bimv->get_f() << std::endl;
-				}
-				
-                out << "best feasible solution                   : ";
-				
-				if ( bf )
-				{
-					out << "( ";
-					bf->Point::display ( out , " " , -1 , -1 );
-					out << " ) h=" << bf->get_h()
-					<< " f="  << bf->get_f() << std::endl;
-				}
-				else
-					out << "no feasible solution has been found" << std::endl;
+            if ( bimv )
+            {
+                out << "best infeasible solution (min. violation): ( ";
+                bimv->Point::display ( out , " " , -1 , -1 );
+                out << " ) h=" << bimv->get_h()
+                << " f="  << bimv->get_f() << std::endl;
+            }
+            
+            out << "best feasible solution                   : ";
+            
+            if ( bf )
+            {
+                out << "( ";
+                bf->Point::display ( out , " " , -1 , -1 );
+                out << " ) h=" << bf->get_h()
+                << " f="  << bf->get_f() ;
+                if ( _p.get_robust_mads() )
+                    out << " f_smooth=" << bf->get_fsmooth() ; // Smoothing available only for unconstrained problems
+                out << std::endl;
+            }
+            else
+                out << "no feasible solution has been found" << std::endl;
+            
+            
+            out.close_block();
+        }
+    }
+    
+    // 2. normal display:
+    // ------------------
+    else
+    {
+        
+        // blackbox evaluations:
+        out << std::endl
+        << "blackbox evaluations                     : " << _stats.get_bb_eval() << std::endl;
+        
+        // output stats:
+        if ( _stats.get_stat_sum().is_defined() )
+            out << "stat sum                                 : " << _stats.get_stat_sum() << std::endl;
+        if ( _stats.get_stat_avg().is_defined() )
+            out << "stat avg                                 : " << _stats.get_stat_avg() << std::endl;
+        
+        // Pareto front (multi-objective optimization):
+        if ( _pareto_front )
+        {
+            out << "number of MADS runs                      : " << _stats.get_mads_runs() << std::endl;
+            if ( _pareto_front->empty() )
+                out << "Pareto front                             : empty" << std::endl;
+            else
+                display_pareto_front();
+        }
+        
+        // single-objective optimization (display of best solutions):
+        else
+        {
+            
+            if ( !bf && !bi )
+                out << "no solution" << std::endl;
+            else
+            {
+                if ( bimv )
+                {
+                    out << "best infeasible solution (min. violation): ( ";
+                    bimv->Point::display ( out , " " , -1 , -1 );
+                    out << " ) h=" << bimv->get_h()
+                    << " f="  << bimv->get_f() << std::endl;
+                }
                 
-			}
-		}
-		out.close_block();
-	}
+                out << "best feasible solution                   : ";
+                
+                if ( bf )
+                {
+                    out << "( ";
+                    bf->Point::display ( out , " " , -1 , -1 );
+                    out << " ) h=" << bf->get_h()
+                    << " f="  << bf->get_f() ;
+                    if ( _p.get_robust_mads() )
+                        out << " f_smooth=" << bf->get_fsmooth() ; // Smoothing available only for unconstrained problems
+                    out << std::endl;
+                }
+                else
+                    out << "no feasible solution has been found" << std::endl;
+                
+            }
+        }
+        out.close_block();
+    }
 }
 
 /*---------------------------------------------------------*/
@@ -3499,7 +3767,8 @@ void NOMAD::Mads::display_model_stats ( const NOMAD::Display & out ) const
     if ( _model_search2 )
         out << std::endl << NOMAD::open_block ( "model search #2 stats" )
         << *_model_search2 << NOMAD::close_block();
-    if ( _p.get_model_eval_sort() != NOMAD::NO_MODEL ) {
+    if ( _p.get_model_eval_sort() != NOMAD::NO_MODEL )
+    {
         out << std::endl << NOMAD::open_block ( "model ordering stats" );
         _ev_control.display_model_ordering_stats ( out );
         out << NOMAD::close_block();
@@ -3512,12 +3781,16 @@ void NOMAD::Mads::display_model_stats ( const NOMAD::Display & out ) const
 /*---------------------------------------------------------*/
 void NOMAD::Mads::display_deltas ( const NOMAD::Signature & s ) const
 {
-    NOMAD::Point delta_m , delta_p;
-    s.get_mesh().get_delta_m ( delta_m , NOMAD::Mesh::get_mesh_index() );
-    s.get_mesh().get_delta_p ( delta_p , NOMAD::Mesh::get_mesh_index() );
-    _p.out() << "mesh size            : ( " << delta_m << " )" << std::endl
-    << "poll size            : ( " << delta_p << " )"
-    << std::endl;
+    
+    NOMAD::Point delta,Delta;
+    
+    _mesh->get_delta(delta);
+    _mesh->get_Delta(Delta);
+    if (delta.is_defined() && Delta.is_defined())
+        _p.out() << "mesh size            : ( " << delta << " )" << std::endl
+        << "poll size            : ( " << Delta << " )" << std::endl
+        << "mesh indices         : ( " << _mesh->get_mesh_indices() << " )" << std::endl;
+    
 }
 
 /*-------------------------------------------------------*/
@@ -3541,7 +3814,8 @@ void NOMAD::Mads::display_iteration_begin ( void ) const
         << std::endl;
 #endif
     out << "best feas. solution  : ";
-    if ( bf ) {
+    if ( bf )
+    {
         out << "( ";
         bf->Point::display ( out , " " , 2 , NOMAD::Point::get_display_limit() );
         out << " ) h=" << bf->get_h()
@@ -3551,7 +3825,8 @@ void NOMAD::Mads::display_iteration_begin ( void ) const
     else
         out << "none" << std::endl;
     out << "best infeas. solution: ";
-    if ( bi ) {
+    if ( bi )
+    {
         out << "( ";
         bi->Point::display ( out , " " , 2 , NOMAD::Point::get_display_limit() );
         out << " ) h=" << bi->get_h()
@@ -3563,7 +3838,8 @@ void NOMAD::Mads::display_iteration_begin ( void ) const
     
     out << "poll center          : ";
     const NOMAD::Eval_Point * poll_center = get_active_barrier().get_poll_center();
-    if ( poll_center ) {
+    if ( poll_center )
+    {
         out << "( ";
         poll_center->Point::display ( out , " " , 2 , NOMAD::Point::get_display_limit() );
         out << " )" << std::endl;
@@ -3578,7 +3854,8 @@ void NOMAD::Mads::display_iteration_begin ( void ) const
     const NOMAD::Eval_Point * sec_poll_center
     = get_active_barrier().get_sec_poll_center();
     
-    if ( sec_poll_center ) {
+    if ( sec_poll_center )
+    {
         out << "sec. poll center     : ( ";
         sec_poll_center->Point::display ( out                               ,
                                          " "                               ,
@@ -3590,20 +3867,18 @@ void NOMAD::Mads::display_iteration_begin ( void ) const
             display_deltas ( *s2 );
     }
     
-    out << "mesh index           : " << NOMAD::Mesh::get_mesh_index() << std::endl
-    << "h_max                : "
+    out << "h_max                : "
     << get_active_barrier().get_h_max() << std::endl;
 }
 
 /*---------------------------------------------------------*/
 /*       displays at the end of an iteration (private)     */
 /*---------------------------------------------------------*/
-void NOMAD::Mads::display_iteration_end
-( bool                      stop           ,
- NOMAD::stop_type          stop_reason    ,
- NOMAD::success_type       success        ,
- const NOMAD::Eval_Point * new_feas_inc   ,
- const NOMAD::Eval_Point * new_infeas_inc   ) const
+void NOMAD::Mads::display_iteration_end ( bool                      stop           ,
+                                         NOMAD::stop_type          stop_reason    ,
+                                         NOMAD::success_type       success        ,
+                                         const NOMAD::Eval_Point * new_feas_inc   ,
+                                         const NOMAD::Eval_Point * new_infeas_inc   ) const
 {
     const NOMAD::Display & out = _p.out();
     
@@ -3614,7 +3889,8 @@ void NOMAD::Mads::display_iteration_end
     << "terminate MADS       : ";
     out.display_yes_or_no ( stop );
     out << std::endl;
-    if ( stop ) {
+    if ( stop )
+    {
         out << "termination cause    : " << stop_reason;
         if ( stop_reason==NOMAD::X0_FAIL &&
             !_flag_p1_active            &&
@@ -3633,4 +3909,7 @@ void NOMAD::Mads::display_iteration_end
         out << *new_infeas_inc;
     else
         out << "none" << std::endl;
+    
 }
+
+

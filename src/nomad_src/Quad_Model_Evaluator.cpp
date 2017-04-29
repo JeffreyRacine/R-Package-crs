@@ -1,16 +1,22 @@
 /*-------------------------------------------------------------------------------------*/
-/*  NOMAD - Nonlinear Optimization by Mesh Adaptive Direct search - version (3.6.2.beta)*/
+/*  NOMAD - Nonlinear Optimization by Mesh Adaptive Direct search - version 3.8.0      */
 /*                                                                                     */
-/*  Copyright (C) 2001-2012 Mark Abramson        - the Boeing Company, Seattle        */
-/*                           Charles Audet        - Ecole Polytechnique, Montreal      */
-/*                           Gilles Couture       - Ecole Polytechnique, Montreal      */
-/*                           John Dennis          - Rice University, Houston           */
-/*                           Sebastien Le Digabel - Ecole Polytechnique, Montreal      */
-/*                           Christophe Tribes    - Ecole Polytechnique, Montreal      */
 /*                                                                                     */
-/*  funded in part by AFOSR and Exxon Mobil                                            */
+/*  NOMAD - version 3.8.0 has been created by                                          */
+/*                 Charles Audet        - Ecole Polytechnique de Montreal              */
+/*                 Sebastien Le Digabel - Ecole Polytechnique de Montreal              */
+/*                 Christophe Tribes    - Ecole Polytechnique de Montreal              */
 /*                                                                                     */
-/*  Author: Sebastien Le Digabel                                                       */
+/*  The copyright of NOMAD - version 3.8.0 is owned by                                 */
+/*                 Sebastien Le Digabel - Ecole Polytechnique de Montreal              */
+/*                 Christophe Tribes    - Ecole Polytechnique de Montreal              */
+/*                                                                                     */
+/*  NOMAD v3 has been funded by AFOSR and Exxon Mobil.                                 */
+/*                                                                                     */
+/*  NOMAD v3 is a new version of NOMAD v1 and v2. NOMAD v1 and v2 were created and     */
+/*  developed by Mark Abramson, Charles Audet, Gilles Couture and John E. Dennis Jr.,  */
+/*  and were funded by AFOSR and Exxon Mobil.                                          */
+/*                                                                                     */
 /*                                                                                     */
 /*  Contact information:                                                               */
 /*    Ecole Polytechnique de Montreal - GERAD                                          */
@@ -34,82 +40,79 @@
 /*  You can find information on the NOMAD software at www.gerad.ca/nomad               */
 /*-------------------------------------------------------------------------------------*/
 /**
-  \file   Quad_Model_Evaluator.cpp
-  \brief  NOMAD::Evaluator subclass for quadratic model optimization (implementation)
-  \author Sebastien Le Digabel
-  \date   2010-08-31
-  \see    Quad_Mopel_Evaluator.hpp
-*/
+ \file   Quad_Model_Evaluator.cpp
+ \brief  NOMAD::Evaluator subclass for quadratic model optimization (implementation)
+ \author Sebastien Le Digabel
+ \date   2010-08-31
+ \see    Quad_Mopel_Evaluator.hpp
+ */
 #include "Quad_Model_Evaluator.hpp"
-using namespace std; // zhenghua
 
 /*-----------------------------*/
 /*         constructor         */
 /*-----------------------------*/
-NOMAD::Quad_Model_Evaluator::Quad_Model_Evaluator
-( const NOMAD::Parameters & p     ,
-  const NOMAD::Quad_Model & model   )
-  :  
-	_n					( model.get_n()         ) ,
-    _nm1				( _n-1                  ) , 
-    _m					( p.get_bb_nb_outputs() ) ,
-    _x					( NULL                  ) ,
-    _alpha				( NULL                  ) ,
-    _model_ready		( model.check()         )
+NOMAD::Quad_Model_Evaluator::Quad_Model_Evaluator ( const NOMAD::Parameters & p     ,
+                                                   const NOMAD::Quad_Model & model   ) :
+_n                  ( model.get_n()         ) ,
+_nm1                ( _n-1                  ) ,
+_m                  ( p.get_bb_nb_outputs() ) ,
+_x                  ( NULL                  ) ,
+_alpha              ( NULL                  ) ,
+_model_ready        ( model.check()         )
 {
-	if ( _model_ready )
-	{
-		
-		int i , j , k , k2 , nalpha = (_n+1)*(_n+2)/2 , nfree = model.get_nfree();
-		NOMAD::Point ** model_alpha = model.get_alpha();
-		
-		_x     = new double   [_n];
-		_alpha = new double * [_m];
-		
-		for ( int io = 0 ; io < _m ; ++io )
-		{
-			_alpha[io] = NULL;
-			if ( model_alpha[io] )
-			{				
-				_alpha[io] = new double[nalpha];
-				_alpha[io][0] = (*model_alpha[io])[0].value();
-				
-				for ( i = 1 ; i < nalpha ; ++i ) 
-					_alpha[io][i] = 0.0;
-				
-				k = 0;
-				
-				for ( i = 0 ; i < _n ; ++i )
-				{
-					if ( !model.variable_is_fixed(i) ) 
-					{
-						++k;
-						_alpha[io][i+1   ] = (*model_alpha[io])[k      ].value();
-						_alpha[io][i+1+_n] = (*model_alpha[io])[k+nfree].value();
-					}
-				}
-				
-				k += nfree;
-				k2 = 2*_n;
-				
-				for ( i = 0 ; i < _nm1 ; ++i )
-				{
-					if ( !model.variable_is_fixed(i) ) 
-					{
-						for ( j = i+1 ; j < _n ; ++j )
-						{
-							++k2;
-							if ( !model.variable_is_fixed(j) )
-								_alpha[io][k2] = (*model_alpha[io])[++k].value();
-						}
-					}
-					else
-						for ( j = i+1 ; j < _n ; ++j )
-							++k2;
-				}
-			}
-		}
-	}
+    if ( _model_ready )
+    {
+        
+        int i , j , k , k2 , nalpha = (_n+1)*(_n+2)/2 , nfree = model.get_nfree();
+        NOMAD::Point ** model_alpha = model.get_alpha();
+        
+        _x     = new double   [_n];
+        _alpha = new double * [_m];
+        
+        for ( int io = 0 ; io < _m ; ++io )
+        {
+            _alpha[io] = NULL;
+            if ( model_alpha[io] )
+            {
+                _alpha[io] = new double[nalpha];
+                _alpha[io][0] = (*model_alpha[io])[0].value();
+                
+                for ( i = 1 ; i < nalpha ; ++i )
+                    _alpha[io][i] = 0.0;
+                
+                k = 0;
+                
+                for ( i = 0 ; i < _n ; ++i )
+                {
+                    if ( !model.variable_is_fixed(i) )
+                    {
+                        ++k;
+                        _alpha[io][i+1   ] = (*model_alpha[io])[k      ].value();
+                        _alpha[io][i+1+_n] = (*model_alpha[io])[k+nfree].value();
+                    }
+                }
+                
+                k += nfree;
+                k2 = 2*_n;
+                
+                for ( i = 0 ; i < _nm1 ; ++i )
+                {
+                    if ( !model.variable_is_fixed(i) )
+                    {
+                        for ( j = i+1 ; j < _n ; ++j )
+                        {
+                            ++k2;
+                            if ( !model.variable_is_fixed(j) )
+                                _alpha[io][k2] = (*model_alpha[io])[++k].value();
+                        }
+                    }
+                    else
+                        for ( j = i+1 ; j < _n ; ++j )
+                            ++k2;
+                }
+            }
+        }
+    }
 }
 
 /*-----------------------------*/
@@ -117,14 +120,14 @@ NOMAD::Quad_Model_Evaluator::Quad_Model_Evaluator
 /*-----------------------------*/
 NOMAD::Quad_Model_Evaluator::~Quad_Model_Evaluator ( void )
 {
-  if ( _model_ready ) 
-  {
-    for ( int i = 0 ; i < _m ; ++i )
-      if ( _alpha[i] )
-	delete [] _alpha[i];
-    delete [] _alpha;
-    delete [] _x;
-  }
+    if ( _model_ready )
+    {
+        for ( int i = 0 ; i < _m ; ++i )
+            if ( _alpha[i] )
+                delete [] _alpha[i];
+        delete [] _alpha;
+        delete [] _x;
+    }
 }
 
 /*------------------------------------------------------------------------*/
@@ -134,51 +137,51 @@ NOMAD::Quad_Model_Evaluator::~Quad_Model_Evaluator ( void )
 /* x is in [-1000;1000] and must be scaled to [-1;1] for the evalutation  */
 /*                                                                        */
 /*------------------------------------------------------------------------*/
-bool NOMAD::Quad_Model_Evaluator::eval_x
-( NOMAD::Eval_Point   & x          ,
-  const NOMAD::Double & h_max      ,
-  bool                & count_eval   ) const
+bool NOMAD::Quad_Model_Evaluator::eval_x ( NOMAD::Eval_Point   & x          ,
+                                          const NOMAD::Double & h_max      ,
+                                          bool                & count_eval   ) const
 {
-	
-	count_eval=false;
-	if ( !_model_ready )
-		return false;
-	
-	int    i , j , k;
-	double z , * alpha , * p;
-	
-	for ( i = 0 ; i < _n ; ++i )
-		_x[i] = x[i].value() / 1000.0;
-	
-	for ( int oi = 0 ; oi < _m ; ++oi )
-	{
-		
-		alpha = _alpha[oi];
-		
-		if ( alpha )
-		{
-			
-			z = alpha[0];
-			p = _x;
-			
-			for ( k = 1 ; k <= _n ; ++k , ++p )
-				z += *p * ( alpha[k] + 0.5 * alpha[k+_n] * *p );
-			
-			k += _n-1;
-			
-			for ( i = 0 ; i < _nm1 ; ++i )
-				for ( j = i+1 ; j < _n ; ++j )
-					z += alpha[++k] * _x[i] * _x[j];
-			
-			x.set_bb_output ( oi , z );
-		}
-		
-		else
-			x.set_bb_output ( oi , 0.0 );
-	}
-	
-	count_eval = true;
-	return true;
+    
+    count_eval=false;
+    if ( !_model_ready )
+        return false;
+    
+    int    i , j , k;
+    double z , * alpha , * p;
+    
+    for ( i = 0 ; i < _n ; ++i )
+        _x[i] = x[i].value() / 1000.0;
+    
+    for ( int oi = 0 ; oi < _m ; ++oi )
+    {
+        
+        alpha = _alpha[oi];
+        
+        if ( alpha )
+        {
+            
+            z = alpha[0];
+            p = _x;
+            
+            for ( k = 1 ; k <= _n ; ++k , ++p )
+                z += *p * ( alpha[k] + 0.5 * alpha[k+_n] * *p );
+            
+            k += _n-1;
+            
+            for ( i = 0 ; i < _nm1 ; ++i )
+                for ( j = i+1 ; j < _n ; ++j )
+                    z += alpha[++k] * _x[i] * _x[j];
+            
+            
+            x.set_bb_output ( oi , z );
+        }
+        
+        else
+            x.set_bb_output ( oi , 0.0 );
+    }
+    
+    count_eval = true;
+    return true;
 }
 
 
@@ -189,38 +192,37 @@ bool NOMAD::Quad_Model_Evaluator::eval_x
 /* x is in [-1000;1000] and must be scaled to [-1;1] for the evalutation  */
 /*                                                                        */
 /*------------------------------------------------------------------------*/
-bool NOMAD::Quad_Model_Evaluator::evalGrad_x
-(const NOMAD::Point   & x   ,
- NOMAD::Point   & g         ,
- const int & output_index   ,
- bool                & count_eval   ) const
+bool NOMAD::Quad_Model_Evaluator::evalGrad_x ( const NOMAD::Point   & x   ,
+                                              NOMAD::Point          & g   ,
+                                              const int & output_index   ,
+                                              bool                  & count_eval   ) const
 {
-	
-	if ( !_model_ready )
-		return false;
-	
-	double * alpha ;
-	
-	for (int  i = 0 ; i < _n ; ++i )
-		_x[i] = x[i].value() / 1000.0;
-	
-	alpha = _alpha[output_index];
-	
-	if ( !alpha )
-		return false;
-		
-	int i , j , k ;
-		
-	for ( k = 1 ; k <= _n ; ++k )
-		g[k-1] = alpha[k] + alpha[k+_n] * _x[k-1];
-	
-	
-	k += _n-1;
-	
-	for ( i = 0 ; i < _nm1 ; ++i )
-		for ( j = i+1 ; j < _n ; ++j )
-			g[i] += alpha[++k] * _x[j];
-	
-	count_eval = true;
-	return true;
+    
+    if ( !_model_ready )
+        return false;
+    
+    double * alpha ;
+    
+    for (int  i = 0 ; i < _n ; ++i )
+        _x[i] = x[i].value() / 1000.0;
+    
+    alpha = _alpha[output_index];
+    
+    if ( !alpha )
+        return false;
+    
+    int i , j , k ;
+    
+    for ( k = 1 ; k <= _n ; ++k )
+        g[k-1] = alpha[k] + alpha[k+_n] * _x[k-1];
+    
+    
+    k += _n-1;
+    
+    for ( i = 0 ; i < _nm1 ; ++i )
+        for ( j = i+1 ; j < _n ; ++j )
+            g[i] += alpha[++k] * _x[j];
+    
+    count_eval = true;
+    return true;
 }

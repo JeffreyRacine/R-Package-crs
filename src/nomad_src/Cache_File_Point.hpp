@@ -1,16 +1,22 @@
 /*-------------------------------------------------------------------------------------*/
-/*  NOMAD - Nonlinear Optimization by Mesh Adaptive Direct search - version 3.6.2        */
+/*  NOMAD - Nonlinear Optimization by Mesh Adaptive Direct search - version 3.8.0      */
 /*                                                                                     */
-/*  Copyright (C) 2001-2012  Mark Abramson        - the Boeing Company, Seattle        */
-/*                           Charles Audet        - Ecole Polytechnique, Montreal      */
-/*                           Gilles Couture       - Ecole Polytechnique, Montreal      */
-/*                           John Dennis          - Rice University, Houston           */
-/*                           Sebastien Le Digabel - Ecole Polytechnique, Montreal      */
-/*                           Christophe Tribes    - Ecole Polytechnique, Montreal      */
 /*                                                                                     */
-/*  funded in part by AFOSR and Exxon Mobil                                            */
+/*  NOMAD - version 3.8.0 has been created by                                          */
+/*                 Charles Audet        - Ecole Polytechnique de Montreal              */
+/*                 Sebastien Le Digabel - Ecole Polytechnique de Montreal              */
+/*                 Christophe Tribes    - Ecole Polytechnique de Montreal              */
 /*                                                                                     */
-/*  Author: Sebastien Le Digabel                                                       */
+/*  The copyright of NOMAD - version 3.8.0 is owned by                                 */
+/*                 Sebastien Le Digabel - Ecole Polytechnique de Montreal              */
+/*                 Christophe Tribes    - Ecole Polytechnique de Montreal              */
+/*                                                                                     */
+/*  NOMAD v3 has been funded by AFOSR and Exxon Mobil.                                 */
+/*                                                                                     */
+/*  NOMAD v3 is a new version of NOMAD v1 and v2. NOMAD v1 and v2 were created and     */
+/*  developed by Mark Abramson, Charles Audet, Gilles Couture and John E. Dennis Jr.,  */
+/*  and were funded by AFOSR and Exxon Mobil.                                          */
+/*                                                                                     */
 /*                                                                                     */
 /*  Contact information:                                                               */
 /*    Ecole Polytechnique de Montreal - GERAD                                          */
@@ -34,12 +40,12 @@
 /*  You can find information on the NOMAD software at www.gerad.ca/nomad               */
 /*-------------------------------------------------------------------------------------*/
 /**
-  \file   Cache_File_Point.hpp
-  \brief  Class for points in binary files (headers)
-  \author Sebastien Le Digabel
-  \date   2010-04-06
-  \see    Cache_File_Point.cpp
-*/
+ \file   Cache_File_Point.hpp
+ \brief  Class for points in binary files (headers)
+ \author Sebastien Le Digabel
+ \date   2010-04-06
+ \see    Cache_File_Point.cpp
+ */
 
 #ifndef __CACHE_FILE_POINT__
 #define __CACHE_FILE_POINT__
@@ -48,155 +54,155 @@
 #include "Uncopyable.hpp"
 
 namespace NOMAD {
-  
-  // forward declarations:
-  class Point;
-  class Eval_Point;
-
-  /// Class to represent NOMAD::Eval_Point objects in binary files.
-  /**
-   - All point coordinates are saved.
-   - Only defined blackbox outputs are saved.
-   - To get all bb_outputs:
-   \code
-   NOMAD::Point bbo ( _m );
-   for ( int i = 0 ; i < _m_def ; ++i )
+    
+    // forward declarations:
+    class Point;
+    class Eval_Point;
+    
+    /// Class to represent NOMAD::Eval_Point objects in binary files.
+    /**
+     - All point coordinates are saved.
+     - Only defined blackbox outputs are saved.
+     - To get all bb_outputs:
+     \code
+     NOMAD::Point bbo ( _m );
+     for ( int i = 0 ; i < _m_def ; ++i )
      bbo [ _bbo_index[i] ] = _bbo_def[i];
-   \endcode
-  */
-  class Cache_File_Point : private NOMAD::Uncopyable {
-
-  private:
-    
+     \endcode
+     */
+    class Cache_File_Point : private NOMAD::Uncopyable {
+        
+    private:
+        
 #ifdef MEMORY_DEBUG
-    /// Number of NOMAD::Cache_File_Point objects in memory.
-    static int _cardinality;
-
-    /// Max number of NOMAD::Cache_File_Point objects in memory.
-    static int _max_cardinality;
+        /// Number of NOMAD::Cache_File_Point objects in memory.
+        static int _cardinality;
+        
+        /// Max number of NOMAD::Cache_File_Point objects in memory.
+        static int _max_cardinality;
 #endif
-
-    int           _n;      ///< Dimension of the point.
-    int           _m;      ///< Number of blackbox outputs (both defined and undefined).
-    int           _m_def;  ///< Number of defined blackbox outputs.
-
-    /// Evaluation status.
-    /**
-	- 0: fail.
-	- 1: ok.
-	- 2: in progress.
-	- 3: undefined.
-    */
-    unsigned char _eval_status;
-
-    double      * _coords;     ///< The \c _n coordinates.
-    double      * _bbo_def;    ///< The \c _m_def defined blackbox output values.
-    int         * _bbo_index;  ///< The index for the blackbox output values.
-
-    /// Reset.
-    void reset ( void );
-
-  public:
-
+        
+        int           _n;      ///< Dimension of the point.
+        int           _m;      ///< Number of blackbox outputs (both defined and undefined).
+        int           _m_def;  ///< Number of defined blackbox outputs.
+        
+        /// Evaluation status.
+        /**
+         - 0: fail.
+         - 1: ok.
+         - 2: in progress.
+         - 3: undefined.
+         */
+        unsigned char _eval_status;
+        
+        double      * _coords;     ///< The \c _n coordinates.
+        double      * _bbo_def;    ///< The \c _m_def defined blackbox output values.
+        int         * _bbo_index;  ///< The index for the blackbox output values.
+        
+        /// Reset.
+        void reset ( void );
+        
+    public:
+        
 #ifdef MEMORY_DEBUG
-    /// Access to the number of NOMAD::Cache_File_Point objects in memory.
-    /**
-       \return The number of NOMAD::Cache_File_Point objects in memory.
-    */
-    static int get_cardinality ( void ) { return Cache_File_Point::_cardinality; }
-
-    /// Access to the max number of NOMAD::Cache_File_Point objects in memory.
-    /**
-       \return The max number of NOMAD::Cache_File_Point objects in memory.
-    */
-    static int get_max_cardinality ( void )
-    {
-      return Cache_File_Point::_max_cardinality;
-    }
+        /// Access to the number of NOMAD::Cache_File_Point objects in memory.
+        /**
+         \return The number of NOMAD::Cache_File_Point objects in memory.
+         */
+        static int get_cardinality ( void ) { return Cache_File_Point::_cardinality; }
+        
+        /// Access to the max number of NOMAD::Cache_File_Point objects in memory.
+        /**
+         \return The max number of NOMAD::Cache_File_Point objects in memory.
+         */
+        static int get_max_cardinality ( void )
+        {
+            return Cache_File_Point::_max_cardinality;
+        }
 #endif
-
-    /// Constructor #1.
-    explicit Cache_File_Point ( void );
+        
+        /// Constructor #1.
+        explicit Cache_File_Point ( void );
+        
+        /// Constructor #2.
+        /**
+         From a NOMAD::Eval_Point object.
+         \param x The evaluation point.
+         */
+        explicit Cache_File_Point ( const NOMAD::Eval_Point & x );
+        
+        /// Destructor.
+        virtual ~Cache_File_Point ( void );
+        
+        /// Access to the dimension of the point.
+        /**
+         \return The dimension of the point.
+         */
+        int get_n ( void  ) const { return _n; }
+        
+        /// Access to the number of blackbox outputs.
+        /**
+         \return The number of blackbox outputs.
+         */
+        int get_m ( void  ) const { return _m; }
+        
+        /// Access to the evaluation status.
+        /**
+         Evaluation status as a character:
+         - 0: fail.
+         - 1: ok.
+         - 2: in progress.
+         - 3: undefined.
+         \return A character as the evaluation status.
+         */
+        unsigned char get_eval_status ( void ) const { return _eval_status; }
+        
+        /// Access to the coordinates.
+        /**
+         \param i The index (0 for the first element) -- \b IN.
+         \return The \c (i+1)th coordinate.
+         */
+        double get_coord ( int i ) const;
+        
+        /// Access to the blackbox outputs.
+        /**
+         \return A NOMAD::Point as the \c _m outputs.
+         */
+        const NOMAD::Point get_bb_outputs ( void ) const;
+        
+        /// Write in a binary file.
+        /**
+         \param fout The output file -- \b IN/OUT.
+         \return A boolean equal to \c true if the file could be written.
+         */
+        bool write ( std::ofstream & fout ) const;
+        
+        /// Read in a binary file.
+        /**
+         \param fin The input file -- \b IN/OUT.
+         \return A boolean equal to \c true if the file could be read.
+         */
+        bool read ( std::ifstream & fin );
+        
+        /// Display.
+        /**
+         \param out The NOMAD::Display object -- \b IN.
+         */
+        void display ( const NOMAD::Display & out ) const;
+    };
     
-    /// Constructor #2.
+    /// Display a NOMAD::Cache_File_Point object.
     /**
-       From a NOMAD::Eval_Point object.
-       \param x The evaluation point.
-    */
-    explicit Cache_File_Point ( const NOMAD::Eval_Point & x );
-    
-    /// Destructor.
-    virtual ~Cache_File_Point ( void );
-
-    /// Access to the dimension of the point.
-    /**
-       \return The dimension of the point.
-    */    
-    int get_n ( void  ) const { return _n; }
-
-    /// Access to the number of blackbox outputs.
-    /**
-       \return The number of blackbox outputs.
-    */  
-    int get_m ( void  ) const { return _m; }
-
-    /// Access to the evaluation status.
-    /**
-       Evaluation status as a character:
-       - 0: fail.
-       - 1: ok.
-       - 2: in progress.
-       - 3: undefined.
-       \return A character as the evaluation status.
-    */  
-    unsigned char get_eval_status ( void ) const { return _eval_status; }
-
-    /// Access to the coordinates.
-    /**
-       \param i The index (0 for the first element) -- \b IN.
-       \return The \c (i+1)th coordinate.
-    */
-    double get_coord ( int i ) const;
-
-    /// Access to the blackbox outputs.
-    /**
-       \return A NOMAD::Point as the \c _m outputs.
-    */
-    const NOMAD::Point get_bb_outputs ( void ) const;
-    
-    /// Write in a binary file.
-    /**
-       \param fout The output file -- \b IN/OUT.
-       \return A boolean equal to \c true if the file could be written.
-    */
-    bool write ( std::ofstream & fout ) const;
-    
-    /// Read in a binary file.
-    /**
-       \param fin The input file -- \b IN/OUT.
-       \return A boolean equal to \c true if the file could be read.
-    */
-    bool read ( std::ifstream & fin );
-    
-    /// Display.
-    /**
-       \param out The NOMAD::Display object -- \b IN.
-    */
-    void display ( const NOMAD::Display & out ) const;
-  };
-
-  /// Display a NOMAD::Cache_File_Point object.
-  /**
      \param out The NOMAD::Display object -- \b IN.
      \param x   The NOMAD::Cache_File_Point object to be displayed -- \b IN.
      \return    The NOMAD::Display object.
-  */
-  inline const NOMAD::Display & operator << ( const NOMAD::Display          & out ,
-					      const NOMAD::Cache_File_Point & x     )
-  {
-    x.display ( out );
-    return out;
-  }
+     */
+    inline const NOMAD::Display & operator << ( const NOMAD::Display          & out ,
+                                               const NOMAD::Cache_File_Point & x     )
+    {
+        x.display ( out );
+        return out;
+    }
 }
 
 #endif

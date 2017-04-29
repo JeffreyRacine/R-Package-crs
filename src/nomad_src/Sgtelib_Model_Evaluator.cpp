@@ -1,16 +1,22 @@
 /*-------------------------------------------------------------------------------------*/
-/*  NOMAD - Nonlinear Optimization by Mesh Adaptive Direct search - version 3.6.2        */
+/*  NOMAD - Nonlinear Optimization by Mesh Adaptive Direct search - version 3.8.0      */
 /*                                                                                     */
-/*  Copyright (C) 2001-2012 Mark Abramson        - the Boeing Company, Seattle        */
-/*                           Charles Audet        - Ecole Polytechnique, Montreal      */
-/*                           Gilles Couture       - Ecole Polytechnique, Montreal      */
-/*                           John Dennis          - Rice University, Houston           */
-/*                           Sebastien Le Digabel - Ecole Polytechnique, Montreal      */
-/*                           Christophe Tribes    - Ecole Polytechnique, Montreal      */
 /*                                                                                     */
-/*  funded in part by AFOSR and Exxon Mobil                                            */
+/*  NOMAD - version 3.8.0 has been created by                                          */
+/*                 Charles Audet        - Ecole Polytechnique de Montreal              */
+/*                 Sebastien Le Digabel - Ecole Polytechnique de Montreal              */
+/*                 Christophe Tribes    - Ecole Polytechnique de Montreal              */
 /*                                                                                     */
-/*  Author: Sebastien Le Digabel                                                       */
+/*  The copyright of NOMAD - version 3.8.0 is owned by                                 */
+/*                 Sebastien Le Digabel - Ecole Polytechnique de Montreal              */
+/*                 Christophe Tribes    - Ecole Polytechnique de Montreal              */
+/*                                                                                     */
+/*  NOMAD v3 has been funded by AFOSR and Exxon Mobil.                                 */
+/*                                                                                     */
+/*  NOMAD v3 is a new version of NOMAD v1 and v2. NOMAD v1 and v2 were created and     */
+/*  developed by Mark Abramson, Charles Audet, Gilles Couture and John E. Dennis Jr.,  */
+/*  and were funded by AFOSR and Exxon Mobil.                                          */
+/*                                                                                     */
 /*                                                                                     */
 /*  Contact information:                                                               */
 /*    Ecole Polytechnique de Montreal - GERAD                                          */
@@ -34,32 +40,29 @@
 /*  You can find information on the NOMAD software at www.gerad.ca/nomad               */
 /*-------------------------------------------------------------------------------------*/
 /**
-  \file   TGP_Model_Evaluator.cpp
-  \brief  NOMAD::Evaluator subclass for TGP model optimization (implementation)
-  \author Sebastien Le Digabel
-  \date   2011-02-17
-  \see    TGP_Mopel_Evaluator.hpp
-*/
+ \file   Sgtelib_Model_Evaluator.cpp
+ \brief  Interface between nomad evaluator and Sgtelib_Model_Manager.
+ \author Bastien Talgorn
+ \date   2013-04-25
+ \see    Sgtelib_Model_Manager.cpp
+ */
 
-#ifndef USE_TGP
+#include "Sgtelib_Model_Evaluator.hpp"
 
-int TGP_MODEL_EVALUATOR_DUMMY; // avoids that TGP_Model_Evaluator.o has no symbols with ranlib
-
-#else
-
-#include "TGP_Model_Evaluator.hpp"
 
 /*------------------------------------------------------------------------*/
-/*                evaluate the TGP model at a given trial point           */
+/*                evaluate the sgtelib_model model at a given trial point           */
 /*------------------------------------------------------------------------*/
-bool NOMAD::TGP_Model_Evaluator::eval_x ( NOMAD::Eval_Point   & x          ,
-					  const NOMAD::Double & h_max      ,
-					  bool                & count_eval   ) const
+bool NOMAD::Sgtelib_Model_Evaluator::eval_x ( NOMAD::Eval_Point   & x          ,
+                                             const NOMAD::Double & h_max      ,
+                                             bool                & count_eval   ) const
 {
-  count_eval = true;
-  if ( !_model.predict ( x , true ) )
-    return false;
-  return true;
+    return _sgtelib_model_manager->eval_x( &x         ,
+                                          h_max      ,
+                                          count_eval );
 }
 
-#endif
+
+
+// #endif
+

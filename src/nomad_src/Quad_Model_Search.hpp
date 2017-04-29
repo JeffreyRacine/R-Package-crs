@@ -1,16 +1,22 @@
 /*-------------------------------------------------------------------------------------*/
-/*  NOMAD - Nonlinear Optimization by Mesh Adaptive Direct search - version 3.6.2        */
+/*  NOMAD - Nonlinear Optimization by Mesh Adaptive Direct search - version 3.8.0      */
 /*                                                                                     */
-/*  Copyright (C) 2001-2012  Mark Abramson        - the Boeing Company, Seattle        */
-/*                           Charles Audet        - Ecole Polytechnique, Montreal      */
-/*                           Gilles Couture       - Ecole Polytechnique, Montreal      */
-/*                           John Dennis          - Rice University, Houston           */
-/*                           Sebastien Le Digabel - Ecole Polytechnique, Montreal      */
-/*                           Christophe Tribes    - Ecole Polytechnique, Montreal      */
 /*                                                                                     */
-/*  funded in part by AFOSR and Exxon Mobil                                            */
+/*  NOMAD - version 3.8.0 has been created by                                          */
+/*                 Charles Audet        - Ecole Polytechnique de Montreal              */
+/*                 Sebastien Le Digabel - Ecole Polytechnique de Montreal              */
+/*                 Christophe Tribes    - Ecole Polytechnique de Montreal              */
 /*                                                                                     */
-/*  Author: Sebastien Le Digabel                                                       */
+/*  The copyright of NOMAD - version 3.8.0 is owned by                                 */
+/*                 Sebastien Le Digabel - Ecole Polytechnique de Montreal              */
+/*                 Christophe Tribes    - Ecole Polytechnique de Montreal              */
+/*                                                                                     */
+/*  NOMAD v3 has been funded by AFOSR and Exxon Mobil.                                 */
+/*                                                                                     */
+/*  NOMAD v3 is a new version of NOMAD v1 and v2. NOMAD v1 and v2 were created and     */
+/*  developed by Mark Abramson, Charles Audet, Gilles Couture and John E. Dennis Jr.,  */
+/*  and were funded by AFOSR and Exxon Mobil.                                          */
+/*                                                                                     */
 /*                                                                                     */
 /*  Contact information:                                                               */
 /*    Ecole Polytechnique de Montreal - GERAD                                          */
@@ -34,12 +40,12 @@
 /*  You can find information on the NOMAD software at www.gerad.ca/nomad               */
 /*-------------------------------------------------------------------------------------*/
 /**
-  \file   Quad_Model_Search.hpp
-  \brief  Quadratic Model search (headers)
-  \author Sebastien Le Digabel
-  \date   2010-08-30
-  \see    Quad_Model_Search.cpp
-*/
+ \file   Quad_Model_Search.hpp
+ \brief  Quadratic Model search (headers)
+ \author Sebastien Le Digabel
+ \date   2010-08-30
+ \see    Quad_Model_Search.cpp
+ */
 #ifndef __QUAD_MODEL_SEARCH__
 #define __QUAD_MODEL_SEARCH__
 
@@ -48,104 +54,105 @@
 #include "Multi_Obj_Quad_Model_Evaluator.hpp"
 
 namespace NOMAD {
-
-  /// Model search.
-  class Quad_Model_Search : public NOMAD::Search , private NOMAD::Uncopyable {
-
-  private:
-
-    NOMAD::Model_Stats _one_search_stats;   ///< Stats for one search.
-    NOMAD::Model_Stats _all_searches_stats; ///< Stats for all searches.
-
-    /// Model optimization.
-    /**
-       \param model          The model                          -- \b IN.
-       \param xk             The two model centers              -- \b IN.
-       \param i_inc          Model center index (\c 0 or \c 1 ) -- \b IN.
-       \param display_degree Display degree                     -- \b IN.
-       \param out            The NOMAD::Display object          -- \b IN.
-       \param xf             Feasible solution \c xf            -- \b OUT.
-       \param xi             Infeasible solution \c xi          -- \b OUT.
-       \param stop           Stop flag                          -- \b OUT.
-       \param stop_reason    Stop reason                        -- \b OUT.
-    */
-    bool optimize_model ( const NOMAD::Quad_Model  & model          ,
-			  const NOMAD::Eval_Point ** xk             ,
-			  int                        i_inc          ,
-			  NOMAD::dd_type             display_degree ,
-			  const NOMAD::Display     & out            ,
-			  NOMAD::Point             & xf             ,
-			  NOMAD::Point             & xi             ,
-			  bool                     & stop           ,
-			  NOMAD::stop_type         & stop_reason      );
-
-    /// Project to mesh and create a trial point.
-    /**
-       \param ev_control     The NOMAD::Evaluator_Control object -- \b IN.
-       \param x              The point coordinates               -- \b IN.
-       \param model          The model                           -- \b IN.
-       \param signature      Signature                           -- \b IN.
-       \param mesh_index     Mesh index                          -- \b IN.
-       \param delta_m        Mesh size parameter                 -- \b IN.
-       \param display_degree Display degree                      -- \b IN.
-       \param out            The NOMAD::Display object           -- \b IN.
-    */
-    void create_trial_point
-    ( NOMAD::Evaluator_Control & ev_control     ,
-      NOMAD::Point               x              ,
-      const NOMAD::Quad_Model  & model          ,
-      NOMAD::Signature         & signature      ,
-      int                        mesh_index     ,
-      const NOMAD::Point       & delta_m        ,
-      NOMAD::dd_type             display_degree ,
-      const NOMAD::Display     & out              );
-
-    /*----------------------------------------------------------------------*/
-
-  public:
-
-    /// Constructor.
-    /**
-       \param p Parameters -- \b IN.
-    */
-    Quad_Model_Search ( NOMAD::Parameters & p )
-      : NOMAD::Search ( p , NOMAD::MODEL_SEARCH ) {}
     
-    /// Destructor.
-    virtual ~Quad_Model_Search ( void ) {}
-
-    /// Reset.
-    virtual void reset ( void ) {}
-
-    /// The quadratic model search.
-    /**
-       Based on quadratic regression/MFN interpolation models.
-       \param mads           NOMAD::Mads object invoking this search -- \b IN/OUT.
-       \param nb_search_pts  Number of generated search points       -- \b OUT.
-       \param stop           Stop flag                               -- \b IN/OUT.
-       \param stop_reason    Stop reason                             -- \b OUT.
-       \param success        Type of success                         -- \b OUT.
-       \param count_search   Count or not the search                 -- \b OUT.
-       \param new_feas_inc   New feasible incumbent                  -- \b IN/OUT.
-       \param new_infeas_inc New infeasible incumbent                -- \b IN/OUT.
-    */
-    virtual void search ( NOMAD::Mads              & mads           ,
-			  int                      & nb_search_pts  ,
-			  bool                     & stop           ,
-			  NOMAD::stop_type         & stop_reason    ,
-			  NOMAD::success_type      & success        ,
-			  bool                     & count_search   ,
-			  const NOMAD::Eval_Point *& new_feas_inc   ,
-			  const NOMAD::Eval_Point *& new_infeas_inc   );
-    //// Display stats.
-    /**
-       \param out The NOMAD::Display object -- \b IN.
-    */
-    virtual void display ( const NOMAD::Display & out ) const
-    {
-      out << _all_searches_stats;
-    }
-  };
+    /// Model search.
+    class Quad_Model_Search : public NOMAD::Search , private NOMAD::Uncopyable {
+        
+    private:
+        
+        NOMAD::Model_Stats _one_search_stats;   ///< Stats for one search.
+        NOMAD::Model_Stats _all_searches_stats; ///< Stats for all searches.
+        
+        /// Model optimization.
+        /**
+         \param model          The model                          -- \b IN.
+         \param xk             The two model centers              -- \b IN.
+         \param i_inc          Model center index (\c 0 or \c 1 ) -- \b IN.
+         \param display_degree Display degree                     -- \b IN.
+         \param out            The NOMAD::Display object          -- \b IN.
+         \param xf             Feasible solution \c xf            -- \b OUT.
+         \param xi             Infeasible solution \c xi          -- \b OUT.
+         \param stop           Stop flag                          -- \b OUT.
+         \param stop_reason    Stop reason                        -- \b OUT.
+         */
+        bool optimize_model ( const NOMAD::Quad_Model  & model          ,
+                             const NOMAD::Eval_Point ** xk             ,
+                             int                        i_inc          ,
+                             NOMAD::dd_type             display_degree ,
+                             const NOMAD::Display     & out            ,
+                             NOMAD::Point             & xf             ,
+                             NOMAD::Point             & xi             ,
+                             bool                     & stop           ,
+                             NOMAD::stop_type         & stop_reason      );
+        
+        /// Project to mesh and create a trial point.
+        /**
+         \param ev_control     The NOMAD::Evaluator_Control object -- \b IN.
+         \param x              The point coordinates               -- \b IN.
+         \param model          The model                           -- \b IN.
+         \param signature      Signature                           -- \b IN.
+         \param mesh_indices   Mesh indic                          -- \b IN.
+         \param delta			 Mesh size parameter                 -- \b IN.
+         \param display_degree Display degree                      -- \b IN.
+         \param out            The NOMAD::Display object           -- \b IN.
+         */
+        void create_trial_point ( NOMAD::Evaluator_Control & ev_control     ,
+                                 NOMAD::Point               x              ,
+                                 const NOMAD::Quad_Model  & model          ,
+                                 NOMAD::Signature         & signature      ,
+                                 const NOMAD::Point        & mesh_indices   ,
+                                 const NOMAD::Point       & delta        ,
+                                 NOMAD::dd_type             display_degree ,
+                                 const NOMAD::Display     & out              );
+        
+        /*----------------------------------------------------------------------*/
+        
+    public:
+        
+        /// Constructor.
+        /**
+         \param p Parameters -- \b IN.
+         */
+        Quad_Model_Search ( NOMAD::Parameters & p )
+        : NOMAD::Search ( p , NOMAD::MODEL_SEARCH ) {}
+        
+        /// Destructor.
+        virtual ~Quad_Model_Search ( void ) {}
+        
+        /// Reset.
+        virtual void reset ( void ) {}
+        
+        /// The quadratic model search.
+        /**
+         Based on quadratic regression/MFN interpolation models.
+         \param mads           NOMAD::Mads object invoking this search -- \b IN/OUT.
+         \param nb_search_pts  Number of generated search points       -- \b OUT.
+         \param stop           Stop flag                               -- \b IN/OUT.
+         \param stop_reason    Stop reason                             -- \b OUT.
+         \param success        Type of success                         -- \b OUT.
+         \param count_search   Count or not the search                 -- \b OUT.
+         \param new_feas_inc   New feasible incumbent                  -- \b IN/OUT.
+         \param new_infeas_inc New infeasible incumbent                -- \b IN/OUT.
+         */
+        virtual void search ( NOMAD::Mads              & mads           ,
+                             int                      & nb_search_pts  ,
+                             bool                     & stop           ,
+                             NOMAD::stop_type         & stop_reason    ,
+                             NOMAD::success_type      & success        ,
+                             bool                     & count_search   ,
+                             const NOMAD::Eval_Point *& new_feas_inc   ,
+                             const NOMAD::Eval_Point *& new_infeas_inc   );
+        
+        
+        //// Display stats.
+        /**
+         \param out The NOMAD::Display object -- \b IN.
+         */
+        virtual void display ( const NOMAD::Display & out ) const
+        {
+            out << _all_searches_stats;
+        }
+    };
 }
 
 #endif

@@ -1,16 +1,22 @@
 /*-------------------------------------------------------------------------------------*/
-/*  NOMAD - Nonlinear Optimization by Mesh Adaptive Direct search - version 3.6.2        */
+/*  NOMAD - Nonlinear Optimization by Mesh Adaptive Direct search - version 3.8.0      */
 /*                                                                                     */
-/*  Copyright (C) 2001-2012  Mark Abramson        - the Boeing Company, Seattle        */
-/*                           Charles Audet        - Ecole Polytechnique, Montreal      */
-/*                           Gilles Couture       - Ecole Polytechnique, Montreal      */
-/*                           John Dennis          - Rice University, Houston           */
-/*                           Sebastien Le Digabel - Ecole Polytechnique, Montreal      */
-/*                           Christophe Tribes    - Ecole Polytechnique, Montreal      */
 /*                                                                                     */
-/*  funded in part by AFOSR and Exxon Mobil                                            */
+/*  NOMAD - version 3.8.0 has been created by                                          */
+/*                 Charles Audet        - Ecole Polytechnique de Montreal              */
+/*                 Sebastien Le Digabel - Ecole Polytechnique de Montreal              */
+/*                 Christophe Tribes    - Ecole Polytechnique de Montreal              */
 /*                                                                                     */
-/*  Author: Sebastien Le Digabel                                                       */
+/*  The copyright of NOMAD - version 3.8.0 is owned by                                 */
+/*                 Sebastien Le Digabel - Ecole Polytechnique de Montreal              */
+/*                 Christophe Tribes    - Ecole Polytechnique de Montreal              */
+/*                                                                                     */
+/*  NOMAD v3 has been funded by AFOSR and Exxon Mobil.                                 */
+/*                                                                                     */
+/*  NOMAD v3 is a new version of NOMAD v1 and v2. NOMAD v1 and v2 were created and     */
+/*  developed by Mark Abramson, Charles Audet, Gilles Couture and John E. Dennis Jr.,  */
+/*  and were funded by AFOSR and Exxon Mobil.                                          */
+/*                                                                                     */
 /*                                                                                     */
 /*  Contact information:                                                               */
 /*    Ecole Polytechnique de Montreal - GERAD                                          */
@@ -34,25 +40,24 @@
 /*  You can find information on the NOMAD software at www.gerad.ca/nomad               */
 /*-------------------------------------------------------------------------------------*/
 /**
-  \file   Random_Pickup.cpp
-  \brief  Class for randomly pick up integers (implementation)
-  \author Sebastien Le Digabel
-  \date   2010-04-07
-  \see    Random_Pickup.hpp
-*/
+ \file   Random_Pickup.cpp
+ \brief  Class for randomly pick up integers (implementation)
+ \author Sebastien Le Digabel
+ \date   2010-04-07
+ \see    Random_Pickup.hpp
+ */
 #include "Random_Pickup.hpp"
-using namespace std; // zhenghua
 
 /*---------------------------------------------------------*/
 /*                         constructor                     */
 /*---------------------------------------------------------*/
 NOMAD::Random_Pickup::Random_Pickup ( int n )
-  : _n0   ( n          ) ,
-    _n    ( n          ) ,
-    _elts ( new int[n] )
+: _n0   ( n          ) ,
+_n    ( n          ) ,
+_elts ( new int[n] )
 {
-  for ( int i = 0 ; i < n ; ++i )
-    _elts[i] = i;
+    for ( int i = 0 ; i < n ; ++i )
+        _elts[i] = i;
 }
 
 /*---------------------------------------------------------*/
@@ -60,9 +65,9 @@ NOMAD::Random_Pickup::Random_Pickup ( int n )
 /*---------------------------------------------------------*/
 void NOMAD::Random_Pickup::reset ( void )
 {
-  _n = _n0;
-  for ( int i = 0 ; i < _n ; ++i )
-    _elts[i] = i;
+    _n = _n0;
+    for ( int i = 0 ; i < _n ; ++i )
+        _elts[i] = i;
 }
 
 /*---------------------------------------------------------*/
@@ -70,17 +75,18 @@ void NOMAD::Random_Pickup::reset ( void )
 /*---------------------------------------------------------*/
 int NOMAD::Random_Pickup::pickup ( void )
 {
-  if ( _n == 0 )
-    return 0;
-  int ind = NOMAD::RNG::rand()%_n; 
-  int tmp = _elts[ind];
-  if ( ind < _n - 1 ) {
-    _elts[ind ] = _elts[_n-1];
-    _elts[_n-1] = tmp;
-  }
-  --_n;
-	
-  return tmp;
+    if ( _n == 0 )
+        return 0;
+    int ind = NOMAD::RNG::rand()%_n;
+    int tmp = _elts[ind];
+    if ( ind < _n - 1 )
+    {
+        _elts[ind ] = _elts[_n-1];
+        _elts[_n-1] = tmp;
+    }
+    --_n;
+    
+    return tmp;
 }
 
 /*---------------------------------------------------------*/
@@ -88,6 +94,6 @@ int NOMAD::Random_Pickup::pickup ( void )
 /*---------------------------------------------------------*/
 void NOMAD::Random_Pickup::cancel_last_pickup ( void )
 {
-  if ( _n < _n0 )
-    ++_n;
+    if ( _n < _n0 )
+        ++_n;
 }

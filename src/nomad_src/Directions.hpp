@@ -1,16 +1,22 @@
 /*-------------------------------------------------------------------------------------*/
-/*  NOMAD - Nonlinear Optimization by Mesh Adaptive Direct search - version 3.6.2        */
+/*  NOMAD - Nonlinear Optimization by Mesh Adaptive Direct search - version 3.8.0      */
 /*                                                                                     */
-/*  Copyright (C) 2001-2012  Mark Abramson        - the Boeing Company, Seattle        */
-/*                           Charles Audet        - Ecole Polytechnique, Montreal      */
-/*                           Gilles Couture       - Ecole Polytechnique, Montreal      */
-/*                           John Dennis          - Rice University, Houston           */
-/*                           Sebastien Le Digabel - Ecole Polytechnique, Montreal      */
-/*                           Christophe Tribes    - Ecole Polytechnique, Montreal      */
 /*                                                                                     */
-/*  funded in part by AFOSR and Exxon Mobil                                            */
+/*  NOMAD - version 3.8.0 has been created by                                          */
+/*                 Charles Audet        - Ecole Polytechnique de Montreal              */
+/*                 Sebastien Le Digabel - Ecole Polytechnique de Montreal              */
+/*                 Christophe Tribes    - Ecole Polytechnique de Montreal              */
 /*                                                                                     */
-/*  Author: Sebastien Le Digabel                                                       */
+/*  The copyright of NOMAD - version 3.8.0 is owned by                                 */
+/*                 Sebastien Le Digabel - Ecole Polytechnique de Montreal              */
+/*                 Christophe Tribes    - Ecole Polytechnique de Montreal              */
+/*                                                                                     */
+/*  NOMAD v3 has been funded by AFOSR and Exxon Mobil.                                 */
+/*                                                                                     */
+/*  NOMAD v3 is a new version of NOMAD v1 and v2. NOMAD v1 and v2 were created and     */
+/*  developed by Mark Abramson, Charles Audet, Gilles Couture and John E. Dennis Jr.,  */
+/*  and were funded by AFOSR and Exxon Mobil.                                          */
+/*                                                                                     */
 /*                                                                                     */
 /*  Contact information:                                                               */
 /*    Ecole Polytechnique de Montreal - GERAD                                          */
@@ -34,322 +40,270 @@
 /*  You can find information on the NOMAD software at www.gerad.ca/nomad               */
 /*-------------------------------------------------------------------------------------*/
 /**
-  \file   Directions.hpp
-  \brief  Set of polling directions (headers)
-  \author Sebastien Le Digabel
-  \date   2010-04-14
-  \see    Directions.cpp
-*/
+ \file   Directions.hpp
+ \brief  Set of polling directions (headers)
+ \author Sebastien Le Digabel
+ \date   2010-04-14
+ \see    Directions.cpp
+ */
 #ifndef __DIRECTIONS__
 #define __DIRECTIONS__
 
 #include "Random_Pickup.hpp"
 #include "Direction.hpp"
-#include "Mesh.hpp"
-#include "RNG.hpp" 
+#include "OrthogonalMesh.hpp"
+#include "RNG.hpp"
 
 namespace NOMAD {
-
-  /// Set of polling directions.
-  class Directions {
-
-    /*--------------------------------------------------------------*/
-  private:
-
-    int _nc;  ///< Number of non-fixed variables.
-
-    /// Types of the poll directions.
-    std::set<NOMAD::direction_type> _direction_types;
-
-    /// Types of the secondary poll directions.
-    std::set<NOMAD::direction_type> _sec_poll_dir_types;
-
-    bool _is_binary;      ///< Flag equal to \c true if all variables are binary.
-    bool _is_categorical; ///< Flag equal to \c true if all variables are categorical.
-
-    bool _is_orthomads;  //< Flag equal to \c true if Ortho-MADS directions are used.
-
-    // LT-MADS attributes:
-    NOMAD::Direction * _bl [1+2*NOMAD::L_LIMITS];  ///< Directions b(ell) (LT-MADS).
-    int             _hat_i [1+2*NOMAD::L_LIMITS];  ///< b(ell) indexes (LT-MADS).
-    bool   _lt_initialized;  ///< Flag equal to \c true if LT-MADS has been initialized.
-
-    // Ortho-MADS members:
-    int      * _primes;           ///< \c nc first prime numbers.
-    int        _halton_seed;      ///< Halton seed \c t_0.
-
-    static int _max_halton_seed;  ///< Max Halton seed for all NOMAD::Directions objects.
     
-    const NOMAD::Display & _out;  ///< Display.
-
-    /*--------------------------------------------------------------*/
-
-    /// Affectation operator.
-    /**
-       \param d The right-hand side object -- \b IN.
-    */
-    Directions & operator = ( const Directions & d );
-
-    /// Ortho-MADS initializations.
-    /**
-       \param halton_seed Halton seed -- \b IN.
-    */
-    void ortho_mads_init ( int halton_seed );
-
-    /// LT-MADS initializations.
-    void lt_mads_init ( void );
-
-    /// Compute the squared norm of \c normalized(2u_t-e) for Ortho-MADS.
-    /**
-       \param x     \b IN.
-       \param norm  \b IN.
-       \param b     \b IN.
-       \param new_b \b OUT.
-       \return The squared norm.
-    */
-    NOMAD::Double eval_ortho_norm ( const NOMAD::Double & x      ,
-				    const NOMAD::Double & norm   ,
-				    const NOMAD::Point  & b      ,
-				    NOMAD::Point        & new_b    ) const;
-
-    /// Householder transformation.
-    /**
-       - Generate \c _nc directions from the Halton direction.
-       - Computes also \c H[i+nc] \c = \c -H[i] (completion to 2n directions).
-       \param halton_dir     The Halton direction                -- \b IN.
-       \param complete_to_2n Complete or not to \c 2n directions -- \b IN.
-       \param H              The \c _nc directions               -- \b OUT.
-    */
-    void householder ( const NOMAD::Direction & halton_dir     ,
-		       bool                     complete_to_2n ,
-		       NOMAD::Direction      ** H                ) const;
-
-    /// Get the expression of an integer \c t in inverse base \c p.
-    /**
-       \param t \b IN.
-       \param p \b IN.
-       \return The expression of \c t in inverse base \c p.
-    */
-    static NOMAD::Double get_phi ( int t , int p );
-
-    /// Compute the Halton direction \c q(t,ell).
-    /**
-       \param halton_index Halton index \c t          -- \b IN.
-       \param mesh_index   Mesh index \c ell          -- \b IN.
-       \param alpha_t_l    Ortho-MADS \c alpha(t,ell) -- \b OUT.
-       \param halton_dir   Halton direction           -- \b OUT.
-       \return A boolean equal to \c true if the computation went well.
-    */
-    bool compute_halton_dir (	int halton_index ,
-								int mesh_index,
-								NOMAD::Double    & alpha_t_l,
-								NOMAD::Direction & halton_dir ) const;
-
-    /// Access to the LT-MADS \c b(ell) direction.
-    /**
-       \param mesh_index Mesh index \c ell  -- \b IN.
-       \param dtype Direction type          -- \b IN.
-       \param hat_i LT-MADS \c hat{i} index -- \b IN/OUT.
-       \return The LT-MADS \c b(ell) direction.
-    */
-    const NOMAD::Direction * get_bl ( int                     mesh_index ,
-				      NOMAD::direction_type   dtype      ,
-				      int                   & hat_i        );
+    /// Set of polling directions.
+    class Directions {
+        
+        /*--------------------------------------------------------------*/
+    private:
+        
+        int _nc;  ///< Number of non-fixed variables.
+        
+        /// Types of the poll directions.
+        std::set<NOMAD::direction_type> _direction_types;
+        
+        /// Types of the secondary poll directions.
+        std::set<NOMAD::direction_type> _sec_poll_dir_types;
+        
+        bool _is_binary;      ///< Flag equal to \c true if all variables are binary.
+        bool _is_categorical; ///< Flag equal to \c true if all variables are categorical.
+        
+        bool _is_orthomads;  //< Flag equal to \c true if Ortho-MADS directions are used.
+        
+        // LT-MADS attributes:
+        NOMAD::Direction * _bl [1+2*NOMAD::L_LIMITS];  ///< Directions b(ell) (LT-MADS).
+        int             _hat_i [1+2*NOMAD::L_LIMITS];  ///< b(ell) indexes (LT-MADS).
+        bool   _lt_initialized;  ///< Flag equal to \c true if LT-MADS has been initialized.
+        
+        const NOMAD::Display & _out;  ///< Display.
+        
+        /*--------------------------------------------------------------*/
+        
+        /// Affectation operator.
+        /**
+         \param d The right-hand side object -- \b IN.
+         */
+        Directions & operator = ( const Directions & d );
+        
+        
+        /// LT-MADS initializations.
+        void lt_mads_init ( void );
+        
+        /// Compute the squared norm of \c normalized(2u_t-e) for Ortho-MADS.
+        /**
+         \param x     \b IN.
+         \param norm  \b IN.
+         \param b     \b IN.
+         \param new_b \b OUT.
+         \return The squared norm.
+         */
+        NOMAD::Double eval_ortho_norm ( const NOMAD::Double & x      ,
+                                       const NOMAD::Double & norm   ,
+                                       const NOMAD::Point  & b      ,
+                                       NOMAD::Point        & new_b    ) const;
+        
+        /// Householder transformation.
+        /**
+         - Generate \c _nc directions.
+         - Computes also \c H[i+nc] \c = \c -H[i] (completion to 2n directions).
+         \param dir     The given direction                -- \b IN.
+         \param complete_to_2n Complete or not to \c 2n directions -- \b IN.
+         \param H              The \c _nc directions               -- \b OUT.
+         */
+        void householder ( const NOMAD::Direction & dir     ,
+                          bool                     complete_to_2n ,
+                          NOMAD::Direction      ** H                ) const;
+        
+        /// Get the expression of an integer \c t in inverse base \c p.
+        /**
+         \param t \b IN.
+         \param p \b IN.
+         \return The expression of \c t in inverse base \c p.
+         */
+        static NOMAD::Double get_phi ( int t , int p );
+        
+        
+        /// Access to the LT-MADS \c b(ell) direction.
+        /**
+         \param mesh the currenet OrthogonalMesh  \c ell  -- \b IN.
+         \param dtype Direction type          -- \b IN.
+         \param hat_i LT-MADS \c hat{i} index -- \b IN/OUT.
+         \return The LT-MADS \c b(ell) direction.
+         */
+        const NOMAD::Direction * get_bl ( const NOMAD::OrthogonalMesh & mesh ,
+                                         NOMAD::direction_type   dtype      ,
+                                         int                   & hat_i        );
+        
+        /// Create a new LT-MADS direction.
+        /**
+         If \c hat_i \c == \c -1, a new \c b(ell) direction is created
+         and \c hat_i is set.
+         \param mesh the current OrthogonalMesh index \c ell           -- \b IN.
+         \param dtype      Direction type              -- \b IN.
+         \param diag_i     Diagonal index              -- \b IN.
+         \param hat_i      LT-MADS \c hat{i} index     -- \b IN/OUT.
+         \param dir        LT-MADS \c b(ell) direction -- \b OUT.
+         */
+        void create_lt_direction ( const NOMAD::OrthogonalMesh & mesh ,
+                                  NOMAD::direction_type   dtype      ,
+                                  int                     diag_i     ,
+                                  int                   & hat_i      ,
+                                  NOMAD::Direction     *& dir          );
+        
+        /// Permute the coordinates of a direction.
+        /**
+         \param dir                The direction      -- \b IN/OUT.
+         \param permutation_vector Permutation vector -- \b IN.
+         */
+        void permute_coords ( NOMAD::Direction & dir                ,
+                             const int        * permutation_vector   ) const;
+        
+        /// Compute binary directions.
+        /**
+         Only if all groups of variables are binary.
+         \param dirs Set of directions -- \b OUT.
+         */
+        void compute_binary_directions ( std::list<NOMAD::Direction> & dirs ) const;
+        
+        /*--------------------------------------------------------------*/
+        
+    public:
+        
+        /// Constructor.
+        /**
+         \param nc                 Number of non-fixed variables          -- \b IN.
+         \param direction_types    Types of the poll directions           -- \b IN.
+         \param sec_poll_dir_types Types of the secondary poll directions -- \b IN.
+         \param out                The display                            -- \b IN.
+         */
+        Directions ( int                                     nc                 ,
+                    const std::set<NOMAD::direction_type> & direction_types    ,
+                    const std::set<NOMAD::direction_type> & sec_poll_dir_types ,
+                    const NOMAD::Display                  & out                  );
+        
+        /// Copy constructor.
+        /**
+         \param d The copied object -- \b IN.
+         */
+        Directions ( const Directions & d )
+        : _nc                 ( d._nc                 ) ,
+        _direction_types    ( d._direction_types    ) ,
+        _sec_poll_dir_types ( d._sec_poll_dir_types ) ,
+        _is_binary          ( d._is_binary          ) ,
+        _is_categorical     ( d._is_categorical     ) ,
+        _is_orthomads       ( d._is_orthomads       ) ,
+        _lt_initialized     ( false                 ) ,
+        _out                ( d._out                )   {}
+        
+        /// Destructor.
+        virtual ~Directions ( void );
+        
+        /// Compute the directions for a given mesh.
+        /**
+         \param mesh               The given mesh                                             -- \b IN.
+         \param dirs               Set of directions                                          -- \b OUT.
+         \param poll               Type of poll (primary or secondary)                        -- \b IN.
+         */
+        void compute ( std::list<NOMAD::Direction> & dirs           ,
+                      NOMAD::poll_type               poll           ,
+                      const NOMAD::OrthogonalMesh  & mesh			);
+        
+        /// Compute a random direction on a N-Sphere.
+        /**
+         \param random_dir								-- \b OUT.
+         \return A boolean equal to \c true if the computation went well.
+         */
+        bool compute_dir_on_unit_sphere (	NOMAD::Direction	& random_dir ) const;
+        
+        
+        /// Check if Ortho-MADS directions are used.
+        /**
+         \return A boolean equal to \c true if Ortho-MADS directions are used.
+         */
+        bool is_orthomads ( void ) const
+        {
+            return _is_orthomads;
+        }
+        
+        /// Check if all variables are categorical.
+        /**
+         \return A boolean equal to \c true if all variables are categorical.
+         */
+        bool is_categorical ( void ) const
+        {
+            return _is_categorical;
+        }
+        
+        /// Access to the poll direction types.
+        /**
+         \return Poll direction types.
+         */
+        const std::set<NOMAD::direction_type> & get_direction_types ( void ) const
+        {
+            return _direction_types;
+        }
+        
+        /// Access to the secondary poll direction types.
+        /**
+         \return Secondary poll direction types.
+         */
+        const std::set<NOMAD::direction_type> & get_sec_poll_dir_types ( void ) const
+        {
+            return _sec_poll_dir_types;
+        }
+        
+        /// Reset directions for binary variables.
+        void set_binary ( void );
+        
+        /// Reset directions for categorical variables.
+        void set_categorical ( void );
+        
+        /// Comparison operator.
+        /**
+         \param  d The right-hand side object -- \b IN.
+         \return A boolean equal to \c true if \c *this \c < \c d .
+         */
+        bool operator < ( const Directions & d ) const;
+        
+        /// Access to the NOMAD::Display member \c _out.
+        /**
+         \return The NOMAD::Display member \c _out.
+         */
+        const NOMAD::Display & out ( void ) const { return _out; }
+        
+        /// Display.
+        /**
+         \param out The NOMAD::Display object -- \b IN.
+         */
+        void display ( const NOMAD::Display & out ) const;
+        
+        /// Display.
+        /**
+         Uses the \c this->_out member as NOMAD::Display object.
+         */
+        void display ( void ) const
+        {
+            display ( _out );
+        }
+    };
     
-    /// Create a new LT-MADS direction.
+    /// Display a NOMAD::Directions object.
     /**
-       If \c hat_i \c == \c -1, a new \c b(ell) direction is created
-       and \c hat_i is set.
-       \param mesh_index Mesh index \c ell           -- \b IN.
-       \param dtype      Direction type              -- \b IN.
-       \param diag_i     Diagonal index              -- \b IN.
-       \param hat_i      LT-MADS \c hat{i} index     -- \b IN/OUT.
-       \param dir        LT-MADS \c b(ell) direction -- \b OUT.
-    */
-    void create_lt_direction ( int                     mesh_index ,
-			       NOMAD::direction_type   dtype      ,
-			       int                     diag_i     ,
-			       int                   & hat_i      ,
-			       NOMAD::Direction     *& dir          );
-
-    /// Permute the coordinates of a direction.
-    /**
-       \param dir                The direction      -- \b IN/OUT.
-       \param permutation_vector Permutation vector -- \b IN.
-    */
-    void permute_coords ( NOMAD::Direction & dir                ,
-			  const int        * permutation_vector   ) const;
-    
-    /// Compute binary directions.
-    /**
-       Only if all groups of variables are binary.
-       \param dirs Set of directions -- \b OUT.
-    */
-    void compute_binary_directions ( std::list<NOMAD::Direction> & dirs ) const;
-    
-    /*--------------------------------------------------------------*/
-
-  public:
-
-    /// Constructor.
-    /**
-       The Halton seed will be automatically computed later
-       if NOMAD::Parameters::_halton_seed==-1.
-       \param nc                 Number of non-fixed variables          -- \b IN.
-       \param direction_types    Types of the poll directions           -- \b IN.
-       \param sec_poll_dir_types Types of the secondary poll directions -- \b IN.
-       \param halton_seed        Halton seed \c t_0                     -- \b IN.
-       \param out                The display                            -- \b IN.
-    */
-    Directions ( int                                     nc                 ,
-		 const std::set<NOMAD::direction_type> & direction_types    ,
-		 const std::set<NOMAD::direction_type> & sec_poll_dir_types ,
-		 int                                     halton_seed        ,
-		 const NOMAD::Display                  & out                  );
-
-    /// Copy constructor.
-    /**
-       \param d The copied object -- \b IN.
-    */
-    Directions ( const Directions & d )
-      : _nc                 ( d._nc                 ) ,
-	_direction_types    ( d._direction_types    ) ,
-	_sec_poll_dir_types ( d._sec_poll_dir_types ) ,
-	_is_binary          ( d._is_binary          ) ,
-	_is_categorical     ( d._is_categorical     ) ,
-	_is_orthomads       ( d._is_orthomads       ) ,
-	_lt_initialized     ( false                 ) ,
-	_primes             ( NULL                  ) ,
-	_halton_seed        ( d._halton_seed        ) ,
-	_out                ( d._out                )   {}
-    
-    /// Destructor.
-    virtual ~Directions ( void );
-    
-    /// Compute the directions for a given mesh.
-    /**
-       \param dirs               Set of directions                                          -- \b OUT.
-       \param poll               Type of poll (primary or secondary)                        -- \b IN.
-       \param poll_center        Poll center                                                -- \b IN.
-       \param mesh_index         Mesh index \c ell                                          -- \b IN.
-       \param halton_index       Halton index \c t (set to \c -1 for a default value)       -- \b IN.
-       \param feas_success_dir   Feasible success direction                                 -- \b IN.
-       \param infeas_success_dir Infeasible success direction                               -- \b IN.
-    */
-    void compute ( std::list<NOMAD::Direction> & dirs               ,
-		   NOMAD::poll_type              poll               ,
-		   const NOMAD::Point          & poll_center        ,
-		   int                           mesh_index         ,
-		   int                           halton_index       ,
-		   const NOMAD::Direction      & feas_success_dir   ,
-		   const NOMAD::Direction      & infeas_success_dir   );
-    
-
-    /// Compute just one direction for a given mesh and provided evaluated pts (used by VNS search and ortho_np1dyn).
-    /**
-       \param dir           One direction                            -- \b OUT.
-       \param mesh_index    Mesh index \c ell                        -- \b IN.
-       \param halton_index  Halton index \c t (must be \c >0)        -- \b IN. 
-       \return A boolean equal to \c true if the computation went well.
-    */
-    bool compute_one_direction ( NOMAD::Direction & dir,
-								int mesh_index,
-								int halton_index );        
-	  
-    /// Method for computing a Halton seed.
-    /**
-       The Halton seed for \c n variables is computed as the \c n th prime number.
-       \param n Number of variables -- \b IN.
-       \return The Halton seed \c t_0.
-    */
-    static int compute_halton_seed ( int n );
-
-    /// Access to the max value of the Halton index \c t.
-    /**
-       \return The max value of the Halton index \c t.
-    */
-    static int get_max_halton_seed ( void ) { return Directions::_max_halton_seed; }
-
-    /// Access to the Halton seed \c t_0.
-    /**
-       \return The Halton seed \c t_0.
-    */
-    int get_halton_seed ( void ) const { return _halton_seed; }
-
-    /// Check if Ortho-MADS directions are used.
-    /**
-       \return A boolean equal to \c true if Ortho-MADS directions are used.
-    */
-    bool is_orthomads ( void ) const { return _is_orthomads; }
-
-    /// Check if all variables are categorical.
-    /**
-       \return A boolean equal to \c true if all variables are categorical.
-    */
-    bool is_categorical ( void ) const { return _is_categorical; }
-
-    /// Access to the poll direction types.
-    /**
-       \return Poll direction types.
-    */
-    const std::set<NOMAD::direction_type> & get_direction_types ( void ) const
-    {
-      return _direction_types;
-    } 
-
-    /// Access to the secondary poll direction types.
-    /**
-       \return Secondary poll direction types.
-    */
-    const std::set<NOMAD::direction_type> & get_sec_poll_dir_types ( void ) const
-    {
-      return _sec_poll_dir_types;
-    }
-    
-    /// Reset directions for binary variables.
-    void set_binary ( void );
-    
-    /// Reset directions for categorical variables.
-    void set_categorical ( void );
-    
-    /// Comparison operator.
-    /**
-       \param  d The right-hand side object -- \b IN.
-       \return A boolean equal to \c true if \c *this \c < \c d .
-    */
-    bool operator < ( const Directions & d ) const;
-
-    /// Access to the NOMAD::Display member \c _out.
-    /**
-       \return The NOMAD::Display member \c _out.
-    */
-    const NOMAD::Display & out ( void ) const { return _out; }
-
-    /// Display.
-    /**
-       \param out The NOMAD::Display object -- \b IN.
-    */
-    void display ( const NOMAD::Display & out ) const;
-
-    /// Display.
-    /**
-       Uses the \c this->_out member as NOMAD::Display object.
-    */
-    void display ( void ) const { display ( _out ); }
-  };
-  
-  /// Display a NOMAD::Directions object.
-  /**
      \param out The NOMAD::Display object -- \b IN.
      \param d   The NOMAD::Directions object to be displayed -- \b IN.
      \return    The NOMAD::Display object.
-  */
-  inline const NOMAD::Display & operator << ( const NOMAD::Display    & out ,
-					      const NOMAD::Directions & d     )
-  {
-    d.display ( out );
-    return out;
-  }
+     */
+    inline const NOMAD::Display & operator << ( const NOMAD::Display    & out ,
+                                               const NOMAD::Directions & d     )
+    {
+        d.display ( out );
+        return out;
+    }
 }
 
 #endif

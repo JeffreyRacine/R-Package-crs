@@ -1,16 +1,22 @@
 /*-------------------------------------------------------------------------------------*/
-/*  NOMAD - Nonlinear Optimization by Mesh Adaptive Direct search - version 3.6.2        */
+/*  NOMAD - Nonlinear Optimization by Mesh Adaptive Direct search - version 3.8.0      */
 /*                                                                                     */
-/*  Copyright (C) 2001-2012  Mark Abramson        - the Boeing Company, Seattle        */
-/*                           Charles Audet        - Ecole Polytechnique, Montreal      */
-/*                           Gilles Couture       - Ecole Polytechnique, Montreal      */
-/*                           John Dennis          - Rice University, Houston           */
-/*                           Sebastien Le Digabel - Ecole Polytechnique, Montreal      */
-/*                           Christophe Tribes    - Ecole Polytechnique, Montreal      */
 /*                                                                                     */
-/*  funded in part by AFOSR and Exxon Mobil                                            */
+/*  NOMAD - version 3.8.0 has been created by                                          */
+/*                 Charles Audet        - Ecole Polytechnique de Montreal              */
+/*                 Sebastien Le Digabel - Ecole Polytechnique de Montreal              */
+/*                 Christophe Tribes    - Ecole Polytechnique de Montreal              */
 /*                                                                                     */
-/*  Author: Sebastien Le Digabel                                                       */
+/*  The copyright of NOMAD - version 3.8.0 is owned by                                 */
+/*                 Sebastien Le Digabel - Ecole Polytechnique de Montreal              */
+/*                 Christophe Tribes    - Ecole Polytechnique de Montreal              */
+/*                                                                                     */
+/*  NOMAD v3 has been funded by AFOSR and Exxon Mobil.                                 */
+/*                                                                                     */
+/*  NOMAD v3 is a new version of NOMAD v1 and v2. NOMAD v1 and v2 were created and     */
+/*  developed by Mark Abramson, Charles Audet, Gilles Couture and John E. Dennis Jr.,  */
+/*  and were funded by AFOSR and Exxon Mobil.                                          */
+/*                                                                                     */
 /*                                                                                     */
 /*  Contact information:                                                               */
 /*    Ecole Polytechnique de Montreal - GERAD                                          */
@@ -34,12 +40,12 @@
 /*  You can find information on the NOMAD software at www.gerad.ca/nomad               */
 /*-------------------------------------------------------------------------------------*/
 /**
-  \file   Cache_Search.hpp
-  \brief  NOMAD::Search subclass for the cache search (headers)
-  \author Sebastien Le Digabel
-  \date   2010-04-08
-  \see    Cache_Search.cpp
-*/
+ \file   Cache_Search.hpp
+ \brief  NOMAD::Search subclass for the cache search (headers)
+ \author Sebastien Le Digabel
+ \date   2010-04-08
+ \see    Cache_Search.cpp
+ */
 #ifndef __CACHE_SEARCH__
 #define __CACHE_SEARCH__
 
@@ -47,50 +53,50 @@
 #include "Search.hpp"
 
 namespace NOMAD {
-
-  /// Cache search.
-  class Cache_Search : public NOMAD::Search , private NOMAD::Uncopyable {
-
-  private:
-
-    /// Number of extern points at the end of the last cache search.
-    int _last_search_nb_extern_pts;
-
-  public:
-
-    /// Constructor.
-    /**
-       \param p Parameters -- \b IN.
-    */
-    Cache_Search ( NOMAD::Parameters & p )
-      : NOMAD::Search              ( p , NOMAD::CACHE_SEARCH ) ,
-	_last_search_nb_extern_pts ( 0                       )  {}
     
-    /// Destructor.
-    virtual ~Cache_Search ( void ) {}
-
-    /// Reset.
-    virtual void reset ( void ) { _last_search_nb_extern_pts = 0; }
-
-    /// The cache search.
-    /**
-      \param mads           NOMAD::Mads object invoking this search -- \b IN/OUT.
-      \param nb_search_pts  Number of generated search points       -- \b OUT.
-      \param stop           Stop flag                               -- \b IN/OUT.
-      \param stop_reason    Stop reason                             -- \b OUT.
-      \param success        Type of success                         -- \b OUT.
-      \param count_search   Count or not the search                 -- \b OUT.
-      \param new_feas_inc   New feasible incumbent                  -- \b IN/OUT.
-      \param new_infeas_inc New infeasible incumbent                -- \b IN/OUT.
-    */
-    virtual void search ( NOMAD::Mads              & mads           ,
-			  int                      & nb_search_pts  ,
-			  bool                     & stop           ,
-			  NOMAD::stop_type         & stop_reason    ,
-			  NOMAD::success_type      & success        ,
-			  bool                     & count_search   ,
-			  const NOMAD::Eval_Point *& new_feas_inc   ,
-			  const NOMAD::Eval_Point *& new_infeas_inc   );
-  };
+    /// Cache search.
+    class Cache_Search : public NOMAD::Search , private NOMAD::Uncopyable {
+        
+    private:
+        
+        /// Number of extern points at the end of the last cache search.
+        int _last_search_nb_extern_pts;
+        
+    public:
+        
+        /// Constructor.
+        /**
+         \param p Parameters -- \b IN.
+         */
+        Cache_Search ( NOMAD::Parameters & p )
+        : NOMAD::Search              ( p , NOMAD::CACHE_SEARCH ) ,
+        _last_search_nb_extern_pts ( 0                       )  {}
+        
+        /// Destructor.
+        virtual ~Cache_Search ( void ) {}
+        
+        /// Reset.
+        virtual void reset ( void ) { _last_search_nb_extern_pts = 0; }
+        
+        /// The cache search.
+        /**
+         \param mads           NOMAD::Mads object invoking this search -- \b IN/OUT.
+         \param nb_search_pts  Number of generated search points       -- \b OUT.
+         \param stop           Stop flag                               -- \b IN/OUT.
+         \param stop_reason    Stop reason                             -- \b OUT.
+         \param success        Type of success                         -- \b OUT.
+         \param count_search   Count or not the search                 -- \b OUT.
+         \param new_feas_inc   New feasible incumbent                  -- \b IN/OUT.
+         \param new_infeas_inc New infeasible incumbent                -- \b IN/OUT.
+         */
+        virtual void search ( NOMAD::Mads              & mads           ,
+                             int                      & nb_search_pts  ,
+                             bool                     & stop           ,
+                             NOMAD::stop_type         & stop_reason    ,
+                             NOMAD::success_type      & success        ,
+                             bool                     & count_search   ,
+                             const NOMAD::Eval_Point *& new_feas_inc   ,
+                             const NOMAD::Eval_Point *& new_infeas_inc   );
+    };
 }
 #endif

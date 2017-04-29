@@ -101,7 +101,7 @@ snomadr(eval.f,
 
       \code{"MIN_MESH_SIZE"="r1.0e-10"}
       
-      \code{"MIN_POLL_SIZE"="r1.0e-10"}
+      \code{"MIN_POLL_SIZE"=1}
 
       Note that the \code{"r..."} denotes relative measurement (relative
       to \code{lb} and \code{ub})
@@ -240,7 +240,7 @@ bbout <-c(0, 2, 1)
 opts <-list("MAX_BB_EVAL"=500,
             "MIN_MESH_SIZE"=0.001,
             "INITIAL_MESH_SIZE"=0.1,
-            "MIN_POLL_SIZE"=0.0001)
+            "MIN_POLL_SIZE"=1)
 
 snomadr(eval.f=eval.f,n=5,  x0=x0, bbin=bbin, bbout=bbout, lb=lb, ub=ub, opts=opts)
 

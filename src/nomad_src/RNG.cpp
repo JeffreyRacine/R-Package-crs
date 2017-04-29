@@ -1,14 +1,23 @@
 /*-------------------------------------------------------------------------------------*/
-/*  NOMAD - Nonsmooth Optimization by Mesh Adaptive Direct search - version 3.6.2        */
+/*  NOMAD - Nonlinear Optimization by Mesh Adaptive Direct search - version 3.8.0      */
 /*                                                                                     */
-/*  Copyright (C) 2001-2010  Mark Abramson        - the Boeing Company, Seattle        */
-/*                           Charles Audet        - Ecole Polytechnique, Montreal      */
-/*                           Gilles Couture       - Ecole Polytechnique, Montreal      */
-/*                           John Dennis          - Rice University, Houston           */
-/*                           Sebastien Le Digabel - Ecole Polytechnique, Montreal      */
-/*                           Christophe Tribes    - Ecole Polytechnique, Montreal      */
 /*                                                                                     */
-/*  funded in part by AFOSR and Exxon Mobil                                            */
+/*  NOMAD - version 3.8.0 has been created by                                          */
+/*                 Charles Audet        - Ecole Polytechnique de Montreal              */
+/*                 Sebastien Le Digabel - Ecole Polytechnique de Montreal              */
+/*                 Christophe Tribes    - Ecole Polytechnique de Montreal              */
+/*                                                                                     */
+/*  The copyright of NOMAD - version 3.8.0 is owned by                                 */
+/*                 Sebastien Le Digabel - Ecole Polytechnique de Montreal              */
+/*                 Christophe Tribes    - Ecole Polytechnique de Montreal              */
+/*                                                                                     */
+/*  NOMAD v3 has been funded by AFOSR and Exxon Mobil.                                 */
+/*                                                                                     */
+/*  NOMAD v3 is a new version of NOMAD v1 and v2. NOMAD v1 and v2 were created and     */
+/*  developed by Mark Abramson, Charles Audet, Gilles Couture and John E. Dennis Jr.,  */
+/*  and were funded by AFOSR and Exxon Mobil.                                          */
+/*                                                                                     */
+/*                                                                                     */
 /*  Contact information:                                                               */
 /*    Ecole Polytechnique de Montreal - GERAD                                          */
 /*    C.P. 6079, Succ. Centre-ville, Montreal (Quebec) H3C 3A7 Canada                  */
@@ -39,45 +48,79 @@
  */
 
 #include "RNG.hpp"
-using namespace std; // zhenghua
+#include <math.h>
+
+//** Default values for the provided number seed  */
+int NOMAD::RNG::_s = 0;
 
 
-//** Default values for the random number seed  */
-uint32_t NOMAD::RNG::x = 123456789;
-uint32_t NOMAD::RNG::y = 362436069;
-uint32_t NOMAD::RNG::z = 521288629; 
+uint32_t NOMAD::RNG::x_def = 123456789;
+uint32_t NOMAD::RNG::y_def = 362436069;
+uint32_t NOMAD::RNG::z_def = 521288629;
+uint32_t NOMAD::RNG::_x = x_def;
+uint32_t NOMAD::RNG::_y = y_def;
+uint32_t NOMAD::RNG::_z = z_def;
 
 
-bool NOMAD::RNG::set_seed(int s)
+void NOMAD::RNG::set_seed(int s)
 {
-    x=static_cast<uint32_t>(s);
-
-		NOMAD::RNG::y = 362436069;  //zhenghua
-		NOMAD::RNG::z = 521288629;  //zhenghua
-
-	if(x<=UINT32_MAX && s>=0)
-		return true;
-	else
-    {
+    
+    if( s<=INT_MAX && s>=0 )
+        _s=s;
+    else
         throw NOMAD::Exception ( "RNG.cpp" , __LINE__ ,
-                                "NOMAD::RNG::set_seed(): invalid seed. Seed should be in [0,UINT32_MAX]" );
-		return false;
-    }
+                                "NOMAD::RNG::set_seed(): invalid seed. Seed should be in [0,INT_MAX]" );
+    
+    reset_private_seed_to_default();
+    for ( int i=0 ; i<_s ; i++)
+        NOMAD::RNG::rand();
+    
+    
 }
 
 uint32_t NOMAD::RNG::rand ( void )
-{ //period 2^96-1
-
- 	uint32_t t;
- 	x ^= x << 16;
- 	x ^= x >> 5;
- 	x ^= x << 1;
- 	
- 	t = x;
-	x = y;
-	y = z;
-	z = t ^ x ^ y;      
-	
-	return z;
+{
+    // http://madrabbit.org/~ray/code/xorshf96.c //period 2^96-1
+    
+    uint32_t t;
+    _x ^= _x << 16;
+    _x ^= _x >> 5;
+    _x ^= _x << 1;
+    
+    t = _x;
+    _x = _y;
+    _y = _z;
+    _z = t ^ _x ^ _y;
+    
+    return _z;
 }
 
+
+/*----------------------------------------*/
+/*          normal random generators       */
+/*----------------------------------------*/
+double NOMAD::RNG::normal_rand( double mean , double var )
+{
+    // Box-Muller transformation~\cite{BoMu58}
+    
+    double x1 , x2 , w;
+    
+    do
+    {
+        x1 = NOMAD::RNG::rand(-1.0,1.0);
+        x2 = NOMAD::RNG::rand(-1.0,1.0);
+        w  = x1 * x1 + x2 * x2;
+    } while ( w >= 1.0 );
+    
+    w = sqrt( (-2.0 * log( w ) ) / w );
+    
+    return pow ( var,0.5) * x1 * w + mean;
+}
+double NOMAD::RNG::normal_rand_mean_0 ( double Var , int Nsample )
+{
+    double sum = 0.0;
+    double a=pow( 3.0*Var,0.5 );
+    for ( int i=0 ; i<Nsample ; i++ )
+        sum+=NOMAD::RNG::rand(-a,a);
+    return sum / pow( Nsample,0.5 );
+}

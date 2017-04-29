@@ -1,16 +1,22 @@
 /*-------------------------------------------------------------------------------------*/
-/*  NOMAD - Nonlinear Optimization by Mesh Adaptive Direct search - version 3.6.2      */
+/*  NOMAD - Nonlinear Optimization by Mesh Adaptive Direct search - version 3.8.0      */
 /*                                                                                     */
-/*  Copyright (C) 2001-2012  Mark Abramson        - the Boeing Company, Seattle        */
-/*                           Charles Audet        - Ecole Polytechnique, Montreal      */
-/*                           Gilles Couture       - Ecole Polytechnique, Montreal      */
-/*                           John Dennis          - Rice University, Houston           */
-/*                           Sebastien Le Digabel - Ecole Polytechnique, Montreal      */
-/*                           Christophe Tribes    - Ecole Polytechnique, Montreal      */
 /*                                                                                     */
-/*  funded in part by AFOSR and Exxon Mobil                                            */
+/*  NOMAD - version 3.8.0 has been created by                                          */
+/*                 Charles Audet        - Ecole Polytechnique de Montreal              */
+/*                 Sebastien Le Digabel - Ecole Polytechnique de Montreal              */
+/*                 Christophe Tribes    - Ecole Polytechnique de Montreal              */
 /*                                                                                     */
-/*  Author: Sebastien Le Digabel                                                       */
+/*  The copyright of NOMAD - version 3.8.0 is owned by                                 */
+/*                 Sebastien Le Digabel - Ecole Polytechnique de Montreal              */
+/*                 Christophe Tribes    - Ecole Polytechnique de Montreal              */
+/*                                                                                     */
+/*  NOMAD v3 has been funded by AFOSR and Exxon Mobil.                                 */
+/*                                                                                     */
+/*  NOMAD v3 is a new version of NOMAD v1 and v2. NOMAD v1 and v2 were created and     */
+/*  developed by Mark Abramson, Charles Audet, Gilles Couture and John E. Dennis Jr.,  */
+/*  and were funded by AFOSR and Exxon Mobil.                                          */
+/*                                                                                     */
 /*                                                                                     */
 /*  Contact information:                                                               */
 /*    Ecole Polytechnique de Montreal - GERAD                                          */
@@ -34,17 +40,17 @@
 /*  You can find information on the NOMAD software at www.gerad.ca/nomad               */
 /*-------------------------------------------------------------------------------------*/
 /**
-  \file   nomad.cpp
-  \brief  NOMAD main file
-  \author Sebastien Le Digabel
-  \date   2010-04-12
-*/
+ \file   nomad.cpp
+ \brief  NOMAD main file
+ \author Sebastien Le Digabel
+ \date   2010-04-12
+ */
 #include "nomad.hpp"
+
 /* *************************  snomadr  zhenghua *********************** */
 #include <R.h>   
 #include <Rdefines.h>
 #include <R_ext/Utils.h>
-using namespace std;
 
 namespace NOMAD {
 
@@ -55,7 +61,7 @@ class Routbuf: public std::streambuf {
 #ifdef R_VERSION
 								if(c!=EOF) Rprintf("%.1s", (char *)&c);  //this is for the class Display in NOMAD. cout will be redirected to this class and output by Rprintf.
 #else
-								if(c!=EOF) printf("%.1s", (char *)&c);  //this is for the class Display in NOMAD. cout will be redirected to this class and output by Rprintf.
+								if(c!=EOF) Rprintf("%.1s", (char *)&c);  //this is for the class Display in NOMAD. cout will be redirected to this class and output by Rprintf.
 #endif
 								return c;
 				}
@@ -68,134 +74,148 @@ std::ostream rout(&routbuf);
 
 /* *************************  snomadr  zhenghua *********************** */
 
+
 /*------------------------------------------*/
 /*            NOMAD main function           */
 /*------------------------------------------*/
 int main ( int argc , char ** argv )
 {
-	
-  // display:
-  NOMAD::Display out ( NOMAD::rout );     //zhenghua
-  out.precision ( NOMAD::DISPLAY_PRECISION_STD );
-	
-
-  std::string error;
-  {
-    // NOMAD initializations:
-    NOMAD::begin ( argc , argv );
-
-    // usage:
-    if ( argc < 2 ) {
-      NOMAD::display_usage ( out); //zhenghua
-      NOMAD::end();
-      return EXIT_FAILURE;
-    }
-
-    // parameters file:
-    std::string param_file_name = argv[1];
-    std::string opt             = param_file_name;
-    NOMAD::toupper ( opt );
-
-	  // display version if option '-v' has been specified:
-	  if ( opt == "-U" ) {
-		  NOMAD::display_usage ( out );
-		  NOMAD::end();
-		  return EXIT_SUCCESS;
-	  }
-	  
-	  
-    // display version if option '-v' has been specified:
-    if ( opt == "-V" || opt =="-VERSION") {
-      NOMAD::display_version ( out );
-      NOMAD::end();
-      return EXIT_SUCCESS;
-    }
-
-    // display info if option '-i' has been specified:
-    if ( opt == "-I" || opt == "-INFO" ) {
-      NOMAD::display_info  ( out );
-      NOMAD::display_usage ( out ); //zhenghua
-      NOMAD::end();
-      return EXIT_SUCCESS;
-    }
-  
-    // parameters creation:
-    NOMAD::Parameters p ( out );
-
-    // display help on parameters if option '-h' has been specified:
-    if ( opt == "-H" || opt == "-HELP" ) {
-      p.help ( argc , argv );
-      NOMAD::end();
-      return EXIT_SUCCESS;
-    }
-
-	  // display developer help on parameters if option '-d' has been specified:
-	  if ( opt == "-D" ) {
-		  p.help ( argc , argv,true );
-		  NOMAD::end();
-		  return EXIT_SUCCESS;
-	  }  
-	  
-	  
-    // check the number of processess:
+    
+    // display:
+    NOMAD::Display out ( NOMAD::rout );
+    out.precision ( NOMAD::DISPLAY_PRECISION_STD );
+    
+    
+    std::string error;
+    {
+        // NOMAD initializations:
+        NOMAD::begin ( argc , argv );
+        
+        // usage:
+        if ( argc < 2 )
+        {
+            NOMAD::display_usage ( argv[0],NOMAD::rout );  //zhenghua
+            NOMAD::end();
+            return EXIT_FAILURE;
+        }
+        
+        // parameters file:
+        std::string param_file_name = argv[1];
+        std::string opt             = param_file_name;
+        NOMAD::toupper ( opt );
+        
+        // display version if option '-v' has been specified:
+        if ( opt == "-U" )
+        {
+            NOMAD::display_usage ( argv[0], out );
+            NOMAD::end();
+            return EXIT_SUCCESS;
+        }
+        
+        
+        // display version if option '-v' has been specified:
+        if ( opt == "-V" || opt =="-VERSION")
+        {
+            NOMAD::display_version ( out );
+            NOMAD::end();
+            return EXIT_SUCCESS;
+        }
+        
+        // display info if option '-i' has been specified:
+        if ( opt == "-I" || opt == "-INFO" )
+        {
+            NOMAD::display_info  ( out );
+            NOMAD::display_usage ( argv[0], out );
+            NOMAD::end();
+            return EXIT_SUCCESS;
+        }
+        
+        // parameters creation:
+        NOMAD::Parameters p ( out );
+        
+        // display help on parameters if option '-h' has been specified:
+        if ( opt == "-H" || opt == "-HELP" )
+        {
+            p.help ( argc , argv );
+            NOMAD::end();
+            return EXIT_SUCCESS;
+        }
+        
+        // display developer help on parameters if option '-d' has been specified:
+        if ( opt == "-D" )
+        {
+            p.help ( argc , argv,true );
+            NOMAD::end();
+            return EXIT_SUCCESS;
+        }
+        
+        
+        // check the number of processess:
 #ifdef USE_MPI
-    if ( NOMAD::Slave::get_nb_processes() < 2 ) {
-				NOMAD::rout << "ERROR: Incorrect command to run with MPI." << std::endl; //zhenghua
-      NOMAD::display_usage ( out ); //zhenghua
-      NOMAD::end();
-      return EXIT_FAILURE;
-    }
+        if ( NOMAD::Slave::get_nb_processes() < 2 )
+        {
+            NOMAD::rout << "ERROR: Incorrect command to run with MPI." << std::endl; //zhenghua
+            NOMAD::display_usage ( argv[0], NOMAD::rout );   //zhenghua
+            NOMAD::end();
+            return EXIT_FAILURE;
+        }
 #endif
-    
-    try {
-
-	
-      // read parameters file:
-      p.read ( param_file_name );
-
-      // parameters check:
-      p.check();
-
-	  // display NOMAD info:
-	  if ( p.get_display_degree() > NOMAD::MINIMAL_DISPLAY)
-		NOMAD::display_info ( out );
-
-      // parameters display:
-      if ( NOMAD::Slave::is_master() &&
-       	   p.get_display_degree() == NOMAD::FULL_DISPLAY ) 
-	out << std::endl
-	    << NOMAD::open_block ( "parameters" ) << std::endl
-	    << p
-	    << NOMAD::close_block();
-
-      // algorithm creation and execution:
-      NOMAD::Mads mads ( p , NULL );
-      if ( p.get_nb_obj() == 1 )
-	mads.run();
-      else
-	mads.multi_run();
-
+        
+        try {
+            
+            
+            // read parameters file:
+            p.read ( param_file_name );
+            
+           
+            // parameters check:
+            p.check();
+            
+            // display NOMAD info and Seed:
+            if ( p.get_display_degree() > NOMAD::MINIMAL_DISPLAY)
+                NOMAD::display_info ( out );
+            
+            // parameters display:
+            if ( NOMAD::Slave::is_master() &&
+                p.get_display_degree() == NOMAD::FULL_DISPLAY )
+                out << std::endl
+                << NOMAD::open_block ( "parameters" ) << std::endl
+                << p
+                << NOMAD::close_block();
+            
+            // algorithm creation and execution:
+            NOMAD::Mads mads ( p , NULL );
+            if ( p.get_nb_obj() == 1 )
+                mads.run();
+            else
+                mads.multi_run();
+            
+            
 #ifdef MODEL_STATS
-      mads.display_model_stats ( out );
+            mads.display_model_stats ( out );
 #endif
-
-    }
-    catch ( std::exception & e ) {
-      if ( NOMAD::Slave::is_master() ) {
-	error = std::string ( "NOMAD has been interrupted: " ) + e.what();
-	NOMAD::rout << std::endl << error << std::endl << std::endl;  //zhenghua
-      }
+            
+        }
+        catch ( std::exception & e )
+        {
+            if ( NOMAD::Slave::is_master() )
+            {
+                error = std::string ( "NOMAD has been interrupted: " ) + e.what();
+                NOMAD::rout << std::endl << error << std::endl << std::endl;  //zhenghua
+            }
+        }
+        
+        
+        NOMAD::Slave::stop_slaves ( out );
+        NOMAD::end();
+        
     }
     
-    NOMAD::Slave::stop_slaves ( out );
-    NOMAD::end();
-  }
-
 #ifdef MEMORY_DEBUG
-  NOMAD::display_cardinalities ( out );
+    NOMAD::display_cardinalities ( out );
 #endif
-
-  return ( error.empty() ) ? EXIT_SUCCESS : EXIT_FAILURE;
+    
+    return ( error.empty() ) ? EXIT_SUCCESS : EXIT_FAILURE;
 }
 
 /*-----------------------------------------------------*/
@@ -204,79 +224,79 @@ int main ( int argc , char ** argv )
 #ifdef MEMORY_DEBUG
 void NOMAD::display_cardinalities ( const NOMAD::Display & out )
 {
-
+    
 #ifdef USE_MPI
-  if ( !NOMAD::Slave::is_master() )
-    return;
+    if ( !NOMAD::Slave::is_master() )
+        return;
 #endif
-
-  // compute the biggest int value for appropriate display width:
-  int max = (NOMAD::Double::get_max_cardinality() > NOMAD::Point::get_max_cardinality())
+    
+    // compute the biggest int value for appropriate display width:
+    int max = (NOMAD::Double::get_max_cardinality() > NOMAD::Point::get_max_cardinality())
     ? NOMAD::Double::get_max_cardinality() : NOMAD::Point::get_max_cardinality();
-  if ( NOMAD::Direction::get_max_cardinality() > max )
-    max = NOMAD::Direction::get_max_cardinality();
-  if ( NOMAD::Set_Element<NOMAD::Eval_Point>::get_max_cardinality() > max )
-    max = NOMAD::Set_Element<NOMAD::Eval_Point>::get_max_cardinality();
-  if ( NOMAD::Set_Element<NOMAD::Signature>::get_max_cardinality() > max )
-    max = NOMAD::Set_Element<NOMAD::Signature>::get_max_cardinality();
-  if ( NOMAD::Cache_File_Point::get_max_cardinality() > max )
-    max = NOMAD::Cache_File_Point::get_max_cardinality();
- 
-  // cardinalities display:
-  // ----------------------
-  out << std::endl
-      << NOMAD::open_block ( "important objects in memory" );
-
-  // NOMAD::Signature:
-  out << "Signature              : ";
-  out.display_int_w ( NOMAD::Signature::get_cardinality() , max );
-  out << " (max=";
-  out.display_int_w ( NOMAD::Signature::get_max_cardinality() , max );
-  out << ")" << std::endl;
-
-  // NOMAD::Double:
-  out << "Double                 : ";
-  out.display_int_w ( NOMAD::Double::get_cardinality() , max );
-  out << " (max=";
-  out.display_int_w ( NOMAD::Double::get_max_cardinality() , max );
-  out << ")" << std::endl;
-
-  // NOMAD::Point:
-  out << "Point                  : ";
-  out.display_int_w ( NOMAD::Point::get_cardinality() , max );
-  out << " (max=";
-  out.display_int_w ( NOMAD::Point::get_max_cardinality() , max );
-  out << ")" << std::endl;
-
-  // NOMAD::Direction:
-  out << "Direction              : ";
-  out.display_int_w ( NOMAD::Direction::get_cardinality() , max );
-  out << " (max=";
-  out.display_int_w ( NOMAD::Direction::get_max_cardinality() , max );
-  out << ")" << std::endl;
-
-  // Set_Element<Eval_Point>:
-  out << "Set_Element<Eval_Point>: ";
-  out.display_int_w (NOMAD::Set_Element<NOMAD::Eval_Point>::get_cardinality(), max);
-  out << " (max=";
-  out.display_int_w (NOMAD::Set_Element<NOMAD::Eval_Point>::get_max_cardinality(), max);
-  out << ")" << std::endl;
-
-  // Set_Element<NOMAD::Signature>:
-  out << "Set_Element<Signature> : ";
-  out.display_int_w (NOMAD::Set_Element<NOMAD::Signature>::get_cardinality(), max);
-  out << " (max=";
-  out.display_int_w (NOMAD::Set_Element<NOMAD::Signature>::get_max_cardinality(), max);
-  out << ")" << std::endl;
-
-  // NOMAD::Cache_File_Point:
-  out << "Cache_File_Point       : ";
-  out.display_int_w ( NOMAD::Cache_File_Point::get_cardinality() , max );
-  out << " (max=";
-  out.display_int_w ( NOMAD::Cache_File_Point::get_max_cardinality() , max );
-  out << ")" << std::endl;
-
-  out << NOMAD::close_block();
+    if ( NOMAD::Direction::get_max_cardinality() > max )
+        max = NOMAD::Direction::get_max_cardinality();
+    if ( NOMAD::Set_Element<NOMAD::Eval_Point>::get_max_cardinality() > max )
+        max = NOMAD::Set_Element<NOMAD::Eval_Point>::get_max_cardinality();
+    if ( NOMAD::Set_Element<NOMAD::Signature>::get_max_cardinality() > max )
+        max = NOMAD::Set_Element<NOMAD::Signature>::get_max_cardinality();
+    if ( NOMAD::Cache_File_Point::get_max_cardinality() > max )
+        max = NOMAD::Cache_File_Point::get_max_cardinality();
+    
+    // cardinalities display:
+    // ----------------------
+    out << std::endl
+    << NOMAD::open_block ( "important objects in memory" );
+    
+    // NOMAD::Signature:
+    out << "Signature              : ";
+    out.display_int_w ( NOMAD::Signature::get_cardinality() , max );
+    out << " (max=";
+    out.display_int_w ( NOMAD::Signature::get_max_cardinality() , max );
+    out << ")" << std::endl;
+    
+    // NOMAD::Double:
+    out << "Double                 : ";
+    out.display_int_w ( NOMAD::Double::get_cardinality() , max );
+    out << " (max=";
+    out.display_int_w ( NOMAD::Double::get_max_cardinality() , max );
+    out << ")" << std::endl;
+    
+    // NOMAD::Point:
+    out << "Point                  : ";
+    out.display_int_w ( NOMAD::Point::get_cardinality() , max );
+    out << " (max=";
+    out.display_int_w ( NOMAD::Point::get_max_cardinality() , max );
+    out << ")" << std::endl;
+    
+    // NOMAD::Direction:
+    out << "Direction              : ";
+    out.display_int_w ( NOMAD::Direction::get_cardinality() , max );
+    out << " (max=";
+    out.display_int_w ( NOMAD::Direction::get_max_cardinality() , max );
+    out << ")" << std::endl;
+    
+    // Set_Element<Eval_Point>:
+    out << "Set_Element<Eval_Point>: ";
+    out.display_int_w (NOMAD::Set_Element<NOMAD::Eval_Point>::get_cardinality(), max);
+    out << " (max=";
+    out.display_int_w (NOMAD::Set_Element<NOMAD::Eval_Point>::get_max_cardinality(), max);
+    out << ")" << std::endl;
+    
+    // Set_Element<NOMAD::Signature>:
+    out << "Set_Element<Signature> : ";
+    out.display_int_w (NOMAD::Set_Element<NOMAD::Signature>::get_cardinality(), max);
+    out << " (max=";
+    out.display_int_w (NOMAD::Set_Element<NOMAD::Signature>::get_max_cardinality(), max);
+    out << ")" << std::endl;
+    
+    // NOMAD::Cache_File_Point:
+    out << "Cache_File_Point       : ";
+    out.display_int_w ( NOMAD::Cache_File_Point::get_cardinality() , max );
+    out << " (max=";
+    out.display_int_w ( NOMAD::Cache_File_Point::get_max_cardinality() , max );
+    out << ")" << std::endl;
+    
+    out << NOMAD::close_block();
 }
 #endif
 
@@ -286,12 +306,12 @@ void NOMAD::display_cardinalities ( const NOMAD::Display & out )
 void NOMAD::display_version ( const NOMAD::Display & out )
 {
 #ifdef USE_MPI
-  if ( !NOMAD::Slave::is_master() )
-    return;
+    if ( !NOMAD::Slave::is_master() )
+        return;
 #endif
-  out << std::endl << "NOMAD - version "
-      << NOMAD::VERSION << " - www.gerad.ca/nomad"
-      << std::endl << std::endl;
+    out << std::endl << "NOMAD - version "
+    << NOMAD::VERSION << " - www.gerad.ca/nomad"
+    << std::endl << std::endl;
 }
 
 /*------------------------------------------*/
@@ -300,29 +320,35 @@ void NOMAD::display_version ( const NOMAD::Display & out )
 void NOMAD::display_info ( const NOMAD::Display & out )
 {
 #ifdef USE_MPI
-  if ( !NOMAD::Slave::is_master() )
-    return;
+    if ( !NOMAD::Slave::is_master() )
+        return;
 #endif
-  NOMAD::display_version ( out );
-  out << NOMAD::open_block ( "Copyright (C) 2001-2013" )
-      << "Mark A. Abramson     - The Boeing Company"              << std::endl
-      << "Charles Audet        - Ecole Polytechnique de Montreal" << std::endl
-      << "Gilles Couture       - Ecole Polytechnique de Montreal" << std::endl
-      << "John E. Dennis, Jr.  - Rice University"                 << std::endl
-      << "Sebastien Le Digabel - Ecole Polytechnique de Montreal" << std::endl
-	  << "Christophe Tribes    - Ecole Polytechnique de Montreal" << std::endl
-      << NOMAD::close_block()
-      << std::endl
-      << "Funded in part by AFOSR and Exxon Mobil."               << std::endl
-      << std::endl
-      << "License   : \'" << NOMAD::LGPL_FILE       << "\'" << std::endl
-      << "User guide: \'" << NOMAD::USER_GUIDE_FILE << "\'" << std::endl
-      << "Examples  : \'" << NOMAD::EXAMPLES_DIR    << "\'" << std::endl
-      << "Tools     : \'" << NOMAD::TOOLS_DIR       << "\'" << std::endl
-      << std::endl
-      << "Please report bugs to nomad@gerad.ca"
-      << std::endl;
-}
+    out << std::endl << "NOMAD - version "
+    << NOMAD::VERSION
+    << NOMAD::open_block(" has been created by")
+    << "Charles Audet        - Ecole Polytechnique de Montreal" << std::endl
+    << "Sebastien Le Digabel - Ecole Polytechnique de Montreal" << std::endl
+    << "Christophe Tribes    - Ecole Polytechnique de Montreal" << std::endl
+    << NOMAD::close_block()
+    << std::endl
+    << "The copyright of NOMAD - version "
+    << NOMAD::VERSION
+    << NOMAD::open_block(" is owned by")
+    << "Sebastien Le Digabel - Ecole Polytechnique de Montreal" << std::endl
+    << "Christophe Tribes    - Ecole Polytechnique de Montreal" << std::endl
+    << NOMAD::close_block()
+    << std::endl << "NOMAD version 3 is a new version of NOMAD v1 and v2, it has been funded by AFOSR and Exxon Mobil." << std::endl
+    << "NOMAD v1 and v2 were created and developed by Mark Abramson, Charles Audet, Gilles Couture and John Dennis Jr., and were funded by AFOSR and Exxon Mobil." << std::endl
+    << std::endl
+    << "Download  : www.gerad.ca/nomad" << std::endl
+    << "License   : \'" << NOMAD::LGPL_FILE       << "\'" << std::endl
+    << "User guide: \'" << NOMAD::USER_GUIDE_FILE << "\'" << std::endl
+    << "Examples  : \'" << NOMAD::EXAMPLES_DIR    << "\'" << std::endl
+    << "Tools     : \'" << NOMAD::TOOLS_DIR       << "\'" << std::endl
+    << std::endl
+    << "Please report bugs to nomad@gerad.ca"
+    << std::endl;
+    out << endl << "Seed: "<< NOMAD::RNG::get_seed()<<endl;}
 
 /*------------------------------------------*/
 /*             display NOMAD usage          */
@@ -330,31 +356,24 @@ void NOMAD::display_info ( const NOMAD::Display & out )
 void NOMAD::display_usage ( char* exeName, const NOMAD::Display & out )
 {
 #ifdef USE_MPI
-  if ( !NOMAD::Slave::is_master() )
-    return;
-  out << std::endl
-      << "Run NOMAD.MPI  : mpirun -np p " << exeName << " parameters_file" << std::endl
-	  << "Info           : " << exeName << " -i"                           << std::endl
-	  << "Help           : " << exeName << " -h keyword(s) (or 'all')"     << std::endl
-	  << "Developer help : " << exeName << " -d keyword(s) (or 'all')"     << std::endl
-      << "Version        : " << exeName << " -v"                           << std::endl
-	  << "Usage          : " << exeName << " -u"                          << std::endl
-      << std::endl;  
+    if ( !NOMAD::Slave::is_master() )
+        return;
+    out << std::endl
+    << "Run NOMAD.MPI  : mpirun -np p " << exeName << " parameters_file" << std::endl
+    << "Info           : " << exeName << " -i"                           << std::endl
+    << "Help           : " << exeName << " -h keyword(s) (or 'all')"     << std::endl
+    << "Developer help : " << exeName << " -d keyword(s) (or 'all')"     << std::endl
+    << "Version        : " << exeName << " -v"                           << std::endl
+    << "Usage          : " << exeName << " -u"                          << std::endl
+    << std::endl;  
 #else
-  out << std::endl
-      << "Run NOMAD      : " << exeName << " parameters_file"          << std::endl
-      << "Info           : " << exeName << " -i"                       << std::endl
-      << "Help           : " << exeName << " -h keyword(s) (or 'all')" << std::endl
-	  << "Developer help : " << exeName << " -d keyword(s) (or 'all')" << std::endl
-      << "Version        : " << exeName << " -v"                       << std::endl
-	  << "Usage          : " << exeName << " -u"                       << std::endl
-      << std::endl; 
+    out << std::endl
+    << "Run NOMAD      : " << exeName << " parameters_file"          << std::endl
+    << "Info           : " << exeName << " -i"                       << std::endl
+    << "Help           : " << exeName << " -h keyword(s) (or 'all')" << std::endl
+    << "Developer help : " << exeName << " -d keyword(s) (or 'all')" << std::endl
+    << "Version        : " << exeName << " -v"                       << std::endl
+    << "Usage          : " << exeName << " -u"                       << std::endl
+    << std::endl; 
 #endif
-}
-
-void NOMAD::display_usage ( const NOMAD::Display & out ) //zhenghua
-{
-		char exeName[]="snomadr";
-		NOMAD::display_usage(exeName, out);
-		return;
 }

@@ -1,16 +1,22 @@
 /*-------------------------------------------------------------------------------------*/
-/*  NOMAD - Nonlinear Optimization by Mesh Adaptive Direct search - version 3.6.2        */
+/*  NOMAD - Nonlinear Optimization by Mesh Adaptive Direct search - version 3.8.0      */
 /*                                                                                     */
-/*  Copyright (C) 2001-2012  Mark Abramson        - the Boeing Company, Seattle        */
-/*                           Charles Audet        - Ecole Polytechnique, Montreal      */
-/*                           Gilles Couture       - Ecole Polytechnique, Montreal      */
-/*                           John Dennis          - Rice University, Houston           */
-/*                           Sebastien Le Digabel - Ecole Polytechnique, Montreal      */
-/*                           Christophe Tribes    - Ecole Polytechnique, Montreal      */
 /*                                                                                     */
-/*  funded in part by AFOSR and Exxon Mobil                                            */
-/*                                                                                      */
-/*  Author: Sebastien Le Digabel                                                       */
+/*  NOMAD - version 3.8.0 has been created by                                          */
+/*                 Charles Audet        - Ecole Polytechnique de Montreal              */
+/*                 Sebastien Le Digabel - Ecole Polytechnique de Montreal              */
+/*                 Christophe Tribes    - Ecole Polytechnique de Montreal              */
+/*                                                                                     */
+/*  The copyright of NOMAD - version 3.8.0 is owned by                                 */
+/*                 Sebastien Le Digabel - Ecole Polytechnique de Montreal              */
+/*                 Christophe Tribes    - Ecole Polytechnique de Montreal              */
+/*                                                                                     */
+/*  NOMAD v3 has been funded by AFOSR and Exxon Mobil.                                 */
+/*                                                                                     */
+/*  NOMAD v3 is a new version of NOMAD v1 and v2. NOMAD v1 and v2 were created and     */
+/*  developed by Mark Abramson, Charles Audet, Gilles Couture and John E. Dennis Jr.,  */
+/*  and were funded by AFOSR and Exxon Mobil.                                          */
+/*                                                                                     */
 /*                                                                                     */
 /*  Contact information:                                                               */
 /*    Ecole Polytechnique de Montreal - GERAD                                          */
@@ -50,28 +56,20 @@
 #include <cstdlib>
 
 
-#define R_VERSION // defined for the R version only
+// #define R_VERSION // defined for the R version only
 
 // Matlab version OPTI style (if not defined than GERAD style)
 // #define OPTI_VERSION 
 
 // Define in order to display debug information
-// #define DEBUG 
+//#define DEBUG
 
 // define in order to display memory debug information:
 //#define MEMORY_DEBUG
 
-// define in order to display TGP information.
-// #define TGP_DEBUG
-
-// #define USE_TGP is defined in the makefile
-
 #ifdef DEBUG
 #ifndef MEMORY_DEBUG
 #define MEMORY_DEBUG
-#ifndef TGP_DEBUG
-#define TGP_DEBUG
-#endif
 #endif
 #endif
 
@@ -127,23 +125,15 @@ namespace NOMAD {
 	extern std::ostream rout;     //zhenghua
 	
 	/// Current version:
-	const std::string BASE_VERSION = "3.6.2";
+	const std::string BASE_VERSION = "3.8.0";
 	
 #ifdef R_VERSION
 	const std::string VERSION = BASE_VERSION + ".R";
 #else
 #ifdef USE_MPI
-#ifdef USE_TGP
-	const std::string VERSION = BASE_VERSION + ".TGP" + ".MPI";
-#else
 	const std::string VERSION = BASE_VERSION + ".MPI";
-#endif
-#else
-#ifdef USE_TGP
-	const std::string VERSION = BASE_VERSION + ".TGP";
 #else
 	const std::string VERSION = BASE_VERSION;
-#endif
 #endif
 #endif
 	
@@ -196,10 +186,20 @@ namespace NOMAD {
 	/// Maximum number of variables.
 	const int MAX_DIMENSION = 1000;
 	
-	// Mesh index constants
-	const int L_LIMITS    = 50;         ///< Limits for the mesh index values
-	const int UNDEFINED_L = L_LIMITS+1;  ///< Undefined value for the mesh index
-	
+	// Old static Mesh index constants
+	const int L_LIMITS    = 50;         ///< Limits for the smesh index values
+	const int UNDEFINED_L = L_LIMITS+1;  ///< Undefined value for the smesh index
+
+    // xmesh index constants
+    const int XL_LIMITS    = -50;         ///< Limits for the xmesh index values
+	const int UNDEFINED_XL = XL_LIMITS-1;  ///< Undefined value for the xmesh index
+    
+    // gmesh index constants
+    const int GL_LIMITS    = -50;         ///< Limits for the gmesh index values
+    const int UNDEFINED_GL = GL_LIMITS-1;  ///< Undefined value for the gmesh index
+
+   
+    
 	/// Default epsilon used by NOMAD::Double
 	/** Use Parameters::set_EPSILON(), or parameter EPSILON,
 	 or NOMAD::Double::set_epsilon() to change it
@@ -220,23 +220,23 @@ namespace NOMAD {
 	 or NOMAD::Double::set_undef_str() to change it
 	 */
 	const std::string DEFAULT_UNDEF_STR = "NaN";
-	
-	// VNS constants
-	const int VNS_HALTON_INDEX_0 = 997; ///< Initial Halton index for the VNS
-	const int VNS_HALTON_INCR    =  17; ///< VNS Halton index increment
-	
+    
 	/// log(10) (for display widths.)
 	const double LOG10 = 2.30258509299;
 	
 	const double INF = std::numeric_limits<double>::max(); ///< Infinity
+	const double NaN = std::numeric_limits<double>::quiet_NaN(); ///< Quiet Not-A-Number
+    const double P_INF_INT = std::numeric_limits<int>::max(); ///< plus infinity for int
+    const double M_INF_INT = std::numeric_limits<int>::min(); ///< minus infinity for int
+
 	
 	const double D_INT_MAX = UINT32_MAX; ///< The UINT32_MAX constant as a \c double
-    
+	
 	// Singular Value Decomposition (SVD) constants:
 	const double SVD_EPS      = 1e-13;      ///< Epsilon for SVD
 	const int    SVD_MAX_MPN  = 1500;       ///< Matrix maximal size (\c m+n )
 	const double SVD_MAX_COND = NOMAD::INF; ///< Max. acceptable cond. number
-	
+		
 	/// Default value for parameter POINT_DISPLAY_LIMIT
 	/** Use Parameters::set_POINT_DISPLAY_LIMIT() or parameter POINT_DISPLAY_LIMIT
 	 or Point::set_display_limit() to change it */
@@ -267,7 +267,7 @@ namespace NOMAD {
 		FULL_DISPLAY     ///< Full display
     };
 	
-	/// Types of the variables
+    /// Types of the variables
 	//  (do not modify this order)
 	enum bb_input_type
     {
@@ -343,25 +343,29 @@ namespace NOMAD {
 	enum model_type
     {
 		QUADRATIC_MODEL , ///< Quadratic model
-		TGP_MODEL       , ///< TGP model
+        SGTELIB_MODEL   , ///< SGTELIB model
 		NO_MODEL          ///< No models
     };
-	
-	/// TGP mode
-	enum TGP_mode_type
+    
+    /// intensification type
+    enum intensification_type
     {
-		TGP_FAST    , ///< TGP fast mode.
-		TGP_PRECISE , ///< TGP precise mode.
-		TGP_USER      ///< TGP user mode.
+        NO_INTENSIFICATION ,
+        POLL_ONLY , ///< Poll intensification only
+        SEARCH_ONLY , ///< Search intensification only
+        POLL_AND_SEARCH
     };
-	
+    
 	/// Success type of an iteration
 	// (do not modify this order)
 	enum success_type
     {
 		UNSUCCESSFUL    ,  ///< Failure
 		PARTIAL_SUCCESS ,  ///< Partial success (improving)
-		FULL_SUCCESS       ///< Full success (dominating)
+        CACHE_UPDATE_SUCCESS, ///< Cache update success (RobustMads only) (dominating)
+		FULL_SUCCESS,       ///< Full success (dominating)
+        FULL_SUCCESS_ZOOM, ///< Full success (dominating)
+        FULL_SUCCESS_STAY  ///< Full success (dominating)
     };
 	
 	/// Quadratic interpolation type
@@ -387,9 +391,13 @@ namespace NOMAD {
 		DELTA_M_MIN_REACHED        ,  ///< Min mesh size
 		DELTA_P_MIN_REACHED        ,  ///< Min poll size
 		L_MAX_REACHED              ,  ///< Max mesh index
+        L_MIN_REACHED              ,  ///< Min mesh index
 		L_LIMITS_REACHED           ,  ///< Mesh index limits
+		XL_LIMITS_REACHED          ,  ///< Mesh index limits
+   		GL_LIMITS_REACHED          ,  ///< Mesh index limits
 		MAX_TIME_REACHED           ,  ///< Max time
 		MAX_BB_EVAL_REACHED        ,  ///< Max number of blackbox evaluations
+		MAX_BLOCK_EVAL_REACHED     ,  ///< Max number of block evaluations
 		MAX_SGTE_EVAL_REACHED      ,  ///< Max number of surrogate evaluations
 		MAX_EVAL_REACHED           ,  ///< Max number of evaluations
 		MAX_SIM_BB_EVAL_REACHED    ,  ///< Max number of sim bb evaluations
@@ -424,7 +432,8 @@ namespace NOMAD {
 		ORTHO_1                , ///< OrthoMADS 1
 		ORTHO_2                , ///< OrthoMADS 2
 		ORTHO_NP1_QUAD         , ///< OrthoMADS n+1 use Quad model to determine n+1-th direction 
-		ORTHO_NP1_NEG          , ///< OrthoMADS n+1 use negative sum of n first directions to determine n+1-th direction 	
+		ORTHO_NP1_NEG          , ///< OrthoMADS n+1 use negative sum of n first directions to determine n+1-th direction
+        ORTHO_NP1_UNI          , ///< OrthoMADS n+1 uniform directions
 		DYN_ADDED              , ///< Dynamic addition (n+1-th direction added for ORTHO n+1)
 		ORTHO_2N               , ///< OrthoMADS 2n
 		LT_1                   , ///< LT-MADS 1
@@ -468,6 +477,8 @@ namespace NOMAD {
     {
 		DS_OBJ        ,    ///< Objective (f) value
 		//   (keep in first position)
+        DS_CONS_H     ,    ///< Infeasibility (h) value
+        DS_SMOOTH_OBJ ,    ///< Smoothed objective value (f~)
 		DS_SIM_BBE    ,    ///< Number of simulated bb evaluations
 		DS_BBE        ,    ///< Number of bb evaluations
 		DS_BLK_EVA	  ,    ///< Number of block evaluation calls	
@@ -484,7 +495,7 @@ namespace NOMAD {
 		DS_VAR        ,    ///< One variable
 		DS_STAT_SUM   ,    ///< Stat sum
 		DS_STAT_AVG   ,    ///< Stat avg
-		DS_UNDEFINED       ///< Undefined value
+		DS_UNDEFINED       ///< Und efined value
 		//   (keep in last position)
     };
 	
@@ -499,10 +510,53 @@ namespace NOMAD {
 	enum eval_status_type
     {
 		EVAL_FAIL        ,  ///< Evaluation failure
-		EVAL_USER_REJECT ,  ///< Evaluation was rejected by user (not failure -> may submitted again)  
-		EVAL_OK          ,  ///< Correct evaluation
+		EVAL_USER_REJECT ,  ///< Evaluation was rejected by user (not failure -> may submitted again)
+        EVAL_OK          ,  ///< Correct evaluation
 		EVAL_IN_PROGRESS ,  ///< Evaluation in progress
 		UNDEFINED_STATUS    ///< Undefined evaluation status
+    };
+    
+    enum smoothing_status_type
+    {
+        SMOOTHING_FAIL   ,   ///< Smoothing failure
+        SMOOTHING_OK     ,   ///< Smoothing success
+        SMOOTHING_UNDEFINED  ///< Undefined smoothing status
+    };
+    
+    // SGTELIB
+    /// Formulations for sgtelib_model model Search
+    enum sgtelib_model_formulation_type
+    {
+        SGTELIB_MODEL_FORMULATION_FS    ,  /// min f-lambda*sigma, st c-lambda*sigma < 0
+        SGTELIB_MODEL_FORMULATION_FSP   ,  /// min f-lambda*sigma, st P(x) > 1/2
+        SGTELIB_MODEL_FORMULATION_EIS   ,  /// min -EI-lambda*sigma, st c-lambda*sigma < 0
+        SGTELIB_MODEL_FORMULATION_EFI   ,  /// min -EFI
+        SGTELIB_MODEL_FORMULATION_EFIS  ,  /// min -EFI-lambda*sigma
+        SGTELIB_MODEL_FORMULATION_EFIM  ,  /// min -EFI-lambda*sigma*mu
+        SGTELIB_MODEL_FORMULATION_EFIC  ,  /// min -EFI-lambda*(EI*sigma+P*mu)
+        SGTELIB_MODEL_FORMULATION_PFI   ,  /// min -PFI
+        SGTELIB_MODEL_FORMULATION_D     ,  /// min -distance_to_closest
+        SGTELIB_MODEL_FORMULATION_EXTERN,  /// min f, st c, with extern sgte.exe model
+        SGTELIB_MODEL_FORMULATION_UNDEFINED /// Undefined
+    };
+    
+    // SGTELIB
+    /// Formulations for sgtelib_model model Search
+    enum sgtelib_model_feasibility_type
+    {
+        SGTELIB_MODEL_FEASIBILITY_C         , /// one model for each constraint
+        SGTELIB_MODEL_FEASIBILITY_H         , /// one model for H
+        SGTELIB_MODEL_FEASIBILITY_B         , /// one binary model
+        SGTELIB_MODEL_FEASIBILITY_M         , /// one model of the max of (c_j)
+        SGTELIB_MODEL_FEASIBILITY_UNDEFINED   /// Undefined
+    };
+    
+    enum mesh_type
+    {
+        XMESH ,  /// Anisotropic (eXtensible) mesh
+        GMESH ,  /// Anisotropic Granular mesh
+        SMESH ,  /// Isotropic Standard mesh
+        NO_MESH_TYPE
     };
 	
 }

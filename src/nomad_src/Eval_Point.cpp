@@ -1,16 +1,22 @@
 /*-------------------------------------------------------------------------------------*/
-/*  NOMAD - Nonlinear Optimization by Mesh Adaptive Direct search - version 3.6.2        */
+/*  NOMAD - Nonlinear Optimization by Mesh Adaptive Direct search - version 3.8.0      */
 /*                                                                                     */
-/*  Copyright (C) 2001-2012  Mark Abramson        - the Boeing Company, Seattle        */
-/*                           Charles Audet        - Ecole Polytechnique, Montreal      */
-/*                           Gilles Couture       - Ecole Polytechnique, Montreal      */
-/*                           John Dennis          - Rice University, Houston           */
-/*                           Sebastien Le Digabel - Ecole Polytechnique, Montreal      */
-/*                           Christophe Tribes    - Ecole Polytechnique, Montreal      */
 /*                                                                                     */
-/*  funded in part by AFOSR and Exxon Mobil                                            */
+/*  NOMAD - version 3.8.0 has been created by                                          */
+/*                 Charles Audet        - Ecole Polytechnique de Montreal              */
+/*                 Sebastien Le Digabel - Ecole Polytechnique de Montreal              */
+/*                 Christophe Tribes    - Ecole Polytechnique de Montreal              */
 /*                                                                                     */
-/*  Author: Sebastien Le Digabel                                                       */
+/*  The copyright of NOMAD - version 3.8.0 is owned by                                 */
+/*                 Sebastien Le Digabel - Ecole Polytechnique de Montreal              */
+/*                 Christophe Tribes    - Ecole Polytechnique de Montreal              */
+/*                                                                                     */
+/*  NOMAD v3 has been funded by AFOSR and Exxon Mobil.                                 */
+/*                                                                                     */
+/*  NOMAD v3 is a new version of NOMAD v1 and v2. NOMAD v1 and v2 were created and     */
+/*  developed by Mark Abramson, Charles Audet, Gilles Couture and John E. Dennis Jr.,  */
+/*  and were funded by AFOSR and Exxon Mobil.                                          */
+/*                                                                                     */
 /*                                                                                     */
 /*  Contact information:                                                               */
 /*    Ecole Polytechnique de Montreal - GERAD                                          */
@@ -43,15 +49,14 @@
 #include "Cache_File_Point.hpp"
 #include "Eval_Point.hpp"
 #include "Slave.hpp"
-using namespace std; // zhenghua
 
 /*-----------------------------------*/
 /*   static members initialization   */
 /*-----------------------------------*/
 int NOMAD::Eval_Point::_current_tag = 0;
+
 int NOMAD::Eval_Point::_current_bbe = 0;
 int NOMAD::Eval_Point::_current_sgte_bbe = 0;
-
 /*---------------------------------------------------------------------*/
 /*                            constructor 1                            */
 /*---------------------------------------------------------------------*/
@@ -62,14 +67,14 @@ _in_cache         ( false                             ) ,
 _current_run      ( false                             ) ,
 _eval_type        ( NOMAD::TRUTH                      ) ,
 _direction        ( NULL                              ) ,
-_mesh_index       ( NULL                              ) ,
 _poll_center_type ( NOMAD::UNDEFINED_POLL_CENTER_TYPE ) ,
 _eval_status      ( NOMAD::UNDEFINED_STATUS           ) ,
+_smoothing_status ( NOMAD::SMOOTHING_UNDEFINED        ) ,
 _EB_ok            ( true                              )
 {
 #ifdef MODEL_STATS
-	_mod_use = -1;
-	_nY      = -1;
+    _mod_use = -1;
+    _nY      = -1;
 #endif
 }
 
@@ -84,15 +89,15 @@ _in_cache         ( false                             ) ,
 _current_run      ( false                             ) ,
 _eval_type        ( NOMAD::TRUTH                      ) ,
 _direction        ( NULL                              ) ,
-_mesh_index       ( NULL                              ) ,
 _poll_center_type ( NOMAD::UNDEFINED_POLL_CENTER_TYPE ) ,
 _eval_status      ( NOMAD::UNDEFINED_STATUS           ) ,
+_smoothing_status ( NOMAD::SMOOTHING_UNDEFINED        ) ,
 _EB_ok            ( true                              ) ,
 _bb_outputs       ( m                                 )
 {
 #ifdef MODEL_STATS
-	_mod_use = -1;
-	_nY      = -1;
+    _mod_use = -1;
+    _nY      = -1;
 #endif
 }
 
@@ -102,12 +107,11 @@ _bb_outputs       ( m                                 )
 NOMAD::Eval_Point::Eval_Point ( const NOMAD::Point & x , int m )
 : NOMAD::Point      ( x                                ) ,
 _direction        ( NULL                              ) ,
-_mesh_index       ( NULL                              ) ,
 _bb_outputs       ( m                                 )
 {
 #ifdef MODEL_STATS
-	_mod_use = -1;
-	_nY      = -1;
+    _mod_use = -1;
+    _nY      = -1;
 #endif
 }
 
@@ -125,33 +129,33 @@ _in_cache         ( false                             ) ,
 _current_run      ( false                             ) ,
 _eval_type        ( et                                ) ,
 _direction        ( NULL                              ) ,
-_mesh_index       ( NULL                              ) ,
 _poll_center_type ( NOMAD::UNDEFINED_POLL_CENTER_TYPE ) ,
 _EB_ok            ( true                              ) ,
 _bb_outputs       ( x.get_bb_outputs()                )
 {
-	int n = size();
-	for ( int i = 0 ; i < n ; ++i )
-		(*this)[i] = x.get_coord(i);
-	
-	switch ( x.get_eval_status() ) {
-		case 0:
-			_eval_status = NOMAD::EVAL_FAIL;
-			break;
-		case 1:
-			_eval_status = NOMAD::EVAL_OK;
-			break;
-		case 2:
-			_eval_status = NOMAD::EVAL_IN_PROGRESS;
-			break;
-		case 3:
-			_eval_status = NOMAD::UNDEFINED_STATUS;
-			break;
-	}
-	
+    int n = size();
+    for ( int i = 0 ; i < n ; ++i )
+        (*this)[i] = x.get_coord(i);
+    
+    switch ( x.get_eval_status() )
+    {
+        case 0:
+            _eval_status = NOMAD::EVAL_FAIL;
+            break;
+        case 1:
+            _eval_status = NOMAD::EVAL_OK;
+            break;
+        case 2:
+            _eval_status = NOMAD::EVAL_IN_PROGRESS;
+            break;
+        case 3:
+            _eval_status = NOMAD::UNDEFINED_STATUS;
+            break;
+    }
+    
 #ifdef MODEL_STATS
-	_mod_use = -1;
-	_nY      = -1;
+    _mod_use = -1;
+    _nY      = -1;
 #endif
 }
 
@@ -169,31 +173,25 @@ _in_cache           ( x._in_cache                       ) ,
 _current_run        ( x._current_run                    ) ,
 _eval_type          ( x._eval_type                      ) ,
 _direction          ( NULL                              ) ,
-_mesh_index         ( NULL                              ) ,
 _poll_center_type   ( x._poll_center_type               ) ,
 _eval_status        ( x._eval_status                    ) ,
+_smoothing_status   ( x._smoothing_status               ) ,
 _EB_ok              ( x._EB_ok                          ) ,
 _bb_outputs         ( x.get_bb_outputs()                ) ,
 _user_eval_priority ( x._user_eval_priority             ) ,
 _rand_eval_priority ( x._rand_eval_priority             )
-{ 
-	// point coordinates:
-	int n = size();
-	for ( int i = 0 ; i < n ; ++i )
-		(*this)[i] = x[i];
-	
-	// _direction:
-	if ( x._direction )
-		_direction = new Direction ( *x._direction );
-	
-	// _mesh_index:
-	if ( x._mesh_index ) {
-		_mesh_index  = new int;
-		*_mesh_index = *x._mesh_index;
-	}
-	
+{
+    // point coordinates:
+    int n = size();
+    for ( int i = 0 ; i < n ; ++i )
+        (*this)[i] = x[i];
+    
+    // _direction:
+    if ( x._direction )
+        _direction = new Direction ( *x._direction );
+    
 #ifdef MODEL_STATS
-	set_model_data ( x );
+    set_model_data ( x );
 #endif
 }
 
@@ -202,10 +200,8 @@ _rand_eval_priority ( x._rand_eval_priority             )
 /*---------------------------------------------------------------------*/
 NOMAD::Eval_Point::~Eval_Point ( void )
 {
-	if (_mesh_index)
-		delete _mesh_index;
-	if (_direction)
-		delete _direction;
+    if ( _direction )
+        delete _direction;
 }
 
 /*-------------------------------------------------------*/
@@ -213,14 +209,14 @@ NOMAD::Eval_Point::~Eval_Point ( void )
 /*-------------------------------------------------------*/
 void NOMAD::Eval_Point::set ( int n , int m )
 {
-	reset ( n );
-	_bb_outputs.reset ( m );
+    reset ( n );
+    _bb_outputs.reset ( m );
 }
 
 void NOMAD::Eval_Point::set ( const NOMAD::Point & x , int m )
 {
-	NOMAD::Point::operator = ( x );
-	_bb_outputs.reset ( m );
+    NOMAD::Point::operator = ( x );
+    _bb_outputs.reset ( m );
 }
 
 /*-------------------------------------------------------*/
@@ -230,8 +226,8 @@ void NOMAD::Eval_Point::set ( const NOMAD::Point & x , int m )
 /*-------------------------------------------------------*/
 void NOMAD::Eval_Point::set_tag ( int tag )
 {
-	_tag = tag;
-	NOMAD::Eval_Point::_current_tag = tag+1;
+    _tag = tag;
+    NOMAD::Eval_Point::_current_tag = tag+1;
 }
 
 /*-------------------------------------------------------*/
@@ -240,9 +236,10 @@ void NOMAD::Eval_Point::set_tag ( int tag )
 /*-------------------------------------------------------*/
 void NOMAD::Eval_Point::increment_bbe ( void )
 {
-	NOMAD::Eval_Point::_current_bbe ++;
-	_bbe=_current_bbe;
+    NOMAD::Eval_Point::_current_bbe ++;
+    _bbe=_current_bbe;
 }
+
 
 /*-------------------------------------------------------*/
 /*           increment counted black box evaluations     */
@@ -250,32 +247,22 @@ void NOMAD::Eval_Point::increment_bbe ( void )
 /*-------------------------------------------------------*/
 void NOMAD::Eval_Point::increment_sgte_bbe ( void )
 {
-	NOMAD::Eval_Point::_current_sgte_bbe ++;
-	_sgte_bbe=_current_sgte_bbe;
+    NOMAD::Eval_Point::_current_sgte_bbe ++;
+    _sgte_bbe=_current_sgte_bbe;
 }
 
-/*---------------------------------------------------------------------*/
-/*              SET methods for _direction and _mesh_index             */
-/*---------------------------------------------------------------------*/
-void NOMAD::Eval_Point::set_mesh_index ( const int * ell )
-{
-	delete _mesh_index;
-	_mesh_index = NULL;
-	if ( ell ) {
-		_mesh_index  = new int;
-		*_mesh_index = *ell;
-	}
-}
 
 void NOMAD::Eval_Point::set_direction ( const NOMAD::Direction * dir )
 {
-	delete _direction;
-	_direction = ( dir ) ? new NOMAD::Direction ( *dir ) : NULL;
+    delete _direction;
+    _direction = ( dir ) ? new NOMAD::Direction ( *dir ) : NULL;
 }
 
 void NOMAD::Eval_Point::set_poll_center ( const NOMAD::Eval_Point * pc )
 {
-	_poll_center=pc;
+    
+    _poll_center=pc;
+    
 }
 
 /*-------------------------------------------------------*/
@@ -283,16 +270,17 @@ void NOMAD::Eval_Point::set_poll_center ( const NOMAD::Eval_Point * pc )
 /*-------------------------------------------------------*/
 void NOMAD::Eval_Point::set_signature ( NOMAD::Signature * s )
 {
-	if ( !s ) {
-		_signature = NULL;
-		return;
-	}
-	
-	if ( !s->is_compatible(*this) )
-		throw NOMAD::Exception ( "Eval_Point.cpp" , __LINE__ ,
-								"x.Eval_Point::set_signature(s): x and s are incompatible" );
-	
-	_signature = s;
+    if ( !s )
+    {
+        _signature = NULL;
+        return;
+    }
+    
+    if ( !s->is_compatible(*this) )
+        throw NOMAD::Exception ( "Eval_Point.cpp" , __LINE__ ,
+                                "x.Eval_Point::set_signature(s): x and s are incompatible" );
+    
+    _signature = s;
 }
 
 /*------------------------------------------*/
@@ -301,11 +289,11 @@ void NOMAD::Eval_Point::set_signature ( NOMAD::Signature * s )
 NOMAD::Signature * NOMAD::Eval_Point::get_signature ( void ) const
 {
 #ifdef USE_MPI
-	if ( !NOMAD::Slave::is_master() )
-		throw NOMAD::Exception ( "Eval_Point.cpp" , __LINE__ ,
-								"Eval_Point::get_signature(): cannot be invoked by slave processes" );
+    if ( !NOMAD::Slave::is_master() )
+        throw NOMAD::Exception ( "Eval_Point.cpp" , __LINE__ ,
+                                "Eval_Point::get_signature(): cannot be invoked by slave processes" );
 #endif
-	return _signature;
+    return _signature;
 }
 
 /*-------------------------------------------------------*/
@@ -313,7 +301,7 @@ NOMAD::Signature * NOMAD::Eval_Point::get_signature ( void ) const
 /*-------------------------------------------------------*/
 int NOMAD::Eval_Point::size_of ( void ) const
 {
-	return NOMAD::Point::size_of () +
+    return NOMAD::Point::size_of () +
     _bb_outputs.size_of        () +
     _f.size_of                 () +
     _h.size_of                 () +
@@ -325,11 +313,10 @@ int NOMAD::Eval_Point::size_of ( void ) const
     sizeof (_in_cache           ) +
     sizeof (_eval_type          ) +
     sizeof (_eval_status        ) +
+    sizeof (_smoothing_status   ) +
     sizeof (_EB_ok              ) +
-    sizeof (_mesh_index         ) +
     sizeof (_direction          ) +
-    (( _mesh_index ) ? sizeof(*_mesh_index)  : 0) +
-    ((_direction   ) ? _direction->size_of() : 0);
+    ((_direction     ) ? _direction->size_of() : 0);
 }
 
 /*-------------------------------------------------------*/
@@ -337,10 +324,10 @@ int NOMAD::Eval_Point::size_of ( void ) const
 /*-------------------------------------------------------*/
 void NOMAD::Eval_Point::scale ( void )
 {
-	if ( !_signature )
-		throw NOMAD::Exception ( "Eval_Point.cpp" , __LINE__ ,
-								"x.Eval_Point::scale(): x has no signature" );
-	_signature->scale ( *this );
+    if ( !_signature )
+        throw NOMAD::Exception ( "Eval_Point.cpp" , __LINE__ ,
+                                "x.Eval_Point::scale(): x has no signature" );
+    _signature->scale ( *this );
 }
 
 /*-------------------------------------------------------*/
@@ -348,10 +335,10 @@ void NOMAD::Eval_Point::scale ( void )
 /*-------------------------------------------------------*/
 void NOMAD::Eval_Point::unscale ( void )
 {
-	if ( !_signature )
-		throw NOMAD::Exception ( "Eval_Point.cpp" , __LINE__ ,
-								"x.Eval_Point::unscale(): x has no signature" );
-	_signature->unscale ( *this );
+    if ( !_signature )
+        throw NOMAD::Exception ( "Eval_Point.cpp" , __LINE__ ,
+                                "x.Eval_Point::unscale(): x has no signature" );
+    _signature->unscale ( *this );
 }
 
 /*-------------------------------------------------------*/
@@ -360,10 +347,10 @@ void NOMAD::Eval_Point::unscale ( void )
 /*-------------------------------------------------------*/
 bool NOMAD::Eval_Point::snap_to_bounds ( void )
 {
-	if ( !_signature )
-		throw NOMAD::Exception ( "Eval_Point.cpp" , __LINE__ ,
-								"x.Eval_Point::snap_to_bounds(): x has no signature" );
-	return _signature->snap_to_bounds ( *this , _direction );
+    if ( !_signature )
+        throw NOMAD::Exception ( "Eval_Point.cpp" , __LINE__ ,
+                                "x.Eval_Point::snap_to_bounds(): x has no signature" );
+    return _signature->snap_to_bounds ( *this , _direction );
 }
 
 /*-------------------------------------------------------*/
@@ -372,11 +359,11 @@ bool NOMAD::Eval_Point::snap_to_bounds ( void )
 /*-------------------------------------------------------*/
 bool NOMAD::Eval_Point::treat_periodic_variables ( NOMAD::Direction *& new_dir )
 {
-	if (!_signature)
-		throw NOMAD::Exception ( "Eval_Point.cpp" , __LINE__ ,
-								"x.Eval_Point::treat_periodic_variables(): x has no signature" );
-	
-	return _signature->treat_periodic_variables ( *this , _direction , new_dir );
+    if (!_signature)
+        throw NOMAD::Exception ( "Eval_Point.cpp" , __LINE__ ,
+                                "x.Eval_Point::treat_periodic_variables(): x has no signature" );
+    
+    return _signature->treat_periodic_variables ( *this , _direction , new_dir );
 }
 
 /*--------------------------------------------------*/
@@ -384,69 +371,76 @@ bool NOMAD::Eval_Point::treat_periodic_variables ( NOMAD::Direction *& new_dir )
 /*--------------------------------------------------*/
 bool NOMAD::Eval_Point::check ( int m , NOMAD::check_failed_type & cf ) const
 {
-	if ( size() <= 0 || !_signature || m != _bb_outputs.size() ) {
-		std::string err = "Eval_Point::check() could not procede";
-		if ( !_signature )
-			err += " (no signature)";
-		else if ( m != _bb_outputs.size() )
-			err += " (wrong number of blackbox outputs)";
-		else
-			err += " (point size <= 0 !)";
-		throw NOMAD::Exception ( "Eval_Point.cpp" , __LINE__ , err );
-	}
-	
-	cf = NOMAD::CHECK_OK;
-	
-	const std::vector<NOMAD::bb_input_type>
-	& input_types = _signature->get_input_types();
-	const NOMAD::Point & lb          = _signature->get_lb();
-	const NOMAD::Point & ub          = _signature->get_ub();
-	const NOMAD::Point & fv          = _signature->get_fixed_variables();
-	int                  n           = size();
-	NOMAD::bb_input_type iti;
-	
-	for ( int i = 0 ; i < n ; ++i ) {
-		
-		const NOMAD::Double xi = (*this)[i];
-		
-		// undefined coordinates ?
-		if ( !xi.is_defined() )
-			throw NOMAD::Exception ( "Eval_Point.cpp" , __LINE__ ,
-									"Eval_Point::check() could not procede (undefined coordinates)" );
-		
-		// check the bounds:
-		const NOMAD::Double & lbi = lb[i];
-		if ( lbi.is_defined() && xi < lbi ) {
-			cf = NOMAD::LB_FAIL;
-			return false;
-		}
-		
-		const NOMAD::Double & ubi = ub[i];
-		if ( ubi.is_defined() && xi > ubi ) {
-			cf = NOMAD::UB_FAIL;
-			return false;
-		}
-		
-		// check the integer/categorical/binary variables:
-		iti = input_types[i];
-		if ( iti == NOMAD::BINARY && !xi.is_binary() ) {
-			cf = NOMAD::BIN_FAIL;
-			return false;
-		}
-		if ( ( iti == NOMAD::INTEGER || iti == NOMAD::CATEGORICAL )
-			&& !xi.is_integer() ) {
-			cf = ( iti == NOMAD::INTEGER ) ? NOMAD::INT_FAIL : NOMAD::CAT_FAIL;
-			return false;
-		}
-		
-		// check the fixed-variables:
-		const NOMAD::Double & fvi = fv[i];
-		if ( fvi.is_defined() && fvi != xi ) {
-			cf = NOMAD::FIX_VAR_FAIL;
-			return false;
-		}
-	}
-	return true;
+    if ( size() <= 0 || !_signature || m != _bb_outputs.size() )
+    {
+        std::string err = "Eval_Point::check() could not procede";
+        if ( !_signature )
+            err += " (no signature)";
+        else if ( m != _bb_outputs.size() )
+            err += " (wrong number of blackbox outputs)";
+        else
+            err += " (point size <= 0 !)";
+        throw NOMAD::Exception ( "Eval_Point.cpp" , __LINE__ , err );
+    }
+    
+    cf = NOMAD::CHECK_OK;
+    
+    const std::vector<NOMAD::bb_input_type>
+    & input_types = _signature->get_input_types();
+    const NOMAD::Point & lb          = _signature->get_lb();
+    const NOMAD::Point & ub          = _signature->get_ub();
+    const NOMAD::Point & fv          = _signature->get_fixed_variables();
+    int                  n           = size();
+    NOMAD::bb_input_type iti;
+    
+    for ( int i = 0 ; i < n ; ++i )
+    {
+        
+        const NOMAD::Double xi = (*this)[i];
+        
+        // undefined coordinates ?
+        if ( !xi.is_defined() )
+            throw NOMAD::Exception ( "Eval_Point.cpp" , __LINE__ ,
+                                    "Eval_Point::check() could not procede (undefined coordinates)" );
+        
+        // check the bounds:
+        const NOMAD::Double & lbi = lb[i];
+        if ( lbi.is_defined() && xi < lbi )
+        {
+            cf = NOMAD::LB_FAIL;
+            return false;
+        }
+        
+        const NOMAD::Double & ubi = ub[i];
+        if ( ubi.is_defined() && xi > ubi )
+        {
+            cf = NOMAD::UB_FAIL;
+            return false;
+        }
+        
+        // check the integer/categorical/binary variables:
+        iti = input_types[i];
+        if ( iti == NOMAD::BINARY && !xi.is_binary() )
+        {
+            cf = NOMAD::BIN_FAIL;
+            return false;
+        }
+        if ( ( iti == NOMAD::INTEGER || iti == NOMAD::CATEGORICAL )
+            && !xi.is_integer() )
+        {
+            cf = ( iti == NOMAD::INTEGER ) ? NOMAD::INT_FAIL : NOMAD::CAT_FAIL;
+            return false;
+        }
+        
+        // check the fixed-variables:
+        const NOMAD::Double & fvi = fv[i];
+        if ( fvi.is_defined() && fvi != xi )
+        {
+            cf = NOMAD::FIX_VAR_FAIL;
+            return false;
+        }
+    }
+    return true;
 }
 
 /*--------------------------------------------------*/
@@ -454,44 +448,51 @@ bool NOMAD::Eval_Point::check ( int m , NOMAD::check_failed_type & cf ) const
 /*--------------------------------------------------*/
 void NOMAD::Eval_Point::display_tag ( const NOMAD::Display & out ) const
 {
-	out << "#";
-	out.display_int_w ( _tag , NOMAD::Eval_Point::_current_tag );
+    out << "#";
+    out.display_int_w ( _tag , NOMAD::Eval_Point::_current_tag );
 }
 
 /*--------------------------------------------------*/
 /*                      display                     */
 /*--------------------------------------------------*/
-void NOMAD::Eval_Point::display ( const NOMAD::Display & out , bool in_block ) const
+void NOMAD::Eval_Point::display_eval( const NOMAD::Display & out , bool in_block ) const
 {
-	if ( in_block ) {
-		
-		std::ostringstream oss;
-		oss << "#" << _tag;
-		out << NOMAD::open_block ( oss.str() )
-		<< "x    = ( ";
-		NOMAD::Point::display ( out , " " , 2  , NOMAD::Point::get_display_limit() );
-		out << " )" << std::endl
-		<< "F(x) = [ ";
-		_bb_outputs.display ( out , " " , 2 , NOMAD::Point::get_display_limit() );
-		out << " ]" << std::endl;
-		if ( _h.is_defined() )
-			out << "h    = " << _h << std::endl;
-		if ( _f.is_defined() )
-			out << "f    = " << _f << std::endl;
-		out.close_block();
-	}
-	else {
-		display_tag ( out );
-		out << " x=( ";
-		NOMAD::Point::display ( out , " " , 2  , NOMAD::Point::get_display_limit() );
-		out << " ) F(x)=[ ";
-		_bb_outputs.display ( out , " " , 2 , NOMAD::Point::get_display_limit() );
-		out << " ]";
-		if ( _h.is_defined() )
-			out << " h=" << _h;
-		if ( _f.is_defined() )
-			out << " f=" << _f;
-	}
+    if ( in_block )
+    {
+        
+        std::ostringstream oss;
+        oss << "#" << _tag;
+        out << NOMAD::open_block ( oss.str() )
+        << "x    = ( ";
+        NOMAD::Point::display ( out , " " , 2  , NOMAD::Point::get_display_limit() );
+        out << " )" << std::endl
+        << "F(x) = [ ";
+        _bb_outputs.display ( out , " " , 2 , NOMAD::Point::get_display_limit() );
+        out << " ]" << std::endl;
+        if ( _h.is_defined() )
+            out << "h    = " << _h << std::endl;
+        if ( _f.is_defined() )
+            out << "f    = " << _f << std::endl;
+        if ( _fsmooth.is_defined() )
+	    out << "fsmooth = " << _fsmooth << std::endl;
+        out.close_block();
+    }
+    else
+    {
+        
+        display_tag ( out );
+        out << " x=( ";
+        NOMAD::Point::display ( out , " " , 2  , NOMAD::Point::get_display_limit() );
+        out << " ) F(x)=[ ";
+        _bb_outputs.display ( out , " " , 2 , NOMAD::Point::get_display_limit() );
+        out << " ]";
+        if ( _h.is_defined() )
+            out << " h=" << _h;
+        if ( _f.is_defined() )
+            out << " f=" << _f;
+        if ( _fsmooth.is_defined() )
+            out << "fsmooth = " << _fsmooth << std::endl;
+    }
 }
 
 /*--------------------------------------------------------------*/
@@ -500,21 +501,21 @@ void NOMAD::Eval_Point::display ( const NOMAD::Display & out , bool in_block ) c
 /*--------------------------------------------------------------*/
 bool NOMAD::Eval_Point::operator < ( const NOMAD::Eval_Point & x ) const
 {
-	if ( this == &x || !is_eval_ok() || !_EB_ok )
-		return false;
-	
-	double h  = _h.value();
-	double f  = _f.value();
-	double hx = x._h.value();
-	double fx = x._f.value();
-	
-	if ( h < hx )
-		return ( f <= fx );
-	
-	if ( h == hx )
-		return ( f < fx );
-	
-	return false;
+    if ( this == &x || !is_eval_ok() || !_EB_ok )
+        return false;
+    
+    double h  = _h.value();
+    double f  = _f.value();
+    double hx = x._h.value();
+    double fx = x._f.value();
+    
+    if ( h < hx )
+        return ( f <= fx );
+    
+    if ( h == hx )
+        return ( f < fx );
+    
+    return false;
 }
 
 /*--------------------------------------------------------------*/
@@ -522,19 +523,21 @@ bool NOMAD::Eval_Point::operator < ( const NOMAD::Eval_Point & x ) const
 /*--------------------------------------------------------------*/
 bool NOMAD::Eval_Point::check_nan ( void ) const
 {
-	int m = _bb_outputs.size();
-	for ( int i = 0 ; i < m ; ++i ) {
-		if ( _bb_outputs[i].is_defined() ) {
+    int m = _bb_outputs.size();
+    for ( int i = 0 ; i < m ; ++i ) 
+    {
+        if ( _bb_outputs[i].is_defined() ) 
+        {
 #ifdef WINDOWS
-			if ( nomad_isnan ( _bb_outputs[i].value() ) ) //zhenghua
-				return true;
+            if ( isnan ( _bb_outputs[i].value() ) )
+                return true;
 #else
-			if ( nomad_isnan ( _bb_outputs[i].value() ) ) //zhenghua 
-				return true;
+            if ( std::isnan ( _bb_outputs[i].value() ) )
+                return true;
 #endif
-		}
-	}
-	return false;
+        }
+    }
+    return false;
 }
 
 #ifdef MODEL_STATS
@@ -544,12 +547,12 @@ bool NOMAD::Eval_Point::check_nan ( void ) const
 /*--------------------------------------------------------------*/
 void NOMAD::Eval_Point::set_model_data ( const NOMAD::Eval_Point & x ) const
 {
-	_mod_use = x._mod_use;
-	_nY      = x._nY;
-	_cond    = x._cond;
-	_Yw      = x._Yw;
-	_mh      = x._mh;
-	_mf      = x._mf;
+    _mod_use = x._mod_use;
+    _nY      = x._nY;
+    _cond    = x._cond;
+    _Yw      = x._Yw;
+    _mh      = x._mh;
+    _mf      = x._mf;
 }
 
 /*--------------------------------------------------------------*/
@@ -557,12 +560,12 @@ void NOMAD::Eval_Point::set_model_data ( const NOMAD::Eval_Point & x ) const
 /*--------------------------------------------------------------*/
 void NOMAD::Eval_Point::clear_model_data ( void ) const
 {
-	_mod_use = -1;
-	_nY      = -1;
-	_cond.clear();
-	_Yw.clear();
-	_mh.clear();
-	_mf.clear();
+    _mod_use = -1;
+    _nY      = -1;
+    _cond.clear();
+    _Yw.clear();
+    _mh.clear();
+    _mf.clear();
 }
 
 #endif

@@ -1,16 +1,22 @@
 /*-------------------------------------------------------------------------------------*/
-/*  NOMAD - Nonlinear Optimization by Mesh Adaptive Direct search - version 3.6.2        */
+/*  NOMAD - Nonlinear Optimization by Mesh Adaptive Direct search - version 3.8.0      */
 /*                                                                                     */
-/*  Copyright (C) 2001-2012  Mark Abramson        - the Boeing Company, Seattle        */
-/*                           Charles Audet        - Ecole Polytechnique, Montreal      */
-/*                           Gilles Couture       - Ecole Polytechnique, Montreal      */
-/*                           John Dennis          - Rice University, Houston           */
-/*                           Sebastien Le Digabel - Ecole Polytechnique, Montreal      */
-/*                           Christophe Tribes    - Ecole Polytechnique, Montreal      */
 /*                                                                                     */
-/*  funded in part by AFOSR and Exxon Mobil                                            */
+/*  NOMAD - version 3.8.0 has been created by                                          */
+/*                 Charles Audet        - Ecole Polytechnique de Montreal              */
+/*                 Sebastien Le Digabel - Ecole Polytechnique de Montreal              */
+/*                 Christophe Tribes    - Ecole Polytechnique de Montreal              */
 /*                                                                                     */
-/*  Author: Sebastien Le Digabel                                                       */
+/*  The copyright of NOMAD - version 3.8.0 is owned by                                 */
+/*                 Sebastien Le Digabel - Ecole Polytechnique de Montreal              */
+/*                 Christophe Tribes    - Ecole Polytechnique de Montreal              */
+/*                                                                                     */
+/*  NOMAD v3 has been funded by AFOSR and Exxon Mobil.                                 */
+/*                                                                                     */
+/*  NOMAD v3 is a new version of NOMAD v1 and v2. NOMAD v1 and v2 were created and     */
+/*  developed by Mark Abramson, Charles Audet, Gilles Couture and John E. Dennis Jr.,  */
+/*  and were funded by AFOSR and Exxon Mobil.                                          */
+/*                                                                                     */
 /*                                                                                     */
 /*  Contact information:                                                               */
 /*    Ecole Polytechnique de Montreal - GERAD                                          */
@@ -34,14 +40,13 @@
 /*  You can find information on the NOMAD software at www.gerad.ca/nomad               */
 /*-------------------------------------------------------------------------------------*/
 /**
-  \file   Cache.cpp
-  \brief  Cache memorizing all evaluations (implementation)
-  \author Sebastien Le Digabel
-  \date   2010-04-12
-  \see    Cache.hpp
-*/
+ \file   Cache.cpp
+ \brief  Cache memorizing all evaluations (implementation)
+ \author Sebastien Le Digabel
+ \date   2010-04-12
+ \see    Cache.hpp
+ */
 #include "Cache.hpp"
-using namespace std; // zhenghua
 
 /*-----------------------------------*/
 /*   static members initialization   */
@@ -53,7 +58,7 @@ std::set<std::string> NOMAD::Cache::_locked_files;
 /*------------------------------------------------------*/
 int NOMAD::Cache::sizeof_init ( void ) const
 {
-  return
+    return
     sizeof ( _cache1     ) +
     sizeof ( _cache2     ) +
     sizeof ( _cache3     ) +
@@ -68,8 +73,8 @@ int NOMAD::Cache::sizeof_init ( void ) const
 /*---------------------------------------------------------------------*/
 void NOMAD::Cache::insert_extern_point ( const NOMAD::Eval_Point & x ) const
 {
-  if ( !x.get_current_run() )
-    _extern_pts.push_front ( &x );
+    if ( !x.get_current_run() )
+        _extern_pts.push_front ( &x );
 }
 
 /*----------------------------------------------------------*/
@@ -78,11 +83,11 @@ void NOMAD::Cache::insert_extern_point ( const NOMAD::Eval_Point & x ) const
 /*----------------------------------------------------------*/
 const NOMAD::Eval_Point * NOMAD::Cache::get_and_remove_extern_point ( void ) const
 {
-  if ( _extern_pts.empty() )
-    return NULL;
-  const NOMAD::Eval_Point * extern_point = *_extern_pts.begin();
-  _extern_pts.pop_front();
-  return extern_point;
+    if ( _extern_pts.empty() )
+        return NULL;
+    const NOMAD::Eval_Point * extern_point = *_extern_pts.begin();
+    _extern_pts.pop_front();
+    return extern_point;
 }
 
 /*------------------------------------------*/
@@ -91,18 +96,18 @@ const NOMAD::Eval_Point * NOMAD::Cache::get_and_remove_extern_point ( void ) con
 /*------------------------------------------*/
 const NOMAD::Eval_Point * NOMAD::Cache::find ( const NOMAD::Eval_Point & x ) const
 {
-  // check the eval types:
-  if ( x.get_eval_type() != _eval_type )
-    throw NOMAD::Cache::Cache_Error ( "Cache.cpp" , __LINE__ ,
-	  "NOMAD::Cache:find(x): x.eval_type != cache.eval_type" );
-
-  // find:
-  std::set<NOMAD::Cache_Point>::const_iterator it;
-  NOMAD::cache_index_type                      cache_index;
-  const NOMAD::Eval_Point                    * cache_x
+    // check the eval types:
+    if ( x.get_eval_type() != _eval_type )
+        throw NOMAD::Cache::Cache_Error ( "Cache.cpp" , __LINE__ ,
+                                         "NOMAD::Cache:find(x): x.eval_type != cache.eval_type" );
+    
+    // find:
+    std::set<NOMAD::Cache_Point>::const_iterator it;
+    NOMAD::cache_index_type                      cache_index;
+    const NOMAD::Eval_Point                    * cache_x
     = NOMAD::Cache::find ( x , it , cache_index );
-
-  return cache_x;
+    
+    return cache_x;
 }
 
 /*----------------------------------------------------*/
@@ -114,33 +119,36 @@ const NOMAD::Eval_Point * NOMAD::Cache::find ( const NOMAD::Eval_Point & x ) con
 /*----------------------------------------------------*/
 const NOMAD::Eval_Point * NOMAD::Cache::find
 ( const NOMAD::Eval_Point                      &  x          ,
-  std::set<NOMAD::Cache_Point>::const_iterator & it          ,
-  NOMAD::cache_index_type                      & cache_index   ) const
+ std::set<NOMAD::Cache_Point>::const_iterator & it          ,
+ NOMAD::cache_index_type                      & cache_index   ) const
 {
-  // search in _cache2 (points to write in a cache file):
-  NOMAD::Cache_Point cp ( &x );
-  it = _cache2.find ( cp );
-  if ( it != _cache2.end() ) {
-    cache_index = NOMAD::CACHE_2;
-    return it->get_point();
-  }
-
-  // search in _cache3 (points saved in a file):
-  it = _cache3.find ( cp );
-  if ( it != _cache3.end() ) {
-    cache_index = NOMAD::CACHE_3;
-    return it->get_point();
-  }
-
-  // search in _cache1 (points read in an initial cache file):
-  it = _cache1.find ( cp );
-  if ( it != _cache1.end() ) {
-    cache_index = NOMAD::CACHE_1;
-    return it->get_point();
-  }
-
-  cache_index = NOMAD::UNDEFINED_CACHE;
-  return NULL;
+    // search in _cache2 (points to write in a cache file):
+    NOMAD::Cache_Point cp ( &x );
+    it = _cache2.find ( cp );
+    if ( it != _cache2.end() )
+    {
+        cache_index = NOMAD::CACHE_2;
+        return it->get_point();
+    }
+    
+    // search in _cache3 (points saved in a file):
+    it = _cache3.find ( cp );
+    if ( it != _cache3.end() )
+    {
+        cache_index = NOMAD::CACHE_3;
+        return it->get_point();
+    }
+    
+    // search in _cache1 (points read in an initial cache file):
+    it = _cache1.find ( cp );
+    if ( it != _cache1.end() )
+    {
+        cache_index = NOMAD::CACHE_1;
+        return it->get_point();
+    }
+    
+    cache_index = NOMAD::UNDEFINED_CACHE;
+    return NULL;
 }
 
 /*-----------------------------------------------------*/
@@ -154,56 +162,61 @@ const NOMAD::Eval_Point * NOMAD::Cache::find
 /*-----------------------------------------------------*/
 bool NOMAD::Cache::erase ( const NOMAD::Eval_Point & x )
 {
-  // check the eval types:
-  if ( x.get_eval_type() != _eval_type )
-    throw NOMAD::Cache::Cache_Error ( "Cache.cpp" , __LINE__ ,
-	  "NOMAD::Cache:erase(x): x.eval_type != cache.eval_type" );
-
-  std::set<NOMAD::Cache_Point>::iterator it;
-  NOMAD::cache_index_type       cache_index;
-  
-  // search in cache:
-  const NOMAD::Eval_Point * cache_x = find ( x , it , cache_index );
-
-  // the point has been found:
-  if ( cache_x ) {
-
-    // remove the point from the list of extern points:
-    if ( cache_x->get_current_run() || x.get_current_run() ) {
-      std::list<const NOMAD::Eval_Point*>::const_iterator end2 = _extern_pts.end();
-      std::list<const NOMAD::Eval_Point*>::iterator       it2  = _extern_pts.begin();
-      while ( it2 != end2 ) {
-	if ( *it2 == cache_x || *it2 == &x ) {
-	  _extern_pts.erase ( it2 );
-	  break;
-	}
-	++it2;
-      }
-    }
-
-    // erase the point in cache if its address is different from &x:
-    if ( cache_x != &x )
-      delete cache_x;
-
-    // remove the point from the cache:
-    _sizeof -= x.size_of();  
+    // check the eval types:
+    if ( x.get_eval_type() != _eval_type )
+        throw NOMAD::Cache::Cache_Error ( "Cache.cpp" , __LINE__ ,
+                                         "NOMAD::Cache:erase(x): x.eval_type != cache.eval_type" );
     
-    switch ( cache_index ) {
-    case NOMAD::CACHE_1:
-      _cache1.erase ( it );
-      break;
-    case NOMAD::CACHE_2:
-      _cache2.erase ( it );
-      break;
-    case NOMAD::CACHE_3:
-      _cache3.erase ( it );
-      break;
-    case NOMAD::UNDEFINED_CACHE:
-      break;
+    std::set<NOMAD::Cache_Point>::iterator it;
+    NOMAD::cache_index_type       cache_index;
+    
+    // search in cache:
+    const NOMAD::Eval_Point * cache_x = find ( x , it , cache_index );
+    
+    // the point has been found:
+    if ( cache_x )
+    {
+        
+        // remove the point from the list of extern points:
+        if ( cache_x->get_current_run() || x.get_current_run() )
+        {
+            std::list<const NOMAD::Eval_Point*>::const_iterator end2 = _extern_pts.end();
+            std::list<const NOMAD::Eval_Point*>::iterator       it2  = _extern_pts.begin();
+            while ( it2 != end2 )
+            {
+                if ( *it2 == cache_x || *it2 == &x )
+                {
+                    _extern_pts.erase ( it2 );
+                    break;
+                }
+                ++it2;
+            }
+        }
+        
+        // erase the point in cache if its address is different from &x:
+        if ( cache_x != &x )
+            delete cache_x;
+        
+        // remove the point from the cache:
+        _sizeof -= x.size_of();
+        
+        switch ( cache_index )
+        {
+            case NOMAD::CACHE_1:
+                _cache1.erase ( it );
+                break;
+            case NOMAD::CACHE_2:
+                _cache2.erase ( it );
+                break;
+            case NOMAD::CACHE_3:
+                _cache3.erase ( it );
+                break;
+            case NOMAD::UNDEFINED_CACHE:
+                break;
+        }
+        return true;
     }
-    return true;
-  }
-  return false;
+    return false;
 }
 
 /*-----------------------------------------------------*/
@@ -211,19 +224,20 @@ bool NOMAD::Cache::erase ( const NOMAD::Eval_Point & x )
 /*-----------------------------------------------------*/
 void NOMAD::Cache::clear ( void )
 {
-  const NOMAD::Eval_Point * x = begin();
-  while ( x ) {
-    delete x;
-    x = next();
-  }
-  _cache1.clear();
-  _cache2.clear();
-  _cache3.clear();
-  unlock();
-  
-  _extern_pts.clear();
-
-  _sizeof = static_cast<float> ( sizeof_init() );
+    const NOMAD::Eval_Point * x = begin();
+    while ( x )
+    {
+        delete x;
+        x = next();
+    }
+    _cache1.clear();
+    _cache2.clear();
+    _cache3.clear();
+    unlock();
+    
+    _extern_pts.clear();
+    
+    _sizeof = static_cast<float> ( sizeof_init() );
 }
 
 /*------------------------------------------------*/
@@ -232,19 +246,19 @@ void NOMAD::Cache::clear ( void )
 /*------------------------------------------------*/
 void NOMAD::Cache::insert ( const NOMAD::Eval_Point & x )
 {
-  // check the eval types:
-  if ( x.get_eval_type() != _eval_type )
-    throw NOMAD::Cache::Cache_Error ( "Cache.cpp" , __LINE__ ,
-	  "NOMAD::Cache:insert(x): x.eval_type != cache.eval_type" );
-
-  // insertion in _extern_pts:
-  insert_extern_point ( x );
-
-  // insertion in _cache2:
-  NOMAD::Cache_Point cp  ( &x );
-  _cache2.insert  (  cp  );
-  x.set_in_cache ( true );
-  _sizeof += x.size_of();
+    // check the eval types:
+    if ( x.get_eval_type() != _eval_type )
+        throw NOMAD::Cache::Cache_Error ( "Cache.cpp" , __LINE__ ,
+                                         "NOMAD::Cache:insert(x): x.eval_type != cache.eval_type" );
+    
+    // insertion in _extern_pts:
+    insert_extern_point ( x );
+    
+    // insertion in _cache2:
+    NOMAD::Cache_Point cp  ( &x );
+    _cache2.insert  (  cp  );
+    x.set_in_cache ( true );
+    _sizeof += x.size_of();
 }
 
 /*-------------------------------------------------------------------------*/
@@ -254,42 +268,44 @@ void NOMAD::Cache::insert ( const NOMAD::Eval_Point & x )
 /*-------------------------------------------------------------------------*/
 void NOMAD::Cache::insert ( Cache & c )
 {
-  if ( &c == this )
-    return;
-
-  // check the eval types:
-  if ( c._eval_type != _eval_type )
-    throw NOMAD::Cache::Cache_Error ( "Cache.cpp" , __LINE__ ,
-	  "NOMAD::Cache:insert(c): c._eval_type != this->_eval_type" );
-
-  // insertion:
-  NOMAD::Point              bbo_cache , bbo_cur;
-  const NOMAD::Eval_Point * cache_x;
-  const NOMAD::Eval_Point * cur = c.begin();
-
-  while ( cur ) {
+    if ( &c == this )
+        return;
     
-    cache_x = find ( *cur );
-
-    // the current point is already in cache:
-    if ( cache_x ) {
-      update ( get_modifiable_point ( *cache_x ) , *cur );
-      delete cur;
+    // check the eval types:
+    if ( c._eval_type != _eval_type )
+        throw NOMAD::Cache::Cache_Error ( "Cache.cpp" , __LINE__ ,
+                                         "NOMAD::Cache:insert(c): c._eval_type != this->_eval_type" );
+    
+    // insertion:
+    NOMAD::Point              bbo_cache , bbo_cur;
+    const NOMAD::Eval_Point * cache_x;
+    const NOMAD::Eval_Point * cur = c.begin();
+    
+    while ( cur )
+    {
+        
+        cache_x = find ( *cur );
+        
+        // the current point is already in cache:
+        if ( cache_x )
+        {
+            update ( get_modifiable_point ( *cache_x ) , *cur );
+            delete cur;
+        }
+        
+        // point not in cache:
+        else
+            insert ( *cur );
+        
+        cur = c.next();
     }
-
-    // point not in cache:
-    else
-      insert ( *cur );
-
-    cur = c.next();
-  }
-
-  c._sizeof = static_cast<float> ( sizeof_init() );
-
-  c._cache1.clear();
-  c._cache2.clear();
-  c._cache3.clear();
-  c._extern_pts.clear();
+    
+    c._sizeof = static_cast<float> ( sizeof_init() );
+    
+    c._cache1.clear();
+    c._cache2.clear();
+    c._cache3.clear();
+    c._extern_pts.clear();
 }
 
 /*------------------------------------------------------------------*/
@@ -298,7 +314,8 @@ void NOMAD::Cache::insert ( Cache & c )
 /*  . example of use:                                               */
 /*                                                                  */
 /*        const NOMAD::Eval_Point * cur = cache.begin();            */
-/*        while ( cur ) {                                           */
+/*        while ( cur )
+ {                                           */
 /*          ...                                                     */
 /*          cur = cache.next();                                     */
 /*        }                                                         */
@@ -310,52 +327,60 @@ void NOMAD::Cache::insert ( Cache & c )
 // --------
 const NOMAD::Eval_Point * NOMAD::Cache::begin ( void ) const
 {
-  if ( !_cache2.empty() ) {
-    _it = _cache2.begin();
-    return _it->get_point();
-  }   
-  if ( !_cache3.empty() ) {
-    _it = _cache3.begin();
-    return _it->get_point();
-  }
-  if ( !_cache1.empty() ) {
-    _it = _cache1.begin();
-    return _it->get_point();
-  }
-  return NULL;
+    if ( !_cache2.empty() )
+    {
+        _it = _cache2.begin();
+        return _it->get_point();
+    }
+    if ( !_cache3.empty() )
+    {
+        _it = _cache3.begin();
+        return _it->get_point();
+    }
+    if ( !_cache1.empty() )
+    {
+        _it = _cache1.begin();
+        return _it->get_point();
+    }
+    return NULL;
 }
 
 // next() (supposes that begin() has been called)
 // -------
 const NOMAD::Eval_Point * NOMAD::Cache::next ( void ) const
-{ 
-  ++_it;
-  
-  if ( !_cache2.empty() && _it == _cache2.end() ) {
-    if ( !_cache3.empty() ) {
-      _it = _cache3.begin();
-      return _it->get_point();
+{
+    ++_it;
+    
+    if ( !_cache2.empty() && _it == _cache2.end() )
+    {
+        if ( !_cache3.empty() )
+        {
+            _it = _cache3.begin();
+            return _it->get_point();
+        }
+        if ( !_cache1.empty() )
+        {
+            _it = _cache1.begin();
+            return _it->get_point();
+        }
+        return NULL;
     }
-    if ( !_cache1.empty() ) {
-      _it = _cache1.begin();
-      return _it->get_point();
+    
+    
+    if ( !_cache3.empty() && _it == _cache3.end() )
+    {
+        if ( !_cache1.empty() )
+        {
+            _it = _cache1.begin();
+            return _it->get_point();
+        }
+        return NULL;
     }
-    return NULL;
-  }
-
-
-  if ( !_cache3.empty() && _it == _cache3.end() ) {
-    if ( !_cache1.empty() ) {
-      _it = _cache1.begin();
-      return _it->get_point();
-    }
-    return NULL;
-  }
-
-  if ( !_cache1.empty() && _it == _cache1.end() )
-    return NULL;
-
-  return _it->get_point();
+    
+    if ( !_cache1.empty() && _it == _cache1.end() )
+        return NULL;
+    
+    return _it->get_point();
 }
 
 /*---------------------------------------------------------------------*/
@@ -363,9 +388,9 @@ const NOMAD::Eval_Point * NOMAD::Cache::next ( void ) const
 /*---------------------------------------------------------------------*/
 bool NOMAD::Cache::is_locked ( const std::string & file_name )
 {
-  if ( file_name == _locked_file )
-    return true;
-  return ( Cache::_locked_files.find ( file_name ) != Cache::_locked_files.end() );
+    if ( file_name == _locked_file )
+        return true;
+    return ( ! Cache::_locked_files.find ( file_name )->empty() );
 }
 
 /*---------------------------------------------------------------------*/
@@ -373,13 +398,13 @@ bool NOMAD::Cache::is_locked ( const std::string & file_name )
 /*---------------------------------------------------------------------*/
 bool NOMAD::Cache::lock ( const std::string & file_name )
 {
-  if ( is_locked ( file_name ) )
-    return false;
-
-  Cache::_locked_files.insert ( file_name );
-  _locked_file = file_name;
-
-  return true;
+    if ( is_locked ( file_name ) )
+        return false;
+    
+    Cache::_locked_files.insert ( file_name );
+    _locked_file = file_name;
+    
+    return true;
 }
 
 /*---------------------------------------------------------------------*/
@@ -387,14 +412,14 @@ bool NOMAD::Cache::lock ( const std::string & file_name )
 /*---------------------------------------------------------------------*/
 void NOMAD::Cache::unlock ( void )
 {
-  if ( _locked_file.empty() )
-    return;
-
-  std::set<std::string>::iterator it = Cache::_locked_files.find ( _locked_file );
-  if ( it != Cache::_locked_files.end() )
-    _locked_files.erase(it);
-
-  _locked_file.clear();
+    if ( _locked_file.empty() )
+        return;
+    
+    std::set<std::string>::iterator it = Cache::_locked_files.find ( _locked_file );
+    if ( it != Cache::_locked_files.end() )
+        _locked_files.erase(it);
+    
+    _locked_file.clear();
 }
 
 /*----------------------------------------------------*/
@@ -403,77 +428,84 @@ void NOMAD::Cache::unlock ( void )
 /*  . private method                                  */
 /*----------------------------------------------------*/
 bool NOMAD::Cache::read_points_from_cache_file ( std::ifstream & fin             ,
-						 const int     * p_nb_bb_outputs ,
-						 bool            display           )
+                                                const int     * p_nb_bb_outputs ,
+                                                bool            display           )
 {
-  try {
-
-    NOMAD::Clock c;
-
-    // the stream is placed at the first point (after the CACHE_FILE_ID tag):
-    fin.seekg ( sizeof ( NOMAD::CACHE_FILE_ID ) , std::ios::beg );
-
-    NOMAD::Cache_File_Point   cfp;
-    NOMAD::Eval_Point       * cur;
-    const NOMAD::Eval_Point * cache_x;
-
-    // main loop:
-    while ( !fin.eof() ) {
-
-      // reading of the Cache_File_Point:
-      if ( !cfp.read ( fin ) ) {
-	if ( fin.eof() )
-	  break;
-	return false;
-      }
-
-      // we ignore this cache file point if it has a different
-      // number of blackbox outputs than *p_nb_bb_outputs:
-      if ( p_nb_bb_outputs && cfp.get_m() != *p_nb_bb_outputs )
-	continue;
-
-      // creation of the Eval_Point:
-      cur = new NOMAD::Eval_Point ( cfp , _eval_type );
-
-      // we look if the current point is already in cache:
-      cache_x = find ( *cur );
-    
-      // the current point is already in cache:
-      if ( cache_x ) {
-	update ( get_modifiable_point ( *cache_x ) , *cur );
-	delete cur;
-      }
-
-      // point not in cache: insertion:
-      else {
-
-	// insertion in _extern_pts:
-	insert_extern_point ( *cur );
-
-	// insertion in _cache1:
-	NOMAD::Cache_Point cp ( cur );
-	_cache1.insert    ( cp   );
-	cur->set_in_cache ( true );
-	_sizeof += cur->size_of();
-      }
-
-    } // end of main loop
-
-    // display stats on the cache load:
-    if ( display ) {
-      _out << "number of points: " << static_cast<int>(_cache1.size()) << std::endl
-	   << "size            : ";
-      _out.display_size_of ( _sizeof );
-      _out << std::endl
-	   << "load time       : " << c.get_real_time() << 's' << std::endl;
+    try {
+        
+        NOMAD::Clock c;
+        
+        // the stream is placed at the first point (after the CACHE_FILE_ID tag):
+        fin.seekg ( sizeof ( NOMAD::CACHE_FILE_ID ) , std::ios::beg );
+        
+        NOMAD::Cache_File_Point   cfp;
+        NOMAD::Eval_Point       * cur;
+        const NOMAD::Eval_Point * cache_x;
+        
+        // main loop:
+        while ( !fin.eof() )
+        {
+            
+            // reading of the Cache_File_Point:
+            if ( !cfp.read ( fin ) )
+            {
+                if ( fin.eof() )
+                    break;
+                return false;
+            }
+            
+            // we ignore this cache file point if it has a different
+            // number of blackbox outputs than *p_nb_bb_outputs:
+            if ( p_nb_bb_outputs && cfp.get_m() != *p_nb_bb_outputs )
+                continue;
+            
+            // creation of the Eval_Point:
+            cur = new NOMAD::Eval_Point ( cfp , _eval_type );
+            
+            // we look if the current point is already in cache:
+            cache_x = find ( *cur );
+            
+            // the current point is already in cache:
+            if ( cache_x )
+            {
+                update ( get_modifiable_point ( *cache_x ) , *cur );
+                delete cur;
+            }
+            
+            // point not in cache: insertion:
+            else
+            {
+                
+                
+                // insertion in _extern_pts:
+                insert_extern_point ( *cur );
+                
+                // insertion in _cache1:
+                NOMAD::Cache_Point cp ( cur );
+                _cache1.insert    ( cp   );
+                cur->set_in_cache ( true );
+                _sizeof += cur->size_of();
+            }
+            
+        } // end of main loop
+        
+        // display stats on the cache load:
+        if ( display )
+        {
+            _out << "number of points: " << static_cast<int>(_cache1.size()) << std::endl
+            << "size            : ";
+            _out.display_size_of ( _sizeof );
+            _out << std::endl
+            << "load time       : " << c.get_real_time() << 's' << std::endl;
+        }
     }
-  }
-  catch ( ... ) {
-    return false;
-  }
-  return true;
+    catch ( ... )
+    {
+        return false;
+    }
+    return true;
 }
-  
+
 /*---------------------------------------------------------------------*/
 /* . load a cache file (fill the set _cache1)                          */
 /* . lock the file 'file_name'                                         */
@@ -491,78 +523,88 @@ bool NOMAD::Cache::read_points_from_cache_file ( std::ifstream & fin            
 /*   ignored                                                           */
 /*---------------------------------------------------------------------*/
 bool NOMAD::Cache::load ( const std::string & file_name       ,
-			  const int         * p_nb_bb_outputs ,
-			  bool                display           )
+                         const int         * p_nb_bb_outputs ,
+                         bool                display           )
 {
-  if ( !file_name.empty() && file_name == _locked_file )
-    return true;
-
-  if ( file_name.empty() || !_locked_file.empty() || is_locked(file_name) )
-    return false;
-
-  // the file exists:
-  if ( NOMAD::check_read_file ( file_name ) ) {
-
-    int           id;
-    std::ifstream fin ( file_name.c_str() , std::ios::binary );
-
-    fin.read ( (char *) &id , sizeof(int) );
+    if ( !file_name.empty() && file_name == _locked_file )
+        return true;
     
-    // it is a valid cache file:
-    if ( !fin.fail() && id == NOMAD::CACHE_FILE_ID ) {
-
-      // display:
-      if ( display )
-	_out << std::endl
-	     << NOMAD::open_block ( "loading of \'" + file_name + "\'" );
-
-      // read the points:
-      if ( !read_points_from_cache_file ( fin , p_nb_bb_outputs , display ) ) {
-	fin.close();
-	return false;  // it is not a valid cache file
-      }
-
-      // lock the file:
-      lock ( file_name );
-
-      fin.close();
-
-      if ( display )
-	_out.close_block();
-
-      return true;      
+    if ( file_name.empty() ||
+        !_locked_file.empty() ||
+        is_locked(file_name) )
+        return false;
+    
+    // the file exists:
+    if ( NOMAD::check_read_file ( file_name ) )
+    {
+        
+        int           id;
+        std::ifstream fin ( file_name.c_str() , std::ios::binary );
+        
+        fin.read ( (char *) &id , sizeof(int) );
+        
+        // it is a valid cache file:
+        if ( !fin.fail() && id == NOMAD::CACHE_FILE_ID )
+        {
+            
+            // display:
+            if ( display )
+                _out << std::endl
+                << NOMAD::open_block ( "loading of \'" + file_name + "\'" );
+            
+            // read the points:
+            if ( !read_points_from_cache_file ( fin , p_nb_bb_outputs , display ) )
+            {
+                fin.close();
+                return false;  // it is not a valid cache file
+            }
+            
+            // lock the file:
+            lock ( file_name );
+            
+            fin.close();
+            
+            if ( display )
+                _out.close_block();
+            
+            return true;
+        }
+        
+        // it is not a valid cache file:
+        else
+        {
+            
+            fin.close();
+            return false;
+        }
     }
-
-    // it is not a valid cache file:
-    else {
-      fin.close();
-      return false;
-    }  
-  }
-
-  // the file does not exist:
-  else {
-
-    // display:
-    if ( display )
-      _out << std::endl << "creating cache file \'" << file_name << "\'" << std::endl;
-
-    // create the file as a valid cache file:
-    std::ofstream fout ( file_name.c_str() , std::ios::binary );
-
-    if ( fout.fail() ) {
-      fout.close();
-      return false;
-    }      
-
-    fout.write ( (char *) &NOMAD::CACHE_FILE_ID , sizeof ( NOMAD::CACHE_FILE_ID ) );
-    fout.close();
-
-    // lock:
-    lock ( file_name );
-  }
-
-  return true;
+    
+    // the file does not exist:
+    else
+    {
+        
+        
+        // display:
+        if ( display )
+            _out << std::endl << "creating cache file \'" << file_name << "\'" << std::endl;
+        
+        // create the file as a valid cache file:
+        std::ofstream fout ( file_name.c_str() , std::ios::binary );
+        
+        if ( fout.fail() )
+        {
+            fout.close();
+            return false;
+        }
+        
+        fout.write ( (char *) &NOMAD::CACHE_FILE_ID , sizeof ( NOMAD::CACHE_FILE_ID ) );
+        fout.close();
+        
+        // lock:
+        lock ( file_name );
+    }
+    
+    return true;
 }
 
 /*------------------------------------------------------------------*/
@@ -575,69 +617,78 @@ bool NOMAD::Cache::load ( const std::string & file_name       ,
 /*------------------------------------------------------------------*/
 bool NOMAD::Cache::save ( bool overwrite , bool display )
 {
-  if ( _locked_file.empty() )
-    return true;
-
-  // display:
-  if ( display )
-    _out << std::endl << "saving cache file \'" << _locked_file << "\'" << std::endl;
-
-  std::ofstream fout;
-
-  if ( overwrite ) {
-
-    // open:
-    fout.open ( _locked_file.c_str() , std::ios::binary );
-    if ( fout.fail() ) {
-      fout.close();
-      return false;
-    }
-
-    // cache file tag:
-    fout.write ( (char *) &NOMAD::CACHE_FILE_ID , sizeof ( NOMAD::CACHE_FILE_ID ) );
-
-    // save all cache points:
-    const NOMAD::Eval_Point * cur = begin();
-    while ( cur ) {
-      NOMAD::Cache_File_Point cfp ( *cur );
-      if ( !cfp.write ( fout ) ) {
- 	fout.close();
- 	return false;
-      }
-      cur = next();
-    }
-  }
-
-  else {
-
-    // open and go at the end of the file:
-    fout.open ( _locked_file.c_str() , std::ios::binary | std::ios::app );
-    if ( fout.fail() ) {
-      fout.close();
-      return false;
+    if ( _locked_file.empty() )
+        return true;
+    
+    // display:
+    if ( display )
+        _out << std::endl << "saving cache file \'" << _locked_file << "\'" << std::endl;
+    
+    std::ofstream fout;
+    
+    if ( overwrite )
+    {
+        
+        // open:
+        fout.open ( _locked_file.c_str() , std::ios::binary );
+        if ( fout.fail() )
+        {
+            fout.close();
+            return false;
+        }
+        
+        // cache file tag:
+        fout.write ( (char *) &NOMAD::CACHE_FILE_ID , sizeof ( NOMAD::CACHE_FILE_ID ) );
+        
+        // save all cache points:
+        const NOMAD::Eval_Point * cur = begin();
+        while ( cur )
+        {
+            NOMAD::Cache_File_Point cfp ( *cur );
+            if ( !cfp.write ( fout ) )
+            {
+                fout.close();
+                return false;
+            }
+            cur = next();
+        }
     }
     
-    std::set<NOMAD::Cache_Point>::iterator it = _cache2.begin();
-    while ( it != _cache2.end() ) {
-   
-      // write it->get_point() in 'fout':
-      NOMAD::Cache_File_Point cfp ( *it->get_point() ); 
-      if ( !cfp.write ( fout ) ) {
-	fout.close();
-	return false;
-      }
-
-      // transfer the point from _cache2 to _cache3:
-      NOMAD::Cache_Point cp = *it; // ( it->get_point() );
-      _cache3.insert ( cp   );
-      _cache2.erase  ( it++ );
+    else
+    {
+        
+        
+        // open and go at the end of the file:
+        fout.open ( _locked_file.c_str() , std::ios::binary | std::ios::app );
+        if ( fout.fail() )
+        {
+            fout.close();
+            return false;
+        }
+        
+        std::set<NOMAD::Cache_Point>::iterator it = _cache2.begin();
+        while ( it != _cache2.end() )
+        {
+            
+            // write it->get_point() in 'fout':
+            NOMAD::Cache_File_Point cfp ( *it->get_point() );
+            if ( !cfp.write ( fout ) )
+            {
+                fout.close();
+                return false;
+            }
+            
+            // transfer the point from _cache2 to _cache3:
+            NOMAD::Cache_Point cp = *it; // ( it->get_point() );
+            _cache3.insert ( cp   );
+            _cache2.erase  ( it++ );
+        }
     }
-  }
-
-  // close the file:
-  fout.close();
-
-  return true;
+    
+    // close the file:
+    fout.close();
+    
+    return true;
 }
 
 /*-----------------------------------------------------------------*/
@@ -648,65 +699,65 @@ bool NOMAD::Cache::save ( bool overwrite , bool display )
 /*  . private method                                               */
 /*-----------------------------------------------------------------*/
 void NOMAD::Cache::update ( NOMAD::Eval_Point       & cache_x ,
-			    const NOMAD::Eval_Point & x         ) const
+                           const NOMAD::Eval_Point & x         ) const
 {
-  const NOMAD::Point & bbo_x = x.get_bb_outputs();
-  
-  if ( &cache_x == &x         ||
-       !x.is_eval_ok()        ||
-       !cache_x.is_in_cache() ||
-       bbo_x.empty()          ||
-       cache_x != x              )
-    return;
-
-  // check the eval types:
-  if ( x.get_eval_type      () != _eval_type ||
-       cache_x.get_eval_type() != _eval_type    )
-    throw NOMAD::Cache::Cache_Error ( "Cache.cpp" , __LINE__ ,
-	  "NOMAD::Cache:update(): problem with the eval. types" );
-
-  const NOMAD::Point & bbo_cache_x = cache_x.get_bb_outputs();
-  int                  m           = bbo_cache_x.size();
-
-  _sizeof -= cache_x.size_of();
-
-  // if the current point could not evaluate and x did,
-  // or if the number of bb outputs is different, we set cache_x = x:
-  if ( !cache_x.is_eval_ok() || m != bbo_x.size() ) {
-    cache_x.set_eval_status ( NOMAD::EVAL_OK     );
-    cache_x.set_bb_output   ( bbo_x              );
-    cache_x.set_signature   ( x.get_signature () );
-    cache_x.set_direction   ( x.get_direction () );
-    cache_x.set_mesh_index  ( x.get_mesh_index() );
-    _sizeof += cache_x.size_of();
-    return;
-  }
+    const NOMAD::Point & bbo_x = x.get_bb_outputs();
     
-  // we complete _bb_outputs:
-  int c1 = 0;
-  int c2 = 0;
- 
-  for ( int i = 0 ; i < m ; ++i ) {
-
-    if ( bbo_cache_x[i].is_defined() )
-      ++c1;
-
-    if ( bbo_x[i].is_defined() )
-      ++c2;
-
-    if ( !bbo_cache_x[i].is_defined() && bbo_x[i].is_defined() )
-      cache_x.set_bb_output ( i , bbo_x[i] );
-  }
-  
-  // the two points are 'eval_ok' and have comparable outputs:
-  // we select the best as the one with the more defined bb_outputs:
-  if ( c2 > c1 ) {
-    cache_x.set_signature  ( x.get_signature () );
-    cache_x.set_direction  ( x.get_direction () );
-    cache_x.set_mesh_index ( x.get_mesh_index() );
-  }
-
-  _sizeof += cache_x.size_of();
+    if ( &cache_x == &x         ||
+        !x.is_eval_ok()        ||
+        !cache_x.is_in_cache() ||
+        bbo_x.empty()          ||
+        cache_x != x              )
+        return;
+    
+    // check the eval types:
+    if ( x.get_eval_type      () != _eval_type ||
+        cache_x.get_eval_type() != _eval_type    )
+        throw NOMAD::Cache::Cache_Error ( "Cache.cpp" , __LINE__ ,
+                                         "NOMAD::Cache:update(): problem with the eval. types" );
+    
+    const NOMAD::Point & bbo_cache_x = cache_x.get_bb_outputs();
+    int                  m           = bbo_cache_x.size();
+    
+    _sizeof -= cache_x.size_of();
+    
+    // if the current point could not evaluate and x did,
+    // or if the number of bb outputs is different, we set cache_x = x:
+    if ( !cache_x.is_eval_ok() || m != bbo_x.size() )
+    {
+        cache_x.set_eval_status ( NOMAD::EVAL_OK     );
+        cache_x.set_bb_output   ( bbo_x              );
+        cache_x.set_signature   ( x.get_signature () );
+        _sizeof += cache_x.size_of();
+        return;
+    }
+    
+    // we complete _bb_outputs:
+    int c1 = 0;
+    int c2 = 0;
+    
+    for ( int i = 0 ; i < m ; ++i )
+    {
+        
+        if ( bbo_cache_x[i].is_defined() )
+            ++c1;
+        
+        if ( bbo_x[i].is_defined() )
+            ++c2;
+        
+        if ( !bbo_cache_x[i].is_defined() && bbo_x[i].is_defined() )
+            cache_x.set_bb_output ( i , bbo_x[i] );
+    }
+    
+    // the two points are 'eval_ok' and have comparable outputs:
+    // we select the best as the one with the more defined bb_outputs:
+    if ( c2 > c1 )
+    {
+        cache_x.set_signature  ( x.get_signature () );
+        cache_x.set_direction  ( x.get_direction () );
+    }
+    
+    _sizeof += cache_x.size_of();
 }
 
 /*---------------------------------------------------------*/
@@ -714,16 +765,17 @@ void NOMAD::Cache::update ( NOMAD::Eval_Point       & cache_x ,
 /*---------------------------------------------------------*/
 void NOMAD::Cache::display_extern_pts ( const NOMAD::Display & out ) const
 {
-  int  nb = static_cast<int>(_extern_pts.size());
-  int cnt = 0;
-  std::list<const NOMAD::Eval_Point *>::const_iterator it , end = _extern_pts.end();
-  for ( it = _extern_pts.begin() ; it != end ; ++it ) {
-    out << "point ";
-    out.display_int_w ( ++cnt , nb );
-    out << "/" << nb << ": ";
-    (*it)->display ( out , false );
-    out << std::endl;
-  }
+    int  nb = static_cast<int>(_extern_pts.size());
+    int cnt = 0;
+    std::list<const NOMAD::Eval_Point *>::const_iterator it , end = _extern_pts.end();
+    for ( it = _extern_pts.begin() ; it != end ; ++it )
+    {
+        out << "point ";
+        out.display_int_w ( ++cnt , nb );
+        out << "/" << nb << ": ";
+        (*it)->display_eval ( out , false );
+        out << std::endl;
+    }
 }
 
 /*---------------------------------------------------------*/
@@ -731,40 +783,45 @@ void NOMAD::Cache::display_extern_pts ( const NOMAD::Display & out ) const
 /*---------------------------------------------------------*/
 void NOMAD::Cache::display ( const NOMAD::Display & out ) const
 {
-  out << "number of cache points: " << size() << std::endl
-      << "size in memory        : ";
-  out.display_size_of ( _sizeof );
-  out << std::endl << "cache file            : ";
-  if ( _locked_file.empty() )
-    out << "-" << std::endl;
-  else
-    out << _locked_file << std::endl;
-
+    out << "number of cache points: " << size() << std::endl
+    << "size in memory        : ";
+    out.display_size_of ( _sizeof );
+    out << std::endl << "cache file            : ";
+    if ( _locked_file.empty() )
+        out << "-" << std::endl;
+    else
+        out << _locked_file << std::endl;
+    
 #ifdef DEBUG
-  int  nb = size();
-  int cnt = 0;
-  out << NOMAD::open_block ( "cache points" ) << std::endl;
-  const NOMAD::Eval_Point * cur = begin();
-  while ( cur ) {
-    out << "point ";
-    out.display_int_w ( ++cnt , nb );
-    out << "/" << nb << ": ";
-    cur->display ( out , false );
+    int  nb = size();
+    int cnt = 0;
+    out << NOMAD::open_block ( "cache points" ) << std::endl;
+    const NOMAD::Eval_Point * cur = begin();
+    while ( cur )
+    {
+        out << "point ";
+        out.display_int_w ( ++cnt , nb );
+        out << "/" << nb << ": ";
+        cur->display_eval ( out , false );
+        out << std::endl;
+        cur = next();
+    }
+    out.close_block();
+    
+    // this display is repeated here as there can
+    // be a lot of points displayed just before:
+    out << "number of cache points: " << size() << std::endl
+    << "size in memory        : ";
+    out.display_size_of ( _sizeof );
+    out << std::endl << "cache file            : ";
+    if ( _locked_file.empty() )
+        out << "-";
+    else
+        out << _locked_file;
     out << std::endl;
-    cur = next();
-  }
-  out.close_block();
-
-  // this display is repeated here as there can
-  // be a lot of points displayed just before:
-  out << "number of cache points: " << size() << std::endl
-      << "size in memory        : ";
-  out.display_size_of ( _sizeof );
-  out << std::endl << "cache file            : ";
-  if ( _locked_file.empty() )
-    out << "-";
-  else
-    out << _locked_file;
-  out << std::endl;
 #endif
 }
+
+
+
+

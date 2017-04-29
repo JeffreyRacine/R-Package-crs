@@ -1,16 +1,22 @@
 /*-------------------------------------------------------------------------------------*/
-/*  NOMAD - Nonlinear Optimization by Mesh Adaptive Direct search - version 3.6.2        */
+/*  NOMAD - Nonlinear Optimization by Mesh Adaptive Direct search - version 3.8.0      */
 /*                                                                                     */
-/*  Copyright (C) 2001-2012  Mark Abramson        - the Boeing Company, Seattle        */
-/*                           Charles Audet        - Ecole Polytechnique, Montreal      */
-/*                           Gilles Couture       - Ecole Polytechnique, Montreal      */
-/*                           John Dennis          - Rice University, Houston           */
-/*                           Sebastien Le Digabel - Ecole Polytechnique, Montreal      */
-/*                           Christophe Tribes    - Ecole Polytechnique, Montreal      */
 /*                                                                                     */
-/*  funded in part by AFOSR and Exxon Mobil                                            */
+/*  NOMAD - version 3.8.0 has been created by                                          */
+/*                 Charles Audet        - Ecole Polytechnique de Montreal              */
+/*                 Sebastien Le Digabel - Ecole Polytechnique de Montreal              */
+/*                 Christophe Tribes    - Ecole Polytechnique de Montreal              */
 /*                                                                                     */
-/*  Author: Sebastien Le Digabel                                                       */
+/*  The copyright of NOMAD - version 3.8.0 is owned by                                 */
+/*                 Sebastien Le Digabel - Ecole Polytechnique de Montreal              */
+/*                 Christophe Tribes    - Ecole Polytechnique de Montreal              */
+/*                                                                                     */
+/*  NOMAD v3 has been funded by AFOSR and Exxon Mobil.                                 */
+/*                                                                                     */
+/*  NOMAD v3 is a new version of NOMAD v1 and v2. NOMAD v1 and v2 were created and     */
+/*  developed by Mark Abramson, Charles Audet, Gilles Couture and John E. Dennis Jr.,  */
+/*  and were funded by AFOSR and Exxon Mobil.                                          */
+/*                                                                                     */
 /*                                                                                     */
 /*  Contact information:                                                               */
 /*    Ecole Polytechnique de Montreal - GERAD                                          */
@@ -34,238 +40,241 @@
 /*  You can find information on the NOMAD software at www.gerad.ca/nomad               */
 /*-------------------------------------------------------------------------------------*/
 /**
-  \file   LH_Search.cpp
-  \brief  Latin-Hypercube search (implementation)
-  \author Sebastien Le Digabel
-  \date   2010-04-09
-  \see    LH_Search.hpp
-*/
+ \file   LH_Search.cpp
+ \brief  Latin-Hypercube search (implementation)
+ \author Sebastien Le Digabel
+ \date   2010-04-09
+ \see    LH_Search.hpp
+ */
 #include "LH_Search.hpp"
-using namespace std; // zhenghua
 
 /*-----------------------------------------------------------*/
 /*              MADS Latin-Hypercube (LH) search             */
 /*-----------------------------------------------------------*/
 void NOMAD::LH_Search::search ( NOMAD::Mads              & mads           ,
-				int                      & nb_search_pts  ,
-				bool                     & stop           ,
-				NOMAD::stop_type         & stop_reason    ,
-				NOMAD::success_type      & success        ,
-				bool                     & count_search   ,
-				const NOMAD::Eval_Point *& new_feas_inc   ,
-				const NOMAD::Eval_Point *& new_infeas_inc   )
+                               int                      & nb_search_pts  ,
+                               bool                     & stop           ,
+                               NOMAD::stop_type         & stop_reason    ,
+                               NOMAD::success_type      & success        ,
+                               bool                     & count_search   ,
+                               const NOMAD::Eval_Point *& new_feas_inc   ,
+                               const NOMAD::Eval_Point *& new_infeas_inc   )
 {
-  new_feas_inc = new_infeas_inc = NULL;
-  nb_search_pts = 0;
-  success       = NOMAD::UNSUCCESSFUL;
-  count_search  = !stop;
-
-  if ( stop )
-    return;
-
-  // initial display:
-  const NOMAD::Display    & out = _p.out();
-  NOMAD::dd_type display_degree = out.get_search_dd();
-  if ( display_degree == NOMAD::FULL_DISPLAY ) {
-    std::ostringstream oss;
-    oss << NOMAD::LH_SEARCH;
-    out << std::endl << NOMAD::open_block ( oss.str() ) << std::endl;
-  }
-
-  // active barrier:
-  const NOMAD::Barrier     & barrier = mads.get_active_barrier();
-
-  // Evaluator_Control:
-  NOMAD::Evaluator_Control & ev_control = mads.get_evaluator_control();
-
-  // current incumbents:
-  const NOMAD::Eval_Point  * feas_inc   = barrier.get_best_feasible  ();
-  const NOMAD::Eval_Point  * infeas_inc = barrier.get_best_infeasible();
-
-  // get a reference point and a signature:
-  const NOMAD::Eval_Point  * ref       = (feas_inc) ? feas_inc : infeas_inc;
-  NOMAD::Signature         * signature = _p.get_signature();
-
-  // check the number of points:
-  int p = _initial_search ? _p.get_LH_search_p0() : _p.get_LH_search_pi();
-  if ( p <= 0 ) {
-    if ( display_degree == NOMAD::FULL_DISPLAY ) {
-      std::ostringstream oss;
-      oss << "end of LH " << ( _initial_search ? "initial " : "")
-	  << "search (number of points <= 0)";
-      out << std::endl << NOMAD::close_block ( oss.str() ) << std::endl;
-    }
-    return;
-  }
-
-  // no reference point is available (we consider the standard signature):
-  if ( !ref )
-  {
-
-    // it is not sufficient with categorical variables:
-    if ( signature->has_categorical() ) 
-	{
-      if ( display_degree == NOMAD::FULL_DISPLAY )
-	  {
-		  std::ostringstream oss;
-		  oss << "end of LH " << ( _initial_search ? "initial " : "")
-		  << "search (no available reference point)";
-		  out << std::endl << NOMAD::close_block ( oss.str() ) << std::endl;
-      }
-      return;
-    }
-  }
-  else
-    signature = ref->get_signature();
-
-	// Change Display stats style
-	const std::list<std::string>         old_ds = _p.get_display_stats();
-	std::list<std::string>                 ds    = old_ds;
-	ds.push_back ( " (LH)" );
-	_p.set_DISPLAY_STATS ( ds );
-
-	// check the parameters:
-	_p.check ( false ,    // remove_history_file  = false
-			  false ,    // remove_solution_file = false
-			  false   ); // remove_stats_file    = false
-	
-  int                      i;
-  NOMAD::Eval_Point      * x;
-  int                      n          = signature->get_n();
-  int                      m          = _p.get_bb_nb_outputs();
-  int                      mesh_index = NOMAD::Mesh::get_mesh_index();
-  int                      pm1        = p-1;
-  
-  // mesh sizes:
-  NOMAD::Point delta_m_max ( n );
-  signature->get_mesh().get_delta_m ( delta_m_max , NOMAD::Mesh::get_min_mesh_index() );
-  
-  NOMAD::Double delta_m_i;
-  NOMAD::Point  delta_m;
-  if ( !_initial_search )
-    signature->get_mesh().get_delta_m ( delta_m , mesh_index );
-
-  // fixed variables:
-  const NOMAD::Point & fixed_variables = signature->get_fixed_variables();
-  
-  // bb input types:
-  const std::vector<NOMAD::bb_input_type> & bbit = signature->get_input_types();
-  
-  // bounds:
-  const NOMAD::Point & lb = signature->get_lb();
-  const NOMAD::Point & ub = signature->get_ub();
-
-  // pts contains n points of dimension p: each of these points contains
-  // p different values for each variable:
-  NOMAD::Point ** pts = new NOMAD::Point * [n];
-
-  // creation of p search points:
-  for ( int k = 0 ; k < p ; ++k ) {
+    new_feas_inc = new_infeas_inc = NULL;
+    nb_search_pts = 0;
+    success       = NOMAD::UNSUCCESSFUL;
+    count_search  = !stop;
     
-    x = new NOMAD::Eval_Point ( n , m );
-    x->set_signature  ( signature   );
-    x->set_mesh_index ( &mesh_index );
+    if ( stop )
+        return;
     
-    for ( i = 0 ; i < n ; ++i ) {
-      
-      if ( k==0 ) {
-	if ( fixed_variables[i].is_defined() )
-	  pts[i] = new NOMAD::Point ( p , fixed_variables[i] );
-	else if ( bbit[i] == NOMAD::CATEGORICAL ) {
-	  pts[i] = new NOMAD::Point ( p , (*ref)[i] );
-	}
-	else {
-	  pts[i] = new NOMAD::Point ( p );
-	  
-	  // for the initial mesh: delta_m is not used and there will
-	  // be no projection on mesh:
-	  if ( !_initial_search )
-	    delta_m_i = delta_m[i];
-
-	  values_for_var_i ( p               ,
-			     delta_m_i       ,
-			     delta_m_max[i]  ,
-			     bbit       [i]  ,
-			     lb         [i]  ,
-			     ub         [i]  ,
-			     *pts       [i]    );
-	}
-      }
-      
-      (*x)[i] = (*pts[i])[k];
-      
-      if ( k == pm1 )
-	delete pts[i];
+    // initial display:
+    const NOMAD::Display    & out = _p.out();
+    NOMAD::dd_type display_degree = out.get_search_dd();
+    if ( display_degree == NOMAD::FULL_DISPLAY )
+    {
+        std::ostringstream oss;
+        oss << NOMAD::LH_SEARCH;
+        out << std::endl << NOMAD::open_block ( oss.str() ) << std::endl;
     }
     
-    if ( display_degree == NOMAD::FULL_DISPLAY ) {
-      out << "LH point #" << x->get_tag()
-	  << ": ( ";
-      x->Point::display ( out , " " , 2 , NOMAD::Point::get_display_limit() );
-      out << " )" << std::endl;
+    // active barrier:
+    const NOMAD::Barrier     & barrier = mads.get_active_barrier();
+    
+    // Evaluator_Control:
+    NOMAD::Evaluator_Control & ev_control = mads.get_evaluator_control();
+    
+    // current incumbents:
+    const NOMAD::Eval_Point  * feas_inc   = barrier.get_best_feasible  ();
+    const NOMAD::Eval_Point  * infeas_inc = barrier.get_best_infeasible();
+    
+    // get a reference point and a signature:
+    const NOMAD::Eval_Point  * ref       = (feas_inc) ? feas_inc : infeas_inc;
+    NOMAD::Signature         * signature = _p.get_signature();
+    
+    // check the number of points:
+    int p = _initial_search ? _p.get_LH_search_p0() : _p.get_LH_search_pi();
+    if ( p <= 0 )
+    {
+        if ( display_degree == NOMAD::FULL_DISPLAY )
+        {
+            std::ostringstream oss;
+            oss << "end of LH " << ( _initial_search ? "initial " : "")
+            << "search (number of points <= 0)";
+            out << std::endl << NOMAD::close_block ( oss.str() ) << std::endl;
+        }
+        return;
     }
+    
+    // no reference point is available (we consider the standard signature):
+    if ( !ref )
+    {
+        
+        // it is not sufficient with categorical variables:
+        if ( signature->has_categorical() )
+        {
+            if ( display_degree == NOMAD::FULL_DISPLAY )
+            {
+                std::ostringstream oss;
+                oss << "end of LH " << ( _initial_search ? "initial " : "")
+                << "search (no available reference point)";
+                out << std::endl << NOMAD::close_block ( oss.str() ) << std::endl;
+            }
+            return;
+        }
+    }
+    else
+        signature = ref->get_signature();
+    
+    // Change Display stats style
+    const std::list<std::string>         old_ds = _p.get_display_stats();
+    std::list<std::string>                 ds    = old_ds;
+    ds.push_back ( " (LH)" );
+    _p.set_DISPLAY_STATS ( ds );
+    
+    // check the parameters:
+    _p.check ( false ,    // remove_history_file  = false
+              false ,    // remove_solution_file = false
+              false   ); // remove_stats_file    = false
+    
+    int                      i;
+    NOMAD::Eval_Point      * x;
+    int                      n          = signature->get_n();
+    int                      m          = _p.get_bb_nb_outputs();
+    int                      pm1        = p-1;
+    
+    // mesh size:
+    NOMAD::Point delta_max = signature->get_mesh()->get_delta_max ();
+    NOMAD::Double delta_i;
+    NOMAD::Point  delta;
+    if ( !_initial_search )
+        signature->get_mesh()->get_delta ( delta );
+    
+    // fixed variables:
+    const NOMAD::Point & fixed_variables = signature->get_fixed_variables();
+    
+    // bb input types:
+    const std::vector<NOMAD::bb_input_type> & bbit = signature->get_input_types();
+    
+    // bounds:
+    const NOMAD::Point & lb = signature->get_lb();
+    const NOMAD::Point & ub = signature->get_ub();
+    
+    // pts contains n points of dimension p: each of these points contains
+    // p different values for each variable:
+    NOMAD::Point ** pts = new NOMAD::Point * [n];
+    
+    // creation of p search points:
+    for ( int k = 0 ; k < p ; ++k )
+    {
+        
+        x = new NOMAD::Eval_Point ( n , m );
+        x->set_signature  ( signature   );
+        
+        for ( i = 0 ; i < n ; ++i )
+        {
+            
+            if ( k==0 )
+            {
+                if ( fixed_variables[i].is_defined() )
+                    pts[i] = new NOMAD::Point ( p , fixed_variables[i] );
+                else if ( bbit[i] == NOMAD::CATEGORICAL )
+                {
+                    pts[i] = new NOMAD::Point ( p , (*ref)[i] );
+                }
+                else
+                {
+                    pts[i] = new NOMAD::Point ( p );
 
-    // add the new point to the ordered list of search trial points:
-    ev_control.add_eval_point ( x               ,
-				display_degree  ,
-				false           ,  // snap_to_bounds = false
-				NOMAD::Double() ,
-				NOMAD::Double() ,
-				NOMAD::Double() ,
-				NOMAD::Double()   );
-  }
-  
-  delete [] pts;
-  
-  nb_search_pts = ev_control.get_nb_eval_points();
-
-  // eval_list_of_points:
-  // --------------------
-  new_feas_inc = new_infeas_inc = NULL;
-  ev_control.eval_list_of_points ( _type                   ,
-				   mads.get_true_barrier() ,
-				   mads.get_sgte_barrier() ,
-				   mads.get_pareto_front() ,
-				   stop                    ,
-				   stop_reason             ,
-				   new_feas_inc            ,
-				   new_infeas_inc          ,
-				   success                   );
-
-
-	_p.get_display_stats();
-	
-	// restore stats style
-	_p.set_DISPLAY_STATS              ( old_ds                               );
-	_p.check ( false ,    // remove_history_file  = false
-			  false ,    // remove_solution_file = false
-			  false   ); // remove_stats_file    = false
-	
-	
-	
-  // final displays:
-  if ( display_degree == NOMAD::FULL_DISPLAY ) {
-    std::ostringstream oss;
-    oss << "end of LH search (" << success << ")";
-    out << std::endl << NOMAD::close_block ( oss.str() ) << std::endl;
-  }
-
+                    if ( !_initial_search )
+                        delta_i = delta[i];
+                    
+                    values_for_var_i ( p               ,
+                                      delta_i       ,
+                                      delta_max[i]  ,
+                                      bbit       [i]  ,
+                                      lb         [i]  ,
+                                      ub         [i]  ,
+                                      *pts       [i]    );
+                }
+            }
+            
+            (*x)[i] = (*pts[i])[k];
+            
+            if ( k == pm1 )
+                delete pts[i];
+        }
+        
+        if ( display_degree == NOMAD::FULL_DISPLAY )
+        {
+            out << "LH point #" << x->get_tag()
+            << ": ( ";
+            x->Point::display ( out , " " , 2 , NOMAD::Point::get_display_limit() );
+            out << " )" << std::endl;
+        }
+        
+        // add the new point to the ordered list of search trial points:
+        ev_control.add_eval_point ( x               ,
+                                   display_degree  ,
+                                   false           ,  // snap_to_bounds = false
+                                   NOMAD::Double() ,
+                                   NOMAD::Double() ,
+                                   NOMAD::Double() ,
+                                   NOMAD::Double()   );
+    }
+    
+    delete [] pts;
+    
+    nb_search_pts = ev_control.get_nb_eval_points();
+    
+    // eval_list_of_points:
+    // --------------------
+    new_feas_inc = new_infeas_inc = NULL;
+    ev_control.eval_list_of_points ( _type                   ,
+                                    mads.get_true_barrier() ,
+                                    mads.get_sgte_barrier() ,
+                                    mads.get_pareto_front() ,
+                                    stop                    ,
+                                    stop_reason             ,
+                                    new_feas_inc            ,
+                                    new_infeas_inc          ,
+                                    success                   );
+    
+    
+    _p.get_display_stats();
+    
+    // restore stats style
+    _p.set_DISPLAY_STATS              ( old_ds                               );
+    _p.check ( false ,    // remove_history_file  = false
+              false ,    // remove_solution_file = false
+              false   ); // remove_stats_file    = false
+    
+    
+    
+    // final displays:
+    if ( display_degree == NOMAD::FULL_DISPLAY )
+    {
+        std::ostringstream oss;
+        oss << "end of LH search (" << success << ")";
+        out << std::endl << NOMAD::close_block ( oss.str() ) << std::endl;
+    }
+    
 }
 
 /*-----------------------------------------------------------*/
 /*        LH search: decide p values for one variable        */
 /*-----------------------------------------------------------*/
 /*  . if no bounds, values are scaled with the largest       */
-/*    delta_m value obtained so far                          */
+/*    delta value obtained so far                            */
 /*  . private method                                         */
 /*-----------------------------------------------------------*/
 void NOMAD::LH_Search::values_for_var_i ( int                          p           ,
-					  const NOMAD::Double        & delta_m     ,
-					  const NOMAD::Double        & delta_m_max ,
-					  const NOMAD::bb_input_type & bbit        ,
-					  const NOMAD::Double        & lb          ,
-					  const NOMAD::Double        & ub          ,
-					  NOMAD::Point               & x      ) const
+                                         const NOMAD::Double        & delta     ,
+                                         const NOMAD::Double        & delta_max ,
+                                         const NOMAD::bb_input_type & bbit        ,
+                                         const NOMAD::Double        & lb          ,
+                                         const NOMAD::Double        & ub          ,
+                                         NOMAD::Point               & x      ) const
 {
     // categorical variables have already been treated as fixed variables:
     if ( bbit == NOMAD::CATEGORICAL )
@@ -282,7 +291,7 @@ void NOMAD::LH_Search::values_for_var_i ( int                          p        
     // main loop:
     for ( i = 0 ; i < p ; ++i )
     {
-        
+
         // both bounds exist:
         if ( lb_def && ub_def )
             v = lb + ( i + NOMAD::RNG::rand()/NOMAD::D_INT_MAX ) * w;
@@ -292,7 +301,7 @@ void NOMAD::LH_Search::values_for_var_i ( int                          p        
             
             // lb exists, and ub not: mapping [0;1] --> [lb;+INF[
             if ( lb_def )
-                v = lb + 10 * delta_m_max * sqrt ( - log ( NOMAD::DEFAULT_EPSILON +
+                v = lb + 10 * delta_max * sqrt ( - log ( NOMAD::DEFAULT_EPSILON +
                                                           ( i + NOMAD::RNG::rand()/NOMAD::D_INT_MAX ) * w ) );
             
             // lb does not exist:
@@ -301,13 +310,13 @@ void NOMAD::LH_Search::values_for_var_i ( int                          p        
                 
                 // ub exists, and lb not: mapping [0;1] --> ]-INF;ub]
                 if ( ub_def )
-                    v = ub - delta_m_max * 10 *
+                    v = ub - delta_max * 10 *
                     sqrt ( -log ( NOMAD::DEFAULT_EPSILON +
                                  ( i +NOMAD::RNG::rand()/NOMAD::D_INT_MAX ) * w ) );
                 
                 // there are no bounds: mapping [0;1] --> ]-INF;+INF[
                 else
-                    v = (NOMAD::RNG::rand()%2 ? -1.0 : 1.0) * delta_m_max * 10 *
+                    v = (NOMAD::RNG::rand()%2 ? -1.0 : 1.0) * delta_max * 10 *
                     sqrt ( - log ( NOMAD::DEFAULT_EPSILON +
                                   ( i + NOMAD::RNG::rand()/NOMAD::D_INT_MAX ) * w ) );
             }
@@ -318,7 +327,7 @@ void NOMAD::LH_Search::values_for_var_i ( int                          p        
             v = v.round();
         
         // projection to mesh (with ref=0):
-        v.project_to_mesh ( 0.0 , delta_m , lb , ub );
+        v.project_to_mesh ( 0.0 , delta , lb , ub );
         
         // affectation + permutation:
         x[rp.pickup()] = v;
@@ -331,11 +340,11 @@ void NOMAD::LH_Search::values_for_var_i ( int                          p        
 /*  (static)                                               */
 /*---------------------------------------------------------*/
 bool NOMAD::LH_Search::LH_points ( int                                n   ,
-				   int                                m   ,
-				   int                                p   ,
-				   const NOMAD::Point               & lb  ,
-				   const NOMAD::Point               & ub  ,
-				   std::vector<NOMAD::Eval_Point *> & pts   )
+                                  int                                m   ,
+                                  int                                p   ,
+                                  const NOMAD::Point               & lb  ,
+                                  const NOMAD::Point               & ub  ,
+                                  std::vector<NOMAD::Eval_Point *> & pts   )
 {
     if ( n <= 0           ||
         p <= 0           ||
@@ -362,8 +371,8 @@ bool NOMAD::LH_Search::LH_points ( int                                n   ,
             if ( k==0 )
                 rps[i] = new NOMAD::Random_Pickup(p);
             (*x)[i] = lb[i] +
-	        (ub[i]-lb[i]) *
-	        ( rps[i]->pickup() + NOMAD::RNG::rand()/(1.0+NOMAD::D_INT_MAX)) / p;
+            (ub[i]-lb[i]) *
+            ( rps[i]->pickup() + NOMAD::RNG::rand()/(1.0+NOMAD::D_INT_MAX)) / p;
             if ( k==pm1 )
                 delete rps[i];
         }

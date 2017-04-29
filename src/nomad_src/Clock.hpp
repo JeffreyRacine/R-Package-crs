@@ -1,16 +1,22 @@
 /*-------------------------------------------------------------------------------------*/
-/*  NOMAD - Nonlinear Optimization by Mesh Adaptive Direct search - version 3.6.2        */
+/*  NOMAD - Nonlinear Optimization by Mesh Adaptive Direct search - version 3.8.0      */
 /*                                                                                     */
-/*  Copyright (C) 2001-2012  Mark Abramson        - the Boeing Company, Seattle        */
-/*                           Charles Audet        - Ecole Polytechnique, Montreal      */
-/*                           Gilles Couture       - Ecole Polytechnique, Montreal      */
-/*                           John Dennis          - Rice University, Houston           */
-/*                           Sebastien Le Digabel - Ecole Polytechnique, Montreal      */
-/*                           Christophe Tribes    - Ecole Polytechnique, Montreal      */
 /*                                                                                     */
-/*  funded in part by AFOSR and Exxon Mobil                                            */
+/*  NOMAD - version 3.8.0 has been created by                                          */
+/*                 Charles Audet        - Ecole Polytechnique de Montreal              */
+/*                 Sebastien Le Digabel - Ecole Polytechnique de Montreal              */
+/*                 Christophe Tribes    - Ecole Polytechnique de Montreal              */
 /*                                                                                     */
-/*  Author: Sebastien Le Digabel                                                       */
+/*  The copyright of NOMAD - version 3.8.0 is owned by                                 */
+/*                 Sebastien Le Digabel - Ecole Polytechnique de Montreal              */
+/*                 Christophe Tribes    - Ecole Polytechnique de Montreal              */
+/*                                                                                     */
+/*  NOMAD v3 has been funded by AFOSR and Exxon Mobil.                                 */
+/*                                                                                     */
+/*  NOMAD v3 is a new version of NOMAD v1 and v2. NOMAD v1 and v2 were created and     */
+/*  developed by Mark Abramson, Charles Audet, Gilles Couture and John E. Dennis Jr.,  */
+/*  and were funded by AFOSR and Exxon Mobil.                                          */
+/*                                                                                     */
 /*                                                                                     */
 /*  Contact information:                                                               */
 /*    Ecole Polytechnique de Montreal - GERAD                                          */
@@ -34,89 +40,88 @@
 /*  You can find information on the NOMAD software at www.gerad.ca/nomad               */
 /*-------------------------------------------------------------------------------------*/
 /**
-  \file   Clock.hpp
-  \brief  Clock class (headers)
-  \author Sebastien Le Digabel
-  \date   2010-04-02
-  \see    Clock.cpp
-*/
+ \file   Clock.hpp
+ \brief  Clock class (headers)
+ \author Sebastien Le Digabel
+ \date   2010-04-02
+ \see    Clock.cpp
+ */
 #ifndef __CLOCK__
 #define __CLOCK__
 
 #include <ctime>
 
 namespace NOMAD {
-using namespace std; // zhenghua
-
-  /// Clock class.
-  /**
+    
+    /// Clock class.
+    /**
      Time measurement.\n\n
      \b Example:
      \code
      Clock c;
-
+     
      // some instructions here
-
+     
      std::cout << "elapsed real time = " << c.get_real_time() << std::endl;
      std::cout << "elapsed CPU time  = " << c.get_CPU_time()  << std::endl;
      \endcode
-  */
-  class Clock {
-
-  private:
-
-    time_t              _real_t0;          ///< Wall clock time measurement.
-    clock_t             _CPU_t0;           ///< CPU time measurement.
-    static const double _D_CLOCKS_PER_SEC; ///< System constant for CPU time measurement.
-
-  public:
-
-    /// Constructor.
-    Clock ( void ) : _CPU_t0 ( clock() ) { time (&_real_t0); }
-
-    /// Copy constructor.
-    /**
-       \param c The copied object -- \b IN.
-    */
-    Clock ( const Clock & c ) : _real_t0 ( c._real_t0 ) , _CPU_t0 ( c._CPU_t0 ) {}
-
-    /// Affectation operator.
-    /**
-       \param  c The right-hand side object -- \b IN.
-       \return \c *this as the result of the affectation.
-    */
-    Clock & operator = ( const Clock & c )
-    {
-      _real_t0 = c._real_t0;
-      _CPU_t0  = c._CPU_t0;
-      return *this;
-    }
-
-    /// Destructor.
-    virtual ~Clock ( void ) {}
-
-    /// Reset the clock.
-    void reset ( void )
-    {
-      time ( &_real_t0 );
-      _CPU_t0 = clock();
-    }
-
-    /// Get wall clock time.
-    /**
-       \return The wall clock time.
-    */
-    int get_real_time ( void ) const;
-
-    /// Get the CPU time.
-    /**
-       \return The CPU time.
-    */
-    double get_CPU_time ( void ) const
-    {
-      return ( clock() - _CPU_t0 ) / _D_CLOCKS_PER_SEC;
-    }
-  };
+     */
+    class Clock {
+        
+    private:
+        
+        time_t              _real_t0;          ///< Wall clock time measurement.
+        clock_t             _CPU_t0;           ///< CPU time measurement.
+        static const double _D_CLOCKS_PER_SEC; ///< System constant for CPU time measurement.
+        
+    public:
+        
+        /// Constructor.
+        Clock ( void ) : _CPU_t0 ( clock() ) { time (&_real_t0); }
+        
+        /// Copy constructor.
+        /**
+         \param c The copied object -- \b IN.
+         */
+        Clock ( const Clock & c ) : _real_t0 ( c._real_t0 ) , _CPU_t0 ( c._CPU_t0 ) {}
+        
+        /// Affectation operator.
+        /**
+         \param  c The right-hand side object -- \b IN.
+         \return \c *this as the result of the affectation.
+         */
+        Clock & operator = ( const Clock & c )
+        {
+            _real_t0 = c._real_t0;
+            _CPU_t0  = c._CPU_t0;
+            return *this;
+        }
+        
+        /// Destructor.
+        virtual ~Clock ( void ) {}
+        
+        /// Reset the clock.
+        void reset ( void )
+        {
+            time ( &_real_t0 );
+            _CPU_t0 = clock();
+        }
+        
+        /// Get wall clock time.
+        /**
+         \return The wall clock time.
+         */
+        int get_real_time ( void ) const;
+        
+        /// Get the CPU time.
+        /**
+         \return The CPU time.
+         */
+        double get_CPU_time ( void ) const
+        {
+            return ( clock() - _CPU_t0 ) / _D_CLOCKS_PER_SEC;
+        }
+    };
 }
 
 #endif

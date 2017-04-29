@@ -1,16 +1,22 @@
 /*-------------------------------------------------------------------------------------*/
-/*  NOMAD - Nonlinear Optimization by Mesh Adaptive Direct search - version 3.6.2        */
+/*  NOMAD - Nonlinear Optimization by Mesh Adaptive Direct search - version 3.8.0      */
 /*                                                                                     */
-/*  Copyright (C) 2001-2012  Mark Abramson        - the Boeing Company, Seattle        */
-/*                           Charles Audet        - Ecole Polytechnique, Montreal      */
-/*                           Gilles Couture       - Ecole Polytechnique, Montreal      */
-/*                           John Dennis          - Rice University, Houston           */
-/*                           Sebastien Le Digabel - Ecole Polytechnique, Montreal      */
-/*                           Christophe Tribes    - Ecole Polytechnique, Montreal      */
 /*                                                                                     */
-/*  funded in part by AFOSR and Exxon Mobil                                            */
+/*  NOMAD - version 3.8.0 has been created by                                          */
+/*                 Charles Audet        - Ecole Polytechnique de Montreal              */
+/*                 Sebastien Le Digabel - Ecole Polytechnique de Montreal              */
+/*                 Christophe Tribes    - Ecole Polytechnique de Montreal              */
 /*                                                                                     */
-/*  Author: Sebastien Le Digabel                                                       */
+/*  The copyright of NOMAD - version 3.8.0 is owned by                                 */
+/*                 Sebastien Le Digabel - Ecole Polytechnique de Montreal              */
+/*                 Christophe Tribes    - Ecole Polytechnique de Montreal              */
+/*                                                                                     */
+/*  NOMAD v3 has been funded by AFOSR and Exxon Mobil.                                 */
+/*                                                                                     */
+/*  NOMAD v3 is a new version of NOMAD v1 and v2. NOMAD v1 and v2 were created and     */
+/*  developed by Mark Abramson, Charles Audet, Gilles Couture and John E. Dennis Jr.,  */
+/*  and were funded by AFOSR and Exxon Mobil.                                          */
+/*                                                                                     */
 /*                                                                                     */
 /*  Contact information:                                                               */
 /*    Ecole Polytechnique de Montreal - GERAD                                          */
@@ -34,14 +40,13 @@
 /*  You can find information on the NOMAD software at www.gerad.ca/nomad               */
 /*-------------------------------------------------------------------------------------*/
 /**
-  \file   Double.cpp
-  \brief  Custom class for double-precision reals (implementation)
-  \author Sebastien Le Digabel
-  \date   2010-04-02
-  \see    Double.hpp
-*/
+ \file   Double.cpp
+ \brief  Custom class for double-precision reals (implementation)
+ \author Sebastien Le Digabel
+ \date   2010-04-02
+ \see    Double.hpp
+ */
 #include "Double.hpp"
-using namespace std; // zhenghua
 
 /*-----------------------------------*/
 /*   static members initialization   */
@@ -58,13 +63,13 @@ int         NOMAD::Double::_max_cardinality = 0;
 /*                  constructor 1                */
 /*-----------------------------------------------*/
 NOMAD::Double::Double ( void )
-  : _value   ( 0.0   ) ,
-    _defined ( false )
+: _value   ( 0.0   ) ,
+_defined ( false )
 {
 #ifdef MEMORY_DEBUG
-  ++NOMAD::Double::_cardinality;
-  if ( NOMAD::Double::_cardinality > NOMAD::Double::_max_cardinality )
-    ++NOMAD::Double::_max_cardinality;
+    ++NOMAD::Double::_cardinality;
+    if ( NOMAD::Double::_cardinality > NOMAD::Double::_max_cardinality )
+        ++NOMAD::Double::_max_cardinality;
 #endif
 }
 
@@ -72,13 +77,13 @@ NOMAD::Double::Double ( void )
 /*                  constructor 2                */
 /*-----------------------------------------------*/
 NOMAD::Double::Double ( double v )
-  : _value   ( v    ) ,
-    _defined ( true )
+: _value   ( v    ) ,
+_defined ( true )
 {
 #ifdef MEMORY_DEBUG
-  ++NOMAD::Double::_cardinality;
-  if (NOMAD::Double::_cardinality > NOMAD::Double::_max_cardinality)
-    ++NOMAD::Double::_max_cardinality;
+    ++NOMAD::Double::_cardinality;
+    if (NOMAD::Double::_cardinality > NOMAD::Double::_max_cardinality)
+        ++NOMAD::Double::_max_cardinality;
 #endif
 }
 
@@ -86,46 +91,46 @@ NOMAD::Double::Double ( double v )
 /*                  constructor 3                */
 /*-----------------------------------------------*/
 NOMAD::Double::Double ( const NOMAD::Double & d )
-  : _value   ( d._value   ) ,
-    _defined ( d._defined )
+: _value   ( d._value   ) ,
+_defined ( d._defined )
 {
 #ifdef MEMORY_DEBUG
-  ++NOMAD::Double::_cardinality;
-  if (NOMAD::Double::_cardinality > NOMAD::Double::_max_cardinality)
-    ++NOMAD::Double::_max_cardinality;
+    ++NOMAD::Double::_cardinality;
+    if (NOMAD::Double::_cardinality > NOMAD::Double::_max_cardinality)
+        ++NOMAD::Double::_max_cardinality;
 #endif
 }
 
 /*-----------------------------------------------*/
 /*                    destructor                 */
 /*-----------------------------------------------*/
-NOMAD::Double::~Double ( void ) 
+NOMAD::Double::~Double ( void )
 {
 #ifdef MEMORY_DEBUG
-  --NOMAD::Double::_cardinality;
+    --NOMAD::Double::_cardinality;
 #endif
 }
 
 /*-----------------------------------------------*/
 /*               set epsilon (static)            */
 /*-----------------------------------------------*/
-void NOMAD::Double::set_epsilon ( double eps ) 
+void NOMAD::Double::set_epsilon ( double eps )
 {
-  if ( eps <= 0.0 )
-    throw NOMAD::Exception ( "Double.cpp" , __LINE__ ,
-			     "NOMAD::Double::set_epsilon(): invalid epsilon" );
-  NOMAD::Double::_epsilon = eps;
+    if ( eps <= 0.0 )
+        throw NOMAD::Exception ( "Double.cpp" , __LINE__ ,
+                                "NOMAD::Double::set_epsilon(): invalid epsilon" );
+    NOMAD::Double::_epsilon = eps;
 }
 
 /*-----------------------------------------------*/
 /*                  get the value                */
 /*-----------------------------------------------*/
-double NOMAD::Double::value ( void ) const
+const double & NOMAD::Double::value ( void ) const
 {
-  if ( !_defined )
-    throw Not_Defined ( "Double.cpp" , __LINE__ ,
-			"NOMAD::Double::value(): value not defined" );
-  return _value;
+    if ( !_defined )
+        throw Not_Defined ( "Double.cpp" , __LINE__ ,
+                           "NOMAD::Double::value(): value not defined" );
+    return _value;
 }
 
 /*------------------------------------------*/
@@ -133,13 +138,13 @@ double NOMAD::Double::value ( void ) const
 /*------------------------------------------*/
 std::istream & NOMAD::operator >> ( std::istream & in , NOMAD::Double & d )
 {
-  std::string s;
-  in >> s;
-
-  if ( !in.fail() && !d.atof (s) )    
-    in.setstate ( std::ios::failbit );
-
-  return in;
+    std::string s;
+    in >> s;
+    
+    if ( !in.fail() && !d.atof (s) )
+        in.setstate ( std::ios::failbit );
+    
+    return in;
 }
 
 /*-----------------------------------------------*/
@@ -147,52 +152,57 @@ std::istream & NOMAD::operator >> ( std::istream & in , NOMAD::Double & d )
 /*-----------------------------------------------*/
 bool NOMAD::Double::atof ( const std::string & ss )
 {
-
-  std::string s = ss;
-  NOMAD::toupper(s);
-
-  if ( s == "-" || ss == NOMAD::Double::_undef_str ) {
-    _value   = 0.0;
-    _defined = false;
-    return true;
-  }
-
-  if ( s == "INF" ||  s == "+INF" ||
-       ss == NOMAD::Double::_inf_str ||
-       ss == ("+" + NOMAD::Double::_inf_str) ) {
-    _value   = NOMAD::INF;
-    _defined = true;
-    return true;
-  }
-
-  if ( s == "-INF" || ss == ("-" + NOMAD::Double::_inf_str) ) {
-    _value   = -NOMAD::INF;
-    _defined = true;
-    return true;
-  }
-
-  if ( s.empty() || (s.size() == 1 && !isdigit(s[0])) )
-    return false;
-
-  if ( !isdigit(s[0]) && s[0] != '+' && s[0] != '-' && s[0] != '.' )
-    return false;
-
-  size_t n = s.size();
-  for ( size_t k = 1 ; k < n ; ++k )
-    if ( !isdigit(s[k]) && s[k] != '.' ) {
-      if ( s[k] == 'E' ) {
- 	if ( s.size() == k+1 )
- 	  return false;
- 	++k;
- 	if ( !isdigit(s[k]) && s[k] != '+' && s[k] != '-' )
- 	  return false;
-      }
-      else
- 	return false;
+    
+    std::string s = ss;
+    NOMAD::toupper(s);
+    
+    if ( s == "-" || ss == NOMAD::Double::_undef_str )
+    {
+        _value   = 0.0;
+        _defined = false;
+        return true;
     }
-
-  *this = std::atof ( s.c_str() );
-  return true;
+    
+    if ( s == "INF" ||  s == "+INF" ||
+        ss == NOMAD::Double::_inf_str ||
+        ss == ("+" + NOMAD::Double::_inf_str) )
+    {
+        _value   = NOMAD::INF;
+        _defined = true;
+        return true;
+    }
+    
+    if ( s == "-INF" || ss == ("-" + NOMAD::Double::_inf_str) )
+    {
+        _value   = -NOMAD::INF;
+        _defined = true;
+        return true;
+    }
+    
+    if ( s.empty() || (s.size() == 1 && !isdigit(s[0])) )
+        return false;
+    
+    if ( !isdigit(s[0]) && s[0] != '+' && s[0] != '-' && s[0] != '.' )
+        return false;
+    
+    size_t n = s.size();
+    for ( size_t k = 1 ; k < n ; ++k )
+        if ( !isdigit(s[k]) && s[k] != '.' )
+        {
+            if ( s[k] == 'E' )
+            {
+                if ( s.size() == k+1 )
+                    return false;
+                ++k;
+                if ( !isdigit(s[k]) && s[k] != '+' && s[k] != '-' )
+                    return false;
+            }
+            else
+                return false;
+        }
+    
+    *this = std::atof ( s.c_str() );
+    return true;
 }
 
 /*-------------------------------------------------*/
@@ -201,16 +211,17 @@ bool NOMAD::Double::atof ( const std::string & ss )
 /*-------------------------------------------------*/
 bool NOMAD::Double::relative_atof ( const std::string & s , bool & relative )
 {
-  if ( std::toupper(s[0]) == 'R' ) {
-    relative  = true;
-    std::string ss = s;
-    ss.erase(ss.begin());
-    if ( !atof(ss) )
-      return false;
-    return ( *this >= 0.0 );
-  }
-  relative = false;
-  return atof(s);
+    if ( std::toupper(s[0]) == 'R' )
+    {
+        relative  = true;
+        std::string ss = s;
+        ss.erase(ss.begin());
+        if ( !atof(ss) )
+            return false;
+        return ( *this >= 0.0 );
+    }
+    relative = false;
+    return atof(s);
 }
 
 /*-----------------------------------------------*/
@@ -218,9 +229,9 @@ bool NOMAD::Double::relative_atof ( const std::string & s , bool & relative )
 /*-----------------------------------------------*/
 bool NOMAD::Double::is_integer ( void ) const
 {
-  if ( !_defined )
-    return false;
-  return ( NOMAD::Double(std::floor(_value))) == ( NOMAD::Double(std::ceil(_value)) );
+    if ( !_defined )
+        return false;
+    return ( NOMAD::Double(std::floor(_value))) == ( NOMAD::Double(std::ceil(_value)) );
 }
 
 /*-----------------------------------------------*/
@@ -228,21 +239,21 @@ bool NOMAD::Double::is_integer ( void ) const
 /*-----------------------------------------------*/
 bool NOMAD::Double::is_binary ( void ) const
 {
-  if ( !_defined )
-    return false;
-  return ( NOMAD::Double(_value) == 0.0 || NOMAD::Double(_value) == 1.0 );
+    if ( !_defined )
+        return false;
+    return ( NOMAD::Double(_value) == 0.0 || NOMAD::Double(_value) == 1.0 );
 }
 
 /*-------------------------------------*/
 /*               d = d1/d2             */
 /*-------------------------------------*/
 const NOMAD::Double NOMAD::operator / ( const NOMAD::Double & d1 ,
-					const NOMAD::Double & d2   )
+                                       const NOMAD::Double & d2   )
 {
-  if ( d2.value() == 0.0 )
-    throw NOMAD::Double::Invalid_Value ( "Double.cpp" , __LINE__ ,
-					 "NOMAD::Double: d1 / d2: division by zero" );
-  return NOMAD::Double ( d1.value() / d2.value() );
+    if ( d2.value() == 0.0 )
+        throw NOMAD::Double::Invalid_Value ( "Double.cpp" , __LINE__ ,
+                                            "NOMAD::Double: d1 / d2: division by zero" );
+    return NOMAD::Double ( d1.value() / d2.value() );
 }
 
 /*-------------------------------------*/
@@ -250,11 +261,11 @@ const NOMAD::Double NOMAD::operator / ( const NOMAD::Double & d1 ,
 /*-------------------------------------*/
 const NOMAD::Double & NOMAD::Double::operator += ( const NOMAD::Double & d2 )
 {
-  if ( !_defined || !d2._defined )
-    throw Not_Defined ( "Double.cpp" , __LINE__ ,
-			"NOMAD::Double: d1 += d2: d1 or d2 not defined" );
-  _value += d2._value;
-  return *this;
+    if ( !_defined || !d2._defined )
+        throw Not_Defined ( "Double.cpp" , __LINE__ ,
+                           "NOMAD::Double: d1 += d2: d1 or d2 not defined" );
+    _value += d2._value;
+    return *this;
 }
 
 /*-------------------------------------*/
@@ -262,11 +273,11 @@ const NOMAD::Double & NOMAD::Double::operator += ( const NOMAD::Double & d2 )
 /*-------------------------------------*/
 const NOMAD::Double & NOMAD::Double::operator -= ( const NOMAD::Double & d2 )
 {
-  if ( !_defined || !d2._defined )
-    throw Not_Defined ( "Double.cpp" , __LINE__ ,
-			"NOMAD::Double: d1 -= d2: d1 or d2 not defined" );
-  _value -= d2._value;
-  return *this;
+    if ( !_defined || !d2._defined )
+        throw Not_Defined ( "Double.cpp" , __LINE__ ,
+                           "NOMAD::Double: d1 -= d2: d1 or d2 not defined" );
+    _value -= d2._value;
+    return *this;
 }
 
 /*-------------------------------------*/
@@ -274,11 +285,11 @@ const NOMAD::Double & NOMAD::Double::operator -= ( const NOMAD::Double & d2 )
 /*-------------------------------------*/
 const NOMAD::Double & NOMAD::Double::operator *= ( const NOMAD::Double & d2 )
 {
-  if ( !_defined || !d2._defined )
-    throw Not_Defined ( "Double.cpp" , __LINE__ ,
-			"NOMAD::Double: d1 *= d2: d1 or d2 not defined" );
-  _value *= d2._value;
-  return *this;
+    if ( !_defined || !d2._defined )
+        throw Not_Defined ( "Double.cpp" , __LINE__ ,
+                           "NOMAD::Double: d1 *= d2: d1 or d2 not defined" );
+    _value *= d2._value;
+    return *this;
 }
 
 /*-------------------------------------*/
@@ -286,14 +297,14 @@ const NOMAD::Double & NOMAD::Double::operator *= ( const NOMAD::Double & d2 )
 /*-------------------------------------*/
 const NOMAD::Double & NOMAD::Double::operator /= ( const NOMAD::Double & d2 )
 {
-  if ( !_defined || !d2._defined )
-    throw Not_Defined ( "Double.cpp" , __LINE__ ,
-			"NOMAD::Double: d1 /= d2: d1 or d2 not defined" );
-  if ( d2._value == 0.0 )
-    throw Invalid_Value ( "Double.cpp" , __LINE__ ,
-			  "NOMAD::Double: d1 /= d2: division by zero" );
-  _value /= d2._value;
-  return *this;
+    if ( !_defined || !d2._defined )
+        throw Not_Defined ( "Double.cpp" , __LINE__ ,
+                           "NOMAD::Double: d1 /= d2: d1 or d2 not defined" );
+    if ( d2._value == 0.0 )
+        throw Invalid_Value ( "Double.cpp" , __LINE__ ,
+                             "NOMAD::Double: d1 /= d2: division by zero" );
+    _value /= d2._value;
+    return *this;
 }
 
 /*-------------------------------------*/
@@ -301,10 +312,10 @@ const NOMAD::Double & NOMAD::Double::operator /= ( const NOMAD::Double & d2 )
 /*-------------------------------------*/
 NOMAD::Double & NOMAD::Double::operator++ ( void )
 {
-  if ( !_defined )
-    throw Not_Defined ( "Double.cpp" , __LINE__ , "NOMAD::Double: ++d: d not defined" );
-  _value += 1;
-  return *this;
+    if ( !_defined )
+        throw Not_Defined ( "Double.cpp" , __LINE__ , "NOMAD::Double: ++d: d not defined" );
+    _value += 1;
+    return *this;
 }
 
 /*-------------------------------------*/
@@ -312,13 +323,13 @@ NOMAD::Double & NOMAD::Double::operator++ ( void )
 /*-------------------------------------*/
 NOMAD::Double NOMAD::Double::operator++ ( int n )
 {
-  if ( !_defined )
-    throw Not_Defined ( "Double.cpp" , __LINE__ , "NOMAD::Double: d++: d not defined" );
-  NOMAD::Double tmp = *this;
-  if( n <= 0 )
-    n = 1;
-  _value += n;
-  return tmp;
+    if ( !_defined )
+        throw Not_Defined ( "Double.cpp" , __LINE__ , "NOMAD::Double: d++: d not defined" );
+    NOMAD::Double tmp = *this;
+    if( n <= 0 )
+        n = 1;
+    _value += n;
+    return tmp;
 }
 
 /*-------------------------------------*/
@@ -326,10 +337,10 @@ NOMAD::Double NOMAD::Double::operator++ ( int n )
 /*-------------------------------------*/
 NOMAD::Double & NOMAD::Double::operator-- ( void )
 {
-  if ( !_defined )
-    throw Not_Defined ( "Double.cpp" , __LINE__ , "NOMAD::Double: --d: d not defined" );
-  _value -= 1;
-  return *this;
+    if ( !_defined )
+        throw Not_Defined ( "Double.cpp" , __LINE__ , "NOMAD::Double: --d: d not defined" );
+    _value -= 1;
+    return *this;
 }
 
 /*-------------------------------------*/
@@ -337,14 +348,14 @@ NOMAD::Double & NOMAD::Double::operator-- ( void )
 /*-------------------------------------*/
 NOMAD::Double NOMAD::Double::operator-- ( int n )
 {
-  if ( !_defined )
-    throw Not_Defined ( "Double.cpp" , __LINE__ ,
-			"NOMAD::Double: d--: d not defined" );
-  NOMAD::Double tmp = *this;
-  if ( n <= 0 )
-    n = 1;
-  _value -= n;
-  return tmp;
+    if ( !_defined )
+        throw Not_Defined ( "Double.cpp" , __LINE__ ,
+                           "NOMAD::Double: d--: d not defined" );
+    NOMAD::Double tmp = *this;
+    if ( n <= 0 )
+        n = 1;
+    _value -= n;
+    return tmp;
 }
 
 /*-------------------------------------*/
@@ -352,16 +363,16 @@ NOMAD::Double NOMAD::Double::operator-- ( int n )
 /*-------------------------------------*/
 NOMAD::Double & NOMAD::Double::operator = ( const NOMAD::Double & d )
 {
-  _value   = d._value;
-  _defined = d._defined;
-  return *this;
+    _value   = d._value;
+    _defined = d._defined;
+    return *this;
 }
 
 NOMAD::Double & NOMAD::Double::operator = ( double r )
 {
-  _value   = r;
-  _defined = true;
-  return *this;
+    _value   = r;
+    _defined = true;
+    return *this;
 }
 
 /*------------------------------------------*/
@@ -369,25 +380,26 @@ NOMAD::Double & NOMAD::Double::operator = ( double r )
 /*------------------------------------------*/
 void NOMAD::Double::display ( const NOMAD::Display & out ) const
 {
-  if ( _defined ) {
-    if ( _value == NOMAD::INF )
-      out << NOMAD::Double::_inf_str;
-    else if ( _value == -NOMAD::INF )
-      out << "-" << NOMAD::Double::_inf_str;
-    else if ( std::floor(_value) == std::ceil(_value) && fabs(_value) < INT_MAX-1 )
-      out << static_cast<int>(_value);
+    if ( _defined )
+    {
+        if ( _value == NOMAD::INF )
+            out << NOMAD::Double::_inf_str;
+        else if ( _value == -NOMAD::INF )
+            out << "-" << NOMAD::Double::_inf_str;
+        else if ( std::floor(_value) == std::ceil(_value) && fabs(_value) < INT_MAX-1 )
+            out << static_cast<int>(_value);
+        else
+            out << _value;
+    }
     else
-      out << _value;
-  }
-  else
-    out << NOMAD::Double::_undef_str;
+        out << NOMAD::Double::_undef_str;
 }
 
 /*------------------------------------------*/
 /*              display with format         */
 /*------------------------------------------*/
 void NOMAD::Double::display ( const NOMAD::Display & out    ,
-			      const std::string    & format   ) const
+                             const std::string    & format   ) const
 {
     // interpret the format:
     // ---------------------
@@ -407,7 +419,7 @@ void NOMAD::Double::display ( const NOMAD::Display & out    ,
     // G Use the shorter of %E or %f                              392.65
     // d or i Integer rounded value                               393
     
-	
+    
     std::string format2 = format;
     
     int  w    = -1;
@@ -474,7 +486,7 @@ void NOMAD::Double::display ( const NOMAD::Display & out    ,
         else if ( c=='d' || c=='i' ||
                  ( format2.empty() &&
                   std::floor(_value) == std::ceil(_value) && fabs(_value) < INT_MAX-1 ) )
-            out << round();
+            out << roundd();
         else
         {
             
@@ -485,18 +497,22 @@ void NOMAD::Double::display ( const NOMAD::Display & out    ,
                 out.precision ( prec );
             
             if ( c == 'f' )
+            {
                 out.setf ( std::ios::fixed );
-            
+                out << _value;
+            }
             else if ( c == 'e' )
             {
                 out.unsetf ( std::ios::fixed );
                 out.setf   ( std::ios::scientific );
+                out << _value;
             }
             
             else if ( c == 'E' )
             {
                 out.unsetf ( std::ios::fixed );
                 out.setf   ( std::ios::scientific | std::ios::uppercase );
+                out << _value;
             }
             
             else if ( c == 'g' )
@@ -510,10 +526,11 @@ void NOMAD::Double::display ( const NOMAD::Display & out    ,
                 streamS.setf( std::ios::scientific);
                 streamS << _value;
                 streamF << _value;
-                if (streamS.str().length() < streamF.str().length())
-                    out.setf(std::ios::scientific);
+                
+                if ( streamS.str().length() < streamF.str().length() )
+                    out << streamS.str();
                 else
-                    out.setf(std::ios::fixed);
+                    out << streamF.str();
                 
             }
             
@@ -523,18 +540,16 @@ void NOMAD::Double::display ( const NOMAD::Display & out    ,
                 streamS.precision ( prec );
                 streamF.precision ( prec );
                 streamF.unsetf(std::ios::scientific);
-                streamF.setf( std::ios::fixed ); 
+                streamF.setf( std::ios::fixed | std::ios::uppercase );
                 streamS.unsetf(std::ios::fixed);
-                streamS.setf( std::ios::scientific);
+                streamS.setf( std::ios::scientific | std::ios::uppercase );
                 streamS << _value ;
                 streamF << _value ;
                 if (streamS.str().length() < streamF.str().length())
-                    out.setf(std::ios::scientific | std::ios::uppercase );
+                    out << streamS.str();
                 else
-                    out.setf(std::ios::fixed | std::ios::uppercase );
+                    out << streamF.str();
             }
-            
-            out << _value;
             
             out.precision ( old_prec  );
             out.flags     ( old_flags );
@@ -544,15 +559,36 @@ void NOMAD::Double::display ( const NOMAD::Display & out    ,
         out << NOMAD::Double::_undef_str;
 }
 
+
 /*------------------------------------------*/
-/*                  round                   */
+/*                round to int              */
 /*------------------------------------------*/
 int NOMAD::Double::round ( void ) const
 {
-  if ( !_defined )
-    throw Not_Defined ( "Double.cpp" , __LINE__ ,
-			"NOMAD::Double::round(): value not defined" );
-  return static_cast<int>(_value < 0.0 ? -std::floor(.5-_value) : std::floor(.5+_value));
+    if ( !_defined )
+        throw Not_Defined ( "Double.cpp" , __LINE__ ,
+                           "NOMAD::Double::round(): value not defined" );
+    
+    double d = (_value < 0.0 ? -std::floor(.5-_value) : std::floor(.5+_value));
+  
+    if ( d > NOMAD::P_INF_INT || d < NOMAD::M_INF_INT )
+        throw Invalid_Value ( "Double.cpp" , __LINE__ ,
+                           "NOMAD::Double::round(): value cannot be rounded to integer because it is outside of range" );
+
+    return static_cast<int> (d);
+}
+
+/*------------------------------------------*/
+/*              round to double             */
+/*------------------------------------------*/
+const NOMAD::Double NOMAD::Double::roundd ( void ) const
+{
+    if ( !_defined )
+        throw Not_Defined ( "Double.cpp" , __LINE__ ,
+                           "NOMAD::Double::round(): value not defined" );
+
+    return (_value < 0.0 ? -std::floor(.5-_value) : std::floor(.5+_value));
+    
 }
 
 
@@ -561,10 +597,10 @@ int NOMAD::Double::round ( void ) const
 /*------------------------------------------*/
 const NOMAD::Double NOMAD::Double::ceil ( void ) const
 {
-  if ( !_defined )
-    throw Not_Defined ( "Double.cpp" , __LINE__ ,
-			"NOMAD::Double::ceil(): value not defined" );
-  return NOMAD::Double(std::ceil(_value));
+    if ( !_defined )
+        throw Not_Defined ( "Double.cpp" , __LINE__ ,
+                           "NOMAD::Double::ceil(): value not defined" );
+    return NOMAD::Double( std::ceil(_value) );
 }
 
 /*------------------------------------------*/
@@ -572,10 +608,10 @@ const NOMAD::Double NOMAD::Double::ceil ( void ) const
 /*------------------------------------------*/
 const NOMAD::Double NOMAD::Double::floor ( void ) const
 {
-  if ( !_defined )
-    throw Not_Defined ( "Double.cpp" , __LINE__ ,
-			"NOMAD::Double::floor(): value not defined" );
-  return NOMAD::Double(std::floor(_value));
+    if ( !_defined )
+        throw Not_Defined ( "Double.cpp" , __LINE__ ,
+                           "NOMAD::Double::floor(): value not defined" );
+    return NOMAD::Double( std::floor(_value) );
 }
 
 /*------------------------------------------*/
@@ -583,10 +619,10 @@ const NOMAD::Double NOMAD::Double::floor ( void ) const
 /*------------------------------------------*/
 const NOMAD::Double NOMAD::Double::abs ( void ) const
 {
-  if ( !_defined )
-    throw Not_Defined ( "Double.cpp" , __LINE__ ,
-			"NOMAD::Double::abs(): value not defined" );
-  return fabs ( _value );
+    if ( !_defined )
+        throw Not_Defined ( "Double.cpp" , __LINE__ ,
+                           "NOMAD::Double::abs(): value not defined" );
+    return fabs ( _value );
 }
 
 /*------------------------------------------*/
@@ -594,10 +630,10 @@ const NOMAD::Double NOMAD::Double::abs ( void ) const
 /*------------------------------------------*/
 const NOMAD::Double NOMAD::Double::pow2 ( void ) const
 {
-  if ( !_defined )
-    throw Not_Defined ( "Double.cpp" , __LINE__ ,
-			"NOMAD::Double::pow2(): value not defined" );
-  return pow ( _value , 2 );
+    if ( !_defined )
+        throw Not_Defined ( "Double.cpp" , __LINE__ ,
+                           "NOMAD::Double::pow2(): value not defined" );
+    return pow ( _value , 2 );
 }
 
 /*------------------------------------------*/
@@ -605,14 +641,14 @@ const NOMAD::Double NOMAD::Double::pow2 ( void ) const
 /*------------------------------------------*/
 const NOMAD::Double NOMAD::Double::sqrt ( void ) const
 {
-  if ( !_defined )
-    throw Not_Defined ( "Double.cpp" , __LINE__ ,
-			"NOMAD::Double::sqrt(): value not defined" );
-  if ( *this < 0.0 )
-    throw NOMAD::Double::Invalid_Value ( "Double.cpp" , __LINE__ ,
-		        "NOMAD::Double::sqrt(x): x < 0" );
-
-  return std::sqrt ( _value );
+    if ( !_defined )
+        throw Not_Defined ( "Double.cpp" , __LINE__ ,
+                           "NOMAD::Double::sqrt(): value not defined" );
+    if ( *this < 0.0 )
+        throw NOMAD::Double::Invalid_Value ( "Double.cpp" , __LINE__ ,
+                                            "NOMAD::Double::sqrt(x): x < 0" );
+    
+    return std::sqrt ( _value );
 }
 
 /*---------------------------------------------*/
@@ -626,68 +662,71 @@ const NOMAD::Double NOMAD::Double::sqrt ( void ) const
 //
 // The error will be in [0;2]
 //
-// Modified: 2012-06-07, S. Le Digabel
+// Modified: 2014-06-07, S. Le Digabel
 //
 const NOMAD::Double NOMAD::Double::rel_err ( const Double & x ) const
 {
-	if ( !_defined || !x._defined )
-		throw Not_Defined ( "Double.cpp" , __LINE__ ,
-						   "NOMAD::Double::rel_err(): one of the values is not defined" );
-	
-	// 1. test if x==y:
-	if ( this == &x || _value == x._value )
-		return 0.0;
-	
-	double diff = fabs ( _value - x._value );
-	
-	// 2. test if one of the values is zero:
-	if ( _value == 0.0 || x._value == 0.0 ) {
-		
-		// we return min{2,|x-y|} (instead of 1):
-		if ( diff > 2.0 )
-			return 2.0;
-		return diff;
-	}
-	
-	// 3. compute the original error:
-	double a   = fabs ( _value   );
-	double b   = fabs ( x._value );
-	double err = diff / ( (a<b) ? b : a );  
-	
-	// 4. test if we have opposite signs:
-	if ( _value * x._value < 0.0 ) {
-		
-		// the original error gives err in ]1;2] : we check if |x-y| < 1
-		// and if so we return |x-y| :
-		if ( diff < 1.0 )
-			return diff;
-	}
-	
-	// we return the original error:
-	return err;
+    if ( !_defined || !x._defined )
+        throw Not_Defined ( "Double.cpp" , __LINE__ ,
+                           "NOMAD::Double::rel_err(): one of the values is not defined" );
+    
+    // 1. test if x==y:
+    if ( this == &x || _value == x._value )
+        return 0.0;
+    
+    double diff = fabs ( _value - x._value );
+    
+    // 2. test if one of the values is zero:
+    if ( _value == 0.0 || x._value == 0.0 )
+    {
+        
+        // we return min{2,|x-y|} (instead of 1):
+        if ( diff > 2.0 )
+            return 2.0;
+        return diff;
+    }
+    
+    // 3. compute the original error:
+    double a   = fabs ( _value   );
+    double b   = fabs ( x._value );
+    double err = diff / ( (a<b) ? b : a );
+    
+    // 4. test if we have opposite signs:
+    if ( _value * x._value < 0.0 )
+    {
+        
+        // the original error gives err in ]1;2] : we check if |x-y| < 1
+        // and if so we return |x-y| :
+        if ( diff < 1.0 )
+            return diff;
+    }
+    
+    // we return the original error:
+    return err;
 }
+
 
 /*---------------------------------------------------------------------*/
 /*  the same as operator < but with consideration of undefined values  */
 /*---------------------------------------------------------------------*/
 bool NOMAD::Double::comp_with_undef ( const NOMAD::Double & d ) const
 {
-  if ( this == &d )
-    return false;
-
-  bool d1d = is_defined();
-  bool d2d = d.is_defined();
-
-  if ( !d1d && !d2d )
-    return false;
-
-  if ( !d1d )
-    return true;
-
-  if ( !d2d )
-    return false;
-
-  return ( *this < d );
+    if ( this == &d )
+        return false;
+    
+    bool d1d = is_defined();
+    bool d2d = d.is_defined();
+    
+    if ( !d1d && !d2d )
+        return false;
+    
+    if ( !d1d )
+        return true;
+    
+    if ( !d2d )
+        return false;
+    
+    return ( *this < d );
 }
 
 /*------------------------------------*/
@@ -695,23 +734,24 @@ bool NOMAD::Double::comp_with_undef ( const NOMAD::Double & d ) const
 /*  ( *this = ref + k * delta )       */
 /*------------------------------------*/
 void NOMAD::Double::project_to_mesh ( const NOMAD::Double & ref   ,
-				      const NOMAD::Double & delta ,
-				      const NOMAD::Double & lb    ,
-				      const NOMAD::Double & ub      )
+                                     const NOMAD::Double & delta ,
+                                     const NOMAD::Double & lb    ,
+                                     const NOMAD::Double & ub      )
 {
-  if ( !_defined )
-    return;
-
-  NOMAD::Double v0 = ( ref._defined ) ? ref : 0.0;
-  
-  if ( delta._defined && delta != 0.0 ) {
-
-    *this = v0 + ( (*this-v0) / delta).round() * delta;
-
-    if ( ub._defined && *this > ub )
-      *this = ub;
-
-    if ( lb._defined && *this < lb )
-      *this = lb;
-  }
+    if ( !_defined )
+        return;
+    
+    NOMAD::Double v0 = ( ref._defined ) ? ref : 0.0;
+    
+    if ( delta._defined && delta != 0.0 )
+    {
+        
+        *this = v0 + ( (*this-v0) / delta).roundd() * delta;
+        
+        if ( ub._defined && *this > ub )
+            *this = ub;
+        
+        if ( lb._defined && *this < lb )
+            *this = lb;
+    }
 }

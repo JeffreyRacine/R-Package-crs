@@ -1,16 +1,22 @@
 /*-------------------------------------------------------------------------------------*/
-/*  NOMAD - Nonlinear Optimization by Mesh Adaptive Direct search - version 3.6.2        */
+/*  NOMAD - Nonlinear Optimization by Mesh Adaptive Direct search - version 3.8.0      */
 /*                                                                                     */
-/*  Copyright (C) 2001-2012  Mark Abramson        - the Boeing Company, Seattle        */
-/*                           Charles Audet        - Ecole Polytechnique, Montreal      */
-/*                           Gilles Couture       - Ecole Polytechnique, Montreal      */
-/*                           John Dennis          - Rice University, Houston           */
-/*                           Sebastien Le Digabel - Ecole Polytechnique, Montreal      */
-/*                           Christophe Tribes    - Ecole Polytechnique, Montreal      */
 /*                                                                                     */
-/*  funded in part by AFOSR and Exxon Mobil                                            */
+/*  NOMAD - version 3.8.0 has been created by                                          */
+/*                 Charles Audet        - Ecole Polytechnique de Montreal              */
+/*                 Sebastien Le Digabel - Ecole Polytechnique de Montreal              */
+/*                 Christophe Tribes    - Ecole Polytechnique de Montreal              */
 /*                                                                                     */
-/*  Author: Sebastien Le Digabel                                                       */
+/*  The copyright of NOMAD - version 3.8.0 is owned by                                 */
+/*                 Sebastien Le Digabel - Ecole Polytechnique de Montreal              */
+/*                 Christophe Tribes    - Ecole Polytechnique de Montreal              */
+/*                                                                                     */
+/*  NOMAD v3 has been funded by AFOSR and Exxon Mobil.                                 */
+/*                                                                                     */
+/*  NOMAD v3 is a new version of NOMAD v1 and v2. NOMAD v1 and v2 were created and     */
+/*  developed by Mark Abramson, Charles Audet, Gilles Couture and John E. Dennis Jr.,  */
+/*  and were funded by AFOSR and Exxon Mobil.                                          */
+/*                                                                                     */
 /*                                                                                     */
 /*  Contact information:                                                               */
 /*    Ecole Polytechnique de Montreal - GERAD                                          */
@@ -34,24 +40,23 @@
 /*  You can find information on the NOMAD software at www.gerad.ca/nomad               */
 /*-------------------------------------------------------------------------------------*/
 /**
-  \file   Parameter_Entries.cpp
-  \brief  Parameter entries (implementation)
-  \author Sebastien Le Digabel
-  \date   2010-04-05
-  \see    Parameter_Entries.hpp
-*/
+ \file   Parameter_Entries.cpp
+ \brief  Parameter entries (implementation)
+ \author Sebastien Le Digabel
+ \date   2010-04-05
+ \see    Parameter_Entries.hpp
+ */
 #include "Parameter_Entries.hpp"
-using namespace std; // zhenghua
 
 /*--------------------------------------------*/
 /*                 destructor                 */
 /*--------------------------------------------*/
 NOMAD::Parameter_Entries::~Parameter_Entries ( void )
 {
-  std::multiset<NOMAD::Parameter_Entry*, NOMAD::Parameter_Entry_Comp>::iterator
+    std::multiset<NOMAD::Parameter_Entry*, NOMAD::Parameter_Entry_Comp>::iterator
     end = _entries.end() , it;
-  for ( it = _entries.begin() ; it != end ; ++it)
-    delete *it;
+    for ( it = _entries.begin() ; it != end ; ++it)
+        delete *it;
 }
 
 /*--------------------------------------------*/
@@ -59,12 +64,12 @@ NOMAD::Parameter_Entries::~Parameter_Entries ( void )
 /*--------------------------------------------*/
 NOMAD::Parameter_Entry * NOMAD::Parameter_Entries::find ( const std::string & name ) const
 {
-  NOMAD::Parameter_Entry p (name);
-  std::multiset<NOMAD::Parameter_Entry*, NOMAD::Parameter_Entry_Comp>::const_iterator
+    NOMAD::Parameter_Entry p (name);
+    std::multiset<NOMAD::Parameter_Entry*, NOMAD::Parameter_Entry_Comp>::const_iterator
     it = _entries.find ( &p );
-  if ( it != _entries.end() )
-    return (*it);
-  return NULL;
+    if ( it != _entries.end() )
+        return (*it);
+    return NULL;
 }
 
 /*----------------------------------------*/
@@ -72,15 +77,16 @@ NOMAD::Parameter_Entry * NOMAD::Parameter_Entries::find ( const std::string & na
 /*----------------------------------------*/
 void NOMAD::Parameter_Entries::insert ( NOMAD::Parameter_Entry * entry )
 {
-  NOMAD::Parameter_Entry * cur = find ( entry->get_name() );
-  if ( cur ) {
-    entry->set_unique ( false );
-    cur->set_unique   ( false );
-    while ( cur->get_next() )
-      cur = cur->get_next();
-    cur->set_next ( entry );
-  }
-  _entries.insert ( entry );
+    NOMAD::Parameter_Entry * cur = find ( entry->get_name() );
+    if ( cur )
+    {
+        entry->set_unique ( false );
+        cur->set_unique   ( false );
+        while ( cur->get_next() )
+            cur = cur->get_next();
+        cur->set_next ( entry );
+    }
+    _entries.insert ( entry );
 }
 
 /*----------------------------------------*/
@@ -88,12 +94,12 @@ void NOMAD::Parameter_Entries::insert ( NOMAD::Parameter_Entry * entry )
 /*----------------------------------------*/
 NOMAD::Parameter_Entry * NOMAD::Parameter_Entries::find_non_interpreted ( void ) const
 {
-  std::multiset<NOMAD::Parameter_Entry*, NOMAD::Parameter_Entry_Comp>::const_iterator
+    std::multiset<NOMAD::Parameter_Entry*, NOMAD::Parameter_Entry_Comp>::const_iterator
     end = _entries.end() , it;
-  for ( it = _entries.begin() ; it != end ; ++it )
-    if ( !(*it)->has_been_interpreted() )
-      return *it;
-  return NULL;
+    for ( it = _entries.begin() ; it != end ; ++it )
+        if ( !(*it)->has_been_interpreted() )
+            return *it;
+    return NULL;
 }
 
 /*--------------------------------------------*/
@@ -101,8 +107,8 @@ NOMAD::Parameter_Entry * NOMAD::Parameter_Entries::find_non_interpreted ( void )
 /*--------------------------------------------*/
 void NOMAD::Parameter_Entries::display ( const NOMAD::Display & out ) const
 {
-  std::multiset<NOMAD::Parameter_Entry*,NOMAD::Parameter_Entry_Comp>::const_iterator
+    std::multiset<NOMAD::Parameter_Entry*,NOMAD::Parameter_Entry_Comp>::const_iterator
     end = _entries.end() , it;
-  for ( it = _entries.begin() ; it != end ; ++it )
-    out << **it << std::endl;
+    for ( it = _entries.begin() ; it != end ; ++it )
+        out << **it << std::endl;
 }

@@ -1,16 +1,22 @@
 /*-------------------------------------------------------------------------------------*/
-/*  NOMAD - Nonlinear Optimization by Mesh Adaptive Direct search - version 3.6.2        */
+/*  NOMAD - Nonlinear Optimization by Mesh Adaptive Direct search - version 3.8.0      */
 /*                                                                                     */
-/*  Copyright (C) 2001-2012  Mark Abramson        - the Boeing Company, Seattle        */
-/*                           Charles Audet        - Ecole Polytechnique, Montreal      */
-/*                           Gilles Couture       - Ecole Polytechnique, Montreal      */
-/*                           John Dennis          - Rice University, Houston           */
-/*                           Sebastien Le Digabel - Ecole Polytechnique, Montreal      */
-/*                           Christophe Tribes    - Ecole Polytechnique, Montreal      */
 /*                                                                                     */
-/*  funded in part by AFOSR and Exxon Mobil                                            */
+/*  NOMAD - version 3.8.0 has been created by                                          */
+/*                 Charles Audet        - Ecole Polytechnique de Montreal              */
+/*                 Sebastien Le Digabel - Ecole Polytechnique de Montreal              */
+/*                 Christophe Tribes    - Ecole Polytechnique de Montreal              */
 /*                                                                                     */
-/*  Author: Sebastien Le Digabel                                                       */
+/*  The copyright of NOMAD - version 3.8.0 is owned by                                 */
+/*                 Sebastien Le Digabel - Ecole Polytechnique de Montreal              */
+/*                 Christophe Tribes    - Ecole Polytechnique de Montreal              */
+/*                                                                                     */
+/*  NOMAD v3 has been funded by AFOSR and Exxon Mobil.                                 */
+/*                                                                                     */
+/*  NOMAD v3 is a new version of NOMAD v1 and v2. NOMAD v1 and v2 were created and     */
+/*  developed by Mark Abramson, Charles Audet, Gilles Couture and John E. Dennis Jr.,  */
+/*  and were funded by AFOSR and Exxon Mobil.                                          */
+/*                                                                                     */
 /*                                                                                     */
 /*  Contact information:                                                               */
 /*    Ecole Polytechnique de Montreal - GERAD                                          */
@@ -34,114 +40,134 @@
 /*  You can find information on the NOMAD software at www.gerad.ca/nomad               */
 /*-------------------------------------------------------------------------------------*/
 /**
-  \file   Phase_One_Evaluator.hpp
-  \brief  NOMAD::Evaluator subclass for the phase one (headers)
-  \author Sebastien Le Digabel
-  \date   2010-04-22
-  \see    Phase_One_Evaluator.cpp
-*/
+ \file   Phase_One_Evaluator.hpp
+ \brief  NOMAD::Evaluator subclass for the phase one (headers)
+ \author Sebastien Le Digabel
+ \date   2010-04-22
+ \see    Phase_One_Evaluator.cpp
+ */
 #ifndef __PHASE_ONE_EVALUATOR__
 #define __PHASE_ONE_EVALUATOR__
 
 #include "Evaluator.hpp"
 
 namespace NOMAD {
-
-  /// NOMAD::Evaluator subclass for the phase one.
-  class Phase_One_Evaluator : public NOMAD::Evaluator {
-
-  private:
-
-    NOMAD::Evaluator & _basic_ev; ///< The original evaluator.
-
-  public:
-
-    /// Constructor.
-    /**
-       \param p  Parameters         -- \b IN.
-       \param ev Original evaluator -- \b IN.
-    */
-    Phase_One_Evaluator ( const NOMAD::Parameters & p , NOMAD::Evaluator & ev )
-      : NOMAD::Evaluator ( p  ) ,
-	_basic_ev        ( ev )   {}
-
-    /// Destructor.
-    virtual ~Phase_One_Evaluator ( void ) {}
-
-    /// User updates after a success.
-    /**
-       This virtual method is called every time a new (full) success is made.
-       \param s Stats -- \b IN.
-       \param x Successful point -- \b IN.
-    */
-    virtual void update_success ( const NOMAD::Stats & s , const NOMAD::Eval_Point & x )
-    {
-      _basic_ev.update_success ( s , x );
-    }
-
-    /// Evaluate the blackboxes at a given trial point.
-    /**
-       \param x The trial point -- \b IN/OUT.
-       \param h_max      Maximal feasibility value \c h_max -- \b IN.
-       \param count_eval Flag indicating if the evaluation has to be counted
-                         or not -- \b OUT.
-       \return A boolean equal to \c false if the evaluation failed.
-     */
-		using NOMAD::Evaluator::eval_x;   // zhenghua
-    virtual bool eval_x ( NOMAD::Eval_Point   & x          ,
-			  const NOMAD::Double & h_max      ,
-			  bool                & count_eval   ) const
-    {
-      return _basic_ev.eval_x ( x , h_max , count_eval );
-    }
-
-	  
-	  /// Evaluate the blackboxes at a given list of trial points.
-	  /**
-       \param list_x The list of trial points -- \b IN/OUT.
-       \param h_max      Maximal feasibility value \c h_max -- \b IN.
-       \param list_count_eval Flags indicating if the evaluations have to be counted
-	   or not -- \b OUT.
-       \return A boolean equal to \c false if the evaluation failed.
-	   */
-	  virtual bool eval_x ( std::list<NOMAD::Eval_Point *>   & list_x          ,
-						   const NOMAD::Double & h_max      ,
-						   std::list<bool>                & list_count_eval   ) const
-	  {
-		  return _basic_ev.eval_x ( list_x , h_max , list_count_eval );
-	  }
-	  
-	  
-    /// User preprocessing of points before evaluations.
-    /**
-       This method is called before the evaluation of a list of points.
-       \param pts List of points to preprocess -- \b IN/OUT.
-    */
-    virtual void list_of_points_preprocessing
-    ( std::set<NOMAD::Priority_Eval_Point> & pts ) const
-    {
-      _basic_ev.list_of_points_preprocessing ( pts );
-    }
-	  
-	  
-	  /// Access to the model evaluator flag.
-	  /**
-	   \return The model evaluator flag.
-	   */
-	  virtual bool is_model_evaluator ( void ) const 
-	  { 
-		  return _basic_ev.is_model_evaluator(); 
-	  }
-	  
     
-    /// Objective computation.
-    /**
-       - Compute \c f(x) from the blackbox outputs of a point.
-       - Special objective for MADS phase one.
-       \param x The trial point -- \b IN/OUT.
-    */
-    virtual void compute_f ( NOMAD::Eval_Point & x ) const;
-  };
+    /// NOMAD::Evaluator subclass for the phase one.
+    class Phase_One_Evaluator : public NOMAD::Evaluator {
+        
+    private:
+        
+        NOMAD::Evaluator & _basic_ev; ///< The original evaluator.
+        
+    public:
+        
+        /// Constructor.
+        /**
+         \param p  Parameters         -- \b IN.
+         \param ev Original evaluator -- \b IN.
+         */
+        Phase_One_Evaluator ( const NOMAD::Parameters & p , NOMAD::Evaluator & ev )
+        : NOMAD::Evaluator ( p  ) ,
+        _basic_ev        ( ev )   {}
+        
+        /// Destructor.
+        virtual ~Phase_One_Evaluator ( void ) {}
+        
+        /// User updates after a success.
+        /**
+         This virtual method is called every time a new (full) success is made.
+         \param s Stats -- \b IN.
+         \param x Successful point -- \b IN.
+         */
+        virtual void update_success ( const NOMAD::Stats & s ,
+                                     const NOMAD::Eval_Point & x )
+        {
+            _basic_ev.update_success ( s , x );
+        }
+        
+        /// Evaluate the blackboxes at a given trial point.
+        /**
+         \param x The trial point -- \b IN/OUT.
+         \param h_max      Maximal feasibility value \c h_max -- \b IN.
+         \param count_eval Flag indicating if the evaluation has to be counted
+         or not -- \b OUT.
+         \return A boolean equal to \c false if the evaluation failed.
+         */
+        virtual bool eval_x ( NOMAD::Eval_Point   & x          ,
+                             const NOMAD::Double & h_max      ,
+                             bool                & count_eval   ) const
+        {
+            return _basic_ev.eval_x ( x , h_max , count_eval );
+        }
+        
+        
+        /// Evaluate the blackboxes at a given list of trial points.
+        /**
+         \param list_x The list of trial points -- \b IN/OUT.
+         \param h_max      Maximal feasibility value \c h_max -- \b IN.
+         \param list_count_eval Flags indicating if the evaluations have to be counted
+         or not -- \b OUT.
+         \return A boolean equal to \c false if the evaluation failed.
+         */
+        virtual bool eval_x ( std::list<NOMAD::Eval_Point *>   & list_x          ,
+                             const NOMAD::Double & h_max      ,
+                             std::list<bool>                & list_count_eval   ) const
+        {
+            return _basic_ev.eval_x ( list_x , h_max , list_count_eval );
+        }
+        
+        
+        /// User preprocessing of points before evaluations.
+        /**
+         This method is called before the evaluation of a list of points.
+         \param pts List of points to preprocess -- \b IN/OUT.
+         */
+        virtual void list_of_points_preprocessing ( std::set<NOMAD::Priority_Eval_Point> & pts ) const
+        {
+            _basic_ev.list_of_points_preprocessing ( pts );
+        }
+        
+        
+        /// Access to the model evaluator flag.
+        /**
+         \return The model evaluator flag.
+         */
+        virtual bool is_model_evaluator ( void ) const
+        {
+            return _basic_ev.is_model_evaluator();
+        }
+        
+        
+        /// User updates after an iteration.
+        /**
+         This virtual method is called every time a MADS iteration is terminated.
+         \param success      Success of the iteration              -- \b IN.
+         \param stats        Stats                                 -- \b IN.
+         \param ev_control   The NOMAD::Evaluator_Control object   -- \b IN.
+         \param true_barrier Barrier for true evaluations          -- \b IN.
+         \param sgte_barrier Barrier for surrogate evaluations     -- \b IN.
+         \param pareto_front Pareto front                          -- \b IN.
+         \param stop         Allows the user to stop the algorithm -- \b OUT.
+         */
+        virtual void update_iteration ( NOMAD::success_type              success      ,
+                                       const NOMAD::Stats             & stats        ,
+                                       const NOMAD::Evaluator_Control & ev_control   ,
+                                       const NOMAD::Barrier           & true_barrier ,
+                                       const NOMAD::Barrier           & sgte_barrier ,
+                                       const NOMAD::Pareto_Front      & pareto_front ,
+                                       bool                           & stop           ) {}
+        
+        
+        
+        /// Objective computation.
+        /**
+         - Compute \c f(x) from the blackbox outputs of a point.
+         - Special objective for MADS phase one.
+         \param x The trial point -- \b IN/OUT.
+         */
+        virtual void compute_f ( NOMAD::Eval_Point & x ) const;
+    };
 }
 
 #endif
