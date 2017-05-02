@@ -1,34 +1,38 @@
+#include <R.h>
+#include <Rinternals.h>
 #include <stdlib.h> // for NULL
 #include <R_ext/Rdynload.h>
-
-/*
-  The following symbols/expressions for .NAME have been omitted
-
-    snomadRInfo
-    snomadRSolve
-    smultinomadRSolve
-
-  Most likely possible values need to be added below.
-*/
 
 /* FIXME: 
    Check these declarations against the C/Fortran source code.
 */
 
 /* .C calls */
+extern void RuniqueCombs(void *, void *, void *, void *);
 extern void gsl_bspline(void *, void *, void *, void *, void *, void *, void *, void *, void *);
 extern void gsl_bspline_deriv(void *, void *, void *, void *, void *, void *, void *, void *, void *, void *, void *);
-extern void RuniqueCombs(void *, void *, void *, void *);
+
+/* .Call calls */
+extern SEXP smultinomadRSolve(SEXP);
+extern SEXP snomadRInfo(SEXP);
+extern SEXP snomadRSolve(SEXP);
 
 static const R_CMethodDef CEntries[] = {
+    {"RuniqueCombs",      (DL_FUNC) &RuniqueCombs,       4},
     {"gsl_bspline",       (DL_FUNC) &gsl_bspline,        9},
     {"gsl_bspline_deriv", (DL_FUNC) &gsl_bspline_deriv, 11},
-    {"RuniqueCombs",      (DL_FUNC) &RuniqueCombs,       4},
+    {NULL, NULL, 0}
+};
+
+static const R_CallMethodDef CallEntries[] = {
+    {"smultinomadRSolve", (DL_FUNC) &smultinomadRSolve, 1},
+    {"snomadRInfo",       (DL_FUNC) &snomadRInfo,       1},
+    {"snomadRSolve",      (DL_FUNC) &snomadRSolve,      1},
     {NULL, NULL, 0}
 };
 
 void R_init_crs(DllInfo *dll)
 {
-    R_registerRoutines(dll, CEntries, NULL, NULL, NULL);
+    R_registerRoutines(dll, CEntries, CallEntries, NULL, NULL);
     R_useDynamicSymbols(dll, FALSE);
 }
