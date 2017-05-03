@@ -357,7 +357,6 @@ dim.bs <- function(basis="additive",kernel=TRUE,degree=NULL,segments=NULL,includ
   if(!kernel)
     if(is.null(include) | is.null(categories)) stop(" Error: you must provide include and categories vectors")    
 
-  intercept <- ifelse(basis=="additive" || basis=="glp", FALSE, TRUE)
   
   K <- cbind(degree,segments)
 
@@ -396,12 +395,7 @@ dim.bs <- function(basis="additive",kernel=TRUE,degree=NULL,segments=NULL,includ
 	} else {
 			if(basis=="additive") {
 					if(any(K[,1] > 0)) 
-					{
-							if(intercept)
-									ncol.bs <- sum(c(rowSums(K[K[,1]!=0,,drop=FALSE]),include*categories-1))
-							else
-									ncol.bs <- sum(c(rowSums(K[K[,1]!=0,,drop=FALSE])-1,include*categories-1))
-					}
+							ncol.bs <- sum(c(rowSums(K[K[,1]!=0,,drop=FALSE])-1,include*categories-1))
 			}
 			if(basis=="glp") {
 					dimen <- c(rowSums(K[K[,1]!=0,,drop=FALSE])-1,include*categories-1)
