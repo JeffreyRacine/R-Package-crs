@@ -356,6 +356,8 @@ dim.bs <- function(basis="additive",kernel=TRUE,degree=NULL,segments=NULL,includ
 
   if(!kernel)
     if(is.null(include) | is.null(categories)) stop(" Error: you must provide include and categories vectors")    
+
+  intercept <- ifelse(basis=="additive" || basis=="glp", FALSE, TRUE)
   
   K <- cbind(degree,segments)
 
@@ -391,39 +393,44 @@ dim.bs <- function(basis="additive",kernel=TRUE,degree=NULL,segments=NULL,includ
       if(any(K[,1] > 0))
         ncol.bs <- prod(rowSums(K[K[,1]!=0,,drop=FALSE]))
     }
-  } else {
-    if(basis=="additive") {
-      if(any(K[,1] > 0)) 
-        ncol.bs <- sum(c(rowSums(K[K[,1]!=0,,drop=FALSE]),include*categories-1))
-    }
-    if(basis=="glp") {
-      dimen <- c(rowSums(K[K[,1]!=0,,drop=FALSE])-1,include*categories-1)
-      dimen <- dimen[dimen>0] ## Delete elements which are eqaul to 0.
-      dimen <- sort(dimen,decreasing=TRUE) ## Sort the array to save memory when doing the computation.
-      k <-length(dimen)
-      if(k==0) {
-        ncol.bs <- 0
-      } else {
-        nd1 <- rep(1,dimen[1])   ## At the beginning,  we have one for [1, 2, 3, ..., dimen[1]]
-        nd1[dimen[1]] <- 0       ## nd1 represents the frequency for every element of [1, 2, 3, ..., dimen[1]]
-        ncol.bs <- dimen[1]
-        if(k>1) {
-          for(i in 2:k) {
-            dim.rt <- two.dimen(dimen[1],dimen[i],nd1,ncol.bs)
-            nd1 <- dim.rt$nd1
-            ncol.bs <- dim.rt$d12
-          }
-          ncol.bs <- dim.rt$d12+k-1
-        }
-      }
-    }
-    if(basis=="tensor") {
-      if(any(K[,1] > 0)) 
-        ncol.bs <- prod(c(rowSums(K[K[,1]!=0,,drop=FALSE]),(include*categories-1)))
-    }
-  }
+	} else {
+			if(basis=="additive") {
+					if(any(K[,1] > 0)) 
+					{
+							if(intercept)
+									ncol.bs <- sum(c(rowSums(K[K[,1]!=0,,drop=FALSE]),include*categories-1))
+							else
+									ncol.bs <- sum(c(rowSums(K[K[,1]!=0,,drop=FALSE])-1,include*categories-1))
+					}
+			}
+			if(basis=="glp") {
+					dimen <- c(rowSums(K[K[,1]!=0,,drop=FALSE])-1,include*categories-1)
+					dimen <- dimen[dimen>0] ## Delete elements which are eqaul to 0.
+					dimen <- sort(dimen,decreasing=TRUE) ## Sort the array to save memory when doing the computation.
+					k <-length(dimen)
+					if(k==0) {
+							ncol.bs <- 0
+					} else {
+							nd1 <- rep(1,dimen[1])   ## At the beginning,  we have one for [1, 2, 3, ..., dimen[1]]
+							nd1[dimen[1]] <- 0       ## nd1 represents the frequency for every element of [1, 2, 3, ..., dimen[1]]
+							ncol.bs <- dimen[1]
+							if(k>1) {
+									for(i in 2:k) {
+											dim.rt <- two.dimen(dimen[1],dimen[i],nd1,ncol.bs)
+											nd1 <- dim.rt$nd1
+											ncol.bs <- dim.rt$d12
+									}
+									ncol.bs <- dim.rt$d12+k-1
+							}
+					}
+			}
+			if(basis=="tensor") {
+					if(any(K[,1] > 0)) 
+							ncol.bs <- prod(c(rowSums(K[K[,1]!=0,,drop=FALSE]),(include*categories-1)))
+			}
+	}
 
-  return(ncol.bs)
+	return(ncol.bs)
 
 }
 
