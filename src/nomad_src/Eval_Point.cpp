@@ -70,7 +70,7 @@ _direction        ( NULL                              ) ,
 _poll_center_type ( NOMAD::UNDEFINED_POLL_CENTER_TYPE ) ,
 _eval_status      ( NOMAD::UNDEFINED_STATUS           ) ,
 _smoothing_status ( NOMAD::SMOOTHING_UNDEFINED        ) ,
-_EB_ok            ( true                              )
+EB_EB_ok            ( true                              )
 {
 #ifdef MODEL_STATS
     _mod_use = -1;
@@ -92,7 +92,7 @@ _direction        ( NULL                              ) ,
 _poll_center_type ( NOMAD::UNDEFINED_POLL_CENTER_TYPE ) ,
 _eval_status      ( NOMAD::UNDEFINED_STATUS           ) ,
 _smoothing_status ( NOMAD::SMOOTHING_UNDEFINED        ) ,
-_EB_ok            ( true                              ) ,
+EB_EB_ok            ( true                              ) ,
 _bb_outputs       ( m                                 )
 {
 #ifdef MODEL_STATS
@@ -130,7 +130,7 @@ _current_run      ( false                             ) ,
 _eval_type        ( et                                ) ,
 _direction        ( NULL                              ) ,
 _poll_center_type ( NOMAD::UNDEFINED_POLL_CENTER_TYPE ) ,
-_EB_ok            ( true                              ) ,
+EB_EB_ok            ( true                              ) ,
 _bb_outputs       ( x.get_bb_outputs()                )
 {
     int n = size();
@@ -176,7 +176,7 @@ _direction          ( NULL                              ) ,
 _poll_center_type   ( x._poll_center_type               ) ,
 _eval_status        ( x._eval_status                    ) ,
 _smoothing_status   ( x._smoothing_status               ) ,
-_EB_ok              ( x._EB_ok                          ) ,
+EB_EB_ok              ( x.EB_EB_ok                          ) ,
 _bb_outputs         ( x.get_bb_outputs()                ) ,
 _user_eval_priority ( x._user_eval_priority             ) ,
 _rand_eval_priority ( x._rand_eval_priority             )
@@ -314,7 +314,7 @@ int NOMAD::Eval_Point::size_of ( void ) const
     sizeof (_eval_type          ) +
     sizeof (_eval_status        ) +
     sizeof (_smoothing_status   ) +
-    sizeof (_EB_ok              ) +
+    sizeof (EB_EB_ok              ) +
     sizeof (_direction          ) +
     ((_direction     ) ? _direction->size_of() : 0);
 }
@@ -501,7 +501,7 @@ void NOMAD::Eval_Point::display_eval( const NOMAD::Display & out , bool in_block
 /*--------------------------------------------------------------*/
 bool NOMAD::Eval_Point::operator < ( const NOMAD::Eval_Point & x ) const
 {
-    if ( this == &x || !is_eval_ok() || !_EB_ok )
+    if ( this == &x || !is_eval_ok() || !EB_EB_ok )
         return false;
     
     double h  = _h.value();

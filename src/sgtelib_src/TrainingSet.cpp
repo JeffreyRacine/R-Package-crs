@@ -41,42 +41,42 @@ SGTELIB::TrainingSet::TrainingSet ( const Matrix & X ,
   _f_min        ( INF               ) ,   
   _fs_min       ( INF               ) , 
   _i_min        ( 0                 ) , // Index of the point where f_min is reached
-  _X            ( X                 ) , // Input Data
-  _Z            ( Z                 ) , // Output Data
-  _Xs           ( "TrainingSet._Xs" , _p , _n ) , // Normalized Input Data
-  _Zs           ( "TrainingSet._Zs" , _p , _m ) , // Normalized Output Data
-  _Ds           ( "TrainingSet._Ds" , _p , _p ) , // Nb of varying input
+  X_X            ( X                 ) , // Input Data
+  Z_Z            ( Z                 ) , // Output Data
+  X_Xs           ( "TrainingSet._Xs" , _p , _n ) , // Normalized Input Data
+  Z_Zs           ( "TrainingSet._Zs" , _p , _m ) , // Normalized Output Data
+  D_Ds           ( "TrainingSet._Ds" , _p , _p ) , // Nb of varying input
   _nvar         ( -1                ) , // Nb of varying output
   _mvar         ( -1                ) ,
   _pvar         ( -1                ) ,
-  _X_lb         ( new double   [_n] ) ,
-  _X_ub         ( new double   [_n] ) ,
-  _X_scaling_a  ( new double   [_n] ) ,
-  _X_scaling_b  ( new double   [_n] ) ,
-  _X_mean       ( new double   [_n] ) ,
-  _X_std        ( new double   [_n] ) ,
-  _X_nbdiff     ( new int      [_n] ) ,
-  _X_nbdiff1    ( 0                 ) ,
-  _X_nbdiff2    ( 0                 ) ,
-  _Z_lb         ( new double   [_m] ) ,
-  _Z_ub         ( new double   [_m] ) ,
-  _Z_replace    ( new double   [_m] ) ,
-  _Z_scaling_a  ( new double   [_m] ) ,
-  _Z_scaling_b  ( new double   [_m] ) ,
-  _Z_mean       ( new double   [_m] ) , // Mean of each output
-  _Z_std        ( new double   [_m] ) ,
-  _Zs_mean      ( new double   [_m] ) , // Mean of each normalized output
-  _Z_nbdiff     ( new int      [_m] ) ,
-  _Ds_mean      ( 0.0               ) {
+  X_X_lb         ( new double   [_n] ) ,
+  X_X_ub         ( new double   [_n] ) ,
+  X_X_scaling_a  ( new double   [_n] ) ,
+  X_X_scaling_b  ( new double   [_n] ) ,
+  X_X_mean       ( new double   [_n] ) ,
+  X_X_std        ( new double   [_n] ) ,
+  X_X_nbdiff     ( new int      [_n] ) ,
+  X_X_nbdiff1    ( 0                 ) ,
+  X_X_nbdiff2    ( 0                 ) ,
+  Z_Z_lb         ( new double   [_m] ) ,
+  Z_Z_ub         ( new double   [_m] ) ,
+  Z_Z_replace    ( new double   [_m] ) ,
+  Z_Z_scaling_a  ( new double   [_m] ) ,
+  Z_Z_scaling_b  ( new double   [_m] ) ,
+  Z_Z_mean       ( new double   [_m] ) , // Mean of each output
+  Z_Z_std        ( new double   [_m] ) ,
+  Z_Zs_mean      ( new double   [_m] ) , // Mean of each normalized output
+  Z_Z_nbdiff     ( new int      [_m] ) ,
+  D_Ds_mean      ( 0.0               ) {
 
   // Init bounds
   for (int i=0 ; i<_n ; i++){
-    _X_lb[i] = 0;
-    _X_ub[i] = 0;
+    X_X_lb[i] = 0;
+    X_X_ub[i] = 0;
   }  
   for (int j=1 ; j<_m ; j++){
-    _Z_lb[j] = 0;
-    _Z_ub[j] = 0;
+    Z_Z_lb[j] = 0;
+    Z_Z_ub[j] = 0;
   }
 
   // Init the _bbo with standard values:
@@ -85,8 +85,8 @@ SGTELIB::TrainingSet::TrainingSet ( const Matrix & X ,
   _bbo[0] = BBO_OBJ;
   for (int j=1 ; j<_m ; j++){
     _bbo[j] = BBO_CON;
-    _Z_lb[j] = 0;
-    _Z_ub[j] = 0;
+    Z_Z_lb[j] = 0;
+    Z_Z_ub[j] = 0;
   }
 
 }//
@@ -127,22 +127,22 @@ SGTELIB::TrainingSet::~TrainingSet ( void ) {
     SGTELIB::rout << "   ## ## Delete TrainingSet " << this << "\n";
   #endif
   delete [] _bbo;
-  delete [] _X_lb;
-  delete [] _X_ub;
-  delete [] _X_scaling_a;
-  delete [] _X_scaling_b;
-  delete [] _X_mean;
-  delete [] _X_std;
-  delete [] _X_nbdiff;
-  delete [] _Z_lb;
-  delete [] _Z_ub;
-  delete [] _Z_replace;
-  delete [] _Z_scaling_a;
-  delete [] _Z_scaling_b;
-  delete [] _Z_mean;
-  delete [] _Z_std;
-  delete [] _Zs_mean;
-  delete [] _Z_nbdiff;
+  delete [] X_X_lb;
+  delete [] X_X_ub;
+  delete [] X_X_scaling_a;
+  delete [] X_X_scaling_b;
+  delete [] X_X_mean;
+  delete [] X_X_std;
+  delete [] X_X_nbdiff;
+  delete [] Z_Z_lb;
+  delete [] Z_Z_ub;
+  delete [] Z_Z_replace;
+  delete [] Z_Z_scaling_a;
+  delete [] Z_Z_scaling_b;
+  delete [] Z_Z_mean;
+  delete [] Z_Z_std;
+  delete [] Z_Zs_mean;
+  delete [] Z_Z_nbdiff;
 }//
 
 /*--------------------------------------*/
@@ -245,7 +245,7 @@ void SGTELIB::TrainingSet::build ( void ){
 
 
   // check the dimensions:
-  if ( _X.get_nb_rows() != _Z.get_nb_rows() )
+  if ( X_X.get_nb_rows() != Z_Z.get_nb_rows() )
     throw Exception ( __FILE__ , __LINE__ ,
              "TrainingSet::build(): dimension error" );
 
@@ -260,16 +260,16 @@ void SGTELIB::TrainingSet::build ( void ){
     #endif
 
     // Compute the number of varying input and output
-    compute_nbdiff(_X,_X_nbdiff,_nvar);
-    compute_nbdiff(_Z,_Z_nbdiff,_mvar);
+    compute_nbdiff(X_X,X_X_nbdiff,_nvar);
+    compute_nbdiff(Z_Z,Z_Z_nbdiff,_mvar);
 
     // Compute the number of input dimension for which 
     // nbdiff is greater than 1 (resp. greater than 2).
-    _X_nbdiff1 = 0;
-    _X_nbdiff2 = 0;
+    X_X_nbdiff1 = 0;
+    X_X_nbdiff2 = 0;
     for (int j=0 ; j<_n ; j++){
-      if (_X_nbdiff[j]>1) _X_nbdiff1++;
-      if (_X_nbdiff[j]>2) _X_nbdiff2++;
+      if (X_X_nbdiff[j]>1) X_X_nbdiff1++;
+      if (X_X_nbdiff[j]>2) X_X_nbdiff2++;
     }
 
     // Check singular data (inf and void) 
@@ -345,15 +345,15 @@ bool SGTELIB::TrainingSet::add_points ( const Matrix & Xnew ,
   }
 
   // Add the points in the trainingset
-  _X.add_rows(Xnew);
-  _Z.add_rows(Znew);
+  X_X.add_rows(Xnew);
+  Z_Z.add_rows(Znew);
 
   // Add empty rows
   int pnew = Xnew.get_nb_rows();
-  _Xs.add_rows(pnew);
-  _Zs.add_rows(pnew);
-  _Ds.add_rows(pnew);
-  _Ds.add_cols(pnew);
+  X_Xs.add_rows(pnew);
+  Z_Zs.add_rows(pnew);
+  D_Ds.add_rows(pnew);
+  D_Ds.add_cols(pnew);
   // Update p
   _p += pnew;
   // Note that the trainingset needs to be updated.
@@ -381,11 +381,11 @@ void SGTELIB::TrainingSet::check_singular_data ( void ){
 
   int i,j;
   bool e = false;
-  // Check that all the _X data are defined
+  // Check that all the X_X data are defined
   for ( j = 0 ; j < _n ; j++ ) {
     for ( i = 0 ; i < _p ; i++ ) {
-      if ( ! isdef(_X.get(i,j))){
-        SGTELIB::rout << "_X(" << i << "," << j << ") = " << _X.get(i,j) << "\n";
+      if ( ! isdef(X_X.get(i,j))){
+        SGTELIB::rout << "X_X(" << i << "," << j << ") = " << X_X.get(i,j) << "\n";
         e = true;
       }
     }
@@ -398,7 +398,7 @@ void SGTELIB::TrainingSet::check_singular_data ( void ){
     // no def value so far
     isdef_Zj = false;
     for ( i = 0 ; i < _p ; i++ ) {
-      if (isdef(_Z.get(i,j))){
+      if (isdef(Z_Z.get(i,j))){
         isdef_Zj = true;
         break;
       }
@@ -429,18 +429,18 @@ void SGTELIB::TrainingSet::compute_mean_std ( void ){
     // Loop on lines for MEAN computation
     mu = 0;
     for ( i=0 ; i<_p ; i++ ) {
-      mu += _X.get(i,j);
+      mu += X_X.get(i,j);
     }
     mu /= _p; 
-    _X_mean[j] = mu;
+    X_X_mean[j] = mu;
     // Loop on lines for VAR computation
     var = 0;
     for ( i=0 ; i<_p ; i++ ) {
-      v = _X.get(i,j);
+      v = X_X.get(i,j);
       var += (v-mu)*(v-mu);
     }
     var /= (_p-1);
-    _X_std[j] = sqrt(var);
+    X_X_std[j] = sqrt(var);
   }
 
   // Loop on the outputs
@@ -448,21 +448,21 @@ void SGTELIB::TrainingSet::compute_mean_std ( void ){
     // Loop on lines for MEAN computation
     mu = 0;
     for ( i=0 ; i<_p ; i++ ) {
-      v = _Z.get(i,j);
-      if ( ! isdef(v)) v = _Z_replace[j];
+      v = Z_Z.get(i,j);
+      if ( ! isdef(v)) v = Z_Z_replace[j];
       mu += v;
     }
     mu /= _p; 
-    _Z_mean[j] = mu;
+    Z_Z_mean[j] = mu;
     // Loop on lines for VAR computation
     var = 0;
     for ( i=0 ; i<_p ; i++ ) {
-      v = _Z.get(i,j);
-      if ( ! isdef(v)) v = _Z_replace[j];
+      v = Z_Z.get(i,j);
+      if ( ! isdef(v)) v = Z_Z_replace[j];
       var += (v-mu)*(v-mu);
     }
     var /= (_p-1);
-    _Z_std[j] = sqrt(var);
+    Z_Z_std[j] = sqrt(var);
   }
 
 }//
@@ -478,36 +478,36 @@ void SGTELIB::TrainingSet::compute_bounds ( void ){
 
   // Bound of X
   for ( j=0 ; j<_n ; j++ ) {
-    _X_lb[j] = +INF;
-    _X_ub[j] = -INF;
+    X_X_lb[j] = +INF;
+    X_X_ub[j] = -INF;
     // Loop on points
     for ( i=0 ; i<_p ; i++ ) {
-      v = _X.get(i,j);
-      _X_lb[j] = std::min(v,_X_lb[j]);
-      _X_ub[j] = std::max(v,_X_ub[j]);
+      v = X_X.get(i,j);
+      X_X_lb[j] = std::min(v,X_X_lb[j]);
+      X_X_ub[j] = std::max(v,X_X_ub[j]);
     }
   }
 
   // Bound of Z
   for ( j=0 ; j<_m ; j++ ) {
-    _Z_lb[j] = +INF;
-    _Z_ub[j] = -INF;
+    Z_Z_lb[j] = +INF;
+    Z_Z_ub[j] = -INF;
     // Loop on points
     for ( i=0 ; i<_p ; i++ ) {
-      v = _Z.get(i,j);
+      v = Z_Z.get(i,j);
       if ( isdef(v) ){
-        _Z_lb[j] = std::min(v,_Z_lb[j]);
-        _Z_ub[j] = std::max(v,_Z_ub[j]);
+        Z_Z_lb[j] = std::min(v,Z_Z_lb[j]);
+        Z_Z_ub[j] = std::max(v,Z_Z_ub[j]);
       }
     }
 
     // Compute replacement value for undef Z
     // If there are no correct bounds defined yet
-    if ( ( ! isdef(_Z_lb[j])) || ( ! isdef(_Z_ub[j])) ){
-      _Z_replace[j] = 1.0;
+    if ( ( ! isdef(Z_Z_lb[j])) || ( ! isdef(Z_Z_ub[j])) ){
+      Z_Z_replace[j] = 1.0;
     }
     else{
-      _Z_replace[j] = std::max(_Z_ub[j],0.0) + std::max(_Z_ub[j]-_Z_lb[j],1.0);
+      Z_Z_replace[j] = std::max(Z_Z_ub[j],0.0) + std::max(Z_Z_ub[j]-Z_Z_lb[j],1.0);
     }
 
   }
@@ -547,14 +547,14 @@ void SGTELIB::TrainingSet::compute_nvar_mvar ( void ){
   if (_nvar!=_n){
     _nvar = 0;
     for ( int j = 0 ; j < _n ; j++ )
-      if (_X_nbdiff[j] > 1) _nvar++;
+      if (X_X_nbdiff[j] > 1) _nvar++;
   }
 
   // Compute _mvar
   if (_mvar!=_m){
     _mvar = 0;
     for ( int j = 0 ; j < _m ; j++ )
-      if (_Z_nbdiff[j] > 1) _mvar++;
+      if (Z_Z_nbdiff[j] > 1) _mvar++;
   }
 }//
 
@@ -568,12 +568,12 @@ void SGTELIB::TrainingSet::compute_scaling ( void ){
 
   // Neutral values
   for ( j = 0 ; j < _n ; j++ ) {
-    _X_scaling_a[j] = 1;
-    _X_scaling_b[j] = 0;
+    X_X_scaling_a[j] = 1;
+    X_X_scaling_b[j] = 0;
   }
   for ( j = 0 ; j < _m ; j++ ) {
-    _Z_scaling_a[j] = 1;
-    _Z_scaling_b[j] = 0;
+    Z_Z_scaling_a[j] = 1;
+    Z_Z_scaling_b[j] = 0;
   }
 
   switch (scaling_method){
@@ -585,12 +585,12 @@ void SGTELIB::TrainingSet::compute_scaling ( void ){
     compute_mean_std();
     // Compute scaling constants
     for ( j = 0 ; j < _n ; j++ ) {
-      if (_X_nbdiff[j]>1) _X_scaling_a[j] = 1/_X_std[j];
-      _X_scaling_b[j] = -_X_mean[j]*_X_scaling_a[j];
+      if (X_X_nbdiff[j]>1) X_X_scaling_a[j] = 1/X_X_std[j];
+      X_X_scaling_b[j] = -X_X_mean[j]*X_X_scaling_a[j];
     }
     for ( j = 0 ; j < _m ; j++ ) {
-      if (_Z_nbdiff[j]>1) _Z_scaling_a[j] = 1/_Z_std[j];
-      _Z_scaling_b[j] = -_Z_mean[j]*_Z_scaling_a[j];
+      if (Z_Z_nbdiff[j]>1) Z_Z_scaling_a[j] = 1/Z_Z_std[j];
+      Z_Z_scaling_b[j] = -Z_Z_mean[j]*Z_Z_scaling_a[j];
     }
     break;
   case SCALING_BOUNDS:
@@ -598,12 +598,12 @@ void SGTELIB::TrainingSet::compute_scaling ( void ){
     compute_bounds();
     // Compute scaling constants
     for ( j = 0 ; j < _n ; j++ ) {
-      if (_X_nbdiff[j]>1) _X_scaling_a[j] = 1/(_X_ub[j]-_X_lb[j]);
-      _X_scaling_b[j] = -_X_lb[j]*_X_scaling_a[j];
+      if (X_X_nbdiff[j]>1) X_X_scaling_a[j] = 1/(X_X_ub[j]-X_X_lb[j]);
+      X_X_scaling_b[j] = -X_X_lb[j]*X_X_scaling_a[j];
     }
     for ( j = 0 ; j < _m ; j++ ) {
-      if (_Z_nbdiff[j]>1)  _Z_scaling_a[j] = 1/(_Z_ub[j]-_Z_lb[j]);
-      _Z_scaling_b[j] = -_Z_lb[j]*_Z_scaling_a[j];
+      if (Z_Z_nbdiff[j]>1)  Z_Z_scaling_a[j] = 1/(Z_Z_ub[j]-Z_Z_lb[j]);
+      Z_Z_scaling_b[j] = -Z_Z_lb[j]*Z_Z_scaling_a[j];
     }
     break;
   }// end switch
@@ -621,8 +621,8 @@ void SGTELIB::TrainingSet::compute_scaled_matrices ( void ){
   // Compute _Xs
   for ( j = 0 ; j < _n ; j++ ){
     for ( i = 0 ; i < _p ; i++ ){
-      v = _X.get(i,j)*_X_scaling_a[j]+_X_scaling_b[j];
-      _Xs.set(i,j,v);
+      v = X_X.get(i,j)*X_X_scaling_a[j]+X_X_scaling_b[j];
+      X_Xs.set(i,j,v);
     }
   }
 
@@ -630,15 +630,15 @@ void SGTELIB::TrainingSet::compute_scaled_matrices ( void ){
   for ( j = 0 ; j < _m ; j++ ){
     mu = 0;
     for ( i = 0 ; i < _p ; i++ ){
-      v = _Z.get(i,j);
+      v = Z_Z.get(i,j);
       if ( ! isdef(v)){
-        v = _Z_replace[j];
+        v = Z_Z_replace[j];
       }
-      v = v*_Z_scaling_a[j]+_Z_scaling_b[j];
+      v = v*Z_Z_scaling_a[j]+Z_Z_scaling_b[j];
       mu +=v;
-      _Zs.set(i,j,v);
+      Z_Zs.set(i,j,v);
     }
-    _Zs_mean[j] = mu/_p;
+    Z_Zs_mean[j] = mu/_p;
   }
 
 }//
@@ -653,22 +653,22 @@ void SGTELIB::TrainingSet::compute_Ds ( void ){
   double d;
   double di1i2;
   _pvar = _p;
-  _Ds_mean = 0.0;
+  D_Ds_mean = 0.0;
   bool unique;
   for ( int i1 = 0 ; i1 < _p-1 ; i1++ ){
-    _Ds.set(i1,i1,0.0);
+    D_Ds.set(i1,i1,0.0);
     unique = true;
     for ( int i2 = i1+1 ; i2 < _p ; i2++ ){
       d = 0;
       for ( int j = 0 ; j < _n ; j++ ){
-        di1i2 = _Xs.get(i1,j)-_Xs.get(i2,j);
+        di1i2 = X_Xs.get(i1,j)-X_Xs.get(i2,j);
         d += di1i2*di1i2;
       }
       d = sqrt(d);
-      _Ds.set(i1,i2,d);
-      _Ds.set(i2,i1,d);
+      D_Ds.set(i1,i2,d);
+      D_Ds.set(i2,i1,d);
       // Compute the mean distance between the points
-      _Ds_mean += d;
+      D_Ds_mean += d;
       // If d==0, then the point i2 is not unique. 
       if (fabs(d)<EPSILON){
         unique = false;
@@ -678,7 +678,7 @@ void SGTELIB::TrainingSet::compute_Ds ( void ){
     // then reduce the number of different points.
     if ( ! unique) _pvar--;
   }
-  _Ds_mean /= double(_pvar*(_pvar-1)/2);
+  D_Ds_mean /= double(_pvar*(_pvar-1)/2);
 
 }//
 
@@ -695,14 +695,14 @@ void SGTELIB::TrainingSet::compute_f_min ( void ){
   // Go through all points
   for ( int i=0 ; i<_p ; i++ ){
     // Get the unscaled objective
-    f = _Z.get(i,_j_obj);
+    f = Z_Z.get(i,_j_obj);
     // If objective is good
     if (f<_f_min){
       // check the constraints
       feasible = true;
       for ( int j=0 ; j<_m ; j++ )
         if (_bbo[j]==BBO_CON)
-          if (_Z.get(i,j)>0.0){ feasible = false; break; }
+          if (Z_Z.get(i,j)>0.0){ feasible = false; break; }
       // If the point is feasible, save the value.
       if (feasible){
         _f_min = f;
@@ -729,7 +729,7 @@ double SGTELIB::TrainingSet::get_Xs ( const int i , const int j ) const {
     }
   #endif
   // Return value
-  return _Xs.get(i,j);
+  return X_Xs.get(i,j);
 }//
 /*---------------------------------------------------*/
 double SGTELIB::TrainingSet::get_Zs ( const int i , const int j ) const {
@@ -742,7 +742,7 @@ double SGTELIB::TrainingSet::get_Zs ( const int i , const int j ) const {
     }
   #endif
   // Return value
-  return _Zs.get(i,j);
+  return Z_Zs.get(i,j);
 }//
 /*---------------------------------------------------*/
 void SGTELIB::TrainingSet::get_Xs ( const int i , double * x ) const {
@@ -760,7 +760,7 @@ void SGTELIB::TrainingSet::get_Xs ( const int i , double * x ) const {
   }
   // Fill pointer
   for ( int j = 0 ; j < _n ; j++ ){
-    x[j] = _Xs.get(i,j);
+    x[j] = X_Xs.get(i,j);
   }
 }//
 /*---------------------------------------------------*/
@@ -779,7 +779,7 @@ void SGTELIB::TrainingSet::get_Zs ( const int i , double * z ) const {
   }
   // Fill pointer
   for ( int j = 0 ; j < _m ; j++ ){
-    z[j] = _Zs.get(i,j);
+    z[j] = Z_Zs.get(i,j);
   }
 }//
 /*---------------------------------------------------*/
@@ -792,7 +792,7 @@ double SGTELIB::TrainingSet::get_Zs_mean ( const int j ) const {
                "TrainingSet::get_Zs_mean(): dimension error" );
     }
   #endif
-  return _Zs_mean[j];
+  return Z_Zs_mean[j];
 }//
 
 
@@ -806,14 +806,14 @@ int SGTELIB::TrainingSet::get_X_nbdiff ( const int i ) const {
                "TrainingSet::get_X_nbdiff(): dimension error" );
     }
   #endif
-  return _X_nbdiff[i];
+  return X_X_nbdiff[i];
 }//
 
 /*---------------------------------------------------*/
 const Matrix SGTELIB::TrainingSet::get_X_nbdiff ( void ) const {
   Matrix V ("NbDiff",1,_n);
   for (int j=0 ; j<_n ; j++){
-    V.set(0,j,(double)_X_nbdiff[j]);
+    V.set(0,j,(double)X_X_nbdiff[j]);
   }
   return V;
 }//
@@ -829,7 +829,7 @@ int SGTELIB::TrainingSet::get_Z_nbdiff ( const int j ) const {
                "TrainingSet::get_Z_nbdiff(): dimension error" );
     }
   #endif
-  return _Z_nbdiff[j];
+  return Z_Z_nbdiff[j];
 }//
 /*---------------------------------------------------*/
 // Return the normalized distance between points i1 an i2
@@ -842,7 +842,7 @@ double SGTELIB::TrainingSet::get_Ds ( const int i1 , const int i2 ) const {
                "TrainingSet::get_Ds(): dimension error" );
     }
   #endif
-  return _Ds.get(i1,i2);
+  return D_Ds.get(i1,i2);
 }//
 
 /*--------------------------------------------------*/
@@ -939,11 +939,11 @@ Matrix SGTELIB::TrainingSet::get_distances ( const Matrix & A ,
 /*--------------------------------------*/
 void SGTELIB::TrainingSet::X_scale ( double * x ) const {
   for ( int j = 0 ; j < _n ; j++ )
-    x[j] = _X_scaling_a[j] * x[j] + _X_scaling_b[j];
+    x[j] = X_X_scaling_a[j] * x[j] + X_X_scaling_b[j];
 }//
 
 double SGTELIB::TrainingSet::X_scale ( double x , int var_index ) const {
-  return _X_scaling_a[var_index] * x + _X_scaling_b[var_index];
+  return X_X_scaling_a[var_index] * x + X_X_scaling_b[var_index];
 }//
 
 /*--------------------------------------*/
@@ -951,11 +951,11 @@ double SGTELIB::TrainingSet::X_scale ( double x , int var_index ) const {
 /*--------------------------------------*/
 void SGTELIB::TrainingSet::X_unscale ( double * y ) const {
   for ( int j = 0 ; j < _n ; j++ )
-    y[j] = ( y[j] - _X_scaling_b[j] ) / _X_scaling_a[j];
+    y[j] = ( y[j] - X_X_scaling_b[j] ) / X_X_scaling_a[j];
 }
 
 double SGTELIB::TrainingSet::X_unscale ( double y , int var_index ) const {
-  return ( y - _X_scaling_b[var_index] ) / _X_scaling_a[var_index];
+  return ( y - X_X_scaling_b[var_index] ) / X_X_scaling_a[var_index];
 }
 
 /*--------------------------------------*/
@@ -963,11 +963,11 @@ double SGTELIB::TrainingSet::X_unscale ( double y , int var_index ) const {
 /*--------------------------------------*/
 void SGTELIB::TrainingSet::Z_scale ( double * z ) const {
   for ( int j = 0 ; j < _m ; j++ )
-    z[j] = _Z_scaling_a[j] * z[j] + _Z_scaling_b[j];
+    z[j] = Z_Z_scaling_a[j] * z[j] + Z_Z_scaling_b[j];
 }//
 
 double SGTELIB::TrainingSet::Z_scale ( double z , int output_index ) const {
-  return _Z_scaling_a[output_index] * z + _Z_scaling_b[output_index];
+  return Z_Z_scaling_a[output_index] * z + Z_Z_scaling_b[output_index];
 }//
 
 /*--------------------------------------*/
@@ -975,11 +975,11 @@ double SGTELIB::TrainingSet::Z_scale ( double z , int output_index ) const {
 /*--------------------------------------*/
 void SGTELIB::TrainingSet::Z_unscale ( double * w ) const {
   for ( int j = 0 ; j < _m ; j++ )
-    w[j] = ( w[j] - _Z_scaling_b[j] ) / _Z_scaling_a[j];
+    w[j] = ( w[j] - Z_Z_scaling_b[j] ) / Z_Z_scaling_a[j];
 }//
 
 double SGTELIB::TrainingSet::Z_unscale ( double w , int output_index ) const {
-  return ( w - _Z_scaling_b[output_index] ) / _Z_scaling_a[output_index];
+  return ( w - Z_Z_scaling_b[output_index] ) / Z_Z_scaling_a[output_index];
 }//
 
 /*------------------------------------------*/
@@ -987,7 +987,7 @@ double SGTELIB::TrainingSet::Z_unscale ( double w , int output_index ) const {
 /* Used to unscale errors, std and EI */
 /*------------------------------------------*/
 double SGTELIB::TrainingSet::ZE_unscale ( double w , int output_index ) const {
-  return w / _Z_scaling_a[output_index];
+  return w / Z_Z_scaling_a[output_index];
 }//
 
 
@@ -1095,7 +1095,7 @@ double SGTELIB::TrainingSet::get_d1_over_d2 ( const Matrix & XXs ) const {
     // Calcul de d
     d = 0.0;
     for ( j=0 ; j<_n ; j++){
-      dxj = XXs.get(0,j)-_Xs.get(i,j);
+      dxj = XXs.get(0,j)-X_Xs.get(i,j);
       d += dxj*dxj;
     }
     if (d==0){
@@ -1106,7 +1106,7 @@ double SGTELIB::TrainingSet::get_d1_over_d2 ( const Matrix & XXs ) const {
       d1=d;
       i1=i;// Memorize index of closest point
     }
-    else if ((d<d2) && (_Ds.get(i,i1)>0)){
+    else if ((d<d2) && (D_Ds.get(i,i1)>0)){
       // nb: the point i can be kept as 2nd closest point only if it is different from the point 
       // i1, which means that the distance to this point must be non null.
       d2=d;
@@ -1136,7 +1136,7 @@ double SGTELIB::TrainingSet::get_d1 ( const Matrix & XXs ) const {
     // Calcul de d
     d = 0.0;
     for ( j=0 ; j<_n ; j++){
-      dxj = XXs.get(0,j)-_Xs.get(i,j);
+      dxj = XXs.get(0,j)-X_Xs.get(i,j);
       d += dxj*dxj;
     }
     if (d==0){
@@ -1384,19 +1384,19 @@ void SGTELIB::TrainingSet::display ( std::ostream & out ) const {
       out << j            <<"| ";
       out << " NA| ";
       out.width(5);
-      out << _X_nbdiff[j] <<"| ";
+      out << X_X_nbdiff[j] <<"| ";
       out.width(10);
-      out << _X_mean[j]   <<" ";
+      out << X_X_mean[j]   <<" ";
       out.width(10);
-      out << _X_std[j]    <<"| ";
+      out << X_X_std[j]    <<"| ";
       out.width(10); 
-      out << _X_lb[j]     <<" ";
+      out << X_X_lb[j]     <<" ";
       out.width(10); 
-      out << _X_ub[j]     <<"|";
+      out << X_X_ub[j]     <<"|";
       out.width(10); 
-      out << _X_scaling_a[j]     <<" ";
+      out << X_X_scaling_a[j]     <<" ";
       out.width(10); 
-      out << _X_scaling_b[j]     <<"|\n";
+      out << X_X_scaling_b[j]     <<"|\n";
     }
     out << "------------------------------------------------------------------------------------\n";
 
@@ -1411,19 +1411,19 @@ void SGTELIB::TrainingSet::display ( std::ostream & out ) const {
       out << j            <<"| ";
       out << bbo_type_to_str(_bbo[j]) << "| ";
       out.width(5);
-      out << _Z_nbdiff[j] <<"| ";
+      out << Z_Z_nbdiff[j] <<"| ";
       out.width(10);
-      out << _Z_mean[j]   <<" ";
+      out << Z_Z_mean[j]   <<" ";
       out.width(10);
-      out << _Z_std[j]    <<"| ";
+      out << Z_Z_std[j]    <<"| ";
       out.width(10); 
-      out << _Z_lb[j]     <<" ";
+      out << Z_Z_lb[j]     <<" ";
       out.width(10); 
-      out << _Z_ub[j]     <<"|";
+      out << Z_Z_ub[j]     <<"|";
       out.width(10); 
-      out << _Z_scaling_a[j]     <<" ";
+      out << Z_Z_scaling_a[j]     <<" ";
       out.width(10); 
-      out << _Z_scaling_b[j]     <<"|\n";
+      out << Z_Z_scaling_b[j]     <<"|\n";
     }
     out << "------------------------------------------------------------------------------------\n";
     SGTELIB::rout << "fs_min: " << _fs_min << "\n";

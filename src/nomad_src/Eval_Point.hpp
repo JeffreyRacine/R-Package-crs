@@ -94,7 +94,7 @@ namespace NOMAD {
         NOMAD::Double _h;
         
         
-        NOMAD::Double _P;
+        NOMAD::Double P_P;    // zhenghua,  for compiling on Solaris.
         NOMAD::Double _fsmooth;
         NOMAD::Double _smoothing_variance;
         
@@ -145,7 +145,7 @@ namespace NOMAD {
         NOMAD::smoothing_status_type _smoothing_status;
         
         /// Flag equal to \c true if all EB constraints have been satisfied.
-        bool _EB_ok;
+        bool EB_EB_ok;   // zhenghua,  for compiling on Solaris.
         
         /// Blackbox outputs.
         NOMAD::Point _bb_outputs;
@@ -316,7 +316,7 @@ namespace NOMAD {
         /**
          \return The objective weight value.
          */
-        const NOMAD::Double & get_P ( void ) const { return _P; }
+        const NOMAD::Double & get_P ( void ) const { return P_P; }
         
         /// Access to the variance for RobustMads kernel smoothing \c f.
         /**
@@ -362,7 +362,7 @@ namespace NOMAD {
         /**
          \return A boolean equal to \c true if the point respects the EB constraints.
          */
-        bool is_EB_ok ( void ) const { return _EB_ok; }
+        bool is_EB_ok ( void ) const { return EB_EB_ok; }
         
         /// Access to the evaluation type.
         /**
@@ -519,7 +519,7 @@ namespace NOMAD {
         /**
          \param p objective weight value -- \b IN.
          */
-        void set_P ( const NOMAD::Double & p ) { _P = p; }
+        void set_P ( const NOMAD::Double & p ) { P_P = p; }
         
         /// Set the variance for RobustMads kernel smoothing \c f.
         /**
@@ -571,7 +571,7 @@ namespace NOMAD {
          \param e A boolean equal to \c true if the point
          respects the EB constraints.
          */
-        void set_EB_ok ( bool e ) { _EB_ok = e; }
+        void set_EB_ok ( bool e ) { EB_EB_ok = e; }
         
         /// Set the evaluation type.
         /**

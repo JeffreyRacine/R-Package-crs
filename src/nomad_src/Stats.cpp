@@ -75,17 +75,17 @@ NOMAD::Stats & NOMAD::Stats::operator = ( const NOMAD::Stats & s )
     _spec_pts          = s._spec_pts;
     _spec_success      = s._spec_success;
     _nb_LH_searches    = s._nb_LH_searches;
-    _LH_pts            = s._LH_pts;
-    _LH_success        = s._LH_success;
+    LH_LH_pts            = s.LH_LH_pts;
+    LH_LH_success        = s.LH_LH_success;
     _nb_cache_searches = s._nb_cache_searches;
-    _CS_pts            = s._CS_pts;
-    _CS_success        = s._CS_success;
+    CS_CS_pts            = s.CS_CS_pts;
+    CS_CS_success        = s.CS_CS_success;
     _model_stats       = s._model_stats;
     _nb_VNS_searches   = s._nb_VNS_searches;
-    _VNS_pts           = s._VNS_pts;
-    _VNS_success       = s._VNS_success;
-    _VNS_bb_eval       = s._VNS_bb_eval;
-    _VNS_sgte_eval     = s._VNS_sgte_eval;
+    VNS_VNS_pts           = s.VNS_VNS_pts;
+    VNS_VNS_success       = s.VNS_VNS_success;
+    VNS_VNS_bb_eval       = s.VNS_VNS_bb_eval;
+    VNS_VNS_sgte_eval     = s.VNS_VNS_sgte_eval;
     _nb_usr_searches   = s._nb_usr_searches;
     _usr_srch_pts      = s._usr_srch_pts;
     _usr_srch_success  = s._usr_srch_success;
@@ -99,7 +99,7 @@ NOMAD::Stats & NOMAD::Stats::operator = ( const NOMAD::Stats & s )
     
 #ifdef USE_MPI
     _asynchronous_success = s._asynchronous_success;
-    _MPI_data_size        = s._MPI_data_size;
+    MPI_MPI_data_size        = s.MPI_MPI_data_size;
 #endif
     
     return *this;
@@ -131,16 +131,16 @@ void NOMAD::Stats::reset ( void )
     _spec_pts          =
     _spec_success      =
     _nb_LH_searches    =
-    _LH_pts            =
-    _LH_success        =
+    LH_LH_pts            =
+    LH_LH_success        =
     _nb_cache_searches =
-    _CS_pts            =
-    _CS_success        =
+    CS_CS_pts            =
+    CS_CS_success        =
     _nb_VNS_searches   =
-    _VNS_pts           =
-    _VNS_success       =
-    _VNS_bb_eval       =
-    _VNS_sgte_eval     =
+    VNS_VNS_pts           =
+    VNS_VNS_success       =
+    VNS_VNS_bb_eval       =
+    VNS_VNS_sgte_eval     =
     _nb_usr_searches   =
     _usr_srch_pts      =
     _usr_srch_success  =
@@ -157,7 +157,7 @@ void NOMAD::Stats::reset ( void )
     
 #ifdef USE_MPI
     _asynchronous_success = 0;
-    _MPI_data_size        = -1;
+    MPI_MPI_data_size        = -1;
 #endif
     
     _clock.reset();
@@ -185,11 +185,11 @@ void NOMAD::Stats::update ( const NOMAD::Stats & s , bool for_search )
     _ext_poll_bb_eval  += s._ext_poll_bb_eval;
     _ext_poll_descents += s._ext_poll_descents;
     _nb_LH_searches    += s._nb_LH_searches;
-    _LH_pts            += s._LH_pts;
-    _LH_success        += s._LH_success;
+    LH_LH_pts            += s.LH_LH_pts;
+    LH_LH_success        += s.LH_LH_success;
     _nb_cache_searches += s._nb_cache_searches;
-    _CS_pts            += s._CS_pts;
-    _CS_success        += s._CS_success;
+    CS_CS_pts            += s.CS_CS_pts;
+    CS_CS_success        += s.CS_CS_success;
     _nb_usr_searches   += s._nb_usr_searches;
     _usr_srch_pts      += s._usr_srch_pts;
     _usr_srch_success  += s._usr_srch_success;
@@ -197,7 +197,7 @@ void NOMAD::Stats::update ( const NOMAD::Stats & s , bool for_search )
     
 #ifdef USE_MPI
     _asynchronous_success += s._asynchronous_success;
-    _MPI_data_size         = s._MPI_data_size;
+    MPI_MPI_data_size         = s.MPI_MPI_data_size;
 #endif
     
     // _stat_sum and _stat_avg:
@@ -216,10 +216,10 @@ void NOMAD::Stats::update ( const NOMAD::Stats & s , bool for_search )
         _spec_pts          += s._spec_pts;
         _spec_success      += s._spec_success;
         _nb_VNS_searches   += s._nb_VNS_searches;
-        _VNS_pts           += s._VNS_pts;
-        _VNS_success       += s._VNS_success;
-        _VNS_bb_eval       += s._VNS_bb_eval;
-        _VNS_sgte_eval     += s._VNS_sgte_eval;
+        VNS_VNS_pts           += s.VNS_VNS_pts;
+        VNS_VNS_success       += s.VNS_VNS_success;
+        VNS_VNS_bb_eval       += s.VNS_VNS_bb_eval;
+        VNS_VNS_sgte_eval     += s.VNS_VNS_sgte_eval;
         _p1_iterations     += s._p1_iterations;
         _p1_bbe            += s._p1_bbe;
         _iterations        += s._iterations;
@@ -312,20 +312,20 @@ void NOMAD::Stats::display ( const NOMAD::Display & out ) const
         << "user search points              : " << _usr_srch_pts        << std::endl;
     out << "number of LH searches           : "   << _nb_LH_searches      << std::endl;
     if ( _nb_LH_searches > 0 )
-        out << "LH search successes             : " << _LH_success          << std::endl
-        << "LH search points                : " << _LH_pts              << std::endl;
+        out << "LH search successes             : " << LH_LH_success          << std::endl
+        << "LH search points                : " << LH_LH_pts              << std::endl;
     out << "number of cache searches        : "   << _nb_cache_searches   << std::endl;
     if ( _nb_cache_searches > 0 )
-        out << "cache search successes          : " << _CS_success          << std::endl
-        << "cache search points             : " << _CS_pts              << std::endl;
+        out << "cache search successes          : " << CS_CS_success          << std::endl
+        << "cache search points             : " << CS_CS_pts              << std::endl;
     out << "number of VNS searches          : "   << _nb_VNS_searches     << std::endl;
     if ( _nb_VNS_searches > 0 )
     {
-        out << "VNS search successes            : " << _VNS_success         << std::endl
-        << "VNS search points               : " << _VNS_pts             << std::endl
-        << "VNS blackbox evaluations        : " << _VNS_bb_eval         << std::endl;
-        if ( _VNS_sgte_eval > 0 )
-            out << "VNS surrogate evaluations       : " << _VNS_sgte_eval     << std::endl;
+        out << "VNS search successes            : " << VNS_VNS_success         << std::endl
+        << "VNS search points               : " << VNS_VNS_pts             << std::endl
+        << "VNS blackbox evaluations        : " << VNS_VNS_bb_eval         << std::endl;
+        if ( VNS_VNS_sgte_eval > 0 )
+            out << "VNS surrogate evaluations       : " << VNS_VNS_sgte_eval     << std::endl;
     }
     if ( _model_stats.get_nb_models() > 0 )
     {
@@ -357,10 +357,10 @@ void NOMAD::Stats::display ( const NOMAD::Display & out ) const
 #ifdef USE_MPI
     out << "number of asynchronous successes: " << _asynchronous_success  << std::endl;
     out << "total size of MPI communications: ";
-    if ( _MPI_data_size < 0 )
+    if ( MPI_MPI_data_size < 0 )
         out << "-";
     else
-        out.display_size_of ( _MPI_data_size );
+        out.display_size_of ( MPI_MPI_data_size );
     out << std::endl;
 #endif
     

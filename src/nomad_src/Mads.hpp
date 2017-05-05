@@ -92,9 +92,9 @@ namespace NOMAD {
         NOMAD::Search        * _model_search1;  ///< Model search #1.
         NOMAD::Search        * _model_search2;  ///< Model search #2.
         
-        NOMAD::Search        * _VNS_search;     ///< VNS search.
+        NOMAD::Search        * VNS_VNS_search;     ///< VNS search.   ///zhenghua, for compiling on Solaris.
         NOMAD::Search        * _cache_search;   ///< Cache search.
-        NOMAD::L_Curve       * _L_curve;        ///< L-curve target.
+        NOMAD::L_Curve       * L_L_curve;        ///< L-curve target.
         NOMAD::Extended_Poll * _extended_poll;  ///< Extended poll for categorical variables.
         bool                   _user_ext_poll;  ///< Flag for user-defined extended poll.
         NOMAD::Sgtelib_Model_Manager * _sgtelib_model_manager;
@@ -379,9 +379,9 @@ namespace NOMAD {
         _user_search           ( NULL                          ) ,
         _model_search1         ( NULL                          ) ,
         _model_search2         ( NULL                          ) ,
-        _VNS_search            ( NULL                          ) ,
+        VNS_VNS_search            ( NULL                          ) ,
         _cache_search          ( NULL                          ) ,
-        _L_curve               ( NULL                          ) ,
+        L_L_curve               ( NULL                          ) ,
         _extended_poll         ( NULL                          ) ,
         _user_ext_poll         ( false                         ) ,
         _sgtelib_model_manager ( NULL                          ) { init(); }
@@ -413,9 +413,9 @@ namespace NOMAD {
         _user_search           ( NULL                                 ) ,
         _model_search1         ( NULL                                 ) ,
         _model_search2         ( NULL                                 ) ,
-        _VNS_search            ( NULL                                 ) ,
+        VNS_VNS_search            ( NULL                                 ) ,
         _cache_search          ( NULL                                 ) ,
-        _L_curve               ( NULL                                 ) ,
+        L_L_curve               ( NULL                                 ) ,
         _extended_poll         ( extended_poll                        ) ,
         _user_ext_poll         ( (extended_poll!=NULL)                ) ,
         _sgtelib_model_manager ( NULL                                 ) { init(); }

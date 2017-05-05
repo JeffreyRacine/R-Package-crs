@@ -51,7 +51,7 @@
 /*-----------------------------------*/
 /*   static members initialization   */
 /*-----------------------------------*/
-const double NOMAD::Clock::_D_CLOCKS_PER_SEC = static_cast<double>(CLOCKS_PER_SEC);
+const double NOMAD::Clock::D_D_CLOCKS_PER_SEC = static_cast<double>(CLOCKS_PER_SEC);
 
 /*---------------------------------------------------------*/
 /*  compute the wall-clock time (real time) elapsed since  */

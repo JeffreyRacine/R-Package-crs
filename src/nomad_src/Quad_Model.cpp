@@ -85,8 +85,8 @@ NOMAD::Quad_Model::~Quad_Model ( void )
     delete [] _index;
     
     // clear the interpolation set Y:
-    for ( size_t k = 0 ; k < _Y.size() ; ++k )
-        delete _Y[k];
+    for ( size_t k = 0 ; k < Y_Y.size() ; ++k )
+        delete Y_Y[k];
 }
 
 /*-----------------------------------------------------------*/
@@ -222,20 +222,20 @@ void NOMAD::Quad_Model::construct_Y ( const NOMAD::Point & center               
                 // (it is put in first position):
                 if ( _center == *cur )
                 {
-                    _Y.push_back ( new NOMAD::Eval_Point ( *cur ) );
+                    Y_Y.push_back ( new NOMAD::Eval_Point ( *cur ) );
                     int nYm1 = get_nY() - 1;
                     if ( nYm1 > 0 )
                     {
-                        NOMAD::Eval_Point * tmp = _Y[0];
-                        _Y[0   ] = _Y[nYm1];
-                        _Y[nYm1] = tmp;
+                        NOMAD::Eval_Point * tmp = Y_Y[0];
+                        Y_Y[0   ] = Y_Y[nYm1];
+                        Y_Y[nYm1] = tmp;
                     }
                 }
                 
                 // other points must within the interpolation radius:
                 else if ( is_within_radius ( *cur , interpolation_radius ) )
                 {
-                    _Y.push_back ( new NOMAD::Eval_Point ( *cur ) );
+                    Y_Y.push_back ( new NOMAD::Eval_Point ( *cur ) );
                 }
             }
         }
@@ -260,15 +260,15 @@ void NOMAD::Quad_Model::reduce_Y ( const NOMAD::Point & center     ,
     
     std::multiset<NOMAD::Model_Sorted_Point> Ys;
     for ( int k = 0 ; k < nY ; ++k )
-        Ys.insert ( NOMAD::Model_Sorted_Point ( _Y[k] , center ) );
+        Ys.insert ( NOMAD::Model_Sorted_Point ( Y_Y[k] , center ) );
     
-    _Y.clear();
+    Y_Y.clear();
     
     std::multiset<NOMAD::Model_Sorted_Point>::const_iterator it , end = Ys.end();
     for ( it = Ys.begin() ; it != end ; ++it )
     {
         if ( get_nY() < max_Y_size )
-            _Y.push_back ( static_cast<NOMAD::Eval_Point *> ( it->get_point() ) );
+            Y_Y.push_back ( static_cast<NOMAD::Eval_Point *> ( it->get_point() ) );
         else
             delete it->get_point();
     }
@@ -317,7 +317,7 @@ bool NOMAD::Quad_Model::is_within_trust_radius ( const NOMAD::Point & x ) const
 /*--------------------------------------------------------------*/
 void NOMAD::Quad_Model::define_scaling ( const NOMAD::Double & r )
 {
-    if ( _error_flag || _Y.empty() )
+    if ( _error_flag || Y_Y.empty() )
     {
         _error_flag = true;
         return;
@@ -344,7 +344,7 @@ void NOMAD::Quad_Model::define_scaling ( const NOMAD::Double & r )
     for ( k = 0 ; k < nY ; ++k )
     {
         
-        if ( !_Y[k] || _n != _Y[k]->size() )
+        if ( !Y_Y[k] || _n != Y_Y[k]->size() )
         {
             _error_flag = true;
             return;
@@ -352,7 +352,7 @@ void NOMAD::Quad_Model::define_scaling ( const NOMAD::Double & r )
         
         for ( i = 0 ; i < _n ; ++i )
         {
-            tmp = (*_Y[k])[i];
+            tmp = (*Y_Y[k])[i];
             if ( !min[i].is_defined() || tmp < min[i] )
                 min[i] = tmp;
             if ( !max[i].is_defined() || tmp > max[i] )
@@ -364,12 +364,12 @@ void NOMAD::Quad_Model::define_scaling ( const NOMAD::Double & r )
         _ref[i] = ( min[i] + max[i] ) / 2.0;
     
 #ifdef MODEL_STATS
-    _Yw = NOMAD::Double();
+    Yw_Yw = NOMAD::Double();
     for ( i = 0 ; i < _n ; ++i )
     {
         tmp = max[i]-min[i];
-        if ( !_Yw.is_defined() || tmp > _Yw )
-            _Yw = tmp;
+        if ( !Yw_Yw.is_defined() || tmp > Yw_Yw )
+            Yw_Yw = tmp;
     }
 #endif
     
@@ -384,7 +384,7 @@ void NOMAD::Quad_Model::define_scaling ( const NOMAD::Double & r )
         
         for ( i = 0 ; i < _n ; ++i )
         {
-            tmp = ( (*_Y[k])[i] - _ref[i] ).abs();
+            tmp = ( (*Y_Y[k])[i] - _ref[i] ).abs();
             if ( !_scaling[i].is_defined() || _scaling[i] < tmp )
                 _scaling[i] = tmp;
         }
@@ -416,7 +416,7 @@ void NOMAD::Quad_Model::define_scaling ( const NOMAD::Double & r )
     
     for ( k = 0 ; k < nY ; ++k )
     {
-        if ( !scale ( *_Y[k] ) )
+        if ( !scale ( *Y_Y[k] ) )
         {
             _scaling.clear();
             _error_flag = true;
@@ -443,7 +443,7 @@ void NOMAD::Quad_Model::define_scaling_by_directions ( const std::list<NOMAD::Di
                                                       const NOMAD::Point & delta_m,
                                                       const NOMAD::Double & epsilon  )
 {
-    if ( _error_flag || _Y.empty() )
+    if ( _error_flag || Y_Y.empty() )
     {
         _error_flag = true;
         return;
@@ -492,7 +492,7 @@ void NOMAD::Quad_Model::define_scaling_by_directions ( const std::list<NOMAD::Di
     for ( k = 0 ; k < nY ; ++k )
     {
         
-        if ( !_Y[k] || _n != _Y[k]->size() )
+        if ( !Y_Y[k] || _n != Y_Y[k]->size() )
         {
             _error_flag = true;
             return;
@@ -500,7 +500,7 @@ void NOMAD::Quad_Model::define_scaling_by_directions ( const std::list<NOMAD::Di
         
         for ( i = 0 ; i < _n ; ++i )
         {
-            tmp = (*_Y[k])[i];
+            tmp = (*Y_Y[k])[i];
             if ( !min[i].is_defined() || tmp < min[i] )
                 min[i] = tmp;
             if ( !max[i].is_defined() || tmp > max[i] )
@@ -509,12 +509,12 @@ void NOMAD::Quad_Model::define_scaling_by_directions ( const std::list<NOMAD::Di
     }
     
 #ifdef MODEL_STATS
-    _Yw = NOMAD::Double();
+    Yw_Yw = NOMAD::Double();
     for ( i = 0 ; i < _n ; ++i )
     {
         tmp = max[i]-min[i];
-        if ( !_Yw.is_defined() || tmp > _Yw )
-            _Yw = tmp;
+        if ( !Yw_Yw.is_defined() || tmp > Yw_Yw )
+            Yw_Yw = tmp;
     }
 #endif
     
@@ -525,7 +525,7 @@ void NOMAD::Quad_Model::define_scaling_by_directions ( const std::list<NOMAD::Di
         bool fixed_var_i=true;
         for ( k = 0 ; k < nY ; ++k )
         {
-            if ( ( (*_Y[k])[i] - _center[i] ).abs() > 0.0 )
+            if ( ( (*Y_Y[k])[i] - _center[i] ).abs() > 0.0 )
             {
                 fixed_var_i=false;
                 break;
@@ -550,7 +550,7 @@ void NOMAD::Quad_Model::define_scaling_by_directions ( const std::list<NOMAD::Di
     // Perform scaling of Y
     for ( k = 0 ; k < nY ; ++k )
     {
-        if ( !scale ( *_Y[k] ) )
+        if ( !scale ( *Y_Y[k] ) )
         {
             _scaling.clear();
             _dirP.clear();
@@ -717,10 +717,10 @@ double NOMAD::Quad_Model::compute_M ( int i , int j ) const
         return 1.0;
     
     if ( j <= _nfree )
-        return (*_Y[i])[_index[j]-1].value();
+        return (*Y_Y[i])[_index[j]-1].value();
     
     if ( j <= 2 * _nfree )
-        return 0.5 * pow ( (*_Y[i])[_index[j-_nfree]-1].value() , 2.0 );
+        return 0.5 * pow ( (*Y_Y[i])[_index[j-_nfree]-1].value() , 2.0 );
     
     int nm1 = _nfree - 1;
     int jm2n , dec , r , i1 , i2;
@@ -739,7 +739,7 @@ double NOMAD::Quad_Model::compute_M ( int i , int j ) const
     
     i2 = r + nm1;
     
-    return (*_Y[i])[_index[i1+1]-1].value() * (*_Y[i])[_index[i2+1]-1].value();
+    return (*Y_Y[i])[_index[i1+1]-1].value() * (*Y_Y[i])[_index[i2+1]-1].value();
 }
 
 /*-----------------------------------------------------------*/
@@ -857,8 +857,8 @@ bool NOMAD::Quad_Model::construct_WP_model ( int max_Y_size )
     }
     
     // creation of sets Y1 and Y2; Y2 contains all available points
-    // of _Y and Y1 will be the 'well-poised' set with n_alpha points:
-    std::vector<NOMAD::Eval_Point *> Y1 , Y2 = _Y;
+    // of Y_Y and Y1 will be the 'well-poised' set with n_alpha points:
+    std::vector<NOMAD::Eval_Point *> Y1 , Y2 = Y_Y;
     int                              iy2 , ny2m1 = p1-1;
     NOMAD::Double                    max_lix , liyi , ljyi;
     
@@ -1273,7 +1273,7 @@ void NOMAD::Quad_Model::solve_regression_system ( double      ** M         ,
     {
         alpha_tmp[i] = 0.0;
         for ( k = 0 ; k < p1 ; ++k )
-            alpha_tmp[i] += M[k][i] * ( _Y[k]->get_bb_outputs()[bbo_index].value() );
+            alpha_tmp[i] += M[k][i] * ( Y_Y[k]->get_bb_outputs()[bbo_index].value() );
     }
     
     double * alpha_tmp2 = new double [_n_alpha];
@@ -1526,7 +1526,7 @@ void NOMAD::Quad_Model::solve_MFN_system ( double      ** F         ,
         if ( W[i] > eps )
             for ( k = 0 ; k < p1 ; ++k )
                 mu_tmp[i] += F[k][i] *
-                ( _Y[k]->get_bb_outputs()[bbo_index].value() ) / W[i];
+                ( Y_Y[k]->get_bb_outputs()[bbo_index].value() ) / W[i];
     }
     
     for ( i = p1 ; i < nF ; ++i )
@@ -1535,7 +1535,7 @@ void NOMAD::Quad_Model::solve_MFN_system ( double      ** F         ,
         if ( W[i] > eps )
             for ( k = 0 ; k < p1 ; ++k )
                 alpha_tmp[i-p1] += F[k][i] *
-                ( _Y[k]->get_bb_outputs()[bbo_index].value() ) / W[i];
+                ( Y_Y[k]->get_bb_outputs()[bbo_index].value() ) / W[i];
     }
     
     for ( i = 0 ; i < p1 ; ++i )
@@ -1578,7 +1578,7 @@ void NOMAD::Quad_Model::solve_MFN_system ( double      ** F         ,
     {
         alpha[i+np1] = 0.0;
         for ( k = 0 ; k < p1 ; ++k )
-            alpha[i+np1] += mu[k] * pow ( (*_Y[k])[_index[i+1]-1].value() , 2.0 ) / 2.0;
+            alpha[i+np1] += mu[k] * pow ( (*Y_Y[k])[_index[i+1]-1].value() , 2.0 ) / 2.0;
     }
     
     for ( k1 = 0 ; k1 < nm1 ; ++k1 )
@@ -1586,7 +1586,7 @@ void NOMAD::Quad_Model::solve_MFN_system ( double      ** F         ,
         {
             alpha[i+np1] = 0.0;
             for ( k = 0 ; k < p1 ; ++k )
-                alpha[i+np1] += mu[k] * (*_Y[k])[_index[k1+1]-1].value() * (*_Y[k])[_index[k2+1]-1].value();
+                alpha[i+np1] += mu[k] * (*Y_Y[k])[_index[k1+1]-1].value() * (*Y_Y[k])[_index[k2+1]-1].value();
             ++i;
         }
     
@@ -1598,7 +1598,7 @@ void NOMAD::Quad_Model::solve_MFN_system ( double      ** F         ,
 /*-----------------------------------------------------------*/
 bool NOMAD::Quad_Model::check_Y ( void ) const
 {
-    if ( _Y.empty() )
+    if ( Y_Y.empty() )
     {
 #ifdef DEBUG
         _out << std::endl << "NOMAD::Quad_Model::check_Y(): set Y is empty"
@@ -1613,7 +1613,7 @@ bool NOMAD::Quad_Model::check_Y ( void ) const
     for ( int k = 0 ; k < nY ; ++k )
     {
         
-        if ( _Y[k] == NULL )
+        if ( Y_Y[k] == NULL )
         {
 #ifdef DEBUG
             _out << std::endl
@@ -1623,7 +1623,7 @@ bool NOMAD::Quad_Model::check_Y ( void ) const
             return false;
         }
         
-        if ( _Y[k]->get_eval_status() != NOMAD::EVAL_OK )
+        if ( Y_Y[k]->get_eval_status() != NOMAD::EVAL_OK )
         {
 #ifdef DEBUG
             _out << std::endl
@@ -1633,7 +1633,7 @@ bool NOMAD::Quad_Model::check_Y ( void ) const
             return false;
         }
         
-        const NOMAD::Point & bbo = _Y[k]->get_bb_outputs();
+        const NOMAD::Point & bbo = Y_Y[k]->get_bb_outputs();
         
         if ( !bbo.is_complete() )
         {
@@ -1656,7 +1656,7 @@ bool NOMAD::Quad_Model::check_Y ( void ) const
             return false;
         }
         
-        if ( _Y[k]->size() != _n )
+        if ( Y_Y[k]->size() != _n )
         {
 #ifdef DEBUG
             _out << std::endl
@@ -1820,12 +1820,12 @@ NOMAD::Double NOMAD::Quad_Model::compute_max_rel_err ( void ) const
         {
             for ( k = 0 ; k < nY ; ++k )
             {
-                if ( _Y[k] && _Y[k]->get_eval_status() == NOMAD::EVAL_OK )
+                if ( Y_Y[k] && Y_Y[k]->get_eval_status() == NOMAD::EVAL_OK )
                 {
-                    truth_value = _Y[k]->get_bb_outputs()[bbo_index];
+                    truth_value = Y_Y[k]->get_bb_outputs()[bbo_index];
                     if ( truth_value.is_defined() )
                     {
-                        model_value = eval ( *_Y[k] , *_alpha[bbo_index] );
+                        model_value = eval ( *Y_Y[k] , *_alpha[bbo_index] );
                         if ( model_value.is_defined() )
                         {
                             if ( truth_value.abs() != 0.0 )
@@ -1870,13 +1870,13 @@ void NOMAD::Quad_Model::compute_model_error ( int             bbo_index   ,
 #endif
     
     for ( int k = 0 ; k < nY ; ++k )
-        if ( _Y[k] && _Y[k]->get_eval_status() == NOMAD::EVAL_OK )
+        if ( Y_Y[k] && Y_Y[k]->get_eval_status() == NOMAD::EVAL_OK )
         {
-            truth_value = _Y[k]->get_bb_outputs()[bbo_index];
+            truth_value = Y_Y[k]->get_bb_outputs()[bbo_index];
             
             if ( truth_value.is_defined() )
             {
-                model_value = eval ( *_Y[k] , *_alpha[bbo_index] );
+                model_value = eval ( *Y_Y[k] , *_alpha[bbo_index] );
                 if ( model_value.is_defined() )
                 {
                     rel_err.clear();
@@ -1898,7 +1898,7 @@ void NOMAD::Quad_Model::compute_model_error ( int             bbo_index   ,
                     
 #ifdef DEBUG
                     _out << "Y[" << k << "]= ( ";
-                    _Y[k]->NOMAD::Point::display ( _out );
+                    Y_Y[k]->NOMAD::Point::display ( _out );
                     _out << " )" << " f=" << truth_value
                     << " m=" << model_value << " error^2="
                     << ( model_value - truth_value ).pow2()
@@ -1983,12 +1983,12 @@ void NOMAD::Quad_Model::display_Y ( const NOMAD::Display & out   ,
         out << "#";
         out.display_int_w ( k , nY );
         out << ": ";
-        if ( _Y[k] )
+        if ( Y_Y[k] )
         {
             out << "( ";
-            _Y[k]->NOMAD::Point::display    ( out , " " , 12 );
+            Y_Y[k]->NOMAD::Point::display    ( out , " " , 12 );
             out << " ) bbo=[ ";
-            _Y[k]->get_bb_outputs().display ( out , " " , 12 );
+            Y_Y[k]->get_bb_outputs().display ( out , " " , 12 );
             out << " ]";
         }
         else

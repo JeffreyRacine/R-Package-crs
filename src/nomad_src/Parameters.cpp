@@ -92,7 +92,7 @@ void NOMAD::Parameters::init ( void )
     _report_blk_eva_value= true;
     _report_sgte_value  = true;
     _stat_sum_target.clear();
-    _L_curve_target.clear();
+    L_L_curve_target.clear();
     _cache_file.clear();
     _problem_dir.clear();
     _tmp_dir.clear();
@@ -217,11 +217,11 @@ void NOMAD::Parameters::init ( void )
     _model_params.model_np1_quad_epsilon =0.01;
     
     // other searches:
-    _VNS_trigger.clear();
+    VNS_VNS_trigger.clear();
     _speculative_search         = true;
-    _VNS_search                 = false;
-    _LH_search_p0               = -1;
-    _LH_search_pi               = -1;
+    VNS_VNS_search                 = false;
+    LH_LH_search_p0               = -1;
+    LH_LH_search_pi               = -1;
     _opportunistic_LH           = true;
     _opp_LH_is_defined          = false;
     _cache_search               = false;
@@ -4047,17 +4047,17 @@ void NOMAD::Parameters::display ( const NOMAD::Display & out ) const
     
     // VNS_SEARCH:
     out << "VNS search                       : ";
-    out.display_yes_or_no ( _VNS_search );
-    if ( _VNS_search )
-        out << " [trigger=" << _VNS_trigger << "]";
+    out.display_yes_or_no ( VNS_VNS_search );
+    if ( VNS_VNS_search )
+        out << " [trigger=" << VNS_VNS_trigger << "]";
     out << std::endl;
     
     // LH_SEARCH:
     out << "Latin-Hypercube (LH) search      : ";
-    if ( _LH_search_p0 > 0 || _LH_search_pi > 0 )
+    if ( LH_LH_search_p0 > 0 || LH_LH_search_pi > 0 )
     {
-        out << "#init:"   << _LH_search_p0
-        << ", #iter:" << _LH_search_pi
+        out << "#init:"   << LH_LH_search_p0
+        << ", #iter:" << LH_LH_search_pi
         << ", opport:";
         out.display_yes_or_no ( _opportunistic_LH );
     }
@@ -4192,9 +4192,9 @@ void NOMAD::Parameters::display ( const NOMAD::Display & out ) const
         << _stat_sum_target << std::endl;
     
     // L_CURVE_TARGET:
-    if ( _L_curve_target.is_defined() )
+    if ( L_L_curve_target.is_defined() )
         out << "L-curve target               : "
-        << _L_curve_target << std::endl;
+        << L_L_curve_target << std::endl;
     
     // STOP_IF_FEASIBLE:
     if ( _stop_if_feasible )
@@ -5460,7 +5460,7 @@ void NOMAD::Parameters::check ( bool remove_history_file  ,
     {
         
         if ( _multi_formulation == NOMAD::UNDEFINED_FORMULATION )
-            _multi_formulation = ( _VNS_search ) ? NOMAD::DIST_L2 : NOMAD::PRODUCT;
+            _multi_formulation = ( VNS_VNS_search ) ? NOMAD::DIST_L2 : NOMAD::PRODUCT;
         
         if ( _multi_nb_mads_runs < 0 )
         {
@@ -5472,8 +5472,8 @@ void NOMAD::Parameters::check ( bool remove_history_file  ,
                 {
                     _max_bb_eval = 25 * _nb_free_variables;
                     
-                    if ( _LH_search_p0 < 0 )
-                        _LH_search_p0 = _max_bb_eval;
+                    if ( LH_LH_search_p0 < 0 )
+                        LH_LH_search_p0 = _max_bb_eval;
                 }
             }
             else if ( !_max_bbe_decided )
@@ -5481,8 +5481,8 @@ void NOMAD::Parameters::check ( bool remove_history_file  ,
                 _max_bb_eval = static_cast<int>
                 ( ceil ( sqrt ( 1.0 * _nb_free_variables * _multi_overall_bb_eval ) ) );
                 
-                if ( _LH_search_p0 < 0 )
-                    _LH_search_p0 = _max_bb_eval;
+                if ( LH_LH_search_p0 < 0 )
+                    LH_LH_search_p0 = _max_bb_eval;
             }
         }
         else if ( _multi_overall_bb_eval > 0 && !_max_bbe_decided )
@@ -5561,7 +5561,7 @@ void NOMAD::Parameters::check ( bool remove_history_file  ,
     {
         if ( _x0s.empty() && _x0_cache_file.empty() )
         {
-            if ( _LH_search_p0 <= 0 )
+            if ( LH_LH_search_p0 <= 0 )
                 throw Invalid_Parameter ( "Parameters.cpp" , __LINE__ ,
                                          "Parameters::check(): no starting point" );
             else if ( has_categorical )
@@ -5612,7 +5612,7 @@ void NOMAD::Parameters::check ( bool remove_history_file  ,
         if ( _robust_mads && has_categorical )
             throw Invalid_Parameter ( "Parameters.cpp" , __LINE__ , "NOMAD::Parameters::check : the algorithm RobustMads cannot be used with categorical variables" );
         
-        if ( _robust_mads && _VNS_search )
+        if ( _robust_mads && VNS_VNS_search )
             throw Invalid_Parameter ( "Parameters.cpp" , __LINE__ , "NOMAD::Parameters::check : the algorithm RobustMads cannot be used vns search" );
         
         if ( _robust_mads && ! _robust_mads_standard_dev_factor.is_defined() )
@@ -5860,7 +5860,7 @@ bool NOMAD::Parameters::get_VNS_search ( void ) const
     if ( _to_be_checked )
         throw Bad_Access ( "Parameters.cpp" , __LINE__ ,
                           "Parameters::get_VNS_search(), Parameters::check() must be invoked" );
-    return _VNS_search;
+    return VNS_VNS_search;
 }
 
 // get_VNS_trigger:
@@ -5869,7 +5869,7 @@ const NOMAD::Double & NOMAD::Parameters::get_VNS_trigger ( void ) const
     if ( _to_be_checked )
         throw Bad_Access ( "Parameters.cpp" , __LINE__ ,
                           "Parameters::get_VNS_trigger(), Parameters::check() must be invoked" );
-    return _VNS_trigger;
+    return VNS_VNS_trigger;
 }
 
 // get_LH_search_p0:
@@ -5878,7 +5878,7 @@ int NOMAD::Parameters::get_LH_search_p0 ( void ) const
     if ( _to_be_checked )
         throw Bad_Access ( "Parameters.cpp" , __LINE__ ,
                           "Parameters::get_LH_search_p0(), Parameters::check() must be invoked" );
-    return _LH_search_p0;
+    return LH_LH_search_p0;
 }
 
 // get_LH_search_p0:
@@ -5887,7 +5887,7 @@ int NOMAD::Parameters::get_LH_search_pi ( void ) const
     if ( _to_be_checked )
         throw Bad_Access ( "Parameters.cpp" , __LINE__ ,
                           "Parameters::get_LH_search_pi(), Parameters::check() must be invoked" );
-    return _LH_search_pi;
+    return LH_LH_search_pi;
 }
 
 // get_direction_types:
@@ -6549,7 +6549,7 @@ const NOMAD::Double & NOMAD::Parameters::get_L_curve_target ( void ) const
     if ( _to_be_checked )
         throw Bad_Access ( "Parameters.cpp" , __LINE__ ,
                           "Parameters::get_L_curve_target(), Parameters::check() must be invoked" );
-    return _L_curve_target;
+    return L_L_curve_target;
 }
 
 // get_problem_dir:
@@ -7139,8 +7139,8 @@ void NOMAD::Parameters::set_MODEL_EVAL_SORT_CAUTIOUS ( bool mesc )
 void NOMAD::Parameters::set_VNS_SEARCH ( bool s )
 {
     _to_be_checked = true;
-    _VNS_search    = s;
-    _VNS_trigger   = ( s ) ? 0.75 : NOMAD::Double();
+    VNS_VNS_search    = s;
+    VNS_VNS_trigger   = ( s ) ? 0.75 : NOMAD::Double();
 }
 
 // set_VNS_SEARCH (2/2):
@@ -7149,7 +7149,7 @@ void NOMAD::Parameters::set_VNS_SEARCH ( const NOMAD::Double & trigger )
     _to_be_checked = true;
     if ( !trigger.is_defined() )
     {
-        _VNS_search = false;
+        VNS_VNS_search = false;
         return;
     }
     
@@ -7157,16 +7157,16 @@ void NOMAD::Parameters::set_VNS_SEARCH ( const NOMAD::Double & trigger )
         throw Invalid_Parameter ( "Parameters.cpp" , __LINE__ ,
                                  "invalid parameter: VNS_SEARCH: must be in [0;1]" );
     
-    _VNS_search  = ( trigger > 0.0 );
-    _VNS_trigger = trigger;
+    VNS_VNS_search  = ( trigger > 0.0 );
+    VNS_VNS_trigger = trigger;
 }
 
 // set_LH_SEARCH:
 void NOMAD::Parameters::set_LH_SEARCH ( int p0 , int pi )
 {
     _to_be_checked = true;
-    _LH_search_p0  = (p0 <= 0 ) ? 0 : p0;
-    _LH_search_pi  = (pi <= 0 ) ? 0 : pi;
+    LH_LH_search_p0  = (p0 <= 0 ) ? 0 : p0;
+    LH_LH_search_pi  = (pi <= 0 ) ? 0 : pi;
 }
 
 // set_DIRECTION_TYPE (1/2):
@@ -8078,7 +8078,7 @@ void NOMAD::Parameters::set_STAT_SUM_TARGET ( const NOMAD::Double & sst )
 void NOMAD::Parameters::set_L_CURVE_TARGET ( const NOMAD::Double & lct )
 {
     _to_be_checked  = true;
-    _L_curve_target = lct;
+    L_L_curve_target = lct;
 }
 
 // set_ANISOTROPIC_MESH:

@@ -67,21 +67,21 @@ NOMAD::Model_Stats & NOMAD::Model_Stats::operator = ( const NOMAD::Model_Stats &
     _construction_time   = s._construction_time;
     _optimization_time   = s._optimization_time;
     _bad_cond            = s._bad_cond;
-    _MS_nb_searches      = s._MS_nb_searches;
-    _MS_pts              = s._MS_pts;
-    _MS_success          = s._MS_success;
-    _MS_bb_eval          = s._MS_bb_eval;
-    _MS_sgte_eval        = s._MS_sgte_eval;
-    _MS_cache_hits       = s._MS_cache_hits;
-    _MS_rejected         = s._MS_rejected;
-    _MS_max_search_pts   = s._MS_max_search_pts;
-    _MS_nb_opt           = s._MS_nb_opt;
-    _MS_opt_error        = s._MS_nb_opt;
-    _MS_avg_model_eval   = s._MS_avg_model_eval;
-    _MS_max_model_eval   = s._MS_max_model_eval;
-    _MS_max_bbe          = s._MS_max_bbe;
-    _ES_nb_inside_radius = s._ES_nb_inside_radius;
-    _ES_nb_pts           = s._ES_nb_pts;
+    MS_MS_nb_searches      = s.MS_MS_nb_searches;
+    MS_MS_pts              = s.MS_MS_pts;
+    MS_MS_success          = s.MS_MS_success;
+    MS_MS_bb_eval          = s.MS_MS_bb_eval;
+    MS_MS_sgte_eval        = s.MS_MS_sgte_eval;
+    MS_MS_cache_hits       = s.MS_MS_cache_hits;
+    MS_MS_rejected         = s.MS_MS_rejected;
+    MS_MS_max_search_pts   = s.MS_MS_max_search_pts;
+    MS_MS_nb_opt           = s.MS_MS_nb_opt;
+    MS_MS_opt_error        = s.MS_MS_nb_opt;
+    MS_MS_avg_model_eval   = s.MS_MS_avg_model_eval;
+    MS_MS_max_model_eval   = s.MS_MS_max_model_eval;
+    MS_MS_max_bbe          = s.MS_MS_max_bbe;
+    ES_ES_nb_inside_radius = s.ES_ES_nb_inside_radius;
+    ES_ES_nb_pts           = s.ES_ES_nb_pts;
     
     return *this;
 }
@@ -99,21 +99,21 @@ void NOMAD::Model_Stats::reset ( void )
     _not_enough_pts      =
     _construction_error  =
     _bad_cond            =
-    _MS_nb_searches      =
-    _MS_pts              =
-    _MS_success          =
-    _MS_bb_eval          =
-    _MS_sgte_eval        =
-    _MS_cache_hits       =
-    _MS_rejected         =
-    _MS_max_search_pts   =
-    _MS_nb_opt           =
-    _MS_opt_error        =
-    _MS_avg_model_eval   =
-    _MS_max_model_eval   =
-    _MS_max_bbe          =
-    _ES_nb_inside_radius =
-    _ES_nb_pts           =
+    MS_MS_nb_searches      =
+    MS_MS_pts              =
+    MS_MS_success          =
+    MS_MS_bb_eval          =
+    MS_MS_sgte_eval        =
+    MS_MS_cache_hits       =
+    MS_MS_rejected         =
+    MS_MS_max_search_pts   =
+    MS_MS_nb_opt           =
+    MS_MS_opt_error        =
+    MS_MS_avg_model_eval   =
+    MS_MS_max_model_eval   =
+    MS_MS_max_bbe          =
+    ES_ES_nb_inside_radius =
+    ES_ES_nb_pts           =
     _nb_Y_sets           = 0;
     
     _min_nY = INT_MAX;
@@ -139,17 +139,17 @@ void NOMAD::Model_Stats::update ( const NOMAD::Model_Stats & s )
     _construction_time   += s._construction_time;
     _optimization_time   += s._optimization_time;
     _bad_cond            += s._bad_cond;
-    _MS_nb_searches      += s._MS_nb_searches;
-    _MS_pts              += s._MS_pts;
-    _MS_success          += s._MS_success;
-    _MS_bb_eval          += s._MS_bb_eval;
-    _MS_sgte_eval        += s._MS_sgte_eval;
-    _MS_cache_hits       += s._MS_cache_hits;
-    _MS_rejected         += s._MS_rejected;
-    _MS_opt_error        += s._MS_opt_error;
-    _MS_max_bbe          += s._MS_max_bbe;
-    _ES_nb_inside_radius += s._ES_nb_inside_radius;
-    _ES_nb_pts           += s._ES_nb_pts;
+    MS_MS_nb_searches      += s.MS_MS_nb_searches;
+    MS_MS_pts              += s.MS_MS_pts;
+    MS_MS_success          += s.MS_MS_success;
+    MS_MS_bb_eval          += s.MS_MS_bb_eval;
+    MS_MS_sgte_eval        += s.MS_MS_sgte_eval;
+    MS_MS_cache_hits       += s.MS_MS_cache_hits;
+    MS_MS_rejected         += s.MS_MS_rejected;
+    MS_MS_opt_error        += s.MS_MS_opt_error;
+    MS_MS_max_bbe          += s.MS_MS_max_bbe;
+    ES_ES_nb_inside_radius += s.ES_ES_nb_inside_radius;
+    ES_ES_nb_pts           += s.ES_ES_nb_pts;
     _nb_Y_sets           += s._nb_Y_sets;
     _sum_nY              += s._sum_nY;
     
@@ -159,20 +159,20 @@ void NOMAD::Model_Stats::update ( const NOMAD::Model_Stats & s )
     _max_nY = ( _max_nY > s._max_nY ) ?
     _max_nY : s._max_nY;
     
-    _MS_max_model_eval = ( _MS_max_model_eval > s._MS_max_model_eval ) ?
-    _MS_max_model_eval : s._MS_max_model_eval;
+    MS_MS_max_model_eval = ( MS_MS_max_model_eval > s.MS_MS_max_model_eval ) ?
+    MS_MS_max_model_eval : s.MS_MS_max_model_eval;
     
-    _MS_max_search_pts = ( _MS_max_search_pts > s._MS_max_search_pts ) ?
-    _MS_max_search_pts : s._MS_max_search_pts;
+    MS_MS_max_search_pts = ( MS_MS_max_search_pts > s.MS_MS_max_search_pts ) ?
+    MS_MS_max_search_pts : s.MS_MS_max_search_pts;
     
-    if ( _MS_nb_opt + s._MS_nb_opt == 0 )
-        _MS_avg_model_eval = 0;
+    if ( MS_MS_nb_opt + s.MS_MS_nb_opt == 0 )
+        MS_MS_avg_model_eval = 0;
     else
-        _MS_avg_model_eval = (   _MS_avg_model_eval*  _MS_nb_opt +
-                              s._MS_avg_model_eval*s._MS_nb_opt   ) /
-        ( _MS_nb_opt + s._MS_nb_opt           );
+        MS_MS_avg_model_eval = (   MS_MS_avg_model_eval*  MS_MS_nb_opt +
+                              s.MS_MS_avg_model_eval*s.MS_MS_nb_opt   ) /
+        ( MS_MS_nb_opt + s.MS_MS_nb_opt           );
     
-    _MS_nb_opt += s._MS_nb_opt;
+    MS_MS_nb_opt += s.MS_MS_nb_opt;
 }
 
 /*----------------------------------------------------*/
@@ -193,8 +193,8 @@ void NOMAD::Model_Stats::update_nY ( int nY )
 /*----------------------------------------------------*/
 void NOMAD::Model_Stats::update_MS_max_search_pts ( int sp )
 {
-    if ( sp > _MS_max_search_pts )
-        _MS_max_search_pts = sp;
+    if ( sp > MS_MS_max_search_pts )
+        MS_MS_max_search_pts = sp;
 }
 
 /*-----------------------------------------------------------------------*/
@@ -202,10 +202,10 @@ void NOMAD::Model_Stats::update_MS_max_search_pts ( int sp )
 /*-----------------------------------------------------------------------*/
 void NOMAD::Model_Stats::update_MS_model_opt ( int eval )
 {
-    if ( eval > _MS_max_model_eval )
-        _MS_max_model_eval = eval;
-    ++_MS_nb_opt;
-    _MS_avg_model_eval = ( (_MS_avg_model_eval*(_MS_nb_opt-1)) + eval ) / _MS_nb_opt;
+    if ( eval > MS_MS_max_model_eval )
+        MS_MS_max_model_eval = eval;
+    ++MS_MS_nb_opt;
+    MS_MS_avg_model_eval = ( (MS_MS_avg_model_eval*(MS_MS_nb_opt-1)) + eval ) / MS_MS_nb_opt;
 }
 
 /*---------------------------------------------------------*/
@@ -242,34 +242,34 @@ void NOMAD::Model_Stats::display ( const NOMAD::Display & out ) const
         out << "-";
     out << std::endl
     << "construction CPU time (s)    : "   << _construction_time  << std::endl;
-    if ( _MS_nb_searches > 0 )
+    if ( MS_MS_nb_searches > 0 )
     {
         out << NOMAD::open_block ( "model searches" )
-        << "number of searches                 : "   << _MS_nb_searches << std::endl
-        << "number of search successes         : "   << _MS_success     << std::endl
-        << "number of search points            : "   << _MS_pts         << std::endl
-        << "number of blackbox evaluations     : "   << _MS_bb_eval     << std::endl;
-        if ( _MS_sgte_eval > 0 )
-            out << "number of sgte evaluations         : " << _MS_sgte_eval       << std::endl;
-        out << "number of cache hits               : "   << _MS_cache_hits      << std::endl
-        << "number of rejected candidates      : "   << _MS_rejected        << std::endl
-        << "max number of trial points         : "   << _MS_max_search_pts  << std::endl
-        << "number of optimizations            : "   << _MS_nb_opt          << std::endl
-        << "number of optimization errors      : "   << _MS_opt_error       << std::endl
-        << "number of max_bbe stops            : "   << _MS_max_bbe         << std::endl
-        << "max number of model evaluations    : "   << _MS_max_model_eval  << std::endl
-        << "average number of model evaluations: "   << _MS_avg_model_eval  << std::endl
+        << "number of searches                 : "   << MS_MS_nb_searches << std::endl
+        << "number of search successes         : "   << MS_MS_success     << std::endl
+        << "number of search points            : "   << MS_MS_pts         << std::endl
+        << "number of blackbox evaluations     : "   << MS_MS_bb_eval     << std::endl;
+        if ( MS_MS_sgte_eval > 0 )
+            out << "number of sgte evaluations         : " << MS_MS_sgte_eval       << std::endl;
+        out << "number of cache hits               : "   << MS_MS_cache_hits      << std::endl
+        << "number of rejected candidates      : "   << MS_MS_rejected        << std::endl
+        << "max number of trial points         : "   << MS_MS_max_search_pts  << std::endl
+        << "number of optimizations            : "   << MS_MS_nb_opt          << std::endl
+        << "number of optimization errors      : "   << MS_MS_opt_error       << std::endl
+        << "number of max_bbe stops            : "   << MS_MS_max_bbe         << std::endl
+        << "max number of model evaluations    : "   << MS_MS_max_model_eval  << std::endl
+        << "average number of model evaluations: "   << MS_MS_avg_model_eval  << std::endl
         << "optimization CPU time (s)          : "   << _optimization_time  << std::endl
         << NOMAD::close_block();
     }
     
-    if ( _ES_nb_pts > 0 ) 
+    if ( ES_ES_nb_pts > 0 ) 
     {
         out << NOMAD::open_block ( "model ordering" )
-        << "number of points considered   : " << _ES_nb_pts << std::endl
-        << "number of points inside radius: " << _ES_nb_inside_radius
+        << "number of points considered   : " << ES_ES_nb_pts << std::endl
+        << "number of points inside radius: " << ES_ES_nb_inside_radius
         << " (";
-        NOMAD::Double(_ES_nb_inside_radius*100.0/_ES_nb_pts).display ( out , "%.0f" );
+        NOMAD::Double(ES_ES_nb_inside_radius*100.0/ES_ES_nb_pts).display ( out , "%.0f" );
         out    << "%)" << std::endl
         << NOMAD::close_block();
     }

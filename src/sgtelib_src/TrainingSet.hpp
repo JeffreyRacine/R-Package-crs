@@ -53,15 +53,15 @@ namespace SGTELIB {
     int _i_min; // Index of the point where f_min is reached
     
     // data points:
-    SGTELIB::Matrix _X; // p x n
-    SGTELIB::Matrix _Z; // p x m
+    SGTELIB::Matrix X_X; // p x n   // zhenghua, for compiling on Solaris.
+    SGTELIB::Matrix Z_Z; // p x m
 
     // scaled matrices
-    SGTELIB::Matrix _Xs; // p x n
-    SGTELIB::Matrix _Zs; // p x m
+    SGTELIB::Matrix X_Xs; // p x n
+    SGTELIB::Matrix Z_Zs; // p x m
 
     // Distance matrix
-    SGTELIB::Matrix _Ds; // p x p
+    SGTELIB::Matrix D_Ds; // p x p
 
     // Nb of varying data
     int _nvar; // Nb of varying input
@@ -69,31 +69,31 @@ namespace SGTELIB {
     int _pvar; // Nb of different points
 
     // Data
-    double * _X_lb;
-    double * _X_ub;
-    double * _X_scaling_a;
-    double * _X_scaling_b;
-    double * _X_mean;
-    double * _X_std;
-    int    * _X_nbdiff;
-    int      _X_nbdiff1;
-    int      _X_nbdiff2;
-    double * _Z_lb;
-    double * _Z_ub;
-    double * _Z_replace;
-    double * _Z_scaling_a;
-    double * _Z_scaling_b;
-    double * _Z_mean;
-    double * _Z_std;
-    double * _Zs_mean;
-    int    * _Z_nbdiff;
+    double * X_X_lb;
+    double * X_X_ub;
+    double * X_X_scaling_a;
+    double * X_X_scaling_b;
+    double * X_X_mean;
+    double * X_X_std;
+    int    * X_X_nbdiff;
+    int      X_X_nbdiff1;
+    int      X_X_nbdiff2;
+    double * Z_Z_lb;
+    double * Z_Z_ub;
+    double * Z_Z_replace;
+    double * Z_Z_scaling_a;
+    double * Z_Z_scaling_b;
+    double * Z_Z_mean;
+    double * Z_Z_std;
+    double * Z_Zs_mean;
+    int    * Z_Z_nbdiff;
 
     // scaled bounds:
     //double * _X_lb_scaled;
     //double * _X_ub_scaled;
 
     // Mean distance between points 
-    double _Ds_mean;
+    double D_Ds_mean;
 
     // private affectation operator:
     TrainingSet & operator = ( const TrainingSet & );
@@ -171,8 +171,8 @@ namespace SGTELIB {
     double get_Zs_mean  ( const int j ) const;
     int    get_X_nbdiff ( const int i ) const;
     int    get_Z_nbdiff ( const int j ) const;
-    int    get_X_nbdiff1 (void) const { check_ready(); return _X_nbdiff1; };
-    int    get_X_nbdiff2 (void) const { check_ready(); return _X_nbdiff2; };
+    int    get_X_nbdiff1 (void) const { check_ready(); return X_X_nbdiff1; };
+    int    get_X_nbdiff2 (void) const { check_ready(); return X_X_nbdiff2; };
     double get_Ds       ( const int i1, const int i2) const;
     const SGTELIB::Matrix get_X_nbdiff ( void ) const;
     
@@ -202,18 +202,18 @@ namespace SGTELIB {
     double get_fs_min      ( void ) const { check_ready(); return _fs_min; };
     double get_f_min       ( void ) const { check_ready(); return _f_min;  };
     int    get_i_min       ( void ) const { check_ready(); return _i_min;  };
-    double get_Ds_mean     ( void ) const { check_ready(); return _Ds_mean; };
+    double get_Ds_mean     ( void ) const { check_ready(); return D_Ds_mean; };
     int    get_j_obj       ( void ) const { check_ready(); return _j_obj; };
     //double get_Ds_min      ( void ) const ;
 
     SGTELIB::bbo_t get_bbo ( int j) const { check_ready(); return _bbo[j]; };
 
-    double get_X_scaling_a ( int j) const { check_ready(); return _X_scaling_a[j]; };
+    double get_X_scaling_a ( int j) const { check_ready(); return X_X_scaling_a[j]; };
 
     // Return the design matrix
-    const SGTELIB::Matrix & get_matrix_Xs ( void ) const { check_ready(); return _Xs; };
-    const SGTELIB::Matrix & get_matrix_Zs ( void ) const { check_ready(); return _Zs; };
-    const SGTELIB::Matrix & get_matrix_Ds ( void ) const { check_ready(); return _Ds; };
+    const SGTELIB::Matrix & get_matrix_Xs ( void ) const { check_ready(); return X_Xs; };
+    const SGTELIB::Matrix & get_matrix_Zs ( void ) const { check_ready(); return Z_Zs; };
+    const SGTELIB::Matrix & get_matrix_Ds ( void ) const { check_ready(); return D_Ds; };
 
     // display:
     void display ( std::ostream & out ) const;

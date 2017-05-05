@@ -76,23 +76,23 @@ namespace NOMAD {
         int    _bad_cond;
         
         // model search (MS):
-        int           _MS_nb_searches;    ///< Number of searches.
-        int           _MS_pts;            ///< Number of search points.
-        int           _MS_success;        ///< Number of search successes.
-        int           _MS_bb_eval;        ///< Number of search blackbox evaluations.
-        int           _MS_sgte_eval;      ///< Number of search surrogate evaluations.
-        int           _MS_cache_hits;     ///< Number of search cache hits.
-        int           _MS_rejected;       ///< Number of rejected trial points.
-        int           _MS_max_search_pts; ///< Max number of trial points for one search.
-        int           _MS_nb_opt;         ///< Number of optimizations.
-        int           _MS_opt_error;      ///< Number of optimization errors.
-        int           _MS_avg_model_eval; ///< Avg number of evaluations for a model opt.
-        int           _MS_max_model_eval; ///< Max number of evaluations for a model opt.
-        int           _MS_max_bbe;        ///< Number of times model eval. reached limit.
+        int           MS_MS_nb_searches;    ///< Number of searches.   // zhenghua, for compiling on Solaris.
+        int           MS_MS_pts;            ///< Number of search points.
+        int           MS_MS_success;        ///< Number of search successes.
+        int           MS_MS_bb_eval;        ///< Number of search blackbox evaluations.
+        int           MS_MS_sgte_eval;      ///< Number of search surrogate evaluations.
+        int           MS_MS_cache_hits;     ///< Number of search cache hits.
+        int           MS_MS_rejected;       ///< Number of rejected trial points.
+        int           MS_MS_max_search_pts; ///< Max number of trial points for one search.
+        int           MS_MS_nb_opt;         ///< Number of optimizations.
+        int           MS_MS_opt_error;      ///< Number of optimization errors.
+        int           MS_MS_avg_model_eval; ///< Avg number of evaluations for a model opt.
+        int           MS_MS_max_model_eval; ///< Max number of evaluations for a model opt.
+        int           MS_MS_max_bbe;        ///< Number of times model eval. reached limit.
         
         // eval sort (ES):
-        int           _ES_nb_inside_radius; ///< Total number of points inside radius.
-        int           _ES_nb_pts;           ///< Total number of points.
+        int           ES_ES_nb_inside_radius; ///< Total number of points inside radius.
+        int           ES_ES_nb_pts;           ///< Total number of points.
         
     public:
         
@@ -118,21 +118,21 @@ namespace NOMAD {
         _construction_time   ( s._construction_time   ) ,
         _optimization_time   ( s._optimization_time   ) ,
         _bad_cond            ( s._bad_cond            ) ,
-        _MS_nb_searches      ( s._MS_nb_searches      ) ,
-        _MS_pts              ( s._MS_pts              ) ,
-        _MS_success          ( s._MS_success          ) ,
-        _MS_bb_eval          ( s._MS_bb_eval          ) ,
-        _MS_sgte_eval        ( s._MS_sgte_eval        ) ,
-        _MS_cache_hits       ( s._MS_cache_hits       ) ,
-        _MS_rejected         ( s._MS_rejected         ) ,
-        _MS_max_search_pts   ( s._MS_max_search_pts   ) ,
-        _MS_nb_opt           ( s._MS_nb_opt           ) ,
-        _MS_opt_error        ( s._MS_opt_error        ) ,
-        _MS_avg_model_eval   ( s._MS_avg_model_eval   ) ,
-        _MS_max_model_eval   ( s._MS_max_model_eval   ) ,
-        _MS_max_bbe          ( s._MS_max_bbe          ) ,
-        _ES_nb_inside_radius ( s._ES_nb_inside_radius ) ,
-        _ES_nb_pts           ( s._ES_nb_pts           ) {}
+        MS_MS_nb_searches      ( s.MS_MS_nb_searches      ) ,
+        MS_MS_pts              ( s.MS_MS_pts              ) ,
+        MS_MS_success          ( s.MS_MS_success          ) ,
+        MS_MS_bb_eval          ( s.MS_MS_bb_eval          ) ,
+        MS_MS_sgte_eval        ( s.MS_MS_sgte_eval        ) ,
+        MS_MS_cache_hits       ( s.MS_MS_cache_hits       ) ,
+        MS_MS_rejected         ( s.MS_MS_rejected         ) ,
+        MS_MS_max_search_pts   ( s.MS_MS_max_search_pts   ) ,
+        MS_MS_nb_opt           ( s.MS_MS_nb_opt           ) ,
+        MS_MS_opt_error        ( s.MS_MS_opt_error        ) ,
+        MS_MS_avg_model_eval   ( s.MS_MS_avg_model_eval   ) ,
+        MS_MS_max_model_eval   ( s.MS_MS_max_model_eval   ) ,
+        MS_MS_max_bbe          ( s.MS_MS_max_bbe          ) ,
+        ES_ES_nb_inside_radius ( s.ES_ES_nb_inside_radius ) ,
+        ES_ES_nb_pts           ( s.ES_ES_nb_pts           ) {}
         
         /// Affectation operator.
         /**
@@ -177,8 +177,8 @@ namespace NOMAD {
          */
         void update_ES_stats ( int nb_inside_radius , int nb_pts )
         {
-            _ES_nb_inside_radius += nb_inside_radius;
-            _ES_nb_pts           += nb_pts;
+            ES_ES_nb_inside_radius += nb_inside_radius;
+            ES_ES_nb_pts           += nb_pts;
         }
         
         /// Add a real to stat \c _construction_time.
@@ -218,79 +218,79 @@ namespace NOMAD {
         void add_bad_cond ( void ) { ++_bad_cond; }
         
         /// Add \c 1 to stat \c _MS_nb_searches.
-        void add_MS_nb_searches ( void ) { ++_MS_nb_searches; }
+        void add_MS_nb_searches ( void ) { ++MS_MS_nb_searches; }
         
         /// Add \c 1 to stat \c _MS_success.
-        void add_MS_success ( void ) { ++_MS_success; }
+        void add_MS_success ( void ) { ++MS_MS_success; }
         
         /// Add \c 1 to stat \c _MS_opt_error.
-        void add_MS_opt_error ( void ) { ++_MS_opt_error; }
+        void add_MS_opt_error ( void ) { ++MS_MS_opt_error; }
         
         /// Add \c 1 to stat \c _MS_max_bbe.
-        void add_MS_max_bbe ( void ) { ++_MS_max_bbe; }
+        void add_MS_max_bbe ( void ) { ++MS_MS_max_bbe; }
         
         /// Add \c 1 to stat \c _MS_rejected.
-        void add_MS_rejected ( void ) { ++_MS_rejected; }
+        void add_MS_rejected ( void ) { ++MS_MS_rejected; }
         
         /// Add an integer to stat \c _MS_pts.
         /**
          \param i The integer -- \b IN.
          */
-        void add_MS_pts ( int i ) { _MS_pts += i; }
+        void add_MS_pts ( int i ) { MS_MS_pts += i; }
         
         /// Add an integer to stat \c _MS_bb_eval.
         /**
          \param i The integer -- \b IN.
          */
-        void add_MS_bb_eval ( int i ) { _MS_bb_eval += i; }
+        void add_MS_bb_eval ( int i ) { MS_MS_bb_eval += i; }
         
         /// Add an integer to stat \c _MS_sgte_eval.
         /**
          \param i The integer -- \b IN.
          */
-        void add_MS_sgte_eval ( int i ) { _MS_sgte_eval += i; }
+        void add_MS_sgte_eval ( int i ) { MS_MS_sgte_eval += i; }
         
         /// Add an integer to stat \c _MS_cache_hits.
         /**
          \param i The integer -- \b IN.
          */
-        void add_MS_cache_hits ( int i ) { _MS_cache_hits += i; }
+        void add_MS_cache_hits ( int i ) { MS_MS_cache_hits += i; }
         
         /// Access to the number of model searches.
         /*
          \return The number of model searches.
          **/
-        int get_MS_nb_searches ( void ) const { return _MS_nb_searches; }
+        int get_MS_nb_searches ( void ) const { return MS_MS_nb_searches; }
         
         /// Access to the number of model optimizations.
         /*
          \return The number of model optimizations.
          **/
-        int get_MS_nb_opt ( void ) const { return _MS_nb_opt; }
+        int get_MS_nb_opt ( void ) const { return MS_MS_nb_opt; }
         
         /// Access to the number of model search points.
         /*
          \return The number of model search points.
          **/
-        int get_MS_pts ( void ) const { return _MS_pts; }
+        int get_MS_pts ( void ) const { return MS_MS_pts; }
         
         /// Access to the number of model blackbox evaluations.
         /*
          \return The number of model blackbox evaluations.
          **/
-        int get_MS_bb_eval ( void ) const { return _MS_bb_eval; }
+        int get_MS_bb_eval ( void ) const { return MS_MS_bb_eval; }
         
         /// Access to the number of model search surrogate evaluations.
         /*
          \return The number of model search surrogate evaluations.
          **/
-        int get_MS_sgte_eval ( void ) const { return _MS_sgte_eval; }
+        int get_MS_sgte_eval ( void ) const { return MS_MS_sgte_eval; }
         
         /// Access to the number of model search successes.
         /*
          \return The number of model search successes.
          **/
-        int get_MS_success ( void ) const { return _MS_success; }
+        int get_MS_success ( void ) const { return MS_MS_success; }
         
         /// Access to the number of models.
         /*

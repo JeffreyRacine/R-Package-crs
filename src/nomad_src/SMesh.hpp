@@ -169,9 +169,9 @@ namespace NOMAD {
 		virtual ~SMesh ( void )
         {
             _delta_0.clear();
-            _Delta_0.clear();
+            Delta_Delta_0.clear();
             _delta_min.clear();
-            _Delta_min.clear();
+            Delta_Delta_min.clear();
         }
         
 		

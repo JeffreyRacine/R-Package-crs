@@ -71,19 +71,19 @@ namespace NOMAD {
     private:
         
         time_t              _real_t0;          ///< Wall clock time measurement.
-        clock_t             _CPU_t0;           ///< CPU time measurement.
-        static const double _D_CLOCKS_PER_SEC; ///< System constant for CPU time measurement.
+        clock_t             CPU_CPU_t0;           ///< CPU time measurement.   // zhenghua, for compiling on Solaris.
+        static const double D_D_CLOCKS_PER_SEC; ///< System constant for CPU time measurement.
         
     public:
         
         /// Constructor.
-        Clock ( void ) : _CPU_t0 ( clock() ) { time (&_real_t0); }
+        Clock ( void ) : CPU_CPU_t0 ( clock() ) { time (&_real_t0); }
         
         /// Copy constructor.
         /**
          \param c The copied object -- \b IN.
          */
-        Clock ( const Clock & c ) : _real_t0 ( c._real_t0 ) , _CPU_t0 ( c._CPU_t0 ) {}
+        Clock ( const Clock & c ) : _real_t0 ( c._real_t0 ) , CPU_CPU_t0 ( c.CPU_CPU_t0 ) {}
         
         /// Affectation operator.
         /**
@@ -93,7 +93,7 @@ namespace NOMAD {
         Clock & operator = ( const Clock & c )
         {
             _real_t0 = c._real_t0;
-            _CPU_t0  = c._CPU_t0;
+            CPU_CPU_t0  = c.CPU_CPU_t0;
             return *this;
         }
         
@@ -104,7 +104,7 @@ namespace NOMAD {
         void reset ( void )
         {
             time ( &_real_t0 );
-            _CPU_t0 = clock();
+            CPU_CPU_t0 = clock();
         }
         
         /// Get wall clock time.
@@ -119,7 +119,7 @@ namespace NOMAD {
          */
         double get_CPU_time ( void ) const
         {
-            return ( clock() - _CPU_t0 ) / _D_CLOCKS_PER_SEC;
+            return ( clock() - CPU_CPU_t0 ) / D_D_CLOCKS_PER_SEC;
         }
     };
 }

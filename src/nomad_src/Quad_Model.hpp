@@ -63,7 +63,7 @@ namespace NOMAD {
 
     const NOMAD::Display                     & _out;  ///< Display.
 
-    std::vector<NOMAD::Eval_Point *>           _Y;    ///< Interpolation points.
+    std::vector<NOMAD::Eval_Point *>           Y_Y;    ///< Interpolation points.  // zhenghua,  for compiling on Solaris.
 
     const std::vector<NOMAD::bb_output_type> & _bbot; ///< Blackbox output types.
 
@@ -247,7 +247,7 @@ namespace NOMAD {
       const std::vector<NOMAD::Eval_Point *> & Y   ) const;
 
 #ifdef MODEL_STATS
-    mutable NOMAD::Double _Yw; ///< Width of the interpolation set \c Y.
+    mutable NOMAD::Double Yw_Yw; ///< Width of the interpolation set \c Y.  // zhenghua,  for compiling on Solaris.
 
   public:
 
@@ -255,7 +255,7 @@ namespace NOMAD {
     /**
        \return The width of the interpolation set.
     */
-    const NOMAD::Double & get_Yw ( void ) const { return _Yw; }
+    const NOMAD::Double & get_Yw ( void ) const { return Yw_Yw; }
 #endif
 
     /*-------------------------------------------------------------------------*/
@@ -350,7 +350,7 @@ namespace NOMAD {
     /**
        \return The number of interpolation points \c nY=p+1.
     */
-    int get_nY ( void ) const { return static_cast<int> ( _Y.size() ); }
+    int get_nY ( void ) const { return static_cast<int> ( Y_Y.size() ); }
 
     /// Access to the condition number.
     /**

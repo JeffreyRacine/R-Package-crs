@@ -368,7 +368,7 @@ namespace NOMAD {
 				bool                   _stop_if_feasible;   ///< Stop if a feasible solution is found.
 				NOMAD::Point           _f_target;           ///< Target for the objective function.
 				NOMAD::Double          _stat_sum_target;    ///< Target for the STAT_SUM stat.
-				NOMAD::Double          _L_curve_target;     ///< Target for the L_CURVE criterion.
+				NOMAD::Double          L_L_curve_target;     ///< Target for the L_CURVE criterion.   // zhenghua, for compiling on Solaris.
 				bool                   _snap_to_bounds;     ///< Snap or not the points to the bounds.
 				bool                   _user_calls_enabled; ///< Enable calls to user functions.
 				bool                   _asynchronous;       ///< Asynchronous version for parallelism.
@@ -931,12 +931,12 @@ namespace NOMAD {
 				NOMAD::model_params_type _model_params; ///< Models parameters.
 
 				// VNS search parameters:
-				bool          _VNS_search;  ///< Flag for the VNS search.
-				NOMAD::Double _VNS_trigger; ///< VNS trigger.
+				bool          VNS_VNS_search;  ///< Flag for the VNS search.
+				NOMAD::Double VNS_VNS_trigger; ///< VNS trigger.
 
 				// Latin-Hypercube (LH) search:
-				int  _LH_search_p0;      ///< Number of initial LH search points.
-				int  _LH_search_pi;      ///< LH search points at each iteration.
+				int  LH_LH_search_p0;      ///< Number of initial LH search points.
+				int  LH_LH_search_pi;      ///< LH search points at each iteration.
 				bool _opportunistic_LH;  ///< Parameter \c OPPORTUNISTIC_LH.
 				bool _opp_LH_is_defined; ///< A boolean equal to \c true if a LH has been defined.
 

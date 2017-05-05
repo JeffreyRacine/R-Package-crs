@@ -62,8 +62,8 @@ NOMAD::OrthogonalMesh::OrthogonalMesh (bool                   anisotropic_mesh ,
                                        int                   limit_mesh_index ) :
 _anisotropic_mesh   ( anisotropic_mesh ),
 _delta_0            ( Delta_0 ),
-_Delta_0            ( Delta_0 ),
-_Delta_min          ( Delta_min ),
+Delta_Delta_0            ( Delta_0 ),
+Delta_Delta_min          ( Delta_min ),
 _delta_min          ( delta_min ),
 _fixed_variables    ( fixed_variables ),
 _granularity        ( granularity ),
@@ -74,8 +74,8 @@ _limit_mesh_index   ( limit_mesh_index )
 {
     
     
-    _Delta_min_is_defined = _Delta_min.is_defined();
-    _Delta_min_is_complete = _Delta_min.is_complete();
+    Delta_Delta_min_is_defined = Delta_Delta_min.is_defined();
+    Delta_Delta_min_is_complete = Delta_Delta_min.is_complete();
     
     _delta_min_is_defined = _delta_min.is_defined();
     _delta_min_is_complete = _delta_min.is_complete();
@@ -88,7 +88,7 @@ _limit_mesh_index   ( limit_mesh_index )
         throw NOMAD::Exception ( "OrthogonalMesh.hpp" , __LINE__ ,
                                 "NOMAD::OrthogonalMesh::OrthogonalMesh(): granularity has undefined values" );
     
-    if ( !_Delta_0.is_complete() )
+    if ( !Delta_Delta_0.is_complete() )
         throw NOMAD::Exception (  "OrthogonalMesh.hpp" , __LINE__ ,
                                 "NOMAD::OrthogonalMesh::OrthogonalMesh(): delta_0 has undefined values" );
     
@@ -96,7 +96,7 @@ _limit_mesh_index   ( limit_mesh_index )
         throw NOMAD::Exception ( "OrthogonalMesh.hpp" , __LINE__ ,
                                 "NOMAD::OrthogonalMesh::OrthogonalMesh(): delta_0 and delta_min have different sizes" );
     
-    if ( _Delta_min_is_defined && Delta_min.size() != _n )
+    if ( Delta_Delta_min_is_defined && Delta_min.size() != _n )
         throw NOMAD::Exception ( "OrthogonalMesh.hpp" , __LINE__ ,
                                 "NOMAD::OrthogonalMesh::OrthogonalMesh(): Delta_0 and Delta_min have different sizes" );
     
@@ -113,9 +113,9 @@ _limit_mesh_index   ( limit_mesh_index )
             error = "NOMAD::OrthogonalMesh::OrthogonalMesh(): delta_0 < delta_min";
             break;
         }
-        if ( _Delta_min_is_defined &&
-            _Delta_min[k].is_defined()                        &&
-            _Delta_0[k] < _Delta_min[k]     )
+        if ( Delta_Delta_min_is_defined &&
+            Delta_Delta_min[k].is_defined()                        &&
+            Delta_Delta_0[k] < Delta_Delta_min[k]     )
         {
             error = "NOMAD::OrthogonalMesh::OrthogonalMesh(): Delta_0 < Delta_min";
             break;
@@ -181,8 +181,8 @@ void NOMAD::OrthogonalMesh::set_min_mesh_sizes ( const NOMAD::Point & delta_min 
         if ( delta_min[k].is_defined() && _delta_0[k] < delta_min[k] )
             _delta_min[k]=_delta_0[k];
         
-        if ( delta_min[k].is_defined() && _Delta_0[k] < delta_min[k] )
-            _delta_min[k]=_Delta_0[k];
+        if ( delta_min[k].is_defined() && Delta_Delta_0[k] < delta_min[k] )
+            _delta_min[k]=Delta_Delta_0[k];
     }
     
     if ( !error.empty() )
@@ -196,12 +196,12 @@ void NOMAD::OrthogonalMesh::set_min_mesh_sizes ( const NOMAD::Point & delta_min 
 void NOMAD::OrthogonalMesh::set_min_poll_sizes ( const NOMAD::Point & Delta_min )
 {
     
-    // If Delta_min undefined than _Delta_min->undefined
+    // If Delta_min undefined than Delta_Delta_min->undefined
     if ( ! Delta_min.is_defined() )
     {
-        _Delta_min.clear();
-        _Delta_min_is_defined = false;
-        _Delta_min_is_complete = false;
+        Delta_Delta_min.clear();
+        Delta_Delta_min_is_defined = false;
+        Delta_Delta_min_is_complete = false;
         return;
     }
     
@@ -215,17 +215,17 @@ void NOMAD::OrthogonalMesh::set_min_poll_sizes ( const NOMAD::Point & Delta_min 
         throw NOMAD::Exception (  "OrthogonalMesh.hpp" , __LINE__ ,
                                 "set_min_poll_sizes(): Delta_min has some defined and undefined values" );
     
-    _Delta_min.reset( _n );
-    _Delta_min = Delta_min;
-    _Delta_min_is_defined = true;
-    _Delta_min_is_complete = true;
+    Delta_Delta_min.reset( _n );
+    Delta_Delta_min = Delta_min;
+    Delta_Delta_min_is_defined = true;
+    Delta_Delta_min_is_complete = true;
     
     std::string error;
     for ( int k = 0 ; k < _n ; ++k )
     {
         // we check that Delta_min <= Delta_0 :
-        if ( Delta_min[k].is_defined() && _Delta_0[k] < Delta_min[k] )
-            _Delta_min[k]=_Delta_0[k];
+        if ( Delta_min[k].is_defined() && Delta_Delta_0[k] < Delta_min[k] )
+            Delta_Delta_min[k]=Delta_Delta_0[k];
     }
     
     if ( !error.empty() )
@@ -254,9 +254,9 @@ void NOMAD::OrthogonalMesh::set_delta_0 ( const NOMAD::Point & d )
 void NOMAD::OrthogonalMesh::set_Delta_0 ( const NOMAD::Point & d )
 {
     
-    if ( d.size() != _Delta_0.size() )
+    if ( d.size() != Delta_Delta_0.size() )
         throw NOMAD::Exception ( "XMesh.cpp" , __LINE__ ,
                                 "NOMAD::XMesh::set_Delta_0(): dimension of provided Delta_0 must be consistent with their previous dimension" );
     
-    _Delta_0=d;
+    Delta_Delta_0=d;
 }

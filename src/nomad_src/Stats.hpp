@@ -107,28 +107,28 @@ namespace NOMAD {
         
 #ifdef USE_MPI
         int           _asynchronous_success; ///< Number of asynchronous successes.
-        int           _MPI_data_size;        ///< Size of MPI messages.
+        int           MPI_MPI_data_size;        ///< Size of MPI messages.
 #endif
         
         // LH searches:
         int           _nb_LH_searches;    ///< Number of Latin-Hypercube (LH) searches.
-        int           _LH_pts;            ///< Number of Latin-Hypercube (LH) search points.
-        int           _LH_success;        ///< Number of LH search successes.
+        int           LH_LH_pts;            ///< Number of Latin-Hypercube (LH) search points.  // zhenghua,  for compiling on Solaris.
+        int           LH_LH_success;        ///< Number of LH search successes.
         
         // Cache searches:
         int           _nb_cache_searches; ///< Number of cache searches (CS).
-        int           _CS_pts;            ///< Number of CS search points.
-        int           _CS_success;        ///< Number of CS search successes.
+        int           CS_CS_pts;            ///< Number of CS search points.
+        int           CS_CS_success;        ///< Number of CS search successes.
         
         /// Model stats.
         NOMAD::Model_Stats _model_stats;
         
         // VNS searches:
         int           _nb_VNS_searches;   ///< Number of VNS searches.
-        int           _VNS_pts;           ///< Number of VNS search points.
-        int           _VNS_success;       ///< Number of VNS search successes.
-        int           _VNS_bb_eval;       ///< Number of VNS blackbox evaluations.
-        int           _VNS_sgte_eval;     ///< Number of VNS surrogate evaluations.
+        int           VNS_VNS_pts;           ///< Number of VNS search points.
+        int           VNS_VNS_success;       ///< Number of VNS search successes.
+        int           VNS_VNS_bb_eval;       ///< Number of VNS blackbox evaluations.
+        int           VNS_VNS_sgte_eval;     ///< Number of VNS surrogate evaluations.
         
         // User searches:
         int           _nb_usr_searches;   ///< Number of user searches.
@@ -182,19 +182,19 @@ namespace NOMAD {
         _spec_success         ( s._spec_success         ) ,
 #ifdef USE_MPI
         _asynchronous_success ( s._asynchronous_success ) ,
-        _MPI_data_size        ( s._MPI_data_size        ) ,
+        MPI_MPI_data_size        ( s.MPI_MPI_data_size        ) ,
 #endif
         _nb_LH_searches       ( s._nb_LH_searches       ) ,
-        _LH_pts               ( s._LH_pts               ) ,
-        _LH_success           ( s._LH_success           ) ,
+        LH_LH_pts               ( s.LH_LH_pts               ) ,
+        LH_LH_success           ( s.LH_LH_success           ) ,
         _nb_cache_searches    ( s._nb_cache_searches    ) ,
-        _CS_pts               ( s._CS_pts               ) ,
-        _CS_success           ( s._CS_success           ) ,
+        CS_CS_pts               ( s.CS_CS_pts               ) ,
+        CS_CS_success           ( s.CS_CS_success           ) ,
         _nb_VNS_searches      ( s._nb_VNS_searches      ) ,
-        _VNS_pts              ( s._VNS_pts              ) ,
-        _VNS_success          ( s._VNS_success          ) ,
-        _VNS_bb_eval          ( s._VNS_bb_eval          ) ,
-        _VNS_sgte_eval        ( s._VNS_sgte_eval        ) ,
+        VNS_VNS_pts              ( s.VNS_VNS_pts              ) ,
+        VNS_VNS_success          ( s.VNS_VNS_success          ) ,
+        VNS_VNS_bb_eval          ( s.VNS_VNS_bb_eval          ) ,
+        VNS_VNS_sgte_eval        ( s.VNS_VNS_sgte_eval        ) ,
         _nb_usr_searches      ( s._nb_usr_searches      ) ,
         _usr_srch_pts         ( s._usr_srch_pts         ) ,
         _usr_srch_success     ( s._usr_srch_success     ) ,
@@ -294,7 +294,7 @@ namespace NOMAD {
         void add_spec_success ( void ) { ++_spec_success; }
         
         /// Add \c 1 to stat \c _LH_success.
-        void add_LH_success ( void ) { ++_LH_success; }
+        void add_LH_success ( void ) { ++LH_LH_success; }
         
         /// Add \c 1 to stat \c _nb_cache_searches.
         void add_nb_cache_searches ( void ) { ++_nb_cache_searches; }
@@ -303,13 +303,13 @@ namespace NOMAD {
         void add_nb_LH_searches ( void ) { ++_nb_LH_searches; }
         
         /// Add \c 1 to stat \c _CS_success.
-        void add_CS_success ( void ) { ++_CS_success; }
+        void add_CS_success ( void ) { ++CS_CS_success; }
         
         /// Add \c 1 to stat \c _nb_VNS_searches.
         void add_nb_VNS_searches ( void ) { ++_nb_VNS_searches; }
         
         /// Add \c 1 to stat \c _VNS_success.
-        void add_VNS_success ( void ) { ++_VNS_success; }
+        void add_VNS_success ( void ) { ++VNS_VNS_success; }
         
         /// Add \c 1 to stat \c _nb_usr_searches.
         void add_nb_usr_searches ( void ) { ++_nb_usr_searches; }
@@ -361,13 +361,13 @@ namespace NOMAD {
         /**
          \param i The integer -- \b IN.
          */
-        void add_LH_pts ( int i ) { _LH_pts += i; }
+        void add_LH_pts ( int i ) { LH_LH_pts += i; }
         
         /// Add an integer to stat \c _CS_pts.
         /**
          \param i The integer -- \b IN.
          */
-        void add_CS_pts ( int i ) { _CS_pts += i; }
+        void add_CS_pts ( int i ) { CS_CS_pts += i; }
         
         /// Update model stats.
         void update_model_stats ( const NOMAD::Model_Stats & ms )
@@ -379,19 +379,19 @@ namespace NOMAD {
         /**
          \param i The integer -- \b IN.
          */
-        void add_VNS_pts ( int i ) { _VNS_pts += i; }
+        void add_VNS_pts ( int i ) { VNS_VNS_pts += i; }
         
         /// Add an integer to stat \c _VNS_bb_eval.
         /**
          \param i The integer -- \b IN.
          */
-        void add_VNS_bb_eval ( int i ) { _VNS_bb_eval += i; }
+        void add_VNS_bb_eval ( int i ) { VNS_VNS_bb_eval += i; }
         
         /// Add an integer to stat \c _VNS_sgte_eval.
         /**
          \param i The integer -- \b IN.
          */
-        void add_VNS_sgte_eval ( int i ) { _VNS_sgte_eval += i; }
+        void add_VNS_sgte_eval ( int i ) { VNS_VNS_sgte_eval += i; }
         
         /// Add an integer to stat \c _usr_srch_pts.
         /**
@@ -408,7 +408,7 @@ namespace NOMAD {
         /**
          \param i The integer -- \b IN.
          */
-        void set_MPI_data_size ( int i ) { _MPI_data_size = i; }
+        void set_MPI_data_size ( int i ) { MPI_MPI_data_size = i; }
 #endif
         
         /// Access to the stat \c _eval.
@@ -457,19 +457,19 @@ namespace NOMAD {
         /**
          \return The stat \c _LH_pts.
          */
-        int get_LH_pts ( void ) const { return _LH_pts; }
+        int get_LH_pts ( void ) const { return LH_LH_pts; }
         
         /// Access to the stat \c _CS_pts.
         /**
          \return The stat \c _CS_pts.
          */
-        int get_CS_pts ( void ) const { return _CS_pts; }
+        int get_CS_pts ( void ) const { return CS_CS_pts; }
         
         /// Access to the stat \c _VNS_bb_eval.
         /**
          \return The stat \c _VNS_bb_eval.
          */
-        int get_VNS_bb_eval ( void ) const { return _VNS_bb_eval; }
+        int get_VNS_bb_eval ( void ) const { return VNS_VNS_bb_eval; }
         
         /// Access to the stat \c _nb_VNS_SEARCHES.
         /**
@@ -481,7 +481,7 @@ namespace NOMAD {
         /**
          \return The stat \c _VNS_sgte_eval.
          */
-        int get_VNS_sgte_eval ( void ) const { return _VNS_sgte_eval; }
+        int get_VNS_sgte_eval ( void ) const { return VNS_VNS_sgte_eval; }
         
         /// Access to the number of cache hits.
         /**
