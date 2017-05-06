@@ -53,7 +53,7 @@ to others, kindly email me the relevant information and I will
 incorporate it into this FAQ.
 
 This FAQ refers to the most recent version, which as of this writing
-is 0.15-26. Kindly update your version should you not be using the
+is 0.15-27. Kindly update your version should you not be using the
 most current (from within R, \texttt{update.packages()} ought to do
 it, though also see \ref{update} below.). See the appendix in this
 file for cumulative changes between this and previous versions of the
@@ -650,6 +650,22 @@ For the second predictor use \texttt{x2} and
 \clearpage
 
 \appendix
+
+\section*{Changes from Version 0.15-26 to 0.15-27 [06-May-2017]}
+
+\begin{itemize}
+
+\item Zhenghua fixed minor issue with \texttt{dim.bs()}
+
+\item Incorporating Simon Wood's C-based tensor product code (was using his R-based code, the C code is substantially faster)
+
+\item Naming of variables in NOMAD port aligned with Brian Ripley's
+comment ('Identifiers starting with an underscore followed by an
+upper-case letter or another underscore are reserved for system macros
+and should not be used in portable code (including not as guards in
+C/C++ headers).')
+
+\end{itemize}
 
 \section*{Changes from Version 0.15-25 to 0.15-26 [29-April-2017]}
 
