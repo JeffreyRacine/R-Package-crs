@@ -1,3 +1,11 @@
+Changes from Version 0.15-26 to 0.15-27 [06-May-2017]
+
+* Zhenguya fixed minor issue with dim.bs()
+
+* Incorporating Simon Wood's C-based tensor product code (was using his R-based code, the C code is substantially faster)
+
+* Naming of variables in NOMAD port aligned with Brian Ripley's comment ('Identifiers starting with an underscore followed by an upper-case letter or another underscore are reserved for system macros and should not be used in portable code (including not as guards in C/C++ headers).')
+
 Changes from Version 0.15-25 to 0.15-26 [29-April-2017]
 
 * Zhenghua patched up issues arising with windows build

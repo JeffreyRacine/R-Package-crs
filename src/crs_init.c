@@ -2,6 +2,7 @@
 #include <Rinternals.h>
 #include <stdlib.h> // for NULL
 #include <R_ext/Rdynload.h>
+#include "mgcv.h"
 
 /* FIXME: 
    Check these declarations against the C/Fortran source code.
@@ -25,6 +26,7 @@ static const R_CMethodDef CEntries[] = {
 };
 
 static const R_CallMethodDef CallEntries[] = {
+    { "mgcv_tmm",         (DL_FUNC) &mgcv_tmm,          5}, 
     {"smultinomadRSolve", (DL_FUNC) &smultinomadRSolve, 1},
     {"snomadRInfo",       (DL_FUNC) &snomadRInfo,       1},
     {"snomadRSolve",      (DL_FUNC) &snomadRSolve,      1},
