@@ -1,3 +1,5 @@
+* Fixed issue with integer predictors and NOMAD for npglpreg() arising from upgrade to latest version of NOMAD
+
 Changes from Version 0.15-26 to 0.15-27 [06-May-2017]
 
 * Zhenghua fixed minor issue with dim.bs()

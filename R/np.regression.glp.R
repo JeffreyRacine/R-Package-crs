@@ -2002,6 +2002,11 @@ glpcvNOMAD <- function(ydat=NULL,
     INITIAL.MESH.SIZE[[i]] <- initial.mesh.size.real
     MIN.MESH.SIZE[[i]] <- min.mesh.size.real
     MIN.POLL.SIZE[[i]] <- min.poll.size.real
+    if(is.integer(xdat[,i])) {
+        INITIAL.MESH.SIZE[[i]] <- initial.mesh.size.integer
+        MIN.MESH.SIZE[[i]] <- min.mesh.size.integer
+        MIN.POLL.SIZE[[i]] <- min.poll.size.integer
+    }
     ## Need to do integer search for numeric predictors when bwtype is
     ## a nearest-neighbour, so set bbin appropriately.
     if(xdat.numeric[i]==TRUE && bwtype!="fixed") {
