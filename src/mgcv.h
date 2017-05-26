@@ -20,3 +20,4 @@ USA. */
 #include <Rconfig.h>
 
 void mgcv_tmm(SEXP x,SEXP t,SEXP D,SEXP M, SEXP N);
+void glp_model_tmm(SEXP X,SEXP Z, SEXP T, SEXP D,SEXP M, SEXP N, SEXP ZN);

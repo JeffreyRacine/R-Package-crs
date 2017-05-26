@@ -26,7 +26,8 @@ static const R_CMethodDef CEntries[] = {
 };
 
 static const R_CallMethodDef CallEntries[] = {
-    { "mgcv_tmm",         (DL_FUNC) &mgcv_tmm,          5}, 
+    {"glp_model_tmm",     (DL_FUNC) &glp_model_tmm,     7}, 
+    {"mgcv_tmm",          (DL_FUNC) &mgcv_tmm,          5}, 
     {"smultinomadRSolve", (DL_FUNC) &smultinomadRSolve, 1},
     {"snomadRInfo",       (DL_FUNC) &snomadRInfo,       1},
     {"snomadRSolve",      (DL_FUNC) &snomadRSolve,      1},

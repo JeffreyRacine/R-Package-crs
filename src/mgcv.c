@@ -70,3 +70,77 @@ void mgcv_tmm(SEXP x,SEXP t,SEXP D,SEXP M, SEXP N) {
   mgcv_tensor_mm(X,T,d,m,n);
 }
 
+/* 
+   x contains rows of matrices to be producted. Contains m matrices,
+   d[i] is number of columns in ith matrix. Each column has n rows. 
+	 t is the target matrix, with n rows and zn columns.
+	 z contains a matrix of integers with m columns and zn rows.
+*/
+void glp_model_mm(double *x, int *z, double *t, int *d, int *m, int *n, int *zn)
+{
+		ptrdiff_t i,j,k, tsize;
+		double *xi;  // the ith column of a given matrix.
+
+		tsize = *zn * *n;  // the size of the matrix t.
+		// the first column of z. fill with the first x matrix.
+		for(i = 0; i < *zn; ++i)
+		{
+				if (*z == 0)
+				{
+						for(j = 0; j < *n; ++j)
+								*t++ = 1.0;
+				}
+				else
+				{
+						xi = x + (*z - 1) * *n;
+						for(j = 0; j < *n; ++j)
+								*t++ = *xi++;
+				}
+				++z;
+		}
+		t -= tsize; // go back to the start pointer.
+
+		if(*m > 1)
+		{
+				// the kth matrix
+				for(k = 1; k < *m; ++k)
+				{
+						x += d[k-1] * *n; // go the next matrix.
+
+						for(i = 0; i < *zn; ++i)
+						{
+								if (*z == 0)
+								{
+												t += *n;
+								}
+								else
+								{
+										xi = x + (*z - 1) * *n;
+										for(j = 0; j < *n; ++j, ++t, ++xi)
+												*t *= *xi;
+								}
+								++z;
+						}
+						t -= tsize; // go back to the start pointer.
+				}
+		}
+		return;
+}
+
+void glp_model_tmm(SEXP X,SEXP Z, SEXP T, SEXP D,SEXP M, SEXP N, SEXP ZN)
+{
+		/* wrapper for calling glp_tmodel_mm using .Call */
+		double *x,*t;
+		int *d,*m,*n, *zn, *z;
+
+		x = REAL(X);
+		z = INTEGER(Z);
+		t=REAL(T);
+		d = INTEGER(D);
+		m = INTEGER(M);
+		n = INTEGER(N);
+		zn = INTEGER(ZN);
+
+		glp_model_mm(x, z, t, d, m, n, zn);
+
+}
