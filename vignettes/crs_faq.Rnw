@@ -651,6 +651,18 @@ For the second predictor use \texttt{x2} and
 
 \appendix
 
+\section*{Changes from Version 0.15-27 to 0.15-28 [06-Oct-2017]}
+
+\begin{itemize}
+
+\item Zhenghua worked his magic to furnish a computationally efficient glp.model.matrix using a C backend similar to Simon Wood's C backend for his tensor.product.model.matrix
+
+\item Fixed issue with integer predictors and NOMAD for \texttt{npglpreg()} arising from upgrade to latest version of NOMAD
+
+\item Fixed issue with \texttt{MIN\_POLL\_SIZE} default arising from upgrade to latest version of NOMAD
+
+\end{itemize}
+
 \section*{Changes from Version 0.15-26 to 0.15-27 [06-May-2017]}
 
 \begin{itemize}

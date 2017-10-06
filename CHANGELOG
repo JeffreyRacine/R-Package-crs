@@ -1,4 +1,10 @@
+Changes from Version 0.15-27 to 0.15-28 [06-Oct-2017]
+
+* Zhenghua worked his magic to furnish a computationally efficient glp.model.matrix using a C backend similar to Simon Wood's C backend for his tensor.product.model.matrix
+
 * Fixed issue with integer predictors and NOMAD for npglpreg() arising from upgrade to latest version of NOMAD
+
+* Fixed issue with min.poll.size arising from upgrade to latest version of NOMAD
 
 Changes from Version 0.15-26 to 0.15-27 [06-May-2017]
 

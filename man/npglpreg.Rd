@@ -68,7 +68,7 @@ npglpreg(\dots)
          initial.mesh.size.integer = 1,
          min.mesh.size.real = sqrt(.Machine$double.eps),
          min.mesh.size.integer = 1, 
-         min.poll.size.real = sqrt(.Machine$double.eps),
+         min.poll.size.real = 1,
          min.poll.size.integer = 1, 
          opts=list(),
          restart.from.min = FALSE,
