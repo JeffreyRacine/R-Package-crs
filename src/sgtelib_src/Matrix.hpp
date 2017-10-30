@@ -51,7 +51,7 @@ namespace SGTELIB {
     int _nbRows; // nbRows x nbCols matrix
     int _nbCols;
 
-    double ** _X;
+    double ** X0;
 
   public:
 
@@ -206,7 +206,7 @@ namespace SGTELIB {
                                      const SGTELIB::Matrix & C,
                                      const SGTELIB::Matrix & D);
 
-    void product ( const int i , const int j , const double v){ _X[i][j]*=v; };
+    void product ( const int i , const int j , const double v){ X0[i][j]*=v; };
 
     // Subset product, multiply
     // the p first rows and q first columns of A
@@ -248,7 +248,7 @@ namespace SGTELIB {
 
     // Add to the matrix itself
     void add ( const SGTELIB::Matrix & B);
-    void add ( const int i , const int j , const double v){ _X[i][j]+=v; };
+    void add ( const int i , const int j , const double v){ X0[i][j]+=v; };
 
     // Add and fill with 0 (add two matrices of different sizes)
     static SGTELIB::Matrix add_fill ( const SGTELIB::Matrix & A,

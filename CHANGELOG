@@ -1,3 +1,9 @@
+Changes from Version 0.15-28 to 0.15-29 [06-Oct-2017]
+
+Fixed issue pointed out by Brian Ripley (thanks!) about double ** _X; in the nomad code
+
+Updated licence to GPL (>= 3)
+
 Changes from Version 0.15-27 to 0.15-28 [06-Oct-2017]
 
 * Zhenghua worked his magic to furnish a computationally efficient glp.model.matrix using a C backend similar to Simon Wood's C backend for his tensor.product.model.matrix
