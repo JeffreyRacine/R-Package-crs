@@ -1528,7 +1528,7 @@ minimand.cv.aic <- function(bws=NULL,
 
       aic.penalty <- (1+trH/n)/(1-(trH+2)/n)
 
-      if (!any(ghat == cv.maxPenalty) && (aic.penalty > 0)){
+      if (!any(is.na(ghat)) && !any(ghat == cv.maxPenalty) && (aic.penalty > 0)){
         fv <- log(mean((ydat-ghat)^2)) + aic.penalty
       } else {
         fv <- cv.maxPenalty
@@ -1608,7 +1608,7 @@ minimand.cv.aic <- function(bws=NULL,
 
       aic.penalty <- (1+trH/n)/(1-(trH+2)/n)
 
-      if (!any(ghat == cv.maxPenalty) && (aic.penalty > 0)){
+      if (!any(is.na(ghat)) && !any(ghat == cv.maxPenalty) && (aic.penalty > 0)){
         fv <- log(mean((ydat-ghat)^2)) + aic.penalty
       } else {
         fv <- cv.maxPenalty
