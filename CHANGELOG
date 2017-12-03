@@ -1,8 +1,14 @@
+Changes from Version 0.15-29 to 0.15-30 [03-Dec-2017]
+
+* Fixed issue where, occasionally during cross-validation, execution of
+  the function npglpreg() could halt with an error indicating missing
+  value needed where TRUE/FALSE needed
+
 Changes from Version 0.15-28 to 0.15-29 [06-Oct-2017]
 
-Fixed issue pointed out by Brian Ripley (thanks!) about double ** _X; in the nomad code
+* Fixed issue pointed out by Brian Ripley (thanks!) about double ** _X; in the nomad code
 
-Updated licence to GPL (>= 3)
+* Updated licence to GPL (>= 3)
 
 Changes from Version 0.15-27 to 0.15-28 [06-Oct-2017]
 
