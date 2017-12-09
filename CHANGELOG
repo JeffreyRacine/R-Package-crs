@@ -1,5 +1,8 @@
 Changes from Version 0.15-29 to 0.15-30 [03-Dec-2017]
 
+* dim.plot() replaced by n2mfrow() for determining layout of multiple
+  figures on one device
+
 * Fixed issue where, occasionally during cross-validation, execution of
   the function npglpreg() could halt with an error indicating missing
   value needed where TRUE/FALSE needed
