@@ -110,15 +110,6 @@ check.max.spline.degree <- function(xdat=NULL,degree=NULL,issue.warning=FALSE) {
 
 }
 
-## Utility function for dimension of par(mfrow=c(,)) for multiple
-## plots on the same device
-
-dim.plot = function(x) {
-  a1 = round(sqrt(4.0/3.0*x))
-  a2 = ceiling(x/a1)
-  c(a1,a2)
-}
-
 succeedWithResponse <- function(tt, frame){
   !any(class(try(eval(expr = attr(tt, "variables"),
                       envir = frame, enclos = NULL), silent = TRUE)) == "try-error")
