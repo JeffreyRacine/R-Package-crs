@@ -1,5 +1,5 @@
 useDynLib(crs, .registration = TRUE)
-importFrom("grDevices", "extendrange", "topo.colors")
+importFrom("grDevices", "extendrange", "topo.colors", "n2mfrow")
 importFrom("graphics", "par", "plot")
 importFrom("utils", "flush.console")
 import(stats, boot, np, quantreg, rgl)
