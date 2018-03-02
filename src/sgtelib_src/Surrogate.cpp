@@ -684,7 +684,7 @@ double SGTELIB::Surrogate::get_metric (SGTELIB::metric_t mt , int j){
          "get_metric(): unknown metric" );
   }
 
-  if (isnan(m)    ){ m = SGTELIB::INF; }
+  if (std::isnan(m)    ){ m = SGTELIB::INF; }
   if (m < -EPSILON){ m = SGTELIB::INF; }
   if (m <= 0.0    ){ m = 0.0; }
   return m;
@@ -1648,8 +1648,8 @@ double SGTELIB::Surrogate::eval_objective ( void ){
     metric = get_metric(mt,0);
   }
 
-  if ( isnan(metric) ) return +INF;
-  if ( isinf(metric) ) return +INF;
+  if ( std::isnan(metric) ) return +INF;
+  if ( std::isinf(metric) ) return +INF;
   return metric;
 
 }//

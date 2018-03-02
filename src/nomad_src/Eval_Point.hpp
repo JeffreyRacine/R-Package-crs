@@ -54,8 +54,8 @@
 #include "Set_Element.hpp"
 
 #ifdef WINDOWS
-#ifndef isnan
-inline bool isnan ( double x ) { return x != x; }
+#ifndef std::isnan
+inline bool std::isnan ( double x ) { return x != x; }
 #endif
 #endif
 
