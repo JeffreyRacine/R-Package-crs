@@ -35,7 +35,7 @@
 #ifdef _MSC_VER
 #pragma warning(disable:4996)
 #include <io.h>
-#define isnan(x) _isnan(x)
+#define std::isnan(x) _std::isnan(x)
 #define isdigit(x) _isdigit(x)
 #define isinf(x) (!_finite(x))
 
@@ -49,7 +49,7 @@ typedef struct timeval {
 #ifdef __MINGW32__
 #include <_timeval.h>
 #include <unistd.h>
-#define isnan(x) _isnan(x)
+#define std::isnan(x) _std::isnan(x)
 #define isdigit(x) _isdigit(x)
 #define isinf(x) (!_finite(x))
 #else

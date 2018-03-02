@@ -248,7 +248,7 @@ std::string SGTELIB::test_quick (const std::string & s , const SGTELIB::Matrix &
   SGTELIB::rout << oss.str();
 
   for (int j=0 ; j<m ; j++){
-    if ( (isnan(emax[j])) || (isnan(rmsecv[j])) || (isnan(oe[j])) || (isnan(oecv[j])) || (isnan(linv[j])) ){
+    if ( (std::isnan(emax[j])) || (std::isnan(rmsecv[j])) || (std::isnan(oe[j])) || (std::isnan(oecv[j])) || (std::isnan(linv[j])) ){
       SGTELIB::rout << "There is some nan\n";
       SGTELIB::rout << "EXIT!\n"; 
      // exit(0);  zhenghua
@@ -1386,11 +1386,11 @@ void SGTELIB::check_matrix_diff(const SGTELIB::Matrix * A, const SGTELIB::Matrix
         eij = true;
         SGTELIB::rout << "diff is too big !\n";
       }
-      if (isnan(va)){
+      if (std::isnan(va)){
         eij = true;
         SGTELIB::rout << "va is nan !\n";
       }
-      if (isnan(vb)){
+      if (std::isnan(vb)){
         eij = true;
         SGTELIB::rout << "vb is nan !\n";
       }

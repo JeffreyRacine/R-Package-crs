@@ -1154,7 +1154,7 @@ double SGTELIB::Surrogate_Parameters::get_x_penalty ( void ){
   }
 
   if ( isinf(pen) ) pen=+INF;
-  if ( isnan(pen) ) pen=+INF;
+  if ( std::isnan(pen) ) pen=+INF;
   return pen;
 }
 
