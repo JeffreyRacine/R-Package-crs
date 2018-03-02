@@ -1649,7 +1649,7 @@ double SGTELIB::Surrogate::eval_objective ( void ){
   }
 
   if ( std::isnan(metric) ) return +INF;
-  if ( isinf(metric) ) return +INF;
+  if ( std::isinf(metric) ) return +INF;
   return metric;
 
 }//

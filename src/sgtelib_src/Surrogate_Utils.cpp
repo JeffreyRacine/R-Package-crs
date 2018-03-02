@@ -139,7 +139,7 @@ void SGTELIB::wait (double t) {
 /*-------------------------------*/
 bool SGTELIB::isdef ( const double x ) {
   if ( std::isnan(x) ) return false;
-  if ( isinf(x) ) return false;
+  if ( std::isinf(x) ) return false;
   if ( fabs(x)>=SGTELIB::INF) return false;
   if ( fabs(x)>=1e+16){
     return false;

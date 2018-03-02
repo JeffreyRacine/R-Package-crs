@@ -2441,7 +2441,7 @@ bool SGTELIB::Matrix::has_inf ( void ) const {
   int i , j;
   for ( i = 0 ; i < _nbRows ; ++i ){
     for ( j = 0 ; j < _nbCols ; ++j ){
-      if ( isinf(X0[i][j])){
+      if ( std::isinf(X0[i][j])){
         return true;
       }
     }
