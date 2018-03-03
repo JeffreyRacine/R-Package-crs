@@ -323,7 +323,7 @@ void NOMAD::Sgtelib_Model_Manager::update(void)
             valid_point = true;
             for ( int j=0 ; j < _p.get_bb_nb_outputs() ; j++)
             {
-                if ( ( !cur->get_bb_outputs()[j].is_defined() ) || ( isnan(cur->get_bb_outputs()[j].value()) ) || !cur->is_eval_ok() || !cur->get_f().is_defined() )
+                if ( ( !cur->get_bb_outputs()[j].is_defined() ) || ( crs_isnan(cur->get_bb_outputs()[j].value()) ) || !cur->is_eval_ok() || !cur->get_f().is_defined() )
                     valid_point = false;
             }
             
@@ -494,7 +494,7 @@ NOMAD::Point NOMAD::Sgtelib_Model_Manager::get_extended_lb(void)
     for ( int i=0 ; i < _p.get_dimension() ; i++ )
     {
         vi = _p.get_lower_bound().get_coord(i);
-        if ( ( ! vi.is_defined() ) || ( isnan(vi.value() ) ) )
+        if ( ( ! vi.is_defined() ) || ( crs_isnan(vi.value() ) ) )
             ext_lb[i] = _model_lb[i] - max(Double(10.0),_model_ub[i]-_model_lb[i]);
     }
     return ext_lb;
@@ -507,7 +507,7 @@ NOMAD::Point NOMAD::Sgtelib_Model_Manager::get_extended_ub(void)
     for ( int i = 0 ; i < _p.get_dimension() ; i++ )
     {
         vi = _p.get_upper_bound().get_coord(i);
-        if ( (!vi.is_defined()) || (isnan(vi.value())) )
+        if ( (!vi.is_defined()) || (crs_isnan(vi.value())) )
             ext_ub[i] = _model_ub[i] + max(Double(10.0),_model_ub[i]-_model_lb[i]);
     }
     return ext_ub;
@@ -974,7 +974,7 @@ bool NOMAD::Sgtelib_Model_Manager::eval_x ( NOMAD::Eval_Point   * x          ,
         }
         out << "Exclusion area penalty = " << penalty << std::endl;
         out << "Model Output = (" << x->get_bb_outputs() << ")" << std::endl;
-        if ( isnan( pf.value() ) || isnan( pi.value() ) )
+        if ( crs_isnan( pf.value() ) || crs_isnan( pi.value() ) )
         {
             throw SGTELIB::Exception ( __FILE__ , __LINE__ ,
                                       "Sgtelib_Model_Manager::eval_x: nan values in pi or pf." );

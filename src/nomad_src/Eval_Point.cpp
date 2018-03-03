@@ -528,13 +528,13 @@ bool NOMAD::Eval_Point::check_nan ( void ) const
     {
         if ( _bb_outputs[i].is_defined() ) 
         {
-#ifdef WINDOWS
-            if ( isnan ( _bb_outputs[i].value() ) )
+//#ifdef WINDOWS
+            if (crs_isnan ( _bb_outputs[i].value() ) )
                 return true;
-#else
-            if ( std::isnan ( _bb_outputs[i].value() ) )
-                return true;
-#endif
+//#else
+//            if ( std::isnan ( _bb_outputs[i].value() ) )
+//               return true;
+//#endif
         }
     }
     return false;

@@ -3758,7 +3758,7 @@ void NOMAD::Evaluator_Control::private_smooth_fx( NOMAD::Eval_Point & eval_pt )
     
     fsmooth = fsmooth / Psmooth;
     
-    if ( isnan( fsmooth.value() ) || isnan( Psmooth.value() ) )
+    if ( crs_isnan( fsmooth.value() ) || crs_isnan( Psmooth.value() ) )
     {
         ptX_1.set_smoothing_status ( NOMAD::SMOOTHING_FAIL );
     }
@@ -3799,7 +3799,7 @@ void NOMAD::Evaluator_Control::private_smooth_fx( NOMAD::Eval_Point & eval_pt )
             fsmooth = fsmooth / Psmooth;
             
             // Update only if fsmooth and Psmooth are valid
-            if ( ! isnan( fsmooth.value() ) && ! isnan( Psmooth.value() ) )
+            if ( ! crs_isnan( fsmooth.value() ) && ! crs_isnan( Psmooth.value() ) )
             {
                 ptX_2.set_fsmooth( fsmooth );
                 ptX_2.set_P( Psmooth );

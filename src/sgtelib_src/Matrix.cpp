@@ -1907,7 +1907,7 @@ SGTELIB::Matrix SGTELIB::Matrix::cholesky_inverse ( double * det ) const {
     double v = 1;
     for (i=0 ; i<n ; i++) v *= L.X0[i][i];
     v *= v;
-    if ( isnan(v)) v=+INF;
+    if ( crs_isnan(v)) v=+INF;
     *det = v;
   }
 
@@ -2426,7 +2426,7 @@ bool SGTELIB::Matrix::has_nan ( void ) const {
   int i , j;
   for ( i = 0 ; i < _nbRows ; ++i ){
     for ( j = 0 ; j < _nbCols ; ++j ){
-      if ( isnan(X0[i][j])){
+      if ( crs_isnan(X0[i][j])){
         return true;
       }
     }
@@ -2441,7 +2441,7 @@ bool SGTELIB::Matrix::has_inf ( void ) const {
   int i , j;
   for ( i = 0 ; i < _nbRows ; ++i ){
     for ( j = 0 ; j < _nbCols ; ++j ){
-      if ( isinf(X0[i][j])){
+      if ( crs_isinf(X0[i][j])){
         return true;
       }
     }
@@ -2456,7 +2456,7 @@ void SGTELIB::Matrix::replace_nan ( double d ) {
   int i , j;
   for ( i = 0 ; i < _nbRows ; ++i ){
     for ( j = 0 ; j < _nbCols ; ++j ){
-      if ( isnan(X0[i][j])){
+      if ( crs_isnan(X0[i][j])){
         X0[i][j] = d;
       }
     }

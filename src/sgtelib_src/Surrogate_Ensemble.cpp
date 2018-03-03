@@ -342,7 +342,7 @@ void SGTELIB::Surrogate_Ensemble::compute_W_by_select ( void ) {
       for (k=0 ; k<_kmax ; k++){
         if (is_ready(k)){
           metric = _surrogates.at(k)->get_metric(_param.get_metric_type(),j);
-          if (! isnan(metric)) {
+          if (! crs_isnan(metric)) {
             metric_best = std::min(metric,metric_best);
           }
         }
@@ -891,7 +891,7 @@ bool SGTELIB::Surrogate_Ensemble::check_weight_vector ( void ) const {
         w = W.get(k,j);
         if (w<-EPSILON)    return true;   
         if (w>1+EPSILON)   return true;
-        if ( isnan(w) ) return true;
+        if ( crs_isnan(w) ) return true;
       }
       s = W.get_col(j).sum();
       if (fabs(s-1.0)>_kready*EPSILON) return true;

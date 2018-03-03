@@ -248,12 +248,12 @@ std::string SGTELIB::test_quick (const std::string & s , const SGTELIB::Matrix &
   SGTELIB::rout << oss.str();
 
   for (int j=0 ; j<m ; j++){
-    if ( (isnan(emax[j])) || (isnan(rmsecv[j])) || (isnan(oe[j])) || (isnan(oecv[j])) || (isnan(linv[j])) ){
+    if ( (crs_isnan(emax[j])) || (crs_isnan(rmsecv[j])) || (crs_isnan(oe[j])) || (crs_isnan(oecv[j])) || (crs_isnan(linv[j])) ){
       SGTELIB::rout << "There is some nan\n";
       SGTELIB::rout << "EXIT!\n"; 
      // exit(0);  zhenghua
     }
-    if ( (isinf(emax[j])) || (isinf(rmse[j])) || ( isinf(rmsecv[j])) || (isinf(oe[j])) || (isinf(oecv[j])) || (isinf(linv[j])) ){
+    if ( (crs_isinf(emax[j])) || (crs_isinf(rmse[j])) || ( crs_isinf(rmsecv[j])) || (crs_isinf(oe[j])) || (crs_isinf(oecv[j])) || (crs_isinf(linv[j])) ){
       SGTELIB::rout << "There is some inf\n";
       SGTELIB::rout << "EXIT!\n"; 
      // exit(0);  zhenghua
@@ -1386,19 +1386,19 @@ void SGTELIB::check_matrix_diff(const SGTELIB::Matrix * A, const SGTELIB::Matrix
         eij = true;
         SGTELIB::rout << "diff is too big !\n";
       }
-      if (isnan(va)){
+      if (crs_isnan(va)){
         eij = true;
         SGTELIB::rout << "va is nan !\n";
       }
-      if (isnan(vb)){
+      if (crs_isnan(vb)){
         eij = true;
         SGTELIB::rout << "vb is nan !\n";
       }
-      if (isinf(va)){
+      if (crs_isinf(va)){
         eij = true;
         SGTELIB::rout << "va is inf !\n";
       }
-      if (isinf(vb)){
+      if (crs_isinf(vb)){
         eij = true;
         SGTELIB::rout << "vb is inf !\n";
       }
