@@ -52,12 +52,7 @@
 #include "Parameters.hpp"
 #include "Cache_File_Point.hpp"
 #include "Set_Element.hpp"
-
-//#ifdef WINDOWS
-#ifndef crs_isnan
-inline bool crs_isnan ( double x ) { return x != x; }
-#endif
-//#endif
+#include "Surrogate_Utils.hpp"
 
 namespace NOMAD {
 		
