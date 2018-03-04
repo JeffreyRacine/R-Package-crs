@@ -57,11 +57,15 @@ typedef struct timeval {
 #endif
 #endif
 
-//#ifndef crs_isnan
-//inline bool crs_isnan ( double x ) { return x != x; }
-//#endif
+#ifndef CRS_ISNAN__
+#define CRS_ISNAN__
+inline bool crs_isnan ( double x ) { return x != x; }
+#endif
 
-#include "../utility.hpp"
+#ifndef __CRS_ISINF__
+#define __CRS_ISINF__
+inline bool crs_isinf (double x) { return !crs_isnan(x) && crs_isnan(x - x); }
+#endif
 
 #include <cstring>
 #include <cctype>
