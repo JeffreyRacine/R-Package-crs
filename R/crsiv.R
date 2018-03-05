@@ -475,7 +475,7 @@ crsiv <- function(y,
     }
 
     phi.mat <- phi
-    if (is.null(list(...)$weights)) {
+    if (!is.null(list(...)$weights)) {
       weights <- list(...)$weights
     } else {
       weights <- rep(1, length(y))
