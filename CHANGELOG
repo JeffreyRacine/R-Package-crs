@@ -1,4 +1,10 @@
+Changes from Version 0.15-30 to 0.15-31 [06-Mar-2018]
+
+* basis="auto" was default, doc/code discrepancy fixed
+
 * Hattip to Thibault Vatter who patched an issue with weights not being functional in crsiv.R
+
+* Fixed issue with compiler compliance to support ICC and retain backwards compatability with MSVC C++
 
 Changes from Version 0.15-29 to 0.15-30 [03-Dec-2017]
 
