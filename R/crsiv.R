@@ -383,7 +383,8 @@ crsiv <- function(y,
                  knots=phi.0$knots,
                  tau=phi.0$tau,
                  deriv=deriv,
-                 data=traindata)
+                 data=traindata,
+                 weights=phi.0$weights)
     if(crs.messages) options(crs.messages=TRUE)
 
     model$residuals <- residuals.phi
@@ -467,14 +468,19 @@ crsiv <- function(y,
     }
     if(crs.messages) options(crs.messages=TRUE)
 
-    if(phi.0.NULL) {
+    if (phi.0.NULL) {
       phi <- predict(phi.0,newdata=evaldata,...) + constant*predict(model.predict.residw.z,newdata=evaldata,...)
     } else {
       phi <- phi.0.input + constant*predict(model.predict.residw.z,newdata=evaldata,...)
     }
 
     phi.mat <- phi
-    norm.stop[1] <- sum(residw^2)/sum(E.y.w^2)
+    if (!is.null(list(...)$weights)) {
+      weights <- list(...)$weights
+    } else {
+      weights <- rep(1, length(y))
+    }
+    norm.stop[1] <- sum(weights*residw^2)/sum(weights*E.y.w^2)
 
     for(j in 2:iterate.max) {
 
@@ -501,7 +507,7 @@ crsiv <- function(y,
       phi <- phi + constant*predict(model.predict.residw.z,newdata=evaldata,...)
       phi.mat <- cbind(phi.mat,phi)
 
-      norm.stop[j] <- ifelse(penalize.iteration,j*sum(residw^2)/sum(E.y.w^2),sum(residw^2)/sum(E.y.w^2))
+      norm.stop[j] <- ifelse(penalize.iteration,j*sum(weights*residw^2)/sum(weights*E.y.w^2),sum(weights*residw^2)/sum(weights*E.y.w^2))
 
       ## The number of iterations in LF is asymptotically equivalent
       ## to 1/alpha (where alpha is the regularization parameter in
@@ -585,7 +591,8 @@ crsiv <- function(y,
                  knots=phi.0$knots,
                  tau=phi.0$tau,
                  deriv=deriv,
-                 data=traindata)
+                 data=traindata,
+                 weights=phi.0$weights)
     if(crs.messages) options(crs.messages=TRUE)
 
     model$residuals <- residuals.phi
