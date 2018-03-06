@@ -1,3 +1,5 @@
+* Hattip to Thibault Vatter who patched an issue with weights not being functional in crsiv.R
+
 Changes from Version 0.15-29 to 0.15-30 [03-Dec-2017]
 
 * dim.plot() replaced by n2mfrow() for determining layout of multiple
