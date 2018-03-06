@@ -21,7 +21,7 @@ crs(\dots)
     lambda = NULL,
     complexity = c("degree-knots","degree","knots"),
     knots = c("quantiles","uniform","auto"),
-    basis = c("additive","tensor","glp","auto"),
+    basis = c("auto","additive","tensor","glp"),
     deriv = 0,
     data.return = FALSE,
     prune = FALSE,
