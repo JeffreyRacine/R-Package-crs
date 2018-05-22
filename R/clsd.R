@@ -570,10 +570,12 @@ ls.ml <- function(x=NULL,
       s <- segments.min
       
       while(s <= segments.max) {
-        
-        if(verbose) cat("\n")
-        cat("\r                                                                                                  ")
-        cat("\rOptimizing, degree = ",d,", segments = ",s,", degree.opt = ",d.opt, ", segments.opt = ",s.opt," ",sep="")
+
+        if(options('crs.messages')$crs.messages) {
+            if(verbose) cat("\n")
+            cat("\r                                                                                                  ")
+            cat("\rOptimizing, degree = ",d,", segments = ",s,", degree.opt = ",d.opt, ", segments.opt = ",s.opt," ",sep="")
+        }
         
         ## Generate objects that need not be recomputed for a given d
         ## and s
@@ -634,9 +636,11 @@ ls.ml <- function(x=NULL,
             ## If optim fails to converge, reset initial parameters and
             ## try again.
             
-            if(verbose && optim.out[[4]]!=0) {
-              if(!is.null(optim.out$message)) cat("\n optim message = ",optim.out$message,sep="")
-              cat("\n optim failed (degree = ",d,", segments = ",s,", convergence = ", optim.out[[4]],") re-running with new initial values",sep="")
+            if(options('crs.messages')$crs.messages) {
+                if(verbose && optim.out[[4]]!=0) {
+                    if(!is.null(optim.out$message)) cat("\n optim message = ",optim.out$message,sep="")
+                    cat("\n optim failed (degree = ",d,", segments = ",s,", convergence = ", optim.out[[4]],") re-running with new initial values",sep="")
+                }
             }
             
             par.init.out <- par.init(d,s,monotone,monotone.lb)
@@ -652,9 +656,11 @@ ls.ml <- function(x=NULL,
           ## new values.
           
           if(optim.out$value > value.opt) {
-            if(verbose && n==1) cat("\n optim improved: d = ",d,", s = ",s,", old = ",formatC(value.opt,format="g",digits=6),", new = ",formatC(optim.out$value,format="g",digits=6),", diff = ",formatC(optim.out$value-value.opt,format="g",digits=6),sep="")
+            if(options('crs.messages')$crs.messages) {
+                if(verbose && n==1) cat("\n optim improved: d = ",d,", s = ",s,", old = ",formatC(value.opt,format="g",digits=6),", new = ",formatC(optim.out$value,format="g",digits=6),", diff = ",formatC(optim.out$value-value.opt,format="g",digits=6),sep="")
             
-            if(verbose && n>1) cat("\n optim improved (ms ",n,"/",nmulti,"): d = ",d,", s = ",s,", old = ",formatC(value.opt,format="g",digits=6),", new = ",formatC(optim.out$value,format="g",digits=6),", diff = ",formatC(optim.out$value-value.opt,format="g",digits=6),sep="")
+                if(verbose && n>1) cat("\n optim improved (ms ",n,"/",nmulti,"): d = ",d,", s = ",s,", old = ",formatC(value.opt,format="g",digits=6),", new = ",formatC(optim.out$value,format="g",digits=6),", diff = ",formatC(optim.out$value-value.opt,format="g",digits=6),sep="")
+            }
             
             par.opt <- optim.out$par
             d.opt <- d
@@ -747,8 +753,10 @@ ls.ml <- function(x=NULL,
         ## try again.
         
         if(verbose && optim.out[[4]]!=0) {
-          if(!is.null(optim.out$message)) cat("\n optim message = ",optim.out$message,sep="")
-          cat("\n optim failed (degree = ",d,", segments = ",s,", convergence = ", optim.out[[4]],") re-running with new initial values",sep="")
+          if(options('crs.messages')$crs.messages) {
+              if(!is.null(optim.out$message)) cat("\n optim message = ",optim.out$message,sep="")
+              cat("\n optim failed (degree = ",d,", segments = ",s,", convergence = ", optim.out[[4]],") re-running with new initial values",sep="")
+          }
         }
         
         par.init.out <- par.init(d,s,monotone,monotone.lb)
@@ -760,9 +768,11 @@ ls.ml <- function(x=NULL,
         
       }
 
-      if(verbose) cat("\n")
-      cat("\r                                                                                                  ")
-      cat("\rOptimizing, degree = ",d,", segments = ",s,", log likelihood = ",optim.out$value,sep="")
+      if(options('crs.messages')$crs.messages) {
+          if(verbose) cat("\n")
+          cat("\r                                                                                                  ")
+          cat("\rOptimizing, degree = ",d,", segments = ",s,", log likelihood = ",optim.out$value,sep="")
+      }
 
       fv <- -optim.out$value
       
@@ -868,8 +878,10 @@ ls.ml <- function(x=NULL,
       ## try again.
       
       if(verbose && optim.out[[4]]!=0) {
-        if(!is.null(optim.out$message)) cat("\n optim message = ",optim.out$message,sep="")
-        cat("\n optim failed (degree = ",d,", segments = ",s,", convergence = ", optim.out[[4]],") re-running with new initial values",sep="")
+        if(options('crs.messages')$crs.messages) {
+            if(!is.null(optim.out$message)) cat("\n optim message = ",optim.out$message,sep="")
+            cat("\n optim failed (degree = ",d,", segments = ",s,", convergence = ", optim.out[[4]],") re-running with new initial values",sep="")
+        }
       }
       
       par.init.out <- par.init(d,s,monotone,monotone.lb)
@@ -888,12 +900,14 @@ ls.ml <- function(x=NULL,
     
   }
   
-  cat("\r                                                                            ")
-  if(!(degree.min==degree.max) && (d.opt==degree.max)) warning(paste(" optimal degree equals search maximum (", d.opt,"): rerun with larger degree.max",sep=""))
-  if(!(segments.min==segments.max) && (s.opt==segments.max)) warning(paste(" optimal segment equals search maximum (", s.opt,"): rerun with larger segments.max",sep=""))
-  if(par.opt[1]>0|par.opt[length(par.opt)]>0) warning(" optim() delivered a positive weight for linear segment (supposed to be negative)")
-  if(!monotone&&par.opt[1]<=monotone.lb) warning(paste(" optimal weight for left nonmonotone basis equals search minimum (",par.opt[1],"): rerun with smaller monotone.lb",sep=""))
-  if(!monotone&&par.opt[length(par.opt)]<=monotone.lb) warning(paste(" optimal weight for right nonmonotone basis equals search minimum (",par.opt[length(par.opt)],"): rerun with smaller monotone.lb",sep=""))
+  if(options('crs.messages')$crs.messages) {
+      cat("\r                                                                            ")
+      if(!(degree.min==degree.max) && (d.opt==degree.max)) warning(paste(" optimal degree equals search maximum (", d.opt,"): rerun with larger degree.max",sep=""))
+      if(!(segments.min==segments.max) && (s.opt==segments.max)) warning(paste(" optimal segment equals search maximum (", s.opt,"): rerun with larger segments.max",sep=""))
+      if(par.opt[1]>0|par.opt[length(par.opt)]>0) warning(" optim() delivered a positive weight for linear segment (supposed to be negative)")
+      if(!monotone&&par.opt[1]<=monotone.lb) warning(paste(" optimal weight for left nonmonotone basis equals search minimum (",par.opt[1],"): rerun with smaller monotone.lb",sep=""))
+      if(!monotone&&par.opt[length(par.opt)]<=monotone.lb) warning(paste(" optimal weight for right nonmonotone basis equals search minimum (",par.opt[length(par.opt)],"): rerun with smaller monotone.lb",sep=""))
+  }
   
   ## Restore seed
 
