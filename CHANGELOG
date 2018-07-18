@@ -1,3 +1,5 @@
+* Added crs.messages=FALSE capabilities to clsd()
+
 Changes from Version 0.15-30 to 0.15-31 [01-May-2018]
 
 * basis="auto" was default, doc/code discrepancy fixed
