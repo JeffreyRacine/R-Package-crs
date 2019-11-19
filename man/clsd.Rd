@@ -185,7 +185,7 @@ clsd(x = NULL,
 
   The spline model employs the tensor product B-spline basis matrix for
   a multivariate polynomial spline via the B-spline routines in the GNU
-  Scientific Library (\url{http://www.gnu.org/software/gsl/}) and the
+  Scientific Library (\url{https://www.gnu.org/software/gsl/}) and the
   \code{\link{tensor.prod.model.matrix}} function.
 
   When \code{basis="additive"} the model becomes additive in nature

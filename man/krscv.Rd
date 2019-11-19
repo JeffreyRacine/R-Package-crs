@@ -140,7 +140,7 @@ krscv(xz,
   For the continuous predictors the regression spline model employs
   either the additive or tensor product B-spline basis matrix for a
   multivariate polynomial spline via the B-spline routines in the GNU
-  Scientific Library (\url{http://www.gnu.org/software/gsl/}) and the
+  Scientific Library (\url{https://www.gnu.org/software/gsl/}) and the
   \code{\link{tensor.prod.model.matrix}} function.
 
   For the discrete predictors the product kernel function is of the

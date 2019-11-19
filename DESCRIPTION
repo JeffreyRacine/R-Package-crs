@@ -1,13 +1,13 @@
 Package: crs
-Version: 0.15-31
-Date: 2018-05-22
+Version: 0.15-32
+Date: 2019-11-19
 Imports: boot, stats, np, quantreg, rgl
 Suggests: logspline, quadprog
 Title: Categorical Regression Splines
 Authors@R: c(person(given = "Jeffrey S.", family = "Racine", role = c("aut","cre"), email = "racinej@mcmaster.ca"),
              person(given = "Zhenghua", family = "Nie", role = c("aut"), email = "niez@mcmaster.ca"),
              person(given = "Brian D.", family = "Ripley", role = c("ctb"), comment = "stepCV.R"))
-Description: Regression splines that handle a mix of continuous and categorical (discrete) data often encountered in applied settings. I would like to gratefully acknowledge support from the Natural Sciences and Engineering Research Council of Canada (NSERC, <http://www.nserc-crsng.gc.ca>), the Social Sciences and Humanities Research Council of Canada (SSHRC, <http://www.sshrc-crsh.gc.ca>), and the Shared Hierarchical Academic Research Computing Network (SHARCNET, <https://www.sharcnet.ca>).
+Description: Regression splines that handle a mix of continuous and categorical (discrete) data often encountered in applied settings. I would like to gratefully acknowledge support from the Natural Sciences and Engineering Research Council of Canada (NSERC, <https://www.nserc-crsng.gc.ca>), the Social Sciences and Humanities Research Council of Canada (SSHRC, <https://www.sshrc-crsh.gc.ca>), and the Shared Hierarchical Academic Research Computing Network (SHARCNET, <https://www.sharcnet.ca>).
 License: GPL (>=3) 
 URL: https://github.com/JeffreyRacine/R-Package-crs
 BugReports: https://github.com/JeffreyRacine/R-Package-crs/issues

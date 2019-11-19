@@ -68,7 +68,7 @@ basis; default is \sQuote{FALSE} }
   returned object.
 
   A primary use is in modelling formulas to directly specify a piecewise
-  polynomial term in a model. See \url{http://www.gnu.org/software/gsl/}
+  polynomial term in a model. See \url{https://www.gnu.org/software/gsl/}
   for further details.
   
 }

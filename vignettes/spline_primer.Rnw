@@ -1,4 +1,4 @@
-%% $Id: spline_primer.Rnw,v 1.29 2013/01/22 17:43:52 jracine Exp jracine $
+%% $Id: spline_primer.Rnw,v 1.30 2015/01/20 10:53:40 jracine Exp jracine $
 
 %\VignetteIndexEntry{A Primer on Spline Regression}
 %\VignetteDepends{crs}
@@ -602,7 +602,7 @@ to recurse divine.''  (L.~Peter Deutsch).
 \singlespacing
 {\scriptsize
 \begin{verbatim}
-## $Id: spline_primer.Rnw,v 1.29 2013/01/22 17:43:52 jracine Exp jracine $
+## $Id: spline_primer.Rnw,v 1.30 2015/01/20 10:53:40 jracine Exp jracine $
 
 ## April 23 2011. The code below is based upon an illustration that
 ## can be found in http://www.stat.tamu.edu/~sinha/research/note1.pdf

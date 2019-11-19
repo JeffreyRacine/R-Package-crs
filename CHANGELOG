@@ -1,3 +1,7 @@
+Changes from Version 0.15-31 to 0.15-32 [19-Nov-2019]
+
+* Corrected return value for mgcv_tmm() (was void, not valid address of R object)
+
 * Added crs.messages=FALSE capabilities to clsd()
 
 Changes from Version 0.15-30 to 0.15-31 [01-May-2018]

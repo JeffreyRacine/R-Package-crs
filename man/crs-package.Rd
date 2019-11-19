@@ -33,7 +33,7 @@
 
   For the continuous predictors the regression spline model employs the
   B-spline basis matrix using the B-spline routines in the GNU
-  Scientific Library (\url{http://www.gnu.org/software/gsl/}).
+  Scientific Library (\url{https://www.gnu.org/software/gsl/}).
 
    The \code{\link{tensor.prod.model.matrix}} function is used to
   construct multivariate tensor spline bases when \code{basis="tensor"}
@@ -77,10 +77,10 @@
 
   I would like to gratefully acknowledge support from the Natural
   Sciences and Engineering Research Council of Canada
-  (\url{http://www.nserc-crsng.gc.ca}), the Social Sciences and Humanities
-  Research Council of Canada (\url{http://www.sshrc-crsh.gc.ca}), and the Shared
+  (\url{https://www.nserc-crsng.gc.ca}), the Social Sciences and Humanities
+  Research Council of Canada (\url{https://www.sshrc-crsh.gc.ca}), and the Shared
   Hierarchical Academic Research Computing Network
-  (\url{http://www.sharcnet.ca}).
+  (\url{https://www.sharcnet.ca}).
   
 }
 \references{

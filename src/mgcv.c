@@ -59,7 +59,7 @@ void mgcv_tensor_mm(double *X,double *T,int *d,int *m,int *n) {
   }  
 } /* mgcv_tensor_mm */
 
-void mgcv_tmm(SEXP x,SEXP t,SEXP D,SEXP M, SEXP N) {
+SEXP mgcv_tmm(SEXP x,SEXP t,SEXP D,SEXP M, SEXP N) {
   /* wrapper for calling mgcv_tensor_mm using .Call */
   double *X,*T;
   int *d,*m,*n;
@@ -68,6 +68,7 @@ void mgcv_tmm(SEXP x,SEXP t,SEXP D,SEXP M, SEXP N) {
   m = INTEGER(M);
   n = INTEGER(N);
   mgcv_tensor_mm(X,T,d,m,n);
+  return(R_NilValue);
 }
 
 /* 
@@ -127,7 +128,7 @@ void glp_model_mm(double *x, int *z, double *t, int *d, int *m, int *n, int *zn)
 		return;
 }
 
-void glp_model_tmm(SEXP X,SEXP Z, SEXP T, SEXP D,SEXP M, SEXP N, SEXP ZN)
+SEXP glp_model_tmm(SEXP X,SEXP Z, SEXP T, SEXP D,SEXP M, SEXP N, SEXP ZN)
 {
 		/* wrapper for calling glp_tmodel_mm using .Call */
 		double *x,*t;
@@ -142,5 +143,6 @@ void glp_model_tmm(SEXP X,SEXP Z, SEXP T, SEXP D,SEXP M, SEXP N, SEXP ZN)
 		zn = INTEGER(ZN);
 
 		glp_model_mm(x, z, t, d, m, n, zn);
+                return(R_NilValue);
 
 }
