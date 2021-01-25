@@ -31,6 +31,7 @@
 #include <vector>
 #include <list>
 #include <climits>
+#include <iterator>
 #include <algorithm>
 #include "Surrogate_Utils.hpp"
 #include "Exception.hpp"
@@ -38,6 +39,18 @@
 #include "RNG.hpp"   //zhenghua for rand.
 
 namespace SGTELIB {
+
+template <class RandomAccessIterator,  class RandomNumberGenerator>
+	  void random_shuffle (RandomAccessIterator first,  RandomAccessIterator last, 
+				                       RandomNumberGenerator& gen)
+		{
+			typedef typename std::iterator_traits<RandomAccessIterator>::difference_type difference_type;
+			difference_type i,  n;
+				  n = (last-first);
+					  for (i=n-1; i>0; --i) {
+							std::swap (first[i], first[gen(i+1)]);
+									  }
+		}
 
 
   class Matrix {
