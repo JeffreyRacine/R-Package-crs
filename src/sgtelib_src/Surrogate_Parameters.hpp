@@ -1,6 +1,6 @@
 /*-------------------------------------------------------------------------------------*/
 /*  sgtelib - A surrogate model library for derivative-free optimization               */
-/*  Version 2.0.1                                                                      */
+/*  Version 2.0.2                                                                      */
 /*                                                                                     */
 /*  Copyright (C) 2012-2017  Sebastien Le Digabel - Ecole Polytechnique, Montreal      */ 
 /*                           Bastien Talgorn - McGill University, Montreal             */
@@ -28,6 +28,7 @@
 
 #include "Defines.hpp"
 #include "Kernel.hpp"
+#include "Metrics.hpp"
 #include <string>
 
 namespace SGTELIB {
@@ -35,7 +36,7 @@ namespace SGTELIB {
   /*--------------------------------------*/
   /*         Surrogate_Parameters class        */
   /*--------------------------------------*/
-  class Surrogate_Parameters  {
+  class DLL_API Surrogate_Parameters  {
 
   protected:
 

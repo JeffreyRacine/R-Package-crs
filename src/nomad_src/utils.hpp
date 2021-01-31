@@ -1,44 +1,46 @@
-/*-------------------------------------------------------------------------------------*/
-/*  NOMAD - Nonlinear Optimization by Mesh Adaptive Direct search - version 3.8.0      */
-/*                                                                                     */
-/*                                                                                     */
-/*  NOMAD - version 3.8.0 has been created by                                          */
-/*                 Charles Audet        - Ecole Polytechnique de Montreal              */
-/*                 Sebastien Le Digabel - Ecole Polytechnique de Montreal              */
-/*                 Christophe Tribes    - Ecole Polytechnique de Montreal              */
-/*                                                                                     */
-/*  The copyright of NOMAD - version 3.8.0 is owned by                                 */
-/*                 Sebastien Le Digabel - Ecole Polytechnique de Montreal              */
-/*                 Christophe Tribes    - Ecole Polytechnique de Montreal              */
-/*                                                                                     */
-/*  NOMAD v3 has been funded by AFOSR and Exxon Mobil.                                 */
-/*                                                                                     */
-/*  NOMAD v3 is a new version of NOMAD v1 and v2. NOMAD v1 and v2 were created and     */
-/*  developed by Mark Abramson, Charles Audet, Gilles Couture and John E. Dennis Jr.,  */
-/*  and were funded by AFOSR and Exxon Mobil.                                          */
-/*                                                                                     */
-/*                                                                                     */
-/*  Contact information:                                                               */
-/*    Ecole Polytechnique de Montreal - GERAD                                          */
-/*    C.P. 6079, Succ. Centre-ville, Montreal (Quebec) H3C 3A7 Canada                  */
-/*    e-mail: nomad@gerad.ca                                                           */
-/*    phone : 1-514-340-6053 #6928                                                     */
-/*    fax   : 1-514-340-5665                                                           */
-/*                                                                                     */
-/*  This program is free software: you can redistribute it and/or modify it under the  */
-/*  terms of the GNU Lesser General Public License as published by the Free Software   */
-/*  Foundation, either version 3 of the License, or (at your option) any later         */
-/*  version.                                                                           */
-/*                                                                                     */
-/*  This program is distributed in the hope that it will be useful, but WITHOUT ANY    */
-/*  WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A    */
-/*  PARTICULAR PURPOSE.  See the GNU Lesser General Public License for more details.   */
-/*                                                                                     */
-/*  You should have received a copy of the GNU Lesser General Public License along     */
-/*  with this program. If not, see <http://www.gnu.org/licenses/>.                     */
-/*                                                                                     */
-/*  You can find information on the NOMAD software at www.gerad.ca/nomad               */
-/*-------------------------------------------------------------------------------------*/
+/*---------------------------------------------------------------------------------*/
+/*  NOMAD - Nonlinear Optimization by Mesh Adaptive Direct search -                */
+/*                                                                                 */
+/*  NOMAD - version 3.9.1 has been created by                                      */
+/*                 Charles Audet               - Ecole Polytechnique de Montreal   */
+/*                 Sebastien Le Digabel        - Ecole Polytechnique de Montreal   */
+/*                 Viviane Rochon Montplaisir - Ecole Polytechnique de Montreal   */
+/*                 Christophe Tribes           - Ecole Polytechnique de Montreal   */
+/*                                                                                 */
+/*  The copyright of NOMAD - version 3.9.1 is owned by                             */
+/*                 Sebastien Le Digabel        - Ecole Polytechnique de Montreal   */
+/*                 Viviane Rochon Montplaisir - Ecole Polytechnique de Montreal   */
+/*                 Christophe Tribes           - Ecole Polytechnique de Montreal   */
+/*                                                                                 */
+/*  NOMAD v3 has been funded by AFOSR and Exxon Mobil.                             */
+/*                                                                                 */
+/*  NOMAD v3 is a new version of NOMAD v1 and v2. NOMAD v1 and v2 were created     */
+/*  and developed by Mark Abramson, Charles Audet, Gilles Couture, and John E.     */
+/*  Dennis Jr., and were funded by AFOSR and Exxon Mobil.                          */
+/*                                                                                 */
+/*  Contact information:                                                           */
+/*    Ecole Polytechnique de Montreal - GERAD                                      */
+/*    C.P. 6079, Succ. Centre-ville, Montreal (Quebec) H3C 3A7 Canada              */
+/*    e-mail: nomad@gerad.ca                                                       */
+/*    phone : 1-514-340-6053 #6928                                                 */
+/*    fax   : 1-514-340-5665                                                       */
+/*                                                                                 */
+/*  This program is free software: you can redistribute it and/or modify it        */
+/*  under the terms of the GNU Lesser General Public License as published by       */
+/*  the Free Software Foundation, either version 3 of the License, or (at your     */
+/*  option) any later version.                                                     */
+/*                                                                                 */
+/*  This program is distributed in the hope that it will be useful, but WITHOUT    */
+/*  ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or          */
+/*  FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License    */
+/*  for more details.                                                              */
+/*                                                                                 */
+/*  You should have received a copy of the GNU Lesser General Public License       */
+/*  along with this program. If not, see <http://www.gnu.org/licenses/>.           */
+/*                                                                                 */
+/*  You can find information on the NOMAD software at www.gerad.ca/nomad           */
+/*---------------------------------------------------------------------------------*/
+
 /**
  \file   utils.hpp
  \brief  Utility functions (headers)
@@ -97,7 +99,6 @@ namespace NOMAD {
      */
     bool string_to_hnorm_type ( const std::string & s , NOMAD::hnorm_type & hn );
     
-    
     /// Convert a string into a multi_formulation_type.
     /**
      \param  s   The string                        -- \b IN.
@@ -126,7 +127,6 @@ namespace NOMAD {
                                 int               * n           = NULL ,
                                 bool                check_order = true   );
     
-
     /// Convert a string in {"QUADRATIC","SGTELIB"} to a \c NOMAD::model_type.
     /**
      \param  s  The string            -- \b IN.
@@ -161,6 +161,15 @@ namespace NOMAD {
     bool strings_to_direction_type ( const std::list<std::string> & ls ,
                                     NOMAD::direction_type        & dt   );
     
+    /// Interpret a list of strings as an intensification type.
+    /**
+     \param s The string to convert -- \b IN.
+     \param it The NOMAD::intensification_type -- \b OUT.
+     \return   A boolean equal to \c true if the conversion was possible.
+     */
+    bool string_to_intensification_type ( const std::string             & s ,
+                                           NOMAD::intensification_type  & it   );
+    
     /// If a NOMAD::bb_output_type variable corresponds to a constraint.
     /**
      \param bbot The NOMAD::bb_output_type -- \b IN.
@@ -187,14 +196,14 @@ namespace NOMAD {
      \param dt The NOMAD::direction_type -- \b IN.
      \return   A boolean equal to \c true if \c dt corresponds to a LT-MADS direction.
      */
-    bool dir_is_ltmads ( NOMAD::direction_type dt );
+  bool dir_is_ltmads ( NOMAD::direction_type dt );
     
     /// If a NOMAD::direction_type variable corresponds to a random direction.
     /**
      \param dt The NOMAD::direction_type -- \b IN.
      \return   A boolean equal to \c true if \c dt corresponds to a random direction.
      */
-    bool dir_is_random ( NOMAD::direction_type dt );
+  bool dir_is_random ( NOMAD::direction_type dt );
     
     
     /// If a NOMAD::direction_type variable corresponds to a Ortho-MADS direction.
@@ -267,7 +276,7 @@ namespace NOMAD {
      \param file_name A string corresponding to a file name -- \b IN.
      \return          A boolean equal to \c true if the file exists and is readable.
      */
-    bool check_read_file ( const std::string & file_name );
+    DLL_API bool check_read_file ( const std::string & file_name );
     
     /// Get the process id (pid); useful for unique random seeds.
     /**
@@ -280,10 +289,10 @@ namespace NOMAD {
      \param argc Number of command line arguments.
      \param argv Command line arguments.
      */
-    void begin ( int argc , char ** argv );
+    DLL_API void begin ( int argc , char ** argv );
     
     /// Called at the end of NOMAD.
-    void end ( void );
+    DLL_API void end ( void );
     
     
     /// Transform an integer into a string.
@@ -291,35 +300,38 @@ namespace NOMAD {
      \param i The integer -- \b IN.
      \return  The string.
      */
-    std::string itos ( int i );
-    
+    DLL_API std::string itos ( int i );
     
     /// Transform a unsigned long (size_t) into a string.
     /**
      \param i The unsigned long -- \b IN.
      \return  The string.
      */
-    std::string itos ( size_t i );
+    DLL_API std::string itos ( size_t i );
     
-    // SGTELIB
     /// Remove leading, trailing and double spaces in a string.
     /**
      \param s The string -- \b IN/OUT.
      */
     void deblank ( std::string & s );
     
+    /// add blank padding between vector delimiters given in a string.
+    /**
+     \param s The string -- \b IN/OUT.
+     */
+    void string_vect_padding ( std::string & s );
     
     /// Put a string into upper cases.
     /**
      \param s The string -- \b IN/OUT.
      */
-    void toupper ( std::string & s );
+    DLL_API void toupper ( std::string & s );
     
     /// Put a list of strings into upper cases.
     /**
      \param ls The list of strings -- \b IN/OUT.
      */
-    void toupper  ( std::list<std::string> & ls );
+    DLL_API void toupper  ( std::list<std::string> & ls );
     
     /// Convert a string into an integer.
     /**
@@ -327,7 +339,7 @@ namespace NOMAD {
      \param i The integer -- \b OUT.
      \return  A boolean equal to \c true if the conversion was possible.
      */
-    bool atoi ( const std::string & s , int & i );
+    DLL_API bool atoi ( const std::string & s , int & i );
     
     /// Convert a character into an integer.
     /**
@@ -335,7 +347,7 @@ namespace NOMAD {
      \param i The integer   -- \b OUT.
      \return  A boolean equal to \c true if the conversion was possible.
      */
-    bool atoi ( char c , int & i );
+    DLL_API bool atoi ( char c , int & i );
     
     /// Search a list of string inside a string.
     /**
@@ -362,6 +374,25 @@ namespace NOMAD {
     bool string_match ( const std::string & s , const std::list<std::string> & ls );
     
     
+    /// LU decomposition.
+    /**
+     - The \c nxn \c M matrix is decomposed into \c M=L.U.
+     \param error_msg Error message when the function returns \c false    -- \b OUT.
+     \param M         The input \c nxn matrix; Will be replaced by \c LU   -- \b IN/OUT.
+     \param n         Number of columns and rows in M                              -- \b IN.
+     \param d         Used by determinant                          -- \b OUT.
+     \param max_mpn   Maximum allowed value for \c n; ignored if \c <=0 -- \b IN
+     -- \b optional (default = \c 50).
+     \return A boolean equal to \c true if the decomposition worked.
+     */
+    bool LU_decomposition ( std::string & error_msg      ,
+                           double     ** M              ,
+                           int           n              ,
+                           double      & d              ,
+                           int           max_mpn = 1500 );
+    
+    
+    
     /// SVD decomposition.
     /**
      - The \c mxn \c M matrix is decomposed into \c M=U.W.V'.
@@ -381,20 +412,34 @@ namespace NOMAD {
                             double     ** V              ,
                             int           m              ,
                             int           n              ,
-                            int           max_mpn = 1500   );
+                            int           max_mpn = 1500 );
     
     
     // Get rank of a matrix  using SVD decomposition
     /**
      - The \c mxn \c M matrix is decomposed into \c M=U.W.V'. The rank equals the size of W
-     \param M         The input \c mxn matrix								-- \b IN.
-     \param m         Number of rows in M                                 -- \b IN.
-     \param n         Number of columns in M                              -- \b IN.
+     \param M         The input \c mxn matrix                               -- \b IN.
+     \param m         Number of rows in M                                   -- \b IN.
+     \param n         Number of columns in M                                -- \b IN.
+     \param eps       Precision to detect rank from W                       -- \b IN.
      \return The rank>0 if the decomposition worked else 0.
      */
-    int get_rank(double **M,
-                 size_t m,
-                 size_t n);
+    int get_rank(double ** M,
+                 size_t    m,
+                 size_t    n,
+                 double    eps = NOMAD::SVD_EPS);
+    
+    
+    // Get determinant of a matrix
+    /**
+     \param M         The input \c nxn matrix         -- \b IN.
+     \param n         Number of row and columns in M  -- \b IN.
+     \param det       The determinant of the matrix M -- \b OUT.
+     \return True/False if success or not.
+     */
+    bool get_determinant(double **M  ,
+                         double & det,
+                         size_t n    );
     
     
     // SGTELIB

@@ -1,44 +1,46 @@
-/*-------------------------------------------------------------------------------------*/
-/*  NOMAD - Nonlinear Optimization by Mesh Adaptive Direct search - version 3.8.0      */
-/*                                                                                     */
-/*                                                                                     */
-/*  NOMAD - version 3.8.0 has been created by                                          */
-/*                 Charles Audet        - Ecole Polytechnique de Montreal              */
-/*                 Sebastien Le Digabel - Ecole Polytechnique de Montreal              */
-/*                 Christophe Tribes    - Ecole Polytechnique de Montreal              */
-/*                                                                                     */
-/*  The copyright of NOMAD - version 3.8.0 is owned by                                 */
-/*                 Sebastien Le Digabel - Ecole Polytechnique de Montreal              */
-/*                 Christophe Tribes    - Ecole Polytechnique de Montreal              */
-/*                                                                                     */
-/*  NOMAD v3 has been funded by AFOSR and Exxon Mobil.                                 */
-/*                                                                                     */
-/*  NOMAD v3 is a new version of NOMAD v1 and v2. NOMAD v1 and v2 were created and     */
-/*  developed by Mark Abramson, Charles Audet, Gilles Couture and John E. Dennis Jr.,  */
-/*  and were funded by AFOSR and Exxon Mobil.                                          */
-/*                                                                                     */
-/*                                                                                     */
-/*  Contact information:                                                               */
-/*    Ecole Polytechnique de Montreal - GERAD                                          */
-/*    C.P. 6079, Succ. Centre-ville, Montreal (Quebec) H3C 3A7 Canada                  */
-/*    e-mail: nomad@gerad.ca                                                           */
-/*    phone : 1-514-340-6053 #6928                                                     */
-/*    fax   : 1-514-340-5665                                                           */
-/*                                                                                     */
-/*  This program is free software: you can redistribute it and/or modify it under the  */
-/*  terms of the GNU Lesser General Public License as published by the Free Software   */
-/*  Foundation, either version 3 of the License, or (at your option) any later         */
-/*  version.                                                                           */
-/*                                                                                     */
-/*  This program is distributed in the hope that it will be useful, but WITHOUT ANY    */
-/*  WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A    */
-/*  PARTICULAR PURPOSE.  See the GNU Lesser General Public License for more details.   */
-/*                                                                                     */
-/*  You should have received a copy of the GNU Lesser General Public License along     */
-/*  with this program. If not, see <http://www.gnu.org/licenses/>.                     */
-/*                                                                                     */
-/*  You can find information on the NOMAD software at www.gerad.ca/nomad               */
-/*-------------------------------------------------------------------------------------*/
+/*---------------------------------------------------------------------------------*/
+/*  NOMAD - Nonlinear Optimization by Mesh Adaptive Direct search -                */
+/*                                                                                 */
+/*  NOMAD - version 3.9.1 has been created by                                      */
+/*                 Charles Audet               - Ecole Polytechnique de Montreal   */
+/*                 Sebastien Le Digabel        - Ecole Polytechnique de Montreal   */
+/*                 Viviane Rochon Montplaisir - Ecole Polytechnique de Montreal   */
+/*                 Christophe Tribes           - Ecole Polytechnique de Montreal   */
+/*                                                                                 */
+/*  The copyright of NOMAD - version 3.9.1 is owned by                             */
+/*                 Sebastien Le Digabel        - Ecole Polytechnique de Montreal   */
+/*                 Viviane Rochon Montplaisir - Ecole Polytechnique de Montreal   */
+/*                 Christophe Tribes           - Ecole Polytechnique de Montreal   */
+/*                                                                                 */
+/*  NOMAD v3 has been funded by AFOSR and Exxon Mobil.                             */
+/*                                                                                 */
+/*  NOMAD v3 is a new version of NOMAD v1 and v2. NOMAD v1 and v2 were created     */
+/*  and developed by Mark Abramson, Charles Audet, Gilles Couture, and John E.     */
+/*  Dennis Jr., and were funded by AFOSR and Exxon Mobil.                          */
+/*                                                                                 */
+/*  Contact information:                                                           */
+/*    Ecole Polytechnique de Montreal - GERAD                                      */
+/*    C.P. 6079, Succ. Centre-ville, Montreal (Quebec) H3C 3A7 Canada              */
+/*    e-mail: nomad@gerad.ca                                                       */
+/*    phone : 1-514-340-6053 #6928                                                 */
+/*    fax   : 1-514-340-5665                                                       */
+/*                                                                                 */
+/*  This program is free software: you can redistribute it and/or modify it        */
+/*  under the terms of the GNU Lesser General Public License as published by       */
+/*  the Free Software Foundation, either version 3 of the License, or (at your     */
+/*  option) any later version.                                                     */
+/*                                                                                 */
+/*  This program is distributed in the hope that it will be useful, but WITHOUT    */
+/*  ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or          */
+/*  FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License    */
+/*  for more details.                                                              */
+/*                                                                                 */
+/*  You should have received a copy of the GNU Lesser General Public License       */
+/*  along with this program. If not, see <http://www.gnu.org/licenses/>.           */
+/*                                                                                 */
+/*  You can find information on the NOMAD software at www.gerad.ca/nomad           */
+/*---------------------------------------------------------------------------------*/
+
 /**
  \file   Model_Stats.hpp
  \brief  Model stats (headers)
@@ -76,7 +78,7 @@ namespace NOMAD {
         int    _bad_cond;
         
         // model search (MS):
-        int           MS_MS_nb_searches;    ///< Number of searches.   // zhenghua, for compiling on Solaris.
+        int           MS_MS_nb_searches;    ///< Number of searches.  //zhenghua, for compiling on Solaris.
         int           MS_MS_pts;            ///< Number of search points.
         int           MS_MS_success;        ///< Number of search successes.
         int           MS_MS_bb_eval;        ///< Number of search blackbox evaluations.
@@ -91,7 +93,7 @@ namespace NOMAD {
         int           MS_MS_max_bbe;        ///< Number of times model eval. reached limit.
         
         // eval sort (ES):
-        int           ES_ES_nb_inside_radius; ///< Total number of points inside radius.
+        int           ES_ES_nb_inside_radius; ///< Total number of points inside radius. //zhenghua, for compiling on Solaris.
         int           ES_ES_nb_pts;           ///< Total number of points.
         
     public:
@@ -158,13 +160,13 @@ namespace NOMAD {
          */
         void update_nY ( int nY );
         
-        /// Update stat \c _MS_max_search_pts.
+        /// Update stat \c MS_MS_max_search_pts.
         /**
          \param sp Number of trial points for a model search -- \b IN.
          */
         void update_MS_max_search_pts ( int sp );
         
-        /// Update stats \c _MS_nb_opt, \c _MS_max_model_eval, and \c _MS_avg_model_eval.
+        /// Update stats \c MS_MS_nb_opt, \c MS_MS_max_model_eval, and \c MS_MS_avg_model_eval.
         /**
          \param eval Number of model evaluations during one model optimization -- \b IN.
          */
@@ -217,40 +219,40 @@ namespace NOMAD {
         /// Add \c 1 to stat \c _bad_cond.
         void add_bad_cond ( void ) { ++_bad_cond; }
         
-        /// Add \c 1 to stat \c _MS_nb_searches.
+        /// Add \c 1 to stat \c MS_MS_nb_searches.
         void add_MS_nb_searches ( void ) { ++MS_MS_nb_searches; }
         
-        /// Add \c 1 to stat \c _MS_success.
+        /// Add \c 1 to stat \c MS_MS_success.
         void add_MS_success ( void ) { ++MS_MS_success; }
         
-        /// Add \c 1 to stat \c _MS_opt_error.
+        /// Add \c 1 to stat \c MS_MS_opt_error.
         void add_MS_opt_error ( void ) { ++MS_MS_opt_error; }
         
-        /// Add \c 1 to stat \c _MS_max_bbe.
+        /// Add \c 1 to stat \c MS_MS_max_bbe.
         void add_MS_max_bbe ( void ) { ++MS_MS_max_bbe; }
         
-        /// Add \c 1 to stat \c _MS_rejected.
+        /// Add \c 1 to stat \c MS_MS_rejected.
         void add_MS_rejected ( void ) { ++MS_MS_rejected; }
         
-        /// Add an integer to stat \c _MS_pts.
+        /// Add an integer to stat \c MS_MS_pts.
         /**
          \param i The integer -- \b IN.
          */
         void add_MS_pts ( int i ) { MS_MS_pts += i; }
         
-        /// Add an integer to stat \c _MS_bb_eval.
+        /// Add an integer to stat \c MS_MS_bb_eval.
         /**
          \param i The integer -- \b IN.
          */
         void add_MS_bb_eval ( int i ) { MS_MS_bb_eval += i; }
         
-        /// Add an integer to stat \c _MS_sgte_eval.
+        /// Add an integer to stat \c MS_MS_sgte_eval.
         /**
          \param i The integer -- \b IN.
          */
         void add_MS_sgte_eval ( int i ) { MS_MS_sgte_eval += i; }
         
-        /// Add an integer to stat \c _MS_cache_hits.
+        /// Add an integer to stat \c MS_MS_cache_hits.
         /**
          \param i The integer -- \b IN.
          */
@@ -336,7 +338,7 @@ namespace NOMAD {
          \return \c The stat _nb_regression.
          */
         int get_nb_regression ( void ) const { return _nb_regression; }
-         
+ 
         /// Display.
         /**
          \param out The NOMAD::Display object -- \b IN.

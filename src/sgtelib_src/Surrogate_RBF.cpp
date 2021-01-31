@@ -1,6 +1,6 @@
 /*-------------------------------------------------------------------------------------*/
 /*  sgtelib - A surrogate model library for derivative-free optimization               */
-/*  Version 2.0.1                                                                      */
+/*  Version 2.0.2                                                                      */
 /*                                                                                     */
 /*  Copyright (C) 2012-2017  Sebastien Le Digabel - Ecole Polytechnique, Montreal      */ 
 /*                           Bastien Talgorn - McGill University, Montreal             */
@@ -42,7 +42,7 @@ SGTELIB::Surrogate_RBF::Surrogate_RBF ( SGTELIB::TrainingSet & trainingset,
   _Alpha             ( "alpha",0,0         ),
   _selected_kernel   (1,-1                 ){
   #ifdef SGTELIB_DEBUG
-    SGTELIB::rout << "constructor RBF\n";
+    std::cout << "constructor RBF\n";
   #endif
 }//
 
@@ -72,7 +72,7 @@ void SGTELIB::Surrogate_RBF::display_private ( std::ostream & out ) const {
 bool SGTELIB::Surrogate_RBF::init_private ( void ) {
 
   #ifdef SGTELIB_DEBUG
-    SGTELIB::rout << "Surrogate_RBF : init_private\n";
+    std::cout << "Surrogate_RBF : init_private\n";
   #endif
 
   const int pvar = _trainingset.get_pvar();
@@ -111,7 +111,7 @@ bool SGTELIB::Surrogate_RBF::init_private ( void ) {
     else if (dmin==0 ) _qprs = 1;
     else if (dmin==1 ) _qprs = 1 + _trainingset.get_nvar(); 
     else{
-      SGTELIB::rout << "dmin = " << dmin << "\n";
+      std::cout << "dmin = " << dmin << "\n";
       throw SGTELIB::Exception ( __FILE__ , __LINE__ ,"dmin out of range." );
     }
   }

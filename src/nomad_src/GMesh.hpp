@@ -1,44 +1,46 @@
-/*-------------------------------------------------------------------------------------*/
-/*  NOMAD - Nonlinear Optimization by Mesh Adaptive Direct search - version 3.8.0      */
-/*                                                                                     */
-/*                                                                                     */
-/*  NOMAD - version 3.8.0 has been created by                                          */
-/*                 Charles Audet        - Ecole Polytechnique de Montreal              */
-/*                 Sebastien Le Digabel - Ecole Polytechnique de Montreal              */
-/*                 Christophe Tribes    - Ecole Polytechnique de Montreal              */
-/*                                                                                     */
-/*  The copyright of NOMAD - version 3.8.0 is owned by                                 */
-/*                 Sebastien Le Digabel - Ecole Polytechnique de Montreal              */
-/*                 Christophe Tribes    - Ecole Polytechnique de Montreal              */
-/*                                                                                     */
-/*  NOMAD v3 has been funded by AFOSR and Exxon Mobil.                                 */
-/*                                                                                     */
-/*  NOMAD v3 is a new version of NOMAD v1 and v2. NOMAD v1 and v2 were created and     */
-/*  developed by Mark Abramson, Charles Audet, Gilles Couture and John E. Dennis Jr.,  */
-/*  and were funded by AFOSR and Exxon Mobil.                                          */
-/*                                                                                     */
-/*                                                                                     */
-/*  Contact information:                                                               */
-/*    Ecole Polytechnique de Montreal - GERAD                                          */
-/*    C.P. 6079, Succ. Centre-ville, Montreal (Quebec) H3C 3A7 Canada                  */
-/*    e-mail: nomad@gerad.ca                                                           */
-/*    phone : 1-514-340-6053 #6928                                                     */
-/*    fax   : 1-514-340-5665                                                           */
-/*                                                                                     */
-/*  This program is free software: you can redistribute it and/or modify it under the  */
-/*  terms of the GNU Lesser General Public License as published by the Free Software   */
-/*  Foundation, either version 3 of the License, or (at your option) any later         */
-/*  version.                                                                           */
-/*                                                                                     */
-/*  This program is distributed in the hope that it will be useful, but WITHOUT ANY    */
-/*  WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A    */
-/*  PARTICULAR PURPOSE.  See the GNU Lesser General Public License for more details.   */
-/*                                                                                     */
-/*  You should have received a copy of the GNU Lesser General Public License along     */
-/*  with this program. If not, see <http://www.gnu.org/licenses/>.                     */
-/*                                                                                     */
-/*  You can find information on the NOMAD software at www.gerad.ca/nomad               */
-/*-------------------------------------------------------------------------------------*/
+/*---------------------------------------------------------------------------------*/
+/*  NOMAD - Nonlinear Optimization by Mesh Adaptive Direct search -                */
+/*                                                                                 */
+/*  NOMAD - version 3.9.1 has been created by                                      */
+/*                 Charles Audet               - Ecole Polytechnique de Montreal   */
+/*                 Sebastien Le Digabel        - Ecole Polytechnique de Montreal   */
+/*                 Viviane Rochon Montplaisir - Ecole Polytechnique de Montreal   */
+/*                 Christophe Tribes           - Ecole Polytechnique de Montreal   */
+/*                                                                                 */
+/*  The copyright of NOMAD - version 3.9.1 is owned by                             */
+/*                 Sebastien Le Digabel        - Ecole Polytechnique de Montreal   */
+/*                 Viviane Rochon Montplaisir - Ecole Polytechnique de Montreal   */
+/*                 Christophe Tribes           - Ecole Polytechnique de Montreal   */
+/*                                                                                 */
+/*  NOMAD v3 has been funded by AFOSR and Exxon Mobil.                             */
+/*                                                                                 */
+/*  NOMAD v3 is a new version of NOMAD v1 and v2. NOMAD v1 and v2 were created     */
+/*  and developed by Mark Abramson, Charles Audet, Gilles Couture, and John E.     */
+/*  Dennis Jr., and were funded by AFOSR and Exxon Mobil.                          */
+/*                                                                                 */
+/*  Contact information:                                                           */
+/*    Ecole Polytechnique de Montreal - GERAD                                      */
+/*    C.P. 6079, Succ. Centre-ville, Montreal (Quebec) H3C 3A7 Canada              */
+/*    e-mail: nomad@gerad.ca                                                       */
+/*    phone : 1-514-340-6053 #6928                                                 */
+/*    fax   : 1-514-340-5665                                                       */
+/*                                                                                 */
+/*  This program is free software: you can redistribute it and/or modify it        */
+/*  under the terms of the GNU Lesser General Public License as published by       */
+/*  the Free Software Foundation, either version 3 of the License, or (at your     */
+/*  option) any later version.                                                     */
+/*                                                                                 */
+/*  This program is distributed in the hope that it will be useful, but WITHOUT    */
+/*  ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or          */
+/*  FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License    */
+/*  for more details.                                                              */
+/*                                                                                 */
+/*  You should have received a copy of the GNU Lesser General Public License       */
+/*  along with this program. If not, see <http://www.gnu.org/licenses/>.           */
+/*                                                                                 */
+/*  You can find information on the NOMAD software at www.gerad.ca/nomad           */
+/*---------------------------------------------------------------------------------*/
+
 /**
  \file   GMesh.hpp
  \brief  Class for the GMesh (extensible mesh) (headers)
@@ -63,14 +65,14 @@ namespace NOMAD {
         
         /*--------------------------------------------------------------*/
     private:
-                
-        NOMAD::Point	_r; // Mesh index per coordinate.
+        
+        NOMAD::Point    _r; // Mesh index per coordinate.
         NOMAD::Point    _r_min;
         NOMAD::Point    _r_max;
-        NOMAD::Point    Delta_Delta_0_exp;
-        NOMAD::Point    Delta_Delta_mant;
-        NOMAD::Point    Delta_Delta_0_mant;
-        NOMAD::Point    Delta_Delta_exp;
+        NOMAD::Point    _Delta_0_exp;
+        NOMAD::Point    _Delta_mant;
+        NOMAD::Point    _Delta_0_mant;
+        NOMAD::Point    _Delta_exp;
         NOMAD::Point    _pos_mant_0;
         
         
@@ -123,28 +125,31 @@ namespace NOMAD {
         
         /// Constructor.
         /**
-         \param anisotropic_mesh        Use anisotropic mesh or not                    -- \b IN.
-         \param Delta_0					Initial poll size Delta^0						-- \b IN.
-         \param Delta_min				Minimal poll size Delta^min (may be undefined)	-- \b IN.
-         \param delta_min				Minimal mesh size delta^min (may be undefined)	-- \b IN.
-         \param poll_update_basis		Poll update basis (b); default=0				-- \b IN.
-         \param poll_coarsening_step	Poll coarsening step (w+); default=0			-- \b IN.
-         \param poll_refining_step		Poll refining step (w-); default=0				-- \b IN.
-         \param fixed_variables         Fixed variables                                 -- \b IN.
-         \param granularity             Granularity of variables                        -- \b IN.
-         \param limit_min_mesh_index    Limit mesh index (<0)                           -- \b IN.
+         \param anisotropic_mesh         Use anisotropic mesh or not                     -- \b IN.
+         \param anisotropy_factor        Anisotropy factor                               -- \b IN.
+         \param Delta_0                  Initial poll size Delta^0                       -- \b IN.
+         \param Delta_min                Minimal poll size Delta^min (may be undefined)  -- \b IN.
+         \param delta_min                Minimal mesh size delta^min (may be undefined)  -- \b IN.
+         \param poll_update_basis        Poll update basis (b); default=0                -- \b IN.
+         \param poll_coarsening_step     Poll coarsening step (w+); default=0            -- \b IN.
+         \param poll_refining_step       Poll refining step (w-); default=0              -- \b IN.
+         \param fixed_variables          Fixed variables                                 -- \b IN.
+         \param granularity              Granularity of variables                        -- \b IN.
+         \param limit_min_mesh_index     Limit mesh index (<0)                           -- \b IN.
          */
         GMesh (bool                 anisotropic_mesh,
+               NOMAD::Double        anisotropy_factor,
                const NOMAD::Point & Delta_0   ,
                const NOMAD::Point & Delta_min ,
                const NOMAD::Point & delta_min  ,
                const NOMAD::Point & fixed_variables ,
                const NOMAD::Point & granularity,
-               NOMAD::Double		poll_update_basis=0,
-               int					poll_coarsening_step=0,
-               int					poll_refining_step=0 ,
+               NOMAD::Double        poll_update_basis=0,
+               int                  poll_coarsening_step=0,
+               int                  poll_refining_step=0 ,
                int                  limit_min_mesh_index=NOMAD::GL_LIMITS )
         : NOMAD::OrthogonalMesh ( anisotropic_mesh,
+                                 anisotropy_factor,
                                  Delta_0,
                                  Delta_min,
                                  delta_min,
@@ -156,8 +161,6 @@ namespace NOMAD {
                                  limit_min_mesh_index ) { init();}
         
         
-        
-        
         /// Copy constructor.
         /**
          \param m The copied object -- \b IN.
@@ -167,7 +170,9 @@ namespace NOMAD {
         _r ( m._r ) { init(); }
         
         /// Destructor.
-        ~GMesh ( void ){}
+        ~GMesh ( void )
+        {
+        }
         
         
         /// Access to the mesh size parameter delta^k for earch coordinate.
@@ -200,15 +205,6 @@ namespace NOMAD {
         bool get_Delta ( NOMAD::Point & Delta) const ;
         
         
-        /// Update the provided mesh indices (the Mesh is unchanged).
-        /**
-         \param success			Type of success of the iteration				-- \b IN.
-         \param mesh_indices	The mesh indices before and after the update	-- \b IN/OUT.
-         \param dir				The direction that is considered (opt)			-- \b IN.
-         */
-        void update ( NOMAD::success_type success , NOMAD::Point & mesh_indices, const NOMAD::Direction *dir=NULL ) const ;
-        
-        
         /// Test if mesh finer than initial.
         /**
          \return True if mesh size is smaller than initial mesh size for all components; False otherwise.
@@ -218,8 +214,8 @@ namespace NOMAD {
         
         /// Update the GMesh (poll and mesh sizes).
         /**
-         \param success    Type of success of the iteration		-- \b IN.
-         \param dir        Direction of the iteration			-- \b IN.
+         \param success    Type of success of the iteration     -- \b IN.
+         \param dir        Direction of the iteration           -- \b IN.
          */
         void update ( NOMAD::success_type success, const NOMAD::Direction * dir=NULL);
         
@@ -242,10 +238,10 @@ namespace NOMAD {
         
         /// Scale and project the ith component of a vector on the mesh
         /**
-         \param i	      The vector component number           -- \b IN.
-         \param l	      The vector component value            -- \b IN.
+         \param i         The vector component number           -- \b IN.
+         \param l         The vector component value            -- \b IN.
          \param round_up  The flag for round up                 -- \b IN.
-         \return	      The ith component of a vector after mesh scaling and projection
+         \return          The ith component of a vector after mesh scaling and projection
          */
         NOMAD::Double scale_and_project(int i, const NOMAD::Double & l , bool round_up=false ) const ;
         
@@ -255,7 +251,7 @@ namespace NOMAD {
          \param stop           Stop flag                  -- \b IN/OUT.
          \param stop_reason    Stop reason                -- \b OUT.
          */
-        void check_min_mesh_sizes (	bool             & stop           ,
+        void check_min_mesh_sizes ( bool             & stop           ,
                                    NOMAD::stop_type & stop_reason      ) const;
         
         /// Access to the mesh indices per coordinate.

@@ -1,6 +1,6 @@
 /*-------------------------------------------------------------------------------------*/
 /*  sgtelib - A surrogate model library for derivative-free optimization               */
-/*  Version 2.0.1                                                                      */
+/*  Version 2.0.2                                                                      */
 /*                                                                                     */
 /*  Copyright (C) 2012-2017  Sebastien Le Digabel - Ecole Polytechnique, Montreal      */ 
 /*                           Bastien Talgorn - McGill University, Montreal             */
@@ -36,18 +36,18 @@
 namespace SGTELIB {
 
 /* *************************  snomadr  zhenghua *********************** */
-class Routbuf: public std::streambuf {
-		private:
-				int overflow(int c){
+  class Routbuf: public std::streambuf {
+  private:
+    int overflow(int c){
 #ifdef R_VERSION
-								if(c!=EOF) Rprintf("%.1s", (char *)&c);  //this is for the class Display in NOMAD. cout will be redirected to this class and output by Rprintf.
+      if(c!=EOF) Rprintf("%.1s", (char *)&c);  //this is for the class Display in NOMAD. cout will be redirected to this class and output by Rprintf.
 #else
-								if(c!=EOF) Rprintf("%.1s", (char *)&c);  //this is for the class Display in NOMAD. cout will be redirected to this class and output by Rprintf.
+      if(c!=EOF) Rprintf("%.1s", (char *)&c);  //this is for the class Display in NOMAD. cout will be redirected to this class and output by Rprintf.
 #endif
-								return c;
-				}
+      return c;
+    }
 
-};
+  };
 
 Routbuf routbuf;
 std::ostream rout(&routbuf);
@@ -55,12 +55,16 @@ std::ostream rout(&routbuf);
 
 /* *************************  snomadr  zhenghua *********************** */
 
+
+
+
+
 using namespace SGTELIB;
 
 /*--------------------------------------*/
 /*           main function              */
 /*--------------------------------------*/
-int sgtelib_main ( int argc , char ** argv ) {
+int sgtelib_main ( int argc , char ** argv ) {  //zhenghua
 
   int i,j,ikw;
   bool error = false;
@@ -594,7 +598,7 @@ void SGTELIB::sgtelib_server( const std::string & model , const bool verbose ){
 
       std::string metric_string;
       SGTELIB::metric_t mt;
-      double metric_value;
+      SGTELIB::Matrix metric_value;
 
       // Read metric_string
       in.open("flag_metric_received");
@@ -607,11 +611,11 @@ void SGTELIB::sgtelib_server( const std::string & model , const bool verbose ){
       if (display) SGTELIB::rout << "Write output.\n";    
       out.open ("flag_metric_received");
       if (ready){
-        for (int j=0 ; j<TS->get_output_dim() ; j++){
-          metric_value = S->get_metric(mt,j);
-          out << metric_value << " ";
+        metric_value = S->get_metric(mt);
+        for (int j=0 ; j<metric_value.get_nb_cols() ; j++){
+          out << metric_value[j] << " ";
           if (display){
-            SGTELIB::rout << "output[" << j << "]: " << metric_value << "\n";
+            SGTELIB::rout << "output[" << j << "]: " << metric_value[j] << "\n";
           }
         }
       }

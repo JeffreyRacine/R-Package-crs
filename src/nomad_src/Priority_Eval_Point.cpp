@@ -1,44 +1,46 @@
-/*-------------------------------------------------------------------------------------*/
-/*  NOMAD - Nonlinear Optimization by Mesh Adaptive Direct search - version 3.8.0      */
-/*                                                                                     */
-/*                                                                                     */
-/*  NOMAD - version 3.8.0 has been created by                                          */
-/*                 Charles Audet        - Ecole Polytechnique de Montreal              */
-/*                 Sebastien Le Digabel - Ecole Polytechnique de Montreal              */
-/*                 Christophe Tribes    - Ecole Polytechnique de Montreal              */
-/*                                                                                     */
-/*  The copyright of NOMAD - version 3.8.0 is owned by                                 */
-/*                 Sebastien Le Digabel - Ecole Polytechnique de Montreal              */
-/*                 Christophe Tribes    - Ecole Polytechnique de Montreal              */
-/*                                                                                     */
-/*  NOMAD v3 has been funded by AFOSR and Exxon Mobil.                                 */
-/*                                                                                     */
-/*  NOMAD v3 is a new version of NOMAD v1 and v2. NOMAD v1 and v2 were created and     */
-/*  developed by Mark Abramson, Charles Audet, Gilles Couture and John E. Dennis Jr.,  */
-/*  and were funded by AFOSR and Exxon Mobil.                                          */
-/*                                                                                     */
-/*                                                                                     */
-/*  Contact information:                                                               */
-/*    Ecole Polytechnique de Montreal - GERAD                                          */
-/*    C.P. 6079, Succ. Centre-ville, Montreal (Quebec) H3C 3A7 Canada                  */
-/*    e-mail: nomad@gerad.ca                                                           */
-/*    phone : 1-514-340-6053 #6928                                                     */
-/*    fax   : 1-514-340-5665                                                           */
-/*                                                                                     */
-/*  This program is free software: you can redistribute it and/or modify it under the  */
-/*  terms of the GNU Lesser General Public License as published by the Free Software   */
-/*  Foundation, either version 3 of the License, or (at your option) any later         */
-/*  version.                                                                           */
-/*                                                                                     */
-/*  This program is distributed in the hope that it will be useful, but WITHOUT ANY    */
-/*  WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A    */
-/*  PARTICULAR PURPOSE.  See the GNU Lesser General Public License for more details.   */
-/*                                                                                     */
-/*  You should have received a copy of the GNU Lesser General Public License along     */
-/*  with this program. If not, see <http://www.gnu.org/licenses/>.                     */
-/*                                                                                     */
-/*  You can find information on the NOMAD software at www.gerad.ca/nomad               */
-/*-------------------------------------------------------------------------------------*/
+/*---------------------------------------------------------------------------------*/
+/*  NOMAD - Nonlinear Optimization by Mesh Adaptive Direct search -                */
+/*                                                                                 */
+/*  NOMAD - version 3.9.1 has been created by                                      */
+/*                 Charles Audet               - Ecole Polytechnique de Montreal   */
+/*                 Sebastien Le Digabel        - Ecole Polytechnique de Montreal   */
+/*                 Viviane Rochon Montplaisir - Ecole Polytechnique de Montreal   */
+/*                 Christophe Tribes           - Ecole Polytechnique de Montreal   */
+/*                                                                                 */
+/*  The copyright of NOMAD - version 3.9.1 is owned by                             */
+/*                 Sebastien Le Digabel        - Ecole Polytechnique de Montreal   */
+/*                 Viviane Rochon Montplaisir - Ecole Polytechnique de Montreal   */
+/*                 Christophe Tribes           - Ecole Polytechnique de Montreal   */
+/*                                                                                 */
+/*  NOMAD v3 has been funded by AFOSR and Exxon Mobil.                             */
+/*                                                                                 */
+/*  NOMAD v3 is a new version of NOMAD v1 and v2. NOMAD v1 and v2 were created     */
+/*  and developed by Mark Abramson, Charles Audet, Gilles Couture, and John E.     */
+/*  Dennis Jr., and were funded by AFOSR and Exxon Mobil.                          */
+/*                                                                                 */
+/*  Contact information:                                                           */
+/*    Ecole Polytechnique de Montreal - GERAD                                      */
+/*    C.P. 6079, Succ. Centre-ville, Montreal (Quebec) H3C 3A7 Canada              */
+/*    e-mail: nomad@gerad.ca                                                       */
+/*    phone : 1-514-340-6053 #6928                                                 */
+/*    fax   : 1-514-340-5665                                                       */
+/*                                                                                 */
+/*  This program is free software: you can redistribute it and/or modify it        */
+/*  under the terms of the GNU Lesser General Public License as published by       */
+/*  the Free Software Foundation, either version 3 of the License, or (at your     */
+/*  option) any later version.                                                     */
+/*                                                                                 */
+/*  This program is distributed in the hope that it will be useful, but WITHOUT    */
+/*  ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or          */
+/*  FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License    */
+/*  for more details.                                                              */
+/*                                                                                 */
+/*  You should have received a copy of the GNU Lesser General Public License       */
+/*  along with this program. If not, see <http://www.gnu.org/licenses/>.           */
+/*                                                                                 */
+/*  You can find information on the NOMAD software at www.gerad.ca/nomad           */
+/*---------------------------------------------------------------------------------*/
+
 /**
  \file   Priority_Eval_Point.cpp
  \brief  Evaluation point with a priority (implementation)
@@ -47,8 +49,6 @@
  \see    Priority_Eval_Point.hpp
  */
 #include "Priority_Eval_Point.hpp"
-
-bool NOMAD::Priority_Eval_Point::_lexicographic_order=false;
 
 /*------------------------------------------------*/
 /*                comparison operator             */
@@ -65,13 +65,31 @@ bool NOMAD::Priority_Eval_Point::dominates ( const NOMAD::Set_Element<NOMAD::Eva
     const NOMAD::Eval_Point * x1 = get_element();
     const NOMAD::Eval_Point * x2 = x.get_element();
     
-    // criterion 0: lexicographic order
-    // ------------
+    // criterion 0: lexicographic order (forced low information ordering)
+    // -----------
     if ( _lexicographic_order )
         return NOMAD::Point(*x1) < NOMAD::Point(*x2);
     
     
-    // criterion 1: user criterion:
+    // criterion 1: random order (forced random ordering --> higher priority than random ordering criterion 11 )
+    // -----------
+    if ( _random_order )
+    {
+        const NOMAD::Double rep1 = x1->get_rand_eval_priority() ;
+        if ( rep1 .is_defined() )
+        {
+            const NOMAD::Double rep2 = x2->get_rand_eval_priority();
+            if ( rep2.is_defined() )
+            {
+                if ( rep1 > rep2 )
+                    return true;
+                if ( rep2 > rep1 )
+                    return false;
+            }
+        }
+    }
+    
+    // criterion 2: user criterion:
     // ------------
     const NOMAD::Double uep1 = x1->get_user_eval_priority();
     if ( uep1.is_defined() )
@@ -85,6 +103,22 @@ bool NOMAD::Priority_Eval_Point::dominates ( const NOMAD::Set_Element<NOMAD::Eva
                 return false;
         }
     }
+    
+    // criterion 3: trend information criterion:
+    // ------------
+    const NOMAD::Double tep1 = x1->get_trend_eval_priority();
+    if ( tep1.is_defined() )
+    {
+        const NOMAD::Double tep2 = x2->get_trend_eval_priority();
+        if ( tep2.is_defined() )
+        {
+            if ( tep1 > tep2 )
+                return true;
+            if ( tep2 > tep1 )
+                return false;
+        }
+    }
+
     
     // specific Priority_Eval_Point elements of comparison:
     NOMAD::Double x_f_sgte;
@@ -101,21 +135,21 @@ bool NOMAD::Priority_Eval_Point::dominates ( const NOMAD::Set_Element<NOMAD::Eva
                              x_angle_success_dir  ,
                              x_angle_simplex_grad   );
     
-    // criterion 2: give priority to already evaluated cache points:
+    // criterion 4: give priority to already evaluated cache points:
     // ------------
     if ( x1->is_in_cache() && !x2->is_in_cache() )
         return true;
     if ( x2->is_in_cache() && !x1->is_in_cache() )
         return false;
     
-    // criterion 3: give priority to already evaluated points
+    // criterion 5: give priority to already evaluated points
     // ------------ that are eval_ok:
     if ( x1->is_eval_ok() && !x2->is_eval_ok() )
         return true;
     if ( x2->is_eval_ok() && !x1->is_eval_ok() )
         return false;
     
-    // criterion 4: true f and h values:
+    // criterion 6: true f and h values:
     // -----------
     int flag = compare_hf_values ( x1->get_h() ,
                                   x1->get_f() ,
@@ -124,13 +158,13 @@ bool NOMAD::Priority_Eval_Point::dominates ( const NOMAD::Set_Element<NOMAD::Eva
     if ( flag )
         return ( flag > 0 );
     
-    // criterion 5: surrogate f and h values:
+    // criterion 7: surrogate f and h values:
     // ------------
     flag = compare_hf_values ( _h_sgte , _f_sgte , x_h_sgte , x_f_sgte );
     if ( flag )
-        return ( flag > 0 );  // return (flag < 0);  // CTribes dec 17, 2014 --- flag < 0 used for testing ordonnancement negationiste
+        return ( flag > 0 );
     
-    // criterion 6: model f and h values:
+    // criterion 8: model f and h values:
     // ------------
     flag = compare_hf_values ( _h_model , _f_model , x_h_model , x_f_model );
     if ( flag )
@@ -138,7 +172,7 @@ bool NOMAD::Priority_Eval_Point::dominates ( const NOMAD::Set_Element<NOMAD::Eva
     
     
     
-    // criterion 7: check the angle with the last successful direction:
+    // criterion 9: check the angle with the last successful direction:
     // ------------
     if ( _angle_success_dir.is_defined() && x_angle_success_dir.is_defined() )
     {
@@ -149,7 +183,7 @@ bool NOMAD::Priority_Eval_Point::dominates ( const NOMAD::Set_Element<NOMAD::Eva
     }
     
     
-    // criterion 8: take the point with the best h value:
+    // criterion 10: take the point with the best h value:
     // ------------
     flag = compare_h_values ( x1->get_h() , x2->get_h() );
     if ( flag )
@@ -163,22 +197,22 @@ bool NOMAD::Priority_Eval_Point::dominates ( const NOMAD::Set_Element<NOMAD::Eva
     if ( flag )
         return ( flag > 0 );
     
-    // criterion 9: random criterion for randomly generated directions:
+    // criterion 11: random criterion for randomly generated directions:
     // -------------
-    const NOMAD::Double rep1 = x1->get_rand_eval_priority();
-    if ( rep1.is_defined() )
+    const NOMAD::Double repp1 = x1->get_rand_eval_priority();
+    if ( repp1.is_defined() )
     {
-        const NOMAD::Double rep2 = x2->get_rand_eval_priority();
-        if ( rep2.is_defined() )
+        const NOMAD::Double repp2 = x2->get_rand_eval_priority();
+        if ( repp2.is_defined() )
         {
-            if ( rep1 < rep2 )
+            if ( repp1 < repp2 )
                 return true;
-            if ( rep2 < rep1 )
+            if ( repp2 < repp1 )
                 return false;
         }
     }
     
-    // criterion 10: compare the tags:
+    // criterion 12: compare the tags:
     // -------------
     return x1->get_tag() < x2->get_tag();
     

@@ -1,29 +1,12 @@
 /*-------------------------------------------------------------------------------------*/
-/*  NOMAD - Nonlinear Optimization by Mesh Adaptive Direct search - version 3.8.0      */
+/*  sgtelib - A surrogate model library for derivative-free optimization               */
+/*  Version 2.0.2                                                                      */
 /*                                                                                     */
+/*  Copyright (C) 2012-2016  Sebastien Le Digabel - Ecole Polytechnique, Montreal      */ 
+/*                           Bastien Talgorn - McGill University, Montreal             */
 /*                                                                                     */
-/*  NOMAD - version 3.8.0 has been created by                                          */
-/*                 Charles Audet        - Ecole Polytechnique de Montreal              */
-/*                 Sebastien Le Digabel - Ecole Polytechnique de Montreal              */
-/*                 Christophe Tribes    - Ecole Polytechnique de Montreal              */
-/*                                                                                     */
-/*  The copyright of NOMAD - version 3.8.0 is owned by                                 */
-/*                 Sebastien Le Digabel - Ecole Polytechnique de Montreal              */
-/*                 Christophe Tribes    - Ecole Polytechnique de Montreal              */
-/*                                                                                     */
-/*  NOMAD v3 has been funded by AFOSR and Exxon Mobil.                                 */
-/*                                                                                     */
-/*  NOMAD v3 is a new version of NOMAD v1 and v2. NOMAD v1 and v2 were created and     */
-/*  developed by Mark Abramson, Charles Audet, Gilles Couture and John E. Dennis Jr.,  */
-/*  and were funded by AFOSR and Exxon Mobil.                                          */
-/*                                                                                     */
-/*                                                                                     */
-/*  Contact information:                                                               */
-/*    Ecole Polytechnique de Montreal - GERAD                                          */
-/*    C.P. 6079, Succ. Centre-ville, Montreal (Quebec) H3C 3A7 Canada                  */
-/*    e-mail: nomad@gerad.ca                                                           */
-/*    phone : 1-514-340-6053 #6928                                                     */
-/*    fax   : 1-514-340-5665                                                           */
+/*  Author: Bastien Talgorn                                                            */
+/*  email: bastientalgorn@fastmail.com                                                 */
 /*                                                                                     */
 /*  This program is free software: you can redistribute it and/or modify it under the  */
 /*  terms of the GNU Lesser General Public License as published by the Free Software   */
@@ -37,7 +20,7 @@
 /*  You should have received a copy of the GNU Lesser General Public License along     */
 /*  with this program. If not, see <http://www.gnu.org/licenses/>.                     */
 /*                                                                                     */
-/*  You can find information on the NOMAD software at www.gerad.ca/nomad               */
+/*  You can find information on sgtelib at https://github.com/bastientalgorn/sgtelib   */
 /*-------------------------------------------------------------------------------------*/
 /**
  \file   Sgtelib_Model_Manager.cpp
@@ -48,6 +31,7 @@
  */
 #include "Sgtelib_Model_Manager.hpp"
 #include "Evaluator_Control.hpp"
+
 
 /*---------------------------------------------------------------*/
 /*                    constructor                                */
@@ -84,7 +68,7 @@ _ready        ( false       )
     {
         if ( ! (_p.get_SGTELIB_MODEL_FEASIBILITY() == NOMAD::SGTELIB_MODEL_FEASIBILITY_C) )
         {
-            NOMAD::rout << "ERROR : Formulations FS and EIS can only be used with FeasibilityMethod C" << std::endl;  // zhenghua
+	  NOMAD::rout << "ERROR : Formulations FS and EIS can only be used with FeasibilityMethod C" << std::endl;   //zhenghua
             throw SGTELIB::Exception ( __FILE__ , __LINE__ ,
                                       "Sgtelib_Model_Manager: SGTELIB_MODEL_FEASIBILITY not valid." );
         }
@@ -111,7 +95,7 @@ _ready        ( false       )
             _nb_models = 2;
             break;
         case NOMAD::SGTELIB_MODEL_FEASIBILITY_UNDEFINED:
-            NOMAD::rout<< "UNDEFINED_SGTELIB_MODEL_FEASIBILITY" << std::endl;   // zhenghua 
+	  NOMAD::rout << "UNDEFINED_SGTELIB_MODEL_FEASIBILITY" << std::endl;  //zhenghua
             break;
     }
     
@@ -271,8 +255,7 @@ void NOMAD::Sgtelib_Model_Manager::update(void)
     const NOMAD::Display & out = _p.out();    
     const bool display_update = string_find( _p.get_SGTELIB_MODEL_DISPLAY(),"U") ;
     
-    if ( display_update )
-        out.open_block("Update sgtelib model");
+    if ( display_update ) out.open_block("Update sgtelib model");
     
     // EXTERN SGTE
     if ( _p.get_SGTELIB_MODEL_FORMULATION() == NOMAD::SGTELIB_MODEL_FORMULATION_EXTERN )
@@ -323,7 +306,12 @@ void NOMAD::Sgtelib_Model_Manager::update(void)
             valid_point = true;
             for ( int j=0 ; j < _p.get_bb_nb_outputs() ; j++)
             {
+                // test on valid f (needed below)
+<<<<<<< HEAD
                 if ( ( !cur->get_bb_outputs()[j].is_defined() ) || ( crs_isnan(cur->get_bb_outputs()[j].value()) ) || !cur->is_eval_ok() || !cur->get_f().is_defined() )
+=======
+                if ( ( !cur->get_bb_outputs()[j].is_defined() ) || ( isnan(cur->get_bb_outputs()[j].value()) ) || !cur->is_eval_ok() || !cur->get_f().is_defined() )
+>>>>>>> 8d7a7ae9b270f08018a9e712de36391272212626
                     valid_point = false;
             }
             
@@ -494,7 +482,7 @@ NOMAD::Point NOMAD::Sgtelib_Model_Manager::get_extended_lb(void)
     for ( int i=0 ; i < _p.get_dimension() ; i++ )
     {
         vi = _p.get_lower_bound().get_coord(i);
-        if ( ( ! vi.is_defined() ) || ( crs_isnan(vi.value() ) ) )
+        if ( ( ! vi.is_defined() ) || ( isnan(vi.value() ) ) )
             ext_lb[i] = _model_lb[i] - max(Double(10.0),_model_ub[i]-_model_lb[i]);
     }
     return ext_lb;
@@ -507,7 +495,7 @@ NOMAD::Point NOMAD::Sgtelib_Model_Manager::get_extended_ub(void)
     for ( int i = 0 ; i < _p.get_dimension() ; i++ )
     {
         vi = _p.get_upper_bound().get_coord(i);
-        if ( (!vi.is_defined()) || (crs_isnan(vi.value())) )
+        if ( (!vi.is_defined()) || (isnan(vi.value())) )
             ext_ub[i] = _model_ub[i] + max(Double(10.0),_model_ub[i]-_model_lb[i]);
     }
     return ext_ub;
@@ -625,8 +613,8 @@ void NOMAD::Sgtelib_Model_Manager::check_hf ( NOMAD::Eval_Point   * x )
 /*                evaluate the sgtelib_model model at a given point       */
 /*------------------------------------------------------------------------*/
 bool NOMAD::Sgtelib_Model_Manager::eval_x ( NOMAD::Eval_Point   * x          ,
-	                                          const NOMAD::Double & h_max      ,
-                                          	bool                & count_eval )
+                                            const NOMAD::Double & h_max      ,
+                                            bool                & count_eval )
 {
     int i;
     const int dim = _p.get_dimension();
@@ -974,7 +962,7 @@ bool NOMAD::Sgtelib_Model_Manager::eval_x ( NOMAD::Eval_Point   * x          ,
         }
         out << "Exclusion area penalty = " << penalty << std::endl;
         out << "Model Output = (" << x->get_bb_outputs() << ")" << std::endl;
-        if ( crs_isnan( pf.value() ) || crs_isnan( pi.value() ) )
+        if ( isnan( pf.value() ) || isnan( pi.value() ) )
         {
             throw SGTELIB::Exception ( __FILE__ , __LINE__ ,
                                       "Sgtelib_Model_Manager::eval_x: nan values in pi or pf." );

@@ -1,44 +1,46 @@
-/*-------------------------------------------------------------------------------------*/
-/*  NOMAD - Nonlinear Optimization by Mesh Adaptive Direct search - version 3.8.0      */
-/*                                                                                     */
-/*                                                                                     */
-/*  NOMAD - version 3.8.0 has been created by                                          */
-/*                 Charles Audet        - Ecole Polytechnique de Montreal              */
-/*                 Sebastien Le Digabel - Ecole Polytechnique de Montreal              */
-/*                 Christophe Tribes    - Ecole Polytechnique de Montreal              */
-/*                                                                                     */
-/*  The copyright of NOMAD - version 3.8.0 is owned by                                 */
-/*                 Sebastien Le Digabel - Ecole Polytechnique de Montreal              */
-/*                 Christophe Tribes    - Ecole Polytechnique de Montreal              */
-/*                                                                                     */
-/*  NOMAD v3 has been funded by AFOSR and Exxon Mobil.                                 */
-/*                                                                                     */
-/*  NOMAD v3 is a new version of NOMAD v1 and v2. NOMAD v1 and v2 were created and     */
-/*  developed by Mark Abramson, Charles Audet, Gilles Couture and John E. Dennis Jr.,  */
-/*  and were funded by AFOSR and Exxon Mobil.                                          */
-/*                                                                                     */
-/*                                                                                     */
-/*  Contact information:                                                               */
-/*    Ecole Polytechnique de Montreal - GERAD                                          */
-/*    C.P. 6079, Succ. Centre-ville, Montreal (Quebec) H3C 3A7 Canada                  */
-/*    e-mail: nomad@gerad.ca                                                           */
-/*    phone : 1-514-340-6053 #6928                                                     */
-/*    fax   : 1-514-340-5665                                                           */
-/*                                                                                     */
-/*  This program is free software: you can redistribute it and/or modify it under the  */
-/*  terms of the GNU Lesser General Public License as published by the Free Software   */
-/*  Foundation, either version 3 of the License, or (at your option) any later         */
-/*  version.                                                                           */
-/*                                                                                     */
-/*  This program is distributed in the hope that it will be useful, but WITHOUT ANY    */
-/*  WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A    */
-/*  PARTICULAR PURPOSE.  See the GNU Lesser General Public License for more details.   */
-/*                                                                                     */
-/*  You should have received a copy of the GNU Lesser General Public License along     */
-/*  with this program. If not, see <http://www.gnu.org/licenses/>.                     */
-/*                                                                                     */
-/*  You can find information on the NOMAD software at www.gerad.ca/nomad               */
-/*-------------------------------------------------------------------------------------*/
+/*---------------------------------------------------------------------------------*/
+/*  NOMAD - Nonlinear Optimization by Mesh Adaptive Direct search -                */
+/*                                                                                 */
+/*  NOMAD - version 3.9.1 has been created by                                      */
+/*                 Charles Audet               - Ecole Polytechnique de Montreal   */
+/*                 Sebastien Le Digabel        - Ecole Polytechnique de Montreal   */
+/*                 Viviane Rochon Montplaisir - Ecole Polytechnique de Montreal   */
+/*                 Christophe Tribes           - Ecole Polytechnique de Montreal   */
+/*                                                                                 */
+/*  The copyright of NOMAD - version 3.9.1 is owned by                             */
+/*                 Sebastien Le Digabel        - Ecole Polytechnique de Montreal   */
+/*                 Viviane Rochon Montplaisir - Ecole Polytechnique de Montreal   */
+/*                 Christophe Tribes           - Ecole Polytechnique de Montreal   */
+/*                                                                                 */
+/*  NOMAD v3 has been funded by AFOSR and Exxon Mobil.                             */
+/*                                                                                 */
+/*  NOMAD v3 is a new version of NOMAD v1 and v2. NOMAD v1 and v2 were created     */
+/*  and developed by Mark Abramson, Charles Audet, Gilles Couture, and John E.     */
+/*  Dennis Jr., and were funded by AFOSR and Exxon Mobil.                          */
+/*                                                                                 */
+/*  Contact information:                                                           */
+/*    Ecole Polytechnique de Montreal - GERAD                                      */
+/*    C.P. 6079, Succ. Centre-ville, Montreal (Quebec) H3C 3A7 Canada              */
+/*    e-mail: nomad@gerad.ca                                                       */
+/*    phone : 1-514-340-6053 #6928                                                 */
+/*    fax   : 1-514-340-5665                                                       */
+/*                                                                                 */
+/*  This program is free software: you can redistribute it and/or modify it        */
+/*  under the terms of the GNU Lesser General Public License as published by       */
+/*  the Free Software Foundation, either version 3 of the License, or (at your     */
+/*  option) any later version.                                                     */
+/*                                                                                 */
+/*  This program is distributed in the hope that it will be useful, but WITHOUT    */
+/*  ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or          */
+/*  FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License    */
+/*  for more details.                                                              */
+/*                                                                                 */
+/*  You should have received a copy of the GNU Lesser General Public License       */
+/*  along with this program. If not, see <http://www.gnu.org/licenses/>.           */
+/*                                                                                 */
+/*  You can find information on the NOMAD software at www.gerad.ca/nomad           */
+/*---------------------------------------------------------------------------------*/
+
 /**
  \file   Evaluator_Control.hpp
  \brief  Control of the blackbox evaluations (headers)
@@ -54,12 +56,6 @@
 #include "Slave.hpp"
 #include "Quad_Model.hpp"
 
-#ifdef R_VERSION
-extern "C" {
-#include <Rinternals.h>
-}
-#endif
-
 
 namespace NOMAD {
     
@@ -69,7 +65,7 @@ namespace NOMAD {
     /**
      This class allows the evaluation of a list of trial points.
      */
-    class Evaluator_Control : private NOMAD::Uncopyable {
+    class DLL_API Evaluator_Control : private NOMAD::Uncopyable {
         
     private:
         
@@ -82,6 +78,7 @@ namespace NOMAD {
         NOMAD::Cache * _cache;       ///< Cache for true function evaluations.
         NOMAD::Cache * _sgte_cache;  ///< Cache for surrogate evaluations.
         
+        // RobustMads
         NOMAD::Eval_Point * _best_smooth_feas_inc;
         
         /// List of points to be evaluated.
@@ -90,6 +87,10 @@ namespace NOMAD {
         /// Flag to enable or disable the model ordering.
         bool _model_eval_sort;
         
+        /// Single trend cone defined by a direction as a sum of basis directions (+ei, -ei, 0)
+        NOMAD::Point _trend_direction;
+
+    
         /// Flag equal to \c true if the destructor has to delete \c this->_ev.
         bool _del_ev;
         
@@ -117,7 +118,7 @@ namespace NOMAD {
         
         NOMAD::Slave * _slave; // Slave object for master process
 #endif
-        
+ 
         NOMAD::Sgtelib_Model_Manager * _sgtelib_model_manager;
         
         
@@ -150,11 +151,11 @@ namespace NOMAD {
         
         /// Save the solution file or update the history file.
         /**
-         \param file_name		Name of the file -- \b IN.
-         \param x				Lattest solution -- \b IN.
-         \param is_sol		Flag equal to \c true if the file is
-         a solution file; otherwise it is a history file.
-         \param display_bimv	Display best infeasible (min. viol.) if \c true
+         \param file_name       Name of the file -- \b IN.
+         \param x               Latest solution -- \b IN.
+         \param is_sol          Flag equal to \c true if the file is
+                                a solution file; otherwise it is a history file.
+         \param display_bimv    Display best infeasible (min. viol.) if \c true
          */
         void write_sol_or_his_file ( const std::string        & file_name ,
                                     const NOMAD::Eval_Point  & x         ,
@@ -239,8 +240,8 @@ namespace NOMAD {
          */
         void quad_model_ordering ( NOMAD::dd_type   display_degree ,
                                   bool           & modified_list    );
-
-
+        
+        
         
         /// Sgtelib model ordering (parameter \c MODEL_EVAL_SORT).
         /**
@@ -303,24 +304,24 @@ namespace NOMAD {
         
         /// Evaluate points.
         /*
-         \param list_x			The list of points						-- \b IN/OUT.
-         \param true_barrier		Barrier for true evaluations			-- \b IN/OUT.
-         \param sgte_barrier		Barrier for surrogate evaluations		-- \b IN/OUT.
-         \param pareto_front		A pointer to the Pareto front			-- \b IN/OUT
+         \param list_x          The list of points                      -- \b IN/OUT.
+         \param true_barrier    Barrier for true evaluations            -- \b IN/OUT.
+         \param sgte_barrier    Barrier for surrogate evaluations       -- \b IN/OUT.
+         \param pareto_front    A pointer to the Pareto front           -- \b IN/OUT
          (may be \c NULL).
-         \param list_count_eval	A list of bool for counted evaluations	-- \b OUT.
-         \param stop				Stop flag								-- \b IN/OUT.
-         \param stop_reason		Stop reason								-- \b OUT.
-         \param h_max				Maximal feasibility value				-- \b IN.
+         \param list_count_eval A list of bool for counted evaluations  -- \b OUT.
+         \param stop            Stop flag                               -- \b IN/OUT.
+         \param stop_reason     Stop reason                             -- \b OUT.
+         \param h_max           Maximal feasibility value               -- \b IN.
          */
-        void eval_points ( std::list<NOMAD::Eval_Point *>	& list_x            ,
-                          NOMAD::Barrier					& true_barrier ,
-                          NOMAD::Barrier					& sgte_barrier ,
-                          NOMAD::Pareto_Front				* pareto_front ,
-                          std::list<bool>					& list_count_eval   ,
-                          bool							& stop         ,
-                          NOMAD::stop_type				& stop_reason  ,
-                          const NOMAD::Double				& h_max          );
+        void eval_points ( std::list<NOMAD::Eval_Point *>   & list_x            ,
+                          NOMAD::Barrier                    & true_barrier ,
+                          NOMAD::Barrier                    & sgte_barrier ,
+                          NOMAD::Pareto_Front               * pareto_front ,
+                          std::list<bool>                   & list_count_eval   ,
+                          bool                              & stop         ,
+                          NOMAD::stop_type                  & stop_reason  ,
+                          const NOMAD::Double               & h_max          );
         
         
         
@@ -407,7 +408,7 @@ namespace NOMAD {
                                           const NOMAD::Eval_Point             *& new_infeas_inc ,
                                           NOMAD::success_type                  & success        ,
                                           std::list<const NOMAD::Eval_Point *> & evaluated_pts    );
-        
+                
         void private_smooth_fx ( NOMAD::Eval_Point & eval_pt );
         
         NOMAD::Double private_grondd ( const NOMAD::Eval_Point & x1 , const NOMAD::Eval_Point & x2  ) ;
@@ -552,8 +553,8 @@ namespace NOMAD {
         
         /// Update the solution file.
         /**
-         \param x				The lattest solution									-- \b IN.
-         \param display_bimv	Required to display least infeasible (default=false)	-- \b IN
+         \param x               The latest solution                                 -- \b IN.
+         \param display_bimv    Required to display least infeasible (default=false) -- \b IN
          */
         void write_solution_file ( const NOMAD::Eval_Point & x , bool display_bimv=false) const;
         
@@ -653,6 +654,16 @@ namespace NOMAD {
         
         
         
+        /// Construct a direction (+ei, -ei, 0) representing the trend cone for active constraints and/or objective(s) for the given poll center. This is used for ordering (subject to parameters \c TREND_MATRIX_EVAL_SORT ).
+        /**
+         \param poll_center  To get feasibility of the poll center -- \b OUT.
+         */
+        void set_single_trend_direction ( const NOMAD::Eval_Point    & poll_center );
+        
+        /// Get the trend direction
+        /**
+         */
+        const NOMAD::Point & get_single_trend_direction ( void ) { return _trend_direction ;}
         
         
         /// Evaluation of a list of points (public version that calls the private version).

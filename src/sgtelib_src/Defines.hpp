@@ -1,6 +1,6 @@
 /*-------------------------------------------------------------------------------------*/
 /*  sgtelib - A surrogate model library for derivative-free optimization               */
-/*  Version 2.0.1                                                                      */
+/*  Version 2.0.2                                                                      */
 /*                                                                                     */
 /*  Copyright (C) 2012-2017  Sebastien Le Digabel - Ecole Polytechnique, Montreal      */ 
 /*                           Bastien Talgorn - McGill University, Montreal             */
@@ -35,16 +35,27 @@
 #include <limits>
 #include <limits.h>
 
+// CASE Visual Studio C++ compiler
+#ifdef _MSC_VER
+#pragma warning(disable:4251)
+#ifdef DLL_EXPORTS
+#define DLL_API __declspec(dllexport) 
+#else
+#define DLL_API __declspec(dllimport) 
+#endif
+#else
+#define DLL_API
+#endif
+
 // debug flag:
 //#define SGTELIB_DEBUG
 //#define ENSEMBLE_DEBUG
 
 namespace SGTELIB {
 
-	#undef PI
 
 	extern std::ostream rout;     //zhenghua
-
+  
   const double EPSILON = 1E-13;
   const double PI = 3.141592654;
   const double INF = std::numeric_limits<double>::max(); ///< Infinity
@@ -54,6 +65,16 @@ namespace SGTELIB {
   // If true, then the lower bound of standard deviation is EPSILON. 
   // This allows to avoid flat EI and P functions. 
 
+
+  enum norm_t {
+    NORM_0 ,
+    NORM_1 ,
+    NORM_2 ,
+    NORM_INF
+  };
+
+
+
   enum scaling_t {
     SCALING_NONE ,
     SCALING_MEANSTD ,
@@ -61,6 +82,10 @@ namespace SGTELIB {
   };
 
   const scaling_t scaling_method = SCALING_MEANSTD;
+  const int boolean_rounding = 2;
+  // 0: no boolean scaling
+  // 1: threshold = (Z_UB+Z_LB)/2;
+  // 2: threshold = mean(Z)
   //const scaling_t scaling_method = SCALING_NONE;
 
 

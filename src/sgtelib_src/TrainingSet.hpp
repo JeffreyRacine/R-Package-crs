@@ -1,6 +1,6 @@
 /*-------------------------------------------------------------------------------------*/
 /*  sgtelib - A surrogate model library for derivative-free optimization               */
-/*  Version 2.0.1                                                                      */
+/*  Version 2.0.2                                                                      */
 /*                                                                                     */
 /*  Copyright (C) 2012-2017  Sebastien Le Digabel - Ecole Polytechnique, Montreal      */ 
 /*                           Bastien Talgorn - McGill University, Montreal             */
@@ -33,7 +33,7 @@ namespace SGTELIB {
   /*--------------------------------------*/
   /*             TrainingSet class          */
   /*--------------------------------------*/
-  class TrainingSet {
+  class DLL_API TrainingSet {
 
   private:
 
@@ -53,15 +53,15 @@ namespace SGTELIB {
     int _i_min; // Index of the point where f_min is reached
     
     // data points:
-    SGTELIB::Matrix X_X; // p x n   // zhenghua, for compiling on Solaris.
-    SGTELIB::Matrix Z_Z; // p x m
+    SGTELIB::Matrix X_X; // p x n  //zhenghua
+    SGTELIB::Matrix Z_Z; // p x m  //zhenghua
 
     // scaled matrices
-    SGTELIB::Matrix X_Xs; // p x n
-    SGTELIB::Matrix Z_Zs; // p x m
+    SGTELIB::Matrix X_Xs; // p x n  //zhenghua
+    SGTELIB::Matrix Z_Zs; // p x m  //zhenghua
 
     // Distance matrix
-    SGTELIB::Matrix D_Ds; // p x p
+    SGTELIB::Matrix D_Ds; // p x p   //zhenghua
 
     // Nb of varying data
     int _nvar; // Nb of varying input
@@ -69,7 +69,7 @@ namespace SGTELIB {
     int _pvar; // Nb of different points
 
     // Data
-    double * X_X_lb;
+    double * X_X_lb;  //zhenghua
     double * X_X_ub;
     double * X_X_scaling_a;
     double * X_X_scaling_b;
@@ -186,10 +186,6 @@ namespace SGTELIB {
     SGTELIB::Matrix get_exclusion_area_penalty ( const SGTELIB::Matrix & XXs , const double tc ) const;
     SGTELIB::Matrix get_distance_to_closest ( const SGTELIB::Matrix & XXs ) const;
  
-    // Return the index of the closest point to point i    
-    int            get_closest ( const int i ) const;
-    // Return the indexes of the nb_pts closest points to point i
-    //std::list<int> get_closest ( const int i , const int nb_pts ) const;
 
     // Get basic information
     int get_nb_points      ( void ) const { return _p; };

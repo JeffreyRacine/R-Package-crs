@@ -1,44 +1,46 @@
-/*-------------------------------------------------------------------------------------*/
-/*  NOMAD - Nonlinear Optimization by Mesh Adaptive Direct search - version 3.8.0      */
-/*                                                                                     */
-/*                                                                                     */
-/*  NOMAD - version 3.8.0 has been created by                                          */
-/*                 Charles Audet        - Ecole Polytechnique de Montreal              */
-/*                 Sebastien Le Digabel - Ecole Polytechnique de Montreal              */
-/*                 Christophe Tribes    - Ecole Polytechnique de Montreal              */
-/*                                                                                     */
-/*  The copyright of NOMAD - version 3.8.0 is owned by                                 */
-/*                 Sebastien Le Digabel - Ecole Polytechnique de Montreal              */
-/*                 Christophe Tribes    - Ecole Polytechnique de Montreal              */
-/*                                                                                     */
-/*  NOMAD v3 has been funded by AFOSR and Exxon Mobil.                                 */
-/*                                                                                     */
-/*  NOMAD v3 is a new version of NOMAD v1 and v2. NOMAD v1 and v2 were created and     */
-/*  developed by Mark Abramson, Charles Audet, Gilles Couture and John E. Dennis Jr.,  */
-/*  and were funded by AFOSR and Exxon Mobil.                                          */
-/*                                                                                     */
-/*                                                                                     */
-/*  Contact information:                                                               */
-/*    Ecole Polytechnique de Montreal - GERAD                                          */
-/*    C.P. 6079, Succ. Centre-ville, Montreal (Quebec) H3C 3A7 Canada                  */
-/*    e-mail: nomad@gerad.ca                                                           */
-/*    phone : 1-514-340-6053 #6928                                                     */
-/*    fax   : 1-514-340-5665                                                           */
-/*                                                                                     */
-/*  This program is free software: you can redistribute it and/or modify it under the  */
-/*  terms of the GNU Lesser General Public License as published by the Free Software   */
-/*  Foundation, either version 3 of the License, or (at your option) any later         */
-/*  version.                                                                           */
-/*                                                                                     */
-/*  This program is distributed in the hope that it will be useful, but WITHOUT ANY    */
-/*  WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A    */
-/*  PARTICULAR PURPOSE.  See the GNU Lesser General Public License for more details.   */
-/*                                                                                     */
-/*  You should have received a copy of the GNU Lesser General Public License along     */
-/*  with this program. If not, see <http://www.gnu.org/licenses/>.                     */
-/*                                                                                     */
-/*  You can find information on the NOMAD software at www.gerad.ca/nomad               */
-/*-------------------------------------------------------------------------------------*/
+/*---------------------------------------------------------------------------------*/
+/*  NOMAD - Nonlinear Optimization by Mesh Adaptive Direct search -                */
+/*                                                                                 */
+/*  NOMAD - version 3.9.1 has been created by                                      */
+/*                 Charles Audet               - Ecole Polytechnique de Montreal   */
+/*                 Sebastien Le Digabel        - Ecole Polytechnique de Montreal   */
+/*                 Viviane Rochon Montplaisir - Ecole Polytechnique de Montreal   */
+/*                 Christophe Tribes           - Ecole Polytechnique de Montreal   */
+/*                                                                                 */
+/*  The copyright of NOMAD - version 3.9.1 is owned by                             */
+/*                 Sebastien Le Digabel        - Ecole Polytechnique de Montreal   */
+/*                 Viviane Rochon Montplaisir - Ecole Polytechnique de Montreal   */
+/*                 Christophe Tribes           - Ecole Polytechnique de Montreal   */
+/*                                                                                 */
+/*  NOMAD v3 has been funded by AFOSR and Exxon Mobil.                             */
+/*                                                                                 */
+/*  NOMAD v3 is a new version of NOMAD v1 and v2. NOMAD v1 and v2 were created     */
+/*  and developed by Mark Abramson, Charles Audet, Gilles Couture, and John E.     */
+/*  Dennis Jr., and were funded by AFOSR and Exxon Mobil.                          */
+/*                                                                                 */
+/*  Contact information:                                                           */
+/*    Ecole Polytechnique de Montreal - GERAD                                      */
+/*    C.P. 6079, Succ. Centre-ville, Montreal (Quebec) H3C 3A7 Canada              */
+/*    e-mail: nomad@gerad.ca                                                       */
+/*    phone : 1-514-340-6053 #6928                                                 */
+/*    fax   : 1-514-340-5665                                                       */
+/*                                                                                 */
+/*  This program is free software: you can redistribute it and/or modify it        */
+/*  under the terms of the GNU Lesser General Public License as published by       */
+/*  the Free Software Foundation, either version 3 of the License, or (at your     */
+/*  option) any later version.                                                     */
+/*                                                                                 */
+/*  This program is distributed in the hope that it will be useful, but WITHOUT    */
+/*  ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or          */
+/*  FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License    */
+/*  for more details.                                                              */
+/*                                                                                 */
+/*  You should have received a copy of the GNU Lesser General Public License       */
+/*  along with this program. If not, see <http://www.gnu.org/licenses/>.           */
+/*                                                                                 */
+/*  You can find information on the NOMAD software at www.gerad.ca/nomad           */
+/*---------------------------------------------------------------------------------*/
+
 /**
  \file   VNS_Search.cpp
  \brief  VNS search (implementation)
@@ -149,10 +151,11 @@ void NOMAD::VNS_Search::search ( NOMAD::Mads              & mads           ,
     
     signature->get_one_direction ( dir , _k - 1);
     
-    // shaking: construct x':
     NOMAD::Point xp(n);
     for (int i = 0 ; i < n ; ++i )
         xp[i] = ( (_p.get_bb_input_type())[i]==NOMAD::BINARY && dir[i]==1.0 && (*x)[i]==1.0 ) ? 0.0 : xp[i] = (*x)[i] + dir[i];
+    
+    
     
     // shaking: the perturbation is tried twice with dir and -dir
     //          (in case x == x + dir after snapping)
@@ -190,6 +193,8 @@ void NOMAD::VNS_Search::search ( NOMAD::Mads              & mads           ,
     const NOMAD::Point            old_delta_min = signature->get_mesh()->get_min_mesh_size();
     // Current min poll size
     const NOMAD::Point            old_Delta_min = signature->get_mesh()->get_min_poll_size();
+    
+    
     
     // stats:
     NOMAD::Stats & stats = mads.get_stats();
@@ -273,7 +278,6 @@ void NOMAD::VNS_Search::search ( NOMAD::Mads              & mads           ,
         for ( k = 0 ; k < nx0 ; ++k )
             x0s.push_back ( new Point ( *x0s_tmp[k] ) );
     }
-    
     
     if ( _p.get_display_degree() == NOMAD::FULL_DISPLAY )
         _p.set_DISPLAY_DEGREE ( NOMAD::NORMAL_DISPLAY );
@@ -531,6 +535,8 @@ void NOMAD::VNS_Search::search ( NOMAD::Mads              & mads           ,
         else if ( !x0_cache_file.empty() )
             _p.set_X0 ( x0_cache_file );
         
+        
+        // Patch to prevent exception from Parameters::check when Categorical variables are present. This patch prevent the original x0 to be restored. Instead the best current solution is used which has consistent dimension with lb, ub, mesh, etc.
         if ( x0s.size() !=0 && x0s[0]->size() != modified_dimension  )
         {
             _p.reset_X0();
@@ -574,7 +580,7 @@ void NOMAD::VNS_Search::search ( NOMAD::Mads              & mads           ,
     
     // Needed because mesh reinitialized during p.check()
     signature->get_mesh()->set_min_mesh_sizes( old_delta_min );
-    signature->get_mesh()->set_min_poll_sizes( old_Delta_min );
+    signature->get_mesh()->set_min_poll_sizes( old_Delta_min ); 
     signature->get_mesh()->set_mesh_indices( old_mesh_indices );
     
     // surrogate evaluations: perform only one true evaluation:
@@ -721,7 +727,7 @@ void NOMAD::VNS_Search::search ( NOMAD::Mads              & mads           ,
         if ( new_feas_inc && display_degree > NOMAD::NO_DISPLAY && display_degree < NOMAD::FULL_DISPLAY )
         {
             std::list<std::string> ds    = old_ds;
-            ds.push_back ( " (VNS#" + NOMAD::itos(stats.get_nb_VNS_SEARCHES()) + ")" );  
+            ds.push_back ( " (VNS#" + NOMAD::itos(stats.get_nb_VNS_SEARCHES()) + ")" );
             ev_control.display_stats(false, out, ds , new_feas_inc , true , NULL );
         }
     }

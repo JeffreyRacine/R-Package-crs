@@ -1,44 +1,46 @@
-/*-------------------------------------------------------------------------------------*/
-/*  NOMAD - Nonlinear Optimization by Mesh Adaptive Direct search - version 3.8.0      */
-/*                                                                                     */
-/*                                                                                     */
-/*  NOMAD - version 3.8.0 has been created by                                          */
-/*                 Charles Audet        - Ecole Polytechnique de Montreal              */
-/*                 Sebastien Le Digabel - Ecole Polytechnique de Montreal              */
-/*                 Christophe Tribes    - Ecole Polytechnique de Montreal              */
-/*                                                                                     */
-/*  The copyright of NOMAD - version 3.8.0 is owned by                                 */
-/*                 Sebastien Le Digabel - Ecole Polytechnique de Montreal              */
-/*                 Christophe Tribes    - Ecole Polytechnique de Montreal              */
-/*                                                                                     */
-/*  NOMAD v3 has been funded by AFOSR and Exxon Mobil.                                 */
-/*                                                                                     */
-/*  NOMAD v3 is a new version of NOMAD v1 and v2. NOMAD v1 and v2 were created and     */
-/*  developed by Mark Abramson, Charles Audet, Gilles Couture and John E. Dennis Jr.,  */
-/*  and were funded by AFOSR and Exxon Mobil.                                          */
-/*                                                                                     */
-/*                                                                                     */
-/*  Contact information:                                                               */
-/*    Ecole Polytechnique de Montreal - GERAD                                          */
-/*    C.P. 6079, Succ. Centre-ville, Montreal (Quebec) H3C 3A7 Canada                  */
-/*    e-mail: nomad@gerad.ca                                                           */
-/*    phone : 1-514-340-6053 #6928                                                     */
-/*    fax   : 1-514-340-5665                                                           */
-/*                                                                                     */
-/*  This program is free software: you can redistribute it and/or modify it under the  */
-/*  terms of the GNU Lesser General Public License as published by the Free Software   */
-/*  Foundation, either version 3 of the License, or (at your option) any later         */
-/*  version.                                                                           */
-/*                                                                                     */
-/*  This program is distributed in the hope that it will be useful, but WITHOUT ANY    */
-/*  WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A    */
-/*  PARTICULAR PURPOSE.  See the GNU Lesser General Public License for more details.   */
-/*                                                                                     */
-/*  You should have received a copy of the GNU Lesser General Public License along     */
-/*  with this program. If not, see <http://www.gnu.org/licenses/>.                     */
-/*                                                                                     */
-/*  You can find information on the NOMAD software at www.gerad.ca/nomad               */
-/*-------------------------------------------------------------------------------------*/
+/*---------------------------------------------------------------------------------*/
+/*  NOMAD - Nonlinear Optimization by Mesh Adaptive Direct search -                */
+/*                                                                                 */
+/*  NOMAD - version 3.9.1 has been created by                                      */
+/*                 Charles Audet               - Ecole Polytechnique de Montreal   */
+/*                 Sebastien Le Digabel        - Ecole Polytechnique de Montreal   */
+/*                 Viviane Rochon Montplaisir - Ecole Polytechnique de Montreal   */
+/*                 Christophe Tribes           - Ecole Polytechnique de Montreal   */
+/*                                                                                 */
+/*  The copyright of NOMAD - version 3.9.1 is owned by                             */
+/*                 Sebastien Le Digabel        - Ecole Polytechnique de Montreal   */
+/*                 Viviane Rochon Montplaisir - Ecole Polytechnique de Montreal   */
+/*                 Christophe Tribes           - Ecole Polytechnique de Montreal   */
+/*                                                                                 */
+/*  NOMAD v3 has been funded by AFOSR and Exxon Mobil.                             */
+/*                                                                                 */
+/*  NOMAD v3 is a new version of NOMAD v1 and v2. NOMAD v1 and v2 were created     */
+/*  and developed by Mark Abramson, Charles Audet, Gilles Couture, and John E.     */
+/*  Dennis Jr., and were funded by AFOSR and Exxon Mobil.                          */
+/*                                                                                 */
+/*  Contact information:                                                           */
+/*    Ecole Polytechnique de Montreal - GERAD                                      */
+/*    C.P. 6079, Succ. Centre-ville, Montreal (Quebec) H3C 3A7 Canada              */
+/*    e-mail: nomad@gerad.ca                                                       */
+/*    phone : 1-514-340-6053 #6928                                                 */
+/*    fax   : 1-514-340-5665                                                       */
+/*                                                                                 */
+/*  This program is free software: you can redistribute it and/or modify it        */
+/*  under the terms of the GNU Lesser General Public License as published by       */
+/*  the Free Software Foundation, either version 3 of the License, or (at your     */
+/*  option) any later version.                                                     */
+/*                                                                                 */
+/*  This program is distributed in the hope that it will be useful, but WITHOUT    */
+/*  ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or          */
+/*  FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License    */
+/*  for more details.                                                              */
+/*                                                                                 */
+/*  You should have received a copy of the GNU Lesser General Public License       */
+/*  along with this program. If not, see <http://www.gnu.org/licenses/>.           */
+/*                                                                                 */
+/*  You can find information on the NOMAD software at www.gerad.ca/nomad           */
+/*---------------------------------------------------------------------------------*/
+
 /**
  \file   Directions.cpp
  \brief  Set of polling directions (implementation)
@@ -60,10 +62,12 @@
 NOMAD::Directions::Directions ( int                                     nc                 ,
                                const std::set<NOMAD::direction_type> & direction_types    ,
                                const std::set<NOMAD::direction_type> & sec_poll_dir_types ,
+                               const std::set<NOMAD::direction_type> & int_poll_dir_types ,
                                const NOMAD::Display                  & out                  )
 : _nc                 ( nc                 ) ,
 _direction_types    ( direction_types    ) ,
 _sec_poll_dir_types ( sec_poll_dir_types ) ,
+_int_poll_dir_types ( int_poll_dir_types ) ,
 _is_binary          ( false              ) ,
 _is_categorical     ( false              ) ,
 _lt_initialized     ( false              ) ,
@@ -76,7 +80,10 @@ _out                ( out                )
     if ( _sec_poll_dir_types.find ( NOMAD::NO_DIRECTION ) != _sec_poll_dir_types.end() )
         _sec_poll_dir_types.clear();
     
-    // is_orthomads: true if at least one direction is of type Ortho-MADS:
+    if ( _int_poll_dir_types.find ( NOMAD::NO_DIRECTION ) != _int_poll_dir_types.end() )
+        _int_poll_dir_types.clear();
+    
+    // is_orthomads: true if at least one direction (primary or secondary) is of type Ortho-MADS:
     _is_orthomads = NOMAD::dirs_have_orthomads ( _direction_types );
     if ( !_is_orthomads )
         _is_orthomads = NOMAD::dirs_have_orthomads ( _sec_poll_dir_types );
@@ -132,6 +139,7 @@ void NOMAD::Directions::set_categorical ( void )
     _is_orthomads   = false;
     _direction_types.clear();
     _sec_poll_dir_types.clear();
+    _int_poll_dir_types.clear();
 }
 
 /*----------------------------------------------------------------------*/
@@ -146,7 +154,6 @@ void NOMAD::Directions::compute_binary_directions ( std::list<NOMAD::Direction> 
     {
         d.push_back ( NOMAD::Direction ( _nc , 0.0 , NOMAD::GPS_BINARY ) );
         pd = &(*(--d.end()));
-        
         (*pd)[i] = ( NOMAD::RNG::rand()%2 == 0 ) ?  1.0: 0.0;
     }
 }
@@ -180,7 +187,7 @@ void NOMAD::Directions::compute ( std::list<NOMAD::Direction> & dirs ,
     /*  loop on the types of directions  */
     /*-----------------------------------*/
     const std::set<NOMAD::direction_type> & dir_types =
-    (poll == NOMAD::PRIMARY) ? _direction_types : _sec_poll_dir_types;
+    (poll == NOMAD::PRIMARY) ? _direction_types : (poll == NOMAD::SECONDARY) ? _sec_poll_dir_types : _int_poll_dir_types ;
     
     std::set<NOMAD::direction_type>::const_iterator it , end = dir_types.end() ;
     for ( it = dir_types.begin() ; it != end ; ++it )
@@ -431,6 +438,19 @@ void NOMAD::Directions::compute ( std::list<NOMAD::Direction> & dirs ,
                     pd = &(*(--dirs.end()));
                     (*pd)[i] = -pow_gps;
                 }
+            }
+
+            // GPS 1, static:
+            // ---------------
+            
+            if ( *it == NOMAD::GPS_1_STATIC )
+            {
+                dirs.push_back ( NOMAD::Direction ( _nc , 0.0 , NOMAD::GPS_1_STATIC ) );
+                pd = &(*(--dirs.end()));
+                
+                // Pickup the variable
+                NOMAD::Random_Pickup rp(_nc);
+                (*pd)[rp.pickup()] = ( NOMAD::RNG::rand(-1,1) > 0 ) ? pow_gps : -pow_gps ;
             }
             
             // GPS 2n, random:
@@ -850,6 +870,11 @@ void NOMAD::Directions::display ( const NOMAD::Display & out ) const
     end = _sec_poll_dir_types.end();
     for ( it = _sec_poll_dir_types.begin() ; it != end ; ++it )
         out << "[" << *it << "] ";
+    out << "}" << std::endl
+    << "int poll types: { ";
+    end = _int_poll_dir_types.end();
+    for ( it = _int_poll_dir_types.begin() ; it != end ; ++it )
+        out << "[" << *it << "] ";
     out << "}" << std::endl;
     if ( _is_orthomads )
     {
@@ -883,10 +908,18 @@ bool NOMAD::Directions::operator < ( const NOMAD::Directions & d ) const
     if ( d._direction_types.size() < nd )
         return false;
     
+    // sec direction types
     size_t ns = _sec_poll_dir_types.size();
     if ( ns < d._sec_poll_dir_types.size() )
         return true;
     if ( d._sec_poll_dir_types.size() < ns )
+        return false;
+    
+    // int direction types
+    size_t ni = _int_poll_dir_types.size();
+    if ( ni < d._int_poll_dir_types.size() )
+        return true;
+    if ( d._int_poll_dir_types.size() < ni )
         return false;
     
     std::set<NOMAD::direction_type>::const_iterator
@@ -907,6 +940,20 @@ bool NOMAD::Directions::operator < ( const NOMAD::Directions & d ) const
     it1 = _sec_poll_dir_types.begin();
     it2 = d._sec_poll_dir_types.begin();
     end = _sec_poll_dir_types.end();
+    
+    while ( it1 != end )
+    {
+        if ( *it1 < *it2 )
+            return true;
+        if ( *it2 < *it1 )
+            return false;
+        ++it1;
+        ++it2;
+    }
+    
+    it1 = _int_poll_dir_types.begin();
+    it2 = d._int_poll_dir_types.begin();
+    end = _int_poll_dir_types.end();
     
     while ( it1 != end )
     {

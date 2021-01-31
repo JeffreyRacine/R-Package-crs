@@ -1,6 +1,6 @@
 /*-------------------------------------------------------------------------------------*/
 /*  sgtelib - A surrogate model library for derivative-free optimization               */
-/*  Version 2.0.1                                                                      */
+/*  Version 2.0.2                                                                      */
 /*                                                                                     */
 /*  Copyright (C) 2012-2017  Sebastien Le Digabel - Ecole Polytechnique, Montreal      */ 
 /*                           Bastien Talgorn - McGill University, Montreal             */
@@ -31,40 +31,43 @@
 #include <vector>
 #include <list>
 #include <climits>
-#include <iterator>
 #include <algorithm>
+#include <iterator>  // zhenghua
 #include "Surrogate_Utils.hpp"
 #include "Exception.hpp"
+#include "Defines.hpp"
 
 #include "RNG.hpp"   //zhenghua for rand.
 
 namespace SGTELIB {
 
-template <class RandomAccessIterator,  class RandomNumberGenerator>
-	  void random_shuffle (RandomAccessIterator first,  RandomAccessIterator last, 
-				                       RandomNumberGenerator& gen)
-		{
-			typedef typename std::iterator_traits<RandomAccessIterator>::difference_type difference_type;
-			difference_type i,  n;
-				  n = (last-first);
-					  for (i=n-1; i>0; --i) {
-							std::swap (first[i], first[gen(i+1)]);
-									  }
-		}
+
+  // zhenghua, C++14 and above would not have std::random_shuffle, so we add this function.
+  template <class RandomAccessIterator,  class RandomNumberGenerator>
+  void random_shuffle (RandomAccessIterator first,  RandomAccessIterator last, 
+		       RandomNumberGenerator& gen)
+  {
+    typedef typename std::iterator_traits<RandomAccessIterator>::difference_type difference_type;
+    difference_type i,  n;
+    n = (last-first);
+    for (i=n-1; i>0; --i) {
+      std::swap (first[i], first[gen(i+1)]);
+    }
+  }
 
 
-  class Matrix {
+  class DLL_API Matrix {
 
   private:
 
-	static int myrandom(int i){return NOMAD::RNG::rand()%i;}  //zhenghua
-
+    static int myrandom(int i){return NOMAD::RNG::rand()%i;}  //zhenghua
+  
     std::string _name;
 
     int _nbRows; // nbRows x nbCols matrix
     int _nbCols;
 
-    double ** X0;
+    double ** _X;
 
   public:
 
@@ -84,6 +87,9 @@ template <class RandomAccessIterator,  class RandomNumberGenerator>
 
     // constructor 4:
     Matrix ( void );
+
+    // constructor 5:
+    Matrix ( double );
 
     // copy constructor:
     Matrix ( const Matrix & );
@@ -111,12 +117,23 @@ template <class RandomAccessIterator,  class RandomNumberGenerator>
     void remove_rows ( const int p); // remove last rows
 
     // GET methods:
-    int get_nb_rows ( void ) const { return _nbRows; }
-    int get_nb_cols ( void ) const { return _nbCols; }
-    int get_numel   ( void ) const { return _nbRows*_nbCols; }
+    inline int get_nb_rows ( void ) const { return _nbRows; }
+    inline int get_nb_cols ( void ) const { return _nbCols; }
+    inline int get_numel   ( void ) const { return _nbRows*_nbCols; }
 
-    double get ( const int k               ) const; // access to element (k)
-    double get ( const int i , const int j ) const; // access to element (i,j)
+    // access to element (k)
+    double get ( const int k ) const; 
+    // access to element (i,j)
+    inline double get ( const int i , const int j ) const {
+      #ifdef SGTELIB_DEBUG
+        if ( i < 0 || i >= _nbRows || j < 0 || j >= _nbCols ){
+          display(std::cout);
+          std::cout << "Error: try to access (" << i << "," << j << ") while dim is [" << _nbRows << "," << _nbCols << "]\n";
+          throw SGTELIB::Exception ( __FILE__ , __LINE__ , "Matrix::get(i,j): bad index" );
+        }
+      #endif
+      return _X[i][j];
+    }//
 
     const double & operator [] ( int k ) const;
     double & operator [] ( int k );
@@ -148,8 +165,8 @@ template <class RandomAccessIterator,  class RandomNumberGenerator>
     bool is_sym ( void ) const;
 
     // SET methods:
-    void set_name ( const std::string & name ) { _name = name; }
-    std::string get_name ( void ) const { return _name; }
+    inline void set_name ( const std::string & name ) { _name = name; }
+    inline std::string get_name ( void ) const { return _name; }
 
     void set     (const int i , const int j , const double d );
     void set_row (const SGTELIB::Matrix & T , const int i); // T is row vector
@@ -157,8 +174,8 @@ template <class RandomAccessIterator,  class RandomNumberGenerator>
     void set_row (const double v , const int i); // T is row vector
     void set_col (const double v , const int j); // T is col vector
   
-    // Permute terms (i1,j1) and (i2,j2)
-    void permute (const int i1 , const int j1 , const int i2 , const int j2 );
+    // swap terms (i1,j1) and (i2,j2)
+    void swap (const int i1 , const int j1 , const int i2 , const int j2 );
 
     // Multiply row
     void multiply_row (const double v , const int i); // T is row vector
@@ -183,7 +200,6 @@ template <class RandomAccessIterator,  class RandomNumberGenerator>
     // Diag
     SGTELIB::Matrix diag (void ) const;
 
-
     // Trace
     double trace ( void ) const;
 
@@ -194,6 +210,7 @@ template <class RandomAccessIterator,  class RandomNumberGenerator>
     double norm ( void ) const;
     double normsquare ( void ) const;
     void normalize_cols ( void );
+    SGTELIB::Matrix col_norm ( const norm_t nt ) const;
 
     // Sum
     double sum ( void ) const;
@@ -219,7 +236,7 @@ template <class RandomAccessIterator,  class RandomNumberGenerator>
                                      const SGTELIB::Matrix & C,
                                      const SGTELIB::Matrix & D);
 
-    void product ( const int i , const int j , const double v){ X0[i][j]*=v; };
+    inline void product ( const int i , const int j , const double v){ _X[i][j]*=v; };
 
     // Subset product, multiply
     // the p first rows and q first columns of A
@@ -261,7 +278,7 @@ template <class RandomAccessIterator,  class RandomNumberGenerator>
 
     // Add to the matrix itself
     void add ( const SGTELIB::Matrix & B);
-    void add ( const int i , const int j , const double v){ X0[i][j]+=v; };
+    void add ( const int i , const int j , const double v){ _X[i][j]+=v; };
 
     // Add and fill with 0 (add two matrices of different sizes)
     static SGTELIB::Matrix add_fill ( const SGTELIB::Matrix & A,

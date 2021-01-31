@@ -1,44 +1,46 @@
-/*-------------------------------------------------------------------------------------*/
-/*  NOMAD - Nonlinear Optimization by Mesh Adaptive Direct search - version 3.8.0      */
-/*                                                                                     */
-/*                                                                                     */
-/*  NOMAD - version 3.8.0 has been created by                                          */
-/*                 Charles Audet        - Ecole Polytechnique de Montreal              */
-/*                 Sebastien Le Digabel - Ecole Polytechnique de Montreal              */
-/*                 Christophe Tribes    - Ecole Polytechnique de Montreal              */
-/*                                                                                     */
-/*  The copyright of NOMAD - version 3.8.0 is owned by                                 */
-/*                 Sebastien Le Digabel - Ecole Polytechnique de Montreal              */
-/*                 Christophe Tribes    - Ecole Polytechnique de Montreal              */
-/*                                                                                     */
-/*  NOMAD v3 has been funded by AFOSR and Exxon Mobil.                                 */
-/*                                                                                     */
-/*  NOMAD v3 is a new version of NOMAD v1 and v2. NOMAD v1 and v2 were created and     */
-/*  developed by Mark Abramson, Charles Audet, Gilles Couture and John E. Dennis Jr.,  */
-/*  and were funded by AFOSR and Exxon Mobil.                                          */
-/*                                                                                     */
-/*                                                                                     */
-/*  Contact information:                                                               */
-/*    Ecole Polytechnique de Montreal - GERAD                                          */
-/*    C.P. 6079, Succ. Centre-ville, Montreal (Quebec) H3C 3A7 Canada                  */
-/*    e-mail: nomad@gerad.ca                                                           */
-/*    phone : 1-514-340-6053 #6928                                                     */
-/*    fax   : 1-514-340-5665                                                           */
-/*                                                                                     */
-/*  This program is free software: you can redistribute it and/or modify it under the  */
-/*  terms of the GNU Lesser General Public License as published by the Free Software   */
-/*  Foundation, either version 3 of the License, or (at your option) any later         */
-/*  version.                                                                           */
-/*                                                                                     */
-/*  This program is distributed in the hope that it will be useful, but WITHOUT ANY    */
-/*  WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A    */
-/*  PARTICULAR PURPOSE.  See the GNU Lesser General Public License for more details.   */
-/*                                                                                     */
-/*  You should have received a copy of the GNU Lesser General Public License along     */
-/*  with this program. If not, see <http://www.gnu.org/licenses/>.                     */
-/*                                                                                     */
-/*  You can find information on the NOMAD software at www.gerad.ca/nomad               */
-/*-------------------------------------------------------------------------------------*/
+/*---------------------------------------------------------------------------------*/
+/*  NOMAD - Nonlinear Optimization by Mesh Adaptive Direct search -                */
+/*                                                                                 */
+/*  NOMAD - version 3.9.1 has been created by                                      */
+/*                 Charles Audet               - Ecole Polytechnique de Montreal   */
+/*                 Sebastien Le Digabel        - Ecole Polytechnique de Montreal   */
+/*                 Viviane Rochon Montplaisir - Ecole Polytechnique de Montreal   */
+/*                 Christophe Tribes           - Ecole Polytechnique de Montreal   */
+/*                                                                                 */
+/*  The copyright of NOMAD - version 3.9.1 is owned by                             */
+/*                 Sebastien Le Digabel        - Ecole Polytechnique de Montreal   */
+/*                 Viviane Rochon Montplaisir - Ecole Polytechnique de Montreal   */
+/*                 Christophe Tribes           - Ecole Polytechnique de Montreal   */
+/*                                                                                 */
+/*  NOMAD v3 has been funded by AFOSR and Exxon Mobil.                             */
+/*                                                                                 */
+/*  NOMAD v3 is a new version of NOMAD v1 and v2. NOMAD v1 and v2 were created     */
+/*  and developed by Mark Abramson, Charles Audet, Gilles Couture, and John E.     */
+/*  Dennis Jr., and were funded by AFOSR and Exxon Mobil.                          */
+/*                                                                                 */
+/*  Contact information:                                                           */
+/*    Ecole Polytechnique de Montreal - GERAD                                      */
+/*    C.P. 6079, Succ. Centre-ville, Montreal (Quebec) H3C 3A7 Canada              */
+/*    e-mail: nomad@gerad.ca                                                       */
+/*    phone : 1-514-340-6053 #6928                                                 */
+/*    fax   : 1-514-340-5665                                                       */
+/*                                                                                 */
+/*  This program is free software: you can redistribute it and/or modify it        */
+/*  under the terms of the GNU Lesser General Public License as published by       */
+/*  the Free Software Foundation, either version 3 of the License, or (at your     */
+/*  option) any later version.                                                     */
+/*                                                                                 */
+/*  This program is distributed in the hope that it will be useful, but WITHOUT    */
+/*  ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or          */
+/*  FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License    */
+/*  for more details.                                                              */
+/*                                                                                 */
+/*  You should have received a copy of the GNU Lesser General Public License       */
+/*  along with this program. If not, see <http://www.gnu.org/licenses/>.           */
+/*                                                                                 */
+/*  You can find information on the NOMAD software at www.gerad.ca/nomad           */
+/*---------------------------------------------------------------------------------*/
+
 /**
   \file   Quad_Model.hpp
   \brief  Quadratic regression or MFN interpolation model (headers)
@@ -63,7 +65,7 @@ namespace NOMAD {
 
     const NOMAD::Display                     & _out;  ///< Display.
 
-    std::vector<NOMAD::Eval_Point *>           Y_Y;    ///< Interpolation points.  // zhenghua,  for compiling on Solaris.
+    std::vector<NOMAD::Eval_Point *>           Y_Y;    ///< Interpolation points. //zhenghua, for compiling on Solaris.
 
     const std::vector<NOMAD::bb_output_type> & _bbot; ///< Blackbox output types.
 
@@ -81,11 +83,11 @@ namespace NOMAD {
     const NOMAD::Cache      & _cache;                 ///< Cache.
     const NOMAD::Signature  & _signature;             ///< Signature.
     bool                      _error_flag;            ///< Error flag.
-	std::list<NOMAD::Direction>  _dirP;               ///< Directions used for scaling (may be empty)
-	NOMAD::Point _delta_m;                           ///< Mesh size used for scaling 
-	NOMAD::Double _epsilon;                           ///< Offset for direction scaling 
-	  
-	  
+    std::list<NOMAD::Direction>  _dirP;               ///< Directions used for scaling (may be empty)
+    NOMAD::Point _delta_m;                           ///< Mesh size used for scaling 
+    NOMAD::Double _epsilon;                           ///< Offset for direction scaling 
+
+
     NOMAD::Double             _cond;                  ///< Condition number.
 
     /// Initialize alpha (model parameters).
@@ -98,7 +100,7 @@ namespace NOMAD {
        \return \c true is \c x is in \c B(center,radius).
     */
     bool is_within_radius ( const NOMAD::Point & x      ,
-			    const NOMAD::Point & radius   ) const;
+                            const NOMAD::Point & radius   ) const;
 
     /// Check the interpolation set \c Y.
     /**
@@ -140,10 +142,10 @@ namespace NOMAD {
        \param avg_rel_err Average relative error -- \b OUT.
     */
     void compute_model_error ( int             bbo_index   ,
-			       NOMAD::Double & error       ,
-			       NOMAD::Double & min_rel_err ,
-			       NOMAD::Double & max_rel_err ,
-			       NOMAD::Double & avg_rel_err   ) const;
+                               NOMAD::Double & error       ,
+                               NOMAD::Double & min_rel_err ,
+                               NOMAD::Double & max_rel_err ,
+                               NOMAD::Double & avg_rel_err   ) const;
 
     /// Compute the maximal relative error of a model.
     /**
@@ -178,8 +180,8 @@ namespace NOMAD {
        \return \c true if the construction succeeded
     */
     bool construct_regression_model ( double eps        ,
-				      int    max_mpn    ,
-				      int    max_Y_size   );
+                                      int    max_mpn    ,
+                                      int    max_Y_size   );
 
     /// Construct well-poised (WP) model.
     /**
@@ -198,10 +200,10 @@ namespace NOMAD {
        \return Index of interpolation point.
     */
     int find_max_lix ( const NOMAD::Point                     & li      ,
-		       const std::vector<NOMAD::Eval_Point *> & Y       ,
-		       int                                      i1      ,
-		       int                                      i2      ,
-		       NOMAD::Double                          & max_lix   ) const;
+                       const std::vector<NOMAD::Eval_Point *> & Y       ,
+                       int                                      i1      ,
+                       int                                      i2      ,
+                       NOMAD::Double                          & max_lix   ) const;
 
     /// Resolution of system \c F.[mu alpha_L]'=[f(Y) 0]' for MFN interpolation.
     /**
@@ -213,11 +215,11 @@ namespace NOMAD {
        \param eps       Epsilon                                            -- \b IN.
     */
     void solve_MFN_system ( double      ** U         ,
-			    double       * W         , 
-			    double      ** V         ,
-			    int            bbo_index ,
-			    NOMAD::Point & alpha     ,
-			    double         eps	      ) const;
+                            double       * W         , 
+                            double      ** V         ,
+                            int            bbo_index ,
+                            NOMAD::Point & alpha     ,
+                            double         eps      ) const;
 
     /// Resolution of system \c F.alpha=M'.f(Y) for the regression.
     /**
@@ -230,12 +232,12 @@ namespace NOMAD {
        \param eps       Epsilon                                            -- \b IN.
     */
     void solve_regression_system ( double      ** M         ,
-				   double      ** U         ,
-				   double       * W         , 
-				   double      ** V         ,
-				   int            bbo_index ,
-				   NOMAD::Point & alpha     ,
-				   double         eps	      ) const;
+                                   double      ** U         ,
+                                   double       * W         , 
+                                   double      ** V         ,
+                                   int            bbo_index ,
+                                   NOMAD::Point & alpha     ,
+                                   double         eps      ) const;
 
     /// Display Lagrange polynomials.
     /**
@@ -247,7 +249,7 @@ namespace NOMAD {
       const std::vector<NOMAD::Eval_Point *> & Y   ) const;
 
 #ifdef MODEL_STATS
-    mutable NOMAD::Double Yw_Yw; ///< Width of the interpolation set \c Y.  // zhenghua,  for compiling on Solaris.
+    mutable NOMAD::Double Yw_Yw; ///< Width of the interpolation set \c Y. //zhenghua, for compiling on Solaris.
 
   public:
 
@@ -269,9 +271,9 @@ namespace NOMAD {
        \param signature     Signature                   -- \b IN.
     */
     Quad_Model ( const NOMAD::Display                     & out       ,
-		 const std::vector<NOMAD::bb_output_type> & bbot      ,
-		 const NOMAD::Cache                       & cache     ,
-		 const NOMAD::Signature                   & signature   );
+                 const std::vector<NOMAD::bb_output_type> & bbot      ,
+                 const NOMAD::Cache                       & cache     ,
+                 const NOMAD::Signature                   & signature   );
 
     /// Destructor.
     virtual ~Quad_Model ( void );
@@ -283,9 +285,9 @@ namespace NOMAD {
        \return Model value.
     */
     NOMAD::Double eval ( const NOMAD::Point & x     ,
-			 const NOMAD::Point & alpha   ) const;
+                         const NOMAD::Point & alpha   ) const;
 
-	  /// Compute model \c h and \c f values at a point.
+    /// Compute model \c h and \c f values at a point.
     /**
        \param x      The point                 -- \b IN.
        \param h_min  Value of \c h_min         -- \b IN..
@@ -294,12 +296,12 @@ namespace NOMAD {
        \param f      Value of \c f             -- \b OUT.
     */
     void eval_hf ( const NOMAD::Point  & x      ,
-		   const NOMAD::Double & h_min  ,
-		   NOMAD::hnorm_type     h_norm ,
-		   NOMAD::Double       & h      ,
-		   NOMAD::Double       & f        ) const;
+                   const NOMAD::Double & h_min  ,
+                   NOMAD::hnorm_type     h_norm ,
+                   NOMAD::Double       & h      ,
+                   NOMAD::Double       & f        ) const;
 
-	  
+
     /// Access to the interpolation type.
     /**
        \return The interpolation type.
@@ -371,8 +373,8 @@ namespace NOMAD {
        \param max_Y_size           Maximum number of elements in \c Y -- \b IN.
     */
     void construct_Y ( const NOMAD::Point & center               ,
-		       const NOMAD::Point & interpolation_radius ,
-		       int                  max_Y_size             );
+                       const NOMAD::Point & interpolation_radius ,
+                       int                  max_Y_size             );
 
     /// Construct \c m models (one by output).
     /**
@@ -382,9 +384,9 @@ namespace NOMAD {
        \param max_Y_size Maximum number of elements in \c Y    -- \b IN.
     */
     void construct ( bool   use_WP     ,
-		     double eps        ,
-		     int    max_mpn    ,
-		     int    max_Y_size   );
+                     double eps        ,
+                     int    max_mpn    ,
+                     int    max_Y_size   );
 
     /// Define scaling to put all coordinates centered in \c [-r;r].
     /**
@@ -393,16 +395,16 @@ namespace NOMAD {
     */
     void define_scaling ( const NOMAD::Double & r );
 
-	  /// Define scaling based on directions. See paper: Reducing the number of function evaluations in Mesh Adaptive Direct Search algorithms, Audet, Ianni, LeDigabel, Tribes, 2014     
-	  /**
+      /// Define scaling based on directions. See paper: Reducing the number of function evaluations in Mesh Adaptive Direct Search algorithms, Audet, Ianni, LeDigabel, Tribes, 2014     
+      /**
        - Looks also for fixed variables.
        \param dirP    The \c dirP parameter corresponds to set of directions formin a hyper-cube centered on poll center -- \b IN.
-	   \param delta_m The \c delta_m parameter is the dimension of the mesh -- \b IN.
-	   \param epsilon The \c epsilon parameter is the hyper-cube offset from the poll center -- \b IN.
-	   */	  
-	void define_scaling_by_directions ( const std::list<NOMAD::Direction> & dirP, const NOMAD::Point & delta_m, const NOMAD::Double &epsilon  );
+       \param delta_m The \c delta_m parameter is the dimension of the mesh -- \b IN.
+       \param epsilon The \c epsilon parameter is the hyper-cube offset from the poll center -- \b IN.
+       */
+    void define_scaling_by_directions ( const std::list<NOMAD::Direction> & dirP, const NOMAD::Point & delta_m, const NOMAD::Double &epsilon  );
 
-	  
+
     /// Scale a point.
     /**
        \param x The point to scale -- \b IN/OUT.
@@ -416,14 +418,14 @@ namespace NOMAD {
        \return \c true if the unscaling worked.
     */
     bool unscale ( NOMAD::Point & x ) const;
-	  
-	  /// Unscale the gradient at a point.
-	  /**
+
+    /// Unscale the gradient at a point.
+    /**
        \param x The grad to unscale -- \b IN/OUT.
        \return \c true if the unscaling worked.
-	   */
-	  bool unscale_grad ( NOMAD::Point & x ) const;	  
-	  
+    */
+    bool unscale_grad ( NOMAD::Point & x ) const;
+
 
     /// Check if a caled point is inside the trust radius.
     /**
@@ -445,7 +447,7 @@ namespace NOMAD {
                     --\b optional (default="interpolation set Y").
     */
     void display_Y ( const NOMAD::Display & out ,
-		     const std::string    & title = "interpolation set Y" ) const;
+                     const std::string    & title = "interpolation set Y" ) const;
 
     /// Display cumulated error on the interpolation points.
     /**
