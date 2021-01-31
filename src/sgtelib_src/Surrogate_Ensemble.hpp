@@ -1,6 +1,6 @@
 /*-------------------------------------------------------------------------------------*/
 /*  sgtelib - A surrogate model library for derivative-free optimization               */
-/*  Version 2.0.1                                                                      */
+/*  Version 2.0.2                                                                      */
 /*                                                                                     */
 /*  Copyright (C) 2012-2017  Sebastien Le Digabel - Ecole Polytechnique, Montreal      */ 
 /*                           Bastien Talgorn - McGill University, Montreal             */
@@ -41,7 +41,7 @@ namespace SGTELIB {
   /*--------------------------------------*/
   /*         Surrogate_Ensemble class        */
   /*--------------------------------------*/
-  class Surrogate_Ensemble : public SGTELIB::Surrogate {
+  class DLL_API Surrogate_Ensemble : public SGTELIB::Surrogate {
 
     /*--------------------------------------------------------*/
     /*  these members are defined in the Surrogate superclass */

@@ -1,6 +1,6 @@
 /*-------------------------------------------------------------------------------------*/
 /*  sgtelib - A surrogate model library for derivative-free optimization               */
-/*  Version 2.0.1                                                                      */
+/*  Version 2.0.2                                                                      */
 /*                                                                                     */
 /*  Copyright (C) 2012-2017  Sebastien Le Digabel - Ecole Polytechnique, Montreal      */ 
 /*                           Bastien Talgorn - McGill University, Montreal             */
@@ -102,7 +102,7 @@ void SGTELIB::Surrogate_KS::predict_private ( const SGTELIB::Matrix & XXs,
   if (Div.has_inf()){
     // Loop on the points of XXs
     for (ixx=0 ; ixx<pxx ; ixx++){
-      if ( crs_isinf(Div.get(ixx,0)) ){
+      if ( isinf(Div.get(ixx,0)) ){
         // Need to use the limit behavior of kernels
         switch (_param.get_kernel_type()){
           case SGTELIB::KERNEL_D1:

@@ -1,44 +1,46 @@
-/*-------------------------------------------------------------------------------------*/
-/*  NOMAD - Nonlinear Optimization by Mesh Adaptive Direct search - version 3.8.0      */
-/*                                                                                     */
-/*                                                                                     */
-/*  NOMAD - version 3.8.0 has been created by                                          */
-/*                 Charles Audet        - Ecole Polytechnique de Montreal              */
-/*                 Sebastien Le Digabel - Ecole Polytechnique de Montreal              */
-/*                 Christophe Tribes    - Ecole Polytechnique de Montreal              */
-/*                                                                                     */
-/*  The copyright of NOMAD - version 3.8.0 is owned by                                 */
-/*                 Sebastien Le Digabel - Ecole Polytechnique de Montreal              */
-/*                 Christophe Tribes    - Ecole Polytechnique de Montreal              */
-/*                                                                                     */
-/*  NOMAD v3 has been funded by AFOSR and Exxon Mobil.                                 */
-/*                                                                                     */
-/*  NOMAD v3 is a new version of NOMAD v1 and v2. NOMAD v1 and v2 were created and     */
-/*  developed by Mark Abramson, Charles Audet, Gilles Couture and John E. Dennis Jr.,  */
-/*  and were funded by AFOSR and Exxon Mobil.                                          */
-/*                                                                                     */
-/*                                                                                     */
-/*  Contact information:                                                               */
-/*    Ecole Polytechnique de Montreal - GERAD                                          */
-/*    C.P. 6079, Succ. Centre-ville, Montreal (Quebec) H3C 3A7 Canada                  */
-/*    e-mail: nomad@gerad.ca                                                           */
-/*    phone : 1-514-340-6053 #6928                                                     */
-/*    fax   : 1-514-340-5665                                                           */
-/*                                                                                     */
-/*  This program is free software: you can redistribute it and/or modify it under the  */
-/*  terms of the GNU Lesser General Public License as published by the Free Software   */
-/*  Foundation, either version 3 of the License, or (at your option) any later         */
-/*  version.                                                                           */
-/*                                                                                     */
-/*  This program is distributed in the hope that it will be useful, but WITHOUT ANY    */
-/*  WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A    */
-/*  PARTICULAR PURPOSE.  See the GNU Lesser General Public License for more details.   */
-/*                                                                                     */
-/*  You should have received a copy of the GNU Lesser General Public License along     */
-/*  with this program. If not, see <http://www.gnu.org/licenses/>.                     */
-/*                                                                                     */
-/*  You can find information on the NOMAD software at www.gerad.ca/nomad               */
-/*-------------------------------------------------------------------------------------*/
+/*---------------------------------------------------------------------------------*/
+/*  NOMAD - Nonlinear Optimization by Mesh Adaptive Direct search -                */
+/*                                                                                 */
+/*  NOMAD - version 3.9.1 has been created by                                      */
+/*                 Charles Audet               - Ecole Polytechnique de Montreal   */
+/*                 Sebastien Le Digabel        - Ecole Polytechnique de Montreal   */
+/*                 Viviane Rochon Montplaisir - Ecole Polytechnique de Montreal   */
+/*                 Christophe Tribes           - Ecole Polytechnique de Montreal   */
+/*                                                                                 */
+/*  The copyright of NOMAD - version 3.9.1 is owned by                             */
+/*                 Sebastien Le Digabel        - Ecole Polytechnique de Montreal   */
+/*                 Viviane Rochon Montplaisir - Ecole Polytechnique de Montreal   */
+/*                 Christophe Tribes           - Ecole Polytechnique de Montreal   */
+/*                                                                                 */
+/*  NOMAD v3 has been funded by AFOSR and Exxon Mobil.                             */
+/*                                                                                 */
+/*  NOMAD v3 is a new version of NOMAD v1 and v2. NOMAD v1 and v2 were created     */
+/*  and developed by Mark Abramson, Charles Audet, Gilles Couture, and John E.     */
+/*  Dennis Jr., and were funded by AFOSR and Exxon Mobil.                          */
+/*                                                                                 */
+/*  Contact information:                                                           */
+/*    Ecole Polytechnique de Montreal - GERAD                                      */
+/*    C.P. 6079, Succ. Centre-ville, Montreal (Quebec) H3C 3A7 Canada              */
+/*    e-mail: nomad@gerad.ca                                                       */
+/*    phone : 1-514-340-6053 #6928                                                 */
+/*    fax   : 1-514-340-5665                                                       */
+/*                                                                                 */
+/*  This program is free software: you can redistribute it and/or modify it        */
+/*  under the terms of the GNU Lesser General Public License as published by       */
+/*  the Free Software Foundation, either version 3 of the License, or (at your     */
+/*  option) any later version.                                                     */
+/*                                                                                 */
+/*  This program is distributed in the hope that it will be useful, but WITHOUT    */
+/*  ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or          */
+/*  FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License    */
+/*  for more details.                                                              */
+/*                                                                                 */
+/*  You should have received a copy of the GNU Lesser General Public License       */
+/*  along with this program. If not, see <http://www.gnu.org/licenses/>.           */
+/*                                                                                 */
+/*  You can find information on the NOMAD software at www.gerad.ca/nomad           */
+/*---------------------------------------------------------------------------------*/
+
 /**
  \file   Variable_Group.hpp
  \brief  Group of variables (headers)
@@ -79,16 +81,19 @@ namespace NOMAD {
          \param var_indexes        Variable indexes                   -- \b IN.
          \param direction_types    Direction types                    -- \b IN.
          \param sec_poll_dir_types Direction types for secondary poll -- \b IN.
+         \param int_poll_dir_types Direction types for intensification poll -- \b IN.
          \param out                Display                            -- \b IN.
          */
         Variable_Group ( const std::set<int>                  & var_indexes        ,
                         const std::set<NOMAD::direction_type> & direction_types    ,
                         const std::set<NOMAD::direction_type> & sec_poll_dir_types ,
+                        const std::set<NOMAD::direction_type> & int_poll_dir_types ,
                         const NOMAD::Display                  & out                  )
         : _var_indexes ( var_indexes ),
         _directions  ( new Directions ( static_cast<int>(var_indexes.size()) ,
                                        direction_types                      ,
                                        sec_poll_dir_types                   ,
+                                       int_poll_dir_types                   ,
                                        out                                    ) ) ,
         _out         ( out )   {}
         
@@ -121,10 +126,10 @@ namespace NOMAD {
          \param mod        True if the variable group has been modified    -- \b out
          \return A boolean equal to \c true if the verification is valid.
          */
-        bool check ( const NOMAD::Point                      & fixed_vars ,
+        bool check ( const NOMAD::Point                     & fixed_vars ,
                     const std::vector<NOMAD::bb_input_type> & bbit       ,
                     std::vector<bool>                       * in_group   ,
-                    bool 									 & mod            );
+                    bool                                    & mod        );
         
         /// Check if the directions are Ortho-MADS directions.
         /**
@@ -156,16 +161,25 @@ namespace NOMAD {
             return _directions->get_sec_poll_dir_types();
         }
         
+        /// Access to the direction types for the intensification poll.
+        /**
+         \return The direction types for the intensification poll.
+         */
+        const std::set<NOMAD::direction_type> & get_int_poll_dir_types ( void ) const
+        {
+            return _directions->get_int_poll_dir_types();
+        }
+        
         
         /// Access to the directions.
         /**
-         \param dirs				List of directions                      -- \b OUT.
-         \param poll				Type of poll (primary or secondary)     -- \b IN.
-         \param mesh				Mesh									-- \b IN.
+         \param dirs    List of directions                      -- \b OUT.
+         \param poll    Type of poll (primary, secondary or intensification)     -- \b IN.
+         \param mesh    Mesh                                    -- \b IN.
          */
-        void get_directions ( std::list<NOMAD::Direction>	& dirs			,
-                             NOMAD::poll_type				  poll			,
-                             const NOMAD::OrthogonalMesh	& mesh			);
+        void get_directions ( std::list<NOMAD::Direction>   & dirs  ,
+                             NOMAD::poll_type                 poll  ,
+                             const NOMAD::OrthogonalMesh    & mesh  );
         
         
         /// Access to one direction for a given mesh.

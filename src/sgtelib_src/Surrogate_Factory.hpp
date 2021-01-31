@@ -1,6 +1,6 @@
 /*-------------------------------------------------------------------------------------*/
 /*  sgtelib - A surrogate model library for derivative-free optimization               */
-/*  Version 2.0.1                                                                      */
+/*  Version 2.0.2                                                                      */
 /*                                                                                     */
 /*  Copyright (C) 2012-2017  Sebastien Le Digabel - Ecole Polytechnique, Montreal      */ 
 /*                           Bastien Talgorn - McGill University, Montreal             */
@@ -35,21 +35,20 @@
 #include "Surrogate_PRS.hpp"
 #include "Surrogate_PRS_EDGE.hpp"
 #include "Surrogate_PRS_CAT.hpp"
-//#include "Surrogate_dynaTree.hpp"
 #include "Surrogate_Ensemble.hpp"
 #include "Surrogate_LOWESS.hpp"
 #include "Surrogate_Kriging.hpp"
 
 namespace SGTELIB {
 
-SGTELIB::Surrogate * Surrogate_Factory ( SGTELIB::TrainingSet    & C,
+DLL_API SGTELIB::Surrogate * Surrogate_Factory ( SGTELIB::TrainingSet    & C,
                                          const std::string & s );
 
-SGTELIB::Surrogate * Surrogate_Factory ( SGTELIB::Matrix & X0,
+DLL_API SGTELIB::Surrogate * Surrogate_Factory ( SGTELIB::Matrix & X0,
                                          SGTELIB::Matrix & Z0,
                                          const std::string & s );
 
-void surrogate_delete ( SGTELIB::Surrogate * S );
+DLL_API void surrogate_delete ( SGTELIB::Surrogate * S );
 
 }
 

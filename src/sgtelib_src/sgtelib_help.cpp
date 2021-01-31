@@ -1,6 +1,6 @@
 /*-------------------------------------------------------------------------------------*/
 /*  sgtelib - A surrogate model library for derivative-free optimization               */
-/*  Version 2.0.1                                                                      */
+/*  Version 2.0.2                                                                      */
 /*                                                                                     */
 /*  Copyright (C) 2012-2017  Sebastien Le Digabel - Ecole Polytechnique, Montreal      */
 /*                           Bastien Talgorn - McGill University, Montreal             */
@@ -373,12 +373,10 @@ std::string ** SGTELIB::get_help_data (void){
   HELP_DATA[i][1] = "ENSEMBLE SELECTION WTA1 WTA2 WTA3 WTA4 WTA";
   HELP_DATA[i][2] = "The field name WEIGHT defines the method used to compute the weights w of the ensemble of models. The keyword WEIGHT_TYPE is equivalent. Allowed for models of type ENSEMBLE.\n"
 " \n"
-"Allowed for models of type ENSEMBLE. \n"
-" \n"
 "Possible values  \n"
 " * WTA1: w_k propto metric_sum - metric_k (default) \n"
 " * WTA3: w_k propto (metric_k + alpha metric_mean)^beta \n"
-" * SELECT: w_k propto 1   textif   metric_k = metric_min \n"
+" * SELECT: w_k propto 1 if metric_k = metric_min \n"
 " * OPTIM: w minimizes metric(w) \n"
 " \n"
 "Example\n"

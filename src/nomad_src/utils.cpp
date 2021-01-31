@@ -1,44 +1,46 @@
-/*-------------------------------------------------------------------------------------*/
-/*  NOMAD - Nonlinear Optimization by Mesh Adaptive Direct search - version 3.8.0      */
-/*                                                                                     */
-/*                                                                                     */
-/*  NOMAD - version 3.8.0 has been created by                                          */
-/*                 Charles Audet        - Ecole Polytechnique de Montreal              */
-/*                 Sebastien Le Digabel - Ecole Polytechnique de Montreal              */
-/*                 Christophe Tribes    - Ecole Polytechnique de Montreal              */
-/*                                                                                     */
-/*  The copyright of NOMAD - version 3.8.0 is owned by                                 */
-/*                 Sebastien Le Digabel - Ecole Polytechnique de Montreal              */
-/*                 Christophe Tribes    - Ecole Polytechnique de Montreal              */
-/*                                                                                     */
-/*  NOMAD v3 has been funded by AFOSR and Exxon Mobil.                                 */
-/*                                                                                     */
-/*  NOMAD v3 is a new version of NOMAD v1 and v2. NOMAD v1 and v2 were created and     */
-/*  developed by Mark Abramson, Charles Audet, Gilles Couture and John E. Dennis Jr.,  */
-/*  and were funded by AFOSR and Exxon Mobil.                                          */
-/*                                                                                     */
-/*                                                                                     */
-/*  Contact information:                                                               */
-/*    Ecole Polytechnique de Montreal - GERAD                                          */
-/*    C.P. 6079, Succ. Centre-ville, Montreal (Quebec) H3C 3A7 Canada                  */
-/*    e-mail: nomad@gerad.ca                                                           */
-/*    phone : 1-514-340-6053 #6928                                                     */
-/*    fax   : 1-514-340-5665                                                           */
-/*                                                                                     */
-/*  This program is free software: you can redistribute it and/or modify it under the  */
-/*  terms of the GNU Lesser General Public License as published by the Free Software   */
-/*  Foundation, either version 3 of the License, or (at your option) any later         */
-/*  version.                                                                           */
-/*                                                                                     */
-/*  This program is distributed in the hope that it will be useful, but WITHOUT ANY    */
-/*  WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A    */
-/*  PARTICULAR PURPOSE.  See the GNU Lesser General Public License for more details.   */
-/*                                                                                     */
-/*  You should have received a copy of the GNU Lesser General Public License along     */
-/*  with this program. If not, see <http://www.gnu.org/licenses/>.                     */
-/*                                                                                     */
-/*  You can find information on the NOMAD software at www.gerad.ca/nomad               */
-/*-------------------------------------------------------------------------------------*/
+/*---------------------------------------------------------------------------------*/
+/*  NOMAD - Nonlinear Optimization by Mesh Adaptive Direct search -                */
+/*                                                                                 */
+/*  NOMAD - version 3.9.1 has been created by                                      */
+/*                 Charles Audet               - Ecole Polytechnique de Montreal   */
+/*                 Sebastien Le Digabel        - Ecole Polytechnique de Montreal   */
+/*                 Viviane Rochon Montplaisir - Ecole Polytechnique de Montreal   */
+/*                 Christophe Tribes           - Ecole Polytechnique de Montreal   */
+/*                                                                                 */
+/*  The copyright of NOMAD - version 3.9.1 is owned by                             */
+/*                 Sebastien Le Digabel        - Ecole Polytechnique de Montreal   */
+/*                 Viviane Rochon Montplaisir - Ecole Polytechnique de Montreal   */
+/*                 Christophe Tribes           - Ecole Polytechnique de Montreal   */
+/*                                                                                 */
+/*  NOMAD v3 has been funded by AFOSR and Exxon Mobil.                             */
+/*                                                                                 */
+/*  NOMAD v3 is a new version of NOMAD v1 and v2. NOMAD v1 and v2 were created     */
+/*  and developed by Mark Abramson, Charles Audet, Gilles Couture, and John E.     */
+/*  Dennis Jr., and were funded by AFOSR and Exxon Mobil.                          */
+/*                                                                                 */
+/*  Contact information:                                                           */
+/*    Ecole Polytechnique de Montreal - GERAD                                      */
+/*    C.P. 6079, Succ. Centre-ville, Montreal (Quebec) H3C 3A7 Canada              */
+/*    e-mail: nomad@gerad.ca                                                       */
+/*    phone : 1-514-340-6053 #6928                                                 */
+/*    fax   : 1-514-340-5665                                                       */
+/*                                                                                 */
+/*  This program is free software: you can redistribute it and/or modify it        */
+/*  under the terms of the GNU Lesser General Public License as published by       */
+/*  the Free Software Foundation, either version 3 of the License, or (at your     */
+/*  option) any later version.                                                     */
+/*                                                                                 */
+/*  This program is distributed in the hope that it will be useful, but WITHOUT    */
+/*  ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or          */
+/*  FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License    */
+/*  for more details.                                                              */
+/*                                                                                 */
+/*  You should have received a copy of the GNU Lesser General Public License       */
+/*  along with this program. If not, see <http://www.gnu.org/licenses/>.           */
+/*                                                                                 */
+/*  You can find information on the NOMAD software at www.gerad.ca/nomad           */
+/*---------------------------------------------------------------------------------*/
+
 /**
  \file   utils.cpp
  \brief  Utility functions
@@ -171,6 +173,7 @@ std::string NOMAD::itos ( size_t i )
 
 
 // SGTELIB
+// (Used in the runner)
 /*-----------------------------------------------------------------*/
 /*                         NOMAD::deblank                          */
 /*-----------------------------------------------------------------*/
@@ -203,7 +206,23 @@ void NOMAD::deblank ( std::string & s )
     }
 }
 
-
+void NOMAD::string_vect_padding( std::string & s )
+{
+    // Add space after leading "(" or "[" and before trailing ")" or "[" to prevent bad interpretation of vectors
+    size_t pos_p = s.find ('(');
+    if ( pos_p != std::string::npos )
+        s.std::string::insert(pos_p+1," ");
+    pos_p = s.find (')');
+    if ( pos_p != std::string::npos )
+        s.std::string::insert(pos_p," ");
+    pos_p = s.find ('[');
+    if ( pos_p != std::string::npos )
+        s.std::string::insert(pos_p+1," ");
+    pos_p = s.find (']');
+    if ( pos_p != std::string::npos )
+        s.std::string::insert(pos_p ," ");
+    
+}
 
 /*-----------------------------------------------------------------*/
 /*                         NOMAD::toupper - 1/2                    */
@@ -613,6 +632,24 @@ bool NOMAD::strings_to_direction_type ( const std::list<std::string> & ls ,
             }
             return false;
         }
+        // 2n directions:
+        if ( s == "1" )
+        {
+            ++it;
+            if ( it == end )
+            {
+                dt = NOMAD::GPS_1_STATIC;
+                return true;
+            }
+            s = *it;
+            NOMAD::toupper ( s );
+            if ( s == "STATIC" )
+            {
+                dt = NOMAD::GPS_1_STATIC;
+                return true;
+            }
+            return false;
+        }
         return false;
     }
     return false;
@@ -728,7 +765,7 @@ bool NOMAD::string_to_bb_output_type ( const std::string     & s    ,
         bbot = NOMAD::CNT_EVAL;
         return true;
     }
-    if ( ss == "NOTHING" || ss == "-" )
+    if ( ss == "NOTHING" || ss == "-" || ss== "EXTRA_O" )
     {
         bbot = NOMAD::UNDEFINED_BBO;
         return true;
@@ -775,6 +812,7 @@ bool NOMAD::string_to_model_type ( const std::string & s  ,
 {
     std::string ss = s;
     NOMAD::toupper ( ss );
+
     if ( ss=="QUADRATIC" || ss=="QUADRATIC_MODEL" )
     {
         mt = NOMAD::QUADRATIC_MODEL;
@@ -788,6 +826,41 @@ bool NOMAD::string_to_model_type ( const std::string & s  ,
     
     
     mt = NOMAD::NO_MODEL;
+    return false;
+}
+
+
+/*----------------------------------------------------------------------*/
+/*           convert a string into an intensification type              */
+/*----------------------------------------------------------------------*/
+bool NOMAD::string_to_intensification_type ( const std::string & s  ,
+                                            NOMAD::intensification_type & it   )
+{
+    std::string ss = s;
+    NOMAD::toupper ( ss );
+    
+    if ( ss=="NO" )
+    {
+        it = NOMAD::NO_INTENSIFICATION;
+        return true;
+    }
+    if ( ss=="POLL" || ss=="P" )
+    {
+        it = NOMAD::POLL_ONLY;
+        return true;
+    }
+    if ( ss=="SEARCH" || ss=="S" )
+    {
+        it = NOMAD::SEARCH_ONLY;
+        return true;
+    }
+    if ( ss=="POLL_AND_SEARCH" || ss=="PS" )
+    {
+        it = NOMAD::POLL_AND_SEARCH;
+        return true;
+    }
+    
+    it = NOMAD::NO_INTENSIFICATION;
     return false;
 }
 
@@ -924,10 +997,50 @@ bool NOMAD::string_to_index_range ( const std::string & s           ,
     return !check_order || i <= j;
 }
 
+bool NOMAD::get_determinant(double ** M,
+                              double  & det,
+                              size_t n)
+{
+    std::string error_msg;
+    
+    double d=1 ;
+    
+    double ** LU = new double *[n];
+    for (size_t i = 0 ; i < n ; i++ )
+    {
+        LU[i]=new double [n];
+        for ( size_t j = 0; j < n ; j++ )
+            LU[i][j]=M[i][j];
+    }
+    
+    NOMAD::LU_decomposition ( error_msg , LU ,  static_cast<int>(n) , d );
+    
+    
+    if ( error_msg.empty() )
+    {
+        for (size_t i=0;i < n;i++)
+            d*=LU[i][i];
+    }
 
+
+    for (size_t i = 0 ; i < n ; i++ )
+    {
+        delete [] LU[i];
+    }
+    delete [] LU;
+    
+    det=d;
+
+    if ( error_msg.empty() )
+        return true;
+    else
+        return false;
+}
+    
 int NOMAD::get_rank(double ** M,
-                    size_t m,
-                    size_t n)
+                    size_t m   ,
+                    size_t n   ,
+                    double    eps)
 {
     double  * W = new double  [n];
     double ** V = new double *[n];
@@ -953,12 +1066,112 @@ int NOMAD::get_rank(double ** M,
     int rank=0;
     for (size_t i=0;i<n;i++)
     {
-        if (fabs(W[i])>NOMAD::SVD_EPS)
+        if (fabs(W[i]) > eps)
             rank++;
     }
     
     delete [] W;
     return rank;
+    
+}
+
+/*--------------------------------------------------------------*/
+/*                        LU decomposition                      */
+/*  Recoded from numerical recipes 3rd ed. 2007                 */
+/*--------------------------------------------------------------*/
+/*                                                              */
+/*           M = L.U                                            */
+/*                                                              */
+/*           M ( n x n )                                        */
+/*                                                              */
+/*           M is given as first argument and becomes LU        */
+/*           LU = [[b00 b01 ... b0n]                            */
+/*                 [a10 b11 ... b1n]                            */
+/*                 [a20 a21 ... b2n]                            */
+/*                    ...........                               */
+/*                 [an0 an1 ... bnn]                            */
+/*                                                              */
+/*--------------------------------------------------------------*/
+bool NOMAD::LU_decomposition ( std::string & error_msg ,
+                               double     ** LU        ,
+                               int           n         ,
+                               double      & d         ,
+                               int           max_n     ) // default=50
+{
+    error_msg.clear();
+    
+    if ( max_n > 0 && n > max_n )
+    {
+        error_msg = "LU_decomposition() error: n > " + NOMAD::itos ( max_n );
+        return false;
+    }
+    
+    const double TINY =1E-40;
+    int i,imax,j,k;
+    
+    double big,temp;
+    
+    double * vv = new double[n]; // stores the implicit scaling of each row
+    int *indx = new int[n]; // stores the permutations
+    
+    d =1; // No row interchange yet
+    
+    for (i = 0; i < n ; i++ )  // Loop over row to get implicit scaling information
+    {
+        big = 0.0;
+        for ( j = 0 ; j < n ; j++ )
+        {
+            if ( (temp=fabs(LU[i][j])) > big )
+                big = temp;
+        }
+        if ( big == 0 )
+        {
+            error_msg = "LU_decomposition() error: no nonzero largest element";
+            delete [] vv;
+            delete [] indx;
+            
+            return false;
+        }
+        vv[i]= 1.0/big; // Saves the scaling
+    }
+    for ( k = 0; k < n ; k++) // This is the outermost kij loop
+    {
+        big = 0.0;            // Initialized the search for largest pivot element
+        imax = k;
+        for ( i = k ; i < n ; i++ )
+        {
+            temp=vv[i]*fabs(LU[i][k]);
+            if ( temp > big )
+            {
+                big = temp;
+                imax=i;
+            }
+        }
+        if ( k != imax )
+        {
+            for ( j = 0; j < n ; j++ )
+            {
+                temp = LU[imax][j];
+                LU[imax][j]=LU[k][j];
+                LU[k][j]=temp;
+            }
+            d = -d;
+            vv[imax] = vv[k];
+        }
+        indx[k] = imax;
+        if ( LU[k][k] == 0.0) // TINY for zero
+            LU[k][k] = TINY;
+        for ( i = k+1 ; i < n ; i++ )
+        {
+            temp = LU[i][k] /= LU[k][k]; // Divide by pivot element
+            for ( j = k+1 ; j < n ; j++ ) // Innermos matrix: reduce remaining submatrix
+                LU[i][j] -= temp*LU[k][j];
+        }
+    }
+    
+    delete [] vv;
+    delete [] indx;
+    return true;
     
 }
 
@@ -1299,7 +1512,7 @@ bool NOMAD::SVD_decomposition ( std::string & error_msg ,
 
 // SGTELIB
 /*-----------------------------------------------------------------*/
-/*       convert a string into a sgtelib_model_formulation_type    */
+/*            convert a string into a sgtelib_model_formulation_type    */
 /*-----------------------------------------------------------------*/
 bool NOMAD::string_to_sgtelib_model_formulation_type ( const std::string & s  ,
                                                       NOMAD::sgtelib_model_formulation_type & dft   )

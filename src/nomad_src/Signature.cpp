@@ -1,44 +1,46 @@
-/*-------------------------------------------------------------------------------------*/
-/*  NOMAD - Nonlinear Optimization by Mesh Adaptive Direct search - version 3.8.0      */
-/*                                                                                     */
-/*                                                                                     */
-/*  NOMAD - version 3.8.0 has been created by                                          */
-/*                 Charles Audet        - Ecole Polytechnique de Montreal              */
-/*                 Sebastien Le Digabel - Ecole Polytechnique de Montreal              */
-/*                 Christophe Tribes    - Ecole Polytechnique de Montreal              */
-/*                                                                                     */
-/*  The copyright of NOMAD - version 3.8.0 is owned by                                 */
-/*                 Sebastien Le Digabel - Ecole Polytechnique de Montreal              */
-/*                 Christophe Tribes    - Ecole Polytechnique de Montreal              */
-/*                                                                                     */
-/*  NOMAD v3 has been funded by AFOSR and Exxon Mobil.                                 */
-/*                                                                                     */
-/*  NOMAD v3 is a new version of NOMAD v1 and v2. NOMAD v1 and v2 were created and     */
-/*  developed by Mark Abramson, Charles Audet, Gilles Couture and John E. Dennis Jr.,  */
-/*  and were funded by AFOSR and Exxon Mobil.                                          */
-/*                                                                                     */
-/*                                                                                     */
-/*  Contact information:                                                               */
-/*    Ecole Polytechnique de Montreal - GERAD                                          */
-/*    C.P. 6079, Succ. Centre-ville, Montreal (Quebec) H3C 3A7 Canada                  */
-/*    e-mail: nomad@gerad.ca                                                           */
-/*    phone : 1-514-340-6053 #6928                                                     */
-/*    fax   : 1-514-340-5665                                                           */
-/*                                                                                     */
-/*  This program is free software: you can redistribute it and/or modify it under the  */
-/*  terms of the GNU Lesser General Public License as published by the Free Software   */
-/*  Foundation, either version 3 of the License, or (at your option) any later         */
-/*  version.                                                                           */
-/*                                                                                     */
-/*  This program is distributed in the hope that it will be useful, but WITHOUT ANY    */
-/*  WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A    */
-/*  PARTICULAR PURPOSE.  See the GNU Lesser General Public License for more details.   */
-/*                                                                                     */
-/*  You should have received a copy of the GNU Lesser General Public License along     */
-/*  with this program. If not, see <http://www.gnu.org/licenses/>.                     */
-/*                                                                                     */
-/*  You can find information on the NOMAD software at www.gerad.ca/nomad               */
-/*-------------------------------------------------------------------------------------*/
+/*---------------------------------------------------------------------------------*/
+/*  NOMAD - Nonlinear Optimization by Mesh Adaptive Direct search -                */
+/*                                                                                 */
+/*  NOMAD - version 3.9.1 has been created by                                      */
+/*                 Charles Audet               - Ecole Polytechnique de Montreal   */
+/*                 Sebastien Le Digabel        - Ecole Polytechnique de Montreal   */
+/*                 Viviane Rochon Montplaisir - Ecole Polytechnique de Montreal   */
+/*                 Christophe Tribes           - Ecole Polytechnique de Montreal   */
+/*                                                                                 */
+/*  The copyright of NOMAD - version 3.9.1 is owned by                             */
+/*                 Sebastien Le Digabel        - Ecole Polytechnique de Montreal   */
+/*                 Viviane Rochon Montplaisir - Ecole Polytechnique de Montreal   */
+/*                 Christophe Tribes           - Ecole Polytechnique de Montreal   */
+/*                                                                                 */
+/*  NOMAD v3 has been funded by AFOSR and Exxon Mobil.                             */
+/*                                                                                 */
+/*  NOMAD v3 is a new version of NOMAD v1 and v2. NOMAD v1 and v2 were created     */
+/*  and developed by Mark Abramson, Charles Audet, Gilles Couture, and John E.     */
+/*  Dennis Jr., and were funded by AFOSR and Exxon Mobil.                          */
+/*                                                                                 */
+/*  Contact information:                                                           */
+/*    Ecole Polytechnique de Montreal - GERAD                                      */
+/*    C.P. 6079, Succ. Centre-ville, Montreal (Quebec) H3C 3A7 Canada              */
+/*    e-mail: nomad@gerad.ca                                                       */
+/*    phone : 1-514-340-6053 #6928                                                 */
+/*    fax   : 1-514-340-5665                                                       */
+/*                                                                                 */
+/*  This program is free software: you can redistribute it and/or modify it        */
+/*  under the terms of the GNU Lesser General Public License as published by       */
+/*  the Free Software Foundation, either version 3 of the License, or (at your     */
+/*  option) any later version.                                                     */
+/*                                                                                 */
+/*  This program is distributed in the hope that it will be useful, but WITHOUT    */
+/*  ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or          */
+/*  FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License    */
+/*  for more details.                                                              */
+/*                                                                                 */
+/*  You should have received a copy of the GNU Lesser General Public License       */
+/*  along with this program. If not, see <http://www.gnu.org/licenses/>.           */
+/*                                                                                 */
+/*  You can find information on the NOMAD software at www.gerad.ca/nomad           */
+/*---------------------------------------------------------------------------------*/
+
 /**
  \file   Signature.cpp
  \brief  Evaluation point signature (implementation)
@@ -64,26 +66,27 @@ bool NOMAD::Signature::_warning_has_been_displayed=false;
 /*--------------------------------------------------*/
 /*                    constructor 1                 */
 /*--------------------------------------------------*/
-NOMAD::Signature::Signature ( int                                                 n                       ,
-                             const std::vector<NOMAD::bb_input_type>            & input_types             ,
-                             const NOMAD::Point                                 & lb                      ,
-                             const NOMAD::Point                                 & ub                      ,
-                             const NOMAD::mesh_type                             & mesh_type               ,
-                             bool                                                 anisotropic_mesh        ,
-                             const NOMAD::Point                                 & granularity             ,
-                             const NOMAD::Point                                 & initial_poll_size       ,
-                             const NOMAD::Point                                 & min_poll_size           ,
-                             const NOMAD::Point                                 & min_mesh_size           ,
-                             NOMAD::Double                                      & mesh_update_basis       ,
-                             NOMAD::Double                                      & poll_update_basis       ,
-                             int                                                & mesh_coarsening_exponent,
-                             int                                                & mesh_refining_exponent  ,
-                             int                                                  initial_mesh_index      ,
-                             const NOMAD::Point                                 & scaling                 ,
-                             const NOMAD::Point                                 & fixed_variables         ,
-                             const std::vector<bool>                            & periodic_variables      ,
-                             std::set<NOMAD::Variable_Group*,NOMAD::VG_Comp>    & var_groups              ,
-                             const NOMAD::Display                               & out )
+NOMAD::Signature::Signature ( int                                                n                    ,
+                             const std::vector<NOMAD::bb_input_type>           & input_types          ,
+                             const NOMAD::Point                                & lb                   ,
+                             const NOMAD::Point                                & ub                   ,
+                             const NOMAD::mesh_type                            & mesh_type            ,
+                             bool                                                anisotropic_mesh     ,
+                             NOMAD::Double                                       anisotropy_factor    ,
+                             const NOMAD::Point                                & granularity          ,
+                             const NOMAD::Point                                & initial_poll_size    ,
+                             const NOMAD::Point                                & min_poll_size        ,
+                             const NOMAD::Point                                & min_mesh_size        ,
+                             NOMAD::Double                                     & mesh_update_basis    ,
+                             NOMAD::Double                                     & poll_update_basis    ,
+                             int                                               & mesh_coarsening_exponent,
+                             int                                               & mesh_refining_exponent,
+                             int                                                 initial_mesh_index    ,
+                             const NOMAD::Point                                & scaling              ,
+                             const NOMAD::Point                                & fixed_variables      ,
+                             const std::vector<bool>                           & periodic_variables   ,
+                             std::set<NOMAD::Variable_Group*,NOMAD::VG_Comp>   & var_groups           ,
+                             const NOMAD::Display                              & out )
 :  _std  ( false ) ,
 _out ( out )
 {
@@ -92,6 +95,7 @@ _out ( out )
     
     if ( mesh_type == NOMAD::GMESH )
         _mesh= new NOMAD::GMesh(anisotropic_mesh,
+                                anisotropy_factor,
                                 initial_poll_size,
                                 min_poll_size,
                                 min_mesh_size,
@@ -100,19 +104,19 @@ _out ( out )
                                 poll_update_basis,  // poll update basis and the 2 other parameters are not needed
                                 mesh_coarsening_exponent,
                                 mesh_refining_exponent);
-        
+    
     else if ( mesh_type == NOMAD::XMESH )
         _mesh=new NOMAD::XMesh( anisotropic_mesh,
-                                initial_poll_size,
-                                min_poll_size,
-                                min_mesh_size,
-                                fixed_variables,
-                                poll_update_basis,  // XMesh sets poll update basis (default 2)
-                                mesh_coarsening_exponent,
-                                mesh_refining_exponent);
-        
+                               initial_poll_size,
+                               min_poll_size,
+                               min_mesh_size,
+                               fixed_variables,
+                               poll_update_basis,  // XMesh sets poll update basis (default 2)
+                               mesh_coarsening_exponent,
+                               mesh_refining_exponent);
+    
     else if ( mesh_type == NOMAD::SMESH )
-    // Mesh index can be provided for isotropic smesh and increases as the mesh size decreases
+        // Mesh index can be provided for isotropic smesh and increases as the mesh size decreases
         _mesh=new NOMAD::SMesh(initial_poll_size,   // WARNING THIS IS NOT AN ERROR     new initial_poll_size ~ old initial mesh size
                                min_poll_size,
                                min_mesh_size,
@@ -152,6 +156,7 @@ NOMAD::Signature::Signature ( int                                      n        
                              const NOMAD::Point                      & ub                 ,
                              const std::set<NOMAD::direction_type>   & direction_types    ,
                              const std::set<NOMAD::direction_type>   & sec_poll_dir_types ,
+                             const std::set<NOMAD::direction_type>   & int_poll_dir_types ,
                              const NOMAD::Display                    & out                  )
 :    _std  ( false ) ,
 _out  ( out )
@@ -160,6 +165,7 @@ _out  ( out )
         throw NOMAD::Signature::Signature_Error ( "Signature.cpp" , __LINE__ , *this ,
                                                  "NOMAD::Signature::Signature(): bad argument: input_types" );
     
+    // Default mesh is isotropic xmesh
     _mesh=new NOMAD::XMesh (false,
                             initial_poll_size,
                             NOMAD::Point(),
@@ -183,17 +189,19 @@ _out  ( out )
         
         // creation of a group for cont./bin./int. variables:
         if ( !vi_cbi.empty() )
-            var_groups.insert ( new NOMAD::Variable_Group ( vi_cbi             ,
+            var_groups.insert ( new NOMAD::Variable_Group ( vi_cbi            ,
                                                            direction_types    ,
                                                            sec_poll_dir_types ,
-                                                           out                  ) );
+                                                           int_poll_dir_types ,
+                                                           out                ) );
         
         // creation of a group for categorical variables:
         if ( !vi_cat.empty() )
             var_groups.insert ( new NOMAD::Variable_Group ( vi_cat            ,
-                                                           direction_types   ,
-                                                           sec_poll_dir_types,
-                                                           out                 ) );
+                                                           direction_types    ,
+                                                           sec_poll_dir_types ,
+                                                           int_poll_dir_types ,
+                                                           out                ) );
         
     }
     
@@ -228,18 +236,18 @@ _out  ( out )
 /*--------------------------------------------------*/
 NOMAD::Signature::Signature ( const NOMAD::Signature & s )
 :  _lb                 ( s._lb                     ) ,
-   _ub                 ( s._ub                     ) ,
-   _scaling            ( s._scaling                ) ,
-   _fixed_variables    ( s._fixed_variables        ) ,
-   _granularity        ( s._granularity            ) ,
-   _input_types        ( s._input_types            ) ,
-   _all_continuous     ( s._all_continuous         ) ,
-   _has_categorical    ( s._has_categorical        ) ,
-   _periodic_variables ( s._periodic_variables        ) ,
-   _std                ( false                     ) ,
-   _feas_success_dir   ( s._feas_success_dir       ) ,
-   _infeas_success_dir ( s._infeas_success_dir     ) ,
-  _out (s._out)
+_ub                 ( s._ub                     ) ,
+_scaling            ( s._scaling                ) ,
+_fixed_variables    ( s._fixed_variables        ) ,
+_granularity        ( s._granularity            ) ,
+_input_types        ( s._input_types            ) ,
+_all_continuous     ( s._all_continuous         ) ,
+_has_categorical    ( s._has_categorical        ) ,
+_periodic_variables ( s._periodic_variables        ) ,
+_std                ( false                     ) ,
+_feas_success_dir   ( s._feas_success_dir       ) ,
+_infeas_success_dir ( s._infeas_success_dir     ) ,
+_out (s._out)
 {
     
     
@@ -380,14 +388,14 @@ void NOMAD::Signature::init ( int                                       n       
     else
         throw NOMAD::Signature::Signature_Error ( "Signature.cpp" , __LINE__ , *this ,
                                                  "NOMAD::Signature::init(): bad argument: fixed_variables" );
-    // Granularity:
+    
     if ( granularity.empty() )
         _granularity.reset(n,0) ;
     else if ( granularity.size() == n )
         _granularity = granularity;
     else
         throw NOMAD::Signature::Signature_Error ( "Signature.cpp" , __LINE__ , *this ,
-                                             "NOMAD::Signature::init(): bad argument: granular_variables" );
+                                                 "NOMAD::Signature::init(): bad argument: granular_variables" );
     
     // periodic variables:
     _periodic_variables = periodic_variables;
@@ -613,9 +621,9 @@ bool NOMAD::Signature::is_compatible ( const NOMAD::Point & x ) const
 /*-----------------------------------------------------*/
 /*     compute the directions                          */
 /*-----------------------------------------------------*/
-void NOMAD::Signature::get_directions ( std::list<NOMAD::Direction>    & dirs       ,
-                                                 NOMAD::poll_type        poll       ,
-                                                 const NOMAD::Point    & poll_center   )
+void NOMAD::Signature::get_directions ( std::list<NOMAD::Direction>    & dirs     ,
+                                       NOMAD::poll_type                poll       ,
+                                       const NOMAD::Point            & poll_center   )
 {
     
     NOMAD::Direction                          * pd;
@@ -629,7 +637,7 @@ void NOMAD::Signature::get_directions ( std::list<NOMAD::Direction>    & dirs   
     
     
     // Reset dir_group_index.
-    // For each signature, a variable_group has a  unique set of directions generated and a unique dir_group_index starting by zero (-1 if no dirs)
+    //    For each signature, a variable_group has a  unique set of directions generated and a unique dir_group_index starting by zero (-1 if no dirs)
     _dir_group_index=-1;
     
     // loop on variable groups:
@@ -661,7 +669,7 @@ void NOMAD::Signature::get_directions ( std::list<NOMAD::Direction>    & dirs   
             NOMAD::Double normInfPoint=0;
             for ( it_vi = var_indexes.begin() ; it_vi != end_vi ; ++it_vi ,++i )
             {
-                normInfPoint = NOMAD::max( normInfPoint , ((*it_dir)[i]).abs() );
+                normInfPoint = NOMAD::max( normInfPoint , (*it_dir)[i].abs() );
             }
             
             
@@ -680,7 +688,7 @@ void NOMAD::Signature::get_directions ( std::list<NOMAD::Direction>    & dirs   
                     (*pd)[*it_vi] = 0.0;
                 else
                 {
-                
+                    
                     if ( dynamic_cast<NOMAD::GMesh *>(_mesh) )
                     {
                         if ( normInfPoint==0 )
@@ -692,6 +700,9 @@ void NOMAD::Signature::get_directions ( std::list<NOMAD::Direction>    & dirs   
                     else
                     {
                         // Case other than Gmesh:
+                        
+                        // Do not block Delta and
+                        // pickup 0, -1, 1 for the integer variable when Delta < 1.0
                         if ( _input_types[*it_vi] == NOMAD::INTEGER && Delta[i] < 1.0 )
                         {
                             if ( (*it_dir)[i] > 1.0/3.0 )
@@ -727,13 +738,13 @@ void NOMAD::Signature::get_directions ( std::list<NOMAD::Direction>    & dirs   
 
 
 /*-----------------------------------------------------------------------------------*/
-/*     compute one ORTHO 1 direction for a random group of variable                          */
+/*     compute one ORTHO 1 direction for a random group of variable                  */
 /*-----------------------------------------------------------------------------------*/
 void NOMAD::Signature::get_variable_group_direction ( NOMAD::Direction          & dir        ,
-                                                     const NOMAD::Point            & poll_center   )
+                                                     const NOMAD::Point         & poll_center   )
 {
     
-    int                                         i;
+    int                                         i=0;
     std::set<int>::const_iterator               it_vi  , end_vi;
     
     NOMAD::Point delta=_mesh->get_delta ( );
@@ -762,7 +773,6 @@ void NOMAD::Signature::get_variable_group_direction ( NOMAD::Direction          
     // get a direction INSIDE a unit nc-sphere
     if ( (*it_vg)->get_one_direction ( dir_nc ) ) // Get a direction ON a unit nc-sphere
     {
-        
         // Randomly scale the direction to be inside the unit nc-sphere
         NOMAD::Double s = NOMAD::RNG::rand(0,1);
         
@@ -773,11 +783,8 @@ void NOMAD::Signature::get_variable_group_direction ( NOMAD::Direction          
         NOMAD::Double normInfPoint=0;
         for ( int j=0; j < static_cast<int>(var_indexes.size()) ; ++j )
         {
-            normInfPoint = NOMAD::max( normInfPoint , (dir_nc[j]).abs() );
+            normInfPoint = NOMAD::max( normInfPoint , (dir_nc)[i].abs() );
         }
-        
-        
-        
         
         end_vi = var_indexes.end();
         i = 0;
@@ -809,6 +816,9 @@ void NOMAD::Signature::get_variable_group_direction ( NOMAD::Direction          
                 {
                     
                     // Case other than Gmesh:
+                    
+                    // Do not block Delta and
+                    // pickup 0, -1, 1 for the integer variable when Delta < 1.0
                     if ( _input_types[*it_vi] == NOMAD::INTEGER && Delta[i] < 1.0 )
                     {
                         if ( dir_nc[i] > 1.0/3.0 )
@@ -845,9 +855,9 @@ void NOMAD::Signature::get_variable_group_direction ( NOMAD::Direction          
 /*----------------------------------------------------------------*/
 /*  get just one direction for a given mesh (used by VNS search)  */
 /*----------------------------------------------------------------*/
-void NOMAD::Signature::get_one_direction ( NOMAD::Direction & dir , int ell) 
+void NOMAD::Signature::get_one_direction ( NOMAD::Direction & dir , int ell)
 {
-    int                           i=0;
+    int                           i;
     std::set<int>::const_iterator it_vi  , end_vi;
     
     // get delta_m (mesh size parameter):
@@ -875,20 +885,19 @@ void NOMAD::Signature::get_one_direction ( NOMAD::Direction & dir , int ell)
         // get a direction on a unit nc-sphere
         if ( (*it_vg)->get_one_direction ( dir_nc ) )
         {
-    
+            
             NOMAD::Double normInfPoint=0;
             for ( int j=0; j < static_cast<int>(var_indexes.size()) ; ++j )
             {
-                normInfPoint = NOMAD::max( normInfPoint , (dir_nc[j]).abs() );
+                normInfPoint = NOMAD::max( normInfPoint , (dir_nc)[j].abs() );
             }
-
+            
             
             // scale with delta and round integer and binary variables:
             end_vi = var_indexes.end();
             i      = 0;
             for ( it_vi = var_indexes.begin() ; it_vi != end_vi ; ++it_vi, ++i )
             {
-                
                 if ( _input_types[*it_vi] == NOMAD::BINARY )
                 {
                     if ( dir_nc[i] < 0 )
@@ -911,6 +920,9 @@ void NOMAD::Signature::get_one_direction ( NOMAD::Direction & dir , int ell)
                     else
                     {
                         // Case other than Gmesh:
+                        
+                        // Do not block Delta and
+                        // pickup 0, -1, 1 for the integer variable when Delta < 1.0
                         if ( _input_types[*it_vi] == NOMAD::INTEGER && Delta[i] < 1.0 )
                         {
                             if ( dir_nc[i] > 1.0/3.0 )
@@ -1311,7 +1323,7 @@ bool NOMAD::Signature::operator < ( const NOMAD::Signature & s ) const
             return true;
         if ( s._granularity[i].comp_with_undef ( _granularity[i] ) )
             return false;
-
+        
         
         // mesh:
         // -----

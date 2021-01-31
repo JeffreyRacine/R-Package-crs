@@ -1,6 +1,6 @@
 /*-------------------------------------------------------------------------------------*/
 /*  sgtelib - A surrogate model library for derivative-free optimization               */
-/*  Version 2.0.1                                                                      */
+/*  Version 2.0.2                                                                      */
 /*                                                                                     */
 /*  Copyright (C) 2012-2017  Sebastien Le Digabel - Ecole Polytechnique, Montreal      */ 
 /*                           Bastien Talgorn - McGill University, Montreal             */
@@ -251,12 +251,12 @@ std::string SGTELIB::test_quick (const std::string & s , const SGTELIB::Matrix &
     if ( (crs_isnan(emax[j])) || (crs_isnan(rmsecv[j])) || (crs_isnan(oe[j])) || (crs_isnan(oecv[j])) || (crs_isnan(linv[j])) ){
       SGTELIB::rout << "There is some nan\n";
       SGTELIB::rout << "EXIT!\n"; 
-     // exit(0);  zhenghua
+      //exit(0);  //zhenghua; to avoid exit from R.
     }
     if ( (crs_isinf(emax[j])) || (crs_isinf(rmse[j])) || ( crs_isinf(rmsecv[j])) || (crs_isinf(oe[j])) || (crs_isinf(oecv[j])) || (crs_isinf(linv[j])) ){
       SGTELIB::rout << "There is some inf\n";
       SGTELIB::rout << "EXIT!\n"; 
-     // exit(0);  zhenghua
+      //exit(0);  //zhenghua
     }
   }
   delete [] emax;
@@ -333,7 +333,7 @@ std::string SGTELIB::test_pxx (const std::string & s , const SGTELIB::Matrix & X
         break;
       default:
         SGTELIB::rout << "ERROR i = " << i << "\n";
-        //exit(0); zhenghua
+        // exit(0);   //zhenghua
     }
 
     // TESTING POINT(S)
@@ -396,7 +396,7 @@ std::string SGTELIB::test_pxx (const std::string & s , const SGTELIB::Matrix & X
           break;
         default:
           SGTELIB::rout << "ERROR k = " << k << "\n";
-          //exit(0); zhenghua
+          // exit(0);   //zhenghua
 
       }// end switch
 
@@ -586,7 +586,7 @@ std::string SGTELIB::test_singular_data (const std::string & s ) {
     if ( ( !  isdef(rmse[j])) || ( !  isdef(rmse[j])) ){
       SGTELIB::rout << "There are some nan !";
       C0.get_matrix_Xs().display(SGTELIB::rout);
-      //exit(0); zhenghua
+      //exit(0);  //zhenghua
     }
   }
 

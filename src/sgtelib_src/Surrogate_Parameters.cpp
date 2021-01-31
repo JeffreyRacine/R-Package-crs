@@ -1,6 +1,6 @@
 /*-------------------------------------------------------------------------------------*/
 /*  sgtelib - A surrogate model library for derivative-free optimization               */
-/*  Version 2.0.1                                                                      */
+/*  Version 2.0.2                                                                      */
 /*                                                                                     */
 /*  Copyright (C) 2012-2017  Sebastien Le Digabel - Ecole Polytechnique, Montreal      */ 
 /*                           Bastien Talgorn - McGill University, Montreal             */
@@ -25,9 +25,11 @@
 
 #include "Surrogate_Parameters.hpp"
 using namespace SGTELIB;
-/*----------------------------*/
-/*         constructor        */
-/*----------------------------*/
+/*---------------------------------------------------------------*/
+/*         constructor                                           */
+/* Use a model_type to define the model, then use default values */
+/* associated to this specific model_type.                       */
+/*---------------------------------------------------------------*/
 SGTELIB::Surrogate_Parameters::Surrogate_Parameters ( const model_t mt ):
   _type  ( mt ){
   set_defaults();
@@ -35,9 +37,11 @@ SGTELIB::Surrogate_Parameters::Surrogate_Parameters ( const model_t mt ):
 }//
 
 
-/*----------------------------*/
-/*          constructor       */
-/*----------------------------*/
+/*-----------------------------------------------------------------------*/
+/*          constructor                                                  */
+/* Use a string provided by the user. Read the model_type in the string, */
+/* then parse the string to read all the other parameters.               */
+/*-----------------------------------------------------------------------*/
 SGTELIB::Surrogate_Parameters::Surrogate_Parameters ( const std::string & s ):
   _type  ( read_model_type(s) ){
   set_defaults();
@@ -70,7 +74,7 @@ SGTELIB::model_t SGTELIB::Surrogate_Parameters::read_model_type ( const std::str
     }
   }
   // If nothing was found
-  SGTELIB::rout << "model_description: " << model_description << "\n";
+  std::cout << "model_description: " << model_description << "\n";
   throw SGTELIB::Exception ( __FILE__ , __LINE__ , "No field \"TYPE\" found.");
 }//
 
@@ -91,20 +95,28 @@ std::string SGTELIB::Surrogate_Parameters::to_standard_field_name (const std::st
   if ( streqi(field,"WEIGHT_CHOICE") )  return "WEIGHT_TYPE";
   if ( streqi(field,"CHOICE_WEIGHT") )  return "WEIGHT_TYPE";
 
-  if ( streqi(field,"RIDGE") )          return "RIDGE";
-  if ( streqi(field,"RIDGE_COEF") )     return "RIDGE";
-  if ( streqi(field,"RIDGE_PARAM") )    return "RIDGE";
+  if ( streqi(field,"RIDGE") )                return "RIDGE";
+  if ( streqi(field,"RIDGE_COEF") )           return "RIDGE";
+  if ( streqi(field,"RIDGE_PARAM") )          return "RIDGE";
+  if ( streqi(field,"RIDGE_COEFFICIENT") )    return "RIDGE";
+  if ( streqi(field,"RIDGE_PARAMETER") )      return "RIDGE";
+  if ( streqi(field,"REGULARIZATION_PARAM") ) return "RIDGE";
+  if ( streqi(field,"REGULARIZATION_COEF") )  return "RIDGE";
 
   if ( streqi(field,"KERNEL_TYPE") )    return "KERNEL_TYPE";
   if ( streqi(field,"TYPE_KERNEL") )    return "KERNEL_TYPE";
   if ( streqi(field,"KERNEL") )         return "KERNEL_TYPE";
 
-  if ( streqi(field,"KERNEL_COEF") )    return "KERNEL_COEF";
-  if ( streqi(field,"COEF_KERNEL") )    return "KERNEL_COEF";
-  if ( streqi(field,"KERNEL_SHAPE") )   return "KERNEL_COEF";
-  if ( streqi(field,"COEF_SHAPE") )     return "KERNEL_COEF";
-  if ( streqi(field,"SHAPE") )          return "KERNEL_COEF";
-  if ( streqi(field,"SHAPE_COEF") )     return "KERNEL_COEF";
+  if ( streqi(field,"KERNEL_COEF") )         return "KERNEL_COEF";
+  if ( streqi(field,"KERNEL_COEFFICIENT") )  return "KERNEL_COEF";
+  if ( streqi(field,"COEF_KERNEL") )         return "KERNEL_COEF";
+  if ( streqi(field,"KERNEL_SHAPE") )        return "KERNEL_COEF";
+  if ( streqi(field,"COEF_SHAPE") )          return "KERNEL_COEF";
+  if ( streqi(field,"COEFFICIENT_SHAPE") )   return "KERNEL_COEF";
+  if ( streqi(field,"SHAPE") )               return "KERNEL_COEF";
+  if ( streqi(field,"SHAPE_COEF") )          return "KERNEL_COEF";
+  if ( streqi(field,"SHAPE_COEFFICIENT") )   return "KERNEL_COEF";
+
 
   if ( streqi(field,"METRIC") )         return "METRIC_TYPE";
   if ( streqi(field,"METRIC_TYPE") )    return "METRIC_TYPE";
@@ -126,7 +138,7 @@ std::string SGTELIB::Surrogate_Parameters::to_standard_field_name (const std::st
   if ( streqi(field,"TYPE_DISTANCE") )  return "DISTANCE_TYPE";
 
 
-  SGTELIB::rout << "Field: " << field << "\n";
+  std::cout << "Field: " << field << "\n";
   throw SGTELIB::Exception ( __FILE__ , __LINE__ , "Field not recognized: \""+field+"\"" );
   return "ERROR";
 }
@@ -140,50 +152,55 @@ void SGTELIB::Surrogate_Parameters::read_string (const std::string & model_descr
   std::string content;
   bool content_is_optim;
   std::istringstream in_line (model_description);	
-  #ifdef SGTELIB_DEBUG
-    SGTELIB::rout << "Model description: " << model_description << "\n";
-  #endif
+  const bool display = false;
+  if (display){
+    std::cout << "Model description: " << model_description << "\n";
+  }
   while ( in_line >> field ){
 
-    #ifdef SGTELIB_DEBUG
-      SGTELIB::rout << "FIELD: " << field ;
-    #endif
+    if (display){
+      std::cout << "FIELD: " << field ;
+    }
     // Convert the field name into a std field name
     field = to_standard_field_name(field);
-    #ifdef SGTELIB_DEBUG
-      SGTELIB::rout << " (" << field << ")\n";
-    #endif   
+    if (display){
+      std::cout << " (" << field << ")\n";
+    }   
     // Check if this field is authorized for this type of model.
-    if ( !  authorized_field(field)){
-      SGTELIB::rout << "model_description: " << model_description << "\n";
+    if ( ! authorized_field(field) ){
+      std::cout << "model_description: " << model_description << "\n";
       throw SGTELIB::Exception ( __FILE__ , __LINE__ ,"Unauthorized field \""+field+"\" in a model of type "+model_type_to_str(_type) );
     }
-    #ifdef SGTELIB_DEBUG
-      SGTELIB::rout << "CONTENT: " << content << "\n";
-    #endif
+    if (display){
+      std::cout << "CONTENT: " << content << "\n";
+    }
     // Read the content 
-    if ( !  (in_line >> content))
+    if ( !(in_line >> content) )
       throw SGTELIB::Exception ( __FILE__ , __LINE__ ,"Missing content for field \""+field+"\"" );
-
-
 
     // Detect if the content is "OPTIM".
     content_is_optim = ( streqi(content,"OPTIM") || streqi(content,"OPTIMIZATION") || streqi(content,"OPTIMIZE") );
+    if (display){
+      std::cout << "CONTENT IS OPTIM: " << content_is_optim << "\n";
+    }
 
     // Check if optimization is allowed for this field.
-    if ((content_is_optim) && ( !  authorized_optim(field))) {
-      SGTELIB::rout << "model_description: " << model_description << "\n";
+    if ((content_is_optim) && (!authorized_optim(field))) {
+      std::cout << "model_description: " << model_description << "\n";
       throw SGTELIB::Exception ( __FILE__ , __LINE__ ,"Field \""+field+"\" cannot be optimized." );
     }
 
     if (streqi(field,"TYPE")){
+      // If the field is "TYPE", then check that the model_type is consistent with the
+      // one already detected.
       if ( str_to_model_type(content) != _type ){
-        SGTELIB::rout << "model_description: " << model_description << "\n";
+        std::cout << "model_description: " << model_description << "\n";
         throw SGTELIB::Exception ( __FILE__ , __LINE__ ,"Unconsistent model type!" );
       }
     }
     else if (streqi(field,"DEGREE")){
       if (content_is_optim)
+        // _degree = default value.
         _degree_status = SGTELIB::STATUS_OPTIM;
       else{
         _degree = SGTELIB::stoi(content);
@@ -192,7 +209,8 @@ void SGTELIB::Surrogate_Parameters::read_string (const std::string & model_descr
     }
     else if (streqi(field,"KERNEL_TYPE")){
       if (content_is_optim)
-         _kernel_type_status = SGTELIB::STATUS_OPTIM;
+        // _kernel_type = default value        
+        _kernel_type_status = SGTELIB::STATUS_OPTIM;
       else{
         _kernel_type = SGTELIB::str_to_kernel_type(content);
         _kernel_type_status = SGTELIB::STATUS_FIXED;
@@ -200,6 +218,7 @@ void SGTELIB::Surrogate_Parameters::read_string (const std::string & model_descr
     }
     else if ( streqi(field,"KERNEL_COEF") ){
       if (content_is_optim)
+        // _kernel_coef = default value
         _kernel_coef_status = SGTELIB::STATUS_OPTIM;
       else{
         _kernel_coef = SGTELIB::stod(content);
@@ -208,7 +227,8 @@ void SGTELIB::Surrogate_Parameters::read_string (const std::string & model_descr
     }
     else if (streqi(field,"RIDGE")){
       if (content_is_optim)
-         _ridge_status = SGTELIB::STATUS_OPTIM;
+        // _ridge = default value
+        _ridge_status = SGTELIB::STATUS_OPTIM;
       else{
         _ridge = SGTELIB::stod(content);
         _ridge_status = SGTELIB::STATUS_FIXED;
@@ -216,6 +236,7 @@ void SGTELIB::Surrogate_Parameters::read_string (const std::string & model_descr
     }
     else if ( streqi(field,"DISTANCE_TYPE") ){
       if (content_is_optim)
+        // _distance_type = default value
         _distance_type_status = SGTELIB::STATUS_OPTIM;
       else{
         _distance_type = str_to_distance_type(content);
@@ -226,28 +247,44 @@ void SGTELIB::Surrogate_Parameters::read_string (const std::string & model_descr
       _weight_type = str_to_weight_type(content);
       if (content_is_optim) 
         _weight_status = SGTELIB::STATUS_OPTIM;
+      // Note, the weight_type can be one of the following:
+      // - WTA1
+      // - WTA3
+      // - SELECT
+      // - OPTIM
+      // If the weight_type is OPTIM, then weight_status is OPTIM.
+      // The variable weight_type is not optimized. It is the weights that are
+      // optimized.
+      // This is different from, for example, the kernel_type, which can be optimized.
     }
     else if ( streqi(field,"METRIC_TYPE") ){
       _metric_type = str_to_metric_type(content);
+      // Cannot be optimized
     }
     else if ( streqi(field,"BUDGET") ){
       _budget = SGTELIB::stoi(content);
+      // Cannot be optimized
     }
     else if ( streqi(field,"PRESET") ){
       _preset = content;
+      // Cannot be optimized
     }
     else if ( streqi(field,"OUTPUT") ){
       _output = content;
+      // Cannot be optimized
     }
     else{
-      SGTELIB::rout << "model_description: " << model_description << "\n";
+      std::cout << "model_description: " << model_description << "\n";
       throw SGTELIB::Exception ( __FILE__ , __LINE__ , "Field not recognized: \""+field+"\"" );
     }
   }// end while read
 }//
 
 
-
+/*----------------------------------------------------------*/
+/* Indicate if the field name given in input is authorized  */
+/* for the current type of model                            */
+/*----------------------------------------------------------*/
 bool SGTELIB::Surrogate_Parameters::authorized_field ( const std::string & field ) const{
 
   if (streqi(field,"TYPE")) return true;
@@ -259,7 +296,7 @@ bool SGTELIB::Surrogate_Parameters::authorized_field ( const std::string & field
     case SGTELIB::LINEAR:
     case SGTELIB::TGP: 
     case SGTELIB::SVN: 
-      throw SGTELIB::Exception ( __FILE__ , __LINE__ , "Not implemented yetnot " );
+      throw SGTELIB::Exception ( __FILE__ , __LINE__ , "Not implemented yet! " );
 
     case SGTELIB::CN:
       if (streqi(field,"DISTANCE_TYPE")) return true;
@@ -268,6 +305,7 @@ bool SGTELIB::Surrogate_Parameters::authorized_field ( const std::string & field
     case SGTELIB::KRIGING: 
       if (streqi(field,"RIDGE"))         return true;
       if (streqi(field,"DISTANCE_TYPE")) return true;
+      break;
 
     case SGTELIB::PRS: 
     case SGTELIB::PRS_EDGE: 
@@ -314,6 +352,10 @@ bool SGTELIB::Surrogate_Parameters::authorized_field ( const std::string & field
   return false;
 }//
 
+
+/*----------------------------------------------------------*/
+/* Indicate if the field given in input can be optimized    */
+/*----------------------------------------------------------*/
 bool SGTELIB::Surrogate_Parameters::authorized_optim ( const std::string & field ) {
 
   if (streqi(field,"DEGREE"))        return true;
@@ -329,7 +371,7 @@ bool SGTELIB::Surrogate_Parameters::authorized_optim ( const std::string & field
   if (streqi(field,"PRESET"))        return false;
   if (streqi(field,"BUDGET"))        return false;
 
-  SGTELIB::rout << "Field : " << field << "\n";
+  std::cout << "Field : " << field << "\n";
   throw SGTELIB::Exception ( __FILE__ , __LINE__ ,"Undefined field" );
 
   return false;
@@ -337,9 +379,10 @@ bool SGTELIB::Surrogate_Parameters::authorized_optim ( const std::string & field
 
 
 
-/*----------------------------*/
-/*          Check             */
-/*----------------------------*/
+/*-------------------------------------------------*/
+/*          Check                                  */
+/* Verify the consistency of the set of parameters */
+/*-------------------------------------------------*/
 void SGTELIB::Surrogate_Parameters::check ( void ) {
   switch (_type) {
     case SGTELIB::LINEAR:
@@ -375,8 +418,11 @@ void SGTELIB::Surrogate_Parameters::check ( void ) {
         throw SGTELIB::Exception ( __FILE__ , __LINE__ ,"kernel_coef must be > 0" );
       if (_ridge<0)
         throw SGTELIB::Exception ( __FILE__ , __LINE__ ,"ridge must be >= 0" );
-      if ( ( !  kernel_has_parameter(_kernel_type)) && (_kernel_type_status==SGTELIB::STATUS_FIXED) ){
-        // If the kernel coef is not used in this type of kernel, then it should be fixed. 
+      if ( ( ! kernel_has_parameter(_kernel_type)) && (_kernel_type_status==SGTELIB::STATUS_FIXED) ){
+        // If the kernel_type is fixed by the user, and this type of kernel does not
+        // require a kernel_coefficient, then the kernel_coefficient is arbitrarily set to 1 
+        // and its status is set to "fixed". See the class Kernel to see which kernel type requires
+        // a coefficient or not.
         _kernel_coef = 1;
         _kernel_coef_status = SGTELIB::STATUS_FIXED;
       }
@@ -387,6 +433,18 @@ void SGTELIB::Surrogate_Parameters::check ( void ) {
         throw SGTELIB::Exception ( __FILE__ , __LINE__ ,"degree for LOWESS model must be 0, 1 or 2" );
       if (_ridge<0)
         throw SGTELIB::Exception ( __FILE__ , __LINE__ ,"ridge must be >= 0" );
+      // The default preset for LOWESS models is DGN. 
+      // The preset defines how the weight of each data point is computed.
+      // D : w_i = phi(distance_i), where distance_i is the distance between the prediction point 
+      //           and the data point x_i.
+      // DEN : w_i = phi(distance_i/dq_i), where dq_i is the distance between the prediction point
+      //             and the q^th closest data point, and dq_i is computed with empirical method.
+      // DGN : w_i = phi(distance_i/dq_i), where dq_i is computed with gamma method.
+      // RE : w_i = phi(rank_i), where rank_i is the rank of x_i in terms of distance 
+      //            to the prediction point, and the rank_i is computed with empirical method.
+      // RG : w_i = phi(rank_i), where the rank is computed with gamma method.
+      // REN : w_i = same as RE but the ranks are normalized in [0,1]
+      // RGN : w_i = same as RG but the ranks are normalized in [0,1]
       if ( (_preset!="D"  ) &&
            (_preset!="DEN") &&
            (_preset!="DGN") &&
@@ -394,8 +452,8 @@ void SGTELIB::Surrogate_Parameters::check ( void ) {
            (_preset!="RG" ) &&
            (_preset!="REN") &&
            (_preset!="RGN") ){
-        SGTELIB::rout << "LOWESS preset : " << _preset << "\n";
-        SGTELIB::rout << "Possible values: D, DEN, DGN, RE, RG, REN, RGN.\n";
+        std::cout << "LOWESS preset : " << _preset << "\n";
+        std::cout << "Possible values: D, DEN, DGN, RE, RG, REN, RGN.\n";
         throw SGTELIB::Exception ( __FILE__ , __LINE__ ,"preset not recognized" );
       }
       if ( ! SGTELIB::kernel_is_decreasing( _kernel_type ) )
@@ -411,8 +469,6 @@ void SGTELIB::Surrogate_Parameters::check ( void ) {
     default: 
       throw SGTELIB::Exception ( __FILE__ , __LINE__ ,"Undefined type" );
   }
-
-
 
 
   // Count the number of parameters to optimize
@@ -744,9 +800,11 @@ std::string SGTELIB::Surrogate_Parameters::get_short_string ( void ) const {
 
 
 
-/*------------------------------------*/
-/*  Parameter domains and definitions */
-/*------------------------------------*/
+/*------------------------------------------------------------*/
+/*  get_x                                                     */
+/* Creates a vector that contains the numerical values of all */
+/* all the parameters that must be optmized.                  */
+/*------------------------------------------------------------*/
 SGTELIB::Matrix SGTELIB::Surrogate_Parameters::get_x ( void ){
 
     SGTELIB::Matrix X ("X",1,_nb_parameter_optimization);
@@ -772,8 +830,8 @@ SGTELIB::Matrix SGTELIB::Surrogate_Parameters::get_x ( void ){
     }
 
     if ( k != _nb_parameter_optimization){
-      SGTELIB::rout << "k=" << k << "\n";
-      SGTELIB::rout << "_nb_parameter_optimization=" << _nb_parameter_optimization << "\n";
+      std::cout << "k=" << k << "\n";
+      std::cout << "_nb_parameter_optimization=" << _nb_parameter_optimization << "\n";
       throw SGTELIB::Exception ( __FILE__ , __LINE__ ,"Unconcistency in the value of k." );
     }
 
@@ -811,23 +869,25 @@ void SGTELIB::Surrogate_Parameters::set_x ( const SGTELIB::Matrix X ){
     } 
 
     if ( k != _nb_parameter_optimization ){
-      SGTELIB::rout << "k=" << k << "\n";
-      SGTELIB::rout << "_nb_parameter_optimization=" << _nb_parameter_optimization << "\n";
+      std::cout << "k=" << k << "\n";
+      std::cout << "_nb_parameter_optimization=" << _nb_parameter_optimization << "\n";
       throw SGTELIB::Exception ( __FILE__ , __LINE__ ,"Unconcistency in the value of k." );
     }
 
 }//
 
-/*------------------------------------*/
-/*  Parameter domains and definitions */
-/*------------------------------------*/
+/*------------------------------------------------------------------------------------*/
+/*  Parameter domains and definitions                                                 */
+/* Defines the bounds, domain and log-scale for each parameter that must be optimized */
+/*------------------------------------------------------------------------------------*/
 void SGTELIB::Surrogate_Parameters::get_x_bounds ( SGTELIB::Matrix * LB ,
                                                    SGTELIB::Matrix * UB ,
                                                    SGTELIB::param_domain_t * domain,
                                                    bool * logscale ){
 
-    if ( ( ! LB) || ( ! UB) || ( ! domain) || ( ! logscale) ){
-      SGTELIB::rout << LB << " " << UB << " " << domain << " " << logscale << "\n";
+    // Check that the arrays or matrices are initialized.
+    if ( (!LB) || (!UB) || (!domain) || (!logscale) ){
+      std::cout << LB << " " << UB << " " << domain << " " << logscale << "\n";
       throw SGTELIB::Exception ( __FILE__ , __LINE__ ,"Pointers are NULL." );
     }
 
@@ -917,36 +977,38 @@ void SGTELIB::Surrogate_Parameters::get_x_bounds ( SGTELIB::Matrix * LB ,
     }
 
     if ( k != N){
-      SGTELIB::rout << "k=" << k << "\n";
-      SGTELIB::rout << "N=" << N << "\n";
+      std::cout << "k=" << k << "\n";
+      std::cout << "N=" << N << "\n";
       throw SGTELIB::Exception ( __FILE__ , __LINE__ ,"Unconcistency in the value of k." );
     }
+
+
     // ----- CHECK CONSISTENCY -------
     bool error = false;
     for (j=0 ; j<N ; j++){
       // Check bounds order
       if (LB->get(j)>=UB->get(j)){
         error=true;
-        SGTELIB::rout << "Variable " << j << "\n";
-        SGTELIB::rout << "LB (=" << LB->get(j) << ") >= UB (=" << UB->get(j) << ")\n";
+        std::cout << "Variable " << j << "\n";
+        std::cout << "LB (=" << LB->get(j) << ") >= UB (=" << UB->get(j) << ")\n";
       }
       // Check that only continuous variables are using a log scale
       if ( (logscale[j]) && (domain[j]!=SGTELIB::PARAM_DOMAIN_CONTINUOUS) ){
         error=true;
-        SGTELIB::rout << "Variable " << j << "\n";
-        SGTELIB::rout << "Uses logscale and is not continuous.\n";
+        std::cout << "Variable " << j << "\n";
+        std::cout << "Uses logscale and is not continuous.\n";
       }
       // Check that variables with log scale have bounds of the same sign.
       if (logscale[j]){
         if (LB->get(j)*UB->get(j)<=0){
           //error=true;
-          SGTELIB::rout << "Variable " << j << "\n";
-          SGTELIB::rout << "LB =" << LB->get(j) << "\nUB =" << UB->get(j) << "\n";
-          SGTELIB::rout << "The bounds are not appropriate for logscale optimization.\n";
+          std::cout << "Variable " << j << "\n";
+          std::cout << "LB =" << LB->get(j) << "\nUB =" << UB->get(j) << "\n";
+          std::cout << "The bounds are not appropriate for logscale optimization.\n";
         }
       }
 
-      // Check fo reach domain type
+      // Check domain types
       switch (domain[j]){
         case SGTELIB::PARAM_DOMAIN_CONTINUOUS:
           break;
@@ -954,30 +1016,30 @@ void SGTELIB::Surrogate_Parameters::get_x_bounds ( SGTELIB::Matrix * LB ,
         case SGTELIB::PARAM_DOMAIN_CAT:
           if (double(round(LB->get(j)))!=LB->get(j)){
             error=true;
-            SGTELIB::rout << "Variable " << j << " (Integer or Categorical)\n";
-            SGTELIB::rout << "LB (=" << LB->get(j) << ") is not an integer\n";
+            std::cout << "Variable " << j << " (Integer or Categorical)\n";
+            std::cout << "LB (=" << LB->get(j) << ") is not an integer\n";
           }
           if (double(round(UB->get(j)))!=UB->get(j)){
             error=true;
-            SGTELIB::rout << "Variable " << j << " (Integer or Categorical)\n";
-            SGTELIB::rout << "UB (=" << UB->get(j) << ") is not an integer\n";
+            std::cout << "Variable " << j << " (Integer or Categorical)\n";
+            std::cout << "UB (=" << UB->get(j) << ") is not an integer\n";
           }
           break;
         case SGTELIB::PARAM_DOMAIN_BOOL:
           if (LB->get(j)==0){
             error=true;
-            SGTELIB::rout << "Variable " << j << " (Boolean)\n";
-            SGTELIB::rout << "LB (=" << LB->get(j) << ") is not 0\n";
+            std::cout << "Variable " << j << " (Boolean)\n";
+            std::cout << "LB (=" << LB->get(j) << ") is not 0\n";
           }
           if (UB->get(j)==1){
             error=true;
-            SGTELIB::rout << "Variable " << j << " (Boolean)\n";
-            SGTELIB::rout << "UB (=" << UB->get(j) << ") is not 1\n";
+            std::cout << "Variable " << j << " (Boolean)\n";
+            std::cout << "UB (=" << UB->get(j) << ") is not 1\n";
           }
           break;
         case SGTELIB::PARAM_DOMAIN_MISC:
           error=true;
-          SGTELIB::rout << "Variable " << j << " is MISC\n";
+          std::cout << "Variable " << j << " is MISC\n";
           break;
       }
     }
@@ -998,13 +1060,13 @@ bool SGTELIB::Surrogate_Parameters::check_x ( void ){
     // Check dimension of X
     if (X.get_nb_rows()!=1){
       error = true;
-      SGTELIB::rout << "Number of rows is not 1\n";
+      std::cout << "Number of rows is not 1\n";
     }
     // Check dimension of X
     const int N = _nb_parameter_optimization;
     if (X.get_nb_cols()!=N){
       error = true;
-      SGTELIB::rout << "Number of cols is not consistent with _nb_parameter_optimization\n";
+      std::cout << "Number of cols is not consistent with _nb_parameter_optimization\n";
     }
 
     // Get bound info.
@@ -1018,11 +1080,11 @@ bool SGTELIB::Surrogate_Parameters::check_x ( void ){
       // Check bounds
       if (X[j]<LB->get(j)){
         error=true;
-        SGTELIB::rout << "X[" << j << "] < lower bound\n";
+        std::cout << "X[" << j << "] < lower bound\n";
       }
       if (X[j]>UB->get(j)){
         error=true;
-        SGTELIB::rout << "X[" << j << "] > upper bound\n";
+        std::cout << "X[" << j << "] > upper bound\n";
       }
       // Check types
       switch (domain[j]){
@@ -1032,20 +1094,20 @@ bool SGTELIB::Surrogate_Parameters::check_x ( void ){
         case SGTELIB::PARAM_DOMAIN_CAT:
           if (double(round(X[j]))!=X[j]){
             error=true;
-            SGTELIB::rout << "Variable " << j << " (Integer or Categorical)\n";
-            SGTELIB::rout << "X[" << j << "]=" << X[j] << " is not an integer\n";
+            std::cout << "Variable " << j << " (Integer or Categorical)\n";
+            std::cout << "X[" << j << "]=" << X[j] << " is not an integer\n";
           }
           break;
         case SGTELIB::PARAM_DOMAIN_BOOL:
           if ((X[j]!=0) && (X[j]!=1)){
             error=true;
-            SGTELIB::rout << "Variable " << j << " (Boolean)\n";
-            SGTELIB::rout << "X[" << j << "]=" << X[j] << " is not a boolean\n";
+            std::cout << "Variable " << j << " (Boolean)\n";
+            std::cout << "X[" << j << "]=" << X[j] << " is not a boolean\n";
           }
           break;
         case SGTELIB::PARAM_DOMAIN_MISC:
           error=true;
-          SGTELIB::rout << "Variable " << j << " is MISC\n";
+          std::cout << "Variable " << j << " is MISC\n";
           break;
       }
     }// End loop on j
@@ -1053,7 +1115,7 @@ bool SGTELIB::Surrogate_Parameters::check_x ( void ){
     // Check dimension of _covariance_coef
     if (_covariance_coef.get_nb_rows()>1){
       error = true;
-      SGTELIB::rout << "Covariance_coef should have only one row.\n";
+      std::cout << "Covariance_coef should have only one row.\n";
     }
     
     if (error){
@@ -1070,7 +1132,7 @@ bool SGTELIB::Surrogate_Parameters::check_x ( void ){
 
 
 /*------------------------------------*/
-/*  Parameter domains and definitions */
+/*  Display the parameters            */
 /*------------------------------------*/
 void SGTELIB::Surrogate_Parameters::display_x ( std::ostream & out ){
     out << "Parameter set {\n";
@@ -1110,7 +1172,7 @@ void SGTELIB::Surrogate_Parameters::display_x ( std::ostream & out ){
 
 
 /*----------------------------------------------*/
-/*  smoothness penalty for a set of parameters  */
+/*  Smoothness penalty for a set of parameters  */
 /*----------------------------------------------*/
 double SGTELIB::Surrogate_Parameters::get_x_penalty ( void ){
   double pen = 0;
@@ -1153,10 +1215,11 @@ double SGTELIB::Surrogate_Parameters::get_x_penalty ( void ){
     }
   }
 
-  if ( crs_isinf(pen) ) pen=+INF;
-  if ( crs_isnan(pen) ) pen=+INF;
+  if ( isinf(pen) ) pen=+INF;
+  if ( isnan(pen) ) pen=+INF;
   return pen;
 }
+
 
 
 
@@ -1166,8 +1229,19 @@ double SGTELIB::Surrogate_Parameters::get_x_penalty ( void ){
 /*  update the dimension of _covariance_parameter  */
 /*  for Kriging models                             */
 /*-------------------------------------------------*/
+// The matrix containing the covariance coefficients, for Kriging models, 
+// is initialized with 2 components (factor and exponent). 
+// In sgtelib 2.0.1, the factor and exponent are the same for all input variables.
+// However, it would be possible to use a different value of factor and exponent
+// for each variable (which is the case in most Kriging implementation).
+// The problem is that the Surrogate_Parameters class is built before the model itself,
+// and the instance Surrogate_Parameters is not able to retrieve the dimension of
+// the input space from either the training set or the model. The following method allows
+// the model to tell to the Surrogate_Parameters what must be the dimension of
+// the set of covariance coefficients. 
+// This function is not used for now, but might be used in future versions of sgtelib.
 void SGTELIB::Surrogate_Parameters::update_covariance_coef ( const int v ){
-
+  // The input value v must be equal to 1 or to the number of variables.
   // Check the old dimension
   const int v0 = _covariance_coef.get_nb_cols()/2;
   if (v<v0) throw SGTELIB::Exception ( __FILE__ , __LINE__ ,"v < v0" );
@@ -1177,8 +1251,8 @@ void SGTELIB::Surrogate_Parameters::update_covariance_coef ( const int v ){
   double factor_mean = 0;
   double exponent_mean = 0;
 
-  // First component is the noise. Then the exponent and factor for each dimension.
-  int k = 1;
+  //  Compute the mean value for exponent and factor.
+  int k = 0;
   for (int i=0 ; i<v0 ; i++){
     exponent_mean += _covariance_coef[k++];
     factor_mean   += _covariance_coef[k++];
@@ -1194,27 +1268,6 @@ void SGTELIB::Surrogate_Parameters::update_covariance_coef ( const int v ){
   // Add columns to _covariance_coef
   for (int i=0 ; i<v-v0 ; i++) _covariance_coef.add_cols(Add);
 }//
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 

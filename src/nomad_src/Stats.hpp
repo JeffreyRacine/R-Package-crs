@@ -1,44 +1,46 @@
-/*-------------------------------------------------------------------------------------*/
-/*  NOMAD - Nonlinear Optimization by Mesh Adaptive Direct search - version 3.8.0      */
-/*                                                                                     */
-/*                                                                                     */
-/*  NOMAD - version 3.8.0 has been created by                                          */
-/*                 Charles Audet        - Ecole Polytechnique de Montreal              */
-/*                 Sebastien Le Digabel - Ecole Polytechnique de Montreal              */
-/*                 Christophe Tribes    - Ecole Polytechnique de Montreal              */
-/*                                                                                     */
-/*  The copyright of NOMAD - version 3.8.0 is owned by                                 */
-/*                 Sebastien Le Digabel - Ecole Polytechnique de Montreal              */
-/*                 Christophe Tribes    - Ecole Polytechnique de Montreal              */
-/*                                                                                     */
-/*  NOMAD v3 has been funded by AFOSR and Exxon Mobil.                                 */
-/*                                                                                     */
-/*  NOMAD v3 is a new version of NOMAD v1 and v2. NOMAD v1 and v2 were created and     */
-/*  developed by Mark Abramson, Charles Audet, Gilles Couture and John E. Dennis Jr.,  */
-/*  and were funded by AFOSR and Exxon Mobil.                                          */
-/*                                                                                     */
-/*                                                                                     */
-/*  Contact information:                                                               */
-/*    Ecole Polytechnique de Montreal - GERAD                                          */
-/*    C.P. 6079, Succ. Centre-ville, Montreal (Quebec) H3C 3A7 Canada                  */
-/*    e-mail: nomad@gerad.ca                                                           */
-/*    phone : 1-514-340-6053 #6928                                                     */
-/*    fax   : 1-514-340-5665                                                           */
-/*                                                                                     */
-/*  This program is free software: you can redistribute it and/or modify it under the  */
-/*  terms of the GNU Lesser General Public License as published by the Free Software   */
-/*  Foundation, either version 3 of the License, or (at your option) any later         */
-/*  version.                                                                           */
-/*                                                                                     */
-/*  This program is distributed in the hope that it will be useful, but WITHOUT ANY    */
-/*  WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A    */
-/*  PARTICULAR PURPOSE.  See the GNU Lesser General Public License for more details.   */
-/*                                                                                     */
-/*  You should have received a copy of the GNU Lesser General Public License along     */
-/*  with this program. If not, see <http://www.gnu.org/licenses/>.                     */
-/*                                                                                     */
-/*  You can find information on the NOMAD software at www.gerad.ca/nomad               */
-/*-------------------------------------------------------------------------------------*/
+/*---------------------------------------------------------------------------------*/
+/*  NOMAD - Nonlinear Optimization by Mesh Adaptive Direct search -                */
+/*                                                                                 */
+/*  NOMAD - version 3.9.1 has been created by                                      */
+/*                 Charles Audet               - Ecole Polytechnique de Montreal   */
+/*                 Sebastien Le Digabel        - Ecole Polytechnique de Montreal   */
+/*                 Viviane Rochon Montplaisir - Ecole Polytechnique de Montreal   */
+/*                 Christophe Tribes           - Ecole Polytechnique de Montreal   */
+/*                                                                                 */
+/*  The copyright of NOMAD - version 3.9.1 is owned by                             */
+/*                 Sebastien Le Digabel        - Ecole Polytechnique de Montreal   */
+/*                 Viviane Rochon Montplaisir - Ecole Polytechnique de Montreal   */
+/*                 Christophe Tribes           - Ecole Polytechnique de Montreal   */
+/*                                                                                 */
+/*  NOMAD v3 has been funded by AFOSR and Exxon Mobil.                             */
+/*                                                                                 */
+/*  NOMAD v3 is a new version of NOMAD v1 and v2. NOMAD v1 and v2 were created     */
+/*  and developed by Mark Abramson, Charles Audet, Gilles Couture, and John E.     */
+/*  Dennis Jr., and were funded by AFOSR and Exxon Mobil.                          */
+/*                                                                                 */
+/*  Contact information:                                                           */
+/*    Ecole Polytechnique de Montreal - GERAD                                      */
+/*    C.P. 6079, Succ. Centre-ville, Montreal (Quebec) H3C 3A7 Canada              */
+/*    e-mail: nomad@gerad.ca                                                       */
+/*    phone : 1-514-340-6053 #6928                                                 */
+/*    fax   : 1-514-340-5665                                                       */
+/*                                                                                 */
+/*  This program is free software: you can redistribute it and/or modify it        */
+/*  under the terms of the GNU Lesser General Public License as published by       */
+/*  the Free Software Foundation, either version 3 of the License, or (at your     */
+/*  option) any later version.                                                     */
+/*                                                                                 */
+/*  This program is distributed in the hope that it will be useful, but WITHOUT    */
+/*  ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or          */
+/*  FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License    */
+/*  for more details.                                                              */
+/*                                                                                 */
+/*  You should have received a copy of the GNU Lesser General Public License       */
+/*  along with this program. If not, see <http://www.gnu.org/licenses/>.           */
+/*                                                                                 */
+/*  You can find information on the NOMAD software at www.gerad.ca/nomad           */
+/*---------------------------------------------------------------------------------*/
+
 /**
  \file   Stats.hpp
  \brief  Algorithm stats (headers)
@@ -64,13 +66,13 @@ namespace NOMAD {
         /**
          Blackbox evaluations + cache hits.
          */
-        int _eval;
+        int           _eval;
         
         /// Number of simulated blackbox evaluations.
         /**
          Blackbox evaluations + initial cache hits.
          */
-        int _sim_bb_eval;
+        int           _sim_bb_eval;
         
         int           _sgte_eval;        ///< Number of surrogate evaluations.
         int           _sgte_cost;        ///< Surrogate cost.
@@ -112,12 +114,32 @@ namespace NOMAD {
         
         // LH searches:
         int           _nb_LH_searches;    ///< Number of Latin-Hypercube (LH) searches.
-        int           LH_LH_pts;            ///< Number of Latin-Hypercube (LH) search points.  // zhenghua,  for compiling on Solaris.
-        int           LH_LH_success;        ///< Number of LH search successes.
+        int           LH_LH_pts;            ///< Number of Latin-Hypercube (LH) search points.  //zhenghua
+        int           LH_LH_success;        ///< Number of LH search successes. //zhenghua
+        
+        // NM searches:
+        int           _nb_NM_searches;    ///< Number of Nelder-Meads (NM) searches.
+        int           NM_NM_pts;            ///< Number of NM search points.  //zhenghua
+        int           NM_NM_step ;          ///< Number of NM steps.
+        int           NM_NM_initial_step ;          ///< Number of NM initial steps.
+        int           NM_NM_success;        ///< Number of NM search successes.
+        int           NM_NM_bb_eval;        ///< Number of NM search blackbox evaluations.
+        int           NM_NM_reflect_step;    ///< Number of NM reflect step.
+        int           NM_NM_expand_step;    ///< Number of NM expand step.
+        int           NM_NM_inside_contraction_step; ///< Number of NM inside contraction step.
+        int           NM_NM_outside_contraction_step;///< Number of NM outside contraction step.
+        int           NM_NM_shrink_step;    ///< Number of NM shrink step.
+        
+        // TM line searches:
+        int           _nb_TM_searches;    ///< Number of Trend matrix (TM) line searches.
+        int           TM_TM_pts;            ///< Number of TM search points.  //zhenghua
+        int           TM_TM_success;        ///< Number of TM line search successes.
+        int           TM_TM_bb_eval;        ///< Number of TM search blackbox evaluations.
+
         
         // Cache searches:
         int           _nb_cache_searches; ///< Number of cache searches (CS).
-        int           CS_CS_pts;            ///< Number of CS search points.
+        int           CS_CS_pts;            ///< Number of CS search points.  //zhenghua
         int           CS_CS_success;        ///< Number of CS search successes.
         
         /// Model stats.
@@ -136,7 +158,7 @@ namespace NOMAD {
         int           _usr_srch_success;  ///< Number of user search successes.
         
         // Dynamic management of poll directions
-        int				_nb_success_dyn_dir;  ///< Number of successfull polling in the direction added dynamically
+        int           _nb_success_dyn_dir;  ///< Number of successfull polling in the direction added dynamically
         
         
     public:
@@ -187,6 +209,20 @@ namespace NOMAD {
         _nb_LH_searches       ( s._nb_LH_searches       ) ,
         LH_LH_pts               ( s.LH_LH_pts               ) ,
         LH_LH_success           ( s.LH_LH_success           ) ,
+        _nb_NM_searches       ( s._nb_NM_searches       ) ,
+        NM_NM_pts               ( s.NM_NM_pts               ) ,
+        NM_NM_step              ( s.NM_NM_step              ) ,
+        NM_NM_initial_step      ( s.NM_NM_initial_step      ) ,
+        NM_NM_success           ( s.NM_NM_success           ) ,
+        NM_NM_bb_eval           ( s.NM_NM_bb_eval           ) ,
+        NM_NM_reflect_step      ( s.NM_NM_reflect_step      ) ,
+        NM_NM_expand_step       ( s.NM_NM_expand_step       ) ,
+        NM_NM_inside_contraction_step ( s.NM_NM_inside_contraction_step ),
+        NM_NM_outside_contraction_step ( s.NM_NM_outside_contraction_step ),
+        NM_NM_shrink_step       ( s.NM_NM_shrink_step       ) ,
+        _nb_TM_searches       ( s._nb_TM_searches       ) ,
+        TM_TM_pts               ( s.TM_TM_pts               ) ,
+        TM_TM_success           ( s.TM_TM_success           ) ,
         _nb_cache_searches    ( s._nb_cache_searches    ) ,
         CS_CS_pts               ( s.CS_CS_pts               ) ,
         CS_CS_success           ( s.CS_CS_success           ) ,
@@ -265,6 +301,12 @@ namespace NOMAD {
         
         /// Add \c 1 to stat \c _cache_hits.
         void add_cache_hit ( void ) { ++_cache_hits; }
+
+        /// Add an integer to stat \c _cache_hits.
+        /**
+         \param i The integer -- \b IN.
+         */
+        void add_cache_hits ( int i ) { _cache_hits+=i ;}
         
         /// Add \c 1 to stat \c _interrupted_eval.
         void add_interrupted_eval ( void ) { ++_interrupted_eval; }
@@ -296,12 +338,45 @@ namespace NOMAD {
         /// Add \c 1 to stat \c _LH_success.
         void add_LH_success ( void ) { ++LH_LH_success; }
         
+        /// Add \c 1 to stat \c _NM_success.
+        void add_NM_success ( void ) { ++NM_NM_success; }
+
+        /// Add \c 1 to stat \c _NM_step.
+        void add_NM_step ( void ) { ++NM_NM_step; }
+
+        /// Add \c 1 to stat \c _NM_initial_step.
+        void add_NM_initial_step ( void ) { ++NM_NM_initial_step; }
+        
+        /// Add \c 1 to stat \c _NM_expand_step.
+        void add_NM_expand_step ( void ) { ++NM_NM_expand_step; }
+
+        /// Add \c 1 to stat \c _NM_expand_step.
+        void add_NM_reflect_step ( void ) { ++NM_NM_reflect_step; }
+        
+        /// Add \c 1 to stat \c _NM_inside_contraction_step.
+        void add_NM_inside_contraction_step ( void ) { ++NM_NM_inside_contraction_step; }
+
+        /// Add \c 1 to stat \c _NM_outside_contraction_step.
+        void add_NM_outside_contraction_step ( void ) { ++NM_NM_outside_contraction_step; }
+
+        /// Add \c 1 to stat \c _NM_shrink_step.
+        void add_NM_shrink_step ( void ) { ++NM_NM_shrink_step; }
+        
+        /// Add \c 1 to stat \c _TM_success.
+        void add_TM_success ( void ) { ++TM_TM_success; }
+        
         /// Add \c 1 to stat \c _nb_cache_searches.
         void add_nb_cache_searches ( void ) { ++_nb_cache_searches; }
         
         /// Add \c 1 to stat \c _nb_LH_searches.
         void add_nb_LH_searches ( void ) { ++_nb_LH_searches; }
         
+        /// Add \c 1 to stat \c _nb_NM_searches.
+        void add_nb_NM_searches ( void ) { ++_nb_NM_searches; }
+
+        /// Add \c 1 to stat \c _nb_TM_searches.
+        void add_nb_TM_searches ( void ) { ++_nb_TM_searches; }
+
         /// Add \c 1 to stat \c _CS_success.
         void add_CS_success ( void ) { ++CS_CS_success; }
         
@@ -316,7 +391,6 @@ namespace NOMAD {
         
         /// Add \c 1 to stat \c _usr_srch_success.
         void add_usr_srch_success ( void ) { ++_usr_srch_success; }
-        
         
         /// Add \c 1 to stat \c _nb_success_dyn_dir.
         void add_nb_success_dyn_dir(void) {++_nb_success_dyn_dir;}
@@ -363,6 +437,19 @@ namespace NOMAD {
          */
         void add_LH_pts ( int i ) { LH_LH_pts += i; }
         
+        /// Add an integer to stat \c _NM_pts.
+        /**
+         \param i The integer -- \b IN.
+         */
+        void add_NM_pts ( int i ) { NM_NM_pts += i; }
+
+        /// Add an integer to stat \c _TM_pts.
+        /**
+         \param i The integer -- \b IN.
+         */
+        void add_TM_pts ( int i ) { TM_TM_pts += i; }
+
+        
         /// Add an integer to stat \c _CS_pts.
         /**
          \param i The integer -- \b IN.
@@ -386,6 +473,19 @@ namespace NOMAD {
          \param i The integer -- \b IN.
          */
         void add_VNS_bb_eval ( int i ) { VNS_VNS_bb_eval += i; }
+
+        /// Add an integer to stat \c _NM_bb_eval.
+        /**
+         \param i The integer -- \b IN.
+         */
+        void add_NM_bb_eval ( int i ) { NM_NM_bb_eval += i; }
+
+        /// Add an integer to stat \c _TM_bb_eval.
+        /**
+         \param i The integer -- \b IN.
+         */
+        void add_TM_bb_eval ( int i ) { TM_TM_bb_eval += i; }
+
         
         /// Add an integer to stat \c _VNS_sgte_eval.
         /**
@@ -459,6 +559,81 @@ namespace NOMAD {
          */
         int get_LH_pts ( void ) const { return LH_LH_pts; }
         
+        /// Access to the stat \c _NM_pts.
+        /**
+         \return The stat \c _NM_pts.
+         */
+        int get_NM_pts ( void ) const { return NM_NM_pts; }
+
+        /// Access to the stat \c _NM_success.
+        /**
+         \return The stat \c _NM_success.
+         */
+        int get_NM_success ( void ) const { return NM_NM_success; }
+
+        /// Access to the stat \c _NM_expand_step.
+        /**
+         \return The stat \c _NM_expand_step.
+         */
+        int get_NM_expand_step ( void ) const { return NM_NM_expand_step; }
+
+        /// Access to the stat \c _NM_initial_step.
+        /**
+         \return The stat \c _NM_initial_step.
+         */
+        int get_NM_initial_step ( void ) const { return NM_NM_initial_step; }
+
+        
+        /// Access to the stat \c _NM_reflect_step.
+        /**
+         \return The stat \c _NM_reflect_step.
+         */
+        int get_NM_reflect_step ( void ) const { return NM_NM_reflect_step; }
+
+        /**
+         \return The stat \c _NM_inside_contraction_step.
+         */
+        int get_NM_inside_contraction_step ( void ) const { return NM_NM_inside_contraction_step; }
+        
+        /**
+         \return The stat \c _NM_outside_contraction_step.
+         */
+        int get_NM_outside_contraction_step ( void ) const { return NM_NM_outside_contraction_step; }
+        
+        /**
+         \return The stat \c _NM_shrink_step.
+         */
+        int get_NM_shrink_step ( void ) const { return NM_NM_shrink_step; }
+        
+        /**
+         \return The stat \c _NM_bb_eval.
+         */
+        int get_NM_bb_eval ( void ) const { return NM_NM_bb_eval; }
+
+        
+        /// Access to the stat \c _nb_TM_searches.
+        /**
+         \return The stat \c _nb_TM_searches.
+         */
+        int get_nb_TM_searches ( void ) const { return _nb_TM_searches; }
+        
+        /// Access to the stat \c _TM_pts.
+        /**
+         \return The stat \c _TM_pts.
+         */
+        int get_TM_pts ( void ) const { return TM_TM_pts; }
+        
+        /// Access to the stat \c _TM_success.
+        /**
+         \return The stat \c _TM_success.
+         */
+        int get_TM_success ( void ) const { return TM_TM_success; }
+
+        /**
+         \return The stat \c _TM_bb_eval.
+         */
+        int get_TM_bb_eval ( void ) const { return TM_TM_bb_eval; }
+        
         /// Access to the stat \c _CS_pts.
         /**
          \return The stat \c _CS_pts.
@@ -476,7 +651,13 @@ namespace NOMAD {
          \return The stat \c _nb_VNS_SEARCHES.
          */
         int get_nb_VNS_SEARCHES ( void ) const { return _nb_VNS_searches; }
-        
+
+        /// Access to the stat \c _nb_NM_SEARCHES.
+        /**
+         \return The stat \c _nb_NM_SEARCHES.
+         */
+        int get_nb_NM_SEARCHES ( void ) const { return _nb_NM_searches; }
+
         /// Access to the stat \c _VNS_sgte_eval.
         /**
          \return The stat \c _VNS_sgte_eval.

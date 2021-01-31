@@ -1,6 +1,6 @@
 /*-------------------------------------------------------------------------------------*/
 /*  sgtelib - A surrogate model library for derivative-free optimization               */
-/*  Version 2.0.1                                                                      */
+/*  Version 2.0.2                                                                      */
 /*                                                                                     */
 /*  Copyright (C) 2012-2017  Sebastien Le Digabel - Ecole Polytechnique, Montreal      */ 
 /*                           Bastien Talgorn - McGill University, Montreal             */
@@ -305,14 +305,15 @@ const SGTELIB::Matrix * SGTELIB::Surrogate_Kriging::get_matrix_Svs (void){
 /*--------------------------------------*/
 void SGTELIB::Surrogate_Kriging::compute_metric_linv (void){
   check_ready(__FILE__,__FUNCTION__,__LINE__);
-  if ( !  _metric_linv){
+  if ( !is_defined(SGTELIB::METRIC_LINV) ){
     #ifdef SGTELIB_DEBUG
-      std::cout << "Compute _metric_linv\n";
+      std::cout << "Compute metric linv\n";
     #endif
-    _metric_linv = new double [_m];
+    SGTELIB::Matrix v = SGTELIB::Matrix("LINV",0,_m);
     for (int j=0 ; j<_m ; j++){
-      _metric_linv[j] = pow(_var[j],_p)*_detR;
+      v.set(0,j, pow(_var[j],_p)*_detR );
     }
+    _metrics[SGTELIB::METRIC_LINV] = v;
   }
 
 }//
