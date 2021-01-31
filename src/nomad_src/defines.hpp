@@ -132,6 +132,7 @@ typedef unsigned int uint32_t;
 // #define MODEL_STATS
 
 <<<<<<< HEAD
+<<<<<<< HEAD
 // zhenghua
 #ifndef CRS_ISNAN__
 #define CRS_ISNAN__
@@ -146,6 +147,10 @@ inline bool crs_isinf (double x) { return !crs_isnan(x) && crs_isnan(x - x); }
 
 
 #include "nomad_version.hpp"
+=======
+
+//#include "nomad_version.hpp"
+>>>>>>> 8d7a7ae9b270f08018a9e712de36391272212626
 =======
 
 //#include "nomad_version.hpp"

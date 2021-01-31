@@ -54,9 +54,15 @@
 #define STR(x) STR_HELPER(x)
 
 <<<<<<< HEAD
+<<<<<<< HEAD
 
 #undef NOMAD
 #define NOMAD NOMAD ## _ ## MAJOR_VER ## _ ## MINOR_VER ## _ ## REV_VER
+=======
+//zhenghua commented the following two lines.
+//#undef NOMAD
+//#define NOMAD NOMAD ## _ ## MAJOR_VER ## _ ## MINOR_VER ## _ ## REV_VER
+>>>>>>> 8d7a7ae9b270f08018a9e712de36391272212626
 =======
 //zhenghua commented the following two lines.
 //#undef NOMAD

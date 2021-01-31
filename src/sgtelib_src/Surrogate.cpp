@@ -246,8 +246,13 @@ bool SGTELIB::Surrogate::build ( void ) {
 
   #ifdef SGTELIB_DEBUG
 <<<<<<< HEAD
+<<<<<<< HEAD
     SGTELIB::rout << "Number of parameters to optimize : " << _param.get_nb_parameter_optimization() << "\n";
     _param.display(SGTELIB::rout);
+=======
+    std::cout << "Number of parameters to optimize : " << _param.get_nb_parameter_optimization() << "\n";
+    _param.display(std::cout);
+>>>>>>> 8d7a7ae9b270f08018a9e712de36391272212626
 =======
     std::cout << "Number of parameters to optimize : " << _param.get_nb_parameter_optimization() << "\n";
     _param.display(std::cout);
@@ -286,7 +291,11 @@ bool SGTELIB::Surrogate::build ( void ) {
     if (_out.fail()) std::cout << "Out.fail2!!!\n";
     display(_out);
 <<<<<<< HEAD
+<<<<<<< HEAD
     if (_out.fail()) SGTELIB::rout << "Out.fail3!!!\n";
+=======
+    if (_out.fail()) std::cout << "Out.fail3!!!\n";
+>>>>>>> 8d7a7ae9b270f08018a9e712de36391272212626
 =======
     if (_out.fail()) std::cout << "Out.fail3!!!\n";
 >>>>>>> 8d7a7ae9b270f08018a9e712de36391272212626
@@ -399,7 +408,11 @@ void SGTELIB::Surrogate::predict ( const SGTELIB::Matrix & XX ,
   if (XX.get_nb_cols() != _n){
     
 <<<<<<< HEAD
+<<<<<<< HEAD
     display(SGTELIB::rout);
+=======
+    display(std::cout);
+>>>>>>> 8d7a7ae9b270f08018a9e712de36391272212626
 =======
     display(std::cout);
 >>>>>>> 8d7a7ae9b270f08018a9e712de36391272212626
@@ -829,9 +842,15 @@ bool SGTELIB::Surrogate::is_defined(const SGTELIB::metric_t mt, const int j){
 /*       compute metric                 */
 /*--------------------------------------*/
 bool SGTELIB::Surrogate::compute_metric ( const metric_t mt ){
+<<<<<<< HEAD
 
   if (is_defined(mt)) return true;
 
+=======
+
+  if (is_defined(mt)) return true;
+
+>>>>>>> 8d7a7ae9b270f08018a9e712de36391272212626
   double m;
   int j;
 
@@ -911,7 +930,11 @@ bool SGTELIB::Surrogate::compute_metric ( const metric_t mt ){
   for (j=0; j<vector_size ; j++){
     m = v[j];
 <<<<<<< HEAD
+<<<<<<< HEAD
     if (crs_isnan(m)    ){ m = SGTELIB::INF; }
+=======
+    if (isnan(m)    ){ m = SGTELIB::INF; }
+>>>>>>> 8d7a7ae9b270f08018a9e712de36391272212626
 =======
     if (isnan(m)    ){ m = SGTELIB::INF; }
 >>>>>>> 8d7a7ae9b270f08018a9e712de36391272212626
@@ -940,9 +963,15 @@ double SGTELIB::Surrogate::get_metric (SGTELIB::metric_t mt , int j){
   // Return value
   #ifdef SGTELIB_DEBUG
 <<<<<<< HEAD
+<<<<<<< HEAD
     SGTELIB::rout << "metric " << SGTELIB::metric_type_to_str(mt) << "[" << j << "]";
     if ( is_defined(mt,j) ) SGTELIB::rout << " is def: " << _metrics[mt][j] << std::endl;
     else SGTELIB::rout << " NOT defined." << std::endl;
+=======
+    std::cout << "metric " << SGTELIB::metric_type_to_str(mt) << "[" << j << "]";
+    if ( is_defined(mt,j) ) std::cout << " is def: " << _metrics[mt][j] << std::endl;
+    else std::cout << " NOT defined." << std::endl;
+>>>>>>> 8d7a7ae9b270f08018a9e712de36391272212626
 =======
     std::cout << "metric " << SGTELIB::metric_type_to_str(mt) << "[" << j << "]";
     if ( is_defined(mt,j) ) std::cout << " is def: " << _metrics[mt][j] << std::endl;
@@ -1018,7 +1047,11 @@ void SGTELIB::Surrogate::compute_metric_linv (void){
   if ( !is_defined(SGTELIB::METRIC_LINV) ){
     #ifdef SGTELIB_DEBUG
 <<<<<<< HEAD
+<<<<<<< HEAD
       SGTELIB::rout << "Compute metric linv\n";
+=======
+      std::cout << "Compute metric linv\n";
+>>>>>>> 8d7a7ae9b270f08018a9e712de36391272212626
 =======
       std::cout << "Compute metric linv\n";
 >>>>>>> 8d7a7ae9b270f08018a9e712de36391272212626
@@ -1162,7 +1195,11 @@ SGTELIB::Matrix SGTELIB::Surrogate::compute_fh (const SGTELIB::Matrix & Zs){
       //===============================================//
       default:
 <<<<<<< HEAD
+<<<<<<< HEAD
         display(SGTELIB::rout); 
+=======
+        display(std::cout); 
+>>>>>>> 8d7a7ae9b270f08018a9e712de36391272212626
 =======
         display(std::cout); 
 >>>>>>> 8d7a7ae9b270f08018a9e712de36391272212626
@@ -1173,9 +1210,15 @@ SGTELIB::Matrix SGTELIB::Surrogate::compute_fh (const SGTELIB::Matrix & Zs){
   }
   else{
 <<<<<<< HEAD
+<<<<<<< HEAD
     Zs.display_short(SGTELIB::rout);
     Zs.display_size(SGTELIB::rout);
     SGTELIB::rout << _m << " " << m << " " << _p << std::endl;
+=======
+    Zs.display_short(std::cout);
+    Zs.display_size(std::cout);
+    std::cout << _m << " " << m << " " << _p << std::endl;
+>>>>>>> 8d7a7ae9b270f08018a9e712de36391272212626
 =======
     Zs.display_short(std::cout);
     Zs.display_size(std::cout);
@@ -1379,8 +1422,13 @@ bool SGTELIB::Surrogate::optimize_parameters ( void ) {
           i2 = i + (int)std::floor(uniform_rand()*(nx0-i));
           if ( (i2<i) || (i2>=nx0) ){
 <<<<<<< HEAD
+<<<<<<< HEAD
 	    SGTELIB::rout << "Error in permutation indexes\n";
             // exit(0);  //zhenghua
+=======
+            std::cout << "Error in permutation indexes\n";
+            exit(0);
+>>>>>>> 8d7a7ae9b270f08018a9e712de36391272212626
 =======
             std::cout << "Error in permutation indexes\n";
             exit(0);

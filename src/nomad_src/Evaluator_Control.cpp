@@ -3813,7 +3813,11 @@ void NOMAD::Evaluator_Control::private_smooth_fx( NOMAD::Eval_Point & eval_pt )
     fsmooth = fsmooth / Wsmooth;
 
 <<<<<<< HEAD
+<<<<<<< HEAD
     if ( crs_isnan( fsmooth.value() ) || crs_isnan( Wsmooth.value() ) )
+=======
+    if ( isnan( fsmooth.value() ) || isnan( Wsmooth.value() ) )
+>>>>>>> 8d7a7ae9b270f08018a9e712de36391272212626
 =======
     if ( isnan( fsmooth.value() ) || isnan( Wsmooth.value() ) )
 >>>>>>> 8d7a7ae9b270f08018a9e712de36391272212626
@@ -3859,7 +3863,11 @@ void NOMAD::Evaluator_Control::private_smooth_fx( NOMAD::Eval_Point & eval_pt )
             
             // Update only if fsmooth and Wsmooth are valid
 <<<<<<< HEAD
+<<<<<<< HEAD
             if ( ! crs_isnan( fsmooth.value() ) && ! crs_isnan( Wsmooth.value() ) )
+=======
+            if ( ! isnan( fsmooth.value() ) && ! isnan( Wsmooth.value() ) )
+>>>>>>> 8d7a7ae9b270f08018a9e712de36391272212626
 =======
             if ( ! isnan( fsmooth.value() ) && ! isnan( Wsmooth.value() ) )
 >>>>>>> 8d7a7ae9b270f08018a9e712de36391272212626

@@ -2478,7 +2478,11 @@ bool SGTELIB::Matrix::has_nan ( void ) const {
   for ( i = 0 ; i < _nbRows ; ++i ){
     for ( j = 0 ; j < _nbCols ; ++j ){
 <<<<<<< HEAD
+<<<<<<< HEAD
       if ( crs_isnan(_X[i][j])){
+=======
+      if ( isnan(_X[i][j])){
+>>>>>>> 8d7a7ae9b270f08018a9e712de36391272212626
 =======
       if ( isnan(_X[i][j])){
 >>>>>>> 8d7a7ae9b270f08018a9e712de36391272212626
@@ -2497,7 +2501,11 @@ bool SGTELIB::Matrix::has_inf ( void ) const {
   for ( i = 0 ; i < _nbRows ; ++i ){
     for ( j = 0 ; j < _nbCols ; ++j ){
 <<<<<<< HEAD
+<<<<<<< HEAD
       if ( crs_isinf(_X[i][j])){
+=======
+      if ( isinf(_X[i][j])){
+>>>>>>> 8d7a7ae9b270f08018a9e712de36391272212626
 =======
       if ( isinf(_X[i][j])){
 >>>>>>> 8d7a7ae9b270f08018a9e712de36391272212626
@@ -2516,7 +2524,11 @@ void SGTELIB::Matrix::replace_nan ( double d ) {
   for ( i = 0 ; i < _nbRows ; ++i ){
     for ( j = 0 ; j < _nbCols ; ++j ){
 <<<<<<< HEAD
+<<<<<<< HEAD
       if ( crs_isnan(_X[i][j])){
+=======
+      if ( isnan(_X[i][j])){
+>>>>>>> 8d7a7ae9b270f08018a9e712de36391272212626
 =======
       if ( isnan(_X[i][j])){
 >>>>>>> 8d7a7ae9b270f08018a9e712de36391272212626

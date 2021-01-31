@@ -390,7 +390,11 @@ void SGTELIB::TrainingSet::check_singular_data ( void ){
     for ( i = 0 ; i < _p ; i++ ) {
       if ( ! isdef(X_X.get(i,j))){
 <<<<<<< HEAD
+<<<<<<< HEAD
         SGTELIB::rout << "_X(" << i << "," << j << ") = " << X_X.get(i,j) << "\n";
+=======
+        std::cout << "_X(" << i << "," << j << ") = " << X_X.get(i,j) << "\n";
+>>>>>>> 8d7a7ae9b270f08018a9e712de36391272212626
 =======
         std::cout << "_X(" << i << "," << j << ") = " << X_X.get(i,j) << "\n";
 >>>>>>> 8d7a7ae9b270f08018a9e712de36391272212626

@@ -308,7 +308,11 @@ void NOMAD::Sgtelib_Model_Manager::update(void)
             {
                 // test on valid f (needed below)
 <<<<<<< HEAD
+<<<<<<< HEAD
                 if ( ( !cur->get_bb_outputs()[j].is_defined() ) || ( crs_isnan(cur->get_bb_outputs()[j].value()) ) || !cur->is_eval_ok() || !cur->get_f().is_defined() )
+=======
+                if ( ( !cur->get_bb_outputs()[j].is_defined() ) || ( isnan(cur->get_bb_outputs()[j].value()) ) || !cur->is_eval_ok() || !cur->get_f().is_defined() )
+>>>>>>> 8d7a7ae9b270f08018a9e712de36391272212626
 =======
                 if ( ( !cur->get_bb_outputs()[j].is_defined() ) || ( isnan(cur->get_bb_outputs()[j].value()) ) || !cur->is_eval_ok() || !cur->get_f().is_defined() )
 >>>>>>> 8d7a7ae9b270f08018a9e712de36391272212626

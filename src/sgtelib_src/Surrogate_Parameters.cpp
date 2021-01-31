@@ -155,7 +155,11 @@ void SGTELIB::Surrogate_Parameters::read_string (const std::string & model_descr
   const bool display = false;
   if (display){
 <<<<<<< HEAD
+<<<<<<< HEAD
     SGTELIB::rout << "Model description: " << model_description << "\n";
+=======
+    std::cout << "Model description: " << model_description << "\n";
+>>>>>>> 8d7a7ae9b270f08018a9e712de36391272212626
 =======
     std::cout << "Model description: " << model_description << "\n";
 >>>>>>> 8d7a7ae9b270f08018a9e712de36391272212626
@@ -164,7 +168,11 @@ void SGTELIB::Surrogate_Parameters::read_string (const std::string & model_descr
 
     if (display){
 <<<<<<< HEAD
+<<<<<<< HEAD
       SGTELIB::rout << "FIELD: " << field ;
+=======
+      std::cout << "FIELD: " << field ;
+>>>>>>> 8d7a7ae9b270f08018a9e712de36391272212626
 =======
       std::cout << "FIELD: " << field ;
 >>>>>>> 8d7a7ae9b270f08018a9e712de36391272212626
@@ -172,6 +180,7 @@ void SGTELIB::Surrogate_Parameters::read_string (const std::string & model_descr
     // Convert the field name into a std field name
     field = to_standard_field_name(field);
     if (display){
+<<<<<<< HEAD
 <<<<<<< HEAD
       SGTELIB::rout << " (" << field << ")\n";
     }   
@@ -193,6 +202,17 @@ void SGTELIB::Surrogate_Parameters::read_string (const std::string & model_descr
     if (display){
       std::cout << "CONTENT: " << content << "\n";
 >>>>>>> 8d7a7ae9b270f08018a9e712de36391272212626
+=======
+      std::cout << " (" << field << ")\n";
+    }   
+    // Check if this field is authorized for this type of model.
+    if ( ! authorized_field(field) ){
+      std::cout << "model_description: " << model_description << "\n";
+      throw SGTELIB::Exception ( __FILE__ , __LINE__ ,"Unauthorized field \""+field+"\" in a model of type "+model_type_to_str(_type) );
+    }
+    if (display){
+      std::cout << "CONTENT: " << content << "\n";
+>>>>>>> 8d7a7ae9b270f08018a9e712de36391272212626
     }
     // Read the content 
     if ( !(in_line >> content) )
@@ -202,7 +222,11 @@ void SGTELIB::Surrogate_Parameters::read_string (const std::string & model_descr
     content_is_optim = ( streqi(content,"OPTIM") || streqi(content,"OPTIMIZATION") || streqi(content,"OPTIMIZE") );
     if (display){
 <<<<<<< HEAD
+<<<<<<< HEAD
       SGTELIB::rout << "CONTENT IS OPTIM: " << content_is_optim << "\n";
+=======
+      std::cout << "CONTENT IS OPTIM: " << content_is_optim << "\n";
+>>>>>>> 8d7a7ae9b270f08018a9e712de36391272212626
 =======
       std::cout << "CONTENT IS OPTIM: " << content_is_optim << "\n";
 >>>>>>> 8d7a7ae9b270f08018a9e712de36391272212626
@@ -211,7 +235,11 @@ void SGTELIB::Surrogate_Parameters::read_string (const std::string & model_descr
     // Check if optimization is allowed for this field.
     if ((content_is_optim) && (!authorized_optim(field))) {
 <<<<<<< HEAD
+<<<<<<< HEAD
       SGTELIB::rout << "model_description: " << model_description << "\n";
+=======
+      std::cout << "model_description: " << model_description << "\n";
+>>>>>>> 8d7a7ae9b270f08018a9e712de36391272212626
 =======
       std::cout << "model_description: " << model_description << "\n";
 >>>>>>> 8d7a7ae9b270f08018a9e712de36391272212626
@@ -916,7 +944,11 @@ void SGTELIB::Surrogate_Parameters::get_x_bounds ( SGTELIB::Matrix * LB ,
     // Check that the arrays or matrices are initialized.
     if ( (!LB) || (!UB) || (!domain) || (!logscale) ){
 <<<<<<< HEAD
+<<<<<<< HEAD
       SGTELIB::rout << LB << " " << UB << " " << domain << " " << logscale << "\n";
+=======
+      std::cout << LB << " " << UB << " " << domain << " " << logscale << "\n";
+>>>>>>> 8d7a7ae9b270f08018a9e712de36391272212626
 =======
       std::cout << LB << " " << UB << " " << domain << " " << logscale << "\n";
 >>>>>>> 8d7a7ae9b270f08018a9e712de36391272212626

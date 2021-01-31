@@ -391,6 +391,7 @@ void SGTELIB::Surrogate_LOWESS::predict_private_single ( const SGTELIB::Matrix X
 
   #ifdef SGTELIB_DEBUG
 <<<<<<< HEAD
+<<<<<<< HEAD
     SGTELIB::rout << "XXs = " << XXs[0] << "\n";
     SGTELIB::rout << "i_exclude = " << i_exclude << "\n";
     SGTELIB::rout << "wsum : " << wsum << "\n";
@@ -400,6 +401,8 @@ void SGTELIB::Surrogate_LOWESS::predict_private_single ( const SGTELIB::Matrix X
     }
     SGTELIB::rout << "\n";
 =======
+=======
+>>>>>>> 8d7a7ae9b270f08018a9e712de36391272212626
     std::cout << "XXs = " << XXs[0] << "\n";
     std::cout << "i_exclude = " << i_exclude << "\n";
     std::cout << "wsum : " << wsum << "\n";
@@ -408,6 +411,9 @@ void SGTELIB::Surrogate_LOWESS::predict_private_single ( const SGTELIB::Matrix X
       std::cout << _W[i] << " ";
     }
     std::cout << "\n";
+<<<<<<< HEAD
+>>>>>>> 8d7a7ae9b270f08018a9e712de36391272212626
+=======
 >>>>>>> 8d7a7ae9b270f08018a9e712de36391272212626
   #endif
 
@@ -503,7 +509,11 @@ void SGTELIB::Surrogate_LOWESS::predict_private_single ( const SGTELIB::Matrix X
   }
   #ifdef SGTELIB_DEBUG
 <<<<<<< HEAD
+<<<<<<< HEAD
     SGTELIB::rout << "nb of non-zeros in w: " << w_count << " / " << _p << "\n";
+=======
+    std::cout << "nb of non-zeros in w: " << w_count << " / " << _p << "\n";
+>>>>>>> 8d7a7ae9b270f08018a9e712de36391272212626
 =======
     std::cout << "nb of non-zeros in w: " << w_count << " / " << _p << "\n";
 >>>>>>> 8d7a7ae9b270f08018a9e712de36391272212626
@@ -523,6 +533,7 @@ void SGTELIB::Surrogate_LOWESS::predict_private_single ( const SGTELIB::Matrix X
 
   #ifdef SGTELIB_DEBUG
 <<<<<<< HEAD
+<<<<<<< HEAD
     SGTELIB::rout << "A = \n";
     for (i=0 ; i<_q ; i++){
       for (j=0 ; j<_q ; j++){
@@ -534,6 +545,8 @@ void SGTELIB::Surrogate_LOWESS::predict_private_single ( const SGTELIB::Matrix X
      for (i=0 ; i<_q ; i++) SGTELIB::rout << _u[i] << " ";
     SGTELIB::rout << "\n";
 =======
+=======
+>>>>>>> 8d7a7ae9b270f08018a9e712de36391272212626
     std::cout << "A = \n";
     for (i=0 ; i<_q ; i++){
       for (j=0 ; j<_q ; j++){
@@ -544,6 +557,9 @@ void SGTELIB::Surrogate_LOWESS::predict_private_single ( const SGTELIB::Matrix X
     std::cout << "u:     ";
      for (i=0 ; i<_q ; i++) std::cout << _u[i] << " ";
     std::cout << "\n";
+<<<<<<< HEAD
+>>>>>>> 8d7a7ae9b270f08018a9e712de36391272212626
+=======
 >>>>>>> 8d7a7ae9b270f08018a9e712de36391272212626
   #endif
 
@@ -574,7 +590,11 @@ void SGTELIB::Surrogate_LOWESS::predict_private_single ( const SGTELIB::Matrix X
       }
       if (e1_sol){
 <<<<<<< HEAD
+<<<<<<< HEAD
         SGTELIB::rout << "e1 is a solution!\n";
+=======
+        std::cout << "e1 is a solution!\n";
+>>>>>>> 8d7a7ae9b270f08018a9e712de36391272212626
 =======
         std::cout << "e1 is a solution!\n";
 >>>>>>> 8d7a7ae9b270f08018a9e712de36391272212626
@@ -730,6 +750,7 @@ void SGTELIB::Surrogate_LOWESS::predict_private_single ( const SGTELIB::Matrix X
       _ZZsi.set(0,j,d);
     }
   }
+<<<<<<< HEAD
 
 
   #ifdef SGTLEIB_DEBUG
@@ -741,6 +762,17 @@ void SGTELIB::Surrogate_LOWESS::predict_private_single ( const SGTELIB::Matrix X
     SGTELIB::rout << "]\n";
     _ZZsi.display(SGTELIB::rout);
 =======
+    std::cout << "_u = [ ";
+    for (i=0 ; i<_q ; i++){
+      std::cout << _u[i] << " ";
+    }
+    std::cout << "]\n";
+    _ZZsi.display(std::cout);
+>>>>>>> 8d7a7ae9b270f08018a9e712de36391272212626
+=======
+
+
+  #ifdef SGTLEIB_DEBUG
     std::cout << "_u = [ ";
     for (i=0 ; i<_q ; i++){
       std::cout << _u[i] << " ";
