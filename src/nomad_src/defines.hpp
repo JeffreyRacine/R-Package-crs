@@ -131,8 +131,6 @@ typedef unsigned int uint32_t;
 
 // #define MODEL_STATS
 
-<<<<<<< HEAD
-<<<<<<< HEAD
 // zhenghua
 #ifndef CRS_ISNAN__
 #define CRS_ISNAN__
@@ -146,34 +144,20 @@ inline bool crs_isinf (double x) { return !crs_isnan(x) && crs_isnan(x - x); }
 #endif
 
 
+
 #include "nomad_version.hpp"
-=======
-
-//#include "nomad_version.hpp"
->>>>>>> 8d7a7ae9b270f08018a9e712de36391272212626
-=======
-
-//#include "nomad_version.hpp"
->>>>>>> 8d7a7ae9b270f08018a9e712de36391272212626
-
-
 namespace NOMAD {
 
 	extern std::ostream rout;     //zhenghua
 
   
     /// Current version:
-  const std::string BASE_VERSION = "3.9.1"; //NOMAD_VERSION_NUMBER;
-
-  // zhenghua
-#ifdef R_VERSION
-  const std::string VERSION = BASE_VERSION + ".R"
-#else
+    const std::string BASE_VERSION = NOMAD_VERSION_NUMBER;
+    
 #ifdef USE_MPI
     const std::string VERSION = BASE_VERSION + ".MPI";
 #else
     const std::string VERSION = BASE_VERSION;
-#endif
 #endif
     
     // Directory separator, plus LGPL and user guide files

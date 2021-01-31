@@ -68,13 +68,13 @@ namespace SGTELIB {
     // Predictions
     // _Zhs: Prediction of the model in the training points
     // (used to compute emax, rmse, eotp, linv)
-    SGTELIB::Matrix * _Zhs; 
-    SGTELIB::Matrix * _Shs; // Predictive std on the training points
+    SGTELIB::Matrix * Z_Zhs; 
+    SGTELIB::Matrix * S_Shs; // Predictive std on the training points
 
     // _Zvs: Cross-Validation prediction of the model in the training points
     // (used to compute rmsecv, oecv)
-    SGTELIB::Matrix * _Zvs; 
-    SGTELIB::Matrix * _Svs; // Cross-validation std on the training points
+    SGTELIB::Matrix * Z_Zvs; 
+    SGTELIB::Matrix * S_Svs; // Cross-validation std on the training points
 
     // List of points used to build the model
     std::list<int> _selected_points;
@@ -195,7 +195,7 @@ namespace SGTELIB {
     SGTELIB::Matrix get_distance_to_closest ( const SGTELIB::Matrix & XX ) const;
 
     bool is_ready                (void) const {return _ready;};
-    void display_trainingset     (void) const {_trainingset.build();_trainingset.display(std::cout);};
+    void display_trainingset     (void) const {_trainingset.build();_trainingset.display(SGTELIB::rout);};
     SGTELIB::model_t get_type    (void) const {return _param.get_type();};
     std::string get_string       (void) const {return _param.get_string();};
     std::string get_short_string (void) const {return _param.get_short_string();};

@@ -1070,7 +1070,7 @@ bool NOMAD::Evaluator_Control::cache_check ( const NOMAD::Eval_Point *& x       
           cache_x->get_h() < h_max                    ) ) )
     {
         if ( display_degree == NOMAD::FULL_DISPLAY )
-	  NOMAD::rout << "in cache but redo"<<endl;     //zhenghua
+	  NOMAD::rout << "in cache but redo"<<endl;    //zhenghua
 
         x       = cache_x;
         cache_x = NULL;
@@ -3812,15 +3812,7 @@ void NOMAD::Evaluator_Control::private_smooth_fx( NOMAD::Eval_Point & eval_pt )
     
     fsmooth = fsmooth / Wsmooth;
 
-<<<<<<< HEAD
-<<<<<<< HEAD
     if ( crs_isnan( fsmooth.value() ) || crs_isnan( Wsmooth.value() ) )
-=======
-    if ( isnan( fsmooth.value() ) || isnan( Wsmooth.value() ) )
->>>>>>> 8d7a7ae9b270f08018a9e712de36391272212626
-=======
-    if ( isnan( fsmooth.value() ) || isnan( Wsmooth.value() ) )
->>>>>>> 8d7a7ae9b270f08018a9e712de36391272212626
     {
         ptX_1.set_smoothing_status ( NOMAD::SMOOTHING_FAIL );
     }
@@ -3862,15 +3854,7 @@ void NOMAD::Evaluator_Control::private_smooth_fx( NOMAD::Eval_Point & eval_pt )
             fsmooth = fsmooth / Wsmooth;
             
             // Update only if fsmooth and Wsmooth are valid
-<<<<<<< HEAD
-<<<<<<< HEAD
             if ( ! crs_isnan( fsmooth.value() ) && ! crs_isnan( Wsmooth.value() ) )
-=======
-            if ( ! isnan( fsmooth.value() ) && ! isnan( Wsmooth.value() ) )
->>>>>>> 8d7a7ae9b270f08018a9e712de36391272212626
-=======
-            if ( ! isnan( fsmooth.value() ) && ! isnan( Wsmooth.value() ) )
->>>>>>> 8d7a7ae9b270f08018a9e712de36391272212626
             {
                 ptX_2.set_fsmooth( fsmooth );
                 ptX_2.set_smoothing_weight( Wsmooth );

@@ -52,13 +52,13 @@ SGTELIB::Surrogate::Surrogate ( SGTELIB::TrainingSet & trainingset,
   // Boolean indicating if the model is ready
   _ready       (false             ) ,
   // Scaled value of the model output at the training points 
-  _Zhs         (NULL              ) ,
+  Z_Zhs         (NULL              ) ,
   // Scaled value of the model variance at the training points
-  _Shs         (NULL              ) ,
+  S_Shs         (NULL              ) ,
   // Scaled leave-one-out cross-validation value at the training points
-  _Zvs         (NULL              ) ,
+  Z_Zvs         (NULL              ) ,
   // Scaled leave-one-out cross-validation variance at the training points
-  _Svs         (NULL              ) ,
+  S_Svs         (NULL              ) ,
   // Set of training points used for building the model (default : all the points)
   // Note that in sgtelib 2.0.1, there is not method implemented to filter the data points.
   // So all the data points are used.
@@ -87,10 +87,10 @@ SGTELIB::Surrogate::Surrogate ( SGTELIB::TrainingSet & trainingset,
   _p         (0                   ) ,
   _p_old     (999999999           ) ,
   _ready (false                   ) ,
-  _Zhs   (NULL                    ) ,
-  _Shs   (NULL                    ) ,
-  _Zvs   (NULL                    ) ,
-  _Svs   (NULL                    ) ,
+  Z_Zhs   (NULL                    ) ,
+  S_Shs   (NULL                    ) ,
+  Z_Zvs   (NULL                    ) ,
+  S_Svs   (NULL                    ) ,
   _selected_points (1,-1          ) ,
   _metrics         (              ) ,
   _psize_max       ( 0.5          ) ,
@@ -109,10 +109,10 @@ SGTELIB::Surrogate::Surrogate ( SGTELIB::TrainingSet & trainingset,
   _p         (0                   ) ,
   _p_old     (0                   ) ,
   _ready (false                   ) ,
-  _Zhs   (NULL                    ) ,
-  _Shs   (NULL                    ) ,
-  _Zvs   (NULL                    ) ,
-  _Svs   (NULL                    ) ,
+  Z_Zhs   (NULL                    ) ,
+  S_Shs   (NULL                    ) ,
+  Z_Zvs   (NULL                    ) ,
+  S_Svs   (NULL                    ) ,
   _selected_points (1,-1          ) ,
   _metrics         (              ) ,
   _psize_max       ( 0.5          ) ,
@@ -158,25 +158,25 @@ void SGTELIB::Surrogate::display ( std::ostream & out ) const {
 /*--------------------------------------*/
 void SGTELIB::Surrogate::reset_metrics ( void ) {
   #ifdef SGTELIB_DEBUG
-    std::cout << "Surrogate: reset_metrics...";
+    SGTELIB::rout << "Surrogate: reset_metrics...";
   #endif
 
-  if (_Zhs) delete _Zhs;
-  _Zhs = NULL;  
+  if (Z_Zhs) delete Z_Zhs;
+  Z_Zhs = NULL;  
 
-  if (_Shs) delete _Shs;
-  _Shs = NULL;  
+  if (S_Shs) delete S_Shs;
+  S_Shs = NULL;  
 
-  if (_Zvs) delete _Zvs;
-  _Zvs = NULL;  
+  if (Z_Zvs) delete Z_Zvs;
+  Z_Zvs = NULL;  
 
-  if (_Svs) delete _Svs;
-  _Svs = NULL;  
+  if (S_Svs) delete S_Svs;
+  S_Svs = NULL;  
 
   _metrics.clear();
 
   #ifdef SGTELIB_DEBUG
-    std::cout << "OK\n";
+    SGTELIB::rout << "OK\n";
   #endif
 }//
 
@@ -186,7 +186,7 @@ void SGTELIB::Surrogate::reset_metrics ( void ) {
 bool SGTELIB::Surrogate::build ( void ) {
 
   #ifdef SGTELIB_DEBUG
-    std::cout << "Surrogate build - BEGIN\n";
+    SGTELIB::rout << "Surrogate build - BEGIN\n";
   #endif
 
   if (streqi(_param.get_output(),"NULL")){
@@ -204,10 +204,10 @@ bool SGTELIB::Surrogate::build ( void ) {
 
   // Number of points in the training set.
   _p_ts = _trainingset.get_nb_points();
-  //std::cout << _ready << " " << _p_ts << " " << _p_ts_old << "\n";
+  //SGTELIB::rout << _ready << " " << _p_ts << " " << _p_ts_old << "\n";
   if ( (_ready) && (_p_ts==_p_ts_old) ){
     #ifdef SGTELIB_DEBUG
-      std::cout << "Surrogate build - SKIP Build\n";
+      SGTELIB::rout << "Surrogate build - SKIP Build\n";
     #endif
     return true;
   }
@@ -230,7 +230,7 @@ bool SGTELIB::Surrogate::build ( void ) {
 
   // Call to the private build
   #ifdef SGTELIB_DEBUG
-    std::cout << "Surrogate build - BUILD_PRIVATE\n";
+    SGTELIB::rout << "Surrogate build - BUILD_PRIVATE\n";
   #endif
 
   bool ok;
@@ -245,18 +245,8 @@ bool SGTELIB::Surrogate::build ( void ) {
   if ( ! ok ) return false;
 
   #ifdef SGTELIB_DEBUG
-<<<<<<< HEAD
-<<<<<<< HEAD
     SGTELIB::rout << "Number of parameters to optimize : " << _param.get_nb_parameter_optimization() << "\n";
     _param.display(SGTELIB::rout);
-=======
-    std::cout << "Number of parameters to optimize : " << _param.get_nb_parameter_optimization() << "\n";
-    _param.display(std::cout);
->>>>>>> 8d7a7ae9b270f08018a9e712de36391272212626
-=======
-    std::cout << "Number of parameters to optimize : " << _param.get_nb_parameter_optimization() << "\n";
-    _param.display(std::cout);
->>>>>>> 8d7a7ae9b270f08018a9e712de36391272212626
   #endif
 
 
@@ -281,24 +271,16 @@ bool SGTELIB::Surrogate::build ( void ) {
   _p_old = _p;
 
   #ifdef SGTELIB_DEBUG
-    std::cout << "Surrogate build - END\n";
+    SGTELIB::rout << "Surrogate build - END\n";
   #endif
   
   if (_display){
     _out.open(_param.get_output().c_str() , std::ios::out | std::ios::app);
-    if (_out.fail()) std::cout << "Out.fail1!!!\n";
-    std::cout << "Write in " << _param.get_output() << "\n";
-    if (_out.fail()) std::cout << "Out.fail2!!!\n";
+    if (_out.fail()) SGTELIB::rout << "Out.fail1!!!\n";
+    SGTELIB::rout << "Write in " << _param.get_output() << "\n";
+    if (_out.fail()) SGTELIB::rout << "Out.fail2!!!\n";
     display(_out);
-<<<<<<< HEAD
-<<<<<<< HEAD
     if (_out.fail()) SGTELIB::rout << "Out.fail3!!!\n";
-=======
-    if (_out.fail()) std::cout << "Out.fail3!!!\n";
->>>>>>> 8d7a7ae9b270f08018a9e712de36391272212626
-=======
-    if (_out.fail()) std::cout << "Out.fail3!!!\n";
->>>>>>> 8d7a7ae9b270f08018a9e712de36391272212626
     _out.close();
   }
 
@@ -309,7 +291,7 @@ bool SGTELIB::Surrogate::build ( void ) {
 bool SGTELIB::Surrogate::init_private (void) {
   // Empty initialization function
   #ifdef SGTELIB_DEBUG
-    std::cout << model_type_to_str(get_type()) << " : init_private\n";
+    SGTELIB::rout << model_type_to_str(get_type()) << " : init_private\n";
   #endif
   return true;
 }
@@ -333,8 +315,8 @@ void SGTELIB::Surrogate::check_ready (const std::string & s) const {
   
   // Check the tag _ready
   if ( ! _ready){
-    display(std::cout);
-    std::cout << "Surrogate: NOT READY! (" << s << ")\n";
+    display(SGTELIB::rout);
+    SGTELIB::rout << "Surrogate: NOT READY! (" << s << ")\n";
     throw SGTELIB::Exception ( __FILE__ , __LINE__ ,
                  "check_ready(): Not ready!" );
   }
@@ -345,8 +327,8 @@ void SGTELIB::Surrogate::check_ready (const std::string & s) const {
 
   // Check the new number of points in the trainingset
   if (_trainingset.get_nb_points()>_p_ts){
-    display(std::cout);
-    std::cout << "Surrogate: NOT READY! (" << s << ")\n";
+    display(SGTELIB::rout);
+    SGTELIB::rout << "Surrogate: NOT READY! (" << s << ")\n";
     throw SGTELIB::Exception ( __FILE__ , __LINE__ ,
                  "check_ready(): Not ready!" );
   }
@@ -407,15 +389,7 @@ void SGTELIB::Surrogate::predict ( const SGTELIB::Matrix & XX ,
   // Check the number of columns in XX
   if (XX.get_nb_cols() != _n){
     
-<<<<<<< HEAD
-<<<<<<< HEAD
     display(SGTELIB::rout);
-=======
-    display(std::cout);
->>>>>>> 8d7a7ae9b270f08018a9e712de36391272212626
-=======
-    display(std::cout);
->>>>>>> 8d7a7ae9b270f08018a9e712de36391272212626
     throw SGTELIB::Exception ( __FILE__ , __LINE__ ,
                  "predict(): dimension error" );
   }
@@ -459,19 +433,19 @@ void SGTELIB::Surrogate::predict ( const SGTELIB::Matrix & XX ,
     }
     if (std){
       if (std->has_nan()){
-        display(std::cout); 
+        display(SGTELIB::rout); 
         throw SGTELIB::Exception ( __FILE__ , __LINE__ , "predict(): std has nan" );
       }
     }
     if (ei){
       if (ei->has_nan()){
-        display(std::cout); 
+        display(SGTELIB::rout); 
         throw SGTELIB::Exception ( __FILE__ , __LINE__ , "predict(): ei has nan" );
       }
     }
     if (cdf){
       if (cdf->has_nan()){
-        display(std::cout); 
+        display(SGTELIB::rout); 
         throw SGTELIB::Exception ( __FILE__ , __LINE__ , "predict(): cdf has nan" );
       }
     }
@@ -616,7 +590,7 @@ void SGTELIB::Surrogate::predict ( const SGTELIB::Matrix & XX ,
 
   // Check the number of columns in XX
   if (XX.get_nb_cols() != _n){
-    display(std::cout); 
+    display(SGTELIB::rout); 
     throw SGTELIB::Exception ( __FILE__ , __LINE__ ,
                  "predict(): dimension error" );
   }
@@ -631,7 +605,7 @@ void SGTELIB::Surrogate::predict ( const SGTELIB::Matrix & XX ,
   predict_private( XXs , ZZ );
   #ifdef SGTELIB_DEBUG
     if (ZZ->has_nan()){
-      display(std::cout); 
+      display(SGTELIB::rout); 
       throw SGTELIB::Exception ( __FILE__ , __LINE__ ,
                    "predict(): ZZ has nan" );
     }
@@ -661,17 +635,17 @@ void SGTELIB::Surrogate::predict ( const SGTELIB::Matrix & XX ,
 /* points                                */
 /*---------------------------------------*/
 const SGTELIB::Matrix * SGTELIB::Surrogate::get_matrix_Zhs (void){
-  if ( ! _Zhs){
+  if ( ! Z_Zhs){
     check_ready(__FILE__,__FUNCTION__,__LINE__);
 
     // Init
-    _Zhs = new SGTELIB::Matrix("Zhs",_p,_m);
+    Z_Zhs = new SGTELIB::Matrix("Zhs",_p,_m);
     //call the predict function on the training points
-    predict_private (get_matrix_Xs(),_Zhs);
-    _Zhs->replace_nan(+INF);
-    _Zhs->set_name("Zhs");
+    predict_private (get_matrix_Xs(),Z_Zhs);
+    Z_Zhs->replace_nan(+INF);
+    Z_Zhs->set_name("Zhs");
   }
-  return _Zhs;
+  return Z_Zhs;
 }//
 
 
@@ -680,27 +654,27 @@ const SGTELIB::Matrix * SGTELIB::Surrogate::get_matrix_Zhs (void){
 /*  (Compute the predictive std)        */
 /*--------------------------------------*/
 const SGTELIB::Matrix * SGTELIB::Surrogate::get_matrix_Shs (void){
-  if ( ! _Shs){
+  if ( ! S_Shs){
     check_ready(__FILE__,__FUNCTION__,__LINE__);
 
     #ifdef SGTELIB_DEBUG
-      std::cout << "Compute _Shs\n";
+      SGTELIB::rout << "Compute _Shs\n";
     #endif
     // Init
-    _Shs = new SGTELIB::Matrix("Shs",_p,_m);
+    S_Shs = new SGTELIB::Matrix("Shs",_p,_m);
     //call the predict function on the training points
-    predict_private (get_matrix_Xs(),NULL,_Shs,NULL,NULL);
-    _Shs->replace_nan(+INF);
-    _Shs->set_name("Shs");
+    predict_private (get_matrix_Xs(),NULL,S_Shs,NULL,NULL);
+    S_Shs->replace_nan(+INF);
+    S_Shs->set_name("Shs");
   }
-  return _Shs;
+  return S_Shs;
 }//
 
 // If no specific method is defined, consider Svs = Shs.
 const SGTELIB::Matrix * SGTELIB::Surrogate::get_matrix_Svs (void){
-  if ( ! _Svs){
+  if ( ! S_Svs){
 
-    _Svs = new SGTELIB::Matrix("Svs",_p,_m);
+    S_Svs = new SGTELIB::Matrix("Svs",_p,_m);
     const SGTELIB::Matrix Ds = _trainingset.get_matrix_Ds();
     for (int i=0 ; i<_p ; i++){
       double dmin = +INF;
@@ -709,10 +683,10 @@ const SGTELIB::Matrix * SGTELIB::Surrogate::get_matrix_Svs (void){
           dmin = std::min(dmin,Ds.get(i,j));
         }
       }
-      _Svs->set_row(dmin,i);
+      S_Svs->set_row(dmin,i);
     }
   }
-  return _Svs;
+  return S_Svs;
 }//
 
 
@@ -842,15 +816,9 @@ bool SGTELIB::Surrogate::is_defined(const SGTELIB::metric_t mt, const int j){
 /*       compute metric                 */
 /*--------------------------------------*/
 bool SGTELIB::Surrogate::compute_metric ( const metric_t mt ){
-<<<<<<< HEAD
 
   if (is_defined(mt)) return true;
 
-=======
-
-  if (is_defined(mt)) return true;
-
->>>>>>> 8d7a7ae9b270f08018a9e712de36391272212626
   double m;
   int j;
 
@@ -929,15 +897,7 @@ bool SGTELIB::Surrogate::compute_metric ( const metric_t mt ){
   // Check bounds.
   for (j=0; j<vector_size ; j++){
     m = v[j];
-<<<<<<< HEAD
-<<<<<<< HEAD
     if (crs_isnan(m)    ){ m = SGTELIB::INF; }
-=======
-    if (isnan(m)    ){ m = SGTELIB::INF; }
->>>>>>> 8d7a7ae9b270f08018a9e712de36391272212626
-=======
-    if (isnan(m)    ){ m = SGTELIB::INF; }
->>>>>>> 8d7a7ae9b270f08018a9e712de36391272212626
     if (m < -EPSILON){ m = SGTELIB::INF; }
     if (m <= 0.0    ){ m = 0.0; }
     v.set(0,j,m);
@@ -962,21 +922,9 @@ double SGTELIB::Surrogate::get_metric (SGTELIB::metric_t mt , int j){
   if ( !compute_metric(mt) ) return SGTELIB::INF;
   // Return value
   #ifdef SGTELIB_DEBUG
-<<<<<<< HEAD
-<<<<<<< HEAD
     SGTELIB::rout << "metric " << SGTELIB::metric_type_to_str(mt) << "[" << j << "]";
     if ( is_defined(mt,j) ) SGTELIB::rout << " is def: " << _metrics[mt][j] << std::endl;
     else SGTELIB::rout << " NOT defined." << std::endl;
-=======
-    std::cout << "metric " << SGTELIB::metric_type_to_str(mt) << "[" << j << "]";
-    if ( is_defined(mt,j) ) std::cout << " is def: " << _metrics[mt][j] << std::endl;
-    else std::cout << " NOT defined." << std::endl;
->>>>>>> 8d7a7ae9b270f08018a9e712de36391272212626
-=======
-    std::cout << "metric " << SGTELIB::metric_type_to_str(mt) << "[" << j << "]";
-    if ( is_defined(mt,j) ) std::cout << " is def: " << _metrics[mt][j] << std::endl;
-    else std::cout << " NOT defined." << std::endl;
->>>>>>> 8d7a7ae9b270f08018a9e712de36391272212626
   #endif
   if ( is_defined(mt,j) ) return _metrics[mt][j];
   // Is still not defined, return INF.
@@ -1046,15 +994,7 @@ void SGTELIB::Surrogate::compute_metric_linv (void){
   check_ready(__FILE__,__FUNCTION__,__LINE__);
   if ( !is_defined(SGTELIB::METRIC_LINV) ){
     #ifdef SGTELIB_DEBUG
-<<<<<<< HEAD
-<<<<<<< HEAD
       SGTELIB::rout << "Compute metric linv\n";
-=======
-      std::cout << "Compute metric linv\n";
->>>>>>> 8d7a7ae9b270f08018a9e712de36391272212626
-=======
-      std::cout << "Compute metric linv\n";
->>>>>>> 8d7a7ae9b270f08018a9e712de36391272212626
     #endif
     // Init
     SGTELIB::Matrix v = SGTELIB::Matrix("v",1,_m);
@@ -1145,7 +1085,7 @@ SGTELIB::Matrix SGTELIB::Surrogate::compute_order_error ( const SGTELIB::Matrix 
       break;
     //===============================================//
     default:
-      display(std::cout); 
+      display(SGTELIB::rout); 
       throw SGTELIB::Exception ( __FILE__ , __LINE__ ,"Undefined type" );
     //===============================================//
     }// end switch
@@ -1194,36 +1134,16 @@ SGTELIB::Matrix SGTELIB::Surrogate::compute_fh (const SGTELIB::Matrix & Zs){
         break;
       //===============================================//
       default:
-<<<<<<< HEAD
-<<<<<<< HEAD
         display(SGTELIB::rout); 
-=======
-        display(std::cout); 
->>>>>>> 8d7a7ae9b270f08018a9e712de36391272212626
-=======
-        display(std::cout); 
->>>>>>> 8d7a7ae9b270f08018a9e712de36391272212626
         throw SGTELIB::Exception ( __FILE__ , __LINE__ ,"Undefined type" );
       //===============================================//
       }// end switch
     }// end loop on j
   }
   else{
-<<<<<<< HEAD
-<<<<<<< HEAD
     Zs.display_short(SGTELIB::rout);
     Zs.display_size(SGTELIB::rout);
     SGTELIB::rout << _m << " " << m << " " << _p << std::endl;
-=======
-    Zs.display_short(std::cout);
-    Zs.display_size(std::cout);
-    std::cout << _m << " " << m << " " << _p << std::endl;
->>>>>>> 8d7a7ae9b270f08018a9e712de36391272212626
-=======
-    Zs.display_short(std::cout);
-    Zs.display_size(std::cout);
-    std::cout << _m << " " << m << " " << _p << std::endl;
->>>>>>> 8d7a7ae9b270f08018a9e712de36391272212626
     throw SGTELIB::Exception ( __FILE__ , __LINE__ ,"Dimension error" );
   }
   return fh;
@@ -1327,8 +1247,8 @@ bool SGTELIB::Surrogate::optimize_parameters ( void ) {
   double d;
   const bool display = false;
   if (display){
-    std::cout << "Begin parameter optimization\n";
-    std::cout << "Metric: " << SGTELIB::metric_type_to_str(_param.get_metric_type()) << "\n";
+    SGTELIB::rout << "Begin parameter optimization\n";
+    SGTELIB::rout << "Metric: " << SGTELIB::metric_type_to_str(_param.get_metric_type()) << "\n";
   }
 
   //-----------------------------------------
@@ -1375,20 +1295,20 @@ bool SGTELIB::Surrogate::optimize_parameters ( void ) {
   // Display the information about optimized parameters
   //-------------------------------------------------------
   if (display){
-    std::cout << "Model: " << get_short_string() << "\n";
-    std::cout << "lb: [ ";
-    for (i=0 ; i<N ; i++) std::cout << lb[i] << " ";
-    std::cout << "]\n";
-    std::cout << "ub: [ ";
-    for (i=0 ; i<N ; i++) std::cout << ub[i] << " ";
-    std::cout << "]\n";
-    std::cout << "scaling: [ ";
+    SGTELIB::rout << "Model: " << get_short_string() << "\n";
+    SGTELIB::rout << "lb: [ ";
+    for (i=0 ; i<N ; i++) SGTELIB::rout << lb[i] << " ";
+    SGTELIB::rout << "]\n";
+    SGTELIB::rout << "ub: [ ";
+    for (i=0 ; i<N ; i++) SGTELIB::rout << ub[i] << " ";
+    SGTELIB::rout << "]\n";
+    SGTELIB::rout << "scaling: [ ";
     for (i=0 ; i<N ; i++){
-      std::cout << scaling[i];
-      if (logscale[i]) std::cout << "(log)";
-      std::cout << " ";
+      SGTELIB::rout << scaling[i];
+      if (logscale[i]) SGTELIB::rout << "(log)";
+      SGTELIB::rout << " ";
     }
-    std::cout << "]\n";
+    SGTELIB::rout << "]\n";
   }
 
 
@@ -1421,18 +1341,8 @@ bool SGTELIB::Surrogate::optimize_parameters ( void ) {
         for (i=0; i<nx0; i++){
           i2 = i + (int)std::floor(uniform_rand()*(nx0-i));
           if ( (i2<i) || (i2>=nx0) ){
-<<<<<<< HEAD
-<<<<<<< HEAD
-	    SGTELIB::rout << "Error in permutation indexes\n";
-            // exit(0);  //zhenghua
-=======
-            std::cout << "Error in permutation indexes\n";
-            exit(0);
->>>>>>> 8d7a7ae9b270f08018a9e712de36391272212626
-=======
-            std::cout << "Error in permutation indexes\n";
-            exit(0);
->>>>>>> 8d7a7ae9b270f08018a9e712de36391272212626
+            SGTELIB::rout << "Error in permutation indexes\n";
+            //exit(0);   //zhenghua
           }
           X0.swap(i,j,i2,j);
         }
@@ -1487,20 +1397,20 @@ bool SGTELIB::Surrogate::optimize_parameters ( void ) {
     success = false;
 
     if (display){
-      std::cout << "=================================================\n";
-      std::cout << "Budget: " << budget  << "\n";
+      SGTELIB::rout << "=================================================\n";
+      SGTELIB::rout << "Budget: " << budget  << "\n";
       // Display best solution
-      std::cout << "\nCurrent xmin:\n";
-      std::cout << "X=[ " ;
-      for (j=0 ; j<N ; j++) std::cout << xmin[j] << " ";
-      std::cout << "] => " << fmin << " / " << pmin <<  "\n\n";
+      SGTELIB::rout << "\nCurrent xmin:\n";
+      SGTELIB::rout << "X=[ " ;
+      for (j=0 ; j<N ; j++) SGTELIB::rout << xmin[j] << " ";
+      SGTELIB::rout << "] => " << fmin << " / " << pmin <<  "\n\n";
     }
 
 
     if (iter){
       // Create POLL candidates
       POLL = SGTELIB::Matrix::get_poll_directions(scaling,domain,psize);
-      //POLL.display(std::cout);
+      //POLL.display(SGTELIB::rout);
       for (i=0 ; i<POLL.get_nb_rows() ; i++){
         for (j=0 ; j<N ; j++){
           // Add poll directions to poll center
@@ -1512,7 +1422,7 @@ bool SGTELIB::Surrogate::optimize_parameters ( void ) {
         POLL.set_row(xtry,i);
       } // End Create POLL
       POLL.set_name("POLL-CANDIDATES");
-      //POLL.display(std::cout);
+      //POLL.display(SGTELIB::rout);
     }
     else{
       // If iter==0, then evaluate starting points
@@ -1530,10 +1440,10 @@ bool SGTELIB::Surrogate::optimize_parameters ( void ) {
 
       // Display candidate
       if (display){
-        if (iter) std::cout << "X = [ " ;
-        else std::cout << "X0= [ " ;
-        for (j=0 ; j<N ; j++) std::cout << xtry[j] << " ";
-        std::cout << "] => ";
+        if (iter) SGTELIB::rout << "X = [ " ;
+        else SGTELIB::rout << "X0= [ " ;
+        for (j=0 ; j<N ; j++) SGTELIB::rout << xtry[j] << " ";
+        SGTELIB::rout << "] => ";
       }
 
       // Snap to bounds
@@ -1571,7 +1481,7 @@ bool SGTELIB::Surrogate::optimize_parameters ( void ) {
       // Check Cache
       cache_hit = (CACHE.find_row(xtry)!=-1);
       if (cache_hit){
-        if (display) std::cout << "Cache hit\n";
+        if (display) SGTELIB::rout << "Cache hit\n";
       }
       else{
         // --------------------------------------
@@ -1592,24 +1502,24 @@ bool SGTELIB::Surrogate::optimize_parameters ( void ) {
 
         // Display f and p
         if (display){
-          if (ftry>=+INF) std::cout << "+inf" ;
-          else std::cout << ftry;
-          std::cout << " / " ;
-          if (ptry>=+INF) std::cout << "+inf" ;
-          else std::cout << ptry;
+          if (ftry>=+INF) SGTELIB::rout << "+inf" ;
+          else SGTELIB::rout << ftry;
+          SGTELIB::rout << " / " ;
+          if (ptry>=+INF) SGTELIB::rout << "+inf" ;
+          else SGTELIB::rout << ptry;
         }
 
         // Check for success 
         // The point xtry is a success if there is an improvement in the metric,
         // or, for an equal metric, if there is an improvement in the penalty.
         if ( (ftry<fmin) || ((ftry==fmin) && (ptry<pmin)) ){
-          if (display) std::cout << "(!)";
+          if (display) SGTELIB::rout << "(!)";
           xmin = xtry;
           fmin = ftry;
           pmin = ptry;
           success = true;
         }
-        if (display) std::cout << "\n";
+        if (display) SGTELIB::rout << "\n";
       } // End Evaluation (i.e. No Cache Hit)
 
       // For iter==0, then we evaluate all the starting points.
@@ -1641,9 +1551,9 @@ bool SGTELIB::Surrogate::optimize_parameters ( void ) {
 
 
   if (display){
-    _param.display(std::cout);
-    std::cout << "End parameter optimization\n";
-    std::cout << "=================================\n";
+    _param.display(SGTELIB::rout);
+    SGTELIB::rout << "End parameter optimization\n";
+    SGTELIB::rout << "=================================\n";
   }
 
   // Check for Nan
@@ -1684,8 +1594,8 @@ double SGTELIB::Surrogate::eval_objective ( void ){
     metric = get_metric(mt,0);
   }
 
-  if ( isnan(metric) ) return +INF;
-  if ( isinf(metric) ) return +INF;
+  if ( crs_isnan(metric) ) return +INF;
+  if ( crs_isinf(metric) ) return +INF;
   return metric;
 
 }//

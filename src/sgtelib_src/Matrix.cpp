@@ -42,11 +42,11 @@ SGTELIB::Matrix::Matrix ( const std::string & name ,
 
   int i , j;
 
-  _X = new double * [_nbRows];
+  X_X = new double * [_nbRows];
   for ( i = 0 ; i < _nbRows ; ++i ) {
-    _X[i] = new double [_nbCols];
+    X_X[i] = new double [_nbCols];
     for ( j = 0 ; j < _nbCols ; ++j )
-      _X[i][j] = 0.0;
+      X_X[i][j] = 0.0;
   }
 }//
 
@@ -68,11 +68,11 @@ SGTELIB::Matrix::Matrix ( const std::string & name ,
 
   int i , j;
 
-  _X = new double * [_nbRows];
+  X_X = new double * [_nbRows];
   for ( i = 0 ; i < _nbRows ; ++i ) {
-    _X[i] = new double [_nbCols];
+    X_X[i] = new double [_nbCols];
     for ( j = 0 ; j < _nbCols ; ++j )
-      _X[i][j] = A[i][j];
+      X_X[i][j] = A[i][j];
   }
 }//
 
@@ -83,7 +83,7 @@ SGTELIB::Matrix::Matrix ( const std::string & file_name ) :
                   _name ( "no_name" ) ,
                   _nbRows    ( 0         ) ,
                   _nbCols    ( 0         ) ,
-                  _X    ( NULL      )   {
+                  X_X    ( NULL      )   {
   *this = import_data(file_name);
 }//
 
@@ -95,7 +95,7 @@ SGTELIB::Matrix::Matrix (void) :
                _name ( "" ) ,
                _nbRows    ( 0   ) ,
                _nbCols    ( 0   ) {
-  _X = new double * [0];
+  X_X = new double * [0];
 }//
 
 /*---------------------------*/
@@ -108,9 +108,9 @@ SGTELIB::Matrix::Matrix (double v) :
   #ifdef SGTELIB_DEBUG
     SGTELIB::rout << "Matrix Constructor 5\n";
   #endif
-  _X = new double * [1];
-  _X[0] = new double [1];
-  _X[0][0] = v;
+  X_X = new double * [1];
+  X_X[0] = new double [1];
+  X_X[0][0] = v;
 }//
 
 
@@ -122,11 +122,11 @@ SGTELIB::Matrix::Matrix ( const SGTELIB::Matrix & A ) :
                           _nbRows    ( A._nbRows    ) ,
                           _nbCols    ( A._nbCols    ) {
   int i , j;
-  _X = new double * [_nbRows];
+  X_X = new double * [_nbRows];
   for ( i = 0 ; i < _nbRows ; ++i ) {
-    _X[i] = new double [_nbCols];
+    X_X[i] = new double [_nbCols];
     for ( j = 0 ; j < _nbCols ; ++j )
-      _X[i][j] = A._X[i][j];
+      X_X[i][j] = A.X_X[i][j];
   }
 }//
 
@@ -146,23 +146,23 @@ SGTELIB::Matrix & SGTELIB::Matrix::operator = ( const SGTELIB::Matrix & A ) {
   if ( _nbRows != A._nbRows || _nbCols != A._nbCols ) {
 
     for ( i = 0 ; i < _nbRows ; ++i )
-      delete [] _X[i];
-    delete [] _X;
+      delete [] X_X[i];
+    delete [] X_X;
 
     _nbRows = A._nbRows;
     _nbCols = A._nbCols;
 
-    _X = new double * [_nbRows];
+    X_X = new double * [_nbRows];
     for ( i = 0 ; i < _nbRows ; ++i ) {
-      _X[i] = new double [_nbCols];
+      X_X[i] = new double [_nbCols];
       for ( j = 0 ; j < _nbCols ; ++j )
-        _X[i][j] = A._X[i][j];
+        X_X[i][j] = A.X_X[i][j];
     }
   }
   else {
     for ( i = 0 ; i < _nbRows ; ++i )
       for ( j = 0 ; j < _nbCols ; ++j )
-        _X[i][j] = A._X[i][j];
+        X_X[i][j] = A.X_X[i][j];
   }
     
   _name = A._name;
@@ -260,7 +260,7 @@ SGTELIB::Matrix SGTELIB::Matrix::string_to_row  ( const std::string & s , int nb
   double v;
   std::stringstream ss( s );
   int i=0;
-  while( ss >> v ) row._X[0][i++] = v;
+  while( ss >> v ) row.X_X[0][i++] = v;
   if (i++!=nbCols){
     SGTELIB::rout << "In line \"" << s << "\"\n";
     SGTELIB::rout << "Found " << i << " components\n";
@@ -344,17 +344,17 @@ SGTELIB::Matrix operator / (const SGTELIB::Matrix & A , const double v) {
 SGTELIB::Matrix::~Matrix ( void ) {
   /*
   #ifdef SGTELIB_DEBUG
-    std::cout << "Delete " << _name << " of size (" << _nbCols << "," << _nbRows << ")...";
-    display(std::cout);
-    std::cout.flush();
+    SGTELIB::rout << "Delete " << _name << " of size (" << _nbCols << "," << _nbRows << ")...";
+    display(SGTELIB::rout);
+    SGTELIB::rout.flush();
   #endif
   */
   for ( int i = 0 ; i < _nbRows ; ++i )
-    delete [] _X[i];
-  delete [] _X; 
+    delete [] X_X[i];
+  delete [] X_X; 
   /*
   #ifdef SGTELIB_DEBUG
-    std::cout << "Deleted.\n";
+    SGTELIB::rout << "Deleted.\n";
   #endif
   */
 }//
@@ -367,14 +367,14 @@ void SGTELIB::Matrix::add_row  ( const double * row ) {
   double ** new_X = new double * [_nbRows+1];
 
   for ( int i = 0 ; i < _nbRows ; ++i )
-    new_X[i] = _X[i];
+    new_X[i] = X_X[i];
 
   new_X[_nbRows] = new double [_nbCols];
   for ( int j = 0 ; j < _nbCols ; ++j )
     new_X[_nbRows][j] = row[j];
   
-  delete [] _X;
-  _X = new_X;
+  delete [] X_X;
+  X_X = new_X;
   ++_nbRows;
 }//
 
@@ -393,16 +393,16 @@ void SGTELIB::Matrix::add_rows ( const Matrix & A ) {
   double ** new_X = new double * [new_nbRows];
 
   for ( i = 0 ; i < _nbRows ; ++i )
-    new_X[i] = _X[i];
+    new_X[i] = X_X[i];
 
   for ( i = _nbRows ; i < new_nbRows ; ++i ) {
     new_X[i] = new double [_nbCols];
     for ( j = 0 ; j < _nbCols ; ++j )
-      new_X[i][j] = A._X[i-_nbRows][j];
+      new_X[i][j] = A.X_X[i-_nbRows][j];
   }
 
-  delete [] _X;
-  _X = new_X;
+  delete [] X_X;
+  X_X = new_X;
   _nbRows = new_nbRows;
 }//
 
@@ -424,14 +424,14 @@ void SGTELIB::Matrix::add_cols ( const Matrix & A ) {
     x = new double [new_nbCols];
     // Original columns
     for ( j = 0 ; j < _nbCols ; ++j )
-      x[j] = _X[i][j];
+      x[j] = X_X[i][j];
     // Additional columns
     for ( j = _nbCols ; j < new_nbCols ; ++j )
-      x[j] = A._X[i][j-_nbCols];
+      x[j] = A.X_X[i][j-_nbCols];
     // Remove original line
-    delete [] _X[i];
+    delete [] X_X[i];
     // Put new line
-    _X[i] = x;
+    X_X[i] = x;
   }
 
   _nbCols = new_nbCols;
@@ -448,7 +448,7 @@ void SGTELIB::Matrix::add_rows ( const int p ) {
   double ** new_X = new double * [new_nbRows];
 
   for ( i = 0 ; i < _nbRows ; ++i )
-    new_X[i] = _X[i];
+    new_X[i] = X_X[i];
 
   for ( i = _nbRows ; i < new_nbRows ; ++i ) {
     new_X[i] = new double [_nbCols];
@@ -456,9 +456,9 @@ void SGTELIB::Matrix::add_rows ( const int p ) {
       new_X[i][j] = 0.0;
   }
 
-  delete [] _X;
+  delete [] X_X;
 
-  _X = new_X;
+  X_X = new_X;
   _nbRows = new_nbRows;
 }//
 
@@ -473,13 +473,13 @@ void SGTELIB::Matrix::remove_rows ( const int p ) {
   double ** new_X = new double * [new_nbRows];
 
   for ( i = 0 ; i < new_nbRows ; ++i )
-    new_X[i] = _X[i];
+    new_X[i] = X_X[i];
 
   for ( i = new_nbRows ; i < _nbRows ; ++i )
-    delete [] _X[i];
+    delete [] X_X[i];
 
-  delete [] _X;
-  _X = new_X;
+  delete [] X_X;
+  X_X = new_X;
   _nbRows = new_nbRows;
 }//
 
@@ -496,11 +496,11 @@ void SGTELIB::Matrix::add_cols ( const int p ) {
   for ( i = 0 ; i < _nbRows ; ++i ) {
     x = new double [new_nbCols];
     for ( j = 0 ; j < _nbCols ; ++j )
-      x[j] = _X[i][j];
+      x[j] = X_X[i][j];
     for ( j = _nbCols ; j < new_nbCols ; ++j )
       x[j] = 0.0;
-    delete [] _X[i];
-    _X[i] = x;
+    delete [] X_X[i];
+    X_X[i] = x;
   }
 
   _nbCols = new_nbCols;
@@ -525,7 +525,7 @@ bool SGTELIB::Matrix::is_sym ( void ) const {
   int i,j;
   for ( i = 0 ; i < _nbRows ; ++i ) {
     for ( j = i+1 ; j < _nbCols ; ++j ) {
-      if (_X[i][j]!=_X[j][i]){
+      if (X_X[i][j]!=X_X[j][i]){
         return false;
       }
     }
@@ -541,9 +541,9 @@ void SGTELIB::Matrix::set_random ( double l , double u , bool round ) {
   int i , j;
   for ( i = 0 ; i < _nbRows ; ++i ){
     for ( j = 0 ; j < _nbCols ; ++j ){
-      _X[i][j] = l + (u-l) * SGTELIB::uniform_rand();
+      X_X[i][j] = l + (u-l) * SGTELIB::uniform_rand();
       if ( round )
-        _X[i][j] = SGTELIB::round ( _X[i][j] );
+        X_X[i][j] = SGTELIB::round ( X_X[i][j] );
     }
   }
 }//
@@ -555,7 +555,7 @@ void SGTELIB::Matrix::fill ( double v ) {
   int i , j;
   for ( i = 0 ; i < _nbRows ; ++i ){
     for ( j = 0 ; j < _nbCols ; ++j ){
-      _X[i][j] = v;
+      X_X[i][j] = v;
     }
   }
 }//
@@ -572,7 +572,7 @@ void SGTELIB::Matrix::set ( const int i , const int j , const double d ) {
       throw SGTELIB::Exception ( __FILE__ , __LINE__ , "Matrix::set(i,j): bad index" );
     }
   #endif
-  _X[i][j] = d;
+  X_X[i][j] = d;
 }//
 
 void SGTELIB::Matrix::set_row (const SGTELIB::Matrix & T , const int i){
@@ -582,7 +582,7 @@ void SGTELIB::Matrix::set_row (const SGTELIB::Matrix & T , const int i){
     }
   #endif
   for (int j=0 ; j<_nbCols ; j++){
-    _X[i][j] = T.get(0,j);
+    X_X[i][j] = T.get(0,j);
   }
 }//
 
@@ -593,7 +593,7 @@ void SGTELIB::Matrix::set_col (const SGTELIB::Matrix & T , const int j){
     }
   #endif
   for (int i=0 ; i<_nbRows ; i++){
-    _X[i][j] = T.get(i,0);
+    X_X[i][j] = T.get(i,0);
   }
 }//
 
@@ -604,7 +604,7 @@ void SGTELIB::Matrix::set_row (const double v , const int i){
     }
   #endif
   for (int j=0 ; j<_nbCols ; j++){
-    _X[i][j] = v;
+    X_X[i][j] = v;
   }
 }//
 
@@ -615,7 +615,7 @@ void SGTELIB::Matrix::set_col (const double v , const int j){
     }
   #endif
   for (int i=0 ; i<_nbRows ; i++){
-    _X[i][j] = v;
+    X_X[i][j] = v;
   }
 }//
 
@@ -625,9 +625,9 @@ void SGTELIB::Matrix::swap (const int i1 , const int j1 , const int i2 , const i
       throw SGTELIB::Exception ( __FILE__ , __LINE__ , "Matrix::permut: bad index" );
     }
   #endif
-  double buffer = _X[i1][j1];
-  _X[i1][j1] = _X[i2][j2];
-  _X[i2][j2] = buffer;
+  double buffer = X_X[i1][j1];
+  X_X[i1][j1] = X_X[i2][j2];
+  X_X[i2][j2] = buffer;
 }//
 
 void SGTELIB::Matrix::multiply_row (const double v , const int i){
@@ -637,7 +637,7 @@ void SGTELIB::Matrix::multiply_row (const double v , const int i){
     }
   #endif
   for (int j=0 ; j<_nbCols ; j++){
-    _X[i][j] *= v;
+    X_X[i][j] *= v;
   }
 }//
 
@@ -648,7 +648,7 @@ void SGTELIB::Matrix::multiply_col (const double v , const int j){
     }
   #endif
   for (int i=0 ; i<_nbRows ; i++){
-    _X[i][j] *= v;
+    X_X[i][j] *= v;
   }
 }//
 
@@ -665,14 +665,14 @@ const double & SGTELIB::Matrix::operator [] ( int k ) const {
   if (_nbRows==1) j=k; 
   else if (_nbCols==1) i=k;
   else throw SGTELIB::Exception ( __FILE__ , __LINE__ , "Matrix::[k]: the matrix is not a vector" );
-  return _X[i][j];
+  return X_X[i][j];
 }//
 double & SGTELIB::Matrix::operator [] ( int k ){
   int i = 0 , j = 0;
   if (_nbRows==1) j=k; 
   else if (_nbCols==1) i=k;
   else throw SGTELIB::Exception ( __FILE__ , __LINE__ , "Matrix::[k]: the matrix is not a vector" );
-  return _X[i][j];
+  return X_X[i][j];
 }//
 
 /*------------------------------------------*/
@@ -692,7 +692,7 @@ SGTELIB::Matrix SGTELIB::Matrix::get_row (const int i) const {
   #endif
   SGTELIB::Matrix A (_name+"(i,:)",1,_nbCols);
   for (int j=0 ; j<_nbCols ; j++){
-    A._X[0][j] = _X[i][j];
+    A.X_X[0][j] = X_X[i][j];
   }
   return A;
 }//
@@ -707,7 +707,7 @@ SGTELIB::Matrix SGTELIB::Matrix::get_col (const int j) const {
   #endif
   SGTELIB::Matrix A (_name+"(:,j)",_nbRows,1);
   for (int i=0 ; i<_nbRows ; i++){
-    A._X[i][0] = _X[i][j];
+    A.X_X[i][0] = X_X[i][j];
   }
   return A;
 }//
@@ -815,7 +815,7 @@ SGTELIB::Matrix SGTELIB::Matrix::get_cols (const std::list<int> & list_cols) con
 int SGTELIB::Matrix::get_nb_diff_values ( int j ) const {
   std::set<double> s;
   for ( int i = 0 ; i < _nbRows ; ++i ){
-    s.insert ( _X[i][j] );
+    s.insert ( X_X[i][j] );
   }
   return static_cast<int> ( s.size() );
 }//
@@ -828,7 +828,7 @@ void SGTELIB::Matrix::display ( std::ostream & out ) const {
   out << std::endl << _name << "=[\n";
   for ( i = 0 ; i < _nbRows ; ++i ) {
     for ( j = 0 ; j < _nbCols ; ++j )
-      out << "\t" << std::setw(10) << _X[i][j] << " ";
+      out << "\t" << std::setw(10) << X_X[i][j] << " ";
     out << ";" << std::endl;
   }
   out << "];" << std::endl;
@@ -841,15 +841,15 @@ void SGTELIB::Matrix::display_short ( std::ostream & out ) const {
   if (get_numel()<5) display(out);
   else{
     out << std::endl << _name << " ( " << _nbRows << " x " << _nbCols << " ) =\n[";
-    out << "\t" << std::setw(10) << _X[0][0] << " ";
+    out << "\t" << std::setw(10) << X_X[0][0] << " ";
     if (_nbCols>2) out << "... ";
-    out << "\t" << std::setw(10) << _X[0][_nbCols] << "\n";
+    out << "\t" << std::setw(10) << X_X[0][_nbCols] << "\n";
     if (_nbRows>2) out << "\t       ...";
     if (_nbCols>2) out << "    ";
     if (_nbRows>2) out << "\t       ...\n";
-    out << "\t" << std::setw(10) << _X[_nbRows-1][0] << " ";
+    out << "\t" << std::setw(10) << X_X[_nbRows-1][0] << " ";
     if (_nbCols>2) out << "... ";
-    out << "\t" << std::setw(10) << _X[_nbRows-1][_nbCols] << "]\n";
+    out << "\t" << std::setw(10) << X_X[_nbRows-1][_nbCols] << "]\n";
   }
 }//
 
@@ -880,7 +880,7 @@ SGTELIB::Matrix SGTELIB::Matrix::col_vector ( const double * v,
   }  
   SGTELIB::Matrix V("V",n,1);
   for (int i=0 ; i<n ; i++){
-    V._X[i][0] = v[i];
+    V.X_X[i][0] = v[i];
   }
   return V;
 }//
@@ -895,7 +895,7 @@ SGTELIB::Matrix SGTELIB::Matrix::row_vector ( const double * v,
   }  
   SGTELIB::Matrix V("V",1,n);
   for (int i=0 ; i<n ; i++){
-    V._X[0][i] = v[i];
+    V.X_X[0][i] = v[i];
   }
   return V;
 }//
@@ -926,11 +926,11 @@ SGTELIB::Matrix SGTELIB::Matrix::product ( const SGTELIB::Matrix & A,
   //double v;
   for ( i = 0 ; i < nb_rows ; ++i ) {
     for ( j = 0 ; j < nb_cols ; ++j ){
-      C._X[i][j] = 0;
+      C.X_X[i][j] = 0;
     }
     for ( k = 0 ; k < nb_inter; ++k ){
       for ( j = 0 ; j < nb_cols ; ++j ){
-        C._X[i][j] += A._X[i][k]*B._X[k][j];
+        C.X_X[i][j] += A.X_X[i][k]*B.X_X[k][j];
       }
     }
   }
@@ -1001,7 +1001,7 @@ SGTELIB::Matrix SGTELIB::Matrix::subset_product (const SGTELIB::Matrix & A,
   for (int i=0 ; i<p ; i++){
     for (int j=0 ; j<r ; j++){
       for (int k=0 ; k<q ; k++){
-        C._X[i][j] += A._X[i][k]*B._X[k][j];
+        C.X_X[i][j] += A.X_X[i][k]*B.X_X[k][j];
       } 
     }
   }
@@ -1054,8 +1054,8 @@ SGTELIB::Matrix SGTELIB::Matrix::hadamard_square ( const SGTELIB::Matrix & A )  
   double a;
   for ( i = 0 ; i < nb_rows ; ++i ) {
     for ( j = 0 ; j < nb_cols ; ++j ){
-      a = A._X[i][j];
-      C._X[i][j] = a*a;
+      a = A.X_X[i][j];
+      C.X_X[i][j] = a*a;
     }
   }
   return C;
@@ -1072,7 +1072,7 @@ void SGTELIB::Matrix::hadamard_square ( void )  {
   int i,j;
   for ( i = 0 ; i < _nbRows ; ++i ) {
     for ( j = 0 ; j < _nbCols ; ++j ){
-      _X[i][j] *= _X[i][j];
+      X_X[i][j] *= X_X[i][j];
     }
   }
 }//
@@ -1088,7 +1088,7 @@ void SGTELIB::Matrix::hadamard_inverse ( void )  {
   int i,j;
   for ( i = 0 ; i < _nbRows ; ++i ) {
     for ( j = 0 ; j < _nbCols ; ++j ){
-      _X[i][j] = 1/_X[i][j];
+      X_X[i][j] = 1/X_X[i][j];
     }
   }
 }//
@@ -1108,7 +1108,7 @@ SGTELIB::Matrix SGTELIB::Matrix::hadamard_sqrt ( const SGTELIB::Matrix & A )  {
   int i,j;
   for ( i = 0 ; i < nb_rows ; ++i ) {
     for ( j = 0 ; j < nb_cols ; ++j ){
-      C._X[i][j] = sqrt(fabs(A._X[i][j]));
+      C.X_X[i][j] = sqrt(fabs(A.X_X[i][j]));
     }
   }
   return C;
@@ -1131,7 +1131,7 @@ SGTELIB::Matrix SGTELIB::Matrix::hadamard_power ( const SGTELIB::Matrix & A , co
   int i,j;
   for ( i = 0 ; i < nb_rows ; ++i ) {
     for ( j = 0 ; j < nb_cols ; ++j ){
-      C._X[i][j] = pow(A._X[i][j],e);
+      C.X_X[i][j] = pow(A.X_X[i][j],e);
     }
   }
   return C;
@@ -1148,7 +1148,7 @@ void SGTELIB::Matrix::hadamard_sqrt ( void )  {
   int i,j;
   for ( i = 0 ; i < _nbRows ; ++i ) {
     for ( j = 0 ; j < _nbCols ; ++j ){
-      _X[i][j] = sqrt(fabs(_X[i][j]));
+      X_X[i][j] = sqrt(fabs(X_X[i][j]));
     }
   }
 }//
@@ -1174,9 +1174,9 @@ SGTELIB::Matrix SGTELIB::Matrix::diagA_product ( const SGTELIB::Matrix & A,
   if ( (na==ma) || (ma==n) ){
     // A is square, use the diag terms
     for ( i = 0 ; i < n ; i++ ) {
-      Aii = A._X[i][i];
+      Aii = A.X_X[i][i];
       for ( j = 0 ; j < m ; j++ ) {
-        C._X[i][j] = Aii*B._X[i][j];
+        C.X_X[i][j] = Aii*B.X_X[i][j];
       }
     }
     return C;
@@ -1184,9 +1184,9 @@ SGTELIB::Matrix SGTELIB::Matrix::diagA_product ( const SGTELIB::Matrix & A,
   else if ( (na==1) && (ma==n) ){
     // A is a line vector
     for ( i = 0 ; i < n ; i++ ) {
-      Aii = A._X[0][i];
+      Aii = A.X_X[0][i];
       for ( j = 0 ; j < m ; j++ ) {
-        C._X[i][j] = Aii*B._X[i][j];
+        C.X_X[i][j] = Aii*B.X_X[i][j];
       }
     }
     return C;
@@ -1194,9 +1194,9 @@ SGTELIB::Matrix SGTELIB::Matrix::diagA_product ( const SGTELIB::Matrix & A,
   else if ( (na==n) && (ma==1) ){
     // A is a col vector
     for ( i = 0 ; i < n ; i++ ) {
-      Aii = A._X[i][0];
+      Aii = A.X_X[i][0];
       for ( j = 0 ; j < m ; j++ ) {
-        C._X[i][j] = Aii*B._X[i][j];
+        C.X_X[i][j] = Aii*B.X_X[i][j];
       }
     }
     return C;
@@ -1230,9 +1230,9 @@ SGTELIB::Matrix SGTELIB::Matrix::diagB_product ( const SGTELIB::Matrix & A,
   if ( (nb==mb) && (mb==n) ){
     // B is square, use the diag terms
     for ( j = 0 ; j < m ; j++ ) {
-      Bjj = B._X[j][j];
+      Bjj = B.X_X[j][j];
       for ( i = 0 ; i < n ; i++ ) {
-        C._X[i][j] = A._X[i][j]*Bjj;
+        C.X_X[i][j] = A.X_X[i][j]*Bjj;
       }
     }
     return C;
@@ -1240,9 +1240,9 @@ SGTELIB::Matrix SGTELIB::Matrix::diagB_product ( const SGTELIB::Matrix & A,
   else if ( (nb==1) && (mb==m) ){
     // B is a line vector
     for ( j = 0 ; j < m ; j++ ) {
-      Bjj = B._X[0][j];
+      Bjj = B.X_X[0][j];
       for ( i = 0 ; i < n ; i++ ) {
-        C._X[i][j] = A._X[i][j]*Bjj;
+        C.X_X[i][j] = A.X_X[i][j]*Bjj;
       }
     }
     return C;
@@ -1250,9 +1250,9 @@ SGTELIB::Matrix SGTELIB::Matrix::diagB_product ( const SGTELIB::Matrix & A,
   else if ( (nb==m) && (mb==1) ){
     // B is a col vector
     for ( j = 0 ; j < m ; j++ ) {
-      Bjj = B._X[j][0];
+      Bjj = B.X_X[j][0];
       for ( i = 0 ; i < n ; i++ ) {
-        C._X[i][j] = A._X[i][j]*Bjj;
+        C.X_X[i][j] = A.X_X[i][j]*Bjj;
       }
     }
     return C;
@@ -1287,9 +1287,9 @@ SGTELIB::Matrix SGTELIB::Matrix::transposeA_product ( const SGTELIB::Matrix & A,
   //double v;
   for ( i = 0 ; i < nb_rows ; ++i ) {
     for ( j = 0 ; j < nb_cols ; ++j ){
-      C._X[i][j] = 0;
+      C.X_X[i][j] = 0;
       for ( k = 0 ; k < nb_inter; ++k ){
-        C._X[i][j] += A._X[k][i]*B._X[k][j];
+        C.X_X[i][j] += A.X_X[k][i]*B.X_X[k][j];
       }
     }
   }
@@ -1360,7 +1360,7 @@ SGTELIB::Matrix SGTELIB::Matrix::get_matrix_dPiPZs ( const SGTELIB::Matrix & Ai,
   int i,j;
   for ( i = 0 ; i < p ; i++ ) {
     v = 0;
-    for ( j = 0 ; j < q ; j++) v += HAi._X[i][j]*H._X[i][j];
+    for ( j = 0 ; j < q ; j++) v += HAi.X_X[i][j]*H.X_X[i][j];
     v = 1.0/( 1.0 - v );
     dPiPZs.multiply_row ( v , i );
   }
@@ -1388,7 +1388,7 @@ SGTELIB::Matrix SGTELIB::Matrix::get_matrix_dPiPZs ( const SGTELIB::Matrix & Ai,
   int i,j;
   for ( i = 0 ; i < p ; i++ ) {
     v = 0;
-    for ( j = 0 ; j < q ; j++) v += HAi._X[i][j]*H._X[i][j];
+    for ( j = 0 ; j < q ; j++) v += HAi.X_X[i][j]*H.X_X[i][j];
     v = 1.0/( 1.0 - v );
     dPiPZs.multiply_row ( v , i );
   }
@@ -1442,7 +1442,7 @@ SGTELIB::Matrix SGTELIB::Matrix::add ( const SGTELIB::Matrix & A,
   int i,j;
   for ( i = 0 ; i < nb_rows ; ++i ) {
     for ( j = 0 ; j < nb_cols ; ++j ){
-      C._X[i][j] = A._X[i][j]+B._X[i][j];
+      C.X_X[i][j] = A.X_X[i][j]+B.X_X[i][j];
     }
   }
   return C;
@@ -1464,7 +1464,7 @@ void SGTELIB::Matrix::add ( const SGTELIB::Matrix & B ) {
   int i,j;
   for ( i = 0 ; i < _nbRows ; ++i ) {
     for ( j = 0 ; j < _nbCols ; ++j ){
-      _X[i][j] += B.get(i,j);
+      X_X[i][j] += B.get(i,j);
     }
   }
 }//
@@ -1485,12 +1485,12 @@ SGTELIB::Matrix SGTELIB::Matrix::add_fill ( const SGTELIB::Matrix & A,
   int i,j;
   for ( i = 0 ; i < A.get_nb_rows() ; ++i ) {
     for ( j = 0 ; j < A.get_nb_cols() ; ++j ){
-      C._X[i][j] = A._X[i][j];
+      C.X_X[i][j] = A.X_X[i][j];
     }
   }
   for ( i = 0 ; i < B.get_nb_rows() ; ++i ) {
     for ( j = 0 ; j < B.get_nb_cols() ; ++j ){
-      C._X[i][j] += B._X[i][j];
+      C.X_X[i][j] += B.X_X[i][j];
     }
   }
   return C;
@@ -1543,7 +1543,7 @@ void SGTELIB::Matrix::sub ( const SGTELIB::Matrix & B ) {
   int i,j;
   for ( i = 0 ; i < _nbRows ; ++i ) {
     for ( j = 0 ; j < _nbCols ; ++j ){
-      _X[i][j] -= B._X[i][j];
+      X_X[i][j] -= B.X_X[i][j];
     }
   }
 }//
@@ -1591,7 +1591,7 @@ SGTELIB::Matrix SGTELIB::Matrix::random_permutation_matrix ( const int n ) {
   for (int i=0; i<n; ++i) v.push_back(i); // 1 2 3 4 5 6 7 8 9
 
   // shuffle
-  SGTELIB::random_shuffle ( v.begin(), v.end(), SGTELIB::Matrix::myrandom);    //zhenghua
+  SGTELIB::random_shuffle ( v.begin(), v.end(), SGTELIB::Matrix::myrandom );    //zhenghua
  
   // Fill matrix
   for (int i=0; i<n; ++i) perm.set(i,v[i],1.0);
@@ -1622,9 +1622,9 @@ SGTELIB::Matrix SGTELIB::Matrix::rank ( void ) const {
     for (i=0 ; i<m ; i++){
       dmin = +INF;
       for (j=0 ; j<m ; j++){
-        if (D._X[0][j]<dmin){
+        if (D.X_X[0][j]<dmin){
           jmin = j;
-          dmin = D._X[0][j];
+          dmin = D.X_X[0][j];
         }
       }
       R.set(0,jmin,double(i));
@@ -1658,7 +1658,7 @@ double SGTELIB::Matrix::rmse ( void ) const{
   double xij;
   for ( i = 0 ; i < _nbRows ; ++i ) {
     for ( j = 0 ; j < _nbCols ; ++j ){
-      xij = _X[i][j];
+      xij = X_X[i][j];
       v += xij*xij;
     }
   }
@@ -1677,7 +1677,7 @@ double SGTELIB::Matrix::normsquare ( void ) const{
   double xij;
   for ( i = 0 ; i < _nbRows ; ++i ) {
     for ( j = 0 ; j < _nbCols ; ++j ){
-      xij = _X[i][j];
+      xij = X_X[i][j];
       v += xij*xij;
     }
   }
@@ -1696,15 +1696,15 @@ void SGTELIB::Matrix::normalize_cols ( void ){
     d = 0;
 
     for ( i = 0 ; i < _nbRows ; ++i )
-      d += _X[i][j];
+      d += X_X[i][j];
 
     if (d==0){
       for ( i = 0 ; i < _nbRows ; ++i )
-        _X[i][j] = 1/_nbRows;
+        X_X[i][j] = 1/_nbRows;
     }
     else{
       for ( i = 0 ; i < _nbRows ; ++i )
-        _X[i][j] /= d;
+        X_X[i][j] /= d;
     }
   }
 }//
@@ -1723,19 +1723,19 @@ SGTELIB::Matrix SGTELIB::Matrix::col_norm ( const norm_t nt ) const {
     double v = 0;
     switch (nt){
       case SGTELIB::NORM_0:
-        for (i=0;i<_nbRows;++i) v += double(fabs(_X[i][j])<EPSILON);
+        for (i=0;i<_nbRows;++i) v += double(fabs(X_X[i][j])<EPSILON);
         v /= double(_nbCols);
         break;
       case SGTELIB::NORM_1:
-        for (i=0;i<_nbRows;++i) v += fabs(_X[i][j]);
+        for (i=0;i<_nbRows;++i) v += fabs(X_X[i][j]);
         v /= double(_nbCols);
         break;
       case SGTELIB::NORM_2:
-        for (i=0;i<_nbRows;++i) v += _X[i][j]*_X[i][j];
+        for (i=0;i<_nbRows;++i) v += X_X[i][j]*X_X[i][j];
         v = sqrt(v/double(_nbCols));
         break;
       case SGTELIB::NORM_INF:
-        for (i=0;i<_nbRows;++i) v = std::max(v,fabs(_X[i][j]));
+        for (i=0;i<_nbRows;++i) v = std::max(v,fabs(X_X[i][j]));
         break;
     }
     N.set(0,j,v);
@@ -1762,7 +1762,7 @@ double SGTELIB::Matrix::sum ( void ) const{
   int i,j;
   for ( i = 0 ; i < _nbRows ; ++i ) {
     for ( j = 0 ; j < _nbCols ; ++j ){
-      v += _X[i][j];
+      v += X_X[i][j];
     }
   }
   return v;
@@ -1784,9 +1784,9 @@ SGTELIB::Matrix SGTELIB::Matrix::sum ( const int direction ) const{
     for ( j = 0 ; j < _nbCols ; ++j ){
       v = 0;
       for ( i = 0 ; i < _nbRows ; ++i ) {
-        v += _X[i][j];
+        v += X_X[i][j];
       }
-      S._X[0][j] = v;
+      S.X_X[0][j] = v;
     }
     return S;
   }
@@ -1795,9 +1795,9 @@ SGTELIB::Matrix SGTELIB::Matrix::sum ( const int direction ) const{
     for ( i = 0 ; i < _nbRows ; ++i ) {
       v = 0;
       for ( j = 0 ; j < _nbCols ; ++j ){
-        v += _X[i][j];
+        v += X_X[i][j];
       }
-      S._X[i][0] = v;
+      S.X_X[i][0] = v;
     }
     return S;
   }
@@ -1827,7 +1827,7 @@ int SGTELIB::Matrix::count ( void ) const{
   const int nb_cols = get_nb_cols();
   for ( i = 0 ; i < nb_rows ; ++i ) {
     for ( j = 0 ; j < nb_cols ; ++j ){
-      v += (fabs(_X[i][j])>EPSILON)? 1:0 ;
+      v += (fabs(X_X[i][j])>EPSILON)? 1:0 ;
     }
   }
   return v;
@@ -1878,7 +1878,7 @@ SGTELIB::Matrix SGTELIB::Matrix::conjugate_solve ( const SGTELIB::Matrix & A ,
   while (iter < 100){
     Ap = A*p;
     pAp = 0;
-    for (int i=0 ; i<n ; i++) pAp += p._X[i][0]*Ap._X[i][0];
+    for (int i=0 ; i<n ; i++) pAp += p.X_X[i][0]*Ap.X_X[i][0];
     alpha = rr/pAp;
     x = x+alpha*p;
     rr_old = rr;
@@ -1914,11 +1914,11 @@ SGTELIB::Matrix SGTELIB::Matrix::cholesky ( void ) const {
     for (j = 0; j < (i+1); j++) {
       s = 0;
       for (k = 0; k < j; k++){
-        s += L._X[i][k] * L._X[j][k];
+        s += L.X_X[i][k] * L.X_X[j][k];
       }
-      L._X[i][j] = (i == j) ?
-         sqrt(_X[i][i] - s) :
-         (1.0 / L._X[j][j] * (_X[i][j] - s));
+      L.X_X[i][j] = (i == j) ?
+         sqrt(X_X[i][i] - s) :
+         (1.0 / L.X_X[j][j] * (X_X[i][j] - s));
     }
   }
   return L;
@@ -1946,19 +1946,19 @@ SGTELIB::Matrix SGTELIB::Matrix::cholesky_inverse ( double * det ) const {
   int i,j,k,kmin;
   for (i=0 ; i<n ; i++){
     for (j=0 ; j<n ; j++){
-      A._X[i][j] = 0;
+      A.X_X[i][j] = 0;
       kmin = std::max(i,j);
       for (k=kmin ; k<n ; k++){
-          A._X[i][j] += Li._X[k][i]*Li._X[k][j];
+          A.X_X[i][j] += Li.X_X[k][i]*Li.X_X[k][j];
       }
     }
   }
 
   if (det){
     double v = 1;
-    for (i=0 ; i<n ; i++) v *= L._X[i][i];
+    for (i=0 ; i<n ; i++) v *= L.X_X[i][i];
     v *= v;
-    if ( isnan(v)) v=+INF;
+    if ( crs_isnan(v)) v=+INF;
     *det = v;
   }
 
@@ -1988,9 +1988,9 @@ SGTELIB::Matrix SGTELIB::Matrix::triu_solve( const SGTELIB::Matrix & U ,
 
   for (int i=n-1 ; i>=0 ; i--){
     for (int j=i+1 ; j<n ; j++){
-      x._X[i][0] -= U._X[i][j]*x._X[j][0];
+      x.X_X[i][0] -= U.X_X[i][j]*x.X_X[j][0];
     }
-    x._X[i][0] /= U._X[i][i];
+    x.X_X[i][0] /= U.X_X[i][i];
   }
 
   return x;
@@ -2036,9 +2036,9 @@ SGTELIB::Matrix SGTELIB::Matrix::tril_solve( const SGTELIB::Matrix & L ,
 
   for (int i=0 ; i<n ; i++){
     for (int j=0 ; j<i ; j++){
-      x._X[i][0] -= L._X[i][j]*x._X[j][0];
+      x.X_X[i][0] -= L.X_X[i][j]*x.X_X[j][0];
     }
-    x._X[i][0] /= L._X[i][i];
+    x.X_X[i][0] /= L.X_X[i][i];
   }
 
   return x;
@@ -2095,7 +2095,7 @@ SGTELIB::Matrix SGTELIB::Matrix::transpose ( void ) const{
   SGTELIB::Matrix A (_name+"'",_nbCols,_nbRows); 
   for (int i=0 ; i<_nbCols ; i++){
     for (int j=0 ; j<_nbRows ; j++){
-      A.set(i,j,_X[j][i]);
+      A.set(i,j,X_X[j][i]);
     }
   }
   return A;
@@ -2109,7 +2109,7 @@ SGTELIB::Matrix SGTELIB::Matrix::diag ( void ) const{
   SGTELIB::Matrix A;
   if (_nbCols==_nbRows){
     A = SGTELIB::Matrix("A",_nbRows,1);   
-    for (int i=0 ; i<_nbCols ; i++) A.set(i,0,_X[i][i]);
+    for (int i=0 ; i<_nbCols ; i++) A.set(i,0,X_X[i][i]);
   }
   else if ( (_nbCols==1) || (_nbRows==1) ){
     const int n=std::max(_nbCols,_nbRows);
@@ -2234,7 +2234,7 @@ bool SGTELIB::Matrix::SVD_decomposition ( std::string & error_msg ,
   // copy the current matrix into U:
   for ( i = 0 ; i < nbRows ; ++i )
     for ( j = 0 ; j < nbCols ; ++j )
-      U[i][j] = _X[i][j];
+      U[i][j] = X_X[i][j];
 
   // Householder reduction to bidiagonal form:
   for ( i = 0 ; i < nbCols ; ++i ) {
@@ -2477,15 +2477,7 @@ bool SGTELIB::Matrix::has_nan ( void ) const {
   int i , j;
   for ( i = 0 ; i < _nbRows ; ++i ){
     for ( j = 0 ; j < _nbCols ; ++j ){
-<<<<<<< HEAD
-<<<<<<< HEAD
-      if ( crs_isnan(_X[i][j])){
-=======
-      if ( isnan(_X[i][j])){
->>>>>>> 8d7a7ae9b270f08018a9e712de36391272212626
-=======
-      if ( isnan(_X[i][j])){
->>>>>>> 8d7a7ae9b270f08018a9e712de36391272212626
+      if ( crs_isnan(X_X[i][j])){
         return true;
       }
     }
@@ -2500,15 +2492,7 @@ bool SGTELIB::Matrix::has_inf ( void ) const {
   int i , j;
   for ( i = 0 ; i < _nbRows ; ++i ){
     for ( j = 0 ; j < _nbCols ; ++j ){
-<<<<<<< HEAD
-<<<<<<< HEAD
-      if ( crs_isinf(_X[i][j])){
-=======
-      if ( isinf(_X[i][j])){
->>>>>>> 8d7a7ae9b270f08018a9e712de36391272212626
-=======
-      if ( isinf(_X[i][j])){
->>>>>>> 8d7a7ae9b270f08018a9e712de36391272212626
+      if ( crs_isinf(X_X[i][j])){
         return true;
       }
     }
@@ -2523,16 +2507,8 @@ void SGTELIB::Matrix::replace_nan ( double d ) {
   int i , j;
   for ( i = 0 ; i < _nbRows ; ++i ){
     for ( j = 0 ; j < _nbCols ; ++j ){
-<<<<<<< HEAD
-<<<<<<< HEAD
-      if ( crs_isnan(_X[i][j])){
-=======
-      if ( isnan(_X[i][j])){
->>>>>>> 8d7a7ae9b270f08018a9e712de36391272212626
-=======
-      if ( isnan(_X[i][j])){
->>>>>>> 8d7a7ae9b270f08018a9e712de36391272212626
-        _X[i][j] = d;
+      if ( crs_isnan(X_X[i][j])){
+        X_X[i][j] = d;
       }
     }
   }
@@ -2550,8 +2526,8 @@ int SGTELIB::Matrix::get_max_index (void ) {
   //   3 6
   for ( j = 0 ; j < _nbCols ; ++j ){
     for ( i = 0 ; i < _nbRows ; ++i ){
-      if (_X[i][j] > vmax){
-        vmax = _X[i][j];
+      if (X_X[i][j] > vmax){
+        vmax = X_X[i][j];
         kmax = k;
       }
       k++;
@@ -2568,7 +2544,7 @@ double SGTELIB::Matrix::min (void) {
   int i,j;
   for ( j = 0 ; j < _nbCols ; ++j ){
     for ( i = 0 ; i < _nbRows ; ++i ){
-      d = std::min(d,_X[i][j]);
+      d = std::min(d,X_X[i][j]);
     }
   }
   return d;
@@ -2579,7 +2555,7 @@ double SGTELIB::Matrix::max (void) {
   int i,j;
   for ( j = 0 ; j < _nbCols ; ++j ){
     for ( i = 0 ; i < _nbRows ; ++i ){
-      d = std::max(d,_X[i][j]);
+      d = std::max(d,X_X[i][j]);
     }
   }
   return d;
@@ -2607,7 +2583,7 @@ SGTELIB::Matrix SGTELIB::Matrix::max ( const SGTELIB::Matrix & A ,
   int i,j;
   for ( i = 0 ; i < nb_rows ; ++i ) {
     for ( j = 0 ; j < nb_cols ; ++j ){
-      C._X[i][j] = std::max( A._X[i][j] , B._X[i][j] );
+      C.X_X[i][j] = std::max( A.X_X[i][j] , B.X_X[i][j] );
     }
   }
   return C;
@@ -2632,7 +2608,7 @@ SGTELIB::Matrix SGTELIB::Matrix::min ( const SGTELIB::Matrix & A ,
   int i,j;
   for ( i = 0 ; i < nb_rows ; ++i ) {
     for ( j = 0 ; j < nb_cols ; ++j ){
-      C._X[i][j] = std::min( A._X[i][j] , B._X[i][j] );
+      C.X_X[i][j] = std::min( A.X_X[i][j] , B.X_X[i][j] );
     }
   }
   return C;
@@ -2650,8 +2626,8 @@ int SGTELIB::Matrix::get_min_index (void ) {
   //   3 6
   for ( j = 0 ; j < _nbCols ; ++j ){
     for ( i = 0 ; i < _nbRows ; ++i ){
-      if (_X[i][j] < vmin){
-        vmin = _X[i][j];
+      if (X_X[i][j] < vmin){
+        vmin = X_X[i][j];
         kmin = k;
       }
       k++;
@@ -2667,8 +2643,8 @@ int SGTELIB::Matrix::get_min_index_row ( const int i ) {
   int j, jmin=0;
   double vmin = +SGTELIB::INF;
   for ( j = 0 ; j < _nbCols ; ++j ){
-    if (_X[i][j] < vmin){
-      vmin = _X[i][j];
+    if (X_X[i][j] < vmin){
+      vmin = X_X[i][j];
       jmin = j;
     }
   }
@@ -2682,8 +2658,8 @@ int SGTELIB::Matrix::get_min_index_col ( const int j ) {
   int i, imin=0;
   double vmin = +SGTELIB::INF;
   for ( i = 0 ; i < _nbRows ; ++i ){
-    if (_X[i][j] < vmin){
-      vmin = _X[i][j];
+    if (X_X[i][j] < vmin){
+      vmin = X_X[i][j];
       imin = i;
     }
   }
@@ -2711,10 +2687,10 @@ SGTELIB::Matrix SGTELIB::Matrix::get_distances_norm2 ( const SGTELIB::Matrix & A
       // Distance between the point ia of the cache and the point ib of the matrix XXs
       v = 0;
       for (j=0 ; j < n ; j++){
-        d = A._X[ia][j]-B._X[ib][j];
+        d = A.X_X[ia][j]-B.X_X[ib][j];
         v += d*d;
       }
-      D._X[ia][ib] = sqrt(v);
+      D.X_X[ia][ib] = sqrt(v);
     }
   }
   return D;
@@ -2741,9 +2717,9 @@ SGTELIB::Matrix SGTELIB::Matrix::get_distances_norm1 ( const SGTELIB::Matrix & A
       // Distance between the point ia of the cache and the point ib of the matrix XXs
       v = 0;
       for (j=0 ; j < n ; j++){
-        v += fabs(A._X[ia][j]-B._X[ib][j]);
+        v += fabs(A.X_X[ia][j]-B.X_X[ib][j]);
       }
-      D._X[ia][ib] = v;
+      D.X_X[ia][ib] = v;
     }
   }
   return D;
@@ -2770,9 +2746,9 @@ SGTELIB::Matrix SGTELIB::Matrix::get_distances_norminf ( const SGTELIB::Matrix &
       // Distance between the point ia of the cache and the point ib of the matrix XXs
       v = 0;
       for (j=0 ; j < n ; j++){
-        v = std::max( v , fabs(A._X[ia][j]-B._X[ib][j]) );
+        v = std::max( v , fabs(A.X_X[ia][j]-B.X_X[ib][j]) );
       }
-      D._X[ia][ib] = v;
+      D.X_X[ia][ib] = v;
     }
   }
   return D;
@@ -2800,7 +2776,7 @@ int SGTELIB::Matrix::find_row (SGTELIB::Matrix & R){
   for (i=0 ; i<_nbRows ; i++){
     diff = false;    
     for (j=0 ; j<_nbCols ; j++){
-      if (_X[i][j]!=R._X[0][j]){
+      if (X_X[i][j]!=R.X_X[0][j]){
         diff = true;
         break;
       }
@@ -2845,7 +2821,7 @@ SGTELIB::Matrix SGTELIB::Matrix::get_poll_directions ( const SGTELIB::Matrix sca
     SGTELIB::Matrix v("v",1,N);
     for (j=0 ; j<N ; j++){
       if (domain[j]==SGTELIB::PARAM_DOMAIN_CONTINUOUS){
-        v._X[0][j] = SGTELIB::quick_norm_rand();
+        v.X_X[0][j] = SGTELIB::quick_norm_rand();
       }
     }
 
@@ -2856,7 +2832,7 @@ SGTELIB::Matrix SGTELIB::Matrix::get_poll_directions ( const SGTELIB::Matrix sca
     for (i=0 ; i<N ; i++){
       if (domain[i]==SGTELIB::PARAM_DOMAIN_CONTINUOUS){
         for (j=0 ; j<N ; j++){
-          D._X[i][j] = double(i==j)-2*v[i]*v[j];
+          D.X_X[i][j] = double(i==j)-2*v[i]*v[j];
         }
       }
     }
@@ -2873,29 +2849,29 @@ SGTELIB::Matrix SGTELIB::Matrix::get_poll_directions ( const SGTELIB::Matrix sca
     if (domain[i]!=SGTELIB::PARAM_DOMAIN_CONTINUOUS){
       for (j=0 ; j<N ; j++){
         if (domain[j]==SGTELIB::PARAM_DOMAIN_CONTINUOUS){
-          D._X[i][j] = 2*uniform_rand()-1;
+          D.X_X[i][j] = 2*uniform_rand()-1;
         }
       }
     }
 
     // Find max asb
     d = 0;
-    for (j=0 ; j<N ; j++) d = std::max( d , fabs(D._X[i][j]) );
+    for (j=0 ; j<N ; j++) d = std::max( d , fabs(D.X_X[i][j]) );
 
     // Scale continuous dimensions
     for (j=0 ; j<N ; j++){
       if (domain[j]==SGTELIB::PARAM_DOMAIN_CONTINUOUS){
-        D._X[i][j] = scaling[j]*msize*SGTELIB::rceil(rho*D._X[i][j]/d);
+        D.X_X[i][j] = scaling[j]*msize*SGTELIB::rceil(rho*D.X_X[i][j]/d);
       }
     }
 
     // Add extended POLL for discrete values
     if ( (domain[i]==SGTELIB::PARAM_DOMAIN_INTEGER) ||
          (domain[i]==SGTELIB::PARAM_DOMAIN_BOOL) ){
-      D._X[i][i] = (i%2==0)?-1:+1;
+      D.X_X[i][i] = (i%2==0)?-1:+1;
     }
     else if (domain[i]==SGTELIB::PARAM_DOMAIN_CAT){
-      D._X[i][i] = SGTELIB::rceil(uniform_rand()*scaling[i]);
+      D.X_X[i][i] = SGTELIB::rceil(uniform_rand()*scaling[i]);
     }
 
   }
@@ -2931,9 +2907,9 @@ SGTELIB::Matrix SGTELIB::Matrix::get_poll_directions ( const SGTELIB::Matrix sca
 void SGTELIB::Matrix::swap_rows(const int i1 , const int i2){
   double buffer;
   for (int j=0 ; j<_nbCols ; j++){
-    buffer    = _X[i1][j];
-    _X[i1][j] = _X[i2][j];
-    _X[i2][j] = buffer;
+    buffer    = X_X[i1][j];
+    X_X[i1][j] = X_X[i2][j];
+    X_X[i2][j] = buffer;
   }
 }//
 
@@ -2963,7 +2939,7 @@ SGTELIB::Matrix SGTELIB::Matrix::lu_inverse ( double * det ) const{
     // Find pivot
     pivot_max = -1;
     for (i=k ; i<N ; i++){
-      pivot = A._X[k][i];
+      pivot = A.X_X[k][i];
       if (pivot<0) pivot*=-1;
       if (pivot>pivot_max){
         ip = i;
@@ -2979,15 +2955,15 @@ SGTELIB::Matrix SGTELIB::Matrix::lu_inverse ( double * det ) const{
 
     // Gaussian elimination
     for (j=k+1 ; j<N ; j++){
-      pivot = A._X[j][k]/A._X[k][k];
-      A._X[j][k] = pivot;
-      for (i=k+1 ; i<N ; i++) A._X[j][i] -= pivot*A._X[k][i];
+      pivot = A.X_X[j][k]/A.X_X[k][k];
+      A.X_X[j][k] = pivot;
+      for (i=k+1 ; i<N ; i++) A.X_X[j][i] -= pivot*A.X_X[k][i];
     }
   }
 
   // Construct the whole matrix P (under the name Ai)
   SGTELIB::Matrix Ai ("Ai",N,N);
-  for (i=0 ; i<N; i++) Ai._X[i][P[i]] = 1;
+  for (i=0 ; i<N; i++) Ai.X_X[i][P[i]] = 1;
 
 
 
@@ -2995,7 +2971,7 @@ SGTELIB::Matrix SGTELIB::Matrix::lu_inverse ( double * det ) const{
     // Compute the determinant of the matrix that is inverted
     double v = 1;
     // Compute the determinant of U
-    for (i=0 ; i<N ; i++) v *= A._X[i][i];
+    for (i=0 ; i<N ; i++) v *= A.X_X[i][i];
     // Comput ethe determinant of P
     i = 0;
     while (i<N){
@@ -3018,16 +2994,16 @@ SGTELIB::Matrix SGTELIB::Matrix::lu_inverse ( double * det ) const{
     // Tri-L solve
     for (i=0 ; i<N ; i++){
       for (j=0 ; j<i ; j++){
-        y._X[i][0] -= A._X[i][j]*y._X[j][0];
+        y.X_X[i][0] -= A.X_X[i][j]*y.X_X[j][0];
       }
     }
 
     // Tri-U solve
     for (int i=N-1 ; i>=0 ; i--){
       for (int j=i+1 ; j<N ; j++){
-        y._X[i][0] -= A._X[i][j]*y._X[j][0];
+        y.X_X[i][0] -= A.X_X[i][j]*y.X_X[j][0];
       }
-      y._X[i][0] /= A._X[i][i];
+      y.X_X[i][0] /= A.X_X[i][i];
     }
 
     Ai.set_col(y,k);

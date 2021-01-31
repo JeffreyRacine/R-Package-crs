@@ -67,7 +67,7 @@ namespace SGTELIB {
     int _nbRows; // nbRows x nbCols matrix
     int _nbCols;
 
-    double ** _X;
+    double ** X_X;
 
   public:
 
@@ -127,12 +127,12 @@ namespace SGTELIB {
     inline double get ( const int i , const int j ) const {
       #ifdef SGTELIB_DEBUG
         if ( i < 0 || i >= _nbRows || j < 0 || j >= _nbCols ){
-          display(std::cout);
-          std::cout << "Error: try to access (" << i << "," << j << ") while dim is [" << _nbRows << "," << _nbCols << "]\n";
+          display(SGTELIB::rout);
+          SGTELIB::rout << "Error: try to access (" << i << "," << j << ") while dim is [" << _nbRows << "," << _nbCols << "]\n";
           throw SGTELIB::Exception ( __FILE__ , __LINE__ , "Matrix::get(i,j): bad index" );
         }
       #endif
-      return _X[i][j];
+      return X_X[i][j];
     }//
 
     const double & operator [] ( int k ) const;
@@ -236,7 +236,7 @@ namespace SGTELIB {
                                      const SGTELIB::Matrix & C,
                                      const SGTELIB::Matrix & D);
 
-    inline void product ( const int i , const int j , const double v){ _X[i][j]*=v; };
+    inline void product ( const int i , const int j , const double v){ X_X[i][j]*=v; };
 
     // Subset product, multiply
     // the p first rows and q first columns of A
@@ -278,7 +278,7 @@ namespace SGTELIB {
 
     // Add to the matrix itself
     void add ( const SGTELIB::Matrix & B);
-    void add ( const int i , const int j , const double v){ _X[i][j]+=v; };
+    void add ( const int i , const int j , const double v){ X_X[i][j]+=v; };
 
     // Add and fill with 0 (add two matrices of different sizes)
     static SGTELIB::Matrix add_fill ( const SGTELIB::Matrix & A,

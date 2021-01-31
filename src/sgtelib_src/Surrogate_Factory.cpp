@@ -49,8 +49,8 @@ SGTELIB::Surrogate * SGTELIB::Surrogate_Factory ( SGTELIB::TrainingSet & TS,
 /*----------------------------------------------------------*/
 
   #ifdef SGTELIB_DEBUG
-    std::cout << "SGTELIB::Surrogate_Factory (TS,p) begin\n";
-    std::cout << "s = " << s << "\n";
+    SGTELIB::rout << "SGTELIB::Surrogate_Factory (TS,p) begin\n";
+    SGTELIB::rout << "s = " << s << "\n";
     TS.info();
   #endif
 
@@ -107,12 +107,12 @@ SGTELIB::Surrogate * SGTELIB::Surrogate_Factory ( SGTELIB::TrainingSet & TS,
 
 
   #ifdef SGTELIB_DEBUG
-    std::cout << "SGTELIB::Surrogate_Factory (TS,p) AFTER set param\n";
-    std::cout << "TS.info()\n";
+    SGTELIB::rout << "SGTELIB::Surrogate_Factory (TS,p) AFTER set param\n";
+    SGTELIB::rout << "TS.info()\n";
     TS.info();
-    std::cout << "S->info()\n";
+    SGTELIB::rout << "S->info()\n";
     S->info();
-    std::cout << "SGTELIB::Surrogate_Factory (TS,p) RETURN\n";
+    SGTELIB::rout << "SGTELIB::Surrogate_Factory (TS,p) RETURN\n";
   #endif
   return S;
 
@@ -124,7 +124,7 @@ void SGTELIB::surrogate_delete ( SGTELIB::Surrogate * S ){
 /*----------------------------------------------------------*/
   if (S){
     #ifdef SGTELIB_DEBUG
-      std::cout << "Delete surrogate\n";
+      SGTELIB::rout << "Delete surrogate\n";
     #endif
     delete S;
     S = NULL;

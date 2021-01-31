@@ -32,7 +32,7 @@ SGTELIB::Surrogate_PRS_CAT::Surrogate_PRS_CAT ( SGTELIB::TrainingSet & trainings
                                                 SGTELIB::Surrogate_Parameters param) :
   SGTELIB::Surrogate_PRS ( trainingset , param ){
   #ifdef SGTELIB_DEBUG
-    std::cout << "constructor PRS_CAT\n";
+    SGTELIB::rout << "constructor PRS_CAT\n";
   #endif
 }//
 
@@ -57,7 +57,7 @@ void SGTELIB::Surrogate_PRS_CAT::display_private ( std::ostream & out ) const {
 /*--------------------------------------*/
 bool SGTELIB::Surrogate_PRS_CAT::init_private ( void ) {
   #ifdef SGTELIB_DEBUG
-    std::cout << "Surrogate_PRS_CAT : init_private\n";
+    SGTELIB::rout << "Surrogate_PRS_CAT : init_private\n";
   #endif
   // Compute the number of categories
   _cat.clear();
@@ -86,12 +86,12 @@ bool SGTELIB::Surrogate_PRS_CAT::build_private ( void ) {
 
   // Compute the exponents of the basis functions (nb there is one less variable
   // as the first one is the cat)
-  _M = SGTELIB::Matrix ("M",nb_monomes,1);
-  _M.fill(0.0);
-  _M.add_cols(get_PRS_monomes(nvar-1,_param.get_degree()));
+  M_M = SGTELIB::Matrix ("M",nb_monomes,1);
+  M_M.fill(0.0);
+  M_M.add_cols(get_PRS_monomes(nvar-1,_param.get_degree()));
 
   // DESIGN MATRIX H
-  _H = compute_design_matrix ( _M , get_matrix_Xs() );
+  H_H = compute_design_matrix ( M_M , get_matrix_Xs() );
 
   // Compute alpha
   bool ok = compute_alpha();   

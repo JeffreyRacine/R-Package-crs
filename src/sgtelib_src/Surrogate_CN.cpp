@@ -32,7 +32,7 @@ SGTELIB::Surrogate_CN::Surrogate_CN ( SGTELIB::TrainingSet & trainingset,
                                       SGTELIB::Surrogate_Parameters param) :
   SGTELIB::Surrogate ( trainingset , param  ) {
   #ifdef SGTELIB_DEBUG
-    std::cout << "constructor CN\n";
+    SGTELIB::rout << "constructor CN\n";
   #endif
 }//
 
@@ -93,18 +93,18 @@ void SGTELIB::Surrogate_CN::predict_private ( const SGTELIB::Matrix & XXs,
 bool SGTELIB::Surrogate_CN::compute_cv_values (void){
   check_ready(__FILE__,__FUNCTION__,__LINE__);
 
-  if ((_Zvs) && (_Svs)) return true;
+  if ((Z_Zvs) && (S_Svs)) return true;
 
 
   // Init matrices
-  if ( ! _Zvs){
-    _Zvs = new SGTELIB::Matrix ("Zvs",_p,_m);
-    _Zvs->set_name("Zvs");
+  if ( ! Z_Zvs){
+    Z_Zvs = new SGTELIB::Matrix ("Zvs",_p,_m);
+    Z_Zvs->set_name("Zvs");
   }
     
-  if ( ! _Svs){
-    _Svs = new SGTELIB::Matrix ("Svs",_p,_m);
-    _Svs->set_name("Svs");
+  if ( ! S_Svs){
+    S_Svs = new SGTELIB::Matrix ("Svs",_p,_m);
+    S_Svs->set_name("Svs");
   }
 
 
@@ -125,8 +125,8 @@ bool SGTELIB::Surrogate_CN::compute_cv_values (void){
         imin = i2;
       }
     }
-    _Zvs->set_row( Zs.get_row(imin) , i);
-    _Svs->set_row( dmin             , i);
+    Z_Zvs->set_row( Zs.get_row(imin) , i);
+    S_Svs->set_row( dmin             , i);
   }
 
   
@@ -135,14 +135,14 @@ bool SGTELIB::Surrogate_CN::compute_cv_values (void){
 }//
 
 /*--------------------------------------*/
-/*       get_matrix_Zhs                 */
+/*       get_matrixZ_Zhs                 */
 /*--------------------------------------*/
 const SGTELIB::Matrix * SGTELIB::Surrogate_CN::get_matrix_Zhs (void){
   check_ready(__FILE__,__FUNCTION__,__LINE__);
-  if ( ! _Zhs){
-    _Zhs = new SGTELIB::Matrix(get_matrix_Zs());
+  if ( ! Z_Zhs){
+    Z_Zhs = new SGTELIB::Matrix(get_matrix_Zs());
   }
-  return _Zhs;
+  return Z_Zhs;
 }//
 
 /*--------------------------------------*/
@@ -150,10 +150,10 @@ const SGTELIB::Matrix * SGTELIB::Surrogate_CN::get_matrix_Zhs (void){
 /*--------------------------------------*/
 const SGTELIB::Matrix * SGTELIB::Surrogate_CN::get_matrix_Shs (void){
   check_ready(__FILE__,__FUNCTION__,__LINE__);
-  if ( ! _Shs){
-    _Shs = new SGTELIB::Matrix("Shs",_p,_m);
+  if ( ! S_Shs){
+    S_Shs = new SGTELIB::Matrix("Shs",_p,_m);
   }
-  return _Shs;
+  return S_Shs;
 }//
 
 
@@ -163,7 +163,7 @@ const SGTELIB::Matrix * SGTELIB::Surrogate_CN::get_matrix_Shs (void){
 const SGTELIB::Matrix * SGTELIB::Surrogate_CN::get_matrix_Zvs (void){
   check_ready(__FILE__,__FUNCTION__,__LINE__);
   compute_cv_values();
-  return _Zvs;
+  return Z_Zvs;
 }//
 
 /*--------------------------------------*/
@@ -172,7 +172,7 @@ const SGTELIB::Matrix * SGTELIB::Surrogate_CN::get_matrix_Zvs (void){
 const SGTELIB::Matrix * SGTELIB::Surrogate_CN::get_matrix_Svs (void){
   check_ready(__FILE__,__FUNCTION__,__LINE__);
   compute_cv_values();
-  return _Svs;
+  return S_Svs;
 }//
 
 

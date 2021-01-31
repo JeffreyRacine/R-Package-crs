@@ -68,7 +68,7 @@ _ready        ( false       )
     {
         if ( ! (_p.get_SGTELIB_MODEL_FEASIBILITY() == NOMAD::SGTELIB_MODEL_FEASIBILITY_C) )
         {
-	  NOMAD::rout << "ERROR : Formulations FS and EIS can only be used with FeasibilityMethod C" << std::endl;   //zhenghua
+	  NOMAD::rout << "ERROR : Formulations FS and EIS can only be used with FeasibilityMethod C" << std::endl;  //zhenghua
             throw SGTELIB::Exception ( __FILE__ , __LINE__ ,
                                       "Sgtelib_Model_Manager: SGTELIB_MODEL_FEASIBILITY not valid." );
         }
@@ -95,7 +95,7 @@ _ready        ( false       )
             _nb_models = 2;
             break;
         case NOMAD::SGTELIB_MODEL_FEASIBILITY_UNDEFINED:
-	  NOMAD::rout << "UNDEFINED_SGTELIB_MODEL_FEASIBILITY" << std::endl;  //zhenghua
+	  NOMAD::rout<< "UNDEFINED_SGTELIB_MODEL_FEASIBILITY" << std::endl;  //zhenghua
             break;
     }
     
@@ -307,15 +307,7 @@ void NOMAD::Sgtelib_Model_Manager::update(void)
             for ( int j=0 ; j < _p.get_bb_nb_outputs() ; j++)
             {
                 // test on valid f (needed below)
-<<<<<<< HEAD
-<<<<<<< HEAD
                 if ( ( !cur->get_bb_outputs()[j].is_defined() ) || ( crs_isnan(cur->get_bb_outputs()[j].value()) ) || !cur->is_eval_ok() || !cur->get_f().is_defined() )
-=======
-                if ( ( !cur->get_bb_outputs()[j].is_defined() ) || ( isnan(cur->get_bb_outputs()[j].value()) ) || !cur->is_eval_ok() || !cur->get_f().is_defined() )
->>>>>>> 8d7a7ae9b270f08018a9e712de36391272212626
-=======
-                if ( ( !cur->get_bb_outputs()[j].is_defined() ) || ( isnan(cur->get_bb_outputs()[j].value()) ) || !cur->is_eval_ok() || !cur->get_f().is_defined() )
->>>>>>> 8d7a7ae9b270f08018a9e712de36391272212626
                     valid_point = false;
             }
             
@@ -486,7 +478,7 @@ NOMAD::Point NOMAD::Sgtelib_Model_Manager::get_extended_lb(void)
     for ( int i=0 ; i < _p.get_dimension() ; i++ )
     {
         vi = _p.get_lower_bound().get_coord(i);
-        if ( ( ! vi.is_defined() ) || ( isnan(vi.value() ) ) )
+        if ( ( ! vi.is_defined() ) || ( crs_isnan(vi.value() ) ) )
             ext_lb[i] = _model_lb[i] - max(Double(10.0),_model_ub[i]-_model_lb[i]);
     }
     return ext_lb;
@@ -499,7 +491,7 @@ NOMAD::Point NOMAD::Sgtelib_Model_Manager::get_extended_ub(void)
     for ( int i = 0 ; i < _p.get_dimension() ; i++ )
     {
         vi = _p.get_upper_bound().get_coord(i);
-        if ( (!vi.is_defined()) || (isnan(vi.value())) )
+        if ( (!vi.is_defined()) || (crs_isnan(vi.value())) )
             ext_ub[i] = _model_ub[i] + max(Double(10.0),_model_ub[i]-_model_lb[i]);
     }
     return ext_ub;
@@ -966,7 +958,7 @@ bool NOMAD::Sgtelib_Model_Manager::eval_x ( NOMAD::Eval_Point   * x          ,
         }
         out << "Exclusion area penalty = " << penalty << std::endl;
         out << "Model Output = (" << x->get_bb_outputs() << ")" << std::endl;
-        if ( isnan( pf.value() ) || isnan( pi.value() ) )
+        if ( crs_isnan( pf.value() ) || crs_isnan( pi.value() ) )
         {
             throw SGTELIB::Exception ( __FILE__ , __LINE__ ,
                                       "Sgtelib_Model_Manager::eval_x: nan values in pi or pf." );

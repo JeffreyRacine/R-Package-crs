@@ -32,12 +32,12 @@ SGTELIB::Surrogate_PRS::Surrogate_PRS ( SGTELIB::TrainingSet & trainingset,
                                         SGTELIB::Surrogate_Parameters param) :
   SGTELIB::Surrogate ( trainingset , param ),
   _q                 ( 0           ),
-  _M                 ( "M",0,0     ),
-  _H                 ( "H",0,0     ),
-  _Ai                ( "Ai",0,0    ),
+  M_M                 ( "M",0,0     ),
+  H_H                 ( "H",0,0     ),
+  Ai_Ai                ( "Ai",0,0    ),
   _alpha             ( "alpha",0,0 ){
   #ifdef SGTELIB_DEBUG
-    std::cout << "constructor PRS\n";
+    SGTELIB::rout << "constructor PRS\n";
   #endif
 }//
 
@@ -74,10 +74,10 @@ bool SGTELIB::Surrogate_PRS::build_private ( void ) {
   if ( (_q>pvar-1) && (_param.get_ridge()==0) ) return false;
 
   // Compute the exponents of the basis functions
-  _M = get_PRS_monomes(nvar,_param.get_degree());
+  M_M = get_PRS_monomes(nvar,_param.get_degree());
 
   // DESIGN MATRIX H
-  _H = compute_design_matrix ( _M , get_matrix_Xs() );
+  H_H = compute_design_matrix ( M_M , get_matrix_Xs() );
 
   // Compute alpha
   if ( !  compute_alpha()) return false;
@@ -137,7 +137,7 @@ const SGTELIB::Matrix SGTELIB::Surrogate_PRS::compute_design_matrix ( const SGTE
 /*--------------------------------------*/
 bool SGTELIB::Surrogate_PRS::compute_alpha ( void ){
 
-  const SGTELIB::Matrix   Ht = _H.transpose();
+  const SGTELIB::Matrix   Ht = H_H.transpose();
   const SGTELIB::Matrix & Zs = get_matrix_Zs();
 
   // Ridge
@@ -145,15 +145,15 @@ bool SGTELIB::Surrogate_PRS::compute_alpha ( void ){
 
   // COMPUTE COEFS
   if (r>0){
-    //_Ai = (Ht*_H+r*SGTELIB::Matrix::identity(_q)).SVD_inverse();
-    _Ai = (Ht*_H+r*SGTELIB::Matrix::identity(_q)).cholesky_inverse();
+    //_Ai = (Ht*H_H+r*SGTELIB::Matrix::identity(_q)).SVD_inverse();
+    Ai_Ai = (Ht*H_H+r*SGTELIB::Matrix::identity(_q)).cholesky_inverse();
   }
   else{
-    //_Ai = (Ht*_H).SVD_inverse();
-    _Ai = (Ht*_H).cholesky_inverse();
+    //Ai_Ai = (Ht*H_H).SVD_inverse();
+    Ai_Ai = (Ht*H_H).cholesky_inverse();
   }
 
-  _alpha = _Ai * (Ht * Zs);
+  _alpha = Ai_Ai * (Ht * Zs);
   _alpha.set_name("alpha");
   if (_alpha.has_nan()){
     return false;
@@ -167,7 +167,7 @@ bool SGTELIB::Surrogate_PRS::compute_alpha ( void ){
 void SGTELIB::Surrogate_PRS::predict_private ( const SGTELIB::Matrix & XXs,
                                                      SGTELIB::Matrix * ZZs ) {
   check_ready(__FILE__,__FUNCTION__,__LINE__);
-  *ZZs = compute_design_matrix(_M,XXs) * _alpha;
+  *ZZs = compute_design_matrix(M_M,XXs) * _alpha;
 }//
 
 /*--------------------------------------*/
@@ -176,19 +176,19 @@ void SGTELIB::Surrogate_PRS::predict_private ( const SGTELIB::Matrix & XXs,
 const SGTELIB::Matrix * SGTELIB::Surrogate_PRS::get_matrix_Zvs (void){
   check_ready(__FILE__,__FUNCTION__,__LINE__);
   // Not necessary. Zv is computed in "build".
-  if ( !  _Zvs){
-    _Zvs = new SGTELIB::Matrix;
+  if ( !  Z_Zvs){
+    Z_Zvs = new SGTELIB::Matrix;
     // Projection matrix
     const SGTELIB::Matrix & Zs = get_matrix_Zs();
-    SGTELIB::Matrix dPiPZs = SGTELIB::Matrix::get_matrix_dPiPZs(_Ai,_H,Zs);
+    SGTELIB::Matrix dPiPZs = SGTELIB::Matrix::get_matrix_dPiPZs(Ai_Ai,H_H,Zs);
 
     // dPi is the inverse of the diag of P 
     // Compute _Zv = Zs - dPi*P*Zs
-    *_Zvs = Zs - dPiPZs;
-    _Zvs->replace_nan(+INF);
-    _Zvs->set_name("Zvs");
+    *Z_Zvs = Zs - dPiPZs;
+    Z_Zvs->replace_nan(+INF);
+    Z_Zvs->set_name("Zvs");
   }
-  return _Zvs;
+  return Z_Zvs;
 }//
 
 

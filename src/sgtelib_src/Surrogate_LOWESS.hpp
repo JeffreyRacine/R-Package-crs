@@ -43,16 +43,16 @@ namespace SGTELIB {
     int _q; // Number of basis functions
     int _q_old; 
     int _degree; // Degree of local regression
-    double ** _H; // Design matrix
-    double *  _W; // Weights of each observation
-    double ** _A; // Matrix of the linear system (and preconditionner)
-    double ** _HWZ; // Second term
+    double ** H_H; // Design matrix
+    double *  W_W; // Weights of each observation
+    double ** A_A; // Matrix of the linear system (and preconditionner)
+    double ** HWZ_HWZ; // Second term
     double * _u; // First line of inverse of A
     double * _old_u; // Last value of gamma
     double * _old_x; // Last value of x
     bool * _x_multiple;
 
-    SGTELIB::Matrix _ZZsi; // Outputs for one point (buffer)
+    SGTELIB::Matrix ZZsi_ZZsi; // Outputs for one point (buffer)
 
     // init and build model (private):
     virtual bool init_private (void);

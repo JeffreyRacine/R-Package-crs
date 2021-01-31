@@ -32,7 +32,7 @@ SGTELIB::Surrogate_KS::Surrogate_KS ( SGTELIB::TrainingSet & trainingset,
                                       SGTELIB::Surrogate_Parameters param) :
   SGTELIB::Surrogate ( trainingset , param  ) {
   #ifdef SGTELIB_DEBUG
-    std::cout << "constructor KS\n";
+    SGTELIB::rout << "constructor KS\n";
   #endif
 }//
 
@@ -140,14 +140,14 @@ const SGTELIB::Matrix * SGTELIB::Surrogate_KS::get_matrix_Zvs (void){
   check_ready(__FILE__,__FUNCTION__,__LINE__);
 
   // Check that it's NULL
-  if (  !  _Zvs ){
+  if (  !  Z_Zvs ){
 
     #ifdef SGTELIB_DEBUG
-      std::cout << "Compute _Zvs\n";
+      SGTELIB::rout << "Compute _Zvs\n";
     #endif
 
     // Init the matrix
-    _Zvs = new SGTELIB::Matrix("Zvs",_p,_m);
+    Z_Zvs = new SGTELIB::Matrix("Zvs",_p,_m);
 
     // i : index of point of the trainingset
     // j : index of an output of the trainingset
@@ -231,14 +231,14 @@ const SGTELIB::Matrix * SGTELIB::Surrogate_KS::get_matrix_Zvs (void){
         }// End of special case for computation of z
 
         // Affectation of the CV prediction
-        _Zvs->set(iv,j,z);
+        Z_Zvs->set(iv,j,z);
       }
 
     }
-    _Zvs->replace_nan(+INF);
-    _Zvs->set_name("Zvs");
+    Z_Zvs->replace_nan(+INF);
+    Z_Zvs->set_name("Zvs");
   }
-  return _Zvs;
+  return Z_Zvs;
 
 }//
 
@@ -250,10 +250,10 @@ const SGTELIB::Matrix * SGTELIB::Surrogate_KS::get_matrix_Zhs (void){
   check_ready(__FILE__,__FUNCTION__,__LINE__);
 
   // Check that it's NULL
-  if (  !  _Zhs ){
+  if (  !  Z_Zhs ){
 
     #ifdef SGTELIB_DEBUG
-      std::cout << "Compute _Zhs\n";
+      SGTELIB::rout << "Compute _Zhs\n";
     #endif
 
     int ixx,j;
@@ -264,7 +264,7 @@ const SGTELIB::Matrix * SGTELIB::Surrogate_KS::get_matrix_Zhs (void){
     SGTELIB::Matrix wZ;
 
     // Init the matrix
-    _Zhs = new SGTELIB::Matrix("Zhs",_p,_m);
+    Z_Zhs = new SGTELIB::Matrix("Zhs",_p,_m);
 
     // Construction of the phi matrix
     double ks = _param.get_kernel_coef() / _trainingset.get_Ds_mean();
@@ -281,16 +281,16 @@ const SGTELIB::Matrix * SGTELIB::Surrogate_KS::get_matrix_Zhs (void){
         phi_ixx = phi.get_row(ixx);
         w = phi_ixx.sum();
         wZ = phi_ixx*Zs;
-        _Zhs->set_row( wZ/w , ixx );
+        Z_Zhs->set_row( wZ/w , ixx );
       }
 
     }
 
-    _Zhs->replace_nan(+INF);
-    _Zhs->set_name("Zhs"); 
+    Z_Zhs->replace_nan(+INF);
+    Z_Zhs->set_name("Zhs"); 
 
   }
-  return _Zhs;
+  return Z_Zhs;
 
 }//
 

@@ -37,7 +37,7 @@ SGTELIB::Surrogate_Ensemble::Surrogate_Ensemble ( SGTELIB::TrainingSet & trainin
   _metric            ( new double [_m] ){
 
   #ifdef ENSEMBLE_DEBUG
-    std::cout << "constructor Ensemble 1\n";
+    SGTELIB::rout << "constructor Ensemble 1\n";
   #endif
   // Init Model list
   model_list_preset(_param.get_preset());
@@ -178,13 +178,13 @@ void SGTELIB::Surrogate_Ensemble::model_list_add ( const std::string & definitio
 /*--------------------------------------*/
 bool SGTELIB::Surrogate_Ensemble::init_private ( void ) {
   #ifdef SGTELIB_DEBUG
-    std::cout << "Surrogate_Ensemble : init_private\n";
+    SGTELIB::rout << "Surrogate_Ensemble : init_private\n";
   #endif
 
   // Need at least 2 surrogates
   if (_kmax<=1){
     #ifdef ENSEMBLE_DEBUG
-      std::cout << "Surrogate_Ensemble : _kmax : " << _kmax << "\n";
+      SGTELIB::rout << "Surrogate_Ensemble : _kmax : " << _kmax << "\n";
     #endif
     return false;
   }
@@ -194,17 +194,17 @@ bool SGTELIB::Surrogate_Ensemble::init_private ( void ) {
   int k;
   for (k=0 ; k<_kmax ; k++){
     #ifdef ENSEMBLE_DEBUG
-      std::cout << "Init model " << k << "/" << _kmax << ": " << _surrogates.at(k)->get_short_string();
+      SGTELIB::rout << "Init model " << k << "/" << _kmax << ": " << _surrogates.at(k)->get_short_string();
     #endif
     if (_surrogates.at(k)->build()){
       _kready++;
       #ifdef ENSEMBLE_DEBUG
-        std::cout << " (ready)\n";
+        SGTELIB::rout << " (ready)\n";
       #endif
     }
   }  
   #ifdef ENSEMBLE_DEBUG
-    std::cout << "Surrogate_Ensemble : _kready/_kmax : " << _kready << "/" << _kmax << "\n";
+    SGTELIB::rout << "Surrogate_Ensemble : _kready/_kmax : " << _kready << "/" << _kmax << "\n";
   #endif
 
 
@@ -226,7 +226,7 @@ bool SGTELIB::Surrogate_Ensemble::init_private ( void ) {
 bool SGTELIB::Surrogate_Ensemble::build_private ( void ) {
 
   #ifdef ENSEMBLE_DEBUG
-    std::cout << "Surrogate_Ensemble : build_private\n";
+    SGTELIB::rout << "Surrogate_Ensemble : build_private\n";
   #endif
 
   int k;
@@ -245,7 +245,7 @@ bool SGTELIB::Surrogate_Ensemble::build_private ( void ) {
     case SGTELIB::WEIGHT_OPTIM:
     case SGTELIB::WEIGHT_EXTERN:
       #ifdef ENSEMBLE_DEBUG
-        std::cout << "Weight corrections\n";
+        SGTELIB::rout << "Weight corrections\n";
       #endif
       {
       SGTELIB::Matrix W = _param.get_weight();
@@ -268,7 +268,7 @@ bool SGTELIB::Surrogate_Ensemble::build_private ( void ) {
 
   if (check_weight_vector()){
     #ifdef ENSEMBLE_DEBUG
-      std::cout << "Weights non valid\n";
+      SGTELIB::rout << "Weights non valid\n";
     #endif
     _ready = false;
     return false;
@@ -284,7 +284,7 @@ bool SGTELIB::Surrogate_Ensemble::build_private ( void ) {
 
 
   #ifdef ENSEMBLE_DEBUG
-    std::cout << "Surrogate_Ensemble : end build_private\n";
+    SGTELIB::rout << "Surrogate_Ensemble : end build_private\n";
   #endif
 
 
@@ -388,7 +388,7 @@ void SGTELIB::Surrogate_Ensemble::compute_W_by_select ( void ) {
 void SGTELIB::Surrogate_Ensemble::compute_W_by_wta1 ( void ) {
 
   #ifdef ENSEMBLE_DEBUG
-    std::cout << "SGTELIB::Surrogate_Ensemble::compute_W_by_wta1\n"; 
+    SGTELIB::rout << "SGTELIB::Surrogate_Ensemble::compute_W_by_wta1\n"; 
   #endif
 
   // Init Weight matrix
@@ -450,7 +450,7 @@ void SGTELIB::Surrogate_Ensemble::compute_W_by_wta1 ( void ) {
 void SGTELIB::Surrogate_Ensemble::compute_W_by_wta3 ( void ) {
 
   #ifdef ENSEMBLE_DEBUG
-    std::cout << "SGTELIB::Surrogate_Ensemble::compute_W_by_wta3\n";
+    SGTELIB::rout << "SGTELIB::Surrogate_Ensemble::compute_W_by_wta3\n";
   #endif
 
   // Init Weight matrix
@@ -675,13 +675,13 @@ void SGTELIB::Surrogate_Ensemble::predict_private ( const SGTELIB::Matrix & XXs,
 /*       get_matrix_Zvs                 */
 /*--------------------------------------*/
 const SGTELIB::Matrix * SGTELIB::Surrogate_Ensemble::get_matrix_Zvs (void){
-  if ( ! _Zvs){
+  if ( ! Z_Zvs){
     #ifdef ENSEMBLE_DEBUG
       check_ready(__FILE__,__FUNCTION__,__LINE__);
     #endif
     const SGTELIB::Matrix W = _param.get_weight(); 
-    _Zvs = new SGTELIB::Matrix("Zv",_p,_m);
-    _Zvs->fill(0.0);
+    Z_Zvs = new SGTELIB::Matrix("Zv",_p,_m);
+    Z_Zvs->fill(0.0);
     int i,j;
     double wkj;
 
@@ -693,31 +693,31 @@ const SGTELIB::Matrix * SGTELIB::Surrogate_Ensemble::get_matrix_Zvs (void){
           wkj = W.get(k,j);
           if (wkj>0){
             for ( i=0 ; i<_p ; i++){
-              _Zvs->add(i,j,  wkj*Zvs_k->get(i,j) );
+              Z_Zvs->add(i,j,  wkj*Zvs_k->get(i,j) );
             }
           }
         }// end loop j
       }// end if ready
     }//end loop k
 
-    _Zvs->set_name("Zvs");
-    _Zvs->replace_nan(+INF);
+    Z_Zvs->set_name("Zvs");
+    Z_Zvs->replace_nan(+INF);
 
   }
-  return _Zvs;
+  return Z_Zvs;
 }//
 
 /*--------------------------------------*/
 /*       get_matrix_Zhs                 */
 /*--------------------------------------*/
 const SGTELIB::Matrix * SGTELIB::Surrogate_Ensemble::get_matrix_Zhs (void){
-  if ( ! _Zhs){
+  if ( ! Z_Zhs){
     #ifdef ENSEMBLE_DEBUG
       check_ready(__FILE__,__FUNCTION__,__LINE__);
     #endif
     const SGTELIB::Matrix W = _param.get_weight();
-    _Zhs = new SGTELIB::Matrix("Zv",_p,_m);
-    _Zhs->fill(0.0);
+    Z_Zhs = new SGTELIB::Matrix("Zv",_p,_m);
+    Z_Zhs->fill(0.0);
     int i,j;
     double wkj;
 
@@ -729,28 +729,28 @@ const SGTELIB::Matrix * SGTELIB::Surrogate_Ensemble::get_matrix_Zhs (void){
           wkj = W.get(k,j);
           if (wkj>0){
             for ( i=0 ; i<_p ; i++){
-              _Zhs->add(i,j,  wkj*Zhs_k->get(i,j) );
+              Z_Zhs->add(i,j,  wkj*Zhs_k->get(i,j) );
             }
           }
         }// end loop j
       }// end if ready
     }//end loop k
 
-    _Zhs->set_name("Zhs");
-    _Zhs->replace_nan(+INF);
+    Z_Zhs->set_name("Zhs");
+    Z_Zhs->replace_nan(+INF);
 
   }
-  return _Zhs;
+  return Z_Zhs;
 }//
 
 /*--------------------------------------*/
 /*       get_matrix_Shs                 */
 /*--------------------------------------*/
 const SGTELIB::Matrix * SGTELIB::Surrogate_Ensemble::get_matrix_Shs (void){
-  if ( ! _Shs){
+  if ( ! S_Shs){
     const SGTELIB::Matrix W = _param.get_weight();
-    _Shs = new SGTELIB::Matrix("Zv",_p,_m);
-    _Shs->fill(0.0);
+    S_Shs = new SGTELIB::Matrix("Zv",_p,_m);
+    S_Shs->fill(0.0);
     SGTELIB::Matrix col ("col",_p,1);
 
     int i,j;
@@ -765,7 +765,7 @@ const SGTELIB::Matrix * SGTELIB::Surrogate_Ensemble::get_matrix_Shs (void){
           wkj = W.get(k,j);
           if (wkj>0){
             for ( i=0 ; i<_p ; i++){
-              _Shs->add(i,j,  wkj*( pow(Shs_k->get(i,j),2) + pow(Zhs_k->get(i,j),2) ) );
+              S_Shs->add(i,j,  wkj*( pow(Shs_k->get(i,j),2) + pow(Zhs_k->get(i,j),2) ) );
             }
           }
         }// end loop j
@@ -773,14 +773,14 @@ const SGTELIB::Matrix * SGTELIB::Surrogate_Ensemble::get_matrix_Shs (void){
     }//end loop k
 
     const SGTELIB::Matrix * Zhs = get_matrix_Zhs();
-    _Shs->sub( Matrix::hadamard_square( *Zhs ) );
-    _Shs->hadamard_sqrt();
+    S_Shs->sub( Matrix::hadamard_square( *Zhs ) );
+    S_Shs->hadamard_sqrt();
 
-    _Shs->set_name("Shs");
-    _Shs->replace_nan(+INF);
+    S_Shs->set_name("Shs");
+    S_Shs->replace_nan(+INF);
 
   }
-  return _Shs;
+  return S_Shs;
 }//
 
 
@@ -914,7 +914,7 @@ void SGTELIB::Surrogate_Ensemble::model_list_preset ( const std::string & preset
 
 
     #ifdef ENSEMBLE_DEBUG
-      std::cout << "Build model list\n";
+      SGTELIB::rout << "Build model list\n";
     #endif
 
     model_list_remove_all();
@@ -1053,7 +1053,7 @@ void SGTELIB::Surrogate_Ensemble::model_list_preset ( const std::string & preset
     }  
 
     #ifdef ENSEMBLE_DEBUG
-      std::cout << "END Build model list\n";
+      SGTELIB::rout << "END Build model list\n";
     #endif
 
 }//

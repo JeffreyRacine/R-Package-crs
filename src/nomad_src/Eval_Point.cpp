@@ -532,15 +532,7 @@ bool NOMAD::Eval_Point::check_nan ( void ) const
     {
         if ( _bb_outputs[i].is_defined() ) 
         {
-<<<<<<< HEAD
-<<<<<<< HEAD
             if ( crs_isnan ( _bb_outputs[i].value() ) )
-=======
-            if ( isnan ( _bb_outputs[i].value() ) )
->>>>>>> 8d7a7ae9b270f08018a9e712de36391272212626
-=======
-            if ( isnan ( _bb_outputs[i].value() ) )
->>>>>>> 8d7a7ae9b270f08018a9e712de36391272212626
                 return true;
         }
     }

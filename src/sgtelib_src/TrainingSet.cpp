@@ -116,7 +116,7 @@ SGTELIB::TrainingSet::TrainingSet ( const TrainingSet & C ) :
 /*               info (debug)           */
 /*--------------------------------------*/
 void SGTELIB::TrainingSet::info (void) const{
-  std::cout << "   ## ## TrainingSet::info  " << this << " " << _ready << " " << _p << "\n";
+  SGTELIB::rout << "   ## ## TrainingSet::info  " << this << " " << _ready << " " << _p << "\n";
 }
 
 /*--------------------------------------*/
@@ -124,7 +124,7 @@ void SGTELIB::TrainingSet::info (void) const{
 /*--------------------------------------*/
 SGTELIB::TrainingSet::~TrainingSet ( void ) {
   #ifdef SGTELIB_DEBUG
-    std::cout << "   ## ## Delete TrainingSet " << this << "\n";
+    SGTELIB::rout << "   ## ## Delete TrainingSet " << this << "\n";
   #endif
   delete [] _bbo;
   delete [] X_X_lb;
@@ -167,8 +167,8 @@ void SGTELIB::TrainingSet::set_bbo_type (const std::string & line){
            "TrainingSet::set_bbo_type: _bbo must be defined before the first build." );
   }
   #ifdef SGTELIB_DEBUG
-    std::cout << "SGTELIB::TrainingSet::set_bbo_type\n";
-    std::cout << "Input string: \"" << line << "\"\n";
+    SGTELIB::rout << "SGTELIB::TrainingSet::set_bbo_type\n";
+    SGTELIB::rout << "Input string: \"" << line << "\"\n";
   #endif 
 
   std::string s;
@@ -222,9 +222,9 @@ void SGTELIB::TrainingSet::set_bbo_type (const std::string & line){
   }
 
   #ifdef SGTELIB_DEBUG
-    std::cout << "Output types:\n";
+    SGTELIB::rout << "Output types:\n";
     for (j=0 ; j<_m ; j++){
-      std::cout << j << ": " << bbo_type_to_str(_bbo[j]) << "\n";
+      SGTELIB::rout << j << ": " << bbo_type_to_str(_bbo[j]) << "\n";
     }
   #endif
 
@@ -256,7 +256,7 @@ void SGTELIB::TrainingSet::build ( void ){
 
   if ( ! _ready){
     #ifdef SGTELIB_DEBUG
-      std::cout << "TrainingSet::build BEGIN, X:(" << _p << "," << _n << ") Z:(" << _p << "," << _m << ")\n";
+      SGTELIB::rout << "TrainingSet::build BEGIN, X:(" << _p << "," << _n << ") Z:(" << _p << "," << _m << ")\n";
     #endif
 
     // Compute the number of varying input and output
@@ -294,7 +294,7 @@ void SGTELIB::TrainingSet::build ( void ){
     _ready = true;
 
     #ifdef SGTELIB_DEBUG
-      std::cout << "TrainingSet::build END\n";
+      SGTELIB::rout << "TrainingSet::build END\n";
     #endif
 
   }
@@ -310,7 +310,7 @@ void SGTELIB::TrainingSet::build ( void ){
 /*--------------------------------------*/
 void SGTELIB::TrainingSet::check_ready (void) const{
   if ( ! _ready){
-    std::cout << "TrainingSet: NOT READY!\n";
+    SGTELIB::rout << "TrainingSet: NOT READY!\n";
     throw Exception ( __FILE__ , __LINE__ , "TrainingSet::check_ready(): TrainingSet not ready. Use method TrainingSet::build()" );
   }
 }//
@@ -323,7 +323,7 @@ void SGTELIB::TrainingSet::check_ready (const std::string & file,
 /*--------------------------------------*/
 void SGTELIB::TrainingSet::check_ready (const std::string & s) const{
   if ( ! _ready){
-    std::cout << "TrainingSet: NOT READY! (" << s << ")\n";
+    SGTELIB::rout << "TrainingSet: NOT READY! (" << s << ")\n";
     throw Exception ( __FILE__ , __LINE__ , "TrainingSet::check_ready(): TrainingSet not ready. Use method TrainingSet::build()" );
   }
 }//
@@ -385,19 +385,11 @@ void SGTELIB::TrainingSet::check_singular_data ( void ){
 
   int i,j;
   bool e = false;
-  // Check that all the _X data are defined
+  // Check that all the X_X data are defined
   for ( j = 0 ; j < _n ; j++ ) {
     for ( i = 0 ; i < _p ; i++ ) {
       if ( ! isdef(X_X.get(i,j))){
-<<<<<<< HEAD
-<<<<<<< HEAD
         SGTELIB::rout << "_X(" << i << "," << j << ") = " << X_X.get(i,j) << "\n";
-=======
-        std::cout << "_X(" << i << "," << j << ") = " << X_X.get(i,j) << "\n";
->>>>>>> 8d7a7ae9b270f08018a9e712de36391272212626
-=======
-        std::cout << "_X(" << i << "," << j << ") = " << X_X.get(i,j) << "\n";
->>>>>>> 8d7a7ae9b270f08018a9e712de36391272212626
         e = true;
       }
     }
@@ -417,7 +409,7 @@ void SGTELIB::TrainingSet::check_singular_data ( void ){
     }
     // if there is more than 10 points and no correct value was found, return an error.
     if ( (_p>10) && ( ! isdef_Zj) ){
-      std::cout << "_Z(:," << j << ") has no defined value !\n";
+      SGTELIB::rout << "_Z(:," << j << ") has no defined value !\n";
       e = true; 
     }
   }
@@ -1233,7 +1225,7 @@ std::list<int> SGTELIB::TrainingSet::select_greedy ( const Matrix & X,
   const int n = X.get_nb_cols();
 
   if ( pS<3 || pS>=p ){
-    std::cout << "pS = " << pS << "\n";
+    SGTELIB::rout << "pS = " << pS << "\n";
     throw Exception ( __FILE__ , __LINE__ ,"TrainingSet::TrainingSet(): wrong value of pS" );
   }
 
@@ -1252,7 +1244,7 @@ std::list<int> SGTELIB::TrainingSet::select_greedy ( const Matrix & X,
   // Add to S
   S.push_back(imin);
   #ifdef SGTELIB_DEBUG
-    std::cout << "First point : " << imin << "\n";
+    SGTELIB::rout << "First point : " << imin << "\n";
   #endif
 
   // Select the further point from B 
@@ -1265,7 +1257,7 @@ std::list<int> SGTELIB::TrainingSet::select_greedy ( const Matrix & X,
   // Add to S
   S.push_back(inew);
   #ifdef SGTELIB_DEBUG
-    std::cout << "Second point : " << inew << "\n";
+    SGTELIB::rout << "Second point : " << inew << "\n";
   #endif
   
   // As B is in S, we can take the min of both distances
@@ -1273,7 +1265,7 @@ std::list<int> SGTELIB::TrainingSet::select_greedy ( const Matrix & X,
 
   // Compute lambda init :
   #ifdef SGTELIB_DEBUG
-    std::cout << "Compute lambda init\n";
+    SGTELIB::rout << "Compute lambda init\n";
   #endif
   double lambda = 0;
   if (lambda0!=0){
@@ -1288,20 +1280,20 @@ std::list<int> SGTELIB::TrainingSet::select_greedy ( const Matrix & X,
 
   // Iterative selection
   #ifdef SGTELIB_DEBUG
-    std::cout << "Start greedy selection (S.size / pS = " << S.size() << " / " << pS << ")\n";
+    SGTELIB::rout << "Start greedy selection (S.size / pS = " << S.size() << " / " << pS << ")\n";
   #endif
   while ((int) S.size() < pS){
     #ifdef SGTELIB_DEBUG
-      std::cout << "New iteration with lambda = " << lambda << "\n";
-      (dS-lambda*dB).display(std::cout);
+      SGTELIB::rout << "New iteration with lambda = " << lambda << "\n";
+      (dS-lambda*dB).display(SGTELIB::rout);
     #endif
     inew = (dS-lambda*dB).get_max_index();
     #ifdef SGTELIB_DEBUG
-      std::cout << "inew : " << inew << "\n";
+      SGTELIB::rout << "inew : " << inew << "\n";
     #endif
     if (dS.get(inew)==0){
       #ifdef SGTELIB_DEBUG
-        std::cout << "dS(inew) == 0 !\n";
+        SGTELIB::rout << "dS(inew) == 0 !\n";
       #endif
       // Update lambda
       lambda *= 0.99;
@@ -1309,7 +1301,7 @@ std::list<int> SGTELIB::TrainingSet::select_greedy ( const Matrix & X,
     }
     else{
       #ifdef SGTELIB_DEBUG
-        std::cout << "Add point " << inew << " to set\n";
+        SGTELIB::rout << "Add point " << inew << " to set\n";
       #endif
       // Add index in S
       S.push_back(inew);
@@ -1396,8 +1388,8 @@ void SGTELIB::TrainingSet::display ( std::ostream & out ) const {
       out << Z_Z_scaling_b[j]     <<"|\n";
     }
     out << "------------------------------------------------------------------------------------\n";
-    std::cout << "fs_min: " << _fs_min << "\n";
-    std::cout << "f_min:  " << _f_min << "\n";
+    SGTELIB::rout << "fs_min: " << _fs_min << "\n";
+    SGTELIB::rout << "f_min:  " << _f_min << "\n";
   }
 
 

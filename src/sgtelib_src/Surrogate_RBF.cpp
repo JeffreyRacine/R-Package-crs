@@ -42,7 +42,7 @@ SGTELIB::Surrogate_RBF::Surrogate_RBF ( SGTELIB::TrainingSet & trainingset,
   _Alpha             ( "alpha",0,0         ),
   _selected_kernel   (1,-1                 ){
   #ifdef SGTELIB_DEBUG
-    std::cout << "constructor RBF\n";
+    SGTELIB::rout << "constructor RBF\n";
   #endif
 }//
 
@@ -72,7 +72,7 @@ void SGTELIB::Surrogate_RBF::display_private ( std::ostream & out ) const {
 bool SGTELIB::Surrogate_RBF::init_private ( void ) {
 
   #ifdef SGTELIB_DEBUG
-    std::cout << "Surrogate_RBF : init_private\n";
+    SGTELIB::rout << "Surrogate_RBF : init_private\n";
   #endif
 
   const int pvar = _trainingset.get_pvar();
@@ -111,7 +111,7 @@ bool SGTELIB::Surrogate_RBF::init_private ( void ) {
     else if (dmin==0 ) _qprs = 1;
     else if (dmin==1 ) _qprs = 1 + _trainingset.get_nvar(); 
     else{
-      std::cout << "dmin = " << dmin << "\n";
+      SGTELIB::rout << "dmin = " << dmin << "\n";
       throw SGTELIB::Exception ( __FILE__ , __LINE__ ,"dmin out of range." );
     }
   }
@@ -272,10 +272,10 @@ void SGTELIB::Surrogate_RBF::predict_private ( const SGTELIB::Matrix & XXs,
 /*--------------------------------------*/
 const SGTELIB::Matrix * SGTELIB::Surrogate_RBF::get_matrix_Zvs (void){
   check_ready(__FILE__,__FUNCTION__,__LINE__);
-  if ( ! _Zvs){
+  if ( ! Z_Zvs){
 
     // Init _Zvs
-    _Zvs = new SGTELIB::Matrix;
+    Z_Zvs = new SGTELIB::Matrix;
     const SGTELIB::Matrix & Zs = get_matrix_Zs();
 
     if ( string_find(_param.get_preset(),"O") ){
@@ -284,7 +284,7 @@ const SGTELIB::Matrix * SGTELIB::Surrogate_RBF::get_matrix_Zvs (void){
       //============================================
       SGTELIB::Matrix dAiAlpha = SGTELIB::Matrix::diagA_product(_Ai.diag_inverse(),_Alpha);
       dAiAlpha.remove_rows(_qprs);
-      *_Zvs = Zs-dAiAlpha;
+      *Z_Zvs = Zs-dAiAlpha;
     }
     else{
       //SGTELIB::Matrix dPiPZs    = SGTELIB::Matrix::get_matrix_dPiPZs(_Ai,_H,Zs);
@@ -292,12 +292,12 @@ const SGTELIB::Matrix * SGTELIB::Surrogate_RBF::get_matrix_Zvs (void){
     
       // dPi is the inverse of the diag of P 
       // Compute _Zv = Zs - dPi*P*Zs
-      *_Zvs = Zs - dPiPZs;
+      *Z_Zvs = Zs - dPiPZs;
     }
 
-    _Zvs->replace_nan(+INF);
-    _Zvs->set_name("Zvs");
+    Z_Zvs->replace_nan(+INF);
+    Z_Zvs->set_name("Zvs");
 
   }
-  return _Zvs;
+  return Z_Zvs;
 }//

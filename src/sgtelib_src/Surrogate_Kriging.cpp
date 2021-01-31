@@ -39,7 +39,7 @@ SGTELIB::Surrogate_Kriging::Surrogate_Kriging ( SGTELIB::TrainingSet & trainings
   _beta              ( "beta",0,0          ),
   _var               ( "var",0,0           ){
   #ifdef SGTELIB_DEBUG
-    std::cout << "constructor Kriging\n";
+    SGTELIB::rout << "constructor Kriging\n";
   #endif
 
 }//
@@ -67,7 +67,7 @@ void SGTELIB::Surrogate_Kriging::display_private ( std::ostream & out ) const {
 /*--------------------------------------*/
 bool SGTELIB::Surrogate_Kriging::init_private ( void ) {
   #ifdef SGTELIB_DEBUG
-    std::cout << "Surrogate_Kriging : init_private\n";
+    SGTELIB::rout << "Surrogate_Kriging : init_private\n";
   #endif
   return true;
 }//
@@ -95,7 +95,7 @@ bool SGTELIB::Surrogate_Kriging::build_private ( void ) {
   }
 
 
-  //std::cout << "detR = "<< _detR << "\n";
+  //SGTELIB::rout << "detR = "<< _detR << "\n";
   const SGTELIB::Matrix HRi  = _H.transpose()*_Ri;
   const SGTELIB::Matrix HRiH = HRi*_H;
   _beta = HRiH.cholesky_inverse() * HRi * Zs;
@@ -256,7 +256,7 @@ void SGTELIB::Surrogate_Kriging::predict_private (const SGTELIB::Matrix & XXs,
 bool SGTELIB::Surrogate_Kriging::compute_cv_values (void){
   check_ready(__FILE__,__FUNCTION__,__LINE__);
 
-  if ((_Zvs) && (_Svs)) return true;
+  if ((Z_Zvs) && (S_Svs)) return true;
 
   const SGTELIB::Matrix & Zs = get_matrix_Zs();
   const SGTELIB::Matrix RiH = _Ri*_H;
@@ -264,24 +264,24 @@ bool SGTELIB::Surrogate_Kriging::compute_cv_values (void){
   const SGTELIB::Matrix dQ = Q.diag_inverse();
   
   // Init matrices
-  if ( !  _Zvs){
-    _Zvs = new SGTELIB::Matrix;
-    *_Zvs = Zs - SGTELIB::Matrix::diagA_product(dQ,Q)*Zs;
-    _Zvs->replace_nan(+INF);
-    _Zvs->set_name("Zvs");
+  if ( !  Z_Zvs){
+    Z_Zvs = new SGTELIB::Matrix;
+    *Z_Zvs = Zs - SGTELIB::Matrix::diagA_product(dQ,Q)*Zs;
+    Z_Zvs->replace_nan(+INF);
+    Z_Zvs->set_name("Zvs");
   }
     
-  if ( !  _Svs){
-    _Svs = new SGTELIB::Matrix ("Svs",_p,_m);
+  if ( !  S_Svs){
+    S_Svs = new SGTELIB::Matrix ("Svs",_p,_m);
     double q;
     for (int i=0 ; i<_p ; i++){
       q = dQ.get(i,i);
       for (int j=0 ; j<_m ; j++){
-        _Svs->set(i,j,sqrt(_var[j]*q));
+        S_Svs->set(i,j,sqrt(_var[j]*q));
       }
     }
-    _Svs->replace_nan(+INF);
-    _Svs->set_name("Svs");
+    S_Svs->replace_nan(+INF);
+    S_Svs->set_name("Svs");
   }
   return true;
 }//
@@ -292,11 +292,11 @@ bool SGTELIB::Surrogate_Kriging::compute_cv_values (void){
 /*--------------------------------------*/
 const SGTELIB::Matrix * SGTELIB::Surrogate_Kriging::get_matrix_Zvs (void){
   compute_cv_values();
-  return _Zvs;
+  return Z_Zvs;
 }
 const SGTELIB::Matrix * SGTELIB::Surrogate_Kriging::get_matrix_Svs (void){
   compute_cv_values();
-  return _Svs;
+  return S_Svs;
 }
 
 
@@ -307,7 +307,7 @@ void SGTELIB::Surrogate_Kriging::compute_metric_linv (void){
   check_ready(__FILE__,__FUNCTION__,__LINE__);
   if ( !is_defined(SGTELIB::METRIC_LINV) ){
     #ifdef SGTELIB_DEBUG
-      std::cout << "Compute metric linv\n";
+      SGTELIB::rout << "Compute metric linv\n";
     #endif
     SGTELIB::Matrix v = SGTELIB::Matrix("LINV",0,_m);
     for (int j=0 ; j<_m ; j++){

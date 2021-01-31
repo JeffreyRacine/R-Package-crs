@@ -42,9 +42,6 @@
 /*---------------------------------------------------------------------------------*/
 
 // Change version number
-#ifndef __NOMAD_VERSION__
-#define __NOMAD_VERSION__
-
 #define MAJOR_VER 3
 #define MINOR_VER 9
 #define REV_VER 1
@@ -53,23 +50,8 @@
 #define STR_HELPER(x) #x
 #define STR(x) STR_HELPER(x)
 
-<<<<<<< HEAD
-<<<<<<< HEAD
-
-#undef NOMAD
-#define NOMAD NOMAD ## _ ## MAJOR_VER ## _ ## MINOR_VER ## _ ## REV_VER
-=======
-//zhenghua commented the following two lines.
 //#undef NOMAD
 //#define NOMAD NOMAD ## _ ## MAJOR_VER ## _ ## MINOR_VER ## _ ## REV_VER
->>>>>>> 8d7a7ae9b270f08018a9e712de36391272212626
-=======
-//zhenghua commented the following two lines.
-//#undef NOMAD
-//#define NOMAD NOMAD ## _ ## MAJOR_VER ## _ ## MINOR_VER ## _ ## REV_VER
->>>>>>> 8d7a7ae9b270f08018a9e712de36391272212626
 
 #undef NOMAD_VERSION_NUMBER
 #define NOMAD_VERSION_NUMBER STR(MAJOR_VER) "." STR(MINOR_VER) "." STR(REV_VER)
-
-#endif
