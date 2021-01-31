@@ -102,7 +102,7 @@ void SGTELIB::Surrogate_KS::predict_private ( const SGTELIB::Matrix & XXs,
   if (Div.has_inf()){
     // Loop on the points of XXs
     for (ixx=0 ; ixx<pxx ; ixx++){
-      if ( isinf(Div.get(ixx,0)) ){
+      if ( crs_isinf(Div.get(ixx,0)) ){
         // Need to use the limit behavior of kernels
         switch (_param.get_kernel_type()){
           case SGTELIB::KERNEL_D1:
