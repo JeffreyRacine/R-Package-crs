@@ -44,8 +44,8 @@ total.
 ## Engel curve for food expenditure shares using Landweber-Fridman
 ## iteration of Fredholm integral equations of the first kind.
 
-## We consider an equation with an endogenous predictor (`z') and an
-## instrument (`w'). Let y = phi(z) + u where phi(z) is the function of
+## We consider an equation with an endogenous predictor ('z') and an
+## instrument ('w'). Let y = phi(z) + u where phi(z) is the function of
 ## interest. Here E(u|z) is not zero hence the conditional mean E(y|z)
 ## does not coincide with the function of interest, but if there exists
 ## an instrument w such that E(u|w) = 0, then we can recover the
@@ -71,7 +71,7 @@ ghat <- crs(food~logexp)
 ## (i.e. for the plotting area trim out 1/4 of one percent from each
 ## tail of y and z). This is often helpful as estimates in the tails of
 ## the support are less reliable (i.e. more variable) so we are
-## interested in examining the relationship `where the action is'.
+## interested in examining the relationship 'where the action is'.
 
 trim <- 0.0025
 

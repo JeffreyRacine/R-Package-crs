@@ -53,7 +53,7 @@ to others, kindly email me the relevant information and I will
 incorporate it into this FAQ.
 
 This FAQ refers to the most recent version, which as of this writing
-is 0.15-32. Kindly update your version should you not be using the
+is 0.15-33. Kindly update your version should you not be using the
 most current (from within R, \texttt{update.packages()} ought to do
 it, though also see \ref{update} below.). See the appendix in this
 file for cumulative changes between this and previous versions of the
@@ -72,7 +72,7 @@ be presented with the following information.
 \begin{verbatim}
 > citation("crs")
 
-To cite package `crs' in publications use:
+To cite package 'crs' in publications use:
 
   Jeffrey S. Racine and Zhenghua Nie (2018). crs: Categorical
   Regression Splines. R package version 0.15-31.
@@ -111,15 +111,15 @@ A BibTeX entry for LaTeX users is
   the \texttt{crs} package are directed to the \texttt{Ecdat} \cite{Ecdat}
   and \texttt{AER} \cite{AER} packages.
 
-  I maintain a `Gallery' to provide a forum for users to share code
+  I maintain a 'Gallery' to provide a forum for users to share code
   and discover examples and illustrations which can be found at
   \url{http://socserv.mcmaster.ca/racinej/Gallery/Home.html}.
 
   Often the best resource is right down the hall. Ask a colleague
   whether they use or know anyone who uses R, then offer to buy that
-  person a coffee and along the way drop something like ``I keep
+  person a coffee and along the way drop something like "I keep
   hearing about the \texttt{R} project\dots I feel like such a
-  Luddite\dots''
+  Luddite\dots"
 
   \subsection{\label{update}How do I keep all \texttt{R} packages on my
     system current?}
@@ -137,7 +137,7 @@ A BibTeX entry for LaTeX users is
   Certainly. The Comprehensive R Archive Network (CRAN) is a network
   of ftp and web servers around the world that store identical,
   up-to-date, versions of code and documentation for \texttt{R}.  The
-  CRAN `task view' for computational econometrics might be of
+  CRAN 'task view' for computational econometrics might be of
   particular interest to econometricians.  The econometric task view
   provides an excellent summary of both parametric and nonparametric
   econometric packages that exist for the R environment and provides
@@ -164,16 +164,16 @@ or
 update.views("Econometrics")
 \end{verbatim}
 
-\subsection{Is there a `gentle guide' to the \texttt{crs} package that
+\subsection{Is there a 'gentle guide' to the \texttt{crs} package that
     contains some easy to follow examples?}
 
   Perhaps the most gentle introduction is contained in the \texttt{crs}
-  package itself in the form of a `vignette'. To view the vignette run
+  package itself in the form of a 'vignette'. To view the vignette run
   R, install the \texttt{crs} package (\texttt{install.packages("crs")}), then
   type \texttt{vignette("crs",package="crs")} to view or print the vignette.
 
   See also \texttt{vignette("spline\_primer",package="crs")} for a vignette
-  that presents a `gentle' introduction to regression splines.
+  that presents a 'gentle' introduction to regression splines.
 
   For a listing of all routines in the \texttt{crs} package type: {\tt
     library(help="crs")}.
@@ -262,7 +262,7 @@ By default, the minimum degrees of freedom possible is set to $n-k=1$
 where $n$ is the sample size and $k$ is the trace of the basis
 matrix. This is done in order to allow for extremely complex
 relationships to be estimated. But for some situations one might not
-want to `go there' for two reasons, namely a) memory consumption and
+want to 'go there' for two reasons, namely a) memory consumption and
 b) improbable models having nearly as many predictors as observations.
 
 During the search process if you have a large number of predictors and
@@ -288,9 +288,9 @@ imposing this restriction is binding on the search process which is of
 course undesirable.
 
 \subsection{When I have a large number of regressors/data the function {\tt
-    crs} just `sits there' when conducting cross-validation via NOMAD\dots}
+    crs} just 'sits there' when conducting cross-validation via NOMAD\dots}
 
-First, if you are concerned that the code is indeed just `sitting
+First, if you are concerned that the code is indeed just 'sitting
 there', you can verify that search is progressing by changing the
 \verb+"DISPLAY_DEGREE"+ setting in the opts list along the lines of
 the following:
@@ -344,12 +344,12 @@ can be restrictive.
 Alternatively, consider kernel regression that does not suffer from
 this computational limitation (see e.g.\ the \texttt{np} package).
 
-\subsection{\label{nonsmooth}My estimated model is not `smooth' (e.g.\ cross-validation
+\subsection{\label{nonsmooth}My estimated model is not 'smooth' (e.g.\ cross-validation
   chooses, say, the spline degree=1 and number of segments=3). How can
   I modify this?}
 
 Unlike, say, smoothing splines \cite{WAHBA:1990} that penalize
-`roughness' (the second derivative of the estimate) and fix the spline
+'roughness' (the second derivative of the estimate) and fix the spline
 degree at, say, three, regression splines fitted by cross-validation
 can deliver a model that minimizes the objective function without
 regard to an ad hoc proxy for smoothness (a strength, not a weakness
@@ -384,10 +384,10 @@ no longer being present in the final model.
 
 \end{enumerate}
 
-\subsection{The crs package implements `regression splines' and
+\subsection{The crs package implements 'regression splines' and
   optimizes the spline degree and knot vector by default. But
-  `smoothing splines' \cite{WAHBA:1990} typically set the degree to
-  `cubic' and penalize roughness. Can we use \texttt{crs()}
+  'smoothing splines' \cite{WAHBA:1990} typically set the degree to
+  'cubic' and penalize roughness. Can we use \texttt{crs()}
   (i.e.\ regression splines) to mirror the cubic smoothing spline
   approach?}
 
@@ -448,7 +448,7 @@ accordingly. However, when a multivariate basis is ill-conditioned we
 apply a large penalty (\verb+sqrt(.Machine$double.xmax)+ which equals
 1.340781e+154 on most processors). Though the search process will try
 to detect a minimum it can fail here if the objective function is
-`flat' in a neighborhood of the initial values.
+'flat' in a neighborhood of the initial values.
 
 When this occurs you can either increase \verb+nmulti+ and/or decrease
 \verb+degree.max+ and restart the search.
@@ -540,8 +540,8 @@ y <- x^3 + z + rnorm(n,sd=.1)
 model <- crs(y~x+z)
 summary(model)
 \end{verbatim}
-Note in summary that you are told `There are 2 continuous predictors'
-(i.e.\ numeric predictors). Note also that the message `optimal degree
+Note in summary that you are told 'There are 2 continuous predictors'
+(i.e.\ numeric predictors). Note also that the message 'optimal degree
 equals search maximum (10): rerun with larger degree.max optimal
 degree equals search maximum (1): rerun with larger degree.max' will
 appear simply because the default maximum degree is 10 but the program
@@ -584,13 +584,13 @@ caution against doing this except when conducting exploratory data
 analysis (the objective function is typically nonsmooth and may
 possess multiple local minima).
 
-\subsection{The R function `lag()' does not work as I expect it
+\subsection{The R function 'lag()' does not work as I expect it
   to. How can I create the $l$th lag of a numeric variable in R to be
   fed to functions in the \texttt{crs} package?}
 
 You can use the \texttt{embed} function to accomplish this task. Here
 is a simple function that might work more along the lines that you
-expect. By default we `pad' the vector with NAs but you can switch
+expect. By default we 'pad' the vector with NAs but you can switch
 this to \texttt{FALSE} if you prefer. The function will return a
 vector of the same length as the original vector with NA's padded for
 the missing values.
@@ -650,6 +650,19 @@ For the second predictor use \texttt{x2} and
 \clearpage
 
 \appendix
+
+\section*{Changes from Version 0.15-32 to 0.15-33 [02-Feb-2021]}
+
+\begin{itemize}
+
+\item Updated NOMAD to version 3.9.1 (thanks Zhenghua!)
+
+\item Removed dependency on C++11 \texttt{random\_shuffle} per
+  recommendation from R development team (thanks Zhenghua!)
+  
+\item Followed R core team request to ``Please move \texttt{rgl} to Suggests and use conditionally (see 1.1.3.1 of Writing R Extensions) at the next package update''
+  
+\end{itemize}
 
 \section*{Changes from Version 0.15-31 to 0.15-32 [19-Nov-2019]}
 
@@ -779,7 +792,7 @@ C/C++ headers).')
 
 \item Default settings for tuning parameters for \texttt{snomadr} in
   \texttt{npglpreg} have been optimized based on extensive simulations
-  for simulated and real datasets (we `optimized the optimizer' so to
+  for simulated and real datasets (we 'optimized the optimizer' so to
   speak)
 
 \item Fixed glitch in \texttt{npglpreg} where \texttt{cv.aic} was only
@@ -824,7 +837,7 @@ C/C++ headers).')
 
 \item \texttt{npglpreg()} now optimizes at the level of the bandwidth
   scaling factors (thanks to Sebastien Le Digabel for the suggestion)
-  to bring parameters to a `common scale'
+  to bring parameters to a 'common scale'
 
 \item For cross-validation with \texttt{npglpreg()} we test for very
   large bandwidths for the continuous predictors ($>$ bandwidth.switch
@@ -951,7 +964,7 @@ C/C++ headers).')
 \item Corrected error in demo for IV regression when exhaustive search
   was selected (nmulti needed to be set though it is not used)
 
-\item Changes to code to improve compliance with R `Writing portable
+\item Changes to code to improve compliance with R 'Writing portable
   packages' guidelines and correct partial argument matches
 
 \end{itemize}
@@ -1034,7 +1047,7 @@ C/C++ headers).')
 
 \item Added the option to treat the continuous bandwidths as discrete
   with \texttt{lambda.discrete.num+1} values in the range [0,1] which
-  can be more computationally efficient when a `quick and dirty'
+  can be more computationally efficient when a 'quick and dirty'
   solution is sufficient rather than conducting mixed integer search
   treating the lambda as real-valued
 
@@ -1116,7 +1129,7 @@ C/C++ headers).')
   robust sd) which occurs when there exist many repeated values for a
   continuous predictor
 
-\item Added `typical usage' preformatted illustrations for docs
+\item Added 'typical usage' preformatted illustrations for docs
 
 \end{itemize}
 

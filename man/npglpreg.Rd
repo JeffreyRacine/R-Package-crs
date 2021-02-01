@@ -254,7 +254,7 @@ for each dimension of the continuous \code{x} in \code{txdat}}
 
   \item{bandwidth.scale.categorical}{ the upper end for the rescaled
   bandwidths for the categorical predictors (default
-  \code{bandwidth.scale.categorical=1.0e+04}) - the aim is to `even up'
+  \code{bandwidth.scale.categorical=1.0e+04}) - the aim is to \sQuote{even up}
   the scale of the search parameters as much as possible, so when very
   large scale factors are selected for the continuous predictors, a
   larger value may improve search}

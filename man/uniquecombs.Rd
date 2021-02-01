@@ -1,6 +1,5 @@
 \name{uniquecombs}
 \alias{uniquecombs}
-%- Also NEED an `\alias' for EACH other topic documented here.
 \title{Find the unique rows in a matrix }
 \description{
 This routine returns a matrix containing all the unique rows of the
@@ -12,7 +11,6 @@ to the original matrix.
 \usage{
 uniquecombs(x)
 }
-%- maybe also `usage' for other objects documented here.
 \arguments{
  \item{x}{ is an \R matrix (numeric) }
 }

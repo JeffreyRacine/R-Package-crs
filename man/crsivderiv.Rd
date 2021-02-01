@@ -200,7 +200,7 @@ crsivderiv(y,
 }
 \note{
 This function currently supports univariate \code{z} only.
-This function should be considered to be in `beta test' status until
+This function should be considered to be in \sQuote{beta test} status until
 further notice.
 }
 

@@ -154,7 +154,7 @@ snomadr(eval.f,
     number of knots, and optionally the kernel bandwidths when using
     \code{\link{crs}} with the option \code{cv="nomad"} (default). This
     is a constrained mixed integer combinatoric problem and is known to
-    be computationally `hard'. See \code{\link{frscvNOMAD}} and
+    be computationally \sQuote{hard}. See \code{\link{frscvNOMAD}} and
     \code{\link{krscvNOMAD}} for the functions called when
     \code{cv="nomad"} while using \code{\link{crs}}.
 

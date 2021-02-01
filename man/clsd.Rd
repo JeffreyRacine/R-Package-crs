@@ -110,7 +110,7 @@ clsd(x = NULL,
     would deliver standard AIC, \code{log(n)} standard BIC)}
   
   \item{elastic.max,elastic.diff}{ a logical value/integer indicating
-     whether to use `elastic' search bounds such that the optimal
+     whether to use \sQuote{elastic} search bounds such that the optimal
      degree/segment must lie \code{elastic.diff} units from the
      respective search bounds }
 
@@ -202,29 +202,29 @@ clsd(x = NULL,
   \code{clsd} returns a \code{clsd} object.  The generic functions
     \code{\link{coef}}, \code{\link{fitted}}, \code{\link{plot}} and
     \code{\link{summary}} support objects of this type (\code{er=FALSE}
-    plots the density on the sample realizations (default is `extended
-    range' data), see \code{er} above, \code{distribution=TRUE} plots
+    plots the density on the sample realizations (default is \sQuote{extended
+    range} data), see \code{er} above, \code{distribution=TRUE} plots
     the distribution). The returned object has the following components:
 
   \item{density}{ estimates of the density function
     at the sample points}
 
-  \item{density.er}{ the density evaluated on the `extended range'
+  \item{density.er}{ the density evaluated on the \sQuote{extended range}
   of the data }
 
   \item{density.deriv}{ estimates of the derivative of the density function
     at the sample points}
 
   \item{density.deriv.er}{ estimates of the derivative of the density
-    function evaluated on the `extended range' of the data }
+    function evaluated on the \sQuote{extended range} of the data }
 
   \item{distribution}{ estimates of the distribution function
     at the sample points}
 
-  \item{distribution.er}{ the distribution evaluated on the `extended range'
+  \item{distribution.er}{ the distribution evaluated on the \sQuote{extended range}
   of the data }
 
-  \item{xer}{ the `extended range' of the data }
+  \item{xer}{ the \sQuote{extended range} of the data }
 
   \item{degree}{ integer/vector specifying the degree of the B-spline
     basis for each dimension of the continuous \code{x}}
@@ -242,15 +242,15 @@ clsd(x = NULL,
   
 \section{Usage Issues}{
 
-  This function should be considered to be in `beta' status until
+  This function should be considered to be in \sQuote{beta} status until
   further notice.
 
   If smoother estimates are desired and \code{degree=degree.min}, increase
   \code{degree.min} to, say, \code{degree.min=3}.
 
-  The use of `regression' B-splines can lead to undesirable behavior at
+  The use of \sQuote{regression} B-splines can lead to undesirable behavior at
   the endpoints of the data (i.e. when \code{monotone=FALSE}). The
-  default `density' B-splines ought to be well-behaved in these regions.
+  default \sQuote{density} B-splines ought to be well-behaved in these regions.
 
 }
 \references{
@@ -329,7 +329,7 @@ lines(xer,dnorm(xer),col=1,lty=1)
 rug(x)
 
 legend("topright",c("DGP",
-                    paste("Cubic Logspline Density (package `logspline', knots = ",
+                    paste("Cubic Logspline Density (package 'logspline', knots = ",
                           model.logspline$nknots,")",sep=""),
                     paste("clsd Density (degree = ", model$degree, ", segments = ",
                           model$segments,", penalty = ",round(model$penalty,2),")",sep="")),

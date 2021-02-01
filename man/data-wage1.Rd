@@ -52,7 +52,7 @@ data(wage1)
 
 ## Cross-validated model selection for spline degree and bandwidths Note
 ## - we override the default nmulti here to get a quick illustration
-## (we don't advice doing this, in fact advise using more restarts in
+## (we don't advise doing this, in fact advise using more restarts in
 ## serious applications)
 
 model <- crs(lwage~married+

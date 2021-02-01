@@ -148,7 +148,7 @@ in \code{x} are included or omitted from the resulting estimate }
 
   \item{complexity}{a character string (default
   \code{complexity="degree-knots"}) indicating whether model
-  `complexity' is determined by the degree of the spline or by the
+  \sQuote{complexity} is determined by the degree of the spline or by the
   number of segments (i.e. number of knots minus one). This option
   allows the user to use cross-validation to select either the spline
   degree (number of knots held fixed) or the number of knots (spline
@@ -260,9 +260,9 @@ in \code{x} are included or omitted from the resulting estimate }
 
   \item{weights}{
     an optional vector of weights to be used in the fitting process.
-    Should be `NULL' or a numeric vector.  If non-NULL, weighted least
-    squares is used with weights `weights' (that is, minimizing
-    `sum(w*e^2)'); otherwise ordinary least squares is used.
+    Should be \sQuote{NULL} or a numeric vector.  If non-NULL, weighted least
+    squares is used with weights \sQuote{weights} (that is, minimizing
+    \sQuote{sum(w*e^2)}); otherwise ordinary least squares is used.
   }
 
   \item{singular.ok}{
@@ -558,7 +558,7 @@ plot(model,mean=TRUE,ci=TRUE)
 pdat <- plot(model,mean=TRUE,ci=TRUE,plot.behavior="data")
 
 ## Column 1 is the (evaluation) predictor ([,1]), 2-4 ([,-1]) the mean,
-## lwr, and upr (note the returned value is a `list' hence pdat[[1]] is
+## lwr, and upr (note the returned value is a 'list' hence pdat[[1]] is
 ## data for the first predictor, pdat[[2]] the second etc). Note that
 ## matplot() can plot this nicely.
 matplot(pdat[[1]][,1],pdat[[1]][,-1],

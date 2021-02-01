@@ -1,3 +1,11 @@
+Changes from Version 0.15-32 to 0.15-33 [02-Feb-2021]
+
+* Updated NOMAD to version 3.9.1  
+
+* Removed dependency on C++11 random_shuffle per recommendation from R development team (thanks Zhenghua!)
+
+* Followed R core team request to "Please move rgl to Suggests and use conditionally (see 1.1.3.1 of Writing R Extensions) at the next package update"
+
 Changes from Version 0.15-31 to 0.15-32 [19-Nov-2019]
 
 * Corrected return value for mgcv_tmm() (was void, not valid address of R object)

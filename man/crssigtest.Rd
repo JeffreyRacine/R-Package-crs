@@ -31,7 +31,7 @@ crssigtest(model = NULL,
     use. Defaults to \code{399}.
   }
   \item{boot.type}{
-    whether to conduct `residual' bootstrapping (iid) or permute
+    whether to conduct \sQuote{residual} bootstrapping (iid) or permute
     (reorder) in place the predictor being tested when imposing the
     null.
   }
@@ -82,8 +82,8 @@ crssigtest(model = NULL,
 
 \section{Usage Issues}{
   
-  This function should be considered to be in `beta status' until
-  further notice.
+  This function should be considered to be in \sQuote{beta status}
+  until further notice.
   
   Caution: bootstrap methods are, by their nature, \emph{computationally
   intensive}. This can be frustrating for users possessing large

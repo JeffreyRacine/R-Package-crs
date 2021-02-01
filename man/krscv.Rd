@@ -61,12 +61,12 @@ krscv(xz,
   }
 
   \item{complexity}{a character string (default
-  \code{complexity="degree-knots"}) indicating whether model `complexity' is
-  determined by the degree of the spline or by the number of segments
-  (`knots'). This option allows the user to use cross-validation to
-  select either the spline degree (number of knots held fixed) or the
-  number of knots (spline degree held fixed) or both the spline degree
-  and number of knots}
+  \code{complexity="degree-knots"}) indicating whether model
+  \sQuote{complexity} is determined by the degree of the spline or by
+  the number of segments (\sQuote{knots}). This option allows the user
+  to use cross-validation to select either the spline degree (number
+  of knots held fixed) or the number of knots (spline degree held
+  fixed) or both the spline degree and number of knots}
 
    \item{knots}{ a character string (default \code{knots="quantiles"})
   specifying where knots are to be placed. \sQuote{quantiles} specifies
@@ -108,12 +108,11 @@ krscv(xz,
     conditional mean (default \code{tau=NULL})
   }
 
-  \item{weights}{
-    an optional vector of weights to be used in the fitting process.
-    Should be `NULL' or a numeric vector.  If non-NULL, weighted least
-    squares is used with weights `weights' (that is, minimizing
-    `sum(w*e^2)'); otherwise ordinary least squares is used.
-  }
+  \item{weights}{ an optional vector of weights to be used in the
+    fitting process.  Should be \sQuote{NULL} or a numeric vector.  If
+    non-NULL, weighted least squares is used with weights
+    \sQuote{weights} (that is, minimizing \sQuote{sum(w*e^2)});
+    otherwise ordinary least squares is used.}
 
   \item{singular.ok}{
     a logical value (default \code{singular.ok=FALSE}) that, when

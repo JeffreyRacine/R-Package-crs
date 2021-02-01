@@ -2589,8 +2589,6 @@ plot.npglpreg <- function(x,
 
     } else {
 
-#      if(!require(rgl)) stop(" Error: you must first install the rgl package")
-
       if(object$num.categorical != 0) stop(" Error: persp3d is for continuous predictors only")
       if(object$num.numeric != 2) stop(" Error: persp3d is for cases involving two continuous predictors only")
 
@@ -2618,23 +2616,31 @@ plot.npglpreg <- function(x,
         colorlut <- topo.colors(num.colors)
         col <- colorlut[ (num.colors-1)*(z-min(z))/(max(z)-min(z)) + 1 ]
 
-        open3d()
+        if(requireNamespace("rgl", quietly = TRUE)) {
 
-        par3d(windowRect=c(900,100,900+640,100+640))
-        rgl.viewpoint(theta = 0, phi = -70, fov = 80)
+          rgl::open3d()
 
-        persp3d(x=x1.seq,y=x2.seq,z=z,
-                xlab=names(object$x)[1],ylab=names(object$x)[2],zlab="Y",
-                ticktype="detailed",
-                border="red",
-                color=col,
-                alpha=.7,
-                back="lines",
-                main="Conditional Mean")
+          rgl::par3d(windowRect=c(900,100,900+640,100+640))
+          rgl::rgl.viewpoint(theta = 0, phi = -70, fov = 80)
 
-        grid3d(c("x", "y+", "z"))
+          rgl::persp3d(x=x1.seq,y=x2.seq,z=z,
+                       xlab=names(object$x)[1],ylab=names(object$x)[2],zlab="Y",
+                       ticktype="detailed",
+                       border="red",
+                       color=col,
+                       alpha=.7,
+                       back="lines",
+                       main="Conditional Mean")
 
-        play3d(spin3d(axis=c(0,0,1), rpm=5), duration=15)
+          rgl::grid3d(c("x", "y+", "z"))
+
+          rgl::play3d(rgl::spin3d(axis=c(0,0,1), rpm=5), duration=15)
+
+        } else {
+        
+          warning("rgl not installed, option persp.rgl ignored")
+          
+        }
 
       }
 

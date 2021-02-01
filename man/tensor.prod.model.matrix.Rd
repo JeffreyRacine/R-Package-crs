@@ -1,6 +1,5 @@
 \name{tensor.prod.model.matrix}
 \alias{tensor.prod.model.matrix}
-%- Also NEED an `\alias' for EACH other topic documented here.
 \title{ Utility functions for constructing tensor product smooths}
 \description{
 Produce model matrices or penalty matrices for a tensor product smooth from the model matrices or
@@ -9,7 +8,6 @@ penalty matrices for the marginal bases of the smooth.
 \usage{
 tensor.prod.model.matrix(X)
 }
-%- maybe also `usage' for other objects documented here.
 \arguments{
   \item{X}{a list of model matrices for the marginal bases of a smooth} 
 }
