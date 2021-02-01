@@ -654,21 +654,21 @@ namespace NOMAD {
         
         mutable int           _mod_use; // 1: model search; 2: model eval sort
         mutable int           _nY;
-        mutable NOMAD::Double _cond , _Yw , _mh , _mf;
+        mutable NOMAD::Double _cond , Yw_Yw , _mh , _mf;
         
     public:
         
         void set_mod_use ( int                 mod_use ) const { _mod_use = mod_use; }
         void set_nY       ( int                     nY ) const { _nY      = nY;      }
         void set_cond     ( const NOMAD::Double & cond ) const { _cond    = cond;    }
-        void set_Yw       ( const NOMAD::Double &   Yw ) const { _Yw      = Yw;      }
+        void set_Yw       ( const NOMAD::Double &   Yw ) const { Yw_Yw      = Yw;      }
         void set_mh       ( const NOMAD::Double &   mh ) const { _mh      = mh;      }
         void set_mf       ( const NOMAD::Double &   mf ) const { _mf      = mf;      }
         
         int                   get_mod_use ( void ) const    { return _mod_use; }
         int                   get_nY      ( void ) const    { return _nY;      }
         const NOMAD::Double & get_cond    ( void ) const    { return _cond;    }
-        const NOMAD::Double & get_Yw      ( void ) const    { return _Yw;      }
+        const NOMAD::Double & get_Yw      ( void ) const    { return Yw_Yw;      }
         const NOMAD::Double & get_mh      ( void ) const    { return _mh;      }
         const NOMAD::Double & get_mf      ( void ) const    { return _mf;      }
         

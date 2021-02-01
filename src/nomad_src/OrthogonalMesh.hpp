@@ -88,16 +88,16 @@ namespace NOMAD {
         NOMAD::Double   _anisotropy_factor;
         
         NOMAD::Point    _delta_0;
-        NOMAD::Point    _Delta_0;
-        NOMAD::Point    _Delta_min;
+        NOMAD::Point    D_Delta_0;     //zhenghua
+        NOMAD::Point    D_Delta_min;
         NOMAD::Point    _delta_min;
         NOMAD::Point    _fixed_variables;
         NOMAD::Point    _granularity;
         
         bool            _all_granular;
         
-        bool            _Delta_min_is_defined;
-        bool            _Delta_min_is_complete;
+        bool            D_Delta_min_is_defined;   //zhenghua
+        bool            D_Delta_min_is_complete;
         bool            _delta_min_is_defined;
         bool            _delta_min_is_complete;
         
@@ -147,13 +147,13 @@ namespace NOMAD {
         _anisotropic_mesh       ( m._anisotropic_mesh   ),
         _anisotropy_factor      ( m._anisotropy_factor  ),
         _delta_0                ( m._delta_0            ),
-        _Delta_0                ( m._Delta_0            ),
-        _Delta_min              ( m._Delta_min          ),
+        D_Delta_0                ( m.D_Delta_0            ),
+        D_Delta_min              ( m.D_Delta_min          ),
         _delta_min              ( m._delta_min          ),
         _fixed_variables        ( m._fixed_variables     ),
         _granularity            ( m._granularity         ),
-        _Delta_min_is_defined   ( m._Delta_min_is_defined ),
-        _Delta_min_is_complete  ( m._Delta_min_is_complete ),
+        D_Delta_min_is_defined   ( m.D_Delta_min_is_defined ),
+        D_Delta_min_is_complete  ( m.D_Delta_min_is_complete ),
         _delta_min_is_defined   ( m._delta_min_is_defined ),
         _delta_min_is_complete  ( m._delta_min_is_complete ),
         _update_basis           ( m._update_basis       ),
@@ -194,7 +194,7 @@ namespace NOMAD {
         /**
          \return A NOMAD::Point for the initial poll size.
          */
-        const NOMAD::Point & get_initial_poll_size ( void ) const { return _Delta_0; }
+        const NOMAD::Point & get_initial_poll_size ( void ) const { return D_Delta_0; }
         
         
         /// Access to the minimal mesh size.
@@ -208,7 +208,7 @@ namespace NOMAD {
         /**
          \return A NOMAD::Point for the minimal poll size.
          */
-        const NOMAD::Point & get_min_poll_size ( void ) const { return _Delta_min; }
+        const NOMAD::Point & get_min_poll_size ( void ) const { return D_Delta_min; }
         
         
         /// Test if mesh is finest so far.

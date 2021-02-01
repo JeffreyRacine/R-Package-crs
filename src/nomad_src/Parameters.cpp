@@ -236,28 +236,28 @@ void NOMAD::Parameters::init ( void )
     _model_params.model_np1_quad_epsilon =0.01;
     
     // other searches:
-    _VNS_trigger.clear();
+    VNS_VNS_trigger.clear();
     _speculative_search         = true;
-    _VNS_search                 = false;
-    _NM_search                  = true;
-    _NM_gamma                   = 0.5;
-    _NM_delta_ic                = -0.5; // Inside contraction parameter
-    _NM_delta_oc                = 0.5; // Outside contraction parameter
-    _NM_delta_e                 = 2 ;   // Expansion parameter
-    _NM_search_intensive        = false;
-    _NM_search_opportunistic    = false;
-    _NM_search_use_only_Y       = false;
-    _NM_search_use_short_Y0     = false;
-    _NM_search_init_Y_best_von  = false;
-    _NM_search_init_Y_iter      = false;
-    _NM_search_scaled_DZ        = true;
-    _NM_search_max_trial_pts    = -1;
-    _NM_search_max_trial_pts_nfactor = 80;
-    _NM_search_min_simplex_vol  = 0; // NOMAD::DEFAULT_EPSILON;
-    _NM_search_rank_eps         = 1E-2;
-    _NM_search_include_factor   = 8;
-    _LH_search_p0               = -1;
-    _LH_search_pi               = -1;
+    VNS_VNS_search                 = false;
+    NM_NM_search                  = true;
+    NM_NM_gamma                   = 0.5;
+    NM_NM_delta_ic                = -0.5; // Inside contraction parameter
+    NM_NM_delta_oc                = 0.5; // Outside contraction parameter
+    NM_NM_delta_e                 = 2 ;   // Expansion parameter
+    NM_NM_search_intensive        = false;
+    NM_NM_search_opportunistic    = false;
+    NM_NM_search_use_only_Y       = false;
+    NM_NM_search_use_short_Y0     = false;
+    NM_NM_search_init_Y_best_von  = false;
+    NM_NM_search_init_Y_iter      = false;
+    NM_NM_search_scaled_DZ        = true;
+    NM_NM_search_max_trial_pts    = -1;
+    NM_NM_search_max_trial_pts_nfactor = 80;
+    NM_NM_search_min_simplex_vol  = 0; // NOMAD::DEFAULT_EPSILON;
+    NM_NM_search_rank_eps         = 1E-2;
+    NM_NM_search_include_factor   = 8;
+    LH_LH_search_p0               = -1;
+    LH_LH_search_pi               = -1;
     _opportunistic_LH           = true;
     _opp_LH_is_defined          = false;
     _cache_search               = false;
@@ -4492,10 +4492,10 @@ bool NOMAD::Parameters::is_algo_compatible ( const NOMAD::Parameters & p_tmp  ) 
 
     // VNS Search
     // ----------
-    if ( _VNS_search != p_tmp._VNS_search )
+    if ( VNS_VNS_search != p_tmp.VNS_VNS_search )
         return false;
     
-    if ( _VNS_search && _VNS_trigger != p_tmp._VNS_trigger )
+    if ( VNS_VNS_search && VNS_VNS_trigger != p_tmp.VNS_VNS_trigger )
         return false;
 
     // Speculative search
@@ -4505,51 +4505,51 @@ bool NOMAD::Parameters::is_algo_compatible ( const NOMAD::Parameters & p_tmp  ) 
     
     // NelderMead search
     // -----------------
-    if ( _NM_search != p_tmp._NM_search )
+    if ( NM_NM_search != p_tmp.NM_NM_search )
         return false;
     
-    if ( _NM_search_max_trial_pts != p_tmp._NM_search_max_trial_pts )
+    if ( NM_NM_search_max_trial_pts != p_tmp.NM_NM_search_max_trial_pts )
         return false;
 
-    if ( _NM_search_max_trial_pts_nfactor != p_tmp._NM_search_max_trial_pts_nfactor )
+    if ( NM_NM_search_max_trial_pts_nfactor != p_tmp.NM_NM_search_max_trial_pts_nfactor )
         return false;
     
-    if ( _NM_search_intensive != p_tmp._NM_search_intensive )
+    if ( NM_NM_search_intensive != p_tmp.NM_NM_search_intensive )
         return false;
 
-    if ( _NM_search_init_Y_iter != p_tmp._NM_search_init_Y_iter )
+    if ( NM_NM_search_init_Y_iter != p_tmp.NM_NM_search_init_Y_iter )
         return false;
     
-    if ( _NM_search_opportunistic != p_tmp._NM_search_opportunistic )
+    if ( NM_NM_search_opportunistic != p_tmp.NM_NM_search_opportunistic )
         return false;
 
-    if ( _NM_search_use_only_Y != p_tmp._NM_search_use_only_Y )
+    if ( NM_NM_search_use_only_Y != p_tmp.NM_NM_search_use_only_Y )
         return false;
 
-    if ( _NM_search_scaled_DZ != p_tmp._NM_search_scaled_DZ )
+    if ( NM_NM_search_scaled_DZ != p_tmp.NM_NM_search_scaled_DZ )
         return false;
     
-    if ( _NM_search_use_short_Y0 != p_tmp._NM_search_use_short_Y0 )
+    if ( NM_NM_search_use_short_Y0 != p_tmp.NM_NM_search_use_short_Y0 )
         return false;
     
-    if ( _NM_search_init_Y_best_von != p_tmp._NM_search_init_Y_best_von )
+    if ( NM_NM_search_init_Y_best_von != p_tmp.NM_NM_search_init_Y_best_von )
         return false;
     
-    if ( _NM_search_min_simplex_vol != p_tmp._NM_search_min_simplex_vol )
+    if ( NM_NM_search_min_simplex_vol != p_tmp.NM_NM_search_min_simplex_vol )
         return false;
 
-    if ( _NM_search_rank_eps != p_tmp._NM_search_rank_eps )
+    if ( NM_NM_search_rank_eps != p_tmp.NM_NM_search_rank_eps )
         return false;
     
-    if ( _NM_search_include_factor != p_tmp._NM_search_include_factor )
+    if ( NM_NM_search_include_factor != p_tmp.NM_NM_search_include_factor )
         return false;
     
     // LH search
     // ---------
-    if ( _LH_search_p0 != p_tmp._LH_search_p0 )
+    if ( LH_LH_search_p0 != p_tmp.LH_LH_search_p0 )
         return false;
     
-    if ( _LH_search_pi != p_tmp._LH_search_pi )
+    if ( LH_LH_search_pi != p_tmp.LH_LH_search_pi )
         return false;
     
     if ( _opportunistic_LH != p_tmp._opportunistic_LH )
@@ -5252,46 +5252,46 @@ void NOMAD::Parameters::display ( const NOMAD::Display & out ) const
     
     // VNS_SEARCH:
     out << "VNS search                       : ";
-    out.display_yes_or_no ( _VNS_search );
-    if ( _VNS_search )
-        out << " [trigger=" << _VNS_trigger << "]";
+    out.display_yes_or_no ( VNS_VNS_search );
+    if ( VNS_VNS_search )
+        out << " [trigger=" << VNS_VNS_trigger << "]";
     out << std::endl;
 
     // NM_SEARCH:
-    if ( _NM_search )
+    if ( NM_NM_search )
     {
         out << NOMAD::open_block ( "NelderMead (NM) search");
 
-        if ( _NM_search_max_trial_pts > 0 )
-            out << "max_trial_pts: "   << _NM_search_max_trial_pts << endl ;
-        if ( _NM_search_max_trial_pts_nfactor > 0 )
-            out << "max_trial_pts_nfactor: "   << _NM_search_max_trial_pts_nfactor << endl;
-        if ( _NM_search_min_simplex_vol > 0 )
-            out << "#min_simplex_vol: "   << _NM_search_min_simplex_vol << endl;
-        out << "gamma (shrink):" << _NM_gamma ;
+        if ( NM_NM_search_max_trial_pts > 0 )
+            out << "max_trial_pts: "   << NM_NM_search_max_trial_pts << endl ;
+        if ( NM_NM_search_max_trial_pts_nfactor > 0 )
+            out << "max_trial_pts_nfactor: "   << NM_NM_search_max_trial_pts_nfactor << endl;
+        if ( NM_NM_search_min_simplex_vol > 0 )
+            out << "#min_simplex_vol: "   << NM_NM_search_min_simplex_vol << endl;
+        out << "gamma (shrink):" << NM_NM_gamma ;
         out << endl;
-        out << "delta_oc (outside contraction):" << _NM_delta_oc ;
+        out << "delta_oc (outside contraction):" << NM_NM_delta_oc ;
         out << endl;
-        out << "delta_ic (inside contraction):" << _NM_delta_ic ;
+        out << "delta_ic (inside contraction):" << NM_NM_delta_ic ;
         out << endl;
-        out << "delta_e (expansion):" << _NM_delta_e ;
+        out << "delta_e (expansion):" << NM_NM_delta_e ;
         out << endl;
         out << "intensive: ";
-        out.display_yes_or_no ( _NM_search_intensive );
+        out.display_yes_or_no ( NM_NM_search_intensive );
         out << endl;
         out << "opportunistic: ";
-        out.display_yes_or_no ( _NM_search_opportunistic );
+        out.display_yes_or_no ( NM_NM_search_opportunistic );
         out << endl;
         out << "use_only_Y: ";
-        out.display_yes_or_no ( _NM_search_use_only_Y );
+        out.display_yes_or_no ( NM_NM_search_use_only_Y );
         out << endl;
         out << "init_Y_best_von: ";
-        out.display_yes_or_no ( _NM_search_init_Y_best_von );
+        out.display_yes_or_no ( NM_NM_search_init_Y_best_von );
         out << endl;
         out << "use_short_Y0: ";
-        out.display_yes_or_no ( _NM_search_use_short_Y0 );
+        out.display_yes_or_no ( NM_NM_search_use_short_Y0 );
         out << endl;
-        out << "include_factor: " << _NM_search_include_factor;
+        out << "include_factor: " << NM_NM_search_include_factor;
         out << NOMAD::close_block();
     }
     else
@@ -5304,10 +5304,10 @@ void NOMAD::Parameters::display ( const NOMAD::Display & out ) const
 
     // LH_SEARCH:
     out << "Latin-Hypercube (LH) search      : ";
-    if ( _LH_search_p0 > 0 || _LH_search_pi > 0 )
+    if ( LH_LH_search_p0 > 0 || LH_LH_search_pi > 0 )
     {
-        out << "#init:"   << _LH_search_p0
-        << ", #iter:" << _LH_search_pi
+        out << "#init:"   << LH_LH_search_p0
+        << ", #iter:" << LH_LH_search_pi
         << ", opport:";
         out.display_yes_or_no ( _opportunistic_LH );
     }
@@ -6843,7 +6843,7 @@ void NOMAD::Parameters::check ( bool remove_history_file  ,
     {
         
         if ( _multi_formulation == NOMAD::UNDEFINED_FORMULATION )
-            _multi_formulation = ( _VNS_search ) ? NOMAD::DIST_L2 : NOMAD::PRODUCT;
+            _multi_formulation = ( VNS_VNS_search ) ? NOMAD::DIST_L2 : NOMAD::PRODUCT;
         
         if ( _multi_nb_mads_runs < 0 )
         {
@@ -6855,8 +6855,8 @@ void NOMAD::Parameters::check ( bool remove_history_file  ,
                 {
                     _max_bb_eval = 25 * _nb_free_variables;
                     
-                    if ( _LH_search_p0 < 0 )
-                        _LH_search_p0 = _max_bb_eval;
+                    if ( LH_LH_search_p0 < 0 )
+                        LH_LH_search_p0 = _max_bb_eval;
                 }
             }
             else if ( !_max_bbe_decided )
@@ -6864,8 +6864,8 @@ void NOMAD::Parameters::check ( bool remove_history_file  ,
                 _max_bb_eval = static_cast<int>
                 ( ceil ( sqrt ( 1.0 * _nb_free_variables * _multi_overall_bb_eval ) ) );
                 
-                if ( _LH_search_p0 < 0 )
-                    _LH_search_p0 = _max_bb_eval;
+                if ( LH_LH_search_p0 < 0 )
+                    LH_LH_search_p0 = _max_bb_eval;
             }
         }
         else if ( _multi_overall_bb_eval > 0 && !_max_bbe_decided )
@@ -6945,7 +6945,7 @@ void NOMAD::Parameters::check ( bool remove_history_file  ,
     {
         if ( _x0s.empty() && _x0_cache_file.empty() )
         {
-            if ( _LH_search_p0 <= 0 )
+            if ( LH_LH_search_p0 <= 0 )
                 throw Invalid_Parameter ( "Parameters.cpp" , __LINE__ ,
                                          "Parameters::check(): no starting point" );
             else if ( has_categorical )
@@ -6996,7 +6996,7 @@ void NOMAD::Parameters::check ( bool remove_history_file  ,
         if ( _robust_mads && has_categorical )
             throw Invalid_Parameter ( "Parameters.cpp" , __LINE__ , "NOMAD::Parameters::check : the algorithm RobustMads cannot be used with categorical variables" );
         
-        if ( _robust_mads && _VNS_search )
+        if ( _robust_mads && VNS_VNS_search )
             throw Invalid_Parameter ( "Parameters.cpp" , __LINE__ , "NOMAD::Parameters::check : the algorithm RobustMads cannot be used vns search" );
         
         if ( _robust_mads && ! _robust_mads_standard_dev_factor.is_defined() )
@@ -7011,19 +7011,19 @@ void NOMAD::Parameters::check ( bool remove_history_file  ,
     /*       Nelder Mead search        */
     /*---------------------------------*/
     {
-        if ( _NM_search )
+        if ( NM_NM_search )
         {
             
-            if ( _NM_search_intensive && ( _NM_gamma <= 0 || _NM_gamma > 1 ) )
+            if ( NM_NM_search_intensive && ( NM_NM_gamma <= 0 || NM_NM_gamma > 1 ) )
                 throw Invalid_Parameter ( "Parameters.cpp" , __LINE__ , "NOMAD::Parameters::check : NM search gamma (shrink) parameter must be >= 0 and < 1." );
             
-            if ( _NM_delta_e <= 1.0 )
+            if ( NM_NM_delta_e <= 1.0 )
                 throw Invalid_Parameter ( "Parameters.cpp" , __LINE__ , "NOMAD::Parameters::check : NM search delta_e (expansion) parameter must be > 1." );
             
-            if ( _NM_delta_ic >= 0  || _NM_delta_ic <= -1 )
+            if ( NM_NM_delta_ic >= 0  || NM_NM_delta_ic <= -1 )
                 throw Invalid_Parameter ( "Parameters.cpp" , __LINE__ , "NOMAD::Parameters::check : NM search delta_ic (inside contraction) parameter must be > -1 and < 0." );
             
-            if ( _NM_delta_oc >= 1.0 || _NM_delta_oc <=0 )
+            if ( NM_NM_delta_oc >= 1.0 || NM_NM_delta_oc <=0 )
                 throw Invalid_Parameter ( "Parameters.cpp" , __LINE__ , "NOMAD::Parameters::check : NM search delta_oc (outside contraction) parameter must be < 1 and > 0." );
             
                 
@@ -7340,7 +7340,7 @@ bool NOMAD::Parameters::get_VNS_search ( void ) const
     if ( _to_be_checked )
         throw Bad_Access ( "Parameters.cpp" , __LINE__ ,
                           "Parameters::get_VNS_search(), Parameters::check() must be invoked" );
-    return _VNS_search;
+    return VNS_VNS_search;
 }
 
 // get_VNS_trigger:
@@ -7349,7 +7349,7 @@ const NOMAD::Double & NOMAD::Parameters::get_VNS_trigger ( void ) const
     if ( _to_be_checked )
         throw Bad_Access ( "Parameters.cpp" , __LINE__ ,
                           "Parameters::get_VNS_trigger(), Parameters::check() must be invoked" );
-    return _VNS_trigger;
+    return VNS_VNS_trigger;
 }
 
 // get_NM_search:
@@ -7358,7 +7358,7 @@ bool NOMAD::Parameters::get_NM_search ( void ) const
     if ( _to_be_checked )
         throw Bad_Access ( "Parameters.cpp" , __LINE__ ,
                           "Parameters::get_NM_search(), Parameters::check() must be invoked" );
-    return _NM_search;
+    return NM_NM_search;
 }
 
 // get_NM_search_gamma:
@@ -7367,7 +7367,7 @@ const NOMAD::Double & NOMAD::Parameters::get_NM_gamma ( void ) const
     if ( _to_be_checked )
         throw Bad_Access ( "Parameters.cpp" , __LINE__ ,
                           "Parameters::get_NM_gamma(), Parameters::check() must be invoked" );
-    return _NM_gamma;
+    return NM_NM_gamma;
 }
 
 // get_NM_search_delta_ic:
@@ -7376,7 +7376,7 @@ const NOMAD::Double & NOMAD::Parameters::get_NM_delta_ic ( void ) const
     if ( _to_be_checked )
         throw Bad_Access ( "Parameters.cpp" , __LINE__ ,
                           "Parameters::get_NM_delta_ic(), Parameters::check() must be invoked" );
-    return _NM_delta_ic;
+    return NM_NM_delta_ic;
 }
 
 
@@ -7386,7 +7386,7 @@ const NOMAD::Double & NOMAD::Parameters::get_NM_delta_oc ( void ) const
     if ( _to_be_checked )
         throw Bad_Access ( "Parameters.cpp" , __LINE__ ,
                           "Parameters::get_NM_delta_oc(), Parameters::check() must be invoked" );
-    return _NM_delta_oc;
+    return NM_NM_delta_oc;
 }
 
 
@@ -7396,7 +7396,7 @@ const NOMAD::Double & NOMAD::Parameters::get_NM_delta_e ( void ) const
     if ( _to_be_checked )
         throw Bad_Access ( "Parameters.cpp" , __LINE__ ,
                           "Parameters::get_NM_delta_e(), Parameters::check() must be invoked" );
-    return _NM_delta_e;
+    return NM_NM_delta_e;
 }
 
 
@@ -7406,7 +7406,7 @@ bool NOMAD::Parameters::get_NM_search_intensive( void ) const
     if ( _to_be_checked )
         throw Bad_Access ( "Parameters.cpp" , __LINE__ ,
                           "Parameters::get_NM_search_intensive(), Parameters::check() must be invoked" );
-    return _NM_search_intensive;
+    return NM_NM_search_intensive;
 }
 
 // get_NM_search_scaled_DZ:
@@ -7415,7 +7415,7 @@ bool NOMAD::Parameters::get_NM_search_scaled_DZ( void ) const
     if ( _to_be_checked )
         throw Bad_Access ( "Parameters.cpp" , __LINE__ ,
                           "Parameters::get_NM_search_scaled_DZ(), Parameters::check() must be invoked" );
-    return _NM_search_scaled_DZ;
+    return NM_NM_search_scaled_DZ;
 }
 
 // get_NM_search_opportunistic:
@@ -7424,7 +7424,7 @@ bool NOMAD::Parameters::get_NM_search_opportunistic( void ) const
     if ( _to_be_checked )
         throw Bad_Access ( "Parameters.cpp" , __LINE__ ,
                           "Parameters::get_NM_search_opportunistic(), Parameters::check() must be invoked" );
-    return _NM_search_opportunistic;
+    return NM_NM_search_opportunistic;
 }
 
 // get_NM_search_use_only_Y:
@@ -7433,7 +7433,7 @@ bool NOMAD::Parameters::get_NM_search_use_only_Y( void ) const
     if ( _to_be_checked )
         throw Bad_Access ( "Parameters.cpp" , __LINE__ ,
                           "Parameters::get_NM_search_use_only_Y(), Parameters::check() must be invoked" );
-    return _NM_search_use_only_Y;
+    return NM_NM_search_use_only_Y;
 }
 
 // get_NM_search_init_Y_iter:
@@ -7442,7 +7442,7 @@ bool NOMAD::Parameters::get_NM_search_init_Y_iter( void ) const
     if ( _to_be_checked )
         throw Bad_Access ( "Parameters.cpp" , __LINE__ ,
                           "Parameters::get_NM_search_init_Y_iter(), Parameters::check() must be invoked" );
-    return _NM_search_init_Y_iter;
+    return NM_NM_search_init_Y_iter;
 }
 
 // get_NM_search_init_Y_best_von:
@@ -7451,7 +7451,7 @@ bool NOMAD::Parameters::get_NM_search_init_Y_best_von( void ) const
     if ( _to_be_checked )
         throw Bad_Access ( "Parameters.cpp" , __LINE__ ,
                           "Parameters::get_NM_search_init_Y_best_von(), Parameters::check() must be invoked" );
-    return _NM_search_init_Y_best_von;
+    return NM_NM_search_init_Y_best_von;
 }
 
 // get_NM_search_use_short_Y0:
@@ -7460,7 +7460,7 @@ bool NOMAD::Parameters::get_NM_search_use_short_Y0( void ) const
     if ( _to_be_checked )
         throw Bad_Access ( "Parameters.cpp" , __LINE__ ,
                           "Parameters::get_NM_search_use_short_Y0(), Parameters::check() must be invoked" );
-    return _NM_search_use_short_Y0;
+    return NM_NM_search_use_short_Y0;
 }
 
 
@@ -7470,7 +7470,7 @@ int NOMAD::Parameters::get_NM_search_max_trial_pts ( void ) const
     if ( _to_be_checked )
         throw Bad_Access ( "Parameters.cpp" , __LINE__ ,
                           "Parameters::get_nm_search_max_trial_pts(), Parameters::check() must be invoked" );
-    return _NM_search_max_trial_pts;
+    return NM_NM_search_max_trial_pts;
 }
 
 // get_nm_search_max_trial_pts_nfactor:
@@ -7479,7 +7479,7 @@ int NOMAD::Parameters::get_NM_search_max_trial_pts_nfactor ( void ) const
     if ( _to_be_checked )
         throw Bad_Access ( "Parameters.cpp" , __LINE__ ,
                           "Parameters::get_nm_search_max_trial_pts_nfactor(), Parameters::check() must be invoked" );
-    return _NM_search_max_trial_pts_nfactor;
+    return NM_NM_search_max_trial_pts_nfactor;
 }
 
 
@@ -7490,7 +7490,7 @@ const NOMAD::Double & NOMAD::Parameters::get_NM_search_min_simplex_vol ( void ) 
     if ( _to_be_checked )
         throw Bad_Access ( "Parameters.cpp" , __LINE__ ,
                           "Parameters::get_nm_search_min_simplex_vol(), Parameters::check() must be invoked" );
-    return _NM_search_min_simplex_vol;
+    return NM_NM_search_min_simplex_vol;
 }
 
 // get_nm_search_rank_eps:
@@ -7499,7 +7499,7 @@ const NOMAD::Double & NOMAD::Parameters::get_NM_search_rank_eps ( void ) const
     if ( _to_be_checked )
         throw Bad_Access ( "Parameters.cpp" , __LINE__ ,
                           "Parameters::get_nm_search_rank_eps(), Parameters::check() must be invoked" );
-    return _NM_search_rank_eps;
+    return NM_NM_search_rank_eps;
 }
 
 
@@ -7509,7 +7509,7 @@ const NOMAD::Double & NOMAD::Parameters::get_NM_search_include_factor ( void ) c
     if ( _to_be_checked )
         throw Bad_Access ( "Parameters.cpp" , __LINE__ ,
                           "Parameters::get_nm_search_include_factor(), Parameters::check() must be invoked" );
-    return _NM_search_include_factor;
+    return NM_NM_search_include_factor;
 }
 
 // get_LH_search_p0:
@@ -7518,7 +7518,7 @@ int NOMAD::Parameters::get_LH_search_p0 ( void ) const
     if ( _to_be_checked )
         throw Bad_Access ( "Parameters.cpp" , __LINE__ ,
                           "Parameters::get_LH_search_p0(), Parameters::check() must be invoked" );
-    return _LH_search_p0;
+    return LH_LH_search_p0;
 }
 
 // get_LH_search_p0:
@@ -7527,7 +7527,7 @@ int NOMAD::Parameters::get_LH_search_pi ( void ) const
     if ( _to_be_checked )
         throw Bad_Access ( "Parameters.cpp" , __LINE__ ,
                           "Parameters::get_LH_search_pi(), Parameters::check() must be invoked" );
-    return _LH_search_pi;
+    return LH_LH_search_pi;
 }
 
 // get_direction_types:
@@ -8803,8 +8803,8 @@ void NOMAD::Parameters::set_MODEL_EVAL_SORT_CAUTIOUS ( bool mesc )
 void NOMAD::Parameters::set_VNS_SEARCH ( bool s )
 {
     _to_be_checked = true;
-    _VNS_search    = s;
-    _VNS_trigger   = ( s ) ? 0.75 : NOMAD::Double();
+    VNS_VNS_search    = s;
+    VNS_VNS_trigger   = ( s ) ? 0.75 : NOMAD::Double();
 }
 
 // set_VNS_SEARCH (2/2):
@@ -8813,7 +8813,7 @@ void NOMAD::Parameters::set_VNS_SEARCH ( const NOMAD::Double & trigger )
     _to_be_checked = true;
     if ( !trigger.is_defined() )
     {
-        _VNS_search = false;
+        VNS_VNS_search = false;
         return;
     }
     
@@ -8821,15 +8821,15 @@ void NOMAD::Parameters::set_VNS_SEARCH ( const NOMAD::Double & trigger )
         throw Invalid_Parameter ( "Parameters.cpp" , __LINE__ ,
                                  "VNS_SEARCH: must be in [0;1]" );
     
-    _VNS_search  = ( trigger > 0.0 );
-    _VNS_trigger = trigger;
+    VNS_VNS_search  = ( trigger > 0.0 );
+    VNS_VNS_trigger = trigger;
 }
 
 // set_NM_SEARCH:
 void NOMAD::Parameters::set_NM_SEARCH ( bool s )
 {
     _to_be_checked = true;
-    _NM_search    = s;
+    NM_NM_search    = s;
 
 }
 
@@ -8837,7 +8837,7 @@ void NOMAD::Parameters::set_NM_SEARCH ( bool s )
 void NOMAD::Parameters::set_NM_GAMMA(const NOMAD::Double & ga)
 {
     _to_be_checked = true;
-    _NM_gamma      = ga;
+    NM_NM_gamma      = ga;
     
 }
 
@@ -8845,7 +8845,7 @@ void NOMAD::Parameters::set_NM_GAMMA(const NOMAD::Double & ga)
 void NOMAD::Parameters::set_NM_DELTA_OC(const NOMAD::Double & doc)
 {
     _to_be_checked = true;
-    _NM_delta_oc   = doc;
+    NM_NM_delta_oc   = doc;
     
 }
 
@@ -8853,7 +8853,7 @@ void NOMAD::Parameters::set_NM_DELTA_OC(const NOMAD::Double & doc)
 void NOMAD::Parameters::set_NM_DELTA_IC(const NOMAD::Double & dic)
 {
     _to_be_checked = true;
-    _NM_delta_ic   = dic;
+    NM_NM_delta_ic   = dic;
     
 }
 
@@ -8861,7 +8861,7 @@ void NOMAD::Parameters::set_NM_DELTA_IC(const NOMAD::Double & dic)
 void NOMAD::Parameters::set_NM_DELTA_E(const NOMAD::Double & de)
 {
     _to_be_checked = true;
-    _NM_delta_e   = de;
+    NM_NM_delta_e   = de;
     
 }
 
@@ -8870,8 +8870,8 @@ void NOMAD::Parameters::set_NM_DELTA_E(const NOMAD::Double & de)
 void NOMAD::Parameters::set_NM_SEARCH_INTENSIVE ( bool s )
 {
     _to_be_checked = true;
-    _NM_search_intensive    = s;
-    if ( ! _NM_search )
+    NM_NM_search_intensive    = s;
+    if ( ! NM_NM_search )
         throw Invalid_Parameter ( "Parameters.cpp" , __LINE__ ,
                                  "NM_SEARCH_INTENSIVE: valid only if NM_SEARCH is set to yes" );
 }
@@ -8880,8 +8880,8 @@ void NOMAD::Parameters::set_NM_SEARCH_INTENSIVE ( bool s )
 void NOMAD::Parameters::set_NM_SEARCH_OPPORTUNISTIC ( bool s )
 {
     _to_be_checked = true;
-    _NM_search_opportunistic    = s;
-    if ( ! _NM_search )
+    NM_NM_search_opportunistic    = s;
+    if ( ! NM_NM_search )
         throw Invalid_Parameter ( "Parameters.cpp" , __LINE__ ,
                                  "NM_SEARCH_OPPORTUNISTIC: valid only if NM_SEARCH is set to yes" );
 }
@@ -8890,8 +8890,8 @@ void NOMAD::Parameters::set_NM_SEARCH_OPPORTUNISTIC ( bool s )
 void NOMAD::Parameters::set_NM_SEARCH_USE_ONLY_Y ( bool s )
 {
     _to_be_checked = true;
-    _NM_search_use_only_Y    = s;
-    if ( ! _NM_search )
+    NM_NM_search_use_only_Y    = s;
+    if ( ! NM_NM_search )
         throw Invalid_Parameter ( "Parameters.cpp" , __LINE__ ,
                                  "NM_SEARCH_USE_ONLY_Y: valid only if NM_SEARCH is set to yes" );
 }
@@ -8900,8 +8900,8 @@ void NOMAD::Parameters::set_NM_SEARCH_USE_ONLY_Y ( bool s )
 void NOMAD::Parameters::set_NM_SEARCH_INIT_Y_ITER ( bool s )
 {
     _to_be_checked = true;
-    _NM_search_init_Y_iter = s;
-    if ( ! _NM_search )
+    NM_NM_search_init_Y_iter = s;
+    if ( ! NM_NM_search )
         throw Invalid_Parameter ( "Parameters.cpp" , __LINE__ ,
                                  "NM_SEARCH_INIT_Y_ITER: valid only if NM_SEARCH is set to yes" );
 }
@@ -8911,8 +8911,8 @@ void NOMAD::Parameters::set_NM_SEARCH_INIT_Y_ITER ( bool s )
 void NOMAD::Parameters::set_NM_SEARCH_USE_SHORT_Y0 ( bool s )
 {
     _to_be_checked = true;
-    _NM_search_use_short_Y0    = s;
-    if ( ! _NM_search )
+    NM_NM_search_use_short_Y0    = s;
+    if ( ! NM_NM_search )
         throw Invalid_Parameter ( "Parameters.cpp" , __LINE__ ,
                                  "NM_SEARCH_USE_SHORT_Y0: valid only if NM_SEARCH is set to yes" );
 }
@@ -8921,8 +8921,8 @@ void NOMAD::Parameters::set_NM_SEARCH_USE_SHORT_Y0 ( bool s )
 void NOMAD::Parameters::set_NM_SEARCH_SCALED_DZ ( bool s )
 {
     _to_be_checked = true;
-    _NM_search_scaled_DZ    = s;
-    if ( ! _NM_search )
+    NM_NM_search_scaled_DZ    = s;
+    if ( ! NM_NM_search )
         throw Invalid_Parameter ( "Parameters.cpp" , __LINE__ ,
                                  "NM_SEARCH_SCALED_DZ: valid only if NM_SEARCH is set to yes" );
 }
@@ -8931,8 +8931,8 @@ void NOMAD::Parameters::set_NM_SEARCH_SCALED_DZ ( bool s )
 void NOMAD::Parameters::set_NM_SEARCH_INIT_Y_BEST_VON ( bool s )
 {
     _to_be_checked = true;
-    _NM_search_init_Y_best_von    = s;
-    if ( ! _NM_search )
+    NM_NM_search_init_Y_best_von    = s;
+    if ( ! NM_NM_search )
         throw Invalid_Parameter ( "Parameters.cpp" , __LINE__ ,
                                  "NM_SEARCH_INIT_Y_BEST_VON: valid only if NM_SEARCH is set to yes" );
 }
@@ -8947,7 +8947,7 @@ void NOMAD::Parameters::set_NM_SEARCH_MAX_TRIAL_PTS ( int max_trial_pts )
         throw Invalid_Parameter ( "Parameters.cpp" , __LINE__ ,
                                  "NM_SEARCH_MAX_TRIAL_PTS: must be in {-1}U[1;+inf]" );
     
-    _NM_search_max_trial_pts = max_trial_pts;
+    NM_NM_search_max_trial_pts = max_trial_pts;
 }
 
 // set_NM_SEARCH_MAX_TRIAL_PTS_NFACTOR:
@@ -8959,7 +8959,7 @@ void NOMAD::Parameters::set_NM_SEARCH_MAX_TRIAL_PTS_NFACTOR( int max_trial_pts_n
         throw Invalid_Parameter ( "Parameters.cpp" , __LINE__ ,
                                  "NM_SEARCH_MAX_TRIAL_PTS_NFACTOR: must be in {-1}U[1;+inf]" );
     
-    _NM_search_max_trial_pts_nfactor = max_trial_pts_nfactor;
+    NM_NM_search_max_trial_pts_nfactor = max_trial_pts_nfactor;
 }
 
 
@@ -8972,7 +8972,7 @@ void NOMAD::Parameters::set_NM_SEARCH_MIN_SIMPLEX_VOL ( NOMAD::Double vol )
         throw Invalid_Parameter ( "Parameters.cpp" , __LINE__ ,
                                  "NM_SEARCH_MIN_SIMPLEX_VOL: must be in [0;+inf]" );
     
-    _NM_search_min_simplex_vol = vol;
+    NM_NM_search_min_simplex_vol = vol;
 }
 
 // set_NM_SEARCH_RANK_EPS:
@@ -8984,7 +8984,7 @@ void NOMAD::Parameters::set_NM_SEARCH_RANK_EPS ( NOMAD::Double eps )
         throw Invalid_Parameter ( "Parameters.cpp" , __LINE__ ,
                                  "NM_SEARCH_RANK_EPS: must be in [0;+inf]" );
     
-    _NM_search_rank_eps = eps;
+    NM_NM_search_rank_eps = eps;
 }
 
 
@@ -8997,7 +8997,7 @@ void NOMAD::Parameters::set_NM_SEARCH_INCLUDE_FACTOR ( NOMAD::Double f )
         throw Invalid_Parameter ( "Parameters.cpp" , __LINE__ ,
                                  "NM_SEARCH_INCLUDE_FACTOR: must be in (0;+inf]" );
     
-    _NM_search_include_factor = f;
+    NM_NM_search_include_factor = f;
 }
 
 
@@ -9006,8 +9006,8 @@ void NOMAD::Parameters::set_NM_SEARCH_INCLUDE_FACTOR ( NOMAD::Double f )
 void NOMAD::Parameters::set_LH_SEARCH ( int p0 , int pi )
 {
     _to_be_checked = true;
-    _LH_search_p0  = (p0 <= 0 ) ? 0 : p0;
-    _LH_search_pi  = (pi <= 0 ) ? 0 : pi;
+    LH_LH_search_p0  = (p0 <= 0 ) ? 0 : p0;
+    LH_LH_search_pi  = (pi <= 0 ) ? 0 : pi;
 }
 
 // set_DIRECTION_TYPE (1/2):

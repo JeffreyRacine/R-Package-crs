@@ -35,11 +35,11 @@ SGTELIB::Surrogate_RBF::Surrogate_RBF ( SGTELIB::TrainingSet & trainingset,
   _q                 ( -1                  ),
   _qrbf              ( -1                  ),
   _qprs              ( -1                  ),
-  _H                 ( "H",0,0             ),
-  _HtH               ( "HtH",0,0           ),
-  _HtZ               ( "HtZ",0,0           ),
-  _Ai                ( "Ai",0,0            ),
-  _Alpha             ( "alpha",0,0         ),
+  H_H                 ( "H",0,0             ),
+  H_HtH               ( "HtH",0,0           ),
+  H_HtZ               ( "HtZ",0,0           ),
+  Ai_Ai                ( "Ai",0,0            ),
+  Alpha_Alpha             ( "alpha",0,0         ),
   _selected_kernel   (1,-1                 ){
   #ifdef SGTELIB_DEBUG
     SGTELIB::rout << "constructor RBF\n";
@@ -144,11 +144,11 @@ bool SGTELIB::Surrogate_RBF::build_private ( void ) {
     // Solve with orthogonality constraints
     // =========================================
     // Build design matrix with constraints lines
-    _H = compute_design_matrix(get_matrix_Xs(),true); 
+    H_H = compute_design_matrix(get_matrix_Xs(),true); 
     // Inverte matrix
-    _Ai = _H.lu_inverse();
+    Ai_Ai = H_H.lu_inverse();
     // Product (only the p first rows of Ai)
-    _Alpha = SGTELIB::Matrix::subset_product(_Ai,Zs,-1,_p,-1);
+    Alpha_Alpha = SGTELIB::Matrix::subset_product(Ai_Ai,Zs,-1,_p,-1);
   }
   else{
     // =========================================
@@ -156,10 +156,10 @@ bool SGTELIB::Surrogate_RBF::build_private ( void ) {
     // =========================================
 
     // Build design matrix WITHOUT constraints lines
-    _H = compute_design_matrix(get_matrix_Xs(),false);
-    _HtH = SGTELIB::Matrix::transposeA_product(_H,_H);
-    _HtZ = SGTELIB::Matrix::transposeA_product(_H,get_matrix_Zs());
-    SGTELIB::Matrix A = _HtH;
+    H_H = compute_design_matrix(get_matrix_Xs(),false);
+    H_HtH = SGTELIB::Matrix::transposeA_product(H_H,H_H);
+    H_HtZ = SGTELIB::Matrix::transposeA_product(H_H,get_matrix_Zs());
+    SGTELIB::Matrix A = H_HtH;
 
     const double r = _param.get_ridge();
   
@@ -180,12 +180,12 @@ bool SGTELIB::Surrogate_RBF::build_private ( void ) {
       // Add ridge to all radial basis function (Same as R3)
       for (int i=0 ; i<_qrbf ; i++) A.add(i,i,r);
     }
-    _Ai = A.cholesky_inverse();
-    _Alpha = _Ai*_HtZ;
+    Ai_Ai = A.cholesky_inverse();
+    Alpha_Alpha = Ai_Ai*H_HtZ;
   }
 
   // Check for Nan  
-  if (_Alpha.has_nan()){
+  if (Alpha_Alpha.has_nan()){
     return false;
   }
 
@@ -264,7 +264,7 @@ const SGTELIB::Matrix SGTELIB::Surrogate_RBF::compute_design_matrix ( const SGTE
 void SGTELIB::Surrogate_RBF::predict_private ( const SGTELIB::Matrix & XXs,
                                                      SGTELIB::Matrix * ZZs) {
   check_ready(__FILE__,__FUNCTION__,__LINE__);
-  *ZZs = compute_design_matrix(XXs,false) * _Alpha;
+  *ZZs = compute_design_matrix(XXs,false) * Alpha_Alpha;
 }//
 
 /*--------------------------------------*/
@@ -282,13 +282,13 @@ const SGTELIB::Matrix * SGTELIB::Surrogate_RBF::get_matrix_Zvs (void){
       //============================================
       // ORTHOGONALITY CONSTRAINTS
       //============================================
-      SGTELIB::Matrix dAiAlpha = SGTELIB::Matrix::diagA_product(_Ai.diag_inverse(),_Alpha);
+      SGTELIB::Matrix dAiAlpha = SGTELIB::Matrix::diagA_product(Ai_Ai.diag_inverse(),Alpha_Alpha);
       dAiAlpha.remove_rows(_qprs);
       *Z_Zvs = Zs-dAiAlpha;
     }
     else{
       //SGTELIB::Matrix dPiPZs    = SGTELIB::Matrix::get_matrix_dPiPZs(_Ai,_H,Zs);
-      SGTELIB::Matrix dPiPZs = SGTELIB::Matrix::get_matrix_dPiPZs(_Ai,_H,Zs,_Alpha);
+      SGTELIB::Matrix dPiPZs = SGTELIB::Matrix::get_matrix_dPiPZs(Ai_Ai,H_H,Zs,Alpha_Alpha);
     
       // dPi is the inverse of the diag of P 
       // Compute _Zv = Zs - dPi*P*Zs

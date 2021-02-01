@@ -98,7 +98,7 @@ namespace NOMAD {
         
         NOMAD::Search        * VNS_VNS_search;     ///< VNS search.  zhenghua
         NOMAD::Search        * _cache_search;   ///< Cache search.
-        NOMAD::L_Curve       * _L_curve;        ///< L-curve target.
+        NOMAD::L_Curve       * L_L_curve;        ///< L-curve target.
         NOMAD::Extended_Poll * _extended_poll;  ///< Extended poll for categorical variables.
         bool                   _user_ext_poll;  ///< Flag for user-defined extended poll.
         NOMAD::Sgtelib_Model_Manager * _sgtelib_model_manager;
@@ -385,7 +385,7 @@ namespace NOMAD {
         _model_search2         ( NULL                          ) ,
         VNS_VNS_search            ( NULL                          ) ,
         _cache_search          ( NULL                          ) ,
-        _L_curve               ( NULL                          ) ,
+        L_L_curve               ( NULL                          ) ,
         _extended_poll         ( NULL                          ) ,
         _user_ext_poll         ( false                         ) ,
         _sgtelib_model_manager ( NULL                          ) { init(); }
@@ -419,7 +419,7 @@ namespace NOMAD {
         _model_search2         ( NULL                                 ) ,
         VNS_VNS_search            ( NULL                                 ) ,
         _cache_search          ( NULL                                 ) ,
-        _L_curve               ( NULL                                 ) ,
+        L_L_curve               ( NULL                                 ) ,
         _extended_poll         ( extended_poll                        ) ,
         _user_ext_poll         ( (extended_poll!=NULL)                ) ,
         _sgtelib_model_manager ( NULL                                 ) { init(); }

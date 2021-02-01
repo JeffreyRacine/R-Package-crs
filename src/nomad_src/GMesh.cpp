@@ -75,12 +75,12 @@ void NOMAD::GMesh::init ( )
     }
     
     // Set the mesh mantissas and exponents
-    init_poll_size_granular ( _Delta_0 );
+    init_poll_size_granular ( D_Delta_0 );
     
     // Update mesh and poll after granular sizing
-    _Delta_0_exp = _Delta_exp ;
-    _Delta_0_mant = _Delta_mant;
-    get_Delta ( _Delta_0 );
+    D_Delta_0_exp = D_Delta_exp ;
+    D_Delta_0_mant = D_Delta_mant;
+    get_Delta ( D_Delta_0 );
     get_delta ( _delta_0 );
     
 
@@ -115,21 +115,21 @@ void NOMAD::GMesh::update ( NOMAD::success_type success , const NOMAD::Direction
             {
                 if ( ! d || ! _anisotropic_mesh ||
                      fabs((*d)[i].value())/get_delta(i).value()/get_rho(i).value() > _anisotropy_factor.value() ||
-                    ( _granularity[i] == 0  && _Delta_exp[i] < _Delta_0_exp[i] && get_rho(i) > min_rho*min_rho ))
+                    ( _granularity[i] == 0  && D_Delta_exp[i] < D_Delta_0_exp[i] && get_rho(i) > min_rho*min_rho ))
                 {
                     // update the mesh index
                     ++_r[i];
                     _r_max[i]=NOMAD::max(_r[i],_r_max[i]);
                     
                     // update the mantissa and exponent
-                    if ( _Delta_mant[i] == 1 )
-                        _Delta_mant[i]= 2;
-                    else if ( _Delta_mant[i] == 2 )
-                        _Delta_mant[i]=5;
+                    if ( D_Delta_mant[i] == 1 )
+                        D_Delta_mant[i]= 2;
+                    else if ( D_Delta_mant[i] == 2 )
+                        D_Delta_mant[i]=5;
                     else
                     {
-                        _Delta_mant[i]=1;
-                        ++_Delta_exp[i];
+                        D_Delta_mant[i]=1;
+                        ++D_Delta_exp[i];
                     }
                 }
             }
@@ -146,22 +146,22 @@ void NOMAD::GMesh::update ( NOMAD::success_type success , const NOMAD::Direction
                 --_r[i];
                 
                 // update the mesh mantissa and exponent
-                if ( _Delta_mant[i] == 1 )
+                if ( D_Delta_mant[i] == 1 )
                 {
-                    _Delta_mant[i]= 5;
-                    --_Delta_exp[i];
+                    D_Delta_mant[i]= 5;
+                    --D_Delta_exp[i];
                 }
-                else if ( _Delta_mant[i] == 2 )
-                    _Delta_mant[i]=1;
+                else if ( D_Delta_mant[i] == 2 )
+                    D_Delta_mant[i]=1;
                 else
-                    _Delta_mant[i]=2;
+                    D_Delta_mant[i]=2;
                 
                 
-                if ( _granularity[i] > 0 && _Delta_exp[i]==-1 && _Delta_mant[i]==5 )
+                if ( _granularity[i] > 0 && D_Delta_exp[i]==-1 && D_Delta_mant[i]==5 )
                 {
                     ++_r[i];
-                    _Delta_exp[i]=0;
-                    _Delta_mant[i]=1;
+                    D_Delta_exp[i]=0;
+                    D_Delta_mant[i]=1;
                 }
             }
             // Update the minimal mesh index reached so far
@@ -188,14 +188,14 @@ void NOMAD::GMesh::display ( const NOMAD::Display & out ) const
         out << "none";
     out << std::endl
     << "minimal poll size       : ";
-    if ( _Delta_min_is_defined )
-        out << "( " << _Delta_min     << " )" << std::endl;
+    if ( D_Delta_min_is_defined )
+        out << "( " << D_Delta_min     << " )" << std::endl;
     else
         out << "none";
     
     out << std::endl << "initial poll size       : ";
-    if ( _Delta_0.is_defined() )
-        out <<"( " << _Delta_0     << " )" << std::endl;
+    if ( D_Delta_0.is_defined() )
+        out <<"( " << D_Delta_0     << " )" << std::endl;
     else
         out <<"( none )" << std::endl;
     
@@ -300,7 +300,7 @@ void NOMAD::GMesh::check_min_mesh_sizes ( bool             & stop           ,
 /*-----------------------------------------------------------*/
 bool NOMAD::GMesh::check_min_poll_size_criterion ( ) const
 {
-    if ( !_Delta_min_is_defined )
+    if ( !D_Delta_min_is_defined )
         return false;
     
     NOMAD::Point Delta;
@@ -354,7 +354,7 @@ NOMAD::Double NOMAD::GMesh::get_delta ( int i ) const
 {
     
     
-    NOMAD::Double delta = pow ( 10 , _Delta_exp[i].value() - std::fabs( _Delta_exp[i].value() - _Delta_0_exp[i].value() ) );
+    NOMAD::Double delta = pow ( 10 , D_Delta_exp[i].value() - std::fabs( D_Delta_exp[i].value() - D_Delta_0_exp[i].value() ) );
     
     if ( _granularity[i] > 0 )
         delta = _granularity[i] * NOMAD::max( 1.0 , delta );
@@ -375,7 +375,7 @@ NOMAD::Double NOMAD::GMesh::get_Delta ( int i ) const
     if ( _granularity[i] > 0 )
         d_min_gran = _granularity[i];
     
-    NOMAD::Double Delta = d_min_gran * _Delta_mant[i] * pow ( 10.0, _Delta_exp[i].value() ) ;
+    NOMAD::Double Delta = d_min_gran * D_Delta_mant[i] * pow ( 10.0, D_Delta_exp[i].value() ) ;
     
     return Delta;
 }
@@ -399,10 +399,10 @@ bool NOMAD::GMesh::get_Delta ( NOMAD::Point & Delta ) const
     {
         Delta[i] = get_Delta( i );
         
-        if (  stop && ! _fixed_variables[i].is_defined() && _granularity[i] == 0 && ( !_Delta_min_is_complete  || Delta[i] >= _Delta_min[i] ) )
+        if (  stop && ! _fixed_variables[i].is_defined() && _granularity[i] == 0 && ( !D_Delta_min_is_complete  || Delta[i] >= D_Delta_min[i] ) )
             stop = false;
         
-        if ( stop && ! _fixed_variables[i].is_defined() && _granularity[i] > 0 && ( !_Delta_min_is_complete  || Delta[i] > _Delta_min[i] ) )
+        if ( stop && ! _fixed_variables[i].is_defined() && _granularity[i] > 0 && ( !D_Delta_min_is_complete  || Delta[i] > D_Delta_min[i] ) )
             stop = false;
 
     }
@@ -421,11 +421,11 @@ NOMAD::Double NOMAD::GMesh::get_rho ( int i ) const
     NOMAD::Double rho ;
     if ( _granularity[i] > 0  )
     {
-        rho = _Delta_mant[i] * NOMAD::min( pow ( 10 , _Delta_exp[i].value() ) , pow ( 10 , std::fabs( _Delta_exp[i].value() - _Delta_0_exp[i].value() ) ) );
+        rho = D_Delta_mant[i] * NOMAD::min( pow ( 10 , D_Delta_exp[i].value() ) , pow ( 10 , std::fabs( D_Delta_exp[i].value() - D_Delta_0_exp[i].value() ) ) );
     }
     else
     {
-        rho = _Delta_mant[i] * pow ( 10 , std::fabs( _Delta_exp[i].value() - _Delta_0_exp[i].value() ) );
+        rho = D_Delta_mant[i] * pow ( 10 , std::fabs( D_Delta_exp[i].value() - D_Delta_0_exp[i].value() ) );
     }
 
     return rho;
@@ -476,15 +476,15 @@ void NOMAD::GMesh::set_mesh_indices ( const NOMAD::Point & r )
         int shift = static_cast<int>( _r[i].value() + _pos_mant_0[i].value() );
         int pos= ( shift + 300 )  % 3 ;
         
-        _Delta_exp[i] = std::floor( ( shift + 300.0 )/3.0 ) - 100.0 + _Delta_0_exp[i];
+        D_Delta_exp[i] = std::floor( ( shift + 300.0 )/3.0 ) - 100.0 + D_Delta_0_exp[i];
         // _Delta_exp[i] = (int)( (_r[i].value() + _pos_mant_0[i].value() )/3.0) + _Delta_0_exp[i];
         
         if ( pos == 0 )
-            _Delta_mant[i] = 1;
+            D_Delta_mant[i] = 1;
         else if ( pos == 1 )
-            _Delta_mant[i] = 2;
+            D_Delta_mant[i] = 2;
         else if ( pos == 2 )
-            _Delta_mant[i] = 5;
+            D_Delta_mant[i] = 5;
         else
             throw NOMAD::Exception ( "GMesh.cpp" , __LINE__ ,
                                     "NOMAD::GMesh::set_mesh_indices(): something is wrong with conversion from index to mantissa and exponent" );
@@ -523,7 +523,7 @@ NOMAD::Double NOMAD::GMesh::scale_and_project(int i, const NOMAD::Double & l, bo
     
     NOMAD::Double delta = get_delta( i );
     
-    if ( i <= _n && _Delta_mant.is_defined() && _Delta_exp.is_defined() && delta.is_defined() )
+    if ( i <= _n && D_Delta_mant.is_defined() && D_Delta_exp.is_defined() && delta.is_defined() )
     {
         NOMAD::Double d = get_rho(i) * l;
         
@@ -573,8 +573,8 @@ void NOMAD::GMesh::init_poll_size_granular ( NOMAD::Point & cont_init_poll_size 
         throw NOMAD::Exception ( "GMesh.cpp" , __LINE__ ,
                                 "NOMAD::GMesh::init_poll_size_granular(): Inconsistent dimension of the poll size!" );
     
-    _Delta_exp.reset ( _n );
-    _Delta_mant.reset ( _n );
+    D_Delta_exp.reset ( _n );
+    D_Delta_mant.reset ( _n );
     _pos_mant_0.reset ( _n );
     
     
@@ -595,24 +595,24 @@ void NOMAD::GMesh::init_poll_size_granular ( NOMAD::Point & cont_init_poll_size 
         if ( exp < 0 )
             exp = 0;
         
-        _Delta_exp[i]=exp;
+        D_Delta_exp[i]=exp;
         
         double cont_mant = cont_init_poll_size[i].value() / d_min.value() * pow ( 10.0 , -exp );
         
         // round to 1, 2 or 5
         if ( cont_mant < 1.5 )
         {
-            _Delta_mant[i]=1;
+            D_Delta_mant[i]=1;
             _pos_mant_0[i]=0;
         }
         else if ( cont_mant >= 1.5 && cont_mant < 3.5 )
         {
-            _Delta_mant[i]=2;
+            D_Delta_mant[i]=2;
             _pos_mant_0[i]=1;
         }
         else
         {
-            _Delta_mant[i]=5;
+            D_Delta_mant[i]=5;
             _pos_mant_0[i]=2;
         }
     }
@@ -630,15 +630,15 @@ bool NOMAD::GMesh::is_finer_than_initial (void) const
         {
             
             // For continuous variables
-            if ( _granularity[i]==0 && ( _Delta_exp[i] > _Delta_0_exp[i] || ( _Delta_exp[i] == _Delta_0_exp[i] && _Delta_mant[i] >= _Delta_0_mant[i] ) ) )
+            if ( _granularity[i]==0 && ( D_Delta_exp[i] > D_Delta_0_exp[i] || ( D_Delta_exp[i] == D_Delta_0_exp[i] && D_Delta_mant[i] >= D_Delta_0_mant[i] ) ) )
                 return false;
             
             // For granular variables ( case 1 )
-            if ( _granularity[i] > 0 && ( _Delta_exp[i] > _Delta_0_exp[i] || ( _Delta_exp[i] == _Delta_0_exp[i] && _Delta_mant[i] > _Delta_0_mant[i] ) ) )
+            if ( _granularity[i] > 0 && ( D_Delta_exp[i] > D_Delta_0_exp[i] || ( D_Delta_exp[i] == D_Delta_0_exp[i] && D_Delta_mant[i] > D_Delta_0_mant[i] ) ) )
                 return false;
             
             // For granular variables ( case 2 )
-            if ( _granularity[i] > 0 && _Delta_exp[i] == _Delta_0_exp[i] && _Delta_mant[i] == _Delta_0_mant[i] && ( _Delta_exp[i] != 0 ||  _Delta_mant[i] != 1 ) )
+            if ( _granularity[i] > 0 && D_Delta_exp[i] == D_Delta_0_exp[i] && D_Delta_mant[i] == D_Delta_0_mant[i] && ( D_Delta_exp[i] != 0 ||  D_Delta_mant[i] != 1 ) )
                 return false;
         }
         

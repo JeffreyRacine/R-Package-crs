@@ -63,7 +63,7 @@ void NOMAD::XMesh::init ( )
                                 "NOMAD::XMesh::XMesh(): limit mesh index must be <=0 " );
     
     // The delta_0 depends on Delta_0 and the problem dimension
-    _delta_0=_Delta_0;
+    _delta_0=D_Delta_0;
     _delta_0*=pow(_n_free_variables,-0.5);
     
 
@@ -177,14 +177,14 @@ void NOMAD::XMesh::display ( const NOMAD::Display & out ) const
         out << "none";
     out << std::endl
     << "minimal poll size       : ";
-    if ( _Delta_min_is_defined )
-        out << "( " << _Delta_min     << " )" << std::endl;
+    if ( D_Delta_min_is_defined )
+        out << "( " << D_Delta_min     << " )" << std::endl;
     else
         out << "none";
     
     out << std::endl << "initial poll size       : ";
-    if (_Delta_0.is_defined())
-        out <<"( " << _Delta_0     << " )" << std::endl;
+    if (D_Delta_0.is_defined())
+        out <<"( " << D_Delta_0     << " )" << std::endl;
     else
         out <<"( none )" << std::endl;
     
@@ -262,7 +262,7 @@ void NOMAD::XMesh::check_min_mesh_sizes ( bool             & stop           ,
 /*-----------------------------------------------------------*/
 bool NOMAD::XMesh::check_min_poll_size_criterion ( ) const
 {
-    if ( !_Delta_min_is_defined )
+    if ( !D_Delta_min_is_defined )
         return false;
     
     NOMAD::Point Delta;
@@ -344,7 +344,7 @@ bool NOMAD::XMesh::get_Delta ( NOMAD::Point & Delta ) const
     {
         Delta[i] = get_Delta( i );
 
-        if (  stop && ! _fixed_variables[i].is_defined() && ( !_Delta_min_is_complete  || Delta[i] >= _Delta_min[i] ) )
+        if (  stop && ! _fixed_variables[i].is_defined() && ( !D_Delta_min_is_complete  || Delta[i] >= D_Delta_min[i] ) )
             stop = false;
     }
     
@@ -357,7 +357,7 @@ bool NOMAD::XMesh::get_Delta ( NOMAD::Point & Delta ) const
 /*--------------------------------------------------------------*/
 NOMAD::Double NOMAD::XMesh::get_Delta ( int i ) const
 {
-    NOMAD::Double Delta = _Delta_0[i] * pow( _update_basis.value() , _r[i].value() );
+    NOMAD::Double Delta = D_Delta_0[i] * pow( _update_basis.value() , _r[i].value() );
     return Delta;
 
 }

@@ -549,7 +549,7 @@ void NOMAD::Eval_Point::set_model_data ( const NOMAD::Eval_Point & x ) const
     _mod_use = x._mod_use;
     _nY      = x._nY;
     _cond    = x._cond;
-    _Yw      = x._Yw;
+    Yw_Yw      = x.Yw_Yw;
     _mh      = x._mh;
     _mf      = x._mf;
 }
@@ -562,7 +562,7 @@ void NOMAD::Eval_Point::clear_model_data ( void ) const
     _mod_use = -1;
     _nY      = -1;
     _cond.clear();
-    _Yw.clear();
+    Yw_Yw.clear();
     _mh.clear();
     _mf.clear();
 }

@@ -992,38 +992,38 @@ namespace NOMAD {
         NOMAD::model_params_type _model_params; ///< Models parameters.
         
         // VNS search parameters:
-        bool          _VNS_search;  ///< Flag for the VNS search.
-        NOMAD::Double _VNS_trigger; ///< VNS trigger.
+        bool          VNS_VNS_search;  ///< Flag for the VNS search.   //zhenghua
+        NOMAD::Double VNS_VNS_trigger; ///< VNS trigger.
         
         
         // NelderMead search simplex parameters:
-        bool          _NM_search;  ///< Flag for the NM search.
+        bool          NM_NM_search;  ///< Flag for the NM search.   //zhenghua
         
         // NelderMead simplex update parameters
-        Double        _NM_gamma ;     ///< Shrink parameter
-        Double        _NM_delta_ic ;  ///< Inside contraction parameter
-        Double        _NM_delta_oc ;  ///< Outside contraction parameter
-        Double        _NM_delta_e ;   ///< Expansion parameter
+        Double        NM_NM_gamma ;     ///< Shrink parameter
+        Double        NM_NM_delta_ic ;  ///< Inside contraction parameter
+        Double        NM_NM_delta_oc ;  ///< Outside contraction parameter
+        Double        NM_NM_delta_e ;   ///< Expansion parameter
         
         // NelderMead search parameters:
-        bool          _NM_search_intensive;  ///< Flag for the NM search intensive mode.
-        bool          _NM_search_opportunistic;  ///< Flag for the NM search opportunistic mode.
-        int           _NM_search_max_trial_pts;  ///< NM max number of trial points at each iteration.
-        Double        _NM_search_min_simplex_vol; ///< NM min simplex volume for stopping.
-        Double        _NM_search_include_factor; ///< NM search initial simplex inclusion factor.
-        Double        _NM_search_rank_eps; ///< NM search epsilon for rank calculation of NM simplex.
-        int           _NM_search_max_trial_pts_nfactor; ///< NM max number of trial points at each iteration : nfactor * dim.
-        bool          _NM_search_use_only_Y; ///< Flag for the NM search using only Y to establish dominance of new points.
-        bool          _NM_search_scaled_DZ; ///< Flag for the NM search using scaled DZ (Delta) for simplex characteristics.
-        bool          _NM_search_init_Y_iter; ///< Flag for the NM search initial simplex Y to be obtained iteratively.
-        bool          _NM_search_use_short_Y0; ///< Flag for the NM search using only two points for Y0.
-        bool          _NM_search_init_Y_best_von; ///< Flag for the NM search picking point for init Y having best normalized volume.
+        bool          NM_NM_search_intensive;  ///< Flag for the NM search intensive mode.
+        bool          NM_NM_search_opportunistic;  ///< Flag for the NM search opportunistic mode.
+        int           NM_NM_search_max_trial_pts;  ///< NM max number of trial points at each iteration.
+        Double        NM_NM_search_min_simplex_vol; ///< NM min simplex volume for stopping.
+        Double        NM_NM_search_include_factor; ///< NM search initial simplex inclusion factor.
+        Double        NM_NM_search_rank_eps; ///< NM search epsilon for rank calculation of NM simplex.
+        int           NM_NM_search_max_trial_pts_nfactor; ///< NM max number of trial points at each iteration : nfactor * dim.
+        bool          NM_NM_search_use_only_Y; ///< Flag for the NM search using only Y to establish dominance of new points.
+        bool          NM_NM_search_scaled_DZ; ///< Flag for the NM search using scaled DZ (Delta) for simplex characteristics.
+        bool          NM_NM_search_init_Y_iter; ///< Flag for the NM search initial simplex Y to be obtained iteratively.
+        bool          NM_NM_search_use_short_Y0; ///< Flag for the NM search using only two points for Y0.
+        bool          NM_NM_search_init_Y_best_von; ///< Flag for the NM search picking point for init Y having best normalized volume.
         
         
         
         // Latin-Hypercube (LH) search:
-        int  _LH_search_p0;      ///< Number of initial LH search points.
-        int  _LH_search_pi;      ///< LH search points at each iteration.
+        int  LH_LH_search_p0;      ///< Number of initial LH search points.   //zhenghua
+        int  LH_LH_search_pi;      ///< LH search points at each iteration.   //zhenghua
         bool _opportunistic_LH;  ///< Parameter \c OPPORTUNISTIC_LH.
         bool _opp_LH_is_defined; ///< A boolean equal to \c true if a LH has been defined.
         

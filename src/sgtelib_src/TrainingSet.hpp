@@ -93,7 +93,7 @@ namespace SGTELIB {
     //double * _X_ub_scaled;
 
     // Mean distance between points 
-    double D_Ds_mean;
+    double D_Ds_mean;   //zhenghua
 
     // private affectation operator:
     TrainingSet & operator = ( const TrainingSet & );

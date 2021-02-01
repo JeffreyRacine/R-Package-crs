@@ -89,7 +89,7 @@ namespace NOMAD {
         
         time_t              _real_t0;          ///< Wall clock time measurement.
         clock_t             CPU_CPU_t0;           ///< CPU time measurement.  //zhenghua, for compiling on Solaris.
-        static const double _D_CLOCKS_PER_SEC; ///< System constant for CPU time measurement.
+        static const double D_D_CLOCKS_PER_SEC; ///< System constant for CPU time measurement.       //zhenghua
         
     public:
         
@@ -136,7 +136,7 @@ namespace NOMAD {
          */
         double get_CPU_time ( void ) const
         {
-            return ( clock() - CPU_CPU_t0 ) / _D_CLOCKS_PER_SEC;
+            return ( clock() - CPU_CPU_t0 ) / D_D_CLOCKS_PER_SEC;
         }
     };
 }

@@ -168,7 +168,7 @@ NOMAD::Mads::~Mads ( void )
     delete _model_search2;
     delete VNS_VNS_search;
     delete _cache_search;
-    delete _L_curve;
+    delete L_L_curve;
     
     if ( _sgtelib_model_manager )
     {
@@ -456,15 +456,15 @@ NOMAD::stop_type NOMAD::Mads::run ( void )
         }
         
         // L_curve initialization:
-        delete _L_curve;
-        _L_curve = NULL;
+        delete L_L_curve;
+        L_L_curve = NULL;
         const NOMAD::Double L_curve_target = _p.get_L_curve_target();
         if ( L_curve_target.is_defined() )
         {
-            _L_curve = new NOMAD::L_Curve ( L_curve_target );
+            L_L_curve = new NOMAD::L_Curve ( L_curve_target );
             const NOMAD::Eval_Point * best_feasible = get_best_feasible();
             if ( best_feasible )
-                _L_curve->insert ( _stats.get_bb_eval() , best_feasible->get_f() );
+                L_L_curve->insert ( _stats.get_bb_eval() , best_feasible->get_f() );
         }
         
         int max_cfi = _p.get_max_consecutive_failed_iterations();
@@ -1393,15 +1393,15 @@ void NOMAD::Mads::iteration ( bool                     & stop           ,
     }
     
     // L_CURVE_TARGET stopping criterion:
-    if ( _L_curve && !stop )
+    if ( L_L_curve && !stop )
     {
         int bbe = _stats.get_bb_eval();
         if ( success == NOMAD::FULL_SUCCESS )
         {
             if ( new_feas_inc )
-                _L_curve->insert ( bbe , new_feas_inc->get_f() );
+                L_L_curve->insert ( bbe , new_feas_inc->get_f() );
         }
-        else if ( success == NOMAD::UNSUCCESSFUL && _L_curve->check_stop ( bbe ) )
+        else if ( success == NOMAD::UNSUCCESSFUL && L_L_curve->check_stop ( bbe ) )
         {
             stop = true;
             stop_reason = NOMAD::L_CURVE_TARGET_REACHED;

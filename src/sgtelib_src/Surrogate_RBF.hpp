@@ -50,11 +50,11 @@ namespace SGTELIB {
     int _q; // Nb of basis function
     int _qrbf; // Nb of RBF basis function
     int _qprs; // Nb of PRS basis function
-    SGTELIB::Matrix _H; // Design matrix
-    SGTELIB::Matrix _HtH; // H'*H
-    SGTELIB::Matrix _HtZ; // H'*Z
-    SGTELIB::Matrix _Ai; // inverse of H or Ht*H+r*J
-    SGTELIB::Matrix _Alpha; // Coefficients
+    SGTELIB::Matrix H_H; // Design matrix   //zhenghua
+    SGTELIB::Matrix H_HtH; // H'*H          //zhenghua
+    SGTELIB::Matrix H_HtZ; // H'*Z          //zhenghua
+    SGTELIB::Matrix Ai_Ai; // inverse of H or Ht*H+r*J   //zhenghua
+    SGTELIB::Matrix Alpha_Alpha; // Coefficients
 
     std::list<int> _selected_kernel;
 

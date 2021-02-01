@@ -32,9 +32,9 @@
 SGTELIB::Surrogate_Kriging::Surrogate_Kriging ( SGTELIB::TrainingSet & trainingset,
                                                 SGTELIB::Surrogate_Parameters param) :
   SGTELIB::Surrogate ( trainingset , param ),
-  _R                 ( "R",0,0             ),  
-  _Ri                ( "Ri",0,0            ),  
-  _H                 ( "H",0,0             ),
+  R_R                 ( "R",0,0             ),  
+  R_Ri                ( "Ri",0,0            ),  
+  H_H                 ( "H",0,0             ),
   _alpha             ( "alpha",0,0         ),
   _beta              ( "beta",0,0          ),
   _var               ( "var",0,0           ){
@@ -85,9 +85,9 @@ bool SGTELIB::Surrogate_Kriging::build_private ( void ) {
   const int nvar = _trainingset.get_nvar();
   const SGTELIB::Matrix & Zs = get_matrix_Zs();
 
-  _R = compute_covariance_matrix(get_matrix_Xs());
-  _H = SGTELIB::Matrix::ones(_p,1);
-  _Ri = _R.lu_inverse(&_detR);
+  R_R = compute_covariance_matrix(get_matrix_Xs());
+  H_H = SGTELIB::Matrix::ones(_p,1);
+  R_Ri = R_R.lu_inverse(&_detR);
 
   if (_detR<=0){
     _detR = +INF;
@@ -96,10 +96,10 @@ bool SGTELIB::Surrogate_Kriging::build_private ( void ) {
 
 
   //SGTELIB::rout << "detR = "<< _detR << "\n";
-  const SGTELIB::Matrix HRi  = _H.transpose()*_Ri;
-  const SGTELIB::Matrix HRiH = HRi*_H;
+  const SGTELIB::Matrix HRi  = H_H.transpose()*R_Ri;
+  const SGTELIB::Matrix HRiH = HRi*H_H;
   _beta = HRiH.cholesky_inverse() * HRi * Zs;
-  _alpha = _Ri*(Zs-_H*_beta);
+  _alpha = R_Ri*(Zs-H_H*_beta);
 
   _beta.set_name("beta");
   _alpha.set_name("alpha");
@@ -110,8 +110,8 @@ bool SGTELIB::Surrogate_Kriging::build_private ( void ) {
   SGTELIB::Matrix Vj;
   for (int j=0 ; j<mvar ; j++){
     Zj = Zs.get_col(j);
-    Zj = (Zj-_H*_beta.get_col(j));
-    Vj = Zj.transpose() * _Ri * Zj;
+    Zj = (Zj-H_H*_beta.get_col(j));
+    Vj = Zj.transpose() * R_Ri * Zj;
     v = Vj.get(0,0) / (_p-nvar);
     if (v<0) return false;
     _var.set(0,j,v);
@@ -190,13 +190,13 @@ void SGTELIB::Surrogate_Kriging::predict_private (const SGTELIB::Matrix & XXs,
   else std = new SGTELIB::Matrix ("std",pxx,_m);
 
   double rRr;
-  const double HRH = (_H.transpose()*_Ri*_H).get(0,0);
+  const double HRH = (H_H.transpose()*R_Ri*H_H).get(0,0);
 
   double v;
   SGTELIB::Matrix ri;
   for (i=0 ; i<pxx ; i++){
     ri = r.get_col(i);
-    rRr = (ri.transpose()*_Ri*ri).get(0,0);
+    rRr = (ri.transpose()*R_Ri*ri).get(0,0);
     if (fabs(rRr-1)<EPSILON){
       v = fabs(rRr-1);
     }
@@ -259,8 +259,8 @@ bool SGTELIB::Surrogate_Kriging::compute_cv_values (void){
   if ((Z_Zvs) && (S_Svs)) return true;
 
   const SGTELIB::Matrix & Zs = get_matrix_Zs();
-  const SGTELIB::Matrix RiH = _Ri*_H;
-  const SGTELIB::Matrix Q = _Ri - RiH*( _H.transpose()*_Ri*_H)*RiH.transpose();
+  const SGTELIB::Matrix RiH = R_Ri*H_H;
+  const SGTELIB::Matrix Q = R_Ri - RiH*( H_H.transpose()*R_Ri*H_H)*RiH.transpose();
   const SGTELIB::Matrix dQ = Q.diag_inverse();
   
   // Init matrices

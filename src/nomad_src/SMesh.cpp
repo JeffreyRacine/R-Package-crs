@@ -125,8 +125,8 @@ void NOMAD::SMesh::display ( const NOMAD::Display & out ) const
         out << "none";
     out << std::endl
     << "minimal poll size       : ";
-    if ( _Delta_min_is_defined )
-        out << "(" << _Delta_min << " )" << std::endl;
+    if ( D_Delta_min_is_defined )
+        out << "(" << D_Delta_min << " )" << std::endl;
     else
         out << "none";
     out << std::endl;
@@ -169,7 +169,7 @@ void NOMAD::SMesh::check_min_mesh_sizes ( bool             & stop           ,
 /*-----------------------------------------------------------*/
 bool NOMAD::SMesh::check_min_poll_size_criterion ( ) const
 {
-    if ( !_Delta_min_is_defined )
+    if ( !D_Delta_min_is_defined )
         return false;
     NOMAD::Point Delta;
     return get_Delta ( Delta  );
@@ -286,12 +286,12 @@ bool NOMAD::SMesh::get_Delta ( NOMAD::Point & Delta ) const
     // Delta^k = power_of_tau * Delta^0:
     for ( int i = 0 ; i < _n ; ++i )
     {
-        Delta[i] = _Delta_0[i] * power_of_tau;
-        if ( !_Delta_min_is_complete || Delta[i] >= _Delta_min[i] )
+        Delta[i] = D_Delta_0[i] * power_of_tau;
+        if ( !D_Delta_min_is_complete || Delta[i] >= D_Delta_min[i] )
             stop = false;
         
-        if ( _Delta_min_is_defined && _Delta_min[i].is_defined() && Delta[i] < _Delta_min[i] )
-            Delta[i]=_Delta_min[i];
+        if ( D_Delta_min_is_defined && D_Delta_min[i].is_defined() && Delta[i] < D_Delta_min[i] )
+            Delta[i]=D_Delta_min[i];
     }
     
     return stop;
@@ -313,10 +313,10 @@ NOMAD::Double NOMAD::SMesh::get_Delta ( int i ) const
            ( (_initial_mesh_index > 0) ? _initial_mesh_index : 0) -
            ( (_mesh_index          > 0) ? _mesh_index          : 0)   );
     
-    NOMAD::Double Delta = _Delta_0[i] * power_of_tau;
+    NOMAD::Double Delta = D_Delta_0[i] * power_of_tau;
     
-    if ( _Delta_min_is_defined && _Delta_min[i].is_defined() && Delta < _Delta_min[i] )
-        Delta=_Delta_min[i];
+    if ( D_Delta_min_is_defined && D_Delta_min[i].is_defined() && Delta < D_Delta_min[i] )
+        Delta=D_Delta_min[i];
     
     return Delta;
 }

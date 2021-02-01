@@ -47,9 +47,9 @@ namespace SGTELIB {
     /*--------------------------------------*/
     /*          Attributes                  */
     /*--------------------------------------*/
-    SGTELIB::Matrix _R; // Covariance Matrix
-    SGTELIB::Matrix _Ri; // Inverte of _R
-    SGTELIB::Matrix _H; // Polynomial terms
+    SGTELIB::Matrix R_R; // Covariance Matrix     //zhenghua
+    SGTELIB::Matrix R_Ri; // Inverte of _R        //zhenghua
+    SGTELIB::Matrix H_H; // Polynomial terms      //zhenghua
     SGTELIB::Matrix _alpha;
     SGTELIB::Matrix _beta;
     SGTELIB::Matrix _var;

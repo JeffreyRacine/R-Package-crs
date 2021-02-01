@@ -69,10 +69,10 @@ namespace NOMAD {
         NOMAD::Point    _r; // Mesh index per coordinate.
         NOMAD::Point    _r_min;
         NOMAD::Point    _r_max;
-        NOMAD::Point    _Delta_0_exp;
-        NOMAD::Point    _Delta_mant;
-        NOMAD::Point    _Delta_0_mant;
-        NOMAD::Point    _Delta_exp;
+      NOMAD::Point    D_Delta_0_exp;     //zhenghua
+        NOMAD::Point    D_Delta_mant;
+        NOMAD::Point    D_Delta_0_mant;
+        NOMAD::Point    D_Delta_exp;
         NOMAD::Point    _pos_mant_0;
         
         
