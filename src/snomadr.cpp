@@ -353,7 +353,7 @@ extern "C" {
 				{
 						NOMAD::Parameters param(out);
 						char **argv;
-						argv = new char*[5];
+						argv = new char*[3];
 						argv[0] = new char[200];
 						argv[1] = new char[200];
 						argv[2] = new char[200];
@@ -371,7 +371,12 @@ extern "C" {
 								strcpy(argv[2], "all");
 
 						param.help(3, argv, false);
-						delete(argv);
+
+						//delete argv.
+						delete argv[0];
+						delete argv[1];
+						delete argv[2];
+						delete[] argv;
 				}
 
 				NOMAD::end();

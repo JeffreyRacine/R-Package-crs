@@ -954,7 +954,7 @@ bool NOMAD::Sgtelib_Model_Search::filter_cache (  const NOMAD::Display & out    
         }// End switch
         
         // If a point was selected,
-        if ( (iselect>-1) & (!keep[iselect]) )
+        if ( (iselect>=0) & (!keep[(size_t)(iselect)]) )
         {
             
             if ( bool_display ){
