@@ -655,7 +655,7 @@ For the second predictor use \texttt{x2} and
 
 \begin{itemize}
 
-\item Fixed warnings flagged on CRAN
+\item Fixed warnings flagged on CRAN (thanks Zhenghua!)
 
 \begin{itemize}
 

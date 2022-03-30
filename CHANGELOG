@@ -1,6 +1,6 @@
 Changes from Version 0.15-33 to 0.15-34 [30-Mar-2022]
 
-* Fixed warnings flagged on CRAN [i) snomadr.cpp:374:60: warning: void operator delete(void*, std::size_t) called on pointer returned from a mismatched allocation function [-Wmismatched-new-delete], ii) nomad_src/Sgtelib_Model_Search.cpp:957:43: warning: array subscript -1 is outside array bounds of bool [2147483647] [-Warray-bounds]]
+* Fixed warnings flagged on CRAN (thanks Zhenghua!) [i) snomadr.cpp:374:60: warning: void operator delete(void*, std::size_t) called on pointer returned from a mismatched allocation function [-Wmismatched-new-delete], ii) nomad_src/Sgtelib_Model_Search.cpp:957:43: warning: array subscript -1 is outside array bounds of bool [2147483647] [-Warray-bounds]]
 
 * Additional casting of x as as.matrix() in is.fullrank()
 
