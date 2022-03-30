@@ -281,7 +281,7 @@ cv.rq <- function (model, tau = 0.5, weights = NULL) {
 is.fullrank <- function(x)
 {
   e <- eigen(crossprod(as.matrix(x)), symmetric = TRUE, only.values = TRUE)$values
-  e[1] > 0 && abs(e[length(e)]/e[1]) > max(dim(x))*max(sqrt(abs(e)))*.Machine$double.eps
+  e[1] > 0 && abs(e[length(e)]/e[1]) > max(dim(as.matrix(x)))*max(sqrt(abs(e)))*.Machine$double.eps
 }
 
 ## Function that determines the dimension of the multivariate basis

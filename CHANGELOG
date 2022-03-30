@@ -1,6 +1,12 @@
+Changes from Version 0.15-33 to 0.15-34 [30-Mar-2022]
+
+* Fixed warnings flagged on CRAN [i) snomadr.cpp:374:60: warning: void operator delete(void*, std::size_t) called on pointer returned from a mismatched allocation function [-Wmismatched-new-delete], ii) nomad_src/Sgtelib_Model_Search.cpp:957:43: warning: array subscript -1 is outside array bounds of bool [2147483647] [-Warray-bounds]]
+
+* Additional casting of x as as.matrix() in is.fullrank()
+
 Changes from Version 0.15-32 to 0.15-33 [02-Feb-2021]
 
-* Updated NOMAD to version 3.9.1  
+* Updated NOMAD to version 3.9.1
 
 * Removed dependency on C++11 random_shuffle per recommendation from R development team (thanks Zhenghua!)
 

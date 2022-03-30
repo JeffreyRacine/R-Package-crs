@@ -53,7 +53,7 @@ to others, kindly email me the relevant information and I will
 incorporate it into this FAQ.
 
 This FAQ refers to the most recent version, which as of this writing
-is 0.15-33. Kindly update your version should you not be using the
+is 0.15-34. Kindly update your version should you not be using the
 most current (from within R, \texttt{update.packages()} ought to do
 it, though also see \ref{update} below.). See the appendix in this
 file for cumulative changes between this and previous versions of the
@@ -650,6 +650,24 @@ For the second predictor use \texttt{x2} and
 \clearpage
 
 \appendix
+
+\section*{Changes from Version 0.15-33 to 0.15-34 [30-Mar-2022]}
+
+\begin{itemize}
+
+\item Fixed warnings flagged on CRAN
+
+\begin{itemize}
+
+\item snomadr.cpp:374:60: warning: void operator delete(void*, std::size\_t) called on pointer returned from a mismatched allocation function [-Wmismatched-new-delete]
+
+\item nomad\_src/Sgtelib\_Model\_Search.cpp:957:43: warning: array subscript -1 is outside array bounds of bool [2147483647] [-Warray-bounds]]
+
+\end{itemize}
+
+\item Additional casting of x as \texttt{as.matrix()} in \texttt{is.fullrank()}
+
+\end{itemize}
 
 \section*{Changes from Version 0.15-32 to 0.15-33 [02-Feb-2021]}
 

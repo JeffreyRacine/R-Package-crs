@@ -28,7 +28,7 @@ are the bounds on the variables \eqn{x}. The functions \eqn{f(x)} and
 \eqn{g(x)} can be nonlinear and nonconvex. The variables can be integer,
 continuous real number, binary, and categorical.
 
-Kindly see \url{https://www.gerad.ca/nomad/Project/Home.html} and the
+Kindly see \url{https://www.gerad.ca/en/software/nomad} and the
 references below for details.
 
 }
@@ -65,7 +65,7 @@ snomadr(eval.f,
     
     \item{bbout}{
       types of output of \code{eval.f}.  See the NOMAD User Guide
-      \url{https://www.gerad.ca/nomad/Downloads/user_guide.pdf}
+      \url{https://nomad-4-user-guide.readthedocs.io/en/latest/#}
     }
     
     \item{x0}{
@@ -90,7 +90,7 @@ snomadr(eval.f,
       }
     \item{opts}{
       list of options for NOMAD, see the NOMAD user guide
-      \url{https://www.gerad.ca/nomad/Downloads/user_guide.pdf}.  Options
+      \url{https://nomad-4-user-guide.readthedocs.io/en/latest/#}.  Options
       can also be set by nomad.opt which should be in the folder where R
       (\code{snomadr}) is executed. Options that affect the solution and
       their defaults and some potential values are
@@ -183,7 +183,7 @@ snomadr(eval.f,
 
   Abramson, M.A. and C. Audet and G. Couture and J.E. Dennis Jr. and
   S. Le Digabel (2011), \dQuote{The NOMAD project}. Software available
-  at https://www.gerad.ca/nomad.
+  at https://www.gerad.ca/en/software/nomad/
 
   Le Digabel, S. (2011), \dQuote{Algorithm 909: NOMAD: Nonlinear
   Optimization With The MADS Algorithm}. ACM Transactions on
