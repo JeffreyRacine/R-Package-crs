@@ -53,7 +53,7 @@ to others, kindly email me the relevant information and I will
 incorporate it into this FAQ.
 
 This FAQ refers to the most recent version, which as of this writing
-is 0.15-34. Kindly update your version should you not be using the
+is 0.15-35. Kindly update your version should you not be using the
 most current (from within R, \texttt{update.packages()} ought to do
 it, though also see \ref{update} below.). See the appendix in this
 file for cumulative changes between this and previous versions of the
@@ -650,6 +650,17 @@ For the second predictor use \texttt{x2} and
 \clearpage
 
 \appendix
+
+\section*{Changes from Version 0.15-34 to 0.15-35 [09-Oct-2022]}
+
+\begin{itemize}
+
+\item Explicit acknowledgment in \texttt{DESCRIPTION} of code
+  \texttt{gsl\_bspline.c/.h} adapted from the GNU GSL library with
+  further details appended to \texttt{gsl\_bspline.c/.h} (thanks to
+  Professor Brian Ripley for noting this oversight).
+
+\end{itemize}  
 
 \section*{Changes from Version 0.15-33 to 0.15-34 [30-Mar-2022]}
 
