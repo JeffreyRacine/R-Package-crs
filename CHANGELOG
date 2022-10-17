@@ -1,6 +1,6 @@
 Changes from Version 0.15-34 to 0.15-35 [09-Oct-2022]
 
-* Explicit acknowledgment in DESCRIPTION of code gsl_bspline.c/.h adapted from the GNU GSL library with further details appended to gsl_bspline.c/.h (thanks to Professor Brian Ripley for noting this oversight).Changes from Version 0.15-33 to 0.15-34 [30-Mar-2022]
+* Explicit acknowledgment in DESCRIPTION of code gsl_bspline.c/.h adapted from the GNU GSL library with further details appended to gsl_bspline.c/.h (thanks to Professor Brian Ripley for noting this oversight).
 
 Changes from Version 0.15-33 to 0.15-34 [30-Mar-2022]
 
