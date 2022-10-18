@@ -65,7 +65,7 @@ void NOMAD::NelderMead_Search::search (NOMAD::Mads              & mads          
     const NOMAD::Eval_Point * step_new_infeas_inc = NULL;
     
     nb_search_pts = 0;
-    int nb_success = 0;
+    /*int nb_success = 0;*/
     success       = NOMAD::UNSUCCESSFUL;
     NOMAD::success_type step_success = NOMAD::UNSUCCESSFUL;
     count_search  = false;
@@ -338,7 +338,7 @@ void NOMAD::NelderMead_Search::search (NOMAD::Mads              & mads          
                 // Update the success status and the incumbent
                 if ( step_success > NOMAD::UNSUCCESSFUL )
                 {
-                    nb_success++;
+                   /* nb_success++;*/
                     if ( _p.get_NM_search_opportunistic() )
                     {
                         nm_stop = true;
@@ -1265,12 +1265,13 @@ void NOMAD::NelderMead_Search::create_initial_sets_from_cache (const NOMAD::Cach
         _out << " ---> z0 KEPT in Y " << endl;
 #endif
         
-        int count_feasible = 0;
+        /*int count_feasible = 0;*/
         
         if ( _p.has_constraints()
             && (*(*itT).get_point()).get_h().is_defined()
             && (*(*itT).get_point()).is_feasible( _p.get_h_min() ) )
-            count_feasible = 1 ;
+	{}
+	/* count_feasible = 1 ;*/
         
         itT++;
         int k=1;
@@ -1500,7 +1501,7 @@ void NOMAD::NelderMead_Search::create_initial_sets_from_cache (const NOMAD::Cach
                     if ( _p.has_constraints()
                         && (*(*itT).get_point()).get_h().is_defined()
                         && (*(*itT).get_point()).is_feasible( _p.get_h_min() ) )
-                        count_feasible++;
+		    {}/*count_feasible++;*/
                 }
                 itT++;
             }
@@ -1510,7 +1511,7 @@ void NOMAD::NelderMead_Search::create_initial_sets_from_cache (const NOMAD::Cach
                 _out << " ---> zk KEPT in Y " << endl;
 #endif
                 if ( (*(*itT).get_point()).is_feasible( _p.get_h_min() ) )
-                    count_feasible++;
+		{} /*count_feasible++;*/
                 k++;
                 itT++;
             }

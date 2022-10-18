@@ -3526,12 +3526,12 @@ void NOMAD::Mads::eval_x0 ( bool             & stop        ,
         {
             x = cache.begin();
             
-            int npts=0;
+            /*int npts=0;*/
             while ( x )
             {
                 pt = &NOMAD::Cache::get_modifiable_point ( *x );
                 
-                npts++;
+                /*npts++;*/
                 
                 if ( x->get_signature() )
                     pt->set_signature ( x->get_signature() );

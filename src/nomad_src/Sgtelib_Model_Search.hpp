@@ -112,7 +112,7 @@ namespace NOMAD {
          const NOMAD::Cache            & cache          ,
          const NOMAD::Point            & incumbent      ,
          const NOMAD::Point            & delta_m        ,
-         const NOMAD::Eval_Point       * x0s[3]         ,
+         const NOMAD::Eval_Point       * x0s[4]         ,
          const NOMAD::Display          & out            ,
          NOMAD::dd_type                 display_degree  ,
          std::vector<NOMAD::Point *>   & oracle_pts     ,
