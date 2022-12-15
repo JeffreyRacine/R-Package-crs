@@ -54,6 +54,7 @@ typedef struct timeval {
 #define isdigit(x) _isdigit(x)
 //#define isinf(x) (!_finite(x))
 #else
+#include <sys/time.h>
 #include <unistd.h>
 #endif
 ///////////

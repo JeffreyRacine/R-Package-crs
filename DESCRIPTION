@@ -1,6 +1,6 @@
 Package: crs
-Version: 0.15-35
-Date: 2022-10-09
+Version: 0.15-36
+Date: 2022-10-18
 Imports: boot, stats, np, quantreg
 Suggests: logspline, quadprog, rgl
 Title: Categorical Regression Splines

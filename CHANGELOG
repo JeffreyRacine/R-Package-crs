@@ -1,3 +1,7 @@
+Changes from Version 0.15-35 to 0.15-36 [18-Oct-2022]
+
+* Fixed warning: a function definition without a prototype is deprecated in all versions of C and is not supported in C2x [-Wdeprecated-non-prototype] (thanks Zhenghua!)
+
 Changes from Version 0.15-34 to 0.15-35 [09-Oct-2022]
 
 * Explicit acknowledgment in DESCRIPTION of code gsl_bspline.c/.h adapted from the GNU GSL library with further details appended to gsl_bspline.c/.h (thanks to Professor Brian Ripley for noting this oversight).
