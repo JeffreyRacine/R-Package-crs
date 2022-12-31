@@ -1,6 +1,8 @@
-Changes from Version 0.15-36 to 0.15-37 [XX-XXX-XXXX]
+Changes from Version 0.15-36 to 0.15-37 [31-Dec-2022]
 
-* fixed issue reported - compilation error on Alpine Linux #9
+* Fixed issue in snomadr.cpp reported by Brian Ripley "warning: 'sprintf' is deprecated: This function is provided for compatibility reasons only.  Due to security concerns inherent in the design of sprintf(3), it is highly recommended that you use snprintf(3) instead. [-Wdeprecated-declarations]"
+
+* Fixed issue reported - compilation error on Alpine Linux #9
 
 Changes from Version 0.15-35 to 0.15-36 [18-Oct-2022]
 

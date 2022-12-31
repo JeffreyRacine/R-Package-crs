@@ -280,11 +280,9 @@ SEXP print_solution(double obj_value, double *x, int n, int bbe, int iter, int n
 		}
 		else
 		{
-				char *mes;
-				mes = (char *)malloc(sizeof(char)*250);
-				sprintf(mes, "Multiple mads runs - [%d]", nmulti);
-				SET_STRING_ELT(R_status_message, 0, mkChar(mes));
-				free(mes);
+			std::ostringstream mes;
+			mes << "Multiple mads runs - [" << nmulti << "]";
+				SET_STRING_ELT(R_status_message, 0, mkChar(mes.str().c_str()));
 		}
 
 		// convert value of objective function to an R object
