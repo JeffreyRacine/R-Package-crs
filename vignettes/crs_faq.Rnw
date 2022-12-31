@@ -655,7 +655,7 @@ For the second predictor use \texttt{x2} and
 
 \begin{itemize}
 
-\item Fixed issue in snomadr.cpp reported by Brian Ripley \texttt{warning: 'sprintf' is deprecated: This function is provided for compatibility reasons only.  Due to security concerns inherent in the design of sprintf(3), it is highly recommended that you use snprintf(3) instead. [-Wdeprecated-declarations]}
+\item Fixed issue in snomadr.cpp reported by Brian Ripley \texttt{warning: 'sprintf' is deprecated: This function is provided for compatibility reasons only.  Due to security concerns inherent in the design of sprintf(3), it is highly recommended that you use snprintf(3) instead. [-Wdeprecated-declarations] (thanks Zhenghua!)}
 
 \item Fixed issue reported - compilation error on Alpine Linux \#9
 
