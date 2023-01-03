@@ -1451,7 +1451,7 @@ plot.crs <- function(x,
           rgl::open3d()
 
           rgl::par3d(windowRect=c(900,100,900+640,100+640))
-          rgl::rgl.viewpoint(theta = 0, phi = -70, fov = 80)
+          rgl::view3d(theta = 0, phi = -70, fov = 80)
 
           rgl::persp3d(x=x1.seq,y=x2.seq,z=z,
                        xlab=names(object$xz)[1],ylab=names(object$xz)[2],zlab="Y",
