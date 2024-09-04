@@ -7,7 +7,7 @@
 
 \documentclass[11pt,nogin]{amsart}
 
-\usepackage{setspace,graphicx,srcltx,enumitem,harvard,framed,xcolor}
+\usepackage{setspace,graphicx,srcltx,enumitem,natbib,framed,xcolor}
 \usepackage[utf8]{inputenc} 
 
 \newcommand{\field}[1]{\mathbb{#1}}
@@ -104,7 +104,7 @@ are popular in applied settings. The fundamental difference between
 the two approaches is that smoothing splines explicitly penalize
 roughness and use the data points themselves as potential knots
 whereas regression splines place knots at equidistant/equiquantile
-points. We direct the interested reader to \citeasnoun{WAHBA:1990} for
+points. We direct the interested reader to \citet{WAHBA:1990} for
 a treatment of smoothing splines.
 
 \section{\label{sec:bezier}B\'ezier curves}
@@ -123,7 +123,7 @@ quadratic B\'ezier curve.
   \end{align*}
   The terms $B_0(x)=(1-x)^2$, $B_1(x)=2(1-x)x$, and $B_2(x)=x^2$ are
   the `bases' which is this case turn out to be `Bernstein
-  polynomials' (\citeasnoun{BERNSTEIN:1912}).  For our purposes the
+  polynomials' \citep{BERNSTEIN:1912}.  For our purposes the
   `control points' $\beta_i$, $i=0,1,2$, will be parameters that could
   be selected by least squares fitting in a regression setting, but
   more on that later. Consider the following simple example where we
@@ -239,7 +239,7 @@ curves are built.
 
 \subsection{Derivatives of spline functions}
 
-From \citeasnoun{DE_BOOR:2001} we know that the derivatives of spline
+From \citet{DE_BOOR:2001} we know that the derivatives of spline
 functions can be simply expressed in terms of lower order spline
 functions. In particular, for the B\'ezier curve we have
 \begin{equation*}
@@ -250,7 +250,7 @@ where $\beta^{(0)}_i=\beta_i$, $0\le i\le n$, and
   \beta^{(l)}_i=(n-l)\left(\beta^{(l-1)}_{i+1}-\beta^{(l-1)}_{i}\right)/(t_i-t_{i-n+l}),\quad
   0\le i\le n-l.
 \end{equation*}
-See \citeasnoun{ZHOU_WOLFE:2000} for details.
+See \citet{ZHOU_WOLFE:2000} for details.
 
 We now turn our attention to the B-spline function. This can be
 thought of as a generalization of the B\'ezier curve where we now
@@ -334,7 +334,7 @@ Using the notation above:
 \item the functions $B_{i,j}$ are called the \emph{$i$-th B-spline
     basis functions of degree $j$}, and the recurrence relation is
   called the \emph{de Boor recurrence relation}, after its discoverer
-  Carl de Boor (\citeasnoun{DE_BOOR:2001}).
+  Carl de Boor \citep{DE_BOOR:2001}.
 
 %% changed order to degree aug 26 2021
 
@@ -355,7 +355,7 @@ typical spline implementations the option \verb+intercept=FALSE+
 denotes dropping this term while \verb+intercept=TRUE+ denotes keeping
 it (recall that $\sum_{i=0}^nB_{i,n}(x)=1$ which can lead to perfect
 multicollinearity in a regression setting; also see
-\citeasnoun{ZHOU_WOLFE:2000} who instead apply shrinkage methods).
+\citet{ZHOU_WOLFE:2000} who instead apply shrinkage methods).
 
 \begin{example}{A fourth-order B-spline basis function with three
     interior knots and its first derivative function.}
@@ -403,7 +403,7 @@ $K=N+m=\Sexpr{ncol(B)}$.
 
 \end{example}
 
-See the appendix for R code (\citeasnoun{R}) that implements the
+See the appendix for R code \citep{R} that implements the
 B-spline basis function.
 
 \subsection{The B-spline function}
@@ -423,7 +423,7 @@ The B-spline order $m$ must be at least 2 (hence at least linear,
 i.e.\ degree $n$ is at least 1) and the number of interior knots must
 be non-negative ($N\ge0$).
 
-See the appendix for R code (\citeasnoun{R}) that implements the
+See the appendix for R code \citep{R} that implements the
 B-spline function.
 
 \section{\label{sec:mv spline}Multivariate B-spline regression}
@@ -441,7 +441,7 @@ are for continuous predictors. Below we briefly describe a
 multivariate kernel weighted tensor product B-spline regression method
 (kernel weighting is used to handle the presence of the categorical
 predictors). This method is implemented in the R package `crs'
-(\citeasnoun{crs}).
+\citep{crs}.
 
 \subsection{Multivariate knots, intervals, and spline bases}
 
@@ -545,13 +545,12 @@ In order to handle the presence of categorical predictors, we define
   },
   \label{DEF:Lzs}
 \end{align}
-where $l(\cdot )$ is a variant of
-\possessivecite{AITCHISON_AITKEN:1976} univariate categorical kernel
-function, $L(\cdot )$ is a product categorical kernel function, and
+where $l(\cdot )$ is a variant of Aitchison and Aitken's
+univariate categorical kernel function \citep{AITCHISON_AITKEN:1976}, $L(\cdot )$ is a product categorical kernel function, and
 $\mathbf{\lambda }=(\lambda _{1},\lambda _{2},\dots ,\lambda
 _{r})^{\mathrm{T}}$ is the vector of bandwidths for each of the
-categorical predictors. See \citeasnoun{MA_RACINE_YANG:2011} and
-\citeasnoun{MA_RACINE:2013} for further details.
+categorical predictors. See \citet{MA_RACINE_YANG:2011} and
+\citet{MA_RACINE:2013} for further details.
 
 We estimate $\beta \left( \mathbf{z}\right) $ by minimizing the
 following weighted least squares criterion,
@@ -579,7 +578,7 @@ by $\widehat{g}\left( \mathbf{x}, \mathbf{z}\right) =\mathcal{B}\left(
   \mathbf{x}\right) ^{\mathrm{T}}\widehat{ \beta }\left(
   \mathbf{z}\right) $.
 
-See the appendix for R code (\citeasnoun{R}) that implements the
+See the appendix for R code \citep{R} that implements the
 B-spline basis function and then uses least squares to construct the
 regression model for a simulated data generating process.
 
