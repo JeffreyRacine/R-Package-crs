@@ -51,9 +51,9 @@ bool file_exists(const char*path)
 //
 SEXP getListElement(SEXP list, std::string str)
 {
-		SEXP elmt = R_NilValue, names = getAttrib(list, R_NamesSymbol);
+		SEXP elmt = R_NilValue, names = Rf_getAttrib(list, R_NamesSymbol);
 		int i;
-		for (i = 0; i < length(list); i++)
+		for (i = 0; i < Rf_length(list); i++)
 				if(str.compare(CHAR(STRING_ELT(names, i))) == 0) {
 						elmt = VECTOR_ELT(list, i);
 						break;
@@ -93,8 +93,8 @@ void setApplicationOptions(NOMAD::Parameters & p, SEXP opts ) {
 
 		// loop over the integer options and set them
 		SEXP opts_integer_names;
-		opts_integer_names = getAttrib(opts_integer, R_NamesSymbol);
-		for (int list_cnt=0;list_cnt<length( opts_integer );list_cnt++) {
+		opts_integer_names = Rf_getAttrib(opts_integer, R_NamesSymbol);
+		for (int list_cnt=0;list_cnt<Rf_length( opts_integer );list_cnt++) {
 
 				SEXP opt_value;
 				PROTECT(opt_value = AS_INTEGER(VECTOR_ELT(opts_integer, list_cnt)));
@@ -107,8 +107,8 @@ void setApplicationOptions(NOMAD::Parameters & p, SEXP opts ) {
 
 		// loop over the numeric options and set them
 		SEXP opts_numeric_names;
-		opts_numeric_names = getAttrib(opts_numeric, R_NamesSymbol);
-		for (int list_cnt=0;list_cnt<length( opts_numeric );list_cnt++) {
+		opts_numeric_names = Rf_getAttrib(opts_numeric, R_NamesSymbol);
+		for (int list_cnt=0;list_cnt<Rf_length( opts_numeric );list_cnt++) {
 
 				SEXP opt_value;
 				PROTECT(opt_value = VECTOR_ELT(opts_numeric, list_cnt));
@@ -122,8 +122,8 @@ void setApplicationOptions(NOMAD::Parameters & p, SEXP opts ) {
 
 		// loop over the string options and set them
 		SEXP opts_string_names;
-		opts_string_names = getAttrib(opts_string, R_NamesSymbol);
-		for (int list_cnt=0;list_cnt<length( opts_string );list_cnt++) {
+		opts_string_names = Rf_getAttrib(opts_string, R_NamesSymbol);
+		for (int list_cnt=0;list_cnt<Rf_length( opts_string );list_cnt++) {
 
 				// opt_value will contain the first (should be the only one) element of the list
 				SEXP opt_value;
@@ -147,12 +147,12 @@ SEXP showArgs1(SEXP largs)
 {
 		int i, nargs = LENGTH(largs);
 		Rcomplex cpl;
-		SEXP el, names = getAttrib(largs, R_NamesSymbol);
+		SEXP el, names = Rf_getAttrib(largs, R_NamesSymbol);
 		const char *name;
 
 		for(i = 0; i < nargs; i++) {
 				el = VECTOR_ELT(largs, i);
-				name = isNull(names) ? "" : CHAR(STRING_ELT(names, i));
+				name = Rf_isNull(names) ? "" : CHAR(STRING_ELT(names, i));
 				switch(TYPEOF(el)) {
 						case REALSXP:
 								Rprintf("[%d] '%s' %f\n", i+1, name, REAL(el)[0]);
@@ -186,14 +186,14 @@ double *eval_f( int m, int n, double *x)
 		// Allocate memory for a vector of reals.
 		// This vector will contain the elements of x,
 		// x is the argument to the R function R_eval_f
-		PROTECT(rargs = allocVector(REALSXP,n));
+		PROTECT(rargs = Rf_allocVector(REALSXP,n));
 		for (int i=0;i<n;i++) {
 				REAL(rargs)[i] = x[i];
 		}
 
 		// evaluate R function R_eval_f with the control x as an argument
-		PROTECT(Rcall = lang2(thefun,rargs));
-		PROTECT(result = eval(Rcall,theenv));
+		PROTECT(Rcall = Rf_lang2(thefun,rargs));
+		PROTECT(result = Rf_eval(Rcall,theenv));
 
 		// recode the return value from SEXP to Number
 		double *ret_value;
@@ -251,60 +251,60 @@ SEXP print_solution(double obj_value, double *x, int n, int bbe, int iter, int n
 
 		// R_result_list is a member object, which has been protected in the constructor
 		// and will be unprotected in the destructor.
-		PROTECT(R_result_list = allocVector(VECSXP, num_return_elements));
+		PROTECT(R_result_list = Rf_allocVector(VECSXP, num_return_elements));
 
 		// attach names to the return list
 		SEXP names;
-		PROTECT(names = allocVector(STRSXP, num_return_elements));
+		PROTECT(names = Rf_allocVector(STRSXP, num_return_elements));
 
-		SET_STRING_ELT(names, 0, mkChar("status"));
-		SET_STRING_ELT(names, 1, mkChar("message"));
-		SET_STRING_ELT(names, 2, mkChar("bbe"));
-		SET_STRING_ELT(names, 3, mkChar("objective"));
-		SET_STRING_ELT(names, 4, mkChar("solution"));
-		SET_STRING_ELT(names, 5, mkChar("iterations"));
-		setAttrib(R_result_list, R_NamesSymbol, names);
+		SET_STRING_ELT(names, 0, Rf_mkChar("status"));
+		SET_STRING_ELT(names, 1, Rf_mkChar("message"));
+		SET_STRING_ELT(names, 2, Rf_mkChar("bbe"));
+		SET_STRING_ELT(names, 3, Rf_mkChar("objective"));
+		SET_STRING_ELT(names, 4, Rf_mkChar("solution"));
+		SET_STRING_ELT(names, 5, Rf_mkChar("iterations"));
+		Rf_setAttrib(R_result_list, R_NamesSymbol, names);
 
 		// convert status to an R object
 		SEXP R_status;
 
 
-		PROTECT(R_status = allocVector(INTSXP,1));
+		PROTECT(R_status = Rf_allocVector(INTSXP,1));
 		INTEGER(R_status)[0] = (int) status;
 
 
 		SEXP R_status_message;
-		PROTECT(R_status_message = allocVector(STRSXP, 1));
+		PROTECT(R_status_message = Rf_allocVector(STRSXP, 1));
 		if(nmulti < 1 ) {  /*0: snomadRSolve,  >0: smultnomadRSolve*/
-				SET_STRING_ELT(R_status_message, 0, mkChar(stop_message[status]));
+				SET_STRING_ELT(R_status_message, 0, Rf_mkChar(stop_message[status]));
 		}
 		else
 		{
 			std::ostringstream mes;
 			mes << "Multiple mads runs - [" << nmulti << "]";
-				SET_STRING_ELT(R_status_message, 0, mkChar(mes.str().c_str()));
+				SET_STRING_ELT(R_status_message, 0, Rf_mkChar(mes.str().c_str()));
 		}
 
 		// convert value of objective function to an R object
 		SEXP R_objective;
-		PROTECT(R_objective = allocVector(REALSXP,1));
+		PROTECT(R_objective = Rf_allocVector(REALSXP,1));
 		REAL(R_objective)[0] = obj_value;
 
 		// convert the value of the controls to an R object
 		SEXP R_solution;
-		PROTECT(R_solution = allocVector(REALSXP,n));
+		PROTECT(R_solution = Rf_allocVector(REALSXP,n));
 		for (int i=0;i<n;i++) {
 				REAL(R_solution)[i] = x[i];
 		}
 
 		// convert number of bbe to an R object and add to the result_list
 		SEXP R_num_bbe;
-		PROTECT(R_num_bbe = allocVector(INTSXP,1));
+		PROTECT(R_num_bbe = Rf_allocVector(INTSXP,1));
 		INTEGER(R_num_bbe)[0] = bbe;
 
 		// convert number of iter to an R object and add to the result_list
 		SEXP R_num_iterations;
-		PROTECT(R_num_iterations = allocVector(INTSXP,1));
+		PROTECT(R_num_iterations = Rf_allocVector(INTSXP,1));
 		INTEGER(R_num_iterations)[0] = iter;
 
 		// add elements to the list
@@ -340,12 +340,12 @@ extern "C" {
 				SEXP sversion = getListElement(args,"version");
 				SEXP shelp = getListElement(args,"help");
 
-				string strinfo =  isNull(sinfo) ? "" : CHAR(STRING_ELT(sinfo, 0));
-				string strversion = isNull(sversion) ? "" : CHAR(STRING_ELT(sversion, 0));
+				string strinfo =  Rf_isNull(sinfo) ? "" : CHAR(STRING_ELT(sinfo, 0));
+				string strversion = Rf_isNull(sversion) ? "" : CHAR(STRING_ELT(sversion, 0));
 				if(strinfo[0]=='-' && (strinfo[1]=='i' || strinfo[1]=='I')) display_info ( out );
 				if(strversion[0]=='-' && (strversion[1]=='v' || strversion[1]=='V')) display_version ( out );
 
-				string strhelp = isNull(shelp) ? "" : CHAR(STRING_ELT(shelp, 0));
+				string strhelp = Rf_isNull(shelp) ? "" : CHAR(STRING_ELT(shelp, 0));
 
 				if(strhelp.c_str()[0]=='-'&& (strhelp.c_str()[1]=='h'||strhelp.c_str()[1]=='H'))
 				{
@@ -530,7 +530,7 @@ extern "C" {
 
 				}
 				catch(std::exception &e){
-						 error("\nNOMAD has been interrupted ( %s )\n\n",  e.what() );
+						 Rf_error("\nNOMAD has been interrupted ( %s )\n\n",  e.what() );
 				}
 
 				NOMAD::Slave::stop_slaves(out);
@@ -632,7 +632,7 @@ extern "C" {
 
 				unsigned int seed;
 				SEXP rseed = getListElement(args, "random.seed");
-				if(isNull(rseed)) 
+				if(Rf_isNull(rseed)) 
 						seed = unsigned(time(NULL));
 				else
 						seed = INTEGER(rseed)[0];
@@ -713,7 +713,7 @@ extern "C" {
 
 						SEXP sx0 = getListElement(args, "x0");  //we may use this as  best_x
 
-					 if(!isNull(sx0))
+					 if(!Rf_isNull(sx0))
 					 {
 							 if(LENGTH(sx0) == N)    /* x0 as the first initial point. */
 							 {
@@ -881,7 +881,7 @@ extern "C" {
 
 				}
 				catch(std::exception &e){
-						error("\nNOMAD has been interrupted ( %s )\n\n",  e.what());
+						Rf_error("\nNOMAD has been interrupted ( %s )\n\n",  e.what());
 				}
 
 				NOMAD::Slave::stop_slaves(out);
