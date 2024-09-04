@@ -1,3 +1,9 @@
+Changes from Version 0.15-37 to 0.15-38 [4-Sep-2024]
+
+* Thanks to Zhenghua Nie for fixing the compiling failure when R_NO_REMAP is defined, and the C/C++ compiling failure when R_NO_REMAP is defined.
+
+* Thanks to Duncan Murdoch for the heads up and PR (new function names from rgl package merged) "An upcoming release of rgl will deprecate a large number of rgl.* functions in favour of the *3d versions. This PR makes the substitutions needed to avoid warnings when that happens. I think the displays should remain the same, but it is possible some defaults (e.g. background colour) are changed."
+
 Changes from Version 0.15-36 to 0.15-37 [31-Dec-2022]
 
 * Fixed issue in snomadr.cpp reported by Brian Ripley "warning: 'sprintf' is deprecated: This function is provided for compatibility reasons only.  Due to security concerns inherent in the design of sprintf(3), it is highly recommended that you use snprintf(3) instead. [-Wdeprecated-declarations]" (thanks Zhenghua!)
