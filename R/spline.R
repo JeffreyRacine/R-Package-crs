@@ -158,7 +158,7 @@ prod.spline <- function(x,
 ## This function returns the fitted/predicted values for the spline
 ## regression model with kernel smoothing of the discrete covariates.
 
-predict.kernel.spline <- function(x,
+predictKernelSpline <- function(x,
                                   y,
                                   z=NULL,
                                   K,
@@ -468,7 +468,7 @@ predict.kernel.spline <- function(x,
 ## This function returns the gradients of order l and differences in
 ## levels (order 1 only) for the kernel spline.
 
-deriv.kernel.spline <- function(x,
+derivKernelSpline <- function(x,
                                 y,
                                 z=NULL,
                                 K,
@@ -753,7 +753,7 @@ deriv.kernel.spline <- function(x,
 ## twist is, as for the basis splines, that we allow a variable to not
 ## enter via a basis of zero length.
 
-predict.factor.spline <- function(x,
+preditFactorSpline <- function(x,
                                   y,
                                   z=NULL,
                                   K=NULL,
@@ -1003,7 +1003,7 @@ predict.factor.spline <- function(x,
 ## twist is, as for the basis splines, that we allow a variable to not
 ## enter via a basis of zero length.
 
-deriv.factor.spline <- function(x,
+derivFactorSpline <- function(x,
                                 y,
                                 z,
                                 K=NULL,
@@ -1265,7 +1265,7 @@ cv.kernel.spline <- function(x,
 
   ## Check dimension of P prior to calculating the basis
 
-  if(n - dim.bs(basis=basis,kernel=TRUE,degree=K[,1],segments=K[,2]) <= cv.df.min)
+  if(n - dimBS(basis=basis,kernel=TRUE,degree=K[,1],segments=K[,2]) <= cv.df.min)
     return(sqrt(.Machine$double.xmax))
 
   ## Otherwise, compute the cross-validation function
@@ -1564,7 +1564,7 @@ cv.factor.spline <- function(x,
     for(i in NCOL(z)) categories[i] <- length(unique(z[,i]))
   }
 
-  if(n - dim.bs(basis=basis,kernel=TRUE,degree=K[,1],segments=K[,2],include=I,categories=categories) <= cv.df.min)
+  if(n - dimBS(basis=basis,kernel=TRUE,degree=K[,1],segments=K[,2],include=I,categories=categories) <= cv.df.min)
     return(sqrt(.Machine$double.xmax))
 
   ## Otherwise, compute the cross-validation function
