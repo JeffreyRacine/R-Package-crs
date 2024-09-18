@@ -8,15 +8,15 @@
 ## different form purely for computational simplicity. Both approaches
 ## are identical though.
 
-scale.robust <- function(y){
- if(any(dim(as.matrix(y)) == 0))
+scale.robust <- function(x, center=TRUE, scale=TRUE){
+ if(any(dim(as.matrix(x)) == 0))
       return(0)
-  sd.vec <- apply(as.matrix(y),2,sd)
-  IQR.vec <- apply(as.matrix(y),2,IQR)/(qnorm(.25,lower.tail=F)*2)
-  mad.vec <- apply(as.matrix(y),2,mad)
-  a <- apply(cbind(sd.vec,IQR.vec,mad.vec),1, function(x) max(x))
+  sd.vec <- apply(as.matrix(x),2,sd)
+  IQR.vec <- apply(as.matrix(x),2,IQR)/(qnorm(.25,lower.tail=F)*2)
+  mad.vec <- apply(as.matrix(x),2,mad)
+  a <- apply(cbind(sd.vec,IQR.vec,mad.vec),1, function(y) max(y))
   if(any(a<=0)) warning(paste("variable ",which(a<=0)," appears to be constant",sep=""))
-  a <- apply(cbind(sd.vec,IQR.vec,mad.vec),1, function(x) min(x[x>0]))  
+  a <- apply(cbind(sd.vec,IQR.vec,mad.vec),1, function(y) min(y[y>0]))  
   return(a)
 }
 
@@ -1057,7 +1057,7 @@ glpregEst <- function(tydat=NULL,
 
     ## Test for negative degrees of freedom
 
-    if(dim.bs(basis="glp",kernel=TRUE,degree=degree,segments=rep(1,length(degree)))>n.train-1)
+    if(dimBS(basis="glp",kernel=TRUE,degree=degree,segments=rep(1,length(degree)))>n.train-1)
       stop(" Ill-conditioned polynomial basis encountered: modify polynomial order")
 
     W <- W.glp(xdat=txdat,
@@ -1718,7 +1718,7 @@ glpcvNOMAD <- function(ydat=NULL,
   
     ## Test for negative degrees of freedom
   
-    if(dim.bs(basis="glp",kernel=TRUE,degree=degree,segments=rep(1,length(degree)))>length(ydat)-1)
+    if(dimBS(basis="glp",kernel=TRUE,degree=degree,segments=rep(1,length(degree)))>length(ydat)-1)
       return(cv.maxPenalty)
   
     W <- W.glp(xdat=xdat,
@@ -1816,7 +1816,7 @@ glpcvNOMAD <- function(ydat=NULL,
   
     ## Test for negative degrees of freedom
   
-    if(dim.bs(basis="glp",kernel=TRUE,degree=degree,segments=rep(1,length(degree)))>length(ydat)-1)
+    if(dimBS(basis="glp",kernel=TRUE,degree=degree,segments=rep(1,length(degree)))>length(ydat)-1)
       return(cv.maxPenalty)
   
     W <- W.glp(xdat=xdat,

@@ -288,7 +288,7 @@ is.fullrank <- function(x)
 ## without precomputing it... the tensor is the mother that consumes
 ## ginormous amounts of memory, followed by the glp basis.
 
-dim.bs <- function(basis="additive",kernel=TRUE,degree=NULL,segments=NULL,include=NULL,categories=NULL) {
+dimBS <- function(basis="additive",kernel=TRUE,degree=NULL,segments=NULL,include=NULL,categories=NULL) {
 
   ## This function computes the dimension of the glp basis without the
   ## memory overhead associated with computing the glp basis itself

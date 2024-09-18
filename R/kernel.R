@@ -20,7 +20,9 @@ kernel <- function(Z,
 prod.kernel <- function(Z,
                         z,
                         lambda,
-                        is.ordered.z=NULL) {
+                        is.ordered.z=NULL,
+			...,
+			na.rm) {
 
   Z <- as.matrix(Z)
 

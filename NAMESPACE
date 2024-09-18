@@ -28,6 +28,7 @@ S3method(summary, clsd)
 S3method(print, sigtest.crs)
 S3method(summary, sigtest.crs)
 
+S3method(crs, sigtest)
 S3method(crs, formula)
 S3method(crs, default)
 
@@ -50,3 +51,9 @@ S3method(predict, npglpreg)
 S3method(print, npglpreg)
 S3method(summary, npglpreg)
 S3method(plot, npglpreg)
+
+S3method(scale, robust)
+S3method(prod, kernel)
+S3method(prod, spline)
+S3method(density, deriv.basis)
+S3method(density, basis)

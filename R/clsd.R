@@ -67,7 +67,8 @@ density.basis <- function(x=NULL,
                           segments=NULL,
                           basis="tensor",
                           knots="quantiles",
-                          monotone=TRUE) {
+                          monotone=TRUE,
+			  ...) {
 
   ## To obtain the constant of integration for B-spline bases, we need
   ## to compute log(integral exp(P%*%beta)) so we take an equally
@@ -171,7 +172,8 @@ density.deriv.basis <- function(x=NULL,
                                 knots="quantiles",
                                 monotone=TRUE,
                                 deriv.index=1,
-                                deriv=1) {
+                                deriv=1,
+				...) {
 
   suppressWarnings(Pnorm.deriv <- prod.spline(x=x,
                                               xeval=xnorm,

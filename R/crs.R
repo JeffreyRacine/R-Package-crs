@@ -75,7 +75,7 @@ crsEst <- function(xz,
 
   if(!kernel) {
 
-    model <- predict.factor.spline(x=x,
+    model <- preditFactorSpline(x=x,
                                    y=y,
                                    z=z,
                                    K=cbind(degree,segments),
@@ -98,7 +98,7 @@ crsEst <- function(xz,
       for(i in 1:ncol(xz)) {
         if(!is.factor(xz[,i])) {
           if(deriv <= degree[m]) {
-            tmp <- deriv.factor.spline(x=x,
+            tmp <- derivFactorSpline(x=x,
                                        y=y,
                                        z=z,
                                        K=cbind(degree,segments),
@@ -122,7 +122,7 @@ crsEst <- function(xz,
           ztmp <- z
           ztmp[,l] <- factor(rep(levels(xz[,i])[1],NROW(xz)),levels=levels(xz[,i]),ordered=is.ordered(xz[,i]))
 
-          zpred <- predict.factor.spline(x=x,
+          zpred <- preditFactorSpline(x=x,
                                          y=y,
                                          z=z,
                                          K=cbind(degree,segments),
@@ -134,7 +134,7 @@ crsEst <- function(xz,
                                          tau=tau,
                                          weights=weights)$fitted.values
 
-          zpred.base <- predict.factor.spline(x=x,
+          zpred.base <- preditFactorSpline(x=x,
                                               y=y,
                                               z=z,
                                               K=cbind(degree,segments),
@@ -164,7 +164,7 @@ crsEst <- function(xz,
 
   } else {
 
-    model <- predict.kernel.spline(x=x,
+    model <- predictKernelSpline(x=x,
                                    y=y,
                                    z=z,
                                    K=cbind(degree,segments),
@@ -188,7 +188,7 @@ crsEst <- function(xz,
       for(i in 1:ncol(xz)) {
         if(!is.factor(xz[,i])) {
           if(deriv <= degree[m]) {
-            tmp <- deriv.kernel.spline(x=x,
+            tmp <- derivKernelSpline(x=x,
                                        y=y,
                                        z=z,
                                        K=cbind(degree,segments),
@@ -213,7 +213,7 @@ crsEst <- function(xz,
           ztmp <- z
           ztmp[,l] <- rep(sort(unique(z[,l]))[1],NROW(z))
           
-          zpred <- predict.kernel.spline(x=x,
+          zpred <- predictKernelSpline(x=x,
                                          y=y,
                                          z=z,
                                          K=cbind(degree,segments),
@@ -225,7 +225,7 @@ crsEst <- function(xz,
                                          tau=tau,
                                          weights=weights)$fitted.values
 
-          zpred.base <- predict.kernel.spline(x=x,
+          zpred.base <- predictKernelSpline(x=x,
                                               y=y,
                                               z=z,
                                               K=cbind(degree,segments),
@@ -795,7 +795,7 @@ predict.crs <- function(object,
       segments <- object$segments
       include <- object$include
 
-      tmp <- predict.factor.spline(x=x,
+      tmp <- preditFactorSpline(x=x,
                                    y=y,
                                    z=z,
                                    K=K,
@@ -824,7 +824,7 @@ predict.crs <- function(object,
         for(i in 1:ncol(newdata)) {
           if(!is.factor(newdata[,i])) {
             if(deriv <= degree[m]) {
-              tmp <- deriv.factor.spline(x=x,
+              tmp <- derivFactorSpline(x=x,
                                          y=y,
                                          z=z,
                                          K=K,
@@ -849,7 +849,7 @@ predict.crs <- function(object,
           } else {
             zevaltmp <- zeval
             zevaltmp[,l] <- factor(rep(levels(newdata[,i])[1],NROW(newdata)),levels=levels(newdata[,i]),ordered=is.ordered(newdata[,i]))
-            zpred <- predict.factor.spline(x=x,
+            zpred <- preditFactorSpline(x=x,
                                            y=y,
                                            z=z,
                                            K=K,
@@ -863,7 +863,7 @@ predict.crs <- function(object,
                                            tau=tau,
                                            weights=weights)$fitted.values
 
-            zpred.base <- predict.factor.spline(x=x,
+            zpred.base <- preditFactorSpline(x=x,
                                                 y=y,
                                                 z=z,
                                                 K=K,
@@ -907,7 +907,7 @@ predict.crs <- function(object,
       z <- as.matrix(z)
       zeval <- as.matrix(zeval)
 
-      tmp <- predict.kernel.spline(x=x,
+      tmp <- predictKernelSpline(x=x,
                                    y=y,
                                    z=z,
                                    K=K,
@@ -935,7 +935,7 @@ predict.crs <- function(object,
         for(i in 1:ncol(newdata)) {
           if(!is.factor(newdata[,i])) {
             if(deriv <= degree[m]) {
-              tmp <- deriv.kernel.spline(x=x,
+              tmp <- derivKernelSpline(x=x,
                                          y=y,
                                          z=z,
                                          K=K,
@@ -961,7 +961,7 @@ predict.crs <- function(object,
             zevaltmp <- zeval
             zevaltmp[,l] <- rep(sort(unique(zeval[,l]))[1],NROW(zeval))
 
-            zpred <- predict.kernel.spline(x=x,
+            zpred <- predictKernelSpline(x=x,
                                            y=y,
                                            z=z,
                                            K=K,
@@ -974,7 +974,7 @@ predict.crs <- function(object,
                                            tau=tau,
                                            weights=weights)$fitted.values
 
-            zpred.base <- predict.kernel.spline(x=x,
+            zpred.base <- predictKernelSpline(x=x,
                                                 y=y,
                                                 z=z,
                                                 K=K,
@@ -1295,7 +1295,7 @@ plot.crs <- function(x,
 
         if(!object$kernel) {
 
-          tmp <- predict.factor.spline(x=x,
+          tmp <- preditFactorSpline(x=x,
                                        y=y,
                                        z=z,
                                        K=K,
@@ -1319,7 +1319,7 @@ plot.crs <- function(x,
           z <- as.matrix(z)
           zeval <- as.matrix(zeval)
 
-          tmp <- predict.kernel.spline(x=x,
+          tmp <- predictKernelSpline(x=x,
                                        y=y,
                                        z=z,
                                        K=K,
@@ -1595,7 +1595,7 @@ plot.crs <- function(x,
 
           if(!is.factor(newdata[,i])) {
             if(deriv <= degree[i.numeric]) {
-              tmp <- deriv.factor.spline(x=x,
+              tmp <- derivFactorSpline(x=x,
                                          y=y,
                                          z=z,
                                          K=K,
@@ -1617,7 +1617,7 @@ plot.crs <- function(x,
             deriv.upr <- tmp[,3]
             rm(tmp)
           } else {
-            zpred <- predict.factor.spline(x=x,
+            zpred <- preditFactorSpline(x=x,
                                            y=y,
                                            z=z,
                                            K=K,
@@ -1631,7 +1631,7 @@ plot.crs <- function(x,
                                            tau=tau,
                                            weights=weights)$fitted.values
 
-            zpred.base <- predict.factor.spline(x=x,
+            zpred.base <- preditFactorSpline(x=x,
                                                 y=y,
                                                 z=z,
                                                 K=K,
@@ -1655,7 +1655,7 @@ plot.crs <- function(x,
 
           if(!is.factor(newdata[,i])) {
             if(deriv <= degree[i.numeric]) {
-              tmp <- deriv.kernel.spline(x=x,
+              tmp <- derivKernelSpline(x=x,
                                          y=y,
                                          z=z,
                                          K=K,
@@ -1678,7 +1678,7 @@ plot.crs <- function(x,
             deriv.upr <- tmp[,3]
             rm(tmp)
           } else {
-            zpred <- predict.kernel.spline(x=x,
+            zpred <- predictKernelSpline(x=x,
                                            y=y,
                                            z=z,
                                            K=K,
@@ -1691,7 +1691,7 @@ plot.crs <- function(x,
                                            tau=tau,
                                            weights=weights)$fitted.values
 
-            zpred.base <- predict.kernel.spline(x=x,
+            zpred.base <- predictKernelSpline(x=x,
                                                 y=y,
                                                 z=z,
                                                 K=K,
