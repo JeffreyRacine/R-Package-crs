@@ -18,7 +18,9 @@ prod.spline <- function(x,
                         knots=c("quantiles","uniform"),
                         basis=c("additive","tensor","glp"),
                         deriv.index=1,
-                        deriv=0) {
+                        deriv=0,
+			...,
+			na.rm) {
 
   basis <- match.arg(basis)
   knots <- match.arg(knots)
@@ -168,7 +170,8 @@ predictKernelSpline <- function(x,
                                   basis=c("additive","tensor","glp"),
                                   model.return=FALSE,
                                   tau=NULL,
-                                  weights=NULL){
+                                  weights=NULL, 
+																	...){
 
   if(missing(x) || missing(y) || missing (K)) stop(" must provide x, y and K")
   if(!is.matrix(K)) stop(" K must be a two-column matrix")
@@ -478,7 +481,8 @@ derivKernelSpline <- function(x,
                                 deriv.index=1,
                                 deriv=0,
                                 tau=NULL,
-                                weights=NULL) {
+                                weights=NULL, 
+																...) {
 
   if(deriv == 0) stop(" deriv must be greater than zero")
 
@@ -762,7 +766,8 @@ preditFactorSpline <- function(x,
                                   prune.index=NULL,
                                   trace=0,
                                   tau=NULL,
-                                  weights=NULL){
+                                  weights=NULL, 
+																	...){
 
   if(missing(x) || missing(y) || missing (K)) stop(" must provide x, y and K")
   if(!is.matrix(K)) stop(" K must be a two-column matrix")
@@ -1011,7 +1016,8 @@ derivFactorSpline <- function(x,
                                 deriv=0,
                                 prune.index=NULL,
                                 tau=NULL,
-                                weights=NULL) {
+                                weights=NULL, 
+																...) {
 
   if(missing(x) || missing(y) || missing (K)) stop(" must provide x, y and K")
   if(deriv == 0) stop(" derivative must be a positive integer")
