@@ -18,8 +18,7 @@ glp.model.matrix(X)
 
 \references{
 
-  Hall, P. and J.S. Racine (forthcoming), \dQuote{Cross-Validated
-  Generalized Local Polynomial Regression,} Journal of Econometrics.
+  Hall, P. and J.S. Racine (2015), \dQuote{Infinite Order Cross-Validated Local Polynomial Regression,} Journal of Econometrics, 185, 510-525.
 
 }
 \author{ Jeffrey S. Racine \email{racinej@mcmaster.ca}} 
