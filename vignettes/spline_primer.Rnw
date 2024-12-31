@@ -289,7 +289,7 @@ that\footnote{This description is based upon the discussion found at
 \begin{equation*}
 t_0 \le t_1 \le \cdots \le t_{N+1}.
 \end{equation*}
-Define the augmented the knot set 
+Define the augmented knot set 
 \begin{equation*} 
   t_{-\left( m-1\right)}=\cdots
   =t_{0}\le t_{1}\le\cdots \le t_{N}\le t_{N+1}=\cdots=t_{N+m},
