@@ -1,8 +1,22 @@
 ## No zero divide
 
 NZD <- function(a) {
+  if(length(a) == 1) {
+    if(is.na(a)) return(a)
+    if(a < 0) return(min(-.Machine$double.eps, a))
+    return(max(.Machine$double.eps, a))
+  }
   ifelse(a<0,pmin(-.Machine$double.eps,a),pmax(.Machine$double.eps,a))
 }
+
+NZD_pos <- function(a) {
+  if(length(a) == 1) {
+    if(is.na(a)) return(a)
+    return(max(.Machine$double.eps, a))
+  }
+  pmax(.Machine$double.eps,a)
+}
+
 
 integrate.trapezoidal <- function(x,y) {
 

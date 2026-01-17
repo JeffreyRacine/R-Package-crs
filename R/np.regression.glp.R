@@ -1168,6 +1168,7 @@ glpregEst <- function(tydat=NULL,
     ridger <- function(i) {
       doridge[i] <<- FALSE
       ridge.lc[i] <- ridge[i]*tyw[1,i][1]/NZD(tww[,,i][1,1])
+
       tryCatch(chol2inv(chol(tww[,,i]+diag(rep(ridge[i],nc))))%*%tyw[,i],
                error = function(e){
                  ridge[i] <<- ridge[i]+epsilon

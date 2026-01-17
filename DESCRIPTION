@@ -1,5 +1,5 @@
 Package: crs
-Version: 0.15-38
+Version: 0.15-39
 Date: 2024-09-27
 Imports: boot, stats, np, quantreg
 Suggests: logspline, quadprog, rgl
