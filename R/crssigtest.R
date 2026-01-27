@@ -38,7 +38,7 @@ crssigtest <- function(model = NULL,
 
   if(is.null(model)) stop(" you must provide a crs model")
   if(is.null(index)) index <- 1:NCOL(model$xz)
-  if(index < 1 || index > NCOL(model$xz)) stop(" you must provide a valid index")
+  if(any(index < 1) || any(index > NCOL(model$xz))) stop(" you must provide a valid index")
   boot.type <- match.arg(boot.type)
 
   ## Some storage vectors/matrices
