@@ -1,0 +1,21 @@
+#!/bin/bash
+sed -i bak -f sed_run.scr clsd.Rd
+sed -i bak -f sed_run.scr crs-package.Rd
+sed -i bak -f sed_run.scr crs.Rd
+sed -i bak -f sed_run.scr crsiv.Rd
+sed -i bak -f sed_run.scr crsivderiv.Rd
+sed -i bak -f sed_run.scr crssigtest.Rd
+sed -i bak -f sed_run.scr data-cps71.Rd
+sed -i bak -f sed_run.scr data-Engel95.Rd
+sed -i bak -f sed_run.scr data-wage1.Rd
+sed -i bak -f sed_run.scr frscv.Rd
+sed -i bak -f sed_run.scr frscvNOMAD.Rd
+sed -i bak -f sed_run.scr glp.model.matrix.Rd
+sed -i bak -f sed_run.scr gsl-bs.Rd
+sed -i bak -f sed_run.scr krscv.Rd
+sed -i bak -f sed_run.scr krscvNOMAD.Rd
+sed -i bak -f sed_run.scr npglpreg.Rd
+sed -i bak -f sed_run.scr snomadr.Rd
+sed -i bak -f sed_run.scr tensor.prod.model.matrix.Rd
+sed -i bak -f sed_run.scr uniquecombs.Rd
+rm *.Rdbak
