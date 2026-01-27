@@ -509,7 +509,7 @@ for each dimension of the continuous \code{x} in \code{txdat}}
 \code{\link[np]{npreg}}
 }
 \examples{
-\dontrun{
+% \dontrun{
 set.seed(42)
 n <- 100
 x1 <- runif(n,-2,2)
@@ -523,12 +523,12 @@ model <- npglpreg(y~x1+x2,nmulti=1)
 summary(model)
 
 ## Plot the partial means and percentile confidence intervals
-plot(model,ci=T)
+plot(model,ci=TRUE)
 ## Extract the data from the plot object and plot it separately
-myplot.dat <- plot(model,plot.behavior="data",ci=T)
+myplot.dat <- plot(model,plot.behavior="data",ci=TRUE)
 matplot(myplot.dat[[1]][,1],myplot.dat[[1]][,-1],type="l")
 matplot(myplot.dat[[2]][,1],myplot.dat[[2]][,-1],type="l")
-}
+% } % end dontrun
 }
 \keyword{ nonparametric }
 \keyword{ regression }
