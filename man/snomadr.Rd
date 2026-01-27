@@ -397,7 +397,7 @@ snomadr(n            = as.integer(n),
         nmulti = as.integer(nmulti), 
         print.output = TRUE, 
         params       = params )
-} %% End dontrun
+} % end dontrun
 }
 \keyword{ optimize }
 \keyword{ interface }

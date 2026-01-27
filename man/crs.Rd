@@ -564,7 +564,7 @@ pdat <- plot(model,mean=TRUE,ci=TRUE,plot.behavior="data")
 matplot(pdat[[1]][,1],pdat[[1]][,-1],
         xlab=names(pdat[[1]][1]),ylab=names(pdat[[1]][2]),
         lty=c(1,2,2),col=c(1,2,2),type="l")
-}
+} % end dontrun
 }
 \keyword{nonparametric}
 

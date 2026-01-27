@@ -351,7 +351,7 @@ x <- runif(n,0,1)
 model <- clsd(x,lbound=0,ubound=1)
 
 plot(model)
-} %% End dontrun
+} % end dontrun
 }
 \keyword{nonparametric}
 

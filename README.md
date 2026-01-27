@@ -18,7 +18,7 @@ Or download the [zip ball](https://github.com/JeffreyRacine/R-Package-crs/zipbal
 library(devtools); install_github('R-Package-crs', 'JeffreyRacine')
 ```
 
-Note Windows users have to first install [Rtools](https://cran.r-project.org/bin/windows/Rtools/), while OS X users have to first install [Xcode](https://apps.apple.com/us/app/xcode/id497799835) and the command line tools (in OS X 10.9 or higher, once you have Xcode installed, open a terminal and run xcode-select --install).
+Note Windows users have to first install [Rtools](https://cran.r-project.org/bin/windows/Rtools/), while OS X users have to first install [Xcode](https://apps.apple.com/us/app/xcode/id497799835?mt=12) and the command line tools (in OS X 10.9 or higher, once you have Xcode installed, open a terminal and run xcode-select --install).
 
 For more information on this project please visit the maintainer's website (https://www.socialsciences.mcmaster.ca/people/racinej).
 

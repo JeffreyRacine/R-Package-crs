@@ -96,5 +96,5 @@ legend(quantile(logexp,trim),quantile(food,1-trim),
        col=c("blue","red"),
        lwd=c(2,2),
        bty="n")
-}
+} % end dontrun
 }

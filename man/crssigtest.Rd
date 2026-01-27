@@ -110,6 +110,6 @@ summary(model)
 
 model.sigtest <- crssigtest(model)
 summary(model.sigtest)
-}
+} % end dontrun
 }
 \keyword{ nonparametric }

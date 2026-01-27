@@ -96,7 +96,7 @@ plot(model,common.scale=FALSE)
 ## Partial first derivative plots (control for non axis predictors)
 plot(model,gradients=TRUE,common.scale=FALSE)
 detach("package:np")
-}
+} % end dontrun
 }
 
 \keyword{datasets}
