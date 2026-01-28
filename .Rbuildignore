@@ -1,7 +1,8 @@
+.DS_Store
 crsver
-mkcrskg.sh
+mkcrspkg.sh
 man/runcrs
 man/dontruncrs
 man/sed_dontrun.scr
 man/sed_run.scr
-tests/*
+
