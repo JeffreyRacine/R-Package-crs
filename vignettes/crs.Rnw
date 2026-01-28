@@ -50,7 +50,7 @@
   McMaster University\\
   Hamilton, Ontario, Canada, L8S 4L8\\
   E-mail: \email{racinej@mcmaster.ca}\\
-  URL: \url{http://www.mcmaster.ca/economics/racine/}\\
+  URL: \url{https://experts.mcmaster.ca/people/racinej}\\
 }
 
 \begin{document}
@@ -192,7 +192,7 @@ and let $c_{s}$ be a finite positive constant.
 
 For the continuous predictors the regression spline model employs the
 B-spline routines in the GNU Scientific Library
-(\url{http://www.gnu.org/software/gsl/}). The B-spline function is the
+(\url{https://www.gnu.org/software/gsl/}). The B-spline function is the
 maximally differentiable interpolative basis function (B-spline stands
 for `basis-spline'), and a B-spline with no internal knots is a
 B\'ezier curve.
@@ -628,10 +628,10 @@ persp(x=x1.seq.1,y=x2.seq.1,z=z1,
 
 I would like to gratefully acknowledge support from the Natural
 Sciences and Engineering Research Council of Canada
-(\url{http://www.nserc-crsng.gc.ca}), the Social Sciences and Humanities
-Research Council of Canada (\url{http://www.sshrc-crsh.gc.ca}), and the Shared
+(\url{https://nserc-crsng.canada.ca/}), the Social Sciences and Humanities
+Research Council of Canada (\url{https://sshrc-crsh.canada.ca/}), and the Shared
 Hierarchical Academic Research Computing Network
-(\url{http://www.sharcnet.ca}).
+(\url{https://www.sharcnet.ca}).
 
 \bibliography{crs}
 

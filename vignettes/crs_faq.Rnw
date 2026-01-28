@@ -53,7 +53,7 @@ to others, kindly email me the relevant information and I will
 incorporate it into this FAQ.
 
 This FAQ refers to the most recent version, which as of this writing
-is 0.15-37. Kindly update your version should you not be using the
+is 0.15-39. Kindly update your version should you not be using the
 most current (from within R, \texttt{update.packages()} ought to do
 it, though also see \ref{update} below.). See the appendix in this
 file for cumulative changes between this and previous versions of the
@@ -95,14 +95,14 @@ A BibTeX entry for LaTeX users is
 
   There are many excellent introductions to the \texttt{R} environment
   with more on the way. First, I would recommend going directly to the
-  \texttt{R} website (\url{http://www.r-project.org}) and looking under
-  Documentation/Manuals (\url{http://cran.r-project.org/manuals.html})
+  \texttt{R} website (\url{https://www.r-project.org}) and looking under
+  Documentation/Manuals (\url{https://cran.r-project.org/manuals.html})
   where you will discover a wealth of documentation for \texttt{R} users
   of all levels. See also the \texttt{R} task views summary page
-  (\url{http://cran.r-project.org/web/views}) for
+  (\url{https://cran.r-project.org/web/views}) for
   information grouped under field of interest. A few documents that I
   mention to my students which are tailored to econometricians include
-  \url{http://cran.r-project.org/doc/contrib/Verzani-SimpleR.pdf},
+  \url{https://cran.r-project.org/doc/contrib/Verzani-SimpleR.pdf}
   Cribari-Neto \& Zarkos (1999) \cite{CRIBARI_NETO_ZARKOS:1999},
   Racine \& Hyndman (2002) \cite{RACINE_HYNDMAN:2002} and Farnsworth
   (2006) \cite{FARNSWORTH:2006}, to name but a few.
@@ -113,7 +113,7 @@ A BibTeX entry for LaTeX users is
 
   I maintain a 'Gallery' to provide a forum for users to share code
   and discover examples and illustrations which can be found at
-  \url{http://socserv.mcmaster.ca/racinej/Gallery/Home.html}.
+  \url{https://jeffreyracine.github.io/gallery/}.
 
   Often the best resource is right down the hall. Ask a colleague
   whether they use or know anyone who uses R, then offer to buy that
@@ -144,7 +144,7 @@ A BibTeX entry for LaTeX users is
   one-stop installation for these packages.
 
 See
-\href{http://cran.r-project.org/web/views/Econometrics.html}{cran.r-project.org/web/views/Econometrics.html} for further information.
+\href{https://cran.r-project.org/web/views/Econometrics.html}{cran.r-project.org/web/views/Econometrics.html} for further information.
 
 To automatically install a task view, the \texttt{ctv} package first
 needs to be installed and loaded, i.e.,
@@ -183,7 +183,7 @@ update.views("Econometrics")
     modified, fixed etc?}
 
   See the CHANGELOG on the CRAN site
-  (\url{http://cran.r-project.org/web/packages/crs/ChangeLog}), or go
+  (\url{https://cran.r-project.org/web/packages/crs/ChangeLog}), or go
   to the end of this document where the CHANGELOG is provided for your
   convenience.
 
@@ -650,6 +650,24 @@ For the second predictor use \texttt{x2} and
 \clearpage
 
 \appendix
+
+\section*{Changes from Version 0.15-38 to 0.15-39 [28-Jan-2026]}
+
+\begin{itemize}
+
+\item Added ggplot2 to Suggests field in DESCRIPTION per CRAN requirements
+
+\item Indexing issues with shrinkage addressed
+
+\item Optimization of kernel(), prod.kernel(), integrate.trapezoidal(), NZD(), NZD\_pos(), matrix.combn(), splitFrame(), blank(), check.function(), dimBS()
+
+\item Fixed index validation bug in crssigtest.R
+
+\item Fixed ci=T deprecation in npglpreg.Rd
+
+\item Fixed typos reported by users in man page
+
+\end{itemize}
 
 \section*{Changes from Version 0.15-37 to 0.15-38 [4-Sep-2024]}
 
