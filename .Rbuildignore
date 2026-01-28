@@ -1,2 +1,7 @@
 crsver
-mkcrspkg.sh
+mkcrskg.sh
+man/runcrs
+man/dontruncrs
+man/sed_dontrun.scr
+man/sed_run.scr
+tests/*
