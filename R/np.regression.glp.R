@@ -1166,8 +1166,10 @@ glpregEst <- function(tydat=NULL,
     nc <- ncol(tww[,,1])
 
     ridger <- function(i) {
+      ## Use <<- for doridge, dirge and ridge.lc to ensure the values are
+      ## preserved for use in while loops that follow
       doridge[i] <<- FALSE
-      ridge.lc[i] <- ridge[i]*tyw[1,i][1]/NZD(tww[,,i][1,1])
+      ridge.lc[i] <<- ridge[i]*tyw[1,i][1]/NZD(tww[,,i][1,1])
 
       tryCatch(chol2inv(chol(tww[,,i]+diag(rep(ridge[i],nc))))%*%tyw[,i],
                error = function(e){
@@ -1383,8 +1385,10 @@ minimand.cv.ls <- function(bws=NULL,
       ## estimator, shrink the mean towards the local constant mean.
 
       ridger <- function(i) {
+        ## Use <<- for doridge, dirge and ridge.lc to ensure the values are
+        ## preserved for use in while loops that follow
         doridge[i] <<- FALSE
-        ridge.lc[i] <- ridge[i]*tyw[1,i][1]/NZD(tww[,,i][1,1])
+        ridge.lc[i] <<- ridge[i]*tyw[1,i][1]/NZD(tww[,,i][1,1])
         W[i,, drop = FALSE] %*% tryCatch(chol2inv(chol(tww[,,i]+diag(rep(ridge[i],nc))))%*%tyw[,i],
                 error = function(e){
                   ridge[i] <<- ridge[i]+epsilon
@@ -1400,7 +1404,7 @@ minimand.cv.ls <- function(bws=NULL,
 
       while(any(doridge)){
         iloo <- (1:n)[doridge]
-        mean.loo[iloo] <- (1-ridge[i])*sapply(iloo, ridger) + ridge.lc[i]
+        mean.loo[iloo] <- (1-ridge[iloo])*sapply(iloo, ridger) + ridge.lc[iloo]
       }
 
       if (!is.na(any(mean.loo == cv.maxPenalty)) && !any(mean.loo == cv.maxPenalty)){
@@ -1583,8 +1587,10 @@ minimand.cv.aic <- function(bws=NULL,
       ## estimator, shrink the mean towards the local constant mean.
 
       ridger <- function(i) {
+        ## Use <<- for doridge, dirge and ridge.lc to ensure the values are
+        ## preserved for use in while loops that follow
         doridge[i] <<- FALSE
-        ridge.lc[i] <- ridge[i]*tyw[1,i][1]/NZD(tww[,,i][1,1])
+        ridge.lc[i] <<- ridge[i]*tyw[1,i][1]/NZD(tww[,,i][1,1])
         W[i,, drop = FALSE] %*% tryCatch(chol2inv(chol(tww[,,i]+diag(rep(ridge[i],nc))))%*%tyw[,i],
                 error = function(e){
                   ridge[i] <<- ridge[i]+epsilon
@@ -1600,7 +1606,7 @@ minimand.cv.aic <- function(bws=NULL,
 
       while(any(doridge)){
         ii <- (1:n)[doridge]
-        ghat[ii] <- (1-ridge[i])*sapply(ii, ridger) + ridge.lc[i]
+        ghat[ii] <- (1-ridge[ii])*sapply(ii, ridger) + ridge.lc[ii]
       }
 
       trH <- kernel.i.eq.j*sum(sapply(1:n,function(i){
