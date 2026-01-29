@@ -9,6 +9,13 @@
 ## Complexity can be modified via the number of knots (segments) or the
 ## spline degree (degree)
 
+## Helper to compute hat values from .lm.fit output
+hat.from.lm.fit <- function(obj) {
+  qr_obj <- list(qr=obj$qr, qraux=obj$qraux, pivot=obj$pivot, tol=obj$tol, rank=obj$rank)
+  class(qr_obj) <- "qr"
+  hat(qr_obj)
+}
+
 prod.spline <- function(x,
                         z=NULL,
                         K=NULL,
@@ -1362,12 +1369,17 @@ cv.kernel.spline <- function(x,
           ## Additive spline regression models have an intercept in
           ## the lm() model (though not in the gsl.bs function)
           if(is.null(tau)) {
-            model <- lm.wfit(XP,y,L)
+            ## 2025: Optimize using .lm.fit with manual weighting
+            ## model <- lm.wfit(XP,y,L)
+            sw <- sqrt(L)
+            model <- .lm.fit(XP*sw,y*sw)
           } else {
             model <- tryCatch(rq.wfit(XP,y,weights=L,tau=tau,method="fn"),error=function(e){FALSE})
             if(is.logical(model))
               return(sqrt(.Machine$double.xmax))
-            model.hat <- lm.wfit(XP,y,L)
+            ## model.hat <- lm.wfit(XP,y,L)
+            sw <- sqrt(L)
+            model.hat <- .lm.fit(XP*sw,y*sw)
           }
         } else {
           ## Test for full column rank
@@ -1376,19 +1388,29 @@ cv.kernel.spline <- function(x,
               return(sqrt(.Machine$double.xmax))
           }
           if(is.null(tau)) {
-            model <- lm.wfit(P,y,L)
+            ## model <- lm.wfit(P,y,L)
+            sw <- sqrt(L)
+            model <- .lm.fit(P*sw,y*sw)
           } else {
             model <- tryCatch(rq.wfit(P,y,weights=L,tau=tau,method="fn"),error=function(e){FALSE})
             if(is.logical(model))
               return(sqrt(.Machine$double.xmax))
-            model.hat <- lm.wfit(P,y,L)
+            ## model.hat <- lm.wfit(P,y,L)
+            sw <- sqrt(L)
+            model.hat <- .lm.fit(P*sw,y*sw)
           }
         }
-        epsilon[zz] <- residuals(model)[zz]
-        if(is.null(tau))
-          htt[zz] <- hat(model$qr)[zz]
-        else
-          htt[zz] <- hat(model.hat$qr)[zz]
+        
+        if(is.null(tau)) {
+          ## epsilon[zz] <- residuals(model)[zz]
+          epsilon[zz] <- (model$residuals/sw)[zz]
+          ## htt[zz] <- hat(model$qr)[zz]
+          htt[zz] <- hat.from.lm.fit(model)[zz]
+        } else {
+          epsilon[zz] <- residuals(model)[zz]
+          ## htt[zz] <- hat(model.hat$qr)[zz]
+          htt[zz] <- hat.from.lm.fit(model.hat)[zz]
+        }
       }
       
     } else {
@@ -1414,16 +1436,25 @@ cv.kernel.spline <- function(x,
         ## the parameter that may shift with the categorical
         ## predictors
         if(is.null(tau)) {
-          model <- lm.wfit(X0,y,L)
-          htt[zz] <- hat(model$qr)[zz]
+          ## model <- lm.wfit(X0,y,L)
+          ## htt[zz] <- hat(model$qr)[zz]
+          sw <- sqrt(L)
+          model <- .lm.fit(X0*sw,y*sw)
+          htt[zz] <- hat.from.lm.fit(model)[zz]
         } else {
           model <- tryCatch(rq.wfit(X0,y,weights=L,tau=tau,method="fn"),error=function(e){FALSE})
           if(is.logical(model))
             return(sqrt(.Machine$double.xmax))
-          model.hat <- lm.wfit(X0,y,L)
-          htt[zz] <- hat(model.hat$qr)[zz]
+          ## model.hat <- lm.wfit(X0,y,L)
+          sw <- sqrt(L)
+          model.hat <- .lm.fit(X0*sw,y*sw)
+          ## htt[zz] <- hat(model.hat$qr)[zz]
+          htt[zz] <- hat.from.lm.fit(model.hat)[zz]
         }
-        epsilon[zz] <- residuals(model)[zz]
+        if(is.null(tau))
+          epsilon[zz] <- (model$residuals/sw)[zz]
+        else
+          epsilon[zz] <- residuals(model)[zz]
       }
     }
     
@@ -1602,10 +1633,14 @@ cv.factor.spline <- function(x,
       ## Additive spline regression models have an intercept in the
       ## lm() model (though not in the gsl.bs function)
       if(is.null(tau)) {
-        if(is.null(weights))
-          model <- lm.fit(XP,y)
-        else
-          model <- lm.wfit(XP,y,weights)
+        if(is.null(weights)) {
+          ## model <- lm.fit(XP,y)
+          model <- .lm.fit(XP,y)
+        } else {
+          ## model <- lm.wfit(XP,y,weights)
+          sw <- sqrt(weights)
+          model <- .lm.fit(XP*sw,y*sw)
+        }
       } else {
         if(is.null(weights))
           model <- tryCatch(rq.fit(XP,y,tau=tau,method="fn"),error=function(e){FALSE})
@@ -1613,10 +1648,14 @@ cv.factor.spline <- function(x,
           model <- tryCatch(rq.wfit(XP,y,tau=tau,weights,method="fn"),error=function(e){FALSE})
         if(is.logical(model))
           return(sqrt(.Machine$double.xmax))
-        if(is.null(weights))
-          model.hat <- lm.fit(XP,y)
-        else
-          model.hat <- lm.wfit(XP,y,weights)
+        if(is.null(weights)) {
+          ## model.hat <- lm.fit(XP,y)
+          model.hat <- .lm.fit(XP,y)
+        } else {
+          ## model.hat <- lm.wfit(XP,y,weights)
+          sw <- sqrt(weights)
+          model.hat <- .lm.fit(XP*sw,y*sw)
+        }
       }
     } else {
       ## Test for full column rank
@@ -1625,10 +1664,14 @@ cv.factor.spline <- function(x,
           return(sqrt(.Machine$double.xmax))
       }
       if(is.null(tau)) {
-        if(is.null(weights))
-          model <- lm.fit(P,y)
-        else
-          model <- lm.wfit(P,y,weights)
+        if(is.null(weights)) {
+          ## model <- lm.fit(P,y)
+          model <- .lm.fit(P,y)
+        } else {
+          ## model <- lm.wfit(P,y,weights)
+          sw <- sqrt(weights)
+          model <- .lm.fit(P*sw,y*sw)
+        }
       } else {
         if(is.null(weights))
           model <- tryCatch(rq.fit(P,y,tau=tau,method="fn"),error=function(e){FALSE})
@@ -1636,18 +1679,29 @@ cv.factor.spline <- function(x,
           model <- tryCatch(rq.wfit(P,y,tau=tau,weights,method="fn"),error=function(e){FALSE})
         if(is.logical(model))
           return(sqrt(.Machine$double.xmax))
-        if(is.null(weights))
-          model.hat <- lm.fit(P,y)
-        else
-          model.hat <- lm.wfit(P,y,weights)
+        if(is.null(weights)) {
+          ## model.hat <- lm.fit(P,y)
+          model.hat <- .lm.fit(P,y)
+        } else {
+          ## model.hat <- lm.wfit(P,y,weights)
+          sw <- sqrt(weights)
+          model.hat <- .lm.fit(P*sw,y*sw)
+        }
       }
     }
     if(is.null(tau))
-      htt <- hat(model$qr)
+      ## htt <- hat(model$qr)
+      htt <- hat.from.lm.fit(model)
     else
-      htt <- hat(model.hat$qr)
+      ## htt <- hat(model.hat$qr)
+      htt <- hat.from.lm.fit(model.hat)
     htt <- ifelse(htt < 1, htt, 1-.Machine$double.eps)
-    epsilon <- residuals(model)
+    
+    if(is.null(tau) && !is.null(weights))
+      epsilon <- model$residuals / sw
+    else
+      epsilon <- residuals(model)
+      
   } else {
     htt <- rep(1/n,n)
     epsilon <- y-mean(y)
