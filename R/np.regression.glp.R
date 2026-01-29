@@ -1377,34 +1377,50 @@ minimand.cv.ls <- function(bws=NULL,
       epsilon <- 1.0/n
       ridge <- double(n)
       ridge.lc <- double(n)      
-      doridge <- !logical(n)
+      doridge <- rep(TRUE, n)
       
       nc <- ncol(tww[,,1])
       
       ## Test for singularity of the generalized local polynomial
       ## estimator, shrink the mean towards the local constant mean.
       
-      ridger <- function(i) {
-        ## Use <<- for doridge, dirge and ridge.lc to ensure the values are
-        ## preserved for use in while loops that follow
-        doridge[i] <<- FALSE
-        ridge.lc[i] <<- ridge[i]*tyw[1,i][1]/NZD(tww[,,i][1,1])
-        W[i,, drop = FALSE] %*% tryCatch(chol2inv(chol(tww[,,i]+diag(rep(ridge[i],nc))))%*%tyw[,i],
-                                         error = function(e){
-                                           ridge[i] <<- ridge[i]+epsilon
-                                           doridge[i] <<- TRUE
-                                           if(cv.warning) console <- printPush(paste("\rWarning: ridging required for inversion at obs. ", i, ", ridge = ",formatC(ridge[i],digits=4,format="f"),"        ",sep=""),console = console)
-                                           return(rep(cv.maxPenalty,nc))
-                                         })
-      }
-      
-      ## Shrinking towards the local constant mean is accomplished via
-      ## ridge.lc[i] which is ridge[i] times the local constant
-      ## estimator
-      
+      ## 2025: Optimized loop to avoid closure/sapply overhead
       while(any(doridge)){
-        iloo <- (1:n)[doridge]
-        mean.loo[iloo] <- (1-ridge[iloo])*sapply(iloo, ridger) + ridge.lc[iloo]
+        iloo <- which(doridge)
+        doridge[iloo] <- FALSE # Reset, set back to TRUE if failure occurs
+        
+        for(i in iloo) {
+          # Local constant estimator component
+          # Note: tww is nc x nc x n. tww[1,1,i] is the weight sum.
+          ridge.lc[i] <- ridge[i]*tyw[1,i]/NZD(tww[1,1,i])
+          
+          # Prepare matrix for inversion
+          mat <- tww[,,i]
+          if(ridge[i] > 0) {
+            # Add ridge to diagonal
+            for(j in 1:nc) mat[j,j] <- mat[j,j] + ridge[i]
+          }
+          
+          val <- tryCatch({
+             R <- chol(mat)
+             inv <- chol2inv(R)
+             est <- inv %*% tyw[,i]
+             sum(W[i,] * est)
+          }, error = function(e) {
+             # Signal failure
+             return(NA)
+          })
+          
+          if(is.na(val)) {
+             ridge[i] <- ridge[i] + epsilon
+             doridge[i] <- TRUE
+             if(cv.warning) console <- printPush(paste("\rWarning: ridging required for inversion at obs. ", i, ", ridge = ",formatC(ridge[i],digits=4,format="f"),"        ",sep=""),console = console)
+             # mean.loo[i] remains cv.maxPenalty (init value) if we give up? 
+             # The loop continues until success.
+          } else {
+             mean.loo[i] <- (1-ridge[i])*val + ridge.lc[i]
+          }
+        }
       }
       
       if (!is.na(any(mean.loo == cv.maxPenalty)) && !any(mean.loo == cv.maxPenalty)){
@@ -1579,39 +1595,65 @@ minimand.cv.aic <- function(bws=NULL,
       epsilon <- 1.0/n
       ridge <- double(n)
       ridge.lc <- double(n)      
-      doridge <- !logical(n)
+      doridge <- rep(TRUE, n)
       
       nc <- ncol(tww[,,1])
+      
+      ## Storage for inverses to avoid recomputing for trH
+      inv_storage <- vector("list", n)
       
       ## Test for singularity of the generalized local polynomial
       ## estimator, shrink the mean towards the local constant mean.
       
-      ridger <- function(i) {
-        ## Use <<- for doridge, dirge and ridge.lc to ensure the values are
-        ## preserved for use in while loops that follow
-        doridge[i] <<- FALSE
-        ridge.lc[i] <<- ridge[i]*tyw[1,i][1]/NZD(tww[,,i][1,1])
-        W[i,, drop = FALSE] %*% tryCatch(chol2inv(chol(tww[,,i]+diag(rep(ridge[i],nc))))%*%tyw[,i],
-                                         error = function(e){
-                                           ridge[i] <<- ridge[i]+epsilon
-                                           doridge[i] <<- TRUE
-                                           if(cv.warning) console <- printPush(paste("\rWarning: ridging required for inversion at obs. ", i, ", ridge = ",formatC(ridge[i],digits=4,format="f"),"        ",sep=""),console = console)
-                                           return(rep(cv.maxPenalty,nc))
-                                         })
-      }
-      
-      ## Shrinking towards the local constant mean is accomplished via
-      ## ridge.lc[i] which is ridge[i] times the local constant
-      ## estimator
-      
+      ## 2025: Optimized loop and caching
       while(any(doridge)){
-        ii <- (1:n)[doridge]
-        ghat[ii] <- (1-ridge[ii])*sapply(ii, ridger) + ridge.lc[ii]
+        ii <- which(doridge)
+        doridge[ii] <- FALSE
+        
+        for(i in ii) {
+          ridge.lc[i] <- ridge[i]*tyw[1,i]/NZD(tww[1,1,i])
+          
+          mat <- tww[,,i]
+          if(ridge[i] > 0) {
+            for(j in 1:nc) mat[j,j] <- mat[j,j] + ridge[i]
+          }
+          
+          res <- tryCatch({
+             R <- chol(mat)
+             inv <- chol2inv(R)
+             est <- inv %*% tyw[,i]
+             val <- sum(W[i,] * est)
+             list(val=val, inv=inv)
+          }, error = function(e) return(NULL))
+          
+          if(is.null(res)) {
+             ridge[i] <- ridge[i] + epsilon
+             doridge[i] <- TRUE
+             if(cv.warning) console <- printPush(paste("\rWarning: ridging required for inversion at obs. ", i, ", ridge = ",formatC(ridge[i],digits=4,format="f"),"        ",sep=""),console = console)
+          } else {
+             ghat[i] <- (1-ridge[i])*res$val + ridge.lc[i]
+             inv_storage[[i]] <- res$inv
+          }
+        }
       }
       
-      trH <- kernel.i.eq.j*sum(sapply(1:n,function(i){
-        (1-ridge[i]) * W[i,, drop = FALSE] %*% chol2inv(chol(tww[,,i]+diag(rep(ridge[i],nc)))) %*% t(W[i,, drop = FALSE]) + ridge[i]/NZD(tww[,,i][1,1])
-      }))
+      ## Optimized trH calculation using cached inverses
+      trH_sum <- 0
+      for(i in 1:n) {
+         term1 <- 0
+         if(ridge[i] < 1) {
+             # Quadratic form W[i,] %*% inv %*% t(W[i,])
+             w_vec <- W[i,]
+             # temp <- inv_storage[[i]] %*% w_vec
+             # term1 <- (1-ridge[i]) * sum(w_vec * temp)
+             # Use crossprod for potentially faster calc
+             term1 <- (1-ridge[i]) * drop(crossprod(w_vec, inv_storage[[i]] %*% w_vec))
+         }
+         term2 <- ridge[i]/NZD(tww[1,1,i])
+         trH_sum <- trH_sum + term1 + term2
+      }
+      
+      trH <- kernel.i.eq.j*trH_sum
       
       aic.penalty <- (1+trH/n)/(1-(trH+2)/n)
       
