@@ -144,7 +144,7 @@ A BibTeX entry for LaTeX users is
   one-stop installation for these packages.
 
 See
-\href{https://cran.r-project.org/web/views/Econometrics.html}{cran.r-project.org/web/views/Econometrics.html} for further information.
+\href{https://CRAN.R-project.org/view=Econometrics}{https://CRAN.R-project.org/view=Econometricsl} for further information.
 
 To automatically install a task view, the \texttt{ctv} package first
 needs to be installed and loaded, i.e.,
@@ -183,7 +183,7 @@ update.views("Econometrics")
     modified, fixed etc?}
 
   See the CHANGELOG on the CRAN site
-  (\url{https://cran.r-project.org/web/packages/crs/ChangeLog}), or go
+  (\url{https://CRAN.R-project.org/package=crs}), or go
   to the end of this document where the CHANGELOG is provided for your
   convenience.
 
