@@ -18,27 +18,27 @@
 ## identical dimension to the originals for all other variables.
 
 glp.model.matrix <- function(X) {
-
+  
   k <-length(X)
   dimen <- numeric()
   for(i in 1:k) {
     dimen[i] <- ncol(X[[i]])
   }
-
-	index.swap <- function(index.input)
-	{
-			index.ret <- 1:length(index.input)
-			index <- 1:length(index.input)
-			for (i in 1:length(index.input))
-			{
-					index.ret[i] <- index[index.input==i]
-			}
-
-			return (index.ret)
-	}
-
+  
+  index.swap <- function(index.input)
+  {
+    index.ret <- 1:length(index.input)
+    index <- 1:length(index.input)
+    for (i in 1:length(index.input))
+    {
+      index.ret[i] <- index[index.input==i]
+    }
+    
+    return (index.ret)
+  }
+  
   two.dimen<- function(d1,d2,d2p,nd1,pd12,d1sets)
-	{
+  {
     if(d2 == 1) {
       ret <- list()
       ret$d12 <- pd12
@@ -58,7 +58,7 @@ glp.model.matrix <- function(X) {
         d2sets <- rbind(d2sets,cbind(matrix(oneSet[rowSums(oneSet)==i,],nrow=NROW(oneSet[rowSums(oneSet)==i,]),ncol=NCOL(d1sets))[rep(1:NROW(oneSet[rowSums(oneSet)==i,]),d2),],rep(0:(d2-1),each=nd1[i])))
       }
     }
-
+    
     for(i in 1:d2){
       d12 <- d12 + (i*nd1[d1-i+1])
       if(nd1[d1-i+1]>0){
@@ -68,7 +68,7 @@ glp.model.matrix <- function(X) {
         d2sets <- rbind(d2sets,cbind(matrix(oneSet[rowSums(oneSet)==d1-i+1,],nrow=NROW(oneSet[rowSums(oneSet)==d1-i+1,]),ncol=NCOL(d1sets))[rep(1:NROW(oneSet[rowSums(oneSet)==d1-i+1,]),i),],rep(0:(i-1), each=nd1[d1-i+1])))
       }
     }
-
+    
     nd2 <- nd1  ## Calculate nd2
     if(d1>1){
       for(j in 1:(d1-1)) {
@@ -98,57 +98,57 @@ glp.model.matrix <- function(X) {
     
     return(ret)
   }
-
-	construct.tensor.prod <- function(dimen.input)
-	{
-			dimen <- sort(dimen.input, decreasing = TRUE)
-
-			nd1 <- rep(1,dimen[1])   ## At the beginning,  we have one for [1, 2, 3, ..., dimen[1]]
-			nd1[dimen[1]] <- 0       ## nd1 represents the frequency for every element of [1, 2, 3, ..., dimen[1]]
-			ncol.bs <- dimen[1]
-			sets <- 1:dimen[1]
-			dim(sets)<- c(dimen[1],1)
-			d2p <- 0
-
-			if(k>1) {
-					for(i in 2:k) {
-							dim.rt <- two.dimen(dimen[1],dimen[i],d2p,nd1,ncol.bs,sets)
-							nd1 <- dim.rt$nd1
-							ncol.bs <- dim.rt$d12
-							sets <- dim.rt$sets
-							d2p <- dim.rt$d2p
-					}
-					ncol.bs <- dim.rt$d12+k-1
-					for(i in 2:k)
-					{
-							oneRow <- rep(0, NCOL(sets))
-							oneRow[i-1] <- dimen[i-1]
-							sets <- rbind(sets, oneRow)
-					}
-			}
-
-			return(sets[, index.swap(order(dimen.input, decreasing = TRUE)), drop = FALSE])
-	}
-
-	z <- construct.tensor.prod(dimen)
-## if we don't want to get the same order as using the expand.grid method, we can comment the following two lines.
-	rownames(z) <- 1:NROW(z)
-	z <- z[do.call('order', as.list(data.frame(z[, NCOL(z):1]))), ]
-
-# X is a list of model matrices, from which a tensor product model matrix is to be produced.
-# e.g. ith row is basically X[[1]][i,]%x%X[[2]][i,]%x%X[[3]][i,], but this routine works 
-# column-wise, for efficiency, and does work in compiled code.
+  
+  construct.tensor.prod <- function(dimen.input)
+  {
+    dimen <- sort(dimen.input, decreasing = TRUE)
+    
+    nd1 <- rep(1,dimen[1])   ## At the beginning,  we have one for [1, 2, 3, ..., dimen[1]]
+    nd1[dimen[1]] <- 0       ## nd1 represents the frequency for every element of [1, 2, 3, ..., dimen[1]]
+    ncol.bs <- dimen[1]
+    sets <- 1:dimen[1]
+    dim(sets)<- c(dimen[1],1)
+    d2p <- 0
+    
+    if(k>1) {
+      for(i in 2:k) {
+        dim.rt <- two.dimen(dimen[1],dimen[i],d2p,nd1,ncol.bs,sets)
+        nd1 <- dim.rt$nd1
+        ncol.bs <- dim.rt$d12
+        sets <- dim.rt$sets
+        d2p <- dim.rt$d2p
+      }
+      ncol.bs <- dim.rt$d12+k-1
+      for(i in 2:k)
+      {
+        oneRow <- rep(0, NCOL(sets))
+        oneRow[i-1] <- dimen[i-1]
+        sets <- rbind(sets, oneRow)
+      }
+    }
+    
+    return(sets[, index.swap(order(dimen.input, decreasing = TRUE)), drop = FALSE])
+  }
+  
+  z <- construct.tensor.prod(dimen)
+  ## if we don't want to get the same order as using the expand.grid method, we can comment the following two lines.
+  rownames(z) <- 1:NROW(z)
+  z <- z[do.call('order', as.list(data.frame(z[, NCOL(z):1]))), ]
+  
+  # X is a list of model matrices, from which a tensor product model matrix is to be produced.
+  # e.g. ith row is basically X[[1]][i,]%x%X[[2]][i,]%x%X[[3]][i,], but this routine works 
+  # column-wise, for efficiency, and does work in compiled code.
   m <- length(X)              ## number to row tensor product
   d <- unlist(lapply(X,ncol)) ## dimensions of each X
   n <- nrow(X[[1]])           ## columns in each X
-	zn <- NROW(z)
+  zn <- NROW(z)
   X <- as.numeric(unlist(X))  ## append X[[i]]s columnwise
   z <- as.integer(unlist(z))  ## append z's columnwise
   res <- numeric(n*zn)     ## storage for result
   .Call(glp_model_tmm,X,z, res,d,m,n, zn)   ## produce product
-
-	return(matrix(res,nrow=n))
-
+  
+  return(matrix(res,nrow=n))
+  
 }
 
 ##> set.seed(42)

@@ -28,45 +28,45 @@
 
 print.snomadr <- function(x, show.controls=TRUE, ...) {
   cat("\nCall:\n", deparse(x$call), "\n\n", sep = "", fill=TRUE)
-
+  
   if (!is.null(x$call$information)) {return(NULL);}
   else
   {
-      cat( unlist(strsplit(paste( "nomad solver status:", x$status, "(", x$message, ")\n" ),' ')), fill=TRUE )
-      cat( paste( "Number of blackbox evaluations.....:", x$bbe, "\n" ) )
-      cat( paste( "Number of iterations...............:", x$iterations, "\n" ) )
-
-      # if show.controls is TRUE or FALSE, show all or none of the controls
-      if ( is.logical( show.controls ) ) {
-          # show all control variables
-          if ( show.controls ) {
-              controls.indices = 1:length(x$solution)
-          }
+    cat( unlist(strsplit(paste( "nomad solver status:", x$status, "(", x$message, ")\n" ),' ')), fill=TRUE )
+    cat( paste( "Number of blackbox evaluations.....:", x$bbe, "\n" ) )
+    cat( paste( "Number of iterations...............:", x$iterations, "\n" ) )
+    
+    # if show.controls is TRUE or FALSE, show all or none of the controls
+    if ( is.logical( show.controls ) ) {
+      # show all control variables
+      if ( show.controls ) {
+        controls.indices = 1:length(x$solution)
       }
-
-      # if show.controls is a vector with indices, rename this vector
-      # and define show.controls as TRUE
-      if ( is.numeric( show.controls ) ) {
-          controls.indices = show.controls
-          show.controls = TRUE
+    }
+    
+    # if show.controls is a vector with indices, rename this vector
+    # and define show.controls as TRUE
+    if ( is.numeric( show.controls ) ) {
+      controls.indices = show.controls
+      show.controls = TRUE
+    }
+    
+    # if solved successfully
+    if ( x$status == 8 || x$status == 9 || x$status == 13 ) {
+      cat( paste( "Optimal value of objective function: ", x$objective, "\n" ) )
+      if ( show.controls ) {
+        cat( "Optimal value of controls..........: " )
+        cat( x$solution[ controls.indices ], fill=TRUE)
+        cat("\n")
       }
-
-      # if solved successfully
-      if ( x$status == 8 || x$status == 9 || x$status == 13 ) {
-          cat( paste( "Optimal value of objective function: ", x$objective, "\n" ) )
-          if ( show.controls ) {
-              cat( "Optimal value of controls..........: " )
-              cat( x$solution[ controls.indices ], fill=TRUE)
-              cat("\n")
-          }
-      } else {
-          cat( paste( "Current value of objective function: ", x$objective, "\n" ) )
-          if ( show.controls ) {
-              cat( "Current value of controls..........: " )
-              cat( x$solution[ controls.indices ], fill=TRUE )
-              cat("\n")
-          }
+    } else {
+      cat( paste( "Current value of objective function: ", x$objective, "\n" ) )
+      if ( show.controls ) {
+        cat( "Current value of controls..........: " )
+        cat( x$solution[ controls.indices ], fill=TRUE )
+        cat("\n")
       }
-      cat("\n")
+    }
+    cat("\n")
   }
 }

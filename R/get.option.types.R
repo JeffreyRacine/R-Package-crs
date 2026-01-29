@@ -30,56 +30,56 @@
 # 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 
 get.option.types <- function(opts) {
-
-# define types of nomad options,  we should add all options here.
-# we may not need this,  we can set all of them as string because we
-# just write all options into a file,  then nomad will read it.
-# I commented some lines,  then everything is string.
-    nomad.option.types <- list(
-                               "DISPLAY_DEGREE"="string", 
-                               "MAX_BB_EVAL"="integer", 
-                               "MIN_POLL_SIZE"="numeric", 
-                               "MIN_MESH_SIZE"="numeric", 
-                               "INITIAL_MESH_SIZE"="string"
-                               )
-
-
-
-    # initialize list with options sorted by type
-    converted.opts <- list( "integer"=list(), "string"=list(), "numeric"=list() )
-
-    is.wholenumber <- function(x, tol = .Machine$double.eps^0.5)  abs(x - round(x)) < tol
-
-    # check if we have at least 1 element in the list, otherwise the 
-    # loop runs from 1 to down 0 and we get errors
-    if ( length( opts ) > 0 ) {
-
-        # loop over all options and give them the correct type
-        for ( i in 1:length( opts ) ) {
-#            tmp.type <- nomad.option.types[[match( names(opts)[i], names(nomad.option.types) )]]
-#            if ( is.null( tmp.type ) ) {
-                # determine type
-#                if ( is.character(opts[[i]]) ) {
-                    tmp.type <- "string"
-#                } else if ( is.wholenumber(opts[[i]]) ) {
-#                    tmp.type <- "integer"
-#                } else {
-#                    tmp.type <- "numeric"
-#                }
-#                cat( paste( "Warning: ", names(opts)[i], " is not a recognized option, we try to pass it to nomad as ", tmp.type, "\n" ) )
-#            }
-
-            if ( tmp.type=="string" ) {
-                converted.opts$string[[ names(opts)[i] ]] <- as.character(opts[[i]])
-            } else if ( tmp.type=="integer" ) {
-                converted.opts$integer[[ names(opts)[i] ]] <- as.integer(opts[[i]])
-            } else if ( tmp.type=="numeric" ) {
-                converted.opts$numeric[[ names(opts)[i] ]] <- as.numeric(opts[[i]])
-            } else {
-                stop(paste("Type of option ", names(opts)[i], " not recognized"))
-            }
-        }
+  
+  # define types of nomad options,  we should add all options here.
+  # we may not need this,  we can set all of them as string because we
+  # just write all options into a file,  then nomad will read it.
+  # I commented some lines,  then everything is string.
+  nomad.option.types <- list(
+    "DISPLAY_DEGREE"="string", 
+    "MAX_BB_EVAL"="integer", 
+    "MIN_POLL_SIZE"="numeric", 
+    "MIN_MESH_SIZE"="numeric", 
+    "INITIAL_MESH_SIZE"="string"
+  )
+  
+  
+  
+  # initialize list with options sorted by type
+  converted.opts <- list( "integer"=list(), "string"=list(), "numeric"=list() )
+  
+  is.wholenumber <- function(x, tol = .Machine$double.eps^0.5)  abs(x - round(x)) < tol
+  
+  # check if we have at least 1 element in the list, otherwise the 
+  # loop runs from 1 to down 0 and we get errors
+  if ( length( opts ) > 0 ) {
+    
+    # loop over all options and give them the correct type
+    for ( i in 1:length( opts ) ) {
+      #            tmp.type <- nomad.option.types[[match( names(opts)[i], names(nomad.option.types) )]]
+      #            if ( is.null( tmp.type ) ) {
+      # determine type
+      #                if ( is.character(opts[[i]]) ) {
+      tmp.type <- "string"
+      #                } else if ( is.wholenumber(opts[[i]]) ) {
+      #                    tmp.type <- "integer"
+      #                } else {
+      #                    tmp.type <- "numeric"
+      #                }
+      #                cat( paste( "Warning: ", names(opts)[i], " is not a recognized option, we try to pass it to nomad as ", tmp.type, "\n" ) )
+      #            }
+      
+      if ( tmp.type=="string" ) {
+        converted.opts$string[[ names(opts)[i] ]] <- as.character(opts[[i]])
+      } else if ( tmp.type=="integer" ) {
+        converted.opts$integer[[ names(opts)[i] ]] <- as.integer(opts[[i]])
+      } else if ( tmp.type=="numeric" ) {
+        converted.opts$numeric[[ names(opts)[i] ]] <- as.numeric(opts[[i]])
+      } else {
+        stop(paste("Type of option ", names(opts)[i], " not recognized"))
+      }
     }
-
-    return ( converted.opts )
+  }
+  
+  return ( converted.opts )
 }

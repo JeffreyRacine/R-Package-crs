@@ -152,23 +152,23 @@ is.monotone.increasing <- function(x) {
 ## set it to its minimum (2)
 
 check.max.spline.degree <- function(xdat=NULL,degree=NULL,issue.warning=FALSE) {
-
+  
   if(is.null(xdat)) stop(" xdat must be provided")
   if(is.null(degree)) stop(" degree vector must be provided")
-
+  
   xdat <- as.data.frame(xdat)
-
+  
   if(missing(degree)) stop(" degree vector must be provided")
-
+  
   ill.conditioned <- FALSE
-
+  
   xdat.numeric <- sapply(1:ncol(xdat),function(i){is.numeric(xdat[,i])})
   numeric.index <- which(xdat.numeric==TRUE)  
   num.numeric <- sum(sapply(1:NCOL(xdat),function(i){is.numeric(xdat[,i])})==TRUE)
   d <- numeric(num.numeric)
-
-  if(num.numeric > 0) {
   
+  if(num.numeric > 0) {
+    
     for(i in 1:num.numeric) {
       if(degree[i]>0) {
         X <- gsl.bs(xdat[,numeric.index[i]],degree=degree[i],nbreak=2)
@@ -189,12 +189,12 @@ check.max.spline.degree <- function(xdat=NULL,degree=NULL,issue.warning=FALSE) {
         }
       }
     }
-
+    
   }
-
+  
   attr(ill.conditioned, "degree.max.vec") <- d
   return(ill.conditioned)
-
+  
 }
 
 succeedWithResponse <- function(tt, frame){

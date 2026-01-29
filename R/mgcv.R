@@ -17,9 +17,9 @@
 ## USA.
 
 tensor.prod.model.matrix <- function(X) {
-# X is a list of model matrices, from which a tensor product model matrix is to be produced.
-# e.g. ith row is basically X[[1]][i,]%x%X[[2]][i,]%x%X[[3]][i,], but this routine works 
-# column-wise, for efficiency, and does work in compiled code.
+  # X is a list of model matrices, from which a tensor product model matrix is to be produced.
+  # e.g. ith row is basically X[[1]][i,]%x%X[[2]][i,]%x%X[[3]][i,], but this routine works 
+  # column-wise, for efficiency, and does work in compiled code.
   m <- length(X)              ## number to row tensor product
   d <- unlist(lapply(X,ncol)) ## dimensions of each X
   n <- nrow(X[[1]])           ## columns in each X
@@ -34,17 +34,17 @@ tensor.prod.model.matrix <- function(X) {
 } ## end tensor.prod.model.matrix
 
 uniquecombs<-function(x) {
-## takes matrix x and counts up unique rows
-## `unique' now does this in R
-if (is.null(x)) stop("x is null")
-if (is.null(nrow(x))) stop("x has no row attribute")
-if (is.null(ncol(x))) stop("x has no col attribute")
-ind <- rep(0,nrow(x))
-res<-.C("RuniqueCombs",x=as.double(x),ind=as.integer(ind),
-        r=as.integer(nrow(x)),c=as.integer(ncol(x)))
-n <- res$r*res$c
-x <- matrix(res$x[1:n],res$r,res$c)
-attr(x,"index") <- res$ind+1 ## C to R index gotcha
-x
+  ## takes matrix x and counts up unique rows
+  ## `unique' now does this in R
+  if (is.null(x)) stop("x is null")
+  if (is.null(nrow(x))) stop("x has no row attribute")
+  if (is.null(ncol(x))) stop("x has no col attribute")
+  ind <- rep(0,nrow(x))
+  res<-.C("RuniqueCombs",x=as.double(x),ind=as.integer(ind),
+          r=as.integer(nrow(x)),c=as.integer(ncol(x)))
+  n <- res$r*res$c
+  x <- matrix(res$x[1:n],res$r,res$c)
+  attr(x,"index") <- res$ind+1 ## C to R index gotcha
+  x
 }
 
