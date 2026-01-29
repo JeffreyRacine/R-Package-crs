@@ -1342,6 +1342,12 @@ cv.kernel.spline <- function(x,
       ## Test for lack of degrees of freedom
       if(NCOL(P) >= (n-1))
         return(sqrt(.Machine$double.xmax))
+      
+      ## 2025: Hoist cbind out of the loop for efficiency
+      if(basis=="additive" || basis=="glp") {
+        XP <- cbind(1,P)
+      } 
+      
       for(i in 1:nrow.z.unique) {
         zz <- ind == ind.vals[i]
         L <- prod.kernel(Z=z,z=z.unique[ind.vals[i],],lambda=lambda,is.ordered.z=is.ordered.z)
@@ -1349,18 +1355,19 @@ cv.kernel.spline <- function(x,
         if(basis=="additive" || basis=="glp") {
           ## Test for full column rank
           if(!singular.ok) {
-            if(!is.fullrank(cbind(1,P)*L))
+            ## Note: using XP (cbind(1,P))
+            if(!is.fullrank(XP*L))
               return(sqrt(.Machine$double.xmax))
           }
           ## Additive spline regression models have an intercept in
           ## the lm() model (though not in the gsl.bs function)
           if(is.null(tau)) {
-            model <- lm.wfit(cbind(1,P),y,L)
+            model <- lm.wfit(XP,y,L)
           } else {
-            model <- tryCatch(rq.wfit(cbind(1,P),y,weights=L,tau=tau,method="fn"),error=function(e){FALSE})
+            model <- tryCatch(rq.wfit(XP,y,weights=L,tau=tau,method="fn"),error=function(e){FALSE})
             if(is.logical(model))
               return(sqrt(.Machine$double.xmax))
-            model.hat <- lm.wfit(cbind(1,P),y,L)
+            model.hat <- lm.wfit(XP,y,L)
           }
         } else {
           ## Test for full column rank
@@ -1388,13 +1395,18 @@ cv.kernel.spline <- function(x,
       ## No predictors for which degree > 0
       z.factor <- data.frame(factor(z[,1]),ordered=is.ordered.z[1])
       if(num.z > 1) for(i in 2:num.z) z.factor <- data.frame(z.factor,factor(z[,i],ordered=is.ordered.z[i]))
+      
+      ## 2025: Hoist matrix creation out of loop
+      X0 <- matrix(1,n,1)
+      
       for(i in 1:nrow.z.unique) {
         zz <- ind == ind.vals[i]
         L <- prod.kernel(Z=z,z=z.unique[ind.vals[i],],lambda=lambda,is.ordered.z=is.ordered.z)
         if(!is.null(weights)) L <- weights*L
         ## Test for full column rank
         if(!singular.ok) {
-          if(!is.fullrank(matrix(1,n,1)*L))
+          ## Note using X0
+          if(!is.fullrank(X0*L))
             return(sqrt(.Machine$double.xmax))
         }
         ## Whether we use additive, glp, or tensor products, this
@@ -1402,13 +1414,13 @@ cv.kernel.spline <- function(x,
         ## the parameter that may shift with the categorical
         ## predictors
         if(is.null(tau)) {
-          model <- lm.wfit(matrix(1,n,1),y,L)
+          model <- lm.wfit(X0,y,L)
           htt[zz] <- hat(model$qr)[zz]
         } else {
-          model <- tryCatch(rq.wfit(matrix(1,n,1),y,weights=L,tau=tau,method="fn"),error=function(e){FALSE})
+          model <- tryCatch(rq.wfit(X0,y,weights=L,tau=tau,method="fn"),error=function(e){FALSE})
           if(is.logical(model))
             return(sqrt(.Machine$double.xmax))
-          model.hat <- lm.wfit(matrix(1,n,1),y,L)
+          model.hat <- lm.wfit(X0,y,L)
           htt[zz] <- hat(model.hat$qr)[zz]
         }
         epsilon[zz] <- residuals(model)[zz]
@@ -1576,30 +1588,35 @@ cv.factor.spline <- function(x,
     ## test condition
     if(NCOL(P) >= (n-1))
       return(sqrt(.Machine$double.xmax))
+    
     if(basis=="additive" || basis=="glp") {
+      
+      ## 2025: Hoist cbind out for efficiency
+      XP <- cbind(1,P)
+      
       ## Test for full column rank
       if(!singular.ok) {
-        if(!is.fullrank(cbind(1,P)))
+        if(!is.fullrank(XP))
           return(sqrt(.Machine$double.xmax))
       }
       ## Additive spline regression models have an intercept in the
       ## lm() model (though not in the gsl.bs function)
       if(is.null(tau)) {
         if(is.null(weights))
-          model <- lm.fit(cbind(1,P),y)
+          model <- lm.fit(XP,y)
         else
-          model <- lm.wfit(cbind(1,P),y,weights)
+          model <- lm.wfit(XP,y,weights)
       } else {
         if(is.null(weights))
-          model <- tryCatch(rq.fit(cbind(1,P),y,tau=tau,method="fn"),error=function(e){FALSE})
+          model <- tryCatch(rq.fit(XP,y,tau=tau,method="fn"),error=function(e){FALSE})
         else
-          model <- tryCatch(rq.wfit(cbind(1,P),y,tau=tau,weights,method="fn"),error=function(e){FALSE})
+          model <- tryCatch(rq.wfit(XP,y,tau=tau,weights,method="fn"),error=function(e){FALSE})
         if(is.logical(model))
           return(sqrt(.Machine$double.xmax))
         if(is.null(weights))
-          model.hat <- lm.fit(cbind(1,P),y)
+          model.hat <- lm.fit(XP,y)
         else
-          model.hat <- lm.wfit(cbind(1,P),y,weights)
+          model.hat <- lm.wfit(XP,y,weights)
       }
     } else {
       ## Test for full column rank
