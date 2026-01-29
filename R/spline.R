@@ -1370,45 +1370,46 @@ cv.kernel.spline <- function(x,
           ## the lm() model (though not in the gsl.bs function)
           if(is.null(tau)) {
             ## 2025: Optimize using .lm.fit with manual weighting
-            ## model <- lm.wfit(XP,y,L)
             sw <- sqrt(L)
             model <- .lm.fit(XP*sw,y*sw)
+            ## Check rank from model instead of is.fullrank
+            if(!singular.ok && model$rank < ncol(XP))
+              return(sqrt(.Machine$double.xmax))
           } else {
+            ## Test for full column rank (rq case)
+            if(!singular.ok && !is.fullrank(XP*L))
+              return(sqrt(.Machine$double.xmax))
+              
             model <- tryCatch(rq.wfit(XP,y,weights=L,tau=tau,method="fn"),error=function(e){FALSE})
             if(is.logical(model))
               return(sqrt(.Machine$double.xmax))
-            ## model.hat <- lm.wfit(XP,y,L)
             sw <- sqrt(L)
             model.hat <- .lm.fit(XP*sw,y*sw)
           }
         } else {
-          ## Test for full column rank
-          if(!singular.ok) {
-            if(!is.fullrank(P*L))
-              return(sqrt(.Machine$double.xmax))
-          }
           if(is.null(tau)) {
-            ## model <- lm.wfit(P,y,L)
             sw <- sqrt(L)
             model <- .lm.fit(P*sw,y*sw)
+            if(!singular.ok && model$rank < ncol(P))
+              return(sqrt(.Machine$double.xmax))
           } else {
+            ## Test for full column rank (rq case)
+            if(!singular.ok && !is.fullrank(P*L))
+              return(sqrt(.Machine$double.xmax))
+              
             model <- tryCatch(rq.wfit(P,y,weights=L,tau=tau,method="fn"),error=function(e){FALSE})
             if(is.logical(model))
               return(sqrt(.Machine$double.xmax))
-            ## model.hat <- lm.wfit(P,y,L)
             sw <- sqrt(L)
             model.hat <- .lm.fit(P*sw,y*sw)
           }
         }
         
         if(is.null(tau)) {
-          ## epsilon[zz] <- residuals(model)[zz]
           epsilon[zz] <- (model$residuals/sw)[zz]
-          ## htt[zz] <- hat(model$qr)[zz]
           htt[zz] <- hat.from.lm.fit(model)[zz]
         } else {
           epsilon[zz] <- residuals(model)[zz]
-          ## htt[zz] <- hat(model.hat$qr)[zz]
           htt[zz] <- hat.from.lm.fit(model.hat)[zz]
         }
       }
@@ -1425,30 +1426,27 @@ cv.kernel.spline <- function(x,
         zz <- ind == ind.vals[i]
         L <- prod.kernel(Z=z,z=z.unique[ind.vals[i],],lambda=lambda,is.ordered.z=is.ordered.z)
         if(!is.null(weights)) L <- weights*L
-        ## Test for full column rank
-        if(!singular.ok) {
-          ## Note using X0
-          if(!is.fullrank(X0*L))
-            return(sqrt(.Machine$double.xmax))
-        }
+        
         ## Whether we use additive, glp, or tensor products, this
         ## model has no continuous predictors hence the intercept is
         ## the parameter that may shift with the categorical
         ## predictors
         if(is.null(tau)) {
-          ## model <- lm.wfit(X0,y,L)
-          ## htt[zz] <- hat(model$qr)[zz]
           sw <- sqrt(L)
           model <- .lm.fit(X0*sw,y*sw)
+          if(!singular.ok && model$rank < ncol(X0))
+             return(sqrt(.Machine$double.xmax))
           htt[zz] <- hat.from.lm.fit(model)[zz]
         } else {
+          ## Test for full column rank
+          if(!singular.ok && !is.fullrank(X0*L))
+            return(sqrt(.Machine$double.xmax))
+            
           model <- tryCatch(rq.wfit(X0,y,weights=L,tau=tau,method="fn"),error=function(e){FALSE})
           if(is.logical(model))
             return(sqrt(.Machine$double.xmax))
-          ## model.hat <- lm.wfit(X0,y,L)
           sw <- sqrt(L)
           model.hat <- .lm.fit(X0*sw,y*sw)
-          ## htt[zz] <- hat(model.hat$qr)[zz]
           htt[zz] <- hat.from.lm.fit(model.hat)[zz]
         }
         if(is.null(tau))
@@ -1671,73 +1669,159 @@ cv.factor.spline <- function(x,
 
     
 
-    ## Set up design matrix X
-
-    if(is_add) {
-
-      X <- cbind(1,P)
-
-    } else {
-
-      X <- P
-
-    }
+        ## Set up design matrix X
 
     
 
-    if(!singular.ok && !is.fullrank(X))
-
-      return(sqrt(.Machine$double.xmax))
+        if(is_add) {
 
     
 
-    if(!have_tau) {
+          X <- cbind(1,P)
 
-      if(!have_w) {
+    
 
-        model <- .lm.fit(X,y)
+        } else {
 
-        epsilon <- model$residuals
+    
 
-      } else {
+          X <- P
 
-        model <- .lm.fit(X*sw,y*sw)
+    
 
-        epsilon <- model$residuals / sw
+        }
 
-      }
+    
 
-      htt <- hat.from.lm.fit(model)
+        
 
-    } else {
+    
 
-      if(!have_w) {
+        if(!have_tau) {
 
-        model <- tryCatch(rq.fit(X,y,tau=tau,method="fn"),error=function(e){FALSE})
+    
 
-        model.hat <- .lm.fit(X,y)
+          if(!have_w) {
 
-      } else {
+    
 
-        model <- tryCatch(rq.wfit(X,y,weights=weights,tau=tau,method="fn"),error=function(e){FALSE})
+            model <- .lm.fit(X,y)
 
-        model.hat <- .lm.fit(X*sw,y*sw)
+    
 
-      }
+            epsilon <- model$residuals
 
-      
+    
 
-      if(is.logical(model))
+          } else {
 
-        return(sqrt(.Machine$double.xmax))
+    
 
-      
+            model <- .lm.fit(X*sw,y*sw)
 
-      epsilon <- residuals(model)
+    
 
-      htt <- hat.from.lm.fit(model.hat)
+            epsilon <- model$residuals / sw
 
-    }
+    
+
+          }
+
+    
+
+          
+
+    
+
+          ## 2025: Optimize rank check using model$rank
+
+    
+
+          if(!singular.ok && model$rank < ncol(X))
+
+    
+
+            return(sqrt(.Machine$double.xmax))
+
+    
+
+            
+
+    
+
+          htt <- hat.from.lm.fit(model)
+
+    
+
+        } else {
+
+    
+
+          if(!singular.ok && !is.fullrank(X))
+
+    
+
+            return(sqrt(.Machine$double.xmax))
+
+    
+
+          
+
+    
+
+          if(!have_w) {
+
+    
+
+            model <- tryCatch(rq.fit(X,y,tau=tau,method="fn"),error=function(e){FALSE})
+
+    
+
+            model.hat <- .lm.fit(X,y)
+
+    
+
+          } else {
+
+    
+
+            model <- tryCatch(rq.wfit(X,y,weights=weights,tau=tau,method="fn"),error=function(e){FALSE})
+
+    
+
+            model.hat <- .lm.fit(X*sw,y*sw)
+
+    
+
+          }
+
+    
+
+          
+
+    
+
+          if(is.logical(model))
+
+    
+
+            return(sqrt(.Machine$double.xmax))
+
+    
+
+          
+
+    
+
+          epsilon <- residuals(model)
+
+    
+
+          htt <- hat.from.lm.fit(model.hat)
+
+    
+
+        }
 
     
 

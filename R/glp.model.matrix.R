@@ -25,18 +25,13 @@ glp.model.matrix <- function(X) {
     dimen[i] <- ncol(X[[i]])
   }
   
+  ## 2025: index.swap is equivalent to order() for permutations
   index.swap <- function(index.input)
   {
-    index.ret <- 1:length(index.input)
-    index <- 1:length(index.input)
-    for (i in 1:length(index.input))
-    {
-      index.ret[i] <- index[index.input==i]
-    }
-    
-    return (index.ret)
+    return(order(index.input))
   }
   
+  ## 2025: Optimized two.dimen with pre-allocation
   two.dimen<- function(d1,d2,d2p,nd1,pd12,d1sets)
   {
     if(d2 == 1) {
@@ -47,51 +42,112 @@ glp.model.matrix <- function(X) {
       ret$sets <- cbind(d1sets,0)
       return(ret)
     }
-    d12 <- d2
-    d2sets <- cbind(matrix(0,nrow=min(NROW(d1sets),d2),ncol=NCOL(d1sets)),seq(1:d2))
-    if(d1-d2>0){
+    
+    # Pre-filter d1sets if needed
+    nc <- NCOL(d1sets)
+    use_d1sets <- d1sets
+    if (nc > 1 && d2p > 0) {
+      keep <- d1sets[, nc] != d2p
+      use_d1sets <- d1sets[keep, , drop = FALSE]
+    }
+    rs <- rowSums(use_d1sets)
+    
+    # Count rows for pre-allocation
+    # Using tabulate for speed (indices are positive integers)
+    # rs contains row sums. 
+    max_rs <- if(length(rs) > 0) max(rs) else 0
+    # Ensure counts vector is large enough to handle max index d1
+    counts <- integer(max(max_rs, d1) + 1)
+    if (length(rs) > 0) {
+      tab <- table(rs)
+      counts[as.integer(names(tab))] <- as.integer(tab)
+    }
+    
+    total_rows <- d2
+    
+    if(d1 > d2) {
+      idx1 <- 1:(d1-d2)
+      total_rows <- total_rows + d2 * sum(counts[idx1])
+    }
+    
+    idx2 <- 1:d2
+    target <- d1 - idx2 + 1
+    total_rows <- total_rows + sum(idx2 * counts[target])
+    
+    # Allocate result
+    d2sets <- matrix(0, nrow=total_rows, ncol=nc+1)
+    
+    # Initialize first d2 rows
+    # 1:nc cols are 0, last col is 1:d2
+    d2sets[1:d2, nc+1] <- 1:d2
+    
+    curr_row <- d2 + 1
+    
+    # Loop 1
+    if(d1-d2 > 0){
       for(i in 1:(d1-d2)){
-        d12 <- d12+d2*nd1[i]
-        oneSet <- d1sets
-        if(NCOL(d1sets) > 1 & d2p > 0)
-          oneSet <- d1sets[d1sets[,NCOL(d1sets)]!=d2p,]  #previous d2
-        d2sets <- rbind(d2sets,cbind(matrix(oneSet[rowSums(oneSet)==i,],nrow=NROW(oneSet[rowSums(oneSet)==i,]),ncol=NCOL(d1sets))[rep(1:NROW(oneSet[rowSums(oneSet)==i,]),d2),],rep(0:(d2-1),each=nd1[i])))
+        # d12 update logic from original (tracking theoretical size vs actual?)
+        # d12 <- d12+d2*nd1[i] 
+        # Note: nd1 is used for nd2 calc later, but here we use actual counts from d1sets
+        
+        # Extract rows with sum i
+        idx <- which(rs == i)
+        n_sub <- length(idx)
+        
+        if (n_sub > 0) {
+          end_row <- curr_row + n_sub * d2 - 1
+          
+          # Replicate rows d2 times
+          d2sets[curr_row:end_row, 1:nc] <- use_d1sets[rep(idx, d2), , drop=FALSE]
+          # Last column: rep(0:(d2-1), each=n_sub)
+          d2sets[curr_row:end_row, nc+1] <- rep(0:(d2-1), each=n_sub)
+          
+          curr_row <- end_row + 1
+        }
       }
     }
     
+    # Loop 2
     for(i in 1:d2){
-      d12 <- d12 + (i*nd1[d1-i+1])
-      if(nd1[d1-i+1]>0){
-        oneSet <- d1sets
-        if(NCOL(d1sets) > 1 & d2p > 0)
-          oneSet <- d1sets[d1sets[,NCOL(d1sets)]!=d2p,]  #previous d2
-        d2sets <- rbind(d2sets,cbind(matrix(oneSet[rowSums(oneSet)==d1-i+1,],nrow=NROW(oneSet[rowSums(oneSet)==d1-i+1,]),ncol=NCOL(d1sets))[rep(1:NROW(oneSet[rowSums(oneSet)==d1-i+1,]),i),],rep(0:(i-1), each=nd1[d1-i+1])))
+      # d12 <- d12 + (i*nd1[d1-i+1])
+      
+      target <- d1 - i + 1
+      idx <- which(rs == target)
+      n_sub <- length(idx)
+      
+      if (n_sub > 0) {
+        end_row <- curr_row + n_sub * i - 1
+        
+        d2sets[curr_row:end_row, 1:nc] <- use_d1sets[rep(idx, i), , drop=FALSE]
+        d2sets[curr_row:end_row, nc+1] <- rep(0:(i-1), each=n_sub)
+        
+        curr_row <- end_row + 1
       }
     }
     
-    nd2 <- nd1  ## Calculate nd2
+    # nd2 calculation (unchanged)
+    nd2 <- nd1
     if(d1>1){
       for(j in 1:(d1-1)) {
         nd2[j] <- 0
-        for(i in j:max(0,j-d2+1)) {
-          if(i > 0) {
-            nd2[j] <- nd2[j] + nd1[i]                  
-          }
-          else {
-            nd2[j] <- nd2[j] + 1  ## nd1[0] always 1
-          }
-        }
+        limit <- max(0, j-d2+1)
+        low <- max(1, limit)
+        if (j >= low) nd2[j] <- nd2[j] + sum(nd1[low:j])
+        if (limit == 0) nd2[j] <- nd2[j] + 1
       }
     }
     if(d2>1) {
       nd2[d1] <- nd1[d1]
-      for(i in (d1-d2+1):(d1-1)) nd2[d1] <- nd2[d1]+nd1[i]
+      low <- d1-d2+1
+      high <- d1-1
+      if(high >= low) nd2[d1] <- nd2[d1] + sum(nd1[low:high])
     }
     else {
       nd2[d1] <- nd1[d1]
     }
+    
     ret <- list()
-    ret$d12 <- d12
+    ret$d12 <- total_rows
     ret$nd1 <- nd2
     ret$d2p <- d2
     ret$sets <- d2sets
@@ -133,7 +189,8 @@ glp.model.matrix <- function(X) {
   z <- construct.tensor.prod(dimen)
   ## if we don't want to get the same order as using the expand.grid method, we can comment the following two lines.
   rownames(z) <- 1:NROW(z)
-  z <- z[do.call('order', as.list(data.frame(z[, NCOL(z):1]))), ]
+  ## 2025: Faster list creation for order
+  z <- z[do.call('order', lapply(ncol(z):1, function(i) z[,i])), ]
   
   # X is a list of model matrices, from which a tensor product model matrix is to be produced.
   # e.g. ith row is basically X[[1]][i,]%x%X[[2]][i,]%x%X[[3]][i,], but this routine works 
