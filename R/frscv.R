@@ -23,7 +23,8 @@ frscv <- function(xz,
                   tau=NULL,
                   weights=NULL,
                   singular.ok=FALSE,
-                  display.warnings=TRUE) {
+                  display.warnings=TRUE,
+                  display.nomad.progress=TRUE) {
   
   complexity <- match.arg(complexity)
   knots <- match.arg(knots)
@@ -172,7 +173,7 @@ frscv <- function(xz,
   }
   
   console <- newLineConsole()
-  console <- printPush("Working...",console = console)
+  if(display.nomad.progress) console <- printPush("Working...",console = console)
   
   ## Take data frame x and parse into factors (z) and numeric (x)
   

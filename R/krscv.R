@@ -24,7 +24,8 @@ krscv <- function(xz,
                   tau=NULL,
                   weights=NULL,
                   singular.ok=FALSE,
-                  display.warnings=TRUE) {
+                  display.warnings=TRUE,
+                  display.nomad.progress=TRUE) {
   
   complexity <- match.arg(complexity)
   knots <- match.arg(knots)
@@ -207,7 +208,7 @@ krscv <- function(xz,
   if(degree.max < 1 || segments.max < 1 ) stop(" degree.max or segments.max must be greater than or equal to 1")
   
   console <- newLineConsole()
-  console <- printPush("Working...",console = console)
+  if(display.nomad.progress) console <- printPush("Working...",console = console)
   
   ## Exhaustive evaluation over all combinations of K, search over
   ## lambda for each combination

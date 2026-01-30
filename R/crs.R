@@ -38,7 +38,8 @@ crsEst <- function(xz,
                    model.return=FALSE,
                    tau=NULL,
                    weights=NULL,
-                   display.warnings=TRUE) {
+                   display.warnings=TRUE,
+                   display.nomad.progress=TRUE) {
   
   ## Take data frame xz and parse into factors (z) and numeric (x).
   
@@ -328,6 +329,7 @@ crs.default <- function(xz,
                         tau=NULL,
                         weights=NULL,
                         display.warnings=TRUE,
+                        display.nomad.progress=TRUE,
                         ...) {
   
   complexity <- match.arg(complexity)
@@ -352,7 +354,8 @@ crs.default <- function(xz,
                 model.return=model.return,
                 tau=tau,
                 weights=weights,
-                display.warnings=display.warnings)
+                display.warnings=display.warnings,
+                display.nomad.progress=display.nomad.progress)
   
   ## Add results to estimated object.
   
@@ -1120,6 +1123,8 @@ plot.crs <- function(x,
                      plot.behavior = c("plot","plot-data","data"),
                      common.scale=TRUE,
                      persp.rgl=FALSE,
+                     display.warnings=TRUE,
+                     display.nomad.progress=TRUE,
                      ...) {
   
   plot.behavior <- match.arg(plot.behavior)
@@ -1146,7 +1151,7 @@ plot.crs <- function(x,
     
     console <- printClear(console)
     console <- printPop(console)
-    console <- printPush("\rWorking...",console = console)
+    if(display.nomad.progress) console <- printPush("\rWorking...",console = console)
     
     plot(fitted(object),
          residuals(object),
@@ -1159,7 +1164,7 @@ plot.crs <- function(x,
     
     console <- printClear(console)
     console <- printPop(console)
-    console <- printPush("\rWorking...",console = console)
+    if(display.nomad.progress) console <- printPush("\rWorking...",console = console)
     
     std.res <- residuals(object)/sqrt(mean(residuals(object)^2))
     
@@ -1172,7 +1177,7 @@ plot.crs <- function(x,
     
     console <- printClear(console)
     console <- printPop(console)
-    console <- printPush("\rWorking...",console = console)
+    if(display.nomad.progress) console <- printPush("\rWorking...",console = console)
     
     plot(fitted(object),
          sqrt(abs(residuals(object,"pearson"))),
@@ -1191,7 +1196,7 @@ plot.crs <- function(x,
       
       console <- printClear(console)
       console <- printPop(console)
-      console <- printPush("\rWorking...",console = console)
+      if(display.nomad.progress) console <- printPush("\rWorking...",console = console)
       
       sigmasq <- sum(residuals(object)^2)/object$df.residual
       cook <- (residuals(object)^2*object$hatvalues)/(sigmasq*(1-object$hatvalues)^2*object$k)
@@ -1309,7 +1314,8 @@ plot.crs <- function(x,
                                     prune=prune,
                                     prune.index=prune.index,
                                     tau=tau,
-                                    weights=weights)$fitted.values
+                                    weights=weights,
+                                    display.warnings=display.warnings)$fitted.values
           
           fitted.values <- tmp[,1]
           lwr <- tmp[,2]
@@ -1332,7 +1338,8 @@ plot.crs <- function(x,
                                      knots=knots,
                                      basis=basis,
                                      tau=tau,
-                                     weights=weights)$fitted.values
+                                     weights=weights,
+                                     display.warnings=display.warnings)$fitted.values
           
           fitted.values <- tmp[,1]
           lwr <- tmp[,2]
@@ -1470,7 +1477,7 @@ plot.crs <- function(x,
           
         } else {
           
-          warning("rgl not installed, option persp.rgl ignored")
+          if(display.warnings) warning("rgl not installed, option persp.rgl ignored")
           
         }
         

@@ -8,14 +8,14 @@
 ## different form purely for computational simplicity. Both approaches
 ## are identical though.
 
-scale.robust <- function(x, center=TRUE, scale=TRUE){
+scale_robust <- function(x, center=TRUE, scale=TRUE, display.warnings=TRUE){
   if(any(dim(as.matrix(x)) == 0))
     return(0)
   sd.vec <- apply(as.matrix(x),2,sd)
   IQR.vec <- apply(as.matrix(x),2,IQR)/(qnorm(.25,lower.tail=F)*2)
   mad.vec <- apply(as.matrix(x),2,mad)
   a <- apply(cbind(sd.vec,IQR.vec,mad.vec),1, function(y) max(y))
-  if(any(a<=0)) warning(paste("variable ",which(a<=0)," appears to be constant",sep=""))
+  if(any(a<=0) && display.warnings) warning(paste("variable ",which(a<=0)," appears to be constant",sep=""))
   a <- apply(cbind(sd.vec,IQR.vec,mad.vec),1, function(y) min(y[y>0]))  
   return(a)
 }
@@ -697,7 +697,7 @@ npglpreg.formula <- function(formula,
   
   if(cv=="none"&&bwtype=="auto") stop(" Error: you cannot use bwtype==\"auto\" without running cross-validation")
   
-  if(cv!="none"&&bwtype!="auto") warning(paste(" bwtype is ", bwtype, ": you could consider bwtype=\"auto\"",sep=""),immediate.=TRUE)
+  if(display.warnings && cv!="none"&&bwtype!="auto") warning(paste(" bwtype is ", bwtype, ": you could consider bwtype=\"auto\"",sep=""),immediate.=TRUE)
   
   if(cv!="none") {
     if(bwtype!="auto") {
@@ -1281,7 +1281,7 @@ minimand.cv.ls <- function(bws=NULL,
   
   for(i in 1:num.bw) {
     if(xdat.numeric[i]==TRUE && bwtype=="fixed") {
-      bws[i] <- bws[i]*scale.robust(xdat[,i])*length(ydat)^{-1/(num.numeric+2*ckerorder)}
+      bws[i] <- bws[i]*scale_robust(xdat[,i],display.warnings=display.warnings)*length(ydat)^{-1/(num.numeric+2*ckerorder)}
     }
     if(xdat.numeric[i]!=TRUE) {
       bws[i] <- bws[i]/bandwidth.scale.categorical
@@ -1339,7 +1339,7 @@ minimand.cv.ls <- function(bws=NULL,
       fv <- ifelse(is.finite(fv),fv,cv.maxPenalty)
       
       console <- printPush("\r                                                                         ",console = console)
-      console <- printPush(paste("\rfv = ",format(fv)," ",sep=""),console = console)
+      if(display.nomad.progress) console <- printPush(paste("\rfv = ",format(fv)," ",sep=""),console = console)
       
       return(fv)
       
@@ -1437,7 +1437,7 @@ minimand.cv.ls <- function(bws=NULL,
       fv <- ifelse(is.finite(fv),fv,cv.maxPenalty)
       
       console <- printPush("\r                                                                         ",console = console)
-      console <- printPush(paste("\rfv = ",format(fv)," ",sep=""),console = console)
+      if(display.nomad.progress) console <- printPush(paste("\rfv = ",format(fv)," ",sep=""),console = console)
       
       return(fv)
       
@@ -1501,7 +1501,7 @@ minimand.cv.aic <- function(bws=NULL,
   
   for(i in 1:num.bw) {
     if(xdat.numeric[i]==TRUE && bwtype=="fixed") {
-      bws[i] <- bws[i]*scale.robust(xdat[,i])*length(ydat)^{-1/(num.numeric+2*ckerorder)}
+      bws[i] <- bws[i]*scale_robust(xdat[,i],display.warnings=display.warnings)*length(ydat)^{-1/(num.numeric+2*ckerorder)}
     }
     if(xdat.numeric[i]!=TRUE) {
       bws[i] <- bws[i]/bandwidth.scale.categorical
@@ -1671,7 +1671,7 @@ minimand.cv.aic <- function(bws=NULL,
       fv <- ifelse(is.finite(fv),fv,cv.maxPenalty)
       
       console <- printPush("\r                                                                         ",console = console)
-      console <- printPush(paste("\rfv = ",format(fv)," ",sep=""),console = console)
+      if(display.nomad.progress) console <- printPush(paste("\rfv = ",format(fv)," ",sep=""),console = console)
       
       return(fv)
       
@@ -1684,7 +1684,7 @@ minimand.cv.aic <- function(bws=NULL,
 ## Note that for the function below which uses NOMAD for optimization
 ## we cross-validate on scale factors throughout (i.e. bandwidths for
 ## continuous predictors are scaled according to
-## scale.robust()*length(ydat)^{-1/(num.numeric+2*ckerorder)}). We adjust
+## scale_robust()*length(ydat)^{-1/(num.numeric+2*ckerorder)}). We adjust
 ## the upper bounds for the categorical variables accordingly (i.e. 1
 ## and (c-1)/c). This is done so that the grid search takes place on a
 ## _somewhat_ common scale and also allows us to sidestep the issue
@@ -1831,7 +1831,7 @@ glpcvNOMAD <- function(ydat=NULL,
                              ...)
     }
     console <- printPush("\r                                                                         ",console = console)
-    console <- printPush(paste("\rfv = ",format(lscv)," ",sep=""),console = console)
+    if(display.nomad.progress) console <- printPush(paste("\rfv = ",format(lscv)," ",sep=""),console = console)
     return(lscv)
   }
   
@@ -1929,7 +1929,7 @@ glpcvNOMAD <- function(ydat=NULL,
                               ...)
     }
     console <- printPush("\r                                                                         ",console = console)
-    console <- printPush(paste("\rfv = ",format(aicc)," ",sep=""),console = console)
+    if(display.nomad.progress) console <- printPush(paste("\rfv = ",format(aicc)," ",sep=""),console = console)
     return(aicc)
   }
   
@@ -2170,7 +2170,7 @@ glpcvNOMAD <- function(ydat=NULL,
   
   console <- newLineConsole()
   if(display.nomad.progress){
-    console <- printPush("\rCalling NOMAD (Nonsmooth Optimization by Mesh Adaptive Direct Search)\n",console = console)
+    if(display.nomad.progress) console <- printPush("\rCalling NOMAD (Nonsmooth Optimization by Mesh Adaptive Direct Search)\n",console = console)
   }
   
   ## Use bandwidth for initial values if provided
@@ -2195,7 +2195,7 @@ glpcvNOMAD <- function(ydat=NULL,
     init.search.vals <- bandwidth
     for(i in 1:num.bw) {
       if(xdat.numeric[i]==TRUE && bwtype=="fixed") {
-        init.search.vals[i] <- bandwidth[i]/(scale.robust(xdat[,i])*length(ydat)^{-1/(num.numeric+2*ckerorder)})
+        init.search.vals[i] <- bandwidth[i]/(scale_robust(xdat[,i],display.warnings=display.warnings)*length(ydat)^{-1/(num.numeric+2*ckerorder)})
       }
       if(xdat.numeric[i]!=TRUE) {
         init.search.vals[i] <- bandwidth[i]*bandwidth.scale.categorical
@@ -2308,7 +2308,7 @@ glpcvNOMAD <- function(ydat=NULL,
   
   if(bwtype=="fixed") {
     for(i in 1:num.numeric) {
-      sd.xdat <- scale.robust(xdat[,numeric.index[i]])
+      sd.xdat <- scale_robust(xdat[,numeric.index[i]],display.warnings=display.warnings)
       bw.opt[numeric.index[i]] <- bw.opt[numeric.index[i]]*sd.xdat*length(ydat)^{-1/(num.numeric+2*ckerorder)}
     }
   }
@@ -2322,15 +2322,17 @@ glpcvNOMAD <- function(ydat=NULL,
   if(cv == "degree-bandwidth") {
     degree.opt <- solution$solution[(num.bw+1):(num.bw+num.numeric)]
     for(i in num.numeric){
-      if(isTRUE(all.equal(degree.opt[i],ub[num.bw+i]))) warning(paste(" Optimal degree for numeric predictor ",i," equals search upper bound (", ub[num.bw+i],")",sep=""))
+      if(display.warnings && isTRUE(all.equal(degree.opt[i],ub[num.bw+i]))) warning(paste(" Optimal degree for numeric predictor ",i," equals search upper bound (", ub[num.bw+i],")",sep=""))
     }
   } else {
     degree.opt <- degree
   }
   
   if(!is.null(opts$MAX_BB_EVAL)){
-    if(nmulti>0) {if(nmulti*opts$MAX_BB_EVAL <= solution$bbe) warning(paste(" MAX_BB_EVAL reached in NOMAD: perhaps use a larger value...", sep=""))}
-    if(nmulti==0) {if(opts$MAX_BB_EVAL <= solution$bbe) warning(paste(" MAX_BB_EVAL reached in NOMAD: perhaps use a larger value...", sep="")) }
+    if(display.warnings) {
+      if(nmulti>0) {if(nmulti*opts$MAX_BB_EVAL <= solution$bbe) warning(paste(" MAX_BB_EVAL reached in NOMAD: perhaps use a larger value...", sep=""))}
+      if(nmulti==0) {if(opts$MAX_BB_EVAL <= solution$bbe) warning(paste(" MAX_BB_EVAL reached in NOMAD: perhaps use a larger value...", sep="")) }
+    }
   }
   
   fv <- solution$objective
@@ -2339,7 +2341,7 @@ glpcvNOMAD <- function(ydat=NULL,
   numimp <- 0
   
   for(i in num.bw) {
-    if(isTRUE(all.equal(bw.opt[i],lb[i]))) warning(paste(" Optimal bandwidth for predictor ",i," equals search lower bound (", formatC(lb[i],digits=3,format="g"),"): rerun with smaller bandwidth.min",sep=""))
+    if(display.warnings && isTRUE(all.equal(bw.opt[i],lb[i]))) warning(paste(" Optimal bandwidth for predictor ",i," equals search lower bound (", formatC(lb[i],digits=3,format="g"),"): rerun with smaller bandwidth.min",sep=""))
   }
   
   console <- printPush("\r                        ",console = console)
@@ -2386,6 +2388,7 @@ compute.bootstrap.errors <- function(tydat,
                                      gradient.categorical=FALSE,
                                      gradient.categorical.index=NULL,
                                      Bernstein=TRUE,
+                                     display.warnings=TRUE,
                                      ...){
   
   plot.errors.type <- match.arg(plot.errors.type)
@@ -2417,6 +2420,7 @@ compute.bootstrap.errors <- function(tydat,
                          gradient.categorical=gradient.categorical,
                          gradient.categorical.index=gradient.categorical.index,
                          Bernstein=Bernstein,
+                         display.warnings=display.warnings,
                          ...)
     if(boot.object=="fitted") {
       return(est.boot$fitted.values)
@@ -2439,6 +2443,7 @@ compute.bootstrap.errors <- function(tydat,
                   okertype=okertype,
                   bwtype=bwtype,
                   Bernstein=Bernstein,
+                  display.warnings=display.warnings,
                   ...)
   
   model.fitted <- est$fitted.values
@@ -2476,6 +2481,8 @@ plot.npglpreg <- function(x,
                           plot.errors.type=c("quantiles","standard"),
                           plot.errors.quantiles=c(.025,.975),
                           persp.rgl=FALSE,
+                          display.warnings=TRUE,
+                          display.nomad.progress=TRUE,
                           ...) {
   
   plot.behavior <- match.arg(plot.behavior)
@@ -2502,7 +2509,7 @@ plot.npglpreg <- function(x,
   console <- newLineConsole()
   console <- printClear(console)
   console <- printPop(console)
-  console <- printPush("\rWorking...",console = console)
+  if(display.nomad.progress) console <- printPush("\rWorking...",console = console)
   
   ## Mean
   
@@ -2548,6 +2555,7 @@ plot.npglpreg <- function(x,
                                 okertype=okertype,
                                 bwtype=bwtype,
                                 Bernstein=Bernstein,
+                                display.warnings=display.warnings,
                                 ...)
         
         fitted.values <- est$fitted.values
@@ -2561,7 +2569,7 @@ plot.npglpreg <- function(x,
           
           console <- printClear(console)
           console <- printPop(console)
-          console <- printPush(paste("\rConducting ",plot.errors.boot.num," bootstrap resamples for predictor ",i,"...",sep=""),console = console)
+          if(display.nomad.progress) console <- printPush(paste("\rConducting ",plot.errors.boot.num," bootstrap resamples for predictor ",i,"...",sep=""),console = console)
           
           ci.out <- compute.bootstrap.errors(tydat=tydat,
                                              txdat=txdat,
@@ -2576,7 +2584,8 @@ plot.npglpreg <- function(x,
                                              boot.object="fitted",
                                              plot.errors.boot.num=plot.errors.boot.num,
                                              plot.errors.type=plot.errors.type,
-                                             plot.errors.quantiles=plot.errors.quantiles)
+                                             plot.errors.quantiles=plot.errors.quantiles,
+                                             display.warnings=display.warnings)
           
           mg[[i]] <- data.frame(exdat[,i],ci.out)
           names(mg[[i]]) <- c(names(exdat)[i],"mean","lwr","upr")
@@ -2694,7 +2703,7 @@ plot.npglpreg <- function(x,
           
         } else {
           
-          warning("rgl not installed, option persp.rgl ignored")
+          if(display.warnings) warning("rgl not installed, option persp.rgl ignored")
           
         }
         
@@ -2778,7 +2787,7 @@ plot.npglpreg <- function(x,
         
         console <- printClear(console)
         console <- printPop(console)
-        console <- printPush(paste("\rConducting ",plot.errors.boot.num," bootstrap resamples for predictor ",i,"...",sep=""),console = console)
+        if(display.nomad.progress) console <- printPush(paste("\rConducting ",plot.errors.boot.num," bootstrap resamples for predictor ",i,"...",sep=""),console = console)
         
         if(!is.factor(object$x[,i])) {
           ci.out <- compute.bootstrap.errors(tydat=tydat,

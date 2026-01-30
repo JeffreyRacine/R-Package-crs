@@ -29,6 +29,7 @@ crs(\dots)
     tau = NULL,
     weights = NULL,
     display.warnings = TRUE,
+    display.nomad.progress = TRUE,
     \dots)
 
 \method{crs}{formula}(formula,

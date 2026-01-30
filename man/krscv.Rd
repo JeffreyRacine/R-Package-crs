@@ -30,7 +30,8 @@ krscv(xz,
       tau = NULL,
       weights = NULL,
       singular.ok = FALSE,
-      display.warnings = TRUE)
+      display.warnings = TRUE,
+      display.nomad.progress = TRUE)
 }
 
 \arguments{
@@ -123,6 +124,9 @@ krscv(xz,
 
   \item{display.warnings}{ a logical value indicating whether to
   display warnings (default \code{display.warnings=TRUE}) }
+
+  \item{display.nomad.progress}{ a logical value indicating whether to
+  display NOMAD progress (default \code{display.nomad.progress=TRUE}) }
 
 }
 

@@ -180,6 +180,7 @@ predictKernelSpline <- function(x,
                                                                  tau=NULL,
                                                                  weights=NULL, 
                                                                  display.warnings=TRUE,
+                                                                 display.nomad.progress=TRUE,
                                                                  ...){
                                   
                                   if(missing(x) || missing(y) || missing (K)) stop(" must provide x, y and K")
@@ -197,7 +198,7 @@ predictKernelSpline <- function(x,
                                   if(!is.null(z)) z <- as.matrix(z)
                                   
                                   console <- newLineConsole()
-                                  console <- printPush("Working...",console = console)
+                                  if(display.nomad.progress) console <- printPush("Working...",console = console)
                                   
                                   model <- NULL ## Returned if model=FALSE and there exist categorical
                                   ## predictors
@@ -777,6 +778,7 @@ preditFactorSpline <- function(x,
                                tau=NULL,
                                weights=NULL, 
                                display.warnings=TRUE,
+                               display.nomad.progress=TRUE,
                                ...){
   
   if(missing(x) || missing(y) || missing (K)) stop(" must provide x, y and K")
@@ -796,7 +798,7 @@ preditFactorSpline <- function(x,
   if(!is.null(zeval)) zeval <- data.frame(zeval)
   
   console <- newLineConsole()
-  console <- printPush("Working...",console = console)
+  if(display.nomad.progress) console <- printPush("Working...",console = console)
   
   if(any(K[,1] > 0)||any(I>0)) {
     
@@ -834,18 +836,20 @@ preditFactorSpline <- function(x,
       else
         suppressWarnings(cv <- cv.rq(model,tau=tau,weights=weights))
       console <- printClear(console)
-      console <- printPush("Pruning...",console = console)
+      if(display.nomad.progress) console <- printPush("Pruning...",console = console)
       if(basis=="additive" || basis=="glp") {
         if(is.null(tau))
           model.pruned <- stepCV(lm(y~.,data=P.df,weights=weights),
                                  scope=list(upper=~.,lower=~1),
                                  k=log(length(y)),
-                                 trace=trace)
+                                 trace=trace,
+                                 display.warnings=display.warnings)
         else
           suppressWarnings(model.pruned <- stepCV(rq(y~.,data=P.df,tau=tau,method="fn",weights=weights),
                                                   scope=list(upper=~.,lower=~1),
                                                   k=log(length(y)),
-                                                  trace=trace))
+                                                  trace=trace,
+                                                  display.warnings=display.warnings))
         
         
       } else {
@@ -853,12 +857,14 @@ preditFactorSpline <- function(x,
           model.pruned <- stepCV(lm(y~.-1,data=P.df,weights=weights),
                                  scope=list(upper=~.,lower=~1),
                                  k=log(length(y)),
-                                 trace=trace)
+                                 trace=trace,
+                                 display.warnings=display.warnings)
         else
           suppressWarnings(model.pruned <- stepCV(rq(y~.-1,data=P.df,tau=tau,method="fn",weights=weights),
                                                   scope=list(upper=~.,lower=~1),
                                                   k=log(length(y)),
-                                                  trace=trace))
+                                                  trace=trace,
+                                                  display.warnings=display.warnings))
         
       }
       if(is.null(tau))

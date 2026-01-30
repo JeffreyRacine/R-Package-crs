@@ -211,7 +211,7 @@ frscvNOMAD <- function(xz,
       console <- printClear(console)
       console <- printPop(console)
       console <- printPush("\r                                                ",console = console)
-      console <- printPush(paste("\rfv = ",format(cv)," ", sep=""),console = console)
+      if(display.nomad.progress) console <- printPush(paste("\rfv = ",format(cv)," ", sep=""),console = console)
       
       return(cv)
       
@@ -352,7 +352,7 @@ frscvNOMAD <- function(xz,
   
   console <- newLineConsole()
   if(display.nomad.progress){
-    console <- printPush("Calling NOMAD (Nonsmooth Optimization by Mesh Adaptive Direct Search)\n",console = console)
+    if(display.nomad.progress) console <- printPush("Calling NOMAD (Nonsmooth Optimization by Mesh Adaptive Direct Search)\n",console = console)
   }
   
   ## Take data frame x and parse into factors (z) and numeric (x)

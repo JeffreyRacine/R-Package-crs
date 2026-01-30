@@ -26,7 +26,7 @@ extractCV <- function(model,...) {
 }
 
 
-check_exact <- function(object)
+check_exact <- function(object, display.warnings=TRUE)
 {
   w <- object$weights
   if(is.null(w)) {
@@ -36,11 +36,11 @@ check_exact <- function(object)
     mss <- sum(w * object$fitted.values^2)
     rss <- sum(w * object$residuals^2)
   }
-  if(rss < 1e-10*mss)
+  if(rss < 1e-10*mss && display.warnings)
     warning("attempting model selection on an essentially perfect fit is nonsense", call. = FALSE)
 }
 add1.lm.cv <- function (object, scope, scale = 0, test = c("none", "Chisq", 
-                                                           "F"), x = NULL, k = 2, ...) 
+                                                           "F"), x = NULL, k = 2, display.warnings=TRUE, ...) 
 {
   Fstat <- function(table, RSS, rdf) {
     dev <- table$"Sum of Sq"
@@ -54,7 +54,7 @@ add1.lm.cv <- function (object, scope, scale = 0, test = c("none", "Chisq",
                        lower.tail = FALSE)
     list(Fs = Fs, P = P)
   }
-  check_exact(object)
+  check_exact(object, display.warnings=display.warnings)
   if (missing(scope) || is.null(scope)) 
     stop("no terms in scope")
   if (!is.character(scope)) 
@@ -85,7 +85,7 @@ add1.lm.cv <- function (object, scope, scale = 0, test = c("none", "Chisq",
     oldn <- length(y)
     y <- model.response(m, "numeric")
     newn <- length(y)
-    if (newn < oldn) 
+    if (newn < oldn && display.warnings) 
       warning(gettextf("using the %d/%d rows from a combined fit", 
                        newn, oldn), domain = NA)
   }
@@ -164,7 +164,7 @@ add1.lm.cv <- function (object, scope, scale = 0, test = c("none", "Chisq",
 stepCV <-
   function(object, scope, scale = 0,
            direction = c("both", "backward", "forward"),
-           trace = 1, keep = NULL, steps = 1000, use.start = FALSE, k = 2, ...)
+           trace = 1, keep = NULL, steps = 1000, use.start = FALSE, k = 2, display.warnings=TRUE, ...)
   {
     mydeviance <- function(x, ...)
     {
@@ -219,7 +219,7 @@ stepCV <-
     if(inherits(object, "lme")) object$call$fixed <- Terms
     else if(inherits(object, "gls")) object$call$model <- Terms
     else object$call$formula <- Terms
-    if(use.start) warning("'use.start' cannot be used with R's version of glm")
+    if(use.start && display.warnings) warning("'use.start' cannot be used with R's version of glm")
     md <- missing(direction)
     direction <- match.arg(direction)
     backward <- direction == "both" | direction == "backward"
@@ -276,7 +276,7 @@ stepCV <-
       change <- NULL
       if(backward && length(scope$drop)) {
         aod <- dropterm(fit, scope$drop, scale = scale,
-                        trace = max(0, trace - 1), k = k, ...)
+                        trace = max(0, trace - 1), k = k, display.warnings=display.warnings, ...)
         rn <- row.names(aod)
         row.names(aod) <- c(rn[1L], paste("-", rn[-1L], sep=" "))
         ## drop all zero df terms first.
@@ -286,7 +286,7 @@ stepCV <-
           nc <- nc[!is.na(nc)][1L]
           ch <- abs(aod[zdf, nc] - aod[1, nc]) > 0.01
           if(any(ch)) {
-            warning("0 df terms are changing CV")
+            if(display.warnings) warning("0 df terms are changing CV")
             zdf <- zdf[!ch]
           }
           ## drop zero df terms first: one at time since they
@@ -298,7 +298,7 @@ stepCV <-
       if(is.null(change)) {
         if(forward && length(scope$add)) {
           aodf <- addterm(fit, scope$add, scale = scale,
-                          trace = max(0, trace - 1), k = k, ...)
+                          trace = max(0, trace - 1), k = k, display.warnings=display.warnings, ...)
           rn <- row.names(aodf)
           row.names(aodf) <- c(rn[1L], paste("+", rn[-1L], sep=" "))
           aod <-
@@ -411,7 +411,7 @@ addterm <-
 
 addterm.default <-
   function(object, scope, scale = 0, test = c("none", "Chisq"),
-           k = 2, sorted = FALSE, trace = FALSE, ...)
+           k = 2, sorted = FALSE, trace = FALSE, display.warnings=TRUE, ...)
   {
     if(missing(scope) || is.null(scope)) stop("no terms in scope")
     if(!is.character(scope))
@@ -466,7 +466,7 @@ addterm.default <-
 
 addterm.lm <-
   function(object, scope, scale = 0, test = c("none", "Chisq", "F"),
-           k = 2, sorted = FALSE, ...)
+           k = 2, sorted = FALSE, display.warnings=TRUE, ...)
   {
     Fstat <- function(table, RSS, rdf) {
       dev <- table$"Sum of Sq"
@@ -482,7 +482,7 @@ addterm.lm <-
     
     if(missing(scope) || is.null(scope)) stop("no terms in scope")
     #    aod <- stats:::add1.lm(object, scope=scope, scale=scale)[ , -4L]
-    aod <- add1.lm.cv(object, scope=scope, scale=scale)[ , -4L] # added jracine
+    aod <- add1.lm.cv(object, scope=scope, scale=scale, display.warnings=display.warnings)[ , -4L] # added jracine
     dfs <- c(0, aod$Df[-1L]) + object$rank; RSS <- aod$RSS
     n <- length(object$residuals)
     if(scale > 0) aic <- RSS/scale - n + k*dfs
@@ -520,7 +520,7 @@ addterm.negbin <- addterm.survreg <-
   function(object, ...)  addterm.default(object, ...)
 
 addterm.glm <- function(object, scope, scale = 0, test = c("none", "Chisq", "F"),
-                        k = 2, sorted = FALSE, trace = FALSE, ...)
+                        k = 2, sorted = FALSE, trace = FALSE, display.warnings=TRUE, ...)
 {
   Fstat <- function(table, rdf) {
     dev <- table$Deviance
@@ -558,7 +558,7 @@ addterm.glm <- function(object, scope, scale = 0, test = c("none", "Chisq", "F")
   oldn <- length(object$residuals)
   y <- object$y
   newn <- length(y)
-  if(newn < oldn)
+  if(newn < oldn && display.warnings)
     warning(gettextf("using the %d/%d rows from a combined fit",
                      newn, oldn), domain = NA)
   wt <- object$prior.weights
@@ -615,7 +615,7 @@ addterm.glm <- function(object, scope, scale = 0, test = c("none", "Chisq", "F")
     dev[nas] <- safe_pchisq(dev[nas], aod$Df[nas], lower.tail=FALSE)
     aod[, "Pr(Chi)"] <- dev
   } else if(test == "F") {
-    if(fam == "binomial" || fam == "poisson")
+    if((fam == "binomial" || fam == "poisson") && display.warnings)
       warning(gettextf("F test assumes quasi%s family", fam),
               domain = NA)
     rdf <- object$df.residual
@@ -638,7 +638,7 @@ dropterm <- function(object, ...) UseMethod("dropterm")
 
 dropterm.default <-
   function(object, scope, scale = 0, test = c("none", "Chisq"),
-           k = 2, sorted = FALSE, trace = FALSE, ...)
+           k = 2, sorted = FALSE, trace = FALSE, display.warnings=TRUE, ...)
   {
     tl <- attr(terms(object), "term.labels")
     if(missing(scope)) scope <- drop.scope(object)
@@ -692,7 +692,7 @@ dropterm.default <-
 
 dropterm.lm <-
   function(object, scope = drop.scope(object), scale = 0,
-           test = c("none", "Chisq", "F"), k = 2, sorted = FALSE, ...)
+           test = c("none", "Chisq", "F"), k = 2, sorted = FALSE, display.warnings=TRUE, ...)
   {
     #    aod <- stats:::drop1.lm(object, scope=scope, scale=scale)[, -4]
     aod <- drop1(object, scope=scope, scale=scale)[, -4]  
@@ -735,7 +735,7 @@ dropterm.mlm <- function(object, ...)
 
 dropterm.glm <-
   function(object, scope, scale = 0, test = c("none", "Chisq", "F"),
-           k = 2, sorted = FALSE, trace = FALSE, ...)
+           k = 2, sorted = FALSE, trace = FALSE, display.warnings=TRUE, ...)
   {
     x <- model.matrix(object)
     n <- nrow(x)
@@ -802,7 +802,7 @@ dropterm.glm <-
       dev[nas] <- safe_pchisq(dev[nas], aod$Df[nas], lower.tail=FALSE)
       aod[, "Pr(Chi)"] <- dev
     } else if(test == "F") {
-      if(fam == "binomial" || fam == "poisson")
+      if((fam == "binomial" || fam == "poisson") && display.warnings)
         warning(gettextf("F test assumes 'quasi%s' family", fam),
                 domain = NA)
       dev <- aod$Deviance
