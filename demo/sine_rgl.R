@@ -2,7 +2,9 @@
 ## results by constructing a 3D real-time rendering plot using OpenGL.
 
 require(crs)
-require(rgl)
+options(rgl.useNULL = TRUE)
+options(rgl.printRglwidget = TRUE)
+library(rgl)
 
 set.seed(42)
 

@@ -2,6 +2,8 @@
 ## results by constructing a 3D real-time rendering plot using OpenGL.
 
 require(crs)
+options(rgl.useNULL = TRUE)
+options(rgl.printRglwidget = TRUE)
 require(rgl)
 
 set.seed(42)
