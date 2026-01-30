@@ -1253,6 +1253,7 @@ minimand.cv.ls <- function(bws=NULL,
                            cv.shrink=TRUE,
                            cv.maxPenalty=sqrt(.Machine$double.xmax),
                            display.warnings=TRUE,
+                           display.nomad.progress=TRUE,
                            bandwidth.scale.categorical=NULL,
                            ...) {
   
@@ -1407,23 +1408,23 @@ minimand.cv.ls <- function(bws=NULL,
           }
           
           val <- tryCatch({
-             R <- chol(mat)
-             inv <- chol2inv(R)
-             est <- inv %*% tyw[,i]
-             sum(W[i,] * est)
+            R <- chol(mat)
+            inv <- chol2inv(R)
+            est <- inv %*% tyw[,i]
+            sum(W[i,] * est)
           }, error = function(e) {
-             # Signal failure
-             return(NA)
+            # Signal failure
+            return(NA)
           })
           
           if(is.na(val)) {
-             ridge[i] <- ridge[i] + epsilon
-             doridge[i] <- TRUE
-             if(display.warnings) console <- printPush(paste("\rWarning: ridging required for inversion at obs. ", i, ", ridge = ",formatC(ridge[i],digits=4,format="f"),"        ",sep=""),console = console)
-             # mean.loo[i] remains cv.maxPenalty (init value) if we give up? 
-             # The loop continues until success.
+            ridge[i] <- ridge[i] + epsilon
+            doridge[i] <- TRUE
+            if(display.warnings) console <- printPush(paste("\rWarning: ridging required for inversion at obs. ", i, ", ridge = ",formatC(ridge[i],digits=4,format="f"),"        ",sep=""),console = console)
+            # mean.loo[i] remains cv.maxPenalty (init value) if we give up? 
+            # The loop continues until success.
           } else {
-             mean.loo[i] <- (1-ridge[i])*val + ridge.lc[i]
+            mean.loo[i] <- (1-ridge[i])*val + ridge.lc[i]
           }
         }
       }
@@ -1460,6 +1461,7 @@ minimand.cv.aic <- function(bws=NULL,
                             cv.shrink=TRUE,
                             cv.maxPenalty=sqrt(.Machine$double.xmax),
                             display.warnings=TRUE,
+                            display.nomad.progress=TRUE,
                             bandwidth.scale.categorical=NULL,
                             ...) {
   
@@ -1624,20 +1626,20 @@ minimand.cv.aic <- function(bws=NULL,
           }
           
           res <- tryCatch({
-             R <- chol(mat)
-             inv <- chol2inv(R)
-             est <- inv %*% tyw[,i]
-             val <- sum(W[i,] * est)
-             list(val=val, inv=inv)
+            R <- chol(mat)
+            inv <- chol2inv(R)
+            est <- inv %*% tyw[,i]
+            val <- sum(W[i,] * est)
+            list(val=val, inv=inv)
           }, error = function(e) return(NULL))
           
           if(is.null(res)) {
-             ridge[i] <- ridge[i] + epsilon
-             doridge[i] <- TRUE
-             if(display.warnings) console <- printPush(paste("\rWarning: ridging required for inversion at obs. ", i, ", ridge = ",formatC(ridge[i],digits=4,format="f"),"        ",sep=""),console = console)
+            ridge[i] <- ridge[i] + epsilon
+            doridge[i] <- TRUE
+            if(display.warnings) console <- printPush(paste("\rWarning: ridging required for inversion at obs. ", i, ", ridge = ",formatC(ridge[i],digits=4,format="f"),"        ",sep=""),console = console)
           } else {
-             ghat[i] <- (1-ridge[i])*res$val + ridge.lc[i]
-             inv_storage[[i]] <- res$inv
+            ghat[i] <- (1-ridge[i])*res$val + ridge.lc[i]
+            inv_storage[[i]] <- res$inv
           }
         }
       }
@@ -1645,17 +1647,17 @@ minimand.cv.aic <- function(bws=NULL,
       ## Optimized trH calculation using cached inverses
       trH_sum <- 0
       for(i in 1:n) {
-         term1 <- 0
-         if(ridge[i] < 1) {
-             # Quadratic form W[i,] %*% inv %*% t(W[i,])
-             w_vec <- W[i,]
-             # temp <- inv_storage[[i]] %*% w_vec
-             # term1 <- (1-ridge[i]) * sum(w_vec * temp)
-             # Use crossprod for potentially faster calc
-             term1 <- (1-ridge[i]) * drop(crossprod(w_vec, inv_storage[[i]] %*% w_vec))
-         }
-         term2 <- ridge[i]/NZD(tww[1,1,i])
-         trH_sum <- trH_sum + term1 + term2
+        term1 <- 0
+        if(ridge[i] < 1) {
+          # Quadratic form W[i,] %*% inv %*% t(W[i,])
+          w_vec <- W[i,]
+          # temp <- inv_storage[[i]] %*% w_vec
+          # term1 <- (1-ridge[i]) * sum(w_vec * temp)
+          # Use crossprod for potentially faster calc
+          term1 <- (1-ridge[i]) * drop(crossprod(w_vec, inv_storage[[i]] %*% w_vec))
+        }
+        term2 <- ridge[i]/NZD(tww[1,1,i])
+        trH_sum <- trH_sum + term1 + term2
       }
       
       trH <- kernel.i.eq.j*trH_sum
@@ -1799,6 +1801,7 @@ glpcvNOMAD <- function(ydat=NULL,
                              cv.shrink=cv.shrink,
                              cv.maxPenalty=cv.maxPenalty,
                              display.warnings=display.warnings,
+                             display.nomad.progress=display.nomad.progress,
                              bandwidth.scale.categorical=bandwidth.scale.categorical,
                              ...)
     } else if(all(bw.gamma >= bw.switch)) {
@@ -1827,6 +1830,7 @@ glpcvNOMAD <- function(ydat=NULL,
                              cv.shrink=cv.shrink,
                              cv.maxPenalty=cv.maxPenalty,
                              display.warnings=display.warnings,
+                             display.nomad.progress=display.nomad.progress,
                              bandwidth.scale.categorical=bandwidth.scale.categorical,
                              ...)
     }
@@ -1897,6 +1901,7 @@ glpcvNOMAD <- function(ydat=NULL,
                               cv.shrink=cv.shrink,
                               cv.maxPenalty=cv.maxPenalty,
                               display.warnings=display.warnings,
+                              display.nomad.progress=display.nomad.progress,
                               bandwidth.scale.categorical=bandwidth.scale.categorical,
                               ...)
     } else if(all(bw.gamma >= bw.switch)) {
@@ -1925,6 +1930,7 @@ glpcvNOMAD <- function(ydat=NULL,
                               cv.shrink=cv.shrink,
                               cv.maxPenalty=cv.maxPenalty,
                               display.warnings=display.warnings,
+                              display.nomad.progress=display.nomad.progress,
                               bandwidth.scale.categorical=bandwidth.scale.categorical,
                               ...)
     }
