@@ -54,6 +54,8 @@ crsiv <- function(y,
                             "MIN_MESH_SIZE"=paste("r",sqrt(.Machine$double.eps),sep=""),
                             "MIN_POLL_SIZE"=paste("r",1,sep=""),
                             "DISPLAY_DEGREE"=0),
+                  display.nomad.progress=TRUE,
+                  display.warnings=TRUE,
                   ...) {
   
   crs.messages <- getOption("crs.messages")
@@ -238,9 +240,9 @@ crsiv <- function(y,
     
     console <- printClear(console)
     console <- printPop(console)
-    console <- printPush("Computing weights and optimal smoothing for E(y|w)...", console)
+    if(display.nomad.progress) console <- printPush("Computing weights and optimal smoothing for E(y|w)...", console)
     if(crs.messages) options(crs.messages=FALSE)
-    model<-crs(formula.yw,opts=opts,data=traindata,...)
+    model<-crs(formula.yw,opts=opts,data=traindata,display.nomad.progress=display.nomad.progress,display.warnings=display.warnings,...)
     if(crs.messages) options(crs.messages=TRUE)
     E.y.w <- predict(model,newdata=evaldata,...)
     B <- model.matrix(model$model.lm)
@@ -251,12 +253,12 @@ crsiv <- function(y,
     console <- printClear(console)
     console <- printPop(console)
     if(is.null(x)) {
-      console <- printPush("Computing weights and optimal smoothing for E(E(y|w)|z)...", console)
+      if(display.nomad.progress) console <- printPush("Computing weights and optimal smoothing for E(E(y|w)|z)...", console)
     } else {
-      console <- printPush("Computing weights and optimal smoothing for E(E(y|w)|z,x)...", console)
+      if(display.nomad.progress) console <- printPush("Computing weights and optimal smoothing for E(E(y|w)|z,x)...", console)
     }
     if(crs.messages) options(crs.messages=FALSE)
-    model <- crs(formula.Eywz,opts=opts,data=traindata,...)
+    model <- crs(formula.Eywz,opts=opts,data=traindata,display.nomad.progress=display.nomad.progress,display.warnings=display.warnings,...)
     if(crs.messages) options(crs.messages=TRUE)
     E.E.y.w.z <- predict(model,newdata=evaldata,...)
     B <- model.matrix(model$model.lm)
@@ -274,7 +276,7 @@ crsiv <- function(y,
     if(is.null(alpha)) {
       console <- printClear(console)
       console <- printPop(console)
-      console <- printPush("Numerically solving for alpha...", console)
+      if(display.nomad.progress) console <- printPush("Numerically solving for alpha...", console)
       alpha <- optimize(ittik, c(alpha.min,alpha.max), tol = alpha.tol, CZ = KYW, CY = KYWZ, Cr.r = E.E.y.w.z, r = E.y.w)$minimum
     }
     
@@ -284,9 +286,9 @@ crsiv <- function(y,
     console <- printClear(console)
     console <- printPop(console)
     if(is.null(x)) {
-      console <- printPush("Computing initial phi(z) estimate...", console)
+      if(display.nomad.progress) console <- printPush("Computing initial phi(z) estimate...", console)
     } else {
-      console <- printPush("Computing initial phi(z,x) estimate...", console)
+      if(display.nomad.progress) console <- printPush("Computing initial phi(z,x) estimate...", console)
     }
     phi <- as.vector(tikh(alpha, CZ = KYW, CY = KYWZ, Cr.r = E.E.y.w.z))
     
@@ -299,12 +301,12 @@ crsiv <- function(y,
     console <- printClear(console)
     console <- printPop(console)
     if(is.null(x)) {
-      console <- printPush("Computing optimal smoothing and weights for E(phi(z)|w)...", console)
+      if(display.nomad.progress) console <- printPush("Computing optimal smoothing and weights for E(phi(z)|w)...", console)
     } else {
-      console <- printPush("Computing optimal smoothing and weights for E(phi(z,x)|w)...", console)
+      if(display.nomad.progress) console <- printPush("Computing optimal smoothing and weights for E(phi(z,x)|w)...", console)
     }
     if(crs.messages) options(crs.messages=FALSE)
-    model <- crs(formula.phiw,opts=opts,data=traindata,...)
+    model <- crs(formula.phiw,opts=opts,data=traindata,display.nomad.progress=display.nomad.progress,display.warnings=display.warnings,...)
     if(crs.messages) options(crs.messages=TRUE)
     E.phi.w <- predict(model,newdata=evaldata,...)
     B <- model.matrix(model$model.lm)
@@ -315,12 +317,12 @@ crsiv <- function(y,
     console <- printClear(console)
     console <- printPop(console)
     if(is.null(x)) {
-      console <- printPush("Computing optimal smoothing and weights for E(E(phi(z)|w)|z)...", console)
+      if(display.nomad.progress) console <- printPush("Computing optimal smoothing and weights for E(E(phi(z)|w)|z)...", console)
     } else {
-      console <- printPush("Computing optimal smoothing and weights for E(E(phi(z,x)|w)|z,x)...", console)
+      if(display.nomad.progress) console <- printPush("Computing optimal smoothing and weights for E(E(phi(z,x)|w)|z,x)...", console)
     }
     if(crs.messages) options(crs.messages=FALSE)
-    model <- crs(formula.Ephiwz,opts=opts,data=traindata,...)
+    model <- crs(formula.Ephiwz,opts=opts,data=traindata,display.nomad.progress=display.nomad.progress,display.warnings=display.warnings,...)
     if(crs.messages) options(crs.messages=TRUE)
     B <- model.matrix(model$model.lm)
     KPHIWZ <- B%*%chol2inv(chol(t(B)%*%B))%*%t(B)
@@ -332,7 +334,7 @@ crsiv <- function(y,
     if(is.null(alpha)) {
       console <- printClear(console)
       console <- printPop(console)
-      console <- printPush("Iterating and computing the numerical solution for alpha...", console)
+      if(display.nomad.progress) console <- printPush("Iterating and computing the numerical solution for alpha...", console)
       alpha <- optimize(ittik,c(alpha.min,alpha.max), tol = alpha.tol, CZ = KPHIW, CY = KPHIWZ, Cr.r = E.E.y.w.z, r = E.y.w)$minimum
     }
     
@@ -342,17 +344,19 @@ crsiv <- function(y,
     console <- printClear(console)
     console <- printPop(console)
     if(is.null(x)) {
-      console <- printPush("Computing final phi(z) estimate...", console)
+      if(display.nomad.progress) console <- printPush("Computing final phi(z) estimate...", console)
     } else {
-      console <- printPush("Computing final phi(z,x) estimate...", console)
+      if(display.nomad.progress) console <- printPush("Computing final phi(z,x) estimate...", console)
     }
     phi <- as.vector(tikh(alpha, CZ = KPHIW, CY = KPHIWZ, Cr.r = E.E.y.w.z))
     
     console <- printClear(console)
     console <- printPop(console)
     
-    if((alpha-alpha.min)/alpha.min < 0.01) warning(paste(" Tikhonov parameter alpha (",formatC(alpha,digits=4,format="f"),") is close to the search minimum (",alpha.min,")",sep=""))
-    if((alpha.max-alpha)/alpha.max < 0.01) warning(paste(" Tikhonov parameter alpha (",formatC(alpha,digits=4,format="f"),") is close to the search maximum (",alpha.max,")",sep=""))
+    if(display.warnings) {
+      if((alpha-alpha.min)/alpha.min < 0.01) warning(paste(" Tikhonov parameter alpha (",formatC(alpha,digits=4,format="f"),") is close to the search minimum (",alpha.min,")",sep=""))
+      if((alpha.max-alpha)/alpha.max < 0.01) warning(paste(" Tikhonov parameter alpha (",formatC(alpha,digits=4,format="f"),") is close to the search maximum (",alpha.max,")",sep=""))
+    }
     
     ## phi.0 is the conditional mean model. We compute lambda =
     ## fitted(phi.0)-phi then transform y via
@@ -367,7 +371,7 @@ crsiv <- function(y,
     ## shorten the iterative process?
     
     if(crs.messages) options(crs.messages=FALSE)
-    phi.0 <- crs(formula.yz,opts=opts,data=traindata,...)
+    phi.0 <- crs(formula.yz,opts=opts,data=traindata,display.nomad.progress=display.nomad.progress,display.warnings=display.warnings,...)
     
     residuals.phi <- traindata$y-phi
     traindata$y <- traindata$y - (fitted(phi.0)-phi)
@@ -405,19 +409,19 @@ crsiv <- function(y,
     
     console <- printClear(console)
     console <- printPop(console)
-    console <- printPush(paste("Computing optimal smoothing and E(Y|w) for the stopping rule...",sep=""),console)
+    if(display.nomad.progress) console <- printPush(paste("Computing optimal smoothing and E(Y|w) for the stopping rule...",sep=""),console)
     
     if(crs.messages) options(crs.messages=FALSE)
-    model.E.y.w <- crs(formula.yw,opts=opts,data=traindata,...)
+    model.E.y.w <- crs(formula.yw,opts=opts,data=traindata,display.nomad.progress=display.nomad.progress,display.warnings=display.warnings,...)
     E.y.w <- predict(model.E.y.w,newdata=evaldata,...)
     if(crs.messages) options(crs.messages=TRUE)
     
     console <- printClear(console)
     console <- printPop(console)
     if(is.null(x)) {
-      console <- printPush(paste("Computing optimal smoothing and phi(z) for iteration 1...",sep=""),console)
+      if(display.nomad.progress) console <- printPush(paste("Computing optimal smoothing and phi(z) for iteration 1...",sep=""),console)
     } else {
-      console <- printPush(paste("Computing optimal smoothing and phi(z,x) for iteration 1...",sep=""),console)
+      if(display.nomad.progress) console <- printPush(paste("Computing optimal smoothing and phi(z,x) for iteration 1...",sep=""),console)
     }
     
     ## Initial value taken from E(E(Y|w)|z) or E(Y|z) or overridden
@@ -426,15 +430,15 @@ crsiv <- function(y,
     if(crs.messages) options(crs.messages=FALSE)
     if(is.null(starting.values)) {
       phi.0.NULL <- TRUE
-      phi.0 <- crs(formula.yz,opts=opts,data=traindata,...)
+      phi.0 <- crs(formula.yz,opts=opts,data=traindata,display.nomad.progress=display.nomad.progress,display.warnings=display.warnings,...)
       ## First compute phi.0 (not passed in) then phi
       if(start.from == "Eyz") {
         ## Start from E(Y|z)
         phi <- predict(phi.0,newdata=evaldata,...)
       } else {
         ## Start from E(E(Y|w)|z)
-        E.y.w <- fitted(crs(formula.yw,opts=opts,data=traindata,...))
-        model.E.E.y.w.z <- crs(formula.Eywz,opts=opts,data=traindata,...)
+        E.y.w <- fitted(crs(formula.yw,opts=opts,data=traindata,display.nomad.progress=display.nomad.progress,display.warnings=display.warnings,...))
+        model.E.E.y.w.z <- crs(formula.Eywz,opts=opts,data=traindata,display.nomad.progress=display.nomad.progress,display.warnings=display.warnings,...)
         phi <- predict(model.E.E.y.w.z,newdata=evaldata,...)
       }
     } else {
@@ -442,7 +446,7 @@ crsiv <- function(y,
       phi.0.input <- starting.values
       ## First compute phi (passed in) then phi.0
       phi <- starting.values
-      phi.0 <- crs(formula.yz,opts=opts,data=traindata,...)
+      phi.0 <- crs(formula.yz,opts=opts,data=traindata,display.nomad.progress=display.nomad.progress,display.warnings=display.warnings,...)
     }
     
     starting.values.phi <- phi
@@ -452,19 +456,19 @@ crsiv <- function(y,
     console <- printClear(console)
     console <- printPop(console)
     if(is.null(x)) {
-      console <- printPush(paste("Computing optimal smoothing for E(Y-phi(z)|w) for iteration 1...",sep=""),console)
+      if(display.nomad.progress) console <- printPush(paste("Computing optimal smoothing for E(Y-phi(z)|w) for iteration 1...",sep=""),console)
     } else {
-      console <- printPush(paste("Computing optimal smoothing  for E(Y-phi(z,x)|w) for iteration 1...",sep=""),console)
+      if(display.nomad.progress) console <- printPush(paste("Computing optimal smoothing  for E(Y-phi(z,x)|w) for iteration 1...",sep=""),console)
     }
     if(crs.messages) options(crs.messages=FALSE)
     if(smooth.residuals) {
-      model.residw <- crs(formula.residw,opts=opts,data=traindata,...)
+      model.residw <- crs(formula.residw,opts=opts,data=traindata,display.nomad.progress=display.nomad.progress,display.warnings=display.warnings,...)
       residw <- predict(model.residw,newdata=evaldata,...)
-      model.predict.residw.z <- crs(formula.residwz,opts=opts,data=traindata,...)
+      model.predict.residw.z <- crs(formula.residwz,opts=opts,data=traindata,display.nomad.progress=display.nomad.progress,display.warnings=display.warnings,...)
     } else {
-      model.E.phi.w <- crs(formula.phiw,opts=opts,data=traindata,...)
+      model.E.phi.w <- crs(formula.phiw,opts=opts,data=traindata,display.nomad.progress=display.nomad.progress,display.warnings=display.warnings,...)
       residw <- predict(model.E.y.w,newdata=evaldata,...)-predict(model.E.phi.w,newdata=evaldata,...)
-      model.predict.residw.z <- crs(formula.residwz,opts=opts,data=traindata,...)
+      model.predict.residw.z <- crs(formula.residwz,opts=opts,data=traindata,display.nomad.progress=display.nomad.progress,display.warnings=display.warnings,...)
     }
     if(crs.messages) options(crs.messages=TRUE)
     
@@ -487,20 +491,20 @@ crsiv <- function(y,
       console <- printClear(console)
       console <- printPop(console)
       if(is.null(x)) {
-        console <- printPush(paste("Computing optimal smoothing and phi(z) for iteration ", j,"...",sep=""),console)
+        if(display.nomad.progress) console <- printPush(paste("Computing optimal smoothing and phi(z) for iteration ", j,"...",sep=""),console)
       } else {
-        console <- printPush(paste("Computing optimal smoothing and phi(z,x) for iteration ", j,"...",sep=""),console)
+        if(display.nomad.progress) console <- printPush(paste("Computing optimal smoothing and phi(z,x) for iteration ", j,"...",sep=""),console)
       }
       
       if(crs.messages) options(crs.messages=FALSE)
       if(smooth.residuals) {
-        model.residw <- crs(formula.residw,opts=opts,data=traindata,...)
+        model.residw <- crs(formula.residw,opts=opts,data=traindata,display.nomad.progress=display.nomad.progress,display.warnings=display.warnings,...)
         residw <- predict(model.residw,newdata=evaldata,...)
-        model.predict.residw.z <- crs(formula.residwz,opts=opts,data=traindata,...)
+        model.predict.residw.z <- crs(formula.residwz,opts=opts,data=traindata,display.nomad.progress=display.nomad.progress,display.warnings=display.warnings,...)
       } else {
-        model.E.phi.w <- crs(formula.phiw,opts=opts,data=traindata,...)
+        model.E.phi.w <- crs(formula.phiw,opts=opts,data=traindata,display.nomad.progress=display.nomad.progress,display.warnings=display.warnings,...)
         residw <- predict(model.E.y.w,newdata=evaldata,...)-predict(model.E.phi.w,newdata=evaldata,...)
-        model.predict.residw.z <- crs(formula.residwz,opts=opts,data=traindata,...)
+        model.predict.residw.z <- crs(formula.residwz,opts=opts,data=traindata,display.nomad.progress=display.nomad.progress,display.warnings=display.warnings,...)
       }
       if(crs.messages) options(crs.messages=TRUE)
       
@@ -550,7 +554,7 @@ crsiv <- function(y,
     ## to the length of norm.stop
     
     if(which.min(norm.stop) == 1 && is.monotone.increasing(norm.stop)) {
-      warning("Stopping rule increases monotonically (consult model$norm.stop):\nThis could be the result of an inspired initial value (unlikely)\nNote: we suggest manually choosing phi.0 and restarting (e.g. instead set `starting.values' to E[E(Y|w)|z])")
+      if(display.warnings) warning("Stopping rule increases monotonically (consult model$norm.stop):\nThis could be the result of an inspired initial value (unlikely)\nNote: we suggest manually choosing phi.0 and restarting (e.g. instead set `starting.values' to E[E(Y|w)|z])")
       convergence <- "FAILURE_MONOTONE_INCREASING"
       ## Ignore the initial increasing portion, take the min to the
       ## right of where the initial inflection point occurs
@@ -606,7 +610,9 @@ crsiv <- function(y,
     console <- printClear(console)
     console <- printPop(console)
     
-    if(j == iterate.max) warning(" iterate.max reached: increase iterate.max or inspect norm.stop vector")
+    if(display.warnings) {
+      if(j == iterate.max) warning(" iterate.max reached: increase iterate.max or inspect norm.stop vector")
+    }
     
     return(model)
     

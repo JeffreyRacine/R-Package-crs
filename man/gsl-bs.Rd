@@ -9,7 +9,7 @@
   derivative of a specified order with respect to each predictor }
 
 \usage{
-gsl.bs(\dots)
+gsl.bs(\dots, display.warnings = TRUE)
 \method{gsl.bs}{default}(x,
        degree = 3,
        nbreak = 2,
@@ -18,6 +18,7 @@ gsl.bs(\dots)
        x.max = NULL,
        intercept = FALSE,
        knots = NULL,
+       display.warnings = TRUE,
        \dots)
 }
 \arguments{
@@ -44,6 +45,9 @@ basis; default is \sQuote{FALSE} }
 \item{knots}{ a vector (default \code{knots="NULL"}) specifying knots
   for the spline basis (default enables uniform knots, otherwise those
   provided are used)}
+
+\item{display.warnings}{ a logical value indicating whether to
+  display warnings (default \code{display.warnings=TRUE}) }
 
 \item{\dots}{ optional arguments }
   

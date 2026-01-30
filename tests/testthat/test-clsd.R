@@ -4,7 +4,7 @@ test_that("clsd works", {
   x <- rnorm(n)
   
   # Compute density at a few points
-  model <- clsd(x, degree=2, segments=1, xeval=seq(-2, 2, length=10))
+  model <- clsd(x, degree=2, segments=1, xeval=seq(-2, 2, length=10), display.warnings=FALSE, display.nomad.progress=FALSE)
   
   expect_s3_class(model, "clsd")
   expect_type(model$density, "double")

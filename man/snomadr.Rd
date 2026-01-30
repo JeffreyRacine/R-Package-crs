@@ -44,7 +44,7 @@ snomadr(eval.f,
         nmulti = 0,
         random.seed = 0,
         opts = list(),
-        print.output = TRUE, 
+        display.nomad.progress = TRUE, 
         information = list(), 
         snomadr.environment = new.env(), 
         ... ) 
@@ -115,7 +115,7 @@ snomadr(eval.f,
 
       }
 
-    \item{print.output}{
+    \item{display.nomad.progress}{
       when FALSE, no output from \code{snomadr} is displayed on the
       screen. If the NOMAD option \code{"DISPLAY_DEGREE"=0,} is set,
       there will also be no output from NOMAD. Higher integer values for
@@ -395,7 +395,7 @@ snomadr(n            = as.integer(n),
         lb           = lb, 
         ub           = ub, 
         nmulti = as.integer(nmulti), 
-        print.output = TRUE, 
+        display.nomad.progress = TRUE, 
         params       = params )
 } % end dontrun
 }

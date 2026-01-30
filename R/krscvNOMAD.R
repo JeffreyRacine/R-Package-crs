@@ -36,7 +36,9 @@ krscvNOMAD <- function(xz,
                        nmulti=0,
                        tau=NULL,
                        weights=NULL,
-                       singular.ok=FALSE) {
+                       singular.ok=FALSE,
+                       display.nomad.progress=TRUE,
+                       display.warnings=TRUE) {
   
   complexity <- match.arg(complexity)
   knots <- match.arg(knots)
@@ -342,7 +344,7 @@ krscvNOMAD <- function(xz,
     ## Test for ill-conditioned spline degree, reset upper bound
     ## if binding and start values.
     
-    ill.conditioned <- check.max.spline.degree(x,rep(degree.max,num.x),issue.warning=FALSE)
+    ill.conditioned <- check.max.spline.degree(x,rep(degree.max,num.x),display.warnings=display.warnings)
     degree.max.vec <- attr(ill.conditioned, "degree.max.vec")
     
     if(complexity != "knots") {
@@ -368,7 +370,7 @@ krscvNOMAD <- function(xz,
                       nmulti=as.integer(nmulti),
                       random.seed=random.seed, 
                       opts=opts,
-                      print.output=print.output, 
+                      display.nomad.progress=print.output, 
                       params=params);
     
     if(basis == "auto"){
@@ -408,7 +410,7 @@ krscvNOMAD <- function(xz,
   
   if(!is.null(lambda) ) {
     if(length(lambda)!=num.z){
-      warning(paste(" the length of lambda (", length(lambda),") is not the same as the length of z (", num.z, ")",sep=""))
+      if(display.warnings) warning(paste(" the length of lambda (", length(lambda),") is not the same as the length of z (", num.z, ")",sep=""))
       lambda <- NULL
     }
     else if (any(lambda < 0) || any(lambda > 1) ) {
@@ -422,7 +424,7 @@ krscvNOMAD <- function(xz,
     if(length(segments)!=num.x) stop(" segments vector must be the same length as x")  
     if(!is.null(degree) && length(degree) == num.x) { #check initial values should be in the bounds
       if(any(degree < degree.min)||any(degree>degree.max)) {
-        warning(paste(" The provided initial values for the degree are not in the bounds.", sep=""))
+        if(display.warnings) warning(paste(" The provided initial values for the degree are not in the bounds.", sep=""))
         degree <- NULL
       }
     }
@@ -433,7 +435,7 @@ krscvNOMAD <- function(xz,
     if(length(degree)!=num.x) stop(" degree vector must be the same length as x")
     if(!is.null(segments) && length(segments) == num.x) {
       if(any(segments < segments.min)||any(segments > segments.max)) {
-        warning(paste(" The provided initial values for the segments are not in the bounds.", sep=""))
+        if(display.warnings) warning(paste(" The provided initial values for the segments are not in the bounds.", sep=""))
         segments <- NULL
       }
     }
@@ -443,7 +445,7 @@ krscvNOMAD <- function(xz,
   else {
     if(!is.null(degree) && length(degree) == num.x) { #check initial values should be in the bounds
       if(any(degree < degree.min)||any(degree>degree.max)) {
-        warning(paste(" The provided initial values for the degree are not in the bounds.", sep=""))
+        if(display.warnings) warning(paste(" The provided initial values for the degree are not in the bounds.", sep=""))
         degree <- NULL
       }
     }
@@ -453,7 +455,7 @@ krscvNOMAD <- function(xz,
     }
     if(!is.null(segments) && length(segments) == num.x) {
       if(any(segments < segments.min)||any(segments > segments.max)) {
-        warning(paste(" The provided initial values for the segments are not in the bounds.", sep=""))
+        if(display.warnings) warning(paste(" The provided initial values for the segments are not in the bounds.", sep=""))
         segments <- NULL
       }
     }
@@ -504,17 +506,18 @@ krscvNOMAD <- function(xz,
   
   if(degree.max < 1 || segments.max < 1 ) stop(" degree.max or segments.max must be greater than or equal to 1")
   
-  print.output <- FALSE
-  
-  console <- newLineConsole()
-  if(!is.null(opts$DISPLAY_DEGREE)){
-    if(opts$DISPLAY_DEGREE>0){
-      print.output <-TRUE
-      console <- printPush("Calling NOMAD (Nonsmooth Optimization by Mesh Adaptive Direct Search)\n",console = console)
+  if(display.nomad.progress) {
+    if(!is.null(opts$DISPLAY_DEGREE)){
+      if(opts$DISPLAY_DEGREE <= 0){
+        display.nomad.progress <- FALSE
+      }
     }
   }
-  else {
-    print.output <-TRUE
+  
+  print.output <- display.nomad.progress
+  
+  console <- newLineConsole()
+  if(display.nomad.progress){
     console <- printPush("Calling NOMAD (Nonsmooth Optimization by Mesh Adaptive Direct Search)\n",console = console)
   }
   
@@ -593,11 +596,13 @@ krscvNOMAD <- function(xz,
   
   segments[degree==0] <- 1
   
-  if(any(degree==nomad.solution$degree.max.vec)) warning(paste(" optimal degree equals search maximum (", nomad.solution$degree.max.vec,"): rerun with larger degree.max",sep=""))
-  if(any(segments==segments.max)) warning(paste(" optimal segment equals search maximum (", segments.max,"): rerun with larger segments.max",sep=""))  
-  if(!is.null(opts$MAX_BB_EVAL)){
-    if(nmulti>0) {if(nmulti*opts$MAX_BB_EVAL <= nomad.solution$bbe) warning(paste(" MAX_BB_EVAL reached in NOMAD: perhaps use a larger value...", sep=""))} 
-    if(nmulti==0) {if(opts$MAX_BB_EVAL <= nomad.solution$bbe) warning(paste(" MAX_BB_EVAL reached in NOMAD: perhaps use a larger value...", sep="")) }
+  if(display.warnings) {
+    if(any(degree==nomad.solution$degree.max.vec)) warning(paste(" optimal degree equals search maximum (", nomad.solution$degree.max.vec,"): rerun with larger degree.max",sep=""))
+    if(any(segments==segments.max)) warning(paste(" optimal segment equals search maximum (", segments.max,"): rerun with larger segments.max",sep=""))  
+    if(!is.null(opts$MAX_BB_EVAL)){
+      if(nmulti>0) {if(nmulti*opts$MAX_BB_EVAL <= nomad.solution$bbe) warning(paste(" MAX_BB_EVAL reached in NOMAD: perhaps use a larger value...", sep=""))} 
+      if(nmulti==0) {if(opts$MAX_BB_EVAL <= nomad.solution$bbe) warning(paste(" MAX_BB_EVAL reached in NOMAD: perhaps use a larger value...", sep="")) }
+    }
   }
   
   ## We do not use the following parameters

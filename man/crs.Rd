@@ -28,6 +28,7 @@ crs(\dots)
     model.return = FALSE,
     tau = NULL,
     weights = NULL,
+    display.warnings = TRUE,
     \dots)
 
 \method{crs}{formula}(formula,
@@ -68,6 +69,8 @@ crs(\dots)
     tau = NULL,
     weights = NULL,
     singular.ok = FALSE,
+    display.nomad.progress = TRUE,
+    display.warnings = TRUE,
     \dots)
 }
 \arguments{
@@ -270,6 +273,12 @@ in \code{x} are included or omitted from the resulting estimate }
     \code{FALSE}, discards singular bases during cross-validation (a check
     for ill-conditioned bases is performed).
   }
+
+  \item{display.nomad.progress}{ a logical value indicating whether to
+  display the progress of the NOMAD solver (default \code{display.nomad.progress=TRUE}) }
+
+  \item{display.warnings}{ a logical value indicating whether to
+  display warnings (default \code{display.warnings=TRUE}) }
  
   \item{\dots}{ optional arguments }
   

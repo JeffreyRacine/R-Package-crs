@@ -9,7 +9,7 @@ test_that("crsiv works with Tikhonov", {
   w <- data.frame(w=w_vec)
   
   # crsiv returns a crs object according to docs
-  model <- crsiv(y=y_vec, z=z, w=w, method="Tikhonov", alpha=0.1, cv="none", basis="additive")
+  model <- crsiv(y=y_vec, z=z, w=w, method="Tikhonov", alpha=0.1, cv="none", basis="additive", display.warnings=FALSE, display.nomad.progress=FALSE)
   
   expect_s3_class(model, "crs")
 })
@@ -26,7 +26,7 @@ test_that("crsiv works with Landweber-Fridman", {
   w <- data.frame(w=w_vec)
   
   # Use few iterations for speed
-  model <- crsiv(y=y_vec, z=z, w=w, method="Landweber-Fridman", iterate.max=2, cv="none", basis="additive")
+  model <- crsiv(y=y_vec, z=z, w=w, method="Landweber-Fridman", iterate.max=2, cv="none", basis="additive", display.warnings=FALSE, display.nomad.progress=FALSE)
   
   expect_s3_class(model, "crs")
   expect_type(model$phi, "double")

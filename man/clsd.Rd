@@ -38,7 +38,9 @@ clsd(x = NULL,
      random.seed = 42,
      maxit = 10^5,
      max.attempts = 25,
-     NOMAD = FALSE)
+     NOMAD = FALSE,
+     display.warnings = TRUE,
+     display.nomad.progress = TRUE)
 }
 \arguments{
 
@@ -167,6 +169,12 @@ clsd(x = NULL,
      a logical value which when \code{TRUE} calls \code{\link{snomadr}}
      to determine the optimal \code{degree} and \code{segments}
      }
+
+  \item{display.warnings}{ a logical value indicating whether to
+  display warnings (default \code{display.warnings=TRUE}) }
+
+  \item{display.nomad.progress}{ a logical value indicating whether to
+  display the progress of the NOMAD solver (default \code{display.nomad.progress=TRUE}) }
   
 }
 

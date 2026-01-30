@@ -1,4 +1,4 @@
-gsl.bs <- function(...) UseMethod("gsl.bs")
+gsl.bs <- function(..., display.warnings=TRUE) UseMethod("gsl.bs")
 
 gsl.bs.default <- function(x,
                            degree=3,
@@ -8,6 +8,7 @@ gsl.bs.default <- function(x,
                            x.max=NULL,
                            intercept=FALSE,
                            knots=NULL,
+                           display.warnings=TRUE,
                            ...) {
   
   x <- as.vector(x)
@@ -21,7 +22,7 @@ gsl.bs.default <- function(x,
   #  if(!is.null(knots)) nbreak <- length(knots)
   if(!is.null(knots)&&length(knots)!=nbreak) {
     nbreak <- length(knots)
-    warning(paste(" nbreak and knots vector do not agree: resetting nbreak to", nbreak))
+    if(display.warnings) warning(paste(" nbreak and knots vector do not agree: resetting nbreak to", nbreak))
   }
   
   ## For evaluation (newx) must use min/max for x unless otherwise
@@ -56,7 +57,7 @@ gsl.bs.default <- function(x,
   outside <- ol | or 
   
   if(any(outside)){
-    warning("some 'x' values beyond boundary knots may cause ill-conditioned bases")
+    if(display.warnings) warning("some 'x' values beyond boundary knots may cause ill-conditioned bases")
     ord <- degree + 1
     derivs<- deriv:degree
     if(ord == deriv) 
@@ -173,6 +174,7 @@ bs.des     <- function(x,
 
 predict.gsl.bs <- function(object,
                            newx=NULL,
+                           display.warnings=TRUE,
                            ...) {
   
   newx.ind <- NULL
@@ -203,7 +205,8 @@ predict.gsl.bs <- function(object,
                 intercept=attr(object, "intercept"),
                 knots=attr(object, "knots"),
                 x.min=x.min,
-                x.max=x.max)
+                x.max=x.max,
+                display.warnings=display.warnings)
     
   }
   

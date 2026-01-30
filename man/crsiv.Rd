@@ -48,6 +48,8 @@ crsiv(y,
                   "MIN_MESH_SIZE"=paste("r",sqrt(.Machine$double.eps),sep=""),
                   "MIN_POLL_SIZE"=paste("r",1,sep=""),
                   "DISPLAY_DEGREE"=0),
+      display.nomad.progress = TRUE,
+      display.warnings = TRUE,
       ...)
 }
 
@@ -152,6 +154,10 @@ crsiv(y,
     arguments passed to the NOMAD solver (see \code{\link{snomadr}} for
     further details)
   }
+  \item{display.nomad.progress}{ a logical value indicating whether to
+  display the progress of the NOMAD solver (default \code{display.nomad.progress=TRUE}) }
+  \item{display.warnings}{ a logical value indicating whether to
+  display warnings (default \code{display.warnings=TRUE}) }
   \item{deriv}{ an integer \code{l} (default \code{deriv=0}) specifying
   whether to compute the univariate \code{l}th partial derivative for
   each continuous predictor (and difference in levels for each

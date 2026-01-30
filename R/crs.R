@@ -37,7 +37,8 @@ crsEst <- function(xz,
                    prune.index=NULL,
                    model.return=FALSE,
                    tau=NULL,
-                   weights=NULL) {
+                   weights=NULL,
+                   display.warnings=TRUE) {
   
   ## Take data frame xz and parse into factors (z) and numeric (x).
   
@@ -326,6 +327,7 @@ crs.default <- function(xz,
                         model.return=FALSE,
                         tau=NULL,
                         weights=NULL,
+                        display.warnings=TRUE,
                         ...) {
   
   complexity <- match.arg(complexity)
@@ -349,7 +351,8 @@ crs.default <- function(xz,
                 prune=prune,
                 model.return=model.return,
                 tau=tau,
-                weights=weights)
+                weights=weights,
+                display.warnings=display.warnings)
   
   ## Add results to estimated object.
   
@@ -414,6 +417,8 @@ crs.formula <- function(formula,
                         tau=NULL,
                         weights=NULL,
                         singular.ok=FALSE,
+                        display.nomad.progress=TRUE,
+                        display.warnings=TRUE,
                         ...) {
   
   cv <- match.arg(cv)
@@ -468,7 +473,7 @@ crs.formula <- function(formula,
   ## large use exhaustive search
   
   if(cv=="nomad" && is.null(num.z) && ((degree.max-degree.min)*(segments.max-segments.min))**num.x <= cv.threshold) {
-    warning(" Dynamically changing search from nomad to exhaustive (if unwanted set cv.threshold to 0)")
+    if(display.warnings) warning(" Dynamically changing search from nomad to exhaustive (if unwanted set cv.threshold to 0)")
     cv <- "exhaustive"
   }
   
@@ -488,19 +493,19 @@ crs.formula <- function(formula,
     ## the user to this effect.
     
     if(is.null(degree)&!is.null(x)) {
-      warning(paste(" cv=\"none\" selected but no degree provided, using degree=rep(3,num.x): you might consider other degree settings",sep=""),immediate.=TRUE)
+      if(display.warnings) warning(paste(" cv=\"none\" selected but no degree provided, using degree=rep(3,num.x): you might consider other degree settings",sep=""),immediate.=TRUE)
       degree <- rep(3,num.x)
     }
     if(is.null(segments)&!is.null(x)) {
-      warning(paste(" cv=\"none\" selected but no segments provided, using segments=rep(1,num.x): you might consider other segment settings",sep=""),immediate.=TRUE)
+      if(display.warnings) warning(paste(" cv=\"none\" selected but no segments provided, using segments=rep(1,num.x): you might consider other segment settings",sep=""),immediate.=TRUE)
       segments <- rep(1,num.x)
     }
     if(is.null(include)&!is.null(z)&!kernel) {
-      warning(paste(" cv=\"none\" selected but no inclusion for factors indicated, using include=rep(1,num.z): you might consider other include settings",sep=""),immediate.=TRUE)
+      if(display.warnings) warning(paste(" cv=\"none\" selected but no inclusion for factors indicated, using include=rep(1,num.z): you might consider other include settings",sep=""),immediate.=TRUE)
       include <- rep(1,num.z)
     }
     if(is.null(lambda)&!is.null(z)&&kernel) {
-      warning(paste(" cv=\"none\" selected but no bandwidths for factors indicated, using lambda=rep(0,num.z): you might consider other lambda settings",sep=""),immediate.=TRUE)
+      if(display.warnings) warning(paste(" cv=\"none\" selected but no bandwidths for factors indicated, using lambda=rep(0,num.z): you might consider other lambda settings",sep=""),immediate.=TRUE)
       lambda <- rep(0,num.z)
     }
     
@@ -511,18 +516,20 @@ crs.formula <- function(formula,
     if(basis=="auto"&&num.x==1) basis <- "additive"
     
     if(basis=="auto"&&num.x>1) {
-      warning(paste(" cv=\"none\" selected, basis=\"auto\" changed to basis=\"additive\": you might consider basis=\"tensor\" etc.",sep=""),immediate.=TRUE)
+      if(display.warnings) warning(paste(" cv=\"none\" selected, basis=\"auto\" changed to basis=\"additive\": you might consider basis=\"tensor\" etc.",sep=""),immediate.=TRUE)
       basis <- "additive"
     }
     
     if(knots=="auto"&&num.x>1) {
-      warning(paste(" cv=\"none\" selected, knots=\"auto\" changed to knots=\"quantiles\": you might consider knots=\"uniform\" etc.",sep=""),immediate.=TRUE)
+      if(display.warnings) warning(paste(" cv=\"none\" selected, knots=\"auto\" changed to knots=\"quantiles\": you might consider knots=\"uniform\" etc.",sep=""),immediate.=TRUE)
       knots <- "quantiles"
     }
     
   }
   
-  if(kernel==TRUE&&prune==TRUE) warning(" pruning cannot coexist with categorical kernel smoothing (pruning ignored)")
+  if(kernel==TRUE&&prune==TRUE) {
+    if(display.warnings) warning(" pruning cannot coexist with categorical kernel smoothing (pruning ignored)")
+  }
   if(!is.null(tau)&&prune==TRUE) stop(" pruning is not supported for quantile regression splines")
   
   ## Check for cv="nomad" and complexity="degree-knots" but
@@ -561,17 +568,10 @@ crs.formula <- function(formula,
                                                        cv.func=cv.func,
                                                        degree=degree,
                                                        segments=segments,
-                                                       include=include,
-                                                       random.seed=random.seed,
-                                                       max.bb.eval=max.bb.eval,
-                                                       initial.mesh.size.integer=initial.mesh.size.integer,
-                                                       min.mesh.size.integer=min.mesh.size.integer,
-                                                       min.poll.size.integer=min.poll.size.integer,
-                                                       opts=opts,
-                                                       nmulti=nmulti,
-                                                       tau=tau,
                                                        weights=weights,
-                                                       singular.ok=singular.ok))
+                                                       singular.ok=singular.ok,
+                                                       display.nomad.progress=display.nomad.progress,
+                                                       display.warnings=display.warnings))
       
       cv.min <- cv.return$cv.objc
       degree <- cv.return$degree
@@ -596,7 +596,8 @@ crs.formula <- function(formula,
                                                   segments=segments,
                                                   tau=tau,
                                                   weights=weights,
-                                                  singular.ok=singular.ok))
+                                                  singular.ok=singular.ok,
+                                                  display.warnings=display.warnings))
       
       cv.min <- cv.return$cv.objc
       degree <- cv.return$degree
@@ -635,13 +636,12 @@ crs.formula <- function(formula,
                                                        initial.mesh.size.integer=initial.mesh.size.integer,
                                                        min.mesh.size.real=min.mesh.size.real,
                                                        min.mesh.size.integer=min.mesh.size.integer,
-                                                       min.poll.size.real=min.poll.size.real,
-                                                       min.poll.size.integer=min.poll.size.integer,
-                                                       opts=opts,
                                                        nmulti=nmulti,
                                                        tau=tau,
                                                        weights=weights,
-                                                       singular.ok=singular.ok))
+                                                       singular.ok=singular.ok,
+                                                       display.nomad.progress=display.nomad.progress,
+                                                       display.warnings=display.warnings))
       
       cv.min <- cv.return$cv.objc
       degree <- cv.return$degree
@@ -669,7 +669,8 @@ crs.formula <- function(formula,
                                                   restarts=restarts,
                                                   tau=tau,
                                                   weights=weights,
-                                                  singular.ok=singular.ok))
+                                                  singular.ok=singular.ok,
+                                                  display.warnings=display.warnings))
       
       cv.min <- cv.return$cv.objc
       degree <- cv.return$degree
@@ -700,6 +701,7 @@ crs.formula <- function(formula,
                                               model.return=model.return,
                                               tau=tau,
                                               weights=weights,
+                                              display.warnings=display.warnings,
                                               ...))
   
   

@@ -32,7 +32,7 @@ npglpreg(\dots)
          gradient.categorical = FALSE,
          cv.shrink = TRUE,
          cv.maxPenalty = sqrt(.Machine$double.xmax),
-         cv.warning = FALSE,
+         display.warnings = TRUE,
          Bernstein = TRUE,
          mpi = FALSE,
          \dots)
@@ -76,9 +76,10 @@ npglpreg(\dots)
          gradient.categorical = FALSE,
          cv.shrink = TRUE,
          cv.maxPenalty = sqrt(.Machine$double.xmax),
-         cv.warning = FALSE,
+         display.warnings = TRUE,
          Bernstein = TRUE,
          mpi = FALSE,
+         display.nomad.progress = TRUE,
          \dots)
 }
 
@@ -282,9 +283,9 @@ for each dimension of the continuous \code{x} in \code{txdat}}
   delete-one estimate is not finite or the polynomial basis is not of
   full column rank }
 
-\item{cv.warning}{ a logical value indicating whether to issue an
+\item{display.warnings}{ a logical value indicating whether to issue an
   immediate warning message when ill conditioned bases are encountered
-  during cross-validation (default \code{cv.warning=FALSE}) }
+  during cross-validation (default \code{display.warnings=TRUE}) }
 
 \item{Bernstein}{ a logical value indicating whether to use raw
   polynomials or Bernstein polynomials (default) (note that a Bernstein
@@ -297,6 +298,9 @@ for each dimension of the continuous \code{x} in \code{txdat}}
   the \code{npRmpi} package, you need to broadcast loading of the
   \code{crs} package, and need \code{.Rprofile} in your current
   directory)}
+
+  \item{display.nomad.progress}{ a logical value indicating whether to
+  display the progress of the NOMAD solver (default \code{display.nomad.progress=TRUE}) }
 
   \item{\dots}{
     additional arguments supplied to specify the regression type,

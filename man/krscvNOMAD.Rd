@@ -42,7 +42,9 @@ krscvNOMAD(xz,
            nmulti = 0,
            tau = NULL,
            weights = NULL,
-           singular.ok = FALSE)
+           singular.ok = FALSE,
+           display.nomad.progress = TRUE,
+           display.warnings = TRUE)
 }
 
 \arguments{
@@ -189,6 +191,12 @@ krscvNOMAD(xz,
     \code{FALSE}, discards singular bases during cross-validation (a check
     for ill-conditioned bases is performed).
   }
+
+  \item{display.nomad.progress}{ a logical value indicating whether to
+  display the progress of the NOMAD solver (default \code{display.nomad.progress=TRUE}) }
+
+  \item{display.warnings}{ a logical value indicating whether to
+  display warnings (default \code{display.warnings=TRUE}) }
 }
 
 \details{

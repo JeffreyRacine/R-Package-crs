@@ -39,19 +39,20 @@ gen.xnorm <- function(x=NULL,
                       lbound=NULL,
                       ubound=NULL,
                       er=NULL,
-                      n.integrate=NULL) {
+                      n.integrate=NULL,
+                      display.warnings=TRUE) {
   
   er <- extendrange(x,f=er)
   if(!is.null(lbound)) er[1] <- lbound
   if(!is.null(ubound)) er[2] <- ubound
-  if(min(x) < er[1] | max(x) > er[2]) warning(" data extends beyond the range of `er'")
+  if(min(x) < er[1] | max(x) > er[2]) if(display.warnings) warning(" data extends beyond the range of `er'")
   xint <- sort(as.numeric(c(seq(er[1],er[2],length=round(n.integrate/2)),
                             quantile(x,seq(sqrt(.Machine$double.eps),1-sqrt(.Machine$double.eps),length=round(n.integrate/2))))))
   if(is.null(xeval)) {
     xnorm <- c(x,xint)
   } else {
     xnorm <- c(xeval,x,xint)
-    if(min(xeval) < er[1] | max(xeval) > er[2]) warning(" evaluation data extends beyond the range of `er'")
+    if(min(xeval) < er[1] | max(xeval) > er[2]) if(display.warnings) warning(" evaluation data extends beyond the range of `er'")
   }
   ## Either x will be the first 1:length(x) elements in
   ## object[rank.xnorm] or xeval will be the first 1:length(xeval)
@@ -68,6 +69,7 @@ density.basis <- function(x=NULL,
                           basis="tensor",
                           knots="quantiles",
                           monotone=TRUE,
+                          display.warnings=TRUE,
                           ...) {
   
   ## To obtain the constant of integration for B-spline bases, we need
@@ -91,7 +93,8 @@ density.basis <- function(x=NULL,
                                         xeval=xnorm,
                                         K=cbind(degree,segments+if(monotone){2}else{0}),
                                         knots=knots,
-                                        basis=basis))
+                                        basis=basis,
+                                        display.warnings=display.warnings))
   
   if(monotone) Pnorm <- Pnorm[,-c(2,degree+segments+1)]
   
@@ -104,7 +107,8 @@ density.basis <- function(x=NULL,
                                         xeval=xnorm,
                                         K=cbind(1,1),
                                         knots=knots,
-                                        basis=basis))
+                                        basis=basis,
+                                        display.warnings=display.warnings))
   
   ## We append the linear basis to the left and rightmost polynomial
   ## bases. We match the slope of the linear basis to that of the
@@ -173,6 +177,7 @@ density.deriv.basis <- function(x=NULL,
                                 monotone=TRUE,
                                 deriv.index=1,
                                 deriv=1,
+                                display.warnings=TRUE,
                                 ...) {
   
   suppressWarnings(Pnorm.deriv <- prod.spline(x=x,
@@ -181,7 +186,8 @@ density.deriv.basis <- function(x=NULL,
                                               knots=knots,
                                               basis=basis,
                                               deriv.index=deriv.index,
-                                              deriv=deriv))
+                                              deriv=deriv,
+                                              display.warnings=display.warnings))
   
   if(monotone) Pnorm.deriv <- Pnorm.deriv[,-c(2,degree+segments+1)]
   
@@ -191,7 +197,8 @@ density.deriv.basis <- function(x=NULL,
                                         knots=knots,
                                         basis=basis,
                                         deriv.index=deriv.index,
-                                        deriv=deriv))
+                                        deriv=deriv,
+                                        display.warnings=display.warnings))
   
   ## For the derivative bases on the extended range `xnorm', above
   ## and below max(x)/min(x) we assign the bases to constants
@@ -244,7 +251,9 @@ clsd <- function(x=NULL,
                  random.seed=42,
                  maxit=10^5,
                  max.attempts=25,
-                 NOMAD=FALSE) {
+                 NOMAD=FALSE,
+                 display.warnings=TRUE,
+                 display.nomad.progress=TRUE) {
   
   if(elastic.max && !NOMAD) {
     degree.max <- 3
@@ -278,7 +287,8 @@ clsd <- function(x=NULL,
                              lbound=lbound,
                              ubound=ubound,
                              er=er,
-                             n.integrate=n.integrate)
+                             n.integrate=n.integrate,
+                             display.warnings=display.warnings)
   
   xnorm <- gen.xnorm.out$xnorm
   rank.xnorm <- gen.xnorm.out$rank.xnorm
@@ -314,7 +324,9 @@ clsd <- function(x=NULL,
                                                 verbose=verbose,
                                                 max.attempts=max.attempts,
                                                 random.seed=random.seed,
-                                                NOMAD=NOMAD))
+                                                NOMAD=NOMAD,
+                                                display.warnings=display.warnings,
+                                                display.nomad.progress=display.nomad.progress))
     
     beta <- ls.ml.out$beta
     degree <- ls.ml.out$degree
@@ -330,7 +342,8 @@ clsd <- function(x=NULL,
                                lbound=lbound,
                                ubound=ubound,
                                er=er,
-                               n.integrate=n.integrate)
+                               n.integrate=n.integrate,
+                               display.warnings=display.warnings)
     
     xnorm <- gen.xnorm.out$xnorm
     rank.xnorm <- gen.xnorm.out$rank.xnorm
@@ -347,7 +360,8 @@ clsd <- function(x=NULL,
                                                   segments=segments,
                                                   basis=basis,
                                                   knots=knots,
-                                                  monotone=monotone))
+                                                  monotone=monotone,
+                                                  display.warnings=display.warnings))
   
   if(ncol(Pnorm)!=length(beta)) stop(paste(" Incompatible arguments: beta must be of dimension ",ncol(Pnorm),sep=""))
   
@@ -386,7 +400,8 @@ clsd <- function(x=NULL,
                                                                 knots=knots,
                                                                 monotone=monotone,
                                                                 deriv.index=deriv.index,
-                                                                deriv=deriv))
+                                                                deriv=deriv,
+                                                                display.warnings=display.warnings))
     
     f.norm.deriv <- as.numeric(f.norm*Pnorm.deriv%*%beta)
     
@@ -527,7 +542,9 @@ ls.ml <- function(x=NULL,
                   verbose=NULL,
                   max.attempts=NULL,
                   random.seed=NULL,
-                  NOMAD=FALSE) {
+                  NOMAD=FALSE,
+                  display.warnings=TRUE,
+                  display.nomad.progress=TRUE) {
   
   ## This function conducts log spline maximum
   ## likelihood. Multistarting is supported as is breaking out to
@@ -573,7 +590,7 @@ ls.ml <- function(x=NULL,
       
       while(s <= segments.max) {
         
-        if(options('crs.messages')$crs.messages) {
+        if(display.nomad.progress && options('crs.messages')$crs.messages) {
           if(verbose) cat("\n")
           cat("\r                                                                                                  ")
           cat("\rOptimizing, degree = ",d,", segments = ",s,", degree.opt = ",d.opt, ", segments.opt = ",s.opt," ",sep="")
@@ -588,7 +605,8 @@ ls.ml <- function(x=NULL,
                                segments=s,
                                basis=basis,
                                knots=knots,
-                               monotone=monotone)
+                               monotone=monotone,
+                               display.warnings=display.warnings)
         
         P <- Pnorm[rank.xnorm,][1:length.x,]
         colSumsP <- colSums(P)
@@ -705,6 +723,7 @@ ls.ml <- function(x=NULL,
       maxit <- params$maxit
       max.attempts <- params$max.attempts
       verbose <- params$verbose
+      display.warnings <- params$display.warnings
       
       length.x <- length(x)
       length.xnorm <- length(xnorm)
@@ -720,7 +739,8 @@ ls.ml <- function(x=NULL,
                              segments=s,
                              basis=basis,
                              knots=knots,
-                             monotone=monotone)
+                             monotone=monotone,
+                             display.warnings=display.warnings)
       
       P <- Pnorm[rank.xnorm,][1:length.x,]
       colSumsP <- colSums(P)
@@ -770,7 +790,7 @@ ls.ml <- function(x=NULL,
         
       }
       
-      if(options('crs.messages')$crs.messages) {
+      if(display.nomad.progress && options('crs.messages')$crs.messages) {
         if(verbose) cat("\n")
         cat("\r                                                                                                  ")
         cat("\rOptimizing, degree = ",d,", segments = ",s,", log likelihood = ",optim.out$value,sep="")
@@ -811,6 +831,7 @@ ls.ml <- function(x=NULL,
     params$maxit <- maxit
     params$max.attempts <- max.attempts
     params$verbose <- verbose            
+    params$display.warnings <- display.warnings
     
     solution <- snomadr(eval.f=eval.f,
                         n=2,## number of variables
@@ -820,7 +841,7 @@ ls.ml <- function(x=NULL,
                         lb=lb,
                         ub=ub,
                         nmulti=nmulti,
-                        print.output=FALSE,
+                        display.nomad.progress=display.nomad.progress,
                         opts=opts,
                         params=params)
     
@@ -847,7 +868,8 @@ ls.ml <- function(x=NULL,
                            segments=s,
                            basis=basis,
                            knots=knots,
-                           monotone=monotone)
+                           monotone=monotone,
+                           display.warnings=display.warnings)
     
     P <- Pnorm[rank.xnorm,][1:length.x,]
     colSumsP <- colSums(P)
@@ -904,11 +926,13 @@ ls.ml <- function(x=NULL,
   
   if(options('crs.messages')$crs.messages) {
     cat("\r                                                                            ")
-    if(!(degree.min==degree.max) && (d.opt==degree.max)) warning(paste(" optimal degree equals search maximum (", d.opt,"): rerun with larger degree.max",sep=""))
-    if(!(segments.min==segments.max) && (s.opt==segments.max)) warning(paste(" optimal segment equals search maximum (", s.opt,"): rerun with larger segments.max",sep=""))
-    if(par.opt[1]>0|par.opt[length(par.opt)]>0) warning(" optim() delivered a positive weight for linear segment (supposed to be negative)")
-    if(!monotone&&par.opt[1]<=monotone.lb) warning(paste(" optimal weight for left nonmonotone basis equals search minimum (",par.opt[1],"): rerun with smaller monotone.lb",sep=""))
-    if(!monotone&&par.opt[length(par.opt)]<=monotone.lb) warning(paste(" optimal weight for right nonmonotone basis equals search minimum (",par.opt[length(par.opt)],"): rerun with smaller monotone.lb",sep=""))
+    if(display.warnings) {
+      if(!(degree.min==degree.max) && (d.opt==degree.max)) warning(paste(" optimal degree equals search maximum (", d.opt,"): rerun with larger degree.max",sep=""))
+      if(!(segments.min==segments.max) && (s.opt==segments.max)) warning(paste(" optimal segment equals search maximum (", s.opt,"): rerun with larger segments.max",sep=""))
+      if(par.opt[1]>0|par.opt[length(par.opt)]>0) warning(" optim() delivered a positive weight for linear segment (supposed to be negative)")
+      if(!monotone&&par.opt[1]<=monotone.lb) warning(paste(" optimal weight for left nonmonotone basis equals search minimum (",par.opt[1],"): rerun with smaller monotone.lb",sep=""))
+      if(!monotone&&par.opt[length(par.opt)]<=monotone.lb) warning(paste(" optimal weight for right nonmonotone basis equals search minimum (",par.opt[length(par.opt)],"): rerun with smaller monotone.lb",sep=""))
+    }
   }
   
   ## Restore seed

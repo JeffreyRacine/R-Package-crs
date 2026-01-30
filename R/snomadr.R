@@ -50,7 +50,7 @@ snomadr <-
             nmulti = 0,   #0: call single nomad,
             random.seed = 0,  # seed will be used for generating multiple initial points.
             opts = list(),
-            print.output = TRUE,  #0: if it is FALSE,  there will be no output in snomadr, if DISPLAY_DEGREE=0 and print_output is true, there will be no any output.
+            display.nomad.progress = TRUE,  #0: if it is FALSE,  there will be no output in snomadr, if DISPLAY_DEGREE=0 and print_output is true, there will be no any output.
             information = list(),
             snomadr.environment = new.env(),
             ... ) {
@@ -99,7 +99,7 @@ snomadr <-
     ## The number of variables should not be null.
     if (missing(n ) || missing(eval.f)) stop("Must provide the objective function and the number of variables")
     if(missing(nmulti)||nmulti < 0) nmulti <- 0
-    if(missing(print.output)) print.output <- TRUE
+    if(missing(display.nomad.progress)) display.nomad.progress <- TRUE
     
     ## Define 'continuous' to types of variables
     if (is.null(bbin) ) { bbin <- rep (0, n)}
@@ -179,7 +179,7 @@ snomadr <-
                 "nmulti"=as.integer(nmulti),
                 "random.seed"=as.integer(random.seed),
                 "options"=get.option.types(opts),
-                "print.output"=print.output,
+                "print.output"=display.nomad.progress,
                 "snomadr.environment"=snomadr.environment)
     
     attr(ret, "class") <- "snomadr"

@@ -44,6 +44,8 @@ crsivderiv <- function(y,
                                  "MIN_MESH_SIZE"=paste("r",sqrt(.Machine$double.eps),sep=""),
                                  "MIN_POLL_SIZE"=paste("r",1,sep=""),
                                  "DISPLAY_DEGREE"=0),
+                       display.nomad.progress=TRUE,
+                       display.warnings=TRUE,
                        ...) {
   
   crs.messages <- getOption("crs.messages")
@@ -126,9 +128,9 @@ crsivderiv <- function(y,
   console <- printClear(console)
   console <- printPop(console)
   if(is.null(x)) {
-    console <- printPush(paste("Computing optimal smoothing for f(z) and S(z) for iteration 1...",sep=""),console)
+    if(display.nomad.progress) console <- printPush(paste("Computing optimal smoothing for f(z) and S(z) for iteration 1...",sep=""),console)
   } else {
-    console <- printPush(paste("Computing optimal smoothing  f(z) and S(z) for iteration 1...",sep=""),console)
+    if(display.nomad.progress) console <- printPush(paste("Computing optimal smoothing  f(z) and S(z) for iteration 1...",sep=""),console)
   }
   
   ## Note - here I am only treating the univariate case, so let's
@@ -141,7 +143,7 @@ crsivderiv <- function(y,
   
   #  require(np)
   
-  cat(paste("\rIteration ", 1, " of at most ", iterate.max,sep=""))
+  if(display.nomad.progress) cat(paste("\rIteration ", 1, " of at most ", iterate.max,sep=""))
   
   ## Let's compute the bandwidth object for the unconditional density
   ## for the moment. Use the normal-reference rule for speed
@@ -165,16 +167,16 @@ crsivderiv <- function(y,
     console <- printClear(console)
     console <- printPop(console)
     if(is.null(x)) {
-      console <- printPush(paste("Computing optimal smoothing for E(y|z) for iteration 1...",sep=""),console)
+      if(display.nomad.progress) console <- printPush(paste("Computing optimal smoothing for E(y|z) for iteration 1...",sep=""),console)
     } else {
-      console <- printPush(paste("Computing optimal smoothing  for E(y|z,x) for iteration 1...",sep=""),console)
+      if(display.nomad.progress) console <- printPush(paste("Computing optimal smoothing  for E(y|z,x) for iteration 1...",sep=""),console)
     }
     
     if(start.from == "Eyz") {
       ## Start from E(Y|z)      
       if(crs.messages) options(crs.messages=FALSE)
       model.E.y.z <- crs(formula.yz,
-                         opts=opts,
+                         opts=opts,display.nomad.progress=display.nomad.progress,display.warnings=display.warnings,
                          data=traindata,
                          deriv=1,
                          ...)
@@ -183,8 +185,8 @@ crsivderiv <- function(y,
       phi.prime <- attr(E.y.z,"deriv.mat")[,1]
     } else {
       ## Start from E(E(Y|w)|z)
-      E.y.w <- fitted(crs(formula.yw,opts=opts,data=traindata,...))
-      model.E.E.y.w.z <- crs(formula.Eywz,opts=opts,data=traindata,deriv=1,...)
+      E.y.w <- fitted(crs(formula.yw,opts=opts,display.nomad.progress=display.nomad.progress,display.warnings=display.warnings,data=traindata,...))
+      model.E.E.y.w.z <- crs(formula.Eywz,opts=opts,display.nomad.progress=display.nomad.progress,display.warnings=display.warnings,data=traindata,deriv=1,...)
       E.E.y.w.z <- predict(model.E.E.y.w.z,newdata=evaldata,...)
       phi.prime <- attr(E.E.y.w.z,"deriv.mat")[,1]
     }
@@ -200,9 +202,9 @@ crsivderiv <- function(y,
   console <- printClear(console)
   console <- printPop(console)
   if(is.null(x)) {
-    console <- printPush(paste("Computing optimal smoothing for E(y|w) (stopping rule) for iteration 1...",sep=""),console)
+    if(display.nomad.progress) console <- printPush(paste("Computing optimal smoothing for E(y|w) (stopping rule) for iteration 1...",sep=""),console)
   } else {
-    console <- printPush(paste("Computing optimal smoothing  for E(y|w) (stopping rule) for iteration 1...",sep=""),console)
+    if(display.nomad.progress) console <- printPush(paste("Computing optimal smoothing  for E(y|w) (stopping rule) for iteration 1...",sep=""),console)
   }
   
   ## NOTE - this presumes univariate z case... in general this would
@@ -222,7 +224,7 @@ crsivderiv <- function(y,
   
   if(crs.messages) options(crs.messages=FALSE)
   model.E.y.w <- crs(formula.yw,
-                     opts=opts,
+                     opts=opts,display.nomad.progress=display.nomad.progress,display.warnings=display.warnings,
                      data=traindata,
                      ...)
   if(crs.messages) options(crs.messages=TRUE)    
@@ -235,7 +237,7 @@ crsivderiv <- function(y,
   
   if(crs.messages) options(crs.messages=FALSE)
   model.E.phi.w <- crs(formula.phiw,
-                       opts=opts,
+                       opts=opts,display.nomad.progress=display.nomad.progress,display.warnings=display.warnings,
                        data=traindata,
                        ...)
   if(crs.messages) options(crs.messages=TRUE)    
@@ -257,7 +259,7 @@ crsivderiv <- function(y,
     
     if(crs.messages) options(crs.messages=FALSE)
     model.E.mu.w <- crs(formula.muw,
-                        opts=opts,
+                        opts=opts,display.nomad.progress=display.nomad.progress,display.warnings=display.warnings,
                         data=traindata,
                         ...)
     
@@ -277,7 +279,7 @@ crsivderiv <- function(y,
     
     if(crs.messages) options(crs.messages=FALSE)
     model.E.phi.w <- crs(formula.phiw,
-                         opts=opts,
+                         opts=opts,display.nomad.progress=display.nomad.progress,display.warnings=display.warnings,
                          data=traindata,
                          ...)
     
@@ -321,14 +323,14 @@ crsivderiv <- function(y,
     
     ## Save previous run in case stop norm increases
     
-    cat(paste("\rIteration ", j, " of at most ", iterate.max,sep=""))
+    if(display.nomad.progress) cat(paste("\rIteration ", j, " of at most ", iterate.max,sep=""))
     
     console <- printClear(console)
     console <- printPop(console)
     if(is.null(x)) {
-      console <- printPush(paste("Computing optimal smoothing and phi(z) for iteration ", j,"...",sep=""),console)
+      if(display.nomad.progress) console <- printPush(paste("Computing optimal smoothing and phi(z) for iteration ", j,"...",sep=""),console)
     } else {
-      console <- printPush(paste("Computing optimal smoothing and phi(z,x) for iteration ", j,"...",sep=""),console)
+      if(display.nomad.progress) console <- printPush(paste("Computing optimal smoothing and phi(z,x) for iteration ", j,"...",sep=""),console)
     }
     
     ## NOTE - this presumes univariate z case... in general this would
@@ -354,7 +356,7 @@ crsivderiv <- function(y,
       
       if(crs.messages) options(crs.messages=FALSE)
       model.E.mu.w <- crs(formula.muw,
-                          opts=opts,
+                          opts=opts,display.nomad.progress=display.nomad.progress,display.warnings=display.warnings,
                           data=traindata,
                           ...)
       
@@ -374,7 +376,7 @@ crsivderiv <- function(y,
       
       if(crs.messages) options(crs.messages=FALSE)
       model.E.phi.w <- crs(formula.phiw,
-                           opts=opts,
+                           opts=opts,display.nomad.progress=display.nomad.progress,display.warnings=display.warnings,
                            data=traindata,
                            ...)
       
@@ -450,7 +452,7 @@ crsivderiv <- function(y,
   norm.value <- norm.stop/(1:length(norm.stop))
   
   if(which.min(norm.stop) == 1 && is.monotone.increasing(norm.stop)) {
-    warning("Stopping rule increases monotonically (consult model$norm.stop):\nThis could be the result of an inspired initial value (unlikely)\nNote: we suggest manually choosing phi.0 and restarting (e.g. instead set `starting.values' to E[E(Y|w)|z])")
+    if(display.warnings) warning("Stopping rule increases monotonically (consult model$norm.stop):\nThis could be the result of an inspired initial value (unlikely)\nNote: we suggest manually choosing phi.0 and restarting (e.g. instead set `starting.values' to E[E(Y|w)|z])")
     convergence <- "FAILURE_MONOTONE_INCREASING"
     #    phi <- starting.values.phi
     #    phi.prime <- starting.values.phi.prime
@@ -472,7 +474,9 @@ crsivderiv <- function(y,
   console <- printClear(console)
   console <- printPop(console)
   
-  if(j == iterate.max) warning(" iterate.max reached: increase iterate.max or inspect norm.stop vector")
+  if(display.warnings) {
+    if(j == iterate.max) warning(" iterate.max reached: increase iterate.max or inspect norm.stop vector")
+  }
   
   return(list(phi=phi,
               phi.prime=phi.prime,

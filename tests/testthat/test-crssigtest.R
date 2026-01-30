@@ -6,7 +6,7 @@ test_that("crssigtest works", {
   x2 <- runif(n)
   y <- x1 + rnorm(n, sd=0.1)
   
-  model <- crs(y ~ x1 + x2, degree=c(3,3), segments=c(1,1), cv="none", basis="additive")
+  model <- crs(y ~ x1 + x2, degree=c(3,3), segments=c(1,1), cv="none", basis="additive", display.warnings=FALSE, display.nomad.progress=FALSE)
   
   # Test with very few bootstrap reps for speed
   sig <- crssigtest(model, boot.num=9, boot=TRUE)
@@ -23,7 +23,7 @@ test_that("crssigtest works without bootstrap", {
   x1 <- runif(n)
   y <- x1 + rnorm(n, sd=0.1)
   
-  model <- crs(y ~ x1, degree=3, segments=1, cv="none", basis="additive")
+  model <- crs(y ~ x1, degree=3, segments=1, cv="none", basis="additive", display.warnings=FALSE, display.nomad.progress=FALSE)
   
   sig <- crssigtest(model, boot=FALSE)
   

@@ -151,7 +151,7 @@ is.monotone.increasing <- function(x) {
 ## results in a better-conditioned matrix. Hence we ignore nbreak and
 ## set it to its minimum (2)
 
-check.max.spline.degree <- function(xdat=NULL,degree=NULL,issue.warning=FALSE) {
+check.max.spline.degree <- function(xdat=NULL,degree=NULL,display.warnings=TRUE) {
   
   if(is.null(xdat)) stop(" xdat must be provided")
   if(is.null(degree)) stop(" degree vector must be provided")
@@ -184,7 +184,7 @@ check.max.spline.degree <- function(xdat=NULL,degree=NULL,issue.warning=FALSE) {
           }
         }
         if(d[i] < degree[i]) {
-          if(issue.warning) warning(paste("\r Predictor ",i," B-spline basis is ill-conditioned beyond degree ",d[i],": see note in ?npglpreg",sep=""),immediate.=TRUE)
+          if(display.warnings) warning(paste("\r Predictor ",i," B-spline basis is ill-conditioned beyond degree ",d[i],": see note in ?npglpreg",sep=""),immediate.=TRUE)
           ill.conditioned <- TRUE
         }
       }

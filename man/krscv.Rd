@@ -29,7 +29,8 @@ krscv(xz,
       segments = segments,
       tau = NULL,
       weights = NULL,
-      singular.ok = FALSE)
+      singular.ok = FALSE,
+      display.warnings = TRUE)
 }
 
 \arguments{
@@ -119,6 +120,9 @@ krscv(xz,
     \code{FALSE}, discards singular bases during cross-validation (a check
     for ill-conditioned bases is performed).
   }
+
+  \item{display.warnings}{ a logical value indicating whether to
+  display warnings (default \code{display.warnings=TRUE}) }
 
 }
 

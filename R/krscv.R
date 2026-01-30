@@ -23,7 +23,8 @@ krscv <- function(xz,
                   segments=segments,
                   tau=NULL,
                   weights=NULL,
-                  singular.ok=FALSE) {
+                  singular.ok=FALSE,
+                  display.warnings=TRUE) {
   
   complexity <- match.arg(complexity)
   knots <- match.arg(knots)
@@ -678,8 +679,10 @@ krscv <- function(xz,
     knots.opt <- attributes(cv.knots)$knots.opt
   }
   
-  if(any(degree==degree.max)) warning(paste(" optimal degree equals search maximum (", degree.max,"): rerun with larger degree.max",sep=""))
-  if(any(segments==segments.max)) warning(paste(" optimal segment equals search maximum (", segments.max,"): rerun with larger segments.max",sep=""))
+  if(display.warnings) {
+    if(any(degree==degree.max)) warning(paste(" optimal degree equals search maximum (", degree.max,"): rerun with larger degree.max",sep=""))
+    if(any(segments==segments.max)) warning(paste(" optimal segment equals search maximum (", segments.max,"): rerun with larger segments.max",sep=""))
+  }
   
   crscv(K=K.opt,
         I=NULL,
