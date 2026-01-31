@@ -1840,8 +1840,8 @@ cv.factor.spline <- function(x,
       }
       
       ## Augment design matrix with ridge penalty
-      ## Solve: (X'X + λI)β = X'y
-      ## Equivalent to: [X; √λI][β] = [y; 0]
+      ## Solve: (X'X + lambda*I)beta = X'y
+      ## Equivalent to: [X; sqrt(lambda)I][beta] = [y; 0]
       k_X <- ncol(X)
       X_aug <- rbind(X, sqrt(ridge.lambda) * diag(k_X))
       y_aug <- c(y, rep(0, k_X))
@@ -1923,7 +1923,7 @@ cv.factor.spline <- function(x,
       ## Calculate hat values for CV
       ## For ridge regression, we need to adjust the hat matrix calculation
       if(use_ridge_now) {
-        ## Effective hat matrix for ridge: H = X(X'X + λI)^{-1}X'
+        ## Effective hat matrix for ridge: H = X(X'X + lambda*I)^{-1}X'
         ## For augmented formulation: use hat values from augmented fit
         ## but only for original observations
         htt_aug <- hat.from.lm.fit(model)
@@ -2655,7 +2655,7 @@ svd_lm_fit <- function(x, y, tol = 1e-7) {
   ## Truncate to effective rank
   d_inv <- ifelse(d > max(tol * d[1], 0), 1/d, 0)
   
-  ## Compute coefficients: β = V D^{-1} U' y
+  ## Compute coefficients: beta = V D^{-1} U' y
   u_truncated <- svd_x$u[, 1:rank, drop = FALSE]
   v_truncated <- svd_x$v[, 1:rank, drop = FALSE]
   
