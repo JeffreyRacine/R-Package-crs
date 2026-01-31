@@ -671,11 +671,16 @@ npglpreg.formula <- function(formula,
   #  } else {
   #    if(!require(npRmpi)) stop(" Error: you must install the npRmpi package to use this function")
   #  }
-  ## Set DISPLAY_DEGREE to 0 if crs.messages=FALSE and DISPLAY_DEGREE
-  ## is not provided
+  ## Set DISPLAY_DEGREE to 0 if crs.messages=FALSE or
+  ## display.nomad.progress=FALSE and DISPLAY_DEGREE is not provided
   
   if(!options('crs.messages')$crs.messages && is.null(opts[["DISPLAY_DEGREE"]])) opts$"DISPLAY_DEGREE"=0
   
+  ## Set crs.messages to FALSE if display.nomad.progress is FALSE
+  old.crs.messages <- options('crs.messages')$crs.messages
+  if(!display.nomad.progress) options(crs.messages = FALSE)
+  on.exit(options(crs.messages = old.crs.messages))
+
   ckertype <- match.arg(ckertype)
   ukertype <- match.arg(ukertype)
   okertype <- match.arg(okertype)
@@ -2849,6 +2854,8 @@ glpcvNOMAD <- function(ydat=NULL,
   
   ## Whether or not to display the information in snomadr
   
+  if(!display.nomad.progress && is.null(opts[["DISPLAY_DEGREE"]])) opts$"DISPLAY_DEGREE" <- 0
+
   if(display.nomad.progress) {
     if(!is.null(opts$DISPLAY_DEGREE)){
       if(opts$DISPLAY_DEGREE <= 0){
