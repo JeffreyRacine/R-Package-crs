@@ -76,9 +76,7 @@ prod.spline <- function(x,
   if(!is.null(z) && (num.I != num.z)) stop(paste(" dimension of z and I incompatible (",num.z,",",num.I,")",sep=""))
   
   if(any(K[,1] > 0)||any(I != 0)) {
-    
     tp <- list()
-    
     j <- 1
     for(i in 1:num.x) {
       if(K[i,1] > 0) {
@@ -109,7 +107,6 @@ prod.spline <- function(x,
         j <- j+1
       }
     }
-    
     if(!is.null(z)) for(i in 1:num.z) {
       if(I[i] == 1) {
         if(is.null(zeval)) {
@@ -120,11 +117,9 @@ prod.spline <- function(x,
         j <- j+1
       }
     }
-    
     ## When more than one element of K[,1] > 0 or I > 0 take all bases
     ## plus tensor product (all interactions), otherwise just the
     ## original bases for the one variable.
-    
     if(NROW(tp) > 1) {
       ## First create all basis matrices for all continuous predictors
       ## (in essence, additive by default)
@@ -148,13 +143,10 @@ prod.spline <- function(x,
       P <- tp[[1]]
       dim.P.no.tensor <- NCOL(P)
     }
-    
   } else {
-    
     ## No relevant continuous or discrete predictors.
     dim.P.no.tensor <- 0
     P <- matrix(rep(1,num.x),num.x,1)
-    
   }
   
   attr(P,"dim.P.no.tensor") <- dim.P.no.tensor
@@ -176,197 +168,197 @@ predictKernelSpline <- function(x,
                                 zeval=NULL,
                                 knots=c("quantiles","uniform"),
                                 basis=c("additive","tensor","glp"),
-                                                                 model.return=FALSE,
-                                                                 tau=NULL,
-                                                                 weights=NULL, 
-                                                                 display.warnings=TRUE,
-                                                                 display.nomad.progress=TRUE,
-                                                                 ...){
-                                  
-                                  if(missing(x) || missing(y) || missing (K)) stop(" must provide x, y and K")
-                                  if(!is.matrix(K)) stop(" K must be a two-column matrix")
-                                  
-                                  if(!is.null(tau)) if(tau <= 0) stop(" tau must be > 0")
-                                  if(!is.null(tau)) if(tau >= 1) stop(" tau must be < 1")
-                                  
-                                  basis <- match.arg(basis)
-                                  knots <- match.arg(knots)
-                                  if(is.null(is.ordered.z)) stop(" is.ordered.z must be provided")
-                                  
-                                  x <- as.matrix(x)
-                                  
-                                  if(!is.null(z)) z <- as.matrix(z)
-                                  
-                                  console <- newLineConsole()
-                                  if(display.nomad.progress) console <- printPush("Working...",console = console)
-                                  
-                                  model <- NULL ## Returned if model=FALSE and there exist categorical
-                                  ## predictors
-                                  
-                                  if(is.null(z)) {
-                                    
-                                    ## First no categorical predictor case, never reached when called by crs()
-                                    
-                                    if(any(K[,1] > 0)) {
-                                      
-                                      ## Degree > 0
-                                      
-                                      P <- prod.spline(x=x,K=K,knots=knots,basis=basis,display.warnings=display.warnings)
-                                      
-                                      if(basis=="additive" || basis=="glp") {
-                                        if(is.null(tau))
-                                          model <- lm(y~P,weights=weights)
-                                        else
-                                          suppressWarnings(model <- rq(y~P,tau=tau,method="fn",weights=weights))
-                                      } else {
-                                        if(is.null(tau))
-                                          model <- lm(y~P-1,weights=weights)
-                                        else
-                                          suppressWarnings(model <- rq(y~P-1,tau=tau,method="fn",weights=weights))
-                                      }
-                                      if(is.null(xeval)) {
-                                        fit.spline <- predict(model,interval="confidence",se.fit=TRUE)
-                                      } else {
-                                        P <- prod.spline(x=x,K=K,xeval=xeval,knots=knots,basis=basis,display.warnings=display.warnings)
-                                        fit.spline <- predict(model,newdata=data.frame(as.matrix(P)),interval="confidence",se.fit=TRUE)
-                                      }
-                                      
-                                    } else {
-                                      
-                                      ## Degree == 0
-                                      
-                                      if(is.null(tau))
-                                        model <- lm(y~1,weights=weights)
-                                      else
-                                        suppressWarnings(model <- rq(y~1,tau=tau,method="fn",weights=weights))
-                                      if(is.null(xeval)) {
-                                        fit.spline <- predict(model,interval="confidence",se.fit=TRUE)
-                                      } else {
-                                        fit.spline <- predict(model,newdata=data.frame(rep(coef(model),NROW(xeval))),interval="confidence",se.fit=TRUE)
-                                      }
-                                    }
-                                    
-                                    if(is.null(tau))
-                                      fit.spline <- cbind(fit.spline[[1]],se=fit.spline[[2]])
-                                    else
-                                      fit.spline <- cbind(fit.spline,se=ifelse(NCOL(fit.spline)>1,(fit.spline[,3]-fit.spline[,1])/qnorm(0.975),NA))
-                                    
-                                    if(is.null(tau))
-                                      htt <- hatvalues(model)
-                                    else
-                                      htt <- hat(model$qr)
-                                    
-                                    htt <- ifelse(htt < 1, htt, 1-.Machine$double.eps)
-                                    
-                                    if(is.null(tau))
-                                      rank <- model$rank
-                                    else
-                                      rank <- NCOL(model$x)
-                                    
-                                  } else {
-                                    
-                                    if(model.return) model <- list()
-                                    
-                                    ## Categorical predictor case
-                                    
-                                    n <- NROW(x)
-                                    
-                                    ## Estimation z information
-                                    
-                                    z.unique <- uniquecombs(as.matrix(z))
-                                    num.z <- ncol(z.unique)
-                                    ind <-  attr(z.unique,"index")
-                                    ind.vals <-  unique(ind)
-                                    nrow.z.unique <- nrow(z.unique)
-                                    
-                                    if(any(K[,1] > 0)) {
-                                      
-                                      ## Degree > 0, fitted
-                                      
-                                      if(is.null(xeval)) {
-                                        fit.spline <- matrix(NA,nrow=n,ncol=4)
-                                        htt <- numeric(length=n)
-                                        P.hat <- numeric(length=n)
-                                        for(i in 1:nrow.z.unique) {
-                                          zz <- ind == ind.vals[i]
-                                          L <- prod.kernel(Z=z,z=z.unique[ind.vals[i],],lambda=lambda,is.ordered.z=is.ordered.z)
-                                          if(!is.null(weights)) L <- weights*L
-                                          P <- prod.spline(x=x,K=K,knots=knots,basis=basis,display.warnings=display.warnings)
-                                          k <- NCOL(P)
-                                          if(basis=="additive" || basis=="glp") {
-                                            if(is.null(tau))
-                                              model.z.unique <- lm(y~P,weights=L)
-                                            else
-                                              suppressWarnings(model.z.unique <- rq(y~P,weights=L,tau=tau,method="fn"))
-                                            model.z.unique.hat <- lm(y~P,weights=L)
-                                          } else {
-                                            if(is.null(tau))
-                                              model.z.unique <- lm(y~P-1,weights=L)
-                                            else
-                                              suppressWarnings(model.z.unique <- rq(y~P-1,weights=L,tau=tau,method="fn"))
-                                            model.z.unique.hat <- lm(y~P-1,weights=L)
-                                          }
-                                          if(model.return) model[[i]] <- model.z.unique
-                                          if(is.null(tau))
-                                            htt[zz] <- hatvalues(model.z.unique)[zz]
-                                          else
-                                            htt[zz] <- hatvalues(model.z.unique.hat)[zz]
-                                          
-                                          P.hat[zz] <- sum(L)
-                                          P <- prod.spline(x=x,K=K,xeval=x[zz,,drop=FALSE],knots=knots,basis=basis,display.warnings=display.warnings)
-                                          tmp <- predict(model.z.unique,newdata=data.frame(as.matrix(P)),interval="confidence",se.fit=TRUE)
-                                          
-                                          if(is.null(tau))
-                                            fit.spline[zz,] <- cbind(tmp[[1]],tmp[[2]])
-                                          else
-                                            fit.spline[zz,] <- cbind(tmp,(tmp[,3]-tmp[,1])/qnorm(0.975))
-                                          rm(tmp)
-                                        }
-                                      } else {
-                                        
-                                        ## Degree > 0, evaluation
-                                        
-                                        zeval.unique <- uniquecombs(as.matrix(zeval))
-                                        num.zeval <- ncol(zeval.unique)
-                                        ind.zeval <-  attr(zeval.unique,"index")
-                                        ind.zeval.vals <-  unique(ind.zeval)
-                                        nrow.zeval.unique <- nrow(zeval.unique)
-                                        
-                                        num.eval <- nrow(zeval)
-                                        
-                                        fit.spline <- matrix(NA,nrow=num.eval,ncol=4)
-                                        htt <- NULL ## No hatvalues for evaluation
-                                        P.hat <- NULL
-                                        for(i in 1:nrow.zeval.unique) {
-                                          zz <- ind.zeval == ind.zeval.vals[i]
-                                          L <- prod.kernel(Z=z,z=zeval.unique[ind.zeval.vals[i],],lambda=lambda,is.ordered.z=is.ordered.z)
-                                          if(!is.null(weights)) L <- weights*L
-                                          P <- prod.spline(x=x,K=K,knots=knots,basis=basis,display.warnings=display.warnings)
-                                          k <- NCOL(P)
-                                          if(basis=="additive" || basis=="glp") {
-                                            if(is.null(tau))
-                                              model.z.unique <- lm(y~P,weights=L)
-                                            else
-                                              suppressWarnings(model.z.unique <- rq(y~P,weights=L,tau=tau,method="fn"))
-                                          } else {
-                                            if(is.null(tau))
-                                              model.z.unique <- lm(y~P-1,weights=L)
-                                            else
-                                              suppressWarnings(model.z.unique <- rq(y~P-1,weights=L,tau=tau,method="fn"))
-                                          }
-                                          if(model.return) model[[i]] <- model.z.unique
-                                          P <- prod.spline(x=x,K=K,xeval=xeval[zz,,drop=FALSE],knots=knots,basis=basis,display.warnings=display.warnings)
-                                          tmp <- predict(model.z.unique,newdata=data.frame(as.matrix(P)),interval="confidence",se.fit=TRUE)
-                                          
-                                          if(is.null(tau))
-                                            fit.spline[zz,] <- cbind(tmp[[1]],tmp[[2]])
-                                          else
-                                            fit.spline[zz,] <- cbind(tmp,(tmp[,3]-tmp[,1])/qnorm(0.975))
-                                          
-                                          rm(tmp)
-                                        }
-                                        
-                                      }      
+                                model.return=FALSE,
+                                tau=NULL,
+                                weights=NULL,
+                                display.warnings=TRUE,
+                                display.nomad.progress=TRUE,
+                                ...){
+  
+  if(missing(x) || missing(y) || missing (K)) stop(" must provide x, y and K")
+  if(!is.matrix(K)) stop(" K must be a two-column matrix")
+  
+  if(!is.null(tau)) if(tau <= 0) stop(" tau must be > 0")
+  if(!is.null(tau)) if(tau >= 1) stop(" tau must be < 1")
+  
+  basis <- match.arg(basis)
+  knots <- match.arg(knots)
+  if(is.null(is.ordered.z)) stop(" is.ordered.z must be provided")
+  
+  x <- as.matrix(x)
+  
+  if(!is.null(z)) z <- as.matrix(z)
+  
+  console <- newLineConsole()
+  if(display.nomad.progress) console <- printPush("Working...",console = console)
+  
+  model <- NULL ## Returned if model=FALSE and there exist categorical
+  ## predictors
+  
+  if(is.null(z)) {
+    
+    ## First no categorical predictor case, never reached when called by crs()
+    
+    if(any(K[,1] > 0)) {
+      
+      ## Degree > 0
+      
+      P <- prod.spline(x=x,K=K,knots=knots,basis=basis,display.warnings=display.warnings)
+      
+      if(basis=="additive" || basis=="glp") {
+        if(is.null(tau))
+          model <- lm(y~P,weights=weights)
+        else
+          suppressWarnings(model <- rq(y~P,tau=tau,method="fn",weights=weights))
+      } else {
+        if(is.null(tau))
+          model <- lm(y~P-1,weights=weights)
+        else
+          suppressWarnings(model <- rq(y~P-1,tau=tau,method="fn",weights=weights))
+      }
+      if(is.null(xeval)) {
+        fit.spline <- predict(model,interval="confidence",se.fit=TRUE)
+      } else {
+        P <- prod.spline(x=x,K=K,xeval=xeval,knots=knots,basis=basis,display.warnings=display.warnings)
+        fit.spline <- predict(model,newdata=data.frame(as.matrix(P)),interval="confidence",se.fit=TRUE)
+      }
+      
+    } else {
+      
+      ## Degree == 0
+      
+      if(is.null(tau))
+        model <- lm(y~1,weights=weights)
+      else
+        suppressWarnings(model <- rq(y~1,tau=tau,method="fn",weights=weights))
+      if(is.null(xeval)) {
+        fit.spline <- predict(model,interval="confidence",se.fit=TRUE)
+      } else {
+        fit.spline <- predict(model,newdata=data.frame(rep(coef(model),NROW(xeval))),interval="confidence",se.fit=TRUE)
+      }
+    }
+    
+    if(is.null(tau))
+      fit.spline <- cbind(fit.spline[[1]],se=fit.spline[[2]])
+    else
+      fit.spline <- cbind(fit.spline,se=ifelse(NCOL(fit.spline)>1,(fit.spline[,3]-fit.spline[,1])/qnorm(0.975),NA))
+    
+    if(is.null(tau))
+      htt <- hatvalues(model)
+    else
+      htt <- hat(model$qr)
+    
+    htt <- ifelse(htt < 1, htt, 1-.Machine$double.eps)
+    
+    if(is.null(tau))
+      rank <- model$rank
+    else
+      rank <- NCOL(model$x)
+    
+  } else {
+    
+    if(model.return) model <- list()
+    
+    ## Categorical predictor case
+    
+    n <- NROW(x)
+    
+    ## Estimation z information
+    
+    z.unique <- uniquecombs(as.matrix(z))
+    num.z <- ncol(z.unique)
+    ind <-  attr(z.unique,"index")
+    ind.vals <-  unique(ind)
+    nrow.z.unique <- nrow(z.unique)
+    
+    if(any(K[,1] > 0)) {
+      
+      ## Degree > 0, fitted
+      
+      if(is.null(xeval)) {
+        fit.spline <- matrix(NA,nrow=n,ncol=4)
+        htt <- numeric(length=n)
+        P.hat <- numeric(length=n)
+        for(i in 1:nrow.z.unique) {
+          zz <- ind == ind.vals[i]
+          L <- prod.kernel(Z=z,z=z.unique[ind.vals[i],],lambda=lambda,is.ordered.z=is.ordered.z)
+          if(!is.null(weights)) L <- weights*L
+          P <- prod.spline(x=x,K=K,knots=knots,basis=basis,display.warnings=display.warnings)
+          k <- NCOL(P)
+          if(basis=="additive" || basis=="glp") {
+            if(is.null(tau))
+              model.z.unique <- lm(y~P,weights=L)
+            else
+              suppressWarnings(model.z.unique <- rq(y~P,weights=L,tau=tau,method="fn"))
+            model.z.unique.hat <- lm(y~P,weights=L)
+          } else {
+            if(is.null(tau))
+              model.z.unique <- lm(y~P-1,weights=L)
+            else
+              suppressWarnings(model.z.unique <- rq(y~P-1,weights=L,tau=tau,method="fn"))
+            model.z.unique.hat <- lm(y~P-1,weights=L)
+          }
+          if(model.return) model[[i]] <- model.z.unique
+          if(is.null(tau))
+            htt[zz] <- hatvalues(model.z.unique)[zz]
+          else
+            htt[zz] <- hatvalues(model.z.unique.hat)[zz]
+          
+          P.hat[zz] <- sum(L)
+          P <- prod.spline(x=x,K=K,xeval=x[zz,,drop=FALSE],knots=knots,basis=basis,display.warnings=display.warnings)
+          tmp <- predict(model.z.unique,newdata=data.frame(as.matrix(P)),interval="confidence",se.fit=TRUE)
+          
+          if(is.null(tau))
+            fit.spline[zz,] <- cbind(tmp[[1]],tmp[[2]])
+          else
+            fit.spline[zz,] <- cbind(tmp,(tmp[,3]-tmp[,1])/qnorm(0.975))
+          rm(tmp)
+        }
+      } else {
+        
+        ## Degree > 0, evaluation
+        
+        zeval.unique <- uniquecombs(as.matrix(zeval))
+        num.zeval <- ncol(zeval.unique)
+        ind.zeval <-  attr(zeval.unique,"index")
+        ind.zeval.vals <-  unique(ind.zeval)
+        nrow.zeval.unique <- nrow(zeval.unique)
+        
+        num.eval <- nrow(zeval)
+        
+        fit.spline <- matrix(NA,nrow=num.eval,ncol=4)
+        htt <- NULL ## No hatvalues for evaluation
+        P.hat <- NULL
+        for(i in 1:nrow.zeval.unique) {
+          zz <- ind.zeval == ind.zeval.vals[i]
+          L <- prod.kernel(Z=z,z=zeval.unique[ind.zeval.vals[i],],lambda=lambda,is.ordered.z=is.ordered.z)
+          if(!is.null(weights)) L <- weights*L
+          P <- prod.spline(x=x,K=K,knots=knots,basis=basis,display.warnings=display.warnings)
+          k <- NCOL(P)
+          if(basis=="additive" || basis=="glp") {
+            if(is.null(tau))
+              model.z.unique <- lm(y~P,weights=L)
+            else
+              suppressWarnings(model.z.unique <- rq(y~P,weights=L,tau=tau,method="fn"))
+          } else {
+            if(is.null(tau))
+              model.z.unique <- lm(y~P-1,weights=L)
+            else
+              suppressWarnings(model.z.unique <- rq(y~P-1,weights=L,tau=tau,method="fn"))
+          }
+          if(model.return) model[[i]] <- model.z.unique
+          P <- prod.spline(x=x,K=K,xeval=xeval[zz,,drop=FALSE],knots=knots,basis=basis,display.warnings=display.warnings)
+          tmp <- predict(model.z.unique,newdata=data.frame(as.matrix(P)),interval="confidence",se.fit=TRUE)
+          
+          if(is.null(tau))
+            fit.spline[zz,] <- cbind(tmp[[1]],tmp[[2]])
+          else
+            fit.spline[zz,] <- cbind(tmp,(tmp[,3]-tmp[,1])/qnorm(0.975))
+          
+          rm(tmp)
+        }
+        
+      }
     } else {
       
       ## Degree == 0 (no relevant continuous predictors), train
@@ -490,7 +482,7 @@ derivKernelSpline <- function(x,
                               deriv.index=1,
                               deriv=0,
                               tau=NULL,
-                              weights=NULL, 
+                              weights=NULL,
                               display.warnings=TRUE,
                               ...) {
   
@@ -776,7 +768,7 @@ preditFactorSpline <- function(x,
                                prune.index=NULL,
                                trace=0,
                                tau=NULL,
-                               weights=NULL, 
+                               weights=NULL,
                                display.warnings=TRUE,
                                display.nomad.progress=TRUE,
                                ...){
@@ -850,7 +842,6 @@ preditFactorSpline <- function(x,
                                                   k=log(length(y)),
                                                   trace=trace,
                                                   display.warnings=display.warnings))
-        
         
       } else {
         if(is.null(tau))
@@ -1032,7 +1023,7 @@ derivFactorSpline <- function(x,
                               deriv=0,
                               prune.index=NULL,
                               tau=NULL,
-                              weights=NULL, 
+                              weights=NULL,
                               display.warnings=TRUE,
                               ...) {
   
@@ -1368,7 +1359,7 @@ cv.kernel.spline <- function(x,
       ## 2025: Hoist cbind out of the loop for efficiency
       if(basis=="additive" || basis=="glp") {
         XP <- cbind(1,P)
-      } 
+      }
       
       for(i in 1:nrow.z.unique) {
         zz <- ind == ind.vals[i]
@@ -1394,7 +1385,7 @@ cv.kernel.spline <- function(x,
             ## Test for full column rank (rq case)
             if(!singular.ok && !is.fullrank(XP*L))
               return(sqrt(.Machine$double.xmax))
-              
+            
             model <- tryCatch(rq.wfit(XP,y,weights=L,tau=tau,method="fn"),error=function(e){FALSE})
             if(is.logical(model))
               return(sqrt(.Machine$double.xmax))
@@ -1411,7 +1402,7 @@ cv.kernel.spline <- function(x,
             ## Test for full column rank (rq case)
             if(!singular.ok && !is.fullrank(P*L))
               return(sqrt(.Machine$double.xmax))
-              
+            
             model <- tryCatch(rq.wfit(P,y,weights=L,tau=tau,method="fn"),error=function(e){FALSE})
             if(is.logical(model))
               return(sqrt(.Machine$double.xmax))
@@ -1450,13 +1441,13 @@ cv.kernel.spline <- function(x,
           sw <- sqrt(L)
           model <- .lm.fit(X0*sw,y*sw)
           if(!singular.ok && model$rank < ncol(X0))
-             return(sqrt(.Machine$double.xmax))
+            return(sqrt(.Machine$double.xmax))
           htt[zz] <- hat.from.lm.fit(model)[zz]
         } else {
           ## Test for full column rank
           if(!singular.ok && !is.fullrank(X0*L))
             return(sqrt(.Machine$double.xmax))
-            
+          
           model <- tryCatch(rq.wfit(X0,y,weights=L,tau=tau,method="fn"),error=function(e){FALSE})
           if(is.logical(model))
             return(sqrt(.Machine$double.xmax))
@@ -1593,329 +1584,126 @@ cv.factor.spline.wrapper <- function(x,
 ## cuts runtime to ~ 0.77 of original time)
 
 cv.factor.spline <- function(x,
-
                              y,
-
                              z=NULL,
-
                              K,
-
                              I=NULL,
-
                              knots=c("quantiles","uniform"),
-
                              basis=c("additive","tensor","glp"),
-
                              cv.func=c("cv.ls","cv.gcv","cv.aic"),
-
-                                                          cv.df.min=1,
-
-                                                          tau=NULL,
-
-                                                          weights=NULL,
-
-                                                          singular.ok=FALSE,
-
-                                                          display.warnings=TRUE) {
-
-                               
-
-                               if(missing(x) || missing(y) || missing (K)) stop(" must provide x, y and K")
-
-                               if(!is.matrix(K)) stop(" K must be a two-column matrix")
-
-                               
-
-                               basis <- match.arg(basis)
-
-                               knots <- match.arg(knots)
-
-                               cv.func <- match.arg(cv.func)
-
-                               
-
-                               n <- NROW(x)
-
-                               have_tau <- !is.null(tau)
-
-                               have_w <- !is.null(weights)
-
-                               is_add <- (basis == "additive" || basis == "glp")
-
-                               
-
-                               ## Check dimension of P prior to calculating the basis
-
-                               
-
-                               if(is.null(I)) {
-
-                                 categories <- NULL
-
-                               } else {
-
-                                 categories <- numeric()
-
-                                 for(i in NCOL(z)) categories[i] <- length(unique(z[,i]))
-
-                               }
-
-                               
-
-                               if(n - dimBS(basis=basis,kernel=TRUE,degree=K[,1],segments=K[,2],include=I,categories=categories) <= cv.df.min)
-
-                                 return(sqrt(.Machine$double.xmax))
-
-                               
-
-                               ## Otherwise, compute the cross-validation function
-
-                               
-
-                               if(any(K[,1] > 0)||any(I > 0)) {
-
-                                 P <- prod.spline(x=x,z=z,K=K,I=I,knots=knots,basis=basis,display.warnings=display.warnings)
-
-    ## Check for rank-deficient fit
-
-    if(NCOL(P) >= (n-1))
-
-      return(sqrt(.Machine$double.xmax))
-
-    
-
-    ## Pre-calculate sw if weights exist
-
-    if(have_w) sw <- sqrt(weights)
-
-    
-
-        ## Set up design matrix X
-
-    
-
-        if(is_add) {
-
-    
-
-          X <- cbind(1,P)
-
-    
-
-        } else {
-
-    
-
-          X <- P
-
-    
-
-        }
-
-    
-
-        
-
-    
-
-        if(!have_tau) {
-
-    
-
-          if(!have_w) {
-
-    
-
-            model <- .lm.fit(X,y)
-
-    
-
-            epsilon <- model$residuals
-
-    
-
-          } else {
-
-    
-
-            model <- .lm.fit(X*sw,y*sw)
-
-    
-
-            epsilon <- model$residuals / sw
-
-    
-
-          }
-
-    
-
-          
-
-    
-
-          ## 2025: Optimize rank check using model$rank
-
-    
-
-          if(!singular.ok && model$rank < ncol(X))
-
-    
-
-            return(sqrt(.Machine$double.xmax))
-
-    
-
-            
-
-    
-
-          htt <- hat.from.lm.fit(model)
-
-    
-
-        } else {
-
-    
-
-          if(!singular.ok && !is.fullrank(X))
-
-    
-
-            return(sqrt(.Machine$double.xmax))
-
-    
-
-          
-
-    
-
-          if(!have_w) {
-
-    
-
-            model <- tryCatch(rq.fit(X,y,tau=tau,method="fn"),error=function(e){FALSE})
-
-    
-
-            model.hat <- .lm.fit(X,y)
-
-    
-
-          } else {
-
-    
-
-            model <- tryCatch(rq.wfit(X,y,weights=weights,tau=tau,method="fn"),error=function(e){FALSE})
-
-    
-
-            model.hat <- .lm.fit(X*sw,y*sw)
-
-    
-
-          }
-
-    
-
-          
-
-    
-
-          if(is.logical(model))
-
-    
-
-            return(sqrt(.Machine$double.xmax))
-
-    
-
-          
-
-    
-
-          epsilon <- residuals(model)
-
-    
-
-          htt <- hat.from.lm.fit(model.hat)
-
-    
-
-        }
-
-    
-
-    ## Clamp hat values in-place
-
-    idx <- htt >= 1
-
-    if(any(idx)) htt[idx] <- 1-.Machine$double.eps
-
-    
-
+                             cv.df.min=1,
+                             tau=NULL,
+                             weights=NULL,
+                             singular.ok=FALSE,
+                             display.warnings=TRUE) {
+  
+  if(missing(x) || missing(y) || missing (K)) stop(" must provide x, y and K")
+  if(!is.matrix(K)) stop(" K must be a two-column matrix")
+  
+  basis <- match.arg(basis)
+  knots <- match.arg(knots)
+  cv.func <- match.arg(cv.func)
+  
+  n <- NROW(x)
+  have_tau <- !is.null(tau)
+  have_w <- !is.null(weights)
+  is_add <- (basis == "additive" || basis == "glp")
+  
+  ## Check dimension of P prior to calculating the basis
+  
+  if(is.null(I)) {
+    categories <- NULL
   } else {
-
-    htt <- rep.int(1/n,n)
-
-    epsilon <- y-mean(y)
-
+    categories <- numeric()
+    for(i in NCOL(z)) categories[i] <- length(unique(z[,i]))
   }
-
   
-
-  ## If weights exist, need to use weighted residuals
-
-  if(have_w) epsilon <- epsilon*sqrt(weights)
-
+  if(n - dimBS(basis=basis,kernel=TRUE,degree=K[,1],segments=K[,2],include=I,categories=categories) <= cv.df.min)
+    return(sqrt(.Machine$double.xmax))
   
-
-  if(cv.func == "cv.ls") {
-
-    if(!have_tau)
-
-      cv <- mean(epsilon^2/(1-htt)^2)
-
-    else
-
-      cv <- mean(check.function(epsilon,tau)/(1-htt)^(1/sqrt(tau*(1-tau))))
-
-  } else if(cv.func == "cv.gcv"){
-
-    if(!have_tau)
-
-      cv <- mean(epsilon^2/(1-mean(htt))^2)
-
-    else
-
-      cv <- mean(check.function(epsilon,tau)/(1-mean(htt))^(1/sqrt(tau*(1-tau))))
-
-  } else if(cv.func == "cv.aic"){
-
-    traceH <- sum(htt)
-
-    if(!have_tau) {
-
-      sigmasq <- mean(epsilon^2)
-
-      penalty <- ((1+traceH/n)/(1-(traceH+2)/n))
-
+  ## Otherwise, compute the cross-validation function
+  
+  if(any(K[,1] > 0)||any(I > 0)) {
+    P <- prod.spline(x=x,z=z,K=K,I=I,knots=knots,basis=basis,display.warnings=display.warnings)
+    ## Check for rank-deficient fit
+    if(NCOL(P) >= (n-1))
+      return(sqrt(.Machine$double.xmax))
+    
+    ## Pre-calculate sw if weights exist
+    if(have_w) sw <- sqrt(weights)
+    
+    ## Set up design matrix X
+    if(is_add) {
+      X <- cbind(1,P)
     } else {
-
-      sigmasq <- mean(check.function(epsilon,tau))
-
-      penalty <- ((1+traceH/n)/(1-(traceH+2)/n))*(0.5/sqrt(tau*(1-tau)))
-
+      X <- P
     }
-
-    cv <- ifelse(penalty < 0, .Machine$double.xmax, log(sigmasq)+penalty);
-
+    
+    if(!have_tau) {
+      if(!have_w) {
+        model <- .lm.fit(X,y)
+        epsilon <- model$residuals
+      } else {
+        model <- .lm.fit(X*sw,y*sw)
+        epsilon <- model$residuals / sw
+      }
+      
+      ## 2025: Optimize rank check using model$rank
+      if(!singular.ok && model$rank < ncol(X))
+        return(sqrt(.Machine$double.xmax))
+      
+      htt <- hat.from.lm.fit(model)
+    } else {
+      if(!singular.ok && !is.fullrank(X))
+        return(sqrt(.Machine$double.xmax))
+      
+      if(!have_w) {
+        model <- tryCatch(rq.fit(X,y,tau=tau,method="fn"),error=function(e){FALSE})
+        model.hat <- .lm.fit(X,y)
+      } else {
+        model <- tryCatch(rq.wfit(X,y,weights=weights,tau=tau,method="fn"),error=function(e){FALSE})
+        model.hat <- .lm.fit(X*sw,y*sw)
+      }
+      
+      if(is.logical(model))
+        return(sqrt(.Machine$double.xmax))
+      
+      epsilon <- residuals(model)
+      htt <- hat.from.lm.fit(model.hat)
+    }
+    ## Clamp hat values in-place
+    idx <- htt >= 1
+    if(any(idx)) htt[idx] <- 1-.Machine$double.eps
+  } else {
+    htt <- rep.int(1/n,n)
+    epsilon <- y-mean(y)
   }
-
   
-
+  ## If weights exist, need to use weighted residuals
+  if(have_w) epsilon <- epsilon*sqrt(weights)
+  
+  if(cv.func == "cv.ls") {
+    if(!have_tau)
+      cv <- mean(epsilon^2/(1-htt)^2)
+    else
+      cv <- mean(check.function(epsilon,tau)/(1-htt)^(1/sqrt(tau*(1-tau))))
+  } else if(cv.func == "cv.gcv"){
+    if(!have_tau)
+      cv <- mean(epsilon^2/(1-mean(htt))^2)
+    else
+      cv <- mean(check.function(epsilon,tau)/(1-mean(htt))^(1/sqrt(tau*(1-tau))))
+  } else if(cv.func == "cv.aic"){
+    traceH <- sum(htt)
+    if(!have_tau) {
+      sigmasq <- mean(epsilon^2)
+      penalty <- ((1+traceH/n)/(1-(traceH+2)/n))
+    } else {
+      sigmasq <- mean(check.function(epsilon,tau))
+      penalty <- ((1+traceH/n)/(1-(traceH+2)/n))*(0.5/sqrt(tau*(1-tau)))
+    }
+    cv <- ifelse(penalty < 0, .Machine$double.xmax, log(sigmasq)+penalty);
+  }
+  
   return(ifelse(!is.na(cv),cv,.Machine$double.xmax))
-
   
-
 }
