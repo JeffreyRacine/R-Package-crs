@@ -128,9 +128,9 @@ crsivderiv <- function(y,
   console <- printClear(console)
   console <- printPop(console)
   if(is.null(x)) {
-    if(display.nomad.progress) console <- printPush(paste("Computing optimal smoothing for f(z) and S(z) for iteration 1...",sep=""),console)
+    if(display.nomad.progress) console <- printPush(paste("Computing optimal smoothing for f(z) and S(z) for iteration 1"," of at most ", iterate.max,"...",sep=""),console)
   } else {
-    if(display.nomad.progress) console <- printPush(paste("Computing optimal smoothing  f(z) and S(z) for iteration 1...",sep=""),console)
+    if(display.nomad.progress) console <- printPush(paste("Computing optimal smoothing  f(z) and S(z) for iteration 1"," of at most ", iterate.max,"...",sep=""),console)
   }
   
   ## Note - here I am only treating the univariate case, so let's
@@ -142,8 +142,6 @@ crsivderiv <- function(y,
   ## survivor function for Z (1-CDF of Z)
   
   #  require(np)
-  
-  if(display.nomad.progress) cat(paste("\rIteration ", 1, " of at most ", iterate.max,sep=""))
   
   ## Let's compute the bandwidth object for the unconditional density
   ## for the moment. Use the normal-reference rule for speed
@@ -167,9 +165,9 @@ crsivderiv <- function(y,
     console <- printClear(console)
     console <- printPop(console)
     if(is.null(x)) {
-      if(display.nomad.progress) console <- printPush(paste("Computing optimal smoothing for E(y|z) for iteration 1...",sep=""),console)
+      if(display.nomad.progress) console <- printPush(paste("Computing optimal smoothing for E(y|z) for iteration 1 of at most ", iterate.max,"...",sep=""),console)
     } else {
-      if(display.nomad.progress) console <- printPush(paste("Computing optimal smoothing  for E(y|z,x) for iteration 1...",sep=""),console)
+      if(display.nomad.progress) console <- printPush(paste("Computing optimal smoothing  for E(y|z,x) for iteration 1 of at most ", iterate.max,"...",sep=""),console)
     }
     
     if(start.from == "Eyz") {
@@ -202,9 +200,9 @@ crsivderiv <- function(y,
   console <- printClear(console)
   console <- printPop(console)
   if(is.null(x)) {
-    if(display.nomad.progress) console <- printPush(paste("Computing optimal smoothing for E(y|w) (stopping rule) for iteration 1...",sep=""),console)
+    if(display.nomad.progress) console <- printPush(paste("Computing optimal smoothing for E(y|w) (stopping rule) for iteration 1 of at most ", iterate.max,"...",sep=""),console)
   } else {
-    if(display.nomad.progress) console <- printPush(paste("Computing optimal smoothing  for E(y|w) (stopping rule) for iteration 1...",sep=""),console)
+    if(display.nomad.progress) console <- printPush(paste("Computing optimal smoothing  for E(y|w) (stopping rule) for iteration 1 of at most ", iterate.max,"...",sep=""),console)
   }
   
   ## NOTE - this presumes univariate z case... in general this would
@@ -323,14 +321,12 @@ crsivderiv <- function(y,
     
     ## Save previous run in case stop norm increases
     
-    if(display.nomad.progress) cat(paste("\rIteration ", j, " of at most ", iterate.max,sep=""))
-    
     console <- printClear(console)
     console <- printPop(console)
     if(is.null(x)) {
-      if(display.nomad.progress) console <- printPush(paste("Computing optimal smoothing and phi(z) for iteration ", j,"...",sep=""),console)
+      if(display.nomad.progress) console <- printPush(paste("Computing optimal smoothing and phi(z) for iteration ", j," of at most ", iterate.max,"...",sep=""),console)
     } else {
-      if(display.nomad.progress) console <- printPush(paste("Computing optimal smoothing and phi(z,x) for iteration ", j,"...",sep=""),console)
+      if(display.nomad.progress) console <- printPush(paste("Computing optimal smoothing and phi(z,x) for iteration ", j," of at most ", iterate.max,"...",sep=""),console)
     }
     
     ## NOTE - this presumes univariate z case... in general this would
