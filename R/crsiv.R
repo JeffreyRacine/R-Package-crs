@@ -59,6 +59,10 @@ crsiv <- function(y,
                   ...) {
   
   crs.messages <- getOption("crs.messages")
+  is.eval.train <- is.null(zeval) && is.null(weval) && is.null(xeval)
+  
+  dot.args <- list(...)
+  nmulti <- if(!is.null(dot.args$nmulti)) dot.args$nmulti else 5
   
   ## This function was constructed initially by Samuele Centorrino
   ## <samuele.centorrino@univ-tlse1.fr>
@@ -140,11 +144,11 @@ crsiv <- function(y,
   
   ## Cr.r is always E.E.y.w.z, r is always E.y.w
   
-  ittik <- function(alpha,CZ,CY,Cr.r,r) {
-    invmat <- chol2inv(chol(alpha*diag(length(Cr.r)) + CY%*%CZ))
+  ittik <- function(alpha,CYCZ,Cr.r,r,CZ) {
+    invmat <- chol2inv(chol(alpha*diag(length(Cr.r)) + CYCZ))
     tikh.val <- invmat %*% Cr.r
-    phi <- tikh.val + alpha * invmat %*% tikh.val ## Not sure about this...
-    return(sum((CZ%*%phi - r)^2)/alpha)     ## This is a sum of squared values so CZ%*%phi can be computed with fitted(crs())...
+    phi <- tikh.val + alpha * invmat %*% tikh.val
+    return(sum((CZ %*% phi - r)^2)/alpha)
   }
   
   console <- newLineConsole()
@@ -244,7 +248,7 @@ crsiv <- function(y,
     if(crs.messages) options(crs.messages=FALSE)
     model<-crs(formula.yw,opts=opts,data=traindata,display.nomad.progress=display.nomad.progress,display.warnings=display.warnings,...)
     if(crs.messages) options(crs.messages=TRUE)
-    E.y.w <- predict(model,newdata=evaldata,...)
+    E.y.w <- if(is.eval.train) fitted(model) else predict(model,newdata=evaldata,...)
     B <- model.matrix(model$model.lm)
     KYW <- B%*%chol2inv(chol(t(B)%*%B))%*%t(B)
     
@@ -260,7 +264,7 @@ crsiv <- function(y,
     if(crs.messages) options(crs.messages=FALSE)
     model <- crs(formula.Eywz,opts=opts,data=traindata,display.nomad.progress=display.nomad.progress,display.warnings=display.warnings,...)
     if(crs.messages) options(crs.messages=TRUE)
-    E.E.y.w.z <- predict(model,newdata=evaldata,...)
+    E.E.y.w.z <- if(is.eval.train) fitted(model) else predict(model,newdata=evaldata,...)
     B <- model.matrix(model$model.lm)
     KYWZ <- B%*%chol2inv(chol(t(B)%*%B))%*%t(B)
     
@@ -277,7 +281,7 @@ crsiv <- function(y,
       console <- printClear(console)
       console <- printPop(console)
       if(display.nomad.progress) console <- printPush("Numerically solving for alpha...", console)
-      alpha <- optimize(ittik, c(alpha.min,alpha.max), tol = alpha.tol, CZ = KYW, CY = KYWZ, Cr.r = E.E.y.w.z, r = E.y.w)$minimum
+      alpha <- optimize(ittik, c(alpha.min,alpha.max), tol = alpha.tol, CYCZ = KYWZ %*% KYW, Cr.r = E.E.y.w.z, r = E.y.w, CZ = KYW)$minimum
     }
     
     ## Finally, we conduct regularized Tikhonov regression using this
@@ -308,7 +312,7 @@ crsiv <- function(y,
     if(crs.messages) options(crs.messages=FALSE)
     model <- crs(formula.phiw,opts=opts,data=traindata,display.nomad.progress=display.nomad.progress,display.warnings=display.warnings,...)
     if(crs.messages) options(crs.messages=TRUE)
-    E.phi.w <- predict(model,newdata=evaldata,...)
+    E.phi.w <- if(is.eval.train) fitted(model) else predict(model,newdata=evaldata,...)
     B <- model.matrix(model$model.lm)
     KPHIW <- B%*%chol2inv(chol(t(B)%*%B))%*%t(B)
     
@@ -335,7 +339,7 @@ crsiv <- function(y,
       console <- printClear(console)
       console <- printPop(console)
       if(display.nomad.progress) console <- printPush("Iterating and computing the numerical solution for alpha...", console)
-      alpha <- optimize(ittik,c(alpha.min,alpha.max), tol = alpha.tol, CZ = KPHIW, CY = KPHIWZ, Cr.r = E.E.y.w.z, r = E.y.w)$minimum
+      alpha <- optimize(ittik,c(alpha.min,alpha.max), tol = alpha.tol, CYCZ = KPHIWZ %*% KPHIW, Cr.r = E.E.y.w.z, r = E.y.w, CZ = KPHIW)$minimum
     }
     
     ## Finally, we conduct regularized Tikhonov regression using this
@@ -394,6 +398,7 @@ crsiv <- function(y,
     model$residuals <- residuals.phi
     model$phi <- phi
     model$alpha <- alpha
+    model$nmulti <- nmulti
     
     return(model)
     
@@ -413,7 +418,7 @@ crsiv <- function(y,
     
     if(crs.messages) options(crs.messages=FALSE)
     model.E.y.w <- crs(formula.yw,opts=opts,data=traindata,display.nomad.progress=display.nomad.progress,display.warnings=display.warnings,...)
-    E.y.w <- predict(model.E.y.w,newdata=evaldata,...)
+    E.y.w <- if(is.eval.train) fitted(model.E.y.w) else predict(model.E.y.w,newdata=evaldata,...)
     if(crs.messages) options(crs.messages=TRUE)
     
     console <- printClear(console)
@@ -434,12 +439,12 @@ crsiv <- function(y,
       ## First compute phi.0 (not passed in) then phi
       if(start.from == "Eyz") {
         ## Start from E(Y|z)
-        phi <- predict(phi.0,newdata=evaldata,...)
+        phi <- if(is.eval.train) fitted(phi.0) else predict(phi.0,newdata=evaldata,...)
       } else {
         ## Start from E(E(Y|w)|z)
         E.y.w <- fitted(crs(formula.yw,opts=opts,data=traindata,display.nomad.progress=display.nomad.progress,display.warnings=display.warnings,...))
         model.E.E.y.w.z <- crs(formula.Eywz,opts=opts,data=traindata,display.nomad.progress=display.nomad.progress,display.warnings=display.warnings,...)
-        phi <- predict(model.E.E.y.w.z,newdata=evaldata,...)
+        phi <- if(is.eval.train) fitted(model.E.E.y.w.z) else predict(model.E.E.y.w.z,newdata=evaldata,...)
       }
     } else {
       phi.0.NULL <- FALSE
@@ -462,29 +467,37 @@ crsiv <- function(y,
     }
     if(crs.messages) options(crs.messages=FALSE)
     if(smooth.residuals) {
+      traindata$phi <- phi
       model.residw <- crs(formula.residw,opts=opts,data=traindata,display.nomad.progress=display.nomad.progress,display.warnings=display.warnings,...)
-      residw <- predict(model.residw,newdata=evaldata,...)
+      residw <- if(is.eval.train) fitted(model.residw) else predict(model.residw,newdata=evaldata,...)
+      traindata$residw <- residw
       model.predict.residw.z <- crs(formula.residwz,opts=opts,data=traindata,display.nomad.progress=display.nomad.progress,display.warnings=display.warnings,...)
     } else {
+      traindata$phi <- phi
       model.E.phi.w <- crs(formula.phiw,opts=opts,data=traindata,display.nomad.progress=display.nomad.progress,display.warnings=display.warnings,...)
-      residw <- predict(model.E.y.w,newdata=evaldata,...)-predict(model.E.phi.w,newdata=evaldata,...)
+      residw <- (if(is.eval.train) fitted(model.E.y.w) else predict(model.E.y.w,newdata=evaldata,...)) -
+                (if(is.eval.train) fitted(model.E.phi.w) else predict(model.E.phi.w,newdata=evaldata,...))
+      traindata$residw <- residw
       model.predict.residw.z <- crs(formula.residwz,opts=opts,data=traindata,display.nomad.progress=display.nomad.progress,display.warnings=display.warnings,...)
     }
     if(crs.messages) options(crs.messages=TRUE)
     
     if (phi.0.NULL) {
-      phi <- predict(phi.0,newdata=evaldata,...) + constant*predict(model.predict.residw.z,newdata=evaldata,...)
+      phi <- (if(is.eval.train) fitted(phi.0) else predict(phi.0,newdata=evaldata,...)) + 
+             constant*(if(is.eval.train) fitted(model.predict.residw.z) else predict(model.predict.residw.z,newdata=evaldata,...))
     } else {
-      phi <- phi.0.input + constant*predict(model.predict.residw.z,newdata=evaldata,...)
+      phi <- phi.0.input + constant*(if(is.eval.train) fitted(model.predict.residw.z) else predict(model.predict.residw.z,newdata=evaldata,...))
     }
     
-    phi.mat <- phi
+    phi.mat <- matrix(NA, nrow = length(phi), ncol = iterate.max)
+    phi.mat[,1] <- phi
     if (!is.null(list(...)$weights)) {
       weights <- list(...)$weights
     } else {
       weights <- rep(1, length(y))
     }
-    norm.stop[1] <- sum(weights*residw^2)/sum(weights*E.y.w^2)
+    sum_w_Eyw2 <- sum(weights*E.y.w^2)
+    norm.stop[1] <- sum(weights*residw^2)/sum_w_Eyw2
     
     for(j in 2:iterate.max) {
       
@@ -498,20 +511,25 @@ crsiv <- function(y,
       
       if(crs.messages) options(crs.messages=FALSE)
       if(smooth.residuals) {
+        traindata$phi <- phi
         model.residw <- crs(formula.residw,opts=opts,data=traindata,display.nomad.progress=display.nomad.progress,display.warnings=display.warnings,...)
-        residw <- predict(model.residw,newdata=evaldata,...)
+        residw <- if(is.eval.train) fitted(model.residw) else predict(model.residw,newdata=evaldata,...)
+        traindata$residw <- residw
         model.predict.residw.z <- crs(formula.residwz,opts=opts,data=traindata,display.nomad.progress=display.nomad.progress,display.warnings=display.warnings,...)
       } else {
+        traindata$phi <- phi
         model.E.phi.w <- crs(formula.phiw,opts=opts,data=traindata,display.nomad.progress=display.nomad.progress,display.warnings=display.warnings,...)
-        residw <- predict(model.E.y.w,newdata=evaldata,...)-predict(model.E.phi.w,newdata=evaldata,...)
+        residw <- (if(is.eval.train) fitted(model.E.y.w) else predict(model.E.y.w,newdata=evaldata,...)) -
+                  (if(is.eval.train) fitted(model.E.phi.w) else predict(model.E.phi.w,newdata=evaldata,...))
+        traindata$residw <- residw
         model.predict.residw.z <- crs(formula.residwz,opts=opts,data=traindata,display.nomad.progress=display.nomad.progress,display.warnings=display.warnings,...)
       }
       if(crs.messages) options(crs.messages=TRUE)
       
-      phi <- phi + constant*predict(model.predict.residw.z,newdata=evaldata,...)
-      phi.mat <- cbind(phi.mat,phi)
+      phi <- phi + constant*(if(is.eval.train) fitted(model.predict.residw.z) else predict(model.predict.residw.z,newdata=evaldata,...))
+      phi.mat[,j] <- phi
       
-      norm.stop[j] <- ifelse(penalize.iteration,j*sum(weights*residw^2)/sum(weights*E.y.w^2),sum(weights*residw^2)/sum(weights*E.y.w^2))
+      norm.stop[j] <- ifelse(penalize.iteration,j*sum(weights*residw^2)/sum_w_Eyw2,sum(weights*residw^2)/sum_w_Eyw2)
       
       ## The number of iterations in LF is asymptotically equivalent
       ## to 1/alpha (where alpha is the regularization parameter in
@@ -544,6 +562,7 @@ crsiv <- function(y,
       
     }
     
+    phi.mat <- phi.mat[, 1:length(norm.stop), drop = FALSE]
     norm.value <- norm.stop/(1:length(norm.stop))
     
     ## Extract minimum, and check for monotone increasing function and
@@ -559,7 +578,7 @@ crsiv <- function(y,
       ## Ignore the initial increasing portion, take the min to the
       ## right of where the initial inflection point occurs
       j <- 1
-      while(norm.value[j+1] > norm.value[j]) j <- j + 1
+      while(j < length(norm.value) && norm.value[j+1] > norm.value[j]) j <- j + 1
       j <- j-1 + which.min(norm.value[j:length(norm.value)])
       phi <- phi.mat[,j]
       #      phi <- starting.values.phi
@@ -567,7 +586,7 @@ crsiv <- function(y,
       ## Ignore the initial increasing portion, take the min to the
       ## right of where the initial inflection point occurs
       j <- 1
-      while(norm.stop[j+1] > norm.stop[j]) j <- j + 1
+      while(j < length(norm.stop) && norm.stop[j+1] > norm.stop[j]) j <- j + 1
       j <- j-1 + which.min(norm.stop[j:length(norm.stop)])
       phi <- phi.mat[,j]
     }
@@ -605,9 +624,11 @@ crsiv <- function(y,
     model$num.iterations <- j
     model$norm.stop <- norm.stop
     model$norm.value <- norm.value
-    model$convergence <- convergence
-    model$starting.values.phi <- starting.values.phi
-    console <- printClear(console)
+        model$convergence <- convergence
+        model$starting.values.phi <- starting.values.phi
+        model$nmulti <- nmulti
+        
+        console <- printClear(console)
     console <- printPop(console)
     
     if(display.warnings) {

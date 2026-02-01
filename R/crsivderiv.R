@@ -49,6 +49,10 @@ crsivderiv <- function(y,
                        ...) {
   
   crs.messages <- getOption("crs.messages")
+  is.eval.train <- is.null(zeval) && is.null(weval) && is.null(xeval)
+  
+  dot.args <- list(...)
+  nmulti <- if(!is.null(dot.args$nmulti)) dot.args$nmulti else 5
   
   console <- newLineConsole()
   
@@ -154,11 +158,11 @@ crsivderiv <- function(y,
   model.fz <- npudens(tdat=z,
                       bws=bw$bw,
                       ...)
-  f.z <- predict(model.fz,newdata=evaldata)
+  f.z <- if(is.eval.train) predict(model.fz) else predict(model.fz,newdata=evaldata)
   model.Sz <- npudist(tdat=z,
                       bws=bw$bw,
                       ...)
-  S.z <- 1-predict(model.Sz,newdata=evaldata)
+  S.z <- 1-(if(is.eval.train) predict(model.Sz) else predict(model.Sz,newdata=evaldata))
   
   if(is.null(starting.values)) {
     
@@ -179,14 +183,26 @@ crsivderiv <- function(y,
                          deriv=1,
                          ...)
       if(crs.messages) options(crs.messages=TRUE)    
-      E.y.z <- predict(model.E.y.z,newdata=evaldata)
-      phi.prime <- attr(E.y.z,"deriv.mat")[,1]
+      if(is.eval.train) {
+        E.y.z <- model.E.y.z$fitted.values
+        phi.prime <- model.E.y.z$deriv.mat[,1]
+      } else {
+        E.y.z_tmp <- predict(model.E.y.z,newdata=evaldata)
+        E.y.z <- as.numeric(E.y.z_tmp)
+        phi.prime <- attr(E.y.z_tmp,"deriv.mat")[,1]
+      }
     } else {
       ## Start from E(E(Y|w)|z)
       E.y.w <- fitted(crs(formula.yw,opts=opts,display.nomad.progress=display.nomad.progress,display.warnings=display.warnings,data=traindata,...))
       model.E.E.y.w.z <- crs(formula.Eywz,opts=opts,display.nomad.progress=display.nomad.progress,display.warnings=display.warnings,data=traindata,deriv=1,...)
-      E.E.y.w.z <- predict(model.E.E.y.w.z,newdata=evaldata,...)
-      phi.prime <- attr(E.E.y.w.z,"deriv.mat")[,1]
+      if(is.eval.train) {
+        E.E.y.w.z <- model.E.E.y.w.z$fitted.values
+        phi.prime <- model.E.E.y.w.z$deriv.mat[,1]
+      } else {
+        E.E.y.w.z_tmp <- predict(model.E.E.y.w.z,newdata=evaldata,...)
+        E.E.y.w.z <- as.numeric(E.E.y.w.z_tmp)
+        phi.prime <- attr(E.E.y.w.z_tmp,"deriv.mat")[,1]
+      }
     }
     
   } else {
@@ -312,8 +328,10 @@ crsivderiv <- function(y,
   
   phi.prime <- phi.prime + constant*T.star.mu
   
-  phi.prime.mat <- phi.prime
-  phi.mat <- phi
+  phi.prime.mat <- matrix(NA, nrow=length(phi.prime), ncol=iterate.max)
+  phi.mat <- matrix(NA, nrow=length(phi), ncol=iterate.max)
+  phi.prime.mat[,1] <- phi.prime
+  phi.mat[,1] <- phi
   
   ## This we iterate...
   
@@ -351,6 +369,7 @@ crsivderiv <- function(y,
       ## Smooth residuals (smooth of (y-phi) on w)
       
       if(crs.messages) options(crs.messages=FALSE)
+      traindata$mu <- mu
       model.E.mu.w <- crs(formula.muw,
                           opts=opts,display.nomad.progress=display.nomad.progress,display.warnings=display.warnings,
                           data=traindata,
@@ -358,7 +377,7 @@ crsivderiv <- function(y,
       
       ## We require the fitted values...
       
-      predicted.model.E.mu.w <- predict(model.E.mu.w,newdata=evaldata)
+      predicted.model.E.mu.w <- if(is.eval.train) fitted(model.E.mu.w) else predict(model.E.mu.w,newdata=evaldata)
       if(crs.messages) options(crs.messages=TRUE)    
       
       ## We again require the mean of the fitted values
@@ -371,6 +390,7 @@ crsivderiv <- function(y,
       ## phi on w)
       
       if(crs.messages) options(crs.messages=FALSE)
+      traindata$phi <- phi
       model.E.phi.w <- crs(formula.phiw,
                            opts=opts,display.nomad.progress=display.nomad.progress,display.warnings=display.warnings,
                            data=traindata,
@@ -378,7 +398,7 @@ crsivderiv <- function(y,
       
       ## We require the fitted values...
       
-      predicted.model.E.mu.w <- E.y.w - predict(model.E.phi.w,newdata=evaldata)
+      predicted.model.E.mu.w <- E.y.w - (if(is.eval.train) fitted(model.E.phi.w) else predict(model.E.phi.w,newdata=evaldata))
       if(crs.messages) options(crs.messages=TRUE)    
       
       ## We again require the mean of the fitted values
@@ -404,8 +424,8 @@ crsivderiv <- function(y,
     ## Now we update, this provides phi.prime.1, and now we can iterate until convergence...
     
     phi.prime <- phi.prime + constant*T.star.mu
-    phi.prime.mat <- cbind(phi.prime.mat,phi.prime)
-    phi.mat <- cbind(phi.mat,phi)
+    phi.prime.mat[,j] <- phi.prime
+    phi.mat[,j] <- phi
     
     ## The number of iterations in LF is asymptotically equivalent to
     ## 1/alpha (where alpha is the regularization parameter in
@@ -438,6 +458,9 @@ crsivderiv <- function(y,
     
   }
   
+  phi.mat <- phi.mat[, 1:length(norm.stop), drop = FALSE]
+  phi.prime.mat <- phi.prime.mat[, 1:length(norm.stop), drop = FALSE]
+  
   ## Extract minimum, and check for monotone increasing function and
   ## issue warning in that case. Otherwise allow for an increasing
   ## then decreasing (and potentially increasing thereafter) portion
@@ -453,7 +476,7 @@ crsivderiv <- function(y,
     #    phi <- starting.values.phi
     #    phi.prime <- starting.values.phi.prime
     j <- 1
-    while(norm.value[j+1] > norm.value[j]) j <- j + 1
+    while(j < length(norm.value) && norm.value[j+1] > norm.value[j]) j <- j + 1
     j <- j-1 + which.min(norm.value[j:length(norm.value)])
     phi <- phi.mat[,j]
     phi.prime <- phi.prime.mat[,j]
@@ -461,7 +484,7 @@ crsivderiv <- function(y,
     ## Ignore the initial increasing portion, take the min to the
     ## right of where the initial inflection point occurs
     j <- 1
-    while(norm.stop[j+1] > norm.stop[j]) j <- j + 1
+    while(j < length(norm.stop) && norm.stop[j+1] > norm.stop[j]) j <- j + 1
     j <- j-1 + which.min(norm.stop[j:length(norm.stop)])
     phi <- phi.mat[,j]
     phi.prime <- phi.prime.mat[,j]
@@ -483,6 +506,7 @@ crsivderiv <- function(y,
               norm.value=norm.value,
               convergence=convergence,
               starting.values.phi=starting.values.phi,
-              starting.values.phi.prime=starting.values.phi.prime))
+              starting.values.phi.prime=starting.values.phi.prime,
+              nmulti=nmulti))
   
 }
