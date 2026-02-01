@@ -25,22 +25,22 @@ crsivderiv(y,
            zeval = NULL,
            weval = NULL,
            xeval = NULL,
-           iterate.max = 1000,
-           iterate.diff.tol = 1.0e-08,
            constant = 0.5,
-           penalize.iteration = TRUE,
-           start.from = c("Eyz","EEywz"),
-           starting.values = NULL,
-           stop.on.increase = TRUE,
-           smooth.residuals = TRUE,
+           display.nomad.progress = TRUE,
+           display.warnings = TRUE,
+           iterate.diff.tol = 1.0e-08,
+           iterate.max = 1000,
            opts = list("MAX_BB_EVAL"=10000,
                        "EPSILON"=.Machine$double.eps,
                        "INITIAL_MESH_SIZE"="r1.0e-01",
                        "MIN_MESH_SIZE"=paste("r",sqrt(.Machine$double.eps),sep=""),
                        "MIN_POLL_SIZE"=paste("r",1,sep=""),
                        "DISPLAY_DEGREE"=0),
-           display.nomad.progress = TRUE,
-           display.warnings = TRUE,
+           penalize.iteration = TRUE,
+           smooth.residuals = TRUE,
+           start.from = c("Eyz","EEywz"),
+           starting.values = NULL,
+           stop.on.increase = TRUE,
            ...)
 }
 
@@ -81,22 +81,36 @@ crsivderiv(y,
     regression will be estimated (evaluation data). By default,
     evaluation takes place on the data provided by \code{x}
   }
-\item{iterate.max}{
-  an integer indicating the maximum number of iterations permitted
-  before termination occurs when using Landweber-Fridman iteration
+\item{constant}{
+  the constant to use when using  Landweber-Fridman iteration
 }
+\item{display.nomad.progress}{ a logical value indicating whether to
+  display the progress of the NOMAD solver (default \code{display.nomad.progress=TRUE}) }
+\item{display.warnings}{ a logical value indicating whether to
+  display warnings (default \code{display.warnings=TRUE}) }
 \item{iterate.diff.tol}{
   the search tolerance for the difference in the stopping rule from
   iteration to iteration when using Landweber-Fridman
   (disable by setting to zero)
 }
-\item{constant}{
-  the constant to use when using  Landweber-Fridman iteration
+\item{iterate.max}{
+  an integer indicating the maximum number of iterations permitted
+  before termination occurs when using Landweber-Fridman iteration
+}
+\item{opts}{
+  arguments passed to the NOMAD solver (see \code{\link{snomadr}} for
+  further details)
 }
 \item{penalize.iteration}{ a logical value indicating whether to
     penalize the norm by the number of iterations or not (default
     \code{TRUE})
 }    
+\item{smooth.residuals}{
+  a logical value (defaults to \code{TRUE}) indicating whether to
+  optimize bandwidths for the regression of \eqn{y-\varphi(z)}{y-phi(z)}
+  on \eqn{w} or for the regression of \eqn{\varphi(z)}{phi(z)} on
+  \eqn{w} during iteration
+ }
 \item{start.from}{ a character string indicating whether to start from
   \eqn{E(Y|z)} (default, \code{"Eyz"}) or from \eqn{E(E(Y|z)|z)} (this can
   be overridden by providing \code{starting.values} below)
@@ -113,20 +127,6 @@ crsivderiv(y,
   course of one iteration (i.e. it may be above the iteration tolerance
   but increased)
 }
-\item{smooth.residuals}{
-  a logical value (defaults to \code{TRUE}) indicating whether to
-  optimize bandwidths for the regression of \eqn{y-\varphi(z)}{y-phi(z)}
-  on \eqn{w} or for the regression of \eqn{\varphi(z)}{phi(z)} on
-  \eqn{w} during iteration
- }
-\item{opts}{
-  arguments passed to the NOMAD solver (see \code{\link{snomadr}} for
-  further details)
-}
-\item{display.nomad.progress}{ a logical value indicating whether to
-  display the progress of the NOMAD solver (default \code{display.nomad.progress=TRUE}) }
-\item{display.warnings}{ a logical value indicating whether to
-  display warnings (default \code{display.warnings=TRUE}) }
 \item{...}{
   additional arguments supplied to \code{\link{crs}}
 }

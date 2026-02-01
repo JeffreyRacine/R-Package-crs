@@ -29,18 +29,15 @@ crsiv(y,
       weval = NULL,
       xeval = NULL,
       alpha = NULL,
-      alpha.min = 1e-10,
       alpha.max = 1e-01,
+      alpha.min = 1e-10,
       alpha.tol = .Machine$double.eps^0.25,
-      deriv = 0,
-      iterate.max = 1000,
-      iterate.diff.tol = 1.0e-08,
       constant = 0.5,
-      penalize.iteration = TRUE,
-      smooth.residuals = TRUE,
-      start.from = c("Eyz","EEywz"),
-      starting.values = NULL,
-      stop.on.increase = TRUE,
+      deriv = 0,
+      display.nomad.progress = TRUE,
+      display.warnings = TRUE,
+      iterate.diff.tol = 1.0e-08,
+      iterate.max = 1000,
       method = c("Landweber-Fridman","Tikhonov"),
       opts = list("MAX_BB_EVAL"=10000,
                   "EPSILON"=.Machine$double.eps,
@@ -48,8 +45,11 @@ crsiv(y,
                   "MIN_MESH_SIZE"=paste("r",sqrt(.Machine$double.eps),sep=""),
                   "MIN_POLL_SIZE"=paste("r",1,sep=""),
                   "DISPLAY_DEGREE"=0),
-      display.nomad.progress = TRUE,
-      display.warnings = TRUE,
+      penalize.iteration = TRUE,
+      smooth.residuals = TRUE,
+      start.from = c("Eyz","EEywz"),
+      starting.values = NULL,
+      stop.on.increase = TRUE,
       ...)
 }
 
@@ -94,36 +94,52 @@ crsiv(y,
     a numeric scalar that, if supplied, is used rather than numerically
     solving for \code{alpha}, when using \code{method="Tikhonov"}
     }
-  \item{alpha.min}{
-    minimum of search range for \eqn{\alpha}{alpha}, the Tikhonov
-    regularization parameter, when using \code{method="Tikhonov"}
-}
   \item{alpha.max}{
     maximum of search range for \eqn{\alpha}{alpha}, the Tikhonov
     regularization parameter, when using  \code{method="Tikhonov"}
   }
+  \item{alpha.min}{
+    minimum of search range for \eqn{\alpha}{alpha}, the Tikhonov
+    regularization parameter, when using \code{method="Tikhonov"}
+}
 \item{alpha.tol}{
   the search tolerance for \code{optimize} when solving for
   \eqn{\alpha}{alpha}, the Tikhonov regularization parameter, 
   when using \code{method="Tikhonov"}
 }
-\item{iterate.max}{
-  an integer indicating the maximum number of iterations permitted
-  before termination occurs when using \code{method="Landweber-Fridman"}
+\item{constant}{
+  the constant to use when using  \code{method="Landweber-Fridman"}
 }
+  \item{deriv}{ an integer \code{l} (default \code{deriv=0}) specifying
+  whether to compute the univariate \code{l}th partial derivative for
+  each continuous predictor (and difference in levels for each
+  categorical predictor) or not and if so what order. Note that if
+  \code{deriv} is higher than the spline degree of the associated
+  continuous predictor then the derivative will be zero and a warning
+  issued to this effect (see important note below)
+  }
+  \item{display.nomad.progress}{ a logical value indicating whether to
+  display the progress of the NOMAD solver (default \code{display.nomad.progress=TRUE}) }
+  \item{display.warnings}{ a logical value indicating whether to
+  display warnings (default \code{display.warnings=TRUE}) }
 \item{iterate.diff.tol}{
   the search tolerance for the difference in the stopping rule from
   iteration to iteration when using \code{method="Landweber-Fridman"}
     (disable by setting to zero)
 }
-\item{constant}{
-  the constant to use when using  \code{method="Landweber-Fridman"}
+\item{iterate.max}{
+  an integer indicating the maximum number of iterations permitted
+  before termination occurs when using \code{method="Landweber-Fridman"}
 }
 \item{method}{
   the regularization method employed (default
    \code{"Landweber-Fridman"}, see Horowitz (2011); see Darolles, Fan,
    Florens and Renault (2011) for details for \code{"Tikhonov"})
  }
+  \item{opts}{
+    arguments passed to the NOMAD solver (see \code{\link{snomadr}} for
+    further details)
+  }
 \item{penalize.iteration}{ a logical value indicating whether to
     penalize the norm by the number of iterations or not (default
     \code{TRUE})
@@ -150,22 +166,6 @@ crsiv(y,
   course of one iteration (i.e. it may be above the iteration tolerance
   but increased)
 }
-  \item{opts}{
-    arguments passed to the NOMAD solver (see \code{\link{snomadr}} for
-    further details)
-  }
-  \item{display.nomad.progress}{ a logical value indicating whether to
-  display the progress of the NOMAD solver (default \code{display.nomad.progress=TRUE}) }
-  \item{display.warnings}{ a logical value indicating whether to
-  display warnings (default \code{display.warnings=TRUE}) }
-  \item{deriv}{ an integer \code{l} (default \code{deriv=0}) specifying
-  whether to compute the univariate \code{l}th partial derivative for
-  each continuous predictor (and difference in levels for each
-  categorical predictor) or not and if so what order. Note that if
-  \code{deriv} is higher than the spline degree of the associated
-  continuous predictor then the derivative will be zero and a warning
-  issued to this effect (see important note below)
-  }
 \item{...}{
   additional arguments supplied to \code{\link{crs}}
 }
