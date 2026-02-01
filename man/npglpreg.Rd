@@ -21,65 +21,65 @@ npglpreg(\dots)
          eydat = NULL,
          exdat = NULL,
          bws = NULL,
-         degree = NULL,
-         leave.one.out = FALSE,
-         ckertype = c("gaussian", "epanechnikov", "uniform", "truncated gaussian"),
-         ckerorder = 2,
-         ukertype = c("liracine", "aitchisonaitken"),
-         okertype = c("liracine", "wangvanryzin"),
-         bwtype = c("fixed", "generalized_nn", "adaptive_nn", "auto"),
-         gradient.vec = NULL,
-         gradient.categorical = FALSE,
-         cv.shrink = TRUE,
-         cv.maxPenalty = sqrt(.Machine$double.xmax),
-         display.warnings = TRUE,
          Bernstein = TRUE,
+         bwtype = c("fixed", "generalized_nn", "adaptive_nn", "auto"),
+         ckerorder = 2,
+         ckertype = c("gaussian", "epanechnikov", "uniform", "truncated gaussian"),
+         cv.maxPenalty = sqrt(.Machine$double.xmax),
+         cv.shrink = TRUE,
+         degree = NULL,
+         display.warnings = TRUE,
+         gradient.categorical = FALSE,
+         gradient.vec = NULL,
+         leave.one.out = FALSE,
          mpi = FALSE,
+         okertype = c("liracine", "wangvanryzin"),
+         ukertype = c("liracine", "aitchisonaitken"),
          \dots)
 
 \method{npglpreg}{formula}(formula,
-         data = list(),
-         tydat = NULL,
-         txdat = NULL,
-         eydat = NULL,
-         exdat = NULL,
-         bws = NULL,
-         degree = NULL,
-         leave.one.out = FALSE,
-         ckertype = c("gaussian", "epanechnikov","uniform","truncated gaussian"),
-         ckerorder = 2,
-         ukertype = c("liracine", "aitchisonaitken"),
-         okertype = c("liracine", "wangvanryzin"),
-         bwtype = c("fixed", "generalized_nn", "adaptive_nn", "auto"),
-         cv = c("degree-bandwidth", "bandwidth", "none"),
-         cv.func = c("cv.ls", "cv.aic"),
-         nmulti = 5,
-         random.seed = 42,
-         degree.max = 10,
-         degree.min = 0,
          bandwidth.max = .Machine$double.xmax,
          bandwidth.min = sqrt(.Machine$double.eps),
          bandwidth.min.numeric = 1.0e-02,
-         bandwidth.switch = 1.0e+06,
          bandwidth.scale.categorical = 1.0e+04,
+         bandwidth.switch = 1.0e+06,
+         Bernstein = TRUE,
+         bws = NULL,
+         bwtype = c("fixed", "generalized_nn", "adaptive_nn", "auto"),
+         ckerorder = 2,
+         ckertype = c("gaussian", "epanechnikov","uniform","truncated gaussian"),
+         cv = c("degree-bandwidth", "bandwidth", "none"),
+         cv.func = c("cv.ls", "cv.aic"),
+         cv.maxPenalty = sqrt(.Machine$double.xmax),
+         cv.shrink = TRUE,
+         data = list(),
+         degree = NULL,
+         degree.max = 10,
+         degree.min = 0,
+         display.nomad.progress = TRUE,
+         display.warnings = TRUE,
+         exdat = NULL,
+         eydat = NULL,
+         gradient.categorical = FALSE,
+         gradient.vec = NULL,
+         initial.mesh.size.integer = 1,
+         initial.mesh.size.real = 1,
+         leave.one.out = FALSE,
          max.bb.eval = 10000,
          min.epsilon = .Machine$double.eps,
-         initial.mesh.size.real = 1,
-         initial.mesh.size.integer = 1,
-         min.mesh.size.real = sqrt(.Machine$double.eps),
          min.mesh.size.integer = 1, 
-         min.poll.size.real = 1,
+         min.mesh.size.real = sqrt(.Machine$double.eps),
          min.poll.size.integer = 1, 
-         opts=list(),
-         restart.from.min = FALSE,
-         gradient.vec = NULL,
-         gradient.categorical = FALSE,
-         cv.shrink = TRUE,
-         cv.maxPenalty = sqrt(.Machine$double.xmax),
-         display.warnings = TRUE,
-         Bernstein = TRUE,
+         min.poll.size.real = 1,
          mpi = FALSE,
-         display.nomad.progress = TRUE,
+         nmulti = 5,
+         okertype = c("liracine", "wangvanryzin"),
+         opts = list(),
+         random.seed = 42,
+         restart.from.min = FALSE,
+         txdat = NULL,
+         tydat = NULL,
+         ukertype = c("liracine", "aitchisonaitken"),
          \dots)
 }
 
@@ -118,40 +118,36 @@ npglpreg(\dots)
     a  vector of bandwidths, with each element \eqn{i} corresponding
     to the bandwidth for column \eqn{i} in \code{txdat}
   }
+
+    \item{bandwidth.max}{ the maximum bandwidth scale (i.e. number of
+    scaled standard deviations) for each of the continuous predictors
+    (default \code{bandwidth.max=.Machine$double.xmax})}
   
-  \item{degree}{ integer/vector specifying the polynomial degree of the
-for each dimension of the continuous \code{x} in \code{txdat}}
+  \item{bandwidth.min}{ the minimum bandwidth scale for each of the
+    categorical predictors (default \code{sqrt(.Machine$double.eps)})}
 
-  \item{leave.one.out}{
-    a logical value to specify whether or not to compute the leave one
-    out sums. Will not work if \code{exdat} is specified. Defaults to
-    \code{FALSE}
-  }
+  \item{bandwidth.min.numeric}{ the minimum bandwidth scale (i.e. number
+    of scaled standard deviations) for each of the continuous predictors
+    (default \code{bandwidth.min=1.0e-02})}
 
-  \item{ckertype}{
-    character string used to specify the continuous kernel type.
-    Can be set as \code{gaussian}, \code{epanechnikov}, or
-    \code{uniform}. Defaults to \code{gaussian}.
-  }
+  \item{bandwidth.scale.categorical}{ the upper end for the rescaled
+  bandwidths for the categorical predictors (default
+  \code{bandwidth.scale.categorical=1.0e+04}) - the aim is to \sQuote{even up}
+  the scale of the search parameters as much as possible, so when very
+  large scale factors are selected for the continuous predictors, a
+  larger value may improve search}
 
-  \item{ckerorder}{
-    numeric value specifying kernel order (one of
-    \code{(2,4,6,8)}). Kernel order specified along with a
-    \code{uniform} continuous kernel type will be ignored. Defaults to
-    \code{2}.
-  }
+  \item{bandwidth.switch}{ the minimum bandwidth scale (i.e. number of
+    scaled standard deviations) for each of the continuous predictors
+    (default \code{bandwidth.switch=1.0e+06}) before the local polynomial
+    is treated as global during cross-validation at which point a global
+    categorical kernel weighted least squares fit is used for
+    computational efficiency}
 
-  \item{ukertype}{
-    character string used to specify the unordered categorical kernel type.
-    Can be set as \code{aitchisonaitken} or \code{liracine}. Defaults to
-    \code{liracine}
-  }
-
-  \item{okertype}{
-    character string used to specify the ordered categorical kernel type.
-    Can be set as \code{wangvanryzin} or \code{liracine}. Defaults to
-    \code{liracine}
-  }
+\item{Bernstein}{ a logical value indicating whether to use raw
+  polynomials or Bernstein polynomials (default) (note that a Bernstein
+  polynomial is also know as a Bezier curve which is also a
+  B-spline with no interior knots)}
 
   \item{bwtype}{
     character string used for the continuous variable bandwidth type,
@@ -162,6 +158,19 @@ for each dimension of the continuous \code{x} in \code{txdat}}
     \code{fixed}: compute fixed bandwidths \cr
     \code{generalized_nn}: compute generalized nearest neighbor bandwidths \cr
     \code{adaptive_nn}: compute adaptive nearest neighbor bandwidths
+  }
+
+  \item{ckerorder}{
+    numeric value specifying kernel order (one of
+    \code{(2,4,6,8)}). Kernel order specified along with a
+    \code{uniform} continuous kernel type will be ignored. Defaults to
+    \code{2}.
+  }
+
+  \item{ckertype}{
+    character string used to specify the continuous kernel type.
+    Can be set as \code{gaussian}, \code{epanechnikov}, or
+    \code{uniform}. Defaults to \code{gaussian}.
   }
 
   \item{cv}{ a character string (default \code{cv="nomad"}) indicating
@@ -176,6 +185,56 @@ for each dimension of the continuous \code{x} in \code{txdat}}
     \code{cv.ls} specifies least-squares cross-validation
   }
 
+\item{cv.maxPenalty}{ a penalty applied during cross-validation when a
+  delete-one estimate is not finite or the polynomial basis is not of
+  full column rank }
+
+\item{cv.shrink}{ a logical value indicating whether to use ridging
+  (Seifert and Gasser (2000)) for ill-conditioned inversion during
+  cross-validation (default \code{cv.shrink=TRUE}) or to instead test
+  for ill-conditioned matrices and penalize heavily when this is the
+  case (much stronger condition imposed on cross-validation)}
+
+  \item{degree}{ integer/vector specifying the polynomial degree of the
+for each dimension of the continuous \code{x} in \code{txdat}}
+
+  \item{degree.max}{ the maximum degree of the polynomial for
+    each of the continuous predictors (default \code{degree.max=10})}
+  
+  \item{degree.min}{ the minimum degree of the polynomial for
+    each of the continuous predictors (default \code{degree.min=0})}
+
+  \item{display.nomad.progress}{ a logical value indicating whether to
+  display the progress of the NOMAD solver (default \code{display.nomad.progress=TRUE}) }
+
+\item{display.warnings}{ a logical value indicating whether to issue an
+  immediate warning message when ill conditioned bases are encountered
+  during cross-validation (default \code{display.warnings=TRUE}) }
+
+  \item{gradient.categorical}{ a logical value indicating whether
+  discrete gradients (i.e. differences in the response from the base
+  value for each categorical predictor) are to be computed }
+
+  \item{gradient.vec}{ a vector corresponding to the order of the
+    partial (or cross-partial) and which variable the partial (or
+    cross-partial) derivative(s) are required }
+
+  \item{initial.mesh.size.integer}{
+    argument passed to the NOMAD solver (see \code{\link{snomadr}} for
+    further details)
+  }
+
+  \item{initial.mesh.size.real}{
+    argument passed to the NOMAD solver (see \code{\link{snomadr}} for
+    further details)
+  }
+
+  \item{leave.one.out}{
+    a logical value to specify whether or not to compute the leave one
+    out sums. Will not work if \code{exdat} is specified. Defaults to
+    \code{FALSE}
+  }
+
   \item{max.bb.eval}{
     argument passed to the NOMAD solver (see \code{\link{snomadr}} for
     further details)
@@ -186,13 +245,8 @@ for each dimension of the continuous \code{x} in \code{txdat}}
     further details)
   }
 
-  \item{initial.mesh.size.real}{
-    argument passed to the NOMAD solver (see \code{\link{snomadr}} for
-    further details)
-  }
-
-  \item{initial.mesh.size.integer}{
-    argument passed to the NOMAD solver (see \code{\link{snomadr}} for
+  \item{min.mesh.size.integer}{
+    arguments passed to the NOMAD solver (see \code{\link{snomadr}} for
     further details)
   }
 
@@ -201,96 +255,15 @@ for each dimension of the continuous \code{x} in \code{txdat}}
     further details)
   }
 
-  \item{min.mesh.size.integer}{
-    arguments passed to the NOMAD solver (see \code{\link{snomadr}} for
-    further details)
-  }
-
-  \item{min.poll.size.real}{
-    arguments passed to the NOMAD solver (see \code{\link{snomadr}} for
-    further details)
-  }
-
   \item{min.poll.size.integer}{
     arguments passed to the NOMAD solver (see \code{\link{snomadr}} for
     further details)
   }      
 
-  \item{opts}{ list of optional arguments passed to the NOMAD solver
-    (see \code{\link{snomadr}} for further details) }
-
-  \item{nmulti}{
-    integer number of times to restart the process of finding extrema of
-    the cross-validation function from different (random) initial
-    points (default \code{nmulti=5})
+  \item{min.poll.size.real}{
+    arguments passed to the NOMAD solver (see \code{\link{snomadr}} for
+    further details)
   }
-  
-  \item{random.seed}{ when it is not missing and not equal to 0, the
-    initial points will be generated using this seed when using
-    \code{\link{snomadr}} }
-      
-  \item{degree.max}{ the maximum degree of the polynomial for
-    each of the continuous predictors (default \code{degree.max=10})}
-  
-  \item{degree.min}{ the minimum degree of the polynomial for
-    each of the continuous predictors (default \code{degree.min=0})}
-  
-    \item{bandwidth.max}{ the maximum bandwidth scale (i.e. number of
-    scaled standard deviations) for each of the continuous predictors
-    (default \code{bandwidth.max=.Machine$double.xmax})}
-  
-  \item{bandwidth.min}{ the minimum bandwidth scale for each of the
-    categorical predictors (default \code{sqrt(.Machine$double.eps)})}
-
-  \item{bandwidth.min.numeric}{ the minimum bandwidth scale (i.e. number
-    of scaled standard deviations) for each of the continuous predictors
-    (default \code{bandwidth.min=1.0e-02})}
-
-  \item{bandwidth.switch}{ the minimum bandwidth scale (i.e. number of
-    scaled standard deviations) for each of the continuous predictors
-    (default \code{bandwidth.switch=1.0e+06}) before the local polynomial
-    is treated as global during cross-validation at which point a global
-    categorical kernel weighted least squares fit is used for
-    computational efficiency}
-
-  \item{bandwidth.scale.categorical}{ the upper end for the rescaled
-  bandwidths for the categorical predictors (default
-  \code{bandwidth.scale.categorical=1.0e+04}) - the aim is to \sQuote{even up}
-  the scale of the search parameters as much as possible, so when very
-  large scale factors are selected for the continuous predictors, a
-  larger value may improve search}
-
-  \item{restart.from.min}{ a logical value indicating to recommence
-  \code{\link{snomadr}} with the optimal values found from its first
-  invocation (typically quick but sometimes recommended in the field of
-  optimization)}
-  
-  \item{gradient.vec}{ a vector corresponding to the order of the
-    partial (or cross-partial) and which variable the partial (or
-    cross-partial) derivative(s) are required }
-
-  \item{gradient.categorical}{ a logical value indicating whether
-  discrete gradients (i.e. differences in the response from the base
-  value for each categorical predictor) are to be computed }
-
-\item{cv.shrink}{ a logical value indicating whether to use ridging
-  (Seifert and Gasser (2000)) for ill-conditioned inversion during
-  cross-validation (default \code{cv.shrink=TRUE}) or to instead test
-  for ill-conditioned matrices and penalize heavily when this is the
-  case (much stronger condition imposed on cross-validation)}
-
-\item{cv.maxPenalty}{ a penalty applied during cross-validation when a
-  delete-one estimate is not finite or the polynomial basis is not of
-  full column rank }
-
-\item{display.warnings}{ a logical value indicating whether to issue an
-  immediate warning message when ill conditioned bases are encountered
-  during cross-validation (default \code{display.warnings=TRUE}) }
-
-\item{Bernstein}{ a logical value indicating whether to use raw
-  polynomials or Bernstein polynomials (default) (note that a Bernstein
-  polynomial is also know as a Bezier curve which is also a
-  B-spline with no interior knots)}
 
 \item{mpi}{ a logical value (default \code{mpi=FALSE}) that, when
   \code{mpi=TRUE}, can call the \code{npRmpi} rather than the \code{np}
@@ -299,8 +272,35 @@ for each dimension of the continuous \code{x} in \code{txdat}}
   \code{crs} package, and need \code{.Rprofile} in your current
   directory)}
 
-  \item{display.nomad.progress}{ a logical value indicating whether to
-  display the progress of the NOMAD solver (default \code{display.nomad.progress=TRUE}) }
+  \item{nmulti}{
+    integer number of times to restart the process of finding extrema of
+    the cross-validation function from different (random) initial
+    points (default \code{nmulti=5})
+  }
+
+  \item{okertype}{
+    character string used to specify the ordered categorical kernel type.
+    Can be set as \code{wangvanryzin} or \code{liracine}. Defaults to
+    \code{liracine}
+  }
+
+  \item{opts}{ list of optional arguments passed to the NOMAD solver
+    (see \code{\link{snomadr}} for further details) }
+
+  \item{random.seed}{ when it is not missing and not equal to 0, the
+    initial points will be generated using this seed when using
+    \code{\link{snomadr}} }
+
+  \item{restart.from.min}{ a logical value indicating to recommence
+  \code{\link{snomadr}} with the optimal values found from its first
+  invocation (typically quick but sometimes recommended in the field of
+  optimization)}
+  
+  \item{ukertype}{
+    character string used to specify the unordered categorical kernel type.
+    Can be set as \code{aitchisonaitken} or \code{liracine}. Defaults to
+    \code{liracine}
+  }
 
   \item{\dots}{
     additional arguments supplied to specify the regression type,
