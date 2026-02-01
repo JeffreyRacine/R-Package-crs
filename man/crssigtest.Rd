@@ -11,10 +11,10 @@
 \usage{
 crssigtest(model = NULL,
            index = NULL,
+           boot = TRUE,
            boot.num = 399,
            boot.type = c("residual","reorder"),
-           random.seed = 42,
-           boot = TRUE)
+           random.seed = 42)
 }
 
 \arguments{
@@ -25,6 +25,10 @@ crssigtest(model = NULL,
     a vector of indices for the columns of \code{model$xz} for which the
     test of significance is to be conducted. Defaults to (1,2,\dots,\eqn{p})
     where \eqn{p} is the number of columns in \code{model$xz}.
+  }
+  \item{boot}{
+    a logical value (default \code{TRUE}) indicating whether to compute
+    the bootstrap P-value or simply return the asymptotic P-value.
   }
   \item{boot.num}{
     an integer value specifying the number of bootstrap replications to
@@ -38,10 +42,6 @@ crssigtest(model = NULL,
   \item{random.seed}{
     an integer used to seed R's random number generator. This is to
     ensure replicability. Defaults to 42.
-  }
-  \item{boot}{
-    a logical value (default \code{TRUE}) indicating whether to compute
-    the bootstrap P-value or simply return the asymptotic P-value.
   }
 }
 

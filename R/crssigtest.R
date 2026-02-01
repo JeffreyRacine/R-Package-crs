@@ -12,10 +12,10 @@
 
 crssigtest <- function(model = NULL,
                        index = NULL,
+                       boot = TRUE,
                        boot.num = 399,
                        boot.type = c("residual","reorder"),
-                       random.seed = 42,
-                       boot = TRUE) {
+                       random.seed = 42) {
   
   ## Save any existing seed prior to setting the seed for this routine
   ## (we set the seed to ensure the same outcome when the test is run
