@@ -627,12 +627,12 @@ crsiv <- function(y,
     model$num.iterations <- j
     model$norm.stop <- norm.stop
     model$norm.value <- norm.value
-        model$convergence <- convergence
-        model$starting.values.phi <- starting.values.phi
-        model$nmulti <- nmulti
-        model$ptm <- proc.time() - ptm.start
+    model$convergence <- convergence
+    model$starting.values.phi <- starting.values.phi
+    model$nmulti <- nmulti
+    model$ptm <- proc.time() - ptm.start
         
-        console <- printClear(console)
+    console <- printClear(console)
     console <- printPop(console)
     
     if(display.warnings) {
