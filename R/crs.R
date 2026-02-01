@@ -424,6 +424,7 @@ crs.formula <- function(formula,
                         display.warnings=TRUE,
                         ...) {
   
+  ptm.start <- proc.time()
   cv <- match.arg(cv)
   cv.func <- match.arg(cv.func)
   complexity <- match.arg(complexity)
@@ -550,7 +551,6 @@ crs.formula <- function(formula,
   if(!is.logical(singular.ok)) stop("singular.ok must be logical (TRUE/FALSE)")
   
   cv.min <- NULL
-  ptm <- system.time("")
   
   if(!kernel) {
     
@@ -558,24 +558,24 @@ crs.formula <- function(formula,
     
     if(cv=="nomad") {
       
-      ptm <- ptm + system.time(cv.return <- frscvNOMAD(xz=xz,
-                                                       y=y,
-                                                       degree.max=degree.max,
-                                                       segments.max=segments.max,
-                                                       degree.min=degree.min,
-                                                       segments.min=segments.min,
-                                                       cv.df.min=cv.df.min,
-                                                       complexity=complexity,
-                                                       knots=knots,
-                                                       basis=basis,
-                                                       cv.func=cv.func,
-                                                       degree=degree,
-                                                       segments=segments,
-                                                       nmulti=nmulti,
-                                                       weights=weights,
-                                                       singular.ok=singular.ok,
-                                                       display.nomad.progress=display.nomad.progress,
-                                                       display.warnings=display.warnings))
+      cv.return <- frscvNOMAD(xz=xz,
+                               y=y,
+                               degree.max=degree.max,
+                               segments.max=segments.max,
+                               degree.min=degree.min,
+                               segments.min=segments.min,
+                               cv.df.min=cv.df.min,
+                               complexity=complexity,
+                               knots=knots,
+                               basis=basis,
+                               cv.func=cv.func,
+                               degree=degree,
+                               segments=segments,
+                               nmulti=nmulti,
+                               weights=weights,
+                               singular.ok=singular.ok,
+                               display.nomad.progress=display.nomad.progress,
+                               display.warnings=display.warnings)
       
       cv.min <- cv.return$cv.objc
       degree <- cv.return$degree
@@ -586,22 +586,22 @@ crs.formula <- function(formula,
       if(isTRUE(all.equal(cv.min,sqrt(.Machine$double.xmax)))) stop(" Search failed: restart with larger nmulti or smaller degree.max  (or degree if provided)")
     }  else if(cv=="exhaustive") {
       
-      ptm <- ptm + system.time(cv.return <- frscv(xz=xz,
-                                                  y=y,
-                                                  degree.max=degree.max,
-                                                  segments.max=segments.max,
-                                                  degree.min=degree.min,
-                                                  segments.min=segments.min,
-                                                  complexity=complexity,
-                                                  knots=knots,
-                                                  basis=basis,
-                                                  cv.func=cv.func,
-                                                  degree=degree,
-                                                  segments=segments,
-                                                  tau=tau,
-                                                  weights=weights,
-                                                  singular.ok=singular.ok,
-                                                  display.warnings=display.warnings))
+      cv.return <- frscv(xz=xz,
+                          y=y,
+                          degree.max=degree.max,
+                          segments.max=segments.max,
+                          degree.min=degree.min,
+                          segments.min=segments.min,
+                          complexity=complexity,
+                          knots=knots,
+                          basis=basis,
+                          cv.func=cv.func,
+                          degree=degree,
+                          segments=segments,
+                          tau=tau,
+                          weights=weights,
+                          singular.ok=singular.ok,
+                          display.warnings=display.warnings)
       
       cv.min <- cv.return$cv.objc
       degree <- cv.return$degree
@@ -618,34 +618,34 @@ crs.formula <- function(formula,
     
     if(cv=="nomad") {
       
-      ptm <- ptm + system.time(cv.return <- krscvNOMAD(xz=xz,
-                                                       y=y,
-                                                       degree.max=degree.max,
-                                                       segments.max=segments.max,
-                                                       degree.min=degree.min,
-                                                       segments.min=segments.min,
-                                                       cv.df.min=cv.df.min,
-                                                       complexity=complexity,
-                                                       knots=knots,
-                                                       basis=basis,
-                                                       cv.func=cv.func,
-                                                       degree=degree,
-                                                       segments=segments,
-                                                       lambda=lambda,
-                                                       lambda.discrete=lambda.discrete,
-                                                       lambda.discrete.num=lambda.discrete.num,
-                                                       random.seed=random.seed,
-                                                       max.bb.eval=max.bb.eval,
-                                                       initial.mesh.size.real=initial.mesh.size.real,
-                                                       initial.mesh.size.integer=initial.mesh.size.integer,
-                                                       min.mesh.size.real=min.mesh.size.real,
-                                                       min.mesh.size.integer=min.mesh.size.integer,
-                                                       nmulti=nmulti,
-                                                       tau=tau,
-                                                       weights=weights,
-                                                       singular.ok=singular.ok,
-                                                       display.nomad.progress=display.nomad.progress,
-                                                       display.warnings=display.warnings))
+      cv.return <- krscvNOMAD(xz=xz,
+                               y=y,
+                               degree.max=degree.max,
+                               segments.max=segments.max,
+                               degree.min=degree.min,
+                               segments.min=segments.min,
+                               cv.df.min=cv.df.min,
+                               complexity=complexity,
+                               knots=knots,
+                               basis=basis,
+                               cv.func=cv.func,
+                               degree=degree,
+                               segments=segments,
+                               lambda=lambda,
+                               lambda.discrete=lambda.discrete,
+                               lambda.discrete.num=lambda.discrete.num,
+                               random.seed=random.seed,
+                               max.bb.eval=max.bb.eval,
+                               initial.mesh.size.real=initial.mesh.size.real,
+                               initial.mesh.size.integer=initial.mesh.size.integer,
+                               min.mesh.size.real=min.mesh.size.real,
+                               min.mesh.size.integer=min.mesh.size.integer,
+                               nmulti=nmulti,
+                               tau=tau,
+                               weights=weights,
+                               singular.ok=singular.ok,
+                               display.nomad.progress=display.nomad.progress,
+                               display.warnings=display.warnings)
       
       cv.min <- cv.return$cv.objc
       degree <- cv.return$degree
@@ -658,23 +658,23 @@ crs.formula <- function(formula,
       
     } else if(cv=="exhaustive") {
       
-      ptm <- ptm + system.time(cv.return <- krscv(xz=xz,
-                                                  y=y,
-                                                  degree.max=degree.max,
-                                                  segments.max=segments.max,
-                                                  degree.min=degree.min,
-                                                  segments.min=segments.min,
-                                                  complexity=complexity,
-                                                  knots=knots,
-                                                  basis=basis,
-                                                  cv.func=cv.func,
-                                                  degree=degree,
-                                                  segments=segments,
-                                                  restarts=restarts,
-                                                  tau=tau,
-                                                  weights=weights,
-                                                  singular.ok=singular.ok,
-                                                  display.warnings=display.warnings))
+      cv.return <- krscv(xz=xz,
+                          y=y,
+                          degree.max=degree.max,
+                          segments.max=segments.max,
+                          degree.min=degree.min,
+                          segments.min=segments.min,
+                          complexity=complexity,
+                          knots=knots,
+                          basis=basis,
+                          cv.func=cv.func,
+                          degree=degree,
+                          segments=segments,
+                          restarts=restarts,
+                          tau=tau,
+                          weights=weights,
+                          singular.ok=singular.ok,
+                          display.warnings=display.warnings)
       
       cv.min <- cv.return$cv.objc
       degree <- cv.return$degree
@@ -689,24 +689,24 @@ crs.formula <- function(formula,
     
   }
   
-  ptm <- ptm + system.time(est <- crs.default(xz=xz,
-                                              y=y,
-                                              degree=degree,
-                                              segments=segments,
-                                              include=include,
-                                              kernel=kernel,
-                                              lambda=lambda,
-                                              complexity=complexity,
-                                              knots=knots,
-                                              basis=basis,
-                                              deriv=deriv,
-                                              data.return=data.return,
-                                              prune=prune,
-                                              model.return=model.return,
-                                              tau=tau,
-                                              weights=weights,
-                                              display.warnings=display.warnings,
-                                              ...))
+  est <- crs.default(xz=xz,
+                      y=y,
+                      degree=degree,
+                      segments=segments,
+                      include=include,
+                      kernel=kernel,
+                      lambda=lambda,
+                      complexity=complexity,
+                      knots=knots,
+                      basis=basis,
+                      deriv=deriv,
+                      data.return=data.return,
+                      prune=prune,
+                      model.return=model.return,
+                      tau=tau,
+                      weights=weights,
+                      display.warnings=display.warnings,
+                      ...)
   
   
   est$cv.score <- cv.min
@@ -720,7 +720,7 @@ crs.formula <- function(formula,
   est$cv.min <- cv.min
   est$cv <- cv
   est$restarts <- restarts
-  est$ptm <- ptm
+  est$ptm <- proc.time() - ptm.start
   est$nmulti <- nmulti
   
   return(est)

@@ -58,9 +58,9 @@ crsiv <- function(y,
                   display.warnings=TRUE,
                   ...) {
   
+  ptm.start <- proc.time()
   crs.messages <- getOption("crs.messages")
   is.eval.train <- is.null(zeval) && is.null(weval) && is.null(xeval)
-  ptm <- system.time("")
   
   dot.args <- list(...)
   nmulti <- if(!is.null(dot.args$nmulti)) dot.args$nmulti else 5
@@ -247,7 +247,7 @@ crsiv <- function(y,
     console <- printPop(console)
     if(display.nomad.progress) console <- printPush("Computing weights and optimal smoothing for E(y|w)...", console)
     if(crs.messages) options(crs.messages=FALSE)
-    ptm <- ptm + system.time(model<-crs(formula.yw,opts=opts,data=traindata,display.nomad.progress=display.nomad.progress,display.warnings=display.warnings,...))
+    model<-crs(formula.yw,opts=opts,data=traindata,display.nomad.progress=display.nomad.progress,display.warnings=display.warnings,...)
     if(crs.messages) options(crs.messages=TRUE)
     E.y.w <- if(is.eval.train) fitted(model) else predict(model,newdata=evaldata,...)
     B <- model.matrix(model$model.lm)
@@ -263,7 +263,7 @@ crsiv <- function(y,
       if(display.nomad.progress) console <- printPush("Computing weights and optimal smoothing for E(E(y|w)|z,x)...", console)
     }
     if(crs.messages) options(crs.messages=FALSE)
-    ptm <- ptm + system.time(model <- crs(formula.Eywz,opts=opts,data=traindata,display.nomad.progress=display.nomad.progress,display.warnings=display.warnings,...))
+    model <- crs(formula.Eywz,opts=opts,data=traindata,display.nomad.progress=display.nomad.progress,display.warnings=display.warnings,...)
     if(crs.messages) options(crs.messages=TRUE)
     E.E.y.w.z <- if(is.eval.train) fitted(model) else predict(model,newdata=evaldata,...)
     B <- model.matrix(model$model.lm)
@@ -311,7 +311,7 @@ crsiv <- function(y,
       if(display.nomad.progress) console <- printPush("Computing optimal smoothing and weights for E(phi(z,x)|w)...", console)
     }
     if(crs.messages) options(crs.messages=FALSE)
-    ptm <- ptm + system.time(model <- crs(formula.phiw,opts=opts,data=traindata,display.nomad.progress=display.nomad.progress,display.warnings=display.warnings,...))
+    model <- crs(formula.phiw,opts=opts,data=traindata,display.nomad.progress=display.nomad.progress,display.warnings=display.warnings,...)
     if(crs.messages) options(crs.messages=TRUE)
     E.phi.w <- if(is.eval.train) fitted(model) else predict(model,newdata=evaldata,...)
     B <- model.matrix(model$model.lm)
@@ -327,7 +327,7 @@ crsiv <- function(y,
       if(display.nomad.progress) console <- printPush("Computing optimal smoothing and weights for E(E(phi(z,x)|w)|z,x)...", console)
     }
     if(crs.messages) options(crs.messages=FALSE)
-    ptm <- ptm + system.time(model <- crs(formula.Ephiwz,opts=opts,data=traindata,display.nomad.progress=display.nomad.progress,display.warnings=display.warnings,...))
+    model <- crs(formula.Ephiwz,opts=opts,data=traindata,display.nomad.progress=display.nomad.progress,display.warnings=display.warnings,...)
     if(crs.messages) options(crs.messages=TRUE)
     B <- model.matrix(model$model.lm)
     KPHIWZ <- B%*%chol2inv(chol(t(B)%*%B))%*%t(B)
@@ -376,12 +376,12 @@ crsiv <- function(y,
     ## shorten the iterative process?
     
     if(crs.messages) options(crs.messages=FALSE)
-    ptm <- ptm + system.time(phi.0 <- crs(formula.yz,opts=opts,data=traindata,display.nomad.progress=display.nomad.progress,display.warnings=display.warnings,...))
+    phi.0 <- crs(formula.yz,opts=opts,data=traindata,display.nomad.progress=display.nomad.progress,display.warnings=display.warnings,...)
     
     residuals.phi <- traindata$y-phi
     traindata$y <- traindata$y - (fitted(phi.0)-phi)
     
-    ptm <- ptm + system.time(model <- crs(formula.yz,
+    model <- crs(formula.yz,
                  cv="none",
                  degree=phi.0$degree,
                  segments=phi.0$segments,
@@ -393,14 +393,14 @@ crsiv <- function(y,
                  tau=phi.0$tau,
                  deriv=deriv,
                  data=traindata,
-                 weights=phi.0$weights))
+                 weights=phi.0$weights)
     if(crs.messages) options(crs.messages=TRUE)
     
     model$residuals <- residuals.phi
     model$phi <- phi
     model$alpha <- alpha
     model$nmulti <- nmulti
-    model$ptm <- ptm
+    model$ptm <- proc.time() - ptm.start
     
     return(model)
     
@@ -419,7 +419,7 @@ crsiv <- function(y,
     if(display.nomad.progress) console <- printPush(paste("Computing optimal smoothing and E(Y|w) for the stopping rule...",sep=""),console)
     
     if(crs.messages) options(crs.messages=FALSE)
-    ptm <- ptm + system.time(model.E.y.w <- crs(formula.yw,opts=opts,data=traindata,display.nomad.progress=display.nomad.progress,display.warnings=display.warnings,...))
+    model.E.y.w <- crs(formula.yw,opts=opts,data=traindata,display.nomad.progress=display.nomad.progress,display.warnings=display.warnings,...)
     E.y.w <- if(is.eval.train) fitted(model.E.y.w) else predict(model.E.y.w,newdata=evaldata,...)
     if(crs.messages) options(crs.messages=TRUE)
     
@@ -437,16 +437,16 @@ crsiv <- function(y,
     if(crs.messages) options(crs.messages=FALSE)
     if(is.null(starting.values)) {
       phi.0.NULL <- TRUE
-      ptm <- ptm + system.time(phi.0 <- crs(formula.yz,opts=opts,data=traindata,display.nomad.progress=display.nomad.progress,display.warnings=display.warnings,...))
+      phi.0 <- crs(formula.yz,opts=opts,data=traindata,display.nomad.progress=display.nomad.progress,display.warnings=display.warnings,...)
       ## First compute phi.0 (not passed in) then phi
       if(start.from == "Eyz") {
         ## Start from E(Y|z)
         phi <- if(is.eval.train) fitted(phi.0) else predict(phi.0,newdata=evaldata,...)
       } else {
         ## Start from E(E(Y|w)|z)
-        ptm <- ptm + system.time(tmp.model <- crs(formula.yw,opts=opts,data=traindata,display.nomad.progress=display.nomad.progress,display.warnings=display.warnings,...))
+        tmp.model <- crs(formula.yw,opts=opts,data=traindata,display.nomad.progress=display.nomad.progress,display.warnings=display.warnings,...)
         E.y.w <- fitted(tmp.model)
-        ptm <- ptm + system.time(model.E.E.y.w.z <- crs(formula.Eywz,opts=opts,data=traindata,display.nomad.progress=display.nomad.progress,display.warnings=display.warnings,...))
+        model.E.E.y.w.z <- crs(formula.Eywz,opts=opts,data=traindata,display.nomad.progress=display.nomad.progress,display.warnings=display.warnings,...)
         phi <- if(is.eval.train) fitted(model.E.E.y.w.z) else predict(model.E.E.y.w.z,newdata=evaldata,...)
       }
     } else {
@@ -454,7 +454,7 @@ crsiv <- function(y,
       phi.0.input <- starting.values
       ## First compute phi (passed in) then phi.0
       phi <- starting.values
-      ptm <- ptm + system.time(phi.0 <- crs(formula.yz,opts=opts,data=traindata,display.nomad.progress=display.nomad.progress,display.warnings=display.warnings,...))
+      phi.0 <- crs(formula.yz,opts=opts,data=traindata,display.nomad.progress=display.nomad.progress,display.warnings=display.warnings,...)
     }
     
     starting.values.phi <- phi
@@ -471,17 +471,17 @@ crsiv <- function(y,
     if(crs.messages) options(crs.messages=FALSE)
     if(smooth.residuals) {
       traindata$phi <- phi
-      ptm <- ptm + system.time(model.residw <- crs(formula.residw,opts=opts,data=traindata,display.nomad.progress=display.nomad.progress,display.warnings=display.warnings,...))
+      model.residw <- crs(formula.residw,opts=opts,data=traindata,display.nomad.progress=display.nomad.progress,display.warnings=display.warnings,...)
       residw <- if(is.eval.train) fitted(model.residw) else predict(model.residw,newdata=evaldata,...)
       traindata$residw <- residw
-      ptm <- ptm + system.time(model.predict.residw.z <- crs(formula.residwz,opts=opts,data=traindata,display.nomad.progress=display.nomad.progress,display.warnings=display.warnings,...))
+      model.predict.residw.z <- crs(formula.residwz,opts=opts,data=traindata,display.nomad.progress=display.nomad.progress,display.warnings=display.warnings,...)
     } else {
       traindata$phi <- phi
-      ptm <- ptm + system.time(model.E.phi.w <- crs(formula.phiw,opts=opts,data=traindata,display.nomad.progress=display.nomad.progress,display.warnings=display.warnings,...))
+      model.E.phi.w <- crs(formula.phiw,opts=opts,data=traindata,display.nomad.progress=display.nomad.progress,display.warnings=display.warnings,...)
       residw <- (if(is.eval.train) fitted(model.E.y.w) else predict(model.E.y.w,newdata=evaldata,...)) -
                 (if(is.eval.train) fitted(model.E.phi.w) else predict(model.E.phi.w,newdata=evaldata,...))
       traindata$residw <- residw
-      ptm <- ptm + system.time(model.predict.residw.z <- crs(formula.residwz,opts=opts,data=traindata,display.nomad.progress=display.nomad.progress,display.warnings=display.warnings,...))
+      model.predict.residw.z <- crs(formula.residwz,opts=opts,data=traindata,display.nomad.progress=display.nomad.progress,display.warnings=display.warnings,...)
     }
     if(crs.messages) options(crs.messages=TRUE)
     
@@ -515,17 +515,17 @@ crsiv <- function(y,
       if(crs.messages) options(crs.messages=FALSE)
       if(smooth.residuals) {
         traindata$phi <- phi
-        ptm <- ptm + system.time(model.residw <- crs(formula.residw,opts=opts,data=traindata,display.nomad.progress=display.nomad.progress,display.warnings=display.warnings,...))
+        model.residw <- crs(formula.residw,opts=opts,data=traindata,display.nomad.progress=display.nomad.progress,display.warnings=display.warnings,...)
         residw <- if(is.eval.train) fitted(model.residw) else predict(model.residw,newdata=evaldata,...)
         traindata$residw <- residw
-        ptm <- ptm + system.time(model.predict.residw.z <- crs(formula.residwz,opts=opts,data=traindata,display.nomad.progress=display.nomad.progress,display.warnings=display.warnings,...))
+        model.predict.residw.z <- crs(formula.residwz,opts=opts,data=traindata,display.nomad.progress=display.nomad.progress,display.warnings=display.warnings,...)
       } else {
         traindata$phi <- phi
-        ptm <- ptm + system.time(model.E.phi.w <- crs(formula.phiw,opts=opts,data=traindata,display.nomad.progress=display.nomad.progress,display.warnings=display.warnings,...))
+        model.E.phi.w <- crs(formula.phiw,opts=opts,data=traindata,display.nomad.progress=display.nomad.progress,display.warnings=display.warnings,...)
         residw <- (if(is.eval.train) fitted(model.E.y.w) else predict(model.E.y.w,newdata=evaldata,...)) -
                   (if(is.eval.train) fitted(model.E.phi.w) else predict(model.E.phi.w,newdata=evaldata,...))
         traindata$residw <- residw
-        ptm <- ptm + system.time(model.predict.residw.z <- crs(formula.residwz,opts=opts,data=traindata,display.nomad.progress=display.nomad.progress,display.warnings=display.warnings,...))
+        model.predict.residw.z <- crs(formula.residwz,opts=opts,data=traindata,display.nomad.progress=display.nomad.progress,display.warnings=display.warnings,...)
       }
       if(crs.messages) options(crs.messages=TRUE)
       
@@ -606,7 +606,7 @@ crsiv <- function(y,
     traindata$y <- traindata$y - (fitted(phi.0)-phi)
     
     if(crs.messages) options(crs.messages=FALSE)
-    ptm <- ptm + system.time(model <- crs(formula.yz,
+    model <- crs(formula.yz,
                  cv="none",
                  degree=phi.0$degree,
                  segments=phi.0$segments,
@@ -618,7 +618,7 @@ crsiv <- function(y,
                  tau=phi.0$tau,
                  deriv=deriv,
                  data=traindata,
-                 weights=phi.0$weights))
+                 weights=phi.0$weights)
     if(crs.messages) options(crs.messages=TRUE)
     
     model$residuals <- residuals.phi
@@ -630,7 +630,7 @@ crsiv <- function(y,
         model$convergence <- convergence
         model$starting.values.phi <- starting.values.phi
         model$nmulti <- nmulti
-        model$ptm <- ptm
+        model$ptm <- proc.time() - ptm.start
         
         console <- printClear(console)
     console <- printPop(console)
