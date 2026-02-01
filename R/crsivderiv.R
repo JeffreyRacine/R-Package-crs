@@ -50,6 +50,7 @@ crsivderiv <- function(y,
   
   crs.messages <- getOption("crs.messages")
   is.eval.train <- is.null(zeval) && is.null(weval) && is.null(xeval)
+  ptm <- system.time("")
   
   dot.args <- list(...)
   nmulti <- if(!is.null(dot.args$nmulti)) dot.args$nmulti else 5
@@ -177,12 +178,13 @@ crsivderiv <- function(y,
     if(start.from == "Eyz") {
       ## Start from E(Y|z)      
       if(crs.messages) options(crs.messages=FALSE)
-      model.E.y.z <- crs(formula.yz,
+      ptm <- ptm + system.time(model.E.y.z <- crs(formula.yz,
                          opts=opts,display.nomad.progress=display.nomad.progress,display.warnings=display.warnings,
                          data=traindata,
                          deriv=1,
-                         ...)
+                         ...))
       if(crs.messages) options(crs.messages=TRUE)    
+      phi.0 <- model.E.y.z
       if(is.eval.train) {
         E.y.z <- model.E.y.z$fitted.values
         phi.prime <- model.E.y.z$deriv.mat[,1]
@@ -193,8 +195,10 @@ crsivderiv <- function(y,
       }
     } else {
       ## Start from E(E(Y|w)|z)
-      E.y.w <- fitted(crs(formula.yw,opts=opts,display.nomad.progress=display.nomad.progress,display.warnings=display.warnings,data=traindata,...))
-      model.E.E.y.w.z <- crs(formula.Eywz,opts=opts,display.nomad.progress=display.nomad.progress,display.warnings=display.warnings,data=traindata,deriv=1,...)
+      ptm <- ptm + system.time(tmp.model <- crs(formula.yw,opts=opts,display.nomad.progress=display.nomad.progress,display.warnings=display.warnings,data=traindata,...))
+      E.y.w <- fitted(tmp.model)
+      ptm <- ptm + system.time(model.E.E.y.w.z <- crs(formula.Eywz,opts=opts,display.nomad.progress=display.nomad.progress,display.warnings=display.warnings,data=traindata,deriv=1,...))
+      phi.0 <- model.E.E.y.w.z
       if(is.eval.train) {
         E.E.y.w.z <- model.E.E.y.w.z$fitted.values
         phi.prime <- model.E.E.y.w.z$deriv.mat[,1]
@@ -207,6 +211,9 @@ crsivderiv <- function(y,
     
   } else {
     phi.prime <- starting.values
+    if(crs.messages) options(crs.messages=FALSE)
+    ptm <- ptm + system.time(phi.0 <- crs(formula.yz,opts=opts,data=traindata,display.nomad.progress=display.nomad.progress,display.warnings=display.warnings,...))
+    if(crs.messages) options(crs.messages=TRUE)
   }
   
   ## Step 1 - begin iteration - for this we require \varphi_0. To
@@ -237,10 +244,10 @@ crsivderiv <- function(y,
   ## For stopping rule...
   
   if(crs.messages) options(crs.messages=FALSE)
-  model.E.y.w <- crs(formula.yw,
+  ptm <- ptm + system.time(model.E.y.w <- crs(formula.yw,
                      opts=opts,display.nomad.progress=display.nomad.progress,display.warnings=display.warnings,
                      data=traindata,
-                     ...)
+                     ...))
   if(crs.messages) options(crs.messages=TRUE)    
   
   E.y.w <- predict(model.E.y.w,newdata=evaldata)
@@ -251,10 +258,10 @@ crsivderiv <- function(y,
   
   if(crs.messages) options(crs.messages=FALSE)
   traindata$phi <- phi
-  model.E.phi.w <- crs(formula.phiw,
+  ptm <- ptm + system.time(model.E.phi.w <- crs(formula.phiw,
                        opts=opts,display.nomad.progress=display.nomad.progress,display.warnings=display.warnings,
                        data=traindata,
-                       ...)
+                       ...))
   if(crs.messages) options(crs.messages=TRUE)    
   
   E.phi.w <- if(is.eval.train) fitted(model.E.phi.w) else predict(model.E.phi.w,newdata=evaldata)
@@ -274,10 +281,10 @@ crsivderiv <- function(y,
     
     if(crs.messages) options(crs.messages=FALSE)
     traindata$mu <- mu
-    model.E.mu.w <- crs(formula.muw,
+    ptm <- ptm + system.time(model.E.mu.w <- crs(formula.muw,
                         opts=opts,display.nomad.progress=display.nomad.progress,display.warnings=display.warnings,
                         data=traindata,
-                        ...)
+                        ...))
     if(crs.messages) options(crs.messages=TRUE)    
     
     ## We require the fitted values...
@@ -295,10 +302,10 @@ crsivderiv <- function(y,
     
     if(crs.messages) options(crs.messages=FALSE)
     traindata$phi <- phi
-    model.E.phi.w <- crs(formula.phiw,
+    ptm <- ptm + system.time(model.E.phi.w <- crs(formula.phiw,
                          opts=opts,display.nomad.progress=display.nomad.progress,display.warnings=display.warnings,
                          data=traindata,
-                         ...)
+                         ...))
     if(crs.messages) options(crs.messages=TRUE)    
     
     ## We require the fitted values...
@@ -373,10 +380,10 @@ crsivderiv <- function(y,
       
       if(crs.messages) options(crs.messages=FALSE)
       traindata$mu <- mu
-      model.E.mu.w <- crs(formula.muw,
+      ptm <- ptm + system.time(model.E.mu.w <- crs(formula.muw,
                           opts=opts,display.nomad.progress=display.nomad.progress,display.warnings=display.warnings,
                           data=traindata,
-                          ...)
+                          ...))
       
       ## We require the fitted values...
       
@@ -394,10 +401,10 @@ crsivderiv <- function(y,
       
       if(crs.messages) options(crs.messages=FALSE)
       traindata$phi <- phi
-      model.E.phi.w <- crs(formula.phiw,
+      ptm <- ptm + system.time(model.E.phi.w <- crs(formula.phiw,
                            opts=opts,display.nomad.progress=display.nomad.progress,display.warnings=display.warnings,
                            data=traindata,
-                           ...)
+                           ...))
       
       ## We require the fitted values...
       
@@ -500,16 +507,37 @@ crsivderiv <- function(y,
     if(j == iterate.max) warning(" iterate.max reached: increase iterate.max or inspect norm.stop vector")
   }
   
-  return(list(phi=phi,
-              phi.prime=phi.prime,
-              phi.mat=phi.mat,
-              phi.prime.mat=phi.prime.mat,
-              num.iterations=j,
-              norm.stop=norm.stop,
-              norm.value=norm.value,
-              convergence=convergence,
-              starting.values.phi=starting.values.phi,
-              starting.values.phi.prime=starting.values.phi.prime,
-              nmulti=nmulti))
+  if(crs.messages) options(crs.messages=FALSE)
+  traindata$y <- traindata$y - (fitted(phi.0)-phi)
+  
+  ptm <- ptm + system.time(model <- crs(formula.yz,
+               cv="none",
+               degree=phi.0$degree,
+               segments=phi.0$segments,
+               lambda=phi.0$lambda,
+               include=phi.0$include,
+               kernel=phi.0$kernel,
+               basis=phi.0$basis,
+               knots=phi.0$knots,
+               tau=phi.0$tau,
+               deriv=1,
+               data=traindata,
+               weights=phi.0$weights))
+  if(crs.messages) options(crs.messages=TRUE)
+  
+  model$phi <- phi
+  model$phi.prime <- phi.prime
+  model$phi.mat <- phi.mat
+  model$phi.prime.mat <- phi.prime.mat
+  model$num.iterations <- j
+  model$norm.stop <- norm.stop
+  model$norm.value <- norm.value
+  model$convergence <- convergence
+  model$starting.values.phi <- starting.values.phi
+  model$starting.values.phi.prime <- starting.values.phi.prime
+  model$nmulti <- nmulti
+  model$ptm <- ptm
+  
+  return(model)
   
 }
