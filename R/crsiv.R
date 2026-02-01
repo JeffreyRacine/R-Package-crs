@@ -63,7 +63,36 @@ crsiv <- function(y,
   is.eval.train <- is.null(zeval) && is.null(weval) && is.null(xeval)
   
   dot.args <- list(...)
-  nmulti <- if(!is.null(dot.args$nmulti)) dot.args$nmulti else 5
+  nmulti.user <- dot.args$nmulti
+  nmulti <- if(!is.null(nmulti.user)) nmulti.user else 5
+  
+  ## Strip arguments we might pass explicitly to avoid conflicts
+  dots.no.nmulti <- dot.args
+  dots.no.nmulti$nmulti <- NULL
+  
+  ## Create a version of dots for pre-loop calls that strips conflicting args
+  dots.preloop <- dot.args
+  dots.preloop$formula <- NULL
+  dots.preloop$opts <- NULL
+  dots.preloop$data <- NULL
+  dots.preloop$display.nomad.progress <- NULL
+  dots.preloop$display.warnings <- NULL
+  
+  ## Create a version of dots for the loop that excludes parameters we pass explicitly
+  dots.loop <- dots.no.nmulti
+  dots.loop$formula <- NULL
+  dots.loop$opts <- NULL
+  dots.loop$data <- NULL
+  dots.loop$display.nomad.progress <- NULL
+  dots.loop$display.warnings <- NULL
+  dots.loop$degree <- NULL
+  dots.loop$segments <- NULL
+  dots.loop$lambda <- NULL
+  dots.loop$include <- NULL
+  dots.loop$nmulti <- NULL # already handled in dots.no.nmulti but for safety
+  
+  ## Determine nmulti for subsequent loop iterations
+  nmulti.loop <- if(!is.null(nmulti.user)) nmulti.user else 1
   
   ## This function was constructed initially by Samuele Centorrino
   ## <samuele.centorrino@univ-tlse1.fr>
@@ -471,17 +500,81 @@ crsiv <- function(y,
     if(crs.messages) options(crs.messages=FALSE)
     if(smooth.residuals) {
       traindata$phi <- phi
-      model.residw <- crs(formula.residw,opts=opts,data=traindata,display.nomad.progress=display.nomad.progress,display.warnings=display.warnings,...)
+      
+      model.residw <- do.call("crs", c(list(formula=formula.residw,
+                                            opts=opts,
+                                            data=traindata,
+                                            display.nomad.progress=display.nomad.progress,
+                                            display.warnings=display.warnings),
+                                       dots.preloop))
+      
+      ## Capture initial parameters for warm start
+      degree.residw <- model.residw$degree
+      segments.residw <- model.residw$segments
+      lambda.residw <- model.residw$lambda
+      include.residw <- model.residw$include
+      
       residw <- if(is.eval.train) fitted(model.residw) else predict(model.residw,newdata=evaldata,...)
       traindata$residw <- residw
-      model.predict.residw.z <- crs(formula.residwz,opts=opts,data=traindata,display.nomad.progress=display.nomad.progress,display.warnings=display.warnings,...)
+      
+      model.predict.residw.z <- do.call("crs", c(list(formula=formula.residwz,
+                                                      opts=opts,
+                                                      data=traindata,
+                                                      display.nomad.progress=display.nomad.progress,
+                                                      display.warnings=display.warnings),
+                                                 dots.preloop))
+      
+      ## Capture initial parameters for warm start
+      degree.residwz <- model.predict.residw.z$degree
+      segments.residwz <- model.predict.residw.z$segments
+      lambda.residwz <- model.predict.residw.z$lambda
+      include.residwz <- model.predict.residw.z$include
+      
+      ## Initialize unused warm start parameters
+      degree.phiw <- NULL
+      segments.phiw <- NULL
+      lambda.phiw <- NULL
+      include.phiw <- NULL
+      
     } else {
       traindata$phi <- phi
-      model.E.phi.w <- crs(formula.phiw,opts=opts,data=traindata,display.nomad.progress=display.nomad.progress,display.warnings=display.warnings,...)
+      
+      model.E.phi.w <- do.call("crs", c(list(formula=formula.phiw,
+                                             opts=opts,
+                                             data=traindata,
+                                             display.nomad.progress=display.nomad.progress,
+                                             display.warnings=display.warnings),
+                                        dots.preloop))
+      
+      ## Capture initial parameters for warm start
+      degree.phiw <- model.E.phi.w$degree
+      segments.phiw <- model.E.phi.w$segments
+      lambda.phiw <- model.E.phi.w$lambda
+      include.phiw <- model.E.phi.w$include
+      
       residw <- (if(is.eval.train) fitted(model.E.y.w) else predict(model.E.y.w,newdata=evaldata,...)) -
                 (if(is.eval.train) fitted(model.E.phi.w) else predict(model.E.phi.w,newdata=evaldata,...))
       traindata$residw <- residw
-      model.predict.residw.z <- crs(formula.residwz,opts=opts,data=traindata,display.nomad.progress=display.nomad.progress,display.warnings=display.warnings,...)
+      
+      model.predict.residw.z <- do.call("crs", c(list(formula=formula.residwz,
+                                                      opts=opts,
+                                                      data=traindata,
+                                                      display.nomad.progress=display.nomad.progress,
+                                                      display.warnings=display.warnings),
+                                                 dots.preloop))
+      
+      ## Capture initial parameters for warm start
+      degree.residwz <- model.predict.residw.z$degree
+      segments.residwz <- model.predict.residw.z$segments
+      lambda.residwz <- model.predict.residw.z$lambda
+      include.residwz <- model.predict.residw.z$include
+      
+      ## Initialize unused warm start parameters
+      degree.residw <- NULL
+      segments.residw <- NULL
+      lambda.residw <- NULL
+      include.residw <- NULL
+      
     }
     if(crs.messages) options(crs.messages=TRUE)
     
@@ -502,6 +595,14 @@ crsiv <- function(y,
     sum_w_Eyw2 <- sum(weights*E.y.w^2)
     norm.stop[1] <- sum(weights*residw^2)/sum_w_Eyw2
     
+    ## Create a version of dots for the loop that excludes parameters we pass explicitly
+    ## to avoid "matched by multiple actual arguments" errors.
+    dots.loop <- dots.no.nmulti
+    dots.loop$degree <- NULL
+    dots.loop$segments <- NULL
+    dots.loop$lambda <- NULL
+    dots.loop$include <- NULL
+    
     for(j in 2:iterate.max) {
       
       console <- printClear(console)
@@ -515,17 +616,84 @@ crsiv <- function(y,
       if(crs.messages) options(crs.messages=FALSE)
       if(smooth.residuals) {
         traindata$phi <- phi
-        model.residw <- crs(formula.residw,opts=opts,data=traindata,display.nomad.progress=display.nomad.progress,display.warnings=display.warnings,...)
+        
+        model.residw <- do.call("crs", c(list(formula=formula.residw,
+                                              degree=degree.residw,
+                                              segments=segments.residw,
+                                              lambda=lambda.residw,
+                                              include=include.residw,
+                                              nmulti=nmulti.loop,
+                                              opts=opts,
+                                              data=traindata,
+                                              display.nomad.progress=display.nomad.progress,
+                                              display.warnings=display.warnings),
+                                         dots.loop))
+        
+        degree.residw <- model.residw$degree
+        segments.residw <- model.residw$segments
+        lambda.residw <- model.residw$lambda
+        include.residw <- model.residw$include
+        
         residw <- if(is.eval.train) fitted(model.residw) else predict(model.residw,newdata=evaldata,...)
         traindata$residw <- residw
-        model.predict.residw.z <- crs(formula.residwz,opts=opts,data=traindata,display.nomad.progress=display.nomad.progress,display.warnings=display.warnings,...)
+        
+        model.predict.residw.z <- do.call("crs", c(list(formula=formula.residwz,
+                                                        degree=degree.residwz,
+                                                        segments=segments.residwz,
+                                                        lambda=lambda.residwz,
+                                                        include=include.residwz,
+                                                        nmulti=nmulti.loop,
+                                                        opts=opts,
+                                                        data=traindata,
+                                                        display.nomad.progress=display.nomad.progress,
+                                                        display.warnings=display.warnings),
+                                                   dots.loop))
+        
+        degree.residwz <- model.predict.residw.z$degree
+        segments.residwz <- model.predict.residw.z$segments
+        lambda.residwz <- model.predict.residw.z$lambda
+        include.residwz <- model.predict.residw.z$include
+        
       } else {
         traindata$phi <- phi
-        model.E.phi.w <- crs(formula.phiw,opts=opts,data=traindata,display.nomad.progress=display.nomad.progress,display.warnings=display.warnings,...)
+        
+        model.E.phi.w <- do.call("crs", c(list(formula=formula.phiw,
+                                               degree=degree.phiw,
+                                               segments=segments.phiw,
+                                               lambda=lambda.phiw,
+                                               include=include.phiw,
+                                               nmulti=nmulti.loop,
+                                               opts=opts,
+                                               data=traindata,
+                                               display.nomad.progress=display.nomad.progress,
+                                               display.warnings=display.warnings),
+                                          dots.loop))
+        
+        degree.phiw <- model.E.phi.w$degree
+        segments.phiw <- model.E.phi.w$segments
+        lambda.phiw <- model.E.phi.w$lambda
+        include.phiw <- model.E.phi.w$include
+        
         residw <- (if(is.eval.train) fitted(model.E.y.w) else predict(model.E.y.w,newdata=evaldata,...)) -
                   (if(is.eval.train) fitted(model.E.phi.w) else predict(model.E.phi.w,newdata=evaldata,...))
         traindata$residw <- residw
-        model.predict.residw.z <- crs(formula.residwz,opts=opts,data=traindata,display.nomad.progress=display.nomad.progress,display.warnings=display.warnings,...)
+        
+        model.predict.residw.z <- do.call("crs", c(list(formula=formula.residwz,
+                                                        degree=degree.residwz,
+                                                        segments=segments.residwz,
+                                                        lambda=lambda.residwz,
+                                                        include=include.residwz,
+                                                        nmulti=nmulti.loop,
+                                                        opts=opts,
+                                                        data=traindata,
+                                                        display.nomad.progress=display.nomad.progress,
+                                                        display.warnings=display.warnings),
+                                                   dots.loop))
+        
+        degree.residwz <- model.predict.residw.z$degree
+        segments.residwz <- model.predict.residw.z$segments
+        lambda.residwz <- model.predict.residw.z$lambda
+        include.residwz <- model.predict.residw.z$include
       }
       if(crs.messages) options(crs.messages=TRUE)
       

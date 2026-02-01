@@ -142,6 +142,21 @@ crsivderiv(y,
   using \code{cv="nomad"} or instead use \code{cv="exhaustive"} if
   possible (this may not be feasible for non-trivial problems).
 
+  Note that for subsequent Landweber-Fridman iterations, a \dQuote{warm
+  start} strategy is employed. The optimal parameters (spline degree,
+  number of segments, and bandwidths or inclusion indicators) from the
+  previous iteration are used as starting values for the current
+  iteration. The user-supplied \code{nmulti} is respected for all
+  iterations. For iterations after the first successful one, these
+  optimal parameters serve as the first of the multiple initial points
+  (a warm start), while any remaining restarts are cold starts. If
+  \code{nmulti} is not explicitly supplied by the user, it defaults to
+  the \code{\link{crs}} default (5) for the first iteration and to 1 for
+  all subsequent iterations. This strategy provides a balance between
+  computational efficiency and robustness, allowing the NOMAD solver to
+  refine the structural parameters as the residuals evolve
+  incrementally while still guarding against local optima.
+
   When using Landweber-Fridman iteration, iteration will terminate
   when either the change in the value of
   \eqn{||(E(y|w)-E(\varphi_k(z,x)|w))/E(y|w)||^2

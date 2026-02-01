@@ -53,7 +53,36 @@ crsivderiv <- function(y,
   is.eval.train <- is.null(zeval) && is.null(weval) && is.null(xeval)
   
   dot.args <- list(...)
-  nmulti <- if(!is.null(dot.args$nmulti)) dot.args$nmulti else 5
+  nmulti.user <- dot.args$nmulti
+  nmulti <- if(!is.null(nmulti.user)) nmulti.user else 5
+  
+  ## Strip arguments we might pass explicitly to avoid conflicts
+  dots.no.nmulti <- dot.args
+  dots.no.nmulti$nmulti <- NULL
+  
+  ## Create a version of dots for pre-loop calls that strips conflicting args
+  dots.preloop <- dot.args
+  dots.preloop$formula <- NULL
+  dots.preloop$opts <- NULL
+  dots.preloop$data <- NULL
+  dots.preloop$display.nomad.progress <- NULL
+  dots.preloop$display.warnings <- NULL
+  
+  ## Create a version of dots for the loop that excludes parameters we pass explicitly
+  dots.loop <- dots.no.nmulti
+  dots.loop$formula <- NULL
+  dots.loop$opts <- NULL
+  dots.loop$data <- NULL
+  dots.loop$display.nomad.progress <- NULL
+  dots.loop$display.warnings <- NULL
+  dots.loop$degree <- NULL
+  dots.loop$segments <- NULL
+  dots.loop$lambda <- NULL
+  dots.loop$include <- NULL
+  dots.loop$nmulti <- NULL # already handled in dots.no.nmulti but for safety
+  
+  ## Determine nmulti for subsequent loop iterations
+  nmulti.loop <- if(!is.null(nmulti.user)) nmulti.user else 1
   
   console <- newLineConsole()
   
@@ -281,10 +310,26 @@ crsivderiv <- function(y,
     
     if(crs.messages) options(crs.messages=FALSE)
     traindata$mu <- mu
-    model.E.mu.w <- crs(formula.muw,
-                        opts=opts,display.nomad.progress=display.nomad.progress,display.warnings=display.warnings,
-                        data=traindata,
-                        ...)
+    
+    model.E.mu.w <- do.call("crs", c(list(formula=formula.muw,
+                                          opts=opts,
+                                          display.nomad.progress=display.nomad.progress,
+                                          display.warnings=display.warnings,
+                                          data=traindata),
+                                     dots.preloop))
+    
+    ## Capture initial parameters for warm start
+    degree.muw <- model.E.mu.w$degree
+    segments.muw <- model.E.mu.w$segments
+    lambda.muw <- model.E.mu.w$lambda
+    include.muw <- model.E.mu.w$include
+    
+    ## Initialize unused warm start parameters
+    degree.phiw <- NULL
+    segments.phiw <- NULL
+    lambda.phiw <- NULL
+    include.phiw <- NULL
+    
     if(crs.messages) options(crs.messages=TRUE)    
     
     ## We require the fitted values...
@@ -302,10 +347,26 @@ crsivderiv <- function(y,
     
     if(crs.messages) options(crs.messages=FALSE)
     traindata$phi <- phi
-    model.E.phi.w <- crs(formula.phiw,
-                         opts=opts,display.nomad.progress=display.nomad.progress,display.warnings=display.warnings,
-                         data=traindata,
-                         ...)
+    
+    model.E.phi.w <- do.call("crs", c(list(formula=formula.phiw,
+                                           opts=opts,
+                                           display.nomad.progress=display.nomad.progress,
+                                           display.warnings=display.warnings,
+                                           data=traindata),
+                                     dots.preloop))
+    
+    ## Capture initial parameters for warm start
+    degree.phiw <- model.E.phi.w$degree
+    segments.phiw <- model.E.phi.w$segments
+    lambda.phiw <- model.E.phi.w$lambda
+    include.phiw <- model.E.phi.w$include
+    
+    ## Initialize unused warm start parameters
+    degree.muw <- NULL
+    segments.muw <- NULL
+    lambda.muw <- NULL
+    include.muw <- NULL
+    
     if(crs.messages) options(crs.messages=TRUE)    
     
     ## We require the fitted values...
@@ -342,6 +403,14 @@ crsivderiv <- function(y,
   phi.mat <- matrix(NA, nrow=length(phi), ncol=iterate.max)
   phi.prime.mat[,1] <- phi.prime
   phi.mat[,1] <- phi
+  
+  ## Create a version of dots for the loop that excludes parameters we pass explicitly
+  ## to avoid "matched by multiple actual arguments" errors.
+  dots.loop <- dots.no.nmulti
+  dots.loop$degree <- NULL
+  dots.loop$segments <- NULL
+  dots.loop$lambda <- NULL
+  dots.loop$include <- NULL
   
   ## This we iterate...
   
@@ -380,10 +449,23 @@ crsivderiv <- function(y,
       
       if(crs.messages) options(crs.messages=FALSE)
       traindata$mu <- mu
-      model.E.mu.w <- crs(formula.muw,
-                          opts=opts,display.nomad.progress=display.nomad.progress,display.warnings=display.warnings,
-                          data=traindata,
-                          ...)
+      
+      model.E.mu.w <- do.call("crs", c(list(formula=formula.muw,
+                                              degree=degree.muw,
+                                              segments=segments.muw,
+                                              lambda=lambda.muw,
+                                              include=include.muw,
+                                              nmulti=nmulti.loop,
+                                              opts=opts,
+                                              display.nomad.progress=display.nomad.progress,
+                                              display.warnings=display.warnings,
+                                              data=traindata),
+                                         dots.loop))
+      
+      degree.muw <- model.E.mu.w$degree
+      segments.muw <- model.E.mu.w$segments
+      lambda.muw <- model.E.mu.w$lambda
+      include.muw <- model.E.mu.w$include
       
       ## We require the fitted values...
       
@@ -401,10 +483,23 @@ crsivderiv <- function(y,
       
       if(crs.messages) options(crs.messages=FALSE)
       traindata$phi <- phi
-      model.E.phi.w <- crs(formula.phiw,
-                           opts=opts,display.nomad.progress=display.nomad.progress,display.warnings=display.warnings,
-                           data=traindata,
-                           ...)
+      
+      model.E.phi.w <- do.call("crs", c(list(formula=formula.phiw,
+                                               degree=degree.phiw,
+                                               segments=segments.phiw,
+                                               lambda=lambda.phiw,
+                                               include=include.phiw,
+                                               nmulti=nmulti.loop,
+                                               opts=opts,
+                                               display.nomad.progress=display.nomad.progress,
+                                               display.warnings=display.warnings,
+                                               data=traindata),
+                                          dots.loop))
+      
+      degree.phiw <- model.E.phi.w$degree
+      segments.phiw <- model.E.phi.w$segments
+      lambda.phiw <- model.E.phi.w$lambda
+      include.phiw <- model.E.phi.w$include
       
       ## We require the fitted values...
       
