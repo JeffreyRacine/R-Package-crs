@@ -10,6 +10,7 @@
 \usage{
 clsd(x = NULL,
      beta = NULL,
+     xeval = NULL,
      basis = "tensor",
      degree = NULL,
      degree.max = 25,
@@ -39,14 +40,15 @@ clsd(x = NULL,
      segments.max = 100,
      segments.min = 1,
      ubound = NULL,
-     verbose = FALSE,
-     xeval = NULL)
+     verbose = FALSE)
 }
 \arguments{
 
   \item{x}{ a numeric vector of training data }
 
   \item{beta}{ a numeric vector of coefficients (default \code{NULL}) }
+
+  \item{xeval}{ a numeric vector of evaluation data }  
 
   \item{basis}{ a character string (default \code{basis="tensor"})
     indicating whether the additive or tensor product B-spline basis
@@ -173,8 +175,6 @@ clsd(x = NULL,
      a logical value which when \code{TRUE} produces verbose output
      during optimization
    }
-
-  \item{xeval}{ a numeric vector of evaluation data }  
 }
 
 \details{

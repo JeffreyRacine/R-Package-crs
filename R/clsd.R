@@ -223,6 +223,7 @@ density.deriv.basis <- function(x=NULL,
 
 clsd <- function(x=NULL,
                  beta=NULL,
+                 xeval=NULL,
                  basis="tensor",
                  degree=NULL,
                  degree.max=25,
@@ -252,8 +253,7 @@ clsd <- function(x=NULL,
                  segments.max=100,
                  segments.min=1,
                  ubound=NULL,
-                 verbose=FALSE,
-                 xeval=NULL) {
+                 verbose=FALSE) {
   
   if(elastic.max && !NOMAD) {
     degree.max <- 3
