@@ -15,70 +15,40 @@
 \usage{
 frscvNOMAD(xz,
            y,
-           degree.max = 10, 
-           segments.max = 10, 
-           degree.min = 0, 
-           segments.min = 1,
-           cv.df.min = 1,
-           complexity = c("degree-knots","degree","knots"),
-           knots = c("quantiles","uniform","auto"),
            basis = c("additive","tensor","glp","auto"),
+           complexity = c("degree-knots","degree","knots"),
+           cv.df.min = 1,
            cv.func = c("cv.ls","cv.gcv","cv.aic"),
            degree = degree,
-           segments = segments, 
+           degree.max = 10, 
+           degree.min = 0, 
+           display.nomad.progress = TRUE,
+           display.warnings = TRUE,
            include = include, 
-           random.seed = 42,
-           max.bb.eval = 10000,
            initial.mesh.size.integer = "1",
+           knots = c("quantiles","uniform","auto"),
+           max.bb.eval = 10000,
            min.mesh.size.integer = "1", 
            min.poll.size.integer = "1", 
-           opts=list(),
            nmulti = 0,
-           tau = NULL,
-           weights = NULL,
+           opts=list(),
+           random.seed = 42,
+           segments = segments, 
+           segments.max = 10, 
+           segments.min = 1, 
            singular.ok = FALSE,
-           display.nomad.progress = TRUE,
-           display.warnings = TRUE)
+           tau = NULL,
+           weights = NULL)
 }
 
 \arguments{
 
-  \item{y}{
-    continuous univariate vector
-  }
-  
   \item{xz}{ continuous and/or nominal/ordinal
     (\code{\link{factor}}/\code{\link{ordered}}) predictors }
 
-  \item{degree.max}{ the maximum degree of the B-spline basis for
-    each of the continuous predictors (default \code{degree.max=10})}
-  
-  \item{segments.max}{ the maximum segments of the B-spline basis for
-    each of the continuous predictors (default \code{segments.max=10})}
-  
-  \item{degree.min}{ the minimum degree of the B-spline basis for
-    each of the continuous predictors (default \code{degree.min=0})}
-  
-  \item{segments.min}{ the minimum segments of the B-spline basis for
-    each of the continuous predictors (default \code{segments.min=1})}
-
-  \item{cv.df.min}{ the minimum degrees of freedom to allow when
-    conducting cross-validation (default \code{cv.df.min=1})}
-
-  \item{complexity}{a character string (default
-  \code{complexity="degree-knots"}) indicating whether model
-  \sQuote{complexity} is determined by the degree of the spline or by
-  the number of segments (\sQuote{knots}). This option allows the user
-  to use cross-validation to select either the spline degree (number
-  of knots held fixed) or the number of knots (spline degree held
-  fixed) or both the spline degree and number of knots}
-
-   \item{knots}{ a character string (default \code{knots="quantiles"})
-  specifying where knots are to be placed. \sQuote{quantiles} specifies
-  knots placed at equally spaced quantiles (equal number of observations
-  lie in each segment) and \sQuote{uniform} specifies knots placed at
-  equally spaced intervals. If \code{knots="auto"}, the knot type will
-  be automatically determined by cross-validation }
+  \item{y}{
+    continuous univariate vector
+  }
 
 \item{basis}{ a character string (default \code{basis="additive"})
     indicating whether the additive or tensor product B-spline basis
@@ -92,6 +62,17 @@ frscvNOMAD(xz,
     to avoid unnecessary computation as the spline bases are equivalent
     in this case }
 
+  \item{complexity}{a character string (default
+  \code{complexity="degree-knots"}) indicating whether model
+  \sQuote{complexity} is determined by the degree of the spline or by
+  the number of segments (\sQuote{knots}). This option allows the user
+  to use cross-validation to select either the spline degree (number
+  of knots held fixed) or the number of knots (spline degree held
+  fixed) or both the spline degree and number of knots}
+
+  \item{cv.df.min}{ the minimum degrees of freedom to allow when
+    conducting cross-validation (default \code{cv.df.min=1})}
+
   \item{cv.func}{a character string (default \code{cv.func="cv.ls"})
     indicating which method to use to select smoothing
     parameters. \code{cv.gcv} specifies generalized cross-validation
@@ -102,25 +83,35 @@ frscvNOMAD(xz,
   
   \item{degree}{ integer/vector specifying the degree of the B-spline
     basis for each dimension of the continuous \code{x}}
+
+  \item{degree.max}{ the maximum degree of the B-spline basis for
+    each of the continuous predictors (default \code{degree.max=10})}
   
-  \item{segments}{ integer/vector specifying the number of segments of
-    the B-spline basis for each dimension of the continuous \code{x}
-    (i.e. number of knots minus one)}
+  \item{degree.min}{ the minimum degree of the B-spline basis for
+    each of the continuous predictors (default \code{degree.min=0})}
+
+  \item{display.nomad.progress}{ a logical value indicating whether to
+  display the progress of the NOMAD solver (default \code{display.nomad.progress=TRUE}) }
+
+  \item{display.warnings}{ a logical value indicating whether to
+  display warnings (default \code{display.warnings=TRUE}) }
 
 \item{include}{ integer/vector for the categorical predictors. If it 
    is not NULL,   it will be the initial value for the fitting}
 
-\item{random.seed}{
-  when it is not missing and not equal to 0, the initial points  will 
- be generated using this seed when \code{nmulti > 0}
-}
-      
-  \item{max.bb.eval}{
+  \item{initial.mesh.size.integer}{
     argument passed to the NOMAD solver (see \code{\link{snomadr}} for
     further details)
   }
 
-  \item{initial.mesh.size.integer}{
+   \item{knots}{ a character string (default \code{knots="quantiles"})
+  specifying where knots are to be placed. \sQuote{quantiles} specifies
+  knots placed at equally spaced quantiles (equal number of observations
+  lie in each segment) and \sQuote{uniform} specifies knots placed at
+  equally spaced intervals. If \code{knots="auto"}, the knot type will
+  be automatically determined by cross-validation }
+
+  \item{max.bb.eval}{
     argument passed to the NOMAD solver (see \code{\link{snomadr}} for
     further details)
   }
@@ -135,13 +126,34 @@ frscvNOMAD(xz,
     further details)
   }
 
-  \item{opts}{ list of optional arguments to be passed to
-  \code{\link{snomadr}} }
-
   \item{nmulti}{
     integer number of times to restart the process of finding extrema of
     the cross-validation function from different (random) initial
     points (default \code{nmulti=0})
+  }
+
+  \item{opts}{ list of optional arguments to be passed to
+  \code{\link{snomadr}} }
+
+\item{random.seed}{
+  when it is not missing and not equal to 0, the initial points  will 
+ be generated using this seed when \code{nmulti > 0}
+}
+      
+  \item{segments}{ integer/vector specifying the number of segments of
+    the B-spline basis for each dimension of the continuous \code{x}
+    (i.e. number of knots minus one)}
+
+  \item{segments.max}{ the maximum segments of the B-spline basis for
+    each of the continuous predictors (default \code{segments.max=10})}
+  
+  \item{segments.min}{ the minimum segments of the B-spline basis for
+    each of the continuous predictors (default \code{segments.min=1})}
+
+  \item{singular.ok}{
+    a logical value (default \code{singular.ok=FALSE}) that, when
+    \code{FALSE}, discards singular bases during cross-validation (a check
+    for ill-conditioned bases is performed).
   }
 
   \item{tau}{
@@ -155,18 +167,6 @@ frscvNOMAD(xz,
     non-NULL, weighted least squares is used with weights
     \sQuote{weights} (that is, minimizing \sQuote{sum(w*e^2)});
     otherwise ordinary least squares is used.  }
-  
-  \item{singular.ok}{
-    a logical value (default \code{singular.ok=FALSE}) that, when
-    \code{FALSE}, discards singular bases during cross-validation (a check
-    for ill-conditioned bases is performed).
-  }
-
-  \item{display.nomad.progress}{ a logical value indicating whether to
-  display the progress of the NOMAD solver (default \code{display.nomad.progress=TRUE}) }
-
-  \item{display.warnings}{ a logical value indicating whether to
-  display warnings (default \code{display.warnings=TRUE}) }
 }
 
 \details{

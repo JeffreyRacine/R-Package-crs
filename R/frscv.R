@@ -10,21 +10,21 @@
 
 frscv <- function(xz,
                   y,
-                  degree.max=10,
-                  segments.max=10,
-                  degree.min=0,
-                  segments.min=1,
-                  complexity=c("degree-knots","degree","knots"),
-                  knots=c("quantiles","uniform", "auto"),
                   basis=c("additive","tensor","glp","auto"),
+                  complexity=c("degree-knots","degree","knots"),
                   cv.func=c("cv.ls","cv.gcv","cv.aic"),
                   degree=degree,
-                  segments=segments,
-                  tau=NULL,
-                  weights=NULL,
-                  singular.ok=FALSE,
+                  degree.max=10,
+                  degree.min=0,
+                  display.nomad.progress=TRUE,
                   display.warnings=TRUE,
-                  display.nomad.progress=TRUE) {
+                  knots=c("quantiles","uniform", "auto"),
+                  segments=segments,
+                  segments.max=10,
+                  segments.min=1,
+                  singular.ok=FALSE,
+                  tau=NULL,
+                  weights=NULL) {
   
   complexity <- match.arg(complexity)
   knots <- match.arg(knots)
