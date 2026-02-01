@@ -14,66 +14,67 @@
 crs(\dots)
 \method{crs}{default}(xz,
     y,
+    basis = c("auto","additive","tensor","glp"),
+    complexity = c("degree-knots","degree","knots"),
+    data.return = FALSE,
     degree = NULL,
-    segments = NULL,
+    deriv = 0,
+    display.nomad.progress = TRUE,
+    display.warnings = TRUE,
     include = NULL,
     kernel = TRUE,
-    lambda = NULL,
-    complexity = c("degree-knots","degree","knots"),
     knots = c("quantiles","uniform","auto"),
-    basis = c("auto","additive","tensor","glp"),
-    deriv = 0,
-    data.return = FALSE,
-    prune = FALSE,
+    lambda = NULL,
     model.return = FALSE,
+    prune = FALSE,
+    segments = NULL,
     tau = NULL,
     weights = NULL,
-    display.warnings = TRUE,
-    display.nomad.progress = TRUE,
     \dots)
 
 \method{crs}{formula}(formula,
-    data = list(),
-    degree = NULL,
-    segments = NULL,
-    include = NULL,
-    degree.max = 10, 
-    segments.max = 10, 
-    degree.min = 0, 
-    segments.min = 1, 
-    cv.df.min = 1,
+    basis = c("auto","additive","tensor","glp"),
+    complexity = c("degree-knots","degree","knots"),
     cv = c("nomad","exhaustive","none"),
-    cv.threshold = 1000,
+    cv.df.min = 1,
     cv.func = c("cv.ls","cv.gcv","cv.aic"),
+    cv.threshold = 1000,
+    data = list(),
+    data.return = FALSE,
+    degree = NULL,
+    degree.max = 10, 
+    degree.min = 0, 
+    deriv = 0,
+    display.nomad.progress = TRUE,
+    display.warnings = TRUE,
+    include = NULL,
+    initial.mesh.size.integer = "1",
+    initial.mesh.size.real = "r1.0e-01",
     kernel = TRUE,
+    knots = c("quantiles","uniform","auto"),
     lambda = NULL,
     lambda.discrete = FALSE,
     lambda.discrete.num = 100,
-    complexity = c("degree-knots","degree","knots"),
-    knots = c("quantiles","uniform","auto"),
-    basis = c("auto","additive","tensor","glp"),
-    deriv = 0,
-    data.return = FALSE,
-    prune = FALSE,
-    model.return = FALSE,
-    restarts = 0,
-    random.seed = 42,
     max.bb.eval = 10000,
-    initial.mesh.size.real = "r1.0e-01",
-    initial.mesh.size.integer = "1",
-    min.mesh.size.real = paste(sqrt(.Machine$double.eps)),
     min.mesh.size.integer = 1, 
-    min.poll.size.real = 1,
+    min.mesh.size.real = paste(sqrt(.Machine$double.eps)),
     min.poll.size.integer = 1, 
-    opts=list(),
+    min.poll.size.real = 1,
+    model.return = FALSE,
     nmulti = 5,
+    opts=list(),
+    prune = FALSE,
+    random.seed = 42,
+    restarts = 0,
+    segments = NULL,
+    segments.max = 10, 
+    segments.min = 1, 
+    singular.ok = FALSE,
     tau = NULL,
     weights = NULL,
-    singular.ok = FALSE,
-    display.nomad.progress = TRUE,
-    display.warnings = TRUE,
     \dots)
 }
+
 \arguments{
 
   \item{xz}{ numeric (\code{x}) and or nominal/ordinal
@@ -81,74 +82,22 @@ crs(\dots)
 
 \item{y}{ a numeric vector of responses. }
 
-\item{degree}{ integer/vector specifying the polynomial degree of the
-B-spline basis for each dimension of the continuous \code{x}
-(default \code{degree=3}, i.e. cubic spline)}
-
-\item{segments}{ integer/vector specifying the number of segments of the
-B-spline basis for each dimension of the continuous \code{x}
-(i.e. number of knots minus one) (default \code{segments=1}, i.e. Bezier
-curve)}
-
-\item{include}{ integer/vector specifying whether each of the
-nominal/ordinal (\code{\link{factor}}/\code{\link{ordered}}) predictors
-in \code{x} are included or omitted from the resulting estimate }
-
-  \item{lambda}{ a vector of bandwidths for each dimension of the
-    categorical \code{z}}
-
-  \item{lambda.discrete}{ if \code{lambda.discrete=TRUE}, the bandwidth
-      will be discretized into \code{lambda.discrete.num+1} points and
-      \code{lambda} will be chosen from these points}
-  
-  \item{lambda.discrete.num}{a positive integer indicating the number of
-  discrete values that lambda can assume - this parameter will only be
-  used when \code{lambda.discrete=TRUE}}
-  
   \item{formula}{ a symbolic description of the model to be fit }
   
   \item{data}{ an optional data frame containing the variables in the
   model }
-  
-\item{cv}{ a character string (default \code{cv="nomad"}) indicating
-  whether to use nonsmooth mesh adaptive direct search, exhaustive
-  search, or no search (i.e. use user supplied values for \code{degree},
-  \code{segments}, and \code{lambda}) }
 
-\item{cv.threshold}{ an integer (default \code{cv.threshold=1000}) for
-  simple problems with no categorical predictors
-  (i.e. \code{kernel=FALSE} otherwise
-  \code{\link{optim}}/\code{\link{snomadr}} search is necessary) such
-  that, if the number of combinations of \code{degree}/\code{segments}
-  is less than the threshold and \code{cv="nomad"}, instead use
-  exhaustive search (\code{cv="exhaustive"}) }
-
-  \item{cv.func}{a character string (default \code{cv.func="cv.ls"})
-    indicating which method to use to select smoothing
-    parameters. \code{cv.gcv} specifies generalized cross-validation
-    (Craven and Wahba (1979)), \code{cv.aic} specifies expected
-    Kullback-Leibler cross-validation (Hurvich, Simonoff, and Tsai
-    (1998)), and \code{cv.ls} specifies least-squares
-    cross-validation }
-  
-  \item{kernel}{ a logical value (default \code{kernel=TRUE})
-    indicating whether to use kernel smoothing or not }
-
-  \item{degree.max}{ the maximum degree of the B-spline basis for
-    each of the continuous predictors (default \code{degree.max=10})}
-  
-  \item{segments.max}{ the maximum segments of the B-spline basis for
-    each of the continuous predictors (default \code{segments.max=10})}
-
-  \item{degree.min}{ the minimum degree of the B-spline basis for
-    each of the continuous predictors (default \code{degree.min=0})}
-
-  \item{segments.min}{ the minimum segments of the B-spline basis for
-    each of the continuous predictors (default \code{segments.min=1})}
-
-  \item{cv.df.min}{ the minimum degrees of freedom to allow when
-    conducting NOMAD-based cross-validation (default
-    \code{cv.df.min=1})}
+\item{basis}{ a character string (default \code{basis="auto"})
+    indicating whether the additive or tensor product B-spline basis
+    matrix for a multivariate polynomial spline or generalized B-spline
+    polynomial basis should be used. Note this can be automatically
+    determined by cross-validation if \code{cv="nomad"} or
+    \code{cv="exhaustive"} and \code{basis="auto"}, and is an
+    \sQuote{all or none} proposition (i.e. interaction terms for all
+    predictors or for no predictors given the nature of \sQuote{tensor
+    products}). Note also that if there is only one predictor this
+    defaults to \code{basis="additive"} to avoid unnecessary computation
+    as the spline bases are equivalent in this case }
 
   \item{complexity}{a character string (default
   \code{complexity="degree-knots"}) indicating whether model
@@ -164,24 +113,43 @@ in \code{x} are included or omitted from the resulting estimate }
   Scientific Library (\url{https://www.gnu.org/software/gsl/}) and the
   \code{\link{tensor.prod.model.matrix}} function }
 
-   \item{knots}{ a character string (default \code{knots="quantiles"})
-  specifying where knots are to be placed. \sQuote{quantiles} specifies
-  knots placed at equally spaced quantiles (equal number of observations
-  lie in each segment) and \sQuote{uniform} specifies knots placed at
-  equally spaced intervals. If \code{knots="auto"}, the knot type will
-  be automatically determined by cross-validation }
+\item{cv}{ a character string (default \code{cv="nomad"}) indicating
+  whether to use nonsmooth mesh adaptive direct search, exhaustive
+  search, or no search (i.e. use user supplied values for \code{degree},
+  \code{segments}, and \code{lambda}) }
 
-\item{basis}{ a character string (default \code{basis="auto"})
-    indicating whether the additive or tensor product B-spline basis
-    matrix for a multivariate polynomial spline or generalized B-spline
-    polynomial basis should be used. Note this can be automatically
-    determined by cross-validation if \code{cv="nomad"} or
-    \code{cv="exhaustive"} and \code{basis="auto"}, and is an
-    \sQuote{all or none} proposition (i.e. interaction terms for all
-    predictors or for no predictors given the nature of \sQuote{tensor
-    products}). Note also that if there is only one predictor this
-    defaults to \code{basis="additive"} to avoid unnecessary computation
-    as the spline bases are equivalent in this case }
+  \item{cv.df.min}{ the minimum degrees of freedom to allow when
+    conducting NOMAD-based cross-validation (default
+    \code{cv.df.min=1})}
+
+  \item{cv.func}{a character string (default \code{cv.func="cv.ls"})
+    indicating which method to use to select smoothing
+    parameters. \code{cv.gcv} specifies generalized cross-validation
+    (Craven and Wahba (1979)), \code{cv.aic} specifies expected
+    Kullback-Leibler cross-validation (Hurvich, Simonoff, and Tsai
+    (1998)), and \code{cv.ls} specifies least-squares
+    cross-validation }
+
+\item{cv.threshold}{ an integer (default \code{cv.threshold=1000}) for
+  simple problems with no categorical predictors
+  (i.e. \code{kernel=FALSE} otherwise
+  \code{\link{optim}}/\code{\link{snomadr}} search is necessary) such
+  that, if the number of combinations of \code{degree}/\code{segments}
+  is less than the threshold and \code{cv="nomad"}, instead use
+  exhaustive search (\code{cv="exhaustive"}) }
+
+  \item{data.return}{ a logical value indicating whether to return
+  \code{x,z,y} or not (default \code{data.return=FALSE}) }
+
+\item{degree}{ integer/vector specifying the polynomial degree of the
+B-spline basis for each dimension of the continuous \code{x}
+(default \code{degree=3}, i.e. cubic spline)}
+
+  \item{degree.max}{ the maximum degree of the B-spline basis for
+    each of the continuous predictors (default \code{degree.max=10})}
+
+  \item{degree.min}{ the minimum degree of the B-spline basis for
+    each of the continuous predictors (default \code{degree.min=0})}
 
   \item{deriv}{ an integer \code{l} (default \code{deriv=0}) specifying
   whether to compute the univariate \code{l}th partial derivative for
@@ -191,28 +159,17 @@ in \code{x} are included or omitted from the resulting estimate }
   continuous predictor then the derivative will be zero and a warning
   issued to this effect }
 
-  \item{data.return}{ a logical value indicating whether to return
-  \code{x,z,y} or not (default \code{data.return=FALSE}) }
+  \item{display.nomad.progress}{ a logical value indicating whether to
+  display the progress of the NOMAD solver (default \code{display.nomad.progress=TRUE}) }
 
-  \item{prune}{ a logical value (default \code{prune=FALSE}) specifying
-   whether the (final) model is to be \sQuote{pruned} using a stepwise
-   cross-validation criterion based upon a modified version of
-   \code{\link[MASS]{stepAIC}} (see below for details) }
+  \item{display.warnings}{ a logical value indicating whether to
+  display warnings (default \code{display.warnings=TRUE}) }
 
-  \item{model.return}{ a logical value indicating whether to return the
-  list of \code{\link{lm}} models or not when \code{kernel=TRUE}
-  (default \code{model.return=FALSE}) }
+\item{include}{ integer/vector specifying whether each of the
+nominal/ordinal (\code{\link{factor}}/\code{\link{ordered}}) predictors
+in \code{x} are included or omitted from the resulting estimate }
 
-\item{restarts}{ integer specifying the number of times to restart the
-    process of finding extrema of the cross-validation function (for the
-    bandwidths only) from different (random) initial points }
-
-  \item{random.seed}{ when it is not missing and not equal to 0, the
-    initial points will be generated using this seed when using
-    \code{\link{frscvNOMAD}} or \code{\link{krscvNOMAD}} and
-    \code{nmulti > 0} }
-      
-  \item{max.bb.eval}{
+  \item{initial.mesh.size.integer}{
     argument passed to the NOMAD solver (see \code{\link{snomadr}} for
     further details)
   }
@@ -222,12 +179,28 @@ in \code{x} are included or omitted from the resulting estimate }
     further details)
   }
 
-  \item{initial.mesh.size.integer}{
-    argument passed to the NOMAD solver (see \code{\link{snomadr}} for
-    further details)
-  }
+  \item{kernel}{ a logical value (default \code{kernel=TRUE})
+    indicating whether to use kernel smoothing or not }
 
-  \item{min.mesh.size.real}{
+   \item{knots}{ a character string (default \code{knots="quantiles"})
+  specifying where knots are to be placed. \sQuote{quantiles} specifies
+  knots placed at equally spaced quantiles (equal number of observations
+  lie in each segment) and \sQuote{uniform} specifies knots placed at
+  equally spaced intervals. If \code{knots="auto"}, the knot type will
+  be automatically determined by cross-validation }
+
+  \item{lambda}{ a vector of bandwidths for each dimension of the
+    categorical \code{z}}
+
+  \item{lambda.discrete}{ if \code{lambda.discrete=TRUE}, the bandwidth
+      will be discretized into \code{lambda.discrete.num+1} points and
+      \code{lambda} will be chosen from these points}
+  
+  \item{lambda.discrete.num}{a positive integer indicating the number of
+  discrete values that lambda can assume - this parameter will only be
+  used when \code{lambda.discrete=TRUE}}
+
+  \item{max.bb.eval}{
     argument passed to the NOMAD solver (see \code{\link{snomadr}} for
     further details)
   }
@@ -237,8 +210,8 @@ in \code{x} are included or omitted from the resulting estimate }
     further details)
   }
 
-  \item{min.poll.size.real}{
-    arguments passed to the NOMAD solver (see \code{\link{snomadr}} for
+  \item{min.mesh.size.real}{
+    argument passed to the NOMAD solver (see \code{\link{snomadr}} for
     further details)
   }
 
@@ -247,14 +220,55 @@ in \code{x} are included or omitted from the resulting estimate }
     further details)
   }      
 
-  \item{opts}{ list of optional arguments to be passed to
-  \code{\link{snomadr}} }
+  \item{min.poll.size.real}{
+    arguments passed to the NOMAD solver (see \code{\link{snomadr}} for
+    further details)
+  }
+
+  \item{model.return}{ a logical value indicating whether to return the
+  list of \code{\link{lm}} models or not when \code{kernel=TRUE}
+  (default \code{model.return=FALSE}) }
 
   \item{nmulti}{
     integer number of times to restart the process of finding extrema of
     the cross-validation function from different (random) initial
     points (default \code{nmulti=5})
   }
+
+  \item{opts}{ list of optional arguments to be passed to
+  \code{\link{snomadr}} }
+
+  \item{prune}{ a logical value (default \code{prune=FALSE}) specifying
+   whether the (final) model is to be \sQuote{pruned} using a stepwise
+   cross-validation criterion based upon a modified version of
+   \code{\link[MASS]{stepAIC}} (see below for details) }
+
+  \item{random.seed}{ when it is not missing and not equal to 0, the
+    initial points will be generated using this seed when using
+    \code{\link{frscvNOMAD}} or \code{\link{krscvNOMAD}} and
+    \code{nmulti > 0} }
+
+\item{restarts}{ integer specifying the number of times to restart the
+    process of finding extrema of the cross-validation function (for the
+    bandwidths only) from different (random) initial points }
+
+\item{segments}{ integer/vector specifying the number of segments of the
+B-spline basis for each dimension of the continuous \code{x}
+(i.e. number of knots minus one) (default \code{segments=1}, i.e. Bezier
+curve)}
+
+  \item{segments.max}{ the maximum segments of the B-spline basis for
+    each of the continuous predictors (default \code{segments.max=10})}
+
+  \item{segments.min}{ the minimum segments of the B-spline basis for
+    each of the continuous predictors (default \code{segments.min=1})}
+
+  \item{singular.ok}{
+    a logical value (default \code{singular.ok=FALSE}) that, when
+    \code{FALSE}, discards singular bases during cross-validation (a check
+    for ill-conditioned bases is performed).
+  }
+
   \item{tau}{
     if non-null a number in (0,1) denoting the quantile for which a quantile
     regression spline is to be estimated rather than estimating the
@@ -269,18 +283,6 @@ in \code{x} are included or omitted from the resulting estimate }
     \sQuote{sum(w*e^2)}); otherwise ordinary least squares is used.
   }
 
-  \item{singular.ok}{
-    a logical value (default \code{singular.ok=FALSE}) that, when
-    \code{FALSE}, discards singular bases during cross-validation (a check
-    for ill-conditioned bases is performed).
-  }
-
-  \item{display.nomad.progress}{ a logical value indicating whether to
-  display the progress of the NOMAD solver (default \code{display.nomad.progress=TRUE}) }
-
-  \item{display.warnings}{ a logical value indicating whether to
-  display warnings (default \code{display.warnings=TRUE}) }
- 
   \item{\dots}{ optional arguments }
   
 }
