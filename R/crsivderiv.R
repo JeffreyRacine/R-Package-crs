@@ -250,13 +250,14 @@ crsivderiv <- function(y,
   ## For the stopping rule, we require E.phi.w
   
   if(crs.messages) options(crs.messages=FALSE)
+  traindata$phi <- phi
   model.E.phi.w <- crs(formula.phiw,
                        opts=opts,display.nomad.progress=display.nomad.progress,display.warnings=display.warnings,
                        data=traindata,
                        ...)
   if(crs.messages) options(crs.messages=TRUE)    
   
-  E.phi.w <- predict(model.E.phi.w,newdata=evaldata)
+  E.phi.w <- if(is.eval.train) fitted(model.E.phi.w) else predict(model.E.phi.w,newdata=evaldata)
   
   ## Now we compute mu.0 (a residual of sorts)
   
@@ -272,15 +273,16 @@ crsivderiv <- function(y,
     ## Smooth residuals (smooth of (y-phi) on w)
     
     if(crs.messages) options(crs.messages=FALSE)
+    traindata$mu <- mu
     model.E.mu.w <- crs(formula.muw,
                         opts=opts,display.nomad.progress=display.nomad.progress,display.warnings=display.warnings,
                         data=traindata,
                         ...)
+    if(crs.messages) options(crs.messages=TRUE)    
     
     ## We require the fitted values...
     
-    predicted.model.E.mu.w <- predict(model.E.mu.w,newdata=evaldata)
-    if(crs.messages) options(crs.messages=TRUE)    
+    predicted.model.E.mu.w <- if(is.eval.train) fitted(model.E.mu.w) else predict(model.E.mu.w,newdata=evaldata)
     
     ## We again require the mean of the fitted values
     
@@ -292,15 +294,16 @@ crsivderiv <- function(y,
     ## on w)
     
     if(crs.messages) options(crs.messages=FALSE)
+    traindata$phi <- phi
     model.E.phi.w <- crs(formula.phiw,
                          opts=opts,display.nomad.progress=display.nomad.progress,display.warnings=display.warnings,
                          data=traindata,
                          ...)
+    if(crs.messages) options(crs.messages=TRUE)    
     
     ## We require the fitted values...
     
-    predicted.model.E.mu.w <- E.y.w - predict(model.E.phi.w,newdata=evaldata)
-    if(crs.messages) options(crs.messages=TRUE)    
+    predicted.model.E.mu.w <- E.y.w - (if(is.eval.train) fitted(model.E.phi.w) else predict(model.E.phi.w,newdata=evaldata))
     
     ## We again require the mean of the fitted values
     
