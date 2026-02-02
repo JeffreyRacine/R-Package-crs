@@ -40,6 +40,12 @@ S3method(summary, crs)
 S3method(predict, crs)
 S3method(plot, crs)
 
+S3method(print, crsiv)
+S3method(summary, crsiv)
+
+S3method(print, crsivderiv)
+S3method(summary, crsivderiv)
+
 S3method(gsl.bs, default)
 S3method(predict, gsl.bs)
 

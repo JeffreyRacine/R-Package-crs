@@ -812,3 +812,56 @@ crsiv <- function(y,
   }
   
 }
+
+print.crsiv <- function(x, ...) {
+  cat("Call:\n")
+  print(x$call)
+}
+
+summary.crsiv <- function(object, ...) {
+  cat("Call:\n")
+  print(object$call)
+  
+  if(!object$kernel) {
+    if(is.null(object$tau))
+      cat("\nIndicator Bases/B-spline Bases Nonparametric IV Regression\n",sep="")
+    else
+      cat("\nIndicator Bases/B-spline Bases Nonparametric IV Quantile Regression\n",sep="")
+  } else {
+    if(is.null(object$tau))
+      cat("\nKernel Weighting/B-spline Bases Nonparametric IV Regression\n",sep="")
+    else
+      cat("\nKernel Weighting/B-spline Bases Nonparametric IV Quantile Regression\n",sep="")
+  }
+  
+  if(!is.null(object$tau)) cat(paste("\nQuantile estimated: tau = ",format(object$tau),sep=""),sep="")
+  
+  cat(paste("\nThere are ",format(object$num.x), " continuous predictors",sep=""),sep="")
+  if(!is.null(object$num.z)) cat(paste("\nThere are ",format(object$num.z), " categorical predictors",sep=""),sep="")
+  
+  for(j in 1:object$num.x)
+    cat(paste("\nSpline degree/number of segments for ",format(object$xnames[j]),": ",format(object$degree[j]),"/",format(object$segments[j]),sep=""),sep="")
+  if(!is.null(object$include)) for(j in 1:length(object$include))
+    cat(paste("\nInclusion indicator for ",format(object$znames[j]),": ",format(object$include[j]),sep=""),sep="")
+  if(!is.null(object$lambda)) for(j in 1:length(object$lambda))
+    cat(paste("\nBandwidth for ",format(object$znames[j]),": ",format(object$lambda[j]),sep=""),sep="")
+  
+  cat(paste("\nModel complexity proxy: ", format(object$complexity), sep=""))
+  cat(paste("\nKnot type: ", format(object$knots), sep=""))
+  if(object$num.x > 1) cat(paste("\nBasis type: ",format(object$basis),sep=""))
+  
+  cat(paste("\nTraining observations: ", format(object$nobs), sep=""))
+  
+  if(!is.null(object$alpha)) {
+    cat(paste("\n\nRegularization method: Tikhonov",sep=""))
+    cat(paste("\nTikhonov parameter (alpha): ", format(object$alpha,digits=8), sep=""))
+  } else {
+    cat(paste("\n\nRegularization method: Landweber-Fridman",sep=""))
+    cat(paste("\nNumber of iterations: ", format(object$num.iterations), sep=""))
+    cat(paste("\nStopping rule value: ", format(object$norm.stop[length(object$norm.stop)],digits=8), sep=""))
+  }
+  
+  cat(paste("\nNumber of multistarts: ", format(object$nmulti), sep=""))
+  cat(paste("\nEstimation time: ", formatC(object$ptm[1],digits=1,format="f"), " seconds",sep=""))
+  cat("\n\n")
+}
