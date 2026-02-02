@@ -433,6 +433,8 @@ crsiv.default <- function(y,
     model$nmulti <- nmulti
     model$ptm <- proc.time() - ptm.start
     
+    class(model) <- c("crsiv", "crs")
+    
     return(model)
     
   } else {
