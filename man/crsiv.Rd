@@ -368,7 +368,7 @@ mean.noniv <- predict(model.noniv,newdata=evaldata)
 
 ## Compute the IV-regression spline estimator of phi(z)
 
-model.iv <- crsiv(y=y,z=z,w=w)
+model.iv <- crsiv(y=y,z=z,w=w,cv.threshold=0)
 phi.iv <- predict(model.iv,newdata=evaldata)
 
 ## For the plots, restrict focal attention to the bulk of the data

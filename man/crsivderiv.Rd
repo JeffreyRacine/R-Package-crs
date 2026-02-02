@@ -305,7 +305,7 @@ ivdata <- ivdata[order(ivdata$z),]
 rm(y,z,w,u,v)
 attach(ivdata)
 
-model.ivderiv <- crsivderiv(y=y,z=z,w=w)
+model.ivderiv <- crsivderiv(y=y,z=z,w=w,cv.threshold=0)
 
 ylim <-c(quantile(model.ivderiv$phi.prime,trim),
          quantile(model.ivderiv$phi.prime,1-trim))

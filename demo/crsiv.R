@@ -48,12 +48,12 @@ y <- phi(z) + u
 
 evaldata <- data.frame(z=sort(z))
 
-model.iv <- crsiv(y=y,z=z,w=w,cv=cv,nmulti=nmulti,method=method)
+model.iv <- crsiv(y=y,z=z,w=w,cv=cv,nmulti=nmulti,method=method,cv.threshold=0)
 phihat.iv <- predict(model.iv,newdata=evaldata)
 
 ## Now the non-iv regression spline estimator of E(y|z)
 
-model.noniv <- crs(y~z,cv=cv,nmulti=nmulti,opts=opts)
+model.noniv <- crs(y~z,cv=cv,nmulti=nmulti,opts=opts,cv.threshold=0)
 crs.mean <- predict(model.noniv,newdata=evaldata)
 
 ## For the plots, restrict focal attention to the bulk of the data

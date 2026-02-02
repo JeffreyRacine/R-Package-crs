@@ -49,9 +49,9 @@ y <- phi(z) + 0.05*x^3 + u
 ## In evaluation data sort z for plotting and hold x constant at its
 ## median
 
-model.iv <- crsiv(y=y,z=z,w=w,x=x,cv=cv,nmulti=nmulti,method=method,deriv=1)
+model.iv <- crsiv(y=y,z=z,w=w,x=x,cv=cv,nmulti=nmulti,method=method,deriv=1,cv.threshold=0)
 
-model.noniv <- crs(y~z+x,cv=cv,nmulti=nmulti,deriv=1,opts=opts)
+model.noniv <- crs(y~z+x,cv=cv,nmulti=nmulti,deriv=1,opts=opts,cv.threshold=0)
 
 summary(model.iv)
 

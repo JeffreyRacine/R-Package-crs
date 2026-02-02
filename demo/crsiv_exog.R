@@ -50,13 +50,13 @@ y <- phi(z) + 0.2*x + u
 
 evaldata <- data.frame(z=sort(z),x=rep(median(x),length(x)))
 
-model.iv <- crsiv(y=y,z=z,w=w,x=x,cv=cv,nmulti=nmulti,method=method,deriv=1)
+model.iv <- crsiv(y=y,z=z,w=w,x=x,cv=cv,nmulti=nmulti,method=method,deriv=1,cv.threshold=0)
 phihat.iv <- predict(model.iv,newdata=evaldata)
 
 ## Now the non-iv regression spline estimator of E(y|z), again
 ## controlling for the evaluation value of x.
 
-model.noniv <- crs(y~z+x,cv=cv,nmulti=nmulti,deriv=1,opts=opts)
+model.noniv <- crs(y~z+x,cv=cv,nmulti=nmulti,deriv=1,opts=opts,cv.threshold=0)
 
 crs.mean <- predict(model.noniv,newdata=evaldata)
 
