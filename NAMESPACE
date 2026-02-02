@@ -32,6 +32,9 @@ S3method(crs, sigtest)
 S3method(crs, formula)
 S3method(crs, default)
 
+S3method(crsiv, default)
+S3method(crsivderiv, default)
+
 S3method(print, crscv)
 S3method(summary, crscv)
 

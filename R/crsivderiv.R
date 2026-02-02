@@ -23,7 +23,9 @@
 ## norm.value: the norm not multiplied by the number of iterations
 ## convergence: a character string indicating whether/why iteration terminated
 
-crsivderiv <- function(y,
+crsivderiv <- function(y, ...) UseMethod("crsivderiv")
+
+crsivderiv.default <- function(y,
                        z,
                        w,
                        x=NULL,
@@ -633,6 +635,8 @@ crsivderiv <- function(y,
   model$nmulti <- nmulti
   model$ptm <- proc.time() - ptm.start
   
+  class(model) <- c("crsivderiv", "crs")
+  
   return(model)
   
 }
@@ -648,14 +652,14 @@ summary.crsivderiv <- function(object, ...) {
   
   if(!object$kernel) {
     if(is.null(object$tau))
-      cat("\nIndicator Bases/B-spline Bases Nonparametric IV Derivative Estimation\n",sep="")
+      cat("\nNonparametric Instrumental Spline Derivative Estimation\n",sep="")
     else
-      cat("\nIndicator Bases/B-spline Bases Nonparametric IV Quantile Derivative Estimation\n",sep="")
+      cat("\nNonparametric Instrumental Spline Quantile Derivative Estimation\n",sep="")
   } else {
     if(is.null(object$tau))
-      cat("\nKernel Weighting/B-spline Bases Nonparametric IV Derivative Estimation\n",sep="")
+      cat("\nNonparametric Instrumental Spline Derivative Estimation (Kernel Weighting)\n",sep="")
     else
-      cat("\nKernel Weighting/B-spline Bases Nonparametric IV Quantile Derivative Estimation\n",sep="")
+      cat("\nNonparametric Instrumental Spline Quantile Derivative Estimation (Kernel Weighting)\n",sep="")
   }
   
   if(!is.null(object$tau)) cat(paste("\nQuantile estimated: tau = ",format(object$tau),sep=""),sep="")

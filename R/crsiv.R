@@ -27,7 +27,9 @@
 ## norm.value: the norm not multiplied by the number of iterations
 ## convergence: a character string indicating whether/why iteration terminated
 
-crsiv <- function(y,
+crsiv <- function(y, ...) UseMethod("crsiv")
+
+crsiv.default <- function(y,
                   z,
                   w,
                   x=NULL,
@@ -799,7 +801,9 @@ crsiv <- function(y,
     model$starting.values.phi <- starting.values.phi
     model$nmulti <- nmulti
     model$ptm <- proc.time() - ptm.start
-        
+    
+    class(model) <- c("crsiv", "crs")
+    
     console <- printClear(console)
     console <- printPop(console)
     
@@ -824,14 +828,14 @@ summary.crsiv <- function(object, ...) {
   
   if(!object$kernel) {
     if(is.null(object$tau))
-      cat("\nIndicator Bases/B-spline Bases Nonparametric IV Regression\n",sep="")
+      cat("\nNonparametric Instrumental Spline Regression\n",sep="")
     else
-      cat("\nIndicator Bases/B-spline Bases Nonparametric IV Quantile Regression\n",sep="")
+      cat("\nNonparametric Instrumental Spline Quantile Regression\n",sep="")
   } else {
     if(is.null(object$tau))
-      cat("\nKernel Weighting/B-spline Bases Nonparametric IV Regression\n",sep="")
+      cat("\nNonparametric Instrumental Spline Regression (Kernel Weighting)\n",sep="")
     else
-      cat("\nKernel Weighting/B-spline Bases Nonparametric IV Quantile Regression\n",sep="")
+      cat("\nNonparametric Instrumental Spline Quantile Regression (Kernel Weighting)\n",sep="")
   }
   
   if(!is.null(object$tau)) cat(paste("\nQuantile estimated: tau = ",format(object$tau),sep=""),sep="")
