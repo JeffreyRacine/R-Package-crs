@@ -1,5 +1,6 @@
 \name{crsivderiv}
 \alias{crsivderiv}
+\alias{crsivderiv.default}
 
 \title{
 Nonparametric Instrumental Derivatives
@@ -18,7 +19,9 @@ Nonparametric Instrumental Derivatives
 
 }
 \usage{
-crsivderiv(y,
+crsivderiv(y, \dots)
+
+\method{crsivderiv}{default}(y,
            z,
            w,
            x = NULL,
@@ -41,7 +44,7 @@ crsivderiv(y,
            start.from = c("Eyz","EEywz"),
            starting.values = NULL,
            stop.on.increase = TRUE,
-           ...)
+           \dots)
 }
 
 \arguments{

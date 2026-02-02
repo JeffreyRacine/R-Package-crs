@@ -1,5 +1,6 @@
 \name{crsiv}
 \alias{crsiv}
+\alias{crsiv.default}
 
 \title{
 Nonparametric Instrumental Regression
@@ -21,7 +22,9 @@ Horowitz (2011) using the regression spline methodology implemented in
 the \pkg{crs} package.
 }
 \usage{
-crsiv(y,
+crsiv(y, \dots)
+
+\method{crsiv}{default}(y,
       z,
       w,
       x = NULL,
@@ -50,7 +53,7 @@ crsiv(y,
       start.from = c("Eyz","EEywz"),
       starting.values = NULL,
       stop.on.increase = TRUE,
-      ...)
+      \dots)
 }
 
 \arguments{
