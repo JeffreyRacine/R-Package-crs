@@ -305,6 +305,10 @@ ivdata <- ivdata[order(ivdata$z),]
 rm(y,z,w,u,v)
 attach(ivdata)
 
+## Setting cv.threshold = 0 forces NOMAD search instead of exhaustive search
+## when no categorical predictors are present. This avoids unnecessary
+## evaluation of all degree/segment combinations in the examples and, for
+## crsiv() and crsivderiv(), ensures that the warm‑start strategy is used.
 model.ivderiv <- crsivderiv(y=y,z=z,w=w,cv.threshold=0)
 
 ylim <-c(quantile(model.ivderiv$phi.prime,trim),

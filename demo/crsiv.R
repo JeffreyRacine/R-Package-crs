@@ -48,11 +48,19 @@ y <- phi(z) + u
 
 evaldata <- data.frame(z=sort(z))
 
+## Setting cv.threshold = 0 forces NOMAD search instead of exhaustive search
+## when no categorical predictors are present. This avoids unnecessary
+## evaluation of all degree/segment combinations in the examples and, for
+## crsiv() and crsivderiv(), ensures that the warm‑start strategy is used.
 model.iv <- crsiv(y=y,z=z,w=w,cv=cv,nmulti=nmulti,method=method,cv.threshold=0)
 phihat.iv <- predict(model.iv,newdata=evaldata)
 
 ## Now the non-iv regression spline estimator of E(y|z)
 
+## Setting cv.threshold = 0 forces NOMAD search instead of exhaustive search
+## when no categorical predictors are present. This avoids unnecessary
+## evaluation of all degree/segment combinations in the examples and, for
+## crsiv() and crsivderiv(), ensures that the warm‑start strategy is used.
 model.noniv <- crs(y~z,cv=cv,nmulti=nmulti,opts=opts,cv.threshold=0)
 crs.mean <- predict(model.noniv,newdata=evaldata)
 

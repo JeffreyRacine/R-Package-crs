@@ -368,6 +368,10 @@ mean.noniv <- predict(model.noniv,newdata=evaldata)
 
 ## Compute the IV-regression spline estimator of phi(z)
 
+## Setting cv.threshold = 0 forces NOMAD search instead of exhaustive search
+## when no categorical predictors are present. This avoids unnecessary
+## evaluation of all degree/segment combinations in the examples and, for
+## crsiv() and crsivderiv(), ensures that the warm‑start strategy is used.
 model.iv <- crsiv(y=y,z=z,w=w,cv.threshold=0)
 phi.iv <- predict(model.iv,newdata=evaldata)
 

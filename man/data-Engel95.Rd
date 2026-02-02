@@ -60,11 +60,19 @@ Engel95 <- Engel95[order(Engel95$logexp),]
 
 attach(Engel95)
 
+## Setting cv.threshold = 0 forces NOMAD search instead of exhaustive search
+## when no categorical predictors are present. This avoids unnecessary
+## evaluation of all degree/segment combinations in the examples and, for
+## crsiv() and crsivderiv(), ensures that the warm‑start strategy is used.
 model.iv <- crsiv(y=food,z=logexp,w=logwages,method="Landweber-Fridman",cv.threshold=0)
 phihat <- model.iv$phi
 
 ## Compute the non-IV regression (i.e. regress y on z)
 
+## Setting cv.threshold = 0 forces NOMAD search instead of exhaustive search
+## when no categorical predictors are present. This avoids unnecessary
+## evaluation of all degree/segment combinations in the examples and, for
+## crsiv() and crsivderiv(), ensures that the warm‑start strategy is used.
 ghat <- crs(food~logexp,cv.threshold=0)
 
 ## For the plots, we restrict focal attention to the bulk of the data
