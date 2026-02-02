@@ -11,6 +11,11 @@
 
 ## Helper to compute hat values from .lm.fit output
 hat.from.lm.fit <- function(obj) {
+  if(!is.null(obj$qr) && !is.null(obj$qraux) && !is.null(obj$rank)) {
+    res <- try(.Call("crs_hat_diag", obj$qr, obj$qraux, as.integer(obj$rank),
+                     PACKAGE="crs"), silent=TRUE)
+    if(!inherits(res, "try-error")) return(res)
+  }
   qr_obj <- list(qr=obj$qr, qraux=obj$qraux, pivot=obj$pivot, tol=obj$tol, rank=obj$rank)
   class(qr_obj) <- "qr"
   hat(qr_obj)

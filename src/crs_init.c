@@ -17,6 +17,7 @@ extern void gsl_bspline_deriv(void *, void *, void *, void *, void *, void *, vo
 extern SEXP smultinomadRSolve(SEXP);
 extern SEXP snomadRInfo(SEXP);
 extern SEXP snomadRSolve(SEXP);
+extern SEXP crs_hat_diag(SEXP, SEXP, SEXP);
 
 static const R_CMethodDef CEntries[] = {
     {"RuniqueCombs",      (DL_FUNC) &RuniqueCombs,       4},
@@ -31,6 +32,7 @@ static const R_CallMethodDef CallEntries[] = {
     {"smultinomadRSolve", (DL_FUNC) &smultinomadRSolve, 1},
     {"snomadRInfo",       (DL_FUNC) &snomadRInfo,       1},
     {"snomadRSolve",      (DL_FUNC) &snomadRSolve,      1},
+    {"crs_hat_diag",      (DL_FUNC) &crs_hat_diag,      3},
     {NULL, NULL, 0}
 };
 

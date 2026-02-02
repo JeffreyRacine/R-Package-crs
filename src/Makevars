@@ -1,6 +1,6 @@
 NOMAD_SRC           = ./nomad_src
 SGTELIB_SRC         = ./sgtelib_src
-OBJECTS             = RuniqueCombs.o bspline.o gsl_bspline.o snomadr.o crs_init.o mgcv.o $(NOMAD_SRC)/nomad.o \
+OBJECTS             = RuniqueCombs.o bspline.o gsl_bspline.o snomadr.o crs_init.o mgcv.o hat_diag.o $(NOMAD_SRC)/nomad.o \
                       $(NOMAD_SRC)/Algo_Parameters.o $(NOMAD_SRC)/Barrier.o $(NOMAD_SRC)/Cache.o $(NOMAD_SRC)/Cache_File_Point.o $(NOMAD_SRC)/Cache_Point.o \
                       $(NOMAD_SRC)/Cache_Search.o $(NOMAD_SRC)/Clock.o $(NOMAD_SRC)/Direction.o $(NOMAD_SRC)/Directions.o $(NOMAD_SRC)/Display.o \
                       $(NOMAD_SRC)/Double.o $(NOMAD_SRC)/Eval_Point.o $(NOMAD_SRC)/Evaluator.o $(NOMAD_SRC)/Evaluator_Control.o \
