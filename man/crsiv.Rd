@@ -238,14 +238,19 @@ crsiv(y,
 }
 \value{
   
-  \code{crsiv} returns a \code{\link{crs}} object.  The generic
-    functions \code{\link{fitted}} and \code{\link{residuals}} extract
-    (or generate) estimated values and residuals. Furthermore, the
-    functions \code{\link{summary}}, \code{\link{predict}}, and
-    \code{\link{plot}} (options \code{mean=FALSE}, \code{deriv=i} where
-    \eqn{i} is an integer, \code{ci=FALSE},
-    \code{plot.behavior=c("plot","plot-data","data")}) support objects
-    of this type.
+  \code{crsiv} returns a \code{crsiv} object (which inherits from
+    the \code{\link{crs}} class).  The generic functions
+    \code{\link{print}}, \code{\link{summary}}, \code{\link{fitted}},
+    \code{\link{residuals}}, \code{\link{predict}}, and
+    \code{\link{plot}} support objects of this type.
+
+    For the \code{\link{plot}} function, the options are
+    \code{plot.data=FALSE} (a logical value indicating whether to plot
+    the data as a scatter plot) and \code{deriv=FALSE} (a logical value
+    indicating whether to plot the derivative of the structural function
+    rather than the function itself). Note that the \code{\link{plot}}
+    method for \code{crsiv} objects currently only supports univariate
+    endogenous predictors \eqn{z}.
     
     See \code{\link{crs}} for details on the return object components.
 

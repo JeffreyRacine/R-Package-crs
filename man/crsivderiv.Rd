@@ -176,9 +176,26 @@ crsivderiv(y,
 }
 \value{
   
-  \code{crsivderiv} returns components \code{phi.prime}, \code{phi},
-    \code{phi.prime.mat}, \code{num.iterations}, \code{norm.stop},
-    \code{norm.value} and \code{convergence}.
+  \code{crsivderiv} returns a \code{crsivderiv} object (which inherits
+    from the \code{\link{crs}} class).  The generic functions
+    \code{\link{print}}, \code{\link{summary}}, \code{\link{fitted}},
+    \code{\link{residuals}}, \code{\link{predict}}, and
+    \code{\link{plot}} support objects of this type.
+
+    For the \code{\link{plot}} function, the options are
+    \code{plot.data=FALSE} (a logical value indicating whether to plot
+    the data as a scatter plot) and \code{phi=FALSE} (a logical value
+    indicating whether to plot the reconstructed structural function
+    rather than its derivative). Note that the \code{\link{plot}}
+    method for \code{crsivderiv} objects currently only supports
+    univariate endogenous predictors \eqn{z}.
+    
+    See \code{\link{crs}} for details on the return object components.
+
+    In addition to the standard \code{\link{crs}} components,
+    \code{crsivderiv} returns components \code{phi.prime}, \code{phi},
+    \code{phi.prime.mat}, \code{phi.mat}, \code{num.iterations},
+    \code{norm.stop}, \code{norm.value} and \code{convergence}.
     
 }
   
