@@ -274,15 +274,24 @@ crsivderiv.default <- function(y,
   
   ## For stopping rule...
   
-  if(crs.messages) options(crs.messages=FALSE)
-  model.E.y.w <- crs(formula.yw,
-                     opts=opts,display.nomad.progress=display.nomad.progress,display.warnings=display.warnings,
-                     data=traindata,
-                     ...)
-  if(crs.messages) options(crs.messages=TRUE)    
+    if(crs.messages) options(crs.messages=FALSE)
+    model.E.y.w <- crs(formula.yw,
+                       opts=opts,display.nomad.progress=display.nomad.progress,display.warnings=display.warnings,
+                       data=traindata,
+                       ...)
+    if(crs.messages) options(crs.messages=TRUE)
   
-  E.y.w <- predict(model.E.y.w,newdata=evaldata)
+    ## Capture instrument parameters for summary
+    degree.w <- model.E.y.w$degree
+    segments.w <- model.E.y.w$segments
+    lambda.w <- model.E.y.w$lambda
+    include.w <- model.E.y.w$include
+    num.x.w <- model.E.y.w$num.x
+    num.z.w <- model.E.y.w$num.z
+    xnames.w <- model.E.y.w$xnames
+    znames.w <- model.E.y.w$znames
   
+    E.y.w <- if(is.eval.train) fitted(model.E.y.w) else predict(model.E.y.w,newdata=evaldata,...)  
   norm.stop <- numeric()
   
   ## For the stopping rule, we require E.phi.w
@@ -634,6 +643,16 @@ crsivderiv.default <- function(y,
   model$starting.values.phi.prime <- starting.values.phi.prime
   model$nmulti <- nmulti
   model$ptm <- proc.time() - ptm.start
+
+  ## Attach instrument parameters for summary
+  model$degree.w <- degree.w
+  model$segments.w <- segments.w
+  model$lambda.w <- lambda.w
+  model$include.w <- include.w
+  model$num.x.w <- num.x.w
+  model$num.z.w <- num.z.w
+  model$xnames.w <- xnames.w
+  model$znames.w <- znames.w
   
   class(model) <- c("crsivderiv", "crs")
   
@@ -673,6 +692,17 @@ summary.crsivderiv <- function(object, ...) {
     cat(paste("\nInclusion indicator for ",format(object$znames[j]),": ",format(object$include[j]),sep=""),sep="")
   if(!is.null(object$lambda)) for(j in 1:length(object$lambda))
     cat(paste("\nBandwidth for ",format(object$znames[j]),": ",format(object$lambda[j]),sep=""),sep="")
+
+  if(!is.null(object$num.x.w)) {
+    for(j in 1:object$num.x.w)
+      cat(paste("\nSpline degree/number of segments for ",format(object$xnames.w[j]),": ",format(object$degree.w[j]),"/",format(object$segments.w[j]),sep=""),sep="")
+  }
+  if(!is.null(object$num.z.w)) {
+    if(!is.null(object$include.w)) for(j in 1:length(object$include.w))
+      cat(paste("\nInclusion indicator for ",format(object$znames.w[j]),": ",format(object$include.w[j]),sep=""),sep="")
+    if(!is.null(object$lambda.w)) for(j in 1:length(object$lambda.w))
+      cat(paste("\nBandwidth for ",format(object$znames.w[j]),": ",format(object$lambda.w[j]),sep=""),sep="")
+  }
   
   cat(paste("\nModel complexity proxy: ", format(object$complexity), sep=""))
   cat(paste("\nKnot type: ", format(object$knots), sep=""))
