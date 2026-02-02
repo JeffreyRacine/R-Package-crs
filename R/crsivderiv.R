@@ -688,3 +688,53 @@ summary.crsivderiv <- function(object, ...) {
   cat(paste("\nEstimation time: ", formatC(object$ptm[1],digits=1,format="f"), " seconds",sep=""))
   cat("\n\n")
 }
+
+plot.crsivderiv <- function(x,
+                            plot.data = FALSE,
+                            phi = FALSE,
+                            ...) {
+  
+  object <- x
+  
+  ## We only support univariate endogenous predictor z
+  if(object$num.x > 1 || !is.null(object$num.z)) stop(" only univariate z is supported")
+  
+  z <- object$xz[,1]
+  y <- object$y
+  zname <- object$xnames[1]
+  yname <- "y"
+  
+  if(phi) {
+    ## Plot the structural function phi
+    fit <- object$phi
+    ylab <- yname
+  } else {
+    ## Plot the derivative phi.prime (default for crsivderiv)
+    fit <- object$phi.prime
+    ylab <- paste("d", yname, "/d", zname, sep="")
+  }
+  
+  if(plot.data && !phi) {
+      ## Scatter data doesn't make sense for derivative plots directly
+      plot.data <- FALSE
+  }
+
+  if(plot.data) {
+    plot(z, y,
+         xlab=zname,
+         ylab=yname,
+         type="p",
+         col="lightgrey",
+         ...)
+    lines(z[order(z)], fit[order(z)],
+          lwd=2,
+          ...)
+  } else {
+    plot(z[order(z)], fit[order(z)],
+         type="l",
+         xlab=zname,
+         ylab=ylab,
+         lwd=2,
+         ...)
+  }
+}

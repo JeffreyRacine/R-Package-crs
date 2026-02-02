@@ -869,3 +869,54 @@ summary.crsiv <- function(object, ...) {
   cat(paste("\nEstimation time: ", formatC(object$ptm[1],digits=1,format="f"), " seconds",sep=""))
   cat("\n\n")
 }
+
+plot.crsiv <- function(x,
+                       plot.data = FALSE,
+                       deriv = FALSE,
+                       ...) {
+  
+  object <- x
+  
+  ## We only support univariate endogenous predictor z
+  if(object$num.x > 1 || !is.null(object$num.z)) stop(" only univariate z is supported")
+  
+  z <- object$xz[,1]
+  y <- object$y
+  phi <- object$phi
+  
+  zname <- object$xnames[1]
+  yname <- "y" ## Default
+  
+  if(deriv) {
+    if(is.null(object$deriv.mat)) stop(" deriv.mat not found: was crsiv called with deriv > 0?")
+    phi.prime <- object$deriv.mat[,1]
+    
+    plot(z[order(z)], phi.prime[order(z)],
+         type="l",
+         xlab=zname,
+         ylab=paste("d", yname, "/d", zname, sep=""),
+         ...)
+    
+  } else {
+    
+    if(plot.data) {
+      plot(z, y,
+           xlab=zname,
+           ylab=yname,
+           type="p",
+           col="lightgrey",
+           ...)
+      lines(z[order(z)], phi[order(z)],
+            lwd=2,
+            ...)
+    } else {
+      plot(z[order(z)], phi[order(z)],
+           type="l",
+           xlab=zname,
+           ylab=yname,
+           lwd=2,
+           ...)
+    }
+  }
+  
+}
