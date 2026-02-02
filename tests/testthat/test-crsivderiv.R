@@ -15,7 +15,8 @@ test_that("crsivderiv works with Landweber-Fridman", {
   # Use small iterate.max for speed in tests
   model <- crsivderiv(y=y_vec, z=z, w=w, iterate.max=5, cv="none", basis="additive", display.nomad.progress=FALSE)
   
-  expect_type(model, "list") # It returns a list
+  expect_s3_class(model, "crsivderiv")
+  expect_s3_class(model, "crs")
   expect_type(model$phi, "double")
   expect_type(model$phi.prime, "double")
   expect_equal(length(model$phi), n)
