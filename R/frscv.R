@@ -25,15 +25,15 @@ frscv <- function(xz,
                   singular.ok=FALSE,
                   tau=NULL,
                   weights=NULL) {
-  
+
   complexity <- match.arg(complexity)
   knots <- match.arg(knots)
   basis <- match.arg(basis)
   cv.func <- match.arg(cv.func)
-  
+
   t1 <- Sys.time()
   cv.maxPenalty <- resolve_cv_maxPenalty(NULL, y, weights = weights)
-  
+
   cv.objc <- function(input,
                       x,
                       z=NULL,
@@ -55,25 +55,25 @@ frscv <- function(xz,
                       tau=tau,
                       weights=weights,
                       singular.ok=singular.ok) {
-    
+
     if(missing(input) || missing(x) || missing(y)) stop(" you must provide input, x, y")
-    
+
     ## Presumes x (continuous predictors) exist, but z
     ## (ordinal/nominal factors) can be optional
-    
+
     n <- length(y)
     num.x <- NCOL(x)
-    
+
     if(NROW(y) != NROW(x)) stop(" x and y have differing numbers of observations")
-    
+
     ## K is a matrix, column 1 degree, column 2 segments, either or
     ## both can be determined via cv so need to take care to allow
     ## user to select knots (degree fixed), degree (knots fixed), or
     ## both degree and knots. The values used to evaluate the cv
     ## function are passed below.
-    
+
     K <- round(cbind(input[1:num.x],input[(num.x+1):(2*num.x)]))
-    
+
     if(!is.null(z)) {
       num.z <- NCOL(z)
       I <- round(input[(2*num.x+1):(2*num.x+num.z)])
@@ -81,7 +81,7 @@ frscv <- function(xz,
       num.z <- 0
       I <- NULL
     }
-    
+
     cv <- cv.factor.spline.wrapper(x=x,
                                    y=y,
                                    z=z,
@@ -94,20 +94,20 @@ frscv <- function(xz,
                                    tau=tau,
                                    weights=weights,
                                    singular.ok=singular.ok)
-    
+
     ## Some i/o unless options(crs.messages=FALSE)
-    
+
     ## Degree is first column of K K[,1], segments second column K[,2]
     ## - could create a tmp vector for i/o, or could switch
-    
+
     console <<- printClear(console)
-    
+
     ## Format function...
     fw.format.2 <- function(input) sapply(input,sprintf,fmt="%#.2f")
-    
+
     ## i/o depends on whether we are cross-validating degree, knots,
     ## or both
-    
+
     if(complexity=="degree") {
       if(!is.null(j)) {
         if(j==1) {
@@ -155,9 +155,9 @@ frscv <- function(xz,
       if(num.x > 1) for(i in 2:num.x) tmp.1 <- paste(tmp.1, ", d[", i, "]=", K[i,1],sep="")
       for(i in 1:num.x) tmp.1 <- paste(tmp.1, ", s[", i, "]=", K[i,2],sep="")
     }
-    
+
     ## For i/o for z variables...
-    
+
     if(num.z > 0) for(i in 1:num.z) tmp.1 <- paste(tmp.1, ", I[", i, "]=", I[i],sep="")
     tmp.3 <- paste(", cv=", format(cv,digits=6), sep="")
     if(num.restarts > 0) {
@@ -166,20 +166,20 @@ frscv <- function(xz,
     } else {
       msg <- paste(tmp.1,tmp.3,sep="")
     }
-    
+
     console <<- printPush(msg,console = console)
-    
+
     return(cv)
-    
+
   }
-  
+
   console <- newLineConsole()
   if(display.nomad.progress) console <- printPush("Working...",console = console)
-  
+
   ## Take data frame x and parse into factors (z) and numeric (x)
-  
+
   if(!is.data.frame(xz)) stop(" xz must be a data frame")
-  
+
   xztmp <- splitFrame(xz)
   x <- xztmp$x
   z <- xztmp$z
@@ -190,12 +190,12 @@ frscv <- function(xz,
   } else {
     num.z <- NCOL(z)
   }
-  
+
   num.x <- ncol(x)
   n <- nrow(x)
-  
+
   if(missing(x) || missing(y)) stop (" you must provide x and y")
-  
+
   if(complexity=="degree") {
     if(missing(segments)||is.null(segments)) stop("segments missing for cross-validation of spline degree")
     if(length(segments)!=num.x) stop(" segments vector must be the same length as x")
@@ -203,20 +203,20 @@ frscv <- function(xz,
     if(missing(degree)||is.null(degree)) stop("degree missing for cross-validation of number of spline knots")
     if(length(degree)!=num.x) stop(" degree vector must be the same length as x")
   }
-  
+
   ## For factor regression spline, if there is only one predictor
   ## (i.e. num.x + num.z = 1) disable auto, set to additive (tensor in
   ## this case, so don't waste time doing both).
-  
+
   if((num.x+num.z==1) && (basis == "auto")) basis <- "additive"
-  
+
   if(degree.min < 0 ) degree.min <- 0
   if(segments.min < 1 ) segments.min <- 1
   if(degree.max < degree.min) degree.max <- (degree.min + 1)
   if(segments.max < segments.min) segments.max <- (segments.min + 1)
-  
+
   if(degree.max < 1 || segments.max < 1 ) stop(" degree.max or segments.max must be greater than or equal to 1")
-  
+
   if(complexity == "degree-knots") {
     if(!is.null(z)) {
       KI.mat <- matrix.combn(K.vec1=degree.min:degree.max,K.vec2=segments.min:segments.max, num.x=num.x,num.z=num.z)
@@ -242,7 +242,7 @@ frscv <- function(xz,
       KI.mat <- cbind(matrix(degree,nrow(KI.mat),length(degree),byrow=TRUE),KI.mat[,1:num.x])
     }
   }
-  
+
   ## For exhaustive search, we avoid redundant computation of cv
   ## function. Some rows will have all continuous predictors having
   ## degree 0 but different segments - computation is redundant here.
@@ -250,49 +250,49 @@ frscv <- function(xz,
   ## factor splines, some of these rows having no continuous
   ## predictors can differ in terms of their categorical predictors
   ## (inclusion), so determine which are unique in this case
-  
+
   degree.zero.rows <- which(rowSums(KI.mat[,1:num.x,drop=FALSE])==0)
-  
+
   if(length(degree.zero.rows) > 0) {
-    
+
     degree.mat.zero.rows.unique <- numeric()
-    
+
     if(num.z > 0) {
-      
+
       KI.I.unique <- unique(KI.mat[degree.zero.rows,(2*num.x+1):(2*num.x+num.z),drop=FALSE])
-      
+
       for(i in 1:nrow(KI.I.unique)) {
         degree.mat.zero.rows.unique[i] <- which(KI.mat[degree.zero.rows,(2*num.x+1):(2*num.x+num.z),drop=FALSE]==KI.I.unique[i,])[1]
       }
-      
+
     } else {
-      
+
       KI.I.unique <- unique(KI.mat[degree.zero.rows,1:num.x,drop=FALSE])
-      
+
       for(i in 1:nrow(KI.I.unique)) {
         degree.mat.zero.rows.unique[i] <- which(KI.mat[degree.zero.rows,1:num.x,drop=FALSE]==KI.I.unique[i,])[1]
       }
-      
+
     }
-    
+
     degree.zero.rows <- degree.zero.rows[-degree.mat.zero.rows.unique]
-    
+
     if(length(degree.zero.rows) > 0) KI.mat <- KI.mat[-degree.zero.rows,,drop=FALSE]
-    
+
   }
-  
+
   nrow.KI.mat <- NROW(KI.mat)
   basis.vec <- character(nrow.KI.mat)
   knots.vec <- character(nrow.KI.mat)
-  
+
   ## Initialize
-  
+
   cv.vec <- rep(cv.maxPenalty, nrow.KI.mat)
-  
+
   for(j in 1:nrow.KI.mat) {
-    
+
     if(basis=="auto") {
-      
+
       output <- cv.objc(input=KI.mat[j,],
                         x=x,
                         y=y,
@@ -314,14 +314,14 @@ frscv <- function(xz,
                         tau=tau,
                         weights=weights,
                         singular.ok=singular.ok)
-      
+
       if(output < cv.vec[j]) {
         basis.vec[j] <- "additive"
         knots.vec[j] <- attributes(output)$knots.opt
         attributes(output) <- NULL
         cv.vec[j] <- output
       }
-      
+
       output <- cv.objc(input=KI.mat[j,],
                         x=x,
                         y=y,
@@ -343,14 +343,14 @@ frscv <- function(xz,
                         tau=tau,
                         weights=weights,
                         singular.ok=singular.ok)
-      
+
       if(output < cv.vec[j]) {
         basis.vec[j] <- "tensor"
         knots.vec[j] <- attributes(output)$knots.opt
         attributes(output) <- NULL
         cv.vec[j] <- output
       }
-      
+
       output <- cv.objc(input=KI.mat[j,],
                         x=x,
                         y=y,
@@ -372,18 +372,18 @@ frscv <- function(xz,
                         tau=tau,
                         weights=weights,
                         singular.ok=singular.ok)
-      
+
       if(output < cv.vec[j]) {
         basis.vec[j] <- "glp"
         knots.vec[j] <- attributes(output)$knots.opt
         attributes(output) <- NULL
         cv.vec[j] <- output
       }
-      
+
     } else {
-      
+
       ## not auto, so use either "additive" or "tensor"
-      
+
       output <- cv.objc(input=KI.mat[j,],
                         x=x,
                         y=y,
@@ -405,45 +405,45 @@ frscv <- function(xz,
                         tau=tau,
                         weights=weights,
                         singular.ok=singular.ok)
-      
+
       if(output < cv.vec[j]) {
         basis.vec[j] <- basis
         knots.vec[j] <- attributes(output)$knots.opt
         attributes(output) <- NULL
         cv.vec[j] <- output
       }
-      
+
     }
-    
+
   }
-  
+
   ## Sort on cv.vec
-  
+
   ocv.vec <- order(cv.vec)
-  
+
   cv.min <- cv.vec[ocv.vec][1]
   K.opt <- KI.mat[ocv.vec,,drop=FALSE][1,]
   basis.opt <- basis.vec[ocv.vec][1]
   knots.opt <- knots.vec[ocv.vec][1]
   degree <- K.opt[1:num.x]
   segments <- K.opt[(num.x+1):(2*num.x)]
-  
+
   if(!is.null(z)) I.opt <- K.opt[(2*num.x+1):(2*num.x+num.z)]
-  
+
   console <- printClear(console)
   console <- printPop(console)
-  
+
   ## Set number of segments when degree==0 to 1 (or NA)
-  
+
   segments[degree==0] <- 1
-  
+
   if(display.warnings) {
     if(any(degree==degree.max)) warning(paste(" optimal degree equals search maximum (", degree.max,"): rerun with larger degree.max",sep=""))
     if(any(segments==segments.max)) warning(paste(" optimal segment equals search maximum (", segments.max,"): rerun with larger segments.max",sep=""))
   }
-  
+
   if(is.null(z)) I.opt <- NULL
-  
+
   crscv(K=K.opt,
         I=I.opt,
         basis=basis.opt,
@@ -465,5 +465,5 @@ frscv <- function(xz,
         num.x=num.x,
         cv.func=cv.func,
         tau=tau)
-  
+
 }

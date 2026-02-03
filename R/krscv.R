@@ -26,17 +26,17 @@ krscv <- function(xz,
                   singular.ok=FALSE,
                   tau=NULL,
                   weights=NULL) {
-  
+
   complexity <- match.arg(complexity)
   knots <- match.arg(knots)
   basis <- match.arg(basis)
   cv.func <- match.arg(cv.func)
   cv.maxPenalty <- resolve_cv_maxPenalty(NULL, y, weights = weights)
-  
+
   ## First define the cv function to be fed to optim
-  
+
   t1 <- Sys.time()
-  
+
   cv.objc <- function(input,
                       x,
                       y,
@@ -64,13 +64,13 @@ krscv <- function(xz,
                       tau=tau,
                       weights=weights,
                       singular.ok=singular.ok) {
-    
+
     ## K is a matrix, column 1 degree, column 2 segments, either or
     ## both can be determined via cv so need to take care to allow
     ## user to select knots (degree fixed), degree (knots fixed), or
     ## both degree and knots. The values used to evaluate the cv
     ## function are passed below.
-    
+
     if(is.null(K)) {
       num.x <- NCOL(x)
       num.z <- NCOL(z)
@@ -82,7 +82,7 @@ krscv <- function(xz,
     }
     ## When using weights= lambda of zero fails. Trivial to trap.
     lambda <- ifelse(lambda <= 0, .Machine$double.eps, lambda)
-    
+
     cv <- cv.kernel.spline.wrapper(x=x,
                                    y=y,
                                    z=z,
@@ -101,12 +101,12 @@ krscv <- function(xz,
                                    tau=tau,
                                    weights=weights,
                                    singular.ok=singular.ok)
-    
+
     ## Some i/o unless options(crs.messages=FALSE)
-    
+
     fw.format.3 <- function(input) sapply(input,sprintf,fmt="%#.3f")
     fw.format.2 <- function(input) sapply(input,sprintf,fmt="%#.2f")
-    
+
     if(complexity=="degree") {
       if(!is.null(j)) {
         if(j==1) {
@@ -154,9 +154,9 @@ krscv <- function(xz,
       if(num.x > 1) for(i in 2:num.x) tmp.1 <- paste(tmp.1, ", d[", i, "]=", K[i,1],sep="")
       for(i in 1:num.x) tmp.1 <- paste(tmp.1, ", s[", i, "]=", K[i,2],sep="")
     }
-    
+
     ## For i/o for z variables
-    
+
     tmp.2 <- paste(", rs=", restart, "/", num.restarts,sep="")
     tmp.3 <- ""
     for(i in 1:num.z) tmp.3 <- paste(tmp.3, ", l[", i, "]=", fw.format.3(lambda[i]),sep="")
@@ -166,14 +166,14 @@ krscv <- function(xz,
     } else {
       msg <- paste(tmp.1,tmp.3,tmp.4,sep="")
     }
-    
+
     console <<- printClear(console)
     console <<- printPush(msg,console = console)
-    
+
     return(cv)
-    
+
   }
-  
+
   xztmp <- splitFrame(xz,factor.to.numeric=TRUE)
   x <- xztmp$x
   z <- xztmp$z
@@ -189,7 +189,7 @@ krscv <- function(xz,
   nrow.z.unique <- NROW(z.unique)
   num.x <- NCOL(x)
   n <- NROW(x)
-  
+
   if(complexity=="degree") {
     if(missing(segments)) stop("segments missing for cross-validation of spline degree")
     if(length(segments)!=num.x) stop(" segments vector must be the same length as x")
@@ -197,23 +197,23 @@ krscv <- function(xz,
     if(missing(degree)) stop("degree missing for cross-validation of number of spline knots")
     if(length(degree)!=num.x) stop(" degree vector must be the same length as x")
   }
-  
+
   ## For kernel regression spline, if there is only one continuous
   ## predictor (i.e. num.x==1) disable auto, set to additive (which is
   ## tensor in this case, so don't waste time doing both).
-  
+
   if((num.x==1) && (basis == "auto")) basis <- "additive"
-  
+
   if(degree.min < 0 ) degree.min <- 0
   if(segments.min < 1 ) segments.min <- 1
   if(degree.max < degree.min) degree.max <- (degree.min + 1)
   if(segments.max < segments.min) segments.max <- (segments.min + 1)
-  
+
   if(degree.max < 1 || segments.max < 1 ) stop(" degree.max or segments.max must be greater than or equal to 1")
-  
+
   console <- newLineConsole()
   if(display.nomad.progress) console <- printPush("Working...",console = console)
-  
+
   ## Exhaustive evaluation over all combinations of K, search over
   ## lambda for each combination
   if(complexity == "degree-knots") {
@@ -225,40 +225,40 @@ krscv <- function(xz,
     K.mat <- matrix.combn(K.vec1=segments.min:segments.max,num.x=num.x)
     K.mat <- cbind(matrix(degree,nrow(K.mat),length(degree),byrow=TRUE),K.mat[,1:num.x])
   }
-  
+
   ## Strip off all (except one) rows with degree 0 for all continuous
   ## predictors, only leave first row (avoid redundant computation,
   ## this will be computed only once for all predictors having degree
   ## 0, segments 1).
-  
+
   degree.zero.rows <- which(rowSums(K.mat[,1:num.x,drop=FALSE])==0)[-1]
-  
+
   if(length(degree.zero.rows) > 0) K.mat <- K.mat[-degree.zero.rows,,drop=FALSE]
-  
+
   nrow.K.mat <- NROW(K.mat)
-  
+
   ## Initialize
-  
+
   cv.vec <- rep(cv.maxPenalty, nrow.K.mat)
-  
+
   basis.vec <- character(nrow.K.mat)
   lambda.mat <- matrix(NA,nrow.K.mat,num.z)
-  
+
   output <- list()
   output.restart <- list()
-  
+
   t2 <- Sys.time() ## placeholder
-  
+
   for(j in 1:nrow.K.mat) {
-    
+
     if(basis=="auto") {
-      
+
       ## First, basis=="additive"
-      
+
       output$convergence <- 42
-      
+
       while(output$convergence != 0) {
-        
+
         output <- optim(par=runif(num.z),
                         cv.objc,
                         lower=rep(0,num.z),
@@ -290,17 +290,17 @@ krscv <- function(xz,
                         tau=tau,
                         weights=weights,
                         singular.ok=singular.ok)
-        
+
       }
-      
+
       if(restarts > 0) {
-        
+
         for(r in 1:restarts) {
-          
+
           output.restart$convergence <- 42
-          
+
           while(output.restart$convergence != 0) {
-            
+
             output.restart <- optim(par=runif(num.z),
                                     cv.objc,
                                     lower=rep(0,num.z),
@@ -332,27 +332,27 @@ krscv <- function(xz,
                                     tau=tau,
                                     weights=weights,
                                     singular.ok=singular.ok)
-            
+
           }
-          
+
           if(output.restart$value < output$value) output <- output.restart
-          
+
         }
-        
+
       } ## end restarts
-      
+
       if(output$value < cv.vec[j]) {
         cv.vec[j] <- output$value
         basis.vec[j] <- "additive"
         lambda.mat[j,] <- output$par
       }
-      
+
       ## Next, basis=="tensor"
-      
+
       output$convergence <- 42
-      
+
       while(output$convergence != 0) {
-        
+
         output <- optim(par=runif(num.z),
                         cv.objc,
                         lower=rep(0,num.z),
@@ -384,17 +384,17 @@ krscv <- function(xz,
                         tau=tau,
                         weights=weights,
                         singular.ok=singular.ok)
-        
+
       }
-      
+
       if(restarts > 0) {
-        
+
         for(r in 1:restarts) {
-          
+
           output.restart$convergence <- 42
-          
+
           while(output.restart$convergence != 0) {
-            
+
             output.restart <- optim(par=runif(num.z),
                                     cv.objc,
                                     lower=rep(0,num.z),
@@ -426,27 +426,27 @@ krscv <- function(xz,
                                     tau=tau,
                                     weights=weights,
                                     singular.ok=singular.ok)
-            
+
           }
-          
+
           if(output.restart$value < output$value) output <- output.restart
-          
+
         }
-        
+
       } ## end restarts
-      
+
       if(output$value < cv.vec[j]) {
         cv.vec[j] <- output$value
         basis.vec[j] <- "tensor"
         lambda.mat[j,] <- output$par
       }
-      
+
       ## Next, basis=="glp"
-      
+
       output$convergence <- 42
-      
+
       while(output$convergence != 0) {
-        
+
         output <- optim(par=runif(num.z),
                         cv.objc,
                         lower=rep(0,num.z),
@@ -478,17 +478,17 @@ krscv <- function(xz,
                         tau=tau,
                         weights=weights,
                         singular.ok=singular.ok)
-        
+
       }
-      
+
       if(restarts > 0) {
-        
+
         for(r in 1:restarts) {
-          
+
           output.restart$convergence <- 42
-          
+
           while(output.restart$convergence != 0) {
-            
+
             output.restart <- optim(par=runif(num.z),
                                     cv.objc,
                                     lower=rep(0,num.z),
@@ -520,30 +520,30 @@ krscv <- function(xz,
                                     tau=tau,
                                     weights=weights,
                                     singular.ok=singular.ok)
-            
+
           }
-          
+
           if(output.restart$value < output$value) output <- output.restart
-          
+
         }
-        
+
       } ## end restarts
-      
+
       if(output$value < cv.vec[j]) {
         cv.vec[j] <- output$value
         basis.vec[j] <- "glp"
         lambda.mat[j,] <- output$par
       }
-      
-      
+
+
     } else { ## end auto
-      
+
       ## Either basis=="additive" or "tensor" or "glp"
-      
+
       output$convergence <- 42
-      
+
       while(output$convergence != 0) {
-        
+
         output <- optim(par=runif(num.z),
                         cv.objc,
                         lower=rep(0,num.z),
@@ -575,17 +575,17 @@ krscv <- function(xz,
                         tau=tau,
                         weights=weights,
                         singular.ok=singular.ok)
-        
+
       }
-      
+
       if(restarts > 0) {
-        
+
         for(r in 1:restarts) {
-          
+
           output.restart$convergence <- 42
-          
+
           while(output.restart$convergence != 0) {
-            
+
             output.restart <- optim(par=runif(num.z),
                                     cv.objc,
                                     lower=rep(0,num.z),
@@ -617,32 +617,32 @@ krscv <- function(xz,
                                     tau=tau,
                                     weights=weights,
                                     singular.ok=singular.ok)
-            
+
           }
-          
+
           if(output.restart$value < output$value) output <- output.restart
-          
+
         }
-        
+
       } ## end restarts
-      
+
       if(output$value < cv.vec[j]) {
         cv.vec[j] <- output$value
         basis.vec[j] <- basis
         lambda.mat[j,] <- output$par
       }
-      
+
     }
-    
+
     t2 <- Sys.time()
-    
+
   }
-  
-  
+
+
   ## Sort on cv.vec
-  
+
   ocv.vec <- order(cv.vec)
-  
+
   cv.min <- cv.vec[ocv.vec][1]
   K.opt <- K.mat[ocv.vec,,drop=FALSE][1,]
   lambda.opt <- lambda.mat[ocv.vec,,drop=FALSE][1,]
@@ -650,19 +650,19 @@ krscv <- function(xz,
   degree <- K.opt[1:num.x]
   segments <- K.opt[(num.x+1):(2*num.x)]
   if(!is.null(z)) I.opt <- K.opt[(2*num.x+1):(2*num.x+num.z)]
-  
+
   console <- printClear(console)
   console <- printPop(console)
-  
+
   ## Set number of segments when degree==0 to 1 (or NA)
   segments[degree==0] <- 1
-  
+
   knots.opt <- knots
   ## One more time to call cv.kernel.spline to know knots when knots="auto"
   if(knots=="auto") {
     ## When using weights= lambda of zero fails. Trivial to trap.
     lambda.opt <- ifelse(lambda.opt <= 0, .Machine$double.eps, lambda.opt)
-    
+
     cv.knots <- cv.kernel.spline.wrapper(x=x,
                                          y=y,
                                          z=z,
@@ -681,15 +681,15 @@ krscv <- function(xz,
                                          tau=tau,
                                          weights=weights,
                                          singular.ok=singular.ok)
-    
+
     knots.opt <- attributes(cv.knots)$knots.opt
   }
-  
+
   if(display.warnings) {
     if(any(degree==degree.max)) warning(paste(" optimal degree equals search maximum (", degree.max,"): rerun with larger degree.max",sep=""))
     if(any(segments==segments.max)) warning(paste(" optimal segment equals search maximum (", segments.max,"): rerun with larger segments.max",sep=""))
   }
-  
+
   crscv(K=K.opt,
         I=NULL,
         basis=basis.opt,
@@ -711,5 +711,5 @@ krscv <- function(xz,
         num.x=num.x,
         cv.func=cv.func,
         tau=tau)
-  
+
 }

@@ -4,11 +4,11 @@
 # Date:   Mon 16 May 2011
 #
 # We use ipoptr developed by Jelmer Ypma as the prototype of this package.
-# Some code is copied and edited from ipoptr. 
+# Some code is copied and edited from ipoptr.
 # Please reference the license of ipoptr.
 #
-# This function converts a list with nomad options into 
-# three sub-lists, where the options are sorted into 
+# This function converts a list with nomad options into
+# three sub-lists, where the options are sorted into
 # the different value types (integer, numeric, string).
 #
 # Input: list of nomad options and their values
@@ -21,39 +21,39 @@
 # it under the terms of the GNU General Public License as published by
 # the Free Software Foundation; either version 3 of the License,  or
 # (at your option) any later version.
-#      
+#
 # This program is distributed WITHOUT ANY WARRANTY. See the
 # GNU General Public License for more details.
-#           
-# If you do not have a copy of the GNU General Public License,  
-# write to the Free Software Foundation, Inc., 
+#
+# If you do not have a copy of the GNU General Public License,
+# write to the Free Software Foundation, Inc.,
 # 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 
 get.option.types <- function(opts) {
-  
+
   # define types of nomad options,  we should add all options here.
   # we may not need this,  we can set all of them as string because we
   # just write all options into a file,  then nomad will read it.
   # I commented some lines,  then everything is string.
   nomad.option.types <- list(
-    "DISPLAY_DEGREE"="string", 
-    "MAX_BB_EVAL"="integer", 
-    "MIN_POLL_SIZE"="numeric", 
-    "MIN_MESH_SIZE"="numeric", 
+    "DISPLAY_DEGREE"="string",
+    "MAX_BB_EVAL"="integer",
+    "MIN_POLL_SIZE"="numeric",
+    "MIN_MESH_SIZE"="numeric",
     "INITIAL_MESH_SIZE"="string"
   )
-  
-  
-  
+
+
+
   # initialize list with options sorted by type
   converted.opts <- list( "integer"=list(), "string"=list(), "numeric"=list() )
-  
+
   is.wholenumber <- function(x, tol = .Machine$double.eps^0.5)  abs(x - round(x)) < tol
-  
-  # check if we have at least 1 element in the list, otherwise the 
+
+  # check if we have at least 1 element in the list, otherwise the
   # loop runs from 1 to down 0 and we get errors
   if ( length( opts ) > 0 ) {
-    
+
     # loop over all options and give them the correct type
     for ( i in 1:length( opts ) ) {
       #            tmp.type <- nomad.option.types[[match( names(opts)[i], names(nomad.option.types) )]]
@@ -68,7 +68,7 @@ get.option.types <- function(opts) {
       #                }
       #                cat( paste( "Warning: ", names(opts)[i], " is not a recognized option, we try to pass it to nomad as ", tmp.type, "\n" ) )
       #            }
-      
+
       if ( tmp.type=="string" ) {
         converted.opts$string[[ names(opts)[i] ]] <- as.character(opts[[i]])
       } else if ( tmp.type=="integer" ) {
@@ -80,6 +80,6 @@ get.option.types <- function(opts) {
       }
     }
   }
-  
+
   return ( converted.opts )
 }

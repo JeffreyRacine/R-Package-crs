@@ -39,8 +39,8 @@ check_exact <- function(object, display.warnings=TRUE)
   if(rss < 1e-10*mss && display.warnings)
     warning("attempting model selection on an essentially perfect fit is nonsense", call. = FALSE)
 }
-add1.lm.cv <- function (object, scope, scale = 0, test = c("none", "Chisq", 
-                                                           "F"), x = NULL, k = 2, display.warnings=TRUE, ...) 
+add1.lm.cv <- function (object, scope, scale = 0, test = c("none", "Chisq",
+                                                           "F"), x = NULL, k = 2, display.warnings=TRUE, ...)
 {
   Fstat <- function(table, RSS, rdf) {
     dev <- table$"Sum of Sq"
@@ -50,16 +50,16 @@ add1.lm.cv <- function (object, scope, scale = 0, test = c("none", "Chisq",
     Fs[df < .Machine$double.eps] <- NA
     P <- Fs
     nnas <- !is.na(Fs)
-    P[nnas] <- safe_pf(Fs[nnas], df[nnas], rdf - df[nnas], 
+    P[nnas] <- safe_pf(Fs[nnas], df[nnas], rdf - df[nnas],
                        lower.tail = FALSE)
     list(Fs = Fs, P = P)
   }
   check_exact(object, display.warnings=display.warnings)
-  if (missing(scope) || is.null(scope)) 
+  if (missing(scope) || is.null(scope))
     stop("no terms in scope")
-  if (!is.character(scope)) 
+  if (!is.character(scope))
     scope <- add.scope(object, update.formula(object, scope))
-  if (!length(scope)) 
+  if (!length(scope))
     stop("no terms in scope for adding to object")
   oTerms <- attr(object$terms, "term.labels")
   int <- attr(object$terms, "intercept")
@@ -85,8 +85,8 @@ add1.lm.cv <- function (object, scope, scale = 0, test = c("none", "Chisq",
     oldn <- length(y)
     y <- model.response(m, "numeric")
     newn <- length(y)
-    if (newn < oldn && display.warnings) 
-      warning(gettextf("using the %d/%d rows from a combined fit", 
+    if (newn < oldn && display.warnings)
+      warning(gettextf("using the %d/%d rows from a combined fit",
                        newn, oldn), domain = NA)
   }
   else {
@@ -97,7 +97,7 @@ add1.lm.cv <- function (object, scope, scale = 0, test = c("none", "Chisq",
   Terms <- attr(Terms, "term.labels")
   asgn <- attr(x, "assign")
   ousex <- match(asgn, match(oTerms, Terms), 0L) > 0L
-  if (int) 
+  if (int)
     ousex[1L] <- TRUE
   iswt <- !is.null(wt)
   X <- x[, ousex, drop = FALSE]
@@ -109,13 +109,13 @@ add1.lm.cv <- function (object, scope, scale = 0, test = c("none", "Chisq",
   RSS[1L] <- deviance(z)
   model <- lm(y~X) # added jracine
   CV[1L] <- mean(residuals(model)^2/(1-hatvalues(model))^2) # added jracine
-  sTerms <- sapply(strsplit(Terms, ":", fixed = TRUE), function(x) paste(sort(x), 
+  sTerms <- sapply(strsplit(Terms, ":", fixed = TRUE), function(x) paste(sort(x),
                                                                          collapse = ":"))
   for (tt in scope) {
     stt <- paste(sort(strsplit(tt, ":")[[1L]]), collapse = ":")
     usex <- match(asgn, match(stt, sTerms), 0L) > 0L
     X <- x[, usex | ousex, drop = FALSE]
-    z <- if (iswt) 
+    z <- if (iswt)
       lm.wfit(X, y, wt, offset = offset)
     else lm.fit(X, y, offset = offset)
     class(z) <- "lm"
@@ -124,16 +124,16 @@ add1.lm.cv <- function (object, scope, scale = 0, test = c("none", "Chisq",
     model <- lm(y~X) # added jracine
     CV[tt] <- mean(residuals(model)^2/(1-hatvalues(model))^2) # added jracine
   }
-  if (scale > 0) 
+  if (scale > 0)
     aic <- RSS/scale - n + k * dfs
   else aic <- n * log(RSS/n) + k * dfs
   dfs <- dfs - dfs[1L]
   dfs[1L] <- NA
   ## Can add here
-  aod <- data.frame(Df = dfs, `Sum of Sq` = c(NA, RSS[1L] - 
-                                                RSS[-1L]), RSS = RSS, AIC = aic, CV=CV, row.names = names(dfs), 
+  aod <- data.frame(Df = dfs, `Sum of Sq` = c(NA, RSS[1L] -
+                                                RSS[-1L]), RSS = RSS, AIC = aic, CV=CV, row.names = names(dfs),
                     check.names = FALSE) # added CV term jracine
-  if (scale > 0) 
+  if (scale > 0)
     names(aod) <- c("Df", "Sum of Sq", "RSS", "Cp")
   test <- match.arg(test)
   if (test == "Chisq") {
@@ -151,10 +151,10 @@ add1.lm.cv <- function (object, scope, scale = 0, test = c("none", "Chisq",
   }
   else if (test == "F") {
     rdf <- object$df.residual
-    aod[, c("F value", "Pr(F)")] <- Fstat(aod, aod$RSS[1L], 
+    aod[, c("F value", "Pr(F)")] <- Fstat(aod, aod$RSS[1L],
                                           rdf)
   }
-  head <- c("Single term additions", "\nModel:", deparse(as.vector(formula(object))), 
+  head <- c("Single term additions", "\nModel:", deparse(as.vector(formula(object))),
             if (scale > 0) paste("\nscale: ", format(scale), "\n"))
   class(aod) <- c("anova", "data.frame")
   attr(aod, "heading") <- head
@@ -171,14 +171,14 @@ stepCV <-
       dev <- deviance(x)
       if(!is.null(dev)) dev else extractCV(x, k=0)[2L]
     }
-    
+
     cut.string <- function(string)
     {
       if(length(string) > 1L)
         string[-1L] <- paste("\n", string[-1L], sep = "")
       string
     }
-    
+
     re.arrange <- function(keep)
     {
       namr <- names(k1 <- keep[[1L]])
@@ -187,7 +187,7 @@ stepCV <-
       nr <- length(k1)
       array(unlist(keep, recursive = FALSE), c(nr, nc), list(namr, namc))
     }
-    
+
     step.results <- function(models, fit, object, usingCp=FALSE)
     {
       change <- sapply(models, "[[", "change")
@@ -213,7 +213,7 @@ stepCV <-
       fit$anova <- aod
       fit
     }
-    
+
     Terms <- terms(object)
     object$formula <- Terms
     if(inherits(object, "lme")) object$call$fixed <- Terms
@@ -479,7 +479,7 @@ addterm.lm <-
       P[nnas] <- pf(Fs[nnas], df[nnas], rdf - df[nnas], lower.tail=FALSE)
       list(Fs=Fs, P=P)
     }
-    
+
     if(missing(scope) || is.null(scope)) stop("no terms in scope")
     #    aod <- stats:::add1.lm(object, scope=scope, scale=scale)[ , -4L]
     aod <- add1.lm.cv(object, scope=scope, scale=scale, display.warnings=display.warnings)[ , -4L] # added jracine
@@ -695,7 +695,7 @@ dropterm.lm <-
            test = c("none", "Chisq", "F"), k = 2, sorted = FALSE, display.warnings=TRUE, ...)
   {
     #    aod <- stats:::drop1.lm(object, scope=scope, scale=scale)[, -4]
-    aod <- drop1(object, scope=scope, scale=scale)[, -4]  
+    aod <- drop1(object, scope=scope, scale=scale)[, -4]
     dfs <-  object$rank - c(0, aod$Df[-1L]); RSS <- aod$RSS
     n <- length(object$residuals)
     aod$CV <- if(scale > 0)RSS/scale - n + k*dfs

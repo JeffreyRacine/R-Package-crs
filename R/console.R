@@ -6,7 +6,7 @@ newLineConsole <- function(parentConsole = NULL){
                      lineLen = 0,
                      startCol = 1,
                      lineMsg = '')
-  
+
   if(!is.null(parentConsole))
     newConsole$startCol <- parentConsole$startCol + parentConsole$lineLen
   return(newConsole)
@@ -23,17 +23,17 @@ charRep <- function(x, times, ...){
 toMsg <- function(msg, console = stop("no console provided")){
   ## attempt to provide minimal support for other data types
   msg <- paste(msg, collapse=' ')
-  
+
   ## explode the message
   tMsg <- unlist(strsplit(msg, '\\\t'))
-  
+
   ## add trailing tab if necessary
   if(substr(msg, nchar(msg), nchar(msg)) == '\t')
     tMsg[length(tMsg)+1] = ""
-  
+
   if(length(tMsg) > 1){
     tmpPos <- console$lineLen + console$startCol
-    
+
     ## do tabbing
     msg <- paste(tMsg, sapply(tMsg, function(x) {
       tmpPos <<- tmpPos + nchar(x)
