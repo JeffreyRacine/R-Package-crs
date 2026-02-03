@@ -1457,56 +1457,6 @@ cv.kernel.spline.wrapper <- function(x,
 #           if(!singular.ok && !is.fullrank(X0*L))
 #             return(sqrt(.Machine$double.xmax))
 #           
-#           model <- tryCatch(rq.wfit(X0,y,weights=L,tau=tau,method="fn"),error=function(e){FALSE})
-#           if(is.logical(model))
-#             return(sqrt(.Machine$double.xmax))
-#           sw <- sqrt(L)
-#           model.hat <- .lm.fit(X0*sw,y*sw)
-#           htt[zz] <- hat.from.lm.fit(model.hat)[zz]
-#         }
-#         if(is.null(tau))
-#           epsilon[zz] <- (model$residuals/sw)[zz]
-#         else
-#           epsilon[zz] <- residuals(model)[zz]
-#       }
-#     }
-#     
-#     htt <- ifelse(htt < 1, htt, 1-.Machine$double.eps)
-#     
-#   }
-#   
-#   ## If weights exist, need to use weighted residuals
-#   
-#   if(!is.null(weights)) epsilon <- epsilon*sqrt(weights)
-#   
-#   if(cv.func == "cv.ls") {
-#     if(is.null(tau))
-#       cv <- mean(epsilon^2/(1-htt)^2)
-#     else
-#       ## Note - this is defined in util.R so if you modify there you must modify here also
-#       cv <- mean(check.function(epsilon,tau)/(1-htt)^(1/sqrt(tau*(1-tau))))
-#   } else if(cv.func == "cv.gcv"){
-#     if(is.null(tau))
-#       cv <- mean(epsilon^2/(1-mean(htt))^2)
-#     else
-#       ## Note - this is defined in util.R so if you modify there you must modify here also
-#       cv <- mean(check.function(epsilon,tau)/(1-mean(htt))^(1/sqrt(tau*(1-tau))))
-#   } else if(cv.func == "cv.aic"){
-#     traceH <- sum(htt)
-#     if(is.null(tau)) {
-#       sigmasq <- mean(epsilon^2)
-#       penalty <- ((1+traceH/n)/(1-(traceH+2)/n))
-#     } else {
-#       sigmasq <- mean(check.function(epsilon,tau))
-#       penalty <- ((1+traceH/n)/(1-(traceH+2)/n))*(0.5/sqrt(tau*(1-tau)))
-#     }
-#     cv <- ifelse(penalty < 0, .Machine$double.xmax, log(sigmasq)+penalty);
-#   }
-#   
-#   return(ifelse(!is.na(cv),cv,.Machine$double.xmax))
-#   
-# }
-
 ## The following function is a wrapper of cv.factor.spline to
 ## handle the situation when knots="auto". It will call
 ## cv.factor.spline two times and return the minimum with
@@ -1587,136 +1537,6 @@ cv.factor.spline.wrapper <- function(x,
   return(cv)
 }
 
-## Feb 1 2011 - replaced lm() and hatvalues() with lsfit and hat. On
-## large datasets makes a noticeable difference (1 predictor, n=10,000
-## drops from 17 secs to 13, n=100,000 drops 92 to to 71 seconds, so
-## cuts runtime to ~ 0.77 of original time)
-
-# cv.factor.spline <- function(x,
-#                              y,
-#                              z=NULL,
-#                              K,
-#                              I=NULL,
-#                              knots=c("quantiles","uniform"),
-#                              basis=c("additive","tensor","glp"),
-#                              cv.func=c("cv.ls","cv.gcv","cv.aic"),
-#                              cv.df.min=1,
-#                              tau=NULL,
-#                              weights=NULL,
-#                              singular.ok=FALSE,
-#                              display.warnings=TRUE) {
-#   
-#   if(missing(x) || missing(y) || missing (K)) stop(" must provide x, y and K")
-#   if(!is.matrix(K)) stop(" K must be a two-column matrix")
-#   
-#   basis <- match.arg(basis)
-#   knots <- match.arg(knots)
-#   cv.func <- match.arg(cv.func)
-#   
-#   n <- NROW(x)
-#   have_tau <- !is.null(tau)
-#   have_w <- !is.null(weights)
-#   is_add <- (basis == "additive" || basis == "glp")
-#   
-#   ## Check dimension of P prior to calculating the basis
-#   
-#   if(is.null(I)) {
-#     categories <- NULL
-#   } else {
-#     categories <- numeric()
-#     for(i in NCOL(z)) categories[i] <- length(unique(z[,i]))
-#   }
-#   
-#   if(n - dimBS(basis=basis,kernel=TRUE,degree=K[,1],segments=K[,2],include=I,categories=categories) <= cv.df.min)
-#     return(sqrt(.Machine$double.xmax))
-#   
-#   ## Otherwise, compute the cross-validation function
-#   
-#   if(any(K[,1] > 0)||any(I > 0)) {
-#     P <- prod.spline(x=x,z=z,K=K,I=I,knots=knots,basis=basis,display.warnings=display.warnings)
-#     ## Check for rank-deficient fit
-#     if(NCOL(P) >= (n-1))
-#       return(sqrt(.Machine$double.xmax))
-#     
-#     ## Pre-calculate sw if weights exist
-#     if(have_w) sw <- sqrt(weights)
-#     
-#     ## Set up design matrix X
-#     if(is_add) {
-#       X <- cbind(1,P)
-#     } else {
-#       X <- P
-#     }
-#     
-#     if(!have_tau) {
-#       if(!have_w) {
-#         model <- .lm.fit(X,y)
-#         epsilon <- model$residuals
-#       } else {
-#         model <- .lm.fit(X*sw,y*sw)
-#         epsilon <- model$residuals / sw
-#       }
-#       
-#       ## 2025: Optimize rank check using model$rank
-#       if(!singular.ok && model$rank < ncol(X))
-#         return(sqrt(.Machine$double.xmax))
-#       
-#       htt <- hat.from.lm.fit(model)
-#     } else {
-#       if(!singular.ok && !is.fullrank(X))
-#         return(sqrt(.Machine$double.xmax))
-#       
-#       if(!have_w) {
-#         model <- tryCatch(rq.fit(X,y,tau=tau,method="fn"),error=function(e){FALSE})
-#         model.hat <- .lm.fit(X,y)
-#       } else {
-#         model <- tryCatch(rq.wfit(X,y,weights=weights,tau=tau,method="fn"),error=function(e){FALSE})
-#         model.hat <- .lm.fit(X*sw,y*sw)
-#       }
-#       
-#       if(is.logical(model))
-#         return(sqrt(.Machine$double.xmax))
-#       
-#       epsilon <- residuals(model)
-#       htt <- hat.from.lm.fit(model.hat)
-#     }
-#     ## Clamp hat values in-place
-#     idx <- htt >= 1
-#     if(any(idx)) htt[idx] <- 1-.Machine$double.eps
-#   } else {
-#     htt <- rep.int(1/n,n)
-#     epsilon <- y-mean(y)
-#   }
-#   
-#   ## If weights exist, need to use weighted residuals
-#   if(have_w) epsilon <- epsilon*sqrt(weights)
-#   
-#   if(cv.func == "cv.ls") {
-#     if(!have_tau)
-#       cv <- mean(epsilon^2/(1-htt)^2)
-#     else
-#       cv <- mean(check.function(epsilon,tau)/(1-htt)^(1/sqrt(tau*(1-tau))))
-#   } else if(cv.func == "cv.gcv"){
-#     if(!have_tau)
-#       cv <- mean(epsilon^2/(1-mean(htt))^2)
-#     else
-#       cv <- mean(check.function(epsilon,tau)/(1-mean(htt))^(1/sqrt(tau*(1-tau))))
-#   } else if(cv.func == "cv.aic"){
-#     traceH <- sum(htt)
-#     if(!have_tau) {
-#       sigmasq <- mean(epsilon^2)
-#       penalty <- ((1+traceH/n)/(1-(traceH+2)/n))
-#     } else {
-#       sigmasq <- mean(check.function(epsilon,tau))
-#       penalty <- ((1+traceH/n)/(1-(traceH+2)/n))*(0.5/sqrt(tau*(1-tau)))
-#     }
-#     cv <- ifelse(penalty < 0, .Machine$double.xmax, log(sigmasq)+penalty);
-#   }
-#   
-#   return(ifelse(!is.na(cv),cv,.Machine$double.xmax))
-#   
-# }
-
 ## Drop-in replacement for cv.factor.spline with improved handling of 
 ## rank-deficient and near-singular designs
 ##
@@ -1763,6 +1583,7 @@ cv.factor.spline <- function(x,
   have_tau <- !is.null(tau)
   have_w <- !is.null(weights)
   is_add <- (basis == "additive" || basis == "glp")
+  cv.maxPenalty <- resolve_cv_maxPenalty(NULL, y, weights = weights)
   
   ## Check dimension of P prior to calculating the basis
   
@@ -1786,7 +1607,7 @@ cv.factor.spline <- function(x,
       deficit <- cv.df.min - df_remaining
       if(deficit > 10) {
         ## Completely infeasible
-        return(sqrt(.Machine$double.xmax))
+        return(cv.maxPenalty)
       } else {
         ## Smooth penalty that grows exponentially
         penalty_mult <- exp(deficit / 2)
@@ -1795,7 +1616,7 @@ cv.factor.spline <- function(x,
       }
     } else {
       ## Original hard cutoff behavior
-      return(sqrt(.Machine$double.xmax))
+      return(cv.maxPenalty)
     }
   }
   
@@ -1817,7 +1638,7 @@ cv.factor.spline <- function(x,
         penalty_mult <- exp((ratio - 0.99) / 0.01)
         return(penalty.scale * penalty_mult)
       } else {
-        return(sqrt(.Machine$double.xmax))
+        return(cv.maxPenalty)
       }
     }
     
@@ -1899,7 +1720,7 @@ cv.factor.spline <- function(x,
       })
       
       if(is.null(model)) {
-        return(sqrt(.Machine$double.xmax))
+        return(cv.maxPenalty)
       }
       
       ## Calculate residuals on ORIGINAL scale (not augmented)
@@ -1924,7 +1745,7 @@ cv.factor.spline <- function(x,
             penalty_mult <- exp(rank_deficit / ncol(X))
             return(penalty.scale * penalty_mult)
           } else {
-            return(sqrt(.Machine$double.xmax))
+            return(cv.maxPenalty)
           }
         }
       }
@@ -1946,7 +1767,7 @@ cv.factor.spline <- function(x,
       
       ## Check for rank deficiency
       if(!singular.ok && !is.fullrank(X))
-        return(sqrt(.Machine$double.xmax))
+        return(cv.maxPenalty)
       
       if(!have_w) {
         model <- tryCatch(
@@ -1963,7 +1784,7 @@ cv.factor.spline <- function(x,
       }
       
       if(is.logical(model))
-        return(sqrt(.Machine$double.xmax))
+        return(cv.maxPenalty)
       
       epsilon <- residuals(model)
       htt <- hat.from.lm.fit(model.hat)
@@ -2002,10 +1823,10 @@ cv.factor.spline <- function(x,
       sigmasq <- mean(check.function(epsilon, tau))
       penalty <- ((1 + traceH/n) / (1 - (traceH + 2)/n)) * (0.5/sqrt(tau*(1-tau)))
     }
-    cv <- ifelse(penalty < 0, .Machine$double.xmax, log(sigmasq) + penalty)
+    cv <- ifelse(penalty < 0, cv.maxPenalty, log(sigmasq) + penalty)
   }
   
-  return(ifelse(!is.na(cv), cv, .Machine$double.xmax))
+  return(ifelse(!is.na(cv), cv, cv.maxPenalty))
 }
 
 ## Drop-in replacement for cv.kernel.spline with improved handling of 
@@ -2076,6 +1897,7 @@ cv.kernel.spline <- function(x,
   ## be and if degrees of freedom is 1 or less, return a large penalty.
   
   n <- length(y)
+  cv.maxPenalty <- resolve_cv_maxPenalty(NULL, y, weights = weights)
   
   ## Check dimension of P prior to calculating the basis
   k_expected <- dimBS(basis=basis, kernel=TRUE, degree=K[,1], segments=K[,2])
@@ -2089,7 +1911,7 @@ cv.kernel.spline <- function(x,
       deficit <- cv.df.min - df_remaining
       if(deficit > 10) {
         ## Completely infeasible
-        return(sqrt(.Machine$double.xmax))
+        return(cv.maxPenalty)
       } else {
         ## Smooth penalty that grows exponentially
         penalty_mult <- exp(deficit / 2)
@@ -2098,7 +1920,7 @@ cv.kernel.spline <- function(x,
       }
     } else {
       ## Original hard cutoff behavior
-      return(sqrt(.Machine$double.xmax))
+      return(cv.maxPenalty)
     }
   }
   
@@ -2167,7 +1989,7 @@ cv.kernel.spline <- function(x,
           penalty_mult <- exp((ratio - 0.99) / 0.01)
           return(penalty.scale * penalty_mult)
         } else {
-          return(sqrt(.Machine$double.xmax))
+          return(cv.maxPenalty)
         }
       }
       
@@ -2198,7 +2020,7 @@ cv.kernel.spline <- function(x,
             if(smooth.penalty) {
               return(penalty.scale * 2)
             } else {
-              return(sqrt(.Machine$double.xmax))
+              return(cv.maxPenalty)
             }
           }
         }
@@ -2210,7 +2032,7 @@ cv.kernel.spline <- function(x,
                                   ridge.lambda, FALSE, sw)
           
           if(is.null(model)) {
-            return(sqrt(.Machine$double.xmax))
+            return(cv.maxPenalty)
           }
           
           ## Calculate residuals on original scale
@@ -2233,7 +2055,7 @@ cv.kernel.spline <- function(x,
                 penalty_mult <- exp(rank_deficit / ncol(X))
                 return(penalty.scale * penalty_mult)
               } else {
-                return(sqrt(.Machine$double.xmax))
+                return(cv.maxPenalty)
               }
             }
           }
@@ -2248,7 +2070,7 @@ cv.kernel.spline <- function(x,
                               error=function(e){FALSE})
           
           if(is.logical(model))
-            return(sqrt(.Machine$double.xmax))
+            return(cv.maxPenalty)
           
           epsilon <- residuals(model)
         }
@@ -2262,7 +2084,7 @@ cv.kernel.spline <- function(x,
             if(smooth.penalty) {
               return(penalty.scale * 2)
             } else {
-              return(sqrt(.Machine$double.xmax))
+              return(cv.maxPenalty)
             }
           }
         }
@@ -2273,7 +2095,7 @@ cv.kernel.spline <- function(x,
                                   ridge.lambda, FALSE, sw)
           
           if(is.null(model)) {
-            return(sqrt(.Machine$double.xmax))
+            return(cv.maxPenalty)
           }
           
           if(use_ridge_now) {
@@ -2294,7 +2116,7 @@ cv.kernel.spline <- function(x,
                 penalty_mult <- exp(rank_deficit / ncol(X))
                 return(penalty.scale * penalty_mult)
               } else {
-                return(sqrt(.Machine$double.xmax))
+                return(cv.maxPenalty)
               }
             }
           }
@@ -2308,7 +2130,7 @@ cv.kernel.spline <- function(x,
                               error=function(e){FALSE})
           
           if(is.logical(model))
-            return(sqrt(.Machine$double.xmax))
+            return(cv.maxPenalty)
           
           epsilon <- residuals(model)
         }
@@ -2344,7 +2166,7 @@ cv.kernel.spline <- function(x,
           penalty_mult <- exp((ratio - 0.99) / 0.01)
           return(penalty.scale * penalty_mult)
         } else {
-          return(sqrt(.Machine$double.xmax))
+          return(cv.maxPenalty)
         }
       }
       
@@ -2407,7 +2229,7 @@ cv.kernel.spline <- function(x,
               if(smooth.penalty) {
                 return(penalty.scale * 2)
               } else {
-                return(sqrt(.Machine$double.xmax))
+                return(cv.maxPenalty)
               }
             }
           }
@@ -2443,7 +2265,7 @@ cv.kernel.spline <- function(x,
             }
             
             if(is.null(model)) {
-              return(sqrt(.Machine$double.xmax))
+              return(cv.maxPenalty)
             }
             
             ## Check rank from model instead of is.fullrank
@@ -2453,7 +2275,7 @@ cv.kernel.spline <- function(x,
                 penalty_mult <- exp(rank_deficit / ncol(XP))
                 return(penalty.scale * penalty_mult)
               } else {
-                return(sqrt(.Machine$double.xmax))
+                return(cv.maxPenalty)
               }
             }
             
@@ -2463,14 +2285,14 @@ cv.kernel.spline <- function(x,
               if(smooth.penalty) {
                 return(penalty.scale * 2)
               } else {
-                return(sqrt(.Machine$double.xmax))
+                return(cv.maxPenalty)
               }
             }
             
             model <- tryCatch(rq.wfit(XP, y, weights=L, tau=tau, method="fn"),
                               error=function(e){FALSE})
             if(is.logical(model))
-              return(sqrt(.Machine$double.xmax))
+              return(cv.maxPenalty)
             sw <- sqrt(L)
             model.hat <- .lm.fit(XP*sw, y*sw)
           }
@@ -2508,7 +2330,7 @@ cv.kernel.spline <- function(x,
             }
             
             if(is.null(model)) {
-              return(sqrt(.Machine$double.xmax))
+              return(cv.maxPenalty)
             }
             
             if(!singular.ok && !use_ridge_subset && model$rank < ncol(P)) {
@@ -2517,7 +2339,7 @@ cv.kernel.spline <- function(x,
                 penalty_mult <- exp(rank_deficit / ncol(P))
                 return(penalty.scale * penalty_mult)
               } else {
-                return(sqrt(.Machine$double.xmax))
+                return(cv.maxPenalty)
               }
             }
             
@@ -2527,14 +2349,14 @@ cv.kernel.spline <- function(x,
               if(smooth.penalty) {
                 return(penalty.scale * 2)
               } else {
-                return(sqrt(.Machine$double.xmax))
+                return(cv.maxPenalty)
               }
             }
             
             model <- tryCatch(rq.wfit(P, y, weights=L, tau=tau, method="fn"),
                               error=function(e){FALSE})
             if(is.logical(model))
-              return(sqrt(.Machine$double.xmax))
+              return(cv.maxPenalty)
             sw <- sqrt(L)
             model.hat <- .lm.fit(P*sw, y*sw)
           }
@@ -2585,17 +2407,17 @@ cv.kernel.spline <- function(x,
           sw <- sqrt(L)
           model <- .lm.fit(X0*sw, y*sw)
           if(!singular.ok && model$rank < ncol(X0))
-            return(sqrt(.Machine$double.xmax))
+            return(cv.maxPenalty)
           htt[zz] <- hat.from.lm.fit(model)[zz]
         } else {
           ## Test for full column rank
           if(!singular.ok && !is.fullrank(X0*L))
-            return(sqrt(.Machine$double.xmax))
+            return(cv.maxPenalty)
           
           model <- tryCatch(rq.wfit(X0, y, weights=L, tau=tau, method="fn"),
                             error=function(e){FALSE})
           if(is.logical(model))
-            return(sqrt(.Machine$double.xmax))
+            return(cv.maxPenalty)
           sw <- sqrt(L)
           model.hat <- .lm.fit(X0*sw, y*sw)
           htt[zz] <- hat.from.lm.fit(model.hat)[zz]
@@ -2633,10 +2455,10 @@ cv.kernel.spline <- function(x,
       sigmasq <- mean(check.function(epsilon, tau))
       penalty <- ((1 + traceH/n) / (1 - (traceH + 2)/n)) * (0.5/sqrt(tau*(1-tau)))
     }
-    cv <- ifelse(penalty < 0, .Machine$double.xmax, log(sigmasq) + penalty)
+    cv <- ifelse(penalty < 0, cv.maxPenalty, log(sigmasq) + penalty)
   }
   
-  return(ifelse(!is.na(cv), cv, .Machine$double.xmax))
+  return(ifelse(!is.na(cv), cv, cv.maxPenalty))
 }
 
 ## ============================================================================

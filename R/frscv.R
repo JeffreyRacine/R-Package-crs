@@ -32,6 +32,7 @@ frscv <- function(xz,
   cv.func <- match.arg(cv.func)
   
   t1 <- Sys.time()
+  cv.maxPenalty <- resolve_cv_maxPenalty(NULL, y, weights = weights)
   
   cv.objc <- function(input,
                       x,
@@ -286,7 +287,7 @@ frscv <- function(xz,
   
   ## Initialize
   
-  cv.vec <- rep(.Machine$double.xmax,nrow.KI.mat)
+  cv.vec <- rep(cv.maxPenalty, nrow.KI.mat)
   
   for(j in 1:nrow.KI.mat) {
     

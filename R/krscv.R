@@ -31,6 +31,7 @@ krscv <- function(xz,
   knots <- match.arg(knots)
   basis <- match.arg(basis)
   cv.func <- match.arg(cv.func)
+  cv.maxPenalty <- resolve_cv_maxPenalty(NULL, y, weights = weights)
   
   ## First define the cv function to be fed to optim
   
@@ -238,7 +239,7 @@ krscv <- function(xz,
   
   ## Initialize
   
-  cv.vec <- rep(.Machine$double.xmax,nrow.K.mat)
+  cv.vec <- rep(cv.maxPenalty, nrow.K.mat)
   
   basis.vec <- character(nrow.K.mat)
   lambda.mat <- matrix(NA,nrow.K.mat,num.z)

@@ -549,8 +549,9 @@ crs.formula <- function(formula,
   ## Check for logical singular.ok
   
   if(!is.logical(singular.ok)) stop("singular.ok must be logical (TRUE/FALSE)")
-  
+
   cv.min <- NULL
+  cv.maxPenalty <- resolve_cv_maxPenalty(NULL, y, weights = weights)
   
   if(!kernel) {
     
@@ -583,7 +584,7 @@ crs.formula <- function(formula,
       include <- cv.return$I
       basis <- cv.return$basis
       knots <- cv.return$knots
-      if(isTRUE(all.equal(cv.min,sqrt(.Machine$double.xmax)))) stop(" Search failed: restart with larger nmulti or smaller degree.max  (or degree if provided)")
+      if(isTRUE(all.equal(cv.min, cv.maxPenalty))) stop(" Search failed: restart with larger nmulti or smaller degree.max  (or degree if provided)")
     }  else if(cv=="exhaustive") {
       
       cv.return <- frscv(xz=xz,
@@ -609,7 +610,7 @@ crs.formula <- function(formula,
       include <- cv.return$I
       basis <- cv.return$basis
       knots <- cv.return$knots
-      if(isTRUE(all.equal(cv.min,sqrt(.Machine$double.xmax)))) stop(" Search failed: restart with smaller degree.max")
+      if(isTRUE(all.equal(cv.min, cv.maxPenalty))) stop(" Search failed: restart with smaller degree.max")
     }
     
   } else {
@@ -654,7 +655,7 @@ crs.formula <- function(formula,
       lambda <- cv.return$lambda
       basis <- cv.return$basis
       knots <- cv.return$knots
-      if(isTRUE(all.equal(cv.min,sqrt(.Machine$double.xmax)))) stop(" Search failed: restart with larger nmulti or smaller degree.max")
+      if(isTRUE(all.equal(cv.min, cv.maxPenalty))) stop(" Search failed: restart with larger nmulti or smaller degree.max")
       
     } else if(cv=="exhaustive") {
       
@@ -683,7 +684,7 @@ crs.formula <- function(formula,
       lambda <- cv.return$lambda
       basis <- cv.return$basis
       knots <- cv.return$knots
-      if(isTRUE(all.equal(cv.min,sqrt(.Machine$double.xmax)))) stop(" Search failed: restart with smaller degree.max")
+      if(isTRUE(all.equal(cv.min, cv.maxPenalty))) stop(" Search failed: restart with smaller degree.max")
       
     }
     

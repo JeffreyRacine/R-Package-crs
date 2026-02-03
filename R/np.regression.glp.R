@@ -282,6 +282,38 @@ check.max.degree <- function(xdat=NULL,degree=NULL,display.warnings=TRUE,Bernste
 
 npglpreg <- function(...) UseMethod("npglpreg")
 
+## Data-driven cv.maxPenalty: 10x the LOO CV of an intercept-only model,
+## with a weighted analog when weights are provided.
+resolve_cv_maxPenalty <- function(cv.maxPenalty,
+                                  ydat,
+                                  weights = NULL,
+                                  multiplier = 10) {
+  if (!is.null(cv.maxPenalty)) return(cv.maxPenalty)
+  if (is.null(ydat)) return(sqrt(.Machine$double.xmax))
+  
+  y <- as.numeric(ydat)
+  y <- y[is.finite(y)]
+  n <- length(y)
+  if (n <= 1) return(sqrt(.Machine$double.xmax))
+  
+  if (!is.null(weights)) {
+    w <- as.numeric(weights)
+    w <- w[is.finite(w)]
+    if (length(w) != n) return(sqrt(.Machine$double.xmax))
+    if (any(w < 0)) return(sqrt(.Machine$double.xmax))
+    wsum <- sum(w)
+    if (!is.finite(wsum) || wsum <= 0) return(sqrt(.Machine$double.xmax))
+    mu <- sum(w * y) / wsum
+    base <- (sum(w * (y - mu)^2) / wsum) / (1 - 1 / n)^2
+  } else {
+    mu <- mean(y)
+    base <- mean((y - mu)^2) / (1 - 1 / n)^2
+  }
+  
+  if (!is.finite(base) || base <= 0) return(sqrt(.Machine$double.xmax))
+  multiplier * base
+}
+
 npglpreg.default <- function(tydat=NULL,
                              txdat=NULL,
                              eydat=NULL,
@@ -291,7 +323,7 @@ npglpreg.default <- function(tydat=NULL,
                              bwtype = c("fixed","generalized_nn","adaptive_nn","auto"),
                              ckerorder=2,
                              ckertype=c("gaussian", "epanechnikov","uniform","truncated gaussian"),
-                             cv.maxPenalty=sqrt(.Machine$double.xmax),
+                             cv.maxPenalty=NULL,
                              cv.shrink=TRUE,
                              degree=NULL,
                              display.warnings=TRUE,
@@ -601,7 +633,7 @@ npglpreg.formula <- function(formula,
                              ckertype=c("gaussian", "epanechnikov","uniform","truncated gaussian"),
                              cv=c("degree-bandwidth","bandwidth","none"),
                              cv.func=c("cv.ls","cv.aic"),
-                             cv.maxPenalty=sqrt(.Machine$double.xmax),
+                             cv.maxPenalty=NULL,
                              cv.shrink=TRUE,
                              data=list(),
                              degree=NULL,
@@ -695,6 +727,7 @@ npglpreg.formula <- function(formula,
   mt <- attr(mf, "terms")
   tydat <- model.response(mf)
   txdat <- mf[, attr(attr(mf, "terms"),"term.labels"), drop = FALSE]
+  cv.maxPenalty <- resolve_cv_maxPenalty(cv.maxPenalty, tydat)
   
   fv <- NULL
   
@@ -930,7 +963,7 @@ glpregEst <- function(tydat=NULL,
                       bwtype=c("fixed","generalized_nn","adaptive_nn"),
                       ckerorder=2,
                       ckertype=c("gaussian", "epanechnikov","uniform","truncated gaussian"),
-                      cv.maxPenalty=sqrt(.Machine$double.xmax),
+                      cv.maxPenalty=NULL,
                       cv.shrink=TRUE,
                       degree=NULL,
                       display.warnings=TRUE,
@@ -953,6 +986,8 @@ glpregEst <- function(tydat=NULL,
   
   miss.ex = is.null(exdat)
   miss.ey = is.null(eydat)
+  
+  cv.maxPenalty <- resolve_cv_maxPenalty(cv.maxPenalty, tydat)
   
   if (miss.ex){
     exdat <- txdat
@@ -1241,453 +1276,6 @@ glpregEst <- function(tydat=NULL,
   
 }
 
-## Create the function wrappers to be fed to the snomadr solver for
-## leave-one-out cross-validation and Hurvich, Simonoff, and Tsai's
-## AIC_c approach
-
-# minimand.cv.ls <- function(bws=NULL,
-#                            ydat=NULL,
-#                            xdat=NULL,
-#                            degree=NULL,
-#                            W=NULL,
-#                            ckertype=c("gaussian", "epanechnikov","uniform","truncated gaussian"),
-#                            ckerorder=2,
-#                            ukertype=c("liracine","aitchisonaitken"),
-#                            okertype=c("liracine","wangvanryzin"),
-#                            bwtype=c("fixed","generalized_nn","adaptive_nn"),
-#                            cv.shrink=TRUE,
-#                            cv.maxPenalty=sqrt(.Machine$double.xmax),
-#                            display.warnings=TRUE,
-#                            display.nomad.progress=TRUE,
-#                            bandwidth.scale.categorical=NULL,
-#                            ...) {
-#   
-#   ckertype <- match.arg(ckertype)
-#   ukertype <- match.arg(ukertype)
-#   okertype <- match.arg(okertype)
-#   bwtype <- match.arg(bwtype)
-#   if(!any(ckerorder==c(2,4,6,8))) stop("ckerorder must be 2, 4, 6, or 8")
-#   
-#   if(is.null(ydat)) stop(" Error: You must provide y data")
-#   if(is.null(xdat)) stop(" Error: You must provide X data")
-#   if(is.null(W)) stop(" Error: You must provide a weighting matrix W")
-#   if(is.null(bws)) stop(" Error: You must provide a bandwidth object")
-#   if(is.null(degree) || any(degree < 0)) stop(paste(" Error: degree vector must contain non-negative integers\ndegree is (", degree, ")\n",sep=""))
-#   
-#   xdat <- as.data.frame(xdat)
-#   
-#   n <- length(ydat)
-#   
-#   ## Manually conduct bandwidth scaling so that NOMAD is operating on
-#   ## a scale free level.
-#   
-#   num.bw <- ncol(xdat)
-#   xdat.numeric <- sapply(1:num.bw,function(i){is.numeric(xdat[,i])})
-#   num.numeric <- ncol(as.data.frame(xdat[,xdat.numeric]))
-#   
-#   for(i in 1:num.bw) {
-#     if(xdat.numeric[i]==TRUE && bwtype=="fixed") {
-#       bws[i] <- bws[i]*scale_robust(xdat[,i],display.warnings=display.warnings)*length(ydat)^{-1/(num.numeric+2*ckerorder)}
-#     }
-#     if(xdat.numeric[i]!=TRUE) {
-#       bws[i] <- bws[i]/bandwidth.scale.categorical
-#     }
-#   }
-#   
-#   console <- newLineConsole()
-#   console <- printClear(console)
-#   console <- printPop(console)
-#   
-#   if(!is.null(W)) {
-#     ## Check for positive degrees of freedom
-#     if(ncol(W) >= nrow(W)-1) {
-#       if(display.warnings) console <- printPush(paste("\rWarning: negative degrees of freedom                           ",sep=""),console = console)
-#       return(cv.maxPenalty)
-#     }
-#     ## Check for full column rank
-#     if(!is.fullrank(W)) {
-#       if(display.warnings) console <- printPush(paste("\rWarning: negative degrees of freedom                           ",sep=""),console = console)
-#       return(cv.maxPenalty)
-#     }
-#   }
-#   
-#   if(any(bws<=0)) {
-#     
-#     return(cv.maxPenalty)
-#     
-#   } else {
-#     
-#     if(all(degree == 0)) {
-#       
-#       ## Local constant via one call to npksum
-#       
-#       tww <- npksum(txdat = xdat,
-#                     weights = as.matrix(data.frame(1,ydat)),
-#                     tydat = rep(1,n),
-#                     bws = bws,
-#                     leave.one.out = TRUE,
-#                     bandwidth.divide = TRUE,
-#                     ckertype = ckertype,
-#                     ckerorder=ckerorder,
-#                     ukertype = ukertype,
-#                     okertype = okertype,
-#                     bwtype = bwtype,
-#                     ...)$ksum
-#       
-#       mean.loo <- tww[2,]/NZD(tww[1,])
-#       
-#       if (!any(mean.loo == cv.maxPenalty)){
-#         fv <- mean((ydat-mean.loo)^2)
-#       } else {
-#         fv <- cv.maxPenalty
-#       }
-#       
-#       fv <- ifelse(is.finite(fv),fv,cv.maxPenalty)
-#       
-#       console <- printPush("\r                                                                         ",console = console)
-#       if(display.nomad.progress) console <- printPush(paste("\rfv = ",format(fv)," ",sep=""),console = console)
-#       
-#       return(fv)
-#       
-#     } else {
-#       
-#       ## Generalized local polynomial via smooth coefficient
-#       ## formulation and one call to npksum
-#       
-#       tww <- npksum(txdat = xdat,
-#                     tydat = as.matrix(cbind(ydat,W)),
-#                     weights = W,
-#                     bws = bws,
-#                     leave.one.out = TRUE,
-#                     bandwidth.divide = TRUE,
-#                     ckertype = ckertype,
-#                     ckerorder = ckerorder,
-#                     ukertype = ukertype,
-#                     okertype = okertype,
-#                     bwtype = bwtype,
-#                     ...)$ksum
-#       
-#       tyw <- array(tww,dim = c(ncol(W)+1,ncol(W),n))[1,,]
-#       tww <- array(tww,dim = c(ncol(W)+1,ncol(W),n))[-1,,]
-#       
-#       if(!cv.shrink) {
-#         ## We can choose to use ridging or simply check for less than
-#         ## full column rank. If we test for full column rank ridging
-#         ## ought never occur but this is quite strong as if one
-#         ## observation only is sparse and inversion is problematic, for
-#         ## the rest of the sample this may not be the case.
-#         for(i in 1:n) {
-#           if(!is.fullrank(tww[,,i])) {
-#             if(display.warnings) console <- printPush(paste("\rWarning: is.fullrank required for inversion at obs. ", i," failed      ",sep=""),console = console)
-#             return(cv.maxPenalty)
-#           }
-#         }
-#       }
-#       
-#       mean.loo <- rep(cv.maxPenalty,n)
-#       epsilon <- 1.0/n
-#       ridge <- double(n)
-#       ridge.lc <- double(n)      
-#       doridge <- rep(TRUE, n)
-#       
-#       nc <- ncol(tww[,,1])
-#       
-#       ## Test for singularity of the generalized local polynomial
-#       ## estimator, shrink the mean towards the local constant mean.
-#       
-#       ## 2025: Optimized loop to avoid closure/sapply overhead
-#       while(any(doridge)){
-#         iloo <- which(doridge)
-#         doridge[iloo] <- FALSE # Reset, set back to TRUE if failure occurs
-#         
-#         for(i in iloo) {
-#           # Local constant estimator component
-#           # Note: tww is nc x nc x n. tww[1,1,i] is the weight sum.
-#           ridge.lc[i] <- ridge[i]*tyw[1,i]/NZD(tww[1,1,i])
-#           
-#           # Prepare matrix for inversion
-#           mat <- tww[,,i]
-#           if(ridge[i] > 0) {
-#             # Add ridge to diagonal
-#             for(j in 1:nc) mat[j,j] <- mat[j,j] + ridge[i]
-#           }
-#           
-#           val <- tryCatch({
-#             R <- chol(mat)
-#             inv <- chol2inv(R)
-#             est <- inv %*% tyw[,i]
-#             sum(W[i,] * est)
-#           }, error = function(e) {
-#             # Signal failure
-#             return(NA)
-#           })
-#           
-#           if(is.na(val)) {
-#             ridge[i] <- ridge[i] + epsilon
-#             doridge[i] <- TRUE
-#             if(display.warnings) console <- printPush(paste("\rWarning: ridging required for inversion at obs. ", i, ", ridge = ",formatC(ridge[i],digits=4,format="f"),"        ",sep=""),console = console)
-#             # mean.loo[i] remains cv.maxPenalty (init value) if we give up? 
-#             # The loop continues until success.
-#           } else {
-#             mean.loo[i] <- (1-ridge[i])*val + ridge.lc[i]
-#           }
-#         }
-#       }
-#       
-#       if (!is.na(any(mean.loo == cv.maxPenalty)) && !any(mean.loo == cv.maxPenalty)){
-#         fv <- mean((ydat-mean.loo)^2)
-#       } else {
-#         fv <- cv.maxPenalty
-#       }
-#       
-#       fv <- ifelse(is.finite(fv),fv,cv.maxPenalty)
-#       
-#       console <- printPush("\r                                                                         ",console = console)
-#       if(display.nomad.progress) console <- printPush(paste("\rfv = ",format(fv)," ",sep=""),console = console)
-#       
-#       return(fv)
-#       
-#     }
-#     
-#   }
-#   
-# }
-# 
-# minimand.cv.aic <- function(bws=NULL,
-#                             ydat=NULL,
-#                             xdat=NULL,
-#                             degree=NULL,
-#                             W=NULL,
-#                             ckertype=c("gaussian", "epanechnikov","uniform","truncated gaussian"),
-#                             ckerorder=2,
-#                             ukertype=c("liracine","aitchisonaitken"),
-#                             okertype=c("liracine","wangvanryzin"),
-#                             bwtype = c("fixed","generalized_nn","adaptive_nn"),
-#                             cv.shrink=TRUE,
-#                             cv.maxPenalty=sqrt(.Machine$double.xmax),
-#                             display.warnings=TRUE,
-#                             display.nomad.progress=TRUE,
-#                             bandwidth.scale.categorical=NULL,
-#                             ...) {
-#   
-#   ckertype <- match.arg(ckertype)
-#   ukertype <- match.arg(ukertype)
-#   okertype <- match.arg(okertype)
-#   bwtype <- match.arg(bwtype)
-#   if(!any(ckerorder==c(2,4,6,8))) stop("ckerorder must be 2, 4, 6, or 8")
-#   
-#   if(is.null(ydat)) stop(" Error: You must provide y data")
-#   if(is.null(xdat)) stop(" Error: You must provide X data")
-#   if(!all(degree==0)) if(is.null(W)) stop(" Error: You must provide a weighting matrix W")
-#   if(is.null(bws)) stop(" Error: You must provide a bandwidth object")
-#   if(is.null(degree) || any(degree < 0)) stop(paste(" Error: degree vector must contain non-negative integers\ndegree is (", degree, ")\n",sep=""))
-#   
-#   xdat <- as.data.frame(xdat)
-#   
-#   n <- length(ydat)
-#   
-#   if(!is.null(W)) {
-#     ## Check for positive degrees of freedom
-#     if(ncol(W) >= nrow(W)-1) {
-#       if(display.warnings) console <- printPush(paste("\rWarning: negative degrees of freedom                           ",sep=""),console = console)
-#       return(cv.maxPenalty)
-#     }
-#     ## Check for full column rank
-#     if(!is.fullrank(W)) {
-#       if(display.warnings) console <- printPush(paste("\rWarning: is.fullrank required for inversion at obs. ", i," failed      ",sep=""),console = console)
-#       return(cv.maxPenalty)
-#     }
-#   }
-#   
-#   ## Manually conduct bandwidth scaling so that NOMAD is operating on
-#   ## a scale free level.
-#   
-#   num.bw <- ncol(xdat)
-#   xdat.numeric <- sapply(1:num.bw,function(i){is.numeric(xdat[,i])})
-#   num.numeric <- ncol(as.data.frame(xdat[,xdat.numeric]))
-#   
-#   for(i in 1:num.bw) {
-#     if(xdat.numeric[i]==TRUE && bwtype=="fixed") {
-#       bws[i] <- bws[i]*scale_robust(xdat[,i],display.warnings=display.warnings)*length(ydat)^{-1/(num.numeric+2*ckerorder)}
-#     }
-#     if(xdat.numeric[i]!=TRUE) {
-#       bws[i] <- bws[i]/bandwidth.scale.categorical
-#     }
-#   }
-#   
-#   console <- newLineConsole()
-#   console <- printClear(console)
-#   console <- printPop(console)
-#   
-#   if(any(bws<=0)) {
-#     
-#     return(cv.maxPenalty)
-#     
-#   } else {
-#     
-#     ## This computes the kernel function when i=j (i.e., K(0))
-#     
-#     kernel.i.eq.j <- npksum(txdat = xdat[1,],
-#                             weights = as.matrix(data.frame(1,ydat)[1,]),
-#                             tydat = 1,
-#                             bws = bws,
-#                             bandwidth.divide = TRUE,
-#                             ckertype = ckertype,
-#                             ckerorder=ckerorder,
-#                             ukertype = ukertype,
-#                             okertype = okertype,
-#                             bwtype = bwtype,
-#                             ...)$ksum[1,1]
-#     
-#     if(all(degree == 0)) {
-#       
-#       ## Local constant via one call to npksum
-#       
-#       tww <- npksum(txdat = xdat,
-#                     weights = as.matrix(data.frame(1,ydat)),
-#                     tydat = rep(1,n),
-#                     bws = bws,
-#                     bandwidth.divide = TRUE,
-#                     ckertype = ckertype,
-#                     ckerorder=ckerorder,
-#                     ukertype = ukertype,
-#                     okertype = okertype,
-#                     bwtype = bwtype,
-#                     ...)$ksum
-#       
-#       ghat <- tww[2,]/NZD(tww[1,])
-#       
-#       trH <- kernel.i.eq.j*sum(1/NZD(tww[1,]))
-#       
-#       aic.penalty <- (1+trH/n)/(1-(trH+2)/n)
-#       
-#       if (!any(is.na(ghat)) && !any(ghat == cv.maxPenalty) && (aic.penalty > 0)){
-#         fv <- log(mean((ydat-ghat)^2)) + aic.penalty
-#       } else {
-#         fv <- cv.maxPenalty
-#       }
-#       
-#       return(ifelse(is.finite(fv),fv,cv.maxPenalty))
-#       
-#     } else {
-#       
-#       ## Generalized local polynomial via smooth coefficient
-#       ## formulation and one call to npksum
-#       
-#       tww <- npksum(txdat = xdat,
-#                     tydat = as.matrix(cbind(ydat,W)),
-#                     weights = W,
-#                     bws = bws,
-#                     bandwidth.divide = TRUE,
-#                     ckertype = ckertype,
-#                     ckerorder=ckerorder,
-#                     ukertype = ukertype,
-#                     okertype = okertype,
-#                     bwtype = bwtype,
-#                     ...)$ksum
-#       
-#       tyw <- array(tww,dim = c(ncol(W)+1,ncol(W),n))[1,,]
-#       tww <- array(tww,dim = c(ncol(W)+1,ncol(W),n))[-1,,]
-#       
-#       if(!cv.shrink) {
-#         ## We can choose to use ridging or simply check for less than
-#         ## full column rank. If we test for full column rank ridging
-#         ## ought never occur but this is quite strong as if one
-#         ## observation only is sparse and inversion is problematic, for
-#         ## the rest of the sample this may not be the case.
-#         for(i in 1:n) {
-#           if(!is.fullrank(tww[,,i])) {
-#             if(display.warnings) console <- printPush(paste("\rWarning: is.fullrank required for inversion at obs. ", i," failed      ",sep=""),console = console)
-#             return(cv.maxPenalty)
-#           }
-#         }
-#       }
-#       
-#       ghat <- rep(cv.maxPenalty,n)
-#       epsilon <- 1.0/n
-#       ridge <- double(n)
-#       ridge.lc <- double(n)      
-#       doridge <- rep(TRUE, n)
-#       
-#       nc <- ncol(tww[,,1])
-#       
-#       ## Storage for inverses to avoid recomputing for trH
-#       inv_storage <- vector("list", n)
-#       
-#       ## Test for singularity of the generalized local polynomial
-#       ## estimator, shrink the mean towards the local constant mean.
-#       
-#       ## 2025: Optimized loop and caching
-#       while(any(doridge)){
-#         ii <- which(doridge)
-#         doridge[ii] <- FALSE
-#         
-#         for(i in ii) {
-#           ridge.lc[i] <- ridge[i]*tyw[1,i]/NZD(tww[1,1,i])
-#           
-#           mat <- tww[,,i]
-#           if(ridge[i] > 0) {
-#             for(j in 1:nc) mat[j,j] <- mat[j,j] + ridge[i]
-#           }
-#           
-#           res <- tryCatch({
-#             R <- chol(mat)
-#             inv <- chol2inv(R)
-#             est <- inv %*% tyw[,i]
-#             val <- sum(W[i,] * est)
-#             list(val=val, inv=inv)
-#           }, error = function(e) return(NULL))
-#           
-#           if(is.null(res)) {
-#             ridge[i] <- ridge[i] + epsilon
-#             doridge[i] <- TRUE
-#             if(display.warnings) console <- printPush(paste("\rWarning: ridging required for inversion at obs. ", i, ", ridge = ",formatC(ridge[i],digits=4,format="f"),"        ",sep=""),console = console)
-#           } else {
-#             ghat[i] <- (1-ridge[i])*res$val + ridge.lc[i]
-#             inv_storage[[i]] <- res$inv
-#           }
-#         }
-#       }
-#       
-#       ## Optimized trH calculation using cached inverses
-#       trH_sum <- 0
-#       for(i in 1:n) {
-#         term1 <- 0
-#         if(ridge[i] < 1) {
-#           # Quadratic form W[i,] %*% inv %*% t(W[i,])
-#           w_vec <- W[i,]
-#           # temp <- inv_storage[[i]] %*% w_vec
-#           # term1 <- (1-ridge[i]) * sum(w_vec * temp)
-#           # Use crossprod for potentially faster calc
-#           term1 <- (1-ridge[i]) * drop(crossprod(w_vec, inv_storage[[i]] %*% w_vec))
-#         }
-#         term2 <- ridge[i]/NZD(tww[1,1,i])
-#         trH_sum <- trH_sum + term1 + term2
-#       }
-#       
-#       trH <- kernel.i.eq.j*trH_sum
-#       
-#       aic.penalty <- (1+trH/n)/(1-(trH+2)/n)
-#       
-#       if (!any(is.na(ghat)) && !any(ghat == cv.maxPenalty) && (aic.penalty > 0)){
-#         fv <- log(mean((ydat-ghat)^2)) + aic.penalty
-#       } else {
-#         fv <- cv.maxPenalty
-#       }
-#       
-#       fv <- ifelse(is.finite(fv),fv,cv.maxPenalty)
-#       
-#       console <- printPush("\r                                                                         ",console = console)
-#       if(display.nomad.progress) console <- printPush(paste("\rfv = ",format(fv)," ",sep=""),console = console)
-#       
-#       return(fv)
-#       
-#     }
-#     
-#   }
-#   
-# }
-
 ## ============================================================================
 ## IMPROVED VERSIONS OF minimand.cv.ls AND minimand.cv.aic
 ## ============================================================================
@@ -1715,7 +1303,7 @@ minimand.cv.ls <- function(bws=NULL,
                            okertype=c("liracine","wangvanryzin"),
                            bwtype=c("fixed","generalized_nn","adaptive_nn"),
                            cv.shrink=TRUE,
-                           cv.maxPenalty=sqrt(.Machine$double.xmax),
+                           cv.maxPenalty=NULL,
                            display.warnings=TRUE,
                            display.nomad.progress=TRUE,
                            bandwidth.scale.categorical=NULL,
@@ -1737,6 +1325,7 @@ minimand.cv.ls <- function(bws=NULL,
   if(is.null(degree) || any(degree < 0)) stop(paste(" Error: degree vector must contain non-negative integers\ndegree is (", degree, ")\n",sep=""))
   
   xdat <- as.data.frame(xdat)
+  cv.maxPenalty <- resolve_cv_maxPenalty(cv.maxPenalty, ydat)
   
   n <- length(ydat)
   
@@ -2026,7 +1615,7 @@ minimand.cv.aic <- function(bws=NULL,
                             okertype=c("liracine","wangvanryzin"),
                             bwtype = c("fixed","generalized_nn","adaptive_nn"),
                             cv.shrink=TRUE,
-                            cv.maxPenalty=sqrt(.Machine$double.xmax),
+                            cv.maxPenalty=NULL,
                             display.warnings=TRUE,
                             display.nomad.progress=TRUE,
                             bandwidth.scale.categorical=NULL,
@@ -2048,6 +1637,7 @@ minimand.cv.aic <- function(bws=NULL,
   if(is.null(degree) || any(degree < 0)) stop(paste(" Error: degree vector must contain non-negative integers\ndegree is (", degree, ")\n",sep=""))
   
   xdat <- as.data.frame(xdat)
+  cv.maxPenalty <- resolve_cv_maxPenalty(cv.maxPenalty, ydat)
   
   n <- length(ydat)
   
@@ -2415,7 +2005,7 @@ glpcvNOMAD <- function(ydat=NULL,
                        min.poll.size.real=1,
                        min.poll.size.integer=1, 
                        cv.shrink=TRUE,
-                       cv.maxPenalty=sqrt(.Machine$double.xmax),
+                       cv.maxPenalty=NULL,
                        display.warnings=TRUE,
                        Bernstein=TRUE,
                        mpi=FALSE,
@@ -2434,6 +2024,8 @@ glpcvNOMAD <- function(ydat=NULL,
   ## In snomadr() we write wrappers around user-defined functions to
   ## pass additional arguments
   ##  eval.f.wrapper <- function(x){ eval.f(x,...) }
+  
+  cv.maxPenalty <- resolve_cv_maxPenalty(cv.maxPenalty, ydat)
   
   eval.lscv <- function(input,
                         params){

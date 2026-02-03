@@ -25,7 +25,7 @@ npglpreg(\dots)
          bwtype = c("fixed", "generalized_nn", "adaptive_nn", "auto"),
          ckerorder = 2,
          ckertype = c("gaussian", "epanechnikov", "uniform", "truncated gaussian"),
-         cv.maxPenalty = sqrt(.Machine$double.xmax),
+         cv.maxPenalty = NULL,
          cv.shrink = TRUE,
          degree = NULL,
          display.warnings = TRUE,
@@ -50,7 +50,7 @@ npglpreg(\dots)
          ckertype = c("gaussian", "epanechnikov","uniform","truncated gaussian"),
          cv = c("degree-bandwidth", "bandwidth", "none"),
          cv.func = c("cv.ls", "cv.aic"),
-         cv.maxPenalty = sqrt(.Machine$double.xmax),
+         cv.maxPenalty = NULL,
          cv.shrink = TRUE,
          data = list(),
          degree = NULL,
@@ -187,7 +187,9 @@ npglpreg(\dots)
 
 \item{cv.maxPenalty}{ a penalty applied during cross-validation when a
   delete-one estimate is not finite or the polynomial basis is not of
-  full column rank }
+  full column rank. If \code{NULL} (default), a data-driven penalty is
+  used: \code{10 * mean((y - mean(y))^2 / (1 - 1/n)^2)} (or the weighted
+  analog when weights are supplied). }
 
 \item{cv.shrink}{ a logical value indicating whether to use ridging
   (Seifert and Gasser (2000)) for ill-conditioned inversion during
@@ -536,4 +538,3 @@ plot(model,ci=TRUE)
 }
 \keyword{ nonparametric }
 \keyword{ regression }
-

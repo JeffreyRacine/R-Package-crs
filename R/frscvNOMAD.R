@@ -40,6 +40,7 @@ frscvNOMAD <- function(xz,
   knots <- match.arg(knots)
   basis <- match.arg(basis)
   cv.func <- match.arg(cv.func)
+  cv.maxPenalty <- resolve_cv_maxPenalty(NULL, y, weights = weights)
   
   if ( missing(include) || is.null(include)) {
     include <- NULL
@@ -458,7 +459,7 @@ frscvNOMAD <- function(xz,
   
   I.opt <- NULL 
   cv.min <- nomad.solution$objective
-  if(isTRUE(all.equal(cv.min,sqrt(.Machine$double.xmax)))) stop(" Search failed: restart with larger nmulti or smaller degree.max")
+  if(isTRUE(all.equal(cv.min, cv.maxPenalty))) stop(" Search failed: restart with larger nmulti or smaller degree.max")
   basis.opt <- basis
   if(complexity=="degree-knots") {
     K.opt <- as.integer(nomad.solution$solution)

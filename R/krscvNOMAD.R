@@ -43,7 +43,8 @@ krscvNOMAD <- function(xz,
   complexity <- match.arg(complexity)
   knots <- match.arg(knots)
   basis <- match.arg(basis)
-  cv.func <- match.arg(cv.func)  
+  cv.func <- match.arg(cv.func)
+  cv.maxPenalty <- resolve_cv_maxPenalty(NULL, y, weights = weights)
   
   if( missing(lambda) || is.null(lambda)){
     lambda <- NULL
@@ -563,7 +564,7 @@ krscvNOMAD <- function(xz,
   
   ##output
   cv.min <- nomad.solution$objective
-  if(isTRUE(all.equal(cv.min,sqrt(.Machine$double.xmax)))) stop(" Search failed: restart with larger nmulti or smaller degree.max")
+  if(isTRUE(all.equal(cv.min, cv.maxPenalty))) stop(" Search failed: restart with larger nmulti or smaller degree.max")
   if(complexity=="degree-knots") {
     K.opt <- as.integer(nomad.solution$solution[1:(2*num.x)])
     lambda.opt <- as.numeric(nomad.solution$solution[(2*num.x+1):(2*num.x+num.z)])
