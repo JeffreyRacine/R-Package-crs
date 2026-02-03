@@ -90,6 +90,7 @@ krscv <- function(xz,
                                    z.unique=z.unique,
                                    ind=ind,
                                    ind.vals=ind.vals,
+                                   ind.list=ind.list,
                                    nrow.z.unique=nrow.z.unique,
                                    is.ordered.z=is.ordered.z,
                                    knots=knots,
@@ -182,6 +183,8 @@ krscv <- function(xz,
   z.unique <- uniquecombs(z)
   ind <-  attr(z.unique,"index")
   ind.vals <-  unique(ind)
+  ind.list <- vector("list", length(ind.vals))
+  for(i in seq_along(ind.vals)) ind.list[[i]] <- ind == ind.vals[i]
   nrow.z.unique <- NROW(z.unique)
   num.x <- NCOL(x)
   n <- NROW(x)
@@ -667,6 +670,7 @@ krscv <- function(xz,
                                          z.unique=z.unique,
                                          ind=ind,
                                          ind.vals=ind.vals,
+                                         ind.list=ind.list,
                                          nrow.z.unique=nrow.z.unique,
                                          is.ordered.z=is.ordered.z,
                                          knots=knots,

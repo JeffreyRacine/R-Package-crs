@@ -126,6 +126,7 @@ krscvNOMAD <- function(xz,
       z.unique <- params$z.unique
       ind <- params$ind
       ind.vals <- params$ind.vals
+      ind.list <- params$ind.list
       nrow.z.unique <- params$nrow.z.unique
       is.ordered.z <- params$is.ordered.z
       lambda.discrete.num <- params$lambda.discrete.num
@@ -172,6 +173,7 @@ krscvNOMAD <- function(xz,
                                        z.unique=z.unique,
                                        ind=ind,
                                        ind.vals=ind.vals,
+                                       ind.list=ind.list,
                                        nrow.z.unique=nrow.z.unique,
                                        is.ordered.z=is.ordered.z,
                                        knots=knots,
@@ -190,6 +192,7 @@ krscvNOMAD <- function(xz,
                                               z.unique=z.unique,
                                               ind=ind,
                                               ind.vals=ind.vals,
+                                              ind.list=ind.list,
                                               nrow.z.unique=nrow.z.unique,
                                               is.ordered.z=is.ordered.z,
                                               knots=knots,
@@ -212,6 +215,7 @@ krscvNOMAD <- function(xz,
                                            z.unique=z.unique,
                                            ind=ind,
                                            ind.vals=ind.vals,
+                                           ind.list=ind.list,
                                            nrow.z.unique=nrow.z.unique,
                                            is.ordered.z=is.ordered.z,
                                            knots=knots,
@@ -232,10 +236,11 @@ krscvNOMAD <- function(xz,
                                        z=z,
                                        K=K,
                                        lambda=lambda,
-                                       z.unique=z.unique,
-                                       ind=ind,
-                                       ind.vals=ind.vals,
-                                       nrow.z.unique=nrow.z.unique,
+                                     z.unique=z.unique,
+                                     ind=ind,
+                                     ind.vals=ind.vals,
+                                     ind.list=ind.list,
+                                     nrow.z.unique=nrow.z.unique,
                                        is.ordered.z=is.ordered.z,
                                        knots=knots,
                                        basis=basis.opt,
@@ -272,6 +277,7 @@ krscvNOMAD <- function(xz,
     params$z.unique <- z.unique
     params$ind <- ind
     params$ind.vals <- ind.vals
+    params$ind.list <- ind.list
     params$nrow.z.unique <- nrow.z.unique
     params$is.ordered.z <- is.ordered.z
     params$lambda.discrete.num <- lambda.discrete.num
@@ -404,6 +410,8 @@ krscvNOMAD <- function(xz,
   z.unique <- uniquecombs(z)
   ind <-  attr(z.unique,"index")
   ind.vals <-  unique(ind)
+  ind.list <- vector("list", length(ind.vals))
+  for(i in seq_along(ind.vals)) ind.list[[i]] <- ind == ind.vals[i]
   nrow.z.unique <- NROW(z.unique)
   num.x <- NCOL(x)
   n <- NROW(x)

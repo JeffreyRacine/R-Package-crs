@@ -1150,6 +1150,7 @@ cv.kernel.spline.wrapper <- function(x,
                                      z.unique,
                                      ind,
                                      ind.vals,
+                                     ind.list=NULL,
                                      nrow.z.unique,
                                      is.ordered.z=NULL,
                                      knots=c("quantiles","uniform","auto"),
@@ -1175,6 +1176,7 @@ cv.kernel.spline.wrapper <- function(x,
                            z.unique=z.unique,
                            ind=ind,
                            ind.vals=ind.vals,
+                           ind.list=ind.list,
                            nrow.z.unique=nrow.z.unique,
                            is.ordered.z=is.ordered.z,
                            knots="quantiles",
@@ -1194,6 +1196,7 @@ cv.kernel.spline.wrapper <- function(x,
                                    z.unique=z.unique,
                                    ind=ind,
                                    ind.vals=ind.vals,
+                                   ind.list=ind.list,
                                    nrow.z.unique=nrow.z.unique,
                                    is.ordered.z=is.ordered.z,
                                    knots="uniform",
@@ -1219,6 +1222,7 @@ cv.kernel.spline.wrapper <- function(x,
                            z.unique=z.unique,
                            ind=ind,
                            ind.vals=ind.vals,
+                           ind.list=ind.list,
                            nrow.z.unique=nrow.z.unique,
                            is.ordered.z=is.ordered.z,
                            knots=knots,
@@ -2040,6 +2044,7 @@ cv.kernel.spline <- function(x,
                              z.unique,
                              ind,
                              ind.vals,
+                             ind.list=NULL,
                              nrow.z.unique,
                              is.ordered.z=NULL,
                              knots=c("quantiles","uniform"),
@@ -2320,7 +2325,7 @@ cv.kernel.spline <- function(x,
   } else {
     
     ## Categorical predictors - this is the workhorse
-    z <- as.matrix(z)
+    if(!is.matrix(z)) z <- as.matrix(z)
     num.z <- NCOL(z)
     epsilon <- numeric(length=n)
     htt <- numeric(length=n)
@@ -2368,7 +2373,11 @@ cv.kernel.spline <- function(x,
       }
       
       for(i in 1:nrow.z.unique) {
-        zz <- ind == ind.vals[i]
+        if(!is.null(ind.list)) {
+          zz <- ind.list[[i]]
+        } else {
+          zz <- ind == ind.vals[i]
+        }
         L <- prod.kernel(Z=z, z=z.unique[ind.vals[i],], lambda=lambda, 
                          is.ordered.z=is.ordered.z)
         if(!is.null(weights)) L <- weights * L
@@ -2563,7 +2572,11 @@ cv.kernel.spline <- function(x,
       X0 <- matrix(1, n, 1)
       
       for(i in 1:nrow.z.unique) {
-        zz <- ind == ind.vals[i]
+        if(!is.null(ind.list)) {
+          zz <- ind.list[[i]]
+        } else {
+          zz <- ind == ind.vals[i]
+        }
         L <- prod.kernel(Z=z, z=z.unique[ind.vals[i],], lambda=lambda, 
                          is.ordered.z=is.ordered.z)
         if(!is.null(weights)) L <- weights * L

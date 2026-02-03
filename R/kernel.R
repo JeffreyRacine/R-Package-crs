@@ -32,7 +32,7 @@ prod.kernel <- function(Z,
                         ...,
                         na.rm) {
 
-  Z <- as.matrix(Z)
+  if(!is.matrix(Z)) Z <- as.matrix(Z)
 
   if(is.null(is.ordered.z) || missing(Z) || missing(z) || missing(lambda)) stop(" must provide is.ordered.z, Z, z, and lambda")
   if(length(is.ordered.z) != NCOL(Z)) stop(" is.ordered.z and Z incompatible")
@@ -106,7 +106,7 @@ prod.kernel <- function(Z,
                         ...,
                         na.rm) {
   
-  Z <- as.matrix(Z)
+  if (!is.matrix(Z)) Z <- as.matrix(Z)
   
   if (is.null(is.ordered.z) || missing(Z) || missing(z) || missing(lambda))
     stop(" must provide is.ordered.z, Z, z, and lambda")
@@ -144,4 +144,3 @@ prod.kernel <- function(Z,
   
   prodker
 }
-
