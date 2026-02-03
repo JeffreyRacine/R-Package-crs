@@ -278,17 +278,19 @@ predictKernelSpline <- function(x,
 
     if(any(K[,1] > 0)) {
 
-      ## Degree > 0, fitted
-
+      ## Degree > 0, fitted/evaluation
+      P.train <- prod.spline(x=x, K=K, knots=knots, basis=basis,
+                             display.warnings=display.warnings)
       if(is.null(xeval)) {
+        P.eval <- P.train
         fit.spline <- matrix(NA,nrow=n,ncol=4)
         htt <- numeric(length=n)
         P.hat <- numeric(length=n)
         for(i in 1:nrow.z.unique) {
           zz <- ind == ind.vals[i]
-          L <- prod.kernel(Z=z,z=z.unique[ind.vals[i],],lambda=lambda,is.ordered.z=is.ordered.z)
+          L <- prod.kernel.matrix(Z=z,z=z.unique[ind.vals[i],],lambda=lambda,is.ordered.z=is.ordered.z)
           if(!is.null(weights)) L <- weights*L
-          P <- prod.spline(x=x,K=K,knots=knots,basis=basis,display.warnings=display.warnings)
+          P <- P.train
           k <- NCOL(P)
           if(basis=="additive" || basis=="glp") {
             if(is.null(tau))
@@ -310,7 +312,7 @@ predictKernelSpline <- function(x,
             htt[zz] <- hatvalues(model.z.unique.hat)[zz]
 
           P.hat[zz] <- sum(L)
-          P <- prod.spline(x=x,K=K,xeval=x[zz,,drop=FALSE],knots=knots,basis=basis,display.warnings=display.warnings)
+          P <- P.eval[zz,,drop=FALSE]
           tmp <- predict(model.z.unique,newdata=data.frame(as.matrix(P)),interval="confidence",se.fit=TRUE)
 
           if(is.null(tau))
@@ -322,6 +324,8 @@ predictKernelSpline <- function(x,
       } else {
 
         ## Degree > 0, evaluation
+        P.eval <- prod.spline(x=x, K=K, xeval=xeval, knots=knots, basis=basis,
+                              display.warnings=display.warnings)
 
         zeval.unique <- uniquecombs(as.matrix(zeval))
         num.zeval <- ncol(zeval.unique)
@@ -336,9 +340,9 @@ predictKernelSpline <- function(x,
         P.hat <- NULL
         for(i in 1:nrow.zeval.unique) {
           zz <- ind.zeval == ind.zeval.vals[i]
-          L <- prod.kernel(Z=z,z=zeval.unique[ind.zeval.vals[i],],lambda=lambda,is.ordered.z=is.ordered.z)
+          L <- prod.kernel.matrix(Z=z,z=zeval.unique[ind.zeval.vals[i],],lambda=lambda,is.ordered.z=is.ordered.z)
           if(!is.null(weights)) L <- weights*L
-          P <- prod.spline(x=x,K=K,knots=knots,basis=basis,display.warnings=display.warnings)
+          P <- P.train
           k <- NCOL(P)
           if(basis=="additive" || basis=="glp") {
             if(is.null(tau))
@@ -352,7 +356,7 @@ predictKernelSpline <- function(x,
               suppressWarnings(model.z.unique <- rq(y~P-1,weights=L,tau=tau,method="fn"))
           }
           if(model.return) model[[i]] <- model.z.unique
-          P <- prod.spline(x=x,K=K,xeval=xeval[zz,,drop=FALSE],knots=knots,basis=basis,display.warnings=display.warnings)
+          P <- P.eval[zz,,drop=FALSE]
           tmp <- predict(model.z.unique,newdata=data.frame(as.matrix(P)),interval="confidence",se.fit=TRUE)
 
           if(is.null(tau))
@@ -375,7 +379,7 @@ predictKernelSpline <- function(x,
         x.intercept <- rep(1,n)
         for(i in 1:nrow.z.unique) {
           zz <- ind == ind.vals[i]
-          L <- prod.kernel(Z=z,z=z.unique[ind.vals[i],],lambda=lambda,is.ordered.z=is.ordered.z)
+          L <- prod.kernel.matrix(Z=z,z=z.unique[ind.vals[i],],lambda=lambda,is.ordered.z=is.ordered.z)
           if(!is.null(weights)) L <- weights*L
           k <- 0
           ## Whether we use additive, glp, or tensor products, this
@@ -420,7 +424,7 @@ predictKernelSpline <- function(x,
         x.intercept <- rep(1,n)
         for(i in 1:nrow.zeval.unique) {
           zz <- ind.zeval == ind.zeval.vals[i]
-          L <- prod.kernel(Z=z,z=zeval.unique[ind.zeval.vals[i],],lambda=lambda,is.ordered.z=is.ordered.z)
+          L <- prod.kernel.matrix(Z=z,z=zeval.unique[ind.zeval.vals[i],],lambda=lambda,is.ordered.z=is.ordered.z)
           if(!is.null(weights)) L <- weights*L
           k <- 0
           if(is.null(tau))
@@ -597,19 +601,24 @@ derivKernelSpline <- function(x,
 
     if(K[deriv.index,1]!=0) {
 
-      ## Degree > 0, fitted
-
+      ## Degree > 0, fitted/evaluation
+      P.train <- prod.spline(x=x, K=K, knots=knots, basis=basis,
+                             display.warnings=display.warnings)
       if(is.null(xeval)) {
+        P.deriv.all <- prod.spline(x=x, K=K, xeval=x, knots=knots, basis=basis,
+                                   deriv.index=deriv.index, deriv=deriv,
+                                   display.warnings=display.warnings)
         deriv.spline <- numeric(length=n)
         se.deriv <- numeric(length=n)
         for(i in 1:nrow.z.unique) {
           zz <- ind == ind.vals[i]
-          L <- prod.kernel(Z=z,z=z.unique[ind.vals[i],],lambda=lambda,is.ordered.z=is.ordered.z)
+          L <- prod.kernel.matrix(Z=z,z=z.unique[ind.vals[i],],lambda=lambda,is.ordered.z=is.ordered.z)
           if(!is.null(weights)) L <- weights*L
-          P <- prod.spline(x=x,K=K,knots=knots,basis=basis,display.warnings=display.warnings)
-          P.deriv <- prod.spline(x=x,K=K,xeval=x[zz,,drop=FALSE],knots=knots,basis=basis,deriv.index=deriv.index,deriv=deriv,display.warnings=display.warnings)
+          P <- P.train
+          P.deriv <- P.deriv.all[zz,,drop=FALSE]
+          attr(P.deriv, "dim.P.no.tensor") <- attr(P.deriv.all, "dim.P.no.tensor")
           k <- NCOL(P)
-          dim.P.no.tensor <- attr(P.deriv,"dim.P.no.tensor")
+          dim.P.no.tensor <- attr(P.deriv.all,"dim.P.no.tensor")
           dim.P.tensor <- NCOL(P)
 
           if(basis=="additive") {
@@ -662,6 +671,9 @@ derivKernelSpline <- function(x,
 
       } else {
         ## Evaluation z information
+        P.deriv.all <- prod.spline(x=x, K=K, xeval=xeval, knots=knots, basis=basis,
+                                   deriv.index=deriv.index, deriv=deriv,
+                                   display.warnings=display.warnings)
 
         zeval.unique <- uniquecombs(as.matrix(zeval))
         num.zeval <- ncol(zeval.unique)
@@ -675,12 +687,13 @@ derivKernelSpline <- function(x,
         se.deriv <- numeric(length=num.eval)
         for(i in 1:nrow.zeval.unique) {
           zz <- ind.zeval == ind.zeval.vals[i]
-          L <- prod.kernel(Z=z,z=zeval.unique[ind.zeval.vals[i],],lambda=lambda,is.ordered.z=is.ordered.z)
+          L <- prod.kernel.matrix(Z=z,z=zeval.unique[ind.zeval.vals[i],],lambda=lambda,is.ordered.z=is.ordered.z)
           if(!is.null(weights)) L <- weights*L
-          P <- prod.spline(x=x,K=K,knots=knots,basis=basis,display.warnings=display.warnings)
-          P.deriv <- prod.spline(x=x,K=K,xeval=xeval[zz,,drop=FALSE],knots=knots,basis=basis,deriv.index=deriv.index,deriv=deriv,display.warnings=display.warnings)
+          P <- P.train
+          P.deriv <- P.deriv.all[zz,,drop=FALSE]
+          attr(P.deriv, "dim.P.no.tensor") <- attr(P.deriv.all, "dim.P.no.tensor")
           k <- NCOL(P)
-          dim.P.no.tensor <- attr(P.deriv,"dim.P.no.tensor")
+          dim.P.no.tensor <- attr(P.deriv.all,"dim.P.no.tensor")
           dim.P.tensor <- NCOL(P)
 
           if(basis=="additive") {
@@ -1995,7 +2008,7 @@ cv.kernel.spline <- function(x,
         } else {
           zz <- ind == ind.vals[i]
         }
-        L <- prod.kernel(Z=z, z=z.unique[ind.vals[i],], lambda=lambda,
+        L <- prod.kernel.matrix(Z=z, z=z.unique[ind.vals[i],], lambda=lambda,
                          is.ordered.z=is.ordered.z)
         if(!is.null(weights)) L <- weights * L
 
@@ -2194,7 +2207,7 @@ cv.kernel.spline <- function(x,
         } else {
           zz <- ind == ind.vals[i]
         }
-        L <- prod.kernel(Z=z, z=z.unique[ind.vals[i],], lambda=lambda,
+        L <- prod.kernel.matrix(Z=z, z=z.unique[ind.vals[i],], lambda=lambda,
                          is.ordered.z=is.ordered.z)
         if(!is.null(weights)) L <- weights * L
 
