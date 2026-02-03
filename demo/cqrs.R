@@ -26,7 +26,7 @@ for(t in seq(along=taus)) {
   ## Setting cv.threshold = 0 forces NOMAD search instead of exhaustive search
   ## when no categorical predictors are present. This avoids unnecessary
   ## evaluation of all degree/segment combinations in the examples and, for
-  ## crsiv() and crsivderiv(), ensures that the warm‑start strategy is used.
+  ## crsiv() and crsivderiv(), ensures that the warm-start strategy is used.
   model.rq <- crs(y~x,tau=taus[t],cv.threshold=0,nmulti=2)
   lines(x.seq,predict(model.rq,newdata=data.frame(x=x.seq)),col=t,lty=t,lwd=2)
   lines(x.seq,qnorm(taus[t],mean=x.seq,sd=sd.x.seq),lty=2)
