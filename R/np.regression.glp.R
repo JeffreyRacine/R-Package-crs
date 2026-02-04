@@ -993,6 +993,7 @@ glpregEst <- function(tydat=NULL,
   okertype <- match.arg(okertype)
   bwtype <- match.arg(bwtype)
   if(!any(ckerorder==c(2,4,6,8))) stop("ckerorder must be 2, 4, 6, or 8")
+  NZD_den <- if (ckerorder == 2) NZD_pos else NZD
 
   if(is.null(tydat)) stop(" Error: You must provide y data")
   if(is.null(txdat)) stop(" Error: You must provide X data")
@@ -1091,7 +1092,7 @@ glpregEst <- function(tydat=NULL,
     ## so use the convention that when the sum of the kernel weights
     ## equals 0, return y. This is unique to this code.
 
-    mhat <- tww[2,]/NZD(tww[1,])
+    mhat <- tww[2,]/NZD_den(tww[1,])
 
     return(list(fitted.values = mhat,
                 gradient = NULL,
@@ -1229,7 +1230,7 @@ glpregEst <- function(tydat=NULL,
       ## Use <<- for doridge, dirge and ridge.lc to ensure the values are
       ## preserved for use in while loops that follow
       doridge[i] <<- FALSE
-      ridge.lc[i] <<- ridge[i]*tyw[1,i][1]/NZD(tww[,,i][1,1])
+      ridge.lc[i] <<- ridge[i]*tyw[1,i][1]/NZD_den(tww[,,i][1,1])
 
       tryCatch(chol2inv(chol(tww[,,i]+diag(rep(ridge[i],nc))))%*%tyw[,i],
                error = function(e){
@@ -1332,6 +1333,7 @@ minimand.cv.ls <- function(bws=NULL,
   okertype <- match.arg(okertype)
   bwtype <- match.arg(bwtype)
   if(!any(ckerorder==c(2,4,6,8))) stop("ckerorder must be 2, 4, 6, or 8")
+  NZD_den <- if (ckerorder == 2) NZD_pos else NZD
 
   if(is.null(ydat)) stop(" Error: You must provide y data")
   if(is.null(xdat)) stop(" Error: You must provide X data")
@@ -1447,7 +1449,7 @@ minimand.cv.ls <- function(bws=NULL,
                   bwtype = bwtype,
                   ...)$ksum
 
-    mean.loo <- tww[2,]/NZD(tww[1,])
+    mean.loo <- tww[2,]/NZD_den(tww[1,])
 
     if (!any(mean.loo == cv.maxPenalty)){
       fv <- mean((ydat-mean.loo)^2)
@@ -1544,7 +1546,7 @@ minimand.cv.ls <- function(bws=NULL,
       doridge[iloo] <- FALSE
 
       for(i in iloo) {
-        ridge.lc[i] <- ridge[i]*tyw[1,i]/NZD(tww[1,1,i])
+        ridge.lc[i] <- ridge[i]*tyw[1,i]/NZD_den(tww[1,1,i])
 
         mat <- tww[,,i]
         if(ridge[i] > 0) {
@@ -1644,6 +1646,7 @@ minimand.cv.aic <- function(bws=NULL,
   okertype <- match.arg(okertype)
   bwtype <- match.arg(bwtype)
   if(!any(ckerorder==c(2,4,6,8))) stop("ckerorder must be 2, 4, 6, or 8")
+  NZD_den <- if (ckerorder == 2) NZD_pos else NZD
 
   if(is.null(ydat)) stop(" Error: You must provide y data")
   if(is.null(xdat)) stop(" Error: You must provide X data")
@@ -1755,9 +1758,9 @@ minimand.cv.aic <- function(bws=NULL,
                   bwtype = bwtype,
                   ...)$ksum
 
-    ghat <- tww[2,]/NZD(tww[1,])
+    ghat <- tww[2,]/NZD_den(tww[1,])
 
-    trH <- kernel.i.eq.j*sum(1/NZD(tww[1,]))
+    trH <- kernel.i.eq.j*sum(1/NZD_den(tww[1,]))
 
     aic.penalty <- (1+trH/n)/(1-(trH+2)/n)
 
@@ -1851,7 +1854,7 @@ minimand.cv.aic <- function(bws=NULL,
       doridge[ii] <- FALSE
 
       for(i in ii) {
-        ridge.lc[i] <- ridge[i]*tyw[1,i]/NZD(tww[1,1,i])
+        ridge.lc[i] <- ridge[i]*tyw[1,i]/NZD_den(tww[1,1,i])
 
         mat <- tww[,,i]
         if(ridge[i] > 0) {
@@ -1895,7 +1898,7 @@ minimand.cv.aic <- function(bws=NULL,
           w_vec <- W[i,]
           term1 <- (1-ridge[i]) * drop(crossprod(w_vec, inv_storage[[i]] %*% w_vec))
         }
-        term2 <- ridge[i]/NZD(tww[1,1,i])
+        term2 <- ridge[i]/NZD_den(tww[1,1,i])
         trH_sum <- trH_sum + term1 + term2
       }
     }
