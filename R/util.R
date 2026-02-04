@@ -26,6 +26,24 @@ NZD_pos <- function(a) {
   a
 }
 
+is.fullrank <- function(X, tol = 1e-7) {
+  if (is.null(X) || any(dim(X) == 0)) return(FALSE)
+  qr_X <- qr(X, tol = tol)
+  return(qr_X$rank == min(dim(X)))
+}
+
+scale_robust <- function(x, center=TRUE, scale=TRUE, display.warnings=TRUE){
+  if(any(dim(as.matrix(x)) == 0))
+    return(0)
+  sd.vec <- apply(as.matrix(x),2,sd)
+  IQR.vec <- apply(as.matrix(x),2,IQR)/(qnorm(.25,lower.tail=F)*2)
+  mad.vec <- apply(as.matrix(x),2,mad)
+  a <- apply(cbind(sd.vec,IQR.vec,mad.vec),1, function(y) max(y))
+  if(any(a<=0) && display.warnings) warning(paste("variable ",which(a<=0)," appears to be constant",sep=""))
+  a <- apply(cbind(sd.vec,IQR.vec,mad.vec),1, function(y) min(y[y>0]))
+  return(a)
+}
+
 ## Integration timing:
 # Comparison,Mean Speedup,Median Speedup
 # Cumulative Integration (fast_cum vs original_cum),1.54x,1.51x

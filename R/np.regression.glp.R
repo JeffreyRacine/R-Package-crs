@@ -282,15 +282,18 @@ check.max.degree <- function(xdat=NULL,degree=NULL,display.warnings=TRUE,Bernste
 
 npglpreg <- function(...) UseMethod("npglpreg")
 
-## Data-driven cv.maxPenalty: 10x the LOO CV of an intercept-only model,
-## with a weighted analog when weights are provided.
+## Data-driven cv.maxPenalty based on the intercept-only model.
+## - cv.ls / cv.gcv: 10x the LOO CV (intercept-only)
+## - cv.aic: AICc of intercept-only plus an additive margin (10 by default)
 resolve_cv_maxPenalty <- function(cv.maxPenalty,
                                   ydat,
                                   weights = NULL,
-                                  multiplier = 10) {
+                                  multiplier = 10,
+                                  cv.func = c("cv.ls","cv.gcv","cv.aic")) {
   if (!is.null(cv.maxPenalty)) return(cv.maxPenalty)
   if (is.null(ydat)) return(sqrt(.Machine$double.xmax))
 
+  cv.func <- match.arg(cv.func)
   y <- as.numeric(ydat)
   y <- y[is.finite(y)]
   n <- length(y)
@@ -304,12 +307,24 @@ resolve_cv_maxPenalty <- function(cv.maxPenalty,
     wsum <- sum(w)
     if (!is.finite(wsum) || wsum <= 0) return(sqrt(.Machine$double.xmax))
     mu <- sum(w * y) / wsum
-    base <- (sum(w * (y - mu)^2) / wsum) / (1 - 1 / n)^2
+    mse <- sum(w * (y - mu)^2) / wsum
   } else {
     mu <- mean(y)
-    base <- mean((y - mu)^2) / (1 - 1 / n)^2
+    mse <- mean((y - mu)^2)
   }
 
+  if (!is.finite(mse) || mse <= 0) return(sqrt(.Machine$double.xmax))
+
+  if (cv.func == "cv.aic") {
+    ## AICc intercept-only: log(mse) + penalty with trH = 1
+    penalty <- (1 + 1 / n) / (1 - 3 / n)
+    base_aic <- log(mse) + penalty
+    if (!is.finite(base_aic)) return(sqrt(.Machine$double.xmax))
+    return(base_aic + multiplier)
+  }
+
+  ## cv.ls / cv.gcv: intercept-only LOO CV
+  base <- mse / (1 - 1 / n)^2
   if (!is.finite(base) || base <= 0) return(sqrt(.Machine$double.xmax))
   multiplier * base
 }
@@ -727,7 +742,7 @@ npglpreg.formula <- function(formula,
   mt <- attr(mf, "terms")
   tydat <- model.response(mf)
   txdat <- mf[, attr(attr(mf, "terms"),"term.labels"), drop = FALSE]
-  cv.maxPenalty <- resolve_cv_maxPenalty(cv.maxPenalty, tydat)
+  cv.maxPenalty <- resolve_cv_maxPenalty(cv.maxPenalty, tydat, cv.func = "cv.ls")
 
   fv <- NULL
 
@@ -987,7 +1002,7 @@ glpregEst <- function(tydat=NULL,
   miss.ex = is.null(exdat)
   miss.ey = is.null(eydat)
 
-  cv.maxPenalty <- resolve_cv_maxPenalty(cv.maxPenalty, tydat)
+  cv.maxPenalty <- resolve_cv_maxPenalty(cv.maxPenalty, tydat, cv.func = "cv.aic")
 
   if (miss.ex){
     exdat <- txdat
@@ -1325,7 +1340,7 @@ minimand.cv.ls <- function(bws=NULL,
   if(is.null(degree) || any(degree < 0)) stop(paste(" Error: degree vector must contain non-negative integers\ndegree is (", degree, ")\n",sep=""))
 
   xdat <- as.data.frame(xdat)
-  cv.maxPenalty <- resolve_cv_maxPenalty(cv.maxPenalty, ydat)
+  cv.maxPenalty <- resolve_cv_maxPenalty(cv.maxPenalty, ydat, cv.func = "cv.ls")
 
   n <- length(ydat)
 
@@ -1637,7 +1652,7 @@ minimand.cv.aic <- function(bws=NULL,
   if(is.null(degree) || any(degree < 0)) stop(paste(" Error: degree vector must contain non-negative integers\ndegree is (", degree, ")\n",sep=""))
 
   xdat <- as.data.frame(xdat)
-  cv.maxPenalty <- resolve_cv_maxPenalty(cv.maxPenalty, ydat)
+  cv.maxPenalty <- resolve_cv_maxPenalty(cv.maxPenalty, ydat, cv.func = "cv.aic")
 
   n <- length(ydat)
 
@@ -1931,34 +1946,6 @@ minimand.cv.aic <- function(bws=NULL,
 ## Helper functions (include these if not already in your codebase)
 ## ============================================================================
 
-if(!exists("NZD")) {
-  NZD <- function(x) {
-    ## Non-zero denominator
-    ifelse(x == 0, .Machine$double.eps, x)
-  }
-}
-
-if(!exists("is.fullrank")) {
-  is.fullrank <- function(X, tol = 1e-7) {
-    if(is.null(X) || any(dim(X) == 0)) return(FALSE)
-    qr_X <- qr(X, tol = tol)
-    return(qr_X$rank == min(dim(X)))
-  }
-}
-
-if(!exists("scale_robust")) {
-  scale_robust <- function(x, center=TRUE, scale=TRUE, display.warnings=TRUE){
-    if(any(dim(as.matrix(x)) == 0))
-      return(0)
-    sd.vec <- apply(as.matrix(x),2,sd)
-    IQR.vec <- apply(as.matrix(x),2,IQR)/(qnorm(.25,lower.tail=F)*2)
-    mad.vec <- apply(as.matrix(x),2,mad)
-    a <- apply(cbind(sd.vec,IQR.vec,mad.vec),1, function(y) max(y))
-    if(any(a<=0) && display.warnings) warning(paste("variable ",which(a<=0)," appears to be constant",sep=""))
-    a <- apply(cbind(sd.vec,IQR.vec,mad.vec),1, function(y) min(y[y>0]))
-    return(a)
-  }
-}
 
 
 ## Note that for the function below which uses NOMAD for optimization
@@ -2025,7 +2012,7 @@ glpcvNOMAD <- function(ydat=NULL,
   ## pass additional arguments
   ##  eval.f.wrapper <- function(x){ eval.f(x,...) }
 
-  cv.maxPenalty <- resolve_cv_maxPenalty(cv.maxPenalty, ydat)
+  cv.maxPenalty <- resolve_cv_maxPenalty(cv.maxPenalty, ydat, cv.func = bwmethod)
 
   eval.lscv <- function(input,
                         params){

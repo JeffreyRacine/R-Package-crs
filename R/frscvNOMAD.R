@@ -40,7 +40,7 @@ frscvNOMAD <- function(xz,
   knots <- match.arg(knots)
   basis <- match.arg(basis)
   cv.func <- match.arg(cv.func)
-  cv.maxPenalty <- resolve_cv_maxPenalty(NULL, y, weights = weights)
+  cv.maxPenalty <- resolve_cv_maxPenalty(NULL, y, weights = weights, cv.func = cv.func)
 
   if ( missing(include) || is.null(include)) {
     include <- NULL

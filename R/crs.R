@@ -551,7 +551,7 @@ crs.formula <- function(formula,
   if(!is.logical(singular.ok)) stop("singular.ok must be logical (TRUE/FALSE)")
 
   cv.min <- NULL
-  cv.maxPenalty <- resolve_cv_maxPenalty(NULL, y, weights = weights)
+  cv.maxPenalty <- resolve_cv_maxPenalty(NULL, y, weights = weights, cv.func = cv.func)
 
   if(!kernel) {
 

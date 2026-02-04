@@ -1391,7 +1391,7 @@ cv.factor.spline <- function(x,
   have_tau <- !is.null(tau)
   have_w <- !is.null(weights)
   is_add <- (basis == "additive" || basis == "glp")
-  cv.maxPenalty <- resolve_cv_maxPenalty(NULL, y, weights = weights)
+  cv.maxPenalty <- resolve_cv_maxPenalty(NULL, y, weights = weights, cv.func = cv.func)
 
   ## Check dimension of P prior to calculating the basis
 
@@ -1705,7 +1705,7 @@ cv.kernel.spline <- function(x,
   ## be and if degrees of freedom is 1 or less, return a large penalty.
 
   n <- length(y)
-  cv.maxPenalty <- resolve_cv_maxPenalty(NULL, y, weights = weights)
+  cv.maxPenalty <- resolve_cv_maxPenalty(NULL, y, weights = weights, cv.func = cv.func)
 
   ## Check dimension of P prior to calculating the basis
   k_expected <- dimBS(basis=basis, kernel=TRUE, degree=K[,1], segments=K[,2])

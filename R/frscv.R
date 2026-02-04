@@ -32,7 +32,7 @@ frscv <- function(xz,
   cv.func <- match.arg(cv.func)
 
   t1 <- Sys.time()
-  cv.maxPenalty <- resolve_cv_maxPenalty(NULL, y, weights = weights)
+  cv.maxPenalty <- resolve_cv_maxPenalty(NULL, y, weights = weights, cv.func = cv.func)
 
   cv.objc <- function(input,
                       x,

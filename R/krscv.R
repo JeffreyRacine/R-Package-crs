@@ -31,7 +31,7 @@ krscv <- function(xz,
   knots <- match.arg(knots)
   basis <- match.arg(basis)
   cv.func <- match.arg(cv.func)
-  cv.maxPenalty <- resolve_cv_maxPenalty(NULL, y, weights = weights)
+  cv.maxPenalty <- resolve_cv_maxPenalty(NULL, y, weights = weights, cv.func = cv.func)
 
   ## First define the cv function to be fed to optim
 
