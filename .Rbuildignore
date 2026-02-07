@@ -5,5 +5,5 @@ man/runcrs
 man/dontruncrs
 man/sed_dontrun.scr
 man/sed_run.scr
-tests/*.R
-tests/testhat/*.R
+tests/
+codex_work_summary.md

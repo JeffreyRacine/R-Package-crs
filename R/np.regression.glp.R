@@ -1289,6 +1289,7 @@ glpregEst <- function(tydat=NULL,
                 numeric.index = numeric.index,
                 gradient.vec = gradient.vec,
                 cv.shrink = cv.shrink,
+                mpi = mpi,
                 Bernstein = Bernstein))
 
   }
