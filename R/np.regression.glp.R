@@ -379,6 +379,7 @@ npglpreg.default <- function(tydat=NULL,
                    cv.shrink=TRUE, ## Override
                    display.warnings=display.warnings,
                    Bernstein=Bernstein,
+                   mpi=mpi,
                    ...)
 
   est$cv.shrink <- cv.shrink
@@ -433,6 +434,7 @@ npglpreg.default <- function(tydat=NULL,
                               cv.shrink=TRUE, ## Override
                               display.warnings=display.warnings,
                               Bernstein=Bernstein,
+                              mpi=mpi,
                               ...)
 
         gradient.categorical.mat[,i] <- est$fitted.values - est.base$fitted.values
@@ -984,6 +986,7 @@ glpregEst <- function(tydat=NULL,
                       display.warnings=TRUE,
                       gradient.vec=NULL,
                       leave.one.out=FALSE,
+                      mpi=FALSE,
                       okertype=c("liracine","wangvanryzin"),
                       ukertype=c("liracine","aitchisonaitken"),
                       ...) {
@@ -1056,7 +1059,7 @@ glpregEst <- function(tydat=NULL,
       ## exdat not supported with leave.one.out, but this is only used
       ## for cross-validation hence no exdat
 
-      tww <- npksum(txdat = txdat,
+      tww <- (if(mpi) npRmpi::npksum else np::npksum)(txdat = txdat,
                     weights = as.matrix(data.frame(1,tydat)),
                     tydat = rep(1,length(tydat)),
                     bws = bws,
@@ -1071,7 +1074,7 @@ glpregEst <- function(tydat=NULL,
 
     } else {
 
-      tww <- npksum(txdat = txdat,
+      tww <- (if(mpi) npRmpi::npksum else np::npksum)(txdat = txdat,
                     exdat = exdat,
                     weights = as.matrix(data.frame(1,tydat)),
                     tydat = rep(1,length(tydat)),
@@ -1162,7 +1165,7 @@ glpregEst <- function(tydat=NULL,
       ## exdat not supported with leave.one.out, but this is only used
       ## for cross-validation hence no exdat
 
-      tww <- npksum(txdat = txdat,
+      tww <- (if(mpi) npRmpi::npksum else np::npksum)(txdat = txdat,
                     tydat = as.matrix(cbind(tydat,W)),
                     weights = W,
                     bws = bws,
@@ -1177,7 +1180,7 @@ glpregEst <- function(tydat=NULL,
 
     } else {
 
-      tww <- npksum(txdat = txdat,
+      tww <- (if(mpi) npRmpi::npksum else np::npksum)(txdat = txdat,
                     exdat = exdat,
                     tydat = as.matrix(cbind(tydat,W)),
                     weights = W,
@@ -1324,6 +1327,7 @@ minimand.cv.ls <- function(bws=NULL,
                            display.nomad.progress=TRUE,
                            bandwidth.scale.categorical=NULL,
                            ...,
+                           mpi=FALSE,
                            smooth.penalty=TRUE,
                            penalty.scale=1000,
                            penalty.growth.rate=2) {
@@ -1436,7 +1440,7 @@ minimand.cv.ls <- function(bws=NULL,
 
     ## Local constant via one call to npksum
 
-    tww <- npksum(txdat = xdat,
+    tww <- (if(mpi) npRmpi::npksum else np::npksum)(txdat = xdat,
                   weights = as.matrix(data.frame(1,ydat)),
                   tydat = rep(1,n),
                   bws = bws,
@@ -1481,7 +1485,7 @@ minimand.cv.ls <- function(bws=NULL,
 
     ## Generalized local polynomial via smooth coefficient formulation
 
-    tww <- npksum(txdat = xdat,
+    tww <- (if(mpi) npRmpi::npksum else np::npksum)(txdat = xdat,
                   tydat = as.matrix(cbind(ydat,W)),
                   weights = W,
                   bws = bws,
@@ -1637,6 +1641,7 @@ minimand.cv.aic <- function(bws=NULL,
                             display.nomad.progress=TRUE,
                             bandwidth.scale.categorical=NULL,
                             ...,
+                            mpi=FALSE,
                             smooth.penalty=TRUE,
                             penalty.scale=1000,
                             penalty.growth.rate=2) {
@@ -1730,7 +1735,7 @@ minimand.cv.aic <- function(bws=NULL,
   }
 
   ## Compute kernel at i=j
-  kernel.i.eq.j <- npksum(txdat = xdat[1,],
+  kernel.i.eq.j <- (if(mpi) npRmpi::npksum else np::npksum)(txdat = xdat[1,],
                           weights = as.matrix(data.frame(1,ydat)[1,]),
                           tydat = 1,
                           bws = bws,
@@ -1746,7 +1751,7 @@ minimand.cv.aic <- function(bws=NULL,
 
     ## Local constant
 
-    tww <- npksum(txdat = xdat,
+    tww <- (if(mpi) npRmpi::npksum else np::npksum)(txdat = xdat,
                   weights = as.matrix(data.frame(1,ydat)),
                   tydat = rep(1,n),
                   bws = bws,
@@ -1795,7 +1800,7 @@ minimand.cv.aic <- function(bws=NULL,
 
     ## Generalized local polynomial
 
-    tww <- npksum(txdat = xdat,
+    tww <- (if(mpi) npRmpi::npksum else np::npksum)(txdat = xdat,
                   tydat = as.matrix(cbind(ydat,W)),
                   weights = W,
                   bws = bws,
@@ -2073,6 +2078,7 @@ glpcvNOMAD <- function(ydat=NULL,
                              display.warnings=display.warnings,
                              display.nomad.progress=display.nomad.progress,
                              bandwidth.scale.categorical=bandwidth.scale.categorical,
+                             mpi=params$mpi,
                              ...)
     } else if(all(bw.gamma >= bw.switch)) {
       ## All bandwidths hit their upper bounds
@@ -2102,6 +2108,7 @@ glpcvNOMAD <- function(ydat=NULL,
                              display.warnings=display.warnings,
                              display.nomad.progress=display.nomad.progress,
                              bandwidth.scale.categorical=bandwidth.scale.categorical,
+                             mpi=params$mpi,
                              ...)
     }
     console <- printPush("\r                                                                         ",console = console)
@@ -2173,6 +2180,7 @@ glpcvNOMAD <- function(ydat=NULL,
                               display.warnings=display.warnings,
                               display.nomad.progress=display.nomad.progress,
                               bandwidth.scale.categorical=bandwidth.scale.categorical,
+                              mpi=params$mpi,
                               ...)
     } else if(all(bw.gamma >= bw.switch)) {
       ## All bandwidths hit their upper bounds
@@ -2202,6 +2210,7 @@ glpcvNOMAD <- function(ydat=NULL,
                               display.warnings=display.warnings,
                               display.nomad.progress=display.nomad.progress,
                               bandwidth.scale.categorical=bandwidth.scale.categorical,
+                              mpi=params$mpi,
                               ...)
     }
     console <- printPush("\r                                                                         ",console = console)
@@ -2429,6 +2438,7 @@ glpcvNOMAD <- function(ydat=NULL,
   params$Bernstein <- Bernstein
   params$bw.switch <- bw.switch
   params$bandwidth.scale.categorical=bandwidth.scale.categorical
+  params$mpi <- mpi
 
   ## Multistarting
 
