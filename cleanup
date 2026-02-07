@@ -2,4 +2,4 @@
 /bin/rm -rf ./chm
 /bin/rm -rf ./config.*
 /bin/rm -rf src/*.so src/*/*.so src/*.o src/*/*.o src/*.d src/*/*.d src/*.dll src/*/*.dll src/*.a src/*/*.a src/*.rc src/*/*.rc src/Makedeps src/*/Makedeps
-/bin/rm -f *~ */*~ */*/*~
+/bin/rm -f -- *~ */*~ */*/*~
