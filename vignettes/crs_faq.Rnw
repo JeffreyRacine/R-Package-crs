@@ -53,7 +53,7 @@ to others, kindly email me the relevant information and I will
 incorporate it into this FAQ.
 
 This FAQ refers to the most recent version, which as of this writing
-is 0.15-39. Kindly update your version should you not be using the
+is 0.15-40. Kindly update your version should you not be using the
 most current (from within R, \texttt{update.packages()} ought to do
 it, though also see \ref{update} below.). See the appendix in this
 file for cumulative changes between this and previous versions of the
@@ -650,6 +650,27 @@ For the second predictor use \texttt{x2} and
 \clearpage
 
 \appendix
+
+\section*{Changes from Version 0.15-39 to 0.15-40 [11-Feb-2026]}
+
+\begin{itemize}
+
+\item Major speedups in core CV/estimation helpers (kernel/spline paths),
+  including reduced categorical overhead and improved caching.
+
+\item Added warm-start optimization and formal S3 classes/methods for
+  crsiv/crsivderiv (print/summary/plot), with enhanced reporting.
+
+\item Updated CV penalty strategy (data-driven defaults and cv.func-aware
+  scaling) to improve optimization robustness.
+
+\item Extended test coverage and resolved check/doc issues (codoc/aliases,
+  non-ASCII cleanups, and dependency declarations).
+
+\item Improved npglpreg/MPI workflow handling and console-output controls
+  for cleaner batch/interactive runs.
+  
+\end{itemize}  
 
 \section*{Changes from Version 0.15-38 to 0.15-39 [28-Jan-2026]}
 
