@@ -1222,7 +1222,7 @@ glpregEst <- function(tydat=NULL,
     }
 
     coef.mat <- matrix(cv.maxPenalty,ncol(W),n.eval)
-    epsilon <- 1.0/n.eval
+    epsilon <- 0.1
     ridge <- double(n.eval)
     ridge.lc <- double(n.eval)
     doridge <- !logical(n.eval)
@@ -1238,6 +1238,12 @@ glpregEst <- function(tydat=NULL,
       tryCatch(chol2inv(chol(tww[,,i]+diag(rep(ridge[i],nc))))%*%tyw[,i],
                error = function(e){
                  ridge[i] <<- ridge[i]+epsilon
+                 if(ridge[i] > 1.0){
+                   ridge[i] <<- 1.0
+                   ridge.lc[i] <<- tyw[1,i][1]/NZD_den(tww[,,i][1,1])
+                   doridge[i] <<- FALSE
+                   return(c(ridge.lc[i], rep(0, nc-1)))
+                 }
                  doridge[i] <<- TRUE
                  if(display.warnings) console <- printPush(paste("\rWarning: ridging required for inversion at obs. ", i, ", ridge = ",formatC(ridge[i],digits=4,format="f"),"        ",sep=""),console = console)
                  return(rep(cv.maxPenalty,nc))
@@ -1532,7 +1538,7 @@ minimand.cv.ls <- function(bws=NULL,
     }
 
     mean.loo <- rep(cv.maxPenalty,n)
-    epsilon <- 1.0/n
+    epsilon <- 0.1
     ridge <- double(n)
     ridge.lc <- double(n)
     doridge <- rep(TRUE, n)
@@ -1572,7 +1578,7 @@ minimand.cv.ls <- function(bws=NULL,
           max_ridge <- max(max_ridge, ridge[i])
 
           ## IMPROVEMENT 6: Give up after excessive ridging
-          if(ridge[i] > 10) {
+          if(ridge[i] > 1.0) {
             n_ridge_fails <- n_ridge_fails + 1
             doridge[i] <- FALSE  ## Stop trying this observation
             mean.loo[i] <- cv.maxPenalty
@@ -1843,7 +1849,7 @@ minimand.cv.aic <- function(bws=NULL,
     }
 
     ghat <- rep(cv.maxPenalty,n)
-    epsilon <- 1.0/n
+    epsilon <- 0.1
     ridge <- double(n)
     ridge.lc <- double(n)
     doridge <- rep(TRUE, n)
@@ -1880,7 +1886,7 @@ minimand.cv.aic <- function(bws=NULL,
           max_ridge <- max(max_ridge, ridge[i])
 
           ## IMPROVEMENT 5: Give up after excessive ridging
-          if(ridge[i] > 10) {
+          if(ridge[i] > 1.0) {
             n_ridge_fails <- n_ridge_fails + 1
             doridge[i] <- FALSE
             ghat[i] <- cv.maxPenalty
