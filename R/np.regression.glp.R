@@ -1466,12 +1466,13 @@ minimand.cv.ls <- function(bws=NULL,
 
     mean.loo <- tww[2,]/NZD_den(tww[1,])
 
-    if (!any(mean.loo == cv.maxPenalty)){
+    bad_mean_loo <- !is.na(mean.loo) & (mean.loo == cv.maxPenalty)
+    if (!any(bad_mean_loo)){
       fv <- mean((ydat-mean.loo)^2)
     } else {
       ## IMPROVEMENT 4: Check how many are problematic
       if(smooth.penalty) {
-        n_bad <- sum(mean.loo == cv.maxPenalty)
+        n_bad <- sum(bad_mean_loo)
         if(n_bad > 0.5 * n) {
           ## More than half are bad - return hard penalty
           fv <- cv.maxPenalty
@@ -1607,11 +1608,12 @@ minimand.cv.ls <- function(bws=NULL,
       ridge_penalty_mult <- 1
     }
 
-    if (!is.na(any(mean.loo == cv.maxPenalty)) && !any(mean.loo == cv.maxPenalty)){
+    bad_mean_loo <- !is.na(mean.loo) & (mean.loo == cv.maxPenalty)
+    if (!any(bad_mean_loo)){
       fv <- mean((ydat-mean.loo)^2) * ridge_penalty_mult
     } else {
       if(smooth.penalty) {
-        n_bad <- sum(mean.loo == cv.maxPenalty)
+        n_bad <- sum(bad_mean_loo)
         if(n_bad > 0.5 * n) {
           fv <- cv.maxPenalty
         } else {
