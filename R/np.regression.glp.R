@@ -1242,7 +1242,7 @@ glpregEst <- function(tydat=NULL,
                error = function(e){
                  ridge.idx[i] <<- ridge.idx[i] + 1L
                  if(ridge.idx[i] > length(ridge.grid)){
-                   ridge[i] <<- tail(ridge.grid, 1L)
+                   ridge[i] <<- ridge.grid[length(ridge.grid)]
                    ridge.lc[i] <<- tyw[1,i][1]/NZD_den(tww[,,i][1,1])
                    doridge[i] <<- FALSE
                    return(c(ridge.lc[i], rep(0, nc-1)))
