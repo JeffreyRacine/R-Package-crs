@@ -329,6 +329,8 @@ resolve_cv_maxPenalty <- function(cv.maxPenalty,
   multiplier * base
 }
 
+ridge.grid.glp <- c(0.0, 1.0e-8, 1.0e-6, 1.0e-4, 1.0e-3, 1.0e-2, 1.0e-1, 1.0)
+
 npglpreg.default <- function(tydat=NULL,
                              txdat=NULL,
                              eydat=NULL,
@@ -1222,8 +1224,9 @@ glpregEst <- function(tydat=NULL,
     }
 
     coef.mat <- matrix(cv.maxPenalty,ncol(W),n.eval)
-    epsilon <- 0.1
+    ridge.grid <- ridge.grid.glp
     ridge <- double(n.eval)
+    ridge.idx <- rep(1L, n.eval)
     ridge.lc <- double(n.eval)
     doridge <- !logical(n.eval)
 
@@ -1237,13 +1240,14 @@ glpregEst <- function(tydat=NULL,
 
       tryCatch(chol2inv(chol(tww[,,i]+diag(rep(ridge[i],nc))))%*%tyw[,i],
                error = function(e){
-                 ridge[i] <<- ridge[i]+epsilon
-                 if(ridge[i] > 1.0){
-                   ridge[i] <<- 1.0
+                 ridge.idx[i] <<- ridge.idx[i] + 1L
+                 if(ridge.idx[i] > length(ridge.grid)){
+                   ridge[i] <<- tail(ridge.grid, 1L)
                    ridge.lc[i] <<- tyw[1,i][1]/NZD_den(tww[,,i][1,1])
                    doridge[i] <<- FALSE
                    return(c(ridge.lc[i], rep(0, nc-1)))
                  }
+                 ridge[i] <<- ridge.grid[ridge.idx[i]]
                  doridge[i] <<- TRUE
                  if(display.warnings) console <- printPush(paste("\rWarning: ridging required for inversion at obs. ", i, ", ridge = ",formatC(ridge[i],digits=4,format="f"),"        ",sep=""),console = console)
                  return(rep(cv.maxPenalty,nc))
@@ -1538,8 +1542,9 @@ minimand.cv.ls <- function(bws=NULL,
     }
 
     mean.loo <- rep(cv.maxPenalty,n)
-    epsilon <- 0.1
+    ridge.grid <- ridge.grid.glp
     ridge <- double(n)
+    ridge.idx <- rep(1L, n)
     ridge.lc <- double(n)
     doridge <- rep(TRUE, n)
 
@@ -1574,11 +1579,13 @@ minimand.cv.ls <- function(bws=NULL,
         })
 
         if(is.na(val)) {
-          ridge[i] <- ridge[i] + epsilon
+          ridge.idx[i] <- ridge.idx[i] + 1L
+          if(ridge.idx[i] <= length(ridge.grid))
+            ridge[i] <- ridge.grid[ridge.idx[i]]
           max_ridge <- max(max_ridge, ridge[i])
 
           ## IMPROVEMENT 6: Give up after excessive ridging
-          if(ridge[i] > 1.0) {
+          if(ridge.idx[i] > length(ridge.grid)) {
             n_ridge_fails <- n_ridge_fails + 1
             doridge[i] <- FALSE  ## Stop trying this observation
             mean.loo[i] <- cv.maxPenalty
@@ -1849,8 +1856,9 @@ minimand.cv.aic <- function(bws=NULL,
     }
 
     ghat <- rep(cv.maxPenalty,n)
-    epsilon <- 0.1
+    ridge.grid <- ridge.grid.glp
     ridge <- double(n)
+    ridge.idx <- rep(1L, n)
     ridge.lc <- double(n)
     doridge <- rep(TRUE, n)
 
@@ -1882,11 +1890,13 @@ minimand.cv.aic <- function(bws=NULL,
         }, error = function(e) return(NULL))
 
         if(is.null(res)) {
-          ridge[i] <- ridge[i] + epsilon
+          ridge.idx[i] <- ridge.idx[i] + 1L
+          if(ridge.idx[i] <= length(ridge.grid))
+            ridge[i] <- ridge.grid[ridge.idx[i]]
           max_ridge <- max(max_ridge, ridge[i])
 
           ## IMPROVEMENT 5: Give up after excessive ridging
-          if(ridge[i] > 1.0) {
+          if(ridge.idx[i] > length(ridge.grid)) {
             n_ridge_fails <- n_ridge_fails + 1
             doridge[i] <- FALSE
             ghat[i] <- cv.maxPenalty
