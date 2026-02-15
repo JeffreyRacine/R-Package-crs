@@ -255,25 +255,13 @@ frscv <- function(xz,
 
   if(length(degree.zero.rows) > 0) {
 
-    degree.mat.zero.rows.unique <- numeric()
-
     if(num.z > 0) {
-
-      KI.I.unique <- unique(KI.mat[degree.zero.rows,(2*num.x+1):(2*num.x+num.z),drop=FALSE])
-
-      for(i in 1:nrow(KI.I.unique)) {
-        degree.mat.zero.rows.unique[i] <- which(KI.mat[degree.zero.rows,(2*num.x+1):(2*num.x+num.z),drop=FALSE]==KI.I.unique[i,])[1]
-      }
-
+      key.mat <- KI.mat[degree.zero.rows,(2*num.x+1):(2*num.x+num.z),drop=FALSE]
     } else {
-
-      KI.I.unique <- unique(KI.mat[degree.zero.rows,1:num.x,drop=FALSE])
-
-      for(i in 1:nrow(KI.I.unique)) {
-        degree.mat.zero.rows.unique[i] <- which(KI.mat[degree.zero.rows,1:num.x,drop=FALSE]==KI.I.unique[i,])[1]
-      }
-
+      key.mat <- KI.mat[degree.zero.rows,1:num.x,drop=FALSE]
     }
+    key.vec <- apply(key.mat, 1, paste, collapse = "|")
+    degree.mat.zero.rows.unique <- match(unique(key.vec), key.vec)
 
     degree.zero.rows <- degree.zero.rows[-degree.mat.zero.rows.unique]
 
