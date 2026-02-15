@@ -1111,7 +1111,7 @@ summary.crs <- function(object,
 
 }
 
-crs.SCSrank <- function(x, conf.level = 0.95, alternative = "two.sided") {
+.crs.SCSrank <- function(x, conf.level = 0.95, alternative = "two.sided") {
   alternative <- match.arg(alternative, choices = c("two.sided", "less", "greater"))
   DataMatrix <- x
   N <- nrow(DataMatrix)
@@ -1152,7 +1152,7 @@ crs.SCSrank <- function(x, conf.level = 0.95, alternative = "two.sided") {
   list(conf.int = SCS)
 }
 
-crs.bootstrap.bounds <- function(boot.t, alpha, band.type, center) {
+.crs.bootstrap.bounds <- function(boot.t, alpha, band.type, center) {
   neval <- ncol(boot.t)
   if (band.type == "standard") {
     z <- qnorm(1 - alpha/2)
@@ -1166,19 +1166,19 @@ crs.bootstrap.bounds <- function(boot.t, alpha, band.type, center) {
     return(t(apply(boot.t, 2, quantile, probs = c(alpha/(2 * neval), 1 - alpha/(2 * neval)))))
   }
   if (band.type == "simultaneous") {
-    return(crs.SCSrank(boot.t, conf.level = 1 - alpha)$conf.int)
+    return(.crs.SCSrank(boot.t, conf.level = 1 - alpha)$conf.int)
   }
   if (band.type == "all") {
     return(list(
-      pointwise = crs.bootstrap.bounds(boot.t, alpha, "pointwise", center),
-      simultaneous = crs.bootstrap.bounds(boot.t, alpha, "simultaneous", center),
-      bonferroni = crs.bootstrap.bounds(boot.t, alpha, "bonferroni", center)
+      pointwise = .crs.bootstrap.bounds(boot.t, alpha, "pointwise", center),
+      simultaneous = .crs.bootstrap.bounds(boot.t, alpha, "simultaneous", center),
+      bonferroni = .crs.bootstrap.bounds(boot.t, alpha, "bonferroni", center)
     ))
   }
   stop("'band.type' must be one of standard, pointwise, bonferroni, simultaneous, all")
 }
 
-crs.draw.all <- function(x, all.bounds, add.legend = TRUE, legend.loc = "topleft") {
+.crs.draw.all <- function(x, all.bounds, add.legend = TRUE, legend.loc = "topleft") {
   cols <- c(pointwise = "red", simultaneous = "green3", bonferroni = "blue")
   for (bn in c("pointwise", "simultaneous", "bonferroni")) {
     lines(x, all.bounds[[bn]][,1], lty = 2, col = cols[bn])
@@ -1191,7 +1191,7 @@ crs.draw.all <- function(x, all.bounds, add.legend = TRUE, legend.loc = "topleft
   }
 }
 
-crs.bootstrap.matrix <- function(object, newdata, deriv = 0, deriv.index = 1, boot.num = 99, display.warnings = TRUE) {
+.crs.bootstrap.matrix <- function(object, newdata, deriv = 0, deriv.index = 1, boot.num = 99, display.warnings = TRUE) {
   n <- nrow(object$xz)
   pred0 <- predict(object, newdata = newdata, deriv = deriv)
   center <- if (deriv > 0) attr(pred0, "deriv.mat")[,deriv.index] else as.numeric(pred0)
@@ -1488,21 +1488,21 @@ plot.crs <- function(x,
 
         } else {
           if (plot.errors.method == "bootstrap") {
-            boot <- crs.bootstrap.matrix(object = object,
+            boot <- .crs.bootstrap.matrix(object = object,
                                          newdata = newdata,
                                          deriv = 0,
                                          deriv.index = i,
                                          boot.num = plot.errors.boot.num,
                                          display.warnings = display.warnings)
             if (plot.errors.type == "all") {
-              all.bounds <- crs.bootstrap.bounds(boot$boot.mat, plot.errors.alpha, "all", boot$center)
+              all.bounds <- .crs.bootstrap.bounds(boot$boot.mat, plot.errors.alpha, "all", boot$center)
               mg[[i]] <- data.frame(newdata[,i], boot$center,
                                     all.bounds$pointwise[,1], all.bounds$pointwise[,2],
                                     all.bounds$simultaneous[,1], all.bounds$simultaneous[,2],
                                     all.bounds$bonferroni[,1], all.bounds$bonferroni[,2])
               names(mg[[i]]) <- c(names(newdata)[i],"mean","lwr","upr","lwr.sim","upr.sim","lwr.bonf","upr.bonf")
             } else {
-              bounds <- crs.bootstrap.bounds(boot$boot.mat, plot.errors.alpha, plot.errors.type, boot$center)
+              bounds <- .crs.bootstrap.bounds(boot$boot.mat, plot.errors.alpha, plot.errors.type, boot$center)
               mg[[i]] <- data.frame(newdata[,i], boot$center, bounds)
               names(mg[[i]]) <- c(names(newdata)[i],"mean","lwr","upr")
             }
@@ -1568,7 +1568,7 @@ plot.crs <- function(x,
                 simultaneous = cbind(mg[[i]][,"lwr.sim"], mg[[i]][,"upr.sim"]),
                 bonferroni = cbind(mg[[i]][,"lwr.bonf"], mg[[i]][,"upr.bonf"])
               )
-              crs.draw.all(mg[[i]][,1], all.bounds, add.legend = TRUE)
+              .crs.draw.all(mg[[i]][,1], all.bounds, add.legend = TRUE)
             } else {
               ## Need to overlay for proper plotting of factor errorbars
               par(new=TRUE)
@@ -1902,21 +1902,21 @@ plot.crs <- function(x,
 
         } else {
           if (plot.errors.method == "bootstrap" && !is.factor(newdata[,i])) {
-            boot <- crs.bootstrap.matrix(object = object,
+            boot <- .crs.bootstrap.matrix(object = object,
                                          newdata = newdata,
                                          deriv = deriv,
                                          deriv.index = i,
                                          boot.num = plot.errors.boot.num,
                                          display.warnings = display.warnings)
             if (plot.errors.type == "all") {
-              all.bounds <- crs.bootstrap.bounds(boot$boot.mat, plot.errors.alpha, "all", boot$center)
+              all.bounds <- .crs.bootstrap.bounds(boot$boot.mat, plot.errors.alpha, "all", boot$center)
               rg[[i]] <- data.frame(newdata[,i], boot$center,
                                     all.bounds$pointwise[,1], all.bounds$pointwise[,2],
                                     all.bounds$simultaneous[,1], all.bounds$simultaneous[,2],
                                     all.bounds$bonferroni[,1], all.bounds$bonferroni[,2])
               names(rg[[i]]) <- c(names(newdata)[i],"deriv","lwr","upr","lwr.sim","upr.sim","lwr.bonf","upr.bonf")
             } else {
-              bounds <- crs.bootstrap.bounds(boot$boot.mat, plot.errors.alpha, plot.errors.type, boot$center)
+              bounds <- .crs.bootstrap.bounds(boot$boot.mat, plot.errors.alpha, plot.errors.type, boot$center)
               rg[[i]] <- data.frame(newdata[,i], boot$center, bounds)
               names(rg[[i]]) <- c(names(newdata)[i],"deriv","lwr","upr")
             }
@@ -1999,7 +1999,7 @@ plot.crs <- function(x,
                 simultaneous = cbind(rg[[i]][,"lwr.sim"], rg[[i]][,"upr.sim"]),
                 bonferroni = cbind(rg[[i]][,"lwr.bonf"], rg[[i]][,"upr.bonf"])
               )
-              crs.draw.all(rg[[i]][,1], all.bounds, add.legend = TRUE)
+              .crs.draw.all(rg[[i]][,1], all.bounds, add.legend = TRUE)
             } else {
               ## Need to overlay for proper plotting of factor errorbars
               par(new=TRUE)
