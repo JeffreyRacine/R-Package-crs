@@ -1,6 +1,6 @@
 useDynLib(crs, .registration = TRUE)
 importFrom("grDevices", "extendrange", "topo.colors", "n2mfrow")
-importFrom("graphics", "par", "plot", "lines")
+importFrom("graphics", "legend", "par", "plot", "lines")
 importFrom("utils", "flush.console")
 import(stats, boot, np, quantreg)
 export(clsd,

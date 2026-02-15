@@ -927,13 +927,20 @@ summary.crsiv <- function(object, ...) {
 
 plot.crsiv <- function(x,
                        plot.data = FALSE,
+                       ci = FALSE,
                        deriv = FALSE,
+                       xtrim = 0.0,
                        ...) {
 
   object <- x
 
   ## We only support univariate endogenous predictor z
   if(object$num.x > 1 || !is.null(object$num.z)) stop(" only univariate z is supported")
+  if(!is.logical(plot.data) || length(plot.data) != 1L || is.na(plot.data)) stop(" plot.data must be TRUE/FALSE")
+  if(!is.logical(ci) || length(ci) != 1L || is.na(ci)) stop(" ci must be TRUE/FALSE")
+  if(!is.logical(deriv) || length(deriv) != 1L || is.na(deriv)) stop(" deriv must be TRUE/FALSE")
+  if(!is.numeric(xtrim) || length(xtrim) != 1L || is.na(xtrim)) stop(" xtrim must be a scalar in [0, 0.5)")
+  if(xtrim < 0 || xtrim >= 0.5) stop(" xtrim must be in [0, 0.5)")
 
   z <- object$xz[,1]
   y <- object$y
@@ -941,36 +948,120 @@ plot.crsiv <- function(x,
 
   zname <- object$xnames[1]
   yname <- "y" ## Default
+  dots <- list(...)
+
+  consume.dot <- function(name, default) {
+    if(!is.null(dots[[name]])) {
+      value <- dots[[name]]
+      dots[[name]] <<- NULL
+      return(value)
+    }
+    default
+  }
+
+  trim.range <- function(v, trim) {
+    if(trim == 0) return(range(v, na.rm = TRUE))
+    as.numeric(stats::quantile(v,
+                               probs = c(trim, 1 - trim),
+                               names = FALSE,
+                               na.rm = TRUE,
+                               type = 7))
+  }
+
+  xlim <- trim.range(z, xtrim)
+  keep <- (z >= xlim[1]) & (z <= xlim[2])
 
   if(deriv) {
     if(is.null(object$deriv.mat)) stop(" deriv.mat not found: was crsiv called with deriv > 0?")
-    phi.prime <- object$deriv.mat[,1]
+    phi.prime <- object$deriv.mat[keep,1]
+    z.plot <- z[keep]
+    ord <- order(z.plot)
+    z.plot <- z.plot[ord]
+    phi.prime <- phi.prime[ord]
 
-    plot(z[order(z)], phi.prime[order(z)],
-         type="l",
-         xlab=zname,
-         ylab=paste("d", yname, "/d", zname, sep=""),
-         ...)
+    deriv.lwr <- NULL
+    deriv.upr <- NULL
+    if(ci) {
+      if(is.null(object$deriv.mat.lwr) || is.null(object$deriv.mat.upr)) {
+        warning("derivative confidence bounds not found; plotting derivative without intervals")
+      } else {
+        deriv.lwr <- object$deriv.mat.lwr[keep,1][ord]
+        deriv.upr <- object$deriv.mat.upr[keep,1][ord]
+      }
+    }
+
+    ci.lty <- consume.dot("ci.lty", 2)
+    ci.lwd <- consume.dot("ci.lwd", 1)
+    ci.col <- consume.dot("ci.col", 2)
+
+    plot.args <- c(
+      list(x = z.plot,
+           y = phi.prime,
+           type = consume.dot("type", "l"),
+           xlab = consume.dot("xlab", zname),
+           ylab = consume.dot("ylab", paste("d", yname, "/d", zname, sep = "")),
+           xlim = consume.dot("xlim", xlim),
+           ylim = consume.dot("ylim",
+                              range(c(phi.prime, deriv.lwr, deriv.upr), na.rm = TRUE)),
+           lwd = consume.dot("lwd", 2),
+           col = consume.dot("col", 1)),
+      dots
+    )
+    do.call(graphics::plot, plot.args)
+
+    if(!is.null(deriv.lwr) && !is.null(deriv.upr)) {
+      graphics::lines(z.plot, deriv.lwr,
+                      lty = ci.lty,
+                      lwd = ci.lwd,
+                      col = ci.col)
+      graphics::lines(z.plot, deriv.upr,
+                      lty = ci.lty,
+                      lwd = ci.lwd,
+                      col = ci.col)
+    }
 
   } else {
+    z.plot <- z[keep]
+    phi.plot <- phi[keep]
+    ord <- order(z.plot)
+    z.plot <- z.plot[ord]
+    phi.plot <- phi.plot[ord]
 
     if(plot.data) {
-      plot(z, y,
-           xlab=zname,
-           ylab=yname,
-           type="p",
-           col="lightgrey",
-           ...)
-      lines(z[order(z)], phi[order(z)],
-            lwd=2,
-            ...)
+      y.plot <- y[keep]
+      line.lwd <- consume.dot("line.lwd", 2)
+      line.lty <- consume.dot("line.lty", 1)
+      line.col <- consume.dot("line.col", 1)
+      plot.args <- c(
+        list(x = z.plot,
+             y = y.plot[ord],
+             xlab = consume.dot("xlab", zname),
+             ylab = consume.dot("ylab", yname),
+             xlim = consume.dot("xlim", xlim),
+             ylim = consume.dot("ylim", range(c(y.plot, phi.plot), na.rm = TRUE)),
+             type = consume.dot("type", "p"),
+             col = consume.dot("col", "lightgrey")),
+        dots
+      )
+      do.call(graphics::plot, plot.args)
+      graphics::lines(z.plot, phi.plot,
+                      lwd = line.lwd,
+                      lty = line.lty,
+                      col = line.col)
     } else {
-      plot(z[order(z)], phi[order(z)],
-           type="l",
-           xlab=zname,
-           ylab=yname,
-           lwd=2,
-           ...)
+      plot.args <- c(
+        list(x = z.plot,
+             y = phi.plot,
+             type = consume.dot("type", "l"),
+             xlab = consume.dot("xlab", zname),
+             ylab = consume.dot("ylab", yname),
+             xlim = consume.dot("xlim", xlim),
+             ylim = consume.dot("ylim", range(phi.plot, na.rm = TRUE)),
+             lwd = consume.dot("lwd", 2),
+             col = consume.dot("col", 1)),
+        dots
+      )
+      do.call(graphics::plot, plot.args)
     }
   }
 

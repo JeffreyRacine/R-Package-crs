@@ -247,13 +247,16 @@ crsiv(y, \dots)
     \code{\link{residuals}}, \code{\link{predict}}, and
     \code{\link{plot}} support objects of this type.
 
-    For the \code{\link{plot}} function, the options are
+    For the \code{\link{plot}} function, the options include
     \code{plot.data=FALSE} (a logical value indicating whether to plot
-    the data as a scatter plot) and \code{deriv=FALSE} (a logical value
+    the data as a scatter plot), \code{deriv=FALSE} (a logical value
     indicating whether to plot the derivative of the structural function
-    rather than the function itself). Note that the \code{\link{plot}}
-    method for \code{crsiv} objects currently only supports univariate
-    endogenous predictors \eqn{z}.
+    rather than the function itself), \code{ci=FALSE} (a logical value
+    indicating whether to overlay derivative confidence bounds when
+    available), and \code{xtrim=0.0} (a scalar in \code{[0,0.5)} used to
+    trim the plotted support of \eqn{z} by quantiles). Note that the
+    \code{\link{plot}} method for \code{crsiv} objects currently only
+    supports univariate endogenous predictors \eqn{z}.
     
     See \code{\link{crs}} for details on the return object components.
 
