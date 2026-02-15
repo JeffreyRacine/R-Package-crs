@@ -390,6 +390,10 @@ curve)}
     (options \code{mean=FALSE}, \code{deriv=i} where \eqn{i} is an
     integer, \code{ci=FALSE}, \code{persp.rgl=FALSE},
     \code{plot.behavior=c("plot","plot-data","data")},
+    \code{plot.errors.method=c("asymptotic","bootstrap")},
+    \code{plot.errors.boot.num=99},
+    \code{plot.errors.type=c("standard","pointwise","bonferroni","simultaneous","all")},
+    \code{plot.errors.alpha=0.05},
     \code{xtrim=0.0},\code{xq=0.5}) support objects of this type. The
     returned object has the following components:
 
@@ -399,7 +403,10 @@ curve)}
   \item{lwr,upr}{ lower/upper bound for a 95\% confidence interval for
   the \code{fitted.values} (conditional mean) obtained from
   \code{\link{predict.lm}} via the argument
-  \code{interval="confidence"}}
+  \code{interval="confidence"}. When plotting with
+  \code{plot.errors.method="bootstrap"}, bootstrap-based bounds are used
+  instead for mean plots. Bootstrap derivative bounds in
+  \code{plot.crs} currently fall back to asymptotic bounds.}
 
   \item{residuals}{ residuals computed at the sample points or
   evaluation points }
@@ -579,4 +586,3 @@ matplot(pdat[[1]][,1],pdat[[1]][,-1],
 } % end dontrun
 }
 \keyword{nonparametric}
-

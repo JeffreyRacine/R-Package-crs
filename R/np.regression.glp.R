@@ -2666,6 +2666,97 @@ glpcvNOMAD <- function(ydat=NULL,
 
 }
 
+npglp.SCSrank <- function(x, conf.level = 0.95, alternative = "two.sided") {
+  alternative <- match.arg(alternative, choices = c("two.sided", "less", "greater"))
+  DataMatrix <- x
+  N <- nrow(DataMatrix)
+  k <- round(conf.level * N, 0)
+  RankDat <- apply(DataMatrix, 2, rank)
+
+  switch(alternative,
+         "two.sided" = {
+           W1 <- apply(RankDat, 1, max)
+           W2 <- N + 1 - apply(RankDat, 1, min)
+           Wmat <- cbind(W1, W2)
+           w <- apply(Wmat, 1, max)
+           tstar <- round(sort(w)[k], 0)
+           SCI <- function(x) {
+             sortx <- sort(x)
+             cbind(sortx[N + 1 - tstar], sortx[tstar])
+           }
+           SCS <- t(apply(DataMatrix, 2, SCI))
+         },
+         "less" = {
+           W1 <- apply(RankDat, 1, max)
+           tstar <- round(sort(W1)[k], 0)
+           SCI <- function(x) {
+             sortx <- sort(x)
+             cbind(-Inf, sortx[tstar])
+           }
+           SCS <- t(apply(DataMatrix, 2, SCI))
+         },
+         "greater" = {
+           W2 <- N + 1 - apply(RankDat, 1, min)
+           tstar <- round(sort(W2)[k], 0)
+           SCI <- function(x) {
+             sortx <- sort(x)
+             cbind(sortx[N + 1 - tstar], Inf)
+           }
+           SCS <- t(apply(DataMatrix, 2, SCI))
+         })
+
+  colnames(SCS) <- c("lower", "upper")
+  list(conf.int = SCS, conf.level = conf.level, alternative = alternative)
+}
+
+npglp.bootstrap.bounds <- function(boot.t, alpha, band.type, center) {
+  neval <- ncol(boot.t)
+  if (band.type == "standard") {
+    se <- sqrt(diag(cov(boot.t)))
+    z <- qnorm(1 - alpha / 2)
+    return(cbind(center - z * se, center + z * se))
+  }
+  if (band.type == "pointwise") {
+    return(t(apply(boot.t, 2, quantile, probs = c(alpha / 2, 1 - alpha / 2))))
+  }
+  if (band.type == "bonferroni") {
+    return(t(apply(boot.t, 2, quantile, probs = c(alpha / (2 * neval), 1 - alpha / (2 * neval)))))
+  }
+  if (band.type == "simultaneous") {
+    return(npglp.SCSrank(boot.t, conf.level = 1 - alpha)$conf.int)
+  }
+  if (band.type == "all") {
+    return(list(
+      pointwise = npglp.bootstrap.bounds(boot.t, alpha, "pointwise", center),
+      bonferroni = npglp.bootstrap.bounds(boot.t, alpha, "bonferroni", center),
+      simultaneous = npglp.bootstrap.bounds(boot.t, alpha, "simultaneous", center)
+    ))
+  }
+  stop("'band.type' must be one of standard, pointwise, bonferroni, simultaneous, all")
+}
+
+npglp.bounds.range <- function(center, bounds, bounds.all = NULL, type = "standard") {
+  if (type == "all" && !is.null(bounds.all)) {
+    lo <- c(bounds.all$pointwise[,1], bounds.all$simultaneous[,1], bounds.all$bonferroni[,1])
+    hi <- c(bounds.all$pointwise[,2], bounds.all$simultaneous[,2], bounds.all$bonferroni[,2])
+    return(c(min(lo, na.rm = TRUE), max(hi, na.rm = TRUE)))
+  }
+  c(min(bounds[,1], na.rm = TRUE), max(bounds[,2], na.rm = TRUE))
+}
+
+npglp.draw.all <- function(x, all.bounds, add.legend = TRUE, legend.loc = "topleft") {
+  cols <- c(pointwise = "red", simultaneous = "green3", bonferroni = "blue")
+  for (bn in c("pointwise", "simultaneous", "bonferroni")) {
+    lines(x, all.bounds[[bn]][,1], lty = 2, col = cols[bn])
+    lines(x, all.bounds[[bn]][,2], lty = 2, col = cols[bn])
+  }
+  if (add.legend) {
+    legend(legend.loc,
+           legend = c("Pointwise", "Simultaneous", "Bonferroni"),
+           lty = 2, col = c("red", "green3", "blue"), lwd = 2, bty = "n")
+  }
+}
+
 compute.bootstrap.errors <- function(tydat,
                                      txdat,
                                      exdat,
@@ -2678,9 +2769,8 @@ compute.bootstrap.errors <- function(tydat,
                                      okertype,
                                      bwtype,boot.object=c("fitted","gradient","gradient.categorical"),
                                      plot.errors.boot.num=99,
-                                     plot.errors.type=c("quantiles","standard"),
-                                     plot.errors.quantiles=c(.025,.975),
-                                     alpha=0.05,
+                                     plot.errors.type=c("standard","pointwise","bonferroni","simultaneous","all"),
+                                     plot.errors.alpha=0.05,
                                      gradient.vec=NULL,
                                      gradient.categorical=FALSE,
                                      gradient.categorical.index=NULL,
@@ -2749,19 +2839,15 @@ compute.bootstrap.errors <- function(tydat,
                    statistic = boot.func.mean,
                    R = plot.errors.boot.num)
 
-  if (plot.errors.type == "standard") {
-    boot.err[,1:2] <- qnorm(1-alpha/2)*sqrt(diag(cov(boot.out$t)))
-    boot.err[,1] <- boot.out$t0 - boot.err[,1]
-    boot.err[,2] <- boot.out$t0 + boot.err[,2]
-  }
-  else if (plot.errors.type == "quantiles") {
-    boot.err[,1:2] <- t(sapply(as.data.frame(boot.out$t),
-                               function (y) {
-                                 quantile(y,probs = plot.errors.quantiles)
-                               }))
+  boot.all.err <- NULL
+  if (plot.errors.type == "all") {
+    boot.all.err <- npglp.bootstrap.bounds(boot.t = boot.out$t, alpha = plot.errors.alpha, band.type = "all", center = boot.out$t0)
+    boot.err[,1:2] <- boot.all.err$pointwise
+  } else {
+    boot.err[,1:2] <- npglp.bootstrap.bounds(boot.t = boot.out$t, alpha = plot.errors.alpha, band.type = plot.errors.type, center = boot.out$t0)
   }
 
-  return(cbind(boot.out$t0,boot.err))
+  return(list(center = boot.out$t0, bounds = boot.err, bounds.all = boot.all.err, boot.mat = boot.out$t))
 
 }
 
@@ -2775,8 +2861,8 @@ plot.npglpreg <- function(x,
                           xq = 0.5,
                           plot.behavior = c("plot","plot-data","data"),
                           plot.errors.boot.num=99,
-                          plot.errors.type=c("quantiles","standard"),
-                          plot.errors.quantiles=c(.025,.975),
+                          plot.errors.type=c("standard","pointwise","bonferroni","simultaneous","all"),
+                          plot.errors.alpha=0.05,
                           persp.rgl=FALSE,
                           display.warnings=TRUE,
                           display.nomad.progress=TRUE,
@@ -2881,11 +2967,21 @@ plot.npglpreg <- function(x,
                                              boot.object="fitted",
                                              plot.errors.boot.num=plot.errors.boot.num,
                                              plot.errors.type=plot.errors.type,
-                                             plot.errors.quantiles=plot.errors.quantiles,
+                                             plot.errors.alpha=plot.errors.alpha,
                                              display.warnings=display.warnings)
-
-          mg[[i]] <- data.frame(exdat[,i],ci.out)
-          names(mg[[i]]) <- c(names(exdat)[i],"mean","lwr","upr")
+          if (plot.errors.type == "all") {
+            mg[[i]] <- data.frame(
+              exdat[,i],
+              ci.out$center,
+              ci.out$bounds.all$pointwise[,1], ci.out$bounds.all$pointwise[,2],
+              ci.out$bounds.all$simultaneous[,1], ci.out$bounds.all$simultaneous[,2],
+              ci.out$bounds.all$bonferroni[,1], ci.out$bounds.all$bonferroni[,2]
+            )
+            names(mg[[i]]) <- c(names(exdat)[i],"mean","lwr","upr","lwr.sim","upr.sim","lwr.bonf","upr.bonf")
+          } else {
+            mg[[i]] <- data.frame(exdat[,i],ci.out$center,ci.out$bounds)
+            names(mg[[i]]) <- c(names(exdat)[i],"mean","lwr","upr")
+          }
 
         }
 
@@ -2895,8 +2991,13 @@ plot.npglpreg <- function(x,
         min.mg <- Inf
         max.mg <- -Inf
         for(i in 1:length(mg)) {
-          min.mg <- min(min.mg,min(mg[[i]][,-1]))
-          max.mg <- max(max.mg,max(mg[[i]][,-1]))
+          if (ci && plot.errors.type == "all") {
+            min.mg <- min(min.mg, min(mg[[i]][,c("lwr","lwr.sim","lwr.bonf")]))
+            max.mg <- max(max.mg, max(mg[[i]][,c("upr","upr.sim","upr.bonf")]))
+          } else {
+            min.mg <- min(min.mg,min(mg[[i]][,-1]))
+            max.mg <- max(max.mg,max(mg[[i]][,-1]))
+          }
         }
         ylim <- c(min.mg,max.mg)
       } else {
@@ -2918,31 +3019,46 @@ plot.npglpreg <- function(x,
                  type="l")
 
           } else {
-            if(!common.scale) ylim <- c(min(mg[[i]][,-1]),max(mg[[i]][,-1]))
+            if(!common.scale) {
+              if (plot.errors.type == "all") {
+                ylim <- c(min(mg[[i]][,c("lwr","lwr.sim","lwr.bonf")]), max(mg[[i]][,c("upr","upr.sim","upr.bonf")]))
+              } else {
+                ylim <- c(min(mg[[i]][,-1]),max(mg[[i]][,-1]))
+              }
+            }
             plot(mg[[i]][,1],mg[[i]][,2],
                  xlab=names(exdat)[i],
                  ylab="Conditional Mean",
                  ylim=ylim,
                  type="l")
-            ## Need to overlay for proper plotting of factor errorbars
-            par(new=TRUE)
-            plot(mg[[i]][,1],mg[[i]][,3],
-                 xlab="",
-                 ylab="",
-                 ylim=ylim,
-                 type="l",
-                 axes=FALSE,
-                 lty=2,
-                 col=2)
-            par(new=TRUE)
-            plot(mg[[i]][,1],mg[[i]][,4],
-                 xlab="",
-                 ylab="",
-                 ylim=ylim,
-                 type="l",
-                 axes=FALSE,
-                 lty=2,
-                 col=2)
+            if (plot.errors.type == "all") {
+              all.bounds <- list(
+                pointwise = cbind(mg[[i]][,"lwr"], mg[[i]][,"upr"]),
+                simultaneous = cbind(mg[[i]][,"lwr.sim"], mg[[i]][,"upr.sim"]),
+                bonferroni = cbind(mg[[i]][,"lwr.bonf"], mg[[i]][,"upr.bonf"])
+              )
+              npglp.draw.all(mg[[i]][,1], all.bounds, add.legend = TRUE)
+            } else {
+              ## Need to overlay for proper plotting of factor errorbars
+              par(new=TRUE)
+              plot(mg[[i]][,1],mg[[i]][,3],
+                   xlab="",
+                   ylab="",
+                   ylim=ylim,
+                   type="l",
+                   axes=FALSE,
+                   lty=2,
+                   col=2)
+              par(new=TRUE)
+              plot(mg[[i]][,1],mg[[i]][,4],
+                   xlab="",
+                   ylab="",
+                   ylim=ylim,
+                   type="l",
+                   axes=FALSE,
+                   lty=2,
+                   col=2)
+            }
           }
 
         }
@@ -3100,7 +3216,7 @@ plot.npglpreg <- function(x,
                                              boot.object="gradient",
                                              plot.errors.boot.num=plot.errors.boot.num,
                                              plot.errors.type=plot.errors.type,
-                                             plot.errors.quantiles=plot.errors.quantiles,
+                                             plot.errors.alpha=plot.errors.alpha,
                                              gradient.vec=gradient.vec)
         } else {
           ci.out <- compute.bootstrap.errors(tydat=tydat,
@@ -3116,13 +3232,24 @@ plot.npglpreg <- function(x,
                                              boot.object="gradient.categorical",
                                              plot.errors.boot.num=plot.errors.boot.num,
                                              plot.errors.type=plot.errors.type,
-                                             plot.errors.quantiles=plot.errors.quantiles,
+                                             plot.errors.alpha=plot.errors.alpha,
                                              gradient.categorical=TRUE,
                                              gradient.categorical.index=i.categorical)
         }
 
-        rg[[i]] <- data.frame(newdata[,i],ci.out)
-        names(rg[[i]]) <- c(names(newdata)[i],"deriv","lwr","upr")
+        if (plot.errors.type == "all") {
+          rg[[i]] <- data.frame(
+            newdata[,i],
+            ci.out$center,
+            ci.out$bounds.all$pointwise[,1], ci.out$bounds.all$pointwise[,2],
+            ci.out$bounds.all$simultaneous[,1], ci.out$bounds.all$simultaneous[,2],
+            ci.out$bounds.all$bonferroni[,1], ci.out$bounds.all$bonferroni[,2]
+          )
+          names(rg[[i]]) <- c(names(newdata)[i],"deriv","lwr","upr","lwr.sim","upr.sim","lwr.bonf","upr.bonf")
+        } else {
+          rg[[i]] <- data.frame(newdata[,i],ci.out$center,ci.out$bounds)
+          names(rg[[i]]) <- c(names(newdata)[i],"deriv","lwr","upr")
+        }
 
       }
 
@@ -3138,8 +3265,13 @@ plot.npglpreg <- function(x,
       min.rg <- Inf
       max.rg <- -Inf
       for(i in 1:length(rg)) {
-        min.rg <- min(min.rg,min(rg[[i]][,-1]))
-        max.rg <- max(max.rg,max(rg[[i]][,-1]))
+        if (ci && plot.errors.type == "all") {
+          min.rg <- min(min.rg, min(rg[[i]][,c("lwr","lwr.sim","lwr.bonf")]))
+          max.rg <- max(max.rg, max(rg[[i]][,c("upr","upr.sim","upr.bonf")]))
+        } else {
+          min.rg <- min(min.rg,min(rg[[i]][,-1]))
+          max.rg <- max(max.rg,max(rg[[i]][,-1]))
+        }
       }
       ylim <- c(min.rg,max.rg)
     } else {
@@ -3160,31 +3292,46 @@ plot.npglpreg <- function(x,
                type="l")
 
         } else {
-          if(!common.scale) ylim <- c(min(rg[[i]][,-1]),max(rg[[i]][,-1]))
+          if(!common.scale) {
+            if (plot.errors.type == "all") {
+              ylim <- c(min(rg[[i]][,c("lwr","lwr.sim","lwr.bonf")]), max(rg[[i]][,c("upr","upr.sim","upr.bonf")]))
+            } else {
+              ylim <- c(min(rg[[i]][,-1]),max(rg[[i]][,-1]))
+            }
+          }
           plot(rg[[i]][,1],rg[[i]][,2],
                xlab=names(newdata)[i],
                ylab=ifelse(!is.factor(newdata[,i]), paste("Order", deriv,"Gradient"), "Difference in Levels"),
                ylim=ylim,
                type="l")
-          ## Need to overlay for proper plotting of factor errorbars
-          par(new=TRUE)
-          plot(rg[[i]][,1],rg[[i]][,3],
-               xlab="",
-               ylab="",
-               ylim=ylim,
-               type="l",
-               axes=FALSE,
-               lty=2,
-               col=2)
-          par(new=TRUE)
-          plot(rg[[i]][,1],rg[[i]][,4],
-               xlab="",
-               ylab="",
-               ylim=ylim,
-               type="l",
-               axes=FALSE,
-               lty=2,
-               col=2)
+          if (plot.errors.type == "all") {
+            all.bounds <- list(
+              pointwise = cbind(rg[[i]][,"lwr"], rg[[i]][,"upr"]),
+              simultaneous = cbind(rg[[i]][,"lwr.sim"], rg[[i]][,"upr.sim"]),
+              bonferroni = cbind(rg[[i]][,"lwr.bonf"], rg[[i]][,"upr.bonf"])
+            )
+            npglp.draw.all(rg[[i]][,1], all.bounds, add.legend = TRUE)
+          } else {
+            ## Need to overlay for proper plotting of factor errorbars
+            par(new=TRUE)
+            plot(rg[[i]][,1],rg[[i]][,3],
+                 xlab="",
+                 ylab="",
+                 ylim=ylim,
+                 type="l",
+                 axes=FALSE,
+                 lty=2,
+                 col=2)
+            par(new=TRUE)
+            plot(rg[[i]][,1],rg[[i]][,4],
+                 xlab="",
+                 ylab="",
+                 ylim=ylim,
+                 type="l",
+                 axes=FALSE,
+                 lty=2,
+                 col=2)
+          }
         }
 
       }

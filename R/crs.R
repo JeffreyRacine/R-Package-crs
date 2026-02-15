@@ -1111,10 +1111,129 @@ summary.crs <- function(object,
 
 }
 
+crs.SCSrank <- function(x, conf.level = 0.95, alternative = "two.sided") {
+  alternative <- match.arg(alternative, choices = c("two.sided", "less", "greater"))
+  DataMatrix <- x
+  N <- nrow(DataMatrix)
+  k <- round(conf.level * N, 0)
+  RankDat <- apply(DataMatrix, 2, rank)
+  switch(alternative,
+         "two.sided" = {
+           W1 <- apply(RankDat, 1, max)
+           W2 <- N + 1 - apply(RankDat, 1, min)
+           Wmat <- cbind(W1, W2)
+           w <- apply(Wmat, 1, max)
+           tstar <- round(sort(w)[k], 0)
+           SCI <- function(x) {
+             sortx <- sort(x)
+             cbind(sortx[N + 1 - tstar], sortx[tstar])
+           }
+           SCS <- t(apply(DataMatrix, 2, SCI))
+         },
+         "less" = {
+           W1 <- apply(RankDat, 1, max)
+           tstar <- round(sort(W1)[k], 0)
+           SCI <- function(x) {
+             sortx <- sort(x)
+             cbind(-Inf, sortx[tstar])
+           }
+           SCS <- t(apply(DataMatrix, 2, SCI))
+         },
+         "greater" = {
+           W2 <- N + 1 - apply(RankDat, 1, min)
+           tstar <- round(sort(W2)[k], 0)
+           SCI <- function(x) {
+             sortx <- sort(x)
+             cbind(sortx[N + 1 - tstar], Inf)
+           }
+           SCS <- t(apply(DataMatrix, 2, SCI))
+         })
+  colnames(SCS) <- c("lower", "upper")
+  list(conf.int = SCS)
+}
+
+crs.bootstrap.bounds <- function(boot.t, alpha, band.type, center) {
+  neval <- ncol(boot.t)
+  if (band.type == "standard") {
+    z <- qnorm(1 - alpha/2)
+    se <- sqrt(diag(cov(boot.t)))
+    return(cbind(center - z * se, center + z * se))
+  }
+  if (band.type == "pointwise") {
+    return(t(apply(boot.t, 2, quantile, probs = c(alpha/2, 1 - alpha/2))))
+  }
+  if (band.type == "bonferroni") {
+    return(t(apply(boot.t, 2, quantile, probs = c(alpha/(2 * neval), 1 - alpha/(2 * neval)))))
+  }
+  if (band.type == "simultaneous") {
+    return(crs.SCSrank(boot.t, conf.level = 1 - alpha)$conf.int)
+  }
+  if (band.type == "all") {
+    return(list(
+      pointwise = crs.bootstrap.bounds(boot.t, alpha, "pointwise", center),
+      simultaneous = crs.bootstrap.bounds(boot.t, alpha, "simultaneous", center),
+      bonferroni = crs.bootstrap.bounds(boot.t, alpha, "bonferroni", center)
+    ))
+  }
+  stop("'band.type' must be one of standard, pointwise, bonferroni, simultaneous, all")
+}
+
+crs.draw.all <- function(x, all.bounds, add.legend = TRUE, legend.loc = "topleft") {
+  cols <- c(pointwise = "red", simultaneous = "green3", bonferroni = "blue")
+  for (bn in c("pointwise", "simultaneous", "bonferroni")) {
+    lines(x, all.bounds[[bn]][,1], lty = 2, col = cols[bn])
+    lines(x, all.bounds[[bn]][,2], lty = 2, col = cols[bn])
+  }
+  if (add.legend) {
+    legend(legend.loc,
+           legend = c("Pointwise", "Simultaneous", "Bonferroni"),
+           lty = 2, col = c("red", "green3", "blue"), lwd = 2, bty = "n")
+  }
+}
+
+crs.bootstrap.matrix <- function(object, newdata, deriv = 0, deriv.index = 1, boot.num = 99, display.warnings = TRUE) {
+  n <- nrow(object$xz)
+  pred0 <- predict(object, newdata = newdata, deriv = deriv)
+  center <- if (deriv > 0) attr(pred0, "deriv.mat")[,deriv.index] else as.numeric(pred0)
+  boot.mat <- matrix(NA_real_, nrow = boot.num, ncol = nrow(newdata))
+
+  for (b in 1:boot.num) {
+    idx <- sample.int(n, size = n, replace = TRUE)
+    fit.b <- crs.default(
+      xz = object$xz[idx,,drop=FALSE],
+      y = object$y[idx],
+      basis = object$basis,
+      complexity = object$complexity,
+      degree = object$degree,
+      include = object$include,
+      kernel = object$kernel,
+      knots = object$knots,
+      lambda = object$lambda,
+      prune = object$prune,
+      segments = object$segments,
+      tau = object$tau,
+      weights = if (is.null(object$weights)) NULL else object$weights[idx],
+      display.warnings = display.warnings,
+      display.nomad.progress = FALSE
+    )
+    fit.b$xz <- object$xz[idx,,drop=FALSE]
+    fit.b$y <- object$y[idx]
+    if (!is.null(object$terms)) fit.b$terms <- object$terms
+    if (!is.null(object$xlevels)) fit.b$xlevels <- object$xlevels
+    pred.b <- predict(fit.b, newdata = newdata, deriv = deriv)
+    boot.mat[b,] <- if (deriv > 0) attr(pred.b, "deriv.mat")[,deriv.index] else as.numeric(pred.b)
+  }
+  list(center = center, boot.mat = boot.mat)
+}
+
 plot.crs <- function(x,
                      mean=FALSE,
                      deriv=0,
                      ci=FALSE,
+                     plot.errors.method = c("asymptotic","bootstrap"),
+                     plot.errors.boot.num = 99,
+                     plot.errors.type = c("standard","pointwise","bonferroni","simultaneous","all"),
+                     plot.errors.alpha = 0.05,
                      num.eval=100,
                      caption=list("Residuals vs Fitted",
                                   "Normal Q-Q Plot",
@@ -1130,6 +1249,18 @@ plot.crs <- function(x,
                      ...) {
 
   plot.behavior <- match.arg(plot.behavior)
+  plot.errors.method <- match.arg(plot.errors.method)
+  plot.errors.type <- match.arg(plot.errors.type)
+
+  if (ci && plot.errors.method == "asymptotic" && plot.errors.type != "standard") {
+    if (display.warnings) warning("asymptotic CI supports only standard type; switching plot.errors.type='standard'")
+    plot.errors.type <- "standard"
+  }
+  if (ci && deriv > 0 && plot.errors.method == "bootstrap") {
+    if (display.warnings) warning("bootstrap CI for derivatives is not yet supported in plot.crs; switching to asymptotic")
+    plot.errors.method <- "asymptotic"
+    plot.errors.type <- "standard"
+  }
 
   object <- x
 
@@ -1356,8 +1487,29 @@ plot.crs <- function(x,
           names(mg[[i]]) <- c(names(newdata)[i],"mean")
 
         } else {
-          mg[[i]] <- data.frame(newdata[,i],fitted.values,lwr,upr)
-          names(mg[[i]]) <- c(names(newdata)[i],"mean","lwr","upr")
+          if (plot.errors.method == "bootstrap") {
+            boot <- crs.bootstrap.matrix(object = object,
+                                         newdata = newdata,
+                                         deriv = 0,
+                                         deriv.index = i,
+                                         boot.num = plot.errors.boot.num,
+                                         display.warnings = display.warnings)
+            if (plot.errors.type == "all") {
+              all.bounds <- crs.bootstrap.bounds(boot$boot.mat, plot.errors.alpha, "all", boot$center)
+              mg[[i]] <- data.frame(newdata[,i], boot$center,
+                                    all.bounds$pointwise[,1], all.bounds$pointwise[,2],
+                                    all.bounds$simultaneous[,1], all.bounds$simultaneous[,2],
+                                    all.bounds$bonferroni[,1], all.bounds$bonferroni[,2])
+              names(mg[[i]]) <- c(names(newdata)[i],"mean","lwr","upr","lwr.sim","upr.sim","lwr.bonf","upr.bonf")
+            } else {
+              bounds <- crs.bootstrap.bounds(boot$boot.mat, plot.errors.alpha, plot.errors.type, boot$center)
+              mg[[i]] <- data.frame(newdata[,i], boot$center, bounds)
+              names(mg[[i]]) <- c(names(newdata)[i],"mean","lwr","upr")
+            }
+          } else {
+            mg[[i]] <- data.frame(newdata[,i],fitted.values,lwr,upr)
+            names(mg[[i]]) <- c(names(newdata)[i],"mean","lwr","upr")
+          }
         }
 
         console <- printClear(console)
@@ -1369,8 +1521,13 @@ plot.crs <- function(x,
         min.mg <- Inf
         max.mg <- -Inf
         for(i in 1:length(mg)) {
-          min.mg <- min(min.mg,min(mg[[i]][,-1]))
-          max.mg <- max(max.mg,max(mg[[i]][,-1]))
+          if (ci && plot.errors.type == "all") {
+            min.mg <- min(min.mg, min(mg[[i]][,c("lwr","lwr.sim","lwr.bonf")]))
+            max.mg <- max(max.mg, max(mg[[i]][,c("upr","upr.sim","upr.bonf")]))
+          } else {
+            min.mg <- min(min.mg,min(mg[[i]][,-1]))
+            max.mg <- max(max.mg,max(mg[[i]][,-1]))
+          }
         }
         ylim <- c(min.mg,max.mg)
       } else {
@@ -1392,34 +1549,49 @@ plot.crs <- function(x,
                  ...)
 
           } else {
-            if(!common.scale) ylim <- c(min(mg[[i]][,-1]),max(mg[[i]][,-1]))
+            if(!common.scale) {
+              if (plot.errors.type == "all") {
+                ylim <- c(min(mg[[i]][,c("lwr","lwr.sim","lwr.bonf")]), max(mg[[i]][,c("upr","upr.sim","upr.bonf")]))
+              } else {
+                ylim <- c(min(mg[[i]][,-1]),max(mg[[i]][,-1]))
+              }
+            }
             plot(mg[[i]][,1],mg[[i]][,2],
                  xlab=names(newdata)[i],
                  ylab=ifelse(is.null(tau),"Conditional Mean",paste("Conditional Quantile (tau = ",format(tau),")",sep="")),
                  ylim=ylim,
                  type="l",
                  ...)
-            ## Need to overlay for proper plotting of factor errorbars
-            par(new=TRUE)
-            plot(mg[[i]][,1],mg[[i]][,3],
-                 xlab="",
-                 ylab="",
-                 ylim=ylim,
-                 type="l",
-                 axes=FALSE,
-                 lty=2,
-                 col=2,
-                 ...)
-            par(new=TRUE)
-            plot(mg[[i]][,1],mg[[i]][,4],
-                 xlab="",
-                 ylab="",
-                 ylim=ylim,
-                 type="l",
-                 axes=FALSE,
-                 lty=2,
-                 col=2,
-                 ...)
+            if (plot.errors.type == "all") {
+              all.bounds <- list(
+                pointwise = cbind(mg[[i]][,"lwr"], mg[[i]][,"upr"]),
+                simultaneous = cbind(mg[[i]][,"lwr.sim"], mg[[i]][,"upr.sim"]),
+                bonferroni = cbind(mg[[i]][,"lwr.bonf"], mg[[i]][,"upr.bonf"])
+              )
+              crs.draw.all(mg[[i]][,1], all.bounds, add.legend = TRUE)
+            } else {
+              ## Need to overlay for proper plotting of factor errorbars
+              par(new=TRUE)
+              plot(mg[[i]][,1],mg[[i]][,3],
+                   xlab="",
+                   ylab="",
+                   ylim=ylim,
+                   type="l",
+                   axes=FALSE,
+                   lty=2,
+                   col=2,
+                   ...)
+              par(new=TRUE)
+              plot(mg[[i]][,1],mg[[i]][,4],
+                   xlab="",
+                   ylab="",
+                   ylim=ylim,
+                   type="l",
+                   axes=FALSE,
+                   lty=2,
+                   col=2,
+                   ...)
+            }
           }
 
         }
@@ -1729,12 +1901,41 @@ plot.crs <- function(x,
           names(rg[[i]]) <- c(names(newdata)[i],"deriv")
 
         } else {
-
-          rg[[i]] <- data.frame(newdata[,i],
-                                deriv.est,
-                                deriv.lwr,
-                                deriv.upr)
-          names(rg[[i]]) <- c(names(newdata)[i],"deriv","lwr","upr")
+          if (plot.errors.method == "bootstrap" && !is.factor(newdata[,i])) {
+            boot <- crs.bootstrap.matrix(object = object,
+                                         newdata = newdata,
+                                         deriv = deriv,
+                                         deriv.index = i,
+                                         boot.num = plot.errors.boot.num,
+                                         display.warnings = display.warnings)
+            if (plot.errors.type == "all") {
+              all.bounds <- crs.bootstrap.bounds(boot$boot.mat, plot.errors.alpha, "all", boot$center)
+              rg[[i]] <- data.frame(newdata[,i], boot$center,
+                                    all.bounds$pointwise[,1], all.bounds$pointwise[,2],
+                                    all.bounds$simultaneous[,1], all.bounds$simultaneous[,2],
+                                    all.bounds$bonferroni[,1], all.bounds$bonferroni[,2])
+              names(rg[[i]]) <- c(names(newdata)[i],"deriv","lwr","upr","lwr.sim","upr.sim","lwr.bonf","upr.bonf")
+            } else {
+              bounds <- crs.bootstrap.bounds(boot$boot.mat, plot.errors.alpha, plot.errors.type, boot$center)
+              rg[[i]] <- data.frame(newdata[,i], boot$center, bounds)
+              names(rg[[i]]) <- c(names(newdata)[i],"deriv","lwr","upr")
+            }
+          } else {
+            if (plot.errors.method == "bootstrap" && is.factor(newdata[,i]) &&
+                plot.errors.type == "all" && display.warnings) {
+              warning("bootstrap-all for factor derivatives currently reuses standard bounds for this slice")
+            }
+            if (plot.errors.type == "all") {
+              rg[[i]] <- data.frame(newdata[,i], deriv.est,
+                                    deriv.lwr, deriv.upr,
+                                    deriv.lwr, deriv.upr,
+                                    deriv.lwr, deriv.upr)
+              names(rg[[i]]) <- c(names(newdata)[i],"deriv","lwr","upr","lwr.sim","upr.sim","lwr.bonf","upr.bonf")
+            } else {
+              rg[[i]] <- data.frame(newdata[,i], deriv.est, deriv.lwr, deriv.upr)
+              names(rg[[i]]) <- c(names(newdata)[i],"deriv","lwr","upr")
+            }
+          }
 
         }
 
@@ -1751,8 +1952,13 @@ plot.crs <- function(x,
         min.rg <- Inf
         max.rg <- -Inf
         for(i in 1:length(rg)) {
-          min.rg <- min(min.rg,min(rg[[i]][,-1]))
-          max.rg <- max(max.rg,max(rg[[i]][,-1]))
+          if (ci && plot.errors.type == "all") {
+            min.rg <- min(min.rg, min(rg[[i]][,c("lwr","lwr.sim","lwr.bonf")]))
+            max.rg <- max(max.rg, max(rg[[i]][,c("upr","upr.sim","upr.bonf")]))
+          } else {
+            min.rg <- min(min.rg,min(rg[[i]][,-1]))
+            max.rg <- max(max.rg,max(rg[[i]][,-1]))
+          }
         }
         ylim <- c(min.rg,max.rg)
       } else {
@@ -1774,34 +1980,49 @@ plot.crs <- function(x,
                  ...)
 
           } else {
-            if(!common.scale) ylim <- c(min(rg[[i]][,-1]),max(rg[[i]][,-1]))
+            if(!common.scale) {
+              if (plot.errors.type == "all") {
+                ylim <- c(min(rg[[i]][,c("lwr","lwr.sim","lwr.bonf")]), max(rg[[i]][,c("upr","upr.sim","upr.bonf")]))
+              } else {
+                ylim <- c(min(rg[[i]][,-1]),max(rg[[i]][,-1]))
+              }
+            }
             plot(rg[[i]][,1],rg[[i]][,2],
                  xlab=names(newdata)[i],
                  ylab=ifelse(!is.factor(newdata[,i]), paste("Order", deriv,"Derivative"), "Difference in Levels"),
                  ylim=ylim,
                  type="l",
                  ...)
-            ## Need to overlay for proper plotting of factor errorbars
-            par(new=TRUE)
-            plot(rg[[i]][,1],rg[[i]][,3],
-                 xlab="",
-                 ylab="",
-                 ylim=ylim,
-                 type="l",
-                 axes=FALSE,
-                 lty=2,
-                 col=2,
-                 ...)
-            par(new=TRUE)
-            plot(rg[[i]][,1],rg[[i]][,4],
-                 xlab="",
-                 ylab="",
-                 ylim=ylim,
-                 type="l",
-                 axes=FALSE,
-                 lty=2,
-                 col=2,
-                 ...)
+            if (plot.errors.type == "all") {
+              all.bounds <- list(
+                pointwise = cbind(rg[[i]][,"lwr"], rg[[i]][,"upr"]),
+                simultaneous = cbind(rg[[i]][,"lwr.sim"], rg[[i]][,"upr.sim"]),
+                bonferroni = cbind(rg[[i]][,"lwr.bonf"], rg[[i]][,"upr.bonf"])
+              )
+              crs.draw.all(rg[[i]][,1], all.bounds, add.legend = TRUE)
+            } else {
+              ## Need to overlay for proper plotting of factor errorbars
+              par(new=TRUE)
+              plot(rg[[i]][,1],rg[[i]][,3],
+                   xlab="",
+                   ylab="",
+                   ylim=ylim,
+                   type="l",
+                   axes=FALSE,
+                   lty=2,
+                   col=2,
+                   ...)
+              par(new=TRUE)
+              plot(rg[[i]][,1],rg[[i]][,4],
+                   xlab="",
+                   ylab="",
+                   ylim=ylim,
+                   type="l",
+                   axes=FALSE,
+                   lty=2,
+                   col=2,
+                   ...)
+            }
           }
 
         }

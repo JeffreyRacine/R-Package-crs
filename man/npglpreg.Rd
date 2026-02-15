@@ -383,15 +383,18 @@ for each dimension of the continuous \code{x} in \code{txdat}}
     (or generate) estimated values and residuals. Furthermore, the
     functions \code{\link{summary}}, \code{\link{predict}}, and
     \code{\link{plot}} (options \code{deriv=0}, \code{ci=FALSE}
-    [\code{ci=TRUE} produces pointwise bootstrap error bounds],
+    [\code{ci=TRUE} produces bootstrap error bounds],
     \code{persp.rgl=FALSE},
     \code{plot.behavior=c("plot","plot-data","data")},
     \code{plot.errors.boot.num=99},
-    \code{plot.errors.type=c("quantiles","standard")}
-    [\code{"quantiles"} produces percentiles determined by
-    \code{plot.errors.quantiles} below, \code{"standard"} produces error
-    bounds given by +/- 1.96 bootstrap standard deviations],
-    \code{plot.errors.quantiles=c(.025,.975)}, \code{xtrim=0.0},
+    \code{plot.errors.type=c("standard","pointwise","bonferroni","simultaneous","all")}
+    [\code{"standard"} produces error bounds given by +/- 1.96 bootstrap
+    standard deviations, \code{"pointwise"} uses
+    \eqn{(\alpha/2,1-\alpha/2)} quantiles, \code{"bonferroni"} uses
+    \eqn{(\alpha/(2m),1-\alpha/(2m))} quantiles with \eqn{m} evaluation
+    points, \code{"simultaneous"} uses rank-based rectangular confidence
+    sets, and \code{"all"} overlays pointwise/simultaneous/bonferroni],
+    \code{plot.errors.alpha=0.05}, \code{xtrim=0.0},
     \code{xq=0.5}) support objects of this type. The returned object has
     the following components:
 
