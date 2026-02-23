@@ -65,6 +65,32 @@ Clean-break rerun artifacts (after removing NOMAD3 tree and legacy aliases):
 - `/tmp/crs_nomad_cleanbreak_vs_pre_parity_compare.csv`
 - `/tmp/crs_nomad_cleanbreak_vs_pre_minima_compare.csv`
 
+Compatibility-profile rerun artifacts (explicit NOMAD3.9.1-like defaults via NOMAD4 names):
+
+- `/tmp/crs_install_compat_profile_20260223.log`
+- `/tmp/crs_nomad_post_compatdefaults_20260223_1_raw.csv`
+- `/tmp/crs_nomad_post_compatdefaults_20260223_1_summary.csv`
+- `/tmp/crs_nomad_post_compatdefaults_20260223_1_parity.rds`
+- `/tmp/crs_nomad_post_compatdefaults_20260223_1.log`
+- `/tmp/crs_nomad_compat_vs_pre_20260223_1_summary_compare.csv`
+- `/tmp/crs_nomad_compat_vs_pre_20260223_1_parity_compare.csv`
+- `/tmp/crs_nomad_compat_vs_pre_20260223_1_minima_compare.csv`
+- `/tmp/crs_nomad_compat_vs_prevpost_20260223_1_summary_compare.csv`
+
+Compatibility-profile refresh rerun (same profile, fresh install/build):
+
+- `/tmp/crs_install_compatprofile_refresh_20260223.log`
+- `/tmp/crs_nomad_post_compatdefaults_20260223_2_raw.csv`
+- `/tmp/crs_nomad_post_compatdefaults_20260223_2_summary.csv`
+- `/tmp/crs_nomad_post_compatdefaults_20260223_2_parity.rds`
+- `/tmp/crs_nomad_post_compatdefaults_20260223_2.log`
+- `/tmp/crs_nomad_compat_vs_pre_20260223_2_summary_compare.csv`
+- `/tmp/crs_nomad_compat_vs_pre_20260223_2_parity_compare.csv`
+- `/tmp/crs_nomad_compat_vs_pre_20260223_2_minima_compare.csv`
+- `/tmp/crs_nomad_compat_vs_prevpost_20260223_2_summary_compare.csv`
+- `/tmp/crs_nomad_compat_vs_prevpost_20260223_2_parity_compare.csv`
+- `/tmp/crs_nomad_compat_vs_prevpost_20260223_2_minima_compare.csv`
+
 ## 2026-02-23 clean-break comparison vs NOMAD3 baseline
 
 Reference pre-upgrade baseline:
@@ -102,6 +128,47 @@ Method note:
 
 - `benchmarks/nomad/compare_prepost.R` can overcount fixed-seed repeats via cross-join.
 - For this section, release-facing comparisons were taken from summary-level outputs and replicate-indexed parity/minima calculations.
+
+## 2026-02-23 parameter-mapping reassessment
+
+Question tested:
+
+- Are the large kernel-path slowdowns mainly due to old-vs-new option mismatch?
+
+Action:
+
+1. Built an explicit NOMAD3.9.1-like compatibility profile in `snomadr()` using NOMAD4 names only.
+2. Re-ran full benchmark suite and compared against both:
+   - NOMAD3 baseline
+   - prior clean-break NOMAD4 run without explicit profile
+
+Result:
+
+1. Relative to NOMAD3 baseline, kernel paths remained substantially slower:
+   - `frscvNOMAD`: fixed mean roughly `+684%` to `+753%`, varying mean roughly `+985%` to `+1005%`
+   - `krscvNOMAD`: fixed mean roughly `+630%` to `+719%`, varying mean roughly `+1230%` to `+1306%`
+2. Relative to prior clean-break NOMAD4 run, this compatibility profile did not materially reduce runtimes:
+   - mostly within low double-digit percent, often slightly slower
+3. Local-minima behavior stayed broadly similar:
+   - `npglpreg` still better on all varying-seed runs
+   - `frscvNOMAD` mostly better
+   - `krscvNOMAD` mixed
+
+Conclusion:
+
+- Parameter-name replacement (`MIN_POLL_SIZE` -> `MIN_FRAME_SIZE`) was not the main driver of observed runtime gaps.
+- Remaining slowdown is likely dominated by NOMAD4 implementation/runtime characteristics on these small kernel-CV workloads rather than superficial option-name mismatch.
+
+Refresh snapshot (`..._20260223_2...`):
+
+1. Versus NOMAD3 baseline:
+   - `frscvNOMAD`: fixed `+752.70%`, varying `+1005.49%` mean elapsed
+   - `krscvNOMAD`: fixed `+719.21%`, varying `+1305.63%` mean elapsed
+   - `npglpreg`: fixed `-25.38%`, varying `+19.52%` mean elapsed
+2. Varying-seed local minima:
+   - `frscvNOMAD`: post better `4/5`
+   - `krscvNOMAD`: post better `2/5`
+   - `npglpreg`: post better `5/5`
 
 ## Current gate state
 

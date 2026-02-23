@@ -14,12 +14,15 @@ This document is the operational playbook for future NOMAD work in `crs`.
    - `/Users/jracine/Development/crs/benchmarks/nomad/README.md`
 4. Complete NOMAD4 option reference used by `crs`:
    - `/Users/jracine/Development/crs/inst/nomad/NOMAD_4_5_0_OPTIONS_REFERENCE.md`
+5. Legacy-to-current option mapping:
+   - `/Users/jracine/Development/crs/NOMAD_391_TO_450_OPTION_MAP.md`
 
 ## Current strategic baseline
 
 1. `crs` is wired to embedded NOMAD `4.5.0`.
 2. `crs` keeps a NOMAD4-only source layout (legacy NOMAD3 tree removed).
-3. Near-term goal remains: stabilize NOMAD4 under strict parity/performance gates for existing `crs` behavior.
+3. `snomadr()` applies a NOMAD3.9.1-like compatibility profile via NOMAD4 option names when those options are not user-specified.
+4. Near-term goal remains: stabilize NOMAD4 under strict parity/performance gates for existing `crs` behavior.
 
 ## Roadmap alignment (`crs` vs `np`/`npRmpi`)
 
@@ -72,3 +75,13 @@ Use this sequence whenever a new NOMAD4.x release is integrated.
    - run tarball-first check from `/Users/jracine/Development`
    - restore with `/Users/jracine/Development/crs/man/dontruncrs` immediately after
    - remove disposable build artifacts (`src/*.o`, `src/*.so`) after check runs
+
+## Package version/date workflow
+
+`crs` release metadata is managed by:
+
+- `/Users/jracine/Development/gen_crs` which runs:
+  - `cd /Users/jracine/Development/crs`
+  - `sh ./mkcrspkg.sh`
+
+`mkcrspkg.sh` updates package metadata fields (for example `DESCRIPTION` date/version and `R/zzz.R` version string). These generated metadata updates are expected and safe to commit together with NOMAD integration changes.

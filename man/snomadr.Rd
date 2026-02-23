@@ -101,6 +101,20 @@ snomadr(eval.f,
       definitions is bundled at
       \code{system.file("nomad", "NOMAD_4_5_0_OPTIONS_REFERENCE.md", package="crs")}.
 
+      To improve comparability with historical NOMAD 3.9.1 behavior,
+      \code{snomadr} applies a small NOMAD4 compatibility profile when
+      these options are not user-supplied (user \code{opts} always take
+      precedence):
+      \code{QUAD_MODEL_SEARCH},
+      \code{SGTELIB_MODEL_SEARCH},
+      \code{NM_SEARCH},
+      \code{SPECULATIVE_SEARCH},
+      \code{EVAL_OPPORTUNISTIC},
+      \code{EVAL_QUEUE_SORT},
+      \code{DIRECTION_TYPE},
+      \code{QUAD_MODEL_SEARCH_BOX_FACTOR},
+      and \code{QUAD_MODEL_BOX_FACTOR}.
+
       A few high-impact options are:
       
       \code{"MAX_BB_EVAL"=10000}

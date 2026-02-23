@@ -39,6 +39,36 @@
 # write to the Free Software Foundation, Inc.,
 # 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 
+nomad4.compat.defaults <- function() {
+  # NOMAD3.9.1-like profile using NOMAD4 option names only.
+  # User-supplied opts always take precedence.
+  list(
+    "QUAD_MODEL_SEARCH" = "yes",
+    "SGTELIB_MODEL_SEARCH" = "no",
+    "NM_SEARCH" = "yes",
+    "SPECULATIVE_SEARCH" = "yes",
+    "EVAL_OPPORTUNISTIC" = "yes",
+    "EVAL_QUEUE_SORT" = "QUADRATIC_MODEL",
+    "DIRECTION_TYPE" = "ORTHO N+1 QUAD",
+    # NOMAD3 MODEL_RADIUS_FACTOR default was 2.0.
+    "QUAD_MODEL_SEARCH_BOX_FACTOR" = "2.0",
+    "QUAD_MODEL_BOX_FACTOR" = "2.0"
+  )
+}
+
+merge.nomad4.compat.defaults <- function(opts) {
+  defaults <- nomad4.compat.defaults()
+  if (length(opts) == 0) {
+    return(defaults)
+  }
+  for (k in names(defaults)) {
+    if (is.null(opts[[k]])) {
+      opts[[k]] <- defaults[[k]]
+    }
+  }
+  opts
+}
+
 snomadr <-
   function( eval.f,
             n,
@@ -100,6 +130,7 @@ snomadr <-
     if (missing(n ) || missing(eval.f)) stop("Must provide the objective function and the number of variables")
     if(missing(nmulti)||nmulti < 0) nmulti <- 0
     if(missing(display.nomad.progress)) display.nomad.progress <- TRUE
+    opts <- merge.nomad4.compat.defaults(opts)
 
     ## Define 'continuous' to types of variables
     if (is.null(bbin) ) { bbin <- rep (0, n)}
