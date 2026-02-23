@@ -2,6 +2,10 @@
 
 This folder provides strict pre/post parity and performance harnesses for NOMAD-related paths in `crs`.
 
+Canonical result/status tracker:
+
+- `/Users/jracine/Development/crs/NOMAD_STATUS_AND_GATES.md`
+
 ## Scripts
 
 - `run_nomad_smoke.R`

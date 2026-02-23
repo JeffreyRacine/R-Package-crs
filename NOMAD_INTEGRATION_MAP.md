@@ -2,6 +2,12 @@
 
 Snapshot date: 2026-02-23
 
+This file is intentionally static/technical.
+
+Dynamic run outcomes and gate status live in:
+
+- `/Users/jracine/Development/crs/NOMAD_STATUS_AND_GATES.md`
+
 ## Current embedded NOMAD version (wired in `crs`)
 
 `4.5.0`
@@ -94,5 +100,4 @@ The bridge currently applies NOMAD3-compatibility translation for key options:
 ## Practical implications
 
 - `crs` is now wired to embedded NOMAD4 (`4.5.0`), not NOMAD3 (`3.9.1`).
-- Behavior is close but not identical to legacy NOMAD3 in all paths.
-- Strict pre/post parity/performance gating remains required for final hardening.
+- Legacy NOMAD3 source remains available for behavioral reference and debugging.
