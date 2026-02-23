@@ -416,7 +416,7 @@ clsd <- function(x=NULL,
   ## Nelson (2006))
 
   quantile.vec <- numeric(length(quantile.seq))
-  for(i in 1:length(quantile.seq)) {
+  for(i in seq_along(quantile.seq)) {
     if(quantile.seq[i]>=0.5) {
       quantile.vec[i] <- max(xnorm[F.norm<=quantile.seq[i]])
     } else {
@@ -428,29 +428,29 @@ clsd <- function(x=NULL,
   ## either sample x or evaluation xeval
 
   if(is.null(xeval)) {
-    f <-   f.norm[rank.xnorm][1:length(x)]
-    F <-   F.norm[rank.xnorm][1:length(x)]
+    f <-   f.norm[rank.xnorm][seq_along(x)]
+    F <-   F.norm[rank.xnorm][seq_along(x)]
     f.norm <- f.norm[rank.xnorm][(length(x)+1):length(f.norm)]
     F.norm <- F.norm[rank.xnorm][(length(x)+1):length(F.norm)]
     xnorm <- xnorm[rank.xnorm][(length(x)+1):length(xnorm)]
     if(deriv>0) {
-      f.deriv <- f.norm.deriv[rank.xnorm][1:length(x)]
+      f.deriv <- f.norm.deriv[rank.xnorm][seq_along(x)]
       f.norm.deriv <- f.norm.deriv[rank.xnorm][(length(x)+1):length(f.norm.deriv)]
     }
-    P <-   Pnorm[rank.xnorm,][1:length(x),]
-    P.beta <- Pnorm.beta[rank.xnorm][1:length(x)]
+    P <-   Pnorm[rank.xnorm,][seq_along(x),]
+    P.beta <- Pnorm.beta[rank.xnorm][seq_along(x)]
   } else {
-    f <-   f.norm[rank.xnorm][1:length(xeval)]
-    F <-   F.norm[rank.xnorm][1:length(xeval)]
+    f <-   f.norm[rank.xnorm][seq_along(xeval)]
+    F <-   F.norm[rank.xnorm][seq_along(xeval)]
     f.norm <- f.norm[rank.xnorm][(length(x)+length(xeval)+1):length(f.norm)]
     F.norm <- F.norm[rank.xnorm][(length(x)+length(xeval)+1):length(F.norm)]
     xnorm <- xnorm[rank.xnorm][(length(x)+length(xeval)+1):length(xnorm)]
     if(deriv>0) {
-      f.deriv <- f.norm.deriv[rank.xnorm][1:length(xeval)]
+      f.deriv <- f.norm.deriv[rank.xnorm][seq_along(xeval)]
       f.norm.deriv <- f.norm.deriv[rank.xnorm][(length(x)+length(xeval)+1):length(f.norm.deriv)]
     }
-    P <-   Pnorm[rank.xnorm,][1:length(xeval),]
-    P.beta <- Pnorm.beta[rank.xnorm][1:length(xeval)]
+    P <-   Pnorm[rank.xnorm,][seq_along(xeval),]
+    P.beta <- Pnorm.beta[rank.xnorm][seq_along(xeval)]
   }
 
   clsd.return <- list(density=f,

@@ -377,3 +377,24 @@ Validation artifacts:
 3. Tarball-first:
    - `/tmp/crs_build_crsivdots_20260223.log`
    - `/tmp/crs_check_ascran_crsivdots_20260223.log` (`Status: 4 WARNINGs, 2 NOTEs`)
+
+### 2026-02-23 - A/R1.7 index/loop safety sweep (additional low-risk paths)
+
+Scope completed:
+
+1. Replaced additional `1:length(...)`, `1:ncol(...)`, and `1:NCOL(...)` loop/index patterns with `seq_along(...)` / `seq_len(...)` in low-risk paths.
+2. Files updated:
+   - `/Users/jracine/Development/crs/R/np.regression.glp.R`
+   - `/Users/jracine/Development/crs/R/clsd.R`
+   - `/Users/jracine/Development/crs/R/snomadr.R`
+   - `/Users/jracine/Development/crs/R/crssigtest.R`
+
+Validation artifacts:
+
+1. Deterministic install:
+   - `/tmp/crs_install_indexsafe2_20260223.log`
+2. Focused smoke (touched surfaces):
+   - `/tmp/crs_indexsafe2_smoke_20260223.out` (`INDEXSAFE2_SMOKE_OK`)
+3. Tarball-first:
+   - `/tmp/crs_build_indexsafe2_20260223.log`
+   - `/tmp/crs_check_ascran_indexsafe2_20260223.log` (`Status: 4 WARNINGs, 2 NOTEs`)

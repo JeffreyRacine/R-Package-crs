@@ -89,7 +89,7 @@ W.glp <- function(xdat = NULL,
 
   xdat <- as.data.frame(xdat)
 
-  xdat.col.numeric <- sapply(1:ncol(xdat),function(i){is.numeric(xdat[,i])})
+  xdat.col.numeric <- sapply(seq_len(ncol(xdat)),function(i){is.numeric(xdat[,i])})
   k <- ncol(as.data.frame(xdat[,xdat.col.numeric]))
 
   xdat.numeric <- NULL
@@ -133,7 +133,7 @@ W.glp <- function(xdat = NULL,
     ind <- (s > 0) & (s <= max(degree))
     z <- z[ind, ,drop=FALSE]
     if(!all(degree==max(degree))) {
-      for(j in 1:length(degree)) {
+      for(j in seq_along(degree)) {
         d <- degree[j]
         if((d < max(degree)) & (d > 0)) {
           s <- rowSums(z)
@@ -211,7 +211,7 @@ knn.max <- function(x) {
   k.max <- length(x)-1
   non.unique <- length(unique(x)) != length(x)
   if(non.unique) x <- unique(x)
-  for(i in 1:length(x)) {
+  for(i in seq_along(x)) {
     x.diff.unique <- sort(unique(abs(x[i]-x[-i])))
     if(length(x.diff.unique) < k.max)
       if(length(x.diff.unique)-1 < k.max) k.max <- length(x.diff.unique)-1
@@ -235,9 +235,9 @@ check.max.degree <- function(xdat=NULL,degree=NULL,display.warnings=TRUE,Bernste
 
   ill.conditioned <- FALSE
 
-  xdat.numeric <- sapply(1:ncol(xdat),function(i){is.numeric(xdat[,i])})
+  xdat.numeric <- sapply(seq_len(ncol(xdat)),function(i){is.numeric(xdat[,i])})
   numeric.index <- which(xdat.numeric==TRUE)
-  num.numeric <- sum(sapply(1:NCOL(xdat),function(i){is.numeric(xdat[,i])})==TRUE)
+  num.numeric <- sum(sapply(seq_len(NCOL(xdat)),function(i){is.numeric(xdat[,i])})==TRUE)
   d <- numeric(num.numeric)
 
   if(num.numeric > 0) {
@@ -1018,10 +1018,10 @@ glpregEst <- function(tydat=NULL,
   n.train <- nrow(txdat)
   n.eval <- nrow(exdat)
 
-  xdat.numeric <- sapply(1:ncol(txdat),function(i){is.numeric(txdat[,i])})
+  xdat.numeric <- sapply(seq_len(ncol(txdat)),function(i){is.numeric(txdat[,i])})
   categorical.index <- which(xdat.numeric==FALSE)
   numeric.index <- which(xdat.numeric==TRUE)
-  num.numeric <- sum(sapply(1:NCOL(txdat),function(i){is.numeric(txdat[,i])})==TRUE)
+  num.numeric <- sum(sapply(seq_len(NCOL(txdat)),function(i){is.numeric(txdat[,i])})==TRUE)
   num.categorical <- NCOL(txdat)-num.numeric
 
   if(num.numeric == 0) stop("generalized local polynomial regression requires at least one numeric predictor")
@@ -2902,7 +2902,7 @@ plot.npglpreg <- function(x,
 
       mg <- list()
 
-      for(i in 1:NCOL(object$x)) {
+      for(i in seq_len(NCOL(object$x))) {
 
         if(!is.factor(object$x[,i])) {
           exdat <- matrix(NA,nrow=num.eval,ncol=NCOL(object$x))
@@ -2921,7 +2921,7 @@ plot.npglpreg <- function(x,
           exdat[,i] <- sort(unique(object$x[,i]))
         }
 
-        for(j in (1:NCOL(object$x))[-i]) {
+        for(j in (seq_len(NCOL(object$x)))[-i]) {
           exdat[,j] <- rep(uocquantile(object$x[,j],prob=xq[j]),neval)
         }
 
@@ -2990,7 +2990,7 @@ plot.npglpreg <- function(x,
       if(common.scale) {
         min.mg <- Inf
         max.mg <- -Inf
-        for(i in 1:length(mg)) {
+        for(i in seq_along(mg)) {
           if (ci && plot.errors.type == "all") {
             min.mg <- min(min.mg, min(mg[[i]][,c("lwr","lwr.sim","lwr.bonf")]))
             max.mg <- max(max.mg, max(mg[[i]][,c("upr","upr.sim","upr.bonf")]))
@@ -3008,7 +3008,7 @@ plot.npglpreg <- function(x,
 
         if(!is.null(object$num.categorical)||(object$num.numeric>1)) par(mfrow=n2mfrow(NCOL(object$x)))
 
-        for(i in 1:NCOL(object$x)) {
+        for(i in seq_len(NCOL(object$x))) {
 
           if(!ci) {
 
@@ -3141,7 +3141,7 @@ plot.npglpreg <- function(x,
     i.numeric <- 1
     i.categorical <- 1
 
-    for(i in 1:NCOL(object$x)) {
+    for(i in seq_len(NCOL(object$x))) {
 
       gradient.vec <- NULL
 
@@ -3164,7 +3164,7 @@ plot.npglpreg <- function(x,
         newdata[,i] <- sort(unique(object$x[,i]))
       }
 
-      for(j in (1:NCOL(object$x))[-i]) {
+      for(j in (seq_len(NCOL(object$x)))[-i]) {
         newdata[,j] <- rep(uocquantile(object$x[,j],prob=xq[j]),neval)
       }
 
@@ -3264,7 +3264,7 @@ plot.npglpreg <- function(x,
     if(common.scale) {
       min.rg <- Inf
       max.rg <- -Inf
-      for(i in 1:length(rg)) {
+      for(i in seq_along(rg)) {
         if (ci && plot.errors.type == "all") {
           min.rg <- min(min.rg, min(rg[[i]][,c("lwr","lwr.sim","lwr.bonf")]))
           max.rg <- max(max.rg, max(rg[[i]][,c("upr","upr.sim","upr.bonf")]))
@@ -3282,7 +3282,7 @@ plot.npglpreg <- function(x,
 
       if(!is.null(object$num.categorical)||(object$num.numeric>1)) par(mfrow=n2mfrow(NCOL(object$x)))
 
-      for(i in 1:NCOL(object$x)) {
+      for(i in seq_len(NCOL(object$x))) {
 
         if(!ci) {
           plot(rg[[i]][,1],rg[[i]][,2],

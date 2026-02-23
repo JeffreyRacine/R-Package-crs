@@ -37,7 +37,7 @@ crssigtest <- function(model = NULL,
   ## function
 
   if(is.null(model)) stop(" you must provide a crs model")
-  if(is.null(index)) index <- 1:NCOL(model$xz)
+  if(is.null(index)) index <- seq_len(NCOL(model$xz))
   if(any(index < 1) || any(index > NCOL(model$xz))) stop(" you must provide a valid index")
   boot.type <- match.arg(boot.type)
 
@@ -53,7 +53,7 @@ crssigtest <- function(model = NULL,
   F.boot <- numeric(length=boot.num)
   F.boot.mat <- matrix(NA,nrow=boot.num,ncol=length(index))
 
-  for(ii in 1:length(index)) {
+  for(ii in seq_along(index)) {
 
     ## Get information from model each time the test is run (we modify
     ## these below hence the need to reset when multiple tests are
@@ -90,7 +90,7 @@ crssigtest <- function(model = NULL,
       ## matrix of all predictors model$xz)
 
       degree.index <- 0
-      for(jj in 1:index[ii]) if(is.numeric(model$xz[,jj])) degree.index <- degree.index + 1
+      for(jj in seq_len(index[ii])) if(is.numeric(model$xz[,jj])) degree.index <- degree.index + 1
 
       ## If the degree is zero (i.e. cross-validation has determined a
       ## variable is `irrelevant'), allow the predictor to be included
@@ -114,7 +114,7 @@ crssigtest <- function(model = NULL,
       ## the `lambda' index
 
       lambda.index <- 0
-      for(jj in 1:index[ii]) if(!is.numeric(model$xz[,jj])) lambda.index <- lambda.index + 1
+      for(jj in seq_len(index[ii])) if(!is.numeric(model$xz[,jj])) lambda.index <- lambda.index + 1
 
       ## If the bandwidth lambda is one (i.e. cross-validation has
       ## determined a variable is `irrelevant'), allow the model to be

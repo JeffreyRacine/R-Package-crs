@@ -219,7 +219,7 @@ snomadr <-
         m1 = match(argnames.udf, argnames.supplied)
         if( any(is.na(m1)) ){
           mx1 = which( is.na(m1) )
-          for( i in 1:length(mx1) ){
+          for( i in seq_along(mx1) ){
             stop(paste(funname, " requires argument '", argnames.udf[mx1], "' but this has not been passed to the 'snomadr' function.\n", sep = ""))
           }
         }
@@ -228,7 +228,7 @@ snomadr <-
         m2 = match(argnames.supplied, argnames.udf)
         if( any(is.na(m2)) ){
           mx2 = which( is.na(m2) )
-          for( i in 1:length(mx2) ){
+          for( i in seq_along(mx2) ){
             stop(paste("'", argnames.supplied[mx2], "' passed to (...) in 'snomadr' but this is not required in the ", funname, " function.\n", sep = ""))
           }
         }
