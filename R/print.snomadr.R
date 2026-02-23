@@ -40,7 +40,7 @@ print.snomadr <- function(x, show.controls=TRUE, ...) {
     if ( is.logical( show.controls ) ) {
       # show all control variables
       if ( show.controls ) {
-        controls.indices = 1:length(x$solution)
+        controls.indices = seq_along(x$solution)
       }
     }
 

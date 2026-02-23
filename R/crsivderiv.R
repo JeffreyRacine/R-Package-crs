@@ -574,8 +574,8 @@ crsivderiv.default <- function(y,
 
   }
 
-  phi.mat <- phi.mat[, 1:length(norm.stop), drop = FALSE]
-  phi.prime.mat <- phi.prime.mat[, 1:length(norm.stop), drop = FALSE]
+  phi.mat <- phi.mat[, seq_along(norm.stop), drop = FALSE]
+  phi.prime.mat <- phi.prime.mat[, seq_along(norm.stop), drop = FALSE]
 
   ## Extract minimum, and check for monotone increasing function and
   ## issue warning in that case. Otherwise allow for an increasing
@@ -584,7 +584,7 @@ crsivderiv.default <- function(y,
   ## and take the min from where the initial inflection point occurs
   ## to the length of norm.stop
 
-  norm.value <- norm.stop/(1:length(norm.stop))
+  norm.value <- norm.stop/seq_along(norm.stop)
 
   if(which.min(norm.stop) == 1 && is.monotone.increasing(norm.stop)) {
     if(display.warnings) warning("Stopping rule increases monotonically (consult model$norm.stop):\nThis could be the result of an inspired initial value (unlikely)\nNote: we suggest manually choosing phi.0 and restarting (e.g. instead set `starting.values' to E[E(Y|w)|z])")
@@ -686,21 +686,21 @@ summary.crsivderiv <- function(object, ...) {
   cat(paste("\nThere are ",format(object$num.x), " continuous predictors",sep=""),sep="")
   if(!is.null(object$num.z)) cat(paste("\nThere are ",format(object$num.z), " categorical predictors",sep=""),sep="")
 
-  for(j in 1:object$num.x)
+  for(j in seq_len(object$num.x))
     cat(paste("\nSpline degree/number of segments for ",format(object$xnames[j]),": ",format(object$degree[j]),"/",format(object$segments[j]),sep=""),sep="")
-  if(!is.null(object$include)) for(j in 1:length(object$include))
+  if(!is.null(object$include)) for(j in seq_along(object$include))
     cat(paste("\nInclusion indicator for ",format(object$znames[j]),": ",format(object$include[j]),sep=""),sep="")
-  if(!is.null(object$lambda)) for(j in 1:length(object$lambda))
+  if(!is.null(object$lambda)) for(j in seq_along(object$lambda))
     cat(paste("\nBandwidth for ",format(object$znames[j]),": ",format(object$lambda[j]),sep=""),sep="")
 
   if(!is.null(object$num.x.w)) {
-    for(j in 1:object$num.x.w)
+    for(j in seq_len(object$num.x.w))
       cat(paste("\nSpline degree/number of segments for ",format(object$xnames.w[j]),": ",format(object$degree.w[j]),"/",format(object$segments.w[j]),sep=""),sep="")
   }
   if(!is.null(object$num.z.w)) {
-    if(!is.null(object$include.w)) for(j in 1:length(object$include.w))
+    if(!is.null(object$include.w)) for(j in seq_along(object$include.w))
       cat(paste("\nInclusion indicator for ",format(object$znames.w[j]),": ",format(object$include.w[j]),sep=""),sep="")
-    if(!is.null(object$lambda.w)) for(j in 1:length(object$lambda.w))
+    if(!is.null(object$lambda.w)) for(j in seq_along(object$lambda.w))
       cat(paste("\nBandwidth for ",format(object$znames.w[j]),": ",format(object$lambda.w[j]),sep=""),sep="")
   }
 

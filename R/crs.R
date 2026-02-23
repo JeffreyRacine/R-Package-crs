@@ -97,7 +97,7 @@ crsEst <- function(xz,
       deriv.mat.upr <- deriv.mat
       l <- 1 ## num.z
       m <- 1 ## num.x
-      for(i in 1:ncol(xz)) {
+      for(i in seq_len(ncol(xz))) {
         if(!is.factor(xz[,i])) {
           if(deriv <= degree[m]) {
             tmp <- derivFactorSpline(x=x,
@@ -187,7 +187,7 @@ crsEst <- function(xz,
       deriv.mat.upr <- deriv.mat
       l <- 1 ## num.z
       m <- 1 ## num.x
-      for(i in 1:ncol(xz)) {
+      for(i in seq_len(ncol(xz))) {
         if(!is.factor(xz[,i])) {
           if(deriv <= degree[m]) {
             tmp <- derivKernelSpline(x=x,
@@ -829,7 +829,7 @@ predict.crs <- function(object,
         deriv.mat.upr <- deriv.mat
         l <- 1 ## num.z
         m <- 1 ## num.x
-        for(i in 1:ncol(newdata)) {
+        for(i in seq_len(ncol(newdata))) {
           if(!is.factor(newdata[,i])) {
             if(deriv <= degree[m]) {
               tmp <- derivFactorSpline(x=x,
@@ -940,7 +940,7 @@ predict.crs <- function(object,
         deriv.mat.upr <- deriv.mat
         l <- 1 ## num.z
         m <- 1 ## num.x
-        for(i in 1:ncol(newdata)) {
+        for(i in seq_len(ncol(newdata))) {
           if(!is.factor(newdata[,i])) {
             if(deriv <= degree[m]) {
               tmp <- derivKernelSpline(x=x,
@@ -1065,11 +1065,11 @@ summary.crs <- function(object,
   }  else {
     cat(paste("\nThere are ",format(object$num.z), " categorical predictors",sep=""),sep="")
   }
-  for(j in 1:object$num.x)
+  for(j in seq_len(object$num.x))
     cat(paste("\nSpline degree/number of segments for ",format(object$xnames[j]),": ",format(object$degree[j]),"/",format(object$segments[j]),sep=""),sep="")
-  if(!is.null(object$include)) for(j in 1:length(object$include))
+  if(!is.null(object$include)) for(j in seq_along(object$include))
     cat(paste("\nInclusion indicator for ",format(object$znames[j]),": ",format(object$include[j]),sep=""),sep="")
-  if(!is.null(object$lambda)) for(j in 1:length(object$lambda))
+  if(!is.null(object$lambda)) for(j in seq_along(object$lambda))
     cat(paste("\nBandwidth for ",format(object$znames[j]),": ",format(object$lambda[j]),sep=""),sep="")
   cat(paste("\nModel complexity proxy: ", format(object$complexity), sep=""))
   cat(paste("\nKnot type: ", format(object$knots), sep=""))
@@ -1521,7 +1521,7 @@ plot.crs <- function(x,
       if(common.scale) {
         min.mg <- Inf
         max.mg <- -Inf
-        for(i in 1:length(mg)) {
+        for(i in seq_along(mg)) {
           if (ci && plot.errors.type == "all") {
             min.mg <- min(min.mg, min(mg[[i]][,c("lwr","lwr.sim","lwr.bonf")]))
             max.mg <- max(max.mg, max(mg[[i]][,c("upr","upr.sim","upr.bonf")]))
@@ -1952,7 +1952,7 @@ plot.crs <- function(x,
       if(common.scale) {
         min.rg <- Inf
         max.rg <- -Inf
-        for(i in 1:length(rg)) {
+        for(i in seq_along(rg)) {
           if (ci && plot.errors.type == "all") {
             min.rg <- min(min.rg, min(rg[[i]][,c("lwr","lwr.sim","lwr.bonf")]))
             max.rg <- max(max.rg, max(rg[[i]][,c("upr","upr.sim","upr.bonf")]))

@@ -39,7 +39,7 @@ get.option.types <- function(opts) {
   if ( length( opts ) > 0 ) {
 
     # loop over all options and give them the correct type
-    for ( i in 1:length( opts ) ) {
+    for ( i in seq_along(opts) ) {
       # Keep all options as strings and let NOMAD parse values.
       # This supports the full NOMAD4 option set without maintaining a hard-coded list.
       tmp.type <- "string"

@@ -104,7 +104,7 @@ check.max.spline.degree <- function(xdat=NULL,degree=NULL,display.warnings=TRUE)
 
   ill.conditioned <- FALSE
 
-  xdat.numeric <- sapply(1:ncol(xdat),function(i){is.numeric(xdat[,i])})
+  xdat.numeric <- sapply(seq_len(ncol(xdat)),function(i){is.numeric(xdat[,i])})
   numeric.index <- which(xdat.numeric==TRUE)
   num.numeric <- sum(sapply(1:NCOL(xdat),function(i){is.numeric(xdat[,i])})==TRUE)
   d <- numeric(num.numeric)
@@ -225,7 +225,7 @@ uocquantile = function(x, prob) {
   if (is.ordered(x)){
     tq = unclass(table(x))
     tq = tq / sum(tq)
-    j = which(sapply(1:length(tq), function(y){ sum(tq[1:y]) }) >= prob)[1]
+    j = which(sapply(seq_along(tq), function(y){ sum(tq[1:y]) }) >= prob)[1]
     sort(unique(x))[j]
   } else if (is.factor(x)) {
     ## just returns mode

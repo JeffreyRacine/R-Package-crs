@@ -244,3 +244,32 @@ Validation artifacts:
 3. Tarball-first:
    - `/tmp/crs_build_docall_20260223.log`
    - `/tmp/crs_check_ascran_docall_20260223.log` (`Status: 4 WARNINGs, 2 NOTEs`)
+
+### 2026-02-23 - A/R1.3 index/loop safety (`seq_len`/`seq_along`)
+
+Scope completed:
+
+1. Replaced selected `1:ncol(...)` / `1:length(...)` loop/index patterns with zero-length-safe forms in low-risk paths:
+   - `/Users/jracine/Development/crs/R/crscv.R`
+   - `/Users/jracine/Development/crs/R/crs.R`
+   - `/Users/jracine/Development/crs/R/crsiv.R`
+   - `/Users/jracine/Development/crs/R/crsivderiv.R`
+   - `/Users/jracine/Development/crs/R/print.snomadr.R`
+   - `/Users/jracine/Development/crs/R/get.option.types.R`
+   - `/Users/jracine/Development/crs/R/util.R`
+2. Included normalization-index safety:
+   - `1:length(norm.stop)` -> `seq_along(norm.stop)` in IV iterative summaries.
+
+Validation artifacts:
+
+1. Parse gate:
+   - inline run result: `SEQLEN_PARSE_OK`
+2. Deterministic install/smokes (`R CMD INSTALL -l /tmp/crs_lib_seqlen_20260223`):
+   - `/tmp/crs_install_seqlen_20260223.log`
+   - `/tmp/crs_smoke_seqlen_20260223.out` (`CRS_SMOKE_OK`)
+   - `/tmp/crsiv_smoke_seqlen_20260223.out` (`CRSIV_SMOKE_OK`)
+   - `/tmp/crsivderiv_smoke_seqlen_20260223.out` (`CRSIVDERIV_SMOKE_OK`)
+   - `/tmp/crs_npglpreg_smoke_seqlen_20260223.out` (`NPGLPREG_SMOKE_OK`)
+3. Tarball-first:
+   - `/tmp/crs_build_seqlen_20260223.log`
+   - `/tmp/crs_check_ascran_seqlen_20260223.log` (`Status: 4 WARNINGs, 2 NOTEs`)

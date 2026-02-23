@@ -57,11 +57,11 @@ print.crscv <- function(x, ...){
     cat(paste("\n\nKnot type: ", format(x$knots), sep=""))
     cat(paste("\nModel complexity proxy: ", format(x$complexity), sep=""))
 
-    for(j in 1:length(x$degree))
+    for(j in seq_along(x$degree))
       cat(paste("\nSpline degree/number of segments for x[", j, "]: ", format(x$degree[j]),"/",format(x$segments[j]),sep=""),sep="")
-    if(!is.null(x$I)) for(j in 1:length(x$I))
+    if(!is.null(x$I)) for(j in seq_along(x$I))
       cat(paste("\nInclusion indicator for z[", j, "]: ",format(x$I[j]),sep=""),sep="")
-    if(!is.null(x$lambda)) for(j in 1:length(x$lambda))
+    if(!is.null(x$lambda)) for(j in seq_along(x$lambda))
       cat(paste("\nBandwidth for  z[", j, "]: ",format(x$lambda[j]),sep=""),sep="")
 
     cat(paste("\n\nMaximum spline degree for search: ",format(x$degree.max),sep=""),sep="")
@@ -75,11 +75,11 @@ print.crscv <- function(x, ...){
     cat(paste("\n\nKnot type: ", format(x$knots), sep=""))
     cat(paste("\nModel complexity proxy: ", format(x$complexity), sep=""))
 
-    for(j in 1:length(x$degree))
+    for(j in seq_along(x$degree))
       cat(paste("\nSpline degree/number of segments for x[", j, "]: ", format(x$degree[j]),"/",format(x$segments[j]),sep=""),sep="")
-    if(!is.null(x$I)) for(j in 1:length(x$I))
+    if(!is.null(x$I)) for(j in seq_along(x$I))
       cat(paste("\nInclusion indicator for z[", j, "]: ",format(x$I[j]),sep=""),sep="")
-    if(!is.null(x$lambda)) for(j in 1:length(x$lambda))
+    if(!is.null(x$lambda)) for(j in seq_along(x$lambda))
       cat(paste("\nBandwidth for  z[", j, "]: ",format(x$lambda[j]),sep=""),sep="")
 
     cat(paste("\n\nMaximum spline degree for search: ",format(x$degree.max),sep=""),sep="")
@@ -93,12 +93,12 @@ print.crscv <- function(x, ...){
     cat(paste("\n\nKnot type: ", format(x$knots), sep=""))
     cat(paste("\nModel complexity proxy: ", format(x$complexity), sep=""))
 
-    for(j in 1:x$num.x)
+    for(j in seq_len(x$num.x))
       cat(paste("\nSpline degree/number of segments for x[", j, "]: ", format(x$degree[j]),"/",format(x$segments[j]),sep=""),sep="")
 
-    if(!is.null(x$I)) for(j in 1:length(x$I))
+    if(!is.null(x$I)) for(j in seq_along(x$I))
       cat(paste("\nInclusion indicator for z[", j, "]: ",format(x$I[j]),sep=""),sep="")
-    if(!is.null(x$lambda)) for(j in 1:length(x$lambda))
+    if(!is.null(x$lambda)) for(j in seq_along(x$lambda))
       cat(paste("\nBandwidth for  z[", j, "]: ",format(x$lambda[j]),sep=""),sep="")
 
     cat(paste("\n\nMaximum spline degree for search: ",format(x$degree.max),sep=""),sep="")
