@@ -769,6 +769,60 @@ Result:
 2. Objective parity remained exact vs prior wrapper-alignment checkpoint in smoke comparison.
 3. Upstream NOMAD4 internal compatibility units remain vendor-internal; see `/Users/jracine/Development/crs/NOMAD_FORENSIC_AUDIT.md` for details.
 
+## 2026-02-23 full-example (`runcrs`) cross-version checkpoint
+
+Runbook used:
+
+1. In `man/`, run `runcrs`.
+2. From `/Users/jracine/Development`, run tarball-first:
+   - `R CMD build crs`
+   - `R CMD check --as-cran crs_<version>.tar.gz`
+3. In `man/`, run `dontruncrs`.
+4. Repeat same process for prior tarball version after unpacking to `/tmp`.
+
+Artifacts:
+
+1. Current (`0.15-41`):
+   - check root: `/tmp/crs_current_01541_runcrs_check/crs.Rcheck`
+   - log: `/tmp/crs_current_check_runcrs_20260223.log`
+   - key files:
+     - `/tmp/crs_current_01541_runcrs_check/crs.Rcheck/crs-Ex.R`
+     - `/tmp/crs_current_01541_runcrs_check/crs.Rcheck/crs-Ex.Rout`
+     - `/tmp/crs_current_01541_runcrs_check/crs.Rcheck/crs-Ex.timings`
+2. Previous (`0.15-40`):
+   - check root: `/tmp/crs_prev_01540_runcrs_check/crs.Rcheck`
+   - log: `/tmp/crs_prev_check_runcrs_20260223.log`
+   - key files:
+     - `/tmp/crs_prev_01540_runcrs_check/crs.Rcheck/crs-Ex.R`
+     - `/tmp/crs_prev_01540_runcrs_check/crs.Rcheck/crs-Ex.Rout`
+     - `/tmp/crs_prev_01540_runcrs_check/crs.Rcheck/crs-Ex.timings`
+3. Cross-version comparison:
+   - timing table: `/tmp/crs_ex_timings_01540_vs_01541.csv`
+   - generated-example diff: `/tmp/crs_exR_prev_vs_new.diff`
+
+Comparability check:
+
+1. `crs-Ex.R` scripts were effectively identical except expected option naming update in one `snomadr` example (`MIN_POLL_SIZE` -> `MIN_FRAME_SIZE`).
+
+Timing summary (elapsed, old `0.15-40` -> new `0.15-41`):
+
+1. Total: `263.393s` -> `754.941s` (`+186.62%`, about `2.87x` slower overall).
+2. Largest regressions:
+   - `data-Engel95`: `12.032s` -> `378.808s` (`+3048%`)
+   - `crsivderiv`: `28.515s` -> `203.132s` (`+612%`)
+   - `crsiv`: `1.013s` -> `18.345s` (`+1711%`)
+3. Largest improvements:
+   - `snomadr`: `58.406s` -> `30.302s` (`-48.1%`)
+   - `data-wage1`: `150.488s` -> `111.714s` (`-25.8%`)
+   - `crssigtest`: `10.379s` -> `8.596s` (`-17.2%`)
+
+Interpretation:
+
+1. Full-example workload performance changed materially between `0.15-40` and `0.15-41`.
+2. Regressions are concentrated in IV-related heavy examples (`data-Engel95`, `crsivderiv`, and `crsiv` path usage).
+3. Check-status drift was also observed (`0.15-41`: `4 WARNINGs, 3 NOTEs`; `0.15-40`: `2 WARNINGs, 1 NOTE`), including current Makevars portability and compiled-code diagnostics.
+4. This checkpoint should be treated as a release-gating reference whenever NOMAD defaults/solver path settings are modified.
+
 ## Current gate state
 
 1. Build/install: passing.

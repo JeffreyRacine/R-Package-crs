@@ -145,9 +145,16 @@ Use this sequence whenever a new NOMAD4.x release is integrated.
    - `benchmarks/nomad/compare_prepost.R` merges by `case + seed_policy + seed`
    - repeated fixed seeds can cross-join replicates; for release decisions, use summary-level comparisons or add replicate index before merging
 7. Optional heavy example gate (non-CRAN workflow)
-   - use `/Users/jracine/Development/crs/man/runcrs` to enable running `\dontrun{}` examples
-   - run tarball-first check from `/Users/jracine/Development`
-   - restore with `/Users/jracine/Development/crs/man/dontruncrs` immediately after
+   - in `/Users/jracine/Development/crs/man`, run `/Users/jracine/Development/crs/man/runcrs`
+   - from `/Users/jracine/Development`, run:
+     - `R CMD build crs`
+     - `R CMD check --as-cran crs_<version>.tar.gz`
+   - in `/Users/jracine/Development/crs/man`, run `/Users/jracine/Development/crs/man/dontruncrs` immediately after check completion
+   - compare heavy-example performance using:
+     - `crs.Rcheck/crs-Ex.Rout`
+     - `crs.Rcheck/crs-Ex.timings`
+   - for cross-version comparisons, unpack prior tarball into `/tmp`, copy `runcrs`/`dontruncrs` + `sed_run.scr`/`sed_dontrun.scr` into prior `man/`, and execute the same cycle
+   - always verify `crs-Ex.R` equivalence before interpreting timing deltas (small option-name substitutions such as `MIN_POLL_SIZE` -> `MIN_FRAME_SIZE` are expected)
    - remove disposable build artifacts (`src/*.o`, `src/*.so`) after check runs
 8. OpenMP safety gate (only when experimenting with OpenMP builds)
    - run isolated thread-matrix probes on `frscvNOMAD`, `krscvNOMAD`, `npglpreg`, and a direct `snomadr` case
