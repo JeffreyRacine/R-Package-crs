@@ -73,6 +73,33 @@ The package now keeps only the NOMAD4 codebase and C interface bridge.
 - `npglpreg(...)` (via NOMAD-driven CV path)
 - additional direct `snomadr(...)` callers in package code.
 
+## Mixed-integer problem structure (corrected map)
+
+1. `frscvNOMAD` (factor-regression spline CV)
+- Decision variables are integer/binary:
+  - spline degree(s): integer in `[degree.min, degree.max]`
+  - spline segment count(s): integer in `[segments.min, segments.max]`
+  - factor include flags: binary `{0,1}`
+- There is no `lambda` bandwidth variable in this path.
+
+2. `krscvNOMAD` (kernel-regression spline CV)
+- Mixed-integer decision vector:
+  - spline degree(s): integer
+  - spline segment count(s): integer
+  - categorical-kernel bandwidth(s) `lambda`:
+    - continuous mode: bounded in `[0,1]`, with evaluation guard mapping `lambda <= 0` to machine epsilon
+    - discrete mode (`lambda.discrete=TRUE`): integer grid index mapped to `lambda/grid_max` in `[0,1]`
+
+3. `npglpreg` (NOMAD CV path)
+- Mixed-variable decision vector over bandwidth scaling factors plus optional degree:
+  - numeric bandwidth controls:
+    - fixed-bandwidth mode: positive continuous scale factors mapped to raw `h > 0`
+    - NN modes (`generalized_nn` / `adaptive_nn`): integer neighbor counts (discrete)
+  - categorical bandwidth controls:
+    - optimized on an internal scaled interval then mapped back to `lambda` in `[0,1]`
+    - for Aitchison-Aitken kernels, effective upper bound is `(c-1)/c`
+  - if `cv="degree-bandwidth"`, numeric polynomial degree is also integer-optimized.
+
 ## Current bridge behavior for options
 
 - `snomadr(opts=...)` passes option names/values to NOMAD4.

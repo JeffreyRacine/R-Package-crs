@@ -91,6 +91,42 @@ Compatibility-profile refresh rerun (same profile, fresh install/build):
 - `/tmp/crs_nomad_compat_vs_prevpost_20260223_2_parity_compare.csv`
 - `/tmp/crs_nomad_compat_vs_prevpost_20260223_2_minima_compare.csv`
 
+Path-specific profile experiments (MADS search-option tuning):
+
+- `/tmp/crs_nomad_profile_scan_20260223_raw.csv`
+- `/tmp/crs_nomad_profile_scan_20260223_summary.csv`
+- `/tmp/crs_nomad_profile_scan_20260223_vs_base.csv`
+- `/tmp/crs_nomad_path_tuned_confirm_20260223_raw.csv`
+- `/tmp/crs_nomad_path_tuned_confirm_20260223_summary.csv`
+- `/tmp/crs_nomad_path_tuned_confirm_20260223_compare.csv`
+- `/tmp/crs_nomad_path_profiles_compare_20260223_raw.csv`
+- `/tmp/crs_nomad_path_profiles_compare_20260223_summary.csv`
+- `/tmp/crs_nomad_path_profiles_compare_20260223_vs_base.csv`
+- `/tmp/crs_nomad_path_no_quad_vs_pre_20260223_summary.csv`
+- `/tmp/crs_nomad_path_no_quad_vs_pre_20260223_minima.csv`
+- `/tmp/crs_nomad_path_cs_vs_pre_20260223_summary.csv`
+- `/tmp/crs_nomad_path_cs_vs_pre_20260223_minima.csv`
+
+Standalone solver-mode scan (NOMAD4 algorithm toggles):
+
+- `/tmp/crs_nomad_solver_modes_scan_20260223_raw.csv`
+- `/tmp/crs_nomad_solver_modes_scan_20260223_summary.csv`
+- `/tmp/crs_nomad_solver_modes_scan_20260223.log`
+
+Post-implementation benchmark (path defaults active in package code):
+
+- `/tmp/crs_install_pathdefaults_20260223.log`
+- `/tmp/crs_nomad_post_pathdefaults_20260223_1_raw.csv`
+- `/tmp/crs_nomad_post_pathdefaults_20260223_1_summary.csv`
+- `/tmp/crs_nomad_post_pathdefaults_20260223_1_parity.rds`
+- `/tmp/crs_nomad_post_pathdefaults_20260223_1.log`
+- `/tmp/crs_nomad_pathdefaults_vs_pre_20260223_1_summary_compare.csv`
+- `/tmp/crs_nomad_pathdefaults_vs_pre_20260223_1_parity_compare.csv`
+- `/tmp/crs_nomad_pathdefaults_vs_pre_20260223_1_minima_compare.csv`
+- `/tmp/crs_nomad_pathdefaults_vs_compat_20260223_1_summary_compare.csv`
+- `/tmp/crs_nomad_pathdefaults_vs_compat_20260223_1_parity_compare.csv`
+- `/tmp/crs_nomad_pathdefaults_vs_compat_20260223_1_minima_compare.csv`
+
 ## 2026-02-23 clean-break comparison vs NOMAD3 baseline
 
 Reference pre-upgrade baseline:
@@ -169,6 +205,46 @@ Refresh snapshot (`..._20260223_2...`):
    - `frscvNOMAD`: post better `4/5`
    - `krscvNOMAD`: post better `2/5`
    - `npglpreg`: post better `5/5`
+
+## 2026-02-23 path-specific default tuning outcome
+
+Best robust profile found:
+
+1. Keep global `snomadr()` compatibility profile as-is.
+2. Add path defaults for `frscvNOMAD` and `krscvNOMAD` only:
+   - `QUAD_MODEL_SEARCH = no`
+   - `EVAL_QUEUE_SORT = DIR_LAST_SUCCESS`
+
+Observed impact versus current NOMAD4 compatibility baseline:
+
+1. `frscvNOMAD`: mean elapsed roughly `-56%` (fixed and varying), no objective drift observed.
+2. `krscvNOMAD`: mean elapsed roughly `-55%` to `-57%`, objective drift negligible (about `2.4e-06` in varying-seed mean).
+3. `npglpreg`: unchanged objective and essentially unchanged runtime (this path keeps existing MADS defaults).
+
+Relative to NOMAD3 baseline after this tuning:
+
+1. `frscvNOMAD`: slowdown reduced from roughly `+750% to +1005%` down to about `+292% to +358%`.
+2. `krscvNOMAD`: slowdown reduced from roughly `+719% to +1306%` down to about `+240% to +498%`.
+3. `npglpreg`: unchanged from prior NOMAD4 profile behavior.
+
+Implemented-code snapshot (`...post_pathdefaults_20260223_1...`):
+
+1. Versus prior NOMAD4 compatibility profile:
+   - `frscvNOMAD`: about `-51%` to `-57%` mean elapsed
+   - `krscvNOMAD`: about `-53%` to `-57%` mean elapsed
+   - `npglpreg`: about `+2%` to `+4%` mean elapsed, objective unchanged in this run
+2. Versus NOMAD3 baseline:
+   - `frscvNOMAD`: about `+311%` (fixed), `+373%` (varying)
+   - `krscvNOMAD`: about `+272%` (fixed), `+478%` (varying)
+   - `npglpreg`: about `-22.8%` (fixed), `+23.3%` (varying)
+
+## 2026-02-23 standalone solver-mode investigation
+
+NOMAD4 provides many standalone optimization modes, but for `crs`/`npglpreg`:
+
+1. Fast standalone modes (`CS_OPTIMIZATION`, `NM_OPTIMIZATION`, `QP_OPTIMIZATION`, `QUAD_MODEL_OPTIMIZATION`, `RANDOM_ALGO_OPTIMIZATION`) often produced materially worse objectives on at least one of the target paths (especially `npglpreg`) despite lower runtime.
+2. OpenMP-gated modes (`PSD_MADS_OPTIMIZATION`, `COOP_MADS_OPTIMIZATION`) are unavailable in the current build.
+3. Practical conclusion: MADS with path-specific search-option tuning remains the best current choice for balancing speed and solution quality stability.
 
 ## Current gate state
 

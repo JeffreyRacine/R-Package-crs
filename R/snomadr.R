@@ -69,6 +69,28 @@ merge.nomad4.compat.defaults <- function(opts) {
   opts
 }
 
+nomad4.frkr.defaults <- function() {
+  # Path-specific defaults for frscvNOMAD/krscvNOMAD.
+  # Empirically reduces runtime while preserving objective parity.
+  list(
+    "QUAD_MODEL_SEARCH" = "no",
+    "EVAL_QUEUE_SORT" = "DIR_LAST_SUCCESS"
+  )
+}
+
+merge.nomad4.frkr.defaults <- function(opts) {
+  defaults <- nomad4.frkr.defaults()
+  if (length(opts) == 0) {
+    return(defaults)
+  }
+  for (k in names(defaults)) {
+    if (is.null(opts[[k]])) {
+      opts[[k]] <- defaults[[k]]
+    }
+  }
+  opts
+}
+
 snomadr <-
   function( eval.f,
             n,

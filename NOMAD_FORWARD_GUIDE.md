@@ -23,6 +23,7 @@ This document is the operational playbook for future NOMAD work in `crs`.
 2. `crs` keeps a NOMAD4-only source layout (legacy NOMAD3 tree removed).
 3. `snomadr()` applies a NOMAD3.9.1-like compatibility profile via NOMAD4 option names when those options are not user-specified.
 4. Near-term goal remains: stabilize NOMAD4 under strict parity/performance gates for existing `crs` behavior.
+5. `frscvNOMAD` and `krscvNOMAD` now apply path defaults (`QUAD_MODEL_SEARCH=no`, `EVAL_QUEUE_SORT=DIR_LAST_SUCCESS`) unless user overrides.
 
 ## Roadmap alignment (`crs` vs `np`/`npRmpi`)
 
@@ -46,6 +47,18 @@ This document is the operational playbook for future NOMAD work in `crs`.
 1. Close remaining NOMAD4 parity/performance gaps recorded in status doc.
 2. Avoid global option toggles that improve one path but regress another; use path-aware tuning if needed.
 3. Keep return contract stable (`status`, `message`, `bbe`, `iterations`, `objective`, `solution`) while tuning internals.
+
+## NOMAD4 solver-mode guidance
+
+1. NOMAD4 exposes multiple standalone algorithms (`CS_OPTIMIZATION`, `NM_OPTIMIZATION`, `QP_OPTIMIZATION`, `QUAD_MODEL_OPTIMIZATION`, etc.), but many are either specialized or not suitable for these mixed-variable CV objectives.
+2. Practical recommendation for `crs`/`npglpreg`:
+   - keep MADS as the primary optimization engine,
+   - tune search-method options path-by-path,
+   - avoid switching to standalone solver modes without explicit parity gates.
+3. OpenMP-gated modes (`PSD_MADS_OPTIMIZATION`, `COOP_MADS_OPTIMIZATION`) are unavailable in the current `crs` build configuration and should not be considered default candidates.
+4. Global-optimum practicality:
+   - NOMAD is a local/direct-search framework; there is no strict global-optimum guarantee for these nonconvex mixed-variable CV objectives.
+   - fastest reliable practice is path-tuned MADS plus controlled restarts (`nmulti`) and seed-policy checks rather than switching to standalone modes that degrade objective quality.
 
 ## NOMAD release-update playbook
 

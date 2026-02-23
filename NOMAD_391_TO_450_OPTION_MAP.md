@@ -50,6 +50,18 @@ Design rule:
 - User-supplied `opts` always override these defaults.
 - `crs` uses NOMAD4 names directly; no legacy-name alias translation is reintroduced.
 
+## Additional path-specific defaults (fr/kr CV paths)
+
+`frscvNOMAD()` and `krscvNOMAD()` now add the following defaults when absent in user `opts`:
+
+1. `QUAD_MODEL_SEARCH = no`
+2. `EVAL_QUEUE_SORT = DIR_LAST_SUCCESS`
+
+Rationale:
+
+- This keeps MADS as the core algorithm while reducing overhead in these mixed-integer CV paths.
+- `npglpreg` does not inherit these two path defaults (to avoid quality drift seen when applied globally).
+
 ## Optimizer continuity: NOMAD3 vs NOMAD4
 
 1. Both versions are from the same NOMAD project and remain MADS-family derivative-free black-box optimizers.
