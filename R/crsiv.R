@@ -537,7 +537,7 @@ crsiv.default <- function(y,
     if(smooth.residuals) {
       traindata$phi <- phi
 
-      model.residw <- do.call("crs", c(list(formula=formula.residw,
+      model.residw <- do.call(crs, c(list(formula=formula.residw,
                                             opts=opts,
                                             data=traindata,
                                             display.nomad.progress=display.nomad.progress,
@@ -553,7 +553,7 @@ crsiv.default <- function(y,
       residw <- if(is.eval.train) fitted(model.residw) else predict(model.residw,newdata=evaldata,...)
       traindata$residw <- residw
 
-      model.predict.residw.z <- do.call("crs", c(list(formula=formula.residwz,
+      model.predict.residw.z <- do.call(crs, c(list(formula=formula.residwz,
                                                       opts=opts,
                                                       data=traindata,
                                                       display.nomad.progress=display.nomad.progress,
@@ -575,7 +575,7 @@ crsiv.default <- function(y,
     } else {
       traindata$phi <- phi
 
-      model.E.phi.w <- do.call("crs", c(list(formula=formula.phiw,
+      model.E.phi.w <- do.call(crs, c(list(formula=formula.phiw,
                                              opts=opts,
                                              data=traindata,
                                              display.nomad.progress=display.nomad.progress,
@@ -592,7 +592,7 @@ crsiv.default <- function(y,
                 (if(is.eval.train) fitted(model.E.phi.w) else predict(model.E.phi.w,newdata=evaldata,...))
       traindata$residw <- residw
 
-      model.predict.residw.z <- do.call("crs", c(list(formula=formula.residwz,
+      model.predict.residw.z <- do.call(crs, c(list(formula=formula.residwz,
                                                       opts=opts,
                                                       data=traindata,
                                                       display.nomad.progress=display.nomad.progress,
@@ -653,7 +653,7 @@ crsiv.default <- function(y,
       if(smooth.residuals) {
         traindata$phi <- phi
 
-        model.residw <- do.call("crs", c(list(formula=formula.residw,
+        model.residw <- do.call(crs, c(list(formula=formula.residw,
                                               degree=degree.residw,
                                               segments=segments.residw,
                                               lambda=lambda.residw,
@@ -673,7 +673,7 @@ crsiv.default <- function(y,
         residw <- if(is.eval.train) fitted(model.residw) else predict(model.residw,newdata=evaldata,...)
         traindata$residw <- residw
 
-        model.predict.residw.z <- do.call("crs", c(list(formula=formula.residwz,
+        model.predict.residw.z <- do.call(crs, c(list(formula=formula.residwz,
                                                         degree=degree.residwz,
                                                         segments=segments.residwz,
                                                         lambda=lambda.residwz,
@@ -693,7 +693,7 @@ crsiv.default <- function(y,
       } else {
         traindata$phi <- phi
 
-        model.E.phi.w <- do.call("crs", c(list(formula=formula.phiw,
+        model.E.phi.w <- do.call(crs, c(list(formula=formula.phiw,
                                                degree=degree.phiw,
                                                segments=segments.phiw,
                                                lambda=lambda.phiw,
@@ -714,7 +714,7 @@ crsiv.default <- function(y,
                   (if(is.eval.train) fitted(model.E.phi.w) else predict(model.E.phi.w,newdata=evaldata,...))
         traindata$residw <- residw
 
-        model.predict.residw.z <- do.call("crs", c(list(formula=formula.residwz,
+        model.predict.residw.z <- do.call(crs, c(list(formula=formula.residwz,
                                                         degree=degree.residwz,
                                                         segments=segments.residwz,
                                                         lambda=lambda.residwz,

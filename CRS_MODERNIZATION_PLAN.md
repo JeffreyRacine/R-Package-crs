@@ -220,3 +220,27 @@ Validation artifacts:
 Notes:
 
 1. `testthat::test_dir("tests/testthat")` is not authoritative here because tests call unqualified package functions without attaching `crs`; installed-package smoke and tarball checks were used as checkpoint gates.
+
+### 2026-02-23 - A/R1.2 string `do.call` retirement
+
+Scope completed:
+
+1. Replaced string-based call dispatch with function references:
+   - `do.call("crs", ...)` -> `do.call(crs, ...)`
+   - `do.call("expand.grid", ...)` -> `do.call(base::expand.grid, ...)`
+2. Files updated:
+   - `/Users/jracine/Development/crs/R/crsiv.R`
+   - `/Users/jracine/Development/crs/R/crsivderiv.R`
+   - `/Users/jracine/Development/crs/R/np.regression.glp.R`
+
+Validation artifacts:
+
+1. Parse gate:
+   - inline run result: `DOCALL_PARSE_OK`
+2. Deterministic install/smoke using explicit library:
+   - `/tmp/crs_install_docall_20260223.log`
+   - `/tmp/crsiv_smoke_docall_20260223.out` (`CRSIV_SMOKE_OK`)
+   - `/tmp/crs_npglpreg_smoke_docall_20260223.out` (`NPGLPREG_SMOKE_OK`)
+3. Tarball-first:
+   - `/tmp/crs_build_docall_20260223.log`
+   - `/tmp/crs_check_ascran_docall_20260223.log` (`Status: 4 WARNINGs, 2 NOTEs`)

@@ -322,7 +322,7 @@ crsivderiv.default <- function(y,
     if(crs.messages) options(crs.messages=FALSE)
     traindata$mu <- mu
 
-    model.E.mu.w <- do.call("crs", c(list(formula=formula.muw,
+    model.E.mu.w <- do.call(crs, c(list(formula=formula.muw,
                                           opts=opts,
                                           display.nomad.progress=display.nomad.progress,
                                           display.warnings=display.warnings,
@@ -359,7 +359,7 @@ crsivderiv.default <- function(y,
     if(crs.messages) options(crs.messages=FALSE)
     traindata$phi <- phi
 
-    model.E.phi.w <- do.call("crs", c(list(formula=formula.phiw,
+    model.E.phi.w <- do.call(crs, c(list(formula=formula.phiw,
                                            opts=opts,
                                            display.nomad.progress=display.nomad.progress,
                                            display.warnings=display.warnings,
@@ -461,7 +461,7 @@ crsivderiv.default <- function(y,
       if(crs.messages) options(crs.messages=FALSE)
       traindata$mu <- mu
 
-      model.E.mu.w <- do.call("crs", c(list(formula=formula.muw,
+      model.E.mu.w <- do.call(crs, c(list(formula=formula.muw,
                                               degree=degree.muw,
                                               segments=segments.muw,
                                               lambda=lambda.muw,
@@ -495,7 +495,7 @@ crsivderiv.default <- function(y,
       if(crs.messages) options(crs.messages=FALSE)
       traindata$phi <- phi
 
-      model.E.phi.w <- do.call("crs", c(list(formula=formula.phiw,
+      model.E.phi.w <- do.call(crs, c(list(formula=formula.phiw,
                                                degree=degree.phiw,
                                                segments=segments.phiw,
                                                lambda=lambda.phiw,
