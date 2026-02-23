@@ -184,3 +184,39 @@ A/R1 tranche candidate:
 
 None for planning.  
 Implementation is intentionally paused pending your heads-up.
+
+## Checkpoint Log
+
+### 2026-02-23 - A/R1.1 option-access hardening
+
+Scope completed:
+
+1. Replaced direct `options('crs.messages')$crs.messages` reads with scalar-safe `isTRUE(getOption("crs.messages"))` in:
+   - `/Users/jracine/Development/crs/R/clsd.R`
+   - `/Users/jracine/Development/crs/R/console.R`
+   - `/Users/jracine/Development/crs/R/crs.R`
+   - `/Users/jracine/Development/crs/R/frscvNOMAD.R`
+   - `/Users/jracine/Development/crs/R/krscvNOMAD.R`
+   - `/Users/jracine/Development/crs/R/np.regression.glp.R`
+2. Modernized startup option reads in:
+   - `/Users/jracine/Development/crs/R/zzz.R`
+   - `options('np.messages')$np.messages` -> `getOption("np.messages")`
+   - `options('np.tree')$np.tree` -> `getOption("np.tree")`
+3. Preserved restore semantics where needed:
+   - `old.crs.messages <- getOption("crs.messages")` before temporary override.
+
+Validation artifacts:
+
+1. Parse gate:
+   - inline run result: `CRS_PARSE_OK`
+2. Install and runtime smoke:
+   - `/tmp/crs_install_optaccess_20260223.log`
+   - `/tmp/crs_smoke_optaccess_20260223.out` (`CRS_SMOKE_OK`)
+   - `/tmp/crs_npglpreg_smoke_optaccess_20260223.out` (`NPGLPREG_SMOKE_OK`)
+3. Tarball-first:
+   - `/tmp/crs_build_optaccess_20260223.log`
+   - `/tmp/crs_check_ascran_optaccess_20260223.log` (`Status: 4 WARNINGs, 2 NOTEs`)
+
+Notes:
+
+1. `testthat::test_dir("tests/testthat")` is not authoritative here because tests call unqualified package functions without attaching `crs`; installed-package smoke and tarball checks were used as checkpoint gates.

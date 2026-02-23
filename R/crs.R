@@ -442,7 +442,7 @@ crs.formula <- function(formula,
   ## Set DISPLAY_DEGREE to 0 if crs.messages=FALSE and DISPLAY_DEGREE
   ## is not provided
 
-  if(!options('crs.messages')$crs.messages && is.null(opts[["DISPLAY_DEGREE"]])) opts$"DISPLAY_DEGREE"=0
+  if(!isTRUE(getOption("crs.messages")) && is.null(opts[["DISPLAY_DEGREE"]])) opts$"DISPLAY_DEGREE"=0
 
   ## If a weights vector is provided and there exists missing data
   ## then the weight vector must be parsed to contain weights

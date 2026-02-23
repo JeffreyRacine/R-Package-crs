@@ -55,7 +55,7 @@ frscvNOMAD <- function(xz,
   ## Set DISPLAY_DEGREE to 0 if crs.messages=FALSE and
   ## DISPLAY_DEGREE is not provided
 
-  if(!options('crs.messages')$crs.messages && is.null(opts[["DISPLAY_DEGREE"]])) opts$"DISPLAY_DEGREE"=0
+  if(!isTRUE(getOption("crs.messages")) && is.null(opts[["DISPLAY_DEGREE"]])) opts$"DISPLAY_DEGREE"=0
   opts <- merge.nomad4.fr.defaults(opts)
 
   t1 <- Sys.time()

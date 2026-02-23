@@ -590,7 +590,7 @@ ls.ml <- function(x=NULL,
 
       while(s <= segments.max) {
 
-        if(display.nomad.progress && options('crs.messages')$crs.messages) {
+        if(display.nomad.progress && isTRUE(getOption("crs.messages"))) {
           if(verbose) cat("\n")
           cat("\r                                                                                                  ")
           cat("\rOptimizing, degree = ",d,", segments = ",s,", degree.opt = ",d.opt, ", segments.opt = ",s.opt," ",sep="")
@@ -656,7 +656,7 @@ ls.ml <- function(x=NULL,
             ## If optim fails to converge, reset initial parameters and
             ## try again.
 
-            if(options('crs.messages')$crs.messages) {
+            if(isTRUE(getOption("crs.messages"))) {
               if(verbose && optim.out[[4]]!=0) {
                 if(!is.null(optim.out$message)) cat("\n optim message = ",optim.out$message,sep="")
                 cat("\n optim failed (degree = ",d,", segments = ",s,", convergence = ", optim.out[[4]],") re-running with new initial values",sep="")
@@ -676,7 +676,7 @@ ls.ml <- function(x=NULL,
           ## new values.
 
           if(optim.out$value > value.opt) {
-            if(options('crs.messages')$crs.messages) {
+            if(isTRUE(getOption("crs.messages"))) {
               if(verbose && n==1) cat("\n optim improved: d = ",d,", s = ",s,", old = ",formatC(value.opt,format="g",digits=6),", new = ",formatC(optim.out$value,format="g",digits=6),", diff = ",formatC(optim.out$value-value.opt,format="g",digits=6),sep="")
 
               if(verbose && n>1) cat("\n optim improved (ms ",n,"/",nmulti,"): d = ",d,", s = ",s,", old = ",formatC(value.opt,format="g",digits=6),", new = ",formatC(optim.out$value,format="g",digits=6),", diff = ",formatC(optim.out$value-value.opt,format="g",digits=6),sep="")
@@ -775,7 +775,7 @@ ls.ml <- function(x=NULL,
         ## try again.
 
         if(verbose && optim.out[[4]]!=0) {
-          if(options('crs.messages')$crs.messages) {
+          if(isTRUE(getOption("crs.messages"))) {
             if(!is.null(optim.out$message)) cat("\n optim message = ",optim.out$message,sep="")
             cat("\n optim failed (degree = ",d,", segments = ",s,", convergence = ", optim.out[[4]],") re-running with new initial values",sep="")
           }
@@ -790,7 +790,7 @@ ls.ml <- function(x=NULL,
 
       }
 
-      if(display.nomad.progress && options('crs.messages')$crs.messages) {
+      if(display.nomad.progress && isTRUE(getOption("crs.messages"))) {
         if(verbose) cat("\n")
         cat("\r                                                                                                  ")
         cat("\rOptimizing, degree = ",d,", segments = ",s,", log likelihood = ",optim.out$value,sep="")
@@ -902,7 +902,7 @@ ls.ml <- function(x=NULL,
       ## try again.
 
       if(verbose && optim.out[[4]]!=0) {
-        if(options('crs.messages')$crs.messages) {
+        if(isTRUE(getOption("crs.messages"))) {
           if(!is.null(optim.out$message)) cat("\n optim message = ",optim.out$message,sep="")
           cat("\n optim failed (degree = ",d,", segments = ",s,", convergence = ", optim.out[[4]],") re-running with new initial values",sep="")
         }
@@ -924,7 +924,7 @@ ls.ml <- function(x=NULL,
 
   }
 
-  if(options('crs.messages')$crs.messages) {
+  if(isTRUE(getOption("crs.messages"))) {
     cat("\r                                                                            ")
     if(display.warnings) {
       if(!(degree.min==degree.max) && (d.opt==degree.max)) warning(paste(" optimal degree equals search maximum (", d.opt,"): rerun with larger degree.max",sep=""))

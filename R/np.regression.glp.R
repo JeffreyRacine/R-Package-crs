@@ -724,10 +724,10 @@ npglpreg.formula <- function(formula,
   ## Set DISPLAY_DEGREE to 0 if crs.messages=FALSE or
   ## display.nomad.progress=FALSE and DISPLAY_DEGREE is not provided
 
-  if(!options('crs.messages')$crs.messages && is.null(opts[["DISPLAY_DEGREE"]])) opts$"DISPLAY_DEGREE"=0
+  if(!isTRUE(getOption("crs.messages")) && is.null(opts[["DISPLAY_DEGREE"]])) opts$"DISPLAY_DEGREE"=0
 
   ## Set crs.messages to FALSE if display.nomad.progress is FALSE
-  old.crs.messages <- options('crs.messages')$crs.messages
+  old.crs.messages <- getOption("crs.messages")
   if(!display.nomad.progress) options(crs.messages = FALSE)
   on.exit(options(crs.messages = old.crs.messages))
 
@@ -752,7 +752,7 @@ npglpreg.formula <- function(formula,
 
   if(cv=="none"&&bwtype=="auto") stop(" Error: you cannot use bwtype==\"auto\" without running cross-validation")
 
-  if(display.warnings && cv!="none" && bwtype!="auto" && options('crs.messages')$crs.messages) warning(paste(" bwtype is ", bwtype, ": you could consider bwtype=\"auto\"",sep=""),immediate.=TRUE)
+  if(display.warnings && cv!="none" && bwtype!="auto" && isTRUE(getOption("crs.messages"))) warning(paste(" bwtype is ", bwtype, ": you could consider bwtype=\"auto\"",sep=""),immediate.=TRUE)
 
   if(cv!="none") {
     if(bwtype!="auto") {

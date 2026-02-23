@@ -3,15 +3,15 @@
 }
 
 .onLoad <- function (lib, pkg) {
-  if(is.null(options('crs.messages')$crs.messages))
+  if(is.null(getOption("crs.messages")))
     options(crs.messages = TRUE)
   ## The package np is declared in NAMESPACE and Imports
   ## (DESCRIPTION) to support npglpreg() which eventually will
   ## migrate to the np package, at which time the following are no
   ## longer required.
-  if(is.null(options('np.messages')$np.messages))
+  if(is.null(getOption("np.messages")))
     options(np.messages = TRUE)
-  if(is.null(options('np.tree')$np.tree))
+  if(is.null(getOption("np.tree")))
     options(np.tree = FALSE)
 }
 
