@@ -60,6 +60,36 @@ This document is the operational playbook for future NOMAD work in `crs`.
    - NOMAD is a local/direct-search framework; there is no strict global-optimum guarantee for these nonconvex mixed-variable CV objectives.
    - fastest reliable practice is path-tuned MADS plus controlled restarts (`nmulti`) and seed-policy checks rather than switching to standalone modes that degrade objective quality.
 
+## Current default recommendation matrix
+
+Based on the expanded solver-space sweeps documented in status:
+
+1. `frscvNOMAD`
+   - keep current MADS path defaults (`QUAD_MODEL_SEARCH=no`, `EVAL_QUEUE_SORT=DIR_LAST_SUCCESS`)
+   - optional `EVAL_QUEUE_SORT=LEXICOGRAPHICAL` can be tested as an experimental profile (small mean speed gain, not consistently better in every cell)
+2. `krscvNOMAD`
+   - keep current MADS path defaults
+   - do not switch to standalone solvers for default use (large speed gains came with objective-risk counts)
+3. `npglpreg`
+   - keep current MADS compatibility defaults
+   - `QUAD_MODEL_SEARCH_BOX_FACTOR=1.0` and `QUAD_MODEL_BOX_FACTOR=1.0` (`np_quadbox1`) is the safest optional variant tested; speed impact is small/mixed
+
+## What was tuned beyond solver toggles
+
+The investigation covered, at minimum:
+
+1. standalone solver families (`CS`, `NM`, `QP`, `RANDOM`)
+2. MADS queue/search variants (`QUAD_MODEL_SEARCH`, `EVAL_QUEUE_SORT`, quad-box factors)
+3. restart and budget controls (`nmulti`, `max.bb.eval`)
+4. both fixed-seed and varying-seed comparisons on simple and harder mixed-variable scenarios
+
+## Exception-only modes (important)
+
+1. In this build, some modes are unavailable or require setup not present in `crs` test paths:
+   - `VNS_MADS_OPTIMIZATION` (not implemented here)
+   - DiscoMADS without revealing outputs
+2. When such exception profiles are tested, isolate them from main comparisons (separate process/session) to avoid contaminated multi-profile runs.
+
 ## NOMAD release-update playbook
 
 Use this sequence whenever a new NOMAD4.x release is integrated.

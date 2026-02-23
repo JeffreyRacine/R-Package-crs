@@ -246,6 +246,72 @@ NOMAD4 provides many standalone optimization modes, but for `crs`/`npglpreg`:
 2. OpenMP-gated modes (`PSD_MADS_OPTIMIZATION`, `COOP_MADS_OPTIMIZATION`) are unavailable in the current build.
 3. Practical conclusion: MADS with path-specific search-option tuning remains the best current choice for balancing speed and solution quality stability.
 
+## 2026-02-23 expanded solver/parameter space investigation
+
+Goal:
+
+- Test whether additional NOMAD4 solver families and tuned settings (`nmulti`, `max.bb.eval`, queue/search toggles) can beat current `crs` defaults on speed while preserving objective quality.
+
+Artifacts:
+
+1. Stage-1 broad scan:
+   - `/tmp/crs_nomad_solver_space_stage1b_20260223_raw.csv`
+   - `/tmp/crs_nomad_solver_space_stage1b_20260223_summary.csv`
+   - `/tmp/crs_nomad_solver_space_stage1b_20260223_compare.csv`
+   - `/tmp/crs_nomad_solver_space_stage1b_20260223_safe_rank.csv`
+2. Stage-2 shortlist confirmation:
+   - `/tmp/crs_nomad_solver_space_stage2_20260223_raw.csv`
+   - `/tmp/crs_nomad_solver_space_stage2_20260223_compare.csv`
+3. Stage-3 exploratory expansion (included exception-only profiles):
+   - `/tmp/crs_nomad_solver_space_stage3_20260223_raw.csv`
+   - `/tmp/crs_nomad_solver_space_stage3_20260223_compare.csv`
+   - `/tmp/crs_nomad_solver_space_stage3_20260223_agg.csv`
+4. Stage-3C clean expansion (full coverage, no exception profiles):
+   - `/tmp/crs_nomad_solver_space_stage3c_20260223_raw.csv`
+   - `/tmp/crs_nomad_solver_space_stage3c_20260223_compare.csv`
+   - `/tmp/crs_nomad_solver_space_stage3c_20260223_agg.csv`
+   - `/tmp/crs_nomad_solver_space_stage3c_20260223_strict_safe.csv`
+   - `/tmp/crs_nomad_solver_space_stage3c_20260223.log`
+
+Important method note:
+
+1. Profiles that intentionally trigger NOMAD exceptions (for example unsupported `VNS_MADS_OPTIMIZATION` in this build, or DiscoMADS without revealing output) can contaminate multi-profile runs in a single R session by leaving conflicting algorithm flags.
+2. Release-facing conclusions should therefore use clean-profile sweeps (Stage-3C) or isolate profiles per process when testing exception-prone modes.
+
+Stage-3C strict-safe winners (`0` worsens, `0` errors, all `4` cells):
+
+1. `frscvNOMAD`
+   - `fr_current`: baseline
+   - `fr_noquad_lexi`: mean elapsed `-2.49%`, worst cell `+4.17%`, objective unchanged
+2. `krscvNOMAD`
+   - `kr_current`: baseline
+3. `npglpreg`
+   - `np_current`: baseline
+   - `np_quadbox1`: mixed speed (`+1.06%` mean; cell range about `-2.92%` to `+8.36%`) with net objective improvements (`5`) and no worsens
+
+Stage-3C aggressive frontier (fast but objective risk):
+
+1. `frscvNOMAD` with standalone CS/NM/QP/random:
+   - elapsed roughly `-88%` to `-95%`
+   - objective worsens present (`4/20` to `20/20` pairs depending on mode)
+   - CS max mean objective drift observed about `+0.0019362`
+2. `krscvNOMAD` with standalone CS/NM/QP/random:
+   - elapsed roughly `-73%` to `-96%`
+   - objective worsens present (`10/20` to `20/20`)
+   - CS max mean objective drift observed about `+0.001487`
+3. `npglpreg` aggressive profiles:
+   - CS/NM/QP/random greatly faster (roughly `-39%` to `-98%`) but worsen almost always (`19/20` or `20/20`)
+   - `np_noquad` gave useful speed (`-36%` mean) but still had mixed objective movement (`4` worsens, `7` improves)
+
+Interpretation:
+
+1. For production defaults, no broad solver-family switch improved speed while remaining strictly parity-safe across all tested cells.
+2. Best robust default set remains:
+   - `frscvNOMAD`: MADS with existing path defaults
+   - `krscvNOMAD`: MADS with existing path defaults
+   - `npglpreg`: current MADS compatibility profile (optionally evaluate `np_quadbox1` case-by-case)
+3. Defaults currently in `crs` are still MADS-based; standalone algorithms are only activated by explicit options.
+
 ## Current gate state
 
 1. Build/install: passing.
