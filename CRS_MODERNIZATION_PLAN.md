@@ -356,3 +356,24 @@ Validation artifacts:
 3. Tarball-first:
    - `/tmp/crs_build_console_20260223.log`
    - `/tmp/crs_check_ascran_console_20260223.log` (`Status: 4 WARNINGs, 2 NOTEs`)
+
+### 2026-02-23 - A/R1.6 retire `<<-` in `plot.crsiv` dot consumption
+
+Scope completed:
+
+1. Removed super-assignment-based state mutation in `plot.crsiv(...)` dot handling:
+   - replaced `dots[[name]] <<- NULL` pattern with a local environment (`dot_env`) and explicit consume helpers.
+2. Preserved argument-consumption behavior by passing only unconsumed args at each plotting call via `remaining.dots()`.
+3. File updated:
+   - `/Users/jracine/Development/crs/R/crsiv.R`
+
+Validation artifacts:
+
+1. Deterministic install:
+   - `/tmp/crs_install_crsivdots_20260223.log`
+2. Focused smoke:
+   - `/tmp/crsiv_plot_smoke_crsivdots_20260223.out` (`CRSIV_PLOT_SMOKE_OK`)
+   - `/tmp/crsiv_plot_crsivdots_20260223.pdf`
+3. Tarball-first:
+   - `/tmp/crs_build_crsivdots_20260223.log`
+   - `/tmp/crs_check_ascran_crsivdots_20260223.log` (`Status: 4 WARNINGs, 2 NOTEs`)

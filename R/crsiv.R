@@ -948,15 +948,19 @@ plot.crsiv <- function(x,
 
   zname <- object$xnames[1]
   yname <- "y" ## Default
-  dots <- list(...)
+  dot_env <- list2env(list(...), parent = emptyenv())
 
   consume.dot <- function(name, default) {
-    if(!is.null(dots[[name]])) {
-      value <- dots[[name]]
-      dots[[name]] <<- NULL
+    if(exists(name, envir = dot_env, inherits = FALSE)) {
+      value <- get(name, envir = dot_env, inherits = FALSE)
+      rm(list = name, envir = dot_env)
       return(value)
     }
     default
+  }
+
+  remaining.dots <- function() {
+    as.list.environment(dot_env, all.names = TRUE)
   }
 
   trim.range <- function(v, trim) {
@@ -1005,7 +1009,7 @@ plot.crsiv <- function(x,
                               range(c(phi.prime, deriv.lwr, deriv.upr), na.rm = TRUE)),
            lwd = consume.dot("lwd", 2),
            col = consume.dot("col", 1)),
-      dots
+      remaining.dots()
     )
     do.call(graphics::plot, plot.args)
 
@@ -1041,7 +1045,7 @@ plot.crsiv <- function(x,
              ylim = consume.dot("ylim", range(c(y.plot, phi.plot), na.rm = TRUE)),
              type = consume.dot("type", "p"),
              col = consume.dot("col", "lightgrey")),
-        dots
+        remaining.dots()
       )
       do.call(graphics::plot, plot.args)
       graphics::lines(z.plot, phi.plot,
@@ -1059,7 +1063,7 @@ plot.crsiv <- function(x,
              ylim = consume.dot("ylim", range(phi.plot, na.rm = TRUE)),
              lwd = consume.dot("lwd", 2),
              col = consume.dot("col", 1)),
-        dots
+        remaining.dots()
       )
       do.call(graphics::plot, plot.args)
     }
