@@ -100,7 +100,7 @@ frscv <- function(xz,
     ## Degree is first column of K K[,1], segments second column K[,2]
     ## - could create a tmp vector for i/o, or could switch
 
-    console <<- printClear(console)
+    console.state$console <- printClear(console.state$console)
 
     ## Format function...
     fw.format.2 <- function(input) sapply(input,sprintf,fmt="%#.2f")
@@ -167,14 +167,15 @@ frscv <- function(xz,
       msg <- paste(tmp.1,tmp.3,sep="")
     }
 
-    console <<- printPush(msg,console = console)
+    console.state$console <- printPush(msg,console = console.state$console)
 
     return(cv)
 
   }
 
-  console <- newLineConsole()
-  if(display.nomad.progress) console <- printPush("Working...",console = console)
+  console.state <- new.env(parent = emptyenv())
+  console.state$console <- newLineConsole()
+  if(display.nomad.progress) console.state$console <- printPush("Working...",console = console.state$console)
 
   ## Take data frame x and parse into factors (z) and numeric (x)
 
@@ -418,8 +419,8 @@ frscv <- function(xz,
 
   if(!is.null(z)) I.opt <- K.opt[(2*num.x+1):(2*num.x+num.z)]
 
-  console <- printClear(console)
-  console <- printPop(console)
+  console.state$console <- printClear(console.state$console)
+  console.state$console <- printPop(console.state$console)
 
   ## Set number of segments when degree==0 to 1 (or NA)
 

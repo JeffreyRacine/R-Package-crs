@@ -398,3 +398,23 @@ Validation artifacts:
 3. Tarball-first:
    - `/tmp/crs_build_indexsafe2_20260223.log`
    - `/tmp/crs_check_ascran_indexsafe2_20260223.log` (`Status: 4 WARNINGs, 2 NOTEs`)
+
+### 2026-02-23 - A/R1.8 retire `<<-` in `frscv`/`krscv` console updates
+
+Scope completed:
+
+1. Removed `console <<- ...` closure mutation in cross-validation objective callbacks for:
+   - `/Users/jracine/Development/crs/R/frscv.R`
+   - `/Users/jracine/Development/crs/R/krscv.R`
+2. Replaced with explicit local state container (`console.state$console`) that is mutated directly without super-assignment.
+3. Kept user-facing progress behavior unchanged.
+
+Validation artifacts:
+
+1. Deterministic install:
+   - `/tmp/crs_install_consoleenv_20260223.log`
+2. Focused smoke:
+   - `/tmp/crs_frs_krs_smoke_consoleenv_20260223.out` (`FRS_KRS_CONSOLEENV_SMOKE_OK`)
+3. Tarball-first:
+   - `/tmp/crs_build_consoleenv_20260223.log`
+   - `/tmp/crs_check_ascran_consoleenv_20260223.log` (`Status: 4 WARNINGs, 2 NOTEs`)

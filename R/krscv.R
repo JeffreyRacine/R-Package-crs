@@ -167,8 +167,8 @@ krscv <- function(xz,
       msg <- paste(tmp.1,tmp.3,tmp.4,sep="")
     }
 
-    console <<- printClear(console)
-    console <<- printPush(msg,console = console)
+    console.state$console <- printClear(console.state$console)
+    console.state$console <- printPush(msg,console = console.state$console)
 
     return(cv)
 
@@ -211,8 +211,9 @@ krscv <- function(xz,
 
   if(degree.max < 1 || segments.max < 1 ) stop(" degree.max or segments.max must be greater than or equal to 1")
 
-  console <- newLineConsole()
-  if(display.nomad.progress) console <- printPush("Working...",console = console)
+  console.state <- new.env(parent = emptyenv())
+  console.state$console <- newLineConsole()
+  if(display.nomad.progress) console.state$console <- printPush("Working...",console = console.state$console)
 
   ## Exhaustive evaluation over all combinations of K, search over
   ## lambda for each combination
@@ -651,8 +652,8 @@ krscv <- function(xz,
   segments <- K.opt[(num.x+1):(2*num.x)]
   if(!is.null(z)) I.opt <- K.opt[(2*num.x+1):(2*num.x+num.z)]
 
-  console <- printClear(console)
-  console <- printPop(console)
+  console.state$console <- printClear(console.state$console)
+  console.state$console <- printPop(console.state$console)
 
   ## Set number of segments when degree==0 to 1 (or NA)
   segments[degree==0] <- 1
