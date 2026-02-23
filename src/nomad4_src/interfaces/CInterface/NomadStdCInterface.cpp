@@ -661,6 +661,32 @@ int solveNomadProblem(const NomadResult result,
         result->solutions_outputs = nullptr;
     }
 
+    // Always clear global NOMAD state between runs, including exception paths.
+    const auto cleanup_nomad_state = []() {
+        try
+        {
+            NOMAD::OutputQueue::Flush();
+        }
+        catch (...)
+        {}
+        try
+        {
+            NOMAD::MainStep::resetComponentsBetweenOptimization();
+        }
+        catch (...)
+        {}
+        try
+        {
+            const auto& cache = NOMAD::CacheBase::getInstance();
+            if (cache != nullptr)
+            {
+                cache->clear();
+            }
+        }
+        catch (...)
+        {}
+    };
+
     // Must perform a checking and compliance of parameters before the resolution
     try
     {
@@ -669,11 +695,12 @@ int solveNomadProblem(const NomadResult result,
     catch (std::exception& e)
     {
         printf("NOMAD exception (report to developer):\n%s\n", e.what());
+        cleanup_nomad_state();
         return -7;
     }
 
     // Resolution
-    int runFlag;
+    int runFlag = -8;
     try
     {
         NOMAD::MainStep TheMainStep;
@@ -763,11 +790,6 @@ int solveNomadProblem(const NomadResult result,
 
         // reset parameters in case someone wants to restart an optimization again
         // nomad_problem->p->resetToDefaultValues();
-
-        NOMAD::OutputQueue::Flush();
-        NOMAD::MainStep::resetComponentsBetweenOptimization();
-
-        return runFlag;
     }
     catch (std::exception &e)
     {
@@ -775,9 +797,7 @@ int solveNomadProblem(const NomadResult result,
         runFlag = -8;
     }
 
-    NOMAD::OutputQueue::Flush();
-    NOMAD::CacheBase::getInstance()->clear();
-
+    cleanup_nomad_state();
     return runFlag;
 }
 

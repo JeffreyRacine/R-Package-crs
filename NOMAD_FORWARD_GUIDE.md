@@ -110,14 +110,24 @@ Use this sequence whenever a new NOMAD4.x release is integrated.
    - compare against the latest accepted pre-upgrade baseline
    - include both fixed-seed and varying-seed comparisons
    - record mean/median elapsed deltas and objective/parameter drift
-5. Important comparison caveat
+5. Exception-isolation gate (required when testing new solver families)
+   - run `run_nomad_exception_isolation.R`
+   - verify that an exception-only profile (for example `disco_opt`) does not break subsequent in-session runs of baseline/CS/NM profiles
+   - keep isolated subprocess results as control
+6. Important comparison caveat
    - `benchmarks/nomad/compare_prepost.R` merges by `case + seed_policy + seed`
    - repeated fixed seeds can cross-join replicates; for release decisions, use summary-level comparisons or add replicate index before merging
-6. Optional heavy example gate (non-CRAN workflow)
+7. Optional heavy example gate (non-CRAN workflow)
    - use `/Users/jracine/Development/crs/man/runcrs` to enable running `\dontrun{}` examples
    - run tarball-first check from `/Users/jracine/Development`
    - restore with `/Users/jracine/Development/crs/man/dontruncrs` immediately after
    - remove disposable build artifacts (`src/*.o`, `src/*.so`) after check runs
+
+## Exception-state guardrail
+
+1. `solveNomadProblem()` in the embedded NOMAD C interface now performs exception-safe global cleanup on both success and failure paths.
+2. This guardrail exists to prevent algorithm-flag/state contamination across sequential calls in one R session.
+3. If contamination symptoms reappear in a future NOMAD update, run the exception-isolation harness first before trusting any solver-space benchmark conclusions.
 
 ## Package version/date workflow
 

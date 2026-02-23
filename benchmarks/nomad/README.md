@@ -31,6 +31,12 @@ Canonical result/status tracker:
     - `<prefix>_compare.csv`
     - `<prefix>_agg.csv`
     - `<prefix>_strict_safe.csv`
+- `run_nomad_exception_isolation.R`
+  - verifies that exception-only profiles do not poison later calls in the same R session
+  - compares in-session sequence vs isolated subprocess calls
+  - writes:
+    - `<prefix>_raw.csv`
+    - `<prefix>_summary.csv`
 
 ## Coverage
 
@@ -67,5 +73,10 @@ Rscript benchmarks/nomad/compare_prepost.R \
 # expanded solver-space sweep (second arg is n; optional)
 Rscript benchmarks/nomad/run_nomad_solver_space.R \
   /tmp/crs_nomad_solver_space \
+  180
+
+# exception-isolation gate
+Rscript benchmarks/nomad/run_nomad_exception_isolation.R \
+  /tmp/crs_nomad_exception_isolation \
   180
 ```

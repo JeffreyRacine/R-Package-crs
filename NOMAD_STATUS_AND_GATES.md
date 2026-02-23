@@ -312,6 +312,47 @@ Interpretation:
    - `npglpreg`: current MADS compatibility profile (optionally evaluate `np_quadbox1` case-by-case)
 3. Defaults currently in `crs` are still MADS-based; standalone algorithms are only activated by explicit options.
 
+## 2026-02-23 exception-path contamination investigation and fix
+
+Question tested:
+
+- Do exception-only NOMAD modes contaminate later optimizer calls in the same R session?
+
+Pre-fix evidence (before C-interface cleanup patch):
+
+1. Study log:
+   - `/tmp/crs_nomad_exception_isolation_study_20260223.log`
+2. Observed behavior:
+   - after a `DISCO_MADS_OPTIMIZATION` failure, subsequent in-session `npglpreg` runs (`cs_opt`, `nm_opt`, and even baseline) failed,
+   - matching isolated subprocess calls remained `ok`.
+3. Summary signature from that run:
+   - `cs_status_in = error`, `cs_status_isolated = ok` for all tested scenario/seed pairs
+   - `nm_status_in = error`, `nm_status_isolated = ok` for all tested scenario/seed pairs
+
+Root cause:
+
+1. `solveNomadProblem()` in
+   - `/Users/jracine/Development/crs/src/nomad4_src/interfaces/CInterface/NomadStdCInterface.cpp`
+2. success path reset global NOMAD components (`MainStep::resetComponentsBetweenOptimization`) but exception paths did not, leaving algorithm-state contamination for later calls.
+
+Fix implemented:
+
+1. Added shared cleanup routine in `solveNomadProblem()` and invoked it on all return paths (including `checkAndComply` failures and run-time exceptions).
+2. Cleanup made exception-safe to avoid failures when cache is not yet instantiated.
+
+Post-fix evidence:
+
+1. Study artifacts:
+   - `/tmp/crs_nomad_exception_isolation_study_20260223_afterfix_run.log`
+   - `/tmp/crs_nomad_exception_isolation_study_20260223_afterfix_raw.csv`
+   - `/tmp/crs_nomad_exception_isolation_study_20260223_afterfix_summary.csv`
+2. Outcome:
+   - `cs_status_in = ok` and `nm_status_in = ok` for all tested scenario/seed pairs after a `disco_opt` failure,
+   - in-session baseline calls recovered and remained runnable.
+3. Regression smoke after patch:
+   - `/tmp/crs_nomad_smoke_after_exception_reset_20260223_summary.csv`
+   - `/tmp/crs_nomad_smoke_after_exception_reset_20260223_parity.rds`
+
 ## Current gate state
 
 1. Build/install: passing.
