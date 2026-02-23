@@ -1,0 +1,183 @@
+###############################################################################
+######            Definition of Eval Parameters attributes         ############
+#####
+##### . Each definition must be separated by at least a comment line
+#####     (starting by #)
+#####
+##### . The definition must provide the name, type and default value
+#####     (no default: '-' or 'N/A') in this order, one by line.
+#####
+##### . Only a single word is considered for the name,
+#####     type and default value (extra is comment)
+#####
+##### . The short info, the help and the keywords must be provided in this
+#####     order within "\(" and "\). For keywords, the plural part of a word
+#####     can be put in parenthesis; both singular and plural will be keywords
+#####
+##### . The default value is automatically reported in the help.
+#####
+##### . In addition, the definition can have optional attributes:
+#####       - ALGO_COMPATIBILITY_CHECK yes/no, the default is no. If yes, the
+#####         value of this attribute can be used for comparing two sets of
+#####         attributes for algorithm compatibility. This is used by the
+#####         Runner.
+#####
+#####       - RESTART_ATTRIBUTE yes/no, the default is no. If yes, the
+#####         value of this attribute can be modified during hot or warm
+#####         restart. Otherwise, modifying this attribute during hot restart
+#####         will trigger an error message.
+#####
+#####       - UNIQUE_ENTRY yes/no, the default is yes. If no, multiple
+#####         values may be assigned to this parameter.
+#####
+################################################################################
+BB_EVAL_FORMAT
+NOMAD::ArrayOfDouble
+-
+\( Format of the doubles sent to the blackbox evaluator \)
+\(
+
+. BB_EVAL_FORMAT is computed from the BB_INPUT_TYPE parameter.
+
+. Gives the format precision for doubles sent to blackbox evaluator.
+
+. CANNOT BE MODIFIED BY USER. Internal parameter.
+
+\)
+\( internal \)
+ALGO_COMPATIBILITY_CHECK no
+RESTART_ATTRIBUTE no
+###############################################################################
+BB_EXE
+std::string
+-
+\( Blackbox executable \)
+\(
+
+. Blackbox executable name
+
+. List of strings
+
+. Required for batch mode
+
+. Unused in library mode
+
+. One executable can give several outputs
+
+. Use \' or \", and \'$\', to specify names or commands with spaces
+
+. When the \'$\' character is put in first position of a string, it is
+  considered as global and no path will be added
+
+. Examples
+    . BB_EXE bb.exe
+    . BB_EXE \'$nice bb.exe\'
+    . BB_EXE \'$python bb.py\'
+
+\)
+\( basic blackbox(es) bb exe executable(s) binary output(s) batch \)
+ALGO_COMPATIBILITY_CHECK no
+RESTART_ATTRIBUTE no
+###############################################################################
+BB_REDIRECTION
+bool
+true
+\( Blackbox executable redirection for outputs  \)
+\(
+
+. Flag to redirect blackbox executable outputs in a stream. The redirection
+  in a stream does not require an ouptut file. NOMAD interprets the outputs from
+  the stream according to BB_OUTPUT_TYPE. If the blackbox executable
+  outputs some verbose, NOMAD cannot interpret correctly the outputs.
+
+. If the redirection is disabled. The blackbox must output its results into a
+ file having the name of the input file (usually nomadtmp.pid.threadnum)
+ completed by \".output\". The format must follow the BB_OUTPUT_TYPE.
+ For example, for BB_OUTPUT_TYPE OBJ CSTR, we must have only the two values on
+ a single line in the output file with a end-of-line.
+ 
+. Disable blackbox redirection and managing output file can be convenient when
+the blackbox outputs some verbose. All the verbose is put into a temporary
+log file nomadtmp.pid.threadnum.tmplog
+ 
+. This parameter has no effect when BB_EXE is not defined like in library mode.
+
+. Examples
+    . BB_REDIRECTION false
+
+\)
+\( basic blackbox(es) bb exe executable(s) binary output(s) batch \)
+ALGO_COMPATIBILITY_CHECK no
+RESTART_ATTRIBUTE no
+#################################################################################
+BB_OUTPUT_TYPE
+NOMAD::BBOutputTypeList
+OBJ
+\( Type of outputs provided by the blackboxes \)
+\(
+
+. Blackbox output types
+
+. List of types for each blackbox output
+
+. If BB_EXE is defined, the blackbox outputs must be returned by the executable
+on a SINGLE LINE of the standard output or in an output file
+(see BB_REDIRECTION). The order of outputs must be consistent between the blackbox
+and BB_OUTPUT_TYPE.
+
+. Available types
+    . OBJ       : objective value to minimize (define twice for bi-objective)
+    . PB        : constraint <= 0 treated with Progressive Barrier (PB)
+    . CSTR      : same as 'PB'
+    . EB        : constraint <= 0 treated with Extreme Barrier (EB)
+    . F         : constraint <= 0 treated with Filter
+    . CNT_EVAL  : 0 or 1 output: count or not the evaluation (for batch mode and Matlab interface)
+    . NOTHING   : this output is ignored
+    . EXTRA_O   : same as 'NOTHING'
+    .  -        : same as 'NOTHING'
+    . BBO_UNDEFINED: same as 'NOTHING'
+
+. Equality constraints are not natively supported
+
+. Extra outputs (EXTRA_O, NOTHING, BBO_UNDEFINED, ...) are not used for
+  optimization but are available for display and custom user testing
+  (see examples).
+
+. See parameters LOWER_BOUND and UPPER_BOUND for bound constraints
+
+. See parameter H_NORM for the infeasibility measure computation.
+
+. See parameter H_MIN for relaxing the feasibility criterion.
+
+. Examples
+    . BB_EXE bb.exe                   # these two lines define
+    . BB_OUTPUT_TYPE OBJ EB EB        # that bb.exe outputs three values
+
+\)
+\( basic bb exe blackbox(s) output(s) constraint(s) type(s) infeasibility norm \)
+ALGO_COMPATIBILITY_CHECK no
+RESTART_ATTRIBUTE no
+################################################################################
+SURROGATE_EXE
+std::string
+-
+\( Static surrogate executable \)
+\(
+. To indicate a static surrogate executable
+
+. List of strings
+
+. Surrogate executable must have the same number of outputs as blackbox 
+    executable, defined by BB_OUTPUT_TYPE.
+    
+. Static surrogate evaluations can be used for sorting trial points before
+  blackbox evaluation OR for VNS Search.
+
+. Example
+    SURROGATE_EXE surrogate.exe     # surrogate.exe is a static surrogate executable
+                                    # for BB_EXE
+\)
+\( advanced static surrogate executable \)
+ALGO_COMPATIBILITY_CHECK yes
+RESTART_ATTRIBUTE no
+################################################################################

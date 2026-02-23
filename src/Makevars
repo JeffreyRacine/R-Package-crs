@@ -1,24 +1,20 @@
-NOMAD_SRC           = ./nomad_src
-SGTELIB_SRC         = ./sgtelib_src
-OBJECTS             = RuniqueCombs.o bspline.o gsl_bspline.o snomadr.o crs_init.o mgcv.o hat_diag.o $(NOMAD_SRC)/nomad.o \
-                      $(NOMAD_SRC)/Algo_Parameters.o $(NOMAD_SRC)/Barrier.o $(NOMAD_SRC)/Cache.o $(NOMAD_SRC)/Cache_File_Point.o $(NOMAD_SRC)/Cache_Point.o \
-                      $(NOMAD_SRC)/Cache_Search.o $(NOMAD_SRC)/Clock.o $(NOMAD_SRC)/Direction.o $(NOMAD_SRC)/Directions.o $(NOMAD_SRC)/Display.o \
-                      $(NOMAD_SRC)/Double.o $(NOMAD_SRC)/Eval_Point.o $(NOMAD_SRC)/Evaluator.o $(NOMAD_SRC)/Evaluator_Control.o \
-                      $(NOMAD_SRC)/Extended_Poll.o $(NOMAD_SRC)/L_Curve.o $(NOMAD_SRC)/LH_Search.o $(NOMAD_SRC)/Mads.o \
-                      $(NOMAD_SRC)/OrthogonalMesh.o $(NOMAD_SRC)/Model_Sorted_Point.o $(NOMAD_SRC)/Model_Stats.o $(NOMAD_SRC)/Multi_Obj_Evaluator.o \
-                      $(NOMAD_SRC)/NelderMead_Search.o $(NOMAD_SRC)/NelderMead_Simplex_Eval_Point.o \
-                      $(NOMAD_SRC)/Parameters.o $(NOMAD_SRC)/Parameter_Entries.o $(NOMAD_SRC)/Parameter_Entry.o \
-                      $(NOMAD_SRC)/Pareto_Front.o $(NOMAD_SRC)/Pareto_Point.o $(NOMAD_SRC)/Phase_One_Evaluator.o \
-                      $(NOMAD_SRC)/Phase_One_Search.o $(NOMAD_SRC)/Point.o $(NOMAD_SRC)/Priority_Eval_Point.o $(NOMAD_SRC)/Quad_Model.o \
-                      $(NOMAD_SRC)/Quad_Model_Evaluator.o $(NOMAD_SRC)/Quad_Model_Search.o $(NOMAD_SRC)/Random_Pickup.o \
-                      $(NOMAD_SRC)/RNG.o $(NOMAD_SRC)/Sgtelib_Model_Evaluator.o $(NOMAD_SRC)/Sgtelib_Model_Search.o $(NOMAD_SRC)/Sgtelib_Model_Manager.o \
-                      $(NOMAD_SRC)/Signature.o $(NOMAD_SRC)/Slave.o $(NOMAD_SRC)/Speculative_Search.o $(NOMAD_SRC)/Stats.o \
-                      $(NOMAD_SRC)/SMesh.o $(NOMAD_SRC)/TrendMatrix_Line_Search.o $(NOMAD_SRC)/GMesh.o $(NOMAD_SRC)/XMesh.o \
-                      $(NOMAD_SRC)/utils.o $(NOMAD_SRC)/Variable_Group.o $(NOMAD_SRC)/VNS_Search.o \
-											$(SGTELIB_SRC)/TrainingSet.o $(SGTELIB_SRC)/Surrogate_Parameters.o $(SGTELIB_SRC)/Surrogate_KS.o $(SGTELIB_SRC)/Surrogate_RBF.o \
-                      $(SGTELIB_SRC)/Surrogate_PRS.o $(SGTELIB_SRC)/Surrogate_PRS_EDGE.o $(SGTELIB_SRC)/Surrogate_LOWESS.o $(SGTELIB_SRC)/Surrogate_Kriging.o\
-                      $(SGTELIB_SRC)/Surrogate_PRS_CAT.o $(SGTELIB_SRC)/Surrogate_Ensemble.o $(SGTELIB_SRC)/Surrogate_CN.o \
-                      $(SGTELIB_SRC)/Surrogate.o $(SGTELIB_SRC)/Matrix.o $(SGTELIB_SRC)/Kernel.o $(SGTELIB_SRC)/Surrogate_Utils.o $(SGTELIB_SRC)/Surrogate_Factory.o \
-                      $(SGTELIB_SRC)/Tests.o $(SGTELIB_SRC)/sgtelib_help.o $(SGTELIB_SRC)/Metrics.o $(SGTELIB_SRC)/sgtelib.o
+NOMAD4_ROOT = ./nomad4_src
 
-PKG_CXXFLAGS= -I$(NOMAD_SRC) -I$(SGTELIB_SRC)
+# NOMAD 4 source list (mirrors CMake selection, excluding tool/openmp-only units).
+NOMAD4_SRC_CPP = $(shell find $(NOMAD4_ROOT)/src -type f -name '*.cpp')
+NOMAD4_SRC_CPP := $(filter-out $(NOMAD4_ROOT)/src/Attribute/WriteAttributeDefinitionFile.cpp,$(NOMAD4_SRC_CPP))
+NOMAD4_SRC_CPP := $(filter-out $(NOMAD4_ROOT)/src/Algos/PSDMads/%,$(NOMAD4_SRC_CPP))
+NOMAD4_SRC_CPP := $(filter-out $(NOMAD4_ROOT)/src/Algos/COOPMads/%,$(NOMAD4_SRC_CPP))
+
+NOMAD4_SGTELIB_CPP = $(shell find $(NOMAD4_ROOT)/ext/sgtelib/src -type f -name '*.cpp')
+NOMAD4_SGTELIB_CPP := $(filter-out $(NOMAD4_ROOT)/ext/sgtelib/src/sgtelib.cpp,$(NOMAD4_SGTELIB_CPP))
+NOMAD4_SGTELIB_CPP := $(filter-out $(NOMAD4_ROOT)/ext/sgtelib/src/sgtelib_predict.cpp,$(NOMAD4_SGTELIB_CPP))
+NOMAD4_CINT_CPP = $(NOMAD4_ROOT)/interfaces/CInterface/NomadStdCInterface.cpp
+
+NOMAD4_OBJECTS = $(NOMAD4_SRC_CPP:.cpp=.o) $(NOMAD4_SGTELIB_CPP:.cpp=.o) $(NOMAD4_CINT_CPP:.cpp=.o)
+NOMAD4_INCLUDE_DIRS = $(shell find $(NOMAD4_ROOT)/src -type d)
+NOMAD4_INCLUDE_FLAGS = $(addprefix -I,$(NOMAD4_INCLUDE_DIRS))
+
+OBJECTS = RuniqueCombs.o bspline.o gsl_bspline.o snomadr.o crs_init.o mgcv.o hat_diag.o $(NOMAD4_OBJECTS)
+
+PKG_CXXFLAGS = $(NOMAD4_INCLUDE_FLAGS) -I$(NOMAD4_ROOT)/interfaces/CInterface -I$(NOMAD4_ROOT)/ext/sgtelib/src -DUSE_SGTELIB -DNOMAD_STATIC_BUILD

@@ -10,8 +10,10 @@ Companion technical map:
 
 ## Current baseline (must preserve)
 
-- Embedded NOMAD version wired into `crs`: `3.9.1`
+- Embedded NOMAD version wired into `crs`: `4.5.0`
 - Embedded source trees:
+  - `/Users/jracine/Development/crs/src/nomad4_src`
+- Legacy retained source trees (no longer wired into build):
   - `/Users/jracine/Development/crs/src/nomad_src`
   - `/Users/jracine/Development/crs/src/sgtelib_src`
 - R entry wrapper:
@@ -237,3 +239,55 @@ Deliverable for checkpoint:
   - mean/median % deltas
   - parity results and tolerances
   - `/tmp` artifact inventory
+
+## Checkpoint Addendum (2026-02-23, NOMAD4 bridge hardening + gates)
+
+### Scope completed
+
+1. `snomadr.cpp` bridge moved to and hardened for NOMAD4 C interface behavior.
+2. `Makevars` wiring updated to NOMAD4 source graph.
+3. Strict pre/post benchmark harnesses executed with isolated pre/post libraries.
+
+### Notable bridge compatibility updates
+
+1. Array-option handling was made dimension-aware and NOMAD4-safe.
+2. Legacy poll options are translated:
+   - `MIN_POLL_SIZE` -> `MIN_FRAME_SIZE`
+   - `INITIAL_POLL_SIZE` -> `INITIAL_FRAME_SIZE`
+3. Relative (`r...`) scalar values are parsed for array options.
+4. Integer/granular variables enforce mesh/frame lower bounds needed by NOMAD4.
+5. `MAX_EVAL` is auto-set from `MAX_BB_EVAL` when missing (legacy budget intent).
+6. `EPSILON` values are sanitized against NOMAD4 precision lower bound.
+
+### Gate artifacts (latest run set)
+
+Pre baseline:
+
+- `/tmp/crs_nomad_pre_20260223_104449_raw.csv`
+- `/tmp/crs_nomad_pre_20260223_104449_summary.csv`
+
+Post (latest candidate):
+
+- `/tmp/crs_nomad_post_20260223_104449_v2_raw.csv`
+- `/tmp/crs_nomad_post_20260223_104449_v2_summary.csv`
+
+Comparisons:
+
+- `/tmp/crs_nomad_perf_20260223_104449_v2.csv`
+- `/tmp/crs_nomad_parity_20260223_104449_v2.csv`
+
+Install/bench logs:
+
+- `/tmp/crs_nomad_gate_20260223_104449.log`
+- `/tmp/crs_nomad_gate_20260223_104449_v2.log`
+
+### Gate summary (latest)
+
+1. Performance improved materially versus earlier NOMAD4 attempt after `MAX_EVAL` compatibility capping.
+2. Strict performance parity is still not met in several paths (`frscvNOMAD`, `krscvNOMAD`, `snomadr_basic_lib` fixed-seed set).
+3. Objective parity is strong for `frscvNOMAD`; mixed/partial for other paths.
+4. Parameter parity still differs in `npglpreg` relative to NOMAD3 baseline.
+
+### Current conclusion
+
+The NOMAD4 upgrade is wired and operational with hardened bridge compatibility, but final strict parity/performance acceptance gates are not yet fully satisfied and require additional tuning decisions.

@@ -1,0 +1,463 @@
+/*---------------------------------------------------------------------------------*/
+/*  NOMAD - Nonlinear Optimization by Mesh Adaptive Direct Search -                */
+/*                                                                                 */
+/*  NOMAD - Version 4 has been created and developed by                            */
+/*                 Viviane Rochon Montplaisir  - Polytechnique Montreal            */
+/*                 Christophe Tribes           - Polytechnique Montreal            */
+/*                                                                                 */
+/*  The copyright of NOMAD - version 4 is owned by                                 */
+/*                 Charles Audet               - Polytechnique Montreal            */
+/*                 Sebastien Le Digabel        - Polytechnique Montreal            */
+/*                 Viviane Rochon Montplaisir  - Polytechnique Montreal            */
+/*                 Christophe Tribes           - Polytechnique Montreal            */
+/*                                                                                 */
+/*  NOMAD 4 has been funded by Rio Tinto, Hydro-Québec, Huawei-Canada,             */
+/*  NSERC (Natural Sciences and Engineering Research Council of Canada),           */
+/*  InnovÉÉ (Innovation en Énergie Électrique) and IVADO (The Institute            */
+/*  for Data Valorization)                                                         */
+/*                                                                                 */
+/*  NOMAD v3 was created and developed by Charles Audet, Sebastien Le Digabel,     */
+/*  Christophe Tribes and Viviane Rochon Montplaisir and was funded by AFOSR       */
+/*  and Exxon Mobil.                                                               */
+/*                                                                                 */
+/*  NOMAD v1 and v2 were created and developed by Mark Abramson, Charles Audet,    */
+/*  Gilles Couture, and John E. Dennis Jr., and were funded by AFOSR and           */
+/*  Exxon Mobil.                                                                   */
+/*                                                                                 */
+/*  Contact information:                                                           */
+/*    Polytechnique Montreal - GERAD                                               */
+/*    C.P. 6079, Succ. Centre-ville, Montreal (Quebec) H3C 3A7 Canada              */
+/*    e-mail: nomad@gerad.ca                                                       */
+/*                                                                                 */
+/*  This program is free software: you can redistribute it and/or modify it        */
+/*  under the terms of the GNU Lesser General Public License as published by       */
+/*  the Free Software Foundation, either version 3 of the License, or (at your     */
+/*  option) any later version.                                                     */
+/*                                                                                 */
+/*  This program is distributed in the hope that it will be useful, but WITHOUT    */
+/*  ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or          */
+/*  FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License    */
+/*  for more details.                                                              */
+/*                                                                                 */
+/*  You should have received a copy of the GNU Lesser General Public License       */
+/*  along with this program. If not, see <http://www.gnu.org/licenses/>.           */
+/*                                                                                 */
+/*  You can find information on the NOMAD software at www.gerad.ca/nomad           */
+/*---------------------------------------------------------------------------------*/
+
+#ifndef __NOMAD_4_5_STEP__
+#define __NOMAD_4_5_STEP__
+
+#include "../Eval/MeshBase.hpp"
+#include "../Eval/SuccessStats.hpp"
+#include "../Eval/BarrierBase.hpp"
+#include "../Output/OutputInfo.hpp"
+#include "../Param/PbParameters.hpp"
+#include "../Param/RunParameters.hpp"
+#include "../Type/CallbackType.hpp"
+#include "../Type/EvalType.hpp"
+#include "../Util/AllStopReasons.hpp"
+
+#include "../nomad_nsbegin.hpp"
+
+class Step;
+class Algorithm;
+
+typedef std::function<void(const Step& step, bool &stop)> StepCbFunc;  ///< Type definitions for callback functions at the end of a step.
+typedef std::function<void(std::vector<std::string>& paramLines)> HotRestartCbFunc; ///< Type definitions for callback functions for hot restart.
+
+/// Base class of all types of steps (Iteration, Termination, Initialization, Poll, Mads,...).
+class DLL_ALGO_API Step
+{
+private:
+    static bool _userInterrupt; ///< Interrupt NOMAD if Ctrl-C is pressed.
+    static bool _userTerminate; ///< Terminate NOMAD if Ctrl-C is pressed again.
+    
+    // By default, always show warnings.
+    // Some warnings do not need to be shown in some cases, ex. unit tests.
+    static bool _showWarnings;
+    
+    bool _isMegaSearchPoll;  ///< The step is for mega search poll (that is, generate trial points for both search and poll before starting queue evaluation.
+
+    Double _hMax0 ; ///< Initial hMax for barrier
+protected:
+
+	const Step* _parentStep;    ///< The parent of this step.
+	//std::string         _name;  ///< The name of this step.
+	StepType    _stepType;      ///< StepType for points generated by this step
+
+	std::shared_ptr<AllStopReasons>      _stopReasons; ///< The stop reasons of an algorithm step.
+
+
+	std::shared_ptr<RunParameters>       _runParams; ///< The run parameters that control a step.
+	std::shared_ptr<PbParameters>        _pbParams;  ///< The problem parameters that control a step.
+
+    SuccessStats _successStats;
+    
+    // Callbacks that may be re-implemented by the user
+    static StepCbFunc    _cbIterationEnd;
+    static StepCbFunc    _cbMegaIterationEnd;
+    static StepCbFunc    _cbMegaIterationStart;
+    static StepCbFunc    _cbPostprocessingCheck;
+    static HotRestartCbFunc _cbHotRestart;
+    
+    
+    /**
+     The success type of a step is used for updates and stats.
+     Success type is initialized to UNDEFINED by default Start.
+     At the end of run step the success type must be updated with the best  success type.
+     Update step uses the success  (for example, enlarge or reduce the mesh).
+     For step that generate and eval trial points, the success is set from the result of calling evcInterface.startEvaluation();
+     When no trial points can be created (lack of information or projection to existing points), the success type is NO_TRIALS. This info is used for stats.
+     */
+    SuccessType _success;
+
+
+public:
+
+	/// Constructor #1 for MainStep (no parent)
+	/**
+	 */
+	explicit Step()
+		: _parentStep(nullptr),
+		_stepType(StepType::UNDEFINED),
+		_stopReasons(nullptr),
+		_runParams(nullptr),
+		_pbParams(nullptr)
+	{
+		init();
+	}
+
+
+	/// Constructor #2 for child step of a parent sharing the same stopReason
+	/**
+	 \param parentStep      The parent of this step (cannot be nullptr).
+	 \param runParams       The run parameters that control this step (null by default).
+	 \param pbParams        The problem parameters that control this step (null by default).
+	 */
+	explicit Step(const Step* parentStep,
+		const std::shared_ptr<RunParameters>   &runParams = nullptr,
+		const std::shared_ptr<PbParameters> &pbParams = nullptr)
+		: _parentStep(parentStep),
+		_stepType(StepType::UNDEFINED),
+		_runParams(runParams),
+		_pbParams(pbParams)
+	{
+		if (_parentStep == nullptr)
+		{
+			throw Exception(__FILE__, __LINE__, "Parent step is NULL. This constructor is for child steps having a parent only.");
+		}
+		else
+		{
+			_stopReasons = parentStep->getAllStopReasons();
+		}
+		init();
+	}
+
+	/// Constructor #3: for a child Step with a provided stopReason (such as an algorithm)
+	/**
+	 \param parentStep      The parent of this step (can be nullptr if child of a MainStep).
+	 \param stopReasons     The stop reasons for all the steps of an algo (cannot be nullptr)
+	 \param runParams       The run parameters that control this step (null by default).
+	 \param pbParams        The problem parameters that control this step (null by default).
+	 */
+	explicit Step(const Step* parentStep,
+		std::shared_ptr<AllStopReasons> stopReasons,
+		const std::shared_ptr<RunParameters> &runParams = nullptr,
+		const std::shared_ptr<PbParameters> &pbParams = nullptr)
+		: _parentStep(parentStep),
+		_stepType(StepType::UNDEFINED),
+		_stopReasons(stopReasons),
+		_runParams(runParams),
+		_pbParams(pbParams)
+	{
+		if (nullptr == _stopReasons)
+		{
+			throw Exception(__FILE__, __LINE__, "StopReason is NULL. Must be provided for this child step.");
+		}
+
+		init();
+	}
+
+
+	/// Destructor
+	/**
+	 Upon destruction of a step the output queue is flushed. Time to print.
+	 */
+	virtual ~Step();
+
+	// Get / Set
+
+	/// Interruption call by user.
+	/**
+	 Called by pressing Ctrl-C.
+	 */
+    static bool getUserTerminate() ; // not inline (dll pb)
+
+	/// Interruption requested
+    static void setUserTerminate() ; // not inline (dll pb)
+
+	/// Reset user terminate (called by main step to prevent invalid stop (Python or Matlab interface)
+    static void resetUserTerminate() ; // not inline (dll pb)
+    
+    /// Reset user interrupt (called by main step to prevent invalid stop (Python or Matlab interface)
+    static void resetUserInterrupt() ; // not inline (dll pb)
+    
+
+    /// Get the parent step.
+    /**
+     * There is no setParentStep(). We should not change parent step externally.
+
+     \return The parent step of this step.
+     */
+    const Step* getParentStep() const { return _parentStep; }
+
+    /// Get the name of this step
+    /**
+     \return A /c string containing the name of this step.
+     */
+    virtual std::string getName() const { return stepTypeToString(_stepType); }
+
+    /// Set the name of this step
+    /**
+     \param name    The name is provided as a \c string -- \b IN.
+     */
+    //void setName(const std::string& name) { _name = name; }
+    
+    /// Set and get the step type of this step
+    const StepType& getStepType() const { return _stepType; }
+    void setStepType(const StepType &stepType) { _stepType = stepType; }
+
+    const std::shared_ptr<AllStopReasons> getAllStopReasons() const { return _stopReasons ; }
+
+    const std::shared_ptr<RunParameters> getRunParams() const { return _runParams; }
+    const std::shared_ptr<PbParameters> getPbParams() const { return _pbParams; }
+
+    /// Interruption call by user.
+    /**
+     * Called when the user pressed Ctrl-C.
+     \param signalValue Signal value -- \b IN.
+     */
+    static void userInterrupt(int signalValue);
+    static void debugSegFault(int signalValue);
+
+    static bool getUserInterrupt(); // not inline (dll pb)
+
+    /// \brief Set user callback
+    void addCallback(const CallbackType& callbackType,
+                     const StepCbFunc& stepCbFunc);
+    void addCallback(const CallbackType& callbackType,
+                     const HotRestartCbFunc& hotRestartCbFunc);
+
+    /// \brief Run user callback
+    static void runCallback(CallbackType callbackType,
+                            const Step& step,
+                            bool &stop);
+    static void runCallback(CallbackType callbackType,
+                            std::vector<std::string>& paramLines);
+    
+    /// \brief Reset user callbacks to default
+    static void resetCallbacks();
+
+    static void disableWarnings() ;
+
+    /// \brief display output
+    void AddOutputInfo(const std::string& s, bool isBlockStart, bool isBlockEnd) const;
+    void AddOutputInfo(const std::string& s, OutputLevel outputLevel = OutputLevel::LEVEL_INFO) const;
+    void AddOutputError(const std::string& s) const;
+    void AddOutputWarning(const std::string& s) const;
+    void AddOutputVeryHigh(const std::string& s) const;
+    void AddOutputHigh(const std::string& s) const;
+    void AddOutputDebug(const std::string& s) const;
+    void AddOutputInfo(OutputInfo outputInfo) const;
+
+    /// Template function to get the parent of given type.
+    /**
+     * Starting with parent of current Step, and going through ancestors,
+    get first Step that is of type T.
+     * By default, stop if an Algorithm is found. Returned Step could be
+     irrelevant otherwise. To go further up than an Algorithm, set optional
+     parameter stopAtAlgo to false.
+     */
+    template<typename T>
+    T getParentOfType(const bool stopAtAlgo = true) const
+    {
+        Step* retStep = nullptr;
+
+        Step* step = const_cast<Step*>(_parentStep);
+        while (nullptr != step)
+        {
+            if (nullptr != dynamic_cast<T>(step))
+            {
+                retStep = step;
+                break;
+            }
+            else if (stopAtAlgo && step->isAnAlgorithm())
+            {
+                break;
+            }
+            step = const_cast<Step*>(step->getParentStep());
+        }
+
+        return dynamic_cast<T>(retStep);
+    }
+
+
+    bool isAnAlgorithm() const;
+
+    /// Get Algorithm ancestor that has no Algorithm ancestor.
+    const Algorithm* getRootAlgorithm() const;
+    /// Get First Algorithm ancestor.
+    const Algorithm* getFirstAlgorithm() const;
+
+    /**
+     \return the name of the first Algorithm ancestor of this Step,
+     or the Step itself, if it is an Algorithm.
+     \note If the Algorithm ancestor exists, a blank space is added at
+     the end of the string for easier use. This method is mostly used
+     to compute Step names as sub-steps of algorithms.
+     */
+    std::string getAlgoName() const;
+
+    /**
+     \return The MeshBase for the first Iteration ancestor of this Step.
+     */
+    const MeshBasePtr getIterationMesh() const;
+
+    /**
+     \return The Barrier for the main MegaIteration ancestor of this Step.
+     */
+    const std::shared_ptr<BarrierBase> getMegaIterationBarrier() const;
+
+    /**
+     \param computeType        Which type of f, h computation (eval type, compute type and h norm type)  -- \b IN.
+     \return \c true if either the cache has a feasible solution,
+       or the MegaIteration ancestor's barrier has a feasible solution.
+     */
+    bool solHasFeas(const NOMAD::FHComputeType & computeType) const;
+
+    /**
+     \return \c true if either the cache has a phase one solution,
+       or the MegaIteration ancestor's barrier has a phase one solution.
+       // A phase one solution has a PHASE_ONE Eval with f = 0.
+     */
+    bool hasPhaseOneSolution() const;
+
+    /**
+    Start of the Step. Initialize values for the run.
+    */
+    void start() ;
+
+    /**
+    Placeholder to be implemented in derived classes. Called by start.
+    */
+    virtual void startImp() = 0 ;
+
+    /**
+     * Perform main step task.
+     * Main part of the Step
+     \return \c true if the Step was positive, for instance, a success was found;
+     \c false if there was no success running this step
+    */
+    bool run();
+
+    /**
+    Placeholder to be implemented in derived classes. Called by run.
+    */
+    virtual bool runImp() = 0 ;
+
+    /**
+     * End of the Step. Clean up structures, flush output.
+    */
+    void end();
+
+    /**
+    Placeholder to be implemented by derived classes. Called by end.
+    */
+    virtual void endImp() = 0 ;
+
+    /// For suggest and observe PyNomad interface
+    virtual NOMAD::ArrayOfPoint suggest() { return NOMAD::ArrayOfPoint(); }
+    virtual void observe(const std::vector<NOMAD::EvalPoint>& evalPointList);
+
+    /// Helper for hot restart functionalities
+    virtual void hotRestartOnUserInterrupt();
+
+    /// For debugging purposes. Show the stack of Steps for this step.
+    void debugShowCallStack() const;
+    
+    /**
+        Access to success type. Used to pass success type from step to parent step
+     */
+    const SuccessType& getSuccessType() const       { return _success; }
+    void setSuccessType(const SuccessType& success) { _success = success; }
+    
+    /// Access to success stats.
+    SuccessStats & getSuccessStats() { return _successStats; }
+    const SuccessStats & getConstSuccessStats() const { return _successStats ;}
+    
+
+protected:
+    /// Helper for constructors.
+    /**
+     Throw Exception when not verified.
+     */
+    void verifyParentNotNull();
+
+    /// Helper for validating steps depending on parameter MEGA_SEARCH_POLL
+    void verifyGenerateAllPointsBeforeEval(const std::string& method, const bool expected) const;
+
+    /// Helpers for hot restart, to be called at the start and end of any override.
+    void hotRestartBeginHelper();
+    /// Helpers for hot restart, to be called at the start and end of any override.
+    void hotRestartEndHelper();
+
+private:
+
+    /// Helper for constructor
+    void init();
+    
+    /// Call to increment some counters when available (nb calls to generate trials, nb calls to algorithm, step counters for Iteration and MegaIteration).
+    virtual void incrementCounters() {};
+
+    // Default callbacks. They do nothing.
+    static void defaultStepCB(const Step& NOMAD_UNUSED(step), bool &stop) { stop = false; }
+    static void defaultHotRestart(std::vector<std::string>& NOMAD_UNUSED(paramLines)) {};
+
+    /**
+     Default task always executed when start() is called
+     */
+    void defaultStart();
+
+    /**
+     Default task always executed when end() is called
+     */
+    void defaultEnd();
+    
+    
+    /// Helper for defaultEnd
+    void updateParentSuccessStats();
+    
+    /// Helper for defaultEnd
+    void updateParentSuccess();
+
+};
+
+
+class StepException : public Exception
+{
+public:
+    /// Constructor
+    StepException(const std::string& file, const size_t line, const std::string & msg, const Step* step)
+      : Exception(file, line, msg)
+    {
+        if (nullptr != step)
+        {
+            step->debugShowCallStack();
+        }
+    }
+};
+
+#include "../nomad_nsend.hpp"
+
+#endif // __NOMAD_4_5_STEP__

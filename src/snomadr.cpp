@@ -1,895 +1,885 @@
-/*
- * 		Copyright (C) 2010 Zhenghua Nie. All Rights Reserved.
- * 		This code is published under the Common Public License.
- *
- * 		File:   snomadr.cpp
- * 		Author: Zhenghua Nie
- * 		Date:   Mon 16 May 2011
- *
- * 		We use ipoptr developed by Jelmer Ypma as the prototype of this package.
- * 		Some code is copied and edited from ipoptr. 
- * 		Please reference the license of ipoptr.
- *
- * 		This file defines the main function snomadRSolve that provides
- * 		an interface to NOMAD from R.
- * 		The function converts and R object containing objective function,
- * 		constraints, etc. into a Parameters , solves the problem,
- * 		and returns the result.
- *
- *    This program is free software; you can redistribute it and/or modify
- *    it under the terms of the GNU General Public License as published by
- *    the Free Software Foundation; either version 3 of the License,  or
- *    (at your option) any later version.
- *      
- *    This program is distributed WITHOUT ANY WARRANTY. See the
- *    GNU General Public License for more details.
- *           
- *    If you do not have a copy of the GNU General Public License,  
- *    write to the Free Software Foundation, Inc., 
- *    59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
- *
- */
 #include "snomadr.h"
 
-using namespace std;
+#include "NomadStdCInterface.h"
+#include "Algos/EvcInterface.hpp"
+#include "nomad_version.hpp"
 
-static SEXP thefun,theenv;
-SEXP showArgs1(SEXP largs);
+#include <R_ext/Boolean.h>
 
+#include <algorithm>
+#include <atomic>
+#include <cctype>
+#include <cstdlib>
+#include <cmath>
+#include <ctime>
+#include <fstream>
+#include <limits>
+#include <ostream>
+#include <random>
+#include <sstream>
+#include <string>
+#include <vector>
+
+static SEXP thefun = R_NilValue;
+static SEXP theenv = R_NilValue;
 static Routbuf routbuf;
 static std::ostream rout(&routbuf);
+static std::atomic<int> g_bbe_counter{0};
 
-bool file_exists(const char*path)
-{
-		struct stat sbuf;
-		return stat(path,&sbuf)==0;
+static SEXP getListElement(SEXP list, const char* str) {
+  SEXP names = Rf_getAttrib(list, R_NamesSymbol);
+  const int n = Rf_length(list);
+  for (int i = 0; i < n; ++i) {
+    if (std::strcmp(CHAR(STRING_ELT(names, i)), str) == 0) {
+      return VECTOR_ELT(list, i);
+    }
+  }
+  return R_NilValue;
 }
 
-//
-// Extracts element with name 'str' from R object 'list'
-// and returns that element.
-//
-SEXP getListElement(SEXP list, std::string str)
-{
-		SEXP elmt = R_NilValue, names = Rf_getAttrib(list, R_NamesSymbol);
-		int i;
-		for (i = 0; i < Rf_length(list); i++)
-				if(str.compare(CHAR(STRING_ELT(names, i))) == 0) {
-						elmt = VECTOR_ELT(list, i);
-						break;
-				}
-		return elmt;
+static std::string trim(const std::string& s) {
+  std::size_t b = 0;
+  while (b < s.size() && std::isspace(static_cast<unsigned char>(s[b]))) {
+    ++b;
+  }
+  std::size_t e = s.size();
+  while (e > b && std::isspace(static_cast<unsigned char>(s[e - 1]))) {
+    --e;
+  }
+  return s.substr(b, e - b);
 }
 
+static bool r_eval_single(int nb_inputs,
+                          double* x,
+                          int nb_outputs,
+                          double* bb_outputs,
+                          bool* count_eval,
+                          NomadUserDataPtr) {
+  R_CheckUserInterrupt();
 
-//
-// Set options specified in R object opts in IpoptApplcation app.
-// If we set the option to approximate the Hessian, then IpoptRNLP
-// needs to know that, so it can return false when calling eval_h,
-// instead of trying to find an R function that evaluates the Hessian.
-//
-// SEXP opts is an R list containing three sub-lists, with names
-// integer, string and numeric. These sub-lists contain the actual
-// options and there values that were specified by the user.
-// Passing the options in this way makes it easier to call different
-// SetValue function in IpoptApplication of the different types.
-//
-void setApplicationOptions(NOMAD::Parameters & p, SEXP opts ) {
+  int nprotect = 0;
+  SEXP rargs = PROTECT(Rf_allocVector(REALSXP, nb_inputs));
+  ++nprotect;
+  for (int i = 0; i < nb_inputs; ++i) {
+    REAL(rargs)[i] = x[i];
+  }
 
-		std::stringbuf nomadbuf;
-		std::iostream fp(&nomadbuf);
+  SEXP call = PROTECT(Rf_lang2(thefun, rargs));
+  ++nprotect;
 
+  int error = 0;
+  SEXP result = R_tryEval(call, theenv, &error);
+  if (error || result == R_NilValue) {
+    UNPROTECT(nprotect);
+    return false;
+  }
 
-		fp.precision(15);
-		fp.seekg(0, std::ios::beg);
-		// extract the sub-lists with options of the different types into separate lists
-		SEXP opts_integer = getListElement(opts, "integer");
-		SEXP opts_numeric = getListElement(opts, "numeric");
-		SEXP opts_string = getListElement(opts, "string");
+  if (!Rf_isNumeric(result)) {
+    UNPROTECT(nprotect);
+    return false;
+  }
 
-		//	showArgs1(opts_integer);
-		//	showArgs1(opts_numeric);
-		//		showArgs1(opts_string);
+  SEXP rnum = result;
+  if (TYPEOF(rnum) != REALSXP) {
+    rnum = PROTECT(Rf_coerceVector(result, REALSXP));
+    ++nprotect;
+  }
 
-		// loop over the integer options and set them
-		SEXP opts_integer_names;
-		opts_integer_names = Rf_getAttrib(opts_integer, R_NamesSymbol);
-		for (int list_cnt=0;list_cnt<Rf_length( opts_integer );list_cnt++) {
+  if (Rf_length(rnum) < nb_outputs) {
+    UNPROTECT(nprotect);
+    return false;
+  }
 
-				SEXP opt_value;
-				PROTECT(opt_value = AS_INTEGER(VECTOR_ELT(opts_integer, list_cnt)));
+  for (int i = 0; i < nb_outputs; ++i) {
+    bb_outputs[i] = REAL(rnum)[i];
+  }
+  *count_eval = true;
+  g_bbe_counter.fetch_add(1, std::memory_order_relaxed);
 
-			fp <<  CHAR(STRING_ELT(opts_integer_names,  list_cnt)) << "\t" <<  INTEGER(opt_value)[0] << std::endl;
-			
-
-				UNPROTECT(1);	
-		}
-
-		// loop over the numeric options and set them
-		SEXP opts_numeric_names;
-		opts_numeric_names = Rf_getAttrib(opts_numeric, R_NamesSymbol);
-		for (int list_cnt=0;list_cnt<Rf_length( opts_numeric );list_cnt++) {
-
-				SEXP opt_value;
-				PROTECT(opt_value = VECTOR_ELT(opts_numeric, list_cnt));
-
-				fp << CHAR(STRING_ELT(opts_numeric_names,  list_cnt)) << "\t" <<  REAL(opt_value)[0] << std::endl;
-
-				UNPROTECT(1);	
-
-		}
-
-
-		// loop over the string options and set them
-		SEXP opts_string_names;
-		opts_string_names = Rf_getAttrib(opts_string, R_NamesSymbol);
-		for (int list_cnt=0;list_cnt<Rf_length( opts_string );list_cnt++) {
-
-				// opt_value will contain the first (should be the only one) element of the list
-				SEXP opt_value;
-				PROTECT(opt_value = STRING_ELT(VECTOR_ELT(opts_string, list_cnt),0));
-
-				fp <<  CHAR(STRING_ELT(opts_string_names,  list_cnt)) << "\t" <<   CHAR(opt_value) << std::endl;
-
-
-				UNPROTECT(1);	
-		}
-
-		fp.seekg (0,  std::ios::beg);
-
-		p.read(fp);
-
-		return;
+  UNPROTECT(nprotect);
+  return true;
 }
 
-
-SEXP showArgs1(SEXP largs)
-{
-		int i, nargs = LENGTH(largs);
-		Rcomplex cpl;
-		SEXP el, names = Rf_getAttrib(largs, R_NamesSymbol);
-		const char *name;
-
-		for(i = 0; i < nargs; i++) {
-				el = VECTOR_ELT(largs, i);
-				name = Rf_isNull(names) ? "" : CHAR(STRING_ELT(names, i));
-				switch(TYPEOF(el)) {
-						case REALSXP:
-								Rprintf("[%d] '%s' %f\n", i+1, name, REAL(el)[0]);
-								break;
-						case LGLSXP:
-						case INTSXP:
-								Rprintf("[%d] '%s' %d\n", i+1, name, INTEGER(el)[0]);
-								break;
-						case CPLXSXP:
-								cpl = COMPLEX(el)[0];
-								Rprintf("[%d] '%s' %f + %fi\n", i+1, name, cpl.r, cpl.i);
-								break;
-						case STRSXP:
-								Rprintf("[%d] '%s' %s\n", i+1, name,
-												CHAR(STRING_ELT(el, 0)));
-								break;
-						default:
-								Rprintf("[%d] '%s' R type\n", i+1, name);
-				}
-		}
-		return(R_NilValue);
-}
-//
-
-double *eval_f( int m, int n, double *x)
-{
-		R_CheckUserInterrupt();
-
-		SEXP rargs,Rcall,result;
-
-		// Allocate memory for a vector of reals.
-		// This vector will contain the elements of x,
-		// x is the argument to the R function R_eval_f
-		PROTECT(rargs = Rf_allocVector(REALSXP,n));
-		for (int i=0;i<n;i++) {
-				REAL(rargs)[i] = x[i];
-		}
-
-		// evaluate R function R_eval_f with the control x as an argument
-		PROTECT(Rcall = Rf_lang2(thefun,rargs));
-		PROTECT(result = Rf_eval(Rcall,theenv));
-
-		// recode the return value from SEXP to Number
-		double *ret_value;
-		ret_value = (double *)malloc(sizeof(double)*m);
-		for(int i=0;i<m;i++)
-				ret_value[i]=REAL(result)[i];
-
-		UNPROTECT(3);
-
-		return(ret_value);
+static std::string map_bbin_to_string(SEXP sbbin) {
+  std::ostringstream oss;
+  const int n = Rf_length(sbbin);
+  oss << "(";
+  bool warned_categorical = false;
+  for (int i = 0; i < n; ++i) {
+    const int type = INTEGER(sbbin)[i];
+    oss << ' ';
+    switch (type) {
+      case 0:
+        oss << "R";
+        break;
+      case 1:
+        oss << "I";
+        break;
+      case 3:
+        oss << "B";
+        break;
+      case 2:
+      default:
+        // NOMAD4 C API does not expose categorical input type; degrade to integer.
+        if (type == 2 && !warned_categorical) {
+          Rprintf("Warning: categorical input type is mapped to integer in embedded NOMAD4.\n");
+          warned_categorical = true;
+        }
+        oss << "I";
+        break;
+    }
+  }
+  oss << " )";
+  return oss.str();
 }
 
-
-class RMy_Evaluator : public NOMAD::Evaluator {
-		public:
-				RMy_Evaluator  ( const NOMAD::Parameters & p ) :
-						NOMAD::Evaluator ( p ) {};
-
-				~RMy_Evaluator ( void ) {};
-using NOMAD::Evaluator::eval_x;
-
-				bool eval_x ( NOMAD::Eval_Point   & x          ,
-								const NOMAD::Double & h_max      ,
-								bool                & count_eval   ) const {
-
-						R_CheckUserInterrupt();
-
-						double *x0;
-						int n = x.get_n();
-						int m = x.get_m();
-						x0 = (double *)malloc(sizeof(double)*n);
-						for(int i=0;i<n;i++)
-						{
-								x0[i]=x[i].value();
-						}
-
-
-						double *ret_value = eval_f(m, n, x0);
-						for(int i=0;i<m;i++)
-								x.set_bb_output  ( i , ret_value[i]  ); // objective value
-
-						count_eval = true; // count a black-box evaluation
-
-						free(x0);
-						free(ret_value);
-
-						return true;       // the evaluation succeeded
-				}
-};
-
-SEXP print_solution(double obj_value, double *x, int n, int bbe, int iter, int nmulti, NOMAD::stop_type status)
-{
-		int num_return_elements = 6;
-		SEXP R_result_list;
-
-		// R_result_list is a member object, which has been protected in the constructor
-		// and will be unprotected in the destructor.
-		PROTECT(R_result_list = Rf_allocVector(VECSXP, num_return_elements));
-
-		// attach names to the return list
-		SEXP names;
-		PROTECT(names = Rf_allocVector(STRSXP, num_return_elements));
-
-		SET_STRING_ELT(names, 0, Rf_mkChar("status"));
-		SET_STRING_ELT(names, 1, Rf_mkChar("message"));
-		SET_STRING_ELT(names, 2, Rf_mkChar("bbe"));
-		SET_STRING_ELT(names, 3, Rf_mkChar("objective"));
-		SET_STRING_ELT(names, 4, Rf_mkChar("solution"));
-		SET_STRING_ELT(names, 5, Rf_mkChar("iterations"));
-		Rf_setAttrib(R_result_list, R_NamesSymbol, names);
-
-		// convert status to an R object
-		SEXP R_status;
-
-
-		PROTECT(R_status = Rf_allocVector(INTSXP,1));
-		INTEGER(R_status)[0] = (int) status;
-
-
-		SEXP R_status_message;
-		PROTECT(R_status_message = Rf_allocVector(STRSXP, 1));
-		if(nmulti < 1 ) {  /*0: snomadRSolve,  >0: smultnomadRSolve*/
-				SET_STRING_ELT(R_status_message, 0, Rf_mkChar(stop_message[status]));
-		}
-		else
-		{
-			std::ostringstream mes;
-			mes << "Multiple mads runs - [" << nmulti << "]";
-				SET_STRING_ELT(R_status_message, 0, Rf_mkChar(mes.str().c_str()));
-		}
-
-		// convert value of objective function to an R object
-		SEXP R_objective;
-		PROTECT(R_objective = Rf_allocVector(REALSXP,1));
-		REAL(R_objective)[0] = obj_value;
-
-		// convert the value of the controls to an R object
-		SEXP R_solution;
-		PROTECT(R_solution = Rf_allocVector(REALSXP,n));
-		for (int i=0;i<n;i++) {
-				REAL(R_solution)[i] = x[i];
-		}
-
-		// convert number of bbe to an R object and add to the result_list
-		SEXP R_num_bbe;
-		PROTECT(R_num_bbe = Rf_allocVector(INTSXP,1));
-		INTEGER(R_num_bbe)[0] = bbe;
-
-		// convert number of iter to an R object and add to the result_list
-		SEXP R_num_iterations;
-		PROTECT(R_num_iterations = Rf_allocVector(INTSXP,1));
-		INTEGER(R_num_iterations)[0] = iter;
-
-		// add elements to the list
-		SET_VECTOR_ELT(R_result_list, 0, R_status);
-		SET_VECTOR_ELT(R_result_list, 1, R_status_message);
-		SET_VECTOR_ELT(R_result_list, 2, R_num_bbe);
-		SET_VECTOR_ELT(R_result_list, 3, R_objective);
-		SET_VECTOR_ELT(R_result_list, 4, R_solution);
-		SET_VECTOR_ELT(R_result_list, 5, R_num_iterations);
-
-		UNPROTECT(num_return_elements+2);
-
-		return(R_result_list);
+static std::string map_bbout_to_string(SEXP sbbout) {
+  std::ostringstream oss;
+  const int n = Rf_length(sbbout);
+  for (int i = 0; i < n; ++i) {
+    if (i > 0) {
+      oss << ' ';
+    }
+    switch (INTEGER(sbbout)[i]) {
+      case 0:
+        oss << "OBJ";
+        break;
+      case 1:
+        oss << "PB";
+        break;
+      case 2:
+        oss << "EB";
+        break;
+      default:
+        oss << "BBO_UNDEFINED";
+        break;
+    }
+  }
+  return oss.str();
 }
 
-//Following function will return the information and help about NOMAD.
-//This is based on the program "nomad.cpp".
+static bool apply_named_option_line(NomadProblem pb, const std::string& key, const std::string& value) {
+  std::string line = key + " " + value;
+  return addNomadParam(pb, line.c_str());
+}
+
+static bool is_array_option_key(const std::string& key) {
+  return key == "INITIAL_MESH_SIZE" || key == "MIN_MESH_SIZE" || key == "MIN_POLL_SIZE" ||
+         key == "INITIAL_POLL_SIZE" || key == "INITIAL_FRAME_SIZE" || key == "MIN_FRAME_SIZE";
+}
+
+static bool is_ignored_legacy_option_key(const std::string& key) {
+  (void)key;
+  return false;
+}
+
+static std::string canonical_option_key(const std::string& key) {
+  if (key == "MIN_POLL_SIZE") {
+    return "MIN_FRAME_SIZE";
+  }
+  if (key == "INITIAL_POLL_SIZE") {
+    return "INITIAL_FRAME_SIZE";
+  }
+  return key;
+}
+
+static bool is_mesh_or_frame_option_key(const std::string& key) {
+  return key == "INITIAL_MESH_SIZE" || key == "MIN_MESH_SIZE" || key == "INITIAL_FRAME_SIZE" ||
+         key == "MIN_FRAME_SIZE";
+}
+
+static std::string normalize_array_option_value(const std::string& raw) {
+  const std::string v = trim(raw);
+  if (v.empty()) {
+    return v;
+  }
+  if (v[0] == '(' || v[0] == '*') {
+    return v;
+  }
+  if (v.find_first_of(" \t") == std::string::npos) {
+    return std::string("* ") + v;
+  }
+  return v;
+}
+
+static std::string array_values_to_literal(const std::vector<double>& values) {
+  std::ostringstream oss;
+  oss.precision(17);
+  oss << "(";
+  for (std::size_t i = 0; i < values.size(); ++i) {
+    oss << " " << values[i];
+  }
+  oss << " )";
+  return oss.str();
+}
+
+static bool parse_scalar_option_value(const std::string& token,
+                                      int index,
+                                      const std::vector<double>& lb,
+                                      const std::vector<double>& ub,
+                                      double* value) {
+  const std::string t = trim(token);
+  if (t.empty()) {
+    return false;
+  }
+  if (t[0] == 'r' || t[0] == 'R') {
+    if (t.size() == 1) {
+      return false;
+    }
+    char* endptr = nullptr;
+    const double rel = std::strtod(t.c_str() + 1, &endptr);
+    if (endptr == t.c_str() + 1 || *endptr != '\0') {
+      return false;
+    }
+    double span = 1.0;
+    if (index >= 0 && static_cast<std::size_t>(index) < lb.size() &&
+        static_cast<std::size_t>(index) < ub.size() && std::isfinite(lb[static_cast<std::size_t>(index)]) &&
+        std::isfinite(ub[static_cast<std::size_t>(index)])) {
+      span = ub[static_cast<std::size_t>(index)] - lb[static_cast<std::size_t>(index)];
+      if (!std::isfinite(span) || span <= 0.0) {
+        span = 1.0;
+      }
+    }
+    *value = rel * span;
+    return true;
+  }
+  char* endptr = nullptr;
+  const double parsed = std::strtod(t.c_str(), &endptr);
+  if (endptr == t.c_str() || *endptr != '\0') {
+    return false;
+  }
+  *value = parsed;
+  return true;
+}
+
+static void enforce_integer_mesh_frame_floor(std::vector<double>& values,
+                                             const std::string& canonical_key,
+                                             const std::vector<int>& bbin) {
+  if (!is_mesh_or_frame_option_key(canonical_key)) {
+    return;
+  }
+  const std::size_t n = std::min(values.size(), bbin.size());
+  for (std::size_t i = 0; i < n; ++i) {
+    if (bbin[i] == 1 || bbin[i] == 2 || bbin[i] == 3) {
+      if (values[i] < 1.0) {
+        values[i] = 1.0;
+      }
+    }
+  }
+}
+
+static bool apply_array_option_values(NomadProblem pb,
+                                      const std::string& key,
+                                      const std::vector<double>& raw_values,
+                                      int n_inputs,
+                                      const std::vector<int>& bbin) {
+  if (n_inputs <= 0 || raw_values.empty()) {
+    return false;
+  }
+  std::vector<double> values(static_cast<std::size_t>(n_inputs), raw_values[0]);
+  if (raw_values.size() == static_cast<std::size_t>(n_inputs)) {
+    values = raw_values;
+  }
+  const std::string canonical_key = canonical_option_key(key);
+  enforce_integer_mesh_frame_floor(values, canonical_key, bbin);
+  if (addNomadArrayOfDoubleParam(pb, canonical_key.c_str(), values.data())) {
+    return true;
+  }
+  return apply_named_option_line(pb, canonical_key, array_values_to_literal(values));
+}
+
+static bool apply_array_option_from_string(NomadProblem pb,
+                                           const std::string& key,
+                                           SEXP val_sexp,
+                                           int n_inputs,
+                                           const std::vector<int>& bbin,
+                                           const std::vector<double>& lb,
+                                           const std::vector<double>& ub) {
+  if (TYPEOF(val_sexp) != STRSXP || Rf_length(val_sexp) <= 0) {
+    return false;
+  }
+  const int nval = Rf_length(val_sexp);
+  if (nval == 1) {
+    const std::string token = trim(CHAR(STRING_ELT(val_sexp, 0)));
+    if (token.empty()) {
+      return false;
+    }
+    if (token[0] == '(' || token[0] == '*') {
+      return apply_named_option_line(pb, canonical_option_key(key), normalize_array_option_value(token));
+    }
+    double scalar = NA_REAL;
+    if (!parse_scalar_option_value(token, 0, lb, ub, &scalar)) {
+      return apply_named_option_line(pb, canonical_option_key(key), normalize_array_option_value(token));
+    }
+    return apply_array_option_values(pb, key, std::vector<double>{scalar}, n_inputs, bbin);
+  }
+
+  std::vector<double> raw_values;
+  raw_values.reserve(static_cast<std::size_t>(nval));
+  for (int j = 0; j < nval; ++j) {
+    double parsed = NA_REAL;
+    if (!parse_scalar_option_value(CHAR(STRING_ELT(val_sexp, j)), j, lb, ub, &parsed)) {
+      return false;
+    }
+    raw_values.push_back(parsed);
+  }
+  return apply_array_option_values(pb, key, raw_values, n_inputs, bbin);
+}
+
+static double sanitize_epsilon(double v) {
+  const double eps = std::numeric_limits<double>::epsilon();
+  if (v <= eps) {
+    return std::nextafter(eps, std::numeric_limits<double>::infinity());
+  }
+  return v;
+}
+
+static void apply_options(NomadProblem pb,
+                          SEXP opts,
+                          int n_inputs,
+                          const std::vector<int>& bbin,
+                          const std::vector<double>& lb,
+                          const std::vector<double>& ub) {
+  if (Rf_isNull(opts)) {
+    return;
+  }
+
+  SEXP opts_integer = getListElement(opts, "integer");
+  SEXP opts_numeric = getListElement(opts, "numeric");
+  SEXP opts_string = getListElement(opts, "string");
+  bool seen_max_eval = false;
+  bool seen_max_bb_eval = false;
+  int max_bb_eval_value = 0;
+
+  if (!Rf_isNull(opts_integer)) {
+    SEXP names = Rf_getAttrib(opts_integer, R_NamesSymbol);
+    const int n = Rf_length(opts_integer);
+    for (int i = 0; i < n; ++i) {
+      const std::string key = CHAR(STRING_ELT(names, i));
+      SEXP val_sexp = VECTOR_ELT(opts_integer, i);
+      const int val = INTEGER(val_sexp)[0];
+      if (key == "MAX_EVAL") {
+        seen_max_eval = true;
+      }
+      if (key == "MAX_BB_EVAL") {
+        seen_max_bb_eval = true;
+        max_bb_eval_value = val;
+      }
+      if (is_ignored_legacy_option_key(key)) {
+        continue;
+      }
+      if (is_array_option_key(key)) {
+        std::vector<double> raw_values;
+        const int nval = Rf_length(val_sexp);
+        for (int j = 0; j < nval; ++j) {
+          raw_values.push_back(static_cast<double>(INTEGER(val_sexp)[j]));
+        }
+        apply_array_option_values(pb, key, raw_values, n_inputs, bbin);
+        continue;
+      }
+      if (!addNomadValParam(pb, key.c_str(), val)) {
+        std::ostringstream oss;
+        oss << val;
+        apply_named_option_line(pb, key, oss.str());
+      }
+    }
+  }
+
+  if (!Rf_isNull(opts_numeric)) {
+    SEXP names = Rf_getAttrib(opts_numeric, R_NamesSymbol);
+    const int n = Rf_length(opts_numeric);
+    for (int i = 0; i < n; ++i) {
+      const std::string key = CHAR(STRING_ELT(names, i));
+      SEXP val_sexp = VECTOR_ELT(opts_numeric, i);
+      const double val = REAL(val_sexp)[0];
+      if (key == "MAX_EVAL") {
+        seen_max_eval = true;
+      }
+      if (key == "MAX_BB_EVAL") {
+        seen_max_bb_eval = true;
+        max_bb_eval_value = static_cast<int>(std::lround(val));
+      }
+      if (is_ignored_legacy_option_key(key)) {
+        continue;
+      }
+      if (is_array_option_key(key)) {
+        std::vector<double> raw_values;
+        const int nval = Rf_length(val_sexp);
+        for (int j = 0; j < nval; ++j) {
+          raw_values.push_back(REAL(val_sexp)[j]);
+        }
+        apply_array_option_values(pb, key, raw_values, n_inputs, bbin);
+        continue;
+      }
+      const double safe_val = (key == "EPSILON") ? sanitize_epsilon(val) : val;
+      if (!addNomadDoubleParam(pb, key.c_str(), safe_val)) {
+        std::ostringstream oss;
+        oss.precision(17);
+        oss << safe_val;
+        apply_named_option_line(pb, key, oss.str());
+      }
+    }
+  }
+
+  if (!Rf_isNull(opts_string)) {
+    SEXP names = Rf_getAttrib(opts_string, R_NamesSymbol);
+    const int n = Rf_length(opts_string);
+    for (int i = 0; i < n; ++i) {
+      const std::string key = CHAR(STRING_ELT(names, i));
+      SEXP val_sexp = VECTOR_ELT(opts_string, i);
+      const char* val = CHAR(STRING_ELT(val_sexp, 0));
+      if (key == "MAX_EVAL") {
+        seen_max_eval = true;
+      }
+      if (key == "MAX_BB_EVAL") {
+        char* endptr = nullptr;
+        const long v = std::strtol(val, &endptr, 10);
+        if (endptr != val && *endptr == '\0' && v > 0 && v <= std::numeric_limits<int>::max()) {
+          seen_max_bb_eval = true;
+          max_bb_eval_value = static_cast<int>(v);
+        }
+      }
+      if (is_ignored_legacy_option_key(key)) {
+        continue;
+      }
+      if (is_array_option_key(key)) {
+        if (!apply_array_option_from_string(pb, key, val_sexp, n_inputs, bbin, lb, ub)) {
+          apply_named_option_line(pb, canonical_option_key(key), normalize_array_option_value(val));
+        }
+        continue;
+      }
+      if (key == "EPSILON") {
+        char* endptr = nullptr;
+        const double parsed = std::strtod(val, &endptr);
+        if (endptr != val && *endptr == '\0') {
+          const double safe_val = sanitize_epsilon(parsed);
+          if (!addNomadDoubleParam(pb, key.c_str(), safe_val)) {
+            std::ostringstream oss;
+            oss.precision(17);
+            oss << safe_val;
+            apply_named_option_line(pb, key, oss.str());
+          }
+          continue;
+        }
+      }
+      if (!addNomadStringParam(pb, key.c_str(), val)) {
+        apply_named_option_line(pb, key, val);
+      }
+    }
+  }
+
+  if (!seen_max_eval && seen_max_bb_eval && max_bb_eval_value > 0) {
+    if (!addNomadValParam(pb, "MAX_EVAL", max_bb_eval_value)) {
+      std::ostringstream oss;
+      oss << max_bb_eval_value;
+      apply_named_option_line(pb, "MAX_EVAL", oss.str());
+    }
+  }
+}
+
+static void apply_nomad_opt_file(NomadProblem pb) {
+  std::ifstream fin("nomad.opt");
+  if (!fin.good()) {
+    return;
+  }
+  std::string line;
+  while (std::getline(fin, line)) {
+    const std::string clean = trim(line);
+    if (clean.empty()) {
+      continue;
+    }
+    if (clean[0] == '#') {
+      continue;
+    }
+    addNomadParam(pb, clean.c_str());
+  }
+}
+
+static double finite_or_default(double x, double fallback) {
+  return std::isfinite(x) ? x : fallback;
+}
+
+static double clamp_to_bounds(double x, double lb, double ub) {
+  if (std::isfinite(lb) && x < lb) {
+    x = lb;
+  }
+  if (std::isfinite(ub) && x > ub) {
+    x = ub;
+  }
+  return x;
+}
+
+static double coerce_by_input_type(double x, int type, double lb, double ub) {
+  if (type == 3) {
+    x = (x >= 0.5) ? 1.0 : 0.0;
+  } else if (type == 1 || type == 2) {
+    x = std::round(x);
+  }
+  return clamp_to_bounds(x, lb, ub);
+}
+
+static void fill_random_start(std::vector<double>& x0s,
+                              int point_index,
+                              int n,
+                              const std::vector<int>& bbin,
+                              const std::vector<double>& lb,
+                              const std::vector<double>& ub,
+                              std::mt19937_64& rng) {
+  for (int i = 0; i < n; ++i) {
+    double lo = finite_or_default(lb[i], -1.0);
+    double hi = finite_or_default(ub[i], 1.0);
+    if (hi < lo) {
+      std::swap(lo, hi);
+    }
+    std::uniform_real_distribution<double> unif(lo, hi);
+    double v = unif(rng);
+    x0s[point_index * n + i] = coerce_by_input_type(v, bbin[i], lb[i], ub[i]);
+  }
+}
+
+static void build_starting_points(SEXP sx0,
+                                  int n,
+                                  int nstart,
+                                  const std::vector<int>& bbin,
+                                  const std::vector<double>& lb,
+                                  const std::vector<double>& ub,
+                                  unsigned int seed,
+                                  std::vector<double>& x0s) {
+  std::mt19937_64 rng(seed == 0 ? static_cast<unsigned int>(std::time(nullptr)) : seed);
+  x0s.assign(static_cast<std::size_t>(nstart) * static_cast<std::size_t>(n), 0.0);
+
+  for (int j = 0; j < nstart; ++j) {
+    fill_random_start(x0s, j, n, bbin, lb, ub, rng);
+  }
+
+  if (Rf_isNull(sx0)) {
+    return;
+  }
+
+  const int len = Rf_length(sx0);
+  if (len == n) {
+    for (int i = 0; i < n; ++i) {
+      x0s[i] = coerce_by_input_type(REAL(sx0)[i], bbin[i], lb[i], ub[i]);
+    }
+    return;
+  }
+
+  if (len >= n * nstart) {
+    for (int j = 0; j < nstart; ++j) {
+      for (int i = 0; i < n; ++i) {
+        // Keep legacy R column-major convention used by old implementation.
+        const double val = REAL(sx0)[j + i * nstart];
+        x0s[j * n + i] = coerce_by_input_type(val, bbin[i], lb[i], ub[i]);
+      }
+    }
+  }
+}
+
+static int map_run_flag_to_status(int run_flag) {
+  switch (run_flag) {
+    case 1:
+      return 8;   // mesh/target reached on feasible point
+    case 0:
+      return 13;  // budget/iter reached with feasible point
+    case -1:
+      return 8;   // mesh convergence (infeasible)
+    case -2:
+      return 13;  // budget/iter reached (infeasible)
+    case -3:
+      return 6;   // x0 fail
+    case -4:
+      return 12;  // max time
+    case -5:
+      return 3;   // user stop / CTRL-C
+    case -6:
+      return 18;  // stop on feasible
+    case -7:
+    case -8:
+    default:
+      return 1;   // generic error
+  }
+}
+
+static const char* run_flag_message(int run_flag) {
+  switch (run_flag) {
+    case 1:
+      return "NOMAD4 run flag 1: target reached or mesh converged on feasible point";
+    case 0:
+      return "NOMAD4 run flag 0: feasible point found; evaluation/iteration budget reached";
+    case -1:
+      return "NOMAD4 run flag -1: mesh converged without feasible point";
+    case -2:
+      return "NOMAD4 run flag -2: no feasible point; evaluation/iteration budget reached";
+    case -3:
+      return "NOMAD4 run flag -3: starting point failed to evaluate";
+    case -4:
+      return "NOMAD4 run flag -4: time limit reached";
+    case -5:
+      return "NOMAD4 run flag -5: user interruption";
+    case -6:
+      return "NOMAD4 run flag -6: stop on feasible point";
+    case -7:
+      return "NOMAD4 run flag -7: invalid parameters";
+    case -8:
+      return "NOMAD4 run flag -8: evaluation/runtime failure";
+    default:
+      return "NOMAD4 run flag: unknown";
+  }
+}
+
+static SEXP build_solution(int status,
+                           const char* message,
+                           int bbe,
+                           int iterations,
+                           double objective,
+                           const std::vector<double>& solution) {
+  const int n = static_cast<int>(solution.size());
+  SEXP out = PROTECT(Rf_allocVector(VECSXP, 6));
+  SEXP names = PROTECT(Rf_allocVector(STRSXP, 6));
+
+  SET_STRING_ELT(names, 0, Rf_mkChar("status"));
+  SET_STRING_ELT(names, 1, Rf_mkChar("message"));
+  SET_STRING_ELT(names, 2, Rf_mkChar("bbe"));
+  SET_STRING_ELT(names, 3, Rf_mkChar("objective"));
+  SET_STRING_ELT(names, 4, Rf_mkChar("solution"));
+  SET_STRING_ELT(names, 5, Rf_mkChar("iterations"));
+  Rf_setAttrib(out, R_NamesSymbol, names);
+
+  SEXP r_status = PROTECT(Rf_allocVector(INTSXP, 1));
+  INTEGER(r_status)[0] = status;
+  SET_VECTOR_ELT(out, 0, r_status);
+
+  SEXP r_message = PROTECT(Rf_allocVector(STRSXP, 1));
+  SET_STRING_ELT(r_message, 0, Rf_mkChar(message));
+  SET_VECTOR_ELT(out, 1, r_message);
+
+  SEXP r_bbe = PROTECT(Rf_allocVector(INTSXP, 1));
+  INTEGER(r_bbe)[0] = bbe;
+  SET_VECTOR_ELT(out, 2, r_bbe);
+
+  SEXP r_obj = PROTECT(Rf_allocVector(REALSXP, 1));
+  REAL(r_obj)[0] = objective;
+  SET_VECTOR_ELT(out, 3, r_obj);
+
+  SEXP r_sol = PROTECT(Rf_allocVector(REALSXP, n));
+  for (int i = 0; i < n; ++i) {
+    REAL(r_sol)[i] = solution[static_cast<std::size_t>(i)];
+  }
+  SET_VECTOR_ELT(out, 4, r_sol);
+
+  SEXP r_iter = PROTECT(Rf_allocVector(INTSXP, 1));
+  INTEGER(r_iter)[0] = iterations;
+  SET_VECTOR_ELT(out, 5, r_iter);
+
+  UNPROTECT(8);
+  return out;
+}
+
+static SEXP solve_nomad4(SEXP args, bool use_multi) {
+  theenv = getListElement(args, "snomadr.environment");
+  thefun = getListElement(args, "eval.f");
+
+  if (Rf_isNull(thefun) || !Rf_isFunction(thefun)) {
+    Rf_error("Invalid eval.f supplied to snomadr.");
+  }
+  if (Rf_isNull(theenv)) {
+    theenv = R_GlobalEnv;
+  }
+
+  SEXP sN = getListElement(args, "n");
+  const int N = INTEGER(sN)[0];
+  if (N <= 0) {
+    Rf_error("Invalid dimension n supplied to snomadr.");
+  }
+
+  SEXP sbbin = getListElement(args, "bbin");
+  SEXP sbbout = getListElement(args, "bbout");
+  SEXP slb = getListElement(args, "lower.bounds");
+  SEXP sub = getListElement(args, "upper.bounds");
+  SEXP sx0 = getListElement(args, "x0");
+  SEXP sopts = getListElement(args, "options");
+  SEXP snmulti = getListElement(args, "nmulti");
+  SEXP sseed = getListElement(args, "random.seed");
+  SEXP sprint = getListElement(args, "print.output");
+
+  int nstart = 1;
+  if (use_multi && !Rf_isNull(snmulti)) {
+    nstart = std::max(1, INTEGER(snmulti)[0]);
+  }
+
+  unsigned int seed = 0;
+  if (!Rf_isNull(sseed) && Rf_length(sseed) > 0) {
+    seed = static_cast<unsigned int>(INTEGER(sseed)[0]);
+  }
+  if (seed == 0) {
+    seed = static_cast<unsigned int>(std::time(nullptr));
+  }
+
+  int print_output = 1;
+  if (!Rf_isNull(sprint) && Rf_length(sprint) > 0) {
+    print_output = (Rf_asLogical(sprint) == TRUE) ? 1 : 0;
+  }
+
+  std::vector<int> bbin(static_cast<std::size_t>(N), 0);
+  std::vector<double> lb(static_cast<std::size_t>(N), -std::numeric_limits<double>::infinity());
+  std::vector<double> ub(static_cast<std::size_t>(N), std::numeric_limits<double>::infinity());
+  for (int i = 0; i < N; ++i) {
+    if (!Rf_isNull(sbbin) && Rf_length(sbbin) > i) {
+      bbin[static_cast<std::size_t>(i)] = INTEGER(sbbin)[i];
+    }
+    if (!Rf_isNull(slb) && Rf_length(slb) > i) {
+      lb[static_cast<std::size_t>(i)] = REAL(slb)[i];
+    }
+    if (!Rf_isNull(sub) && Rf_length(sub) > i) {
+      ub[static_cast<std::size_t>(i)] = REAL(sub)[i];
+    }
+  }
+
+  const int M = Rf_length(sbbout);
+  if (M <= 0) {
+    Rf_error("Invalid bbout supplied to snomadr.");
+  }
+
+  NomadProblem pb = createNomadProblem(r_eval_single, nullptr, N, M);
+  if (pb == nullptr) {
+    Rf_error("Unable to initialize NOMAD4 problem.");
+  }
+  if (!addNomadValParam(pb, "DIMENSION", N)) {
+    freeNomadProblem(pb);
+    Rf_error("Failed to set DIMENSION for NOMAD4.");
+  }
+
+  if (!addNomadStringParam(pb, "BB_INPUT_TYPE", map_bbin_to_string(sbbin).c_str())) {
+    freeNomadProblem(pb);
+    Rf_error("Failed to set BB_INPUT_TYPE for NOMAD4.");
+  }
+  if (!addNomadStringParam(pb, "BB_OUTPUT_TYPE", map_bbout_to_string(sbbout).c_str())) {
+    freeNomadProblem(pb);
+    Rf_error("Failed to set BB_OUTPUT_TYPE for NOMAD4.");
+  }
+  if (!addNomadArrayOfDoubleParam(pb, "LOWER_BOUND", lb.data())) {
+    freeNomadProblem(pb);
+    Rf_error("Failed to set LOWER_BOUND for NOMAD4.");
+  }
+  if (!addNomadArrayOfDoubleParam(pb, "UPPER_BOUND", ub.data())) {
+    freeNomadProblem(pb);
+    Rf_error("Failed to set UPPER_BOUND for NOMAD4.");
+  }
+
+  // Keep old behavior: hide progress when print.output is FALSE.
+  if (!print_output) {
+    addNomadValParam(pb, "DISPLAY_DEGREE", 0);
+    addNomadBoolParam(pb, "DISPLAY_ALL_EVAL", false);
+    addNomadBoolParam(pb, "DISPLAY_UNSUCCESSFUL", false);
+  }
+
+  apply_options(pb, sopts, N, bbin, lb, ub);
+  apply_nomad_opt_file(pb);
+
+  std::vector<double> x0s;
+  build_starting_points(sx0, N, nstart, bbin, lb, ub, seed, x0s);
+
+  NomadResult result = createNomadResult();
+  if (result == nullptr) {
+    freeNomadProblem(pb);
+    Rf_error("Unable to allocate NOMAD4 result container.");
+  }
+
+  g_bbe_counter.store(0, std::memory_order_relaxed);
+  const int run_flag = solveNomadProblem(result, pb, nstart, x0s.data(), nullptr);
+
+  int nb_solutions = nbSolutionsNomadResult(result);
+  if (nb_solutions < 0) {
+    nb_solutions = 0;
+  }
+
+  std::vector<double> best_x(static_cast<std::size_t>(N), NA_REAL);
+  std::vector<double> best_out(static_cast<std::size_t>(M), NA_REAL);
+  if (nb_solutions > 0) {
+    loadInputSolutionsNomadResult(best_x.data(), 1, result);
+    loadOutputSolutionsNomadResult(best_out.data(), 1, result);
+  }
+
+  int objective_index = 0;
+  for (int i = 0; i < M; ++i) {
+    if (INTEGER(sbbout)[i] == 0) {
+      objective_index = i;
+      break;
+    }
+  }
+  const double objective = (nb_solutions > 0) ? best_out[static_cast<std::size_t>(objective_index)] : NA_REAL;
+
+  int bbe = g_bbe_counter.load(std::memory_order_relaxed);
+  try {
+    auto evc = NOMAD::EvcInterface::getEvaluatorControl();
+    if (evc != nullptr) {
+      const std::size_t nbe = evc->getNbEval();
+      const int bbe_evc = (nbe > static_cast<std::size_t>(std::numeric_limits<int>::max()))
+                              ? std::numeric_limits<int>::max()
+                              : static_cast<int>(nbe);
+      if (bbe_evc > 0) {
+        bbe = bbe_evc;
+      }
+    }
+  } catch (...) {
+    // Keep a safe scalar to preserve legacy downstream comparisons.
+    bbe = 0;
+  }
+
+  const int iterations = 0;
+  const int status = map_run_flag_to_status(run_flag);
+  const char* message = run_flag_message(run_flag);
+
+  SEXP ret = build_solution(status, message, bbe, iterations, objective, best_x);
+
+  freeNomadResult(result);
+  freeNomadProblem(pb);
+
+  return ret;
+}
+
 extern "C" {
 
-		SEXP snomadRInfo( SEXP args )
-		{
-				R_CheckUserInterrupt();
+SEXP snomadRInfo(SEXP args) {
+  SEXP solution = PROTECT(args);
 
-				SEXP solution;
+  SEXP sinfo = getListElement(args, "info");
+  SEXP sversion = getListElement(args, "version");
+  SEXP shelp = getListElement(args, "help");
 
-				NOMAD::Display out(rout);
+  if (!Rf_isNull(sinfo)) {
+    const char* s = CHAR(STRING_ELT(sinfo, 0));
+    if (s[0] == '-' && (s[1] == 'i' || s[1] == 'I')) {
+      rout << "NOMAD (embedded in crs) -- C interface backend\n";
+      rout << "See https://www.gerad.ca/en/software/nomad\n";
+    }
+  }
 
-				//showArgs1(args);
+  if (!Rf_isNull(sversion)) {
+    const char* s = CHAR(STRING_ELT(sversion, 0));
+    if (s[0] == '-' && (s[1] == 'v' || s[1] == 'V')) {
+      rout << "NOMAD version " << NOMAD_VERSION_NUMBER << '\n';
+    }
+  }
 
-				PROTECT(solution=args);
+  if (!Rf_isNull(shelp)) {
+    const char* s = CHAR(STRING_ELT(shelp, 0));
+    if (s[0] == '-' && (s[1] == 'h' || s[1] == 'H')) {
+      rout << "NOMAD parameter help is available in the user guide:\n";
+      rout << "https://nomad-4-user-guide.readthedocs.io/en/latest/\n";
+    }
+  }
 
-				SEXP sinfo = getListElement(args,"info");
-				SEXP sversion = getListElement(args,"version");
-				SEXP shelp = getListElement(args,"help");
-
-				string strinfo =  Rf_isNull(sinfo) ? "" : CHAR(STRING_ELT(sinfo, 0));
-				string strversion = Rf_isNull(sversion) ? "" : CHAR(STRING_ELT(sversion, 0));
-				if(strinfo[0]=='-' && (strinfo[1]=='i' || strinfo[1]=='I')) display_info ( out );
-				if(strversion[0]=='-' && (strversion[1]=='v' || strversion[1]=='V')) display_version ( out );
-
-				string strhelp = Rf_isNull(shelp) ? "" : CHAR(STRING_ELT(shelp, 0));
-
-				if(strhelp.c_str()[0]=='-'&& (strhelp.c_str()[1]=='h'||strhelp.c_str()[1]=='H'))
-				{
-						NOMAD::Parameters param(out);
-						char **argv;
-						argv = new char*[3];
-						argv[0] = new char[200];
-						argv[1] = new char[200];
-						argv[2] = new char[200];
-						strcpy(argv[0], "nomad"); /* this is for matching the function param.help */
-						strcpy(argv[1], "-h");
-						int i = 3;
-						while(strhelp[i] !='\0' && strhelp[i]==' ') i++;
-						if(strhelp[i]!='\0') {
-								strcpy(argv[2], &CHAR(STRING_ELT(shelp, 0))[i]);
-								i=0;  /* delete space at the end of the string. */
-								while(argv[2][i] != ' ') i++;
-								argv[2][i] = '\0';
-						}
-						else 
-								strcpy(argv[2], "all");
-
-						param.help(3, argv, false);
-
-						//delete argv.
-						delete argv[0];
-						delete argv[1];
-						delete argv[2];
-						delete[] argv;
-				}
-
-				NOMAD::end();
-
-				UNPROTECT(1);
-
-				return(solution);
-		}
-}
-// we want this function to be available in R, so we put extern around it.
-extern "C" {
-
-		SEXP snomadRSolve( SEXP args )
-		{
-				R_CheckUserInterrupt();
-
-				SEXP solution;
-
-				//		showArgs1(args);
-
-				PROTECT(solution=args);
-
-				NOMAD::Display out(rout);
-				out.precision(NOMAD::DISPLAY_PRECISION_STD);
-
-				theenv = getListElement(args, "snomadr.environment");
-				thefun = getListElement(args, "eval.f");
-
-				try{
-						R_CheckUserInterrupt();
-
-						NOMAD::Parameters param(out);
-						SEXP sN = getListElement(args,"n");
-						int N = INTEGER(sN)[0];
-
-						param.set_DIMENSION(N);
-
-						// Default options
-						//				param.set_DIRECTION_TYPE(NOMAD::GPS_2N_RAND);
-						//				param.set_OPPORTUNISTIC_EVAL(true);
-					//					param.set_MIN_POLL_SIZE(0.001);
-						//				param.set_MIN_MESH_SIZE(0.001);
-						//  			param.set_INITIAL_MESH_SIZE(0.01);
-						param.set_MAX_BB_EVAL(10000);
-
-						vector<NOMAD::bb_input_type> bbin(N);
-						NOMAD::Point x0(N);
-						NOMAD::Point lb(N);
-						NOMAD::Point ub(N);
-
-						SEXP sbbin = getListElement(args, "bbin");
-						SEXP slb = getListElement(args, "lower.bounds");
-						SEXP sub = getListElement(args, "upper.bounds");
-						SEXP sx0 = getListElement(args, "x0");
-						int  print_output = INTEGER(getListElement(args, "print.output"))[0];
-
-						for(int i= 0;i<N;i++)
-						{
-								R_CheckUserInterrupt();
-
-								switch(INTEGER(sbbin)[i])
-								{
-										case 0:
-										default:
-												bbin[i]= NOMAD::CONTINUOUS; 
-												x0[i]= REAL(sx0)[i];
-												lb[i]= REAL(slb)[i];
-												ub[i]= REAL(sub)[i];
-												break;
-										case 1:
-												bbin[i]= NOMAD::INTEGER; 
-												x0[i]= (int)(REAL(sx0)[i]);
-												lb[i]= (int)(REAL(slb)[i]);
-												ub[i]= (int)(REAL(sub)[i]);
-												break;
-										case 2:
-												bbin[i]= NOMAD::CATEGORICAL ; 
-												x0[i]= (int)(REAL(sx0)[i]);
-												lb[i]= (int)(REAL(slb)[i]);
-												ub[i]= (int)(REAL(sub)[i]);
-												break;
-										case 3:
-												bbin[i]= NOMAD::BINARY;
-												x0[i]= (int)(REAL(sx0)[i]);
-												lb[i]= (int)(REAL(slb)[i]);
-												ub[i]= (int)(REAL(sub)[i]);
-												break;
-
-								}
-						}
-						param.set_BB_INPUT_TYPE(bbin);
-						param.set_X0(x0);
-						param.set_LOWER_BOUND(lb);
-						param.set_UPPER_BOUND(ub);
-
-						SEXP sbbout = getListElement(args, "bbout");
-
-						vector<NOMAD::bb_output_type> bbot(LENGTH(sbbout));
-
-						for(int i=0;i<LENGTH(sbbout);i++){
-								bbot[i] = NOMAD::bb_output_type(INTEGER(sbbout)[i]);
-						}
-
-						param.set_BB_OUTPUT_TYPE(bbot);
-
-						param.set_DISPLAY_STATS("bbe ( sol ) obj");
-
-						/* set other options in R  */
-						SEXP opts;
-						opts = getListElement(args, "options");
-						setApplicationOptions(param, opts );
-
-						/* set other options in nomad.opt */
-						if(file_exists("nomad.opt"))
-								param.read("nomad.opt");
-
-						param.check();
-						RMy_Evaluator ev(param);
-
-						NOMAD::Mads mads(param,&ev);
-						NOMAD::stop_type status = mads.run();
-
-						if ( status == NOMAD::CTRL_C ) R_CheckUserInterrupt(); //)exit(-1);
-
-						/* output the results of statistics, we may need to learn more about Stats */
-						NOMAD::Stats &stats = mads.get_stats();
-
-						if(print_output > 0)
-						{
-								Rprintf("\niterations: %d\n", stats.get_iterations());
-								Rprintf("time:       %d\n", stats.get_real_time());
-						}
-						/* output the results */
-						const NOMAD::Eval_Point *cur_x;
-						cur_x= mads.get_best_feasible();
-
-						NOMAD::Double obj_value = cur_x->get_f();
-
-						NOMAD::Point best_x(N);
-						best_x= *cur_x;
-
-						double *sol_x;
-						sol_x = (double *)malloc(sizeof(double)*N);
-
-						for(int i=0;i<N;i++)
-						{
-								sol_x[i]= best_x[i].value();
-						}
-
-						solution = print_solution(obj_value.value(), sol_x, N, mads.get_cache().size(), stats.get_iterations(),  0,  status);
-
-						free(sol_x);
-
-				}
-				catch(std::exception &e){
-						 Rf_error("\nNOMAD has been interrupted ( %s )\n\n",  e.what() );
-				}
-
-				NOMAD::Slave::stop_slaves(out);
-				NOMAD::end();
-
-				UNPROTECT(1);
-
-				return(solution);
-		}
-
-} // extern "C"
-
-/* for multiple restart */
-
-void LH_values_for_var_i ( int     ind ,
-				int     p   ,
-				NOMAD::Point & x, const NOMAD::Point &lb, const NOMAD::Point  & ub, 
-				const vector<NOMAD::bb_input_type> &bbin) {
-
-		NOMAD::Random_Pickup rp(p);
-		int    i;
-		NOMAD::Double v;
-		double UB = ub[ind].value();
-		double LB = lb[ind].value();
-
-		for ( i = 0 ; i < p ; ++i ) {
-				double w = (UB - LB)/p;
-				v = LB + ( i + NOMAD::RNG::rand()/NOMAD::D_INT_MAX ) * w;
-				if( bbin[ind]!= NOMAD::CONTINUOUS) 
-				{
-						x[rp.pickup()] =(int) v.value();
-				}
-				else{
-						x[rp.pickup()] = v;
-				}
-		}
+  UNPROTECT(1);
+  return solution;
 }
 
-/*----------------------------------------*/
-/*  LH search used to generate x0 points  */
-/*----------------------------------------*/
-void LH_x0 ( int n , int p , vector<NOMAD::Point *> & x0_pts, const NOMAD::Point &lb, const NOMAD::Point & ub, const vector<NOMAD::bb_input_type>  &bbin) {
-
-		//
-		// pts contains n points of dimension p: each of these points contains
-		// p different values for each variable:
-		NOMAD::Point ** pts = new NOMAD::Point * [n] , * x;
-
-		int pm1 = p - 1 , i;
-
-		// creation of p search points:
-		for ( int k = 0 ; k < p ; ++k ) {
-				R_CheckUserInterrupt();
-
-				x = new NOMAD::Point (n);
-
-				for ( i = 0 ; i < n ; ++i ) {
-
-						if ( k==0 ) {
-								pts[i] = new NOMAD::Point(p);
-
-								LH_values_for_var_i ( i , p , *pts[i], lb, ub, bbin );
-
-						}
-
-						(*x)[i] = (*pts[i])[k];
-
-						if ( k == pm1 )
-								delete pts[i];
-				}
-
-				x0_pts.push_back ( x );
-
-		}
-
-		delete [] pts;
+SEXP snomadRSolve(SEXP args) {
+  return solve_nomad4(args, false);
 }
 
-
-
-
-// we want this function to be available in R, so we put extern around it.
-extern "C" {
-
-		SEXP smultinomadRSolve( SEXP args )
-		{
-				R_CheckUserInterrupt();
-				SEXP solution;
-
-				//	showArgs1(args);
-
-				PROTECT(solution=args);
-
-				NOMAD::Display out(rout);
-				out.precision(NOMAD::DISPLAY_PRECISION_STD);
-
-				theenv = getListElement(args, "snomadr.environment");
-				thefun = getListElement(args, "eval.f");
-
-				unsigned int seed;
-				SEXP rseed = getListElement(args, "random.seed");
-				if(Rf_isNull(rseed)) 
-						seed = unsigned(time(NULL));
-				else
-						seed = INTEGER(rseed)[0];
-
-				if(seed == 0) seed = unsigned(time(NULL));
-
-				NOMAD::RNG::set_seed(seed);
-
-				try{
-						R_CheckUserInterrupt();
-
-						vector<NOMAD::Point*> x0_pts;
-
-						NOMAD::Parameters param(out);
-						SEXP sN = getListElement(args,"n");
-						int N = INTEGER(sN)[0];
-						int i;
-
-						SEXP snmulti = getListElement(args, "nmulti");
-						int nmulti= INTEGER(snmulti)[0];
-
-						param.set_DIMENSION(N);
-
-						// Default options
-						//				param.set_DIRECTION_TYPE(NOMAD::GPS_2N_RAND);
-						//				param.set_OPPORTUNISTIC_EVAL(true);
-						//				param.set_MIN_POLL_SIZE(0.001);
-						//				param.set_MIN_MESH_SIZE(0.001);
-						//	  		param.set_INITIAL_MESH_SIZE(0.01);
-						param.set_MAX_BB_EVAL(10000);
-
-
-						vector<NOMAD::bb_input_type> bbin(N);
-						NOMAD::Point lb(N);
-						NOMAD::Point ub(N);
-
-						SEXP sbbin = getListElement(args, "bbin");
-						SEXP slb = getListElement(args, "lower.bounds");
-						SEXP sub = getListElement(args, "upper.bounds");
-						int  print_output = INTEGER(getListElement(args, "print.output"))[0];
-
-						for( i= 0;i<N;i++)
-						{
-								R_CheckUserInterrupt();
-
-								switch(INTEGER(sbbin)[i])
-								{
-										case 0:
-										default:
-												bbin[i]= NOMAD::CONTINUOUS; 
-												lb[i]= REAL(slb)[i];
-												ub[i]= REAL(sub)[i];
-												break;
-										case 1:
-												bbin[i]= NOMAD::INTEGER; 
-												lb[i]= (int)(REAL(slb)[i]);
-												ub[i]= (int)(REAL(sub)[i]);
-												break;
-										case 2:
-												bbin[i]= NOMAD::CATEGORICAL ; 
-												lb[i]= (int)(REAL(slb)[i]);
-												ub[i]= (int)(REAL(sub)[i]);
-												break;
-										case 3:
-												bbin[i]= NOMAD::BINARY;
-												lb[i]= (int)(REAL(slb)[i]);
-												ub[i]= (int)(REAL(sub)[i]);
-												break;
-
-								}
-						}
-						param.set_BB_INPUT_TYPE(bbin);
-						param.set_LOWER_BOUND(lb);
-						param.set_UPPER_BOUND(ub);
-
-						/* initial points */
-						LH_x0(N,nmulti,x0_pts, lb, ub, bbin);
-
-						SEXP sx0 = getListElement(args, "x0");  //we may use this as  best_x
-
-					 if(!Rf_isNull(sx0))
-					 {
-							 if(LENGTH(sx0) == N)    /* x0 as the first initial point. */
-							 {
-									 for( i=0;i<N;i++) {
-											 (*x0_pts[0])[i]= REAL(sx0)[i];
-									 }
-							 }   /* all initial points are input. please note the memory order of an array ( 
-											it seems that R uses the Fortran style.).*/
-							 else if((LENGTH(sx0)  >=  N*nmulti) && (nmulti > 1) ) {
-									 for (int j=0; j< nmulti; j++) {
-											 for( i=0;i<N;i++) {
-													 (*x0_pts[j])[i]= REAL(sx0)[j+i*nmulti];
-											 }
-									 }
-							 }
-					 }
-					 else {
-
-							 // read best_x.txt:
-							 ifstream fin ( "best_x.txt");
-
-							 if ( !fin.fail() )
-									 for ( i = 0 ; i < N ; ++i )
-											 fin >> (*x0_pts[0])[i];
-
-								fin.close();
-					 }
-
-						SEXP sbbout = getListElement(args, "bbout");
-
-						vector<NOMAD::bb_output_type> bbot(LENGTH(sbbout));
-
-						for( i=0;i<LENGTH(sbbout);i++){
-								bbot[i] = NOMAD::bb_output_type(INTEGER(sbbout)[i]);
-						}
-
-						param.set_BB_OUTPUT_TYPE(bbot);
-
-						param.set_DISPLAY_DEGREE (0);
-						param.set_DISPLAY_STATS("bbe ( sol ) obj");
-
-						/* set other options in R  */
-						SEXP opts;
-						opts = getListElement(args, "options");
-						setApplicationOptions(param, opts );
-
-						/* set other options in nomad.opt */
-						if(file_exists("nomad.opt"))
-								param.read("nomad.opt");
-
-
-						param.set_X0 ( *x0_pts[0] );
-
-						param.check();
-						// display all starting points:
-						if(print_output > 0 ){
-								out << endl;
-								for ( int j = 0 ; j < nmulti ; ++j )
-										out << "starting point # " << j << ": ( " << *x0_pts[j] << " )" << endl;
-								out << endl;
-						}
-
-
-						RMy_Evaluator ev(param);
-
-						const NOMAD::Eval_Point * cur_x;
-						NOMAD::Point              best_x (N);
-						NOMAD::Double             best_f = NOMAD::INF , worst_f = 0.0 , avg_f = 0.0;
-
-						// MADS runs:
-						// ----------
-						int bbe = 0;
-						int iter = 0;
-						i = 0;
-						NOMAD::stop_type status ;
-
-						while ( true ) {
-
-								R_CheckUserInterrupt();
-
-								// algorithm creation:
-								NOMAD::Mads mads ( param , &ev );
-								status = mads.run();
-
-								if ( status == NOMAD::CTRL_C ) R_CheckUserInterrupt(); //)exit(-1);
-
-
-								bbe += mads.get_cache().size();  /* the number of evaluations of the objectibve function. */
-								iter += mads.get_stats().get_iterations();
-
-								// displays and remember the best point:
-								if( print_output > 0 ) 
-										out << "\rrun #" << setw(2) << i << ": ";
-								cur_x = mads.get_best_feasible();
-								if ( cur_x ) {
-
-										if(print_output > 0 ) 
-												out << "f=" << cur_x->get_f() << endl;
-
-										if ( cur_x->get_f() < best_f ) {
-
-												best_f = cur_x->get_f();
-												best_x = *cur_x;
-										}
-
-										if ( cur_x->get_f() > worst_f )
-												worst_f = cur_x->get_f();
-
-										avg_f += cur_x->get_f();
-
-								}
-								else{
-										if(print_output > 0 ) 
-												out << "NULL" << endl;
-								}
-
-								if ( ++i == nmulti )
-										break;
-
-								// preparation of next run:
-								mads.reset();
-								param.reset_X0();
-								param.set_X0 ( *x0_pts[i] );
-								param.check();
-						}
-
-
-						// display the solution:
-						if(print_output > 0 ) {
-								out << endl << "bb eval : " << bbe << endl
-										<< "best    : " << best_f;
-								out << endl
-										<< "worst   : " << worst_f << endl
-										<< "solution: ";
-								out << "x = ( ";
-								best_x.display ( out , " " , -1 , -1 );
-								out << " ) f(x) = " << best_f.value();
-								out << endl << endl;
-						}
-
-						//ofstream fout ( "best_x.txt" );
-						//fout << setprecision(32);
-						//best_x.display ( fout , " " , -1 , -1 );
-						//fout.close();
-
-						// delete x0 points:
-						for ( i = 0 ; i < nmulti ; ++i )
-								delete x0_pts[i];
-
-
-
-						double obj_value = best_f.value();
-
-						double *sol_x;
-						sol_x = (double *)malloc(sizeof(double)*N);
-
-						for(int i=0;i<N;i++)
-						{
-								sol_x[i]= best_x[i].value();
-						}
-
-						solution = print_solution(obj_value, sol_x, N, bbe, iter, nmulti, status);
-
-						free(sol_x);
-
-				}
-				catch(std::exception &e){
-						Rf_error("\nNOMAD has been interrupted ( %s )\n\n",  e.what());
-				}
-
-				NOMAD::Slave::stop_slaves(out);
-				NOMAD::end();
-
-				UNPROTECT(1);
-
-				return(solution);
-		}
+SEXP smultinomadRSolve(SEXP args) {
+  return solve_nomad4(args, true);
+}
 
 } // extern "C"

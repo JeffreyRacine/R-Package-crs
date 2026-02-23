@@ -1,0 +1,743 @@
+###############################################################################
+#######           Definition of Run Parameters attributes          ############
+#####
+##### . Each definition must be separated by at least a comment line
+#####     (starting by #)
+#####
+##### . The definition must provide the name, type and default value
+#####     (no default: '-' or 'N/A') in this order, one by line.
+#####
+##### . Only a single word is considered for the name,
+#####     type and default value (extra is comment)
+#####
+##### . The short info, the help and the keywords must be provided in this
+#####     order within "\(" and "\). For keywords, the plural part of a word
+#####     can be put in parenthesis; both singular and plural will be keywords
+#####
+##### . The default value is automatically reported in the help.
+#####
+##### . In addition, the definition can have optional attributes:
+#####       - ALGO_COMPATIBILITY_CHECK yes/no, the default is no. If yes, the
+#####         value of this attribute can be used for comparing two sets of
+#####         attributes for algorithm compatibility. This is used by the
+#####         Runner.
+#####
+#####       - RESTART_ATTRIBUTE yes/no, the default is no. If yes, the
+#####         value of this attribute can be modified during hot or warm
+#####         restart. Otherwise, modifying this attribute during hot restart
+#####         will trigger an error message.
+#####
+#####       - UNIQUE_ENTRY yes/no, the default is yes. If no, multiple
+#####         values may be assigned to this parameter.
+#####
+###############################################################################
+ADD_SEED_TO_FILE_NAMES
+bool
+true
+\( The flag to add seed to the file names \)
+\(
+
+. If \'yes\', the seed is added to the name of output file provided by STATS_FILE
+
+. Argument: one boolean (\'yes\' or \'no\')
+
+. Example: ADD_SEED_TO_FILE_NAMES no
+
+\)
+\( advanced seed(s) random number run stat(s) file history solution(s) \)
+ALGO_COMPATIBILITY_CHECK no
+RESTART_ATTRIBUTE no
+################################################################################
+ANISOTROPIC_MESH
+bool
+true
+\( MADS uses anisotropic mesh for generating directions \)
+\(
+
+. MADS uses anisotropic mesh for generating directions
+
+. Argument: one boolean ('yes' or 'no')
+
+. Example: ANISOTROPIC_MESH no
+
+\)
+\( advanced mads direction(s) anisotropic anisotropy aniso \)
+ALGO_COMPATIBILITY_CHECK yes
+RESTART_ATTRIBUTE yes
+################################################################################
+ANISOTROPY_FACTOR
+NOMAD::Double
+0.1
+\( MADS anisotropy factor for mesh size change \)
+\(
+
+. Set anisotropy_factor for mesh relative coarsening/refining if the anisotropic
+  mesh is enabled.
+
+. Argument: one positive real
+
+. Example: ANISOTROPY_FACTOR 0.05
+
+\)
+\( advanced mads direction(s) anisotropic anisotropy aniso \)
+ALGO_COMPATIBILITY_CHECK yes
+RESTART_ATTRIBUTE yes
+################################################################################
+SEARCH_METHOD_MESH_PROJECTION
+bool
+true
+\( Projection on mesh for trial points from a search method \)
+\(
+
+. Flag to project on mesh search methods trial points.
+
+. Disabling mesh projection breaks Mads theory.
+
+. Need mesh projection if some variables are granular.
+
+. Argument: bool
+
+. Example: SEARCH_METHOD_MESH_PROJECTION false
+
+\)
+\( advanced mads mesh search projection project trial points \)
+ALGO_COMPATIBILITY_CHECK yes
+RESTART_ATTRIBUTE yes
+################################################################################
+DIRECTION_TYPE
+NOMAD::DirectionTypeList
+ORTHO N+1 QUAD
+\( Direction types for Poll steps \)
+\(
+. Direction types used by Poll steps (Mads and CS) to generate trial points.
+
+. Several direction types can be defined (one direction type per line).
+
+. Arguments: direction type in:
+    ORTHO 2N      : OrthoMADS, 2n
+    ORTHO N+1 NEG : OrthoMADS, n+1, with (n+1)th dir = negative sum of
+                                                       the first n dirs
+    ORTHO N+1 QUAD: OrthoMADS, n+1, with (n+1)th dir from quad
+                                                     model optimization
+    N+1 UNI       : MADS with n+1, uniform distribution of dirs
+    SINGLE        : Single direction
+    DOUBLE        : Two opposite directions
+    CS            : Coordinate directions (only with CS_OPTIMIZATION)
+    USER_POLL     : Poll method for generating unit direction(s) must be
+                    implemented in a callback function. This is available
+                    only in library mode. See example in
+                    $NOMAD_HOME/examples/advanced/library/CustomPollMethod.
+
+. Examples:
+    . DIRECTION_TYPE N+1 UNI
+    . DIRECTION_TYPE ORTHO 2N
+    . DIRECTION_TYPE DOUBLE
+
+\)
+\( advanced poll direction ortho \)
+ALGO_COMPATIBILITY_CHECK yes
+RESTART_ATTRIBUTE no
+UNIQUE_ENTRY no
+################################################################################
+DIRECTION_TYPE_SECONDARY_POLL
+NOMAD::DirectionTypeList
+DOUBLE
+\( Direction types for Mads secondary poll \)
+\(
+. Direction types for the secondary poll
+
+. Several direction types can be defined (one direction type per line).
+
+. Arguments: same as DIRECTION_TYPE
+
+. If DIRECTION_TYPE is ORTHO 2N or ORTHO N+1 NEG is defined, then the default
+  value for DIRECTION_TYPE_SECONDARY_POLL is DOUBLE. Otherwise, it is SINGLE.
+
+. Examples:
+    . DIRECTION_TYPE_SECONDARY_POLL ORTHO 2N
+    . DIRECTION_TYPE_SECONDARY_POLL SINGLE
+
+. See also: DIRECTION_TYPE RHO
+
+\)
+\( advanced poll direction primary secondary \)
+ALGO_COMPATIBILITY_CHECK yes
+RESTART_ATTRIBUTE no
+UNIQUE_ENTRY no
+################################################################################
+TRIAL_POINT_MAX_ADD_UP
+size_t
+0
+\( Max number of trial points \)
+\(
+. Complete the trial points obtained from the primary and secondary poll
+  directions to reached the given target number.
+
+. D
+
+. Added trial points are obtained by repeating SINGLE direction
+ (see DIRECTION_TYPE) trial point creation.
+
+. If the number is not increased by a adding a SINGLE direction we stop adding.
+
+. When the number of trial points obtained from poll directions (primary and
+  secondary) is above the given target nothing is done.
+
+. This strategy can be used to complete the number of trial points in a block
+  (see BB_MAX_BLOCK_SIZE). In this case, both attributes can have the same value.
+
+. Arguments: size_t
+
+. Example:
+    . DIMENSION 2
+    . DIRECTION_TYPE ORTHO N+1 NEG
+    . BB_MAX_BLOCK_SIZE 10
+    . TRIAL_POINT_MAX_ADD_UP 10
+
+. See also: DIRECTION_TYPE BB_MAX_BLOCK_SIZE
+
+\)
+\( advanced poll direction primary secondary block parallel \)
+ALGO_COMPATIBILITY_CHECK yes
+RESTART_ATTRIBUTE yes
+UNIQUE_ENTRY yes
+################################################################################
+ORTHO_MESH_REFINE_FREQ
+size_t
+1
+\( Control mesh refinement frequency \)
+\(
+. When mesh refinement is called, perform it once every given frequency value.
+
+. Frequency value below 1 has no effect. Increase frequency value to prevent
+  the mesh to collapse to quickly when the cone of progress directions is narrow.
+
+. Arguments: size_t
+
+. Examples:
+    . ORTHO_MESH_REFINE_FREQ 10
+
+\)
+\( advanced mesh refine refinement ortho \)
+ALGO_COMPATIBILITY_CHECK yes
+RESTART_ATTRIBUTE no
+UNIQUE_ENTRY no
+################################################################################
+FRAME_CENTER_USE_CACHE
+bool
+false
+\( Find best points in the cache and use them as frame centers \)
+\(
+. When this parameter is true, when the Update step occurs, the points with
+  the best values are found in the Cache. Multiple points may have the same
+  value. These points are all used as frame centers for the next Search and
+  Poll steps.
+
+. When this parameter is false, the frame centers (one feasible and one
+  infeasible) are kept from previous iterations. This is the classical
+  MADS algorithm.
+
+\)
+\( advanced \)
+ALGO_COMPATIBILITY_CHECK yes
+RESTART_ATTRIBUTE yes
+################################################################################
+H_MAX_0
+NOMAD::Double
+NOMAD::INF
+\( Initial value of hMax. \)
+\(
+. Initial value of hMax. Used for progressive barrier (PB) constraints.
+
+. Argument: one positive real.
+
+. Points x such that h(x) > hMax are rejected. h measures the feasibility, or
+  how much the constraints are violated.
+
+. Example: H_MAX_0 100.0
+
+\)
+\( advanced hmax h_max constraint(s) pb feasibility progressive barrier \)
+ALGO_COMPATIBILITY_CHECK yes
+RESTART_ATTRIBUTE no
+################################################################################
+HOT_RESTART_FILE
+std::string
+hotrestart.txt
+\( The name of the hot restart file \)
+\(
+
+. Name of the file where the information about hot restart is kept.
+
+
+\)
+\( advanced hot restart file(s) file interrupt \)
+ALGO_COMPATIBILITY_CHECK no
+RESTART_ATTRIBUTE no
+################################################################################
+HOT_RESTART_ON_USER_INTERRUPT
+bool
+false
+\( Flag to perform a hot restart on user interrupt \)
+\(
+
+. If true, when NOMAD runs and the user does an interruption (CTRL+C),
+  then the parameters can be modified. Upon pressing CTRL+D, the resolution
+  continues where it was stopped, using the modified parameters.
+
+. If false, when NOMAD runs and the user does an interruption (CTRL+C),
+  the resolution ends.
+
+\)
+\( advanced hot restart file(s) interrupt \)
+ALGO_COMPATIBILITY_CHECK no
+RESTART_ATTRIBUTE no
+################################################################################
+HOT_RESTART_READ_FILES
+bool
+false
+\( Flag to read hot restart files \)
+\(
+
+. If true, the hot restart files (hotRestart.txt and CACHE_FILE) are read
+  when NOMAD is started. If NOMAD is ran twice, the second run starts from
+  where the first run ended.
+
+. If false, the hot restart files are ignored when NOMAD is started. Two runs
+  in a row will start from the same configuration.
+
+. See also: HOT_RESTART_WRITE_FILES, CACHE_FILE
+
+\)
+\( advanced hot restart file(s) interrupt \)
+ALGO_COMPATIBILITY_CHECK no
+RESTART_ATTRIBUTE no
+################################################################################
+HOT_RESTART_WRITE_FILES
+bool
+false
+\( Flag to write hot restart files \)
+\(
+
+. If true, when NOMAD ends, write the hot restart files (hotRestart.txt and
+  CACHE_FILE).
+
+. See also: HOT_RESTART_READ_FILES, CACHE_FILE
+
+\)
+\( advanced hot restart file(s) interrupt \)
+ALGO_COMPATIBILITY_CHECK no
+RESTART_ATTRIBUTE no
+################################################################################
+MAX_ITERATIONS
+size_t
+INF
+\( The maximum number of iterations of the MADS algorithm \)
+\(
+
+. Maximum number of iterations
+
+. Argument: one positive integer.
+
+. Example: MAX_ITERATIONS 1000
+
+\)
+\( advanced max maximum iteration(s) stop(s) stopping criterion(s) \)
+ALGO_COMPATIBILITY_CHECK yes
+RESTART_ATTRIBUTE yes
+################################################################################
+MAX_ITERATION_PER_MEGAITERATION
+size_t
+INF
+\( Maximum number of Iterations to generate for each MegaIteration. \)
+\(
+. Maximum number of Iterations to generate for each MegaIteration.
+
+. Argument: one positive integer.
+
+. If there are few points in the barrier, this parameter has no effect.
+
+. If FRAME_CENTER_USE_CACHE is false, this parameter has no effect.
+
+. If there are many points in the barrier, this parameter limits
+  the number of iterations generated.
+  A mixture of feasible and infeasible points of the barrier is used to
+  generate iterations.
+  Each iteration uses a point of the barrier as frame center.
+
+\)
+\( advanced \)
+ALGO_COMPATIBILITY_CHECK yes
+RESTART_ATTRIBUTE yes
+################################################################################
+MAX_TIME
+size_t
+INF
+\( Maximum wall-clock time in seconds \)
+\(
+. Argument: one positive integer.
+
+. Example: MAX_TIME 3600 # one hour max
+
+\)
+\( basic clock stop time \)
+ALGO_COMPATIBILITY_CHECK no
+RESTART_ATTRIBUTE yes
+################################################################################
+MEGA_SEARCH_POLL
+bool
+false
+\( Evaluate points generated from Search and Poll steps all at once \)
+\(
+. If true, generate all points from Search and Poll steps, and then
+  start evaluation. This method is preferred when multiple processes
+  are available in parallel to evaluate points. This way, more processes
+  will work on evaluating points simultaneously.
+
+. If false, generate points from Search, evaluate them, and then continue
+  to Poll, or to next Search. This is the classic way of evaluation.
+  If multiple processes are available for evaluation, and the Search step
+  generated a single point, only that point is evaluated while the other
+  processes do nothing.
+
+\)
+\( advanced \)
+ALGO_COMPATIBILITY_CHECK yes
+RESTART_ATTRIBUTE yes
+################################################################################
+REJECT_UNKNOWN_PARAMETERS
+bool
+true
+\( Flag to reject unknown parameters when checking validity of parameters \)
+\(
+
+. If false, when reading a parameters file, NOMAD will ignore unknown parameters.
+
+. If true, when reading a parameters file, NOMAD will exit if unknown
+  parameters are present.
+
+\)
+\( advanced valid param(s) parameter(s) ignore \)
+ALGO_COMPATIBILITY_CHECK no
+RESTART_ATTRIBUTE no
+################################################################################
+RHO
+NOMAD::Double
+0.1
+\( Rho parameter of the progressive barrier \)
+\(
+. Used to choose if the primary frame center is the feasible or infeasible
+  incumbent.
+
+. Argument: real
+
+. If the value is negative, both feasible and infeasible incumbents are
+  treated as primary poll centers.
+
+. Example: RHO 0.5
+\)
+\( advanced primary secondary \)
+ALGO_COMPATIBILITY_CHECK yes
+RESTART_ATTRIBUTE no
+################################################################################
+SEED
+int
+0
+\( The seed for the pseudo-random number generator \)
+\(
+
+. Random seed
+
+. Argument: one nonnegative integer (max UINT32_MAX) or -1 to generate a
+  different seed for each run.
+
+. The default value is used for each run if the parameter is not provided.
+
+. The seed is used in the output file names
+
+. Example: SEED 123456
+           SEED -1
+
+\)
+\( advanced seed(s) random number run \)
+ALGO_COMPATIBILITY_CHECK yes
+RESTART_ATTRIBUTE yes
+################################################################################
+RNG_ALT_SEEDING
+bool
+false
+\( With this option the seed is used to set xdef \)
+\(
+
+. Random number generator advanced option.
+
+. This option cannot be used with the default seed, that is 0.
+
+. Argument: one bool.
+
+\)
+\( advanced seed(s) random number run \)
+ALGO_COMPATIBILITY_CHECK yes
+RESTART_ATTRIBUTE yes
+################################################################################
+SIMPLE_LINE_SEARCH
+bool
+false
+\( MADS simple line search method complement speculative search \)
+\(
+
+. A line search method that add a point after unsuccessful speculative
+search.The direction of last success is used for each frame center. Three points
+are considered to build a quadratic model of the objective along this direction.
+The minimum of the quadratic is used to construct a new point. Done if all three
+points are feasible.
+
+. Argument: one boolean ('yes' or 'no')
+
+. Example: SIMPLE_LINE_SEARCH yes
+
+\)
+\( basic mads search speculative line \)
+ALGO_COMPATIBILITY_CHECK yes
+RESTART_ATTRIBUTE yes
+################################################################################
+SPECULATIVE_SEARCH
+bool
+true
+\( MADS speculative search method \)
+\(
+
+. MADS speculative search (optimistic strategy)
+
+. Argument: one boolean ('yes' or 'no')
+
+. Example: SPECULATIVE_SEARCH no
+
+\)
+\( basic mads search speculative \)
+ALGO_COMPATIBILITY_CHECK yes
+RESTART_ATTRIBUTE yes
+################################################################################
+SPECULATIVE_SEARCH_BASE_FACTOR
+NOMAD::Double
+4.0
+\( Distance of the MADS speculative search method \)
+\(
+
+. The MADS speculative search creates a point in a direction of success from the
+  best incumbent(s). The distance depends on the frame size, the number of search
+  points to be generated and a base factor (>1).
+
+. Argument: one NOMAD::Double strictly greater than 1.
+
+. Example: SPECULATIVE_SEARCH_BASE_FACTOR 3.0
+
+\)
+\( advanced mads search speculative \)
+ALGO_COMPATIBILITY_CHECK yes
+RESTART_ATTRIBUTE yes
+################################################################################
+SPECULATIVE_SEARCH_MAX
+size_t
+1
+\( MADS speculative search method \)
+\(
+
+. Number of points to generate using the MADS speculative search (optimistic
+  strategy)
+
+. Argument: one positive integer < INF.
+
+. Example: SPECULATIVE_SEARCH_MAX 2
+
+\)
+\( advanced mads search speculative \)
+ALGO_COMPATIBILITY_CHECK yes
+RESTART_ATTRIBUTE yes
+################################################################################
+USER_SEARCH
+bool
+false
+\( MADS user search method provided as callback function \)
+\(
+
+. This option is only available in library mode (see NOMAD documentation).
+
+. To enable, a user search method for Mads, this parameter must be set to true
+  and a callback function must be added to Mads.
+
+. An example is provided in $NOMAD_HOME/examples/advanced/library/CustomPollMethod
+
+. The user search method is disabled within another search method using Mads.
+
+. By default the user-defined search method will position first in the list
+  of search method.
+
+. Argument: boolean
+
+. Example: USER_SEARCH true
+
+\)
+\( advanced mads user search \)
+ALGO_COMPATIBILITY_CHECK yes
+RESTART_ATTRIBUTE yes
+################################################################################
+STOP_IF_FEASIBLE
+bool
+false
+\( Stop algorithm once a feasible point is obtained \)
+\(
+
+. Stopping criterion on feasibility.
+
+. See H_NORM and H_MIN for computation of h and feasibility criterion.
+
+. Argument: boolean.
+
+. Example:
+    . STOP_IF_FEASIBLE true.
+
+\)
+\( advanced stopping terminate(s) termination(s) \)
+RESTART_ATTRIBUTE no
+################################################################################
+STOP_IF_PHASE_ONE_SOLUTION
+bool
+false
+\( Stop algorithm once a phase one solution is obtained \)
+\(
+
+. Stopping criterion on feasibility. Used by the Phase One algorithm
+  to obtain a feasible point when EB (Extreme Barrier) constraints
+  are set and the starting point is infeasible.
+
+. A Phase One solution is a point for which the EB constraints are
+  satisfied. Any PB (Progressive Barrier) constraints are ignored.
+
+. Argument: boolean.
+
+. Example:
+    . STOP_IF_PHASE_ONE_SOLUTION true.
+
+\)
+\( advanced stopping terminate(s) termination(s) phase one  \)
+RESTART_ATTRIBUTE no
+################################################################################
+USER_CALLS_ENABLED
+bool
+true
+\( Controls the automatic calls to user function \)
+\(
+. If true the user functions are called (update_iteration, ...)
+
+\)
+\( advanced user(s) callback function(s) \)
+ALGO_COMPATIBILITY_CHECK no
+RESTART_ATTRIBUTE yes
+################################################################################
+RANDOM_ALGO_SEARCH
+bool
+false
+\( A random search step for Mads using an algo (several iterations) \)
+\(
+
+. A random search step for Mads that several trial points from the poll center
+
+. Use this as a template to develop a new search method
+
+. Argument: bool
+
+. Example: RANDOM_ALGO_SEARCH true
+
+\)
+\( advanced template algorithm search dummy \)
+ALGO_COMPATIBILITY_CHECK yes
+RESTART_ATTRIBUTE yes
+################################################################################
+RANDOM_ALGO_OPTIMIZATION
+bool
+false
+\( A standalone random optimization algo (several iterations) \)
+\(
+
+. Use this random algo as a template to implement a new algo.
+
+. By default this algorithm generates iteratively ramdom points around the
+  best incumbent.
+
+. Argument: bool
+
+. Example: RANDOM_ALGO_OPTIMIZATION true
+
+\)
+\( advanced template algorithm search dummy random \)
+ALGO_COMPATIBILITY_CHECK yes
+RESTART_ATTRIBUTE yes
+################################################################################
+RANDOM_ALGO_DUMMY_FACTOR
+size_t
+1
+\( Dummy factor for random algo (used as template) \)
+\(
+
+. This is dummy factor used by random algo.
+
+. Use this as a template for a parameter controling the behavior of a new search
+  method
+
+. Argument: one positive integer < INF.
+
+. Example: RANDOM_ALGO_DUMMY_FACTOR 2
+
+\)
+\( advanced mads algorithm search template dummy \)
+ALGO_COMPATIBILITY_CHECK yes
+RESTART_ATTRIBUTE yes
+################################################################################
+H_NORM
+NOMAD::HNormType
+L2
+\( Norm type for infeasibility measure (h) computation \)
+\(
+
+. The norm used for combining constraint violation of all PB constraints.
+
+. The norm can be L2 (default), L1 or Linf.
+
+. If a single EB constraint is violated, h is set to infinity.
+
+. If no EB constraint is violated, and the c_j are constraints evaluation, h
+  is computed as follows:
+    - for L2: h = sum(max(c_j,0)^2)
+    - for L1: h = sum(max(c_j,0))
+    - for Linf: h = max(max(c_j,0))
+
+\)
+\( advanced infeasibility norm h \)
+ALGO_COMPATIBILITY_CHECK yes
+RESTART_ATTRIBUTE no
+################################################################################
+H_MIN
+NOMAD::Double
+0
+\( Min h value for detecting infeasibility \)
+\(
+
+. H_MIN is the parameter provided to user to relax feasibility criterion.
+  The feasibility test is h(x) < h_min at a precision of epsilon.
+
+. Epsilon is used for the comparison of NOMAD::Double (epsilon = 1E-13) and
+  is hardcoded in NOMAD. Modifying epsilon is not recommended and requires to
+  rebuild NOMAD.
+
+. See parameter H_NORM for the computation of h.
+
+. Argument: one positive real.
+
+. Example: H_MIN 0.1
+
+\)
+\( advanced infeasibility norm h hmin feasibility epsilon \)
+ALGO_COMPATIBILITY_CHECK yes
+RESTART_ATTRIBUTE no
+################################################################################
