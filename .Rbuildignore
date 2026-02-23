@@ -11,4 +11,5 @@ mkcrspkg.sh
 ^codex_work_summary\.md
 ^AGENTS\.md$
 ^NOMAD_.*\.md$
+^CRS_MODERNIZATION_PLAN\.md$
 ^benchmarks$
