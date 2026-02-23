@@ -3,7 +3,7 @@ NOMAD4_ROOT = ./nomad4_src
 # NOMAD 4 source list (mirrors CMake selection, excluding tool/openmp-only units).
 NOMAD4_SRC_CPP = $(shell find $(NOMAD4_ROOT)/src -type f -name '*.cpp')
 NOMAD4_SRC_CPP := $(filter-out $(NOMAD4_ROOT)/src/Attribute/WriteAttributeDefinitionFile.cpp,$(NOMAD4_SRC_CPP))
-# Exclude legacy backup unit; CMake builds only the current implementation.
+# Exclude alternate/unused units not built in the upstream CMake path.
 NOMAD4_SRC_CPP := $(filter-out $(NOMAD4_ROOT)/src/Algos/PSDMads/PSDMadsMegaIteration_prev.cpp,$(NOMAD4_SRC_CPP))
 ifeq ($(CRS_EXPERIMENTAL_OPENMP),1)
   # Keep OpenMP-gated solvers in experimental OpenMP builds.

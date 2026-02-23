@@ -542,7 +542,7 @@ static void build_starting_points(SEXP sx0,
   if (len >= n * nstart) {
     for (int j = 0; j < nstart; ++j) {
       for (int i = 0; i < n; ++i) {
-        // Keep legacy R column-major convention used by old implementation.
+        // Preserve R column-major layout when reading matrix-provided starting points.
         const double val = REAL(sx0)[j + i * nstart];
         x0s[j * n + i] = coerce_by_input_type(val, bbin[i], lb[i], ub[i]);
       }
@@ -741,7 +741,7 @@ static SEXP solve_nomad4(SEXP args, bool use_multi) {
     Rf_error("Failed to set UPPER_BOUND for NOMAD4.");
   }
 
-  // Keep old behavior: hide progress when print.output is FALSE.
+  // Hide progress when print.output is FALSE.
   if (!print_output) {
     addNomadValParam(pb, "DISPLAY_DEGREE", 0);
     addNomadBoolParam(pb, "DISPLAY_ALL_EVAL", false);
@@ -797,7 +797,7 @@ static SEXP solve_nomad4(SEXP args, bool use_multi) {
       }
     }
   } catch (...) {
-    // Keep a safe scalar to preserve legacy downstream comparisons.
+    // Use a safe scalar fallback when evaluator metadata is unavailable.
     bbe = 0;
   }
 

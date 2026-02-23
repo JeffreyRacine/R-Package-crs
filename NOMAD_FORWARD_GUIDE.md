@@ -16,6 +16,8 @@ This document is the operational playbook for future NOMAD work in `crs`.
    - `/Users/jracine/Development/crs/inst/nomad/NOMAD_4_5_0_OPTIONS_REFERENCE.md`
 5. Legacy-to-current option mapping:
    - `/Users/jracine/Development/crs/NOMAD_391_TO_450_OPTION_MAP.md`
+6. Forensic legacy-residue audit and cleanup log:
+   - `/Users/jracine/Development/crs/NOMAD_FORENSIC_AUDIT.md`
 
 ## Current strategic baseline
 

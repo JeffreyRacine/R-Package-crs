@@ -4,10 +4,6 @@
 #include <R_ext/Rdynload.h>
 #include "mgcv.h"
 
-/* FIXME: 
-   Check these declarations against the C/Fortran source code.
-*/
-
 /* .C calls */
 extern void RuniqueCombs(void *, void *, void *, void *);
 extern void gsl_bspline(void *, void *, void *, void *, void *, void *, void *, void *, void *);

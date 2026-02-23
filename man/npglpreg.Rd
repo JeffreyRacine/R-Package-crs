@@ -69,8 +69,8 @@ npglpreg(\dots)
          min.epsilon = .Machine$double.eps,
          min.mesh.size.integer = 1, 
          min.mesh.size.real = sqrt(.Machine$double.eps),
-         min.poll.size.integer = 1, 
-         min.poll.size.real = 1,
+         min.frame.size.integer = 1, 
+         min.frame.size.real = 1,
          mpi = FALSE,
          nmulti = 5,
          okertype = c("liracine", "wangvanryzin"),
@@ -257,12 +257,12 @@ for each dimension of the continuous \code{x} in \code{txdat}}
     further details)
   }
 
-  \item{min.poll.size.integer}{
+  \item{min.frame.size.integer}{
     arguments passed to the NOMAD solver (see \code{\link{snomadr}} for
     further details)
   }      
 
-  \item{min.poll.size.real}{
+  \item{min.frame.size.real}{
     arguments passed to the NOMAD solver (see \code{\link{snomadr}} for
     further details)
   }
@@ -369,8 +369,8 @@ for each dimension of the continuous \code{x} in \code{txdat}}
   to investigate the impact of changing default search parameters such
   as \code{initial.mesh.size.real}, \code{initial.mesh.size.integer},
   \code{min.mesh.size.real},
-  \code{min.mesh.size.integer},\code{min.poll.size.real}, and
-  \code{min.poll.size.integer}. The default values were chosen based on
+  \code{min.mesh.size.integer},\code{min.frame.size.real}, and
+  \code{min.frame.size.integer}. The default values were chosen based on
   extensive simulation experiments and were chosen so as to yield robust
   performance while being mindful of excessive computation - of course,
   no one setting can be globally optimal.

@@ -25,7 +25,7 @@ frscvNOMAD <- function(xz,
                        knots=c("quantiles","uniform", "auto"),
                        max.bb.eval=10000,
                        min.mesh.size.integer="1", #paste("r",sqrt(.Machine$double.eps),sep=""),
-                       min.poll.size.integer="1",  #paste("r",sqrt(.Machine$double.eps),sep=""),
+                       min.frame.size.integer="1",  #paste("r",sqrt(.Machine$double.eps),sep=""),
                        nmulti=0,
                        opts=list(),
                        random.seed=42,
@@ -340,7 +340,7 @@ frscvNOMAD <- function(xz,
   opts$"MAX_BB_EVAL" <- max.bb.eval
   opts$"INITIAL_MESH_SIZE" <- initial.mesh.size.integer
   opts$"MIN_MESH_SIZE" <-  min.mesh.size.integer
-  opts$"MIN_FRAME_SIZE" <- min.poll.size.integer
+  opts$"MIN_FRAME_SIZE" <- min.frame.size.integer
 
   if(display.nomad.progress) {
     if(!is.null(opts$DISPLAY_DEGREE)){

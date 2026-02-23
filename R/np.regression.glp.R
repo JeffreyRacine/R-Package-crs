@@ -669,8 +669,8 @@ npglpreg.formula <- function(formula,
                              min.epsilon=.Machine$double.eps,
                              min.mesh.size.integer=1,
                              min.mesh.size.real=sqrt(.Machine$double.eps),
-                             min.poll.size.integer=1,
-                             min.poll.size.real=1,
+                             min.frame.size.integer=1,
+                             min.frame.size.real=1,
                              mpi=FALSE,
                              nmulti=5,
                              okertype=c("liracine","wangvanryzin"),
@@ -702,8 +702,8 @@ npglpreg.formula <- function(formula,
   if(as.numeric(initial.mesh.size.integer) <= 0) stop(" initial.mesh.size.integer must be positive")
   if(as.numeric(min.mesh.size.integer) <= 0) stop(" min.mesh.size.integer must be positive")
   if(as.numeric(min.mesh.size.real) <= 0) stop(" min.mesh.size.real must be positive")
-  if(as.numeric(min.poll.size.integer) <= 0) stop(" min.poll.size.integer must be positive")
-  if(as.numeric(min.poll.size.real) <= 0) stop(" min.poll.size.real must be positive")
+  if(as.numeric(min.frame.size.integer) <= 0) stop(" min.frame.size.integer must be positive")
+  if(as.numeric(min.frame.size.real) <= 0) stop(" min.frame.size.real must be positive")
   if(as.numeric(bandwidth.scale.categorical) <= 0) stop(" bandwidth.scale.categorical must be positive")
   if(as.numeric(bandwidth.min) <= 0) stop(" bandwidth.min must be positive")
   if(as.numeric(bandwidth.min.numeric) <= 0) stop(" bandwidth.min.numeric must be positive")
@@ -713,8 +713,8 @@ npglpreg.formula <- function(formula,
   if(as.numeric(min.epsilon) <= 0) stop(" min.epsilon must be positive")
   if(as.numeric(min.epsilon) >= as.numeric(min.mesh.size.real)) stop(" min.epsilon must be less than min.mesh.size.real")
   if(as.numeric(min.epsilon) >= as.numeric(min.mesh.size.integer)) stop(" min.epsilon must be less than min.mesh.size.integer")
-  if(as.numeric(min.epsilon) >= as.numeric(min.poll.size.real)) stop(" min.epsilon must be less than min.poll.size.real")
-  if(as.numeric(min.epsilon) >= as.numeric(min.poll.size.integer)) stop(" min.epsilon must be less than min.poll.size.integer")
+  if(as.numeric(min.epsilon) >= as.numeric(min.frame.size.real)) stop(" min.epsilon must be less than min.frame.size.real")
+  if(as.numeric(min.epsilon) >= as.numeric(min.frame.size.integer)) stop(" min.epsilon must be less than min.frame.size.integer")
   if(as.numeric(max.bb.eval) <= 0) stop(" max.bb.eval must be positive")
   #  if(!mpi) {
   #    if(!require(np)) stop(" Error: you must install the np package to use this function")
@@ -782,8 +782,8 @@ npglpreg.formula <- function(formula,
                                                      initial.mesh.size.integer=initial.mesh.size.integer,
                                                      min.mesh.size.real=min.mesh.size.real,
                                                      min.mesh.size.integer=min.mesh.size.integer,
-                                                     min.poll.size.real=min.poll.size.real,
-                                                     min.poll.size.integer=min.poll.size.integer,
+                                                     min.frame.size.real=min.frame.size.real,
+                                                     min.frame.size.integer=min.frame.size.integer,
                                                      opts=opts,
                                                      restart.from.min=restart.from.min,
                                                      cv.shrink=cv.shrink,
@@ -820,8 +820,8 @@ npglpreg.formula <- function(formula,
                              initial.mesh.size.integer=initial.mesh.size.integer,
                              min.mesh.size.real=min.mesh.size.real,
                              min.mesh.size.integer=min.mesh.size.integer,
-                             min.poll.size.real=min.poll.size.real,
-                             min.poll.size.integer=min.poll.size.integer,
+                             min.frame.size.real=min.frame.size.real,
+                             min.frame.size.integer=min.frame.size.integer,
                              opts=opts,
                              restart.from.min=restart.from.min,
                              cv.shrink=cv.shrink,
@@ -861,8 +861,8 @@ npglpreg.formula <- function(formula,
                           initial.mesh.size.integer=initial.mesh.size.integer,
                           min.mesh.size.real=min.mesh.size.real,
                           min.mesh.size.integer=min.mesh.size.integer,
-                          min.poll.size.real=min.poll.size.real,
-                          min.poll.size.integer=min.poll.size.integer,
+                          min.frame.size.real=min.frame.size.real,
+                          min.frame.size.integer=min.frame.size.integer,
                           opts=opts,
                           restart.from.min=restart.from.min,
                           cv.shrink=cv.shrink,
@@ -904,8 +904,8 @@ npglpreg.formula <- function(formula,
                           initial.mesh.size.integer=initial.mesh.size.integer,
                           min.mesh.size.real=min.mesh.size.real,
                           min.mesh.size.integer=min.mesh.size.integer,
-                          min.poll.size.real=min.poll.size.real,
-                          min.poll.size.integer=min.poll.size.integer,
+                          min.frame.size.real=min.frame.size.real,
+                          min.frame.size.integer=min.frame.size.integer,
                           opts=opts,
                           restart.from.min=restart.from.min,
                           cv.shrink=cv.shrink,
@@ -2006,8 +2006,8 @@ glpcvNOMAD <- function(ydat=NULL,
                        initial.mesh.size.integer=1,
                        min.mesh.size.real=sqrt(.Machine$double.eps),
                        min.mesh.size.integer=1,
-                       min.poll.size.real=1,
-                       min.poll.size.integer=1,
+                       min.frame.size.real=1,
+                       min.frame.size.integer=1,
                        cv.shrink=TRUE,
                        cv.maxPenalty=NULL,
                        display.warnings=TRUE,
@@ -2345,16 +2345,16 @@ glpcvNOMAD <- function(ydat=NULL,
 
   INITIAL.MESH.SIZE <- list()
   MIN.MESH.SIZE <- list()
-  MIN.POLL.SIZE <- list()
+  MIN.FRAME.SIZE <- list()
 
   for(i in 1:num.bw) {
     INITIAL.MESH.SIZE[[i]] <- initial.mesh.size.real
     MIN.MESH.SIZE[[i]] <- min.mesh.size.real
-    MIN.POLL.SIZE[[i]] <- min.poll.size.real
+    MIN.FRAME.SIZE[[i]] <- min.frame.size.real
     if(is.integer(xdat[,i])) {
       INITIAL.MESH.SIZE[[i]] <- initial.mesh.size.integer
       MIN.MESH.SIZE[[i]] <- min.mesh.size.integer
-      MIN.POLL.SIZE[[i]] <- min.poll.size.integer
+      MIN.FRAME.SIZE[[i]] <- min.frame.size.integer
     }
     ## Need to do integer search for numeric predictors when bwtype is
     ## a nearest-neighbour, so set bbin appropriately.
@@ -2367,7 +2367,7 @@ glpcvNOMAD <- function(ydat=NULL,
       bw.switch[i] <- ub[i]
       INITIAL.MESH.SIZE[[i]] <- initial.mesh.size.integer
       MIN.MESH.SIZE[[i]] <- min.mesh.size.integer
-      MIN.POLL.SIZE[[i]] <- min.poll.size.integer
+      MIN.FRAME.SIZE[[i]] <- min.frame.size.integer
     }
     ## Check for unordered and Aitchison/Aitken kernel
     if(xdat.unordered[i]==TRUE && ukertype=="aitchisonaitken") {
@@ -2389,7 +2389,7 @@ glpcvNOMAD <- function(ydat=NULL,
     for(i in (num.bw+1):(num.bw+num.numeric)) {
       INITIAL.MESH.SIZE[[i]] <- initial.mesh.size.integer
       MIN.MESH.SIZE[[i]] <- min.mesh.size.integer
-      MIN.POLL.SIZE[[i]] <- min.poll.size.integer
+      MIN.FRAME.SIZE[[i]] <- min.frame.size.integer
     }
   }
 
@@ -2399,7 +2399,7 @@ glpcvNOMAD <- function(ydat=NULL,
   opts$"MAX_BB_EVAL" <- max.bb.eval
   opts$"INITIAL_MESH_SIZE" <- INITIAL.MESH.SIZE
   opts$"MIN_MESH_SIZE" <- MIN.MESH.SIZE
-  opts$"MIN_FRAME_SIZE" <- MIN.POLL.SIZE
+  opts$"MIN_FRAME_SIZE" <- MIN.FRAME.SIZE
 
   if(is.null(degree)) {
     if(cv == "degree-bandwidth") {

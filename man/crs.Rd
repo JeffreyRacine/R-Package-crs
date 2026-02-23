@@ -58,8 +58,8 @@ crs(\dots)
     max.bb.eval = 140,
     min.mesh.size.integer = 1, 
     min.mesh.size.real = paste(sqrt(.Machine$double.eps)),
-    min.poll.size.integer = 1, 
-    min.poll.size.real = 1,
+    min.frame.size.integer = 1, 
+    min.frame.size.real = 1,
     model.return = FALSE,
     nmulti = 5,
     opts=list(),
@@ -216,12 +216,12 @@ in \code{x} are included or omitted from the resulting estimate }
     further details)
   }
 
-  \item{min.poll.size.integer}{
+  \item{min.frame.size.integer}{
     arguments passed to the NOMAD solver (see \code{\link{snomadr}} for
     further details)
   }      
 
-  \item{min.poll.size.real}{
+  \item{min.frame.size.real}{
     arguments passed to the NOMAD solver (see \code{\link{snomadr}} for
     further details)
   }

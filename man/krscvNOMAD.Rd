@@ -34,8 +34,8 @@ krscvNOMAD(xz,
            max.bb.eval = 140,
            min.mesh.size.integer = "1", 
            min.mesh.size.real = paste("r",sqrt(.Machine$double.eps),sep=""),
-           min.poll.size.integer = "1", 
-           min.poll.size.real = "1",
+           min.frame.size.integer = "1", 
+           min.frame.size.real = "1",
            nmulti = 0,
            opts=list(),
            random.seed = 42,
@@ -146,12 +146,12 @@ krscvNOMAD(xz,
     further details)
   }
 
-  \item{min.poll.size.integer}{
+  \item{min.frame.size.integer}{
     arguments passed to the NOMAD solver (see \code{\link{snomadr}} for
     further details)
   }      
 
-  \item{min.poll.size.real}{
+  \item{min.frame.size.real}{
     arguments passed to the NOMAD solver (see \code{\link{snomadr}} for
     further details)
   }

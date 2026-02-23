@@ -372,10 +372,9 @@ crs.default <- function(xz,
 
 ## Here we define the formula and split y (always first column of the
 ## model frame) from xz (the remaining continuous and
-## ordinal/nominal).  nomad::FALSE exhaustive search nmulti is the
-## number for multiple initial points.  if it is bigger than 1, when
-## nomad is true, it will call snomadRSolve, otherwise, it will call
-## smultinomadRSolve See ?snomadr
+## ordinal/nominal).  nomad/exhaustive search and nmulti controls multiple initial
+## points. When nmulti==0, snomadRSolve is used; otherwise
+## smultinomadRSolve is used. See ?snomadr
 ## Jun 4,  2011
 ##1) degree.max (we have removed  basis.maxdim)
 ##2) segments.max (we have removed  basis.maxdim)
@@ -408,8 +407,8 @@ crs.formula <- function(formula,
                         max.bb.eval=140,
                         min.mesh.size.integer=1,
                         min.mesh.size.real=paste(sqrt(.Machine$double.eps)),
-                        min.poll.size.integer=1,
-                        min.poll.size.real=1,
+                        min.frame.size.integer=1,
+                        min.frame.size.real=1,
                         model.return=FALSE,
                         nmulti=5,
                         opts=list(),
@@ -641,6 +640,8 @@ crs.formula <- function(formula,
                                initial.mesh.size.integer=initial.mesh.size.integer,
                                min.mesh.size.real=min.mesh.size.real,
                                min.mesh.size.integer=min.mesh.size.integer,
+                               min.frame.size.real=min.frame.size.real,
+                               min.frame.size.integer=min.frame.size.integer,
                                nmulti=nmulti,
                                tau=tau,
                                weights=weights,

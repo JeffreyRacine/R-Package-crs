@@ -28,8 +28,8 @@ krscvNOMAD <- function(xz,
                        max.bb.eval=140,
                        min.mesh.size.integer="1",
                        min.mesh.size.real=paste("r",sqrt(.Machine$double.eps),sep=""),
-                       min.poll.size.integer="1",
-                       min.poll.size.real="1",
+                       min.frame.size.integer="1",
+                       min.frame.size.real="1",
                        nmulti=0,
                        opts=list(),
                        random.seed=42,
@@ -475,30 +475,30 @@ krscvNOMAD <- function(xz,
 
   INITIAL.MESH.SIZE <- list()
   MIN.MESH.SIZE <- list()
-  MIN.POLL.SIZE <- list()
+  MIN.FRAME.SIZE <- list()
 
   if(complexity=="degree-knots") {
     for(i in 1:(2*num.x)) {
       INITIAL.MESH.SIZE[[i]] <- initial.mesh.size.integer
       MIN.MESH.SIZE[[i]] <- min.mesh.size.integer
-      MIN.POLL.SIZE[[i]] <- min.poll.size.integer
+      MIN.FRAME.SIZE[[i]] <- min.frame.size.integer
     }
     for(i in (2*num.x+1):(2*num.x+num.z)) {
       INITIAL.MESH.SIZE[[i]] <- initial.mesh.size.real
       MIN.MESH.SIZE[[i]] <- min.mesh.size.real
-      MIN.POLL.SIZE[[i]] <- min.poll.size.real
+      MIN.FRAME.SIZE[[i]] <- min.frame.size.real
     }
   }
   else if(complexity=="degree"|complexity=="knots") {
     for(i in 1:num.x) {
       INITIAL.MESH.SIZE[[i]] <- initial.mesh.size.integer
       MIN.MESH.SIZE[[i]] <- min.mesh.size.integer
-      MIN.POLL.SIZE[[i]] <- min.poll.size.integer
+      MIN.FRAME.SIZE[[i]] <- min.frame.size.integer
     }
     for(i in (num.x+1):(num.x+num.z)) {
       INITIAL.MESH.SIZE[[i]] <- initial.mesh.size.real
       MIN.MESH.SIZE[[i]] <- min.mesh.size.real
-      MIN.POLL.SIZE[[i]] <- min.poll.size.real
+      MIN.FRAME.SIZE[[i]] <- min.frame.size.real
     }
   }
 
@@ -506,7 +506,7 @@ krscvNOMAD <- function(xz,
   opts$"MAX_BB_EVAL" <- max.bb.eval
   opts$"INITIAL_MESH_SIZE" <- INITIAL.MESH.SIZE
   opts$"MIN_MESH_SIZE" <- MIN.MESH.SIZE
-  opts$"MIN_FRAME_SIZE" <- MIN.POLL.SIZE
+  opts$"MIN_FRAME_SIZE" <- MIN.FRAME.SIZE
 
   ## For kernel regression spline, if there is only one continuous
   ## predictor (i.e. num.x==1) disable auto, set to additive (which is

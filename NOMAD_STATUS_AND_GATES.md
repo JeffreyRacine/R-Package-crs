@@ -738,6 +738,37 @@ Observed effect:
 1. Objective parity remained exact in smoke comparison (`max_abs_objective_diff=0` for all covered cases).
 2. Elapsed-time differences in this smoke comparison were small-run noise and not accompanied by objective drift.
 
+## 2026-02-23 forensic legacy-residue audit checkpoint
+
+Scope:
+
+1. Active R integration layer (`/Users/jracine/Development/crs/R`)
+2. Active native integration layer (`/Users/jracine/Development/crs/src`)
+
+Implemented:
+
+1. Renamed public API args from `min.poll.size.*` to `min.frame.size.*` across R code and man pages.
+2. Updated wrapper forwarding so `crs.formula` passes `min.frame.size.*` into `krscvNOMAD`.
+3. Renamed `snomadr` default-profile helper from `nomad4.compat.defaults` to `nomad4.mads.defaults`.
+4. Removed stale duplicate source tree `src/sgtelib_src`.
+5. Removed stale legacy/FIXME comments in active integration files.
+
+Validation artifacts:
+
+1. `/tmp/crs_install_after_forensic_legacy_cleanup_20260223.log`
+2. `/tmp/crs_forensic_formals_check_20260223.out`
+3. `/tmp/crs_wrapper_minframe_smoke_20260223.out`
+4. `/tmp/crs_nomad_smoke_after_forensic_legacy_cleanup_20260223_raw.csv`
+5. `/tmp/crs_nomad_smoke_after_forensic_legacy_cleanup_20260223_summary.csv`
+6. `/tmp/crs_nomad_smoke_after_forensic_legacy_cleanup_20260223_parity.rds`
+7. `/tmp/crs_nomad_smoke_forensic_vs_wrapper_objdiff.csv`
+
+Result:
+
+1. Active `R` + integration `src` paths are free of legacy `min.poll` naming and legacy default-helper naming.
+2. Objective parity remained exact vs prior wrapper-alignment checkpoint in smoke comparison.
+3. Upstream NOMAD4 internal compatibility units remain vendor-internal; see `/Users/jracine/Development/crs/NOMAD_FORENSIC_AUDIT.md` for details.
+
 ## Current gate state
 
 1. Build/install: passing.
