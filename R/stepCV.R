@@ -69,8 +69,8 @@ add1.lm.cv <- function (object, scope, scale = 0, test = c("none", "Chisq",
   RSS <- numeric(ns + 1)
   CV <- numeric(ns + 1) # added jracine
   names(CV) <- names(dfs) <- names(RSS) <- c("<none>", scope) # added term 1 jracine
-  add.rhs <- paste(scope, collapse = "+")
-  add.rhs <- eval(parse(text = paste("~ . +", add.rhs)))
+  add.rhs <- stats::reformulate(c(".", scope),
+                                env = environment(formula(object)))
   new.form <- update.formula(object, add.rhs)
   Terms <- terms(new.form)
   if (is.null(x)) {
@@ -543,8 +543,8 @@ addterm.glm <- function(object, scope, scale = 0, test = c("none", "Chisq", "F")
   ns <- length(scope)
   dfs <- dev <- numeric(ns+1)
   names(dfs) <- names(dev) <- c("<none>", scope)
-  add.rhs <- paste(scope, collapse = "+")
-  add.rhs <- eval(parse(text = paste("~ . +", add.rhs)))
+  add.rhs <- stats::reformulate(c(".", scope),
+                                env = environment(formula(object)))
   new.form <- update.formula(object, add.rhs)
   oc <- object$call
   Terms <- terms(new.form)

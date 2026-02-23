@@ -273,3 +273,23 @@ Validation artifacts:
 3. Tarball-first:
    - `/tmp/crs_build_seqlen_20260223.log`
    - `/tmp/crs_check_ascran_seqlen_20260223.log` (`Status: 4 WARNINGs, 2 NOTEs`)
+
+### 2026-02-23 - A/R2.1 remove `eval(parse(...))` in `stepCV`
+
+Scope completed:
+
+1. Replaced `eval(parse(...))` formula construction in `R/stepCV.R` with structured formula creation:
+   - `stats::reformulate(c(".", scope), env = environment(formula(object)))`
+2. Updated both affected callsites in:
+   - `/Users/jracine/Development/crs/R/stepCV.R`
+
+Validation artifacts:
+
+1. Parse gate:
+   - inline run result: `STEPCV_PARSE_OK`
+2. Deterministic install/smoke:
+   - `/tmp/crs_install_stepcv_20260223.log`
+   - `/tmp/crs_stepcv_smoke_20260223.out` (`STEPCV_SMOKE_OK`, invoked via `crs:::stepCV`)
+3. Tarball-first:
+   - `/tmp/crs_build_stepcv_20260223.log`
+   - `/tmp/crs_check_ascran_stepcv_20260223.log` (`Status: 4 WARNINGs, 2 NOTEs`)
