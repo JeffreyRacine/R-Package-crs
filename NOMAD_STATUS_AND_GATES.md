@@ -615,6 +615,57 @@ Snapshot (core paths):
    - `npglpreg`: marginally slower (`+1.22%` fixed, `+2.38%` varying)
 3. Objective-level parity versus `frdironly` run was exact in this canonical bench (`max_abs_obj_diff = 0` for all cases/seed policies).
 
+## 2026-02-23 mixed-dimension tradeoff sweep (`n=100`)
+
+Goal:
+
+- Test whether a single aggressive setting can work well across increasing mixed dimensions:
+  - `(p_cont, p_cat) = (1,1), (2,2), (3,3)`
+
+Artifacts:
+
+1. Sweep outputs:
+   - `/tmp/crs_nomad_dimmix_tradeoff_20260223_n100_raw.csv`
+   - `/tmp/crs_nomad_dimmix_tradeoff_20260223_n100_compare.csv`
+   - `/tmp/crs_nomad_dimmix_tradeoff_20260223_n100_agg_by_dim.csv`
+   - `/tmp/crs_nomad_dimmix_tradeoff_20260223_n100_agg_overall.csv`
+   - `/tmp/crs_nomad_dimmix_tradeoff_20260223_n100.log`
+
+Profiles tested:
+
+1. `frscvNOMAD`
+   - `fr_current`
+   - `fr_universal_aggr` (`DIRECTION_TYPE=ORTHO 2N`, `max.bb.eval=140`)
+2. `krscvNOMAD`
+   - `kr_current`
+   - `kr_nmtrial40`
+   - `kr_universal_aggr` (`DIRECTION_TYPE=ORTHO 2N`, `max.bb.eval=140`)
+3. `npglpreg`
+   - `np_current`
+   - `np_universal_aggr` (`DIRECTION_TYPE=ORTHO 2N`, `max.bb.eval=140`)
+   - `np_noquad`
+
+Results summary:
+
+1. `frscvNOMAD`
+   - `fr_universal_aggr` was slower overall (`+17.40%` mean elapsed)
+   - dimension trend: speed penalty grew with dimension (`+2.6%` at `1+1`, `+17.3%` at `2+2`, `+32.3%` at `3+3`)
+2. `krscvNOMAD`
+   - `kr_universal_aggr` remained strongly faster overall (`-45.41%` mean elapsed)
+   - dimension trend: speed gain reduced with dimension but remained large (`-70.9%`, `-41.9%`, `-23.5%`)
+   - objective trade-off remained mixed (overall `7` worsens / `16` improves / `7` ties)
+3. `npglpreg`
+   - `np_universal_aggr` was slower overall (`+34.16%` mean elapsed) despite many improvements
+   - `np_noquad` was faster overall (`-29.68%`) but with large downside tails (`16` worsens / `12` improves / `2` ties; worst diff about `+0.029985`)
+
+Conclusion:
+
+1. No single universal aggressive profile is a good global default across `fr`, `kr`, and `npglpreg`.
+2. Aggressive settings are still path-specific:
+   - `kr`: strong practical speed/quality trade-off candidate
+   - `fr`: keep current tuned defaults
+   - `npglpreg`: aggressive speedups carry materially larger downside risk
+
 ## Current gate state
 
 1. Build/install: passing.

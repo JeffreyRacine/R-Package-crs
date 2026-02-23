@@ -53,6 +53,17 @@ Canonical result/status tracker:
     - `<prefix>_compare.csv`
     - `<prefix>_agg.csv`
     - `<prefix>_strict_safe.csv`
+- `run_nomad_dimmix_tradeoff.R`
+  - mixed-dimension tradeoff sweep for `(p_cont, p_cat) = (1,1), (2,2), (3,3)` at fixed `n`
+  - compares baseline vs aggressive profiles for:
+    - `frscvNOMAD`
+    - `krscvNOMAD`
+    - `npglpreg`
+  - writes:
+    - `<prefix>_raw.csv`
+    - `<prefix>_compare.csv`
+    - `<prefix>_agg_by_dim.csv`
+    - `<prefix>_agg_overall.csv`
 - `run_nomad_exception_isolation.R`
   - verifies that exception-only profiles do not poison later calls in the same R session
   - compares in-session sequence vs isolated subprocess calls
@@ -111,6 +122,11 @@ Rscript benchmarks/nomad/run_nomad_mads_deep_space.R \
 Rscript benchmarks/nomad/run_nomad_kr_timebudget.R \
   /tmp/crs_nomad_kr_timebudget \
   300
+
+# mixed-dimension tradeoff sweep (second arg is n; optional)
+Rscript benchmarks/nomad/run_nomad_dimmix_tradeoff.R \
+  /tmp/crs_nomad_dimmix_tradeoff \
+  100
 
 # exception-isolation gate
 Rscript benchmarks/nomad/run_nomad_exception_isolation.R \
