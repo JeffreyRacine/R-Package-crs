@@ -708,6 +708,36 @@ Interpretation:
 1. This change is a strong practical speed gain for `krscvNOMAD` with small observed objective trade-offs.
 2. It is intentionally not a strict-parity profile; it is a practical default choice.
 
+## 2026-02-23 wrapper/default alignment checkpoint
+
+Decision:
+
+1. Align `crs.formula` wrapper default with adopted `krscvNOMAD` default:
+   - `max.bb.eval=140` in `/Users/jracine/Development/crs/R/crs.R`
+2. Align user docs:
+   - `max.bb.eval = 140` in `\usage{}` for `crs.formula` in `/Users/jracine/Development/crs/man/crs.Rd`
+   - explicit default note in `\item{max.bb.eval}{...}` in `/Users/jracine/Development/crs/man/crs.Rd`
+
+Validation artifacts:
+
+1. Install:
+   - `/tmp/crs_install_after_wrapper_eval140_20260223.log`
+2. Wrapper smoke (`crs(...)` path, default args):
+   - `/tmp/crs_wrapper_default_smoke_20260223.out`
+3. NOMAD smoke suite:
+   - `/tmp/crs_nomad_smoke_after_wrapper_eval140_20260223_raw.csv`
+   - `/tmp/crs_nomad_smoke_after_wrapper_eval140_20260223_summary.csv`
+   - `/tmp/crs_nomad_smoke_after_wrapper_eval140_20260223_parity.rds`
+   - `/tmp/crs_nomad_smoke_after_wrapper_eval140_20260223.log`
+4. Comparison vs prior checkpoint smoke:
+   - `/tmp/crs_nomad_smoke_wrapper_align_vs_prev_summary.csv`
+   - `/tmp/crs_nomad_smoke_wrapper_align_vs_prev_objdiff.csv`
+
+Observed effect:
+
+1. Objective parity remained exact in smoke comparison (`max_abs_objective_diff=0` for all covered cases).
+2. Elapsed-time differences in this smoke comparison were small-run noise and not accompanied by objective drift.
+
 ## Current gate state
 
 1. Build/install: passing.

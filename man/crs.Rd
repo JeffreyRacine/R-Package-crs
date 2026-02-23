@@ -55,7 +55,7 @@ crs(\dots)
     lambda = NULL,
     lambda.discrete = FALSE,
     lambda.discrete.num = 100,
-    max.bb.eval = 10000,
+    max.bb.eval = 140,
     min.mesh.size.integer = 1, 
     min.mesh.size.real = paste(sqrt(.Machine$double.eps)),
     min.poll.size.integer = 1, 
@@ -201,8 +201,9 @@ in \code{x} are included or omitted from the resulting estimate }
   used when \code{lambda.discrete=TRUE}}
 
   \item{max.bb.eval}{
-    argument passed to the NOMAD solver (see \code{\link{snomadr}} for
-    further details)
+    argument passed to the NOMAD solver (default
+    \code{max.bb.eval=140}; see \code{\link{snomadr}} for further
+    details)
   }
 
   \item{min.mesh.size.integer}{
