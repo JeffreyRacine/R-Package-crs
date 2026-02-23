@@ -35,13 +35,15 @@ toMsg <- function(msg, console = stop("no console provided")){
     tmpPos <- console$lineLen + console$startCol
 
     ## do tabbing
-    msg <- paste(tMsg, sapply(tMsg, function(x) {
-      tmpPos <<- tmpPos + nchar(x)
-      tmpPos <<- tmpPos +
-        nchar(tFill <- paste(charRep(' ', console$tabLen-(tmpPos %% console$tabLen)),
-                             collapse = ''))
-      tFill
-    }), sep='', collapse='')
+    fills <- character(length(tMsg))
+    for(i in seq_along(tMsg)) {
+      tmpPos <- tmpPos + nchar(tMsg[i])
+      tFill <- paste(charRep(' ', console$tabLen - (tmpPos %% console$tabLen)),
+                     collapse = '')
+      tmpPos <- tmpPos + nchar(tFill)
+      fills[i] <- tFill
+    }
+    msg <- paste(tMsg, fills, sep = '', collapse = '')
   }
   list(msg = msg,
        len = nchar(msg))

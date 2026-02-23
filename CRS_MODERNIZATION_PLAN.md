@@ -336,3 +336,23 @@ Validation artifacts:
 3. Tarball-first:
    - `/tmp/crs_build_scalarop_20260223.log`
    - `/tmp/crs_check_ascran_scalarop_20260223.log` (`Status: 4 WARNINGs, 2 NOTEs`)
+
+### 2026-02-23 - A/R1.5 retire `<<-` in console tab formatting
+
+Scope completed:
+
+1. Removed closure mutation in `toMsg()` tab-fill logic:
+   - replaced `tmpPos <<- ...` updates inside `sapply` with explicit local `for` loop accumulation.
+2. File updated:
+   - `/Users/jracine/Development/crs/R/console.R`
+
+Validation artifacts:
+
+1. Parse gate:
+   - inline run result: `CONSOLE_PARSE_OK`
+2. Deterministic install/smoke:
+   - `/tmp/crs_install_console_20260223.log`
+   - `/tmp/crs_console_smoke_20260223.out` (`CONSOLE_SMOKE_OK`)
+3. Tarball-first:
+   - `/tmp/crs_build_console_20260223.log`
+   - `/tmp/crs_check_ascran_console_20260223.log` (`Status: 4 WARNINGs, 2 NOTEs`)
