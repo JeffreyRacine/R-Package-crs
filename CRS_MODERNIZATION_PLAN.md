@@ -293,3 +293,22 @@ Validation artifacts:
 3. Tarball-first:
    - `/tmp/crs_build_stepcv_20260223.log`
    - `/tmp/crs_check_ascran_stepcv_20260223.log` (`Status: 4 WARNINGs, 2 NOTEs`)
+
+### 2026-02-23 - B/R1.1 non-NOMAD C memory hygiene (`gsl_bspline`)
+
+Scope completed:
+
+1. Fixed leak candidate in derivative wrapper by restoring missing free:
+   - `/Users/jracine/Development/crs/src/gsl_bspline.c`
+   - `gsl_vector_free(quantile_vec);` in `gsl_bspline_deriv(...)`
+
+Validation artifacts:
+
+1. Deterministic install:
+   - `/tmp/crs_install_gslfree_20260223.log`
+2. Focused smokes:
+   - `/tmp/crs_gslbs_smoke_gslfree_20260223.out` (`GSL_BS_SMOKE_OK`)
+   - `/tmp/crs_basic_smoke_gslfree_20260223.out` (`CRS_BASIC_SMOKE_OK`)
+3. Tarball-first:
+   - `/tmp/crs_build_gslfree_20260223.log`
+   - `/tmp/crs_check_ascran_gslfree_20260223.log` (`Status: 4 WARNINGs, 2 NOTEs`)
