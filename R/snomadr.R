@@ -76,7 +76,8 @@ nomad4.fr.defaults <- function() {
     "QUAD_MODEL_SEARCH" = "no",
     "EVAL_QUEUE_SORT" = "DIR_LAST_SUCCESS",
     "SIMPLE_LINE_SEARCH" = "yes",
-    "SPECULATIVE_SEARCH" = "no"
+    "SPECULATIVE_SEARCH" = "no",
+    "DIRECTION_TYPE" = "ORTHO N+1 NEG"
   )
 }
 

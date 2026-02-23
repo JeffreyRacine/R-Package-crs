@@ -24,6 +24,7 @@ Primary references used:
 | `OPPORTUNISTIC_EVAL` | `EVAL_OPPORTUNISTIC` | Same high-level meaning. |
 | `MODEL_RADIUS_FACTOR` | `QUAD_MODEL_SEARCH_BOX_FACTOR` and `QUAD_MODEL_BOX_FACTOR` | NOMAD4 split behavior into search/model box factors. |
 | `MAX_EVAL_INTENSIFICATION` | `QUAD_MODEL_MAX_EVAL` + `SGTELIB_MODEL_MAX_EVAL` | NOMAD4 replacement per deprecated definition file. |
+| `NB_THREADS_OPENMP` (deprecated in NOMAD4) | `NB_THREADS_PARALLEL_EVAL` | NOMAD4 rename; values `>1` require OpenMP-enabled NOMAD build. |
 
 ## Items with no strict one-to-one behavior
 

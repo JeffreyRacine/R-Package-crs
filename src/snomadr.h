@@ -16,6 +16,11 @@
 #undef error
 #endif
 
+// OpenMP headers use "match" tokens in pragmas; R defines match() as a macro.
+#ifdef match
+#undef match
+#endif
+
 class Routbuf : public std::streambuf {
 private:
   int overflow(int c) override {

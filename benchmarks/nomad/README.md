@@ -38,6 +38,21 @@ Canonical result/status tracker:
     - `<prefix>_compare.csv`
     - `<prefix>_agg.csv`
     - `<prefix>_strict_safe.csv`
+- `run_nomad_mads_deep_space.R`
+  - MADS-only deep sweep for direction/search/restart/budget controls
+  - writes:
+    - `<prefix>_raw.csv`
+    - `<prefix>_compare.csv`
+    - `<prefix>_agg.csv`
+    - `<prefix>_strict_safe.csv`
+    - `<prefix>_relaxed_safe.csv`
+- `run_nomad_kr_timebudget.R`
+  - `krscvNOMAD`-focused speed/accuracy frontier sweep including time-budget reinvestment profiles
+  - writes:
+    - `<prefix>_raw.csv`
+    - `<prefix>_compare.csv`
+    - `<prefix>_agg.csv`
+    - `<prefix>_strict_safe.csv`
 - `run_nomad_exception_isolation.R`
   - verifies that exception-only profiles do not poison later calls in the same R session
   - compares in-session sequence vs isolated subprocess calls
@@ -86,6 +101,16 @@ Rscript benchmarks/nomad/run_nomad_solver_space.R \
 Rscript benchmarks/nomad/run_nomad_solver_space_extended.R \
   /tmp/crs_nomad_solver_space_ext \
   180
+
+# MADS-only deep sweep (second arg is n; optional)
+Rscript benchmarks/nomad/run_nomad_mads_deep_space.R \
+  /tmp/crs_nomad_mads_deep_space \
+  180
+
+# kr time-budget frontier sweep (second arg is n; optional)
+Rscript benchmarks/nomad/run_nomad_kr_timebudget.R \
+  /tmp/crs_nomad_kr_timebudget \
+  300
 
 # exception-isolation gate
 Rscript benchmarks/nomad/run_nomad_exception_isolation.R \

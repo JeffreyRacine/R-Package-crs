@@ -3,8 +3,14 @@ NOMAD4_ROOT = ./nomad4_src
 # NOMAD 4 source list (mirrors CMake selection, excluding tool/openmp-only units).
 NOMAD4_SRC_CPP = $(shell find $(NOMAD4_ROOT)/src -type f -name '*.cpp')
 NOMAD4_SRC_CPP := $(filter-out $(NOMAD4_ROOT)/src/Attribute/WriteAttributeDefinitionFile.cpp,$(NOMAD4_SRC_CPP))
-NOMAD4_SRC_CPP := $(filter-out $(NOMAD4_ROOT)/src/Algos/PSDMads/%,$(NOMAD4_SRC_CPP))
-NOMAD4_SRC_CPP := $(filter-out $(NOMAD4_ROOT)/src/Algos/COOPMads/%,$(NOMAD4_SRC_CPP))
+# Exclude legacy backup unit; CMake builds only the current implementation.
+NOMAD4_SRC_CPP := $(filter-out $(NOMAD4_ROOT)/src/Algos/PSDMads/PSDMadsMegaIteration_prev.cpp,$(NOMAD4_SRC_CPP))
+ifeq ($(CRS_EXPERIMENTAL_OPENMP),1)
+  # Keep OpenMP-gated solvers in experimental OpenMP builds.
+else
+  NOMAD4_SRC_CPP := $(filter-out $(NOMAD4_ROOT)/src/Algos/PSDMads/%,$(NOMAD4_SRC_CPP))
+  NOMAD4_SRC_CPP := $(filter-out $(NOMAD4_ROOT)/src/Algos/COOPMads/%,$(NOMAD4_SRC_CPP))
+endif
 
 NOMAD4_SGTELIB_CPP = $(shell find $(NOMAD4_ROOT)/ext/sgtelib/src -type f -name '*.cpp')
 NOMAD4_SGTELIB_CPP := $(filter-out $(NOMAD4_ROOT)/ext/sgtelib/src/sgtelib.cpp,$(NOMAD4_SGTELIB_CPP))
@@ -18,3 +24,10 @@ NOMAD4_INCLUDE_FLAGS = $(addprefix -I,$(NOMAD4_INCLUDE_DIRS))
 OBJECTS = RuniqueCombs.o bspline.o gsl_bspline.o snomadr.o crs_init.o mgcv.o hat_diag.o $(NOMAD4_OBJECTS)
 
 PKG_CXXFLAGS = $(NOMAD4_INCLUDE_FLAGS) -I$(NOMAD4_ROOT)/interfaces/CInterface -I$(NOMAD4_ROOT)/ext/sgtelib/src -DUSE_SGTELIB -DNOMAD_STATIC_BUILD
+
+# Experimental OpenMP build toggle (local benchmarking only):
+#   CRS_EXPERIMENTAL_OPENMP=1 R CMD INSTALL crs
+ifeq ($(CRS_EXPERIMENTAL_OPENMP),1)
+  PKG_CXXFLAGS += -Xpreprocessor -fopenmp -I/opt/local/include/libomp
+  PKG_LIBS += -L/opt/local/lib/libomp -Wl,-rpath,/opt/local/lib/libomp -lomp
+endif

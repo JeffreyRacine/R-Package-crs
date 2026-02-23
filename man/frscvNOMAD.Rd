@@ -137,9 +137,10 @@ frscvNOMAD(xz,
   the NOMAD4 path defaults \code{QUAD_MODEL_SEARCH="no"},
   \code{EVAL_QUEUE_SORT="DIR_LAST_SUCCESS"},
   \code{SIMPLE_LINE_SEARCH="yes"}, and
-  \code{SPECULATIVE_SEARCH="no"} for faster mixed-integer search in
-  this specific \code{frscvNOMAD} path. User-supplied \code{opts}
-  entries always take precedence. }
+  \code{SPECULATIVE_SEARCH="no"}, and
+  \code{DIRECTION_TYPE="ORTHO N+1 NEG"} for faster mixed-integer
+  search in this specific \code{frscvNOMAD} path. User-supplied
+  \code{opts} entries always take precedence. }
 
 \item{random.seed}{
   when it is not missing and not equal to 0, the initial points  will 

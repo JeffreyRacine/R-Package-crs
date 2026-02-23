@@ -65,6 +65,9 @@ The package now keeps only the NOMAD4 codebase and C interface bridge.
   - `solveNomadProblem(...)`
   - `createNomadResult(...)` / `load*SolutionsNomadResult(...)`
 - Objective callback re-enters R via `R_tryEval(...)`.
+- Threading implication:
+  - because objective evaluation enters R, concurrent NOMAD trial-point evaluation threads (`NB_THREADS_PARALLEL_EVAL > 1`) are not safe in current wiring.
+  - practical effect: OpenMP parallel evaluation cannot be treated as production-safe for current `crs` callback architecture.
 
 5. High-level `crs` entry points that route into NOMAD
 
@@ -127,3 +130,4 @@ Canonical option catalog for embedded NOMAD4:
 
 - `crs` is now wired to embedded NOMAD4 (`4.5.0`), not NOMAD3 (`3.9.1`).
 - `crs` keeps a clean-break NOMAD4-only source layout.
+- `crs` currently exposes single-point objective callbacks only; no dedicated batch/vectorized blackbox callback path is wired for NOMAD block evaluations.

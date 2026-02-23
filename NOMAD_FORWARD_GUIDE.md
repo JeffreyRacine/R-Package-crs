@@ -24,7 +24,7 @@ This document is the operational playbook for future NOMAD work in `crs`.
 3. `snomadr()` applies a NOMAD3.9.1-like compatibility profile via NOMAD4 option names when those options are not user-specified.
 4. Near-term goal remains: stabilize NOMAD4 under strict parity/performance gates for existing `crs` behavior.
 5. Path defaults currently applied unless user overrides:
-   - `frscvNOMAD`: `QUAD_MODEL_SEARCH=no`, `EVAL_QUEUE_SORT=DIR_LAST_SUCCESS`, `SIMPLE_LINE_SEARCH=yes`, `SPECULATIVE_SEARCH=no`
+   - `frscvNOMAD`: `QUAD_MODEL_SEARCH=no`, `EVAL_QUEUE_SORT=DIR_LAST_SUCCESS`, `SIMPLE_LINE_SEARCH=yes`, `SPECULATIVE_SEARCH=no`, `DIRECTION_TYPE=ORTHO N+1 NEG`
    - `krscvNOMAD`: `QUAD_MODEL_SEARCH=no`, `EVAL_QUEUE_SORT=DIR_LAST_SUCCESS`
 
 ## Roadmap alignment (`crs` vs `np`/`npRmpi`)
@@ -62,16 +62,34 @@ This document is the operational playbook for future NOMAD work in `crs`.
    - NOMAD is a local/direct-search framework; there is no strict global-optimum guarantee for these nonconvex mixed-variable CV objectives.
    - fastest reliable practice is path-tuned MADS plus controlled restarts (`nmulti`) and seed-policy checks rather than switching to standalone modes that degrade objective quality.
 
+## OpenMP policy (current)
+
+1. Experimental OpenMP build path exists for local testing:
+   - `CRS_EXPERIMENTAL_OPENMP=1 R CMD INSTALL crs`
+   - when switching between OpenMP and non-OpenMP builds, force clean object rebuilds (for example delete `src/**/*.o` before reinstall) to avoid stale-link contamination.
+2. In current `crs` architecture, NOMAD evaluation callbacks re-enter R (`R_tryEval` path in bridge), so `NB_THREADS_PARALLEL_EVAL > 1` is not runtime-safe.
+3. Current recommendation:
+   - keep production builds non-OpenMP
+   - keep `NB_THREADS_PARALLEL_EVAL` at default `1` for `crs`/`npglpreg` paths
+4. `BB_MAX_BLOCK_SIZE` is not a substitute for this limitation in current wiring; there is no dedicated vectorized/batch objective callback exposed by `crs`.
+5. Future re-open criteria:
+   - objective evaluation moved to a native thread-safe path (no concurrent R API usage),
+   - then re-run full parity/performance gates before enabling any threaded defaults.
+
 ## Current default recommendation matrix
 
 Based on the expanded solver-space sweeps documented in status:
 
 1. `frscvNOMAD`
-   - keep current MADS path defaults (`QUAD_MODEL_SEARCH=no`, `EVAL_QUEUE_SORT=DIR_LAST_SUCCESS`, `SIMPLE_LINE_SEARCH=yes`, `SPECULATIVE_SEARCH=no`)
-   - this profile produced the best strict-safe speedup among tested `fr` variants
+   - keep current MADS path defaults (`QUAD_MODEL_SEARCH=no`, `EVAL_QUEUE_SORT=DIR_LAST_SUCCESS`, `SIMPLE_LINE_SEARCH=yes`, `SPECULATIVE_SEARCH=no`, `DIRECTION_TYPE=ORTHO N+1 NEG`)
+   - this profile produced the strongest strict-safe speedup across both `n=180` and `n=300` sweeps
 2. `krscvNOMAD`
    - keep current MADS path defaults
-   - no strict-safe speedup profile beat current defaults in the extended sweep
+   - `NM_SEARCH_MAX_TRIAL_PTS_NFACTOR=40` remains a tested optional profile for harder mixed-variable settings; it was mixed on the canonical bench
+   - aggressive optional profile for fast global-search attempts:
+     - `opts = list(DIRECTION_TYPE="ORTHO 2N")`
+     - `max.bb.eval = 140`
+     - expected behavior: materially faster and often better minima, but not strict-parity-safe in larger-seed stress tests
    - do not switch to standalone solvers for default use (large speed gains came with objective-risk counts)
 3. `npglpreg`
    - keep current MADS compatibility defaults
@@ -86,6 +104,7 @@ The investigation covered, at minimum:
 3. restart and budget controls (`nmulti`, `max.bb.eval`)
 4. both fixed-seed and varying-seed comparisons on simple and harder mixed-variable scenarios
 5. a deeper follow-up sweep via `run_nomad_solver_space_extended.R` for search-method controls
+6. a MADS-only deep sweep via `run_nomad_mads_deep_space.R` for direction/restart/budget controls (tested at `n=180` and `n=300`)
 
 ## Exception-only modes (important)
 
@@ -126,6 +145,9 @@ Use this sequence whenever a new NOMAD4.x release is integrated.
    - run tarball-first check from `/Users/jracine/Development`
    - restore with `/Users/jracine/Development/crs/man/dontruncrs` immediately after
    - remove disposable build artifacts (`src/*.o`, `src/*.so`) after check runs
+8. OpenMP safety gate (only when experimenting with OpenMP builds)
+   - run isolated thread-matrix probes on `frscvNOMAD`, `krscvNOMAD`, `npglpreg`, and a direct `snomadr` case
+   - require zero crashes and zero corrupted-result logs before considering any `NB_THREADS_PARALLEL_EVAL > 1` usage
 
 ## Exception-state guardrail
 

@@ -135,6 +135,21 @@ Extended solver-space follow-up (search-method toggles plus solver modes):
 - `/tmp/crs_nomad_solver_space_ext_20260223_strict_safe.csv`
 - `/tmp/crs_nomad_solver_space_ext_20260223.log`
 
+MADS-only deep sweeps (direction/search/restart/budget controls):
+
+- `/tmp/crs_nomad_mads_deep_space_20260223_raw.csv`
+- `/tmp/crs_nomad_mads_deep_space_20260223_compare.csv`
+- `/tmp/crs_nomad_mads_deep_space_20260223_agg.csv`
+- `/tmp/crs_nomad_mads_deep_space_20260223_strict_safe.csv`
+- `/tmp/crs_nomad_mads_deep_space_20260223_relaxed_safe.csv`
+- `/tmp/crs_nomad_mads_deep_space_20260223.log`
+- `/tmp/crs_nomad_mads_deep_space_20260223_n300_raw.csv`
+- `/tmp/crs_nomad_mads_deep_space_20260223_n300_compare.csv`
+- `/tmp/crs_nomad_mads_deep_space_20260223_n300_agg.csv`
+- `/tmp/crs_nomad_mads_deep_space_20260223_n300_strict_safe.csv`
+- `/tmp/crs_nomad_mads_deep_space_20260223_n300_relaxed_safe.csv`
+- `/tmp/crs_nomad_mads_deep_space_20260223_n300.log`
+
 Post-implementation rerun after adopting `frscvNOMAD` `SIMPLE_LINE_SEARCH=yes` path default:
 
 - `/tmp/crs_install_fr_simpleline_20260223.log`
@@ -378,6 +393,49 @@ Post-update checkpoint:
 3. Exception-isolation recheck after default change remained clean:
    - `cs_status_in = ok`, `nm_status_in = ok` across tested scenario/seed pairs.
 
+## 2026-02-23 MADS-only deep sweep (cross-`n` confirmation)
+
+Goal:
+
+- Expand tuning beyond search toggles and test direction/restart/budget controls under strict parity/error gates, then confirm winners at a larger sample size.
+
+Method:
+
+1. Run `run_nomad_mads_deep_space.R` at `n=180` and `n=300`.
+2. Use strict-safe filter (`cells_present=4`, `worsen_count=0`, `error_runs=0`).
+3. Keep only profiles that remain strict-safe across both runs.
+
+Cross-`n` strict-safe outcomes:
+
+1. `frscvNOMAD`
+   - `fr_dirnp1neg` remained best:
+     - `n=180`: mean elapsed `-82.04%`
+     - `n=300`: mean elapsed `-81.20%`
+     - objective: no worsens, no improves in all four cells
+   - `fr_dir2n` was close second and also strict-safe.
+2. `krscvNOMAD`
+   - `kr_nmtrial40` remained best strict-safe:
+     - `n=180`: mean elapsed `-4.32%`
+     - `n=300`: mean elapsed `-2.52%`
+     - objective: no worsens in all four cells
+3. `npglpreg`
+   - no robust speed gain over baseline survived cross-`n` confirmation.
+   - `np_nmtrial40` remained strict-safe but effectively neutral (`~0.04%` mean at `n=300`).
+
+Implemented default update from this sweep:
+
+1. `frscvNOMAD` path defaults now additionally set:
+   - `DIRECTION_TYPE=ORTHO N+1 NEG`
+2. `krscvNOMAD` defaults left unchanged after canonical-bench validation:
+   - `NM_SEARCH_MAX_TRIAL_PTS_NFACTOR=40` remains a validated optional profile (faster in deep mixed/hard sweeps, mixed in canonical bench).
+3. `npglpreg` defaults unchanged.
+
+Implementation note:
+
+1. Profiles using `SIMPLE_LINE_SEARCH=yes` with speculative search still enabled are invalid in NOMAD4 and triggered expected exceptions:
+   - `SimpleLineSearchMethod: cannot work with speculative search`
+2. These invalid profiles are retained as rejected candidates in deep-sweep artifacts and excluded by strict-safe filters.
+
 ## 2026-02-23 exception-path contamination investigation and fix
 
 Question tested:
@@ -418,6 +476,115 @@ Post-fix evidence:
 3. Regression smoke after patch:
    - `/tmp/crs_nomad_smoke_after_exception_reset_20260223_summary.csv`
    - `/tmp/crs_nomad_smoke_after_exception_reset_20260223_parity.rds`
+
+## 2026-02-23 OpenMP/parallel-evaluation investigation (MacPorts `libomp`)
+
+Question tested:
+
+- Can NOMAD4 OpenMP parallel evaluation (`NB_THREADS_PARALLEL_EVAL`) be integrated in `crs` and materially speed optimization?
+
+Build/integration artifacts:
+
+1. OpenMP-enabled install (experimental local build):
+   - `/tmp/crs_install_openmp_exp_20260223_retry3.log`
+2. Clean non-OpenMP rebuild (true baseline after object purge):
+   - `/tmp/crs_install_noopenmp_clean_20260223.log`
+
+Runtime safety probe artifacts:
+
+1. Per-case thread matrix logs:
+   - `/tmp/crs_openmp_probe_fr_t*.log`
+   - `/tmp/crs_openmp_probe_kr_t*.log`
+   - `/tmp/crs_openmp_probe_np_t*.log`
+   - `/tmp/crs_openmp_probe_basic_t*.log`
+2. Matrix summaries:
+   - `/tmp/crs_openmp_probe_summary.psv`
+   - `/tmp/crs_openmp_probe_analysis.csv`
+
+OpenMP build-overhead artifacts (`threads=1` only):
+
+1. OpenMP build benchmark:
+   - `/tmp/crs_nomad_openmp_t1_20260223_raw.csv`
+   - `/tmp/crs_nomad_openmp_t1_20260223_summary.csv`
+   - `/tmp/crs_nomad_openmp_t1_20260223.log`
+2. Clean non-OpenMP benchmark:
+   - `/tmp/crs_nomad_noopenmp_clean_20260223_raw.csv`
+   - `/tmp/crs_nomad_noopenmp_clean_20260223_summary.csv`
+   - `/tmp/crs_nomad_noopenmp_clean_20260223.log`
+
+Findings:
+
+1. Integration is technically feasible for local experimentation (OpenMP compile/link works), but current `crs` callback architecture is not safe for `NB_THREADS_PARALLEL_EVAL > 1`.
+2. Safety matrix outcome:
+   - `threads=1`: stable for `frscvNOMAD`, `krscvNOMAD`, `npglpreg`, `snomadr` basic case
+   - `threads>=2`: mostly fatal (`SIGSEGV`, `SIGBUS`, abort) or corrupted behavior
+   - one apparent `fr` "`ok`" run at high thread count returned `objective=0` while log contained internal R errors; treated as invalid/corrupted result
+3. Performance impact of OpenMP build alone (still `threads=1`) was negative:
+   - about `+5.25%` mean elapsed overall versus clean non-OpenMP build on canonical harness
+   - objective parity remained exact in this comparison
+
+Decision:
+
+1. Keep production `crs` on non-OpenMP NOMAD build for now.
+2. Do not recommend or document `NB_THREADS_PARALLEL_EVAL > 1` for current `crs`/`npglpreg` paths.
+3. Revisit only if evaluation callbacks are moved to a thread-safe native path that avoids concurrent R API re-entry.
+
+## 2026-02-23 `krscvNOMAD` time-budget frontier (strict vs aggressive)
+
+Goal:
+
+- Determine whether a much faster `krscvNOMAD` profile can improve practical global-search outcomes, and whether any such profile is robust enough for defaults.
+
+Artifacts:
+
+1. Frontier sweep at `n=300`:
+   - `/tmp/crs_nomad_kr_timebudget_20260223_n300_raw.csv`
+   - `/tmp/crs_nomad_kr_timebudget_20260223_n300_compare.csv`
+   - `/tmp/crs_nomad_kr_timebudget_20260223_n300_agg.csv`
+   - `/tmp/crs_nomad_kr_timebudget_20260223_n300_strict_safe.csv`
+   - `/tmp/crs_nomad_kr_timebudget_20260223_n300.log`
+2. Frontier sweep at `n=500`:
+   - `/tmp/crs_nomad_kr_timebudget_20260223_n500_raw.csv`
+   - `/tmp/crs_nomad_kr_timebudget_20260223_n500_compare.csv`
+   - `/tmp/crs_nomad_kr_timebudget_20260223_n500_agg.csv`
+   - `/tmp/crs_nomad_kr_timebudget_20260223_n500_strict_safe.csv`
+   - `/tmp/crs_nomad_kr_timebudget_20260223_n500.log`
+3. Targeted stress runs:
+   - `/tmp/crs_kr_targeted_n500_raw.csv`
+   - `/tmp/crs_kr_targeted_n500_compare.csv`
+   - `/tmp/crs_kr_dir2n_eval140_vs_current_n300_50seeds.csv`
+
+Key profiles tested:
+
+1. Baseline:
+   - `kr_current` (`nmulti=2`, `max.bb.eval=100`, current defaults)
+2. Strict-safe candidate:
+   - `kr_nmtrial40` (`opts = list(NM_SEARCH_MAX_TRIAL_PTS_NFACTOR=40)`)
+3. Aggressive candidate:
+   - `kr_dir2n_eval140` (`opts = list(DIRECTION_TYPE="ORTHO 2N")`, `max.bb.eval=140`)
+
+Findings:
+
+1. `kr_nmtrial40` stayed strict-safe across tested cells with small speed gain (roughly `-0.6%` to `-1.3%` mean).
+2. `kr_dir2n_eval140` delivered large speed gains:
+   - around `-58.7%` mean (`n=300` frontier)
+   - around `-57.0%` mean (`n=500` frontier)
+3. Objective behavior for `kr_dir2n_eval140`:
+   - often improved, especially on hard scenarios,
+   - but not strictly parity-safe in larger-seed stress runs:
+     - `n=300`, 50-seed hard scenario: `26` improves, `10` worsens, `14` ties (`tol=1e-6`)
+     - worst observed positive drift about `+2.4e-05`, best improvement about `-1.432e-03`
+4. Interpretation:
+   - this profile is a strong aggressive search mode (fast and often better minima),
+   - but not suitable as a strict default under current parity gates.
+5. Additional robustness note:
+   - `kr_simple_specoff` showed sporadic runtime exceptions in targeted stress runs (`SimpleLineSearchMethod: evaluated point not found in cache`), so it is not a reliable candidate despite occasional speed gains.
+
+Decision:
+
+1. Keep `krscvNOMAD` package defaults conservative.
+2. Keep `kr_nmtrial40` as optional strict-safe speed tweak.
+3. Keep `kr_dir2n_eval140` documented as an aggressive, user-opt-in exploration profile for faster global-search attempts.
 
 ## Current gate state
 
