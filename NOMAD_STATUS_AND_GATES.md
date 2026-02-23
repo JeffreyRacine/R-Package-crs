@@ -586,6 +586,35 @@ Decision:
 2. Keep `kr_nmtrial40` as optional strict-safe speed tweak.
 3. Keep `kr_dir2n_eval140` documented as an aggressive, user-opt-in exploration profile for faster global-search attempts.
 
+## 2026-02-23 committed-state benchmark refresh (`b0871f2`)
+
+Artifacts:
+
+1. Install/build:
+   - `/tmp/crs_install_post_b0871f2_20260223.log`
+2. Canonical bench:
+   - `/tmp/crs_nomad_post_b0871f2_20260223_raw.csv`
+   - `/tmp/crs_nomad_post_b0871f2_20260223_summary.csv`
+   - `/tmp/crs_nomad_post_b0871f2_20260223_parity.rds`
+   - `/tmp/crs_nomad_post_b0871f2_20260223.log`
+3. Summary comparisons:
+   - `/tmp/crs_nomad_post_b0871f2_vs_pre_summary.csv`
+   - `/tmp/crs_nomad_post_b0871f2_vs_frdironly_summary.csv`
+   - `/tmp/crs_nomad_post_b0871f2_vs_pre_objdiff.csv`
+   - `/tmp/crs_nomad_post_b0871f2_vs_frdironly_objdiff.csv`
+
+Snapshot (core paths):
+
+1. Versus NOMAD3 pre baseline:
+   - `frscvNOMAD`: fixed `-18.29%`, varying `-25.81%` mean elapsed
+   - `krscvNOMAD`: fixed `+241.75%`, varying `+433.33%` mean elapsed
+   - `npglpreg`: fixed `-25.27%`, varying `+3.98%` mean elapsed
+2. Versus prior tuned NOMAD4 checkpoint (`frdironly`):
+   - `frscvNOMAD`: essentially unchanged (fixed `+3.08%`, varying ~`0%`)
+   - `krscvNOMAD`: marginally faster (about `-0.85%` fixed, `-0.56%` varying)
+   - `npglpreg`: marginally slower (`+1.22%` fixed, `+2.38%` varying)
+3. Objective-level parity versus `frdironly` run was exact in this canonical bench (`max_abs_obj_diff = 0` for all cases/seed policies).
+
 ## Current gate state
 
 1. Build/install: passing.
