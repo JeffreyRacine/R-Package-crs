@@ -1223,29 +1223,28 @@ glpregEst <- function(tydat=NULL,
 
     coef.mat <- matrix(cv.maxPenalty,ncol(W),n.eval)
     epsilon <- 1.0/n.eval
-    ridge <- double(n.eval)
-    ridge.lc <- double(n.eval)
-    doridge <- !logical(n.eval)
+    ridge.state <- new.env(parent = emptyenv())
+    ridge.state$ridge <- double(n.eval)
+    ridge.state$ridge.lc <- double(n.eval)
+    ridge.state$doridge <- rep(TRUE, n.eval)
 
     nc <- ncol(tww[,,1])
 
     ridger <- function(i) {
-      ## Use <<- for doridge, dirge and ridge.lc to ensure the values are
-      ## preserved for use in while loops that follow
-      doridge[i] <<- FALSE
-      ridge.lc[i] <<- ridge[i]*tyw[1,i][1]/NZD_den(tww[,,i][1,1])
+      ridge.state$doridge[i] <- FALSE
+      ridge.state$ridge.lc[i] <- ridge.state$ridge[i] * tyw[1,i][1] / NZD_den(tww[,,i][1,1])
 
-      tryCatch(chol2inv(chol(tww[,,i]+diag(rep(ridge[i],nc))))%*%tyw[,i],
+      tryCatch(chol2inv(chol(tww[,,i]+diag(rep(ridge.state$ridge[i],nc))))%*%tyw[,i],
                error = function(e){
-                 ridge[i] <<- ridge[i]+epsilon
-                 if(ridge[i] > 1) {
-                   ridge[i] <<- 1
-                   ridge.lc[i] <<- tyw[1,i][1]/NZD_den(tww[,,i][1,1])
-                   doridge[i] <<- FALSE
-                   return(c(ridge.lc[i], rep(0, nc-1)))
+                 ridge.state$ridge[i] <- ridge.state$ridge[i] + epsilon
+                 if(ridge.state$ridge[i] > 1) {
+                   ridge.state$ridge[i] <- 1
+                   ridge.state$ridge.lc[i] <- tyw[1,i][1]/NZD_den(tww[,,i][1,1])
+                   ridge.state$doridge[i] <- FALSE
+                   return(c(ridge.state$ridge.lc[i], rep(0, nc-1)))
                  }
-                 doridge[i] <<- TRUE
-                 if(display.warnings) console <- printPush(paste("\rWarning: ridging required for inversion at obs. ", i, ", ridge = ",formatC(ridge[i],digits=4,format="f"),"        ",sep=""),console = console)
+                 ridge.state$doridge[i] <- TRUE
+                 if(display.warnings) console <- printPush(paste("\rWarning: ridging required for inversion at obs. ", i, ", ridge = ",formatC(ridge.state$ridge[i],digits=4,format="f"),"        ",sep=""),console = console)
                  return(rep(cv.maxPenalty,nc))
                })
     }
@@ -1253,8 +1252,8 @@ glpregEst <- function(tydat=NULL,
     ## Test for singularity of the generalized local polynomial
     ## estimator, cv.shrink the mean towards the local constant mean.
 
-    while(any(doridge)){
-      iloo <- (1:n.eval)[doridge]
+    while(any(ridge.state$doridge)){
+      iloo <- which(ridge.state$doridge)
       coef.mat[,iloo] <- sapply(iloo, ridger)
     }
 
@@ -1262,15 +1261,15 @@ glpregEst <- function(tydat=NULL,
     ## ridge.lc[i] which is ridge[i] times the local constant
     ## estimator
 
-    mhat <- sapply(1:n.eval, function(i) {
-      (1-ridge[i]) * W.eval[i,, drop = FALSE] %*% coef.mat[,i] + ridge.lc[i]
+    mhat <- sapply(seq_len(n.eval), function(i) {
+      (1-ridge.state$ridge[i]) * W.eval[i,, drop = FALSE] %*% coef.mat[,i] + ridge.state$ridge.lc[i]
     })
 
     ## Ought to have a correction here for derivative when shrinking
     ## towards the local constant - XXX
 
     if(!is.null(gradient.vec)) {
-      gradient <- sapply(1:n.eval, function(i) {
+      gradient <- sapply(seq_len(n.eval), function(i) {
         W.eval.deriv[i,-1, drop = FALSE] %*% coef.mat[-1,i]
       })
     } else {

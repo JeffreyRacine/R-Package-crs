@@ -418,3 +418,25 @@ Validation artifacts:
 3. Tarball-first:
    - `/tmp/crs_build_consoleenv_20260223.log`
    - `/tmp/crs_check_ascran_consoleenv_20260223.log` (`Status: 4 WARNINGs, 2 NOTEs`)
+
+### 2026-02-23 - A/R1.9 retire last R-layer `<<-` usage (`np.regression.glp`)
+
+Scope completed:
+
+1. Replaced ridge-loop super-assignment state in `glpregEst(...)` with explicit local environment state:
+   - `ridge`, `ridge.lc`, and `doridge` now managed via `ridge.state$...`.
+2. Updated related loops to use `seq_len(...)` where appropriate in the same block.
+3. File updated:
+   - `/Users/jracine/Development/crs/R/np.regression.glp.R`
+4. Post-change audit:
+   - `rg -n "<<-" /Users/jracine/Development/crs/R` returns no matches.
+
+Validation artifacts:
+
+1. Deterministic install:
+   - `/tmp/crs_install_ridgestate_20260223.log`
+2. Focused smoke:
+   - `/tmp/crs_npglp_smoke_ridgestate_20260223.out` (`RIDGESTATE_SMOKE_OK`)
+3. Tarball-first:
+   - `/tmp/crs_build_ridgestate_20260223.log`
+   - `/tmp/crs_check_ascran_ridgestate_20260223.log` (`Status: 4 WARNINGs, 2 NOTEs`)
