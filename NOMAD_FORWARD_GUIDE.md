@@ -23,7 +23,9 @@ This document is the operational playbook for future NOMAD work in `crs`.
 2. `crs` keeps a NOMAD4-only source layout (legacy NOMAD3 tree removed).
 3. `snomadr()` applies a NOMAD3.9.1-like compatibility profile via NOMAD4 option names when those options are not user-specified.
 4. Near-term goal remains: stabilize NOMAD4 under strict parity/performance gates for existing `crs` behavior.
-5. `frscvNOMAD` and `krscvNOMAD` now apply path defaults (`QUAD_MODEL_SEARCH=no`, `EVAL_QUEUE_SORT=DIR_LAST_SUCCESS`) unless user overrides.
+5. Path defaults currently applied unless user overrides:
+   - `frscvNOMAD`: `QUAD_MODEL_SEARCH=no`, `EVAL_QUEUE_SORT=DIR_LAST_SUCCESS`, `SIMPLE_LINE_SEARCH=yes`, `SPECULATIVE_SEARCH=no`
+   - `krscvNOMAD`: `QUAD_MODEL_SEARCH=no`, `EVAL_QUEUE_SORT=DIR_LAST_SUCCESS`
 
 ## Roadmap alignment (`crs` vs `np`/`npRmpi`)
 
@@ -65,10 +67,11 @@ This document is the operational playbook for future NOMAD work in `crs`.
 Based on the expanded solver-space sweeps documented in status:
 
 1. `frscvNOMAD`
-   - keep current MADS path defaults (`QUAD_MODEL_SEARCH=no`, `EVAL_QUEUE_SORT=DIR_LAST_SUCCESS`)
-   - optional `EVAL_QUEUE_SORT=LEXICOGRAPHICAL` can be tested as an experimental profile (small mean speed gain, not consistently better in every cell)
+   - keep current MADS path defaults (`QUAD_MODEL_SEARCH=no`, `EVAL_QUEUE_SORT=DIR_LAST_SUCCESS`, `SIMPLE_LINE_SEARCH=yes`, `SPECULATIVE_SEARCH=no`)
+   - this profile produced the best strict-safe speedup among tested `fr` variants
 2. `krscvNOMAD`
    - keep current MADS path defaults
+   - no strict-safe speedup profile beat current defaults in the extended sweep
    - do not switch to standalone solvers for default use (large speed gains came with objective-risk counts)
 3. `npglpreg`
    - keep current MADS compatibility defaults
@@ -82,6 +85,7 @@ The investigation covered, at minimum:
 2. MADS queue/search variants (`QUAD_MODEL_SEARCH`, `EVAL_QUEUE_SORT`, quad-box factors)
 3. restart and budget controls (`nmulti`, `max.bb.eval`)
 4. both fixed-seed and varying-seed comparisons on simple and harder mixed-variable scenarios
+5. a deeper follow-up sweep via `run_nomad_solver_space_extended.R` for search-method controls
 
 ## Exception-only modes (important)
 

@@ -134,10 +134,12 @@ frscvNOMAD(xz,
 
   \item{opts}{ list of optional arguments to be passed to
   \code{\link{snomadr}}. If not user-specified, this function applies
-  the NOMAD4 path defaults \code{QUAD_MODEL_SEARCH="no"} and
-  \code{EVAL_QUEUE_SORT="DIR_LAST_SUCCESS"} for faster mixed-integer
-  search in this specific \code{frscvNOMAD} path. User-supplied
-  \code{opts} entries always take precedence. }
+  the NOMAD4 path defaults \code{QUAD_MODEL_SEARCH="no"},
+  \code{EVAL_QUEUE_SORT="DIR_LAST_SUCCESS"},
+  \code{SIMPLE_LINE_SEARCH="yes"}, and
+  \code{SPECULATIVE_SEARCH="no"} for faster mixed-integer search in
+  this specific \code{frscvNOMAD} path. User-supplied \code{opts}
+  entries always take precedence. }
 
 \item{random.seed}{
   when it is not missing and not equal to 0, the initial points  will 

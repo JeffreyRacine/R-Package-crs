@@ -127,6 +127,27 @@ Post-implementation benchmark (path defaults active in package code):
 - `/tmp/crs_nomad_pathdefaults_vs_compat_20260223_1_parity_compare.csv`
 - `/tmp/crs_nomad_pathdefaults_vs_compat_20260223_1_minima_compare.csv`
 
+Extended solver-space follow-up (search-method toggles plus solver modes):
+
+- `/tmp/crs_nomad_solver_space_ext_20260223_raw.csv`
+- `/tmp/crs_nomad_solver_space_ext_20260223_compare.csv`
+- `/tmp/crs_nomad_solver_space_ext_20260223_agg.csv`
+- `/tmp/crs_nomad_solver_space_ext_20260223_strict_safe.csv`
+- `/tmp/crs_nomad_solver_space_ext_20260223.log`
+
+Post-implementation rerun after adopting `frscvNOMAD` `SIMPLE_LINE_SEARCH=yes` path default:
+
+- `/tmp/crs_install_fr_simpleline_20260223.log`
+- `/tmp/crs_nomad_post_frsimpleline_20260223_raw.csv`
+- `/tmp/crs_nomad_post_frsimpleline_20260223_summary.csv`
+- `/tmp/crs_nomad_post_frsimpleline_20260223_parity.rds`
+- `/tmp/crs_nomad_post_frsimpleline_20260223.log`
+- `/tmp/crs_nomad_frsimpleline_vs_pathdefaults_20260223_summary_compare.csv`
+- `/tmp/crs_nomad_frsimpleline_vs_pre_20260223_summary_compare.csv`
+- `/tmp/crs_nomad_exception_isolation_after_frdefaults_20260223_raw.csv`
+- `/tmp/crs_nomad_exception_isolation_after_frdefaults_20260223_summary.csv`
+- `/tmp/crs_nomad_exception_isolation_after_frdefaults_20260223.log`
+
 ## 2026-02-23 clean-break comparison vs NOMAD3 baseline
 
 Reference pre-upgrade baseline:
@@ -311,6 +332,51 @@ Interpretation:
    - `krscvNOMAD`: MADS with existing path defaults
    - `npglpreg`: current MADS compatibility profile (optionally evaluate `np_quadbox1` case-by-case)
 3. Defaults currently in `crs` are still MADS-based; standalone algorithms are only activated by explicit options.
+
+## 2026-02-23 extended solver-space follow-up and default update
+
+Goal:
+
+- Re-open the highest-value tuning tranche by testing additional MADS search-method controls while keeping strict parity/error gates.
+
+Strict-safe outcomes from `/tmp/crs_nomad_solver_space_ext_20260223_strict_safe.csv`:
+
+1. `frscvNOMAD`
+   - `fr_simple_line`: mean elapsed `-5.06%`, worst cell `-0.017%`, `0` worsens, `0` errors
+   - `fr_noquad_lexi`: mean elapsed `-4.27%`, worst cell `+4.71%`
+   - `fr_vns_search`: mean elapsed `-2.49%`, worst cell `+15.77%`
+   - `fr_current`: baseline
+2. `krscvNOMAD`
+   - `kr_current`: baseline remained best strict-safe profile
+3. `npglpreg`
+   - `np_current`: baseline remained best strict-safe profile
+   - `np_quadbox1`: no worsens with `5` improves, but mean elapsed `+1.48%` (mixed speed effect)
+
+Profiles rejected for production defaults:
+
+1. Standalone solver modes (CS/NM/QP/random): very large speedups, but objective-worsen counts remained material.
+2. `np_vns_search`: unstable in this build (`error_runs=19`).
+
+Implemented code change from this follow-up:
+
+1. `frscvNOMAD` path defaults now include:
+   - `QUAD_MODEL_SEARCH=no`
+   - `EVAL_QUEUE_SORT=DIR_LAST_SUCCESS`
+   - `SIMPLE_LINE_SEARCH=yes`
+   - `SPECULATIVE_SEARCH=no`
+2. `krscvNOMAD` path defaults remain:
+   - `QUAD_MODEL_SEARCH=no`
+   - `EVAL_QUEUE_SORT=DIR_LAST_SUCCESS`
+
+Post-update checkpoint:
+
+1. Versus prior path-default build (`/tmp/crs_nomad_frsimpleline_vs_pathdefaults_20260223_summary_compare.csv`):
+   - `frscvNOMAD`: fixed `-4.77%`, varying `+0.24%`, objective/parameter diffs `0`
+2. Versus NOMAD3 baseline (`/tmp/crs_nomad_frsimpleline_vs_pre_20260223_summary_compare.csv`):
+   - `frscvNOMAD`: fixed `+291.60%`, varying `+373.38%`
+   - `krscvNOMAD`: fixed `+263.32%`, varying `+463.08%`
+3. Exception-isolation recheck after default change remained clean:
+   - `cs_status_in = ok`, `nm_status_in = ok` across tested scenario/seed pairs.
 
 ## 2026-02-23 exception-path contamination investigation and fix
 

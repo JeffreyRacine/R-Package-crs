@@ -31,6 +31,13 @@ Canonical result/status tracker:
     - `<prefix>_compare.csv`
     - `<prefix>_agg.csv`
     - `<prefix>_strict_safe.csv`
+- `run_nomad_solver_space_extended.R`
+  - deeper sweep adding MADS search-method toggles (`SIMPLE_LINE_SEARCH`, `SPECULATIVE_SEARCH`, `NM_SEARCH`, `VNS_MADS_SEARCH`) plus standalone solver modes
+  - writes:
+    - `<prefix>_raw.csv`
+    - `<prefix>_compare.csv`
+    - `<prefix>_agg.csv`
+    - `<prefix>_strict_safe.csv`
 - `run_nomad_exception_isolation.R`
   - verifies that exception-only profiles do not poison later calls in the same R session
   - compares in-session sequence vs isolated subprocess calls
@@ -73,6 +80,11 @@ Rscript benchmarks/nomad/compare_prepost.R \
 # expanded solver-space sweep (second arg is n; optional)
 Rscript benchmarks/nomad/run_nomad_solver_space.R \
   /tmp/crs_nomad_solver_space \
+  180
+
+# deeper solver-space sweep (second arg is n; optional)
+Rscript benchmarks/nomad/run_nomad_solver_space_extended.R \
+  /tmp/crs_nomad_solver_space_ext \
   180
 
 # exception-isolation gate
