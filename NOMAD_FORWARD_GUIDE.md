@@ -24,8 +24,9 @@ This document is the operational playbook for future NOMAD work in `crs`.
 1. `crs` is wired to embedded NOMAD `4.5.0`.
 2. `crs` keeps a NOMAD4-only source layout (legacy NOMAD3 tree removed).
 3. `snomadr()` applies a NOMAD3.9.1-like compatibility profile via NOMAD4 option names when those options are not user-specified.
-4. Near-term goal remains: stabilize NOMAD4 under strict parity/performance gates for existing `crs` behavior.
-5. Path defaults currently applied unless user overrides:
+4. Current policy: accept measured parity/performance differences versus NOMAD3 as a deliberate trade-off for NOMAD4 modernization and speed/quality profile gains.
+5. Revisit trigger: re-open strict parity/performance tuning only when a new NOMAD release is integrated or when default solver profiles are changed materially.
+6. Path defaults currently applied unless user overrides:
    - `frscvNOMAD`: `QUAD_MODEL_SEARCH=no`, `EVAL_QUEUE_SORT=DIR_LAST_SUCCESS`, `SIMPLE_LINE_SEARCH=yes`, `SPECULATIVE_SEARCH=no`, `DIRECTION_TYPE=ORTHO N+1 NEG`
    - `krscvNOMAD`: `QUAD_MODEL_SEARCH=no`, `EVAL_QUEUE_SORT=DIR_LAST_SUCCESS`, `DIRECTION_TYPE=ORTHO 2N`
    - `krscvNOMAD` default evaluation budget is `max.bb.eval=140`
@@ -37,7 +38,7 @@ This document is the operational playbook for future NOMAD work in `crs`.
 2. NOMAD work in `crs` should preserve solver behavior so that `npreg` can reuse it if needed.
 3. Cross-package dependency concern is currently non-blocking; correctness and reproducibility gates are primary.
 
-## Non-negotiable acceptance gates
+## Acceptance gates (active)
 
 1. Build/install from clean objects must succeed.
 2. No new NOMAD-attributable `R CMD check --as-cran` regressions.
@@ -47,12 +48,13 @@ This document is the operational playbook for future NOMAD work in `crs`.
    - mean/median performance deltas
    - objective/parameter parity summaries
 4. Any residual drift must be explicitly documented with likely source and practical impact.
+5. Strict NOMAD3-vs-NOMAD4 parity/performance equivalence is not a release blocker at present; maintain and update benchmark evidence instead.
 
 ## Practical next-step priorities
 
-1. Close remaining NOMAD4 parity/performance gaps recorded in status doc.
+1. Keep return contract stable (`status`, `message`, `bbe`, `iterations`, `objective`, `solution`) while tuning internals.
 2. Avoid global option toggles that improve one path but regress another; use path-aware tuning if needed.
-3. Keep return contract stable (`status`, `message`, `bbe`, `iterations`, `objective`, `solution`) while tuning internals.
+3. Preserve and refresh benchmark artifacts on each meaningful NOMAD/tuning update for future revisit decisions.
 
 ## NOMAD4 solver-mode guidance
 

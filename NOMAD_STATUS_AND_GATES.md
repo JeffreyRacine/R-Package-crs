@@ -827,17 +827,23 @@ Interpretation:
 
 1. Build/install: passing.
 2. Runtime compatibility: passing for core paths (`frscvNOMAD`, `krscvNOMAD`, `npglpreg`, `snomadr`).
-3. Strict parity/performance gates: not yet fully passing.
+3. Strict NOMAD3-vs-NOMAD4 parity/performance equivalence: explicitly accepted as non-blocking for current release direction (2026-02-23 decision).
 
-Outstanding gaps:
+Accepted differences (tracked, not blocking):
 
 1. Fixed-seed performance regressions remain in `frscvNOMAD` and `krscvNOMAD` vs NOMAD3 baseline.
 2. `npglpreg` still shows parameter drift under strict comparisons.
 3. Direct `snomadr` fixed-seed behavior is sensitive to search-profile changes.
 
+Revisit trigger:
+
+1. Re-open strict parity/performance investigation when either:
+   - NOMAD is upgraded beyond `4.5.0`, or
+   - default solver/tuning profiles are changed materially.
+
 ## Practical forward plan
 
 1. Keep bridge contract stable and continue tuning at option-profile level.
 2. Prefer path-aware tuning over global search-disable flags.
-3. Re-run strict pre/post gates after each tuning checkpoint and append artifacts here.
+3. Re-run strict pre/post gates when revisit trigger conditions are met, and append artifacts here.
 4. Treat this file as the only canonical place for migration status and gate outcomes.
