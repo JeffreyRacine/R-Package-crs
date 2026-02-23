@@ -24,6 +24,13 @@ Canonical result/status tracker:
   - compares pre/post raw outputs and writes:
     - performance summary CSV (mean/median % elapsed change)
     - parity summary CSV (objective drift + parameter drift counts)
+- `run_nomad_solver_space.R`
+  - expanded solver/profile sweep for speed-vs-objective tradeoff mapping
+  - writes:
+    - `<prefix>_raw.csv`
+    - `<prefix>_compare.csv`
+    - `<prefix>_agg.csv`
+    - `<prefix>_strict_safe.csv`
 
 ## Coverage
 
@@ -56,4 +63,9 @@ Rscript benchmarks/nomad/compare_prepost.R \
   /tmp/crs_nomad_post_bench_raw.csv \
   /tmp/crs_nomad_prepost_perf_summary.csv \
   /tmp/crs_nomad_prepost_parity_summary.csv
+
+# expanded solver-space sweep (second arg is n; optional)
+Rscript benchmarks/nomad/run_nomad_solver_space.R \
+  /tmp/crs_nomad_solver_space \
+  180
 ```
