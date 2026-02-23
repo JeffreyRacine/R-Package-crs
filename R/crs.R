@@ -1392,7 +1392,7 @@ plot.crs <- function(x,
 
       mg <- list()
 
-      for(i in 1:NCOL(object$xz)) {
+      for(i in seq_len(NCOL(object$xz))) {
 
         if(!is.factor(object$xz[,i])) {
           newdata <- matrix(NA,nrow=num.eval,ncol=NCOL(object$xz))
@@ -1411,7 +1411,7 @@ plot.crs <- function(x,
           newdata[,i] <- factor(levels(object$xz[,i]),levels=levels(object$xz[,i]),ordered=is.ordered(object$xz[,i]))
         }
 
-        for(j in (1:NCOL(object$xz))[-i]) {
+        for(j in (seq_len(NCOL(object$xz)))[-i]) {
           if(!is.factor(object$xz[,j])) {
             newdata[,j] <- rep(uocquantile(object$xz[,j],prob=xq[j]),neval)
           } else {
@@ -1539,7 +1539,7 @@ plot.crs <- function(x,
 
         if(!is.null(object$num.z)||(object$num.x>1)) par(mfrow=n2mfrow(NCOL(object$xz)))
 
-        for(i in 1:NCOL(object$xz)) {
+        for(i in seq_len(NCOL(object$xz))) {
 
           if(!ci) {
             plot(mg[[i]][,1],mg[[i]][,2],
@@ -1715,7 +1715,7 @@ plot.crs <- function(x,
       m <- 0
       i.numeric <- 0
 
-      for(i in 1:NCOL(object$xz)) {
+      for(i in seq_len(NCOL(object$xz))) {
 
         if(!is.factor(object$xz[,i])) {
           i.numeric <- i.numeric + 1
@@ -1738,7 +1738,7 @@ plot.crs <- function(x,
           newdata.base[,i] <- factor(rep(levels(object$xz[,i])[1],neval),levels=levels(object$xz[,i]),ordered=is.ordered(object$xz[,i]))
         }
 
-        for(j in (1:NCOL(object$xz))[-i]) {
+        for(j in (seq_len(NCOL(object$xz)))[-i]) {
           if(!is.factor(object$xz[,j])) {
             newdata[,j] <- rep(uocquantile(object$xz[,j],prob=xq[j]),neval)
             newdata.base[,j] <- rep(uocquantile(object$xz[,j],prob=xq[j]),neval)
@@ -1970,7 +1970,7 @@ plot.crs <- function(x,
 
         if(!is.null(object$num.z)||(object$num.x>1)) par(mfrow=n2mfrow(NCOL(object$xz)))
 
-        for(i in 1:NCOL(object$xz)) {
+        for(i in seq_len(NCOL(object$xz))) {
 
           if(!ci) {
             plot(rg[[i]][,1],rg[[i]][,2],
@@ -2064,7 +2064,7 @@ crs.sigtest <- function(object,...) {
   j.num.x <- 1
   j.num.z <- 1
 
-  for(i in 1:NCOL(object$xz)) {
+  for(i in seq_len(NCOL(object$xz))) {
 
     if(!is.factor(object$xz[,i])) {
       degree <- object$degree

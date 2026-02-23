@@ -440,3 +440,37 @@ Validation artifacts:
 3. Tarball-first:
    - `/tmp/crs_build_ridgestate_20260223.log`
    - `/tmp/crs_check_ascran_ridgestate_20260223.log` (`Status: 4 WARNINGs, 2 NOTEs`)
+
+### 2026-02-23 - A/R1.10 residual index-range sweep (`crs`/`spline`/`util`)
+
+Scope completed:
+
+1. Replaced remaining active `1:NCOL(...)` / `1:length(...)` patterns with `seq_len(...)` / `seq_along(...)` in:
+   - `/Users/jracine/Development/crs/R/crs.R`
+   - `/Users/jracine/Development/crs/R/spline.R`
+   - `/Users/jracine/Development/crs/R/util.R`
+2. Post-change audit:
+   - active `1:NCOL(` / `1:length(` matches removed from code paths (remaining matches are comments in `clsd.R` only).
+
+Validation artifacts:
+
+1. Deterministic install:
+   - `/tmp/crs_install_lastindex_20260223.log`
+2. Focused smoke:
+   - `/tmp/crs_lastindex_smoke_20260223.out` (`LASTINDEX_SMOKE_OK`)
+3. Tarball-first:
+   - `/tmp/crs_build_lastindex_20260223.log`
+   - `/tmp/crs_check_ascran_lastindex_20260223.log` (`Status: 4 WARNINGs, 2 NOTEs`)
+
+### 2026-02-23 - Forensic Snapshot (post A/R1.10)
+
+Current R-layer pattern counts:
+
+1. `eval(parse(...))`: `0`
+2. `do.call("<string>", ...)`: `0`
+3. `<<-`: `0`
+4. `1:length(...)`: `0` in active code (`2` comment-only occurrences in `clsd.R`)
+5. `1:ncol(...)`: `0`
+6. `1:NCOL(...)`: `0` in active code
+7. `.C(` callsites in `R/`: `0`
+8. `.Call(` callsites in `R/`: `0`

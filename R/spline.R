@@ -137,7 +137,7 @@ prod.spline <- function(x,
         P <- glp.model.matrix(tp)
         if(deriv!=0) {
           P.deriv <- list()
-          for(i in 1:length(tp)) P.deriv[[i]] <- matrix(0,1,ncol(tp[[i]]))
+          for(i in seq_along(tp)) P.deriv[[i]] <- matrix(0,1,ncol(tp[[i]]))
           deriv.index <- deriv.index - length(which((K[1:deriv.index,1]==0)))
           while(deriv.index<=0) deriv.index <- deriv.index + 1
           P.deriv[[deriv.index]] <- matrix(NA,1,ncol(tp[[deriv.index]]))
@@ -883,7 +883,7 @@ preditFactorSpline <- function(x,
 
       if(cv.pruned <= cv) {
         IND <- logical()
-        for(i in 1:NCOL(P.df)) IND[i] <- any(names(P.df)[i]==names(model.pruned$model[,-1,drop=FALSE]))
+        for(i in seq_len(NCOL(P.df))) IND[i] <- any(names(P.df)[i]==names(model.pruned$model[,-1,drop=FALSE]))
         if(basis=="additive" || basis=="glp") {
           if(is.null(tau))
             model <- lm(y~P[,IND,drop=FALSE],weights=weights)
@@ -1399,7 +1399,7 @@ cv.factor.spline <- function(x,
     categories <- NULL
   } else {
     categories <- numeric()
-    for(i in 1:NCOL(z)) categories[i] <- length(unique(z[,i]))
+    for(i in seq_len(NCOL(z))) categories[i] <- length(unique(z[,i]))
   }
 
   ## Calculate expected degrees of freedom
@@ -2312,7 +2312,7 @@ svd_lm_fit <- function(x, y, tol = 1e-7) {
   ## Ensure full length coefficient vector
   if(length(coefficients) < p) {
     coef_full <- rep(0, p)
-    coef_full[1:length(coefficients)] <- coefficients
+    coef_full[seq_along(coefficients)] <- coefficients
     coefficients <- coef_full
   }
 

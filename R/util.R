@@ -106,7 +106,7 @@ check.max.spline.degree <- function(xdat=NULL,degree=NULL,display.warnings=TRUE)
 
   xdat.numeric <- sapply(seq_len(ncol(xdat)),function(i){is.numeric(xdat[,i])})
   numeric.index <- which(xdat.numeric==TRUE)
-  num.numeric <- sum(sapply(1:NCOL(xdat),function(i){is.numeric(xdat[,i])})==TRUE)
+  num.numeric <- sum(sapply(seq_len(NCOL(xdat)),function(i){is.numeric(xdat[,i])})==TRUE)
   d <- numeric(num.numeric)
 
   if(num.numeric > 0) {
