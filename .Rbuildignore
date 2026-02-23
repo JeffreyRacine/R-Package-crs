@@ -10,3 +10,5 @@ mkcrspkg.sh
 ^tests/testthat/.*\\.R$
 ^codex_work_summary\.md
 ^AGENTS\.md$
+^NOMAD_.*\\.md$
+^benchmarks$
