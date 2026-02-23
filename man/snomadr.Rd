@@ -92,8 +92,16 @@ snomadr(eval.f,
       list of options for NOMAD, see the NOMAD user guide
       \url{https://nomad-4-user-guide.readthedocs.io/en/latest/#}.  Options
       can also be set by nomad.opt which should be in the folder where R
-      (\code{snomadr}) is executed. Options that affect the solution and
-      their defaults and some potential values are
+      (\code{snomadr}) is executed.
+
+      This interface uses NOMAD 4 option names directly (for example
+      \code{MIN_FRAME_SIZE}).
+
+      A complete option catalog generated from the embedded NOMAD 4.5.0
+      definitions is bundled at
+      \code{system.file("nomad", "NOMAD_4_5_0_OPTIONS_REFERENCE.md", package="crs")}.
+
+      A few high-impact options are:
       
       \code{"MAX_BB_EVAL"=10000}
 
@@ -101,7 +109,7 @@ snomadr(eval.f,
 
       \code{"MIN_MESH_SIZE"="r1.0e-10"}
       
-      \code{"MIN_POLL_SIZE"=1}
+      \code{"MIN_FRAME_SIZE"=1}
 
       Note that the \code{"r..."} denotes relative measurement (relative
       to \code{lb} and \code{ub})
@@ -240,7 +248,7 @@ bbout <-c(0, 2, 1)
 opts <-list("MAX_BB_EVAL"=500,
             "MIN_MESH_SIZE"=0.001,
             "INITIAL_MESH_SIZE"=0.1,
-            "MIN_POLL_SIZE"=1)
+            "MIN_FRAME_SIZE"=1)
 
 snomadr(eval.f=eval.f,n=5,  x0=x0, bbin=bbin, bbout=bbout, lb=lb, ub=ub, opts=opts)
 
