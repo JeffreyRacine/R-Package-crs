@@ -507,7 +507,7 @@ crs.formula <- function(formula,
       if(display.warnings) warning(paste(" cv=\"none\" selected but no inclusion for factors indicated, using include=rep(1,num.z): you might consider other include settings",sep=""),immediate.=TRUE)
       include <- rep(1,num.z)
     }
-    if(is.null(lambda)&!is.null(z)&&kernel) {
+    if(is.null(lambda) && !is.null(z) && kernel) {
       if(display.warnings) warning(paste(" cv=\"none\" selected but no bandwidths for factors indicated, using lambda=rep(0,num.z): you might consider other lambda settings",sep=""),immediate.=TRUE)
       lambda <- rep(0,num.z)
     }
@@ -516,24 +516,24 @@ crs.formula <- function(formula,
     ## simply set the basis to additive and be done (no warning
     ## necessary)
 
-    if(basis=="auto"&&num.x==1) basis <- "additive"
+    if(basis == "auto" && num.x == 1) basis <- "additive"
 
-    if(basis=="auto"&&num.x>1) {
+    if(basis == "auto" && num.x > 1) {
       if(display.warnings) warning(paste(" cv=\"none\" selected, basis=\"auto\" changed to basis=\"additive\": you might consider basis=\"tensor\" etc.",sep=""),immediate.=TRUE)
       basis <- "additive"
     }
 
-    if(knots=="auto"&&num.x>1) {
+    if(knots == "auto" && num.x > 1) {
       if(display.warnings) warning(paste(" cv=\"none\" selected, knots=\"auto\" changed to knots=\"quantiles\": you might consider knots=\"uniform\" etc.",sep=""),immediate.=TRUE)
       knots <- "quantiles"
     }
 
   }
 
-  if(kernel==TRUE&&prune==TRUE) {
+  if(kernel == TRUE && prune == TRUE) {
     if(display.warnings) warning(" pruning cannot coexist with categorical kernel smoothing (pruning ignored)")
   }
-  if(!is.null(tau)&&prune==TRUE) stop(" pruning is not supported for quantile regression splines")
+  if(!is.null(tau) && prune == TRUE) stop(" pruning is not supported for quantile regression splines")
 
   ## Check for cv="nomad" and complexity="degree-knots" but
   ## degree.min==degree.max or segments==segments.max
@@ -1101,7 +1101,7 @@ summary.crs <- function(object,
 
   if(object$cv != "none") cat(paste("\nNumber of multistarts: ", format(object$nmulti), sep=""))
 
-  if(sigtest&!object$kernel) {
+  if(sigtest && !object$kernel) {
     cat("\n\nPredictor significance test:\n")
     crs.sigtest(object)
   }
@@ -1277,7 +1277,7 @@ plot.crs <- function(x,
 
   ## Default - basic residual plots
 
-  if(!mean&!deriv) {
+  if(!mean && !deriv) {
 
     par(mfrow=c(2,2))
 

@@ -312,3 +312,27 @@ Validation artifacts:
 3. Tarball-first:
    - `/tmp/crs_build_gslfree_20260223.log`
    - `/tmp/crs_check_ascran_gslfree_20260223.log` (`Status: 4 WARNINGs, 2 NOTEs`)
+
+### 2026-02-23 - A/R1.4 scalar logical operator hardening
+
+Scope completed:
+
+1. Replaced scalar control operators in selected low-risk paths:
+   - `&` -> `&&`
+   - `|` -> `||`
+2. Files updated:
+   - `/Users/jracine/Development/crs/R/console.R`
+   - `/Users/jracine/Development/crs/R/clsd.R`
+   - `/Users/jracine/Development/crs/R/crs.R`
+
+Validation artifacts:
+
+1. Parse gate:
+   - inline run result: `SCALAROP_PARSE_OK`
+2. Deterministic install/smokes:
+   - `/tmp/crs_install_scalarop_20260223.log`
+   - `/tmp/crs_clsd_smoke_scalarop_20260223.out` (`CLSD_SMOKE_OK`)
+   - `/tmp/crs_basic_smoke_scalarop_20260223.out` (`CRS_BASIC_SMOKE_OK`)
+3. Tarball-first:
+   - `/tmp/crs_build_scalarop_20260223.log`
+   - `/tmp/crs_check_ascran_scalarop_20260223.log` (`Status: 4 WARNINGs, 2 NOTEs`)

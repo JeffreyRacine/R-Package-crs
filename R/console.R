@@ -62,7 +62,7 @@ printPush <- function(msg, console = stop("no console provided")){
 }
 
 printPop <- function(console = stop("no console provided")){
-  if(console$numLineElements > 0 & isTRUE(getOption("crs.messages"))) {
+  if(console$numLineElements > 0 && isTRUE(getOption("crs.messages"))) {
     cat(paste(rep('\b',console$lineList[[console$numLineElements]]$len), collapse=''))
     flush.console()
     console$lineLen <- console$lineLen - console$lineList[[console$numLineElements]]$len
@@ -75,7 +75,7 @@ printPop <- function(console = stop("no console provided")){
 }
 
 printClear <- function(console = stop("no console provided")){
-  if(console$numLineElements > 0 & isTRUE(getOption("crs.messages"))){
+  if(console$numLineElements > 0 && isTRUE(getOption("crs.messages"))){
     cat(paste(rep('\b', nchar(console$lineMsg)), collapse=''))
     cat(paste(rep(' ', nchar(console$lineMsg)), collapse=''))
     cat(paste(rep('\b', nchar(console$lineMsg)), collapse=''))
@@ -85,4 +85,3 @@ printClear <- function(console = stop("no console provided")){
   }
   return(console)
 }
-

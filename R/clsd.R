@@ -929,7 +929,7 @@ ls.ml <- function(x=NULL,
     if(display.warnings) {
       if(!(degree.min==degree.max) && (d.opt==degree.max)) warning(paste(" optimal degree equals search maximum (", d.opt,"): rerun with larger degree.max",sep=""))
       if(!(segments.min==segments.max) && (s.opt==segments.max)) warning(paste(" optimal segment equals search maximum (", s.opt,"): rerun with larger segments.max",sep=""))
-      if(par.opt[1]>0|par.opt[length(par.opt)]>0) warning(" optim() delivered a positive weight for linear segment (supposed to be negative)")
+      if(par.opt[1] > 0 || par.opt[length(par.opt)] > 0) warning(" optim() delivered a positive weight for linear segment (supposed to be negative)")
       if(!monotone&&par.opt[1]<=monotone.lb) warning(paste(" optimal weight for left nonmonotone basis equals search minimum (",par.opt[1],"): rerun with smaller monotone.lb",sep=""))
       if(!monotone&&par.opt[length(par.opt)]<=monotone.lb) warning(paste(" optimal weight for right nonmonotone basis equals search minimum (",par.opt[length(par.opt)],"): rerun with smaller monotone.lb",sep=""))
     }
@@ -1034,4 +1034,3 @@ coef.clsd <- function(object, ...) {
 fitted.clsd <- function(object, ...){
   object$density
 }
-
