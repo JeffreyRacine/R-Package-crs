@@ -88,6 +88,54 @@ run_glp <- function(dat, cfg) {
   )
 }
 
+run_snomadr_basic <- function(cfg) {
+  eval.f <- function(x) {
+    f <- c(Inf, Inf, Inf)
+    n <- length(x)
+
+    if (n == 5 && (is.double(x) || is.integer(x))) {
+      f[1] <- x[5]
+      f[2] <- sum((x - 1)^2) - 25
+      f[3] <- 25 - sum((x + 1)^2)
+    }
+
+    as.double(f)
+  }
+
+  x0 <- rep(0.0, 5)
+  bbin <- c(1, 1, 1, 1, 1)
+  lb <- rep(-6.0, 5)
+  ub <- c(5.0, 6.0, 7.0, 1000000, 100000)
+  bbout <- c(0, 2, 1)
+  opts <- list(
+    "MAX_BB_EVAL" = as.integer(cfg$max_bb_eval_basic),
+    "MIN_MESH_SIZE" = 0.001,
+    "INITIAL_MESH_SIZE" = 0.1,
+    "MIN_POLL_SIZE" = 1,
+    "DISPLAY_DEGREE" = 0
+  )
+
+  out <- snomadr(
+    eval.f = eval.f,
+    n = 5,
+    x0 = x0,
+    bbin = bbin,
+    bbout = bbout,
+    lb = lb,
+    ub = ub,
+    opts = opts,
+    display.nomad.progress = FALSE
+  )
+
+  list(
+    objective = unname(out$objective[1]),
+    degree = "",
+    segments = "",
+    lambda = "",
+    bws = safe_collapse(signif(out$solution, digits = 12))
+  )
+}
+
 run_case <- function(case_id, seed, seed_policy, cfg) {
   dat <- make_data(cfg$n, seed)
   warning_msgs <- character(0)
@@ -108,6 +156,7 @@ run_case <- function(case_id, seed, seed_policy, cfg) {
           frscvNOMAD = run_fr(dat, cfg),
           krscvNOMAD = run_kr(dat, cfg),
           npglpreg = run_glp(dat, cfg),
+          snomadr_basic_lib = run_snomadr_basic(cfg),
           stop(paste("unknown case", case_id))
         ),
         error = function(e) {
@@ -215,7 +264,10 @@ parity_raw <- function(raw_df) {
 }
 
 run_suite <- function(cfg, out_prefix) {
-  cases <- c("frscvNOMAD", "krscvNOMAD", "npglpreg")
+  if (is.null(cfg$max_bb_eval_basic)) {
+    cfg$max_bb_eval_basic <- cfg$max_bb_eval
+  }
+  cases <- c("frscvNOMAD", "krscvNOMAD", "npglpreg", "snomadr_basic_lib")
   rows <- list()
   idx <- 1L
   for (seed in cfg$fixed_seeds) {

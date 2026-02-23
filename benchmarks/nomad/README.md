@@ -28,6 +28,7 @@ Each suite runs:
 - `frscvNOMAD`
 - `krscvNOMAD`
 - `npglpreg` (NOMAD-driven CV path)
+- `snomadr_basic_lib` (direct `snomadr` case extracted from `man/snomadr.Rd`)
 
 with both:
 

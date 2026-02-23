@@ -197,7 +197,7 @@ snomadr(eval.f,
     \code{\link{optim}}, \code{\link{nlm}}, \code{\link{nlminb}}
 }
 \examples{
-% \dontrun{
+\dontrun{
 ## List all options
 snomadr(information=list("help"="-h"))
 
@@ -397,8 +397,7 @@ snomadr(n            = as.integer(n),
         nmulti = as.integer(nmulti), 
         display.nomad.progress = TRUE, 
         params       = params )
-% } % end dontrun
+} % end dontrun
 }
 \keyword{ optimize }
 \keyword{ interface }
-
