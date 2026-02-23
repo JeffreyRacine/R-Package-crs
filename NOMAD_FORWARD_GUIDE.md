@@ -43,3 +43,32 @@ This document is the operational playbook for future NOMAD work in `crs`.
 1. Close remaining NOMAD4 parity/performance gaps recorded in status doc.
 2. Avoid global option toggles that improve one path but regress another; use path-aware tuning if needed.
 3. Keep return contract stable (`status`, `message`, `bbe`, `iterations`, `objective`, `solution`) while tuning internals.
+
+## NOMAD release-update playbook
+
+Use this sequence whenever a new NOMAD4.x release is integrated.
+
+1. Vendor update and build wiring
+   - update `src/nomad4_src` to the target upstream release
+   - verify `src/Makevars` still compiles only from `src/nomad4_src`
+   - keep clean-break policy: do not reintroduce `src/nomad_src`
+2. Option contract policy
+   - keep direct NOMAD4 option names only (`MIN_FRAME_SIZE`, `INITIAL_FRAME_SIZE`, etc.)
+   - do not add legacy alias mapping (`MIN_POLL_SIZE`, `INITIAL_POLL_SIZE`)
+3. Regenerate complete option docs
+   - run `/Users/jracine/Development/crs/tools/nomad/generate_nomad_options_reference.sh`
+   - confirm output at `/Users/jracine/Development/crs/inst/nomad/NOMAD_4_5_0_OPTIONS_REFERENCE.md` (or matching versioned filename)
+   - verify `man/snomadr.Rd` still points users to the generated catalog
+4. Benchmark and parity gates
+   - run `run_nomad_smoke.R` and `run_nomad_bench.R`
+   - compare against the latest accepted pre-upgrade baseline
+   - include both fixed-seed and varying-seed comparisons
+   - record mean/median elapsed deltas and objective/parameter drift
+5. Important comparison caveat
+   - `benchmarks/nomad/compare_prepost.R` merges by `case + seed_policy + seed`
+   - repeated fixed seeds can cross-join replicates; for release decisions, use summary-level comparisons or add replicate index before merging
+6. Optional heavy example gate (non-CRAN workflow)
+   - use `/Users/jracine/Development/crs/man/runcrs` to enable running `\dontrun{}` examples
+   - run tarball-first check from `/Users/jracine/Development`
+   - restore with `/Users/jracine/Development/crs/man/dontruncrs` immediately after
+   - remove disposable build artifacts (`src/*.o`, `src/*.so`) after check runs
