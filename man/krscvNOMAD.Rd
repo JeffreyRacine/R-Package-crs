@@ -31,7 +31,7 @@ krscvNOMAD(xz,
            lambda = lambda, 
            lambda.discrete = FALSE, 
            lambda.discrete.num = 100, 
-           max.bb.eval = 10000,
+           max.bb.eval = 140,
            min.mesh.size.integer = "1", 
            min.mesh.size.real = paste("r",sqrt(.Machine$double.eps),sep=""),
            min.poll.size.integer = "1", 
@@ -132,7 +132,8 @@ krscvNOMAD(xz,
 
   \item{max.bb.eval}{
     argument passed to the NOMAD solver (see \code{\link{snomadr}} for
-    further details)
+    further details). Default is \code{140} for the aggressive
+    speed-oriented profile.
   }
 
   \item{min.mesh.size.integer}{
@@ -163,10 +164,11 @@ krscvNOMAD(xz,
 
   \item{opts}{ list of optional arguments to be passed to
   \code{\link{snomadr}}. If not user-specified, this function applies
-  the NOMAD4 path defaults \code{QUAD_MODEL_SEARCH="no"} and
-  \code{EVAL_QUEUE_SORT="DIR_LAST_SUCCESS"} for faster mixed-integer
-  search in this specific \code{krscvNOMAD} path. User-supplied
-  \code{opts} entries always take precedence. }
+  the NOMAD4 path defaults \code{QUAD_MODEL_SEARCH="no"},
+  \code{EVAL_QUEUE_SORT="DIR_LAST_SUCCESS"}, and
+  \code{DIRECTION_TYPE="ORTHO 2N"} for an aggressive, speed-oriented
+  mixed-integer search profile in this specific \code{krscvNOMAD}
+  path. User-supplied \code{opts} entries always take precedence. }
 
 \item{random.seed}{
   when it is not missing and not equal to 0, the initial points  will 

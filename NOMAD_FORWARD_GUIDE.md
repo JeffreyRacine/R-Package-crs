@@ -25,7 +25,8 @@ This document is the operational playbook for future NOMAD work in `crs`.
 4. Near-term goal remains: stabilize NOMAD4 under strict parity/performance gates for existing `crs` behavior.
 5. Path defaults currently applied unless user overrides:
    - `frscvNOMAD`: `QUAD_MODEL_SEARCH=no`, `EVAL_QUEUE_SORT=DIR_LAST_SUCCESS`, `SIMPLE_LINE_SEARCH=yes`, `SPECULATIVE_SEARCH=no`, `DIRECTION_TYPE=ORTHO N+1 NEG`
-   - `krscvNOMAD`: `QUAD_MODEL_SEARCH=no`, `EVAL_QUEUE_SORT=DIR_LAST_SUCCESS`
+   - `krscvNOMAD`: `QUAD_MODEL_SEARCH=no`, `EVAL_QUEUE_SORT=DIR_LAST_SUCCESS`, `DIRECTION_TYPE=ORTHO 2N`
+   - `krscvNOMAD` default evaluation budget is `max.bb.eval=140`
 
 ## Roadmap alignment (`crs` vs `np`/`npRmpi`)
 
@@ -84,12 +85,12 @@ Based on the expanded solver-space sweeps documented in status:
    - keep current MADS path defaults (`QUAD_MODEL_SEARCH=no`, `EVAL_QUEUE_SORT=DIR_LAST_SUCCESS`, `SIMPLE_LINE_SEARCH=yes`, `SPECULATIVE_SEARCH=no`, `DIRECTION_TYPE=ORTHO N+1 NEG`)
    - this profile produced the strongest strict-safe speedup across both `n=180` and `n=300` sweeps
 2. `krscvNOMAD`
-   - keep current MADS path defaults
-   - `NM_SEARCH_MAX_TRIAL_PTS_NFACTOR=40` remains a tested optional profile for harder mixed-variable settings; it was mixed on the canonical bench
-   - aggressive optional profile for fast global-search attempts:
-     - `opts = list(DIRECTION_TYPE="ORTHO 2N")`
-     - `max.bb.eval = 140`
-     - expected behavior: materially faster and often better minima, but not strict-parity-safe in larger-seed stress tests
+   - default is now aggressive MADS:
+     - `DIRECTION_TYPE=ORTHO 2N`
+     - `max.bb.eval=140`
+   - expected behavior: materially faster and often better minima, with occasional small objective worsens
+   - strict fallback profile (for reproducibility-sensitive workflows):
+     - set `opts = list(NM_SEARCH_MAX_TRIAL_PTS_NFACTOR=40)` and optionally override `DIRECTION_TYPE` to a conservative value for the session
    - do not switch to standalone solvers for default use (large speed gains came with objective-risk counts)
 3. `npglpreg`
    - keep current MADS compatibility defaults

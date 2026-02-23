@@ -96,10 +96,11 @@ merge.nomad4.fr.defaults <- function(opts) {
 
 nomad4.kr.defaults <- function() {
   # Path-specific defaults for krscvNOMAD.
-  # Empirically reduces runtime while preserving objective parity.
+  # Aggressive speed-oriented defaults.
   list(
     "QUAD_MODEL_SEARCH" = "no",
-    "EVAL_QUEUE_SORT" = "DIR_LAST_SUCCESS"
+    "EVAL_QUEUE_SORT" = "DIR_LAST_SUCCESS",
+    "DIRECTION_TYPE" = "ORTHO 2N"
   )
 }
 

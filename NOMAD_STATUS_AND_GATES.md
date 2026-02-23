@@ -582,9 +582,9 @@ Findings:
 
 Decision:
 
-1. Keep `krscvNOMAD` package defaults conservative.
+1. Initial decision at this checkpoint was to keep conservative defaults pending broader tradeoff checks.
 2. Keep `kr_nmtrial40` as optional strict-safe speed tweak.
-3. Keep `kr_dir2n_eval140` documented as an aggressive, user-opt-in exploration profile for faster global-search attempts.
+3. Keep `kr_dir2n_eval140` as the aggressive candidate for adoption testing.
 
 ## 2026-02-23 committed-state benchmark refresh (`b0871f2`)
 
@@ -665,6 +665,48 @@ Conclusion:
    - `kr`: strong practical speed/quality trade-off candidate
    - `fr`: keep current tuned defaults
    - `npglpreg`: aggressive speedups carry materially larger downside risk
+
+## 2026-02-23 adopted `krscvNOMAD` default switch (practical mode)
+
+Decision:
+
+1. Adopt aggressive `krscvNOMAD` defaults:
+   - `DIRECTION_TYPE=ORTHO 2N` (path default in `merge.nomad4.kr.defaults`)
+   - function default `max.bb.eval=140`
+2. Keep `frscvNOMAD` and `npglpreg` defaults unchanged.
+3. Keep strict fallback available via user-supplied `opts` (for example `NM_SEARCH_MAX_TRIAL_PTS_NFACTOR=40`).
+
+Validation artifacts:
+
+1. Install:
+   - `/tmp/crs_install_after_kr_defaultswitch_20260223.log`
+2. Smoke:
+   - `/tmp/crs_nomad_smoke_after_kr_defaultswitch_20260223_raw.csv`
+   - `/tmp/crs_nomad_smoke_after_kr_defaultswitch_20260223_summary.csv`
+   - `/tmp/crs_nomad_smoke_after_kr_defaultswitch_20260223_parity.rds`
+   - `/tmp/crs_nomad_smoke_after_kr_defaultswitch_20260223.log`
+3. Canonical bench:
+   - `/tmp/crs_nomad_post_krdefaultswitch_20260223_raw.csv`
+   - `/tmp/crs_nomad_post_krdefaultswitch_20260223_summary.csv`
+   - `/tmp/crs_nomad_post_krdefaultswitch_20260223_parity.rds`
+   - `/tmp/crs_nomad_post_krdefaultswitch_20260223.log`
+4. Comparisons:
+   - `/tmp/crs_nomad_post_krdefaultswitch_vs_pre_summary.csv`
+   - `/tmp/crs_nomad_post_krdefaultswitch_vs_pre_objdiff.csv`
+
+Observed effect (vs previous committed default state):
+
+1. `krscvNOMAD` elapsed:
+   - fixed seeds: about `-71.9%` mean
+   - varying seeds: about `-74.1%` mean
+2. `krscvNOMAD` objective drift in canonical bench:
+   - fixed seeds: `0`
+   - varying seeds: max absolute diff about `5.8e-05`
+
+Interpretation:
+
+1. This change is a strong practical speed gain for `krscvNOMAD` with small observed objective trade-offs.
+2. It is intentionally not a strict-parity profile; it is a practical default choice.
 
 ## Current gate state
 
