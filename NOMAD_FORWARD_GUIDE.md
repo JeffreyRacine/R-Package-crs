@@ -12,11 +12,13 @@ This document is the operational playbook for future NOMAD work in `crs`.
    - `/Users/jracine/Development/crs/NOMAD_STATUS_AND_GATES.md`
 3. Harness mechanics and commands:
    - `/Users/jracine/Development/crs/benchmarks/nomad/README.md`
+4. Complete NOMAD4 option reference used by `crs`:
+   - `/Users/jracine/Development/crs/inst/nomad/NOMAD_4_5_0_OPTIONS_REFERENCE.md`
 
 ## Current strategic baseline
 
 1. `crs` is wired to embedded NOMAD `4.5.0`.
-2. Legacy NOMAD3 source is retained in-tree for reference only.
+2. `crs` keeps a NOMAD4-only source layout (legacy NOMAD3 tree removed).
 3. Near-term goal remains: stabilize NOMAD4 under strict parity/performance gates for existing `crs` behavior.
 
 ## Roadmap alignment (`crs` vs `np`/`npRmpi`)

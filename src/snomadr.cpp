@@ -164,23 +164,8 @@ static bool apply_named_option_line(NomadProblem pb, const std::string& key, con
 }
 
 static bool is_array_option_key(const std::string& key) {
-  return key == "INITIAL_MESH_SIZE" || key == "MIN_MESH_SIZE" || key == "MIN_POLL_SIZE" ||
-         key == "INITIAL_POLL_SIZE" || key == "INITIAL_FRAME_SIZE" || key == "MIN_FRAME_SIZE";
-}
-
-static bool is_ignored_legacy_option_key(const std::string& key) {
-  (void)key;
-  return false;
-}
-
-static std::string canonical_option_key(const std::string& key) {
-  if (key == "MIN_POLL_SIZE") {
-    return "MIN_FRAME_SIZE";
-  }
-  if (key == "INITIAL_POLL_SIZE") {
-    return "INITIAL_FRAME_SIZE";
-  }
-  return key;
+  return key == "INITIAL_MESH_SIZE" || key == "MIN_MESH_SIZE" || key == "INITIAL_FRAME_SIZE" ||
+         key == "MIN_FRAME_SIZE";
 }
 
 static bool is_mesh_or_frame_option_key(const std::string& key) {
@@ -280,12 +265,11 @@ static bool apply_array_option_values(NomadProblem pb,
   if (raw_values.size() == static_cast<std::size_t>(n_inputs)) {
     values = raw_values;
   }
-  const std::string canonical_key = canonical_option_key(key);
-  enforce_integer_mesh_frame_floor(values, canonical_key, bbin);
-  if (addNomadArrayOfDoubleParam(pb, canonical_key.c_str(), values.data())) {
+  enforce_integer_mesh_frame_floor(values, key, bbin);
+  if (addNomadArrayOfDoubleParam(pb, key.c_str(), values.data())) {
     return true;
   }
-  return apply_named_option_line(pb, canonical_key, array_values_to_literal(values));
+  return apply_named_option_line(pb, key, array_values_to_literal(values));
 }
 
 static bool apply_array_option_from_string(NomadProblem pb,
@@ -305,11 +289,11 @@ static bool apply_array_option_from_string(NomadProblem pb,
       return false;
     }
     if (token[0] == '(' || token[0] == '*') {
-      return apply_named_option_line(pb, canonical_option_key(key), normalize_array_option_value(token));
+      return apply_named_option_line(pb, key, normalize_array_option_value(token));
     }
     double scalar = NA_REAL;
     if (!parse_scalar_option_value(token, 0, lb, ub, &scalar)) {
-      return apply_named_option_line(pb, canonical_option_key(key), normalize_array_option_value(token));
+      return apply_named_option_line(pb, key, normalize_array_option_value(token));
     }
     return apply_array_option_values(pb, key, std::vector<double>{scalar}, n_inputs, bbin);
   }
@@ -365,9 +349,6 @@ static void apply_options(NomadProblem pb,
         seen_max_bb_eval = true;
         max_bb_eval_value = val;
       }
-      if (is_ignored_legacy_option_key(key)) {
-        continue;
-      }
       if (is_array_option_key(key)) {
         std::vector<double> raw_values;
         const int nval = Rf_length(val_sexp);
@@ -398,9 +379,6 @@ static void apply_options(NomadProblem pb,
       if (key == "MAX_BB_EVAL") {
         seen_max_bb_eval = true;
         max_bb_eval_value = static_cast<int>(std::lround(val));
-      }
-      if (is_ignored_legacy_option_key(key)) {
-        continue;
       }
       if (is_array_option_key(key)) {
         std::vector<double> raw_values;
@@ -439,12 +417,9 @@ static void apply_options(NomadProblem pb,
           max_bb_eval_value = static_cast<int>(v);
         }
       }
-      if (is_ignored_legacy_option_key(key)) {
-        continue;
-      }
       if (is_array_option_key(key)) {
         if (!apply_array_option_from_string(pb, key, val_sexp, n_inputs, bbin, lb, ub)) {
-          apply_named_option_line(pb, canonical_option_key(key), normalize_array_option_value(val));
+          apply_named_option_line(pb, key, normalize_array_option_value(val));
         }
         continue;
       }

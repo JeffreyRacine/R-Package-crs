@@ -111,7 +111,7 @@ run_snomadr_basic <- function(cfg) {
     "MAX_BB_EVAL" = as.integer(cfg$max_bb_eval_basic),
     "MIN_MESH_SIZE" = 0.001,
     "INITIAL_MESH_SIZE" = 0.1,
-    "MIN_POLL_SIZE" = 1,
+    "MIN_FRAME_SIZE" = 1,
     "DISPLAY_DEGREE" = 0
   )
 

@@ -12,7 +12,7 @@
 #    eval.f : function to evaluate objective function
 #    lb : lower bounds of the control
 #    ub : upper bounds of the control
-#    opts : list with options that are passed to Ipopt
+#    opts : list with options that are passed to NOMAD
 #       ... : arguments that will be passed to user-defined functions
 #
 # Output: structure with inputs and

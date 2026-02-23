@@ -13,7 +13,7 @@ opts <- list("MAX_BB_EVAL"=10000,
              "EPSILON"=.Machine$double.eps,
              "INITIAL_MESH_SIZE"="r1.0e-01",
              "MIN_MESH_SIZE"=sqrt(.Machine$double.eps),
-             "MIN_POLL_SIZE"=sqrt(.Machine$double.eps),
+             "MIN_FRAME_SIZE"=sqrt(.Machine$double.eps),
              "DISPLAY_DEGREE"=0)
 
 set.seed(42)

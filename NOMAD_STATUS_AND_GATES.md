@@ -8,14 +8,14 @@ This file tracks dynamic findings, gate outcomes, and unresolved issues for the 
 
 1. `crs` bridge migrated to embedded NOMAD `4.5.0`.
 2. `src/Makevars` now builds against `src/nomad4_src`.
-3. Legacy option compatibility shims added in `src/snomadr.cpp`:
-   - `MIN_POLL_SIZE` -> `MIN_FRAME_SIZE`
-   - `INITIAL_POLL_SIZE` -> `INITIAL_FRAME_SIZE`
+3. Legacy NOMAD3 tree removed from `src/nomad_src` (clean break).
+4. NOMAD4 bridge behavior in `src/snomadr.cpp`:
+   - direct NOMAD4 option names only
    - array/relative-option parsing
    - integer mesh/frame lower-bound enforcement
    - `MAX_EVAL` auto-derived from `MAX_BB_EVAL` when absent
    - `EPSILON` sanitization
-4. Benchmark harness suite in place under `benchmarks/nomad/`.
+5. Benchmark harness suite in place under `benchmarks/nomad/`.
 
 ## Primary migration lessons learned
 
@@ -24,7 +24,7 @@ This file tracks dynamic findings, gate outcomes, and unresolved issues for the 
 3. A single global search-profile toggle is not safe:
    - settings that improve `frscvNOMAD`/`krscvNOMAD` can degrade `npglpreg` parity
    - settings that speed direct `snomadr` can alter solution/objective
-4. Option translation must stay dimension-aware and type-aware (especially for integer/binary/categorical mapped inputs).
+4. Option handling must stay dimension-aware and type-aware (especially for integer/binary/categorical mapped inputs).
 
 ## Latest gate artifacts
 

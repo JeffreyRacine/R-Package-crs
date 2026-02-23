@@ -299,7 +299,7 @@ opts <- list("MAX_BB_EVAL"=10000,
              "EPSILON"=.Machine$double.eps,
              "INITIAL_MESH_SIZE"="r1.0e-01",
              "MIN_MESH_SIZE"=paste("r",sqrt(.Machine$double.eps),sep=""),
-             "MIN_POLL_SIZE"=paste("r",sqrt(.Machine$double.eps),sep=""),
+             "MIN_FRAME_SIZE"=paste("r",sqrt(.Machine$double.eps),sep=""),
              "DISPLAY_DEGREE"=3)
 
 model <- crs(...,opts=opts)
@@ -1327,7 +1327,7 @@ C/C++ headers).')
 \item Increased default \verb+MAX_BB_EVAL+ from 500 to 10000 (makes a
   difference for difficult problems) and modified default EPSILON in
   NOMAD along with other parameters (\verb+MIN_MESH_SIZE+,
-  \verb+MIN_POLL_SIZE+) to reflect actual machine precision (using R's
+  \verb+MIN_FRAME_SIZE+) to reflect actual machine precision (using R's
   \verb+.Machine$double.eps+ where \verb+NOMAD+ fixed EPSILON at
   1e-13)
 

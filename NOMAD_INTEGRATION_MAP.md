@@ -17,18 +17,15 @@ Evidence in source:
 - `/Users/jracine/Development/crs/src/nomad4_src/src/nomad_version.hpp` defines:
   - `NOMAD` namespace alias as `NOMAD_4_5`
   - `NOMAD_VERSION_NUMBER "4.5.0"`
-- `/Users/jracine/Development/crs/src/Makevars` compiles from `./nomad4_src` (not `./nomad_src`)
+- `/Users/jracine/Development/crs/src/Makevars` compiles from `./nomad4_src`
 - `/Users/jracine/Development/crs/src/snomadr.cpp` includes:
   - `NomadStdCInterface.h`
   - `nomad_version.hpp`
 
-## Important transition note
+## Clean-break note
 
-The legacy NOMAD3 source tree remains in the repo:
-
-- `/Users/jracine/Development/crs/src/nomad_src`
-
-but it is no longer wired into the shared object by current `Makevars`.
+Legacy NOMAD3 source tree `src/nomad_src` has been removed from `crs`.
+The package now keeps only the NOMAD4 codebase and C interface bridge.
 
 ## Integration topology (current)
 
@@ -76,17 +73,19 @@ but it is no longer wired into the shared object by current `Makevars`.
 - `npglpreg(...)` (via NOMAD-driven CV path)
 - additional direct `snomadr(...)` callers in package code.
 
-## Current compatibility shims in bridge
+## Current bridge behavior for options
 
-The bridge currently applies NOMAD3-compatibility translation for key options:
+- `snomadr(opts=...)` passes option names/values to NOMAD4.
+- `crs` expects NOMAD4 option names directly (for example `MIN_FRAME_SIZE`).
+- array option normalization for NOMAD4 format remains in place.
+- relative (`r...`) scalar parsing for array options remains in place.
+- integer/granular mesh/frame floor handling remains in place.
+- `MAX_EVAL` auto-set from `MAX_BB_EVAL` when absent.
+- safe `EPSILON` sanitization for NOMAD4 minimum precision constraints.
 
-- `MIN_POLL_SIZE` -> `MIN_FRAME_SIZE`
-- `INITIAL_POLL_SIZE` -> `INITIAL_FRAME_SIZE`
-- array option normalization for NOMAD4 format
-- relative (`r...`) scalar parsing for array options
-- integer/granular mesh/frame floor handling
-- `MAX_EVAL` auto-set from `MAX_BB_EVAL` when absent
-- safe `EPSILON` sanitization for NOMAD4 minimum precision constraints
+Canonical option catalog for embedded NOMAD4:
+
+- `/Users/jracine/Development/crs/inst/nomad/NOMAD_4_5_0_OPTIONS_REFERENCE.md`
 
 ## Working call flow
 
@@ -100,4 +99,4 @@ The bridge currently applies NOMAD3-compatibility translation for key options:
 ## Practical implications
 
 - `crs` is now wired to embedded NOMAD4 (`4.5.0`), not NOMAD3 (`3.9.1`).
-- Legacy NOMAD3 source remains available for behavioral reference and debugging.
+- `crs` keeps a clean-break NOMAD4-only source layout.

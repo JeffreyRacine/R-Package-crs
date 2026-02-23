@@ -2399,7 +2399,7 @@ glpcvNOMAD <- function(ydat=NULL,
   opts$"MAX_BB_EVAL" <- max.bb.eval
   opts$"INITIAL_MESH_SIZE" <- INITIAL.MESH.SIZE
   opts$"MIN_MESH_SIZE" <- MIN.MESH.SIZE
-  opts$"MIN_POLL_SIZE" <- MIN.POLL.SIZE
+  opts$"MIN_FRAME_SIZE" <- MIN.POLL.SIZE
 
   if(is.null(degree)) {
     if(cv == "degree-bandwidth") {

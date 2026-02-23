@@ -505,7 +505,7 @@ krscvNOMAD <- function(xz,
   opts$"MAX_BB_EVAL" <- max.bb.eval
   opts$"INITIAL_MESH_SIZE" <- INITIAL.MESH.SIZE
   opts$"MIN_MESH_SIZE" <- MIN.MESH.SIZE
-  opts$"MIN_POLL_SIZE" <- MIN.POLL.SIZE
+  opts$"MIN_FRAME_SIZE" <- MIN.POLL.SIZE
 
   ## For kernel regression spline, if there is only one continuous
   ## predictor (i.e. num.x==1) disable auto, set to additive (which is
