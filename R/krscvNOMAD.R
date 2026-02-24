@@ -489,7 +489,7 @@ krscvNOMAD <- function(xz,
       MIN.FRAME.SIZE[[i]] <- min.frame.size.real
     }
   }
-  else if(complexity=="degree"|complexity=="knots") {
+  else if(complexity=="degree" || complexity=="knots") {
     for(i in seq_len(num.x)) {
       INITIAL.MESH.SIZE[[i]] <- initial.mesh.size.integer
       MIN.MESH.SIZE[[i]] <- min.mesh.size.integer

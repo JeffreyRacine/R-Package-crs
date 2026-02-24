@@ -725,3 +725,28 @@ Validation artifacts:
 4. Tarball-first:
    - `/tmp/crs_build_npglp_loopsweep_20260224.log`
    - `/tmp/crs_check_ascran_npglp_loopsweep_20260224.log` (`Status: 4 WARNINGs, 2 NOTEs`)
+
+### 2026-02-24 - A/R1.15 indexer safety + scalar logical hardening
+
+Scope completed:
+
+1. Replaced remaining active `sapply(1:...)` indexers with zero-length-safe `sapply(seq_len(...), ...)` in:
+   - `/Users/jracine/Development/crs/R/np.regression.glp.R`
+   - `/Users/jracine/Development/crs/R/spline.R`
+2. Hardened scalar branch logic to avoid vectorized-or semantics in:
+   - `/Users/jracine/Development/crs/R/krscvNOMAD.R`
+   - `complexity=="degree"|complexity=="knots"` -> `complexity=="degree" || complexity=="knots"`.
+3. Scope remains non-invasive: no NOMAD core code changes.
+
+Validation artifacts:
+
+1. Parse gate:
+   - `/tmp/crs_parse_seqapply_scalarlogic_20260224.log` (`SEQAPPLY_SCALARLOGIC_PARSE_OK`)
+2. Deterministic install:
+   - `/tmp/crs_install_seqapply_scalarlogic2_20260224.log`
+3. Focused runtime smoke (GLP + spline/derivative + `krscvNOMAD` branch path):
+   - `/tmp/crs_seqapply_scalarlogic_smoke_20260224.R`
+   - `/tmp/crs_seqapply_scalarlogic_smoke2_20260224.out` (`CRS_SEQAPPLY_SCALARLOGIC_SMOKE_OK`)
+4. Tarball-first:
+   - `/tmp/crs_build_seqapply_scalarlogic_20260224.log`
+   - `/tmp/crs_check_ascran_seqapply_scalarlogic_20260224.log` (`Status: 4 WARNINGs, 2 NOTEs`)

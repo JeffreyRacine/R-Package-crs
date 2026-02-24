@@ -548,7 +548,7 @@ derivKernelSpline <- function(x,
         else
           suppressWarnings(vcov.model <- summary(model,covariance=TRUE)$cov[-1,-1,drop=FALSE])
 
-        se.deriv <- sapply(1:NROW(P.deriv), function(i){ sqrt(P.deriv[i,deriv.ind.vec,drop=FALSE]%*%vcov.model[deriv.ind.vec,deriv.ind.vec]%*%t(P.deriv[i,deriv.ind.vec,drop=FALSE])) })
+        se.deriv <- sapply(seq_len(NROW(P.deriv)), function(i){ sqrt(P.deriv[i,deriv.ind.vec,drop=FALSE]%*%vcov.model[deriv.ind.vec,deriv.ind.vec]%*%t(P.deriv[i,deriv.ind.vec,drop=FALSE])) })
       } else if(basis=="tensor") {
         if(is.null(tau))
           model <- lm(y~P-1,weights=weights)
@@ -562,7 +562,7 @@ derivKernelSpline <- function(x,
         else
           suppressWarnings(vcov.model <- summary(model,covariance=TRUE)$cov)
 
-        se.deriv <- sapply(1:NROW(P.deriv), function(i){ sqrt(P.deriv[i,,drop=FALSE]%*%vcov.model%*%t(P.deriv[i,,drop=FALSE])) })
+        se.deriv <- sapply(seq_len(NROW(P.deriv)), function(i){ sqrt(P.deriv[i,,drop=FALSE]%*%vcov.model%*%t(P.deriv[i,,drop=FALSE])) })
       } else if(basis=="glp") {
         if(is.null(tau))
           model <- lm(y~P,weights=weights)
@@ -575,7 +575,7 @@ derivKernelSpline <- function(x,
         else
           suppressWarnings(vcov.model <- summary(model,covariance=TRUE)$cov[-1,-1,drop=FALSE])
 
-        se.deriv <- sapply(1:NROW(P.deriv), function(i){ sqrt(P.deriv[i,,drop=FALSE]%*%vcov.model%*%t(P.deriv[i,,drop=FALSE])) })
+        se.deriv <- sapply(seq_len(NROW(P.deriv)), function(i){ sqrt(P.deriv[i,,drop=FALSE]%*%vcov.model%*%t(P.deriv[i,,drop=FALSE])) })
       }
 
     } else {
@@ -636,7 +636,7 @@ derivKernelSpline <- function(x,
             else
               suppressWarnings(vcov.model <- summary(model,covariance=TRUE)$cov[-1,-1,drop=FALSE])
 
-            se.deriv[zz] <- sapply(1:NROW(P.deriv), function(i){ sqrt(P.deriv[i,deriv.ind.vec,drop=FALSE]%*%vcov.model[deriv.ind.vec,deriv.ind.vec]%*%t(P.deriv[i,deriv.ind.vec,drop=FALSE])) })
+            se.deriv[zz] <- sapply(seq_len(NROW(P.deriv)), function(i){ sqrt(P.deriv[i,deriv.ind.vec,drop=FALSE]%*%vcov.model[deriv.ind.vec,deriv.ind.vec]%*%t(P.deriv[i,deriv.ind.vec,drop=FALSE])) })
           } else if(basis=="tensor") {
             if(is.null(tau))
               model <- lm(y~P-1,weights=L)
@@ -650,7 +650,7 @@ derivKernelSpline <- function(x,
             else
               suppressWarnings(vcov.model <- summary(model,covariance=TRUE)$cov)
 
-            se.deriv[zz] <- sapply(1:NROW(P.deriv), function(i){ sqrt(P.deriv[i,,drop=FALSE]%*%vcov.model%*%t(P.deriv[i,,drop=FALSE])) })
+            se.deriv[zz] <- sapply(seq_len(NROW(P.deriv)), function(i){ sqrt(P.deriv[i,,drop=FALSE]%*%vcov.model%*%t(P.deriv[i,,drop=FALSE])) })
           } else if(basis=="glp") {
             if(is.null(tau))
               model <- lm(y~P,weights=L)
@@ -664,7 +664,7 @@ derivKernelSpline <- function(x,
             else
               suppressWarnings(vcov.model <- summary(model,covariance=TRUE)$cov[-1,-1,drop=FALSE])
 
-            se.deriv[zz] <- sapply(1:NROW(P.deriv), function(i){ sqrt(P.deriv[i,,drop=FALSE]%*%vcov.model%*%t(P.deriv[i,,drop=FALSE])) })
+            se.deriv[zz] <- sapply(seq_len(NROW(P.deriv)), function(i){ sqrt(P.deriv[i,,drop=FALSE]%*%vcov.model%*%t(P.deriv[i,,drop=FALSE])) })
           }
 
         }
@@ -712,7 +712,7 @@ derivKernelSpline <- function(x,
             else
               suppressWarnings(vcov.model <- summary(model,covariance=TRUE)$cov[-1,-1,drop=FALSE])
 
-            se.deriv[zz] <- sapply(1:NROW(P.deriv), function(i){ sqrt(P.deriv[i,deriv.ind.vec,drop=FALSE]%*%vcov.model[deriv.ind.vec,deriv.ind.vec]%*%t(P.deriv[i,deriv.ind.vec,drop=FALSE])) })
+            se.deriv[zz] <- sapply(seq_len(NROW(P.deriv)), function(i){ sqrt(P.deriv[i,deriv.ind.vec,drop=FALSE]%*%vcov.model[deriv.ind.vec,deriv.ind.vec]%*%t(P.deriv[i,deriv.ind.vec,drop=FALSE])) })
           } else if(basis=="tensor") {
             if(is.null(tau))
               model <- lm(y~P-1,weights=L)
@@ -725,7 +725,7 @@ derivKernelSpline <- function(x,
             else
               suppressWarnings(vcov.model <- summary(model,covariance=TRUE)$cov)
 
-            se.deriv[zz] <- sapply(1:NROW(P.deriv), function(i){ sqrt(P.deriv[i,,drop=FALSE]%*%vcov.model%*%t(P.deriv[i,,drop=FALSE])) })
+            se.deriv[zz] <- sapply(seq_len(NROW(P.deriv)), function(i){ sqrt(P.deriv[i,,drop=FALSE]%*%vcov.model%*%t(P.deriv[i,,drop=FALSE])) })
           } else if(basis=="glp") {
             if(is.null(tau))
               model <- lm(y~P,weights=L)
@@ -738,7 +738,7 @@ derivKernelSpline <- function(x,
             else
               suppressWarnings(vcov.model <- summary(model,covariance=TRUE)$cov[-1,-1,drop=FALSE])
 
-            se.deriv[zz] <- sapply(1:NROW(P.deriv), function(i){ sqrt(P.deriv[i,,drop=FALSE]%*%vcov.model%*%t(P.deriv[i,,drop=FALSE])) })
+            se.deriv[zz] <- sapply(seq_len(NROW(P.deriv)), function(i){ sqrt(P.deriv[i,,drop=FALSE]%*%vcov.model%*%t(P.deriv[i,,drop=FALSE])) })
           }
 
         }
@@ -1133,7 +1133,7 @@ derivFactorSpline <- function(x,
     }
 
     deriv.spline <- P.deriv[,deriv.ind.vec,drop=FALSE]%*%coef.vec.model[deriv.ind.vec]
-    se.deriv <- sapply(1:NROW(P.deriv[,deriv.ind.vec,drop=FALSE]), function(i){ sqrt(P.deriv[i,deriv.ind.vec,drop=FALSE]%*%vcov.mat.model[deriv.ind.vec,deriv.ind.vec]%*%t(P.deriv[i,deriv.ind.vec,drop=FALSE])) })
+    se.deriv <- sapply(seq_len(NROW(P.deriv[,deriv.ind.vec,drop=FALSE])), function(i){ sqrt(P.deriv[i,deriv.ind.vec,drop=FALSE]%*%vcov.mat.model[deriv.ind.vec,deriv.ind.vec]%*%t(P.deriv[i,deriv.ind.vec,drop=FALSE])) })
     lwr <- deriv.spline - qnorm(0.975)*se.deriv
     upr <- deriv.spline + qnorm(0.975)*se.deriv
 

@@ -1358,7 +1358,7 @@ minimand.cv.ls <- function(bws=NULL,
 
   ## Manually conduct bandwidth scaling
   num.bw <- ncol(xdat)
-  xdat.numeric <- sapply(1:num.bw,function(i){is.numeric(xdat[,i])})
+  xdat.numeric <- sapply(seq_len(num.bw),function(i){is.numeric(xdat[,i])})
   num.numeric <- ncol(as.data.frame(xdat[,xdat.numeric]))
 
   for(i in seq_len(num.bw)) {
@@ -1719,7 +1719,7 @@ minimand.cv.aic <- function(bws=NULL,
 
   ## Manually conduct bandwidth scaling
   num.bw <- ncol(xdat)
-  xdat.numeric <- sapply(1:num.bw,function(i){is.numeric(xdat[,i])})
+  xdat.numeric <- sapply(seq_len(num.bw),function(i){is.numeric(xdat[,i])})
   num.numeric <- ncol(as.data.frame(xdat[,xdat.numeric]))
 
   for(i in seq_len(num.bw)) {
@@ -2286,7 +2286,7 @@ glpcvNOMAD <- function(ydat=NULL,
   ## [0,(c-1)/c] and not 0/1 as are the rest of the unordered and
   ## ordered kernel bandwidth bounds.
 
-  xdat.numeric <- sapply(1:num.bw,function(i){is.numeric(xdat[,i])})
+  xdat.numeric <- sapply(seq_len(num.bw),function(i){is.numeric(xdat[,i])})
   num.numeric <- ncol(as.data.frame(xdat[,xdat.numeric]))
   numeric.index <- which(xdat.numeric==TRUE)
 
@@ -2294,7 +2294,7 @@ glpcvNOMAD <- function(ydat=NULL,
 
   if(!is.null(degree) && length(degree) != num.numeric) stop(paste(" Error: degree vector supplied has ", length(degree), " elements but there exist ", num.numeric," numeric.predictors",sep=""))
 
-  xdat.unordered <- sapply(1:num.bw,function(i){is.factor(xdat[,i])&!is.ordered(xdat[,i])})
+  xdat.unordered <- sapply(seq_len(num.bw),function(i){is.factor(xdat[,i])&!is.ordered(xdat[,i])})
   num.unordered <- ncol(as.data.frame(xdat[,xdat.unordered]))
 
   if(cv=="degree-bandwidth") {
