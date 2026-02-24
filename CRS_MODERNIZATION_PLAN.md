@@ -914,3 +914,27 @@ Validation artifacts:
    - `/Users/jracine/Development/crs.Rcheck/00check.log`
 3. Note profile change vs standard gate:
    - additional NOTE from long examples timing (`* checking examples ... [11m/11m] NOTE`) under full-example mode.
+
+### 2026-02-24 - B/R1.2 native-interface regression tests
+
+Scope completed:
+
+1. Added focused non-NOMAD native-interface regression tests in:
+   - `/Users/jracine/Development/crs/tests/testthat/test-native-interfaces.R`
+2. Coverage added for:
+   - `RuniqueCombs` path via `uniquecombs()` row-index reconstruction invariants.
+   - `gsl_bspline`/`gsl_bspline_deriv` paths via `gsl.bs()` fit/predict dimension invariants.
+   - `crs_hat_diag` path via `crs:::hat.from.lm.fit()` parity against QR-based `hat(...)`.
+3. Test file uses explicit namespace qualification (`crs::` / `crs:::`) to support direct `test_dir(...)` execution.
+
+Validation artifacts:
+
+1. Parse + local test execution:
+   - `/tmp/crs_parse_native_tests_20260224.log` (`NATIVE_TEST_PARSE_OK`)
+   - `/tmp/crs_test_native_interfaces_20260224.out` (`NATIVE_TESTS_OK`)
+2. Deterministic install and smoke:
+   - `/tmp/crs_install_native_interfaces_20260224.log`
+   - `/tmp/crs_loop_native_interfaces_smoke_20260224.out` (`LOOP_SMOKE_OK`)
+3. Tarball-first:
+   - `/tmp/crs_build_native_interfaces_20260224.log`
+   - `/tmp/crs_check_ascran_native_interfaces_20260224.log` (`Status: 4 WARNINGs, 3 NOTEs`)
