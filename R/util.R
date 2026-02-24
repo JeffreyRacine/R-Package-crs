@@ -140,6 +140,18 @@ is.monotone.increasing <- function(x) {
   !is.unsorted(x) && x[length(x)] > x[1]
 }
 
+.crsiv_select_stop_index <- function(norm.stop) {
+  norm.value <- norm.stop / seq_along(norm.stop)
+  monotone.failure <- which.min(norm.stop) == 1L && is.monotone.increasing(norm.stop)
+  target <- if (monotone.failure) norm.value else norm.stop
+
+  j <- 1L
+  while (j < length(target) && target[j + 1L] > target[j]) j <- j + 1L
+  j <- j - 1L + which.min(target[j:length(target)])
+
+  list(index = j, norm.value = norm.value, monotone.failure = monotone.failure)
+}
+
 ## This function tests for the maximum well-conditioned spline degree.
 
 ## Note that increasing the number of breaks, other things equal,

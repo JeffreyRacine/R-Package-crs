@@ -731,7 +731,8 @@ crsiv.default <- function(y,
     }
 
     phi.mat <- phi.mat[, seq_along(norm.stop), drop = FALSE]
-    norm.value <- norm.stop/seq_along(norm.stop)
+    stop.pick <- .crsiv_select_stop_index(norm.stop)
+    norm.value <- stop.pick$norm.value
 
     ## Extract minimum, and check for monotone increasing function and
     ## issue warning in that case. Otherwise allow for an increasing
@@ -740,24 +741,12 @@ crsiv.default <- function(y,
     ## and take the min from where the initial inflection point occurs
     ## to the length of norm.stop
 
-    if(which.min(norm.stop) == 1 && is.monotone.increasing(norm.stop)) {
+    if(stop.pick$monotone.failure) {
       if(display.warnings) warning("Stopping rule increases monotonically (consult model$norm.stop):\nThis could be the result of an inspired initial value (unlikely)\nNote: we suggest manually choosing phi.0 and restarting (e.g. instead set `starting.values' to E[E(Y|w)|z])")
       convergence <- "FAILURE_MONOTONE_INCREASING"
-      ## Ignore the initial increasing portion, take the min to the
-      ## right of where the initial inflection point occurs
-      j <- 1
-      while(j < length(norm.value) && norm.value[j+1] > norm.value[j]) j <- j + 1
-      j <- j-1 + which.min(norm.value[j:length(norm.value)])
-      phi <- phi.mat[,j]
-      #      phi <- starting.values.phi
-    } else {
-      ## Ignore the initial increasing portion, take the min to the
-      ## right of where the initial inflection point occurs
-      j <- 1
-      while(j < length(norm.stop) && norm.stop[j+1] > norm.stop[j]) j <- j + 1
-      j <- j-1 + which.min(norm.stop[j:length(norm.stop)])
-      phi <- phi.mat[,j]
     }
+    j <- stop.pick$index
+    phi <- phi.mat[,j]
 
     ## phi.0 is the conditional mean model. We compute lambda =
     ## fitted(phi.0)-phi then transform y via
