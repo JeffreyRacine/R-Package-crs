@@ -61,8 +61,9 @@ crsiv.default <- function(y,
                   ...) {
 
   ptm.start <- proc.time()
-  crs.messages <- getOption("crs.messages")
-  on.exit(options(crs.messages = crs.messages), add = TRUE)
+  old.crs.messages <- getOption("crs.messages")
+  on.exit(options(crs.messages = old.crs.messages), add = TRUE)
+  crs.messages <- isTRUE(old.crs.messages)
   is.eval.train <- is.null(zeval) && is.null(weval) && is.null(xeval)
 
   dot.prep <- .crsiv_prepare_dot_args(list(...))

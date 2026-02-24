@@ -88,3 +88,33 @@ test_that("crsivderiv restores crs.messages option on internal error", {
 
   expect_identical(getOption("crs.messages"), TRUE)
 })
+
+test_that("crsivderiv works when crs.messages option is unset", {
+  old_option <- getOption("crs.messages")
+  on.exit(options(crs.messages = old_option), add = TRUE)
+
+  options(crs.messages = NULL)
+
+  set.seed(42)
+  n <- 40
+  w_vec <- rnorm(n)
+  z_vec <- 0.2 * w_vec + rnorm(n, sd = 0.1)
+  y_vec <- z_vec^2 + rnorm(n, sd = 0.1)
+
+  z <- data.frame(z = z_vec)
+  w <- data.frame(w = w_vec)
+
+  model <- crsivderiv(
+    y = y_vec,
+    z = z,
+    w = w,
+    iterate.max = 2,
+    cv = "none",
+    basis = "additive",
+    display.warnings = FALSE,
+    display.nomad.progress = FALSE
+  )
+
+  expect_s3_class(model, "crsivderiv")
+  expect_null(getOption("crs.messages"))
+})

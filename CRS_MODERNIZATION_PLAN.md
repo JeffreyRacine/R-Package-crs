@@ -14,7 +14,7 @@ Modernize `crs` to current best-practice R package engineering standards while p
 
 ## Current Status Snapshot (2026-02-24)
 
-1. Checkpoints completed locally: `50+` commits on top of `origin/master` (no push).
+1. Checkpoints completed locally: `51+` commits on top of `origin/master` (no push).
 2. Completed tranches:
    - `A/R1.1` through `A/R1.10` (low-risk R modernization path).
    - `A/R2.1` (removed `eval(parse(...))` in `stepCV`).
@@ -26,7 +26,7 @@ Modernize `crs` to current best-practice R package engineering standards while p
    - `A/R1.12` (additional `seq_len`/`seq.int` safety sweep in spline utilities).
    - `A/R1.13` (broader loop-header safety sweep across CV/sigtest and helper paths).
    - `A/R1.14` (full `npglpreg` loop-header safety sweep).
-   - `A/R1.15` through `A/R1.29` (scalar control-flow cleanup, script hygiene, clamp/vectorization follow-ups, remaining legacy `do.call` cleanup in matrix-construction paths, `vapply` numeric-column sweeps, boolean control simplification, centralized RNG seed state handling, scalar-loop index correctness fixes in `npglpreg` warning/index paths, registered-symbol `.Call` hygiene, and robust option-restoration guards for `crsiv` / `crsivderiv` error paths).
+   - `A/R1.15` through `A/R1.30` (scalar control-flow cleanup, script hygiene, clamp/vectorization follow-ups, remaining legacy `do.call` cleanup in matrix-construction paths, `vapply` numeric-column sweeps, boolean control simplification, centralized RNG seed state handling, scalar-loop index correctness fixes in `npglpreg` warning/index paths, registered-symbol `.Call` hygiene, and robust option-state guards for `crsiv` / `crsivderiv` including unset-option handling).
    - `B/R2` (shared IV scaffolding helpers for dots/call assembly in `crsiv` and `crsivderiv`).
    - `B/R1.1` (non-NOMAD C memory hygiene in `gsl_bspline.c`).
    - `B/R1.2` and `B/R1.3` (native-interface and matrix-kernel regression test expansion).
@@ -1413,3 +1413,33 @@ Validation artifacts:
 4. Tarball-first:
    - `/tmp/crs_build_option_restore_20260224.log`
    - `/tmp/crs_check_option_restore_20260224.log` (`Status: 4 WARNINGs, 4 NOTEs`)
+
+### 2026-02-24 - A/R1.30 `crs.messages` unset-option guard in IV paths
+
+Scope completed:
+
+1. Hardened option capture/restore and scalar messaging gates in:
+   - `/Users/jracine/Development/crs/R/crsiv.R`
+   - `/Users/jracine/Development/crs/R/crsivderiv.R`
+2. Changes:
+   - store entry option value via `old.crs.messages <- getOption("crs.messages")`,
+   - restore exact prior state on exit with `on.exit(options(crs.messages = old.crs.messages), add = TRUE)`,
+   - use scalar-safe `crs.messages <- isTRUE(old.crs.messages)` for branch controls.
+3. Added regression tests for unset option (`NULL`) behavior:
+   - `/Users/jracine/Development/crs/tests/testthat/test-crsiv.R`
+   - `/Users/jracine/Development/crs/tests/testthat/test-crsivderiv.R`
+4. Result:
+   - IV routines no longer risk `if (crs.messages)` errors when the option is unset,
+   - option state is restored to its original value after both success and forced-error paths.
+
+Validation artifacts:
+
+1. Deterministic install:
+   - `/tmp/crs_install_option_null_guard_20260224.log`
+2. Targeted tests:
+   - `/tmp/crs_test_option_null_guard_targeted_20260224.out` (`PASS 25, WARN 0, FAIL 0`)
+3. Full test suite:
+   - `/tmp/crs_test_option_null_guard_full_20260224.out` (`PASS 90, WARN 1, FAIL 0`)
+4. Tarball-first:
+   - `/tmp/crs_build_option_null_guard_20260224.log`
+   - `/tmp/crs_check_option_null_guard_20260224.log` (`Status: 4 WARNINGs, 4 NOTEs`)
