@@ -15,6 +15,8 @@ extern SEXP snomadRInfo(SEXP);
 extern SEXP snomadRSolve(SEXP);
 extern SEXP crs_hat_diag(SEXP, SEXP, SEXP);
 extern SEXP crs_uniquecombs_call(SEXP);
+extern SEXP crs_gsl_bspline_call(SEXP, SEXP, SEXP, SEXP, SEXP, SEXP);
+extern SEXP crs_gsl_bspline_deriv_call(SEXP, SEXP, SEXP, SEXP, SEXP, SEXP, SEXP);
 
 static const R_CMethodDef CEntries[] = {
     {"RuniqueCombs",      (DL_FUNC) &RuniqueCombs,       4},
@@ -31,6 +33,8 @@ static const R_CallMethodDef CallEntries[] = {
     {"snomadRSolve",      (DL_FUNC) &snomadRSolve,      1},
     {"crs_hat_diag",      (DL_FUNC) &crs_hat_diag,      3},
     {"crs_uniquecombs_call", (DL_FUNC) &crs_uniquecombs_call, 1},
+    {"crs_gsl_bspline_call", (DL_FUNC) &crs_gsl_bspline_call, 6},
+    {"crs_gsl_bspline_deriv_call", (DL_FUNC) &crs_gsl_bspline_deriv_call, 7},
     {NULL, NULL, 0}
 };
 

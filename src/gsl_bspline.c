@@ -12,6 +12,7 @@
 #include <math.h>
 #include "gsl_bspline.h"
 #include <R.h>
+#include <Rinternals.h>
 
 /* Code to replicate bs() in splines package. Note that feeding in
    x_min and x_max is necessary if you want to replicate predict.bs()
@@ -134,3 +135,150 @@ int gsl_bspline_deriv(double *x,
 	return(0);
 
 } /* main() */
+
+SEXP crs_gsl_bspline_call(SEXP x,
+                          SEXP degree,
+                          SEXP nbreak,
+                          SEXP x_min,
+                          SEXP x_max,
+                          SEXP knots)
+{
+  SEXP x_r = PROTECT(coerceVector(x, REALSXP));
+  SEXP degree_i = PROTECT(coerceVector(degree, INTSXP));
+  SEXP nbreak_i = PROTECT(coerceVector(nbreak, INTSXP));
+  SEXP x_min_r = PROTECT(coerceVector(x_min, REALSXP));
+  SEXP x_max_r = PROTECT(coerceVector(x_max, REALSXP));
+  SEXP out = R_NilValue;
+  SEXP knots_r = R_NilValue;
+
+  int n = LENGTH(x_r);
+  int deg = INTEGER(degree_i)[0];
+  int nb = INTEGER(nbreak_i)[0];
+  int knots_int = isNull(knots) ? 0 : 1;
+  int ncol = nb + deg - 1;
+  int i, j;
+  double dummy = 0.0;
+  double *qvec = &dummy;
+  double *bx_rowmajor;
+
+  if (n < 1) {
+    UNPROTECT(5);
+    Rf_error("x must have positive length");
+  }
+  if (deg < 1) {
+    UNPROTECT(5);
+    Rf_error("degree must be positive");
+  }
+  if (nb < 2) {
+    UNPROTECT(5);
+    Rf_error("nbreak must be at least 2");
+  }
+  if (knots_int) {
+    knots_r = PROTECT(coerceVector(knots, REALSXP));
+    if (LENGTH(knots_r) < nb) {
+      UNPROTECT(6);
+      Rf_error("knots length is smaller than nbreak");
+    }
+    qvec = REAL(knots_r);
+  }
+
+  bx_rowmajor = (double *) R_alloc((size_t)n * (size_t)ncol, sizeof(double));
+  gsl_bspline(REAL(x_r), &n, &deg, &nb, REAL(x_min_r), REAL(x_max_r), qvec, &knots_int, bx_rowmajor);
+
+  PROTECT(out = allocMatrix(REALSXP, n, ncol));
+  for (i = 0; i < n; i++) {
+    for (j = 0; j < ncol; j++) {
+      REAL(out)[i + n * j] = bx_rowmajor[i * ncol + j];
+    }
+  }
+
+  if (knots_int) {
+    UNPROTECT(7);
+  } else {
+    UNPROTECT(6);
+  }
+  return out;
+}
+
+SEXP crs_gsl_bspline_deriv_call(SEXP x,
+                                SEXP degree,
+                                SEXP nbreak,
+                                SEXP deriv,
+                                SEXP x_min,
+                                SEXP x_max,
+                                SEXP knots)
+{
+  SEXP x_r = PROTECT(coerceVector(x, REALSXP));
+  SEXP degree_i = PROTECT(coerceVector(degree, INTSXP));
+  SEXP nbreak_i = PROTECT(coerceVector(nbreak, INTSXP));
+  SEXP deriv_i = PROTECT(coerceVector(deriv, INTSXP));
+  SEXP x_min_r = PROTECT(coerceVector(x_min, REALSXP));
+  SEXP x_max_r = PROTECT(coerceVector(x_max, REALSXP));
+  SEXP out = R_NilValue;
+  SEXP knots_r = R_NilValue;
+
+  int n = LENGTH(x_r);
+  int deg = INTEGER(degree_i)[0];
+  int nb = INTEGER(nbreak_i)[0];
+  int knots_int = isNull(knots) ? 0 : 1;
+  int ncol = nb + deg - 1;
+  int i, j;
+  int order_max = 0;
+  double dummy = 0.0;
+  double *qvec = &dummy;
+  double *bx_rowmajor;
+
+  if (n < 1) {
+    UNPROTECT(6);
+    Rf_error("x must have positive length");
+  }
+  if (LENGTH(deriv_i) != n) {
+    UNPROTECT(6);
+    Rf_error("deriv must have same length as x");
+  }
+  if (deg < 1) {
+    UNPROTECT(6);
+    Rf_error("degree must be positive");
+  }
+  if (nb < 2) {
+    UNPROTECT(6);
+    Rf_error("nbreak must be at least 2");
+  }
+
+  for (i = 0; i < n; i++) {
+    if (INTEGER(deriv_i)[i] < 0) {
+      UNPROTECT(6);
+      Rf_error("deriv must be non-negative");
+    }
+    if (INTEGER(deriv_i)[i] > order_max) {
+      order_max = INTEGER(deriv_i)[i];
+    }
+  }
+
+  if (knots_int) {
+    knots_r = PROTECT(coerceVector(knots, REALSXP));
+    if (LENGTH(knots_r) < nb) {
+      UNPROTECT(7);
+      Rf_error("knots length is smaller than nbreak");
+    }
+    qvec = REAL(knots_r);
+  }
+
+  bx_rowmajor = (double *) R_alloc((size_t)n * (size_t)ncol, sizeof(double));
+  gsl_bspline_deriv(REAL(x_r), &n, &deg, &nb, INTEGER(deriv_i), &order_max,
+                    REAL(x_min_r), REAL(x_max_r), qvec, &knots_int, bx_rowmajor);
+
+  PROTECT(out = allocMatrix(REALSXP, n, ncol));
+  for (i = 0; i < n; i++) {
+    for (j = 0; j < ncol; j++) {
+      REAL(out)[i + n * j] = bx_rowmajor[i * ncol + j];
+    }
+  }
+
+  if (knots_int) {
+    UNPROTECT(8);
+  } else {
+    UNPROTECT(7);
+  }
+  return out;
+}

@@ -30,7 +30,7 @@ Modernize `crs` to current best-practice R package engineering standards while p
    - `B/R1.1` (non-NOMAD C memory hygiene in `gsl_bspline.c`).
    - `B/R1.2` and `B/R1.3` (native-interface and matrix-kernel regression test expansion).
    - test harness stabilization (`tests/testthat/setup-load-crs.R`) and deprecation cleanup (`test-crsivderiv.R`).
-   - `C/R3.1` partial migration: `uniquecombs()` moved from `.C` to `.Call`.
+   - `C/R3.1` and `C/R3.2` partial migrations: `uniquecombs()` and `gsl.bs` native paths moved from `.C` to `.Call`.
 3. Validation discipline maintained at each checkpoint:
    - installed-package targeted smokes,
    - tarball-first `R CMD build` and `R CMD check --as-cran`,
@@ -44,6 +44,8 @@ Modernize `crs` to current best-practice R package engineering standards while p
    - active `1:NCOL(...)`: `0`
    - scalar `ifelse(is.null(...))` / `ifelse(is.finite(...))` / `return(ifelse(...))`: `0`
    - total `ifelse(...)` uses in `R/`: `2` (intentional vectorized expressions)
+   - `.C(` callsites in `R/`: `0`
+   - `.Call(` callsites in `R/`: `10`
 5. Scope guard respected:
    - no edits to NOMAD core source/interface (`src/nomad4_src/**`, `src/snomadr.cpp`, `src/snomadr.h`).
 
@@ -66,7 +68,7 @@ Modernize `crs` to current best-practice R package engineering standards while p
 
 ## Next High-ROI Items (Remaining)
 
-1. `C/R3` (optional/deferred): `.C` -> `.Call` migration and deeper algorithmic rewrites only after extended parity/performance signoff.
+1. `C/R3` (optional/deferred): deeper native-interface API cleanup and algorithmic rewrites only after extended parity/performance signoff.
 
 Primary guidance basis:
 
@@ -124,8 +126,8 @@ Static inventory (initial baseline):
 
 Current inventory (2026-02-24):
 
-1. `.C(` callsites in `R/`: `2`
-2. `.Call(` callsites in `R/`: `8`
+1. `.C(` callsites in `R/`: `0`
+2. `.Call(` callsites in `R/`: `10`
 3. `eval(parse(...))` in `R/`: `0`
 4. string `do.call("<name>", ...)` in `R/`: `0`
 5. `<<-` in `R/`: `0`
@@ -1035,3 +1037,33 @@ Validation artifacts:
 4. Tarball-first:
    - `/tmp/crs_build_uniquecombs_call_20260224.log`
    - `/tmp/crs_check_ascran_uniquecombs_call_20260224.log` (`Status: 4 WARNINGs, 3 NOTEs`)
+
+### 2026-02-24 - C/R3.2 partial `.C` -> `.Call` migration (`gsl.bs`/`bs.des`)
+
+Scope completed:
+
+1. Added `.Call` wrappers in:
+   - `/Users/jracine/Development/crs/src/gsl_bspline.c`
+   - `crs_gsl_bspline_call(...)`
+   - `crs_gsl_bspline_deriv_call(...)`
+2. Registered wrappers in:
+   - `/Users/jracine/Development/crs/src/crs_init.c`
+3. Migrated R callsites in:
+   - `/Users/jracine/Development/crs/R/gsl_bspline.R` (`bs.des()`)
+   from `.C("gsl_bspline*")` to `.Call("crs_gsl_bspline*_call", ...)` while preserving matrix layout semantics.
+4. Result:
+   - `.C(` callsites in `R/` reduced from `2` to `0`; `.Call(` callsites in `R/` increased accordingly.
+
+Validation artifacts:
+
+1. Deterministic install:
+   - `/tmp/crs_install_gsl_call_20260224.log`
+2. Direct tests + suite:
+   - `/tmp/crs_test_gsl_call_native_20260224.out` (`TARGET_TESTS_OK`)
+   - `/tmp/crs_test_fullsuite_gsl_call_20260224.out` (`FULL_TESTS_OK`)
+3. Focused smoke:
+   - `/tmp/crs_spline_gsl_call_smoke_20260224.out` (`SPLINE_SMOKE_OK`)
+   - `/tmp/crs_npglp_gsl_call_smoke_20260224.out` (`NPGLP_SMOKE_OK`)
+4. Tarball-first:
+   - `/tmp/crs_build_gsl_call_20260224.log`
+   - `/tmp/crs_check_ascran_gsl_call_20260224.log` (`Status: 4 WARNINGs, 3 NOTEs`)

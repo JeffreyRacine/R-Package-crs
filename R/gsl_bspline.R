@@ -124,49 +124,32 @@ bs.des     <- function(x,
   n <- length(x)
   deriv <- as.vector(deriv)
 
-  if(!is.null(x.min)&!is.null(x.max)) if(x.min >= x.max) stop(" x.min must be less than x.max")
+  if(!is.null(x.min) && !is.null(x.max) && x.min >= x.max) stop(" x.min must be less than x.max")
   if(is.null(x.min)) x.min <- min(x)
   if(is.null(x.max)) x.max <- max(x)
 
-  ## 0 == don't use user supplied knots, 1 = use
-
-  knots.int <- if(is.null(knots)) 0 else 1
-
-  ncol <- nbreak+degree-1;
+  knots.arg <- if(is.null(knots)) NULL else as.double(knots)
 
   if(all(deriv==0)) {
-
-    myout <- .C("gsl_bspline",
-                as.double(x),
-                as.integer(n),
-                as.integer(degree),
-                as.integer(nbreak),
-                as.double(x.min),
-                as.double(x.max),
-                as.double(knots),
-                as.integer(knots.int),
-                Bx = double(n*ncol),
-                PACKAGE="crs" )
-
+    B <- .Call("crs_gsl_bspline_call",
+               as.double(x),
+               as.integer(degree),
+               as.integer(nbreak),
+               as.double(x.min),
+               as.double(x.max),
+               knots.arg,
+               PACKAGE = "crs")
   } else {
-
-    myout <- .C("gsl_bspline_deriv",
-                as.double(x),
-                as.integer(n),
-                as.integer(degree),
-                as.integer(nbreak),
-                as.integer(deriv),
-                as.integer(max(deriv)), #for setting the size of memory
-                as.double(x.min),
-                as.double(x.max),
-                as.double(knots),
-                as.integer(knots.int),
-                Bx = double(n*ncol),
-                PACKAGE="crs" )
-
+    B <- .Call("crs_gsl_bspline_deriv_call",
+               as.double(x),
+               as.integer(degree),
+               as.integer(nbreak),
+               as.integer(deriv),
+               as.double(x.min),
+               as.double(x.max),
+               knots.arg,
+               PACKAGE = "crs")
   }
-
-  B <- matrix(data=myout$Bx, nrow = n, ncol = ncol, byrow = TRUE)
 
   return(B)
 
