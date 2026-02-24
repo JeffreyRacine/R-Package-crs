@@ -202,13 +202,24 @@ snomadr <-
 
       ## Determine function arguments
       fargs <- formals(fun)
+      argnames.supplied <- names(arglist)
+      if (is.null(argnames.supplied)) {
+        argnames.supplied <- rep.int("", length(arglist))
+      }
+
+      if (length(fargs) == 1L && length(arglist) > 0L) {
+        bad.idx <- 1L
+        bad.name <- if (nzchar(argnames.supplied[bad.idx])) {
+          argnames.supplied[bad.idx]
+        } else {
+          paste0("argument #", bad.idx)
+        }
+        stop(paste("'", bad.name, "' passed to (...) in 'snomadr' but this is not required in the ", funname, " function.\n", sep = ""))
+      }
 
       if ( length(fargs) > 1 ) {
         ## Determine argument names user-defined function
         argnames.udf <- names(fargs)[-1L]  ## remove first argument, which is x
-
-        ## Determine argument names that where supplied to snomadr()
-        argnames.supplied <- names(arglist)
 
         ## Determine which arguments where required but not supplied
         m1 = match(argnames.udf, argnames.supplied)

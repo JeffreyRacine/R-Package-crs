@@ -31,3 +31,20 @@ test_that("snomadr reports extraneous ... arguments", {
     "'extra_arg' passed to \\(\\.\\.\\.\\) in 'snomadr'"
   )
 })
+
+test_that("snomadr rejects ... arguments when eval.f only takes x", {
+  eval.f <- function(x) sum(x)
+
+  expect_error(
+    crs::snomadr(
+      n = 2,
+      eval.f = eval.f,
+      x0 = c(0, 0),
+      lb = c(-1, -1),
+      ub = c(1, 1),
+      extra_arg = 123,
+      display.nomad.progress = FALSE
+    ),
+    "'extra_arg' passed to \\(\\.\\.\\.\\) in 'snomadr'"
+  )
+})
