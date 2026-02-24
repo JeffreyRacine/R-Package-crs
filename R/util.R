@@ -163,9 +163,9 @@ check.max.spline.degree <- function(xdat=NULL,degree=NULL,display.warnings=TRUE)
 
   ill.conditioned <- FALSE
 
-  xdat.numeric <- sapply(seq_len(ncol(xdat)),function(i){is.numeric(xdat[,i])})
-  numeric.index <- which(xdat.numeric==TRUE)
-  num.numeric <- sum(sapply(seq_len(NCOL(xdat)),function(i){is.numeric(xdat[,i])})==TRUE)
+  xdat.numeric <- vapply(xdat, is.numeric, logical(1L))
+  numeric.index <- which(xdat.numeric)
+  num.numeric <- sum(xdat.numeric)
   d <- numeric(num.numeric)
 
   if(num.numeric > 0) {

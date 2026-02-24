@@ -89,7 +89,7 @@ W.glp <- function(xdat = NULL,
 
   xdat <- as.data.frame(xdat)
 
-  xdat.col.numeric <- sapply(seq_len(ncol(xdat)),function(i){is.numeric(xdat[,i])})
+  xdat.col.numeric <- vapply(xdat, is.numeric, logical(1L))
   k <- ncol(as.data.frame(xdat[,xdat.col.numeric]))
 
   xdat.numeric <- NULL
@@ -235,9 +235,9 @@ check.max.degree <- function(xdat=NULL,degree=NULL,display.warnings=TRUE,Bernste
 
   ill.conditioned <- FALSE
 
-  xdat.numeric <- sapply(seq_len(ncol(xdat)),function(i){is.numeric(xdat[,i])})
-  numeric.index <- which(xdat.numeric==TRUE)
-  num.numeric <- sum(sapply(seq_len(NCOL(xdat)),function(i){is.numeric(xdat[,i])})==TRUE)
+  xdat.numeric <- vapply(xdat, is.numeric, logical(1L))
+  numeric.index <- which(xdat.numeric)
+  num.numeric <- sum(xdat.numeric)
   d <- numeric(num.numeric)
 
   if(num.numeric > 0) {
@@ -1018,10 +1018,10 @@ glpregEst <- function(tydat=NULL,
   n.train <- nrow(txdat)
   n.eval <- nrow(exdat)
 
-  xdat.numeric <- sapply(seq_len(ncol(txdat)),function(i){is.numeric(txdat[,i])})
-  categorical.index <- which(xdat.numeric==FALSE)
-  numeric.index <- which(xdat.numeric==TRUE)
-  num.numeric <- sum(sapply(seq_len(NCOL(txdat)),function(i){is.numeric(txdat[,i])})==TRUE)
+  xdat.numeric <- vapply(txdat, is.numeric, logical(1L))
+  categorical.index <- which(!xdat.numeric)
+  numeric.index <- which(xdat.numeric)
+  num.numeric <- sum(xdat.numeric)
   num.categorical <- NCOL(txdat)-num.numeric
 
   if(num.numeric == 0) stop("generalized local polynomial regression requires at least one numeric predictor")

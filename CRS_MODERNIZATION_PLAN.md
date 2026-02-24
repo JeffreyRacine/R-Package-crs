@@ -14,7 +14,7 @@ Modernize `crs` to current best-practice R package engineering standards while p
 
 ## Current Status Snapshot (2026-02-24)
 
-1. Checkpoints completed locally: `43+` commits on top of `origin/master` (no push).
+1. Checkpoints completed locally: `44+` commits on top of `origin/master` (no push).
 2. Completed tranches:
    - `A/R1.1` through `A/R1.10` (low-risk R modernization path).
    - `A/R2.1` (removed `eval(parse(...))` in `stepCV`).
@@ -26,7 +26,7 @@ Modernize `crs` to current best-practice R package engineering standards while p
    - `A/R1.12` (additional `seq_len`/`seq.int` safety sweep in spline utilities).
    - `A/R1.13` (broader loop-header safety sweep across CV/sigtest and helper paths).
    - `A/R1.14` (full `npglpreg` loop-header safety sweep).
-   - `A/R1.15` through `A/R1.22` (scalar control-flow cleanup, script hygiene, clamp/vectorization follow-ups, and remaining legacy `do.call` cleanup in matrix-construction paths).
+   - `A/R1.15` through `A/R1.23` (scalar control-flow cleanup, script hygiene, clamp/vectorization follow-ups, remaining legacy `do.call` cleanup in matrix-construction paths, and `vapply` numeric-column sweep).
    - `B/R2` (shared IV scaffolding helpers for dots/call assembly in `crsiv` and `crsivderiv`).
    - `B/R1.1` (non-NOMAD C memory hygiene in `gsl_bspline.c`).
    - `B/R1.2` and `B/R1.3` (native-interface and matrix-kernel regression test expansion).
@@ -1215,3 +1215,32 @@ Validation artifacts:
    - `/tmp/crs_check_eval_refactor_20260224.log` (`Status: 4 WARNINGs, 4 NOTEs`)
    - `/tmp/crs_build_eval_refactor_clean_20260224.log`
    - `/tmp/crs_check_eval_refactor_clean_20260224.log` (`Status: 4 WARNINGs, 4 NOTEs`)
+
+### 2026-02-24 - A/R1.23 `vapply` numeric-column detection sweep
+
+Scope completed:
+
+1. Replaced repeated `sapply(seq_len(ncol(...)), is.numeric)` patterns with `vapply(..., is.numeric, logical(1L))` in:
+   - `/Users/jracine/Development/crs/R/util.R`
+   - `/Users/jracine/Development/crs/R/np.regression.glp.R`
+2. Simplified derived counters/indexes to scalar-safe direct forms:
+   - `which(xdat.numeric == TRUE)` -> `which(xdat.numeric)`
+   - `sum(... == TRUE)` -> `sum(xdat.numeric)`
+   - `which(xdat.numeric == FALSE)` -> `which(!xdat.numeric)`
+3. Removed final active `1:NROW(...)` indexing form in:
+   - `/Users/jracine/Development/crs/R/glp.model.matrix.R`
+   - `rownames(z) <- seq_len(NROW(z))`.
+4. Result:
+   - no remaining active `1:length(...)` / `1:ncol(...)` / `1:NCOL(...)` / `1:NROW(...)` loop-header/index forms in `R/`.
+
+Validation artifacts:
+
+1. Deterministic preclean install:
+   - `/tmp/crs_install_vapply_sweep_20260224.log`
+2. Targeted tests:
+   - `/tmp/crs_test_vapply_targeted_20260224.out` (`PASS 33, WARN 1, FAIL 0`)
+3. Full test suite:
+   - `/tmp/crs_test_vapply_full_20260224.out` (`PASS 80, WARN 1, FAIL 0`)
+4. Tarball-first:
+   - `/tmp/crs_build_vapply_sweep_20260224.log`
+   - `/tmp/crs_check_vapply_sweep_20260224.log` (`Status: 4 WARNINGs, 3 NOTEs`)
