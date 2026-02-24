@@ -168,6 +168,11 @@ is.monotone.increasing <- function(x) {
   if (crs.messages) options(crs.messages = value)
 }
 
+.crs_tail_index <- function(start, n) {
+  if (start > n) return(integer(0L))
+  seq.int(start, n)
+}
+
 ## This function tests for the maximum well-conditioned spline degree.
 
 ## Note that increasing the number of breaks, other things equal,

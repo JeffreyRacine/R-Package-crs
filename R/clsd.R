@@ -428,26 +428,28 @@ clsd <- function(x=NULL,
   ## either sample x or evaluation xeval
 
   if(is.null(xeval)) {
+    tail.idx <- .crs_tail_index(length(x) + 1L, length(f.norm))
     f <-   f.norm[rank.xnorm][seq_along(x)]
     F <-   F.norm[rank.xnorm][seq_along(x)]
-    f.norm <- f.norm[rank.xnorm][(length(x)+1):length(f.norm)]
-    F.norm <- F.norm[rank.xnorm][(length(x)+1):length(F.norm)]
-    xnorm <- xnorm[rank.xnorm][(length(x)+1):length(xnorm)]
+    f.norm <- f.norm[rank.xnorm][tail.idx]
+    F.norm <- F.norm[rank.xnorm][tail.idx]
+    xnorm <- xnorm[rank.xnorm][tail.idx]
     if(deriv>0) {
       f.deriv <- f.norm.deriv[rank.xnorm][seq_along(x)]
-      f.norm.deriv <- f.norm.deriv[rank.xnorm][(length(x)+1):length(f.norm.deriv)]
+      f.norm.deriv <- f.norm.deriv[rank.xnorm][tail.idx]
     }
     P <-   Pnorm[rank.xnorm,][seq_along(x),]
     P.beta <- Pnorm.beta[rank.xnorm][seq_along(x)]
   } else {
+    tail.idx <- .crs_tail_index(length(x) + length(xeval) + 1L, length(f.norm))
     f <-   f.norm[rank.xnorm][seq_along(xeval)]
     F <-   F.norm[rank.xnorm][seq_along(xeval)]
-    f.norm <- f.norm[rank.xnorm][(length(x)+length(xeval)+1):length(f.norm)]
-    F.norm <- F.norm[rank.xnorm][(length(x)+length(xeval)+1):length(F.norm)]
-    xnorm <- xnorm[rank.xnorm][(length(x)+length(xeval)+1):length(xnorm)]
+    f.norm <- f.norm[rank.xnorm][tail.idx]
+    F.norm <- F.norm[rank.xnorm][tail.idx]
+    xnorm <- xnorm[rank.xnorm][tail.idx]
     if(deriv>0) {
       f.deriv <- f.norm.deriv[rank.xnorm][seq_along(xeval)]
-      f.norm.deriv <- f.norm.deriv[rank.xnorm][(length(x)+length(xeval)+1):length(f.norm.deriv)]
+      f.norm.deriv <- f.norm.deriv[rank.xnorm][tail.idx]
     }
     P <-   Pnorm[rank.xnorm,][seq_along(xeval),]
     P.beta <- Pnorm.beta[rank.xnorm][seq_along(xeval)]
@@ -605,8 +607,9 @@ ls.ml <- function(x=NULL,
 
         P <- Pnorm[rank.xnorm,][seq_len(length.x),]
         colSumsP <- colSums(P)
-        Pint <- Pnorm[rank.xnorm,][(length.x+1):nrow(Pnorm),]
-        xint <- xnorm[rank.xnorm][(length.x+1):nrow(Pnorm)]
+        int.idx <- .crs_tail_index(length.x + 1L, nrow(Pnorm))
+        Pint <- Pnorm[rank.xnorm,][int.idx,]
+        xint <- xnorm[rank.xnorm][int.idx]
 
         complexity <- d+s
 
@@ -739,8 +742,9 @@ ls.ml <- function(x=NULL,
 
       P <- Pnorm[rank.xnorm,][seq_len(length.x),]
       colSumsP <- colSums(P)
-      Pint <- Pnorm[rank.xnorm,][(length.x+1):nrow(Pnorm),]
-      xint <- xnorm[rank.xnorm][(length.x+1):nrow(Pnorm)]
+      int.idx <- .crs_tail_index(length.x + 1L, nrow(Pnorm))
+      Pint <- Pnorm[rank.xnorm,][int.idx,]
+      xint <- xnorm[rank.xnorm][int.idx]
 
       ## NOMAD minimizes only
 
@@ -868,8 +872,9 @@ ls.ml <- function(x=NULL,
 
     P <- Pnorm[rank.xnorm,][seq_len(length.x),]
     colSumsP <- colSums(P)
-    Pint <- Pnorm[rank.xnorm,][(length.x+1):nrow(Pnorm),]
-    xint <- xnorm[rank.xnorm][(length.x+1):nrow(Pnorm)]
+    int.idx <- .crs_tail_index(length.x + 1L, nrow(Pnorm))
+    Pint <- Pnorm[rank.xnorm,][int.idx,]
+    xint <- xnorm[rank.xnorm][int.idx]
 
     optim.out <- list()
     optim.out[[4]] <- 9999
