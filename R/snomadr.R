@@ -205,7 +205,7 @@ snomadr <-
 
       if ( length(fargs) > 1 ) {
         ## Determine argument names user-defined function
-        argnames.udf <- names(fargs)[2:length(fargs)]  ## remove first argument, which is x
+        argnames.udf <- names(fargs)[-1L]  ## remove first argument, which is x
 
         ## Determine argument names that where supplied to snomadr()
         argnames.supplied <- names(arglist)
@@ -214,18 +214,14 @@ snomadr <-
         m1 = match(argnames.udf, argnames.supplied)
         if( any(is.na(m1)) ){
           mx1 = which( is.na(m1) )
-          for( i in seq_along(mx1) ){
-            stop(paste(funname, " requires argument '", argnames.udf[mx1], "' but this has not been passed to the 'snomadr' function.\n", sep = ""))
-          }
+          stop(paste(funname, " requires argument '", argnames.udf[mx1[1L]], "' but this has not been passed to the 'snomadr' function.\n", sep = ""))
         }
 
         ## Determine which arguments where supplied but not required
         m2 = match(argnames.supplied, argnames.udf)
         if( any(is.na(m2)) ){
           mx2 = which( is.na(m2) )
-          for( i in seq_along(mx2) ){
-            stop(paste("'", argnames.supplied[mx2], "' passed to (...) in 'snomadr' but this is not required in the ", funname, " function.\n", sep = ""))
-          }
+          stop(paste("'", argnames.supplied[mx2[1L]], "' passed to (...) in 'snomadr' but this is not required in the ", funname, " function.\n", sep = ""))
         }
       }
       return( 0 )

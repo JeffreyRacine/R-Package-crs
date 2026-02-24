@@ -14,7 +14,7 @@ Modernize `crs` to current best-practice R package engineering standards while p
 
 ## Current Status Snapshot (2026-02-24)
 
-1. Checkpoints completed locally: `54+` commits on top of `origin/master` (no push).
+1. Checkpoints completed locally: `55+` commits on top of `origin/master` (no push).
 2. Completed tranches:
    - `A/R1.1` through `A/R1.10` (low-risk R modernization path).
    - `A/R2.1` (removed `eval(parse(...))` in `stepCV`).
@@ -26,7 +26,7 @@ Modernize `crs` to current best-practice R package engineering standards while p
    - `A/R1.12` (additional `seq_len`/`seq.int` safety sweep in spline utilities).
    - `A/R1.13` (broader loop-header safety sweep across CV/sigtest and helper paths).
    - `A/R1.14` (full `npglpreg` loop-header safety sweep).
-   - `A/R1.15` through `A/R1.33` (scalar control-flow cleanup, script hygiene, clamp/vectorization follow-ups, remaining legacy `do.call` cleanup in matrix-construction paths, `vapply` numeric-column sweeps, boolean control simplification, centralized RNG seed state handling, scalar-loop index correctness fixes in `npglpreg` warning/index paths, registered-symbol `.Call` hygiene, robust option-state guards for `crsiv` / `crsivderiv` including unset-option handling, eval-helper namespace-resolution hardening, recursive source-artifact cleanup/build hygiene hardening, and stepCV loop-index safety hardening for empty-scope paths).
+   - `A/R1.15` through `A/R1.34` (scalar control-flow cleanup, script hygiene, clamp/vectorization follow-ups, remaining legacy `do.call` cleanup in matrix-construction paths, `vapply` numeric-column sweeps, boolean control simplification, centralized RNG seed state handling, scalar-loop index correctness fixes in `npglpreg` warning/index paths, registered-symbol `.Call` hygiene, robust option-state guards for `crsiv` / `crsivderiv` including unset-option handling, eval-helper namespace-resolution hardening, recursive source-artifact cleanup/build hygiene hardening, stepCV loop-index safety hardening for empty-scope paths, and snomadr argument-validation hardening).
    - `B/R2` (shared IV scaffolding helpers for dots/call assembly in `crsiv` and `crsivderiv`).
    - `B/R1.1` (non-NOMAD C memory hygiene in `gsl_bspline.c`).
    - `B/R1.2` and `B/R1.3` (native-interface and matrix-kernel regression test expansion).
@@ -1537,3 +1537,33 @@ Validation artifacts:
 5. Tarball-first:
    - `/tmp/crs_build_stepcv_seq_len_20260224.log`
    - `/tmp/crs_check_stepcv_seq_len_20260224.log` (`Status: 5 WARNINGs, 1 NOTE`)
+
+### 2026-02-24 - A/R1.34 `snomadr` argument-validation hardening
+
+Scope completed:
+
+1. Hardened user-argument validation internals in:
+   - `/Users/jracine/Development/crs/R/snomadr.R`
+2. Changes:
+   - replaced brittle `names(fargs)[2:length(fargs)]` with scalar-safe `names(fargs)[-1L]`,
+   - simplified missing-argument failure path to report first missing required argument deterministically,
+   - simplified extraneous-argument failure path to report first unexpected argument deterministically.
+3. Added regression tests:
+   - `/Users/jracine/Development/crs/tests/testthat/test-snomadr-args.R`
+   - missing required `...` argument for `eval.f`,
+   - extraneous `...` argument detection when `eval.f` formal requirements are supplied.
+4. Result:
+   - removed length/indexing footgun in argument-name slicing,
+   - made user-facing argument-check errors deterministic and explicit.
+
+Validation artifacts:
+
+1. Deterministic install:
+   - `/tmp/crs_install_snomadr_args_20260224.log`
+2. Targeted tests:
+   - `/tmp/crs_test_snomadr_args_targeted_20260224.out` (`PASS 2, WARN 0, FAIL 0`)
+3. Full test suite:
+   - `/tmp/crs_test_snomadr_args_full_20260224.out` (`PASS 100, WARN 1, FAIL 0`)
+4. Tarball-first:
+   - `/tmp/crs_build_snomadr_args_20260224.log`
+   - `/tmp/crs_check_snomadr_args_20260224.log` (`Status: 5 WARNINGs, 1 NOTE`)
