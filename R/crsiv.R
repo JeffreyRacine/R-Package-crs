@@ -693,7 +693,8 @@ crsiv.default <- function(y,
       phi <- phi + constant*(if(is.eval.train) fitted(model.predict.residw.z) else predict(model.predict.residw.z,newdata=evaldata,...))
       phi.mat[,j] <- phi
 
-      norm.stop[j] <- ifelse(penalize.iteration,j*sum(weights*residw^2)/sum_w_Eyw2,sum(weights*residw^2)/sum_w_Eyw2)
+      norm.raw <- sum(weights * residw^2) / sum_w_Eyw2
+      norm.stop[j] <- if (penalize.iteration) j * norm.raw else norm.raw
 
       ## The number of iterations in LF is asymptotically equivalent
       ## to 1/alpha (where alpha is the regularization parameter in

@@ -494,7 +494,8 @@ crsivderiv.default <- function(y,
 
     }
 
-    norm.stop[j] <- ifelse(penalize.iteration,j*sum(predicted.model.E.mu.w^2)/sum(E.y.w^2),sum(predicted.model.E.mu.w^2)/sum(E.y.w^2))
+    norm.raw <- sum(predicted.model.E.mu.w^2) / sum(E.y.w^2)
+    norm.stop[j] <- if (penalize.iteration) j * norm.raw else norm.raw
 
     ## Now we compute T^* applied to mu
 
