@@ -1054,7 +1054,7 @@ glpregEst <- function(tydat=NULL,
 
     ## Local constant using only one call to npksum
 
-    if(leave.one.out == TRUE) {
+    if(leave.one.out) {
 
       ## exdat not supported with leave.one.out, but this is only used
       ## for cross-validation hence no exdat
@@ -1160,7 +1160,7 @@ glpregEst <- function(tydat=NULL,
     ## Local polynomial via smooth coefficient formulation and one
     ## call to npksum
 
-    if(leave.one.out == TRUE) {
+    if(leave.one.out) {
 
       ## exdat not supported with leave.one.out, but this is only used
       ## for cross-validation hence no exdat
@@ -1358,14 +1358,14 @@ minimand.cv.ls <- function(bws=NULL,
 
   ## Manually conduct bandwidth scaling
   num.bw <- ncol(xdat)
-  xdat.numeric <- sapply(seq_len(num.bw),function(i){is.numeric(xdat[,i])})
+  xdat.numeric <- vapply(xdat, is.numeric, logical(1L))
   num.numeric <- ncol(as.data.frame(xdat[,xdat.numeric]))
 
   for(i in seq_len(num.bw)) {
-    if(xdat.numeric[i]==TRUE && bwtype=="fixed") {
+    if(xdat.numeric[i] && bwtype=="fixed") {
       bws[i] <- bws[i]*scale_robust(xdat[,i],display.warnings=display.warnings)*length(ydat)^{-1/(num.numeric+2*ckerorder)}
     }
-    if(xdat.numeric[i]!=TRUE) {
+    if(!xdat.numeric[i]) {
       bws[i] <- bws[i]/bandwidth.scale.categorical
     }
   }
@@ -1719,14 +1719,14 @@ minimand.cv.aic <- function(bws=NULL,
 
   ## Manually conduct bandwidth scaling
   num.bw <- ncol(xdat)
-  xdat.numeric <- sapply(seq_len(num.bw),function(i){is.numeric(xdat[,i])})
+  xdat.numeric <- vapply(xdat, is.numeric, logical(1L))
   num.numeric <- ncol(as.data.frame(xdat[,xdat.numeric]))
 
   for(i in seq_len(num.bw)) {
-    if(xdat.numeric[i]==TRUE && bwtype=="fixed") {
+    if(xdat.numeric[i] && bwtype=="fixed") {
       bws[i] <- bws[i]*scale_robust(xdat[,i],display.warnings=display.warnings)*length(ydat)^{-1/(num.numeric+2*ckerorder)}
     }
-    if(xdat.numeric[i]!=TRUE) {
+    if(!xdat.numeric[i]) {
       bws[i] <- bws[i]/bandwidth.scale.categorical
     }
   }
@@ -2287,15 +2287,15 @@ glpcvNOMAD <- function(ydat=NULL,
   ## [0,(c-1)/c] and not 0/1 as are the rest of the unordered and
   ## ordered kernel bandwidth bounds.
 
-  xdat.numeric <- sapply(seq_len(num.bw),function(i){is.numeric(xdat[,i])})
+  xdat.numeric <- vapply(xdat, is.numeric, logical(1L))
   num.numeric <- ncol(as.data.frame(xdat[,xdat.numeric]))
-  numeric.index <- which(xdat.numeric==TRUE)
+  numeric.index <- which(xdat.numeric)
 
   if(num.numeric == 0) stop("generalized local polynomial regression requires at least one numeric predictor")
 
   if(!is.null(degree) && length(degree) != num.numeric) stop(paste(" Error: degree vector supplied has ", length(degree), " elements but there exist ", num.numeric," numeric.predictors",sep=""))
 
-  xdat.unordered <- sapply(seq_len(num.bw),function(i){is.factor(xdat[,i])&!is.ordered(xdat[,i])})
+  xdat.unordered <- vapply(xdat, function(col) is.factor(col) && !is.ordered(col), logical(1L))
   num.unordered <- ncol(as.data.frame(xdat[,xdat.unordered]))
 
   if(cv=="degree-bandwidth") {
@@ -2358,7 +2358,7 @@ glpcvNOMAD <- function(ydat=NULL,
     }
     ## Need to do integer search for numeric predictors when bwtype is
     ## a nearest-neighbour, so set bbin appropriately.
-    if(xdat.numeric[i]==TRUE && bwtype!="fixed") {
+    if(xdat.numeric[i] && bwtype!="fixed") {
       bbin[i] <- 1
     }
     if(!xdat.numeric[i]) {
@@ -2370,7 +2370,7 @@ glpcvNOMAD <- function(ydat=NULL,
       MIN.FRAME.SIZE[[i]] <- min.frame.size.integer
     }
     ## Check for unordered and Aitchison/Aitken kernel
-    if(xdat.unordered[i]==TRUE && ukertype=="aitchisonaitken") {
+    if(xdat.unordered[i] && ukertype=="aitchisonaitken") {
       c.num <- length(unique(xdat[,i]))
       ub[i] <- (c.num-1)/c.num*bandwidth.scale.categorical
       bw.switch[i] <- ub[i]
@@ -2476,13 +2476,13 @@ glpcvNOMAD <- function(ydat=NULL,
   if(is.null(bandwidth)) {
     init.search.vals <- numeric()
     for(i in seq_len(num.bw)) {
-      if(xdat.numeric[i]==TRUE && bwtype=="fixed") {
+      if(xdat.numeric[i] && bwtype=="fixed") {
         init.search.vals[i] <- runif(1,lb[i],1.5)
       }
-      if(xdat.numeric[i]==TRUE && bwtype!="fixed") {
+      if(xdat.numeric[i] && bwtype!="fixed") {
         init.search.vals[i] <- round(runif(1,lb[i],sqrt(ub[i])))
       }
-      if(xdat.numeric[i]!=TRUE) {
+      if(!xdat.numeric[i]) {
         init.search.vals[i] <- runif(1,lb[i],ub[i])
       }
     }
@@ -2492,10 +2492,10 @@ glpcvNOMAD <- function(ydat=NULL,
     ## optimizing)
     init.search.vals <- bandwidth
     for(i in seq_len(num.bw)) {
-      if(xdat.numeric[i]==TRUE && bwtype=="fixed") {
+      if(xdat.numeric[i] && bwtype=="fixed") {
         init.search.vals[i] <- bandwidth[i]/(scale_robust(xdat[,i],display.warnings=display.warnings)*length(ydat)^{-1/(num.numeric+2*ckerorder)})
       }
-      if(xdat.numeric[i]!=TRUE) {
+      if(!xdat.numeric[i]) {
         init.search.vals[i] <- bandwidth[i]*bandwidth.scale.categorical
       }
     }
@@ -2509,13 +2509,13 @@ glpcvNOMAD <- function(ydat=NULL,
     if(iMulti != 1) {
       init.search.vals <- numeric()
       for(i in seq_len(num.bw)) {
-        if(xdat.numeric[i]==TRUE && bwtype=="fixed") {
+        if(xdat.numeric[i] && bwtype=="fixed") {
           init.search.vals[i] <- runif(1,lb[i],1.5)
         }
-        if(xdat.numeric[i]==TRUE && bwtype!="fixed") {
+        if(xdat.numeric[i] && bwtype!="fixed") {
           init.search.vals[i] <- round(runif(1,lb[i],sqrt(ub[i])))
         }
-        if(xdat.numeric[i]!=TRUE) {
+        if(!xdat.numeric[i]) {
           init.search.vals[i] <- runif(1,lb[i],ub[i])
         }
       }
@@ -2899,7 +2899,7 @@ plot.npglpreg <- function(x,
 
   ## Mean
 
-  if(mean==TRUE && deriv==0) {
+  if(isTRUE(mean) && deriv==0) {
 
     if(!persp.rgl) {
 

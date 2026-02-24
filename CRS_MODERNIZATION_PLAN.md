@@ -14,7 +14,7 @@ Modernize `crs` to current best-practice R package engineering standards while p
 
 ## Current Status Snapshot (2026-02-24)
 
-1. Checkpoints completed locally: `44+` commits on top of `origin/master` (no push).
+1. Checkpoints completed locally: `45+` commits on top of `origin/master` (no push).
 2. Completed tranches:
    - `A/R1.1` through `A/R1.10` (low-risk R modernization path).
    - `A/R2.1` (removed `eval(parse(...))` in `stepCV`).
@@ -26,7 +26,7 @@ Modernize `crs` to current best-practice R package engineering standards while p
    - `A/R1.12` (additional `seq_len`/`seq.int` safety sweep in spline utilities).
    - `A/R1.13` (broader loop-header safety sweep across CV/sigtest and helper paths).
    - `A/R1.14` (full `npglpreg` loop-header safety sweep).
-   - `A/R1.15` through `A/R1.23` (scalar control-flow cleanup, script hygiene, clamp/vectorization follow-ups, remaining legacy `do.call` cleanup in matrix-construction paths, and `vapply` numeric-column sweep).
+   - `A/R1.15` through `A/R1.24` (scalar control-flow cleanup, script hygiene, clamp/vectorization follow-ups, remaining legacy `do.call` cleanup in matrix-construction paths, `vapply` numeric-column sweeps, and boolean control simplification in `npglpreg` paths).
    - `B/R2` (shared IV scaffolding helpers for dots/call assembly in `crsiv` and `crsivderiv`).
    - `B/R1.1` (non-NOMAD C memory hygiene in `gsl_bspline.c`).
    - `B/R1.2` and `B/R1.3` (native-interface and matrix-kernel regression test expansion).
@@ -1244,3 +1244,35 @@ Validation artifacts:
 4. Tarball-first:
    - `/tmp/crs_build_vapply_sweep_20260224.log`
    - `/tmp/crs_check_vapply_sweep_20260224.log` (`Status: 4 WARNINGs, 3 NOTEs`)
+
+### 2026-02-24 - A/R1.24 boolean control simplification (`npglpreg` paths)
+
+Scope completed:
+
+1. Simplified boolean control branches in:
+   - `/Users/jracine/Development/crs/R/np.regression.glp.R`
+2. Replaced scalar/vector boolean comparisons with direct logical forms:
+   - `xdat.numeric[i] == TRUE` -> `xdat.numeric[i]`
+   - `xdat.numeric[i] != TRUE` -> `!xdat.numeric[i]`
+   - `xdat.unordered[i] == TRUE` -> `xdat.unordered[i]`
+   - `which(xdat.numeric == TRUE)` -> `which(xdat.numeric)`
+3. Hardened scalar flag checks:
+   - `leave.one.out == TRUE` -> `leave.one.out`
+   - `mean == TRUE` -> `isTRUE(mean)`
+4. Extended `vapply` use for predictor-type detection in additional local paths:
+   - `xdat.numeric <- vapply(xdat, is.numeric, logical(1L))`
+   - `xdat.unordered <- vapply(xdat, function(col) is.factor(col) && !is.ordered(col), logical(1L))`
+
+Validation artifacts:
+
+1. Deterministic preclean install:
+   - `/tmp/crs_install_bool_sweep_20260224.log`
+2. Targeted tests:
+   - `/tmp/crs_test_bool_targeted_20260224.out` (`PASS 28, WARN 1, FAIL 0`)
+3. Full test suite:
+   - `/tmp/crs_test_bool_full_20260224.out` (`PASS 80, WARN 1, FAIL 0`)
+4. Tarball-first:
+   - `/tmp/crs_build_bool_sweep_20260224.log`
+   - `/tmp/crs_check_bool_sweep_20260224.log` (`Status: 4 WARNINGs, 4 NOTEs`)
+   - `/tmp/crs_build_bool_sweep_clean_20260224.log`
+   - `/tmp/crs_check_bool_sweep_clean_20260224.log` (`Status: 4 WARNINGs, 4 NOTEs`)
