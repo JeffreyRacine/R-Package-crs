@@ -1,3 +1,40 @@
+legacy_bs_des_c <- function(x, degree, nbreak, deriv, x.min, x.max, knots = NULL) {
+  n <- length(x)
+  ncol <- nbreak + degree - 1
+  knots.int <- if (is.null(knots)) 0L else 1L
+  knots.vec <- if (is.null(knots)) as.double(NULL) else as.double(knots)
+
+  if (all(deriv == 0L)) {
+    out <- .C("gsl_bspline",
+              as.double(x),
+              as.integer(n),
+              as.integer(degree),
+              as.integer(nbreak),
+              as.double(x.min),
+              as.double(x.max),
+              knots.vec,
+              as.integer(knots.int),
+              Bx = double(n * ncol),
+              PACKAGE = "crs")
+  } else {
+    out <- .C("gsl_bspline_deriv",
+              as.double(x),
+              as.integer(n),
+              as.integer(degree),
+              as.integer(nbreak),
+              as.integer(deriv),
+              as.integer(max(deriv)),
+              as.double(x.min),
+              as.double(x.max),
+              knots.vec,
+              as.integer(knots.int),
+              Bx = double(n * ncol),
+              PACKAGE = "crs")
+  }
+
+  matrix(out$Bx, nrow = n, ncol = ncol, byrow = TRUE)
+}
+
 test_that("uniquecombs preserves row mapping via index attribute", {
   set.seed(101)
   x <- cbind(round(runif(24), 2), sample(1:4, 24, replace = TRUE))
@@ -55,4 +92,38 @@ test_that("hat.from.lm.fit matches qr-based hat values", {
 
   expect_equal(h_native, h_ref, tolerance = 1e-10)
   expect_true(all(is.finite(h_native)))
+})
+
+test_that("bs.des .Call wrapper matches legacy .C results (uniform knots)", {
+  set.seed(104)
+  x <- runif(40)
+  degree <- 3L
+  nbreak <- 6L
+  x.min <- min(x)
+  x.max <- max(x)
+
+  deriv0 <- rep(0L, length(x))
+  new0 <- crs:::bs.des(x, degree = degree, nbreak = nbreak, deriv = deriv0, x.min = x.min, x.max = x.max, knots = NULL)
+  old0 <- legacy_bs_des_c(x, degree = degree, nbreak = nbreak, deriv = deriv0, x.min = x.min, x.max = x.max, knots = NULL)
+  expect_equal(new0, old0, tolerance = 1e-12)
+
+  derivv <- sample.int(degree, length(x), replace = TRUE) - 1L
+  newv <- crs:::bs.des(x, degree = degree, nbreak = nbreak, deriv = derivv, x.min = x.min, x.max = x.max, knots = NULL)
+  oldv <- legacy_bs_des_c(x, degree = degree, nbreak = nbreak, deriv = derivv, x.min = x.min, x.max = x.max, knots = NULL)
+  expect_equal(newv, oldv, tolerance = 1e-12)
+})
+
+test_that("bs.des .Call wrapper matches legacy .C results (quantile knots)", {
+  set.seed(105)
+  x <- runif(35)
+  degree <- 2L
+  nbreak <- 5L
+  x.min <- min(x)
+  x.max <- max(x)
+  knots <- as.numeric(quantile(x, probs = seq(0, 1, length.out = nbreak), type = 7))
+
+  deriv0 <- rep(0L, length(x))
+  new0 <- crs:::bs.des(x, degree = degree, nbreak = nbreak, deriv = deriv0, x.min = x.min, x.max = x.max, knots = knots)
+  old0 <- legacy_bs_des_c(x, degree = degree, nbreak = nbreak, deriv = deriv0, x.min = x.min, x.max = x.max, knots = knots)
+  expect_equal(new0, old0, tolerance = 1e-12)
 })

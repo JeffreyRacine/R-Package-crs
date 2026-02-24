@@ -14,7 +14,7 @@ Modernize `crs` to current best-practice R package engineering standards while p
 
 ## Current Status Snapshot (2026-02-24)
 
-1. Checkpoints completed locally: `30+` commits on top of `origin/master` (no push).
+1. Checkpoints completed locally: `40+` commits on top of `origin/master` (no push).
 2. Completed tranches:
    - `A/R1.1` through `A/R1.10` (low-risk R modernization path).
    - `A/R2.1` (removed `eval(parse(...))` in `stepCV`).
@@ -31,11 +31,12 @@ Modernize `crs` to current best-practice R package engineering standards while p
    - `B/R1.2` and `B/R1.3` (native-interface and matrix-kernel regression test expansion).
    - test harness stabilization (`tests/testthat/setup-load-crs.R`) and deprecation cleanup (`test-crsivderiv.R`).
    - `C/R3.1` and `C/R3.2` partial migrations: `uniquecombs()` and `gsl.bs` native paths moved from `.C` to `.Call`.
+   - `C/R3.3` parity tranche: explicit `.Call` vs legacy `.C` regression tests for `bs.des`.
 3. Validation discipline maintained at each checkpoint:
    - installed-package targeted smokes,
    - tarball-first `R CMD build` and `R CMD check --as-cran`,
    - stable non-regressive check profile (`4 WARNINGs, 2-3 NOTEs`) with no modernization regressions introduced.
-4. R-layer forensic status (post A/R1.20):
+4. R-layer forensic status (post A/R1.21 + C/R3.3 parity checks):
    - `eval(parse(...))`: `0`
    - string `do.call("...")`: `0`
    - `<<-`: `0`
@@ -131,7 +132,7 @@ Current inventory (2026-02-24):
 3. `eval(parse(...))` in `R/`: `0`
 4. string `do.call("<name>", ...)` in `R/`: `0`
 5. `<<-` in `R/`: `0`
-6. `ifelse(` in `R/`: `2` (both intentional vectorized expressions)
+6. `ifelse(` in `R/`: `0`
 
 Hotspot files (non-NOMAD-heavy):
 
@@ -1095,3 +1096,31 @@ Validation artifacts:
 4. Tarball-first:
    - `/tmp/crs_build_no_ifelse_20260224.log`
    - `/tmp/crs_check_ascran_no_ifelse_20260224.log` (`Status: 4 WARNINGs, 3 NOTEs`)
+
+### 2026-02-24 - C/R3.3 `.Call` parity checks against legacy `.C` (`bs.des`)
+
+Scope completed:
+
+1. Extended native-interface tests in:
+   - `/Users/jracine/Development/crs/tests/testthat/test-native-interfaces.R`
+2. Added a local legacy comparator helper (`legacy_bs_des_c`) that calls registered `.C` entry points:
+   - `"gsl_bspline"`
+   - `"gsl_bspline_deriv"`
+3. Added parity assertions that new `.Call` path (`crs:::bs.des`) matches legacy `.C` outputs for:
+   - uniform-knot basis (`deriv = 0`)
+   - uniform-knot mixed derivatives (`deriv` varying by row)
+   - quantile-knot basis (`deriv = 0`)
+4. Result:
+   - new `.Call` migration has direct regression coverage against legacy interface behavior while `.C` symbols remain available internally.
+
+Validation artifacts:
+
+1. Native parity tests:
+   - `/tmp/crs_test_native_interfaces_parity_20260224.out` (`PASS 18, FAIL 0`)
+2. Full test suite:
+   - `/tmp/crs_test_fullsuite_parity_20260224.out` (`PASS 75, WARN 1, FAIL 0`)
+3. Deterministic install:
+   - `/tmp/crs_install_native_parity_20260224.log`
+4. Tarball-first:
+   - `/tmp/crs_build_native_parity_20260224.log`
+   - `/tmp/crs_check_ascran_native_parity_20260224.log` (`Status: 4 WARNINGs, 3 NOTEs`)
