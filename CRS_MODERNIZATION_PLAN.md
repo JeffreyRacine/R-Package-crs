@@ -14,7 +14,7 @@ Modernize `crs` to current best-practice R package engineering standards while p
 
 ## Current Status Snapshot (2026-02-24)
 
-1. Checkpoints completed locally: `63+` commits on top of `origin/master` (no push).
+1. Checkpoints completed locally: `64+` commits on top of `origin/master` (no push).
 2. Completed tranches:
    - `A/R1.1` through `A/R1.10` (low-risk R modernization path).
    - `A/R2.1` (removed `eval(parse(...))` in `stepCV`).
@@ -26,7 +26,7 @@ Modernize `crs` to current best-practice R package engineering standards while p
    - `A/R1.12` (additional `seq_len`/`seq.int` safety sweep in spline utilities).
    - `A/R1.13` (broader loop-header safety sweep across CV/sigtest and helper paths).
    - `A/R1.14` (full `npglpreg` loop-header safety sweep).
-   - `A/R1.15` through `A/R1.41` (scalar control-flow cleanup, script hygiene, clamp/vectorization follow-ups, remaining legacy `do.call` cleanup in matrix-construction paths, `vapply` numeric-column sweeps, boolean control simplification, centralized RNG seed state handling, scalar-loop index correctness fixes in `npglpreg` warning/index paths, registered-symbol `.Call` hygiene, robust option-state guards for `crsiv` / `crsivderiv` including unset-option handling, eval-helper namespace-resolution hardening, recursive source-artifact cleanup/build hygiene hardening, stepCV loop-index safety hardening for empty-scope paths, snomadr argument-validation hardening, stepCV call-evaluation/helper cleanup, snomadr single-argument `...` guard hardening, formal-matching parity for defaults/ellipsis, non-NOMAD C forensic comment cleanup, residual scalar bitwise-operator cleanup in control paths, `plot.clsd` scalar logical follow-up alignment, and invariant-hoisting in `W.glp` polynomial index construction).
+   - `A/R1.15` through `A/R1.42` (scalar control-flow cleanup, script hygiene, clamp/vectorization follow-ups, remaining legacy `do.call` cleanup in matrix-construction paths, `vapply` numeric-column sweeps, boolean control simplification, centralized RNG seed state handling, scalar-loop index correctness fixes in `npglpreg` warning/index paths, registered-symbol `.Call` hygiene, robust option-state guards for `crsiv` / `crsivderiv` including unset-option handling, eval-helper namespace-resolution hardening, recursive source-artifact cleanup/build hygiene hardening, stepCV loop-index safety hardening for empty-scope paths, snomadr argument-validation hardening, stepCV call-evaluation/helper cleanup, snomadr single-argument `...` guard hardening, formal-matching parity for defaults/ellipsis, non-NOMAD C forensic comment cleanup, residual scalar bitwise-operator cleanup in control paths, `plot.clsd` scalar logical follow-up alignment, invariant-hoisting in `W.glp` polynomial index construction, and explicit `TRUE`/`FALSE` constant normalization in active call arguments).
    - `B/R2` (shared IV scaffolding helpers for dots/call assembly in `crsiv` and `crsivderiv`).
    - `B/R1.1` (non-NOMAD C memory hygiene in `gsl_bspline.c`).
    - `B/R1.2` and `B/R1.3` (native-interface and matrix-kernel regression test expansion).
@@ -1748,3 +1748,36 @@ Validation artifacts:
 4. Check rerun notes:
    - `/tmp/crs_check_npglpreg_degree_max_hoist_20260224.log` ended with OS-level kill during install (`Killed: 9`), matching the known sporadic pre-existing check instability.
    - `/tmp/crs_check_npglpreg_degree_max_hoist_rerun_20260224.log` failed examples due missing installed `np` in this session; resolved by local install from `/Users/jracine/Development/np-master` (`/tmp/np_install_for_crs_check_20260224.log`) before the final successful check.
+
+### 2026-02-24 - A/R1.42 explicit boolean constant normalization
+
+Scope completed:
+
+1. Normalized legacy short boolean constants in active argument positions:
+   - `/Users/jracine/Development/crs/R/util.R`
+   - `/Users/jracine/Development/crs/R/np.regression.glp.R`
+   - `/Users/jracine/Development/crs/R/crssigtest.R`
+   - `/Users/jracine/Development/crs/R/frscvNOMAD.R`
+   - `/Users/jracine/Development/crs/R/krscvNOMAD.R`
+2. Changes:
+   - `lower.tail=F` -> `lower.tail=FALSE`,
+   - `replace=T` -> `replace=TRUE`,
+   - aligned sampled-argument comments to `replace=TRUE`.
+3. Result:
+   - removes remaining ambiguous boolean shorthand in runtime callsites,
+   - improves readability and static-audit clarity with no behavioral change.
+
+Validation artifacts:
+
+1. Syntax gate:
+   - `/tmp/crs_parse_bool_constants_cleanup_20260224.out` (`PARSE_OK`)
+2. Targeted tests:
+   - `/tmp/crs_test_bool_constants_targeted_20260224.out` (`PASS 19, WARN 1, FAIL 0`)
+3. Full test suite:
+   - `/tmp/crs_test_bool_constants_full_20260224.out` (`PASS 105, WARN 1, FAIL 0`)
+4. Tarball-first:
+   - `/tmp/crs_build_bool_constants_cleanup_20260224.log`
+   - `/tmp/crs_check_bool_constants_cleanup_20260224.log` (`Status: 5 WARNINGs`)
+5. Check environment note:
+   - first build attempt failed because `np` was unavailable in library (`ERROR: dependency 'np' is not available`);
+   - resolved by local install from `/Users/jracine/Development/np-master` (`/tmp/np_install_for_crs_build_20260224.log`) before final successful build/check.

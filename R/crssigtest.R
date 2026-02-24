@@ -194,7 +194,7 @@ crssigtest <- function(model = NULL,
 
         if(boot.type=="reorder") {
 
-          xz.boot[,index[ii]] <- sample(model$xz[,index[ii]],replace=T)
+          xz.boot[,index[ii]] <- sample(model$xz[,index[ii]],replace=TRUE)
 
           model.unrestricted.boot <- crs(xz=xz.boot,
                                          y=model$y,
@@ -216,7 +216,7 @@ crssigtest <- function(model = NULL,
 
         } else {
 
-          y.boot <- fitted(model.restricted) + as.numeric(scale(sample(residuals(model),replace=T),center=TRUE,scale=FALSE))
+          y.boot <- fitted(model.restricted) + as.numeric(scale(sample(residuals(model),replace=TRUE),center=TRUE,scale=FALSE))
 
           model.unrestricted.boot <- crs(xz=model$xz,
                                          y=y.boot,
