@@ -202,13 +202,13 @@ crsivderiv.default <- function(y,
 
     if(start.from == "Eyz") {
       ## Start from E(Y|z)
-      if(crs.messages) options(crs.messages=FALSE)
+      .crs_set_messages(crs.messages, FALSE)
       model.E.y.z <- crs(formula.yz,
                          opts=opts,display.nomad.progress=display.nomad.progress,display.warnings=display.warnings,
                          data=traindata,
                          deriv=1,
                          ...)
-      if(crs.messages) options(crs.messages=TRUE)
+      .crs_set_messages(crs.messages, TRUE)
       phi.0 <- model.E.y.z
       if(is.eval.train) {
         E.y.z <- model.E.y.z$fitted.values
@@ -236,9 +236,9 @@ crsivderiv.default <- function(y,
 
   } else {
     phi.prime <- starting.values
-    if(crs.messages) options(crs.messages=FALSE)
+    .crs_set_messages(crs.messages, FALSE)
     phi.0 <- crs(formula.yz,opts=opts,data=traindata,display.nomad.progress=display.nomad.progress,display.warnings=display.warnings,...)
-    if(crs.messages) options(crs.messages=TRUE)
+    .crs_set_messages(crs.messages, TRUE)
   }
 
   ## Step 1 - begin iteration - for this we require \varphi_0. To
@@ -268,12 +268,12 @@ crsivderiv.default <- function(y,
 
   ## For stopping rule...
 
-    if(crs.messages) options(crs.messages=FALSE)
+    .crs_set_messages(crs.messages, FALSE)
     model.E.y.w <- crs(formula.yw,
                        opts=opts,display.nomad.progress=display.nomad.progress,display.warnings=display.warnings,
                        data=traindata,
                        ...)
-    if(crs.messages) options(crs.messages=TRUE)
+    .crs_set_messages(crs.messages, TRUE)
 
     ## Capture instrument parameters for summary
     degree.w <- model.E.y.w$degree
@@ -290,13 +290,13 @@ crsivderiv.default <- function(y,
 
   ## For the stopping rule, we require E.phi.w
 
-  if(crs.messages) options(crs.messages=FALSE)
+  .crs_set_messages(crs.messages, FALSE)
   traindata$phi <- phi
   model.E.phi.w <- crs(formula.phiw,
                        opts=opts,display.nomad.progress=display.nomad.progress,display.warnings=display.warnings,
                        data=traindata,
                        ...)
-  if(crs.messages) options(crs.messages=TRUE)
+  .crs_set_messages(crs.messages, TRUE)
 
   E.phi.w <- if(is.eval.train) fitted(model.E.phi.w) else predict(model.E.phi.w,newdata=evaldata)
 
@@ -313,7 +313,7 @@ crsivderiv.default <- function(y,
 
     ## Smooth residuals (smooth of (y-phi) on w)
 
-    if(crs.messages) options(crs.messages=FALSE)
+    .crs_set_messages(crs.messages, FALSE)
     traindata$mu <- mu
 
     model.E.mu.w <- fit.crs(formula = formula.muw,
@@ -332,7 +332,7 @@ crsivderiv.default <- function(y,
     lambda.phiw <- NULL
     include.phiw <- NULL
 
-    if(crs.messages) options(crs.messages=TRUE)
+    .crs_set_messages(crs.messages, TRUE)
 
     ## We require the fitted values...
 
@@ -347,7 +347,7 @@ crsivderiv.default <- function(y,
     ## Not smoothing residuals (difference of E(Y|w) and smooth of phi
     ## on w)
 
-    if(crs.messages) options(crs.messages=FALSE)
+    .crs_set_messages(crs.messages, FALSE)
     traindata$phi <- phi
 
     model.E.phi.w <- fit.crs(formula = formula.phiw,
@@ -366,7 +366,7 @@ crsivderiv.default <- function(y,
     lambda.muw <- NULL
     include.muw <- NULL
 
-    if(crs.messages) options(crs.messages=TRUE)
+    .crs_set_messages(crs.messages, TRUE)
 
     ## We require the fitted values...
 
@@ -439,7 +439,7 @@ crsivderiv.default <- function(y,
 
       ## Smooth residuals (smooth of (y-phi) on w)
 
-      if(crs.messages) options(crs.messages=FALSE)
+      .crs_set_messages(crs.messages, FALSE)
       traindata$mu <- mu
 
       model.E.mu.w <- fit.crs(formula = formula.muw,
@@ -459,7 +459,7 @@ crsivderiv.default <- function(y,
       ## We require the fitted values...
 
       predicted.model.E.mu.w <- if(is.eval.train) fitted(model.E.mu.w) else predict(model.E.mu.w,newdata=evaldata)
-      if(crs.messages) options(crs.messages=TRUE)
+      .crs_set_messages(crs.messages, TRUE)
 
       ## We again require the mean of the fitted values
 
@@ -470,7 +470,7 @@ crsivderiv.default <- function(y,
       ## Not smoothing residuals (difference of E(Y|w) and smooth of
       ## phi on w)
 
-      if(crs.messages) options(crs.messages=FALSE)
+      .crs_set_messages(crs.messages, FALSE)
       traindata$phi <- phi
 
       model.E.phi.w <- fit.crs(formula = formula.phiw,
@@ -490,7 +490,7 @@ crsivderiv.default <- function(y,
       ## We require the fitted values...
 
       predicted.model.E.mu.w <- E.y.w - (if(is.eval.train) fitted(model.E.phi.w) else predict(model.E.phi.w,newdata=evaldata))
-      if(crs.messages) options(crs.messages=TRUE)
+      .crs_set_messages(crs.messages, TRUE)
 
       ## We again require the mean of the fitted values
 
@@ -576,7 +576,7 @@ crsivderiv.default <- function(y,
 
   .crsiv_warn_iterate_max(display.warnings, j, iterate.max)
 
-  if(crs.messages) options(crs.messages=FALSE)
+  .crs_set_messages(crs.messages, FALSE)
   traindata$y <- traindata$y - (fitted(phi.0)-phi)
 
   model <- crs(formula.yz,
@@ -592,7 +592,7 @@ crsivderiv.default <- function(y,
                deriv=1,
                data=traindata,
                weights=phi.0$weights)
-  if(crs.messages) options(crs.messages=TRUE)
+  .crs_set_messages(crs.messages, TRUE)
 
   model$phi <- phi
   model$phi.prime <- phi.prime

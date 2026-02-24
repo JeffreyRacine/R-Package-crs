@@ -164,6 +164,10 @@ is.monotone.increasing <- function(x) {
   }
 }
 
+.crs_set_messages <- function(crs.messages, value) {
+  if (crs.messages) options(crs.messages = value)
+}
+
 ## This function tests for the maximum well-conditioned spline degree.
 
 ## Note that increasing the number of breaks, other things equal,
