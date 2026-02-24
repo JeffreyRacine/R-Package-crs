@@ -199,8 +199,64 @@ check.max.spline.degree <- function(xdat=NULL,degree=NULL,display.warnings=TRUE)
 }
 
 succeedWithResponse <- function(tt, frame){
-  !any(class(try(eval(expr = attr(tt, "variables"),
-                      envir = frame, enclos = NULL), silent = TRUE)) == "try-error")
+  vars.expr <- attr(tt, "variables")
+  !inherits(try(.crs_eval_call(vars.expr, frame), silent = TRUE), "try-error")
+}
+
+.crs_resolve_call_head <- function(head, env) {
+  if (is.function(head)) {
+    return(head)
+  }
+
+  if (is.symbol(head)) {
+    return(as.character(head))
+  }
+
+  if (is.character(head) && length(head) == 1L) {
+    return(head)
+  }
+
+  if (is.call(head)) {
+    op <- head[[1L]]
+    if (is.symbol(op)) {
+      op_name <- as.character(op)
+      if (identical(op_name, "::")) {
+        return(getExportedValue(as.character(head[[2L]]), as.character(head[[3L]])))
+      }
+      if (identical(op_name, ":::")) {
+        return(getFromNamespace(as.character(head[[3L]]), as.character(head[[2L]])))
+      }
+    }
+  }
+
+  stop("unable to resolve callable expression head")
+}
+
+.crs_as_eval_env <- function(env) {
+  if (is.environment(env)) {
+    return(env)
+  }
+
+  if (is.list(env)) {
+    return(list2env(env, parent = baseenv()))
+  }
+
+  stop("env must be an environment or list-like object")
+}
+
+.crs_eval_call <- function(expr, env) {
+  env <- .crs_as_eval_env(env)
+
+  if (is.symbol(expr)) {
+    return(get(as.character(expr), envir = env))
+  }
+
+  if (!is.call(expr)) {
+    return(expr)
+  }
+
+  what <- .crs_resolve_call_head(expr[[1L]], env)
+  do.call(what, as.list(expr[-1L]), envir = env)
 }
 
 ## Utility function to divide explanatory variables into

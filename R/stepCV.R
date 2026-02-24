@@ -465,7 +465,7 @@ addterm.default <-
       }
       nfit <- update(object, as.formula(paste("~ . +", tt)),
                      evaluate = FALSE)
-      nfit <- eval(nfit, envir=env) # was  eval.parent(nfit)
+      nfit <- .crs_eval_call(nfit, env)
       ans[i+1L, ] <- extractCV(nfit, scale, k = k, ...)
       if(length(nfit$residuals) != n0)
         stop("number of rows in use has changed: remove missing values?")
@@ -691,7 +691,7 @@ dropterm.default <-
       }
       nfit <- update(object, as.formula(paste("~ . -", tt)),
                      evaluate = FALSE)
-      nfit <- eval(nfit, envir=env) # was  eval.parent(nfit)
+      nfit <- .crs_eval_call(nfit, env)
       ans[i+1, ] <- extractCV(nfit, scale, k = k, ...)
       if(length(nfit$residuals) != n0)
         stop("number of rows in use has changed: remove missing values?")

@@ -2,7 +2,7 @@
 
 Date: 2026-02-23  
 Last Updated: 2026-02-24  
-Status: Active execution; low-risk modernization scope is substantially complete with checkpoint validation, and remaining items are selective/high-risk refactors.
+Status: Active execution; low-risk modernization scope is effectively complete with checkpoint validation, and remaining items are selective/high-risk refactors.
 
 ## Goal
 
@@ -14,13 +14,14 @@ Modernize `crs` to current best-practice R package engineering standards while p
 
 ## Current Status Snapshot (2026-02-24)
 
-1. Checkpoints completed locally: `40+` commits on top of `origin/master` (no push).
+1. Checkpoints completed locally: `43+` commits on top of `origin/master` (no push).
 2. Completed tranches:
    - `A/R1.1` through `A/R1.10` (low-risk R modernization path).
    - `A/R2.1` (removed `eval(parse(...))` in `stepCV`).
    - `A/R2.2` (removed redundant re-fit work in `add1.lm.cv` path).
    - `A/R2.3` (hardened `crs.sigtest` call-data resolution).
    - `A/R2.4` (reduced repeated call/list rebuilding in `crsiv`/`crsivderiv` loops).
+   - `A/R2.5` (removed remaining direct `eval(...)` callsites in `R/` via parity-safe `.crs_eval_call` helper and new regression tests).
    - `A/R1.11` (scalar stopping-rule branch hardening in IV iteration loops).
    - `A/R1.12` (additional `seq_len`/`seq.int` safety sweep in spline utilities).
    - `A/R1.13` (broader loop-header safety sweep across CV/sigtest and helper paths).
@@ -35,9 +36,10 @@ Modernize `crs` to current best-practice R package engineering standards while p
 3. Validation discipline maintained at each checkpoint:
    - installed-package targeted smokes,
    - tarball-first `R CMD build` and `R CMD check --as-cran`,
-   - stable non-regressive check profile (`4 WARNINGs, 2-3 NOTEs`) with no modernization regressions introduced.
-4. R-layer forensic status (post A/R1.21 + C/R3.3 parity checks):
+   - stable non-regressive check profile (`4 WARNINGs, 2-4 NOTEs`) with no modernization regressions introduced.
+4. R-layer forensic status (post A/R2.5 completion):
    - `eval(parse(...))`: `0`
+   - `eval(...)`: `0`
    - string `do.call("...")`: `0`
    - `<<-`: `0`
    - active `1:length(...)`: `0`
@@ -70,7 +72,6 @@ Modernize `crs` to current best-practice R package engineering standards while p
 ## Next High-ROI Items (Remaining)
 
 1. `C/R3` (optional/deferred): deeper native-interface API cleanup and algorithmic rewrites only after extended parity/performance signoff.
-2. `A/R2` selective follow-up (optional): replace remaining intentional `eval(...)` call sites only if parity harnesses are expanded first.
 
 Primary guidance basis:
 
@@ -131,17 +132,18 @@ Current inventory (2026-02-24):
 1. `.C(` callsites in `R/`: `0`
 2. `.Call(` callsites in `R/`: `10`
 3. `eval(parse(...))` in `R/`: `0`
-4. string `do.call("<name>", ...)` in `R/`: `0`
-5. `<<-` in `R/`: `0`
-6. `ifelse(` in `R/`: `0`
+4. `eval(` in `R/`: `0`
+5. string `do.call("<name>", ...)` in `R/`: `0`
+6. `<<-` in `R/`: `0`
+7. `ifelse(` in `R/`: `0`
 
-Hotspot files (non-NOMAD-heavy):
+Resolved hotspot history (non-NOMAD-heavy):
 
-1. `/Users/jracine/Development/crs/R/spline.R` (`ifelse` density).
-2. `/Users/jracine/Development/crs/R/crs.R` (`eval(object$call$data)`, indexing patterns).
-3. `/Users/jracine/Development/crs/R/crsiv.R` and `/Users/jracine/Development/crs/R/crsivderiv.R` (string `do.call`, repeated loop scaffolding).
-4. `/Users/jracine/Development/crs/R/stepCV.R` (`eval(parse(...))`, duplicate model fitting in CV loop).
-5. `/Users/jracine/Development/crs/R/console.R`, `/Users/jracine/Development/crs/R/frscv.R`, `/Users/jracine/Development/crs/R/krscv.R`, `/Users/jracine/Development/crs/R/np.regression.glp.R` (`<<-` usage).
+1. `/Users/jracine/Development/crs/R/spline.R` (`ifelse` density) resolved.
+2. `/Users/jracine/Development/crs/R/crs.R` (`eval(object$call$data)`, indexing patterns) resolved for direct `eval(...)`.
+3. `/Users/jracine/Development/crs/R/crsiv.R` and `/Users/jracine/Development/crs/R/crsivderiv.R` (string `do.call`, repeated loop scaffolding) resolved.
+4. `/Users/jracine/Development/crs/R/stepCV.R` (`eval(parse(...))`, duplicate model fitting in CV loop) resolved.
+5. `/Users/jracine/Development/crs/R/console.R`, `/Users/jracine/Development/crs/R/frscv.R`, `/Users/jracine/Development/crs/R/krscv.R`, `/Users/jracine/Development/crs/R/np.regression.glp.R` (`<<-` usage) resolved.
 
 Non-NOMAD C note identified during audit:
 
@@ -1164,7 +1166,7 @@ Scope completed:
    - `ifelse(...)`
    - `<<-`
 3. Confirmed only comment-only `1:length(...)` matches remain (`R/clsd.R` comments), with no active code usage.
-4. Reviewed remaining `eval(...)` callsites (`R/crs.R`, `R/util.R`, `R/stepCV.R`) and classified them as intentional evaluation semantics requiring dedicated parity harnesses before replacement.
+4. At closure-sweep time, remaining `eval(...)` callsites (`R/crs.R`, `R/util.R`, `R/stepCV.R`) were flagged for dedicated parity-harness replacement work.
 5. Non-NOMAD `src/` risky-call scan found only:
    - commented debug `Rprintf` in `src/mgcv.c`
    - NOMAD-wrapper messaging in `src/snomadr.h` / `src/snomadr.cpp` (explicitly out-of-scope for this modernization exercise).
@@ -1173,3 +1175,43 @@ Validation artifacts:
 
 1. Consolidated forensic audit log:
    - `/tmp/crs_forensic_sweep_20260224.log`
+
+### 2026-02-24 - A/R2.5 remove remaining direct `eval(...)` in R layer
+
+Scope completed:
+
+1. Added parity-safe internal evaluator helpers in:
+   - `/Users/jracine/Development/crs/R/util.R`
+   - `.crs_resolve_call_head(...)`
+   - `.crs_as_eval_env(...)`
+   - `.crs_eval_call(...)`
+2. Replaced remaining direct `eval(...)` callsites in:
+   - `/Users/jracine/Development/crs/R/stepCV.R`
+     - `addterm.default(...)` and `dropterm.default(...)` now evaluate `update(..., evaluate = FALSE)` call objects via `.crs_eval_call(...)`.
+   - `/Users/jracine/Development/crs/R/crs.R`
+     - `crs.sigtest` call-data resolution now uses `.crs_eval_call(...)`.
+   - `/Users/jracine/Development/crs/R/util.R`
+     - `succeedWithResponse(...)` now uses `.crs_eval_call(...)`.
+3. Added dedicated regression coverage in:
+   - `/Users/jracine/Development/crs/tests/testthat/test-eval-helper.R`
+   - parity against `eval(...)` for `update()` call-object evaluation,
+   - namespace-qualified callable resolution,
+   - response-presence detection behavior in `succeedWithResponse(...)`.
+4. Result:
+   - `eval(` count in `/Users/jracine/Development/crs/R` is now `0`.
+
+Validation artifacts:
+
+1. Forced clean install to avoid stale namespace bytecode during direct-test workflow:
+   - `/tmp/crs_install_preclean_eval_refactor_20260224.log`
+2. Targeted tests:
+   - `/tmp/crs_test_eval_targeted_20260224.out` (`PASS 28, WARN 1, FAIL 0`)
+3. Full test suite:
+   - `/tmp/crs_test_eval_full_20260224.out` (`PASS 80, WARN 1, FAIL 0`)
+4. Deterministic install:
+   - `/tmp/crs_install_eval_refactor_20260224.log`
+5. Tarball-first:
+   - `/tmp/crs_build_eval_refactor_20260224.log`
+   - `/tmp/crs_check_eval_refactor_20260224.log` (`Status: 4 WARNINGs, 4 NOTEs`)
+   - `/tmp/crs_build_eval_refactor_clean_20260224.log`
+   - `/tmp/crs_check_eval_refactor_clean_20260224.log` (`Status: 4 WARNINGs, 4 NOTEs`)

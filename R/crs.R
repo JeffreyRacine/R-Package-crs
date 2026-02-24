@@ -2073,7 +2073,7 @@ crs.sigtest <- function(object,...) {
       if (!is.environment(env)) {
         next
       }
-      data.val <- try(eval(data.expr, envir = env), silent = TRUE)
+      data.val <- try(.crs_eval_call(data.expr, env), silent = TRUE)
       if (!inherits(data.val, "try-error")) {
         return(data.val)
       }
