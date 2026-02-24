@@ -1,7 +1,8 @@
 # CRS Modernization Plan (R + Non-NOMAD C)
 
 Date: 2026-02-23  
-Status: Planning only (no implementation started)
+Last Updated: 2026-02-24  
+Status: Active execution; major low-risk modernization tranches completed with checkpoint validation.
 
 ## Goal
 
@@ -10,6 +11,51 @@ Modernize `crs` to current best-practice R package engineering standards while p
 1. Functional behavior.
 2. Numerical stability (except accepted optimizer-path drift).
 3. Existing user-facing API/contracts.
+
+## Current Status Snapshot (2026-02-24)
+
+1. Checkpoints completed locally: `15` commits on top of `origin/master` (no push).
+2. Completed tranches:
+   - `A/R1.1` through `A/R1.10` (low-risk R modernization path).
+   - `A/R2.1` (removed `eval(parse(...))` in `stepCV`).
+   - `B/R1.1` (non-NOMAD C memory hygiene in `gsl_bspline.c`).
+3. Validation discipline maintained at each checkpoint:
+   - installed-package targeted smokes,
+   - tarball-first `R CMD build` and `R CMD check --as-cran`,
+   - stable check status (`4 WARNINGs, 2 NOTEs`) with no new modernization regressions introduced.
+4. R-layer forensic status (post A/R1.10):
+   - `eval(parse(...))`: `0`
+   - string `do.call("...")`: `0`
+   - `<<-`: `0`
+   - active `1:length(...)`: `0`
+   - active `1:ncol(...)`: `0`
+   - active `1:NCOL(...)`: `0`
+5. Scope guard respected:
+   - no edits to NOMAD core source/interface (`src/nomad4_src/**`, `src/snomadr.cpp`, `src/snomadr.h`).
+
+## Accomplished Tasks (Clear Summary)
+
+1. Option-access hardening:
+   - migrated fragile `options('x')$x` reads to `getOption(...)` / `isTRUE(...)`.
+2. Dynamic evaluation/call cleanup:
+   - replaced string `do.call("fn", ...)` dispatch with function references,
+   - removed `eval(parse(...))` from `R/stepCV.R`.
+3. Scalar safety and control-flow hardening:
+   - converted low-risk `1:length`/`1:ncol`/`1:NCOL` patterns to `seq_along`/`seq_len`,
+   - converted selected scalar `|`/`&` controls to `||`/`&&`.
+4. Super-assignment retirement in R:
+   - removed `<<-` state mutation from `console`, `plot.crsiv`, `frscv`, `krscv`, and `np.regression.glp` ridge loop state.
+5. Non-NOMAD C hygiene:
+   - fixed `gsl_bspline_deriv` allocation cleanup (`gsl_vector_free(quantile_vec)` restored).
+6. Project documentation hygiene:
+   - each completed tranche logged in the checkpoint section below with concrete `/tmp` artifact paths.
+
+## Next High-ROI Items (Remaining)
+
+1. `A/R2.2`: reduce redundant re-fit work in `stepCV` CV scoring path.
+2. `A/R2.3`: replace fragile `eval(object$call$data)` handling with robust call/data resolution helpers.
+3. `A/R2.4`: reduce repeated call/list rebuilding in `crsiv`/`crsivderiv` iterative paths.
+4. `B/R2`: controlled DRY refactors for shared `crsiv`/`crsivderiv` scaffolding after parity checks.
 
 Primary guidance basis:
 
@@ -182,8 +228,8 @@ A/R1 tranche candidate:
 
 ## Blockers / Decisions Needed
 
-None for planning.  
-Implementation is intentionally paused pending your heads-up.
+No hard blockers at present.  
+Execution is active and checkpoint-driven; pending items are listed in `Next High-ROI Items (Remaining)`.
 
 ## Checkpoint Log
 
