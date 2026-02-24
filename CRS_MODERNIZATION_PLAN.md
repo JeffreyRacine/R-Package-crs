@@ -22,6 +22,7 @@ Modernize `crs` to current best-practice R package engineering standards while p
    - `A/R2.3` (hardened `crs.sigtest` call-data resolution).
    - `A/R2.4` (reduced repeated call/list rebuilding in `crsiv`/`crsivderiv` loops).
    - `A/R1.11` (scalar stopping-rule branch hardening in IV iteration loops).
+   - `A/R1.12` (additional `seq_len`/`seq.int` safety sweep in spline utilities).
    - `B/R2` (shared IV scaffolding helpers for dots/call assembly in `crsiv` and `crsivderiv`).
    - `B/R1.1` (non-NOMAD C memory hygiene in `gsl_bspline.c`).
 3. Validation discipline maintained at each checkpoint:
@@ -649,3 +650,26 @@ Validation artifacts:
 4. Tarball-first:
    - `/tmp/crs_build_normbranch_20260224.log`
    - `/tmp/crs_check_ascran_normbranch_20260224.log` (`Status: 4 WARNINGs, 3 NOTEs`)
+
+### 2026-02-24 - A/R1.12 index-range safety sweep (`spline`/`util`)
+
+Scope completed:
+
+1. Replaced remaining targeted `for (... in 1:...)` loop headers with zero-length-safe forms in:
+   - `/Users/jracine/Development/crs/R/spline.R`
+   - `/Users/jracine/Development/crs/R/util.R`
+2. Updated guarded upper-range loop form:
+   - `for(i in 2:num.z)` -> `for(i in seq.int(2, num.z))` under `if(num.z > 1)`.
+
+Validation artifacts:
+
+1. Parse gate:
+   - inline run result: `SPLINE_SEQ_PARSE_OK`
+2. Deterministic install:
+   - `/tmp/crs_install_splineseq_20260224.log`
+3. Focused spline-path runtime smoke (kernel/non-kernel + eval data + derivative path):
+   - `/tmp/crs_spline_seq_smoke_20260224.R`
+   - `/tmp/crs_spline_seq_smoke_20260224.out` (`CRS_SPLINE_SEQ_SMOKE_OK`)
+4. Tarball-first:
+   - `/tmp/crs_build_splineseq_20260224.log`
+   - `/tmp/crs_check_ascran_splineseq_20260224.log` (`Status: 4 WARNINGs, 3 NOTEs`)

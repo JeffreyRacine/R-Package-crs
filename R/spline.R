@@ -83,7 +83,7 @@ prod.spline <- function(x,
   if(any(K[,1] > 0)||any(I != 0)) {
     tp <- list()
     j <- 1
-    for(i in 1:num.x) {
+    for(i in seq_len(num.x)) {
       if(K[i,1] > 0) {
         ## nbreak is K[i,2]+1
         if(knots=="uniform") {
@@ -112,7 +112,7 @@ prod.spline <- function(x,
         j <- j+1
       }
     }
-    if(!is.null(z)) for(i in 1:num.z) {
+    if(!is.null(z)) for(i in seq_len(num.z)) {
       if(I[i] == 1) {
         if(is.null(zeval)) {
           tp[[j]] <- model.matrix(~z[,i])[,-1,drop=FALSE]
@@ -286,7 +286,7 @@ predictKernelSpline <- function(x,
         fit.spline <- matrix(NA,nrow=n,ncol=4)
         htt <- numeric(length=n)
         P.hat <- numeric(length=n)
-        for(i in 1:nrow.z.unique) {
+        for(i in seq_len(nrow.z.unique)) {
           zz <- ind == ind.vals[i]
           L <- prod.kernel.matrix(Z=z,z=z.unique[ind.vals[i],],lambda=lambda,is.ordered.z=is.ordered.z)
           if(!is.null(weights)) L <- weights*L
@@ -338,7 +338,7 @@ predictKernelSpline <- function(x,
         fit.spline <- matrix(NA,nrow=num.eval,ncol=4)
         htt <- NULL ## No hatvalues for evaluation
         P.hat <- NULL
-        for(i in 1:nrow.zeval.unique) {
+        for(i in seq_len(nrow.zeval.unique)) {
           zz <- ind.zeval == ind.zeval.vals[i]
           L <- prod.kernel.matrix(Z=z,z=zeval.unique[ind.zeval.vals[i],],lambda=lambda,is.ordered.z=is.ordered.z)
           if(!is.null(weights)) L <- weights*L
@@ -377,7 +377,7 @@ predictKernelSpline <- function(x,
         htt <- numeric(length=n)
         P.hat <- numeric(length=n)
         x.intercept <- rep(1,n)
-        for(i in 1:nrow.z.unique) {
+        for(i in seq_len(nrow.z.unique)) {
           zz <- ind == ind.vals[i]
           L <- prod.kernel.matrix(Z=z,z=z.unique[ind.vals[i],],lambda=lambda,is.ordered.z=is.ordered.z)
           if(!is.null(weights)) L <- weights*L
@@ -422,7 +422,7 @@ predictKernelSpline <- function(x,
         htt <- NULL ## No hatvalues for evaluation
         P.hat <- NULL
         x.intercept <- rep(1,n)
-        for(i in 1:nrow.zeval.unique) {
+        for(i in seq_len(nrow.zeval.unique)) {
           zz <- ind.zeval == ind.zeval.vals[i]
           L <- prod.kernel.matrix(Z=z,z=zeval.unique[ind.zeval.vals[i],],lambda=lambda,is.ordered.z=is.ordered.z)
           if(!is.null(weights)) L <- weights*L
@@ -610,7 +610,7 @@ derivKernelSpline <- function(x,
                                    display.warnings=display.warnings)
         deriv.spline <- numeric(length=n)
         se.deriv <- numeric(length=n)
-        for(i in 1:nrow.z.unique) {
+        for(i in seq_len(nrow.z.unique)) {
           zz <- ind == ind.vals[i]
           L <- prod.kernel.matrix(Z=z,z=z.unique[ind.vals[i],],lambda=lambda,is.ordered.z=is.ordered.z)
           if(!is.null(weights)) L <- weights*L
@@ -685,7 +685,7 @@ derivKernelSpline <- function(x,
 
         deriv.spline <- numeric(length(num.eval))
         se.deriv <- numeric(length=num.eval)
-        for(i in 1:nrow.zeval.unique) {
+        for(i in seq_len(nrow.zeval.unique)) {
           zz <- ind.zeval == ind.zeval.vals[i]
           L <- prod.kernel.matrix(Z=z,z=zeval.unique[ind.zeval.vals[i],],lambda=lambda,is.ordered.z=is.ordered.z)
           if(!is.null(weights)) L <- weights*L
@@ -2002,7 +2002,7 @@ cv.kernel.spline <- function(x,
         XP <- P
       }
 
-      for(i in 1:nrow.z.unique) {
+      for(i in seq_len(nrow.z.unique)) {
         if(!is.null(ind.list)) {
           zz <- ind.list[[i]]
         } else {
@@ -2195,13 +2195,13 @@ cv.kernel.spline <- function(x,
     } else {
       ## No predictors for which degree > 0
       z.factor <- data.frame(factor(z[,1]), ordered=is.ordered.z[1])
-      if(num.z > 1) for(i in 2:num.z)
+      if(num.z > 1) for(i in seq.int(2, num.z))
         z.factor <- data.frame(z.factor, factor(z[,i], ordered=is.ordered.z[i]))
 
       ## Hoist matrix creation out of loop
       X0 <- matrix(1, n, 1)
 
-      for(i in 1:nrow.z.unique) {
+      for(i in seq_len(nrow.z.unique)) {
         if(!is.null(ind.list)) {
           zz <- ind.list[[i]]
         } else {

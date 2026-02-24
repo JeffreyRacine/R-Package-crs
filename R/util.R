@@ -165,12 +165,12 @@ check.max.spline.degree <- function(xdat=NULL,degree=NULL,display.warnings=TRUE)
 
   if(num.numeric > 0) {
 
-    for(i in 1:num.numeric) {
+    for(i in seq_len(num.numeric)) {
       if(degree[i]>0) {
         X <- gsl.bs(xdat[,numeric.index[i]],degree=degree[i],nbreak=2)
         d[i] <- degree[i]
         if(!is.fullrank(X)) {
-          for(j in 1:degree[i]) {
+          for(j in seq_len(degree[i])) {
             d[i] <- j
             X <- gsl.bs(xdat[,numeric.index[i]],degree=d[i],nbreak=2)
             if(!is.fullrank(X)) {
@@ -412,7 +412,7 @@ dimBS <- function(basis="additive", kernel=TRUE, degree=NULL, segments=NULL, inc
     d12 <- d12 + nd1[d1]
     nd2 <- nd1
     if (d1 > 1) {
-      for (j in 1:(d1 - 1)) {
+      for (j in seq_len(d1 - 1)) {
         s <- 0
         for (i in j:max(0, j - d2 + 1)) s <- s + if (i > 0) nd1[i] else 1
         nd2[j] <- s
