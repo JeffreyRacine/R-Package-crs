@@ -2054,8 +2054,10 @@ glpcvNOMAD <- function(ydat=NULL,
     bandwidth.scale.categorical=params$bandwidth.scale.categorical
 
     bw.gamma <- input[1:num.bw]
-    if(cv=="degree-bandwidth")
-      degree <- round(input[(num.bw+1):(num.bw+num.numeric)])
+    if(cv=="degree-bandwidth") {
+      degree.idx <- num.bw + seq_len(num.numeric)
+      degree <- round(input[degree.idx])
+    }
 
     ## Test for negative degrees of freedom
 
@@ -2156,8 +2158,10 @@ glpcvNOMAD <- function(ydat=NULL,
     bandwidth.scale.categorical=params$bandwidth.scale.categorical
 
     bw.gamma <- input[1:num.bw]
-    if(cv=="degree-bandwidth")
-      degree <- round(input[(num.bw+1):(num.bw+num.numeric)])
+    if(cv=="degree-bandwidth") {
+      degree.idx <- num.bw + seq_len(num.numeric)
+      degree <- round(input[degree.idx])
+    }
 
     ## Test for negative degrees of freedom
 
@@ -2380,9 +2384,9 @@ glpcvNOMAD <- function(ydat=NULL,
   degree.max.vec <- attr(ill.conditioned, "degree.max.vec")
 
   if(cv == "degree-bandwidth") {
-    deg.idx <- (num.bw+1):(num.bw+num.numeric)
+    deg.idx <- num.bw + seq_len(num.numeric)
     ub[deg.idx] <- pmin(ub[deg.idx], degree.max.vec)
-    for(i in (num.bw+1):(num.bw+num.numeric)) {
+    for(i in deg.idx) {
       INITIAL.MESH.SIZE[[i]] <- initial.mesh.size.integer
       MIN.MESH.SIZE[[i]] <- min.mesh.size.integer
       MIN.FRAME.SIZE[[i]] <- min.frame.size.integer
@@ -2517,8 +2521,9 @@ glpcvNOMAD <- function(ydat=NULL,
     }
 
     if(cv == "degree-bandwidth" && iMulti != 1) {
+      deg.idx <- num.bw + seq_len(num.numeric)
       for(i in seq_len(num.numeric)) {
-        degree[i] <- sample(degree.min:ub[(num.bw+1):(num.bw+num.numeric)][i], 1)
+        degree[i] <- sample(degree.min:ub[deg.idx[i]], 1)
       }
     }
 
@@ -2615,9 +2620,10 @@ glpcvNOMAD <- function(ydat=NULL,
   }
 
   if(cv == "degree-bandwidth") {
-    degree.opt <- solution$solution[(num.bw+1):(num.bw+num.numeric)]
-    for(i in num.numeric){
-      if(display.warnings && isTRUE(all.equal(degree.opt[i],ub[num.bw+i]))) warning(paste(" Optimal degree for numeric predictor ",i," equals search upper bound (", ub[num.bw+i],")",sep=""))
+    deg.idx <- num.bw + seq_len(num.numeric)
+    degree.opt <- solution$solution[deg.idx]
+    for(i in seq_len(num.numeric)){
+      if(display.warnings && isTRUE(all.equal(degree.opt[i],ub[deg.idx[i]]))) warning(paste(" Optimal degree for numeric predictor ",i," equals search upper bound (", ub[deg.idx[i]],")",sep=""))
     }
   } else {
     degree.opt <- degree
@@ -2635,7 +2641,7 @@ glpcvNOMAD <- function(ydat=NULL,
   best <- NULL
   numimp <- 0
 
-  for(i in num.bw) {
+  for(i in seq_len(num.bw)) {
     if(display.warnings && isTRUE(all.equal(bw.opt[i],lb[i]))) warning(paste(" Optimal bandwidth for predictor ",i," equals search lower bound (", formatC(lb[i],digits=3,format="g"),"): rerun with smaller bandwidth.min",sep=""))
   }
 

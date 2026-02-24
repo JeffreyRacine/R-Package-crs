@@ -14,7 +14,7 @@ Modernize `crs` to current best-practice R package engineering standards while p
 
 ## Current Status Snapshot (2026-02-24)
 
-1. Checkpoints completed locally: `47+` commits on top of `origin/master` (no push).
+1. Checkpoints completed locally: `48+` commits on top of `origin/master` (no push).
 2. Completed tranches:
    - `A/R1.1` through `A/R1.10` (low-risk R modernization path).
    - `A/R2.1` (removed `eval(parse(...))` in `stepCV`).
@@ -26,7 +26,7 @@ Modernize `crs` to current best-practice R package engineering standards while p
    - `A/R1.12` (additional `seq_len`/`seq.int` safety sweep in spline utilities).
    - `A/R1.13` (broader loop-header safety sweep across CV/sigtest and helper paths).
    - `A/R1.14` (full `npglpreg` loop-header safety sweep).
-   - `A/R1.15` through `A/R1.26` (scalar control-flow cleanup, script hygiene, clamp/vectorization follow-ups, remaining legacy `do.call` cleanup in matrix-construction paths, `vapply` numeric-column sweeps, boolean control simplification, and centralized RNG seed state handling).
+   - `A/R1.15` through `A/R1.27` (scalar control-flow cleanup, script hygiene, clamp/vectorization follow-ups, remaining legacy `do.call` cleanup in matrix-construction paths, `vapply` numeric-column sweeps, boolean control simplification, centralized RNG seed state handling, and scalar-loop index correctness fixes in `npglpreg` warning/index paths).
    - `B/R2` (shared IV scaffolding helpers for dots/call assembly in `crsiv` and `crsivderiv`).
    - `B/R1.1` (non-NOMAD C memory hygiene in `gsl_bspline.c`).
    - `B/R1.2` and `B/R1.3` (native-interface and matrix-kernel regression test expansion).
@@ -1335,3 +1335,30 @@ Validation artifacts:
 4. Tarball-first:
    - `/tmp/crs_build_seed_helper_20260224.log`
    - `/tmp/crs_check_seed_helper_20260224.log` (`Status: 4 WARNINGs, 4 NOTEs`)
+
+### 2026-02-24 - A/R1.27 scalar-loop index correctness in `npglpreg` paths
+
+Scope completed:
+
+1. Replaced scalar-loop headers that iterated only the last index in:
+   - `/Users/jracine/Development/crs/R/np.regression.glp.R`
+2. Key fixes:
+   - `for(i in num.numeric)` -> `for(i in seq_len(num.numeric))`
+   - `for(i in num.bw)` -> `for(i in seq_len(num.bw))`
+3. Normalized adjacent degree-index slices to explicit index vectors:
+   - `(num.bw+1):(num.bw+num.numeric)` -> `num.bw + seq_len(num.numeric)` in touched paths.
+4. Behavioral intent:
+   - preserve optimization behavior,
+   - ensure warning/index checks are applied consistently across all predictors (not only the final one).
+
+Validation artifacts:
+
+1. Deterministic install:
+   - `/tmp/crs_install_npglp_index_loops_20260224.log`
+2. Targeted tests:
+   - `/tmp/crs_test_npglp_index_loops_targeted_20260224.out` (`PASS 18, WARN 1, FAIL 0`)
+3. Full test suite:
+   - `/tmp/crs_test_npglp_index_loops_full_20260224.out` (`PASS 82, WARN 1, FAIL 0`)
+4. Tarball-first:
+   - `/tmp/crs_build_npglp_index_loops_20260224.log`
+   - `/tmp/crs_check_npglp_index_loops_20260224.log` (`Status: 4 WARNINGs, 4 NOTEs`)
