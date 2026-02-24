@@ -99,8 +99,13 @@ crssigtest <- function(model = NULL,
       ## (if we did not the restricted and unrestricted models would
       ## coincide)
 
-      model.degree[degree.index] <- ifelse(model$degree[degree.index]==0,1,model$degree[degree.index])
-      model.segments[degree.index] <- ifelse(model$degree[degree.index]==0,1,model$segments[degree.index])
+      degree.slice <- model$degree[degree.index]
+      segment.slice <- model$segments[degree.index]
+      zero.degree <- (degree.slice == 0)
+      degree.slice[zero.degree] <- 1
+      segment.slice[zero.degree] <- 1
+      model.degree[degree.index] <- degree.slice
+      model.segments[degree.index] <- segment.slice
 
       ## Set the null degree to zero and segments to one (latter not
       ## necessary but zero cost to so doing)
@@ -121,7 +126,8 @@ crssigtest <- function(model = NULL,
       ## included using the `frequency' fit (bandwidth of basically
       ## zero)
 
-      model.lambda[lambda.index] <- ifelse(isTRUE(all.equal(model$lambda[lambda.index],1)),.Machine$double.eps,model$lambda[lambda.index])
+      if(isTRUE(all.equal(model$lambda[lambda.index],1)))
+        model.lambda[lambda.index] <- .Machine$double.eps
 
       ## Set the null bandwidth to one
 
@@ -250,7 +256,7 @@ crssigtest <- function(model = NULL,
 
       F.boot.mat[,ii] <- F.boot
 
-      P.vec.boot[ii] <- mean(ifelse(F.boot > F.pseudo, 1, 0))
+      P.vec.boot[ii] <- mean(F.boot > F.pseudo)
 
     }
 

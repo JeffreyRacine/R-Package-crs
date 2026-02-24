@@ -81,7 +81,7 @@ krscv <- function(xz,
       lambda <- input
     }
     ## When using weights= lambda of zero fails. Trivial to trap.
-    lambda <- ifelse(lambda <= 0, .Machine$double.eps, lambda)
+    lambda <- pmax(lambda, .Machine$double.eps)
 
     cv <- cv.kernel.spline.wrapper(x=x,
                                    y=y,
@@ -662,7 +662,7 @@ krscv <- function(xz,
   ## One more time to call cv.kernel.spline to know knots when knots="auto"
   if(knots=="auto") {
     ## When using weights= lambda of zero fails. Trivial to trap.
-    lambda.opt <- ifelse(lambda.opt <= 0, .Machine$double.eps, lambda.opt)
+    lambda.opt <- pmax(lambda.opt, .Machine$double.eps)
 
     cv.knots <- cv.kernel.spline.wrapper(x=x,
                                          y=y,

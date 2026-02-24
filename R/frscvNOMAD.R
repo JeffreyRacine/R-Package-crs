@@ -293,8 +293,8 @@ frscvNOMAD <- function(xz,
     degree.max.vec <- attr(ill.conditioned, "degree.max.vec")
 
     if(complexity != "knots") {
-      ub[1:num.x] <- ifelse(ub[1:num.x] > degree.max.vec, degree.max.vec, ub[1:num.x])
-      x0[1:num.x] <- ifelse(x0[1:num.x] > degree.max.vec, degree.max.vec, x0[1:num.x])
+      ub[1:num.x] <- pmin(ub[1:num.x], degree.max.vec)
+      x0[1:num.x] <- pmin(x0[1:num.x], degree.max.vec)
     }
 
     if(length(x0) != length(lb)) stop(" x0 and bounds have differing numbers of variables")

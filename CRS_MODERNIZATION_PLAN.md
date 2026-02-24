@@ -125,7 +125,7 @@ Current inventory (2026-02-24):
 3. `eval(parse(...))` in `R/`: `0`
 4. string `do.call("<name>", ...)` in `R/`: `0`
 5. `<<-` in `R/`: `0`
-6. `ifelse(` in `R/`: `29` (remaining uses are intentional vectorized/broadcast expressions)
+6. `ifelse(` in `R/`: `2` (both intentional vectorized expressions)
 
 Hotspot files (non-NOMAD-heavy):
 
@@ -860,3 +860,33 @@ Validation artifacts:
 2. Tarball-first:
    - `/tmp/crs_build_script_hygiene_20260224.log`
    - `/tmp/crs_check_ascran_script_hygiene_20260224.log` (`Status: 4 WARNINGs, 3 NOTEs`)
+
+### 2026-02-24 - A/R1.20 clamp/vectorization normalization sweep
+
+Scope completed:
+
+1. Replaced equivalent clamp/select `ifelse(...)` patterns with `pmin(...)`/`pmax(...)` or direct logical expressions in:
+   - `/Users/jracine/Development/crs/R/np.regression.glp.R`
+   - `/Users/jracine/Development/crs/R/krscv.R`
+   - `/Users/jracine/Development/crs/R/frscvNOMAD.R`
+   - `/Users/jracine/Development/crs/R/krscvNOMAD.R`
+   - `/Users/jracine/Development/crs/R/crssigtest.R`
+   - `/Users/jracine/Development/crs/R/spline.R`
+2. Normalized degree/lambda upper/lower bound clamps and hat-value caps via vectorized intrinsics (`pmin`/`pmax`) for clearer intent and lower overhead.
+3. Replaced boolean-selection `ifelse` with direct logical algebra where appropriate (`deriv.ind.vec <- deriv.ind.vec & prune.index`).
+4. R-layer `ifelse(...)` inventory reduced from `29` to `2` (remaining intentional vectorized cases in `util.R` and `spline.R` helper math).
+
+Validation artifacts:
+
+1. Parse gate:
+   - `/tmp/crs_parse_clamp_sweep_20260224.log` (`CLAMP_SWEEP_PARSE_OK`)
+2. Deterministic install:
+   - `/tmp/crs_install_clamp_sweep_20260224.log`
+3. Focused runtime smoke:
+   - `/tmp/crs_npglp_clamp_sweep_smoke_20260224.out` (`NPGLP_SMOKE_OK`)
+   - `/tmp/crs_spline_clamp_sweep_smoke_20260224.out` (`SPLINE_SMOKE_OK`)
+   - `/tmp/crs_loop_clamp_sweep_smoke_20260224.out` (`LOOP_SMOKE_OK`)
+   - `/tmp/crs_clamp_sweep_nomad_smoke_20260224.out` (`NOMAD_CV_SMOKE_OK`)
+4. Tarball-first:
+   - `/tmp/crs_build_clamp_sweep_20260224.log`
+   - `/tmp/crs_check_ascran_clamp_sweep_20260224.log` (`Status: 4 WARNINGs, 3 NOTEs`)

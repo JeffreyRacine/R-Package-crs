@@ -161,7 +161,7 @@ krscvNOMAD <- function(xz,
       ## When using weights= lambda of zero fails. Trivial to trap.
       ## This will be a problem because we cannot change "input". I'll think it.
       ## If cv=infinity, we will check in snomadr.
-      lambda <- ifelse(lambda <= 0, .Machine$double.eps, lambda)
+      lambda <- pmax(lambda, .Machine$double.eps)
 
       basis.opt <-  basis;
       if(basis=="auto"){
@@ -356,8 +356,8 @@ krscvNOMAD <- function(xz,
     degree.max.vec <- attr(ill.conditioned, "degree.max.vec")
 
     if(complexity != "knots") {
-      ub[1:num.x] <- ifelse(ub[1:num.x] > degree.max.vec, degree.max.vec, ub[1:num.x])
-      x0[1:num.x] <- ifelse(x0[1:num.x] > degree.max.vec, degree.max.vec, x0[1:num.x])
+      ub[1:num.x] <- pmin(ub[1:num.x], degree.max.vec)
+      x0[1:num.x] <- pmin(x0[1:num.x], degree.max.vec)
     }
 
     if(length(x0) != length(lb)) stop(" x0 and bounds have differing numbers of variables")
@@ -597,7 +597,7 @@ krscvNOMAD <- function(xz,
   ## Check for lambda of zero (or less) as solution as lm() with
   ## weights= will fail, so set to machine epsilon in this case
 
-  lambda.opt <- ifelse(lambda.opt <= 0, .Machine$double.eps, lambda.opt)
+  lambda.opt <- pmax(lambda.opt, .Machine$double.eps)
 
   console <- printClear(console)
   console <- printPop(console)

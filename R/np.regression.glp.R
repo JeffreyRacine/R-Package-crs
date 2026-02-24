@@ -932,7 +932,7 @@ npglpreg.formula <- function(formula,
   if(!is.null(degree))    {
     ill.conditioned <- check.max.degree(txdat,degree,display.warnings=display.warnings,Bernstein=Bernstein)
     degree.max.vec <- attr(ill.conditioned, "degree.max.vec")
-    degree <- ifelse(degree > degree.max.vec, degree.max.vec, degree)
+    degree <- pmin(degree, degree.max.vec)
   }
 
   est <- npglpreg.default(tydat=tydat,
@@ -2096,7 +2096,7 @@ glpcvNOMAD <- function(ydat=NULL,
       } else {
         model <- lm(ydat~W-1)
         htt <- hatvalues(model)
-        htt <- ifelse(htt < 1, htt, 1-.Machine$double.eps)
+        htt <- pmin(htt, 1-.Machine$double.eps)
         lscv <- mean((residuals(model)/(1-htt))^2)
       }
     } else {
@@ -2198,7 +2198,7 @@ glpcvNOMAD <- function(ydat=NULL,
       } else {
         model <- lm(ydat~W-1)
         htt <- hatvalues(model)
-        htt <- ifelse(htt < 1, htt, 1-.Machine$double.eps)
+        htt <- pmin(htt, 1-.Machine$double.eps)
         aicc <- mean((residuals(model)/(1-htt))^2)
       }
     } else {
@@ -2385,7 +2385,8 @@ glpcvNOMAD <- function(ydat=NULL,
   degree.max.vec <- attr(ill.conditioned, "degree.max.vec")
 
   if(cv == "degree-bandwidth") {
-    ub[(num.bw+1):(num.bw+num.numeric)] <- ifelse(ub[(num.bw+1):(num.bw+num.numeric)] > degree.max.vec, degree.max.vec, ub[(num.bw+1):(num.bw+num.numeric)])
+    deg.idx <- (num.bw+1):(num.bw+num.numeric)
+    ub[deg.idx] <- pmin(ub[deg.idx], degree.max.vec)
     for(i in (num.bw+1):(num.bw+num.numeric)) {
       INITIAL.MESH.SIZE[[i]] <- initial.mesh.size.integer
       MIN.MESH.SIZE[[i]] <- min.mesh.size.integer

@@ -259,7 +259,7 @@ predictKernelSpline <- function(x,
     else
       htt <- hat(model$qr)
 
-    htt <- ifelse(htt < 1, htt, 1-.Machine$double.eps)
+    htt <- pmin(htt, 1-.Machine$double.eps)
 
     if(is.null(tau))
       rank <- model$rank
@@ -469,7 +469,8 @@ predictKernelSpline <- function(x,
   ## trap this case.
 
   P.hat <- P.hat/(sum(unique(P.hat/n))*n)
-  P.hat <- ifelse(P.hat==1,1/nrow.z.unique,P.hat)
+  idx.one <- which(P.hat == 1)
+  if(length(idx.one) > 0) P.hat[idx.one] <- 1/nrow.z.unique
 
   return(list(fitted.values=fit.spline,
               df.residual=length(y)-rank,
@@ -520,8 +521,10 @@ derivKernelSpline <- function(x,
 
   if(basis=="additive" || basis=="glp") {
     K.additive <- K
-    K.additive[,2] <- ifelse(K[,1]==0,0,K[,2])
-    K.additive[,1] <- ifelse(K[,1]>0,K[,1]-1,K[,1])
+    K.additive[,2] <- K[,2]
+    K.additive[K[,1] == 0,2] <- 0
+    K.additive[,1] <- K[,1]
+    K.additive[K[,1] > 0,1] <- K[K[,1] > 0,1] - 1
   }
 
   if(!is.null(z)) z <- as.matrix(z)
@@ -1074,8 +1077,10 @@ derivFactorSpline <- function(x,
 
   if(basis=="additive" || basis=="glp") {
     K.additive <- K
-    K.additive[,2] <- ifelse(K[,1]==0,0,K[,2])
-    K.additive[,1] <- ifelse(K[,1]>0,K[,1]-1,K[,1])
+    K.additive[,2] <- K[,2]
+    K.additive[K[,1] == 0,2] <- 0
+    K.additive[,1] <- K[,1]
+    K.additive[K[,1] > 0,1] <- K[K[,1] > 0,1] - 1
   }
   if(K[deriv.index,1]!=0) {
 
@@ -1113,7 +1118,7 @@ derivFactorSpline <- function(x,
       deriv.start <- if(deriv.index != 1) sum(K.additive[1:(deriv.index-1),])+1 else 1
       deriv.end <- deriv.start+sum(K.additive[deriv.index,])-1
       deriv.ind.vec[deriv.start:deriv.end] <- TRUE
-      deriv.ind.vec <- ifelse(prune.index,deriv.ind.vec,FALSE)
+      deriv.ind.vec <- deriv.ind.vec & prune.index
     } else if(basis=="tensor") {
       if(is.null(tau))
         model <- lm(y~P[,prune.index,drop=FALSE]-1,weights=weights)
@@ -1127,7 +1132,7 @@ derivFactorSpline <- function(x,
         suppressWarnings(vcov.mat.model[prune.index,prune.index] <- summary(model,covariance=TRUE)$cov)
 
       deriv.ind.vec[1:dim.P.tensor] <- TRUE
-      deriv.ind.vec <- ifelse(prune.index,deriv.ind.vec,FALSE)
+      deriv.ind.vec <- deriv.ind.vec & prune.index
     } else if(basis=="glp") {
       if(is.null(tau))
         model <- lm(y~P[,prune.index,drop=FALSE],weights=weights)
@@ -1141,7 +1146,7 @@ derivFactorSpline <- function(x,
         suppressWarnings(vcov.mat.model[prune.index,prune.index] <- summary(model,covariance=TRUE)$cov[-1,-1,drop=FALSE])
 
       deriv.ind.vec[1:dim.P.tensor] <- TRUE
-      deriv.ind.vec <- ifelse(prune.index,deriv.ind.vec,FALSE)
+      deriv.ind.vec <- deriv.ind.vec & prune.index
     }
 
     deriv.spline <- P.deriv[,deriv.ind.vec,drop=FALSE]%*%coef.vec.model[deriv.ind.vec]
@@ -1961,7 +1966,7 @@ cv.kernel.spline <- function(x,
       }
 
       htt <- hat(P)
-      htt <- ifelse(htt < 1, htt, 1-.Machine$double.eps)
+      htt <- pmin(htt, 1-.Machine$double.eps)
 
     } else {
       htt <- rep(1/n, n)
@@ -2253,7 +2258,7 @@ cv.kernel.spline <- function(x,
       }
     }
 
-    htt <- ifelse(htt < 1, htt, 1-.Machine$double.eps)
+    htt <- pmin(htt, 1-.Machine$double.eps)
 
   }
 
