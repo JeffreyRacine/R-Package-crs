@@ -229,18 +229,18 @@ frscv <- function(xz,
   } else if(complexity == "degree") {
     if(!is.null(z)) {
       KI.mat <- matrix.combn(K.vec1=degree.min:degree.max,num.x=num.x,num.z=num.z)
-      KI.mat <- cbind(KI.mat[,1:num.x],matrix(segments,nrow(KI.mat),length(segments),byrow=TRUE),KI.mat[,(num.x+1):(num.x+num.z)])
+      KI.mat <- cbind(KI.mat[,seq_len(num.x)],matrix(segments,nrow(KI.mat),length(segments),byrow=TRUE),KI.mat[,(num.x+1):(num.x+num.z)])
     } else {
       KI.mat <- matrix.combn(K.vec1=degree.min:degree.max,num.x=num.x)
-      KI.mat <- cbind(KI.mat[,1:num.x],matrix(segments,nrow(KI.mat),length(segments),byrow=TRUE))
+      KI.mat <- cbind(KI.mat[,seq_len(num.x)],matrix(segments,nrow(KI.mat),length(segments),byrow=TRUE))
     }
   } else if (complexity == "knots"){
     if(!is.null(z)) {
       KI.mat <- matrix.combn(K.vec1=segments.min:segments.max,num.x=num.x,num.z=num.z)
-      KI.mat <- cbind(matrix(degree,nrow(KI.mat),length(degree),byrow=TRUE),KI.mat[,1:num.x],KI.mat[,(num.x+1):(num.x+num.z)])
+      KI.mat <- cbind(matrix(degree,nrow(KI.mat),length(degree),byrow=TRUE),KI.mat[,seq_len(num.x)],KI.mat[,(num.x+1):(num.x+num.z)])
     } else {
       KI.mat <- matrix.combn(K.vec1=segments.min:segments.max,num.x=num.x)
-      KI.mat <- cbind(matrix(degree,nrow(KI.mat),length(degree),byrow=TRUE),KI.mat[,1:num.x])
+      KI.mat <- cbind(matrix(degree,nrow(KI.mat),length(degree),byrow=TRUE),KI.mat[,seq_len(num.x)])
     }
   }
 
@@ -252,14 +252,14 @@ frscv <- function(xz,
   ## predictors can differ in terms of their categorical predictors
   ## (inclusion), so determine which are unique in this case
 
-  degree.zero.rows <- which(rowSums(KI.mat[,1:num.x,drop=FALSE])==0)
+  degree.zero.rows <- which(rowSums(KI.mat[,seq_len(num.x),drop=FALSE])==0)
 
   if(length(degree.zero.rows) > 0) {
 
     if(num.z > 0) {
       key.mat <- KI.mat[degree.zero.rows,(2*num.x+1):(2*num.x+num.z),drop=FALSE]
     } else {
-      key.mat <- KI.mat[degree.zero.rows,1:num.x,drop=FALSE]
+      key.mat <- KI.mat[degree.zero.rows,seq_len(num.x),drop=FALSE]
     }
     key.vec <- apply(key.mat, 1, paste, collapse = "|")
     degree.mat.zero.rows.unique <- match(unique(key.vec), key.vec)

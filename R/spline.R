@@ -1582,7 +1582,7 @@ cv.factor.spline <- function(x,
         ## For augmented formulation: use hat values from augmented fit
         ## but only for original observations
         htt_aug <- hat.from.lm.fit(model)
-        htt <- htt_aug[1:n]
+        htt <- htt_aug[seq_len(n)]
       } else {
         htt <- hat.from.lm.fit(model)
       }
@@ -2202,7 +2202,7 @@ cv.kernel.spline <- function(x,
             epsilon[zz] <- (y - fitted_vals)[zz]
             ## For ridge: hat values from augmented system, take first n
             htt_all <- hat.from.lm.fit(model)
-            htt[zz] <- htt_all[1:n][zz]
+            htt[zz] <- htt_all[seq_len(n)][zz]
           } else {
             epsilon[zz] <- (model$residuals/sw)[zz]
             htt[zz] <- hat.from.lm.fit(model)[zz]

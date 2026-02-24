@@ -221,10 +221,10 @@ krscv <- function(xz,
     K.mat <- matrix.combn(K.vec1=degree.min:degree.max, K.vec2=segments.min:segments.max,num.x=num.x)
   } else if(complexity == "degree") {
     K.mat <- matrix.combn(K.vec1=degree.min:degree.max,num.x=num.x)
-    K.mat <- cbind(K.mat[,1:num.x],matrix(segments,nrow(K.mat),length(segments),byrow=TRUE))
+    K.mat <- cbind(K.mat[,seq_len(num.x)],matrix(segments,nrow(K.mat),length(segments),byrow=TRUE))
   } else if (complexity == "knots"){
     K.mat <- matrix.combn(K.vec1=segments.min:segments.max,num.x=num.x)
-    K.mat <- cbind(matrix(degree,nrow(K.mat),length(degree),byrow=TRUE),K.mat[,1:num.x])
+    K.mat <- cbind(matrix(degree,nrow(K.mat),length(degree),byrow=TRUE),K.mat[,seq_len(num.x)])
   }
 
   ## Strip off all (except one) rows with degree 0 for all continuous
@@ -232,7 +232,7 @@ krscv <- function(xz,
   ## this will be computed only once for all predictors having degree
   ## 0, segments 1).
 
-  degree.zero.rows <- which(rowSums(K.mat[,1:num.x,drop=FALSE])==0)[-1]
+  degree.zero.rows <- which(rowSums(K.mat[,seq_len(num.x),drop=FALSE])==0)[-1]
 
   if(length(degree.zero.rows) > 0) K.mat <- K.mat[-degree.zero.rows,,drop=FALSE]
 
