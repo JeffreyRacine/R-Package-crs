@@ -14,7 +14,7 @@ Modernize `crs` to current best-practice R package engineering standards while p
 
 ## Current Status Snapshot (2026-02-24)
 
-1. Checkpoints completed locally: `70+` commits on top of `origin/master` (no push).
+1. Checkpoints completed locally: `75+` commits on top of `origin/master` (no push).
 2. Completed tranches:
    - `A/R1.1` through `A/R1.10` (low-risk R modernization path).
    - `A/R2.1` (removed `eval(parse(...))` in `stepCV`).
@@ -36,7 +36,8 @@ Modernize `crs` to current best-practice R package engineering standards while p
 3. Validation discipline maintained at each checkpoint:
    - installed-package targeted smokes,
    - tarball-first `R CMD build` and `R CMD check --as-cran`,
-   - stable non-regressive check profile (`4-5 WARNINGs, 0-4 NOTEs`) with no modernization regressions introduced.
+   - stable non-regressive check profile (`4-5 WARNINGs, 0-4 NOTEs`) with no modernization regressions introduced,
+   - latest post-tranche gate in this session: `Status: 5 WARNINGs` (the intermittent `unable to verify current time` NOTE did not appear in that run).
 4. R-layer forensic status (post A/R2.5 completion):
    - `eval(parse(...))`: `0`
    - `eval(...)`: `0`
@@ -49,8 +50,31 @@ Modernize `crs` to current best-practice R package engineering standards while p
    - total `ifelse(...)` uses in `R/`: `0`
    - `.C(` callsites in `R/`: `0`
    - `.Call(` callsites in `R/`: `10`
+   - active `for (... in 2:...)` loop headers in `R/`: `0`
 5. Scope guard respected:
    - no edits to NOMAD core source/interface (`src/nomad4_src/**`, `src/snomadr.cpp`, `src/snomadr.h`).
+
+## Session Addendum (2026-02-24, latest)
+
+1. Completed and committed tranche checkpoints:
+   - `e69fbee` `modernize(r): normalize guarded 2:n loop headers with seq.int`
+   - `66b91af` `modernize(iv): guard iterate.max loops and normalize loop headers`
+2. Static forensic sweeps after these checkpoints:
+   - no executable `for (... in 2:...)` loop headers remain in `R/`,
+   - legacy index-pattern scan remains clean; remaining `1:length(...)` hits are comment-only in `/Users/jracine/Development/crs/R/clsd.R`.
+3. Validation artifacts for the latest tranche gates:
+   - `/tmp/crs_parse_loop_seqint_guarded_20260224.out`
+   - `/tmp/crs_install_loop_seqint_guarded_20260224.log`
+   - `/tmp/crs_test_loop_seqint_guarded_targeted_20260224.out`
+   - `/tmp/crs_test_loop_seqint_guarded_full_20260224.out`
+   - `/tmp/crs_build_loop_seqint_guarded_20260224.log`
+   - `/tmp/crs_check_loop_seqint_guarded_20260224.log`
+   - `/tmp/crs_parse_iterate_seq_guard_clean_20260224.out`
+   - `/tmp/crs_install_iterate_seq_guard_20260224.log`
+   - `/tmp/crs_test_iterate_seq_guard_targeted_20260224.out`
+   - `/tmp/crs_test_iterate_seq_guard_full_20260224.out`
+   - `/tmp/crs_build_iterate_seq_guard_20260224.log`
+   - `/tmp/crs_check_iterate_seq_guard_20260224.log`
 
 ## Accomplished Tasks (Clear Summary)
 
