@@ -1131,7 +1131,7 @@ derivFactorSpline <- function(x,
       else
         suppressWarnings(vcov.mat.model[prune.index,prune.index] <- summary(model,covariance=TRUE)$cov)
 
-      deriv.ind.vec[1:dim.P.tensor] <- TRUE
+      deriv.ind.vec[seq_len(dim.P.tensor)] <- TRUE
       deriv.ind.vec <- deriv.ind.vec & prune.index
     } else if(basis=="glp") {
       if(is.null(tau))
@@ -1145,7 +1145,7 @@ derivFactorSpline <- function(x,
       else
         suppressWarnings(vcov.mat.model[prune.index,prune.index] <- summary(model,covariance=TRUE)$cov[-1,-1,drop=FALSE])
 
-      deriv.ind.vec[1:dim.P.tensor] <- TRUE
+      deriv.ind.vec[seq_len(dim.P.tensor)] <- TRUE
       deriv.ind.vec <- deriv.ind.vec & prune.index
     }
 
@@ -2319,7 +2319,7 @@ svd_lm_fit <- function(x, y, tol = 1e-7) {
       rank = 0,
       qr = matrix(0, n, p),
       qraux = rep(0, p),
-      pivot = 1:p,
+      pivot = seq_len(p),
       tol = tol,
       effects = rep(0, n)
     ))
@@ -2332,10 +2332,11 @@ svd_lm_fit <- function(x, y, tol = 1e-7) {
   d_inv[keep] <- 1/d[keep]
 
   ## Compute coefficients: beta = V D^{-1} U' y
-  u_truncated <- svd_x$u[, 1:rank, drop = FALSE]
-  v_truncated <- svd_x$v[, 1:rank, drop = FALSE]
+  rank_idx <- seq_len(rank)
+  u_truncated <- svd_x$u[, rank_idx, drop = FALSE]
+  v_truncated <- svd_x$v[, rank_idx, drop = FALSE]
 
-  coefficients <- v_truncated %*% (d_inv[1:rank] * (t(u_truncated) %*% y))
+  coefficients <- v_truncated %*% (d_inv[rank_idx] * (t(u_truncated) %*% y))
 
   ## Ensure full length coefficient vector
   if(length(coefficients) < p) {
@@ -2364,6 +2365,6 @@ svd_lm_fit <- function(x, y, tol = 1e-7) {
     qraux = qr_obj$qraux,
     pivot = qr_obj$pivot,
     tol = tol,
-    effects = d[1:min(rank, length(d))]
+    effects = d[seq_len(min(rank, length(d)))]
   ))
 }

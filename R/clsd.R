@@ -603,7 +603,7 @@ ls.ml <- function(x=NULL,
                                monotone=monotone,
                                display.warnings=display.warnings)
 
-        P <- Pnorm[rank.xnorm,][1:length.x,]
+        P <- Pnorm[rank.xnorm,][seq_len(length.x),]
         colSumsP <- colSums(P)
         Pint <- Pnorm[rank.xnorm,][(length.x+1):nrow(Pnorm),]
         xint <- xnorm[rank.xnorm][(length.x+1):nrow(Pnorm)]
@@ -737,7 +737,7 @@ ls.ml <- function(x=NULL,
                              monotone=monotone,
                              display.warnings=display.warnings)
 
-      P <- Pnorm[rank.xnorm,][1:length.x,]
+      P <- Pnorm[rank.xnorm,][seq_len(length.x),]
       colSumsP <- colSums(P)
       Pint <- Pnorm[rank.xnorm,][(length.x+1):nrow(Pnorm),]
       xint <- xnorm[rank.xnorm][(length.x+1):nrow(Pnorm)]
@@ -866,7 +866,7 @@ ls.ml <- function(x=NULL,
                            monotone=monotone,
                            display.warnings=display.warnings)
 
-    P <- Pnorm[rank.xnorm,][1:length.x,]
+    P <- Pnorm[rank.xnorm,][seq_len(length.x),]
     colSumsP <- colSums(P)
     Pint <- Pnorm[rank.xnorm,][(length.x+1):nrow(Pnorm),]
     xint <- xnorm[rank.xnorm][(length.x+1):nrow(Pnorm)]
