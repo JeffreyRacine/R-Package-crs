@@ -829,3 +829,23 @@ Validation artifacts:
 4. Tarball-first:
    - `/tmp/crs_build_scalar_ifelse_finalsweep_20260224.log`
    - `/tmp/crs_check_ascran_scalar_ifelse_finalsweep_20260224.log` (`Status: 4 WARNINGs, 3 NOTEs`)
+
+### 2026-02-24 - A/R1.19 script hygiene (`runcrs`/`dontruncrs`)
+
+Scope completed:
+
+1. Hardened backup cleanup command in:
+   - `/Users/jracine/Development/crs/man/runcrs`
+   - `/Users/jracine/Development/crs/man/dontruncrs`
+2. Changed:
+   - `rm *.Rdbak` -> `rm -f -- ./*.Rdbak`
+   to avoid option-interpretation edge cases and satisfy `shellcheck` guidance.
+
+Validation artifacts:
+
+1. Script lint/syntax:
+   - `shellcheck /Users/jracine/Development/crs/man/runcrs /Users/jracine/Development/crs/man/dontruncrs` (clean)
+   - `bash -n /Users/jracine/Development/crs/man/runcrs` and `bash -n /Users/jracine/Development/crs/man/dontruncrs` (`BASH_N_OK`)
+2. Tarball-first:
+   - `/tmp/crs_build_script_hygiene_20260224.log`
+   - `/tmp/crs_check_ascran_script_hygiene_20260224.log` (`Status: 4 WARNINGs, 3 NOTEs`)

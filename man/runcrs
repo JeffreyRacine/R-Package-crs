@@ -18,4 +18,4 @@ sed -i bak -f sed_run.scr npglpreg.Rd
 sed -i bak -f sed_run.scr snomadr.Rd
 sed -i bak -f sed_run.scr tensor.prod.model.matrix.Rd
 sed -i bak -f sed_run.scr uniquecombs.Rd
-rm *.Rdbak
+rm -f -- ./*.Rdbak
