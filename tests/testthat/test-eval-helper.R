@@ -16,6 +16,7 @@ test_that(".crs_eval_call resolves namespace-qualified call heads", {
   env$x <- c(1, 2, 3, 4, 5)
 
   expect_equal(crs:::.crs_eval_call(quote(stats::median(x)), env), 3)
+  expect_equal(crs:::.crs_eval_call(quote(stats:::.MFclass(x)), env), "numeric")
 })
 
 test_that("succeedWithResponse returns expected response-availability flags", {

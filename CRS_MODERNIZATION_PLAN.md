@@ -14,7 +14,7 @@ Modernize `crs` to current best-practice R package engineering standards while p
 
 ## Current Status Snapshot (2026-02-24)
 
-1. Checkpoints completed locally: `51+` commits on top of `origin/master` (no push).
+1. Checkpoints completed locally: `52+` commits on top of `origin/master` (no push).
 2. Completed tranches:
    - `A/R1.1` through `A/R1.10` (low-risk R modernization path).
    - `A/R2.1` (removed `eval(parse(...))` in `stepCV`).
@@ -26,7 +26,7 @@ Modernize `crs` to current best-practice R package engineering standards while p
    - `A/R1.12` (additional `seq_len`/`seq.int` safety sweep in spline utilities).
    - `A/R1.13` (broader loop-header safety sweep across CV/sigtest and helper paths).
    - `A/R1.14` (full `npglpreg` loop-header safety sweep).
-   - `A/R1.15` through `A/R1.30` (scalar control-flow cleanup, script hygiene, clamp/vectorization follow-ups, remaining legacy `do.call` cleanup in matrix-construction paths, `vapply` numeric-column sweeps, boolean control simplification, centralized RNG seed state handling, scalar-loop index correctness fixes in `npglpreg` warning/index paths, registered-symbol `.Call` hygiene, and robust option-state guards for `crsiv` / `crsivderiv` including unset-option handling).
+   - `A/R1.15` through `A/R1.31` (scalar control-flow cleanup, script hygiene, clamp/vectorization follow-ups, remaining legacy `do.call` cleanup in matrix-construction paths, `vapply` numeric-column sweeps, boolean control simplification, centralized RNG seed state handling, scalar-loop index correctness fixes in `npglpreg` warning/index paths, registered-symbol `.Call` hygiene, robust option-state guards for `crsiv` / `crsivderiv` including unset-option handling, and eval-helper namespace-resolution hardening).
    - `B/R2` (shared IV scaffolding helpers for dots/call assembly in `crsiv` and `crsivderiv`).
    - `B/R1.1` (non-NOMAD C memory hygiene in `gsl_bspline.c`).
    - `B/R1.2` and `B/R1.3` (native-interface and matrix-kernel regression test expansion).
@@ -1443,3 +1443,31 @@ Validation artifacts:
 4. Tarball-first:
    - `/tmp/crs_build_option_null_guard_20260224.log`
    - `/tmp/crs_check_option_null_guard_20260224.log` (`Status: 4 WARNINGs, 4 NOTEs`)
+
+### 2026-02-24 - A/R1.31 eval-helper namespace-resolution hardening
+
+Scope completed:
+
+1. Hardened hidden namespace callable resolution in:
+   - `/Users/jracine/Development/crs/R/util.R`
+2. Change:
+   - `.crs_resolve_call_head()` now uses `utils::getFromNamespace(...)` for `:::` heads, eliminating undefined global-function check noise while preserving behavior.
+3. Expanded regression coverage in:
+   - `/Users/jracine/Development/crs/tests/testthat/test-eval-helper.R`
+4. Added explicit parity check for hidden namespace function calls:
+   - `stats:::.MFclass(x)` route now exercised through `.crs_eval_call(...)`.
+5. Result:
+   - `R CMD check --as-cran` `R code for possible problems` gate is now `OK`,
+   - overall check profile improved from `4 WARNINGs, 4 NOTEs` to `4 WARNINGs, 3 NOTEs`.
+
+Validation artifacts:
+
+1. Deterministic install:
+   - `/tmp/crs_install_eval_nsqual_20260224.log`
+2. Targeted tests:
+   - `/tmp/crs_test_eval_nsqual_targeted_20260224.out` (`PASS 6, WARN 0, FAIL 0`)
+3. Full test suite:
+   - `/tmp/crs_test_eval_nsqual_full_20260224.out` (`PASS 91, WARN 1, FAIL 0`)
+4. Tarball-first:
+   - `/tmp/crs_build_eval_nsqual_20260224.log`
+   - `/tmp/crs_check_eval_nsqual_20260224.log` (`Status: 4 WARNINGs, 3 NOTEs`)

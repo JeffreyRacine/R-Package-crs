@@ -241,7 +241,7 @@ succeedWithResponse <- function(tt, frame){
         return(getExportedValue(as.character(head[[2L]]), as.character(head[[3L]])))
       }
       if (identical(op_name, ":::")) {
-        return(getFromNamespace(as.character(head[[3L]]), as.character(head[[2L]])))
+        return(utils::getFromNamespace(as.character(head[[3L]]), as.character(head[[2L]])))
       }
     }
   }
