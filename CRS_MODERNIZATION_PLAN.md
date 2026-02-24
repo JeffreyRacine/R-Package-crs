@@ -20,6 +20,7 @@ Modernize `crs` to current best-practice R package engineering standards while p
    - `A/R2.1` (removed `eval(parse(...))` in `stepCV`).
    - `A/R2.2` (removed redundant re-fit work in `add1.lm.cv` path).
    - `A/R2.3` (hardened `crs.sigtest` call-data resolution).
+   - `A/R2.4` (reduced repeated call/list rebuilding in `crsiv`/`crsivderiv` loops).
    - `B/R1.1` (non-NOMAD C memory hygiene in `gsl_bspline.c`).
 3. Validation discipline maintained at each checkpoint:
    - installed-package targeted smokes,
@@ -54,8 +55,7 @@ Modernize `crs` to current best-practice R package engineering standards while p
 
 ## Next High-ROI Items (Remaining)
 
-1. `A/R2.4`: reduce repeated call/list rebuilding in `crsiv`/`crsivderiv` iterative paths.
-2. `B/R2`: controlled DRY refactors for shared `crsiv`/`crsivderiv` scaffolding after parity checks.
+1. `B/R2`: controlled DRY refactors for shared `crsiv`/`crsivderiv` scaffolding after parity checks.
 
 Primary guidance basis:
 
@@ -577,3 +577,26 @@ Validation artifacts:
 5. Tarball-first:
    - `/tmp/crs_build_sigtestdata_20260224.log`
    - `/tmp/crs_check_ascran_sigtestdata_20260224.log` (`Status: 4 WARNINGs, 2 NOTEs`)
+
+### 2026-02-24 - A/R2.4 reduce repeated call/list rebuilding in `crsiv*`
+
+Scope completed:
+
+1. Added local `fit.crs(...)` helpers in:
+   - `/Users/jracine/Development/crs/R/crsiv.R`
+   - `/Users/jracine/Development/crs/R/crsivderiv.R`
+2. Replaced repeated `do.call(crs, c(list(...), dots.*))` blocks in pre-loop and iterative paths with helper calls that centralize shared arguments (`opts`, `data`, `display.*`, optional warm-start args).
+3. Removed redundant mid-function re-creation of `dots.loop` and reused pre-sanitized loop dots to avoid repeated rebuild overhead and duplicate-arg risk.
+
+Validation artifacts:
+
+1. Parse gate:
+   - inline run result: `CRSIV_PARSE_OK`
+2. Deterministic install:
+   - `/tmp/crs_install_crsivref_20260224.log`
+3. Focused runtime smoke (`crsiv` + `crsivderiv` with `cv="none"`, `kernel=FALSE`, small `iterate.max`):
+   - `/tmp/crsiv_refactor_smoke_20260224.R`
+   - `/tmp/crsiv_refactor_smoke_20260224.out` (`CRSIV_REFACTOR_SMOKE_OK`)
+4. Tarball-first:
+   - `/tmp/crs_build_crsivref_20260224.log`
+   - `/tmp/crs_check_ascran_crsivref_20260224.log` (`Status: 4 WARNINGs, 3 NOTEs`)
