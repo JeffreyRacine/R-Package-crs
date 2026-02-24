@@ -14,7 +14,7 @@ Modernize `crs` to current best-practice R package engineering standards while p
 
 ## Current Status Snapshot (2026-02-24)
 
-1. Checkpoints completed locally: `62+` commits on top of `origin/master` (no push).
+1. Checkpoints completed locally: `63+` commits on top of `origin/master` (no push).
 2. Completed tranches:
    - `A/R1.1` through `A/R1.10` (low-risk R modernization path).
    - `A/R2.1` (removed `eval(parse(...))` in `stepCV`).
@@ -26,7 +26,7 @@ Modernize `crs` to current best-practice R package engineering standards while p
    - `A/R1.12` (additional `seq_len`/`seq.int` safety sweep in spline utilities).
    - `A/R1.13` (broader loop-header safety sweep across CV/sigtest and helper paths).
    - `A/R1.14` (full `npglpreg` loop-header safety sweep).
-   - `A/R1.15` through `A/R1.40` (scalar control-flow cleanup, script hygiene, clamp/vectorization follow-ups, remaining legacy `do.call` cleanup in matrix-construction paths, `vapply` numeric-column sweeps, boolean control simplification, centralized RNG seed state handling, scalar-loop index correctness fixes in `npglpreg` warning/index paths, registered-symbol `.Call` hygiene, robust option-state guards for `crsiv` / `crsivderiv` including unset-option handling, eval-helper namespace-resolution hardening, recursive source-artifact cleanup/build hygiene hardening, stepCV loop-index safety hardening for empty-scope paths, snomadr argument-validation hardening, stepCV call-evaluation/helper cleanup, snomadr single-argument `...` guard hardening, formal-matching parity for defaults/ellipsis, non-NOMAD C forensic comment cleanup, residual scalar bitwise-operator cleanup in control paths, and `plot.clsd` scalar logical follow-up alignment).
+   - `A/R1.15` through `A/R1.41` (scalar control-flow cleanup, script hygiene, clamp/vectorization follow-ups, remaining legacy `do.call` cleanup in matrix-construction paths, `vapply` numeric-column sweeps, boolean control simplification, centralized RNG seed state handling, scalar-loop index correctness fixes in `npglpreg` warning/index paths, registered-symbol `.Call` hygiene, robust option-state guards for `crsiv` / `crsivderiv` including unset-option handling, eval-helper namespace-resolution hardening, recursive source-artifact cleanup/build hygiene hardening, stepCV loop-index safety hardening for empty-scope paths, snomadr argument-validation hardening, stepCV call-evaluation/helper cleanup, snomadr single-argument `...` guard hardening, formal-matching parity for defaults/ellipsis, non-NOMAD C forensic comment cleanup, residual scalar bitwise-operator cleanup in control paths, `plot.clsd` scalar logical follow-up alignment, and invariant-hoisting in `W.glp` polynomial index construction).
    - `B/R2` (shared IV scaffolding helpers for dots/call assembly in `crsiv` and `crsivderiv`).
    - `B/R1.1` (non-NOMAD C memory hygiene in `gsl_bspline.c`).
    - `B/R1.2` and `B/R1.3` (native-interface and matrix-kernel regression test expansion).
@@ -1722,3 +1722,29 @@ Validation artifacts:
 3. Tarball-first:
    - `/tmp/crs_build_clsd_scalar_logic_followup_20260224.log`
    - `/tmp/crs_check_clsd_scalar_logic_followup_20260224.log` (`Status: 5 WARNINGs, 1 NOTE`)
+
+### 2026-02-24 - A/R1.41 `W.glp` invariant-hoist micro-optimization
+
+Scope completed:
+
+1. Hoisted invariant degree maximum computation in `W.glp`:
+   - `/Users/jracine/Development/crs/R/np.regression.glp.R`
+2. Changes:
+   - compute `degree.max <- max(degree)` once,
+   - reuse `degree.max` for index filtering and loop guards.
+3. Result:
+   - removes repeated invariant recomputation inside polynomial-index setup,
+   - no behavioral change (indexing logic and filtering remain identical).
+
+Validation artifacts:
+
+1. Syntax gate:
+   - `/tmp/crs_parse_npglpreg_degree_max_hoist_20260224.out` (`PARSE_OK`)
+2. Full test suite:
+   - `/tmp/crs_test_npglpreg_degree_max_hoist_full_20260224.out` (`PASS 105, WARN 1, FAIL 0`)
+3. Tarball-first:
+   - `/tmp/crs_build_npglpreg_degree_max_hoist_20260224.log`
+   - `/tmp/crs_check_npglpreg_degree_max_hoist_final_20260224.log` (`Status: 5 WARNINGs, 1 NOTE`)
+4. Check rerun notes:
+   - `/tmp/crs_check_npglpreg_degree_max_hoist_20260224.log` ended with OS-level kill during install (`Killed: 9`), matching the known sporadic pre-existing check instability.
+   - `/tmp/crs_check_npglpreg_degree_max_hoist_rerun_20260224.log` failed examples due missing installed `np` in this session; resolved by local install from `/Users/jracine/Development/np-master` (`/tmp/np_install_for_crs_check_20260224.log`) before the final successful check.

@@ -126,16 +126,17 @@ W.glp <- function(xdat = NULL,
 
   } else {
 
+    degree.max <- max(degree)
     degree.list <- list()
     for(i in seq_len(k)) degree.list[[i]] <- 0:degree[i]
     z <- do.call(base::expand.grid, c(degree.list, list(KEEP.OUT.ATTRS = FALSE)))
     s <- rowSums(z)
-    ind <- (s > 0) & (s <= max(degree))
+    ind <- (s > 0) & (s <= degree.max)
     z <- z[ind, ,drop=FALSE]
-    if(!all(degree==max(degree))) {
+    if(!all(degree == degree.max)) {
       for(j in seq_along(degree)) {
         d <- degree[j]
-        if((d < max(degree)) && (d > 0)) {
+        if((d < degree.max) && (d > 0)) {
           s <- rowSums(z)
           d <- (s > d) & (z[,j,drop=FALSE]==matrix(d,nrow(z),1,byrow=TRUE))
           z <- z[!d, ]
