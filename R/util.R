@@ -198,6 +198,23 @@ check.max.spline.degree <- function(xdat=NULL,degree=NULL,display.warnings=TRUE)
 
 }
 
+.crs_capture_seed <- function() {
+  if (exists(".Random.seed", envir = .GlobalEnv, inherits = FALSE)) {
+    return(list(
+      exists_seed = TRUE,
+      seed = get(".Random.seed", envir = .GlobalEnv, inherits = FALSE)
+    ))
+  }
+  list(exists_seed = FALSE, seed = NULL)
+}
+
+.crs_restore_seed <- function(seed_state) {
+  if (isTRUE(seed_state$exists_seed)) {
+    assign(".Random.seed", seed_state$seed, envir = .GlobalEnv)
+  }
+  invisible(NULL)
+}
+
 succeedWithResponse <- function(tt, frame){
   vars.expr <- attr(tt, "variables")
   !inherits(try(.crs_eval_call(vars.expr, frame), silent = TRUE), "try-error")

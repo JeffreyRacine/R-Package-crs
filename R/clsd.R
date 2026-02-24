@@ -553,12 +553,7 @@ ls.ml <- function(x=NULL,
 
   ## Save seed prior to setting
 
-  if(exists(".Random.seed", .GlobalEnv)) {
-    save.seed <- get(".Random.seed", .GlobalEnv)
-    exists.seed = TRUE
-  } else {
-    exists.seed = FALSE
-  }
+  seed.state <- .crs_capture_seed()
 
   set.seed(random.seed)
 
@@ -937,7 +932,7 @@ ls.ml <- function(x=NULL,
 
   ## Restore seed
 
-  if(exists.seed) assign(".Random.seed", save.seed, .GlobalEnv)
+  .crs_restore_seed(seed.state)
 
   return(list(degree=d.opt,segments=s.opt,beta=par.opt,fv=value.opt))
 

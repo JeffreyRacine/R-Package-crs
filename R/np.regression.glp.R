@@ -2229,12 +2229,7 @@ glpcvNOMAD <- function(ydat=NULL,
 
   ## Save the seed prior to setting
 
-  if(exists(".Random.seed", .GlobalEnv)) {
-    save.seed <- get(".Random.seed", .GlobalEnv)
-    exists.seed = TRUE
-  } else {
-    exists.seed = FALSE
-  }
+  seed.state <- .crs_capture_seed()
 
   set.seed(random.seed)
 
@@ -2650,7 +2645,7 @@ glpcvNOMAD <- function(ydat=NULL,
 
   ## Restore seed
 
-  if(exists.seed) assign(".Random.seed", save.seed, .GlobalEnv)
+  .crs_restore_seed(seed.state)
 
   if(isTRUE(all.equal(fv,cv.maxPenalty))) stop(" Search failed: restart with larger nmulti or smaller degree.max")
 

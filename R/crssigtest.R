@@ -24,12 +24,7 @@ crssigtest <- function(model = NULL,
   ## unsettling for some users - this can naturally be overridden by
   ## setting a unique seed each time the test is run)
 
-  if(exists(".Random.seed", .GlobalEnv)) {
-    save.seed <- get(".Random.seed", .GlobalEnv)
-    exists.seed <- TRUE
-  } else {
-    exists.seed <- FALSE
-  }
+  seed.state <- .crs_capture_seed()
 
   set.seed(random.seed)
 
@@ -268,7 +263,7 @@ crssigtest <- function(model = NULL,
 
   ## Restore seed
 
-  if(exists.seed) assign(".Random.seed", save.seed, .GlobalEnv)
+  .crs_restore_seed(seed.state)
 
   ## Return a list containing test results
 

@@ -14,7 +14,7 @@ Modernize `crs` to current best-practice R package engineering standards while p
 
 ## Current Status Snapshot (2026-02-24)
 
-1. Checkpoints completed locally: `46+` commits on top of `origin/master` (no push).
+1. Checkpoints completed locally: `47+` commits on top of `origin/master` (no push).
 2. Completed tranches:
    - `A/R1.1` through `A/R1.10` (low-risk R modernization path).
    - `A/R2.1` (removed `eval(parse(...))` in `stepCV`).
@@ -26,7 +26,7 @@ Modernize `crs` to current best-practice R package engineering standards while p
    - `A/R1.12` (additional `seq_len`/`seq.int` safety sweep in spline utilities).
    - `A/R1.13` (broader loop-header safety sweep across CV/sigtest and helper paths).
    - `A/R1.14` (full `npglpreg` loop-header safety sweep).
-   - `A/R1.15` through `A/R1.25` (scalar control-flow cleanup, script hygiene, clamp/vectorization follow-ups, remaining legacy `do.call` cleanup in matrix-construction paths, `vapply` numeric-column sweeps, and boolean control simplification in `npglpreg` + `crs` scalar gate paths).
+   - `A/R1.15` through `A/R1.26` (scalar control-flow cleanup, script hygiene, clamp/vectorization follow-ups, remaining legacy `do.call` cleanup in matrix-construction paths, `vapply` numeric-column sweeps, boolean control simplification, and centralized RNG seed state handling).
    - `B/R2` (shared IV scaffolding helpers for dots/call assembly in `crsiv` and `crsivderiv`).
    - `B/R1.1` (non-NOMAD C memory hygiene in `gsl_bspline.c`).
    - `B/R1.2` and `B/R1.3` (native-interface and matrix-kernel regression test expansion).
@@ -1303,3 +1303,35 @@ Validation artifacts:
 4. Tarball-first:
    - `/tmp/crs_build_bool_kernel_prune_20260224.log`
    - `/tmp/crs_check_bool_kernel_prune_20260224.log` (`Status: 4 WARNINGs, 4 NOTEs`)
+
+### 2026-02-24 - A/R1.26 centralized RNG seed-state helpers
+
+Scope completed:
+
+1. Added shared internal RNG seed helpers in:
+   - `/Users/jracine/Development/crs/R/util.R`
+   - `.crs_capture_seed(...)`
+   - `.crs_restore_seed(...)`
+2. Replaced duplicated seed save/restore blocks with helper calls in:
+   - `/Users/jracine/Development/crs/R/clsd.R`
+   - `/Users/jracine/Development/crs/R/snomadr.R`
+   - `/Users/jracine/Development/crs/R/np.regression.glp.R`
+   - `/Users/jracine/Development/crs/R/frscvNOMAD.R`
+   - `/Users/jracine/Development/crs/R/krscvNOMAD.R`
+   - `/Users/jracine/Development/crs/R/crssigtest.R`
+3. Added helper regression tests in:
+   - `/Users/jracine/Development/crs/tests/testthat/test-seed-helper.R`
+4. Result:
+   - no remaining `save.seed` / `exists.seed` duplication in `R/`.
+
+Validation artifacts:
+
+1. Deterministic install:
+   - `/tmp/crs_install_seed_helper_20260224.log`
+2. Targeted tests:
+   - `/tmp/crs_test_seed_helper_targeted_20260224.out` (`PASS 13, WARN 1, FAIL 0`)
+3. Full test suite:
+   - `/tmp/crs_test_seed_helper_full_20260224.out` (`PASS 82, WARN 1, FAIL 0`)
+4. Tarball-first:
+   - `/tmp/crs_build_seed_helper_20260224.log`
+   - `/tmp/crs_check_seed_helper_20260224.log` (`Status: 4 WARNINGs, 4 NOTEs`)
