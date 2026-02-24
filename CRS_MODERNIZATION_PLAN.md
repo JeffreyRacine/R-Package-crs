@@ -24,6 +24,7 @@ Modernize `crs` to current best-practice R package engineering standards while p
    - `A/R1.11` (scalar stopping-rule branch hardening in IV iteration loops).
    - `A/R1.12` (additional `seq_len`/`seq.int` safety sweep in spline utilities).
    - `A/R1.13` (broader loop-header safety sweep across CV/sigtest and helper paths).
+   - `A/R1.14` (full `npglpreg` loop-header safety sweep).
    - `B/R2` (shared IV scaffolding helpers for dots/call assembly in `crsiv` and `crsivderiv`).
    - `B/R1.1` (non-NOMAD C memory hygiene in `gsl_bspline.c`).
 3. Validation discipline maintained at each checkpoint:
@@ -702,3 +703,25 @@ Validation artifacts:
 4. Tarball-first:
    - `/tmp/crs_build_loopsweep_20260224.log`
    - `/tmp/crs_check_ascran_loopsweep_20260224.log` (`Status: 4 WARNINGs, 3 NOTEs`)
+
+### 2026-02-24 - A/R1.14 `npglpreg` loop-header safety sweep
+
+Scope completed:
+
+1. Converted remaining active `for (... in 1:...)` loop headers in:
+   - `/Users/jracine/Development/crs/R/np.regression.glp.R`
+   to zero-length-safe `seq_len(...)` forms.
+2. Post-change R-layer scan now shows no active `for(... in 1:...)` loop headers (remaining match is comment-only in `glp.model.matrix.R`).
+
+Validation artifacts:
+
+1. Parse gate:
+   - `/tmp/crs_parse_npglp_loopsweep_20260224.log` (`NPGLP_LOOP_PARSE_OK`)
+2. Deterministic install:
+   - `/tmp/crs_install_npglp_loopsweep_20260224.log`
+3. Focused `npglpreg` runtime smoke (`cv.ls` and `cv.aic`):
+   - `/tmp/crs_npglp_loopsweep_smoke_20260224.R`
+   - `/tmp/crs_npglp_loopsweep_smoke_20260224.out` (`NPGLP_LOOP_SWEEP_SMOKE_OK`)
+4. Tarball-first:
+   - `/tmp/crs_build_npglp_loopsweep_20260224.log`
+   - `/tmp/crs_check_ascran_npglp_loopsweep_20260224.log` (`Status: 4 WARNINGs, 2 NOTEs`)

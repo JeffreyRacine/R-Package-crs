@@ -40,7 +40,7 @@ mypoly <- function(x,
 
     if(gradient.compute) {
       Z <- NULL
-      for(i in 1:degree) {
+      for(i in seq_len(degree)) {
         if((i-r) >= 0) {
           tmp <- (factorial(i)/factorial(i-r))*x^max(0,i-r)
         } else {
@@ -127,7 +127,7 @@ W.glp <- function(xdat = NULL,
   } else {
 
     degree.list <- list()
-    for(i in 1:k) degree.list[[i]] <- 0:degree[i]
+    for(i in seq_len(k)) degree.list[[i]] <- 0:degree[i]
     z <- do.call(base::expand.grid, degree.list, k)
     s <- rowSums(z)
     ind <- (s > 0) & (s <= max(degree))
@@ -242,7 +242,7 @@ check.max.degree <- function(xdat=NULL,degree=NULL,display.warnings=TRUE,Bernste
 
   if(num.numeric > 0) {
 
-    for(i in 1:num.numeric) {
+    for(i in seq_len(num.numeric)) {
       if(degree[i]>0) {
         ## First check if degree results in a well-conditioned basis
         d[i] <- degree[i]
@@ -254,7 +254,7 @@ check.max.degree <- function(xdat=NULL,degree=NULL,display.warnings=TRUE,Bernste
         ## (descending may require computation of large matrices that
         ## are discarded)
         if(!is.fullrank(X)) {
-          for(j in 1:degree[i]) {
+          for(j in seq_len(degree[i])) {
             d[i] <- j
             X <- mypoly(x=xdat[,numeric.index[i]],
                         ex=NULL,
@@ -400,7 +400,7 @@ npglpreg.default <- function(tydat=NULL,
       num.eval <- ifelse(is.null(exdat),nrow(txdat),nrow(exdat))
       gradient.categorical.mat <- matrix(NA,nrow=num.eval,ncol=num.categorical)
 
-      for(i in 1:num.categorical) {
+      for(i in seq_len(num.categorical)) {
 
         if(is.null(exdat)) {
           exdat.base <- txdat
@@ -508,7 +508,7 @@ summary.npglpreg <- function(object,
   if(object$num.numeric >= 1) {
     cat(paste("\nContinuous kernel type: ", object$ckertype, sep=""))
     cat(paste("\nContinuous kernel order: ", object$ckerorder, sep=""))
-    for(j in 1:object$num.numeric) {
+    for(j in seq_len(object$num.numeric)) {
       if(object$bwtype=="fixed") {
         cat(paste("\nBandwidth for ",format(object$xnames[object$numeric.index][j]),": ",format(object$bws[object$numeric.index][j]),sep=""),sep="")
         if(!is.null(object$bws.sf))
@@ -519,7 +519,7 @@ summary.npglpreg <- function(object,
     }
   }
 
-  for(j in 1:object$num.numeric)
+  for(j in seq_len(object$num.numeric))
     cat(paste("\nDegree for ",format(object$xnames[object$numeric.index][j]),": ",format(object$degree[j]),sep=""),sep="")
 
   ## Summarize categorical predictors
@@ -533,7 +533,7 @@ summary.npglpreg <- function(object,
   if(object$num.categorical >= 1) {
     cat(paste("\nUnordered kernel type: ", object$ukertype, sep=""))
     cat(paste("\nOrdered kernel type: ", object$okertype, sep=""))
-    for(j in 1:(object$num.categorical))
+    for(j in seq_len(object$num.categorical))
       cat(paste("\nBandwidth for ",format(object$xnames[object$categorical.index][j]),": ",format(object$bws[object$categorical.index][j]),sep=""),sep="")
   }
 
@@ -1034,7 +1034,7 @@ glpregEst <- function(tydat=NULL,
   ## the distance is defined.
 
   if(bwtype!="fixed" && !is.null(bws) && num.numeric > 0) {
-    for(i in 1:num.numeric) {
+    for(i in seq_len(num.numeric)) {
       k.max <- knn.max(txdat[,numeric.index[i]])
       if(bws[numeric.index[i]] > k.max) stop(paste("Error: invalid knn provided for predictor ",numeric.index[i],": max is ",k.max,sep=""))
     }
@@ -1205,7 +1205,7 @@ glpregEst <- function(tydat=NULL,
       ## ought never occur but this is quite strong as if one
       ## observation only is sparse and inversion is problematic, for
       ## the rest of the sample this may not be the case.
-      for(i in 1:n.eval) {
+      for(i in seq_len(n.eval)) {
         if(!is.fullrank(tww[,,i])) {
           if(display.warnings) console <- printPush(paste("\rWarning: is.fullrank required for inversion at obs. ", i," failed      ",sep=""),console = console)
           return(cv.maxPenalty)
@@ -1361,7 +1361,7 @@ minimand.cv.ls <- function(bws=NULL,
   xdat.numeric <- sapply(1:num.bw,function(i){is.numeric(xdat[,i])})
   num.numeric <- ncol(as.data.frame(xdat[,xdat.numeric]))
 
-  for(i in 1:num.bw) {
+  for(i in seq_len(num.bw)) {
     if(xdat.numeric[i]==TRUE && bwtype=="fixed") {
       bws[i] <- bws[i]*scale_robust(xdat[,i],display.warnings=display.warnings)*length(ydat)^{-1/(num.numeric+2*ckerorder)}
     }
@@ -1511,7 +1511,7 @@ minimand.cv.ls <- function(bws=NULL,
     if(!cv.shrink) {
       ## IMPROVEMENT 5: Smooth penalty for rank deficiency in subsets
       n_rank_fail <- 0
-      for(i in 1:n) {
+      for(i in seq_len(n)) {
         if(!is.fullrank(tww[,,i])) {
           n_rank_fail <- n_rank_fail + 1
         }
@@ -1561,7 +1561,7 @@ minimand.cv.ls <- function(bws=NULL,
 
         mat <- tww[,,i]
         if(ridge[i] > 0) {
-          for(j in 1:nc) mat[j,j] <- mat[j,j] + ridge[i]
+          for(j in seq_len(nc)) mat[j,j] <- mat[j,j] + ridge[i]
         }
 
         val <- tryCatch({
@@ -1722,7 +1722,7 @@ minimand.cv.aic <- function(bws=NULL,
   xdat.numeric <- sapply(1:num.bw,function(i){is.numeric(xdat[,i])})
   num.numeric <- ncol(as.data.frame(xdat[,xdat.numeric]))
 
-  for(i in 1:num.bw) {
+  for(i in seq_len(num.bw)) {
     if(xdat.numeric[i]==TRUE && bwtype=="fixed") {
       bws[i] <- bws[i]*scale_robust(xdat[,i],display.warnings=display.warnings)*length(ydat)^{-1/(num.numeric+2*ckerorder)}
     }
@@ -1826,7 +1826,7 @@ minimand.cv.aic <- function(bws=NULL,
     if(!cv.shrink) {
       ## IMPROVEMENT 4: Smooth penalty for rank failures
       n_rank_fail <- 0
-      for(i in 1:n) {
+      for(i in seq_len(n)) {
         if(!is.fullrank(tww[,,i])) {
           n_rank_fail <- n_rank_fail + 1
         }
@@ -1871,7 +1871,7 @@ minimand.cv.aic <- function(bws=NULL,
 
         mat <- tww[,,i]
         if(ridge[i] > 0) {
-          for(j in 1:nc) mat[j,j] <- mat[j,j] + ridge[i]
+          for(j in seq_len(nc)) mat[j,j] <- mat[j,j] + ridge[i]
         }
 
         res <- tryCatch({
@@ -1904,7 +1904,7 @@ minimand.cv.aic <- function(bws=NULL,
 
     ## Calculate trH
     trH_sum <- 0
-    for(i in 1:n) {
+    for(i in seq_len(n)) {
       if(!is.null(inv_storage[[i]])) {
         term1 <- 0
         if(ridge[i] < 1) {
@@ -2315,7 +2315,7 @@ glpcvNOMAD <- function(ydat=NULL,
   ## likely not sensible.
 
   if(!is.null(bandwidth.min.numeric)) {
-    for(i in 1:num.numeric) {
+    for(i in seq_len(num.numeric)) {
       lb[numeric.index[i]] <- bandwidth.min.numeric
     }
   }
@@ -2332,7 +2332,7 @@ glpcvNOMAD <- function(ydat=NULL,
   bw.switch <- c(rep(bandwidth.switch, num.bw))
 
   if(bwtype!="fixed" && num.numeric > 0) {
-    for(i in 1:num.numeric) {
+    for(i in seq_len(num.numeric)) {
       k.max <- knn.max(xdat[,numeric.index[i]])
       if(ub[numeric.index[i]] > k.max) ub[numeric.index[i]] <- k.max
       if(bw.switch[numeric.index[i]] > k.max) bw.switch[numeric.index[i]] <- k.max
@@ -2346,7 +2346,7 @@ glpcvNOMAD <- function(ydat=NULL,
   MIN.MESH.SIZE <- list()
   MIN.FRAME.SIZE <- list()
 
-  for(i in 1:num.bw) {
+  for(i in seq_len(num.bw)) {
     INITIAL.MESH.SIZE[[i]] <- initial.mesh.size.real
     MIN.MESH.SIZE[[i]] <- min.mesh.size.real
     MIN.FRAME.SIZE[[i]] <- min.frame.size.real
@@ -2403,7 +2403,7 @@ glpcvNOMAD <- function(ydat=NULL,
   if(is.null(degree)) {
     if(cv == "degree-bandwidth") {
       degree <- numeric(num.numeric)
-      for(i in 1:num.numeric) {
+      for(i in seq_len(num.numeric)) {
         ## We adopt the convention to always start from a polynomial
         ## or degree 1 for the first search attempt
         degree[i] <- 1
@@ -2473,7 +2473,7 @@ glpcvNOMAD <- function(ydat=NULL,
 
   if(is.null(bandwidth)) {
     init.search.vals <- numeric()
-    for(i in 1:num.bw) {
+    for(i in seq_len(num.bw)) {
       if(xdat.numeric[i]==TRUE && bwtype=="fixed") {
         init.search.vals[i] <- runif(1,lb[i],1.5)
       }
@@ -2489,7 +2489,7 @@ glpcvNOMAD <- function(ydat=NULL,
     ## numeric variables into scale factors (level on which snomadr is
     ## optimizing)
     init.search.vals <- bandwidth
-    for(i in 1:num.bw) {
+    for(i in seq_len(num.bw)) {
       if(xdat.numeric[i]==TRUE && bwtype=="fixed") {
         init.search.vals[i] <- bandwidth[i]/(scale_robust(xdat[,i],display.warnings=display.warnings)*length(ydat)^{-1/(num.numeric+2*ckerorder)})
       }
@@ -2503,10 +2503,10 @@ glpcvNOMAD <- function(ydat=NULL,
 
   x0.pts <- matrix(numeric(1), nmulti, length(bbin))
 
-  for(iMulti in 1:nmulti) {
+  for(iMulti in seq_len(nmulti)) {
     if(iMulti != 1) {
       init.search.vals <- numeric()
-      for(i in 1:num.bw) {
+      for(i in seq_len(num.bw)) {
         if(xdat.numeric[i]==TRUE && bwtype=="fixed") {
           init.search.vals[i] <- runif(1,lb[i],1.5)
         }
@@ -2520,7 +2520,7 @@ glpcvNOMAD <- function(ydat=NULL,
     }
 
     if(cv == "degree-bandwidth" && iMulti != 1) {
-      for(i in 1:num.numeric) {
+      for(i in seq_len(num.numeric)) {
         degree[i] <- sample(degree.min:ub[(num.bw+1):(num.bw+num.numeric)][i], 1)
       }
     }
@@ -2603,13 +2603,13 @@ glpcvNOMAD <- function(ydat=NULL,
   bw.opt <- bw.opt.sf
 
   if(bwtype=="fixed") {
-    for(i in 1:num.numeric) {
+    for(i in seq_len(num.numeric)) {
       sd.xdat <- scale_robust(xdat[,numeric.index[i]],display.warnings=display.warnings)
       bw.opt[numeric.index[i]] <- bw.opt[numeric.index[i]]*sd.xdat*length(ydat)^{-1/(num.numeric+2*ckerorder)}
     }
   }
 
-  for(i in 1:num.bw) {
+  for(i in seq_len(num.bw)) {
     if(!xdat.numeric[i]) {
       bw.opt[i] <- bw.opt[i]/bandwidth.scale.categorical
     }
