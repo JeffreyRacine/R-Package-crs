@@ -54,53 +54,27 @@ crsivderiv.default <- function(y,
   crs.messages <- getOption("crs.messages")
   is.eval.train <- is.null(zeval) && is.null(weval) && is.null(xeval)
 
-  dot.args <- list(...)
-  nmulti.user <- dot.args$nmulti
-  nmulti <- if(!is.null(nmulti.user)) nmulti.user else 5
-
-  ## Strip arguments we might pass explicitly to avoid conflicts
-  dots.no.nmulti <- dot.args
-  dots.no.nmulti$nmulti <- NULL
-
-  ## Create a version of dots for pre-loop calls that strips conflicting args
-  dots.preloop <- dot.args
-  dots.preloop$formula <- NULL
-  dots.preloop$opts <- NULL
-  dots.preloop$data <- NULL
-  dots.preloop$display.nomad.progress <- NULL
-  dots.preloop$display.warnings <- NULL
-
-  ## Create a version of dots for the loop that excludes parameters we pass explicitly
-  dots.loop <- dots.no.nmulti
-  dots.loop$formula <- NULL
-  dots.loop$opts <- NULL
-  dots.loop$data <- NULL
-  dots.loop$display.nomad.progress <- NULL
-  dots.loop$display.warnings <- NULL
-  dots.loop$degree <- NULL
-  dots.loop$segments <- NULL
-  dots.loop$lambda <- NULL
-  dots.loop$include <- NULL
-  dots.loop$nmulti <- NULL # already handled in dots.no.nmulti but for safety
-
-  ## Determine nmulti for subsequent loop iterations
-  nmulti.loop <- if(!is.null(nmulti.user)) nmulti.user else 1
+  dot.prep <- .crsiv_prepare_dot_args(list(...))
+  nmulti <- dot.prep$nmulti
+  nmulti.loop <- dot.prep$nmulti.loop
+  dots.preloop <- dot.prep$dots.preloop
+  dots.loop <- dot.prep$dots.loop
 
   fit.crs <- function(formula, data, dots, deriv = NULL, degree = NULL,
                       segments = NULL, lambda = NULL, include = NULL,
                       nmulti = NULL) {
-    args <- list(formula = formula,
-                 opts = opts,
-                 display.nomad.progress = display.nomad.progress,
-                 display.warnings = display.warnings,
-                 data = data)
-    if (!is.null(deriv)) args$deriv <- deriv
-    if (!is.null(degree)) args$degree <- degree
-    if (!is.null(segments)) args$segments <- segments
-    if (!is.null(lambda)) args$lambda <- lambda
-    if (!is.null(include)) args$include <- include
-    if (!is.null(nmulti)) args$nmulti <- nmulti
-    do.call(crs, c(args, dots))
+    .crsiv_fit_crs(formula = formula,
+                   data = data,
+                   dots = dots,
+                   opts = opts,
+                   display.nomad.progress = display.nomad.progress,
+                   display.warnings = display.warnings,
+                   deriv = deriv,
+                   degree = degree,
+                   segments = segments,
+                   lambda = lambda,
+                   include = include,
+                   nmulti = nmulti)
   }
 
   console <- newLineConsole()

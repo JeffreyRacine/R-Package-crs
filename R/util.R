@@ -32,6 +32,60 @@ is.fullrank <- function(X, tol = 1e-7) {
   return(qr_X$rank == min(dim(X)))
 }
 
+.crsiv_prepare_dot_args <- function(dot.args) {
+  nmulti.user <- dot.args$nmulti
+  nmulti <- if (!is.null(nmulti.user)) nmulti.user else 5
+
+  dots.no.nmulti <- dot.args
+  dots.no.nmulti$nmulti <- NULL
+
+  dots.preloop <- dot.args
+  dots.preloop$formula <- NULL
+  dots.preloop$opts <- NULL
+  dots.preloop$data <- NULL
+  dots.preloop$display.nomad.progress <- NULL
+  dots.preloop$display.warnings <- NULL
+
+  dots.loop <- dots.no.nmulti
+  dots.loop$formula <- NULL
+  dots.loop$opts <- NULL
+  dots.loop$data <- NULL
+  dots.loop$display.nomad.progress <- NULL
+  dots.loop$display.warnings <- NULL
+  dots.loop$degree <- NULL
+  dots.loop$segments <- NULL
+  dots.loop$lambda <- NULL
+  dots.loop$include <- NULL
+  dots.loop$nmulti <- NULL
+
+  nmulti.loop <- if (!is.null(nmulti.user)) nmulti.user else 1
+
+  list(
+    nmulti = nmulti,
+    nmulti.loop = nmulti.loop,
+    dots.preloop = dots.preloop,
+    dots.loop = dots.loop
+  )
+}
+
+.crsiv_fit_crs <- function(formula, data, dots, opts, display.nomad.progress,
+                           display.warnings, deriv = NULL, degree = NULL,
+                           segments = NULL, lambda = NULL, include = NULL,
+                           nmulti = NULL) {
+  args <- list(formula = formula,
+               opts = opts,
+               data = data,
+               display.nomad.progress = display.nomad.progress,
+               display.warnings = display.warnings)
+  if (!is.null(deriv)) args$deriv <- deriv
+  if (!is.null(degree)) args$degree <- degree
+  if (!is.null(segments)) args$segments <- segments
+  if (!is.null(lambda)) args$lambda <- lambda
+  if (!is.null(include)) args$include <- include
+  if (!is.null(nmulti)) args$nmulti <- nmulti
+  do.call(crs, c(args, dots))
+}
+
 scale_robust <- function(x, center=TRUE, scale=TRUE, display.warnings=TRUE){
   if(any(dim(as.matrix(x)) == 0))
     return(0)

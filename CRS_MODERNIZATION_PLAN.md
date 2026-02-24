@@ -21,6 +21,7 @@ Modernize `crs` to current best-practice R package engineering standards while p
    - `A/R2.2` (removed redundant re-fit work in `add1.lm.cv` path).
    - `A/R2.3` (hardened `crs.sigtest` call-data resolution).
    - `A/R2.4` (reduced repeated call/list rebuilding in `crsiv`/`crsivderiv` loops).
+   - `B/R2` (shared IV scaffolding helpers for dots/call assembly in `crsiv` and `crsivderiv`).
    - `B/R1.1` (non-NOMAD C memory hygiene in `gsl_bspline.c`).
 3. Validation discipline maintained at each checkpoint:
    - installed-package targeted smokes,
@@ -55,7 +56,7 @@ Modernize `crs` to current best-practice R package engineering standards while p
 
 ## Next High-ROI Items (Remaining)
 
-1. `B/R2`: controlled DRY refactors for shared `crsiv`/`crsivderiv` scaffolding after parity checks.
+1. `C/R3` (optional/deferred): `.C` -> `.Call` migration and deeper algorithmic rewrites only after extended parity/performance signoff.
 
 Primary guidance basis:
 
@@ -600,3 +601,28 @@ Validation artifacts:
 4. Tarball-first:
    - `/tmp/crs_build_crsivref_20260224.log`
    - `/tmp/crs_check_ascran_crsivref_20260224.log` (`Status: 4 WARNINGs, 3 NOTEs`)
+
+### 2026-02-24 - B/R2 shared `crsiv*` scaffolding helpers
+
+Scope completed:
+
+1. Added shared internal helper functions in:
+   - `/Users/jracine/Development/crs/R/util.R`
+   - `.crsiv_prepare_dot_args(...)` for consistent `...` sanitization across pre-loop and loop calls.
+   - `.crsiv_fit_crs(...)` for standardized `crs` call assembly with optional warm-start args.
+2. Updated both IV entry points to use shared helpers:
+   - `/Users/jracine/Development/crs/R/crsiv.R`
+   - `/Users/jracine/Development/crs/R/crsivderiv.R`
+3. Kept behavior contracts stable while removing duplicated local scaffolding blocks.
+
+Validation artifacts:
+
+1. Parse gate:
+   - inline run result: `CRSIV_B2_PARSE_OK`
+2. Deterministic install:
+   - `/tmp/crs_install_crsivb2_20260224.log`
+3. Focused runtime smoke (`crsiv` + `crsivderiv`):
+   - `/tmp/crsiv_b2_smoke_20260224.out` (`CRSIV_REFACTOR_SMOKE_OK`)
+4. Tarball-first:
+   - `/tmp/crs_build_crsivb2_20260224.log`
+   - `/tmp/crs_check_ascran_crsivb2_20260224.log` (`Status: 4 WARNINGs, 2 NOTEs`)
