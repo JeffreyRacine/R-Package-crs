@@ -1265,8 +1265,8 @@ glpregEst <- function(tydat=NULL,
       (1-ridge.state$ridge[i]) * W.eval[i,, drop = FALSE] %*% coef.mat[,i] + ridge.state$ridge.lc[i]
     })
 
-    ## Ought to have a correction here for derivative when shrinking
-    ## towards the local constant - XXX
+    ## Derivative correction under local-constant shrinkage is not
+    ## currently applied in this path.
 
     if(!is.null(gradient.vec)) {
       gradient <- sapply(seq_len(n.eval), function(i) {

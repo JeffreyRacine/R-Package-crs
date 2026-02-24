@@ -391,7 +391,8 @@ void RuniqueCombs(double *X,int *ind,int *r, int *c)
   ind1=Xd_strip(&Xd);
   for (i=0;i<*r;i++) ind[i] = ind1[i]; /* copy index for return */
   Xd.c--; /* hide index array  */
-  RArrayFromMatrix(X,Xd.r,&Xd);  /* NOTE: not sure about rows here!!!! */
+  /* Write unique rows back densely using the compacted row stride (Xd.r). */
+  RArrayFromMatrix(X,Xd.r,&Xd);
   *r = (int)Xd.r; 
   freemat(Xd);free(ind1);
 #ifdef MEM_CHECK

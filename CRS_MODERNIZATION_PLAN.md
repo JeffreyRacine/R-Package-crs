@@ -14,7 +14,7 @@ Modernize `crs` to current best-practice R package engineering standards while p
 
 ## Current Status Snapshot (2026-02-24)
 
-1. Checkpoints completed locally: `57+` commits on top of `origin/master` (no push).
+1. Checkpoints completed locally: `60+` commits on top of `origin/master` (no push).
 2. Completed tranches:
    - `A/R1.1` through `A/R1.10` (low-risk R modernization path).
    - `A/R2.1` (removed `eval(parse(...))` in `stepCV`).
@@ -26,7 +26,7 @@ Modernize `crs` to current best-practice R package engineering standards while p
    - `A/R1.12` (additional `seq_len`/`seq.int` safety sweep in spline utilities).
    - `A/R1.13` (broader loop-header safety sweep across CV/sigtest and helper paths).
    - `A/R1.14` (full `npglpreg` loop-header safety sweep).
-   - `A/R1.15` through `A/R1.36` (scalar control-flow cleanup, script hygiene, clamp/vectorization follow-ups, remaining legacy `do.call` cleanup in matrix-construction paths, `vapply` numeric-column sweeps, boolean control simplification, centralized RNG seed state handling, scalar-loop index correctness fixes in `npglpreg` warning/index paths, registered-symbol `.Call` hygiene, robust option-state guards for `crsiv` / `crsivderiv` including unset-option handling, eval-helper namespace-resolution hardening, recursive source-artifact cleanup/build hygiene hardening, stepCV loop-index safety hardening for empty-scope paths, snomadr argument-validation hardening, stepCV call-evaluation/helper cleanup, and snomadr single-argument `...` guard hardening).
+   - `A/R1.15` through `A/R1.38` (scalar control-flow cleanup, script hygiene, clamp/vectorization follow-ups, remaining legacy `do.call` cleanup in matrix-construction paths, `vapply` numeric-column sweeps, boolean control simplification, centralized RNG seed state handling, scalar-loop index correctness fixes in `npglpreg` warning/index paths, registered-symbol `.Call` hygiene, robust option-state guards for `crsiv` / `crsivderiv` including unset-option handling, eval-helper namespace-resolution hardening, recursive source-artifact cleanup/build hygiene hardening, stepCV loop-index safety hardening for empty-scope paths, snomadr argument-validation hardening, stepCV call-evaluation/helper cleanup, snomadr single-argument `...` guard hardening, formal-matching parity for defaults/ellipsis, and non-NOMAD C forensic comment cleanup).
    - `B/R2` (shared IV scaffolding helpers for dots/call assembly in `crsiv` and `crsivderiv`).
    - `B/R1.1` (non-NOMAD C memory hygiene in `gsl_bspline.c`).
    - `B/R1.2` and `B/R1.3` (native-interface and matrix-kernel regression test expansion).
@@ -1652,3 +1652,24 @@ Validation artifacts:
 2. Tarball-first:
    - `/tmp/crs_build_snomadr_argmatch_20260224.log`
    - `/tmp/crs_check_snomadr_argmatch_20260224.log` (`Status: 5 WARNINGs, 1 NOTE`)
+
+### 2026-02-24 - A/R1.38 forensic legacy-marker sweep (R + non-NOMAD C)
+
+Scope completed:
+
+1. Ran a fresh static forensic sweep across `R/` and non-NOMAD `src/` files to verify no active legacy constructs remain.
+2. Confirmed active R-layer modernization invariants remain intact:
+   - `eval(parse(...))`, `eval(...)`, `eval.parent(...)`, `ifelse(...)`, string `do.call("...")`, `<<-`, and R-layer `.C(` callsites are all `0`.
+3. Cleaned residual audit-marker comments in touched non-NOMAD surfaces:
+   - `/Users/jracine/Development/crs/src/RuniqueCombs.c`
+   - `/Users/jracine/Development/crs/R/np.regression.glp.R`
+4. Result:
+   - no active legacy markers remain in R or non-NOMAD C targets from this modernization scope,
+   - remaining `1:length(` hits are comment-only historical notes (no executable callsites).
+
+Validation artifacts:
+
+1. Static sweep report:
+   - `/tmp/crs_forensic_static_sweep_20260224.txt`
+2. Syntax gate for touched R file:
+   - `/tmp/crs_parse_npglpreg_comment_cleanup_20260224.out` (`PARSE_OK`)
