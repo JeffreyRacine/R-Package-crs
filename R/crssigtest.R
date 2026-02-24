@@ -186,7 +186,7 @@ crssigtest <- function(model = NULL,
 
       if(boot.type=="reorder") xz.boot <- model$xz
 
-      for(bb in 1:boot.num) {
+      for(bb in seq_len(boot.num)) {
 
         ## Bootstrap sample under the null and recompute the
         ## `restricted' and `unrestricted' models for the null sample

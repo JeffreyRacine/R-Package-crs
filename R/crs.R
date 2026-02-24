@@ -1198,7 +1198,7 @@ summary.crs <- function(object,
   center <- if (deriv > 0) attr(pred0, "deriv.mat")[,deriv.index] else as.numeric(pred0)
   boot.mat <- matrix(NA_real_, nrow = boot.num, ncol = nrow(newdata))
 
-  for (b in 1:boot.num) {
+  for (b in seq_len(boot.num)) {
     idx <- sample.int(n, size = n, replace = TRUE)
     fit.b <- crs.default(
       xz = object$xz[idx,,drop=FALSE],

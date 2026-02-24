@@ -23,6 +23,7 @@ Modernize `crs` to current best-practice R package engineering standards while p
    - `A/R2.4` (reduced repeated call/list rebuilding in `crsiv`/`crsivderiv` loops).
    - `A/R1.11` (scalar stopping-rule branch hardening in IV iteration loops).
    - `A/R1.12` (additional `seq_len`/`seq.int` safety sweep in spline utilities).
+   - `A/R1.13` (broader loop-header safety sweep across CV/sigtest and helper paths).
    - `B/R2` (shared IV scaffolding helpers for dots/call assembly in `crsiv` and `crsivderiv`).
    - `B/R1.1` (non-NOMAD C memory hygiene in `gsl_bspline.c`).
 3. Validation discipline maintained at each checkpoint:
@@ -673,3 +674,31 @@ Validation artifacts:
 4. Tarball-first:
    - `/tmp/crs_build_splineseq_20260224.log`
    - `/tmp/crs_check_ascran_splineseq_20260224.log` (`Status: 4 WARNINGs, 3 NOTEs`)
+
+### 2026-02-24 - A/R1.13 broader loop-header safety sweep
+
+Scope completed:
+
+1. Replaced additional active `for (... in 1:...)` loop headers with zero-length-safe forms in:
+   - `/Users/jracine/Development/crs/R/crs.R`
+   - `/Users/jracine/Development/crs/R/clsd.R`
+   - `/Users/jracine/Development/crs/R/snomadr.R`
+   - `/Users/jracine/Development/crs/R/frscv.R`
+   - `/Users/jracine/Development/crs/R/glp.model.matrix.R`
+   - `/Users/jracine/Development/crs/R/krscv.R`
+   - `/Users/jracine/Development/crs/R/krscvNOMAD.R`
+   - `/Users/jracine/Development/crs/R/crssigtest.R`
+2. Kept scope strictly R-layer and non-invasive (loop-header normalization only; no NOMAD core edits).
+
+Validation artifacts:
+
+1. Parse gate:
+   - `/tmp/crs_parse_loopsweep_20260224.log` (`LOOP_SWEEP_PARSE_OK`)
+2. Deterministic install:
+   - `/tmp/crs_install_loopsweep2_20260224.log`
+3. Focused runtime smoke (exhaustive/non-kernel, exhaustive/kernel, NOMAD-kernel, GLP, and `crssigtest` reorder path):
+   - `/tmp/crs_loop_sweep_smoke_20260224.R`
+   - `/tmp/crs_loop_sweep_smoke_20260224.out` (`CRS_LOOP_SWEEP_SMOKE_OK`)
+4. Tarball-first:
+   - `/tmp/crs_build_loopsweep_20260224.log`
+   - `/tmp/crs_check_ascran_loopsweep_20260224.log` (`Status: 4 WARNINGs, 3 NOTEs`)

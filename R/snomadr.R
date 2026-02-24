@@ -192,7 +192,7 @@ snomadr <-
     ## We don't need to generate the initial point for multiple mads runs.
     if(is.null(x0)&&nmulti < 1){
       x0<-rep(0.0, n)
-      for(i in 1:n){
+      for(i in seq_len(n)){
         x0[i] <- runif(1, min=lb[i], max=ub[i])
       }
     }

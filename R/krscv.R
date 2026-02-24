@@ -152,14 +152,14 @@ krscv <- function(xz,
         tmp.1 <- paste("d[1]=", K[1,1],sep="")
       }
       if(num.x > 1) for(i in 2:num.x) tmp.1 <- paste(tmp.1, ", d[", i, "]=", K[i,1],sep="")
-      for(i in 1:num.x) tmp.1 <- paste(tmp.1, ", s[", i, "]=", K[i,2],sep="")
+      for(i in seq_len(num.x)) tmp.1 <- paste(tmp.1, ", s[", i, "]=", K[i,2],sep="")
     }
 
     ## For i/o for z variables
 
     tmp.2 <- paste(", rs=", restart, "/", num.restarts,sep="")
     tmp.3 <- ""
-    for(i in 1:num.z) tmp.3 <- paste(tmp.3, ", l[", i, "]=", fw.format.3(lambda[i]),sep="")
+    for(i in seq_len(num.z)) tmp.3 <- paste(tmp.3, ", l[", i, "]=", fw.format.3(lambda[i]),sep="")
     tmp.4 <- paste(", cv=", format(cv,digits=6), sep="")
     if(num.restarts > 0) {
       msg <- paste(tmp.1,tmp.2,tmp.3,tmp.4,sep="")
@@ -250,7 +250,7 @@ krscv <- function(xz,
 
   t2 <- Sys.time() ## placeholder
 
-  for(j in 1:nrow.K.mat) {
+  for(j in seq_len(nrow.K.mat)) {
 
     if(basis=="auto") {
 
@@ -296,7 +296,7 @@ krscv <- function(xz,
 
       if(restarts > 0) {
 
-        for(r in 1:restarts) {
+        for(r in seq_len(restarts)) {
 
           output.restart$convergence <- 42
 
@@ -390,7 +390,7 @@ krscv <- function(xz,
 
       if(restarts > 0) {
 
-        for(r in 1:restarts) {
+        for(r in seq_len(restarts)) {
 
           output.restart$convergence <- 42
 
@@ -484,7 +484,7 @@ krscv <- function(xz,
 
       if(restarts > 0) {
 
-        for(r in 1:restarts) {
+        for(r in seq_len(restarts)) {
 
           output.restart$convergence <- 42
 
@@ -581,7 +581,7 @@ krscv <- function(xz,
 
       if(restarts > 0) {
 
-        for(r in 1:restarts) {
+        for(r in seq_len(restarts)) {
 
           output.restart$convergence <- 42
 

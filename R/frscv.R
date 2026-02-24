@@ -153,12 +153,12 @@ frscv <- function(xz,
         tmp.1 <- paste("k[1]=", K[1,1],sep="")
       }
       if(num.x > 1) for(i in 2:num.x) tmp.1 <- paste(tmp.1, ", d[", i, "]=", K[i,1],sep="")
-      for(i in 1:num.x) tmp.1 <- paste(tmp.1, ", s[", i, "]=", K[i,2],sep="")
+      for(i in seq_len(num.x)) tmp.1 <- paste(tmp.1, ", s[", i, "]=", K[i,2],sep="")
     }
 
     ## For i/o for z variables...
 
-    if(num.z > 0) for(i in 1:num.z) tmp.1 <- paste(tmp.1, ", I[", i, "]=", I[i],sep="")
+    if(num.z > 0) for(i in seq_len(num.z)) tmp.1 <- paste(tmp.1, ", I[", i, "]=", I[i],sep="")
     tmp.3 <- paste(", cv=", format(cv,digits=6), sep="")
     if(num.restarts > 0) {
       tmp.2 <- paste(", rs=", restart, "/", num.restarts,sep="")
@@ -278,7 +278,7 @@ frscv <- function(xz,
 
   cv.vec <- rep(cv.maxPenalty, nrow.KI.mat)
 
-  for(j in 1:nrow.KI.mat) {
+  for(j in seq_len(nrow.KI.mat)) {
 
     if(basis=="auto") {
 

@@ -512,7 +512,7 @@ sum.log.density.gradient <- function(beta=NULL,
   exp.Pint.beta <- as.numeric(exp(Pint%*%beta))
   exp.Pint.beta.Pint <- exp.Pint.beta*Pint
   int.exp.Pint.beta.Pint <- numeric()
-  for(i in 1:complexity) int.exp.Pint.beta.Pint[i] <- integrate.trapezoidal.sum(xint,exp.Pint.beta.Pint[,i])
+  for(i in seq_len(complexity)) int.exp.Pint.beta.Pint[i] <- integrate.trapezoidal.sum(xint,exp.Pint.beta.Pint[,i])
   return(2*(colSumsP-length.x*int.exp.Pint.beta.Pint/integrate.trapezoidal.sum(xint,exp.Pint.beta)))
 
 }
@@ -617,7 +617,7 @@ ls.ml <- function(x=NULL,
 
         ## Multistart if desired.
 
-        for(n in 1:nmulti) {
+        for(n in seq_len(nmulti)) {
 
           ## Can restart to see if we can improve on min... note initial
           ## values totally ad-hoc...

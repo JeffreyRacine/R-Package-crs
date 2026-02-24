@@ -478,7 +478,7 @@ krscvNOMAD <- function(xz,
   MIN.FRAME.SIZE <- list()
 
   if(complexity=="degree-knots") {
-    for(i in 1:(2*num.x)) {
+    for(i in seq_len(2*num.x)) {
       INITIAL.MESH.SIZE[[i]] <- initial.mesh.size.integer
       MIN.MESH.SIZE[[i]] <- min.mesh.size.integer
       MIN.FRAME.SIZE[[i]] <- min.frame.size.integer
@@ -490,7 +490,7 @@ krscvNOMAD <- function(xz,
     }
   }
   else if(complexity=="degree"|complexity=="knots") {
-    for(i in 1:num.x) {
+    for(i in seq_len(num.x)) {
       INITIAL.MESH.SIZE[[i]] <- initial.mesh.size.integer
       MIN.MESH.SIZE[[i]] <- min.mesh.size.integer
       MIN.FRAME.SIZE[[i]] <- min.frame.size.integer

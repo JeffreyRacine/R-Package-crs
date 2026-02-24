@@ -21,7 +21,7 @@ glp.model.matrix <- function(X) {
 
   k <-length(X)
   dimen <- numeric()
-  for(i in 1:k) {
+  for(i in seq_len(k)) {
     dimen[i] <- ncol(X[[i]])
   }
 
@@ -85,7 +85,7 @@ glp.model.matrix <- function(X) {
 
     # Loop 1
     if(d1-d2 > 0){
-      for(i in 1:(d1-d2)){
+      for(i in seq_len(d1-d2)){
         # d12 update logic from original (tracking theoretical size vs actual?)
         # d12 <- d12+d2*nd1[i]
         # Note: nd1 is used for nd2 calc later, but here we use actual counts from d1sets
@@ -108,7 +108,7 @@ glp.model.matrix <- function(X) {
     }
 
     # Loop 2
-    for(i in 1:d2){
+    for(i in seq_len(d2)){
       # d12 <- d12 + (i*nd1[d1-i+1])
 
       target <- d1 - i + 1
@@ -128,7 +128,7 @@ glp.model.matrix <- function(X) {
     # nd2 calculation (unchanged)
     nd2 <- nd1
     if(d1>1){
-      for(j in 1:(d1-1)) {
+      for(j in seq_len(d1-1)) {
         nd2[j] <- 0
         limit <- max(0, j-d2+1)
         low <- max(1, limit)
@@ -243,4 +243,3 @@ glp.model.matrix <- function(X) {
 ##[1] 8.338926e-13
 ##> rcond(t(B.tp)%*%B.tp)
 ##[1] 5.92409e-21
-
