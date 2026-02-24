@@ -14,7 +14,7 @@ Modernize `crs` to current best-practice R package engineering standards while p
 
 ## Current Status Snapshot (2026-02-24)
 
-1. Checkpoints completed locally: `49+` commits on top of `origin/master` (no push).
+1. Checkpoints completed locally: `50+` commits on top of `origin/master` (no push).
 2. Completed tranches:
    - `A/R1.1` through `A/R1.10` (low-risk R modernization path).
    - `A/R2.1` (removed `eval(parse(...))` in `stepCV`).
@@ -26,7 +26,7 @@ Modernize `crs` to current best-practice R package engineering standards while p
    - `A/R1.12` (additional `seq_len`/`seq.int` safety sweep in spline utilities).
    - `A/R1.13` (broader loop-header safety sweep across CV/sigtest and helper paths).
    - `A/R1.14` (full `npglpreg` loop-header safety sweep).
-   - `A/R1.15` through `A/R1.28` (scalar control-flow cleanup, script hygiene, clamp/vectorization follow-ups, remaining legacy `do.call` cleanup in matrix-construction paths, `vapply` numeric-column sweeps, boolean control simplification, centralized RNG seed state handling, scalar-loop index correctness fixes in `npglpreg` warning/index paths, and registered-symbol `.Call` hygiene).
+   - `A/R1.15` through `A/R1.29` (scalar control-flow cleanup, script hygiene, clamp/vectorization follow-ups, remaining legacy `do.call` cleanup in matrix-construction paths, `vapply` numeric-column sweeps, boolean control simplification, centralized RNG seed state handling, scalar-loop index correctness fixes in `npglpreg` warning/index paths, registered-symbol `.Call` hygiene, and robust option-restoration guards for `crsiv` / `crsivderiv` error paths).
    - `B/R2` (shared IV scaffolding helpers for dots/call assembly in `crsiv` and `crsivderiv`).
    - `B/R1.1` (non-NOMAD C memory hygiene in `gsl_bspline.c`).
    - `B/R1.2` and `B/R1.3` (native-interface and matrix-kernel regression test expansion).
@@ -1387,3 +1387,29 @@ Validation artifacts:
 4. Tarball-first:
    - `/tmp/crs_build_callsymbols_20260224.log`
    - `/tmp/crs_check_callsymbols_20260224.log` (`Status: 4 WARNINGs, 4 NOTEs`)
+
+### 2026-02-24 - A/R1.29 robust `crs.messages` restoration on IV error paths
+
+Scope completed:
+
+1. Added function-scope option restoration guards in:
+   - `/Users/jracine/Development/crs/R/crsiv.R`
+   - `/Users/jracine/Development/crs/R/crsivderiv.R`
+2. Change:
+   - capture initial `crs.messages` at function entry,
+   - restore with `on.exit(options(crs.messages = crs.messages), add = TRUE)` to prevent option leakage when errors occur while message-suppression toggles are active.
+3. Added regression tests that force internal errors and assert option restoration:
+   - `/Users/jracine/Development/crs/tests/testthat/test-crsiv.R`
+   - `/Users/jracine/Development/crs/tests/testthat/test-crsivderiv.R`
+
+Validation artifacts:
+
+1. Deterministic install:
+   - `/tmp/crs_install_option_restore_20260224.log`
+2. Targeted tests:
+   - `/tmp/crs_test_option_restore_targeted_20260224.out` (`PASS 20, WARN 0, FAIL 0`)
+3. Full test suite:
+   - `/tmp/crs_test_option_restore_full_20260224.out` (`PASS 86, WARN 1, FAIL 0`)
+4. Tarball-first:
+   - `/tmp/crs_build_option_restore_20260224.log`
+   - `/tmp/crs_check_option_restore_20260224.log` (`Status: 4 WARNINGs, 4 NOTEs`)
