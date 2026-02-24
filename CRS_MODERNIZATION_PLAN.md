@@ -1623,3 +1623,32 @@ Validation artifacts:
 4. Tarball-first:
    - `/tmp/crs_build_snomadr_singlearg_guard_20260224.log`
    - `/tmp/crs_check_snomadr_singlearg_guard_20260224.log` (`Status: 5 WARNINGs, 1 NOTE`)
+
+### 2026-02-24 - A/R1.37 snomadr formal-matching parity for defaults and `...`
+
+Scope completed:
+
+1. Replaced legacy post-`x` argument matching in:
+   - `/Users/jracine/Development/crs/R/snomadr.R`
+2. Changes:
+   - honors defaulted formals as optional (no longer treated as required),
+   - supports functions declaring `...` by permitting additional named/unnamed arguments,
+   - preserves strict rejection for extraneous args when `...` is absent,
+   - preserves deterministic first-failure reporting for missing required formals and unexpected args.
+3. Expanded regression coverage in:
+   - `/Users/jracine/Development/crs/tests/testthat/test-snomadr-args.R`
+   - new guard that defaulted arguments are not falsely flagged as required,
+   - new guard that `...` routes accept extra args while still enforcing required non-default formals.
+4. Result:
+   - fixes false-positive "requires argument" failures for valid `eval.f` signatures with defaults,
+   - aligns `snomadr` preflight checks with standard R formal semantics without touching NOMAD core paths.
+
+Validation artifacts:
+
+1. Test summary (targeted + full):
+   - `/tmp/crs_test_snomadr_argmatch_summary_20260224.txt`
+   - targeted: `PASS 5, WARN 0, FAIL 0`
+   - full: `PASS 105, WARN 1, FAIL 0` (one pre-existing `npglpreg` warning)
+2. Tarball-first:
+   - `/tmp/crs_build_snomadr_argmatch_20260224.log`
+   - `/tmp/crs_check_snomadr_argmatch_20260224.log` (`Status: 5 WARNINGs, 1 NOTE`)

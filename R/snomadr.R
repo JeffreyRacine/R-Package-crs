@@ -198,44 +198,87 @@ snomadr <-
 
     ## Internal function to check the arguments of the functions
     checkFunctionArguments <- function( fun, arglist, funname ) {
-      if( !is.function(fun) ) stop(paste(funname, " must be a function\n", sep = ""))
+      if (!is.function(fun)) stop(paste(funname, " must be a function\n", sep = ""))
 
-      ## Determine function arguments
       fargs <- formals(fun)
+      if (length(fargs) <= 1L) {
+        if (length(arglist) > 0L) {
+          argnames.supplied <- names(arglist)
+          if (is.null(argnames.supplied)) {
+            argnames.supplied <- rep.int("", length(arglist))
+          }
+          bad.idx <- 1L
+          bad.name <- if (nzchar(argnames.supplied[bad.idx])) {
+            argnames.supplied[bad.idx]
+          } else {
+            paste0("argument #", bad.idx)
+          }
+          stop(paste("'", bad.name, "' passed to (...) in 'snomadr' but this is not required in the ", funname, " function.\n", sep = ""))
+        }
+        return(0)
+      }
+
+      is_missing_default <- function(x) identical(x, quote(expr = ))
+
+      extra_formals <- fargs[-1L]
+      extra_names <- names(extra_formals)
+      has_dots <- any(extra_names == "...")
+      formal_names <- extra_names[extra_names != "..."]
+
       argnames.supplied <- names(arglist)
       if (is.null(argnames.supplied)) {
         argnames.supplied <- rep.int("", length(arglist))
       }
 
-      if (length(fargs) == 1L && length(arglist) > 0L) {
-        bad.idx <- 1L
-        bad.name <- if (nzchar(argnames.supplied[bad.idx])) {
-          argnames.supplied[bad.idx]
-        } else {
-          paste0("argument #", bad.idx)
+      named_idx <- which(nzchar(argnames.supplied))
+      unnamed_idx <- which(!nzchar(argnames.supplied))
+      named_args <- argnames.supplied[named_idx]
+
+      supplied_by_name <- rep.int(FALSE, length(formal_names))
+      names(supplied_by_name) <- formal_names
+
+      if (length(named_args) > 0L) {
+        bad_named <- named_args[is.na(match(named_args, formal_names))]
+        if (!has_dots && length(bad_named) > 0L) {
+          stop(paste("'", bad_named[1L], "' passed to (...) in 'snomadr' but this is not required in the ", funname, " function.\n", sep = ""))
         }
-        stop(paste("'", bad.name, "' passed to (...) in 'snomadr' but this is not required in the ", funname, " function.\n", sep = ""))
-      }
-
-      if ( length(fargs) > 1 ) {
-        ## Determine argument names user-defined function
-        argnames.udf <- names(fargs)[-1L]  ## remove first argument, which is x
-
-        ## Determine which arguments where required but not supplied
-        m1 = match(argnames.udf, argnames.supplied)
-        if( any(is.na(m1)) ){
-          mx1 = which( is.na(m1) )
-          stop(paste(funname, " requires argument '", argnames.udf[mx1[1L]], "' but this has not been passed to the 'snomadr' function.\n", sep = ""))
-        }
-
-        ## Determine which arguments where supplied but not required
-        m2 = match(argnames.supplied, argnames.udf)
-        if( any(is.na(m2)) ){
-          mx2 = which( is.na(m2) )
-          stop(paste("'", argnames.supplied[mx2[1L]], "' passed to (...) in 'snomadr' but this is not required in the ", funname, " function.\n", sep = ""))
+        valid_named <- named_args[!is.na(match(named_args, formal_names))]
+        if (length(valid_named) > 0L) {
+          supplied_by_name[unique(valid_named)] <- TRUE
         }
       }
-      return( 0 )
+
+      unmatched_formals <- formal_names[!supplied_by_name]
+      n_unnamed <- length(unnamed_idx)
+      n_positional_match <- min(length(unmatched_formals), n_unnamed)
+      supplied_positional <- character(0L)
+      if (n_positional_match > 0L) {
+        supplied_positional <- unmatched_formals[seq_len(n_positional_match)]
+      }
+
+      if (!has_dots && n_unnamed > n_positional_match) {
+        bad_pos <- unnamed_idx[n_positional_match + 1L]
+        stop(paste("'", paste0("argument #", bad_pos), "' passed to (...) in 'snomadr' but this is not required in the ", funname, " function.\n", sep = ""))
+      }
+
+      supplied_all <- rep.int(FALSE, length(formal_names))
+      names(supplied_all) <- formal_names
+      if (any(supplied_by_name)) {
+        supplied_all[names(supplied_by_name)[supplied_by_name]] <- TRUE
+      }
+      if (length(supplied_positional) > 0L) {
+        supplied_all[supplied_positional] <- TRUE
+      }
+
+      required_formals <- extra_names[
+        extra_names != "..." & vapply(extra_formals[extra_names != "..."], is_missing_default, logical(1L))
+      ]
+      missing_required <- required_formals[!supplied_all[required_formals]]
+      if (length(missing_required) > 0L) {
+        stop(paste(funname, " requires argument '", missing_required[1L], "' but this has not been passed to the 'snomadr' function.\n", sep = ""))
+      }
+
+      return(0)
     }
 
     ## Extract list of additional arguments and check user-defined
