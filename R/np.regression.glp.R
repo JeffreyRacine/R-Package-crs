@@ -148,7 +148,7 @@ W.glp <- function(xdat = NULL,
       if(gradient.compute && gradient.vec[1] != 0) res.deriv <- cbind(1,matrix(NA,1,degree[1]))[, 1 + z[, 1],drop=FALSE]
       if(gradient.compute && gradient.vec[1] == 0) res.deriv <- cbind(1,matrix(0,1,degree[1]))[, 1 + z[, 1],drop=FALSE]
     }
-    if(k > 1) for (i in 2:k) if(degree[i] > 0) {
+    if (k > 1) for (i in seq.int(2L, k)) if(degree[i] > 0) {
       res <- res * cbind(1, mypoly(x=xdat.numeric[,i],
                                    ex=exdat.numeric[,i],
                                    degree=degree[i],

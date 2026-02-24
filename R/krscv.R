@@ -121,7 +121,7 @@ krscv <- function(xz,
       } else {
         tmp.1 <- paste("d[1]=", K[1,1],sep="")
       }
-      if(num.x > 1) for(i in 2:num.x) tmp.1 <- paste(tmp.1, ", d[", i, "]=", K[i,1],sep="")
+      if (num.x > 1) for (i in seq.int(2L, num.x)) tmp.1 <- paste(tmp.1, ", d[", i, "]=", K[i,1],sep="")
     } else  if(complexity=="knots") {
       if(!is.null(j)) {
         if(j==1) {
@@ -136,7 +136,7 @@ krscv <- function(xz,
       } else {
         tmp.1 <- paste("s[1]=", K[1,2],sep="")
       }
-      if(num.x > 1) for(i in 2:num.x) tmp.1 <- paste(tmp.1, ", s[", i, "]=", K[i,2],sep="")
+      if (num.x > 1) for (i in seq.int(2L, num.x)) tmp.1 <- paste(tmp.1, ", s[", i, "]=", K[i,2],sep="")
     } else  if(complexity=="degree-knots") {
       if(!is.null(j)) {
         if(j==1) {
@@ -151,7 +151,7 @@ krscv <- function(xz,
       } else {
         tmp.1 <- paste("d[1]=", K[1,1],sep="")
       }
-      if(num.x > 1) for(i in 2:num.x) tmp.1 <- paste(tmp.1, ", d[", i, "]=", K[i,1],sep="")
+      if (num.x > 1) for (i in seq.int(2L, num.x)) tmp.1 <- paste(tmp.1, ", d[", i, "]=", K[i,1],sep="")
       for(i in seq_len(num.x)) tmp.1 <- paste(tmp.1, ", s[", i, "]=", K[i,2],sep="")
     }
 

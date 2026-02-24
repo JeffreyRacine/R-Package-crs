@@ -479,7 +479,7 @@ dimBS <- function(basis="additive", kernel=TRUE, degree=NULL, segments=NULL, inc
       for (i in seq_len(d1 - d2)) d12 <- d12 + d2 * nd1[i]
     }
     if (d2 > 1) {
-      for (i in 2:d2) d12 <- d12 + i * nd1[d1 - i + 1]
+      for (i in seq.int(2L, d2)) d12 <- d12 + i * nd1[d1 - i + 1]
     }
     d12 <- d12 + nd1[d1]
     nd2 <- nd1
@@ -515,7 +515,7 @@ dimBS <- function(basis="additive", kernel=TRUE, degree=NULL, segments=NULL, inc
         nd1 <- rep(1, dimen[1]); nd1[dimen[1]] <- 0
         ncol.bs <- dimen[1]
         if (k > 1) {
-          for (i in 2:k) {
+          for (i in seq.int(2L, k)) {
             dim.rt <- two.dimen(dimen[1], dimen[i], nd1, ncol.bs)
             nd1 <- dim.rt$nd1
             ncol.bs <- dim.rt$d12
@@ -539,7 +539,7 @@ dimBS <- function(basis="additive", kernel=TRUE, degree=NULL, segments=NULL, inc
         nd1 <- rep(1, dimen[1]); nd1[dimen[1]] <- 0
         ncol.bs <- dimen[1]
         if (k > 1) {
-          for (i in 2:k) {
+          for (i in seq.int(2L, k)) {
             dim.rt <- two.dimen(dimen[1], dimen[i], nd1, ncol.bs)
             nd1 <- dim.rt$nd1
             ncol.bs <- dim.rt$d12

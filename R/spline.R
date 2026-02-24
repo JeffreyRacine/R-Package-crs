@@ -129,7 +129,7 @@ prod.spline <- function(x,
       ## First create all basis matrices for all continuous predictors
       ## (in essence, additive by default)
       P <- tp[[1]]
-      for(i in 2:NROW(tp)) P <- cbind(P,tp[[i]])
+      for (i in seq.int(2L, NROW(tp))) P <- cbind(P,tp[[i]])
       dim.P.no.tensor <- NCOL(P)
       ## Solely tensor if basis==tensor
       if(basis=="tensor") P <- tensor.prod.model.matrix(tp)
