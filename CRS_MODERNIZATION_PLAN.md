@@ -2,7 +2,7 @@
 
 Date: 2026-02-23  
 Last Updated: 2026-02-24  
-Status: Active execution; major low-risk modernization tranches completed with checkpoint validation.
+Status: Active execution; low-risk modernization scope is substantially complete with checkpoint validation, and remaining items are selective/high-risk refactors.
 
 ## Goal
 
@@ -70,6 +70,7 @@ Modernize `crs` to current best-practice R package engineering standards while p
 ## Next High-ROI Items (Remaining)
 
 1. `C/R3` (optional/deferred): deeper native-interface API cleanup and algorithmic rewrites only after extended parity/performance signoff.
+2. `A/R2` selective follow-up (optional): replace remaining intentional `eval(...)` call sites only if parity harnesses are expanded first.
 
 Primary guidance basis:
 
@@ -1150,3 +1151,25 @@ Validation artifacts:
 4. Tarball-first:
    - `/tmp/crs_build_docall_20260224.log`
    - `/tmp/crs_check_docall_20260224.log` (`Status: 4 WARNINGs, 2 NOTEs`)
+
+### 2026-02-24 - Forensic closure sweep (R + non-NOMAD C audit)
+
+Scope completed:
+
+1. Ran consolidated pattern sweep over `R/` and non-NOMAD `src/` to verify remaining modernization debt.
+2. Confirmed zero live matches in `R/` for:
+   - string `do.call("...")` or `do.call('...')`
+   - `eval(parse(...))`
+   - `.C(` callsites
+   - `ifelse(...)`
+   - `<<-`
+3. Confirmed only comment-only `1:length(...)` matches remain (`R/clsd.R` comments), with no active code usage.
+4. Reviewed remaining `eval(...)` callsites (`R/crs.R`, `R/util.R`, `R/stepCV.R`) and classified them as intentional evaluation semantics requiring dedicated parity harnesses before replacement.
+5. Non-NOMAD `src/` risky-call scan found only:
+   - commented debug `Rprintf` in `src/mgcv.c`
+   - NOMAD-wrapper messaging in `src/snomadr.h` / `src/snomadr.cpp` (explicitly out-of-scope for this modernization exercise).
+
+Validation artifacts:
+
+1. Consolidated forensic audit log:
+   - `/tmp/crs_forensic_sweep_20260224.log`
