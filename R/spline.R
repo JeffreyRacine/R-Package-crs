@@ -138,7 +138,7 @@ prod.spline <- function(x,
         if(deriv!=0) {
           P.deriv <- list()
           for(i in seq_along(tp)) P.deriv[[i]] <- matrix(0,1,ncol(tp[[i]]))
-          deriv.index <- deriv.index - length(which((K[1:deriv.index,1]==0)))
+          deriv.index <- deriv.index - length(which(K[.crs_index_block(0L, deriv.index), 1] == 0))
           while(deriv.index<=0) deriv.index <- deriv.index + 1
           P.deriv[[deriv.index]] <- matrix(NA,1,ncol(tp[[deriv.index]]))
           P[,!is.na(as.numeric(glp.model.matrix(P.deriv)))] <- 0
@@ -547,7 +547,7 @@ derivKernelSpline <- function(x,
           suppressWarnings(model <- rq(y~P,tau=tau,method="fn",weights=weights))
 
         dim.P.deriv <- sum(K.additive[deriv.index,])
-        deriv.start <- if(deriv.index != 1) sum(K.additive[1:(deriv.index-1),])+1 else 1
+        deriv.start <- if (deriv.index != 1) sum(K.additive[.crs_index_block(0L, deriv.index - 1L), ]) + 1 else 1
         deriv.end <- deriv.start+sum(K.additive[deriv.index,])-1
         deriv.ind.vec <- max(1,deriv.start:deriv.end - length(which(K[,1]==0)))
         deriv.spline <- P.deriv[,deriv.ind.vec,drop=FALSE]%*%(coef(model)[-1])[deriv.ind.vec]
@@ -636,7 +636,7 @@ derivKernelSpline <- function(x,
             else
               suppressWarnings(model <- rq(y~P,tau=tau,method="fn",weights=L))
             dim.P.deriv <- sum(K.additive[deriv.index,])
-            deriv.start <- if(deriv.index != 1) sum(K.additive[1:(deriv.index-1),])+1 else 1
+            deriv.start <- if (deriv.index != 1) sum(K.additive[.crs_index_block(0L, deriv.index - 1L), ]) + 1 else 1
             deriv.end <- deriv.start+sum(K.additive[deriv.index,])-1
             deriv.ind.vec <- deriv.start:deriv.end
             deriv.spline[zz] <- P.deriv[,deriv.ind.vec,drop=FALSE]%*%(coef(model)[-1])[deriv.ind.vec]
@@ -712,7 +712,7 @@ derivKernelSpline <- function(x,
               suppressWarnings(model <- rq(y~P,weights=L,tau=tau,method="fn"))
 
             dim.P.deriv <- sum(K.additive[deriv.index,])
-            deriv.start <- if(deriv.index != 1) sum(K.additive[1:(deriv.index-1),])+1 else 1
+            deriv.start <- if (deriv.index != 1) sum(K.additive[.crs_index_block(0L, deriv.index - 1L), ]) + 1 else 1
             deriv.end <- deriv.start+sum(K.additive[deriv.index,])-1
             deriv.ind.vec <- deriv.start:deriv.end
             deriv.spline[zz] <- P.deriv[,deriv.ind.vec,drop=FALSE]%*%(coef(model)[-1])[deriv.ind.vec]
@@ -838,7 +838,7 @@ preditFactorSpline <- function(x,
       ## test and stop())
 
       P.df <- data.frame(P)
-      names(P.df) <- paste("P",seq(1,NCOL(P.df)),sep="")
+      names(P.df) <- paste("P", seq_len(NCOL(P.df)), sep = "")
       if(basis=="additive" || basis=="glp") {
         if(is.null(tau))
           model <- lm(y~.,data=P.df,weights=weights)
@@ -1115,7 +1115,7 @@ derivFactorSpline <- function(x,
         suppressWarnings(vcov.mat.model[prune.index,prune.index] <- summary(model,covariance=TRUE)$cov[-1,-1,drop=FALSE])
 
       dim.P.deriv <- sum(K.additive[deriv.index,])
-      deriv.start <- if(deriv.index != 1) sum(K.additive[1:(deriv.index-1),])+1 else 1
+      deriv.start <- if (deriv.index != 1) sum(K.additive[.crs_index_block(0L, deriv.index - 1L), ]) + 1 else 1
       deriv.end <- deriv.start+sum(K.additive[deriv.index,])-1
       deriv.ind.vec[deriv.start:deriv.end] <- TRUE
       deriv.ind.vec <- deriv.ind.vec & prune.index

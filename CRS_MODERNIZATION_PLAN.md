@@ -26,7 +26,7 @@ Modernize `crs` to current best-practice R package engineering standards while p
    - `A/R1.12` (additional `seq_len`/`seq.int` safety sweep in spline utilities).
    - `A/R1.13` (broader loop-header safety sweep across CV/sigtest and helper paths).
    - `A/R1.14` (full `npglpreg` loop-header safety sweep).
-   - `A/R1.15` through `A/R1.61` (scalar control-flow cleanup, script hygiene, clamp/vectorization follow-ups, remaining legacy `do.call` cleanup in matrix-construction paths, `vapply` numeric-column sweeps, boolean control simplification, centralized RNG seed state handling, scalar-loop index correctness fixes in `npglpreg` warning/index paths, registered-symbol `.Call` hygiene, robust option-state guards for `crsiv` / `crsivderiv` including unset-option handling, eval-helper namespace-resolution hardening, recursive source-artifact cleanup/build hygiene hardening, stepCV loop-index safety hardening for empty-scope paths, snomadr argument-validation hardening, stepCV call-evaluation/helper cleanup, snomadr single-argument `...` guard hardening, formal-matching parity for defaults/ellipsis, non-NOMAD C forensic comment cleanup, residual scalar bitwise-operator cleanup in control paths, `plot.clsd` scalar logical follow-up alignment, invariant-hoisting in `W.glp` polynomial index construction, explicit `TRUE`/`FALSE` constant normalization in active call arguments, duplicate helper-definition consolidation for `scale_robust`/`is.fullrank`, `on.exit(..., add=TRUE)` stacking safety for `npglpreg` message-state restoration, sequence-construction hardening in GLP matrix expansion, additional zero-dimension-safe sequence/rep-index hardening in `glp.model.matrix`, residual `1:n` index-slice hardening in GLP/NPGLP bandwidth internals, `frscv/krscv` family index-slice normalization to `seq_len` in R wrappers, final remaining executable `1:num.*`/`[1:n]` slice hardening in `frscv`/`krscv`/`spline`, closure of the last executable `1:num.*` slice sites across these wrappers with static-audit confirmation, parity-safe `seq.int(2L, ...)` normalization for remaining guarded loop headers in active non-NOMAD R paths, guarded `iterate.max` loop-header hardening in `crsiv`/`crsivderiv` with deterministic convergence defaults, `crsiv` dots/weights extraction reuse to remove redundant `list(...)` materialization in iterative setup, shared stop-index selection helper extraction for IV stopping-rule post-processing across `crsiv`/`crsivderiv`, monotone-stop warning text/helper consolidation with symmetric dot-argument parsing in `crsivderiv`, shared iterate-max warning helper extraction across both IV endpoints, centralized `crs.messages` option toggling via helper calls in both IV endpoints, additional executable `1:n` slice hardening in non-NOMAD `clsd`/`spline` routines including SVD helper index vectors, tail-index safety hardening for `clsd` sample/integration splits using shared `.crs_tail_index` helper, and `uocquantile()` ordered-branch cumulative-probability refactor from quadratic scan to linear `cumsum` with regression coverage).
+   - `A/R1.15` through `A/R1.62` (scalar control-flow cleanup, script hygiene, clamp/vectorization follow-ups, remaining legacy `do.call` cleanup in matrix-construction paths, `vapply` numeric-column sweeps, boolean control simplification, centralized RNG seed state handling, scalar-loop index correctness fixes in `npglpreg` warning/index paths, registered-symbol `.Call` hygiene, robust option-state guards for `crsiv` / `crsivderiv` including unset-option handling, eval-helper namespace-resolution hardening, recursive source-artifact cleanup/build hygiene hardening, stepCV loop-index safety hardening for empty-scope paths, snomadr argument-validation hardening, stepCV call-evaluation/helper cleanup, snomadr single-argument `...` guard hardening, formal-matching parity for defaults/ellipsis, non-NOMAD C forensic comment cleanup, residual scalar bitwise-operator cleanup in control paths, `plot.clsd` scalar logical follow-up alignment, invariant-hoisting in `W.glp` polynomial index construction, explicit `TRUE`/`FALSE` constant normalization in active call arguments, duplicate helper-definition consolidation for `scale_robust`/`is.fullrank`, `on.exit(..., add=TRUE)` stacking safety for `npglpreg` message-state restoration, sequence-construction hardening in GLP matrix expansion, additional zero-dimension-safe sequence/rep-index hardening in `glp.model.matrix`, residual `1:n` index-slice hardening in GLP/NPGLP bandwidth internals, `frscv/krscv` family index-slice normalization to `seq_len` in R wrappers, final remaining executable `1:num.*`/`[1:n]` slice hardening in `frscv`/`krscv`/`spline`, closure of the last executable `1:num.*` slice sites across these wrappers with static-audit confirmation, parity-safe `seq.int(2L, ...)` normalization for remaining guarded loop headers in active non-NOMAD R paths, guarded `iterate.max` loop-header hardening in `crsiv`/`crsivderiv` with deterministic convergence defaults, `crsiv` dots/weights extraction reuse to remove redundant `list(...)` materialization in iterative setup, shared stop-index selection helper extraction for IV stopping-rule post-processing across `crsiv`/`crsivderiv`, monotone-stop warning text/helper consolidation with symmetric dot-argument parsing in `crsivderiv`, shared iterate-max warning helper extraction across both IV endpoints, centralized `crs.messages` option toggling via helper calls in both IV endpoints, additional executable `1:n` slice hardening in non-NOMAD `clsd`/`spline` routines including SVD helper index vectors, tail-index safety hardening for `clsd` sample/integration splits using shared `.crs_tail_index` helper, `uocquantile()` ordered-branch cumulative-probability refactor from quadratic scan to linear `cumsum` with regression coverage, and final additive-derivative index-block hardening in active `spline` paths).
    - `B/R2` (shared IV scaffolding helpers for dots/call assembly in `crsiv` and `crsivderiv`).
    - `B/R1.1` (non-NOMAD C memory hygiene in `gsl_bspline.c`).
    - `B/R1.2` and `B/R1.3` (native-interface and matrix-kernel regression test expansion).
@@ -2305,3 +2305,29 @@ Validation artifacts:
 5. Tarball-first:
    - `/tmp/crs_build_cv_index_block_helper_20260224.log`
    - `/tmp/crs_check_cv_index_block_helper_20260224.log` (`Status: 5 WARNINGs, 1 NOTE`)
+
+### 2026-02-24 - A/R1.62 spline additive-derivative index hardening
+
+Scope completed:
+
+1. Hardened residual executable index-slice patterns in:
+   - `/Users/jracine/Development/crs/R/spline.R`
+2. Changes:
+   - replaced derivative prefix slices `1:(deriv.index-1)` with `.crs_index_block(0L, deriv.index - 1L)` in additive-derivative offset computation,
+   - replaced derivative zero-degree count slice `K[1:deriv.index, 1]` with helper-based block selection,
+   - replaced `seq(1, NCOL(P.df))` with `seq_len(NCOL(P.df))` in pruning data-frame naming.
+3. Result:
+   - closes remaining executable `1:(...)` index-slice cluster in active spline derivative paths,
+   - preserves parity under tests and keeps behavior aligned with prior zero-length-safe index conventions.
+
+Validation artifacts:
+
+1. Syntax gate:
+   - `/tmp/crs_parse_spline_deriv_indexsafe_20260224.out` (`PARSE_OK`)
+2. Targeted tests:
+   - `/tmp/crs_test_spline_deriv_indexsafe_targeted_20260224.out` (`PASS 4, WARN 0, FAIL 0`)
+3. Full test suite:
+   - `/tmp/crs_test_spline_deriv_indexsafe_full_20260224.out` (`PASS 110, WARN 1, FAIL 0`)
+4. Tarball-first:
+   - `/tmp/crs_build_spline_deriv_indexsafe_20260224.log`
+   - `/tmp/crs_check_spline_deriv_indexsafe_20260224.log` (`Status: 5 WARNINGs`)
