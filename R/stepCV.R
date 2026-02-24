@@ -456,7 +456,7 @@ addterm.default <-
     ans[1L,  ] <- extractCV(object, scale, k = k, ...)
     n0 <- length(object$residuals)
     env <- environment(formula(object))
-    for(i in seq(ns)) {
+    for(i in seq_len(ns)) {
       tt <- scope[i]
       if(trace) {
         message("trying +", tt)
@@ -682,7 +682,7 @@ dropterm.default <-
     ans[1,  ] <- extractCV(object, scale, k = k, ...)
     env <- environment(formula(object))
     n0 <- length(object$residuals)
-    for(i in seq(ns)) {
+    for(i in seq_len(ns)) {
       tt <- scope[i]
       if(trace) {
         message("trying -", tt)
@@ -789,13 +789,13 @@ dropterm.glm <-
     }
     wt <- object$prior.weights
     if(is.null(wt)) wt <- rep.int(1, n)
-    for(i in 1L:ns) {
+    for(i in seq_len(ns)) {
       if(trace) {
         message("trying -", scope[i])
         utils::flush.console()
       }
       ii <- seq_along(asgn)[asgn == ndrop[i]]
-      jj <- setdiff(seq(ncol(x)), ii)
+      jj <- setdiff(seq_len(ncol(x)), ii)
       z <-  glm.fit(x[, jj, drop = FALSE], y, wt, offset=object$offset,
                     family=object$family, control=object$control)
       dfs[i] <- z$rank
