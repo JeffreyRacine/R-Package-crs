@@ -938,3 +938,22 @@ Validation artifacts:
 3. Tarball-first:
    - `/tmp/crs_build_native_interfaces_20260224.log`
    - `/tmp/crs_check_ascran_native_interfaces_20260224.log` (`Status: 4 WARNINGs, 3 NOTEs`)
+
+### 2026-02-24 - Test harness stabilization for direct `test_dir` runs
+
+Scope completed:
+
+1. Added test setup bootstrap:
+   - `/Users/jracine/Development/crs/tests/testthat/setup-load-crs.R`
+2. Purpose:
+   - ensure direct local `testthat::test_dir('tests/testthat')` runs have package symbols loaded, matching expected developer workflow outside `R CMD check`.
+3. Result:
+   - full local test suite now runs successfully in direct mode.
+
+Validation artifacts:
+
+1. Full-suite direct test run:
+   - `/tmp/crs_test_fullsuite_20260224.out` (`FULL_TESTS_OK`)
+2. Tarball-first:
+   - `/tmp/crs_build_test_setup_20260224.log`
+   - `/tmp/crs_check_ascran_test_setup_20260224.log` (`Status: 4 WARNINGs, 2 NOTEs`)
