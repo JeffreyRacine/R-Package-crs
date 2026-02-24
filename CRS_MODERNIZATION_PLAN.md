@@ -26,7 +26,7 @@ Modernize `crs` to current best-practice R package engineering standards while p
    - `A/R1.12` (additional `seq_len`/`seq.int` safety sweep in spline utilities).
    - `A/R1.13` (broader loop-header safety sweep across CV/sigtest and helper paths).
    - `A/R1.14` (full `npglpreg` loop-header safety sweep).
-   - `A/R1.15` through `A/R1.47` (scalar control-flow cleanup, script hygiene, clamp/vectorization follow-ups, remaining legacy `do.call` cleanup in matrix-construction paths, `vapply` numeric-column sweeps, boolean control simplification, centralized RNG seed state handling, scalar-loop index correctness fixes in `npglpreg` warning/index paths, registered-symbol `.Call` hygiene, robust option-state guards for `crsiv` / `crsivderiv` including unset-option handling, eval-helper namespace-resolution hardening, recursive source-artifact cleanup/build hygiene hardening, stepCV loop-index safety hardening for empty-scope paths, snomadr argument-validation hardening, stepCV call-evaluation/helper cleanup, snomadr single-argument `...` guard hardening, formal-matching parity for defaults/ellipsis, non-NOMAD C forensic comment cleanup, residual scalar bitwise-operator cleanup in control paths, `plot.clsd` scalar logical follow-up alignment, invariant-hoisting in `W.glp` polynomial index construction, explicit `TRUE`/`FALSE` constant normalization in active call arguments, duplicate helper-definition consolidation for `scale_robust`/`is.fullrank`, `on.exit(..., add=TRUE)` stacking safety for `npglpreg` message-state restoration, sequence-construction hardening in GLP matrix expansion, additional zero-dimension-safe sequence/rep-index hardening in `glp.model.matrix`, and residual `1:n` index-slice hardening in GLP/NPGLP bandwidth internals).
+   - `A/R1.15` through `A/R1.48` (scalar control-flow cleanup, script hygiene, clamp/vectorization follow-ups, remaining legacy `do.call` cleanup in matrix-construction paths, `vapply` numeric-column sweeps, boolean control simplification, centralized RNG seed state handling, scalar-loop index correctness fixes in `npglpreg` warning/index paths, registered-symbol `.Call` hygiene, robust option-state guards for `crsiv` / `crsivderiv` including unset-option handling, eval-helper namespace-resolution hardening, recursive source-artifact cleanup/build hygiene hardening, stepCV loop-index safety hardening for empty-scope paths, snomadr argument-validation hardening, stepCV call-evaluation/helper cleanup, snomadr single-argument `...` guard hardening, formal-matching parity for defaults/ellipsis, non-NOMAD C forensic comment cleanup, residual scalar bitwise-operator cleanup in control paths, `plot.clsd` scalar logical follow-up alignment, invariant-hoisting in `W.glp` polynomial index construction, explicit `TRUE`/`FALSE` constant normalization in active call arguments, duplicate helper-definition consolidation for `scale_robust`/`is.fullrank`, `on.exit(..., add=TRUE)` stacking safety for `npglpreg` message-state restoration, sequence-construction hardening in GLP matrix expansion, additional zero-dimension-safe sequence/rep-index hardening in `glp.model.matrix`, residual `1:n` index-slice hardening in GLP/NPGLP bandwidth internals, and `frscv/krscv` family index-slice normalization to `seq_len` in R wrappers).
    - `B/R2` (shared IV scaffolding helpers for dots/call assembly in `crsiv` and `crsivderiv`).
    - `B/R1.1` (non-NOMAD C memory hygiene in `gsl_bspline.c`).
    - `B/R1.2` and `B/R1.3` (native-interface and matrix-kernel regression test expansion).
@@ -1921,3 +1921,33 @@ Validation artifacts:
 5. Tarball-first:
    - `/tmp/crs_build_glp_bw_seq_len_followup_20260224.log`
    - `/tmp/crs_check_glp_bw_seq_len_followup_20260224.log` (`Status: 5 WARNINGs, 1 NOTE`)
+
+### 2026-02-24 - A/R1.48 `frscv/krscv` wrapper index-slice normalization
+
+Scope completed:
+
+1. Normalized remaining direct `1:num.*` index slices in wrapper paths:
+   - `/Users/jracine/Development/crs/R/frscv.R`
+   - `/Users/jracine/Development/crs/R/frscvNOMAD.R`
+   - `/Users/jracine/Development/crs/R/krscv.R`
+   - `/Users/jracine/Development/crs/R/krscvNOMAD.R`
+2. Changes:
+   - replaced direct slices such as `x[1:num.x]` with `x[seq_len(num.x)]`,
+   - applied same normalization to upper-bound/start-value index slices and extracted solution vectors in NOMAD wrappers.
+3. Result:
+   - removes residual `1:0`-style edge-case risk in these wrapper indexing paths,
+   - retains existing behavior for normal positive-dimension cases.
+
+Validation artifacts:
+
+1. Syntax gate:
+   - `/tmp/crs_parse_fr_kr_seq_len_sweep_20260224.out` (`PARSE_OK`)
+2. Deterministic install:
+   - `/tmp/crs_install_fr_kr_seq_len_sweep_20260224.log`
+3. Targeted tests:
+   - `/tmp/crs_test_fr_kr_seq_len_sweep_targeted_20260224.out` (`PASS 17, WARN 1, FAIL 0`)
+4. Full test suite:
+   - `/tmp/crs_test_fr_kr_seq_len_sweep_full_20260224.out` (`PASS 105, WARN 1, FAIL 0`)
+5. Tarball-first:
+   - `/tmp/crs_build_fr_kr_seq_len_sweep_20260224.log`
+   - `/tmp/crs_check_fr_kr_seq_len_sweep_20260224.log` (`Status: 5 WARNINGs, 1 NOTE`)

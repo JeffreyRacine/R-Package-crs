@@ -119,14 +119,14 @@ frscvNOMAD <- function(xz,
       I <- include
 
       if(complexity=="degree-knots") {
-        K <- round(cbind(input[1:num.x],input[(num.x+1):(2*num.x)]))
+        K <- round(cbind(input[seq_len(num.x)],input[(num.x+1):(2*num.x)]))
         if(!is.null(z)  ) {
           num.z <- NCOL(z)
           I <- round(input[(2*num.x+1):(2*num.x+num.z)])
         }
       }
       else if(complexity=="degree") {
-        K<-round(cbind(input[1:num.x],segments))
+        K<-round(cbind(input[seq_len(num.x)],segments))
         if(!is.null(z)  ) {
           num.z <- NCOL(z)
           I <- round(input[(num.x+1):(num.x+num.z)])
@@ -134,7 +134,7 @@ frscvNOMAD <- function(xz,
       }
       else if(complexity=="knots")
       {
-        K<-round(cbind(degree, input[1:num.x]))
+        K<-round(cbind(degree, input[seq_len(num.x)]))
         if(!is.null(z)  ) {
           num.z <- NCOL(z)
           I <- round(input[(num.x+1):(num.x+num.z)])
@@ -288,8 +288,8 @@ frscvNOMAD <- function(xz,
     degree.max.vec <- attr(ill.conditioned, "degree.max.vec")
 
     if(complexity != "knots") {
-      ub[1:num.x] <- pmin(ub[1:num.x], degree.max.vec)
-      x0[1:num.x] <- pmin(x0[1:num.x], degree.max.vec)
+      ub[seq_len(num.x)] <- pmin(ub[seq_len(num.x)], degree.max.vec)
+      x0[seq_len(num.x)] <- pmin(x0[seq_len(num.x)], degree.max.vec)
     }
 
     if(length(x0) != length(lb)) stop(" x0 and bounds have differing numbers of variables")
@@ -459,17 +459,17 @@ frscvNOMAD <- function(xz,
   basis.opt <- basis
   if(complexity=="degree-knots") {
     K.opt <- as.integer(nomad.solution$solution)
-    degree <- K.opt[1:num.x]
+    degree <- K.opt[seq_len(num.x)]
     segments <- K.opt[(num.x+1):(2*num.x)]
     if(!is.null(z) ) I.opt <- K.opt[(2*num.x+1):(2*num.x+num.z)]
   }
   else if(complexity=="degree") {
-    degree <- as.integer(nomad.solution$solution[1:num.x])
+    degree <- as.integer(nomad.solution$solution[seq_len(num.x)])
     if(!is.null(z) ) {I.opt <- as.integer(nomad.solution$solution[(num.x+1):(num.x+num.z)])}
   }
   else if(complexity=="knots")
   {
-    segments <- as.integer(nomad.solution$solution[1:num.x])
+    segments <- as.integer(nomad.solution$solution[seq_len(num.x)])
     if(!is.null(z) ) {I.opt <- as.integer(nomad.solution$solution[(num.x+1):(num.x+num.z)])}
   }
 

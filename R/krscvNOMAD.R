@@ -142,16 +142,16 @@ krscvNOMAD <- function(xz,
       num.z <- NCOL(z)
 
       if(complexity=="degree-knots") {
-        K <- round(cbind(input[1:num.x],input[(num.x+1):(2*num.x)]))
+        K <- round(cbind(input[seq_len(num.x)],input[(num.x+1):(2*num.x)]))
         lambda <- input[(2*num.x+1):(2*num.x+num.z)]
       }
       else if(complexity=="degree") {
-        K<-round(cbind(input[1:num.x],segments))
+        K<-round(cbind(input[seq_len(num.x)],segments))
         lambda <- input[(num.x+1):(num.x+num.z)]
       }
       else if(complexity=="knots")
       {
-        K<-round(cbind(degree, input[1:num.x]))
+        K<-round(cbind(degree, input[seq_len(num.x)]))
         lambda <- input[(num.x+1):(num.x+num.z)]
       }
 
@@ -351,8 +351,8 @@ krscvNOMAD <- function(xz,
     degree.max.vec <- attr(ill.conditioned, "degree.max.vec")
 
     if(complexity != "knots") {
-      ub[1:num.x] <- pmin(ub[1:num.x], degree.max.vec)
-      x0[1:num.x] <- pmin(x0[1:num.x], degree.max.vec)
+      ub[seq_len(num.x)] <- pmin(ub[seq_len(num.x)], degree.max.vec)
+      x0[seq_len(num.x)] <- pmin(x0[seq_len(num.x)], degree.max.vec)
     }
 
     if(length(x0) != length(lb)) stop(" x0 and bounds have differing numbers of variables")
@@ -564,17 +564,17 @@ krscvNOMAD <- function(xz,
   if(complexity=="degree-knots") {
     K.opt <- as.integer(nomad.solution$solution[1:(2*num.x)])
     lambda.opt <- as.numeric(nomad.solution$solution[(2*num.x+1):(2*num.x+num.z)])
-    degree <- K.opt[1:num.x]
+    degree <- K.opt[seq_len(num.x)]
     segments <- K.opt[(num.x+1):(2*num.x)]
   }
   else if(complexity=="degree") {
-    degree <- as.integer(nomad.solution$solution[1:num.x])
+    degree <- as.integer(nomad.solution$solution[seq_len(num.x)])
     lambda.opt <- as.numeric(nomad.solution$solution[(num.x+1):(num.x+num.z)])
     K.opt <-cbind(degree, segments)
   }
   else if(complexity=="knots")
   {
-    segments <- as.integer(nomad.solution$solution[1:num.x])
+    segments <- as.integer(nomad.solution$solution[seq_len(num.x)])
     lambda.opt <- as.numeric(nomad.solution$solution[(num.x+1):(num.x+num.z)])
     K.opt <-cbind(degree, segments)
   }

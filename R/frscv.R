@@ -72,7 +72,7 @@ frscv <- function(xz,
     ## both degree and knots. The values used to evaluate the cv
     ## function are passed below.
 
-    K <- round(cbind(input[1:num.x],input[(num.x+1):(2*num.x)]))
+    K <- round(cbind(input[seq_len(num.x)],input[(num.x+1):(2*num.x)]))
 
     if(!is.null(z)) {
       num.z <- NCOL(z)
@@ -414,7 +414,7 @@ frscv <- function(xz,
   K.opt <- KI.mat[ocv.vec,,drop=FALSE][1,]
   basis.opt <- basis.vec[ocv.vec][1]
   knots.opt <- knots.vec[ocv.vec][1]
-  degree <- K.opt[1:num.x]
+  degree <- K.opt[seq_len(num.x)]
   segments <- K.opt[(num.x+1):(2*num.x)]
 
   if(!is.null(z)) I.opt <- K.opt[(2*num.x+1):(2*num.x+num.z)]

@@ -74,10 +74,10 @@ krscv <- function(xz,
     if(is.null(K)) {
       num.x <- NCOL(x)
       num.z <- NCOL(z)
-      K <- round(cbind(input[1:num.x],input[(num.x+1):(2*num.x)]))
+      K <- round(cbind(input[seq_len(num.x)],input[(num.x+1):(2*num.x)]))
       lambda <- input[(2*num.x+1):(2*num.x+num.z)]
     } else {
-      K <- round(cbind(K[1:num.x],K[(num.x+1):(2*num.x)]))
+      K <- round(cbind(K[seq_len(num.x)],K[(num.x+1):(2*num.x)]))
       lambda <- input
     }
     ## When using weights= lambda of zero fails. Trivial to trap.
@@ -648,7 +648,7 @@ krscv <- function(xz,
   K.opt <- K.mat[ocv.vec,,drop=FALSE][1,]
   lambda.opt <- lambda.mat[ocv.vec,,drop=FALSE][1,]
   basis.opt <- basis.vec[ocv.vec][1]
-  degree <- K.opt[1:num.x]
+  degree <- K.opt[seq_len(num.x)]
   segments <- K.opt[(num.x+1):(2*num.x)]
   if(!is.null(z)) I.opt <- K.opt[(2*num.x+1):(2*num.x+num.z)]
 
