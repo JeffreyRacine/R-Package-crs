@@ -718,7 +718,7 @@ npglpreg.formula <- function(formula,
   ## Set crs.messages to FALSE if display.nomad.progress is FALSE
   old.crs.messages <- getOption("crs.messages")
   if(!display.nomad.progress) options(crs.messages = FALSE)
-  on.exit(options(crs.messages = old.crs.messages))
+  on.exit(options(crs.messages = old.crs.messages), add = TRUE)
 
   ckertype <- match.arg(ckertype)
   ukertype <- match.arg(ukertype)
