@@ -14,7 +14,7 @@ Modernize `crs` to current best-practice R package engineering standards while p
 
 ## Current Status Snapshot (2026-02-24)
 
-1. Checkpoints completed locally: `20+` commits on top of `origin/master` (no push).
+1. Checkpoints completed locally: `30+` commits on top of `origin/master` (no push).
 2. Completed tranches:
    - `A/R1.1` through `A/R1.10` (low-risk R modernization path).
    - `A/R2.1` (removed `eval(parse(...))` in `stepCV`).
@@ -25,14 +25,16 @@ Modernize `crs` to current best-practice R package engineering standards while p
    - `A/R1.12` (additional `seq_len`/`seq.int` safety sweep in spline utilities).
    - `A/R1.13` (broader loop-header safety sweep across CV/sigtest and helper paths).
    - `A/R1.14` (full `npglpreg` loop-header safety sweep).
-   - `A/R1.15` through `A/R1.19` (scalar control-flow cleanup and script hygiene follow-ups).
+   - `A/R1.15` through `A/R1.20` (scalar control-flow cleanup, script hygiene, and clamp/vectorization follow-ups).
    - `B/R2` (shared IV scaffolding helpers for dots/call assembly in `crsiv` and `crsivderiv`).
    - `B/R1.1` (non-NOMAD C memory hygiene in `gsl_bspline.c`).
+   - `B/R1.2` and `B/R1.3` (native-interface and matrix-kernel regression test expansion).
+   - test harness stabilization (`tests/testthat/setup-load-crs.R`) and deprecation cleanup (`test-crsivderiv.R`).
 3. Validation discipline maintained at each checkpoint:
    - installed-package targeted smokes,
    - tarball-first `R CMD build` and `R CMD check --as-cran`,
    - stable non-regressive check profile (`4 WARNINGs, 2-3 NOTEs`) with no modernization regressions introduced.
-4. R-layer forensic status (post A/R1.19):
+4. R-layer forensic status (post A/R1.20):
    - `eval(parse(...))`: `0`
    - string `do.call("...")`: `0`
    - `<<-`: `0`
@@ -40,6 +42,7 @@ Modernize `crs` to current best-practice R package engineering standards while p
    - active `1:ncol(...)`: `0`
    - active `1:NCOL(...)`: `0`
    - scalar `ifelse(is.null(...))` / `ifelse(is.finite(...))` / `return(ifelse(...))`: `0`
+   - total `ifelse(...)` uses in `R/`: `2` (intentional vectorized expressions)
 5. Scope guard respected:
    - no edits to NOMAD core source/interface (`src/nomad4_src/**`, `src/snomadr.cpp`, `src/snomadr.h`).
 
