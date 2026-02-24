@@ -14,7 +14,7 @@ Modernize `crs` to current best-practice R package engineering standards while p
 
 ## Current Status Snapshot (2026-02-24)
 
-1. Checkpoints completed locally: `48+` commits on top of `origin/master` (no push).
+1. Checkpoints completed locally: `49+` commits on top of `origin/master` (no push).
 2. Completed tranches:
    - `A/R1.1` through `A/R1.10` (low-risk R modernization path).
    - `A/R2.1` (removed `eval(parse(...))` in `stepCV`).
@@ -26,7 +26,7 @@ Modernize `crs` to current best-practice R package engineering standards while p
    - `A/R1.12` (additional `seq_len`/`seq.int` safety sweep in spline utilities).
    - `A/R1.13` (broader loop-header safety sweep across CV/sigtest and helper paths).
    - `A/R1.14` (full `npglpreg` loop-header safety sweep).
-   - `A/R1.15` through `A/R1.27` (scalar control-flow cleanup, script hygiene, clamp/vectorization follow-ups, remaining legacy `do.call` cleanup in matrix-construction paths, `vapply` numeric-column sweeps, boolean control simplification, centralized RNG seed state handling, and scalar-loop index correctness fixes in `npglpreg` warning/index paths).
+   - `A/R1.15` through `A/R1.28` (scalar control-flow cleanup, script hygiene, clamp/vectorization follow-ups, remaining legacy `do.call` cleanup in matrix-construction paths, `vapply` numeric-column sweeps, boolean control simplification, centralized RNG seed state handling, scalar-loop index correctness fixes in `npglpreg` warning/index paths, and registered-symbol `.Call` hygiene).
    - `B/R2` (shared IV scaffolding helpers for dots/call assembly in `crsiv` and `crsivderiv`).
    - `B/R1.1` (non-NOMAD C memory hygiene in `gsl_bspline.c`).
    - `B/R1.2` and `B/R1.3` (native-interface and matrix-kernel regression test expansion).
@@ -1362,3 +1362,28 @@ Validation artifacts:
 4. Tarball-first:
    - `/tmp/crs_build_npglp_index_loops_20260224.log`
    - `/tmp/crs_check_npglp_index_loops_20260224.log` (`Status: 4 WARNINGs, 4 NOTEs`)
+
+### 2026-02-24 - A/R1.28 registered-symbol `.Call` hygiene sweep
+
+Scope completed:
+
+1. Replaced remaining string-based `.Call("...")` invocations with registered-symbol calls (`.Call(symbol, ...)`) in:
+   - `/Users/jracine/Development/crs/R/gsl_bspline.R`
+   - `/Users/jracine/Development/crs/R/mgcv.R`
+   - `/Users/jracine/Development/crs/R/spline.R`
+   - `/Users/jracine/Development/crs/R/stepCV.R`
+2. Removed now-redundant `PACKAGE = "crs"` callsite arguments on those paths.
+3. Result:
+   - `rg -n "\\.Call\\(\"" /Users/jracine/Development/crs/R` returns no matches.
+
+Validation artifacts:
+
+1. Deterministic install:
+   - `/tmp/crs_install_callsymbols_20260224.log`
+2. Targeted tests:
+   - `/tmp/crs_test_callsymbols_targeted_20260224.out` (`PASS 36, WARN 0, FAIL 0`)
+3. Full test suite:
+   - `/tmp/crs_test_callsymbols_full_20260224.out` (`PASS 82, WARN 1, FAIL 0`)
+4. Tarball-first:
+   - `/tmp/crs_build_callsymbols_20260224.log`
+   - `/tmp/crs_check_callsymbols_20260224.log` (`Status: 4 WARNINGs, 4 NOTEs`)

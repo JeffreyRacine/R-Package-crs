@@ -39,5 +39,5 @@ uniquecombs<-function(x) {
   if (is.null(x)) stop("x is null")
   if (is.null(nrow(x))) stop("x has no row attribute")
   if (is.null(ncol(x))) stop("x has no col attribute")
-  .Call("crs_uniquecombs_call", x, PACKAGE = "crs")
+  .Call(crs_uniquecombs_call, x)
 }

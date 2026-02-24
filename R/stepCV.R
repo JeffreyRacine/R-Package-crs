@@ -62,11 +62,10 @@ add1.lm.cv <- function (object, scope, scale = 0, test = c("none", "Chisq",
       return(mean(fitcv$residuals^2))
     }
 
-    h <- try(.Call("crs_hat_diag",
+    h <- try(.Call(crs_hat_diag,
                    fitcv$qr,
                    fitcv$qraux,
-                   as.integer(fitcv$rank),
-                   PACKAGE = "crs"),
+                   as.integer(fitcv$rank)),
              silent = TRUE)
 
     if (inherits(h, "try-error")) {

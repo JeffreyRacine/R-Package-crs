@@ -131,24 +131,22 @@ bs.des     <- function(x,
   knots.arg <- if(is.null(knots)) NULL else as.double(knots)
 
   if(all(deriv==0)) {
-    B <- .Call("crs_gsl_bspline_call",
+    B <- .Call(crs_gsl_bspline_call,
                as.double(x),
                as.integer(degree),
                as.integer(nbreak),
                as.double(x.min),
                as.double(x.max),
-               knots.arg,
-               PACKAGE = "crs")
+               knots.arg)
   } else {
-    B <- .Call("crs_gsl_bspline_deriv_call",
+    B <- .Call(crs_gsl_bspline_deriv_call,
                as.double(x),
                as.integer(degree),
                as.integer(nbreak),
                as.integer(deriv),
                as.double(x.min),
                as.double(x.max),
-               knots.arg,
-               PACKAGE = "crs")
+               knots.arg)
   }
 
   return(B)
