@@ -41,6 +41,7 @@
 #else
 #include <R.h>
 #endif
+#include <Rinternals.h>
 #include <stdio.h>
 #include <math.h>
 #include <stdlib.h>
@@ -398,3 +399,39 @@ void RuniqueCombs(double *X,int *ind,int *r, int *c)
 #endif 
 }
 
+SEXP crs_uniquecombs_call(SEXP x)
+{
+  SEXP xmat = NULL, xcopy = NULL, ind = NULL, out = NULL, idx = NULL;
+  int nrow, ncol, i, r, c;
+
+  if (isNull(x)) {
+    Rf_error("x is null");
+  }
+
+  if (!isMatrix(x)) {
+    Rf_error("x has no matrix dimensions");
+  }
+
+  PROTECT(xmat = coerceVector(x, REALSXP));
+  PROTECT(xcopy = duplicate(xmat));
+
+  nrow = nrows(xcopy);
+  ncol = ncols(xcopy);
+  r = nrow;
+  c = ncol;
+
+  PROTECT(ind = allocVector(INTSXP, nrow));
+  RuniqueCombs(REAL(xcopy), INTEGER(ind), &r, &c);
+
+  PROTECT(out = allocMatrix(REALSXP, r, c));
+  memcpy(REAL(out), REAL(xcopy), (size_t)r * (size_t)c * sizeof(double));
+
+  PROTECT(idx = allocVector(INTSXP, nrow));
+  for (i = 0; i < nrow; i++) {
+    INTEGER(idx)[i] = INTEGER(ind)[i] + 1;
+  }
+  setAttrib(out, install("index"), idx);
+
+  UNPROTECT(5);
+  return out;
+}

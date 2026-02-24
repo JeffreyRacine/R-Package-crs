@@ -39,12 +39,5 @@ uniquecombs<-function(x) {
   if (is.null(x)) stop("x is null")
   if (is.null(nrow(x))) stop("x has no row attribute")
   if (is.null(ncol(x))) stop("x has no col attribute")
-  ind <- rep(0,nrow(x))
-  res<-.C("RuniqueCombs",x=as.double(x),ind=as.integer(ind),
-          r=as.integer(nrow(x)),c=as.integer(ncol(x)))
-  n <- res$r*res$c
-  x <- matrix(res$x[1:n],res$r,res$c)
-  attr(x,"index") <- res$ind+1 ## C to R index gotcha
-  x
+  .Call("crs_uniquecombs_call", x, PACKAGE = "crs")
 }
-

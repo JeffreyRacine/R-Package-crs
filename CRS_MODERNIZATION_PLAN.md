@@ -30,6 +30,7 @@ Modernize `crs` to current best-practice R package engineering standards while p
    - `B/R1.1` (non-NOMAD C memory hygiene in `gsl_bspline.c`).
    - `B/R1.2` and `B/R1.3` (native-interface and matrix-kernel regression test expansion).
    - test harness stabilization (`tests/testthat/setup-load-crs.R`) and deprecation cleanup (`test-crsivderiv.R`).
+   - `C/R3.1` partial migration: `uniquecombs()` moved from `.C` to `.Call`.
 3. Validation discipline maintained at each checkpoint:
    - installed-package targeted smokes,
    - tarball-first `R CMD build` and `R CMD check --as-cran`,
@@ -123,8 +124,8 @@ Static inventory (initial baseline):
 
 Current inventory (2026-02-24):
 
-1. `.C(` callsites in `R/`: `3`
-2. `.Call(` callsites in `R/`: `7`
+1. `.C(` callsites in `R/`: `2`
+2. `.Call(` callsites in `R/`: `8`
 3. `eval(parse(...))` in `R/`: `0`
 4. string `do.call("<name>", ...)` in `R/`: `0`
 5. `<<-` in `R/`: `0`
@@ -537,8 +538,8 @@ Current R-layer pattern counts:
 4. `1:length(...)`: `0` in active code (`2` comment-only occurrences in `clsd.R`)
 5. `1:ncol(...)`: `0`
 6. `1:NCOL(...)`: `0` in active code
-7. `.C(` callsites in `R/`: `0`
-8. `.Call(` callsites in `R/`: `0`
+7. `.C(` callsites in `R/`: `3`
+8. `.Call(` callsites in `R/`: `7`
 
 ### 2026-02-24 - A/R2.2 remove redundant `lm()` re-fit in `add1.lm.cv`
 
@@ -1006,3 +1007,31 @@ Validation artifacts:
 3. Tarball-first:
    - `/tmp/crs_build_matrix_kernels_20260224.log`
    - `/tmp/crs_check_ascran_matrix_kernels_20260224.log` (`Status: 4 WARNINGs, 3 NOTEs`)
+
+### 2026-02-24 - C/R3.1 partial `.C` -> `.Call` migration (`uniquecombs`)
+
+Scope completed:
+
+1. Added new `.Call` wrapper in:
+   - `/Users/jracine/Development/crs/src/RuniqueCombs.c`
+   - `SEXP crs_uniquecombs_call(SEXP x)` allocates outputs in native code and preserves `index` mapping semantics.
+2. Registered new native symbol in:
+   - `/Users/jracine/Development/crs/src/crs_init.c`
+3. Migrated R callsite in:
+   - `/Users/jracine/Development/crs/R/mgcv.R`
+   - `uniquecombs()` now uses `.Call("crs_uniquecombs_call", ..., PACKAGE="crs")`.
+4. Result:
+   - `.C(` callsites in `R/` reduced from `3` to `2`, with no user-facing API change.
+
+Validation artifacts:
+
+1. Deterministic install:
+   - `/tmp/crs_install_uniquecombs_call_20260224.log`
+2. Direct tests + suite:
+   - `/tmp/crs_test_uniquecombs_call_native_20260224.out` (`NATIVE_TESTS_OK`)
+   - `/tmp/crs_test_fullsuite_uniquecombs_call_20260224.out` (`FULL_TESTS_OK`)
+3. Focused smoke:
+   - `/tmp/crs_loop_uniquecombs_call_smoke_20260224.out` (`LOOP_SMOKE_OK`)
+4. Tarball-first:
+   - `/tmp/crs_build_uniquecombs_call_20260224.log`
+   - `/tmp/crs_check_ascran_uniquecombs_call_20260224.log` (`Status: 4 WARNINGs, 3 NOTEs`)
