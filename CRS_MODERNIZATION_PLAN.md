@@ -14,7 +14,7 @@ Modernize `crs` to current best-practice R package engineering standards while p
 
 ## Current Status Snapshot (2026-02-24)
 
-1. Checkpoints completed locally: `52+` commits on top of `origin/master` (no push).
+1. Checkpoints completed locally: `53+` commits on top of `origin/master` (no push).
 2. Completed tranches:
    - `A/R1.1` through `A/R1.10` (low-risk R modernization path).
    - `A/R2.1` (removed `eval(parse(...))` in `stepCV`).
@@ -26,7 +26,7 @@ Modernize `crs` to current best-practice R package engineering standards while p
    - `A/R1.12` (additional `seq_len`/`seq.int` safety sweep in spline utilities).
    - `A/R1.13` (broader loop-header safety sweep across CV/sigtest and helper paths).
    - `A/R1.14` (full `npglpreg` loop-header safety sweep).
-   - `A/R1.15` through `A/R1.31` (scalar control-flow cleanup, script hygiene, clamp/vectorization follow-ups, remaining legacy `do.call` cleanup in matrix-construction paths, `vapply` numeric-column sweeps, boolean control simplification, centralized RNG seed state handling, scalar-loop index correctness fixes in `npglpreg` warning/index paths, registered-symbol `.Call` hygiene, robust option-state guards for `crsiv` / `crsivderiv` including unset-option handling, and eval-helper namespace-resolution hardening).
+   - `A/R1.15` through `A/R1.32` (scalar control-flow cleanup, script hygiene, clamp/vectorization follow-ups, remaining legacy `do.call` cleanup in matrix-construction paths, `vapply` numeric-column sweeps, boolean control simplification, centralized RNG seed state handling, scalar-loop index correctness fixes in `npglpreg` warning/index paths, registered-symbol `.Call` hygiene, robust option-state guards for `crsiv` / `crsivderiv` including unset-option handling, eval-helper namespace-resolution hardening, and recursive source-artifact cleanup/build hygiene hardening).
    - `B/R2` (shared IV scaffolding helpers for dots/call assembly in `crsiv` and `crsivderiv`).
    - `B/R1.1` (non-NOMAD C memory hygiene in `gsl_bspline.c`).
    - `B/R1.2` and `B/R1.3` (native-interface and matrix-kernel regression test expansion).
@@ -36,7 +36,7 @@ Modernize `crs` to current best-practice R package engineering standards while p
 3. Validation discipline maintained at each checkpoint:
    - installed-package targeted smokes,
    - tarball-first `R CMD build` and `R CMD check --as-cran`,
-   - stable non-regressive check profile (`4 WARNINGs, 2-4 NOTEs`) with no modernization regressions introduced.
+   - stable non-regressive check profile (`4-5 WARNINGs, 1-4 NOTEs`) with no modernization regressions introduced.
 4. R-layer forensic status (post A/R2.5 completion):
    - `eval(parse(...))`: `0`
    - `eval(...)`: `0`
@@ -1471,3 +1471,37 @@ Validation artifacts:
 4. Tarball-first:
    - `/tmp/crs_build_eval_nsqual_20260224.log`
    - `/tmp/crs_check_eval_nsqual_20260224.log` (`Status: 4 WARNINGs, 3 NOTEs`)
+
+### 2026-02-24 - A/R1.32 recursive source-artifact cleanup hardening
+
+Scope completed:
+
+1. Hardened package cleanup script for deep tree artifact removal:
+   - `/Users/jracine/Development/crs/cleanup`
+2. Replaced shallow glob deletion (`src/*.o`, `src/*/*.o`, etc.) with recursive file cleanup:
+   - `find src -type f (...) -delete` for `.o`, `.so`, `.d`, `.dll`, `.a`, `.rc`,
+   - `find src -type f -name 'Makedeps' -delete`.
+3. Added explicit source-artifact ignore guards:
+   - `/Users/jracine/Development/crs/.Rbuildignore`
+   - `^src/.*\\.o$`
+   - `^src/.*\\.so$`
+4. Verified shell lint:
+   - `shellcheck /Users/jracine/Development/crs/cleanup` (`clean`).
+5. Result:
+   - recursive cleanup removes deep NOMAD object trees (`225` files -> `0`),
+   - source tarball no longer bundles `.o`/`.so` artifacts (`0` matches in `tar tzf`),
+   - `R CMD check --as-cran` moved from object-file NOTE to clean source-package gate.
+
+Validation artifacts:
+
+1. Install/build/check path before recursive cleanup fix:
+   - `/tmp/crs_install_rbuildignore_objs_20260224.log`
+   - `/tmp/crs_build_rbuildignore_objs_20260224.log`
+   - `/tmp/crs_check_rbuildignore_objs_20260224.log` (`Status: 4 WARNINGs, 3 NOTEs`)
+2. Recursive cleanup verification:
+   - local count check: `find src -type f \\( -name '*.o' -o -name '*.so' \\) | wc -l` (`225 -> 0` after `sh ./cleanup`)
+3. Build/check after recursive cleanup:
+   - `/tmp/crs_build_cleanup_recursive_20260224.log`
+   - `/tmp/crs_check_cleanup_recursive_20260224.log` (`Status: 5 WARNINGs, 1 NOTE`)
+4. Important note:
+   - the additional warning is a pre-existing NOMAD compile warning now surfaced when objects are no longer bundled in source (`QPModelUtils.cpp:462`, bitwise/logical warning), not a modernization regression in `R/` or non-NOMAD C logic.
