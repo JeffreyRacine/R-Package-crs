@@ -19,6 +19,7 @@ Modernize `crs` to current best-practice R package engineering standards while p
    - `A/R1.1` through `A/R1.10` (low-risk R modernization path).
    - `A/R2.1` (removed `eval(parse(...))` in `stepCV`).
    - `A/R2.2` (removed redundant re-fit work in `add1.lm.cv` path).
+   - `A/R2.3` (hardened `crs.sigtest` call-data resolution).
    - `B/R1.1` (non-NOMAD C memory hygiene in `gsl_bspline.c`).
 3. Validation discipline maintained at each checkpoint:
    - installed-package targeted smokes,
@@ -53,9 +54,8 @@ Modernize `crs` to current best-practice R package engineering standards while p
 
 ## Next High-ROI Items (Remaining)
 
-1. `A/R2.3`: replace fragile `eval(object$call$data)` handling with robust call/data resolution helpers.
-2. `A/R2.4`: reduce repeated call/list rebuilding in `crsiv`/`crsivderiv` iterative paths.
-3. `B/R2`: controlled DRY refactors for shared `crsiv`/`crsivderiv` scaffolding after parity checks.
+1. `A/R2.4`: reduce repeated call/list rebuilding in `crsiv`/`crsivderiv` iterative paths.
+2. `B/R2`: controlled DRY refactors for shared `crsiv`/`crsivderiv` scaffolding after parity checks.
 
 Primary guidance basis:
 
@@ -549,3 +549,31 @@ Validation artifacts:
 4. Tarball-first:
    - `/tmp/crs_build_stepcvperf_20260224.log`
    - `/tmp/crs_check_ascran_stepcvperf_20260224.log` (`Status: 4 WARNINGs, 3 NOTEs`)
+
+### 2026-02-24 - A/R2.3 harden `crs.sigtest` call-data resolution
+
+Scope completed:
+
+1. Replaced direct `eval(object$call$data)` usage in `crs.sigtest(...)` with a local resolver helper:
+   - `resolve.call.data(object)` now resolves `object$call$data` across robust environment candidates:
+     - `attr(object$terms, ".Environment")`
+     - `environment(object$formula)`
+     - `parent.frame()`
+2. Resolved data object once per invocation (`model.data`) and reused it in the variable loop.
+3. Updated callsites in:
+   - `/Users/jracine/Development/crs/R/crs.R`
+
+Validation artifacts:
+
+1. Parse gate:
+   - inline run result: `CRS_PARSE_OK`
+2. Deterministic install:
+   - `/tmp/crs_install_sigtest_20260224.log`
+3. Focused smoke:
+   - `/tmp/crs_sigtest_smoke_20260224.out` (`CRS_SIGTEST_SMOKE_OK`)
+4. Regression smoke for detached data-symbol scope (local function fit, later `crs.sigtest`):
+   - `/tmp/crs_sigtest_envresolve_20260224.R`
+   - `/tmp/crs_sigtest_envresolve_20260224.out` (`CRS_SIGTEST_ENV_RESOLVE_OK`)
+5. Tarball-first:
+   - `/tmp/crs_build_sigtestdata_20260224.log`
+   - `/tmp/crs_check_ascran_sigtestdata_20260224.log` (`Status: 4 WARNINGs, 2 NOTEs`)

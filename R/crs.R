@@ -2057,6 +2057,32 @@ crs.sigtest <- function(object,...) {
 
   if(object$kernel) stop(" sigtest is currently available only when kernel=FALSE")
 
+  resolve.call.data <- function(obj) {
+    data.expr <- obj$call$data
+    if (is.null(data.expr)) {
+      return(list())
+    }
+
+    env.candidates <- list(
+      attr(obj$terms, ".Environment"),
+      environment(obj$formula),
+      parent.frame()
+    )
+
+    for (env in env.candidates) {
+      if (!is.environment(env)) {
+        next
+      }
+      data.val <- try(eval(data.expr, envir = env), silent = TRUE)
+      if (!inherits(data.val, "try-error")) {
+        return(data.val)
+      }
+    }
+
+    stop("unable to resolve data from fitted call; refit with explicit `data=` in scope")
+  }
+
+  model.data <- resolve.call.data(object)
   sg <- list()
 
   ## Conduct the significance test in order variable by variable
@@ -2069,13 +2095,13 @@ crs.sigtest <- function(object,...) {
     if(!is.factor(object$xz[,i])) {
       degree <- object$degree
       degree[j.num.x] <- 0
-      model.res <- crs(object$formula,cv="none",degree=degree,include=object$include,basis=object$basis,prune=object$prune,data=eval(object$call$data))
+      model.res <- crs(object$formula,cv="none",degree=degree,include=object$include,basis=object$basis,prune=object$prune,data=model.data)
       sg[[i]] <- anova(model.res$model.lm,object$model.lm)
       j.num.x <- j.num.x + 1
     } else {
       include <- object$include
       include[j.num.z] <- 0
-      model.res <- crs(object$formula,cv="none",degree=object$degree,include=include,basis=object$basis,prune=object$prune,data=eval(object$call$data))
+      model.res <- crs(object$formula,cv="none",degree=object$degree,include=include,basis=object$basis,prune=object$prune,data=model.data)
       sg[[i]] <- anova(model.res$model.lm,object$model.lm)
       j.num.z <- j.num.z + 1
     }
