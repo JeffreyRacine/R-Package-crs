@@ -11,8 +11,13 @@ NZD <- function(a) {
     return(a)
   }
   idx <- which(abs(a) < eps)
-  if (length(idx) > 0)
-    a[idx] <- ifelse(a[idx] >= 0, eps, -eps)
+  if (length(idx) > 0) {
+    vals <- a[idx]
+    nonneg <- vals >= 0
+    vals[nonneg] <- eps
+    vals[!nonneg] <- -eps
+    a[idx] <- vals
+  }
   a
 }
 

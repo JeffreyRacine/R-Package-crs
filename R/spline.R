@@ -2326,7 +2326,10 @@ svd_lm_fit <- function(x, y, tol = 1e-7) {
   }
 
   ## Truncate to effective rank
-  d_inv <- ifelse(d > max(tol * d[1], 0), 1/d, 0)
+  d_inv <- numeric(length(d))
+  d_tol <- max(tol * d[1], 0)
+  keep <- d > d_tol
+  d_inv[keep] <- 1/d[keep]
 
   ## Compute coefficients: beta = V D^{-1} U' y
   u_truncated <- svd_x$u[, 1:rank, drop = FALSE]

@@ -43,7 +43,7 @@ Modernize `crs` to current best-practice R package engineering standards while p
    - active `1:ncol(...)`: `0`
    - active `1:NCOL(...)`: `0`
    - scalar `ifelse(is.null(...))` / `ifelse(is.finite(...))` / `return(ifelse(...))`: `0`
-   - total `ifelse(...)` uses in `R/`: `2` (intentional vectorized expressions)
+   - total `ifelse(...)` uses in `R/`: `0`
    - `.C(` callsites in `R/`: `0`
    - `.Call(` callsites in `R/`: `10`
 5. Scope guard respected:
@@ -1067,3 +1067,31 @@ Validation artifacts:
 4. Tarball-first:
    - `/tmp/crs_build_gsl_call_20260224.log`
    - `/tmp/crs_check_ascran_gsl_call_20260224.log` (`Status: 4 WARNINGs, 3 NOTEs`)
+
+### 2026-02-24 - A/R1.21 remove remaining vectorized `ifelse` usage
+
+Scope completed:
+
+1. Removed the final two `ifelse(...)` callsites in:
+   - `/Users/jracine/Development/crs/R/util.R`
+   - `/Users/jracine/Development/crs/R/spline.R`
+2. Replaced with explicit vectorized logical indexing to preserve behavior:
+   - sign-aware epsilon replacement in `NZD(...)`
+   - SVD reciprocal-threshold mask in `svd_lm_fit(...)`.
+3. Result:
+   - `ifelse(` count in `R/` is now `0`.
+
+Validation artifacts:
+
+1. Parse + inventory:
+   - `/tmp/crs_parse_no_ifelse_20260224.log` (`NO_IFELSE_PARSE_OK`)
+   - inline inventory result: `ifelse 0`
+2. Deterministic install and tests:
+   - `/tmp/crs_install_no_ifelse_20260224.log`
+   - `/tmp/crs_test_fullsuite_no_ifelse_20260224.out` (`FULL_TESTS_OK`)
+3. Focused smoke:
+   - `/tmp/crs_spline_no_ifelse_smoke_20260224.out` (`SPLINE_SMOKE_OK`)
+   - `/tmp/crs_npglp_no_ifelse_smoke_20260224.out` (`NPGLP_SMOKE_OK`)
+4. Tarball-first:
+   - `/tmp/crs_build_no_ifelse_20260224.log`
+   - `/tmp/crs_check_ascran_no_ifelse_20260224.log` (`Status: 4 WARNINGs, 3 NOTEs`)
