@@ -2042,7 +2042,7 @@ glpcvNOMAD <- function(ydat=NULL,
     bw.switch <- params$bw.switch
     bandwidth.scale.categorical=params$bandwidth.scale.categorical
 
-    bw.gamma <- input[1:num.bw]
+    bw.gamma <- input[seq_len(num.bw)]
     if(cv=="degree-bandwidth") {
       degree.idx <- num.bw + seq_len(num.numeric)
       degree <- round(input[degree.idx])
@@ -2146,7 +2146,7 @@ glpcvNOMAD <- function(ydat=NULL,
     bw.switch <- params$bw.switch
     bandwidth.scale.categorical=params$bandwidth.scale.categorical
 
-    bw.gamma <- input[1:num.bw]
+    bw.gamma <- input[seq_len(num.bw)]
     if(cv=="degree-bandwidth") {
       degree.idx <- num.bw + seq_len(num.numeric)
       degree <- round(input[degree.idx])
@@ -2588,7 +2588,7 @@ glpcvNOMAD <- function(ydat=NULL,
 
   fv.vec[1] <- solution$objective
 
-  bw.opt.sf <- solution$solution[1:num.bw]
+  bw.opt.sf <- solution$solution[seq_len(num.bw)]
 
   ## We optimize at the level of scaling factors (multiples of
   ## bandwidths) so we need to back out the unscaled (raw) bandwidths.

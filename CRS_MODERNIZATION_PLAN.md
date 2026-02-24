@@ -26,7 +26,7 @@ Modernize `crs` to current best-practice R package engineering standards while p
    - `A/R1.12` (additional `seq_len`/`seq.int` safety sweep in spline utilities).
    - `A/R1.13` (broader loop-header safety sweep across CV/sigtest and helper paths).
    - `A/R1.14` (full `npglpreg` loop-header safety sweep).
-   - `A/R1.15` through `A/R1.46` (scalar control-flow cleanup, script hygiene, clamp/vectorization follow-ups, remaining legacy `do.call` cleanup in matrix-construction paths, `vapply` numeric-column sweeps, boolean control simplification, centralized RNG seed state handling, scalar-loop index correctness fixes in `npglpreg` warning/index paths, registered-symbol `.Call` hygiene, robust option-state guards for `crsiv` / `crsivderiv` including unset-option handling, eval-helper namespace-resolution hardening, recursive source-artifact cleanup/build hygiene hardening, stepCV loop-index safety hardening for empty-scope paths, snomadr argument-validation hardening, stepCV call-evaluation/helper cleanup, snomadr single-argument `...` guard hardening, formal-matching parity for defaults/ellipsis, non-NOMAD C forensic comment cleanup, residual scalar bitwise-operator cleanup in control paths, `plot.clsd` scalar logical follow-up alignment, invariant-hoisting in `W.glp` polynomial index construction, explicit `TRUE`/`FALSE` constant normalization in active call arguments, duplicate helper-definition consolidation for `scale_robust`/`is.fullrank`, `on.exit(..., add=TRUE)` stacking safety for `npglpreg` message-state restoration, sequence-construction hardening in GLP matrix expansion, and additional zero-dimension-safe sequence/rep-index hardening in `glp.model.matrix`).
+   - `A/R1.15` through `A/R1.47` (scalar control-flow cleanup, script hygiene, clamp/vectorization follow-ups, remaining legacy `do.call` cleanup in matrix-construction paths, `vapply` numeric-column sweeps, boolean control simplification, centralized RNG seed state handling, scalar-loop index correctness fixes in `npglpreg` warning/index paths, registered-symbol `.Call` hygiene, robust option-state guards for `crsiv` / `crsivderiv` including unset-option handling, eval-helper namespace-resolution hardening, recursive source-artifact cleanup/build hygiene hardening, stepCV loop-index safety hardening for empty-scope paths, snomadr argument-validation hardening, stepCV call-evaluation/helper cleanup, snomadr single-argument `...` guard hardening, formal-matching parity for defaults/ellipsis, non-NOMAD C forensic comment cleanup, residual scalar bitwise-operator cleanup in control paths, `plot.clsd` scalar logical follow-up alignment, invariant-hoisting in `W.glp` polynomial index construction, explicit `TRUE`/`FALSE` constant normalization in active call arguments, duplicate helper-definition consolidation for `scale_robust`/`is.fullrank`, `on.exit(..., add=TRUE)` stacking safety for `npglpreg` message-state restoration, sequence-construction hardening in GLP matrix expansion, additional zero-dimension-safe sequence/rep-index hardening in `glp.model.matrix`, and residual `1:n` index-slice hardening in GLP/NPGLP bandwidth internals).
    - `B/R2` (shared IV scaffolding helpers for dots/call assembly in `crsiv` and `crsivderiv`).
    - `B/R1.1` (non-NOMAD C memory hygiene in `gsl_bspline.c`).
    - `B/R1.2` and `B/R1.3` (native-interface and matrix-kernel regression test expansion).
@@ -1893,3 +1893,31 @@ Validation artifacts:
 5. Tarball-first:
    - `/tmp/crs_build_glp_seq_hardening_20260224.log`
    - `/tmp/crs_check_glp_seq_hardening_20260224.log` (`Status: 5 WARNINGs, 1 NOTE`)
+
+### 2026-02-24 - A/R1.47 residual GLP/NPGLP `1:n` slice hardening
+
+Scope completed:
+
+1. Replaced residual `1:n`-style index slices in active internals:
+   - `/Users/jracine/Development/crs/R/glp.model.matrix.R`
+   - `/Users/jracine/Development/crs/R/np.regression.glp.R`
+2. Changes:
+   - matrix column slices `1:nc` -> `seq_len(nc)` in GLP index assembly,
+   - bandwidth/solution extraction `x[1:num.bw]` -> `x[seq_len(num.bw)]` in NPGLP CV/AIC objective and final bandwidth extraction paths.
+3. Result:
+   - removes remaining `1:0` edge-case exposure in these helper slices,
+   - preserves behavior for standard positive-dimension cases.
+
+Validation artifacts:
+
+1. Syntax gate:
+   - `/tmp/crs_parse_glp_bw_seq_len_followup_20260224.out` (`PARSE_OK`)
+2. Deterministic install:
+   - `/tmp/crs_install_glp_bw_seq_len_followup_20260224.log`
+3. Targeted tests:
+   - `/tmp/crs_test_glp_bw_seq_len_followup_targeted_20260224.out` (`PASS 23, WARN 1, FAIL 0`)
+4. Full test suite:
+   - `/tmp/crs_test_glp_bw_seq_len_followup_full_20260224.out` (`PASS 105, WARN 1, FAIL 0`)
+5. Tarball-first:
+   - `/tmp/crs_build_glp_bw_seq_len_followup_20260224.log`
+   - `/tmp/crs_check_glp_bw_seq_len_followup_20260224.log` (`Status: 5 WARNINGs, 1 NOTE`)

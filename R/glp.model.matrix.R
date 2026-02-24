@@ -100,7 +100,7 @@ glp.model.matrix <- function(X) {
           end_row <- curr_row + n_sub * d2 - 1
 
           # Replicate rows d2 times
-          d2sets[curr_row:end_row, 1:nc] <- use_d1sets[rep(idx, d2), , drop=FALSE]
+          d2sets[curr_row:end_row, seq_len(nc)] <- use_d1sets[rep(idx, d2), , drop=FALSE]
           # Last column: rep(0:(d2-1), each=n_sub)
           d2sets[curr_row:end_row, nc+1] <- rep(seq.int(0L, d2-1L), each=n_sub)
 
@@ -120,7 +120,7 @@ glp.model.matrix <- function(X) {
       if (n_sub > 0L) {
         end_row <- curr_row + n_sub * i - 1
 
-        d2sets[curr_row:end_row, 1:nc] <- use_d1sets[rep(idx, i), , drop=FALSE]
+        d2sets[curr_row:end_row, seq_len(nc)] <- use_d1sets[rep(idx, i), , drop=FALSE]
         d2sets[curr_row:end_row, nc+1] <- rep(seq.int(0L, i-1L), each=n_sub)
 
         curr_row <- end_row + 1
