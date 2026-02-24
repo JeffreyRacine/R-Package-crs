@@ -189,8 +189,10 @@ glp.model.matrix <- function(X) {
   z <- construct.tensor.prod(dimen)
   ## if we don't want to get the same order as using the expand.grid method, we can comment the following two lines.
   rownames(z) <- 1:NROW(z)
-  ## 2025: Faster list creation for order
-  z <- z[do.call('order', lapply(ncol(z):1, function(i) z[,i])), ]
+  ## 2026: Use explicit function reference and safe reverse index construction.
+  if (ncol(z) > 0L) {
+    z <- z[do.call(order, lapply(rev(seq_len(ncol(z))), function(i) z[, i])), ]
+  }
 
   # X is a list of model matrices, from which a tensor product model matrix is to be produced.
   # e.g. ith row is basically X[[1]][i,]%x%X[[2]][i,]%x%X[[3]][i,], but this routine works

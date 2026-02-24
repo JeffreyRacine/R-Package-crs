@@ -47,5 +47,5 @@ matrix.combn <- function(K.vec1, K.vec2 = NULL, num.x = 0, num.z = NULL) {
     return(matrix(numeric(0), nrow = 0, ncol = 0))
   }
 
-  as.matrix(do.call(expand.grid, c(parts, list(KEEP.OUT.ATTRS = FALSE))))
+  as.matrix(do.call(base::expand.grid, c(parts, list(KEEP.OUT.ATTRS = FALSE))))
 }

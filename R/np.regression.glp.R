@@ -128,7 +128,7 @@ W.glp <- function(xdat = NULL,
 
     degree.list <- list()
     for(i in seq_len(k)) degree.list[[i]] <- 0:degree[i]
-    z <- do.call(base::expand.grid, degree.list, k)
+    z <- do.call(base::expand.grid, c(degree.list, list(KEEP.OUT.ATTRS = FALSE)))
     s <- rowSums(z)
     ind <- (s > 0) & (s <= max(degree))
     z <- z[ind, ,drop=FALSE]

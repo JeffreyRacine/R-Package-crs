@@ -25,7 +25,7 @@ Modernize `crs` to current best-practice R package engineering standards while p
    - `A/R1.12` (additional `seq_len`/`seq.int` safety sweep in spline utilities).
    - `A/R1.13` (broader loop-header safety sweep across CV/sigtest and helper paths).
    - `A/R1.14` (full `npglpreg` loop-header safety sweep).
-   - `A/R1.15` through `A/R1.20` (scalar control-flow cleanup, script hygiene, and clamp/vectorization follow-ups).
+   - `A/R1.15` through `A/R1.22` (scalar control-flow cleanup, script hygiene, clamp/vectorization follow-ups, and remaining legacy `do.call` cleanup in matrix-construction paths).
    - `B/R2` (shared IV scaffolding helpers for dots/call assembly in `crsiv` and `crsivderiv`).
    - `B/R1.1` (non-NOMAD C memory hygiene in `gsl_bspline.c`).
    - `B/R1.2` and `B/R1.3` (native-interface and matrix-kernel regression test expansion).
@@ -1124,3 +1124,29 @@ Validation artifacts:
 4. Tarball-first:
    - `/tmp/crs_build_native_parity_20260224.log`
    - `/tmp/crs_check_ascran_native_parity_20260224.log` (`Status: 4 WARNINGs, 3 NOTEs`)
+
+### 2026-02-24 - A/R1.22 `do.call` and sequence cleanup in matrix-construction paths
+
+Scope completed:
+
+1. Updated explicit function dispatch and sequence construction in:
+   - `/Users/jracine/Development/crs/R/glp.model.matrix.R`
+   - replaced `do.call('order', lapply(ncol(z):1, ...))` with `do.call(order, lapply(rev(seq_len(ncol(z))), ...))`, plus a defensive `ncol(z) > 0L` guard.
+2. Updated `expand.grid` dispatch in:
+   - `/Users/jracine/Development/crs/R/matrix.combns.R`
+   - now uses `do.call(base::expand.grid, ...)` explicitly.
+3. Removed ambiguous third-argument `do.call` usage in:
+   - `/Users/jracine/Development/crs/R/np.regression.glp.R`
+   - now uses `do.call(base::expand.grid, c(degree.list, list(KEEP.OUT.ATTRS = FALSE)))`.
+
+Validation artifacts:
+
+1. Targeted tests:
+   - `/tmp/crs_test_docall_targeted_20260224.out` (`PASS 23, WARN 1, FAIL 0`)
+2. Full test suite:
+   - `/tmp/crs_test_docall_full_20260224.out` (`PASS 75, WARN 1, FAIL 0`)
+3. Deterministic install:
+   - `/tmp/crs_install_docall_20260224.log`
+4. Tarball-first:
+   - `/tmp/crs_build_docall_20260224.log`
+   - `/tmp/crs_check_docall_20260224.log` (`Status: 4 WARNINGs, 2 NOTEs`)
