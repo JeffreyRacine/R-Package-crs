@@ -14,7 +14,7 @@ Modernize `crs` to current best-practice R package engineering standards while p
 
 ## Current Status Snapshot (2026-02-24)
 
-1. Checkpoints completed locally: `55+` commits on top of `origin/master` (no push).
+1. Checkpoints completed locally: `56+` commits on top of `origin/master` (no push).
 2. Completed tranches:
    - `A/R1.1` through `A/R1.10` (low-risk R modernization path).
    - `A/R2.1` (removed `eval(parse(...))` in `stepCV`).
@@ -26,7 +26,7 @@ Modernize `crs` to current best-practice R package engineering standards while p
    - `A/R1.12` (additional `seq_len`/`seq.int` safety sweep in spline utilities).
    - `A/R1.13` (broader loop-header safety sweep across CV/sigtest and helper paths).
    - `A/R1.14` (full `npglpreg` loop-header safety sweep).
-   - `A/R1.15` through `A/R1.34` (scalar control-flow cleanup, script hygiene, clamp/vectorization follow-ups, remaining legacy `do.call` cleanup in matrix-construction paths, `vapply` numeric-column sweeps, boolean control simplification, centralized RNG seed state handling, scalar-loop index correctness fixes in `npglpreg` warning/index paths, registered-symbol `.Call` hygiene, robust option-state guards for `crsiv` / `crsivderiv` including unset-option handling, eval-helper namespace-resolution hardening, recursive source-artifact cleanup/build hygiene hardening, stepCV loop-index safety hardening for empty-scope paths, and snomadr argument-validation hardening).
+   - `A/R1.15` through `A/R1.35` (scalar control-flow cleanup, script hygiene, clamp/vectorization follow-ups, remaining legacy `do.call` cleanup in matrix-construction paths, `vapply` numeric-column sweeps, boolean control simplification, centralized RNG seed state handling, scalar-loop index correctness fixes in `npglpreg` warning/index paths, registered-symbol `.Call` hygiene, robust option-state guards for `crsiv` / `crsivderiv` including unset-option handling, eval-helper namespace-resolution hardening, recursive source-artifact cleanup/build hygiene hardening, stepCV loop-index safety hardening for empty-scope paths, snomadr argument-validation hardening, and stepCV call-evaluation/helper cleanup).
    - `B/R2` (shared IV scaffolding helpers for dots/call assembly in `crsiv` and `crsivderiv`).
    - `B/R1.1` (non-NOMAD C memory hygiene in `gsl_bspline.c`).
    - `B/R1.2` and `B/R1.3` (native-interface and matrix-kernel regression test expansion).
@@ -36,7 +36,7 @@ Modernize `crs` to current best-practice R package engineering standards while p
 3. Validation discipline maintained at each checkpoint:
    - installed-package targeted smokes,
    - tarball-first `R CMD build` and `R CMD check --as-cran`,
-   - stable non-regressive check profile (`4-5 WARNINGs, 1-4 NOTEs`) with no modernization regressions introduced.
+   - stable non-regressive check profile (`4-5 WARNINGs, 0-4 NOTEs`) with no modernization regressions introduced.
 4. R-layer forensic status (post A/R2.5 completion):
    - `eval(parse(...))`: `0`
    - `eval(...)`: `0`
@@ -1567,3 +1567,31 @@ Validation artifacts:
 4. Tarball-first:
    - `/tmp/crs_build_snomadr_args_20260224.log`
    - `/tmp/crs_check_snomadr_args_20260224.log` (`Status: 5 WARNINGs, 1 NOTE`)
+
+### 2026-02-24 - A/R1.35 stepCV call-evaluation helper alignment
+
+Scope completed:
+
+1. Replaced remaining `eval.parent(...)` path in:
+   - `/Users/jracine/Development/crs/R/stepCV.R`
+2. Changes:
+   - `fit <- eval.parent(fit)` -> `fit <- .crs_eval_call(fit, parent.frame())` in the main `stepCV` update loop,
+   - final model/keep list slicing now uses `seq_len(nm)` in place of `seq(nm)`.
+3. Expanded regression coverage:
+   - `/Users/jracine/Development/crs/tests/testthat/test-stepcv.R`
+   - added `stepCV` update-path smoke test that exercises call-object evaluation and output structure.
+4. Result:
+   - removed the last active `eval.parent(...)` callsite from `R/`,
+   - aligned step-model evaluation semantics with the centralized eval helper used elsewhere.
+
+Validation artifacts:
+
+1. Deterministic install:
+   - `/tmp/crs_install_stepcv_evalcall_20260224.log`
+2. Targeted tests:
+   - `/tmp/crs_test_stepcv_evalcall_targeted_20260224.out` (`PASS 9, WARN 0, FAIL 0`)
+3. Full test suite:
+   - `/tmp/crs_test_stepcv_evalcall_full_20260224.out` (`PASS 102, WARN 1, FAIL 0`)
+4. Tarball-first:
+   - `/tmp/crs_build_stepcv_evalcall_20260224.log`
+   - `/tmp/crs_check_stepcv_evalcall_20260224.log` (`Status: 5 WARNINGs, 0 NOTEs`)

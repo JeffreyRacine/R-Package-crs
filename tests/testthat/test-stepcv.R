@@ -28,3 +28,19 @@ test_that("dropterm.glm handles empty scope without loop-index artifacts", {
   expect_identical(rownames(res), "<none>")
   expect_true(is.na(res$Df[1L]))
 })
+
+test_that("stepCV update path evaluates call objects robustly", {
+  fit <- lm(mpg ~ wt, data = mtcars)
+
+  out <- crs:::stepCV(
+    object = fit,
+    scope = list(lower = mpg ~ 1, upper = mpg ~ wt + hp),
+    direction = "both",
+    trace = 0,
+    steps = 1,
+    display.warnings = FALSE
+  )
+
+  expect_s3_class(out, "lm")
+  expect_true("anova" %in% names(out))
+})

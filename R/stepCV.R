@@ -352,7 +352,7 @@ stepCV <-
       usingCp <- match("Cp", names(aod), 0) > 0
       ## may need to look for a 'data' argument in parent
       fit <- update(fit, paste("~ .", change), evaluate = FALSE)
-      fit <- eval.parent(fit)
+      fit <- .crs_eval_call(fit, parent.frame())
       if(is.list(fit) && (nmm <- match("nobs", names(fit), 0)) > 0)
         nnew <- fit[[nmm]]
       else nnew <- length(residuals(fit))
@@ -375,8 +375,8 @@ stepCV <-
              change = change, CV = bCV)
       if(!is.null(keep)) keep.list[[nm]] <- keep(fit, bCV)
     }
-    if(!is.null(keep)) fit$keep <- re.arrange(keep.list[seq(nm)])
-    step.results(models = models[seq(nm)], fit, object, usingCp)
+    if(!is.null(keep)) fit$keep <- re.arrange(keep.list[seq_len(nm)])
+    step.results(models = models[seq_len(nm)], fit, object, usingCp)
   }
 
 extractCV.loglm <- function(fit, scale, k = 2, ...)
