@@ -250,8 +250,8 @@ stepCV <-
     if(use.start && display.warnings) warning("'use.start' cannot be used with R's version of glm")
     md <- missing(direction)
     direction <- match.arg(direction)
-    backward <- direction == "both" | direction == "backward"
-    forward <- direction == "both" | direction == "forward"
+    backward <- direction == "both" || direction == "backward"
+    forward <- direction == "both" || direction == "forward"
     if(missing(scope)) {
       fdrop <- numeric(0)
       fadd <- attr(Terms, "factors")

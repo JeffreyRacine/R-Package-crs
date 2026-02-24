@@ -495,15 +495,15 @@ crs.formula <- function(formula,
     ## for various parameters, we set them to ad hoc defaults and warn
     ## the user to this effect.
 
-    if(is.null(degree)&!is.null(x)) {
+    if(is.null(degree) && !is.null(x)) {
       if(display.warnings) warning(paste(" cv=\"none\" selected but no degree provided, using degree=rep(3,num.x): you might consider other degree settings",sep=""),immediate.=TRUE)
       degree <- rep(3,num.x)
     }
-    if(is.null(segments)&!is.null(x)) {
+    if(is.null(segments) && !is.null(x)) {
       if(display.warnings) warning(paste(" cv=\"none\" selected but no segments provided, using segments=rep(1,num.x): you might consider other segment settings",sep=""),immediate.=TRUE)
       segments <- rep(1,num.x)
     }
-    if(is.null(include)&!is.null(z)&!kernel) {
+    if(is.null(include) && !is.null(z) && !kernel) {
       if(display.warnings) warning(paste(" cv=\"none\" selected but no inclusion for factors indicated, using include=rep(1,num.z): you might consider other include settings",sep=""),immediate.=TRUE)
       include <- rep(1,num.z)
     }

@@ -45,14 +45,14 @@ gen.xnorm <- function(x=NULL,
   er <- extendrange(x,f=er)
   if(!is.null(lbound)) er[1] <- lbound
   if(!is.null(ubound)) er[2] <- ubound
-  if(min(x) < er[1] | max(x) > er[2]) if(display.warnings) warning(" data extends beyond the range of `er'")
+  if(min(x) < er[1] || max(x) > er[2]) if(display.warnings) warning(" data extends beyond the range of `er'")
   xint <- sort(as.numeric(c(seq(er[1],er[2],length=round(n.integrate/2)),
                             quantile(x,seq(sqrt(.Machine$double.eps),1-sqrt(.Machine$double.eps),length=round(n.integrate/2))))))
   if(is.null(xeval)) {
     xnorm <- c(x,xint)
   } else {
     xnorm <- c(xeval,x,xint)
-    if(min(xeval) < er[1] | max(xeval) > er[2]) if(display.warnings) warning(" evaluation data extends beyond the range of `er'")
+    if(min(xeval) < er[1] || max(xeval) > er[2]) if(display.warnings) warning(" evaluation data extends beyond the range of `er'")
   }
   ## Either x will be the first 1:length(x) elements in
   ## object[rank.xnorm] or xeval will be the first 1:length(xeval)

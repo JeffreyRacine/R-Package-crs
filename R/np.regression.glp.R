@@ -135,7 +135,7 @@ W.glp <- function(xdat = NULL,
     if(!all(degree==max(degree))) {
       for(j in seq_along(degree)) {
         d <- degree[j]
-        if((d < max(degree)) & (d > 0)) {
+        if((d < max(degree)) && (d > 0)) {
           s <- rowSums(z)
           d <- (s > d) & (z[,j,drop=FALSE]==matrix(d,nrow(z),1,byrow=TRUE))
           z <- z[!d, ]
