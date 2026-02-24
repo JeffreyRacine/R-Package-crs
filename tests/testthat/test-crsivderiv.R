@@ -1,5 +1,3 @@
-context("crsivderiv")
-
 test_that("crsivderiv works with Landweber-Fridman", {
   set.seed(42)
   n <- 100
@@ -13,7 +11,7 @@ test_that("crsivderiv works with Landweber-Fridman", {
 
   # Basic execution test
   # Use small iterate.max for speed in tests
-  model <- crsivderiv(y=y_vec, z=z, w=w, iterate.max=5, cv="none", basis="additive", display.nomad.progress=FALSE)
+  model <- crsivderiv(y=y_vec, z=z, w=w, iterate.max=5, cv="none", basis="additive", display.nomad.progress=FALSE, display.warnings=FALSE)
   
   expect_s3_class(model, "crsivderiv")
   expect_s3_class(model, "crs")
@@ -37,7 +35,7 @@ test_that("crsivderiv handles evaluation data correctly", {
   zeval <- data.frame(z=seq(min(z_vec), max(z_vec), length.out=n))
   weval <- data.frame(w=rep(0, n))
   
-  model <- crsivderiv(y=y_vec, z=z, w=w, zeval=zeval, weval=weval, iterate.max=2, cv="none", basis="additive", display.nomad.progress=FALSE)
+  model <- crsivderiv(y=y_vec, z=z, w=w, zeval=zeval, weval=weval, iterate.max=2, cv="none", basis="additive", display.nomad.progress=FALSE, display.warnings=FALSE)
   
   expect_equal(length(model$phi), n)
   expect_equal(length(model$phi.prime), n)
@@ -55,7 +53,7 @@ test_that("crsivderiv works with exogenous predictors", {
   w <- data.frame(w=w_vec)
   x <- data.frame(x=x_vec)
   
-  model <- crsivderiv(y=y_vec, z=z, w=w, x=x, iterate.max=2, cv="none", basis="additive", display.nomad.progress=FALSE)
+  model <- crsivderiv(y=y_vec, z=z, w=w, x=x, iterate.max=2, cv="none", basis="additive", display.nomad.progress=FALSE, display.warnings=FALSE)
   
   expect_equal(length(model$phi), n)
   expect_type(model$phi, "double")

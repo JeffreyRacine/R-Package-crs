@@ -957,3 +957,25 @@ Validation artifacts:
 2. Tarball-first:
    - `/tmp/crs_build_test_setup_20260224.log`
    - `/tmp/crs_check_ascran_test_setup_20260224.log` (`Status: 4 WARNINGs, 2 NOTEs`)
+
+### 2026-02-24 - testthat deprecation/noise cleanup (`crsivderiv` tests)
+
+Scope completed:
+
+1. Removed deprecated `testthat::context()` usage from:
+   - `/Users/jracine/Development/crs/tests/testthat/test-crsivderiv.R`
+2. Added explicit warning suppression setting for deterministic test execution:
+   - `display.warnings = FALSE` in `crsivderiv(...)` test calls.
+3. Goal achieved:
+   - direct `testthat::test_dir(...)` runs no longer emit the context deprecation warning and are less noisy.
+
+Validation artifacts:
+
+1. Direct tests:
+   - `/tmp/crs_test_crsivderiv_modern_20260224.out` (`CRSIVDERIV_TESTS_OK`)
+   - `/tmp/crs_test_fullsuite_post_crsivderiv_20260224.out` (`FULL_TESTS_OK`)
+2. Deterministic install:
+   - `/tmp/crs_install_test_crsivderiv_modern_20260224.log`
+3. Tarball-first:
+   - `/tmp/crs_build_test_crsivderiv_modern_20260224.log`
+   - `/tmp/crs_check_ascran_test_crsivderiv_modern_20260224.log` (`Status: 4 WARNINGs, 3 NOTEs`)
