@@ -979,3 +979,27 @@ Validation artifacts:
 3. Tarball-first:
    - `/tmp/crs_build_test_crsivderiv_modern_20260224.log`
    - `/tmp/crs_check_ascran_test_crsivderiv_modern_20260224.log` (`Status: 4 WARNINGs, 3 NOTEs`)
+
+### 2026-02-24 - B/R1.3 native matrix-kernel regression tests
+
+Scope completed:
+
+1. Added matrix-kernel regression tests in:
+   - `/Users/jracine/Development/crs/tests/testthat/test-native-matrix-kernels.R`
+2. Coverage added for:
+   - `tensor.prod.model.matrix` (`mgcv_tmm`) parity against manual row-wise Kronecker construction.
+   - `glp.model.matrix` (`glp_model_tmm`) structural invariants and column-membership within the tensor-product basis.
+   - single-input edge case (`list(A)`) parity for both matrix constructors.
+3. Scope is test-only; no runtime/package API changes.
+
+Validation artifacts:
+
+1. Direct tests:
+   - `/tmp/crs_test_native_matrix_kernels_20260224.out` (`NATIVE_KERNEL_TESTS_OK`)
+   - `/tmp/crs_test_fullsuite_post_matrixkernels_20260224.out` (`FULL_TESTS_OK`)
+2. Deterministic install + smoke:
+   - `/tmp/crs_install_matrix_kernels_20260224.log`
+   - `/tmp/crs_loop_matrix_kernels_smoke_20260224.out` (`LOOP_SMOKE_OK`)
+3. Tarball-first:
+   - `/tmp/crs_build_matrix_kernels_20260224.log`
+   - `/tmp/crs_check_ascran_matrix_kernels_20260224.log` (`Status: 4 WARNINGs, 3 NOTEs`)
