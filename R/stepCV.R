@@ -54,6 +54,37 @@ add1.lm.cv <- function (object, scope, scale = 0, test = c("none", "Chisq",
                        lower.tail = FALSE)
     list(Fs = Fs, P = P)
   }
+  .loocv_from_xy <- function(X, y) {
+    Xcv <- cbind("(Intercept)" = 1, X)
+    fitcv <- .lm.fit(Xcv, y)
+
+    if (fitcv$rank == 0L) {
+      return(mean(fitcv$residuals^2))
+    }
+
+    h <- try(.Call("crs_hat_diag",
+                   fitcv$qr,
+                   fitcv$qraux,
+                   as.integer(fitcv$rank),
+                   PACKAGE = "crs"),
+             silent = TRUE)
+
+    if (inherits(h, "try-error")) {
+      qr_obj <- structure(list(qr = fitcv$qr,
+                               qraux = fitcv$qraux,
+                               pivot = fitcv$pivot,
+                               tol = fitcv$tol,
+                               rank = fitcv$rank),
+                          class = "qr")
+      qmat <- qr.Q(qr_obj, complete = FALSE)
+      if (ncol(qmat) > fitcv$rank) {
+        qmat <- qmat[, seq_len(fitcv$rank), drop = FALSE]
+      }
+      h <- rowSums(qmat^2)
+    }
+
+    mean(fitcv$residuals^2/(1 - h)^2)
+  }
   check_exact(object, display.warnings=display.warnings)
   if (missing(scope) || is.null(scope))
     stop("no terms in scope")
@@ -107,8 +138,7 @@ add1.lm.cv <- function (object, scope, scale = 0, test = c("none", "Chisq",
   dfs[1L] <- z$rank
   class(z) <- "lm"
   RSS[1L] <- deviance(z)
-  model <- lm(y~X) # added jracine
-  CV[1L] <- mean(residuals(model)^2/(1-hatvalues(model))^2) # added jracine
+  CV[1L] <- .loocv_from_xy(X, y)
   sTerms <- sapply(strsplit(Terms, ":", fixed = TRUE), function(x) paste(sort(x),
                                                                          collapse = ":"))
   for (tt in scope) {
@@ -121,8 +151,7 @@ add1.lm.cv <- function (object, scope, scale = 0, test = c("none", "Chisq",
     class(z) <- "lm"
     dfs[tt] <- z$rank
     RSS[tt] <- deviance(z)
-    model <- lm(y~X) # added jracine
-    CV[tt] <- mean(residuals(model)^2/(1-hatvalues(model))^2) # added jracine
+    CV[tt] <- .loocv_from_xy(X, y)
   }
   if (scale > 0)
     aic <- RSS/scale - n + k * dfs

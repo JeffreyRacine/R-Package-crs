@@ -14,15 +14,16 @@ Modernize `crs` to current best-practice R package engineering standards while p
 
 ## Current Status Snapshot (2026-02-24)
 
-1. Checkpoints completed locally: `15` commits on top of `origin/master` (no push).
+1. Checkpoints completed locally: `16+` commits on top of `origin/master` (no push).
 2. Completed tranches:
    - `A/R1.1` through `A/R1.10` (low-risk R modernization path).
    - `A/R2.1` (removed `eval(parse(...))` in `stepCV`).
+   - `A/R2.2` (removed redundant re-fit work in `add1.lm.cv` path).
    - `B/R1.1` (non-NOMAD C memory hygiene in `gsl_bspline.c`).
 3. Validation discipline maintained at each checkpoint:
    - installed-package targeted smokes,
    - tarball-first `R CMD build` and `R CMD check --as-cran`,
-   - stable check status (`4 WARNINGs, 2 NOTEs`) with no new modernization regressions introduced.
+   - stable non-regressive check profile (`4 WARNINGs, 2-3 NOTEs`) with no modernization regressions introduced.
 4. R-layer forensic status (post A/R1.10):
    - `eval(parse(...))`: `0`
    - string `do.call("...")`: `0`
@@ -52,10 +53,9 @@ Modernize `crs` to current best-practice R package engineering standards while p
 
 ## Next High-ROI Items (Remaining)
 
-1. `A/R2.2`: reduce redundant re-fit work in `stepCV` CV scoring path.
-2. `A/R2.3`: replace fragile `eval(object$call$data)` handling with robust call/data resolution helpers.
-3. `A/R2.4`: reduce repeated call/list rebuilding in `crsiv`/`crsivderiv` iterative paths.
-4. `B/R2`: controlled DRY refactors for shared `crsiv`/`crsivderiv` scaffolding after parity checks.
+1. `A/R2.3`: replace fragile `eval(object$call$data)` handling with robust call/data resolution helpers.
+2. `A/R2.4`: reduce repeated call/list rebuilding in `crsiv`/`crsivderiv` iterative paths.
+3. `B/R2`: controlled DRY refactors for shared `crsiv`/`crsivderiv` scaffolding after parity checks.
 
 Primary guidance basis:
 
@@ -520,3 +520,32 @@ Current R-layer pattern counts:
 6. `1:NCOL(...)`: `0` in active code
 7. `.C(` callsites in `R/`: `0`
 8. `.Call(` callsites in `R/`: `0`
+
+### 2026-02-24 - A/R2.2 remove redundant `lm()` re-fit in `add1.lm.cv`
+
+Scope completed:
+
+1. Removed duplicate per-candidate `lm(y~X)` fit in `add1.lm.cv(...)` and replaced with a single helper path that computes LOO CV from matrix inputs.
+2. Added internal helper `.loocv_from_xy(X, y)` in:
+   - `/Users/jracine/Development/crs/R/stepCV.R`
+3. Implementation details:
+   - uses `.lm.fit` on `cbind("(Intercept)" = 1, X)` (no formula re-parse overhead),
+   - computes hat diagonals via `.Call("crs_hat_diag", ...)` when available,
+   - includes QR fallback with rank-aware `Q[, seq_len(rank), drop = FALSE]` to preserve numerical parity in rank-deficient cases.
+
+Validation artifacts:
+
+1. Objective/parity probe (old vs new):
+   - `/tmp/crs_stepcv_parity_probe_20260224.R`
+   - `/tmp/crs_stepcv_parity_probe_20260224.out`
+   - result: `MAX_ABS_CV_DIFF=0`, `ALL_EQUAL_CV=TRUE`
+2. Focused micro-benchmark (`add1.lm.cv` loop):
+   - `/tmp/crs_stepcv_add1_bench_20260224.R`
+   - `/tmp/crs_stepcv_add1_bench_20260224.out`
+   - result: `OLD_ELAPSED=0.310000`, `NEW_ELAPSED=0.219000`, `DELTA_PCT=-29.35`
+3. Deterministic install/smoke:
+   - `/tmp/crs_install_stepcvperf_20260224.log`
+   - `/tmp/crs_stepcvperf_smoke_20260224.out` (`STEPCVPERF_SMOKE_OK`)
+4. Tarball-first:
+   - `/tmp/crs_build_stepcvperf_20260224.log`
+   - `/tmp/crs_check_ascran_stepcvperf_20260224.log` (`Status: 4 WARNINGs, 3 NOTEs`)
