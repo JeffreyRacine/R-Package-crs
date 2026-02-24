@@ -801,9 +801,7 @@ crsiv.default <- function(y,
     console <- printClear(console)
     console <- printPop(console)
 
-    if(display.warnings) {
-      if(j == iterate.max) warning(" iterate.max reached: increase iterate.max or inspect norm.stop vector")
-    }
+    .crsiv_warn_iterate_max(display.warnings, j, iterate.max)
 
     return(model)
 

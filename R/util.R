@@ -158,6 +158,12 @@ is.monotone.increasing <- function(x) {
   }
 }
 
+.crsiv_warn_iterate_max <- function(display.warnings, j, iterate.max) {
+  if (display.warnings && j == iterate.max) {
+    warning(" iterate.max reached: increase iterate.max or inspect norm.stop vector")
+  }
+}
+
 ## This function tests for the maximum well-conditioned spline degree.
 
 ## Note that increasing the number of breaks, other things equal,
