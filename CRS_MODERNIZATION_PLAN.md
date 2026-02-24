@@ -890,3 +890,27 @@ Validation artifacts:
 4. Tarball-first:
    - `/tmp/crs_build_clamp_sweep_20260224.log`
    - `/tmp/crs_check_ascran_clamp_sweep_20260224.log` (`Status: 4 WARNINGs, 3 NOTEs`)
+
+### 2026-02-24 - Periodic heavy-example gate (`runcrs`)
+
+Scope completed:
+
+1. Executed full example stress gate using package-maintained toggles:
+   - `/Users/jracine/Development/crs/man/runcrs`
+   - `R CMD build` + `R CMD check --as-cran` from `/Users/jracine/Development`
+   - `/Users/jracine/Development/crs/man/dontruncrs`
+2. Verified `dontruncrs` restoration completed successfully after check run.
+
+Validation artifacts:
+
+1. Toggle/build/check logs:
+   - `/tmp/crs_runcrs_toggle_on_20260224.log` (`RUNCRS_ON_OK`)
+   - `/tmp/crs_build_runcrs_gate_20260224.log` (`BUILD_OK`)
+   - `/tmp/crs_check_ascran_runcrs_gate_20260224.log` (`Status: 4 WARNINGs, 4 NOTEs`)
+   - `/tmp/crs_runcrs_toggle_off_20260224.log` (`RUNCRS_OFF_OK`)
+2. Example outputs:
+   - `/Users/jracine/Development/crs.Rcheck/crs-Ex.R`
+   - `/Users/jracine/Development/crs.Rcheck/crs-Ex.Rout`
+   - `/Users/jracine/Development/crs.Rcheck/00check.log`
+3. Note profile change vs standard gate:
+   - additional NOTE from long examples timing (`* checking examples ... [11m/11m] NOTE`) under full-example mode.
