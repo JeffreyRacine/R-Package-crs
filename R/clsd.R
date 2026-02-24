@@ -980,7 +980,7 @@ plot.clsd <- function(x,
       if(missing(ylab)) ylab <- "Distribution"
       if(missing(ylim)) ylim <- c(0,1)
     }
-    if(!distribution&&!derivative) {
+    if(!distribution && !derivative) {
       y <- x$density[order.x]
       if(missing(ylab)) ylab <- "Density"
       if(missing(ylim)) ylim <- c(0,max(y))
@@ -998,7 +998,7 @@ plot.clsd <- function(x,
       if(missing(ylab)) ylab <- "Distribution"
       if(missing(ylim)) ylim <- c(0,1)
     }
-    if(!distribution&&!derivative) {
+    if(!distribution && !derivative) {
       y <- x$density.er[order.xer]
       if(missing(ylab)) ylab <- "Density"
       if(missing(ylim)) ylim <- c(0,max(y))
