@@ -19,7 +19,7 @@
 
 glp.model.matrix <- function(X) {
 
-  k <-length(X)
+  k <- length(X)
   dimen <- numeric()
   for(i in seq_len(k)) {
     dimen[i] <- ncol(X[[i]])
@@ -66,11 +66,11 @@ glp.model.matrix <- function(X) {
     total_rows <- d2
 
     if(d1 > d2) {
-      idx1 <- 1:(d1-d2)
+      idx1 <- seq_len(d1-d2)
       total_rows <- total_rows + d2 * sum(counts[idx1])
     }
 
-    idx2 <- 1:d2
+    idx2 <- seq_len(d2)
     target <- d1 - idx2 + 1
     total_rows <- total_rows + sum(idx2 * counts[target])
 
@@ -79,12 +79,14 @@ glp.model.matrix <- function(X) {
 
     # Initialize first d2 rows
     # 1:nc cols are 0, last col is 1:d2
-    d2sets[1:d2, nc+1] <- 1:d2
+    if (d2 > 0L) {
+      d2sets[seq_len(d2), nc+1] <- seq_len(d2)
+    }
 
     curr_row <- d2 + 1
 
     # Loop 1
-    if(d1-d2 > 0){
+    if((d1-d2 > 0) && (d2 > 0L)){
       for(i in seq_len(d1-d2)){
         # d12 update logic from original (tracking theoretical size vs actual?)
         # d12 <- d12+d2*nd1[i]
@@ -94,13 +96,13 @@ glp.model.matrix <- function(X) {
         idx <- which(rs == i)
         n_sub <- length(idx)
 
-        if (n_sub > 0) {
+        if (n_sub > 0L) {
           end_row <- curr_row + n_sub * d2 - 1
 
           # Replicate rows d2 times
           d2sets[curr_row:end_row, 1:nc] <- use_d1sets[rep(idx, d2), , drop=FALSE]
           # Last column: rep(0:(d2-1), each=n_sub)
-          d2sets[curr_row:end_row, nc+1] <- rep(0:(d2-1), each=n_sub)
+          d2sets[curr_row:end_row, nc+1] <- rep(seq.int(0L, d2-1L), each=n_sub)
 
           curr_row <- end_row + 1
         }
@@ -115,11 +117,11 @@ glp.model.matrix <- function(X) {
       idx <- which(rs == target)
       n_sub <- length(idx)
 
-      if (n_sub > 0) {
+      if (n_sub > 0L) {
         end_row <- curr_row + n_sub * i - 1
 
         d2sets[curr_row:end_row, 1:nc] <- use_d1sets[rep(idx, i), , drop=FALSE]
-        d2sets[curr_row:end_row, nc+1] <- rep(0:(i-1), each=n_sub)
+        d2sets[curr_row:end_row, nc+1] <- rep(seq.int(0L, i-1L), each=n_sub)
 
         curr_row <- end_row + 1
       }
@@ -167,7 +169,7 @@ glp.model.matrix <- function(X) {
     d2p <- 0
 
     if(k>1) {
-      for(i in 2:k) {
+      for(i in seq.int(2L, k)) {
         dim.rt <- two.dimen(dimen[1],dimen[i],d2p,nd1,ncol.bs,sets)
         nd1 <- dim.rt$nd1
         ncol.bs <- dim.rt$d12
@@ -175,7 +177,7 @@ glp.model.matrix <- function(X) {
         d2p <- dim.rt$d2p
       }
       ncol.bs <- dim.rt$d12+k-1
-      for(i in 2:k)
+      for(i in seq.int(2L, k))
       {
         oneRow <- rep(0, NCOL(sets))
         oneRow[i-1] <- dimen[i-1]
