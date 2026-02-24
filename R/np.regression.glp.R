@@ -397,7 +397,7 @@ npglpreg.default <- function(tydat=NULL,
 
     if(num.categorical > 0) {
 
-      num.eval <- ifelse(is.null(exdat),nrow(txdat),nrow(exdat))
+      num.eval <- if(is.null(exdat)) nrow(txdat) else nrow(exdat)
       gradient.categorical.mat <- matrix(NA,nrow=num.eval,ncol=num.categorical)
 
       for(i in seq_len(num.categorical)) {
@@ -1481,7 +1481,7 @@ minimand.cv.ls <- function(bws=NULL,
       }
     }
 
-    fv <- ifelse(is.finite(fv),fv,cv.maxPenalty)
+    if(!is.finite(fv)) fv <- cv.maxPenalty
 
     console <- printPush("\r                                                                         ",console = console)
     if(display.nomad.progress) console <- printPush(paste("\rfv = ",format(fv)," ",sep=""),console = console)
@@ -1617,7 +1617,7 @@ minimand.cv.ls <- function(bws=NULL,
       }
     }
 
-    fv <- ifelse(is.finite(fv),fv,cv.maxPenalty)
+    if(!is.finite(fv)) fv <- cv.maxPenalty
 
     console <- printPush("\r                                                                         ",console = console)
     if(display.nomad.progress) console <- printPush(paste("\rfv = ",format(fv)," ",sep=""),console = console)
@@ -1802,7 +1802,8 @@ minimand.cv.aic <- function(bws=NULL,
       }
     }
 
-    return(ifelse(is.finite(fv),fv,cv.maxPenalty))
+    if(!is.finite(fv)) fv <- cv.maxPenalty
+    return(fv)
 
   } else {
 
@@ -2534,6 +2535,8 @@ glpcvNOMAD <- function(ydat=NULL,
 
   }
 
+  nmulti.nomad <- if(nmulti == 1) 0 else nmulti
+
   if(bwmethod == "cv.ls" ) {
     solution<-snomadr(eval.f=eval.lscv,
                       n=length(bbin),
@@ -2542,7 +2545,7 @@ glpcvNOMAD <- function(ydat=NULL,
                       bbout=0,
                       lb=lb,
                       ub=ub,
-                      nmulti=ifelse(nmulti==1,0,nmulti),
+                      nmulti=nmulti.nomad,
                       random.seed=random.seed,
                       opts=opts,
                       display.nomad.progress=display.nomad.progress,
@@ -2571,7 +2574,7 @@ glpcvNOMAD <- function(ydat=NULL,
                       bbout=0,
                       lb=lb,
                       ub=ub,
-                      nmulti=ifelse(nmulti==1,0,nmulti),
+                      nmulti=nmulti.nomad,
                       random.seed=random.seed,
                       opts=opts,
                       display.nomad.progress=display.nomad.progress,

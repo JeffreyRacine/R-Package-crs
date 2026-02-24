@@ -44,7 +44,7 @@ prod.spline <- function(x,
   ## Additive and glp models have intercept=FALSE in gsl.bs but
   ## intercept=TRUE in lm()
 
-  gsl.intercept <- ifelse(basis=="additive" || basis=="glp", FALSE, TRUE)
+  gsl.intercept <- !(basis=="additive" || basis=="glp")
 
   ## Care in passing (extra cast) and ensure K is a matrix of integers
   ## (K contains the spline degree [integer] for each dimension in
@@ -538,7 +538,7 @@ derivKernelSpline <- function(x,
           suppressWarnings(model <- rq(y~P,tau=tau,method="fn",weights=weights))
 
         dim.P.deriv <- sum(K.additive[deriv.index,])
-        deriv.start <- ifelse(deriv.index!=1,sum(K.additive[1:(deriv.index-1),])+1,1)
+        deriv.start <- if(deriv.index != 1) sum(K.additive[1:(deriv.index-1),])+1 else 1
         deriv.end <- deriv.start+sum(K.additive[deriv.index,])-1
         deriv.ind.vec <- max(1,deriv.start:deriv.end - length(which(K[,1]==0)))
         deriv.spline <- P.deriv[,deriv.ind.vec,drop=FALSE]%*%(coef(model)[-1])[deriv.ind.vec]
@@ -627,7 +627,7 @@ derivKernelSpline <- function(x,
             else
               suppressWarnings(model <- rq(y~P,tau=tau,method="fn",weights=L))
             dim.P.deriv <- sum(K.additive[deriv.index,])
-            deriv.start <- ifelse(deriv.index!=1,sum(K.additive[1:(deriv.index-1),])+1,1)
+            deriv.start <- if(deriv.index != 1) sum(K.additive[1:(deriv.index-1),])+1 else 1
             deriv.end <- deriv.start+sum(K.additive[deriv.index,])-1
             deriv.ind.vec <- deriv.start:deriv.end
             deriv.spline[zz] <- P.deriv[,deriv.ind.vec,drop=FALSE]%*%(coef(model)[-1])[deriv.ind.vec]
@@ -703,7 +703,7 @@ derivKernelSpline <- function(x,
               suppressWarnings(model <- rq(y~P,weights=L,tau=tau,method="fn"))
 
             dim.P.deriv <- sum(K.additive[deriv.index,])
-            deriv.start <- ifelse(deriv.index!=1,sum(K.additive[1:(deriv.index-1),])+1,1)
+            deriv.start <- if(deriv.index != 1) sum(K.additive[1:(deriv.index-1),])+1 else 1
             deriv.end <- deriv.start+sum(K.additive[deriv.index,])-1
             deriv.ind.vec <- deriv.start:deriv.end
             deriv.spline[zz] <- P.deriv[,deriv.ind.vec,drop=FALSE]%*%(coef(model)[-1])[deriv.ind.vec]
@@ -1631,10 +1631,14 @@ cv.factor.spline <- function(x,
       sigmasq <- mean(check.function(epsilon, tau))
       penalty <- ((1 + traceH/n) / (1 - (traceH + 2)/n)) * (0.5/sqrt(tau*(1-tau)))
     }
-    cv <- ifelse(penalty < 0, cv.maxPenalty, log(sigmasq) + penalty)
+    if(penalty < 0) {
+      cv <- cv.maxPenalty
+    } else {
+      cv <- log(sigmasq) + penalty
+    }
   }
 
-  return(ifelse(!is.na(cv), cv, cv.maxPenalty))
+  return(if(is.na(cv)) cv.maxPenalty else cv)
 }
 
 ## Drop-in replacement for cv.kernel.spline with improved handling of
@@ -2263,10 +2267,14 @@ cv.kernel.spline <- function(x,
       sigmasq <- mean(check.function(epsilon, tau))
       penalty <- ((1 + traceH/n) / (1 - (traceH + 2)/n)) * (0.5/sqrt(tau*(1-tau)))
     }
-    cv <- ifelse(penalty < 0, cv.maxPenalty, log(sigmasq) + penalty)
+    if(penalty < 0) {
+      cv <- cv.maxPenalty
+    } else {
+      cv <- log(sigmasq) + penalty
+    }
   }
 
-  return(ifelse(!is.na(cv), cv, cv.maxPenalty))
+  return(if(is.na(cv)) cv.maxPenalty else cv)
 }
 
 ## ============================================================================

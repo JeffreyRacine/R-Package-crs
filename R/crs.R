@@ -1074,7 +1074,7 @@ summary.crs <- function(object,
   cat(paste("\nModel complexity proxy: ", format(object$complexity), sep=""))
   cat(paste("\nKnot type: ", format(object$knots), sep=""))
   if(object$num.x > 1) cat(paste("\nBasis type: ",format(object$basis),sep=""))
-  if(!object$kernel) cat(paste("\nPruning of final model: ",format(ifelse(object$prune,"TRUE","FALSE")),sep=""))
+  if(!object$kernel) cat(paste("\nPruning of final model: ",format(if(object$prune) "TRUE" else "FALSE"),sep=""))
   cat(paste("\nTraining observations: ", format(object$nobs), sep=""))
   if(is.null(object$tau)) cat(paste("\nRank of model frame: ", format(object$k), sep=""))
   cat(paste("\nTrace of smoother matrix: ", format(round(sum(object$hatvalues))), sep=""))

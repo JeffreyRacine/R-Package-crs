@@ -750,3 +750,31 @@ Validation artifacts:
 4. Tarball-first:
    - `/tmp/crs_build_seqapply_scalarlogic_20260224.log`
    - `/tmp/crs_check_ascran_seqapply_scalarlogic_20260224.log` (`Status: 4 WARNINGs, 2 NOTEs`)
+
+### 2026-02-24 - A/R1.16 scalar-control `ifelse` cleanup sweep
+
+Scope completed:
+
+1. Replaced clearly scalar `ifelse(...)` control/dispatch patterns with scalar `if (...) ... else ...` branches in:
+   - `/Users/jracine/Development/crs/R/np.regression.glp.R`
+   - `/Users/jracine/Development/crs/R/spline.R`
+   - `/Users/jracine/Development/crs/R/crs.R`
+2. Replaced scalar logical `&` with `&&` in bound-check guard and simplified scalar integer flag assignment in:
+   - `/Users/jracine/Development/crs/R/gsl_bspline.R`
+3. Reduced repeated scalar-expression evaluation for NOMAD restart count forwarding by introducing one local scalar:
+   - `nmulti.nomad <- if(nmulti == 1) 0 else nmulti` in `glpcvNOMAD`.
+4. Scope remains non-invasive: no NOMAD core source edits.
+
+Validation artifacts:
+
+1. Parse gate:
+   - `/tmp/crs_parse_scalar_ifelse_20260224.log` (`SCALAR_IFELSE_PARSE_OK`)
+2. Deterministic install:
+   - `/tmp/crs_install_scalar_ifelse_20260224.log`
+3. Focused runtime smoke:
+   - `/tmp/crs_npglp_scalar_ifelse_smoke_20260224.out` (`NPGLP_SMOKE_OK`)
+   - `/tmp/crs_spline_scalar_ifelse_smoke_20260224.out` (`SPLINE_SMOKE_OK`)
+   - `/tmp/crs_gsl_scalar_ifelse_smoke_20260224.out` (`GSL_SMOKE_OK`)
+4. Tarball-first:
+   - `/tmp/crs_build_scalar_ifelse_20260224.log`
+   - `/tmp/crs_check_ascran_scalar_ifelse_20260224.log` (`Status: 4 WARNINGs, 3 NOTEs`)

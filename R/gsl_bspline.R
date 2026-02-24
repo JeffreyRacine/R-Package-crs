@@ -29,7 +29,7 @@ gsl.bs.default <- function(x,
   ## specified - check that mix < max
 
 
-  if(!is.null(x.min)&!is.null(x.max)) if(x.min >= x.max) stop(" x.min must be less than x.max")
+  if(!is.null(x.min) && !is.null(x.max) && x.min >= x.max) stop(" x.min must be less than x.max")
   if(is.null(x.min)) {
     x.min <- min(x)
     ol <- FALSE
@@ -130,7 +130,7 @@ bs.des     <- function(x,
 
   ## 0 == don't use user supplied knots, 1 = use
 
-  knots.int <- ifelse(is.null(knots), 0, 1)
+  knots.int <- if(is.null(knots)) 0 else 1
 
   ncol <- nbreak+degree-1;
 
