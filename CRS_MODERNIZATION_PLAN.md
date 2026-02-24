@@ -14,7 +14,7 @@ Modernize `crs` to current best-practice R package engineering standards while p
 
 ## Current Status Snapshot (2026-02-24)
 
-1. Checkpoints completed locally: `77+` commits on top of `origin/master` (no push).
+1. Checkpoints completed locally: `78+` commits on top of `origin/master` (no push).
 2. Completed tranches:
    - `A/R1.1` through `A/R1.10` (low-risk R modernization path).
    - `A/R2.1` (removed `eval(parse(...))` in `stepCV`).
@@ -26,7 +26,7 @@ Modernize `crs` to current best-practice R package engineering standards while p
    - `A/R1.12` (additional `seq_len`/`seq.int` safety sweep in spline utilities).
    - `A/R1.13` (broader loop-header safety sweep across CV/sigtest and helper paths).
    - `A/R1.14` (full `npglpreg` loop-header safety sweep).
-   - `A/R1.15` through `A/R1.54` (scalar control-flow cleanup, script hygiene, clamp/vectorization follow-ups, remaining legacy `do.call` cleanup in matrix-construction paths, `vapply` numeric-column sweeps, boolean control simplification, centralized RNG seed state handling, scalar-loop index correctness fixes in `npglpreg` warning/index paths, registered-symbol `.Call` hygiene, robust option-state guards for `crsiv` / `crsivderiv` including unset-option handling, eval-helper namespace-resolution hardening, recursive source-artifact cleanup/build hygiene hardening, stepCV loop-index safety hardening for empty-scope paths, snomadr argument-validation hardening, stepCV call-evaluation/helper cleanup, snomadr single-argument `...` guard hardening, formal-matching parity for defaults/ellipsis, non-NOMAD C forensic comment cleanup, residual scalar bitwise-operator cleanup in control paths, `plot.clsd` scalar logical follow-up alignment, invariant-hoisting in `W.glp` polynomial index construction, explicit `TRUE`/`FALSE` constant normalization in active call arguments, duplicate helper-definition consolidation for `scale_robust`/`is.fullrank`, `on.exit(..., add=TRUE)` stacking safety for `npglpreg` message-state restoration, sequence-construction hardening in GLP matrix expansion, additional zero-dimension-safe sequence/rep-index hardening in `glp.model.matrix`, residual `1:n` index-slice hardening in GLP/NPGLP bandwidth internals, `frscv/krscv` family index-slice normalization to `seq_len` in R wrappers, final remaining executable `1:num.*`/`[1:n]` slice hardening in `frscv`/`krscv`/`spline`, closure of the last executable `1:num.*` slice sites across these wrappers with static-audit confirmation, parity-safe `seq.int(2L, ...)` normalization for remaining guarded loop headers in active non-NOMAD R paths, guarded `iterate.max` loop-header hardening in `crsiv`/`crsivderiv` with deterministic convergence defaults, `crsiv` dots/weights extraction reuse to remove redundant `list(...)` materialization in iterative setup, and shared stop-index selection helper extraction for IV stopping-rule post-processing across `crsiv`/`crsivderiv`).
+   - `A/R1.15` through `A/R1.55` (scalar control-flow cleanup, script hygiene, clamp/vectorization follow-ups, remaining legacy `do.call` cleanup in matrix-construction paths, `vapply` numeric-column sweeps, boolean control simplification, centralized RNG seed state handling, scalar-loop index correctness fixes in `npglpreg` warning/index paths, registered-symbol `.Call` hygiene, robust option-state guards for `crsiv` / `crsivderiv` including unset-option handling, eval-helper namespace-resolution hardening, recursive source-artifact cleanup/build hygiene hardening, stepCV loop-index safety hardening for empty-scope paths, snomadr argument-validation hardening, stepCV call-evaluation/helper cleanup, snomadr single-argument `...` guard hardening, formal-matching parity for defaults/ellipsis, non-NOMAD C forensic comment cleanup, residual scalar bitwise-operator cleanup in control paths, `plot.clsd` scalar logical follow-up alignment, invariant-hoisting in `W.glp` polynomial index construction, explicit `TRUE`/`FALSE` constant normalization in active call arguments, duplicate helper-definition consolidation for `scale_robust`/`is.fullrank`, `on.exit(..., add=TRUE)` stacking safety for `npglpreg` message-state restoration, sequence-construction hardening in GLP matrix expansion, additional zero-dimension-safe sequence/rep-index hardening in `glp.model.matrix`, residual `1:n` index-slice hardening in GLP/NPGLP bandwidth internals, `frscv/krscv` family index-slice normalization to `seq_len` in R wrappers, final remaining executable `1:num.*`/`[1:n]` slice hardening in `frscv`/`krscv`/`spline`, closure of the last executable `1:num.*` slice sites across these wrappers with static-audit confirmation, parity-safe `seq.int(2L, ...)` normalization for remaining guarded loop headers in active non-NOMAD R paths, guarded `iterate.max` loop-header hardening in `crsiv`/`crsivderiv` with deterministic convergence defaults, `crsiv` dots/weights extraction reuse to remove redundant `list(...)` materialization in iterative setup, shared stop-index selection helper extraction for IV stopping-rule post-processing across `crsiv`/`crsivderiv`, and monotone-stop warning text/helper consolidation with symmetric dot-argument parsing in `crsivderiv`).
    - `B/R2` (shared IV scaffolding helpers for dots/call assembly in `crsiv` and `crsivderiv`).
    - `B/R1.1` (non-NOMAD C memory hygiene in `gsl_bspline.c`).
    - `B/R1.2` and `B/R1.3` (native-interface and matrix-kernel regression test expansion).
@@ -2149,3 +2149,35 @@ Validation artifacts:
 5. Tarball-first:
    - `/tmp/crs_build_iv_stop_select_helper_20260224.log`
    - `/tmp/crs_check_iv_stop_select_helper_20260224.log` (`Status: 5 WARNINGs, 1 NOTE`)
+
+### 2026-02-24 - A/R1.55 IV warning-helper consolidation and `crsivderiv` dots symmetry
+
+Scope completed:
+
+1. Added shared monotone-stop warning helper in:
+   - `/Users/jracine/Development/crs/R/util.R`
+2. Updated warning call sites in:
+   - `/Users/jracine/Development/crs/R/crsiv.R`
+   - `/Users/jracine/Development/crs/R/crsivderiv.R`
+3. Normalized dots parsing symmetry in:
+   - `/Users/jracine/Development/crs/R/crsivderiv.R`
+4. Changes:
+   - introduced `.crsiv_warn_monotone_increasing(display.warnings)` and replaced duplicated warning string literals,
+   - switched `crsivderiv` from direct `.crsiv_prepare_dot_args(list(...))` to one-shot `dot.args <- list(...)` then helper call, matching the `crsiv` pattern.
+5. Result:
+   - centralizes a high-friction duplicated warning message for safer maintenance,
+   - keeps runtime behavior unchanged and aligns `crsiv`/`crsivderiv` argument-prep style.
+
+Validation artifacts:
+
+1. Syntax gate:
+   - `/tmp/crs_parse_iv_warning_helper_20260224.out` (`PARSE_OK`)
+2. Deterministic install:
+   - `/tmp/crs_install_iv_warning_helper_20260224.log`
+3. Targeted tests:
+   - `/tmp/crs_test_iv_warning_helper_targeted_20260224.out` (`PASS 28, WARN 0, FAIL 0`)
+4. Full test suite:
+   - `/tmp/crs_test_iv_warning_helper_full_20260224.out` (`PASS 105, WARN 1, FAIL 0`)
+5. Tarball-first:
+   - `/tmp/crs_build_iv_warning_helper_20260224.log`
+   - `/tmp/crs_check_iv_warning_helper_20260224.log` (`Status: 5 WARNINGs, 1 NOTE`)

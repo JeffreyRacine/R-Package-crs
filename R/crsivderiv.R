@@ -56,7 +56,8 @@ crsivderiv.default <- function(y,
   crs.messages <- isTRUE(old.crs.messages)
   is.eval.train <- is.null(zeval) && is.null(weval) && is.null(xeval)
 
-  dot.prep <- .crsiv_prepare_dot_args(list(...))
+  dot.args <- list(...)
+  dot.prep <- .crsiv_prepare_dot_args(dot.args)
   nmulti <- dot.prep$nmulti
   nmulti.loop <- dot.prep$nmulti.loop
   dots.preloop <- dot.prep$dots.preloop
@@ -561,7 +562,7 @@ crsivderiv.default <- function(y,
   norm.value <- stop.pick$norm.value
 
   if(stop.pick$monotone.failure) {
-    if(display.warnings) warning("Stopping rule increases monotonically (consult model$norm.stop):\nThis could be the result of an inspired initial value (unlikely)\nNote: we suggest manually choosing phi.0 and restarting (e.g. instead set `starting.values' to E[E(Y|w)|z])")
+    .crsiv_warn_monotone_increasing(display.warnings)
     convergence <- "FAILURE_MONOTONE_INCREASING"
     #    phi <- starting.values.phi
     #    phi.prime <- starting.values.phi.prime

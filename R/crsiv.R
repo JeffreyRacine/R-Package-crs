@@ -742,7 +742,7 @@ crsiv.default <- function(y,
     ## to the length of norm.stop
 
     if(stop.pick$monotone.failure) {
-      if(display.warnings) warning("Stopping rule increases monotonically (consult model$norm.stop):\nThis could be the result of an inspired initial value (unlikely)\nNote: we suggest manually choosing phi.0 and restarting (e.g. instead set `starting.values' to E[E(Y|w)|z])")
+      .crsiv_warn_monotone_increasing(display.warnings)
       convergence <- "FAILURE_MONOTONE_INCREASING"
     }
     j <- stop.pick$index

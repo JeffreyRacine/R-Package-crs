@@ -152,6 +152,12 @@ is.monotone.increasing <- function(x) {
   list(index = j, norm.value = norm.value, monotone.failure = monotone.failure)
 }
 
+.crsiv_warn_monotone_increasing <- function(display.warnings) {
+  if (display.warnings) {
+    warning("Stopping rule increases monotonically (consult model$norm.stop):\nThis could be the result of an inspired initial value (unlikely)\nNote: we suggest manually choosing phi.0 and restarting (e.g. instead set `starting.values' to E[E(Y|w)|z])")
+  }
+}
+
 ## This function tests for the maximum well-conditioned spline degree.
 
 ## Note that increasing the number of breaks, other things equal,
