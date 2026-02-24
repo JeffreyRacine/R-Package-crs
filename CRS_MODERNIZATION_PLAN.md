@@ -14,7 +14,7 @@ Modernize `crs` to current best-practice R package engineering standards while p
 
 ## Current Status Snapshot (2026-02-24)
 
-1. Checkpoints completed locally: `16+` commits on top of `origin/master` (no push).
+1. Checkpoints completed locally: `20+` commits on top of `origin/master` (no push).
 2. Completed tranches:
    - `A/R1.1` through `A/R1.10` (low-risk R modernization path).
    - `A/R2.1` (removed `eval(parse(...))` in `stepCV`).
@@ -25,19 +25,21 @@ Modernize `crs` to current best-practice R package engineering standards while p
    - `A/R1.12` (additional `seq_len`/`seq.int` safety sweep in spline utilities).
    - `A/R1.13` (broader loop-header safety sweep across CV/sigtest and helper paths).
    - `A/R1.14` (full `npglpreg` loop-header safety sweep).
+   - `A/R1.15` through `A/R1.19` (scalar control-flow cleanup and script hygiene follow-ups).
    - `B/R2` (shared IV scaffolding helpers for dots/call assembly in `crsiv` and `crsivderiv`).
    - `B/R1.1` (non-NOMAD C memory hygiene in `gsl_bspline.c`).
 3. Validation discipline maintained at each checkpoint:
    - installed-package targeted smokes,
    - tarball-first `R CMD build` and `R CMD check --as-cran`,
    - stable non-regressive check profile (`4 WARNINGs, 2-3 NOTEs`) with no modernization regressions introduced.
-4. R-layer forensic status (post A/R1.10):
+4. R-layer forensic status (post A/R1.19):
    - `eval(parse(...))`: `0`
    - string `do.call("...")`: `0`
    - `<<-`: `0`
    - active `1:length(...)`: `0`
    - active `1:ncol(...)`: `0`
    - active `1:NCOL(...)`: `0`
+   - scalar `ifelse(is.null(...))` / `ifelse(is.finite(...))` / `return(ifelse(...))`: `0`
 5. Scope guard respected:
    - no edits to NOMAD core source/interface (`src/nomad4_src/**`, `src/snomadr.cpp`, `src/snomadr.h`).
 
@@ -103,9 +105,9 @@ Modernization patterns that worked repeatedly and safely:
    - `/tmp` artifacts logged.
 5. Tarball-first checks as authoritative gates.
 
-## Baseline Audit Snapshot (`crs`)
+## Baseline Audit Snapshot (`crs`, 2026-02-23 initial)
 
-Static inventory (current):
+Static inventory (initial baseline):
 
 1. `.C(` callsites in `R/`: `3`
 2. `.Call(` callsites in `R/`: `6`
@@ -115,6 +117,15 @@ Static inventory (current):
 6. `<<-` in `R/`: `15`
 7. `ifelse(` in `R/`: `58`
 8. `1:length(...)` in `R/`: `50`
+
+Current inventory (2026-02-24):
+
+1. `.C(` callsites in `R/`: `3`
+2. `.Call(` callsites in `R/`: `7`
+3. `eval(parse(...))` in `R/`: `0`
+4. string `do.call("<name>", ...)` in `R/`: `0`
+5. `<<-` in `R/`: `0`
+6. `ifelse(` in `R/`: `29` (remaining uses are intentional vectorized/broadcast expressions)
 
 Hotspot files (non-NOMAD-heavy):
 
