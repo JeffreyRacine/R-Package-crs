@@ -26,7 +26,7 @@ Modernize `crs` to current best-practice R package engineering standards while p
    - `A/R1.12` (additional `seq_len`/`seq.int` safety sweep in spline utilities).
    - `A/R1.13` (broader loop-header safety sweep across CV/sigtest and helper paths).
    - `A/R1.14` (full `npglpreg` loop-header safety sweep).
-   - `A/R1.15` through `A/R1.42` (scalar control-flow cleanup, script hygiene, clamp/vectorization follow-ups, remaining legacy `do.call` cleanup in matrix-construction paths, `vapply` numeric-column sweeps, boolean control simplification, centralized RNG seed state handling, scalar-loop index correctness fixes in `npglpreg` warning/index paths, registered-symbol `.Call` hygiene, robust option-state guards for `crsiv` / `crsivderiv` including unset-option handling, eval-helper namespace-resolution hardening, recursive source-artifact cleanup/build hygiene hardening, stepCV loop-index safety hardening for empty-scope paths, snomadr argument-validation hardening, stepCV call-evaluation/helper cleanup, snomadr single-argument `...` guard hardening, formal-matching parity for defaults/ellipsis, non-NOMAD C forensic comment cleanup, residual scalar bitwise-operator cleanup in control paths, `plot.clsd` scalar logical follow-up alignment, invariant-hoisting in `W.glp` polynomial index construction, and explicit `TRUE`/`FALSE` constant normalization in active call arguments).
+   - `A/R1.15` through `A/R1.43` (scalar control-flow cleanup, script hygiene, clamp/vectorization follow-ups, remaining legacy `do.call` cleanup in matrix-construction paths, `vapply` numeric-column sweeps, boolean control simplification, centralized RNG seed state handling, scalar-loop index correctness fixes in `npglpreg` warning/index paths, registered-symbol `.Call` hygiene, robust option-state guards for `crsiv` / `crsivderiv` including unset-option handling, eval-helper namespace-resolution hardening, recursive source-artifact cleanup/build hygiene hardening, stepCV loop-index safety hardening for empty-scope paths, snomadr argument-validation hardening, stepCV call-evaluation/helper cleanup, snomadr single-argument `...` guard hardening, formal-matching parity for defaults/ellipsis, non-NOMAD C forensic comment cleanup, residual scalar bitwise-operator cleanup in control paths, `plot.clsd` scalar logical follow-up alignment, invariant-hoisting in `W.glp` polynomial index construction, explicit `TRUE`/`FALSE` constant normalization in active call arguments, and duplicate helper-definition consolidation for `scale_robust`/`is.fullrank`).
    - `B/R2` (shared IV scaffolding helpers for dots/call assembly in `crsiv` and `crsivderiv`).
    - `B/R1.1` (non-NOMAD C memory hygiene in `gsl_bspline.c`).
    - `B/R1.2` and `B/R1.3` (native-interface and matrix-kernel regression test expansion).
@@ -1781,3 +1781,33 @@ Validation artifacts:
 5. Check environment note:
    - first build attempt failed because `np` was unavailable in library (`ERROR: dependency 'np' is not available`);
    - resolved by local install from `/Users/jracine/Development/np-master` (`/tmp/np_install_for_crs_build_20260224.log`) before final successful build/check.
+
+### 2026-02-24 - A/R1.43 duplicate helper-definition consolidation
+
+Scope completed:
+
+1. Removed redundant top-level helper definitions while preserving runtime behavior:
+   - deleted duplicate `scale_robust` definition from:
+     - `/Users/jracine/Development/crs/R/np.regression.glp.R`
+   - deleted dead shadowed `is.fullrank` definition (early file copy) from:
+     - `/Users/jracine/Development/crs/R/util.R`
+2. Runtime behavior preserved by retaining the effective definitions:
+   - `scale_robust` remains in `/Users/jracine/Development/crs/R/util.R`,
+   - `is.fullrank` remains in `/Users/jracine/Development/crs/R/util.R` (the implementation that was already effective at runtime due later redefinition order).
+3. Result:
+   - removes duplicate-maintenance drift risk for shared numerical helpers,
+   - clarifies a single source of truth for each helper without touching NOMAD core paths.
+
+Validation artifacts:
+
+1. Syntax gate:
+   - `/tmp/crs_parse_helper_dedup_clean_20260224.out` (`PARSE_OK`)
+2. Deterministic install before installed-namespace tests:
+   - `/tmp/crs_install_helper_dedup_20260224.log`
+3. Targeted tests:
+   - `/tmp/crs_test_helper_dedup_targeted_20260224.out` (`PASS 31, WARN 1, FAIL 0`)
+4. Full test suite:
+   - `/tmp/crs_test_helper_dedup_full_postinstall_20260224.out` (`PASS 105, WARN 1, FAIL 0`)
+5. Tarball-first:
+   - `/tmp/crs_build_helper_dedup_20260224.log`
+   - `/tmp/crs_check_helper_dedup_20260224.log` (`Status: 5 WARNINGs, 1 NOTE`)

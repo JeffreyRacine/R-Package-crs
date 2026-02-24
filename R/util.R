@@ -31,12 +31,6 @@ NZD_pos <- function(a) {
   a
 }
 
-is.fullrank <- function(X, tol = 1e-7) {
-  if (is.null(X) || any(dim(X) == 0)) return(FALSE)
-  qr_X <- qr(X, tol = tol)
-  return(qr_X$rank == min(dim(X)))
-}
-
 .crsiv_prepare_dot_args <- function(dot.args) {
   nmulti.user <- dot.args$nmulti
   nmulti <- if (!is.null(nmulti.user)) nmulti.user else 5

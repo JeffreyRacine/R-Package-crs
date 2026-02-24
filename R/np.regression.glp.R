@@ -8,18 +8,6 @@
 ## different form purely for computational simplicity. Both approaches
 ## are identical though.
 
-scale_robust <- function(x, center=TRUE, scale=TRUE, display.warnings=TRUE){
-  if(any(dim(as.matrix(x)) == 0))
-    return(0)
-  sd.vec <- apply(as.matrix(x),2,sd)
-  IQR.vec <- apply(as.matrix(x),2,IQR)/(qnorm(.25,lower.tail=FALSE)*2)
-  mad.vec <- apply(as.matrix(x),2,mad)
-  a <- apply(cbind(sd.vec,IQR.vec,mad.vec),1, function(y) max(y))
-  if(any(a<=0) && display.warnings) warning(paste("variable ",which(a<=0)," appears to be constant",sep=""))
-  a <- apply(cbind(sd.vec,IQR.vec,mad.vec),1, function(y) min(y[y>0]))
-  return(a)
-}
-
 mypoly <- function(x,
                    ex=NULL,
                    degree,
