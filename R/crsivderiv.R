@@ -404,7 +404,8 @@ crsivderiv.default <- function(y,
 
   ## This we iterate...
 
-  for(j in 2:iterate.max) {
+  convergence <- "ITERATE_MAX"
+  if (iterate.max > 1L) for (j in seq.int(2L, iterate.max)) {
 
     ## Save previous run in case stop norm increases
 
@@ -543,8 +544,6 @@ crsivderiv.default <- function(y,
       }
 
     }
-
-    convergence <- "ITERATE_MAX"
 
   }
 

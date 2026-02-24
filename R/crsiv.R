@@ -610,7 +610,8 @@ crsiv.default <- function(y,
     sum_w_Eyw2 <- sum(weights*E.y.w^2)
     norm.stop[1] <- sum(weights*residw^2)/sum_w_Eyw2
 
-    for(j in 2:iterate.max) {
+    convergence <- "ITERATE_MAX"
+    if (iterate.max > 1L) for (j in seq.int(2L, iterate.max)) {
 
       console <- printClear(console)
       console <- printPop(console)
@@ -724,8 +725,6 @@ crsiv.default <- function(y,
         }
 
       }
-
-      convergence <- "ITERATE_MAX"
 
     }
 

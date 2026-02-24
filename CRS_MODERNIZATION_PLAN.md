@@ -26,7 +26,7 @@ Modernize `crs` to current best-practice R package engineering standards while p
    - `A/R1.12` (additional `seq_len`/`seq.int` safety sweep in spline utilities).
    - `A/R1.13` (broader loop-header safety sweep across CV/sigtest and helper paths).
    - `A/R1.14` (full `npglpreg` loop-header safety sweep).
-   - `A/R1.15` through `A/R1.51` (scalar control-flow cleanup, script hygiene, clamp/vectorization follow-ups, remaining legacy `do.call` cleanup in matrix-construction paths, `vapply` numeric-column sweeps, boolean control simplification, centralized RNG seed state handling, scalar-loop index correctness fixes in `npglpreg` warning/index paths, registered-symbol `.Call` hygiene, robust option-state guards for `crsiv` / `crsivderiv` including unset-option handling, eval-helper namespace-resolution hardening, recursive source-artifact cleanup/build hygiene hardening, stepCV loop-index safety hardening for empty-scope paths, snomadr argument-validation hardening, stepCV call-evaluation/helper cleanup, snomadr single-argument `...` guard hardening, formal-matching parity for defaults/ellipsis, non-NOMAD C forensic comment cleanup, residual scalar bitwise-operator cleanup in control paths, `plot.clsd` scalar logical follow-up alignment, invariant-hoisting in `W.glp` polynomial index construction, explicit `TRUE`/`FALSE` constant normalization in active call arguments, duplicate helper-definition consolidation for `scale_robust`/`is.fullrank`, `on.exit(..., add=TRUE)` stacking safety for `npglpreg` message-state restoration, sequence-construction hardening in GLP matrix expansion, additional zero-dimension-safe sequence/rep-index hardening in `glp.model.matrix`, residual `1:n` index-slice hardening in GLP/NPGLP bandwidth internals, `frscv/krscv` family index-slice normalization to `seq_len` in R wrappers, final remaining executable `1:num.*`/`[1:n]` slice hardening in `frscv`/`krscv`/`spline`, closure of the last executable `1:num.*` slice sites across these wrappers with static-audit confirmation, and parity-safe `seq.int(2L, ...)` normalization for remaining guarded loop headers in active non-NOMAD R paths).
+   - `A/R1.15` through `A/R1.52` (scalar control-flow cleanup, script hygiene, clamp/vectorization follow-ups, remaining legacy `do.call` cleanup in matrix-construction paths, `vapply` numeric-column sweeps, boolean control simplification, centralized RNG seed state handling, scalar-loop index correctness fixes in `npglpreg` warning/index paths, registered-symbol `.Call` hygiene, robust option-state guards for `crsiv` / `crsivderiv` including unset-option handling, eval-helper namespace-resolution hardening, recursive source-artifact cleanup/build hygiene hardening, stepCV loop-index safety hardening for empty-scope paths, snomadr argument-validation hardening, stepCV call-evaluation/helper cleanup, snomadr single-argument `...` guard hardening, formal-matching parity for defaults/ellipsis, non-NOMAD C forensic comment cleanup, residual scalar bitwise-operator cleanup in control paths, `plot.clsd` scalar logical follow-up alignment, invariant-hoisting in `W.glp` polynomial index construction, explicit `TRUE`/`FALSE` constant normalization in active call arguments, duplicate helper-definition consolidation for `scale_robust`/`is.fullrank`, `on.exit(..., add=TRUE)` stacking safety for `npglpreg` message-state restoration, sequence-construction hardening in GLP matrix expansion, additional zero-dimension-safe sequence/rep-index hardening in `glp.model.matrix`, residual `1:n` index-slice hardening in GLP/NPGLP bandwidth internals, `frscv/krscv` family index-slice normalization to `seq_len` in R wrappers, final remaining executable `1:num.*`/`[1:n]` slice hardening in `frscv`/`krscv`/`spline`, closure of the last executable `1:num.*` slice sites across these wrappers with static-audit confirmation, parity-safe `seq.int(2L, ...)` normalization for remaining guarded loop headers in active non-NOMAD R paths, and guarded `iterate.max` loop-header hardening in `crsiv`/`crsivderiv` with deterministic convergence defaults).
    - `B/R2` (shared IV scaffolding helpers for dots/call assembly in `crsiv` and `crsivderiv`).
    - `B/R1.1` (non-NOMAD C memory hygiene in `gsl_bspline.c`).
    - `B/R1.2` and `B/R1.3` (native-interface and matrix-kernel regression test expansion).
@@ -2040,3 +2040,31 @@ Validation artifacts:
 5. Tarball-first:
    - `/tmp/crs_build_loop_seqint_guarded_20260224.log`
    - `/tmp/crs_check_loop_seqint_guarded_20260224.log` (`Status: 5 WARNINGs, 1 NOTE`)
+
+### 2026-02-24 - A/R1.52 IV iteration-loop guard hardening (`iterate.max`)
+
+Scope completed:
+
+1. Hardened residual unguarded `2:iterate.max` loop headers in:
+   - `/Users/jracine/Development/crs/R/crsiv.R`
+   - `/Users/jracine/Development/crs/R/crsivderiv.R`
+2. Changes:
+   - normalized loop headers to `if (iterate.max > 1L) for (j in seq.int(2L, iterate.max))`,
+   - initialized `convergence <- "ITERATE_MAX"` before loop entry for deterministic no-loop edge behavior.
+3. Result:
+   - removes remaining `2:1` range hazards in active IV iterative paths,
+   - preserves existing behavior for standard `iterate.max >= 2` use while making edge semantics explicit.
+
+Validation artifacts:
+
+1. Syntax gate:
+   - `/tmp/crs_parse_iterate_seq_guard_clean_20260224.out` (`PARSE_OK`)
+2. Deterministic install:
+   - `/tmp/crs_install_iterate_seq_guard_20260224.log`
+3. Targeted tests:
+   - `/tmp/crs_test_iterate_seq_guard_targeted_20260224.out` (`PASS 28, WARN 0, FAIL 0`)
+4. Full test suite:
+   - `/tmp/crs_test_iterate_seq_guard_full_20260224.out` (`PASS 105, WARN 1, FAIL 0`)
+5. Tarball-first:
+   - `/tmp/crs_build_iterate_seq_guard_20260224.log`
+   - `/tmp/crs_check_iterate_seq_guard_20260224.log` (`Status: 5 WARNINGs`)
