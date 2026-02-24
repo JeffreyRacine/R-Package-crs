@@ -66,7 +66,9 @@ crsiv.default <- function(y,
   crs.messages <- isTRUE(old.crs.messages)
   is.eval.train <- is.null(zeval) && is.null(weval) && is.null(xeval)
 
-  dot.prep <- .crsiv_prepare_dot_args(list(...))
+  dot.args <- list(...)
+  dot.prep <- .crsiv_prepare_dot_args(dot.args)
+  weights.arg <- dot.args$weights
   nmulti <- dot.prep$nmulti
   nmulti.loop <- dot.prep$nmulti.loop
   dots.preloop <- dot.prep$dots.preloop
@@ -602,8 +604,8 @@ crsiv.default <- function(y,
 
     phi.mat <- matrix(NA, nrow = length(phi), ncol = iterate.max)
     phi.mat[,1] <- phi
-    if (!is.null(list(...)$weights)) {
-      weights <- list(...)$weights
+    if (!is.null(weights.arg)) {
+      weights <- weights.arg
     } else {
       weights <- rep(1, length(y))
     }
