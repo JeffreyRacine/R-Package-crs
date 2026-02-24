@@ -245,8 +245,14 @@ predictKernelSpline <- function(x,
 
     if(is.null(tau))
       fit.spline <- cbind(fit.spline[[1]],se=fit.spline[[2]])
-    else
-      fit.spline <- cbind(fit.spline,se=ifelse(NCOL(fit.spline)>1,(fit.spline[,3]-fit.spline[,1])/qnorm(0.975),NA))
+    else {
+      if(NCOL(fit.spline) > 1) {
+        se.fit <- (fit.spline[,3]-fit.spline[,1])/qnorm(0.975)
+      } else {
+        se.fit <- NA
+      }
+      fit.spline <- cbind(fit.spline, se = se.fit)
+    }
 
     if(is.null(tau))
       htt <- hatvalues(model)
@@ -997,8 +1003,14 @@ preditFactorSpline <- function(x,
 
   if(is.null(tau))
     fit.spline <- cbind(fit.spline[[1]],se=fit.spline[[2]])
-  else
-    fit.spline <- cbind(fit.spline,se=ifelse(NCOL(fit.spline)>1,(fit.spline[,3]-fit.spline[,1])/qnorm(0.975),NA))
+  else {
+    if(NCOL(fit.spline) > 1) {
+      se.fit <- (fit.spline[,3]-fit.spline[,1])/qnorm(0.975)
+    } else {
+      se.fit <- NA
+    }
+    fit.spline <- cbind(fit.spline, se = se.fit)
+  }
 
   console <- printClear(console)
   console <- printPop(console)
@@ -1098,7 +1110,7 @@ derivFactorSpline <- function(x,
         suppressWarnings(vcov.mat.model[prune.index,prune.index] <- summary(model,covariance=TRUE)$cov[-1,-1,drop=FALSE])
 
       dim.P.deriv <- sum(K.additive[deriv.index,])
-      deriv.start <- ifelse(deriv.index!=1,sum(K.additive[1:(deriv.index-1),])+1,1)
+      deriv.start <- if(deriv.index != 1) sum(K.additive[1:(deriv.index-1),])+1 else 1
       deriv.end <- deriv.start+sum(K.additive[deriv.index,])-1
       deriv.ind.vec[deriv.start:deriv.end] <- TRUE
       deriv.ind.vec <- ifelse(prune.index,deriv.ind.vec,FALSE)

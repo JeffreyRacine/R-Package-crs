@@ -803,3 +803,29 @@ Validation artifacts:
 4. Tarball-first:
    - `/tmp/crs_build_scalar_ifelse_followup_20260224.log`
    - `/tmp/crs_check_ascran_scalar_ifelse_followup_20260224.log` (`Status: 4 WARNINGs, 3 NOTEs`)
+
+### 2026-02-24 - A/R1.18 residual scalar `ifelse` cleanup (`spline`/`npglpreg`)
+
+Scope completed:
+
+1. Replaced remaining scalar `ifelse` constructs in:
+   - `/Users/jracine/Development/crs/R/spline.R`
+   - `/Users/jracine/Development/crs/R/np.regression.glp.R`
+2. Specific updates:
+   - scalar confidence-band `se` column assembly in `spline` now uses scalar `if (...)` control flow.
+   - final additive derivative index start in `spline` now uses scalar `if (...)` branch.
+   - gradient plot labels in `npglpreg` now use scalar `if (...) ... else ...` expressions.
+3. Scope remains behavior-preserving and wrapper-only (no NOMAD core edits).
+
+Validation artifacts:
+
+1. Parse gate:
+   - `/tmp/crs_parse_scalar_ifelse_finalsweep_20260224.log` (`SCALAR_IFELSE_FINAL_SWEEP_PARSE_OK`)
+2. Deterministic install:
+   - `/tmp/crs_install_scalar_ifelse_finalsweep_20260224.log`
+3. Focused runtime smoke:
+   - `/tmp/crs_npglp_scalar_ifelse_finalsweep_smoke_20260224.out` (`NPGLP_SMOKE_OK`)
+   - `/tmp/crs_spline_scalar_ifelse_finalsweep_smoke_20260224.out` (`SPLINE_SMOKE_OK`)
+4. Tarball-first:
+   - `/tmp/crs_build_scalar_ifelse_finalsweep_20260224.log`
+   - `/tmp/crs_check_ascran_scalar_ifelse_finalsweep_20260224.log` (`Status: 4 WARNINGs, 3 NOTEs`)

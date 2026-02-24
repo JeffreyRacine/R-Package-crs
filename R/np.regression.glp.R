@@ -3289,7 +3289,7 @@ plot.npglpreg <- function(x,
         if(!ci) {
           plot(rg[[i]][,1],rg[[i]][,2],
                xlab=names(newdata)[i],
-               ylab=ifelse(!is.factor(newdata[,i]), paste("Order", deriv,"Gradient"), "Difference in Levels"),
+               ylab=if(!is.factor(newdata[,i])) paste("Order", deriv,"Gradient") else "Difference in Levels",
                ylim=ylim,
                type="l")
 
@@ -3303,7 +3303,7 @@ plot.npglpreg <- function(x,
           }
           plot(rg[[i]][,1],rg[[i]][,2],
                xlab=names(newdata)[i],
-               ylab=ifelse(!is.factor(newdata[,i]), paste("Order", deriv,"Gradient"), "Difference in Levels"),
+               ylab=if(!is.factor(newdata[,i])) paste("Order", deriv,"Gradient") else "Difference in Levels",
                ylim=ylim,
                type="l")
           if (plot.errors.type == "all") {
