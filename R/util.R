@@ -384,7 +384,7 @@ uocquantile = function(x, prob) {
   if (is.ordered(x)){
     tq = unclass(table(x))
     tq = tq / sum(tq)
-    j = which(sapply(seq_along(tq), function(y){ sum(tq[1:y]) }) >= prob)[1]
+    j = which(cumsum(tq) >= prob)[1]
     sort(unique(x))[j]
   } else if (is.factor(x)) {
     ## just returns mode

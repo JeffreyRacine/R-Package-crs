@@ -26,7 +26,7 @@ Modernize `crs` to current best-practice R package engineering standards while p
    - `A/R1.12` (additional `seq_len`/`seq.int` safety sweep in spline utilities).
    - `A/R1.13` (broader loop-header safety sweep across CV/sigtest and helper paths).
    - `A/R1.14` (full `npglpreg` loop-header safety sweep).
-   - `A/R1.15` through `A/R1.59` (scalar control-flow cleanup, script hygiene, clamp/vectorization follow-ups, remaining legacy `do.call` cleanup in matrix-construction paths, `vapply` numeric-column sweeps, boolean control simplification, centralized RNG seed state handling, scalar-loop index correctness fixes in `npglpreg` warning/index paths, registered-symbol `.Call` hygiene, robust option-state guards for `crsiv` / `crsivderiv` including unset-option handling, eval-helper namespace-resolution hardening, recursive source-artifact cleanup/build hygiene hardening, stepCV loop-index safety hardening for empty-scope paths, snomadr argument-validation hardening, stepCV call-evaluation/helper cleanup, snomadr single-argument `...` guard hardening, formal-matching parity for defaults/ellipsis, non-NOMAD C forensic comment cleanup, residual scalar bitwise-operator cleanup in control paths, `plot.clsd` scalar logical follow-up alignment, invariant-hoisting in `W.glp` polynomial index construction, explicit `TRUE`/`FALSE` constant normalization in active call arguments, duplicate helper-definition consolidation for `scale_robust`/`is.fullrank`, `on.exit(..., add=TRUE)` stacking safety for `npglpreg` message-state restoration, sequence-construction hardening in GLP matrix expansion, additional zero-dimension-safe sequence/rep-index hardening in `glp.model.matrix`, residual `1:n` index-slice hardening in GLP/NPGLP bandwidth internals, `frscv/krscv` family index-slice normalization to `seq_len` in R wrappers, final remaining executable `1:num.*`/`[1:n]` slice hardening in `frscv`/`krscv`/`spline`, closure of the last executable `1:num.*` slice sites across these wrappers with static-audit confirmation, parity-safe `seq.int(2L, ...)` normalization for remaining guarded loop headers in active non-NOMAD R paths, guarded `iterate.max` loop-header hardening in `crsiv`/`crsivderiv` with deterministic convergence defaults, `crsiv` dots/weights extraction reuse to remove redundant `list(...)` materialization in iterative setup, shared stop-index selection helper extraction for IV stopping-rule post-processing across `crsiv`/`crsivderiv`, monotone-stop warning text/helper consolidation with symmetric dot-argument parsing in `crsivderiv`, shared iterate-max warning helper extraction across both IV endpoints, centralized `crs.messages` option toggling via helper calls in both IV endpoints, additional executable `1:n` slice hardening in non-NOMAD `clsd`/`spline` routines including SVD helper index vectors, and tail-index safety hardening for `clsd` sample/integration splits using shared `.crs_tail_index` helper).
+   - `A/R1.15` through `A/R1.60` (scalar control-flow cleanup, script hygiene, clamp/vectorization follow-ups, remaining legacy `do.call` cleanup in matrix-construction paths, `vapply` numeric-column sweeps, boolean control simplification, centralized RNG seed state handling, scalar-loop index correctness fixes in `npglpreg` warning/index paths, registered-symbol `.Call` hygiene, robust option-state guards for `crsiv` / `crsivderiv` including unset-option handling, eval-helper namespace-resolution hardening, recursive source-artifact cleanup/build hygiene hardening, stepCV loop-index safety hardening for empty-scope paths, snomadr argument-validation hardening, stepCV call-evaluation/helper cleanup, snomadr single-argument `...` guard hardening, formal-matching parity for defaults/ellipsis, non-NOMAD C forensic comment cleanup, residual scalar bitwise-operator cleanup in control paths, `plot.clsd` scalar logical follow-up alignment, invariant-hoisting in `W.glp` polynomial index construction, explicit `TRUE`/`FALSE` constant normalization in active call arguments, duplicate helper-definition consolidation for `scale_robust`/`is.fullrank`, `on.exit(..., add=TRUE)` stacking safety for `npglpreg` message-state restoration, sequence-construction hardening in GLP matrix expansion, additional zero-dimension-safe sequence/rep-index hardening in `glp.model.matrix`, residual `1:n` index-slice hardening in GLP/NPGLP bandwidth internals, `frscv/krscv` family index-slice normalization to `seq_len` in R wrappers, final remaining executable `1:num.*`/`[1:n]` slice hardening in `frscv`/`krscv`/`spline`, closure of the last executable `1:num.*` slice sites across these wrappers with static-audit confirmation, parity-safe `seq.int(2L, ...)` normalization for remaining guarded loop headers in active non-NOMAD R paths, guarded `iterate.max` loop-header hardening in `crsiv`/`crsivderiv` with deterministic convergence defaults, `crsiv` dots/weights extraction reuse to remove redundant `list(...)` materialization in iterative setup, shared stop-index selection helper extraction for IV stopping-rule post-processing across `crsiv`/`crsivderiv`, monotone-stop warning text/helper consolidation with symmetric dot-argument parsing in `crsivderiv`, shared iterate-max warning helper extraction across both IV endpoints, centralized `crs.messages` option toggling via helper calls in both IV endpoints, additional executable `1:n` slice hardening in non-NOMAD `clsd`/`spline` routines including SVD helper index vectors, tail-index safety hardening for `clsd` sample/integration splits using shared `.crs_tail_index` helper, and `uocquantile()` ordered-branch cumulative-probability refactor from quadratic scan to linear `cumsum` with regression coverage).
    - `B/R2` (shared IV scaffolding helpers for dots/call assembly in `crsiv` and `crsivderiv`).
    - `B/R1.1` (non-NOMAD C memory hygiene in `gsl_bspline.c`).
    - `B/R1.2` and `B/R1.3` (native-interface and matrix-kernel regression test expansion).
@@ -37,7 +37,7 @@ Modernize `crs` to current best-practice R package engineering standards while p
    - installed-package targeted smokes,
    - tarball-first `R CMD build` and `R CMD check --as-cran`,
    - stable non-regressive check profile (`4-5 WARNINGs, 0-4 NOTEs`) with no modernization regressions introduced,
-   - latest post-tranche gate in this session: `Status: 5 WARNINGs` (intermittent `unable to verify current time` NOTE remains a known baseline fluctuation).
+   - latest post-tranche gate in this session: `Status: 5 WARNINGs` (baseline-consistent; ran with `_R_CHECK_FUTURE_FILE_TIMESTAMPS_=false` to bypass the known sporadic timestamp-check stall on this host).
 4. R-layer forensic status (post A/R2.5 completion):
    - `eval(parse(...))`: `0`
    - `eval(...)`: `0`
@@ -61,10 +61,12 @@ Modernize `crs` to current best-practice R package engineering standards while p
    - `66b91af` `modernize(iv): guard iterate.max loops and normalize loop headers`
    - `914ac41` `modernize(r): harden residual index slices in clsd and spline`
    - `A/R1.59` `modernize(r): harden clsd tail slicing with shared safe-tail helper`
+   - `A/R1.60` `modernize(util): linearize ordered-factor uocquantile cutoff logic with tests`
 2. Static forensic sweeps after these checkpoints:
    - no executable `for (... in 2:...)` loop headers remain in `R/`,
    - no executable `1:length.x` slices remain in active `clsd`/`spline` paths,
    - no active `(+1):end` tail slices remain in `clsd` evaluation/integration split paths,
+   - ordered-factor `uocquantile()` cumulative cutoff no longer uses repeated prefix-sum scans,
    - legacy index-pattern scan remains clean; remaining `1:length(...)` hits are comment-only in `/Users/jracine/Development/crs/R/clsd.R`.
 3. Validation artifacts for the latest tranche gates:
    - `/tmp/crs_parse_loop_seqint_guarded_20260224.out`
@@ -91,6 +93,12 @@ Modernize `crs` to current best-practice R package engineering standards while p
    - `/tmp/crs_test_clsd_tailidx_helper_full_20260224.out`
    - `/tmp/crs_build_clsd_tailidx_helper_20260224.log`
    - `/tmp/crs_check_clsd_tailidx_helper_20260224.log`
+   - `/tmp/crs_parse_util_uocquantile_cumsum_20260224.out`
+   - `/tmp/crs_install_util_uocquantile_cumsum_20260224.log`
+   - `/tmp/crs_test_util_uocquantile_cumsum_targeted_20260224.out`
+   - `/tmp/crs_test_util_uocquantile_cumsum_full_20260224.out`
+   - `/tmp/crs_build_util_uocquantile_cumsum_20260224.log`
+   - `/tmp/crs_check_util_uocquantile_cumsum_notimestamps_20260224.log`
 
 ## Accomplished Tasks (Clear Summary)
 
