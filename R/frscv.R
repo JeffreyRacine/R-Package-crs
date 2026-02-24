@@ -72,11 +72,11 @@ frscv <- function(xz,
     ## both degree and knots. The values used to evaluate the cv
     ## function are passed below.
 
-    K <- round(cbind(input[seq_len(num.x)],input[(num.x+1):(2*num.x)]))
+    K <- round(cbind(input[seq_len(num.x)], input[.crs_index_block(num.x, num.x)]))
 
     if(!is.null(z)) {
       num.z <- NCOL(z)
-      I <- round(input[(2*num.x+1):(2*num.x+num.z)])
+      I <- round(input[.crs_index_block(2 * num.x, num.z)])
     } else {
       num.z <- 0
       I <- NULL
@@ -229,7 +229,7 @@ frscv <- function(xz,
   } else if(complexity == "degree") {
     if(!is.null(z)) {
       KI.mat <- matrix.combn(K.vec1=degree.min:degree.max,num.x=num.x,num.z=num.z)
-      KI.mat <- cbind(KI.mat[,seq_len(num.x)],matrix(segments,nrow(KI.mat),length(segments),byrow=TRUE),KI.mat[,(num.x+1):(num.x+num.z)])
+      KI.mat <- cbind(KI.mat[,seq_len(num.x)], matrix(segments, nrow(KI.mat), length(segments), byrow=TRUE), KI.mat[, .crs_index_block(num.x, num.z)])
     } else {
       KI.mat <- matrix.combn(K.vec1=degree.min:degree.max,num.x=num.x)
       KI.mat <- cbind(KI.mat[,seq_len(num.x)],matrix(segments,nrow(KI.mat),length(segments),byrow=TRUE))
@@ -237,7 +237,7 @@ frscv <- function(xz,
   } else if (complexity == "knots"){
     if(!is.null(z)) {
       KI.mat <- matrix.combn(K.vec1=segments.min:segments.max,num.x=num.x,num.z=num.z)
-      KI.mat <- cbind(matrix(degree,nrow(KI.mat),length(degree),byrow=TRUE),KI.mat[,seq_len(num.x)],KI.mat[,(num.x+1):(num.x+num.z)])
+      KI.mat <- cbind(matrix(degree, nrow(KI.mat), length(degree), byrow=TRUE), KI.mat[,seq_len(num.x)], KI.mat[, .crs_index_block(num.x, num.z)])
     } else {
       KI.mat <- matrix.combn(K.vec1=segments.min:segments.max,num.x=num.x)
       KI.mat <- cbind(matrix(degree,nrow(KI.mat),length(degree),byrow=TRUE),KI.mat[,seq_len(num.x)])
@@ -257,7 +257,7 @@ frscv <- function(xz,
   if(length(degree.zero.rows) > 0) {
 
     if(num.z > 0) {
-      key.mat <- KI.mat[degree.zero.rows,(2*num.x+1):(2*num.x+num.z),drop=FALSE]
+      key.mat <- KI.mat[degree.zero.rows, .crs_index_block(2 * num.x, num.z), drop=FALSE]
     } else {
       key.mat <- KI.mat[degree.zero.rows,seq_len(num.x),drop=FALSE]
     }
@@ -415,9 +415,9 @@ frscv <- function(xz,
   basis.opt <- basis.vec[ocv.vec][1]
   knots.opt <- knots.vec[ocv.vec][1]
   degree <- K.opt[seq_len(num.x)]
-  segments <- K.opt[(num.x+1):(2*num.x)]
+  segments <- K.opt[.crs_index_block(num.x, num.x)]
 
-  if(!is.null(z)) I.opt <- K.opt[(2*num.x+1):(2*num.x+num.z)]
+  if(!is.null(z)) I.opt <- K.opt[.crs_index_block(2 * num.x, num.z)]
 
   console.state$console <- printClear(console.state$console)
   console.state$console <- printPop(console.state$console)

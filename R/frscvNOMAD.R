@@ -119,17 +119,17 @@ frscvNOMAD <- function(xz,
       I <- include
 
       if(complexity=="degree-knots") {
-        K <- round(cbind(input[seq_len(num.x)],input[(num.x+1):(2*num.x)]))
+        K <- round(cbind(input[seq_len(num.x)], input[.crs_index_block(num.x, num.x)]))
         if(!is.null(z)  ) {
           num.z <- NCOL(z)
-          I <- round(input[(2*num.x+1):(2*num.x+num.z)])
+          I <- round(input[.crs_index_block(2 * num.x, num.z)])
         }
       }
       else if(complexity=="degree") {
         K<-round(cbind(input[seq_len(num.x)],segments))
         if(!is.null(z)  ) {
           num.z <- NCOL(z)
-          I <- round(input[(num.x+1):(num.x+num.z)])
+          I <- round(input[.crs_index_block(num.x, num.z)])
         }
       }
       else if(complexity=="knots")
@@ -137,7 +137,7 @@ frscvNOMAD <- function(xz,
         K<-round(cbind(degree, input[seq_len(num.x)]))
         if(!is.null(z)  ) {
           num.z <- NCOL(z)
-          I <- round(input[(num.x+1):(num.x+num.z)])
+          I <- round(input[.crs_index_block(num.x, num.z)])
         }
       }
 
@@ -460,17 +460,17 @@ frscvNOMAD <- function(xz,
   if(complexity=="degree-knots") {
     K.opt <- as.integer(nomad.solution$solution)
     degree <- K.opt[seq_len(num.x)]
-    segments <- K.opt[(num.x+1):(2*num.x)]
-    if(!is.null(z) ) I.opt <- K.opt[(2*num.x+1):(2*num.x+num.z)]
+    segments <- K.opt[.crs_index_block(num.x, num.x)]
+    if(!is.null(z) ) I.opt <- K.opt[.crs_index_block(2 * num.x, num.z)]
   }
   else if(complexity=="degree") {
     degree <- as.integer(nomad.solution$solution[seq_len(num.x)])
-    if(!is.null(z) ) {I.opt <- as.integer(nomad.solution$solution[(num.x+1):(num.x+num.z)])}
+    if(!is.null(z) ) {I.opt <- as.integer(nomad.solution$solution[.crs_index_block(num.x, num.z)])}
   }
   else if(complexity=="knots")
   {
     segments <- as.integer(nomad.solution$solution[seq_len(num.x)])
-    if(!is.null(z) ) {I.opt <- as.integer(nomad.solution$solution[(num.x+1):(num.x+num.z)])}
+    if(!is.null(z) ) {I.opt <- as.integer(nomad.solution$solution[.crs_index_block(num.x, num.z)])}
   }
 
   if(!is.null(z))

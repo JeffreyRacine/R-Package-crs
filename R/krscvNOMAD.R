@@ -142,17 +142,17 @@ krscvNOMAD <- function(xz,
       num.z <- NCOL(z)
 
       if(complexity=="degree-knots") {
-        K <- round(cbind(input[seq_len(num.x)],input[(num.x+1):(2*num.x)]))
-        lambda <- input[(2*num.x+1):(2*num.x+num.z)]
+        K <- round(cbind(input[seq_len(num.x)], input[.crs_index_block(num.x, num.x)]))
+        lambda <- input[.crs_index_block(2 * num.x, num.z)]
       }
       else if(complexity=="degree") {
         K<-round(cbind(input[seq_len(num.x)],segments))
-        lambda <- input[(num.x+1):(num.x+num.z)]
+        lambda <- input[.crs_index_block(num.x, num.z)]
       }
       else if(complexity=="knots")
       {
         K<-round(cbind(degree, input[seq_len(num.x)]))
-        lambda <- input[(num.x+1):(num.x+num.z)]
+        lambda <- input[.crs_index_block(num.x, num.z)]
       }
 
       if(lambda.discrete)
@@ -478,7 +478,7 @@ krscvNOMAD <- function(xz,
       MIN.MESH.SIZE[[i]] <- min.mesh.size.integer
       MIN.FRAME.SIZE[[i]] <- min.frame.size.integer
     }
-    for(i in (2*num.x+1):(2*num.x+num.z)) {
+    for(i in .crs_index_block(2 * num.x, num.z)) {
       INITIAL.MESH.SIZE[[i]] <- initial.mesh.size.real
       MIN.MESH.SIZE[[i]] <- min.mesh.size.real
       MIN.FRAME.SIZE[[i]] <- min.frame.size.real
@@ -490,7 +490,7 @@ krscvNOMAD <- function(xz,
       MIN.MESH.SIZE[[i]] <- min.mesh.size.integer
       MIN.FRAME.SIZE[[i]] <- min.frame.size.integer
     }
-    for(i in (num.x+1):(num.x+num.z)) {
+    for(i in .crs_index_block(num.x, num.z)) {
       INITIAL.MESH.SIZE[[i]] <- initial.mesh.size.real
       MIN.MESH.SIZE[[i]] <- min.mesh.size.real
       MIN.FRAME.SIZE[[i]] <- min.frame.size.real
@@ -562,20 +562,20 @@ krscvNOMAD <- function(xz,
   cv.min <- nomad.solution$objective
   if(isTRUE(all.equal(cv.min, cv.maxPenalty))) stop(" Search failed: restart with larger nmulti or smaller degree.max")
   if(complexity=="degree-knots") {
-    K.opt <- as.integer(nomad.solution$solution[1:(2*num.x)])
-    lambda.opt <- as.numeric(nomad.solution$solution[(2*num.x+1):(2*num.x+num.z)])
+    K.opt <- as.integer(nomad.solution$solution[.crs_index_block(0L, 2 * num.x)])
+    lambda.opt <- as.numeric(nomad.solution$solution[.crs_index_block(2 * num.x, num.z)])
     degree <- K.opt[seq_len(num.x)]
-    segments <- K.opt[(num.x+1):(2*num.x)]
+    segments <- K.opt[.crs_index_block(num.x, num.x)]
   }
   else if(complexity=="degree") {
     degree <- as.integer(nomad.solution$solution[seq_len(num.x)])
-    lambda.opt <- as.numeric(nomad.solution$solution[(num.x+1):(num.x+num.z)])
+    lambda.opt <- as.numeric(nomad.solution$solution[.crs_index_block(num.x, num.z)])
     K.opt <-cbind(degree, segments)
   }
   else if(complexity=="knots")
   {
     segments <- as.integer(nomad.solution$solution[seq_len(num.x)])
-    lambda.opt <- as.numeric(nomad.solution$solution[(num.x+1):(num.x+num.z)])
+    lambda.opt <- as.numeric(nomad.solution$solution[.crs_index_block(num.x, num.z)])
     K.opt <-cbind(degree, segments)
   }
 

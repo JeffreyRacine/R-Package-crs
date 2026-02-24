@@ -173,6 +173,11 @@ is.monotone.increasing <- function(x) {
   seq.int(start, n)
 }
 
+.crs_index_block <- function(offset, width) {
+  if (width <= 0L) return(integer(0L))
+  seq.int(offset + 1L, offset + width)
+}
+
 ## This function tests for the maximum well-conditioned spline degree.
 
 ## Note that increasing the number of breaks, other things equal,
