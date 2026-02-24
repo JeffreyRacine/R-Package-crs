@@ -61,7 +61,7 @@ crsEst <- function(xz,
   is.ordered.z <- xztmp$is.ordered.z
   ## The default is kernel==TRUE - this will throw an error with no
   ## categorical predictors so first check
-  if(is.null(num.z) && kernel==TRUE) kernel <- FALSE
+  if(is.null(num.z) && isTRUE(kernel)) kernel <- FALSE
   rm(xztmp)
   if(is.null(z)) {
     include <- NULL
@@ -466,7 +466,7 @@ crs.formula <- function(formula,
   is.ordered.z <- xztmp$is.ordered.z
   ## The default is kernel==TRUE - this will throw an error with no
   ## categorical predictors so first check
-  if(is.null(num.z) && kernel==TRUE) kernel <- FALSE
+  if(is.null(num.z) && isTRUE(kernel)) kernel <- FALSE
   rm(xztmp)
   if(is.null(z)) {
     include <- NULL
@@ -530,10 +530,10 @@ crs.formula <- function(formula,
 
   }
 
-  if(kernel == TRUE && prune == TRUE) {
+  if(isTRUE(kernel) && isTRUE(prune)) {
     if(display.warnings) warning(" pruning cannot coexist with categorical kernel smoothing (pruning ignored)")
   }
-  if(!is.null(tau) && prune == TRUE) stop(" pruning is not supported for quantile regression splines")
+  if(!is.null(tau) && isTRUE(prune)) stop(" pruning is not supported for quantile regression splines")
 
   ## Check for cv="nomad" and complexity="degree-knots" but
   ## degree.min==degree.max or segments==segments.max
