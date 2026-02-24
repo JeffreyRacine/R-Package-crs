@@ -1544,7 +1544,7 @@ plot.crs <- function(x,
           if(!ci) {
             plot(mg[[i]][,1],mg[[i]][,2],
                  xlab=names(newdata)[i],
-                 ylab=ifelse(is.null(tau),"Conditional Mean",paste("Conditional Quantile (tau = ",format(tau),")",sep="")),
+                 ylab=if(is.null(tau)) "Conditional Mean" else paste("Conditional Quantile (tau = ",format(tau),")",sep=""),
                  ylim=ylim,
                  type="l",
                  ...)
@@ -1559,7 +1559,7 @@ plot.crs <- function(x,
             }
             plot(mg[[i]][,1],mg[[i]][,2],
                  xlab=names(newdata)[i],
-                 ylab=ifelse(is.null(tau),"Conditional Mean",paste("Conditional Quantile (tau = ",format(tau),")",sep="")),
+                 ylab=if(is.null(tau)) "Conditional Mean" else paste("Conditional Quantile (tau = ",format(tau),")",sep=""),
                  ylim=ylim,
                  type="l",
                  ...)
@@ -1644,7 +1644,7 @@ plot.crs <- function(x,
                        color=col,
                        alpha=.7,
                        back="lines",
-                       main=ifelse(is.null(tau),"Conditional Mean",paste("Conditional Quantile (tau = ",format(tau),")",sep="")))
+                       main=if(is.null(tau)) "Conditional Mean" else paste("Conditional Quantile (tau = ",format(tau),")",sep=""))
 
           rgl::grid3d(c("x", "y+", "z"))
 
@@ -1975,7 +1975,7 @@ plot.crs <- function(x,
           if(!ci) {
             plot(rg[[i]][,1],rg[[i]][,2],
                  xlab=names(newdata)[i],
-                 ylab=ifelse(!is.factor(newdata[,i]), paste("Order", deriv,"Derivative"), "Difference in Levels"),
+                 ylab=if(!is.factor(newdata[,i])) paste("Order", deriv,"Derivative") else "Difference in Levels",
                  ylim=ylim,
                  type="l",
                  ...)
@@ -1990,7 +1990,7 @@ plot.crs <- function(x,
             }
             plot(rg[[i]][,1],rg[[i]][,2],
                  xlab=names(newdata)[i],
-                 ylab=ifelse(!is.factor(newdata[,i]), paste("Order", deriv,"Derivative"), "Difference in Levels"),
+                 ylab=if(!is.factor(newdata[,i])) paste("Order", deriv,"Derivative") else "Difference in Levels",
                  ylim=ylim,
                  type="l",
                  ...)

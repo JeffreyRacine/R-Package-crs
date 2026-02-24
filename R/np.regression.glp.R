@@ -1947,7 +1947,7 @@ minimand.cv.aic <- function(bws=NULL,
       }
     }
 
-    fv <- ifelse(is.finite(fv),fv,cv.maxPenalty)
+    if(!is.finite(fv)) fv <- cv.maxPenalty
 
     console <- printPush("\r                                                                         ",console = console)
     if(display.nomad.progress) console <- printPush(paste("\rfv = ",format(fv)," ",sep=""),console = console)

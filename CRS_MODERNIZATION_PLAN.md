@@ -778,3 +778,28 @@ Validation artifacts:
 4. Tarball-first:
    - `/tmp/crs_build_scalar_ifelse_20260224.log`
    - `/tmp/crs_check_ascran_scalar_ifelse_20260224.log` (`Status: 4 WARNINGs, 3 NOTEs`)
+
+### 2026-02-24 - A/R1.17 scalar-label/control cleanup follow-up
+
+Scope completed:
+
+1. Removed remaining scalar `ifelse(is.finite(...), ...)` clamp in:
+   - `/Users/jracine/Development/crs/R/np.regression.glp.R`
+   using scalar branch `if(!is.finite(fv)) fv <- cv.maxPenalty`.
+2. Replaced scalar plot label/title `ifelse(...)` calls in:
+   - `/Users/jracine/Development/crs/R/crs.R`
+   with scalar `if (...) ... else ...` expressions.
+3. Corrected a temporary parse issue in the 3D plot title expression and revalidated package build/check.
+
+Validation artifacts:
+
+1. Parse gate:
+   - `/tmp/crs_parse_scalar_ifelse_followup_20260224.log` (`SCALAR_IFELSE_FOLLOWUP_PARSE_OK`)
+2. Deterministic install:
+   - `/tmp/crs_install_scalar_ifelse_followup_20260224.log`
+3. Focused runtime smoke:
+   - `/tmp/crs_npglp_scalar_ifelse_followup_smoke_20260224.out` (`NPGLP_SMOKE_OK`)
+   - `/tmp/crs_loop_scalar_ifelse_followup_smoke_20260224.out` (`LOOP_SMOKE_OK`)
+4. Tarball-first:
+   - `/tmp/crs_build_scalar_ifelse_followup_20260224.log`
+   - `/tmp/crs_check_ascran_scalar_ifelse_followup_20260224.log` (`Status: 4 WARNINGs, 3 NOTEs`)
