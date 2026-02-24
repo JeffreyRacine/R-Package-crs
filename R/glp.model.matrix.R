@@ -162,7 +162,7 @@ glp.model.matrix <- function(X) {
     nd1 <- rep(1,dimen[1])   ## At the beginning,  we have one for [1, 2, 3, ..., dimen[1]]
     nd1[dimen[1]] <- 0       ## nd1 represents the frequency for every element of [1, 2, 3, ..., dimen[1]]
     ncol.bs <- dimen[1]
-    sets <- 1:dimen[1]
+    sets <- seq_len(dimen[1])
     dim(sets)<- c(dimen[1],1)
     d2p <- 0
 
