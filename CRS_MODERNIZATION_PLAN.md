@@ -62,10 +62,12 @@ Modernize `crs` to current best-practice R package engineering standards while p
    - `914ac41` `modernize(r): harden residual index slices in clsd and spline`
    - `A/R1.59` `modernize(r): harden clsd tail slicing with shared safe-tail helper`
    - `A/R1.60` `modernize(util): linearize ordered-factor uocquantile cutoff logic with tests`
+   - `4807692` `modernize(cv): harden frscv/krscv block index ranges`
 2. Static forensic sweeps after these checkpoints:
    - no executable `for (... in 2:...)` loop headers remain in `R/`,
    - no executable `1:length.x` slices remain in active `clsd`/`spline` paths,
    - no active `(+1):end` tail slices remain in `clsd` evaluation/integration split paths,
+   - no active `(offset+1):end` block-slice patterns remain in executable `frscv*`/`krscv*` wrapper paths,
    - ordered-factor `uocquantile()` cumulative cutoff no longer uses repeated prefix-sum scans,
    - legacy index-pattern scan remains clean; remaining `1:length(...)` hits are comment-only in `/Users/jracine/Development/crs/R/clsd.R`.
 3. Validation artifacts for the latest tranche gates:
@@ -99,6 +101,12 @@ Modernize `crs` to current best-practice R package engineering standards while p
    - `/tmp/crs_test_util_uocquantile_cumsum_full_20260224.out`
    - `/tmp/crs_build_util_uocquantile_cumsum_20260224.log`
    - `/tmp/crs_check_util_uocquantile_cumsum_notimestamps_20260224.log`
+   - `/tmp/crs_parse_cv_index_block_helper_20260224.out`
+   - `/tmp/crs_install_cv_index_block_helper_20260224.log`
+   - `/tmp/crs_test_cv_index_block_helper_targeted_20260224.out`
+   - `/tmp/crs_test_cv_index_block_helper_full_20260224.out`
+   - `/tmp/crs_build_cv_index_block_helper_20260224.log`
+   - `/tmp/crs_check_cv_index_block_helper_20260224.log`
 
 ## Accomplished Tasks (Clear Summary)
 
