@@ -63,9 +63,11 @@ Modernize `crs` to current best-practice R package engineering standards while p
    - `A/R1.59` `modernize(r): harden clsd tail slicing with shared safe-tail helper`
    - `A/R1.60` `modernize(util): linearize ordered-factor uocquantile cutoff logic with tests`
    - `4807692` `modernize(cv): harden frscv/krscv block index ranges`
+   - `7025b9a` `modernize(spline): harden additive-derivative index blocks`
 2. Static forensic sweeps after these checkpoints:
    - no executable `for (... in 2:...)` loop headers remain in `R/`,
    - no executable `1:length.x` slices remain in active `clsd`/`spline` paths,
+   - no executable `1:(...)` index-slice headers remain in active `R/` code,
    - no active `(+1):end` tail slices remain in `clsd` evaluation/integration split paths,
    - no active `(offset+1):end` block-slice patterns remain in executable `frscv*`/`krscv*` wrapper paths,
    - ordered-factor `uocquantile()` cumulative cutoff no longer uses repeated prefix-sum scans,
@@ -107,6 +109,11 @@ Modernize `crs` to current best-practice R package engineering standards while p
    - `/tmp/crs_test_cv_index_block_helper_full_20260224.out`
    - `/tmp/crs_build_cv_index_block_helper_20260224.log`
    - `/tmp/crs_check_cv_index_block_helper_20260224.log`
+   - `/tmp/crs_parse_spline_deriv_indexsafe_20260224.out`
+   - `/tmp/crs_test_spline_deriv_indexsafe_targeted_20260224.out`
+   - `/tmp/crs_test_spline_deriv_indexsafe_full_20260224.out`
+   - `/tmp/crs_build_spline_deriv_indexsafe_20260224.log`
+   - `/tmp/crs_check_spline_deriv_indexsafe_20260224.log`
 
 ## Accomplished Tasks (Clear Summary)
 
