@@ -1,5 +1,16 @@
 # NOMAD Forensic Audit (`crs`)
 
+## Archive Note (2026-03-13)
+
+This audit is archived as a completed historical remediation record.
+
+Reason:
+
+1. the forensic cleanup documented here was completed,
+2. later operational guidance is carried by the live NOMAD map/status/forward
+   documents,
+3. this file is now provenance rather than an active execution note.
+
 Audit date: 2026-02-23
 
 Scope:

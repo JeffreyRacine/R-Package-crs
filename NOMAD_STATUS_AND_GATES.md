@@ -767,7 +767,7 @@ Result:
 
 1. Active `R` + integration `src` paths are free of legacy `min.poll` naming and legacy default-helper naming.
 2. Objective parity remained exact vs prior wrapper-alignment checkpoint in smoke comparison.
-3. Upstream NOMAD4 internal compatibility units remain vendor-internal; see `/Users/jracine/Development/crs/NOMAD_FORENSIC_AUDIT.md` for details.
+3. Upstream NOMAD4 internal compatibility units remain vendor-internal; see `/Users/jracine/Development/crs/archive/ROOT_MD_CLOSEOUT_20260313/NOMAD_FORENSIC_AUDIT.md` for details.
 
 ## 2026-02-23 full-example (`runcrs`) cross-version checkpoint
 
