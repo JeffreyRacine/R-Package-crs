@@ -343,7 +343,6 @@ stepCV <-
         o <- order(aod[, nc])
         if(trace) {
           print(aod[o,  ])
-          utils::flush.console()
         }
         if(o[1L] == 1) break
         change <- rownames(aod)[o[1L]]
@@ -457,8 +456,7 @@ addterm.default <-
     for(i in seq_len(ns)) {
       tt <- scope[i]
       if(trace) {
-        message("trying +", tt)
-        utils::flush.console()
+        .crs_message("trying +", tt)
       }
       nfit <- update(object, as.formula(paste("~ . +", tt)),
                      evaluate = FALSE)
@@ -603,8 +601,7 @@ addterm.glm <- function(object, scope, scale = 0, test = c("none", "Chisq", "F")
                    function(x) paste(sort(x), collapse=":"))
   for(tt in scope) {
     if(trace) {
-      message("trying +", tt)
-      utils::flush.console()
+      .crs_message("trying +", tt)
     }
     stt <- paste(sort(strsplit(tt, ":")[[1L]]), collapse=":")
     usex <- match(asgn, match(stt, sTerms), 0L) > 0L
@@ -683,8 +680,7 @@ dropterm.default <-
     for(i in seq_len(ns)) {
       tt <- scope[i]
       if(trace) {
-        message("trying -", tt)
-        utils::flush.console()
+        .crs_message("trying -", tt)
       }
       nfit <- update(object, as.formula(paste("~ . -", tt)),
                      evaluate = FALSE)
@@ -789,8 +785,7 @@ dropterm.glm <-
     if(is.null(wt)) wt <- rep.int(1, n)
     for(i in seq_len(ns)) {
       if(trace) {
-        message("trying -", scope[i])
-        utils::flush.console()
+        .crs_message("trying -", scope[i])
       }
       ii <- seq_along(asgn)[asgn == ndrop[i]]
       jj <- setdiff(seq_len(ncol(x)), ii)

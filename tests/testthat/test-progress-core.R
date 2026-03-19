@@ -98,6 +98,38 @@ test_that("single-line progress trace records NOMAD updates and finish", {
   expect_true(any(grepl("NOMAD search... iteration 2, elapsed 2.0s: fv=0.8", vapply(actual$trace, `[[`, character(1L), "line"), fixed = TRUE)))
 })
 
+test_that("plot progress emits checkpoint updates even when throttled", {
+  begin <- getFromNamespace(".crs_plot_stage_progress_begin", "crs")
+  tick <- getFromNamespace(".crs_plot_progress_tick", "crs")
+  finish <- getFromNamespace(".crs_plot_progress_end", "crs")
+
+  old_opts <- options(
+    crs.messages = TRUE,
+    crs.plot.progress.start.grace.sec = 0,
+    crs.plot.progress.interval.sec = 999,
+    crs.plot.progress.max.intermediate = 2
+  )
+  on.exit(options(old_opts), add = TRUE)
+
+  actual <- capture_crs_progress_shadow_trace(
+    {
+      state <- begin(total = 8, label = "Plot bootstrap")
+      state <- tick(state, done = 1)
+      state <- tick(state, done = 3)
+      state <- tick(state, done = 6)
+      finish(state)
+    },
+    force_renderer = "single_line",
+    now = progress_time_values(c(0, 0, 0.1, 0.2, 0.3, 0.4, 0.5)),
+    interactive = TRUE
+  )
+
+  lines <- vapply(actual$trace, `[[`, character(1L), "line")
+  expect_true(any(grepl("Plot bootstrap 0/8", lines, fixed = TRUE)))
+  expect_true(any(grepl("Plot bootstrap 3/8", lines, fixed = TRUE)))
+  expect_true(any(grepl("Plot bootstrap 6/8", lines, fixed = TRUE)))
+})
+
 test_that("console helpers route through the shared progress runtime", {
   reset <- getFromNamespace(".crs_progress_reset_registry", "crs")
 

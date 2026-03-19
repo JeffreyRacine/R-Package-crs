@@ -1192,11 +1192,36 @@ summary.crs <- function(object,
   }
 }
 
-.crs.bootstrap.matrix <- function(object, newdata, deriv = 0, deriv.index = 1, boot.num = 99, display.warnings = TRUE) {
+.crs.bootstrap.matrix <- function(object,
+                                  newdata,
+                                  deriv = 0,
+                                  deriv.index = 1,
+                                  boot.num = 99,
+                                  display.warnings = TRUE,
+                                  display.nomad.progress = TRUE,
+                                  progress.target = NULL) {
   n <- nrow(object$xz)
   pred0 <- predict(object, newdata = newdata, deriv = deriv)
   center <- if (deriv > 0) attr(pred0, "deriv.mat")[,deriv.index] else as.numeric(pred0)
   boot.mat <- matrix(NA_real_, nrow = boot.num, ncol = nrow(newdata))
+  progress <- NULL
+
+  if (isTRUE(display.nomad.progress)) {
+    .crs_progress_note(
+      .crs_plot_bootstrap_stage_label(
+        stage = "Preparing plot bootstrap",
+        target_label = progress.target
+      )
+    )
+    progress <- .crs_plot_stage_progress_begin(
+      total = boot.num,
+      label = .crs_plot_bootstrap_stage_label(
+        stage = "Plot bootstrap",
+        target_label = progress.target
+      )
+    )
+    on.exit(.crs_plot_progress_end(progress), add = TRUE)
+  }
 
   for (b in seq_len(boot.num)) {
     idx <- sample.int(n, size = n, replace = TRUE)
@@ -1223,6 +1248,7 @@ summary.crs <- function(object,
     if (!is.null(object$xlevels)) fit.b$xlevels <- object$xlevels
     pred.b <- predict(fit.b, newdata = newdata, deriv = deriv)
     boot.mat[b,] <- if (deriv > 0) attr(pred.b, "deriv.mat")[,deriv.index] else as.numeric(pred.b)
+    progress <- .crs_plot_progress_tick(progress, done = b, force = (b == 1L))
   }
   list(center = center, boot.mat = boot.mat)
 }
@@ -1269,11 +1295,10 @@ plot.crs <- function(x,
     enabled = display.nomad.progress,
     surface = "plot"
   )
+  on.exit(.crs_progress_status_clear(progress.status), add = TRUE)
   set_status <- function(msg = NULL) {
-    .crs_progress_status_clear(progress.status)
-    if (!is.null(msg)) {
-      .crs_progress_status_update(progress.status, msg)
-    }
+    if (is.null(msg)) return(.crs_progress_status_clear(progress.status))
+    .crs_progress_status_update(progress.status, msg)
   }
   set_status()
 
@@ -1433,6 +1458,15 @@ plot.crs <- function(x,
 
         ## Compute the predicted values.
 
+        set_status(.crs_plot_bootstrap_stage_label(
+          stage = "Evaluating plot surface",
+          target_label = .crs_plot_regression_bootstrap_target_label(
+            object = object,
+            slice.index = i,
+            gradients = FALSE
+          )
+        ))
+
         if(!object$kernel) {
 
           tmp <- preditFactorSpline(x=x,
@@ -1488,12 +1522,24 @@ plot.crs <- function(x,
 
         } else {
           if (plot.errors.method == "bootstrap") {
+            target.label <- .crs_plot_regression_bootstrap_target_label(
+              object = object,
+              slice.index = i,
+              gradients = FALSE
+            )
+            set_status()
             boot <- .crs.bootstrap.matrix(object = object,
                                          newdata = newdata,
                                          deriv = 0,
                                          deriv.index = i,
                                          boot.num = plot.errors.boot.num,
-                                         display.warnings = display.warnings)
+                                         display.warnings = display.warnings,
+                                         display.nomad.progress = display.nomad.progress,
+                                         progress.target = target.label)
+            set_status(.crs_plot_bootstrap_stage_label(
+              stage = sprintf("Constructing bootstrap %s bands", plot.errors.type),
+              target_label = target.label
+            ))
             if (plot.errors.type == "all") {
               all.bounds <- .crs.bootstrap.bounds(boot$boot.mat, plot.errors.alpha, "all", boot$center)
               mg[[i]] <- data.frame(newdata[,i], boot$center,
@@ -1772,6 +1818,15 @@ plot.crs <- function(x,
 
         ## Compute the predicted values.
 
+        set_status(.crs_plot_bootstrap_stage_label(
+          stage = "Evaluating plot surface",
+          target_label = .crs_plot_regression_bootstrap_target_label(
+            object = object,
+            slice.index = i,
+            gradients = TRUE
+          )
+        ))
+
         if(!object$kernel) {
 
           if(!is.factor(newdata[,i])) {
@@ -1900,12 +1955,24 @@ plot.crs <- function(x,
 
         } else {
           if (plot.errors.method == "bootstrap" && !is.factor(newdata[,i])) {
+            target.label <- .crs_plot_regression_bootstrap_target_label(
+              object = object,
+              slice.index = i,
+              gradients = TRUE
+            )
+            set_status()
             boot <- .crs.bootstrap.matrix(object = object,
                                          newdata = newdata,
                                          deriv = deriv,
                                          deriv.index = i,
                                          boot.num = plot.errors.boot.num,
-                                         display.warnings = display.warnings)
+                                         display.warnings = display.warnings,
+                                         display.nomad.progress = display.nomad.progress,
+                                         progress.target = target.label)
+            set_status(.crs_plot_bootstrap_stage_label(
+              stage = sprintf("Constructing bootstrap %s bands", plot.errors.type),
+              target_label = target.label
+            ))
             if (plot.errors.type == "all") {
               all.bounds <- .crs.bootstrap.bounds(boot$boot.mat, plot.errors.alpha, "all", boot$center)
               rg[[i]] <- data.frame(newdata[,i], boot$center,

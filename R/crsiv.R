@@ -176,21 +176,64 @@ crsiv.default <- function(y,
     return(sum((CZ %*% phi - r)^2)/alpha)
   }
 
-  progress.status <- .crs_progress_status_begin(
-    enabled = display.nomad.progress,
-    surface = "solver"
+  progress.state <- .crs_progress_iv_initialize_state(
+    .crs_progress_begin(
+      label = .crs_progress_iv_title(),
+      domain = "general",
+      surface = "iv_solve"
+    )
   )
-  set_status <- function(msg = NULL) {
-    .crs_progress_status_clear(progress.status)
-    if (!is.null(msg)) {
-      .crs_progress_status_update(progress.status, msg)
-    }
-  }
+  on.exit({
+    progress.state <<- .crs_progress_end(progress.state)
+  }, add = TRUE)
 
   ## Basic error checking
 
   start.from <- match.arg(start.from)
   if(!is.logical(stop.on.increase)) stop("stop.on.increase must be logical (TRUE/FALSE)")
+
+  iv_set_stage <- function(label, iteration = NULL) {
+    if (!is.null(label)) {
+      label <- as.character(label)[1L]
+      if (is.na(label) || !nzchar(label)) {
+        label <- NULL
+      }
+    }
+
+    if (!is.null(iteration)) {
+      iteration <- suppressWarnings(as.integer(iteration)[1L])
+      if (is.na(iteration) || iteration < 1L) {
+        iteration <- NULL
+      }
+    }
+
+    progress.state$iv_object_label <<- label
+    progress.state$iv_iteration <<- iteration
+    progress.state <<- .crs_progress_step_at(
+      state = progress.state,
+      now = .crs_progress_now(),
+      done = iteration,
+      force = TRUE
+    )
+
+    invisible(NULL)
+  }
+
+  iv_start_label <- function() {
+    if (identical(start.from, "Eyz")) "E[y|z]" else "E[E[y|w]|z]"
+  }
+
+  iv_residual_stage_label <- function(smooth.residuals) {
+    if (smooth.residuals) "E[y-phi(z)|w]" else "E[phi(z)|w]"
+  }
+
+  iv_adjoint_stage_label <- function(smooth.residuals) {
+    if (smooth.residuals) {
+      "E[E[y-phi(z)|w]|z]"
+    } else {
+      "E[E[y|w]-E[phi(z)|w]|z]"
+    }
+  }
 
   if(missing(y)) stop("You must provide y")
   if(missing(z)) stop("You must provide z")
@@ -276,7 +319,7 @@ crsiv.default <- function(y,
 
     ## First we conduct the regression spline estimator of y on w
 
-    set_status("Computing weights and optimal smoothing for E(y|w)...")
+    iv_set_stage("E[y|w]")
     .crs_set_messages(crs.messages, FALSE)
     model<-crs(formula.yw,opts=opts,data=traindata,display.nomad.progress=display.nomad.progress,display.warnings=display.warnings,...)
     .crs_set_messages(crs.messages, TRUE)
@@ -297,12 +340,7 @@ crsiv.default <- function(y,
 
     ## Next, we conduct the regression spline of E(y|w) on z
 
-    set_status()
-    if(is.null(x)) {
-      set_status("Computing weights and optimal smoothing for E(E(y|w)|z)...")
-    } else {
-      set_status("Computing weights and optimal smoothing for E(E(y|w)|z,x)...")
-    }
+    iv_set_stage("E[E[y|w]|z]")
     .crs_set_messages(crs.messages, FALSE)
     model <- crs(formula.Eywz,opts=opts,data=traindata,display.nomad.progress=display.nomad.progress,display.warnings=display.warnings,...)
     .crs_set_messages(crs.messages, TRUE)
@@ -320,19 +358,14 @@ crsiv.default <- function(y,
     ## \phi^\alpha = (\alpha I+CzCw)^{-1}Cr x r
 
     if(is.null(alpha)) {
-      set_status("Numerically solving for alpha...")
+      iv_set_stage("alpha")
       alpha <- optimize(ittik, c(alpha.min,alpha.max), tol = alpha.tol, CYCZ = KYWZ %*% KYW, Cr.r = E.E.y.w.z, r = E.y.w, CZ = KYW)$minimum
     }
 
     ## Finally, we conduct regularized Tikhonov regression using this
     ## optimal alpha to get a first stage estimate of phi
 
-    set_status()
-    if(is.null(x)) {
-      set_status("Computing initial phi(z) estimate...")
-    } else {
-      set_status("Computing initial phi(z,x) estimate...")
-    }
+    iv_set_stage("phi(z)")
     phi <- as.vector(tikh(alpha, CZ = KYW, CY = KYWZ, Cr.r = E.E.y.w.z))
 
     ## KYWZ and KZWS no longer used, save memory
@@ -341,12 +374,7 @@ crsiv.default <- function(y,
 
     ## Conduct kernel regression of phi(z) on w
 
-    set_status()
-    if(is.null(x)) {
-      set_status("Computing optimal smoothing and weights for E(phi(z)|w)...")
-    } else {
-      set_status("Computing optimal smoothing and weights for E(phi(z,x)|w)...")
-    }
+    iv_set_stage("E[phi(z)|w]")
     .crs_set_messages(crs.messages, FALSE)
     model <- crs(formula.phiw,opts=opts,data=traindata,display.nomad.progress=display.nomad.progress,display.warnings=display.warnings,...)
     .crs_set_messages(crs.messages, TRUE)
@@ -356,12 +384,7 @@ crsiv.default <- function(y,
 
     ## Conduct kernel regression of E(phi(z)|w) on z
 
-    set_status()
-    if(is.null(x)) {
-      set_status("Computing optimal smoothing and weights for E(E(phi(z)|w)|z)...")
-    } else {
-      set_status("Computing optimal smoothing and weights for E(E(phi(z,x)|w)|z,x)...")
-    }
+    iv_set_stage("E[E[phi(z)|w]|z]")
     .crs_set_messages(crs.messages, FALSE)
     model <- crs(formula.Ephiwz,opts=opts,data=traindata,display.nomad.progress=display.nomad.progress,display.warnings=display.warnings,...)
     .crs_set_messages(crs.messages, TRUE)
@@ -373,22 +396,17 @@ crsiv.default <- function(y,
     ## optimal alpha for the non-iterated scheme.
 
     if(is.null(alpha)) {
-      set_status("Iterating and computing the numerical solution for alpha...")
+      iv_set_stage("alpha")
       alpha <- optimize(ittik,c(alpha.min,alpha.max), tol = alpha.tol, CYCZ = KPHIWZ %*% KPHIW, Cr.r = E.E.y.w.z, r = E.y.w, CZ = KPHIW)$minimum
     }
 
     ## Finally, we conduct regularized Tikhonov regression using this
     ## optimal alpha.
 
-    set_status()
-    if(is.null(x)) {
-      set_status("Computing final phi(z) estimate...")
-    } else {
-      set_status("Computing final phi(z,x) estimate...")
-    }
+    iv_set_stage("phi(z)")
     phi <- as.vector(tikh(alpha, CZ = KPHIW, CY = KPHIWZ, Cr.r = E.E.y.w.z))
 
-    set_status()
+    iv_set_stage(NULL)
 
     if(display.warnings) {
       if((alpha-alpha.min)/alpha.min < 0.01) warning(paste(" Tikhonov parameter alpha (",formatC(alpha,digits=4,format="f"),") is close to the search minimum (",alpha.min,")",sep=""))
@@ -458,7 +476,7 @@ crsiv.default <- function(y,
 
     ## Compute E(Y|w) for the stopping rule
 
-    set_status("Computing optimal smoothing and E(Y|w) for the stopping rule...")
+    iv_set_stage("E[y|w]")
 
     .crs_set_messages(crs.messages, FALSE)
     model.E.y.w <- crs(formula.yw,opts=opts,data=traindata,display.nomad.progress=display.nomad.progress,display.warnings=display.warnings,...)
@@ -476,12 +494,7 @@ crsiv.default <- function(y,
     E.y.w <- if(is.eval.train) fitted(model.E.y.w) else predict(model.E.y.w,newdata=evaldata,...)
     .crs_set_messages(crs.messages, TRUE)
 
-    set_status()
-    if(is.null(x)) {
-      set_status("Computing optimal smoothing and phi(z) for iteration 1...")
-    } else {
-      set_status("Computing optimal smoothing and phi(z,x) for iteration 1...")
-    }
+    iv_set_stage(iv_start_label())
 
     ## Initial value taken from E(E(Y|w)|z) or E(Y|z) or overridden
     ## and passed in, formulae all operate on phi. phi.0.NULL flag set
@@ -513,12 +526,7 @@ crsiv.default <- function(y,
 
     .crs_set_messages(crs.messages, TRUE)
 
-    set_status()
-    if(is.null(x)) {
-      set_status("Computing optimal smoothing for E(Y-phi(z)|w) for iteration 1...")
-    } else {
-      set_status("Computing optimal smoothing  for E(Y-phi(z,x)|w) for iteration 1...")
-    }
+    iv_set_stage(iv_residual_stage_label(smooth.residuals), iteration = 1L)
     .crs_set_messages(crs.messages, FALSE)
     if(smooth.residuals) {
       traindata$phi <- phi
@@ -536,6 +544,7 @@ crsiv.default <- function(y,
       residw <- if(is.eval.train) fitted(model.residw) else predict(model.residw,newdata=evaldata,...)
       traindata$residw <- residw
 
+      iv_set_stage(iv_adjoint_stage_label(smooth.residuals), iteration = 1L)
       model.predict.residw.z <- fit.crs(formula = formula.residwz,
                                         data = traindata,
                                         dots = dots.preloop)
@@ -569,6 +578,7 @@ crsiv.default <- function(y,
                 (if(is.eval.train) fitted(model.E.phi.w) else predict(model.E.phi.w,newdata=evaldata,...))
       traindata$residw <- residw
 
+      iv_set_stage(iv_adjoint_stage_label(smooth.residuals), iteration = 1L)
       model.predict.residw.z <- fit.crs(formula = formula.residwz,
                                         data = traindata,
                                         dots = dots.preloop)
@@ -608,12 +618,7 @@ crsiv.default <- function(y,
     convergence <- "ITERATE_MAX"
     if (iterate.max > 1L) for (j in seq.int(2L, iterate.max)) {
 
-      set_status()
-      if(is.null(x)) {
-        set_status(paste("Computing optimal smoothing and phi(z) for iteration ", j,"...",sep=""))
-      } else {
-        set_status(paste("Computing optimal smoothing and phi(z,x) for iteration ", j,"...",sep=""))
-      }
+      iv_set_stage(iv_residual_stage_label(smooth.residuals), iteration = j)
 
       .crs_set_messages(crs.messages, FALSE)
       if(smooth.residuals) {
@@ -636,6 +641,7 @@ crsiv.default <- function(y,
         residw <- if(is.eval.train) fitted(model.residw) else predict(model.residw,newdata=evaldata,...)
         traindata$residw <- residw
 
+        iv_set_stage(iv_adjoint_stage_label(smooth.residuals), iteration = j)
         model.predict.residw.z <- fit.crs(formula = formula.residwz,
                                           data = traindata,
                                           dots = dots.loop,
@@ -671,6 +677,7 @@ crsiv.default <- function(y,
                   (if(is.eval.train) fitted(model.E.phi.w) else predict(model.E.phi.w,newdata=evaldata,...))
         traindata$residw <- residw
 
+        iv_set_stage(iv_adjoint_stage_label(smooth.residuals), iteration = j)
         model.predict.residw.z <- fit.crs(formula = formula.residwz,
                                           data = traindata,
                                           dots = dots.loop,
@@ -790,7 +797,7 @@ crsiv.default <- function(y,
 
     class(model) <- c("crsiv", "crs")
 
-    set_status()
+    iv_set_stage(NULL)
 
     .crsiv_warn_iterate_max(display.warnings, j, iterate.max)
 

@@ -336,6 +336,7 @@ npglpreg.default <- function(tydat=NULL,
                              leave.one.out=FALSE,
                              mpi=FALSE,
                              okertype=c("liracine","wangvanryzin"),
+                             verbose=FALSE,
                              ukertype=c("liracine","aitchisonaitken"),
                              ...) {
 
@@ -369,6 +370,7 @@ npglpreg.default <- function(tydat=NULL,
                    display.warnings=display.warnings,
                    Bernstein=Bernstein,
                    mpi=mpi,
+                   verbose=verbose,
                    ...)
 
   est$cv.shrink <- cv.shrink
@@ -424,6 +426,7 @@ npglpreg.default <- function(tydat=NULL,
                               display.warnings=display.warnings,
                               Bernstein=Bernstein,
                               mpi=mpi,
+                              verbose=verbose,
                               ...)
 
         gradient.categorical.mat[,i] <- est$fitted.values - est.base$fitted.values
@@ -669,6 +672,7 @@ npglpreg.formula <- function(formula,
                              txdat=NULL,
                              tydat=NULL,
                              ukertype=c("liracine","aitchisonaitken"),
+                             verbose=FALSE,
                              ...) {
 
   ptm.start <- proc.time()
@@ -781,6 +785,7 @@ npglpreg.formula <- function(formula,
                                                      Bernstein=Bernstein,
                                                      mpi=mpi,
                                                      display.nomad.progress=display.nomad.progress,
+                                                     verbose=verbose,
                                                      ...)
     } else {
       model.cv <-glpcvNOMAD(ydat=tydat,
@@ -819,6 +824,7 @@ npglpreg.formula <- function(formula,
                              Bernstein=Bernstein,
                              mpi=mpi,
                              display.nomad.progress=display.nomad.progress,
+                             verbose=verbose,
                              ...)
 
       bwtype <- "fixed"
@@ -860,6 +866,7 @@ npglpreg.formula <- function(formula,
                           Bernstein=Bernstein,
                           mpi=mpi,
                           display.nomad.progress=display.nomad.progress,
+                          verbose=verbose,
                           ...)
 
       if(model$fv < model.cv$fv) {
@@ -903,6 +910,7 @@ npglpreg.formula <- function(formula,
                           Bernstein=Bernstein,
                           mpi=mpi,
                           display.nomad.progress=display.nomad.progress,
+                          verbose=verbose,
                           ...)
       if(model$fv < model.cv$fv) {
         model.cv <- model
@@ -943,6 +951,7 @@ npglpreg.formula <- function(formula,
                            display.warnings=display.warnings,
                            Bernstein=Bernstein,
                            mpi=mpi,
+                           verbose=verbose,
                            ...)
 
   est$call <- match.call()
@@ -977,6 +986,7 @@ glpregEst <- function(tydat=NULL,
                       leave.one.out=FALSE,
                       mpi=FALSE,
                       okertype=c("liracine","wangvanryzin"),
+                      verbose=FALSE,
                       ukertype=c("liracine","aitchisonaitken"),
                       ...) {
 
@@ -1039,6 +1049,11 @@ glpregEst <- function(tydat=NULL,
   on.exit(.crs_progress_status_clear(progress.status), add = TRUE)
   status_warning <- function(msg) {
     if (display.warnings) {
+      .crs_progress_status_update(progress.status, msg)
+    }
+  }
+  status_verbose_warning <- function(msg) {
+    if (display.warnings && verbose) {
       .crs_progress_status_update(progress.status, msg)
     }
   }
@@ -1240,7 +1255,7 @@ glpregEst <- function(tydat=NULL,
                    return(c(ridge.state$ridge.lc[i], rep(0, nc-1)))
                  }
                  ridge.state$doridge[i] <- TRUE
-                 status_warning(paste("Warning: ridging required for inversion at obs. ", i, ", ridge = ",formatC(ridge.state$ridge[i],digits=4,format="f"),sep=""))
+                 status_verbose_warning(paste("Warning: ridging required for inversion at obs. ", i, ", ridge = ",formatC(ridge.state$ridge[i],digits=4,format="f"),sep=""))
                  return(rep(cv.maxPenalty,nc))
                })
     }
@@ -1331,6 +1346,7 @@ minimand.cv.ls <- function(bws=NULL,
                            progress.status=NULL,
                            ...,
                            mpi=FALSE,
+                           verbose=FALSE,
                            smooth.penalty=TRUE,
                            penalty.scale=1000,
                            penalty.growth.rate=2) {
@@ -1377,6 +1393,11 @@ minimand.cv.ls <- function(bws=NULL,
   }
   status_update <- function(msg) {
     .crs_progress_status_update(progress.status, msg)
+  }
+  status_verbose_warning <- function(msg) {
+    if (display.warnings && verbose) {
+      status_update(msg)
+    }
   }
   status_fv <- function(value) {
     if (display.nomad.progress) {
@@ -1593,7 +1614,7 @@ minimand.cv.ls <- function(bws=NULL,
             mean.loo[i] <- cv.maxPenalty
           } else {
             doridge[i] <- TRUE
-            if(display.warnings) status_update(paste("Warning: ridging required for inversion at obs. ", i, ", ridge = ",formatC(ridge[i],digits=4,format="f"),sep=""))
+            status_verbose_warning(paste("Warning: ridging required for inversion at obs. ", i, ", ridge = ",formatC(ridge[i],digits=4,format="f"),sep=""))
           }
         } else {
           mean.loo[i] <- (1-ridge[i])*val + ridge.lc[i]
@@ -1659,6 +1680,7 @@ minimand.cv.aic <- function(bws=NULL,
                             progress.status=NULL,
                             ...,
                             mpi=FALSE,
+                            verbose=FALSE,
                             smooth.penalty=TRUE,
                             penalty.scale=1000,
                             penalty.growth.rate=2) {
@@ -1691,6 +1713,11 @@ minimand.cv.aic <- function(bws=NULL,
   }
   status_update <- function(msg) {
     .crs_progress_status_update(progress.status, msg)
+  }
+  status_verbose_warning <- function(msg) {
+    if (display.warnings && verbose) {
+      status_update(msg)
+    }
   }
   status_fv <- function(value) {
     if (display.nomad.progress) {
@@ -1916,7 +1943,7 @@ minimand.cv.aic <- function(bws=NULL,
             ghat[i] <- cv.maxPenalty
           } else {
             doridge[i] <- TRUE
-            if(display.warnings) status_update(paste("Warning: ridging required for inversion at obs. ", i, ", ridge = ",formatC(ridge[i],digits=4,format="f"),sep=""))
+            status_verbose_warning(paste("Warning: ridging required for inversion at obs. ", i, ", ridge = ",formatC(ridge[i],digits=4,format="f"),sep=""))
           }
         } else {
           ghat[i] <- (1-ridge[i])*res$val + ridge.lc[i]
@@ -2037,6 +2064,7 @@ glpcvNOMAD <- function(ydat=NULL,
                        restart.from.min=FALSE,
                        opts=list(),
                        display.nomad.progress=TRUE,
+                       verbose=FALSE,
                        ...) {
 
   ## Functions which, if defined outside, cause R warnings currently
@@ -2074,6 +2102,7 @@ glpcvNOMAD <- function(ydat=NULL,
     bw.switch <- params$bw.switch
     bandwidth.scale.categorical=params$bandwidth.scale.categorical
     progress.status <- params$progress.status
+    verbose <- params$verbose
 
     bw.gamma <- input[seq_len(num.bw)]
     if(cv=="degree-bandwidth") {
@@ -2117,6 +2146,7 @@ glpcvNOMAD <- function(ydat=NULL,
                              bandwidth.scale.categorical=bandwidth.scale.categorical,
                              progress.status=progress.status,
                              mpi=params$mpi,
+                             verbose=verbose,
                              ...)
       emitted.fv <- isTRUE(display.nomad.progress)
     } else if(all(bw.gamma >= bw.switch)) {
@@ -2149,6 +2179,7 @@ glpcvNOMAD <- function(ydat=NULL,
                              bandwidth.scale.categorical=bandwidth.scale.categorical,
                              progress.status=progress.status,
                              mpi=params$mpi,
+                             verbose=verbose,
                              ...)
       emitted.fv <- isTRUE(display.nomad.progress)
     }
@@ -2186,6 +2217,7 @@ glpcvNOMAD <- function(ydat=NULL,
     bw.switch <- params$bw.switch
     bandwidth.scale.categorical=params$bandwidth.scale.categorical
     progress.status <- params$progress.status
+    verbose <- params$verbose
 
     bw.gamma <- input[seq_len(num.bw)]
     if(cv=="degree-bandwidth") {
@@ -2229,6 +2261,7 @@ glpcvNOMAD <- function(ydat=NULL,
                               bandwidth.scale.categorical=bandwidth.scale.categorical,
                               progress.status=progress.status,
                               mpi=params$mpi,
+                              verbose=verbose,
                               ...)
       emitted.fv <- isTRUE(display.nomad.progress)
     } else if(all(bw.gamma >= bw.switch)) {
@@ -2261,6 +2294,7 @@ glpcvNOMAD <- function(ydat=NULL,
                               bandwidth.scale.categorical=bandwidth.scale.categorical,
                               progress.status=progress.status,
                               mpi=params$mpi,
+                              verbose=verbose,
                               ...)
       emitted.fv <- isTRUE(display.nomad.progress)
     }
@@ -2485,6 +2519,7 @@ glpcvNOMAD <- function(ydat=NULL,
   params$bw.switch <- bw.switch
   params$bandwidth.scale.categorical=bandwidth.scale.categorical
   params$mpi <- mpi
+  params$verbose <- verbose
 
   ## Multistarting
 
@@ -2819,6 +2854,8 @@ compute.bootstrap.errors <- function(tydat,
                                      gradient.categorical.index=NULL,
                                      Bernstein=TRUE,
                                      display.warnings=TRUE,
+                                     display.nomad.progress=TRUE,
+                                     progress.target=NULL,
                                      ...){
 
   plot.errors.type <- match.arg(plot.errors.type)
@@ -2832,6 +2869,7 @@ compute.bootstrap.errors <- function(tydat,
   }
 
   boot.err <- matrix(data = NA, nrow = neval, ncol = 2)
+  progress <- NULL
 
   ## Conduct simple iid residual bootstrap
 
@@ -2851,6 +2889,7 @@ compute.bootstrap.errors <- function(tydat,
                          gradient.categorical.index=gradient.categorical.index,
                          Bernstein=Bernstein,
                          display.warnings=display.warnings,
+                         display.nomad.progress=FALSE,
                          ...)
     if(boot.object=="fitted") {
       return(est.boot$fitted.values)
@@ -2865,22 +2904,62 @@ compute.bootstrap.errors <- function(tydat,
 
   est <- npglpreg(tydat=tydat,
                   txdat=txdat,
+                  exdat=exdat,
                   bws=bws,
                   degree=degree,
                   ckertype=ckertype,
                   ckerorder=ckerorder,
-                  ukertype=ukertype,
-                  okertype=okertype,
-                  bwtype=bwtype,
-                  Bernstein=Bernstein,
-                  display.warnings=display.warnings,
-                  ...)
+                ukertype=ukertype,
+                okertype=okertype,
+                bwtype=bwtype,
+                Bernstein=Bernstein,
+                display.warnings=display.warnings,
+                display.nomad.progress=FALSE,
+                ...)
 
   model.fitted <- est$fitted.values
+  if (isTRUE(display.nomad.progress)) {
+    .crs_progress_note(
+      .crs_plot_bootstrap_stage_label(
+        stage = "Preparing plot bootstrap",
+        target_label = progress.target
+      )
+    )
+    progress <- .crs_plot_stage_progress_begin(
+      total = plot.errors.boot.num,
+      label = .crs_plot_bootstrap_stage_label(
+        stage = "Plot bootstrap",
+        target_label = progress.target
+      )
+    )
+    on.exit(.crs_plot_progress_end(progress), add = TRUE)
+  }
 
-  boot.out <- boot(data = model.fitted,
-                   statistic = boot.func.mean,
-                   R = plot.errors.boot.num)
+  boot.t <- matrix(NA_real_, nrow = plot.errors.boot.num, ncol = neval)
+  for (b in seq_len(plot.errors.boot.num)) {
+    idx <- sample.int(length(model.fitted), size = length(model.fitted), replace = TRUE)
+    boot.t[b, ] <- as.numeric(boot.func.mean(model.fitted, idx))
+    progress <- .crs_plot_progress_tick(progress, done = b, force = (b == 1L))
+  }
+
+  boot.center <- if(boot.object=="fitted") {
+    est$fitted.values
+  } else if(boot.object=="gradient") {
+    est$gradient
+  } else {
+    est$gradient.categorical.mat[,gradient.categorical.index]
+  }
+
+  boot.out <- list(t0 = as.numeric(boot.center), t = boot.t)
+
+  if (isTRUE(display.nomad.progress)) {
+    .crs_progress_note(
+      .crs_plot_bootstrap_stage_label(
+        stage = sprintf("Constructing bootstrap %s bands", plot.errors.type),
+        target_label = progress.target
+      )
+    )
+  }
 
   boot.all.err <- NULL
   if (plot.errors.type == "all") {
@@ -2936,11 +3015,10 @@ plot.npglpreg <- function(x,
     enabled = display.nomad.progress,
     surface = "plot"
   )
+  on.exit(.crs_progress_status_clear(progress.status), add = TRUE)
   set_status <- function(msg = NULL) {
-    .crs_progress_status_clear(progress.status)
-    if (!is.null(msg)) {
-      .crs_progress_status_update(progress.status, msg)
-    }
+    if (is.null(msg)) return(.crs_progress_status_clear(progress.status))
+    .crs_progress_status_update(progress.status, msg)
   }
   set_status("Working...")
 
@@ -2977,6 +3055,15 @@ plot.npglpreg <- function(x,
 
         names(exdat) <- object$xnames
 
+        set_status(.crs_plot_bootstrap_stage_label(
+          stage = "Evaluating plot surface",
+          target_label = .crs_plot_glp_bootstrap_target_label(
+            object = object,
+            slice.index = i,
+            gradients = FALSE
+          )
+        ))
+
         est <- npglpreg.default(tydat=tydat,
                                 txdat=txdat,
                                 exdat=exdat,
@@ -2999,8 +3086,12 @@ plot.npglpreg <- function(x,
           names(mg[[i]]) <- c(names(exdat)[i],"mean")
 
         } else {
-
-          set_status(paste("Conducting ",plot.errors.boot.num," bootstrap resamples for predictor ",i,"...",sep=""))
+          target.label <- .crs_plot_glp_bootstrap_target_label(
+            object = object,
+            slice.index = i,
+            gradients = FALSE
+          )
+          set_status()
 
           ci.out <- compute.bootstrap.errors(tydat=tydat,
                                              txdat=txdat,
@@ -3016,7 +3107,13 @@ plot.npglpreg <- function(x,
                                              plot.errors.boot.num=plot.errors.boot.num,
                                              plot.errors.type=plot.errors.type,
                                              plot.errors.alpha=plot.errors.alpha,
+                                             display.nomad.progress=display.nomad.progress,
+                                             progress.target=target.label,
                                              display.warnings=display.warnings)
+          set_status(.crs_plot_bootstrap_stage_label(
+            stage = sprintf("Constructing bootstrap %s bands", plot.errors.type),
+            target_label = target.label
+          ))
           if (plot.errors.type == "all") {
             mg[[i]] <- data.frame(
               exdat[,i],
@@ -3217,6 +3314,15 @@ plot.npglpreg <- function(x,
 
       names(newdata) <- object$xnames
 
+      set_status(.crs_plot_bootstrap_stage_label(
+        stage = "Evaluating plot surface",
+        target_label = .crs_plot_glp_bootstrap_target_label(
+          object = object,
+          slice.index = i,
+          gradients = TRUE
+        )
+      ))
+
       est <- npglpreg.default(tydat=tydat,
                               txdat=txdat,
                               exdat=newdata,
@@ -3244,8 +3350,12 @@ plot.npglpreg <- function(x,
         names(rg[[i]]) <- c(names(newdata)[i],"deriv")
 
       } else {
-
-        set_status(paste("Conducting ",plot.errors.boot.num," bootstrap resamples for predictor ",i,"...",sep=""))
+        target.label <- .crs_plot_glp_bootstrap_target_label(
+          object = object,
+          slice.index = i,
+          gradients = TRUE
+        )
+        set_status()
 
         if(!is.factor(object$x[,i])) {
           ci.out <- compute.bootstrap.errors(tydat=tydat,
@@ -3262,7 +3372,9 @@ plot.npglpreg <- function(x,
                                              plot.errors.boot.num=plot.errors.boot.num,
                                              plot.errors.type=plot.errors.type,
                                              plot.errors.alpha=plot.errors.alpha,
-                                             gradient.vec=gradient.vec)
+                                             gradient.vec=gradient.vec,
+                                             display.nomad.progress=display.nomad.progress,
+                                             progress.target=target.label)
         } else {
           ci.out <- compute.bootstrap.errors(tydat=tydat,
                                              txdat=txdat,
@@ -3279,8 +3391,15 @@ plot.npglpreg <- function(x,
                                              plot.errors.type=plot.errors.type,
                                              plot.errors.alpha=plot.errors.alpha,
                                              gradient.categorical=TRUE,
-                                             gradient.categorical.index=i.categorical)
+                                             gradient.categorical.index=i.categorical,
+                                             display.nomad.progress=display.nomad.progress,
+                                             progress.target=target.label)
         }
+
+        set_status(.crs_plot_bootstrap_stage_label(
+          stage = sprintf("Constructing bootstrap %s bands", plot.errors.type),
+          target_label = target.label
+        ))
 
         if (plot.errors.type == "all") {
           rg[[i]] <- data.frame(

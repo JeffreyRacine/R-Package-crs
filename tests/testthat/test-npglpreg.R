@@ -113,3 +113,110 @@ test_that("npglpreg categorical predictors work", {
   fit <- predict(model, newdata=newdata)
   expect_equal(length(fit), 1)
 })
+
+test_that("npglpreg ridging diagnostics honor verbose", {
+  set.seed(1)
+  n <- 30
+  x <- rep(seq(0, 1, length.out = 5), each = 6)
+  y <- sin(2 * pi * x) + rnorm(n, sd = 0.05)
+  dat <- data.frame(y = y, x = x)
+
+  quiet <- capture_crs_progress_shadow_trace(
+    suppressWarnings(
+      npglpreg(
+        y ~ x,
+        data = dat,
+        cv = "bandwidth",
+        degree = 4,
+        nmulti = 1,
+        max.bb.eval = 20,
+        display.nomad.progress = TRUE,
+        display.warnings = TRUE,
+        verbose = FALSE
+      )
+    ),
+    force_renderer = "legacy",
+    interactive = TRUE
+  )
+
+  verbose <- capture_crs_progress_shadow_trace(
+    suppressWarnings(
+      npglpreg(
+        y ~ x,
+        data = dat,
+        cv = "bandwidth",
+        degree = 4,
+        nmulti = 1,
+        max.bb.eval = 20,
+        display.nomad.progress = TRUE,
+        display.warnings = TRUE,
+        verbose = TRUE
+      )
+    ),
+    force_renderer = "legacy",
+    interactive = TRUE
+  )
+
+  quiet_lines <- vapply(quiet$trace, `[[`, character(1L), "line")
+  verbose_lines <- vapply(verbose$trace, `[[`, character(1L), "line")
+
+  expect_s3_class(quiet$value, "npglpreg")
+  expect_s3_class(verbose$value, "npglpreg")
+  expect_false(any(grepl("ridging required for inversion", quiet_lines, fixed = TRUE)))
+  expect_true(any(grepl("ridging required for inversion", verbose_lines, fixed = TRUE)))
+})
+
+test_that("plot.npglpreg bootstrap progress stays visible", {
+  test_time_values <- function(values) {
+    i <- 0L
+    force(values)
+    function() {
+      i <<- min(i + 1L, length(values))
+      values[[i]]
+    }
+  }
+  set.seed(9)
+  old_opts <- options(
+    crs.progress.start.grace.known.sec = 0,
+    crs.progress.interval.known.sec = 0
+  )
+  on.exit(options(old_opts), add = TRUE)
+  n <- 40
+  x1 <- runif(n)
+  x2 <- runif(n)
+  y <- sin(2 * pi * x1) + x2 + rnorm(n, sd = 0.1)
+  dat <- data.frame(y = y, x1 = x1, x2 = x2)
+
+  model <- npglpreg(
+    y ~ x1 + x2,
+    data = dat,
+    cv = "none",
+    bws = c(0.2, 0.2),
+    degree = c(1, 1),
+    display.warnings = FALSE,
+    display.nomad.progress = FALSE
+  )
+
+  traced <- capture_crs_progress_shadow_trace(
+    suppressWarnings(
+      plot(
+        model,
+        mean = TRUE,
+        ci = TRUE,
+        plot.errors.boot.num = 3,
+        plot.behavior = "data",
+        num.eval = 8,
+        display.warnings = FALSE,
+        display.nomad.progress = TRUE
+      )
+    ),
+    force_renderer = "legacy",
+    now = test_time_values(seq(0, 20, by = 0.25)),
+    interactive = TRUE
+  )
+
+  lines <- vapply(traced$trace, `[[`, character(1L), "line")
+  expect_true(any(grepl("Plot bootstrap", lines, fixed = TRUE)))
+  expect_true(any(grepl("3/3", lines, fixed = TRUE)))
+  expect_type(traced$value, "list")
+})

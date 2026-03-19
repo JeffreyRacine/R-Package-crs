@@ -171,6 +171,390 @@
   "legacy"
 }
 
+.crs_progress_iv_enhanced_state <- function(state) {
+  isTRUE(state$iv_progress_common)
+}
+
+.crs_progress_iv_title <- function() {
+  "IV regression"
+}
+
+.crs_progress_iv_initialize_state <- function(state) {
+  state$iv_progress_common <- TRUE
+  state$iv_object_label <- NULL
+  state$iv_iteration <- NULL
+  state$start_note <- sprintf(
+    "%s %s...",
+    state$pkg_prefix,
+    .crs_progress_iv_title()
+  )
+  state
+}
+
+.crs_progress_iv_format_line <- function(state, now = .crs_progress_now()) {
+  elapsed <- max(0, now - state$started)
+  fields <- character()
+
+  if (!is.null(state$iv_object_label) && nzchar(state$iv_object_label)) {
+    fields <- c(fields, state$iv_object_label)
+  }
+
+  if (!is.null(state$iv_iteration)) {
+    fields <- c(fields, sprintf("iteration %s", format(state$iv_iteration)))
+  }
+
+  fields <- c(fields, sprintf("elapsed %ss", .crs_progress_fmt_num(elapsed)))
+
+  sprintf(
+    "%s %s (%s)",
+    state$pkg_prefix,
+    .crs_progress_iv_title(),
+    paste(fields, collapse = ", ")
+  )
+}
+
+.crs_progress_show_now <- function(state,
+                                   done = state$last_done,
+                                   detail = state$last_emitted_detail) {
+  if (is.null(state)) {
+    return(NULL)
+  }
+
+  state$last_emit <- -Inf
+  .crs_progress_step_at(
+    state = state,
+    now = .crs_progress_now(),
+    done = done,
+    detail = detail,
+    force = TRUE
+  )
+}
+
+.crs_plot_progress_enabled <- function() {
+  isTRUE(getOption("crs.messages", TRUE)) &&
+    isTRUE(getOption("crs.plot.progress", TRUE)) &&
+    isTRUE(.crs_progress_is_interactive())
+}
+
+.crs_plot_progress_interval_sec <- function() {
+  .crs_progress_interval_sec(known_total = FALSE, domain = "plot")
+}
+
+.crs_plot_progress_start_grace_sec <- function() {
+  .crs_progress_start_grace_sec(known_total = TRUE, domain = "plot")
+}
+
+.crs_plot_progress_max_intermediate <- function() {
+  val <- suppressWarnings(as.integer(getOption("crs.plot.progress.max.intermediate", 3L))[1L])
+  if (is.na(val) || val < 0L) {
+    val <- 3L
+  }
+  val
+}
+
+.crs_plot_progress_chunk_cap <- function(total) {
+  total <- as.integer(total)
+  if (is.na(total) || total < 1L) {
+    return(1L)
+  }
+
+  max_intermediate <- .crs_plot_progress_max_intermediate()
+  if (is.na(max_intermediate) || max_intermediate < 1L) {
+    return(total)
+  }
+
+  max(1L, as.integer(ceiling(total / (max_intermediate + 1L))))
+}
+
+.crs_plot_progress_warmup_max_reps <- function() {
+  val <- suppressWarnings(as.integer(getOption("crs.plot.progress.warmup.max.reps", 16L))[1L])
+  if (is.na(val) || val < 1L) {
+    val <- 16L
+  }
+  val
+}
+
+.crs_plot_progress_warmup_chunk <- function(n,
+                                            B,
+                                            chunk.size,
+                                            progress_enabled = .crs_plot_progress_enabled()) {
+  n <- as.integer(n)[1L]
+  B <- as.integer(B)[1L]
+  chunk.size <- as.integer(chunk.size)[1L]
+  if (is.na(n) || n < 1L || is.na(B) || B < 1L || is.na(chunk.size) || chunk.size < 1L) {
+    return(1L)
+  }
+  if (!isTRUE(progress_enabled)) {
+    return(min(B, chunk.size))
+  }
+
+  warmup.bytes <- 4 * 1024 * 1024
+  warmup.chunk <- as.integer(floor(warmup.bytes / (8 * n)))
+  if (!is.finite(warmup.chunk) || is.na(warmup.chunk) || warmup.chunk < 1L) {
+    warmup.chunk <- 1L
+  }
+  warmup.chunk <- min(warmup.chunk, .crs_plot_progress_warmup_max_reps())
+
+  min(B, chunk.size, warmup.chunk)
+}
+
+.crs_plot_progress_chunk_controller <- function(chunk.size, progress = NULL) {
+  chunk.size <- as.integer(chunk.size)[1L]
+  if (is.na(chunk.size) || chunk.size < 1L) {
+    chunk.size <- 1L
+  }
+
+  target.sec <- if (!is.null(progress)) {
+    suppressWarnings(as.numeric(progress$throttle_sec)[1L])
+  } else {
+    NA_real_
+  }
+
+  list(
+    chunk.size = chunk.size,
+    adaptive = isTRUE(.crs_plot_progress_enabled()) &&
+      !is.null(progress) &&
+      is.finite(target.sec) &&
+      !is.na(target.sec) &&
+      target.sec > 0,
+    target.sec = target.sec
+  )
+}
+
+.crs_plot_progress_chunk_observe <- function(controller, bsz, elapsed.sec) {
+  if (is.null(controller) || !isTRUE(controller$adaptive)) {
+    return(controller)
+  }
+
+  bsz <- as.integer(bsz)[1L]
+  elapsed.sec <- suppressWarnings(as.numeric(elapsed.sec)[1L])
+  target.sec <- suppressWarnings(as.numeric(controller$target.sec)[1L])
+  if (is.na(bsz) || bsz < 1L || !is.finite(elapsed.sec) || is.na(elapsed.sec) || elapsed.sec <= 0) {
+    return(controller)
+  }
+  if (!is.finite(target.sec) || is.na(target.sec) || target.sec <= 0) {
+    return(controller)
+  }
+
+  suggested <- as.integer(round(bsz * target.sec / elapsed.sec))
+  lower <- max(1L, as.integer(floor(bsz / 4L)))
+  upper <- max(lower, as.integer(ceiling(bsz * 4L)))
+  if (is.na(suggested) || suggested < 1L) {
+    suggested <- lower
+  }
+
+  controller$chunk.size <- min(upper, max(lower, suggested))
+  controller
+}
+
+.crs_plot_progress_checkpoints <- function(total) {
+  total <- as.integer(total)
+  max_intermediate <- .crs_plot_progress_max_intermediate()
+  if (is.na(total) || total < 2L || max_intermediate < 1L) {
+    return(integer())
+  }
+
+  checkpoints <- unique(as.integer(ceiling(total * seq_len(max_intermediate) / (max_intermediate + 1L))))
+  checkpoints[checkpoints >= 1L & checkpoints < total]
+}
+
+.crs_plot_progress_begin <- function(total, label) {
+  total <- as.integer(total)
+  if (is.na(total) || total < 1L || !.crs_plot_progress_enabled()) {
+    return(NULL)
+  }
+
+  label <- as.character(label)[1L]
+  state <- .crs_progress_begin(label = label, total = total, domain = "plot", surface = "plot")
+  state$enabled <- isTRUE(.crs_plot_progress_enabled())
+  state$throttle_sec <- .crs_plot_progress_interval_sec()
+  state$last_emit <- state$started - state$throttle_sec
+  state$start_note_grace_sec <- .crs_plot_progress_start_grace_sec()
+  state$start_note_consumes_throttle <- TRUE
+  state$checkpoints <- .crs_plot_progress_checkpoints(total = total)
+  state$next_checkpoint_idx <- 1L
+  state
+}
+
+.crs_plot_stage_progress_begin <- function(total, label) {
+  state <- .crs_plot_progress_begin(total = total, label = label)
+  if (is.null(state)) {
+    return(NULL)
+  }
+
+  .crs_progress_show_now(state = state, done = 0L)
+}
+
+.crs_plot_progress_tick <- function(state, done, detail = NULL, force = FALSE) {
+  if (is.null(state)) {
+    return(NULL)
+  }
+
+  done <- as.integer(done)
+  if (is.na(done)) {
+    done <- 0L
+  }
+  done <- max(0L, min(state$total, done))
+  state$last_done <- done
+
+  now <- .crs_progress_now()
+  state <- .crs_progress_maybe_emit_start_note(state = state, now = now)
+  emit_now <- isTRUE(force)
+
+  if (!isTRUE(force)) {
+    checkpoints <- state$checkpoints
+    next_idx <- state$next_checkpoint_idx
+    reached_checkpoint <- FALSE
+    if (length(checkpoints) && !is.na(next_idx) && next_idx <= length(checkpoints)) {
+      next_checkpoint <- checkpoints[[next_idx]]
+      if (done >= next_checkpoint) {
+        reached <- max(which(checkpoints <= done))
+        state$next_checkpoint_idx <- as.integer(reached + 1L)
+        reached_checkpoint <- TRUE
+      }
+    }
+
+    emitted_done <- if (is.null(state$last_emitted_done)) 0L else as.integer(state$last_emitted_done)
+    advanced <- isTRUE(done > emitted_done)
+    time_ready <- isTRUE(advanced) &&
+      !isTRUE(state$start_note_pending) &&
+      ((now - state$last_emit) >= state$throttle_sec)
+
+    if (!isTRUE(reached_checkpoint) && !isTRUE(time_ready)) {
+      return(state)
+    }
+
+    emit_now <- isTRUE(reached_checkpoint) || isTRUE(time_ready)
+  }
+
+  .crs_progress_step_at(
+    state = state,
+    now = now,
+    done = done,
+    detail = detail,
+    force = emit_now
+  )
+}
+
+.crs_plot_progress_end <- function(state, detail = NULL) {
+  if (is.null(state)) {
+    return(invisible(NULL))
+  }
+
+  .crs_progress_end(state = state, detail = detail)
+  invisible(NULL)
+}
+
+.crs_plot_bootstrap_stage_label <- function(stage,
+                                            method_label = NULL,
+                                            target_label = NULL) {
+  stage <- as.character(stage)[1L]
+  method_label <- if (is.null(method_label)) NULL else as.character(method_label)[1L]
+  target_label <- if (is.null(target_label)) NULL else as.character(target_label)[1L]
+
+  base <- if (!is.null(method_label) && nzchar(method_label)) {
+    sprintf("%s %s", stage, method_label)
+  } else {
+    stage
+  }
+
+  if (!is.null(target_label) && nzchar(target_label)) {
+    sprintf("%s (%s)", base, target_label)
+  } else {
+    base
+  }
+}
+
+.crs_plot_progress_target_name <- function(name, fallback) {
+  name <- if (is.null(name)) NULL else as.character(name)[1L]
+  if (is.null(name) || !nzchar(name) || is.na(name)) {
+    fallback
+  } else {
+    name
+  }
+}
+
+.crs_plot_progress_target_label <- function(target_name = NULL,
+                                            index = 1L,
+                                            total = 1L) {
+  index <- suppressWarnings(as.integer(index)[1L])
+  total <- suppressWarnings(as.integer(total)[1L])
+  target_name <- if (is.null(target_name)) NULL else as.character(target_name)[1L]
+
+  if (is.na(total) || total < 1L) {
+    total <- 1L
+  }
+  if (is.na(index) || index < 1L) {
+    index <- 1L
+  }
+
+  if (total <= 1L) {
+    return(NULL)
+  }
+
+  if (!is.null(target_name) && nzchar(target_name) && !is.na(target_name)) {
+    sprintf("%s %d/%d", target_name, index, total)
+  } else {
+    sprintf("surf %d/%d", index, total)
+  }
+}
+
+.crs_plot_regression_bootstrap_target_label <- function(object,
+                                                        slice.index,
+                                                        gradients = FALSE) {
+  slice.index <- suppressWarnings(as.integer(slice.index)[1L])
+  total <- suppressWarnings(as.integer(NCOL(object$xz))[1L])
+  if (is.na(total) || total < 1L) {
+    total <- 1L
+  }
+
+  if (is.na(slice.index) || slice.index <= 0L) {
+    return(.crs_plot_progress_target_label(index = 1L, total = total))
+  }
+
+  target_name <- .crs_plot_progress_target_name(
+    if (!is.null(names(object$xz)) && length(names(object$xz)) >= slice.index) names(object$xz)[[slice.index]] else NULL,
+    sprintf("x%d", slice.index)
+  )
+  if (isTRUE(gradients)) {
+    target_name <- sprintf("grad %s", target_name)
+  }
+
+  .crs_plot_progress_target_label(
+    target_name = target_name,
+    index = slice.index,
+    total = total
+  )
+}
+
+.crs_plot_glp_bootstrap_target_label <- function(object,
+                                                 slice.index,
+                                                 gradients = FALSE) {
+  slice.index <- suppressWarnings(as.integer(slice.index)[1L])
+  total <- suppressWarnings(as.integer(NCOL(object$x))[1L])
+  if (is.na(total) || total < 1L) {
+    total <- 1L
+  }
+
+  if (is.na(slice.index) || slice.index <= 0L) {
+    return(.crs_plot_progress_target_label(index = 1L, total = total))
+  }
+
+  target_name <- .crs_plot_progress_target_name(
+    if (!is.null(object$xnames) && length(object$xnames) >= slice.index) object$xnames[[slice.index]] else NULL,
+    sprintf("x%d", slice.index)
+  )
+  if (isTRUE(gradients)) {
+    target_name <- sprintf("grad %s", target_name)
+  }
+
+  .crs_plot_progress_target_label(
+    target_name = target_name,
+    index = slice.index,
+    total = total
+  )
+}
+
 .crs_progress_emit <- function(line) {
   .crs_message(line)
   invisible(NULL)
@@ -496,6 +880,13 @@
 }
 
 .crs_progress_format_line <- function(state, done = NULL, detail = NULL, now = .crs_progress_now()) {
+  if (.crs_progress_iv_enhanced_state(state)) {
+    return(.crs_progress_iv_format_line(
+      state = state,
+      now = now
+    ))
+  }
+
   if (isTRUE(state$known_total)) {
     .crs_progress_format_known_total(
       state = state,
