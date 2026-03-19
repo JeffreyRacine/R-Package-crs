@@ -75,14 +75,9 @@ void NOMAD::SimpleProgressiveBarrier::updateRefBests()
 // This update of the simple progressive barrier keeps only at most two undominated points with h<=hMax
 bool NOMAD::SimpleProgressiveBarrier::updateWithPointsKeep2(const std::vector<NOMAD::SimpleEvalPoint>& evalPointList)
 {
-
-    bool updated = false;
     bool updatedFeas = false;
     bool updatedInf = false;
-    bool updatedInc = false;
     bool updatedIncFeas = false;
-    bool updatedIncInf = false;
-    bool updatedHMax = false;
 
     _xTmpInf.clear();
 
@@ -132,7 +127,6 @@ bool NOMAD::SimpleProgressiveBarrier::updateWithPointsKeep2(const std::vector<NO
 
     //
     // Ready to update hMax and the incumbents (if requested)
-    NOMAD::Double hMaxPrev = _hMax;
     if (!_incumbentsAndHMaxUpToDate)
     {
         NOMAD::SuccessType feasSuccessType = NOMAD::SuccessType::UNSUCCESSFUL;
@@ -203,31 +197,19 @@ bool NOMAD::SimpleProgressiveBarrier::updateWithPointsKeep2(const std::vector<NO
             _xIncInf = _xInf[0];
         }
 
-        if (_hMax < hMaxPrev)
-        {
-            updatedHMax = true;
-        }
-
         _incumbentsAndHMaxUpToDate = true; // For the next update
     }
 
-    updated = updatedFeas || updatedInf;
-    updatedInc = updatedIncFeas || updatedIncInf;
-
-    return updatedInc;
+    return updatedIncFeas;
 }
 
 // Points from evalPointList are already in subproblem dimension.
 bool NOMAD::SimpleProgressiveBarrier::updateWithPoints(const std::vector<NOMAD::SimpleEvalPoint>& evalPointList)
 {
-
-    bool updated = false;
     bool updatedFeas = false;
     bool updatedInf = false;
-    bool updatedInc = false;
     bool updatedIncFeas = false;
     bool updatedIncInf = false;
-    bool updatedHMax = false;
 
     _xTmpInf.clear();
 
@@ -280,7 +262,6 @@ bool NOMAD::SimpleProgressiveBarrier::updateWithPoints(const std::vector<NOMAD::
 
     //
     // Ready to update hMax and the incumbents (if requested)
-    NOMAD::Double hMaxPrev = _hMax;
     if (!_incumbentsAndHMaxUpToDate)
     {
         NOMAD::SuccessType feasSuccessType = NOMAD::SuccessType::UNSUCCESSFUL;
@@ -324,7 +305,7 @@ bool NOMAD::SimpleProgressiveBarrier::updateWithPoints(const std::vector<NOMAD::
         }
         
         // Step three: remove dominated points
-        bool updatedIncInf = removeInfeasibleDominatedPoints();
+        removeInfeasibleDominatedPoints();
         
 //        // TEMP for testing
 //        auto compFunc = [](const NOMAD::SimpleEvalPoint & a, const NOMAD::SimpleEvalPoint & b) { return a.getH() < b.getH(); };
@@ -356,11 +337,6 @@ bool NOMAD::SimpleProgressiveBarrier::updateWithPoints(const std::vector<NOMAD::
         {
             _hMax = _xIncInf.getH();
         }
-        if (_hMax < hMaxPrev)
-        {
-            updatedHMax = true;
-        }
-
         // Step five: remove barrier points with h > hmax and update infeasible incumbent;
         updatedIncInf = setInfeasibleIncumbents();
         
@@ -370,10 +346,7 @@ bool NOMAD::SimpleProgressiveBarrier::updateWithPoints(const std::vector<NOMAD::
         _incumbentsAndHMaxUpToDate = true; // For the next update
     }
 
-    updated = updatedFeas || updatedInf;
-    updatedInc = updatedIncFeas || updatedIncInf;
-
-    return updatedInc;
+    return updatedIncFeas || updatedIncInf;
 }
 
 

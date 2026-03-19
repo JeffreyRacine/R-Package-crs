@@ -109,10 +109,10 @@ public:
                                 bool flagPriorCombineObjsForModel = false)
       : Iteration(parentStep, k) ,
         _refCenter(center),
-        _madsMesh(madsMesh),
-        _useForSortingTrialPoints(false),
         _trialPoints(trialPoints),
-        _flagPriorCombineObjsForModel(flagPriorCombineObjsForModel)
+        _flagPriorCombineObjsForModel(flagPriorCombineObjsForModel),
+        _madsMesh(madsMesh),
+        _useForSortingTrialPoints(false)
     {
         init();
     }

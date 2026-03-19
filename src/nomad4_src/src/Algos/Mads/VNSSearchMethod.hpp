@@ -58,8 +58,6 @@
 class VNSSearchMethod final: public SearchMethodAlgo
 {
 private:
-    OutputLevel _displayLevel;
-
     Point   _refFrameCenter;    ///< The reference frame center for the last call. If frame center same as reference, do not perform search.
         
     double _trigger; ///< Evaluation ratio (vns evals vs all evals) to trigger vns search
@@ -87,7 +85,6 @@ public:
      */
     explicit VNSSearchMethod(const Step* parentStep)
       : SearchMethodAlgo(parentStep),
-        _displayLevel(OutputLevel::LEVEL_NORMAL),
         _useSurrogate(false),
         _vnsAlgo(nullptr)
     {
@@ -114,4 +111,3 @@ private:
 #include "../../nomad_nsend.hpp"
 
 #endif // __NOMAD_4_5_VNSSEARCHMETHOD__
-

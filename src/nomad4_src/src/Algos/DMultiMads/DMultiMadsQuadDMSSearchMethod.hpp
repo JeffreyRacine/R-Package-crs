@@ -86,8 +86,8 @@ public:
      */
     explicit DMultiMadsQuadDMSSearchMethod(const Step* parentStep)
       : SearchMethodAlgo(parentStep),
-        _m(0),
-        _l(0)
+        _l(0),
+        _m(0)
     {
         init();
     }

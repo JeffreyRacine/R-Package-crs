@@ -90,8 +90,8 @@ public:
         _frameCenter(frameCenter),
         _hasSecondPass(hasSecondPass),
         _isFreePoll(isFreePoll),
-        _scaleAndProjectSecondPassDirectionOnMesh(true),
-        _subsetListVG(false)
+        _subsetListVG(false),
+        _scaleAndProjectSecondPassDirectionOnMesh(true)
     {
         init();
     }

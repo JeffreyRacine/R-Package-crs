@@ -101,13 +101,13 @@ public:
      */
     explicit SimplePoll(const Step* parentStep, const std::shared_ptr<SGTELIB::Surrogate> & model, const NOMAD::BBOutputTypeList & bbot, const singleOutputComputeFType & singleObjCompute)
       : Iteration(parentStep, 0),
+        _bbot(bbot),
         _barrier(nullptr),
         _mesh(nullptr),
         _model(model),
-        _bbot(bbot),
+        _singleObjCompute(singleObjCompute),
         _nbEval(0),
-        _phaseOneSearch(false),
-        _singleObjCompute(singleObjCompute)
+        _phaseOneSearch(false)
     {
         init();
     }
@@ -117,13 +117,13 @@ public:
      */
     explicit SimplePoll(const Step* parentStep, const NOMAD::BBOutputTypeList & bbot, std::function<bool(std::vector<NOMAD::SimpleEvalPoint> &)> eval_x)
       : Iteration(parentStep, 0),
+        _bbot(bbot),
         _barrier(nullptr),
         _mesh(nullptr),
-        _bbot(bbot),
+        _singleObjCompute(NOMAD::defaultEmptySingleOutputCompute),
         _nbEval(0),
         _phaseOneSearch(false),
-        _eval_x(eval_x),
-        _singleObjCompute(NOMAD::defaultEmptySingleOutputCompute)
+        _eval_x(eval_x)
     {
         init();
     }

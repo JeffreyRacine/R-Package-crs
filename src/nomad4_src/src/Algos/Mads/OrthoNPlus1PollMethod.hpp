@@ -73,8 +73,8 @@ public:
                                      const EvalPointPtr frameCenter,
                                    bool flagUseQuadOpt)
       : PollMethodBase(parentStep, frameCenter, true), // true: hasSecondPass
-        _frameCenter(frameCenter),
-        _flagUseQuadOpt(flagUseQuadOpt)
+        _flagUseQuadOpt(flagUseQuadOpt),
+        _frameCenter(frameCenter)
     {
         init();
     }

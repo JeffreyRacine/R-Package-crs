@@ -215,7 +215,6 @@ NOMAD::LMSolverStatus NOMAD::LevenbergMarquardtSolver::solve(SGTELIB::Matrix& x,
         std::printf("\n");
     }
 
-    size_t successiveUnsuccessful = 0;
     double distXLoop = 1e15;
     double backtrackStepSize = 1.0;
     double ared =0, pred = 0;
@@ -374,8 +373,6 @@ NOMAD::LMSolverStatus NOMAD::LevenbergMarquardtSolver::solve(SGTELIB::Matrix& x,
                 Delta = std::min(gamma_2 * Delta, largestDelta); // std::max(d.norm(), delta);
             }
 
-            successiveUnsuccessful = 0;
-
             // Update parameters
             cons = cxp;
             cslack = checkslack;
@@ -397,7 +394,6 @@ NOMAD::LMSolverStatus NOMAD::LevenbergMarquardtSolver::solve(SGTELIB::Matrix& x,
             }
             // Decrease Delta
             Delta = std::max(gamma_1 * std::min(Delta, vxs.norm()), smallestDelta);
-            successiveUnsuccessful += 1;
         }
     }
 
@@ -601,4 +597,3 @@ bool NOMAD::LevenbergMarquardtSolver::checkStartingPointInBounds(const SGTELIB::
 
     return true;
 }
-

@@ -102,6 +102,8 @@ public:
         _hMax = b._hMax;
         _computeType = b._computeType;
     }
+
+    virtual ~BarrierBase() = default;
     
     // Use clone to create a barrier of the same type (for example, ProgressiveBarrier, DiscoMadsBarrier or DMultiMadsBarrier)
     virtual std::shared_ptr<BarrierBase> clone() const = 0;

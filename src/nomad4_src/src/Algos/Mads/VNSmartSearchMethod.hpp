@@ -67,9 +67,6 @@
 class VNSmartAlgoSearchMethod final : public SearchMethodAlgo
 {
 private:
-    
-    OutputLevel _displayLevel;
-
     Point   _refFrameCenter;    ///< The reference frame center for the last call. If frame center same as reference, do not perform search.
     /**
         The algorithm used by the search method.
@@ -91,7 +88,6 @@ public:
      */
     explicit VNSmartAlgoSearchMethod(const Step* parentStep )
     : SearchMethodAlgo(parentStep),
-      _displayLevel(OutputLevel::LEVEL_NORMAL),
       _vnsAlgo(nullptr),
       _stopConsFailures(P_INF_INT)
   {
@@ -117,4 +113,3 @@ private:
 #include "../../nomad_nsend.hpp"
 
 #endif // __NOMAD_4_5_VNSMARTALGOSEARCHMETHOD__
-

@@ -72,8 +72,6 @@ void NOMAD::SimpleMads::init()
 
 bool NOMAD::SimpleMads::runImp()
 {
-    size_t k = 0;   // Iteration number (incremented at start)
-    
     bool pollSuccess = true;
     
     // Termination: 1- Reach max model eval, 2- fail to create trial points on mesh
@@ -82,7 +80,6 @@ bool NOMAD::SimpleMads::runImp()
         _poll.start();
         pollSuccess = _poll.run();
         _poll.end();
-        k++;
     }
 
     return true;

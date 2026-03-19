@@ -31,12 +31,17 @@
 SGTELIB::Surrogate_PRS::Surrogate_PRS ( SGTELIB::TrainingSet & trainingset,
                                         const SGTELIB::Surrogate_Parameters& param) :
   SGTELIB::Surrogate ( trainingset , param ),
+  _preComputeForJacobianAndHessianDone( false),
+  _M_dxj              ( nullptr     ),
+  _alpha_dxj          ( nullptr     ),
+  _M_dxidxj           ( nullptr     ),
+  _alpha_dxidxj       ( nullptr     ),
+  _cond               ( 0.0         ),
   _q                 ( 0           ),
   _M                 ( "M",0,0     ),
   _H                 ( "H",0,0     ),
   _Ai                ( "Ai",0,0    ),
-  _alpha             ( "alpha",0,0 ),
-  _preComputeForJacobianAndHessianDone( false){
+  _alpha             ( "alpha",0,0 ){
   #ifdef SGTELIB_DEBUG
     std::cout << "constructor PRS\n";
   #endif
@@ -1002,12 +1007,10 @@ void SGTELIB::Surrogate_PRS::compute_multiplier(
     // Compute the SVD of the transpose Jacobian
     Jacobian.transpose().SVD_decomposition(error_msg , U, W, V, 1000000000);
  
-    int rank = 0;
     for (int i = 0; i < ncon; i++)
     {
         if (fabs(W[i]) > rank_tol)
         {
-            rank++;
         }
         else
         {
@@ -1040,4 +1043,3 @@ void SGTELIB::Surrogate_PRS::compute_multiplier(
     delete [] V;
     delete [] W;
 }
-

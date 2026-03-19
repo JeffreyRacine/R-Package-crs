@@ -13,5 +13,6 @@ mkcrspkg.sh
 ^NOMAD_.*\.md$
 ^CRS_MODERNIZATION_PLAN\.md$
 ^benchmarks$
+^archive$
 ^src/.*\\.o$
 ^src/.*\\.so$

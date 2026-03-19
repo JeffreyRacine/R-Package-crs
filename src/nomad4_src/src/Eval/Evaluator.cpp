@@ -86,9 +86,9 @@ NOMAD::Evaluator::Evaluator(
                     const NOMAD::EvalType evalType,
                     const NOMAD::EvalXDefined evalXDefined)
   : _evalParams(evalParams),
-    _evalXDefined(evalXDefined),
     _evalType(evalType),
     _bbOutputTypeList(_evalParams->getAttributeValue<NOMAD::BBOutputTypeList>("BB_OUTPUT_TYPE")),
+    _evalXDefined(evalXDefined),
     _bbEvalFormat(_evalParams->getAttributeValue<NOMAD::ArrayOfDouble>("BB_EVAL_FORMAT"))
 {
     init();

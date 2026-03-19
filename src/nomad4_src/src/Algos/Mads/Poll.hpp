@@ -97,7 +97,6 @@ public:
     explicit Poll(const Step* parentStep, bool userCallbackEnabled=false)
       : Step(parentStep),
         IterationUtils(parentStep),
-        _pollMethods(),
         _userPollMethodCallbackEnabled(userCallbackEnabled)
     {
         init();

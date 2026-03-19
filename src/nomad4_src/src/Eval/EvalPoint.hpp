@@ -380,6 +380,9 @@ public:
     bool isEvalOk(EvalType evalType) const;
 
     /// Display with or without format
+    std::string display(const ArrayOfDouble &pointFormat,
+                        const std::string & doubleFormat) const override;
+
     std::string display(const NOMAD::FHComputeTypeS& computeType,
                         const ArrayOfDouble &pointFormat = ArrayOfDouble(),
                         const int &solFormat = NOMAD::DISPLAY_PRECISION_FULL,

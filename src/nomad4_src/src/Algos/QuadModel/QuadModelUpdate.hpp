@@ -85,11 +85,13 @@ public:
                              bool flagPriorCombineObjsForModel = false)
       : Step(parentStep),
         _displayLevel(OutputLevel::LEVEL_INFO),
+        _modelCenter(),
+        _boxSize(),
         _flagUseTrialPointsToDefineBox(false),
         _flagUseScaledModel(false),
-        _scalingDirections(scalingDirections),
+        _flagPriorCombineObjsForModel(flagPriorCombineObjsForModel),
         _trialPoints(trialPoints),
-        _flagPriorCombineObjsForModel(flagPriorCombineObjsForModel)
+        _scalingDirections(scalingDirections)
     {
         init();
     }

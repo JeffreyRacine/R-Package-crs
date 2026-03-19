@@ -137,12 +137,15 @@ public:
       : _trialPoints(),
         _nbEvalPointsThatNeedEval(0),
         _parentStep(parentStep),
-        _trialPointsSuccess(SuccessType::UNDEFINED),
         _iterAncestor(nullptr),
-        _trialPointStats( parentStep ),
-        _fromAlgo(false),
+        _megaIterAncestor(nullptr),
+        _trialPointStats(parentStep),
+        _projectOnMesh(true),
+        _frameCenterUseCache(false),
+        _pointPrecisionFull(),
+        _trialPointsSuccess(SuccessType::UNDEFINED),
         _updateIncumbentsAndHMax(true),
-        _projectOnMesh(true)
+        _fromAlgo(false)
     {
         init();
     }

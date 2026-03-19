@@ -1537,8 +1537,6 @@ double NOMAD::QPSolverOptimize::projected_armijo(
     // const int bA_max = 10; // non-negative integer
     const double t_increase = 5; // > 1
 
-    bool good_grad = false; // true if gradient has been updated.
-
     // Check compatibility dimension
     lencheck(n, Xp);
     lencheck(n, gradientF_kp);
@@ -1575,11 +1573,9 @@ double NOMAD::QPSolverOptimize::projected_armijo(
         armijoCond = fkp <= fk - armijo_tol * tk * std::abs(slope);
 
         nbW ++;
-        good_grad = true;
     }
 
     // Then try to satisfy Armijo's conditions.
-    int nbA = 0;
     armijoCond = fkp <= fk - armijo_tol * tk * std::abs(slope);
     while (!armijoCond && tk > t_small)
     {
@@ -1589,7 +1585,6 @@ double NOMAD::QPSolverOptimize::projected_armijo(
         fkp = getModelObj(Xp, H, g, g0);
 
         armijoCond = fkp <= fk - armijo_tol * tk * fabs(slope);
-        nbA ++;
     }
 
     if (!armijoCond)
@@ -3899,7 +3894,6 @@ size_t NOMAD::QPSolverOptimize::solveLM(
     bool success = (res <= Fx) || (wq.norm() <= tol);
 
     size_t iterInnerLoop = 0;
-    size_t successivUnsuccessful = 0;
     double distXInnerLoop = INF;
     bool failure = false;
     failure = failure || (distXInnerLoop <= tolDistDXInner);
@@ -4018,8 +4012,6 @@ size_t NOMAD::QPSolverOptimize::solveLM(
                 Delta = std::min(gamma_2 * Delta, largestDelta); // std::max(d.norm(), delta);
             }
 
-            successivUnsuccessful = 0;
-
             // Check optimality:
             cons = cxp;
             cslack = checkslack;
@@ -4046,7 +4038,6 @@ size_t NOMAD::QPSolverOptimize::solveLM(
             }
             // Decrease Delta
             Delta = std::max(gamma_1 * std::min(Delta, vxs.norm()), smallestDelta);
-            successivUnsuccessful += 1;
         }
 
         // Check optimality
@@ -5637,7 +5628,6 @@ double NOMAD::QPSolverOptimize::max_step_bounds(
             throw NOMAD::Exception(__FILE__, __LINE__, "Assertion error: Error compatibility lower and upper bound");
         }
 
-        const bool feasible = (X.get(i, 0) >= lvar.get(i, 0)) && (X.get(i, 0) <= uvar.get(i, 0));
     }
 
     double t_max = INF;

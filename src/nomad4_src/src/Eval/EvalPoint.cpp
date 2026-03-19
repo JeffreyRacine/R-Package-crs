@@ -853,6 +853,13 @@ std::string NOMAD::EvalPoint::display(const NOMAD::FHComputeTypeS& computeType,
 
 
 std::string NOMAD::EvalPoint::display(const NOMAD::ArrayOfDouble &pointFormat,
+                                      const std::string &doubleFormat) const
+{
+    return NOMAD::Point::display(pointFormat, doubleFormat);
+}
+
+
+std::string NOMAD::EvalPoint::display(const NOMAD::ArrayOfDouble &pointFormat,
                                       const int &solFormat) const
 {
     return display(defaultFHComputeTypeS, pointFormat, solFormat);

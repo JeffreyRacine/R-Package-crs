@@ -34,6 +34,7 @@ npglpreg(\dots)
          leave.one.out = FALSE,
          mpi = FALSE,
          okertype = c("liracine", "wangvanryzin"),
+         verbose = FALSE,
          ukertype = c("liracine", "aitchisonaitken"),
          \dots)
 
@@ -80,6 +81,7 @@ npglpreg(\dots)
          txdat = NULL,
          tydat = NULL,
          ukertype = c("liracine", "aitchisonaitken"),
+         verbose = FALSE,
          \dots)
 }
 
@@ -212,6 +214,10 @@ for each dimension of the continuous \code{x} in \code{txdat}}
 \item{display.warnings}{ a logical value indicating whether to issue an
   immediate warning message when ill conditioned bases are encountered
   during cross-validation (default \code{display.warnings=TRUE}) }
+
+\item{verbose}{ a logical value indicating whether to emit extra
+  cross-validation diagnostics such as ridging messages when
+  \code{display.warnings=TRUE}. Defaults to \code{FALSE}. }
 
   \item{gradient.categorical}{ a logical value indicating whether
   discrete gradients (i.e. differences in the response from the base

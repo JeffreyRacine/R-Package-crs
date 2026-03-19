@@ -118,14 +118,13 @@ void NOMAD::MegaIteration::endImp()
     if(_stopReasons->checkTerminate())
     {
             // Update of hmax and feasible/infeasible incumbents
-            bool barrierModified = false;
             std::vector<NOMAD::EvalPoint> evalPointList;  // eval point list empty just to call updateWithPoints
             if(_barrier!= nullptr)
             {
-                barrierModified = _barrier->updateWithPoints(
-                                    evalPointList,
-                                    false /* not used by progressive barrier */,
-                                    true /* update incumbents and hmax*/ );
+                _barrier->updateWithPoints(
+                    evalPointList,
+                    false /* not used by progressive barrier */,
+                    true /* update incumbents and hmax*/ );
             }
     }
 

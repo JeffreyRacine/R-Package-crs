@@ -415,10 +415,10 @@ public:
                          NomadUserDataPtr user_data_ptr)
         : NOMAD::Evaluator(evalParams, NOMAD::EvalType::BB),
           _bb_single(bb_single),
+          _data_user_ptr(user_data_ptr),
           _nbInputs(nbInputs),
           _nbOutputs(nbOutputs),
-          _hasSgte(hasSgte),
-          _data_user_ptr(user_data_ptr)
+          _hasSgte(hasSgte)
     {
         if (_hasSgte)
         {
@@ -492,10 +492,10 @@ public:
             : NOMAD::Evaluator(evalParams, NOMAD::EvalType::BB),
               _bb_single(bb_single),
               _bb_block(bb_block),
+              _data_user_ptr(user_data_ptr),
               _nbInputs(nbInputs),
               _nbOutputs(nbOutputs),
-              _hasSgte(hasSgte),
-              _data_user_ptr(user_data_ptr)
+              _hasSgte(hasSgte)
     {
         if (_hasSgte)
         {

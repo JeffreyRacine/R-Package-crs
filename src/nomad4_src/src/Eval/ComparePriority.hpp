@@ -73,6 +73,8 @@ private:
     std::string _name;  ///< Method name, useful for information or debugging
 
 public:
+    virtual ~ComparePriorityMethod() = default;
+
     virtual bool comp(EvalQueuePointPtr& NOMAD_UNUSED(point1), EvalQueuePointPtr& NOMAD_UNUSED(point2)) const
     {
         return false;

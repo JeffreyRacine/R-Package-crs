@@ -272,12 +272,6 @@ bool NOMAD::NMInitializeSimplex::createSimplex()
     dbgInfo2.addMsg(" ---> z0 KEPT in Y ");
     OUTPUT_DEBUG_END
 
-    int count_feasible = 0;
-
-    if ( (*itT).getH(completeComputeType).isDefined()
-        && (*itT).isFeasible(completeComputeType) )
-        count_feasible = 1 ;
-
     itT++;
     int k=1;
     while ( itT != T.end() && ! nmStopReason->checkTerminate() )
@@ -326,8 +320,6 @@ bool NOMAD::NMInitializeSimplex::createSimplex()
             OUTPUT_DEBUG_START
             dbgInfo2.addMsg( " ---> zk KEPT in Y " );
             OUTPUT_DEBUG_END
-            if ( (*itT).isFeasible(completeComputeType) )
-                count_feasible++;
             k++;
             itT++;
         }

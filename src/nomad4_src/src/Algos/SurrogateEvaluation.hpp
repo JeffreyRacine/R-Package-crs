@@ -70,10 +70,10 @@ public:
                                  EvalPointSet & trialPoints,
                                  EvalType evalType = EvalType::SURROGATE)
       : Step(parentStep),
-       _trialPoints(trialPoints),
        _evalType(evalType),
        _quadModelIteration(nullptr),
-       _evaluatorIsReady(false)
+       _evaluatorIsReady(false),
+       _trialPoints(trialPoints)
     {
         init();
     }

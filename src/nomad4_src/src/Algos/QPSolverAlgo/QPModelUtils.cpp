@@ -459,7 +459,7 @@ SGTELIB::Matrix NOMAD::QPModelUtils::getReducedQPModel(const SGTELIB::Matrix& QP
             {
                 const double xj = x.get(j, 0);
                 const double alphaK = QPModel.get(row, k);
-                if (fixedVars[i] & fixedVars[j])
+                if (fixedVars[i] && fixedVars[j])
                 {
                     alpha0Val += xi * xj * alphaK;
                 }

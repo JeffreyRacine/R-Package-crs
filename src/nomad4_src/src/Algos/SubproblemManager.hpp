@@ -72,8 +72,6 @@ private:
 #endif // _OPENMP
 
     DLL_ALGO_API static std::unique_ptr<SubproblemManager> _single; ///< The singleton
-
-    bool updateSubproblemFixedVariable;
     
     /// Constructor
     explicit SubproblemManager()

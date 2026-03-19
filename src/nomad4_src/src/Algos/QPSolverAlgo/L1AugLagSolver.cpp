@@ -1375,13 +1375,11 @@ void NOMAD::L1AugLagSolver::computeMultipliersInfeasibleConstraints(SGTELIB::Mat
     std::string error_msg;
     JActiveT.SVD_decomposition(error_msg, U, W, V, 1000000000);
 
-    int rank = 0;
     constexpr double rank_tol = 1e-15;
     for (int i = 0; i < nbCons; i++)
     {
         if (fabs(W[i]) > rank_tol)
         {
-            rank++;
         } else
         {
             W[i] = 0;

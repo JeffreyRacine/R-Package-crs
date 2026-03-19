@@ -84,8 +84,8 @@ public:
                                  bool flagPriorCombineObjsForModel = false)
       : QuadModelIteration(parentStep, frameCenter, 0, madsMesh, {} /* no trial points */, flagPriorCombineObjsForModel),
         QuadModelIterationUtils(parentStep),
-        _scalingDirections(scalingDirections),
-        _flagPriorCombineObjsForModel(flagPriorCombineObjsForModel)
+        _flagPriorCombineObjsForModel(flagPriorCombineObjsForModel),
+        _scalingDirections(scalingDirections)
     {
         _stopReasons = std::make_shared<AlgoStopReasons<ModelStopType>>();
         _flagUseScaledModel = (_scalingDirections.size() > 0);

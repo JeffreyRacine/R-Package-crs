@@ -79,9 +79,9 @@ public:
      */
     explicit QuadModelIterationUtils(const Step* parentStep)
       : IterationUtils(parentStep),
-        _trainingSet(nullptr),
         _bestXFeas(nullptr),
         _bestXInf(nullptr),
+        _trainingSet(nullptr),
         _model(nullptr)
     {
         init();

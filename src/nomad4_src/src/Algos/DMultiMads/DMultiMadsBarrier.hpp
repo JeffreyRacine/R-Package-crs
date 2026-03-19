@@ -118,13 +118,14 @@ public:
                       bool barrierInitializedFromCache= true,
                       const BBInputTypeList bbInputsType= std::vector<BBInputType>())
       : BarrierBase(evalType, computeType, hMax),
-        _nobj(nbObj), 
         _currentIncumbentFeas(nullptr),
         _currentIncumbentInf(nullptr),
         _currentIncumbentInfMaxH(nullptr),
+        _fixedVariables(fixedVariables),
+        _xFilterInf(),
         _currentIdealFeas(nbObj, NOMAD::INF),
         _currentIdealInf(nbObj, NOMAD::INF),
-        _fixedVariables(fixedVariables),
+        _nobj(nbObj),
         _bbInputsType(bbInputsType),
         _incumbentSelectionParam(incumbentSelectionParam)
     {
