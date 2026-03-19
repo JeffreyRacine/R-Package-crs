@@ -176,7 +176,16 @@ crsiv.default <- function(y,
     return(sum((CZ %*% phi - r)^2)/alpha)
   }
 
-  console <- newLineConsole()
+  progress.status <- .crs_progress_status_begin(
+    enabled = display.nomad.progress,
+    surface = "solver"
+  )
+  set_status <- function(msg = NULL) {
+    .crs_progress_status_clear(progress.status)
+    if (!is.null(msg)) {
+      .crs_progress_status_update(progress.status, msg)
+    }
+  }
 
   ## Basic error checking
 
@@ -267,9 +276,7 @@ crsiv.default <- function(y,
 
     ## First we conduct the regression spline estimator of y on w
 
-    console <- printClear(console)
-    console <- printPop(console)
-    if(display.nomad.progress) console <- printPush("Computing weights and optimal smoothing for E(y|w)...", console)
+    set_status("Computing weights and optimal smoothing for E(y|w)...")
     .crs_set_messages(crs.messages, FALSE)
     model<-crs(formula.yw,opts=opts,data=traindata,display.nomad.progress=display.nomad.progress,display.warnings=display.warnings,...)
     .crs_set_messages(crs.messages, TRUE)
@@ -290,12 +297,11 @@ crsiv.default <- function(y,
 
     ## Next, we conduct the regression spline of E(y|w) on z
 
-    console <- printClear(console)
-    console <- printPop(console)
+    set_status()
     if(is.null(x)) {
-      if(display.nomad.progress) console <- printPush("Computing weights and optimal smoothing for E(E(y|w)|z)...", console)
+      set_status("Computing weights and optimal smoothing for E(E(y|w)|z)...")
     } else {
-      if(display.nomad.progress) console <- printPush("Computing weights and optimal smoothing for E(E(y|w)|z,x)...", console)
+      set_status("Computing weights and optimal smoothing for E(E(y|w)|z,x)...")
     }
     .crs_set_messages(crs.messages, FALSE)
     model <- crs(formula.Eywz,opts=opts,data=traindata,display.nomad.progress=display.nomad.progress,display.warnings=display.warnings,...)
@@ -314,21 +320,18 @@ crsiv.default <- function(y,
     ## \phi^\alpha = (\alpha I+CzCw)^{-1}Cr x r
 
     if(is.null(alpha)) {
-      console <- printClear(console)
-      console <- printPop(console)
-      if(display.nomad.progress) console <- printPush("Numerically solving for alpha...", console)
+      set_status("Numerically solving for alpha...")
       alpha <- optimize(ittik, c(alpha.min,alpha.max), tol = alpha.tol, CYCZ = KYWZ %*% KYW, Cr.r = E.E.y.w.z, r = E.y.w, CZ = KYW)$minimum
     }
 
     ## Finally, we conduct regularized Tikhonov regression using this
     ## optimal alpha to get a first stage estimate of phi
 
-    console <- printClear(console)
-    console <- printPop(console)
+    set_status()
     if(is.null(x)) {
-      if(display.nomad.progress) console <- printPush("Computing initial phi(z) estimate...", console)
+      set_status("Computing initial phi(z) estimate...")
     } else {
-      if(display.nomad.progress) console <- printPush("Computing initial phi(z,x) estimate...", console)
+      set_status("Computing initial phi(z,x) estimate...")
     }
     phi <- as.vector(tikh(alpha, CZ = KYW, CY = KYWZ, Cr.r = E.E.y.w.z))
 
@@ -338,12 +341,11 @@ crsiv.default <- function(y,
 
     ## Conduct kernel regression of phi(z) on w
 
-    console <- printClear(console)
-    console <- printPop(console)
+    set_status()
     if(is.null(x)) {
-      if(display.nomad.progress) console <- printPush("Computing optimal smoothing and weights for E(phi(z)|w)...", console)
+      set_status("Computing optimal smoothing and weights for E(phi(z)|w)...")
     } else {
-      if(display.nomad.progress) console <- printPush("Computing optimal smoothing and weights for E(phi(z,x)|w)...", console)
+      set_status("Computing optimal smoothing and weights for E(phi(z,x)|w)...")
     }
     .crs_set_messages(crs.messages, FALSE)
     model <- crs(formula.phiw,opts=opts,data=traindata,display.nomad.progress=display.nomad.progress,display.warnings=display.warnings,...)
@@ -354,12 +356,11 @@ crsiv.default <- function(y,
 
     ## Conduct kernel regression of E(phi(z)|w) on z
 
-    console <- printClear(console)
-    console <- printPop(console)
+    set_status()
     if(is.null(x)) {
-      if(display.nomad.progress) console <- printPush("Computing optimal smoothing and weights for E(E(phi(z)|w)|z)...", console)
+      set_status("Computing optimal smoothing and weights for E(E(phi(z)|w)|z)...")
     } else {
-      if(display.nomad.progress) console <- printPush("Computing optimal smoothing and weights for E(E(phi(z,x)|w)|z,x)...", console)
+      set_status("Computing optimal smoothing and weights for E(E(phi(z,x)|w)|z,x)...")
     }
     .crs_set_messages(crs.messages, FALSE)
     model <- crs(formula.Ephiwz,opts=opts,data=traindata,display.nomad.progress=display.nomad.progress,display.warnings=display.warnings,...)
@@ -372,26 +373,22 @@ crsiv.default <- function(y,
     ## optimal alpha for the non-iterated scheme.
 
     if(is.null(alpha)) {
-      console <- printClear(console)
-      console <- printPop(console)
-      if(display.nomad.progress) console <- printPush("Iterating and computing the numerical solution for alpha...", console)
+      set_status("Iterating and computing the numerical solution for alpha...")
       alpha <- optimize(ittik,c(alpha.min,alpha.max), tol = alpha.tol, CYCZ = KPHIWZ %*% KPHIW, Cr.r = E.E.y.w.z, r = E.y.w, CZ = KPHIW)$minimum
     }
 
     ## Finally, we conduct regularized Tikhonov regression using this
     ## optimal alpha.
 
-    console <- printClear(console)
-    console <- printPop(console)
+    set_status()
     if(is.null(x)) {
-      if(display.nomad.progress) console <- printPush("Computing final phi(z) estimate...", console)
+      set_status("Computing final phi(z) estimate...")
     } else {
-      if(display.nomad.progress) console <- printPush("Computing final phi(z,x) estimate...", console)
+      set_status("Computing final phi(z,x) estimate...")
     }
     phi <- as.vector(tikh(alpha, CZ = KPHIW, CY = KPHIWZ, Cr.r = E.E.y.w.z))
 
-    console <- printClear(console)
-    console <- printPop(console)
+    set_status()
 
     if(display.warnings) {
       if((alpha-alpha.min)/alpha.min < 0.01) warning(paste(" Tikhonov parameter alpha (",formatC(alpha,digits=4,format="f"),") is close to the search minimum (",alpha.min,")",sep=""))
@@ -461,9 +458,7 @@ crsiv.default <- function(y,
 
     ## Compute E(Y|w) for the stopping rule
 
-    console <- printClear(console)
-    console <- printPop(console)
-    if(display.nomad.progress) console <- printPush(paste("Computing optimal smoothing and E(Y|w) for the stopping rule...",sep=""),console)
+    set_status("Computing optimal smoothing and E(Y|w) for the stopping rule...")
 
     .crs_set_messages(crs.messages, FALSE)
     model.E.y.w <- crs(formula.yw,opts=opts,data=traindata,display.nomad.progress=display.nomad.progress,display.warnings=display.warnings,...)
@@ -481,12 +476,11 @@ crsiv.default <- function(y,
     E.y.w <- if(is.eval.train) fitted(model.E.y.w) else predict(model.E.y.w,newdata=evaldata,...)
     .crs_set_messages(crs.messages, TRUE)
 
-    console <- printClear(console)
-    console <- printPop(console)
+    set_status()
     if(is.null(x)) {
-      if(display.nomad.progress) console <- printPush(paste("Computing optimal smoothing and phi(z) for iteration 1...",sep=""),console)
+      set_status("Computing optimal smoothing and phi(z) for iteration 1...")
     } else {
-      if(display.nomad.progress) console <- printPush(paste("Computing optimal smoothing and phi(z,x) for iteration 1...",sep=""),console)
+      set_status("Computing optimal smoothing and phi(z,x) for iteration 1...")
     }
 
     ## Initial value taken from E(E(Y|w)|z) or E(Y|z) or overridden
@@ -519,12 +513,11 @@ crsiv.default <- function(y,
 
     .crs_set_messages(crs.messages, TRUE)
 
-    console <- printClear(console)
-    console <- printPop(console)
+    set_status()
     if(is.null(x)) {
-      if(display.nomad.progress) console <- printPush(paste("Computing optimal smoothing for E(Y-phi(z)|w) for iteration 1...",sep=""),console)
+      set_status("Computing optimal smoothing for E(Y-phi(z)|w) for iteration 1...")
     } else {
-      if(display.nomad.progress) console <- printPush(paste("Computing optimal smoothing  for E(Y-phi(z,x)|w) for iteration 1...",sep=""),console)
+      set_status("Computing optimal smoothing  for E(Y-phi(z,x)|w) for iteration 1...")
     }
     .crs_set_messages(crs.messages, FALSE)
     if(smooth.residuals) {
@@ -615,12 +608,11 @@ crsiv.default <- function(y,
     convergence <- "ITERATE_MAX"
     if (iterate.max > 1L) for (j in seq.int(2L, iterate.max)) {
 
-      console <- printClear(console)
-      console <- printPop(console)
+      set_status()
       if(is.null(x)) {
-        if(display.nomad.progress) console <- printPush(paste("Computing optimal smoothing and phi(z) for iteration ", j,"...",sep=""),console)
+        set_status(paste("Computing optimal smoothing and phi(z) for iteration ", j,"...",sep=""))
       } else {
-        if(display.nomad.progress) console <- printPush(paste("Computing optimal smoothing and phi(z,x) for iteration ", j,"...",sep=""),console)
+        set_status(paste("Computing optimal smoothing and phi(z,x) for iteration ", j,"...",sep=""))
       }
 
       .crs_set_messages(crs.messages, FALSE)
@@ -798,8 +790,7 @@ crsiv.default <- function(y,
 
     class(model) <- c("crsiv", "crs")
 
-    console <- printClear(console)
-    console <- printPop(console)
+    set_status()
 
     .crsiv_warn_iterate_max(display.warnings, j, iterate.max)
 

@@ -284,9 +284,8 @@ stepCV <-
     nm <- 1
     Terms <- terms(fit)
     if(trace) {
-      cat("Start:  CV=", format(bCV), "\n",
-          cut.string(deparse(as.vector(formula(fit)))), "\n\n", sep='')
-      utils::flush.console()
+      .crs_message("Start: CV=", format(bCV))
+      .crs_message(cut.string(deparse(as.vector(formula(fit)))))
     }
     models[[nm]] <- list(deviance = mydeviance(fit), df.resid = n - edf,
                          change = "", CV = bCV)
@@ -363,9 +362,8 @@ stepCV <-
       edf <- bCV[1L]
       bCV <- bCV[2L]
       if(trace) {
-        cat("\nStep:  CV=", format(bCV), "\n",
-            cut.string(deparse(as.vector(formula(fit)))), "\n\n", sep='')
-        utils::flush.console()
+        .crs_message("Step: CV=", format(bCV))
+        .crs_message(cut.string(deparse(as.vector(formula(fit)))))
       }
       ## add a tolerance as dropping 0-df terms might increase CV slightly
       if(bCV >= CV + 1e-7) break

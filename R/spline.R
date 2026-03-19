@@ -194,8 +194,11 @@ predictKernelSpline <- function(x,
 
   if(!is.null(z)) z <- as.matrix(z)
 
-  console <- newLineConsole()
-  if(display.nomad.progress) console <- printPush("Working...",console = console)
+  progress.status <- .crs_progress_status_begin(
+    enabled = display.nomad.progress,
+    surface = "solver"
+  )
+  .crs_progress_status_update(progress.status, "Working...")
 
   model <- NULL ## Returned if model=FALSE and there exist categorical
   ## predictors
@@ -457,8 +460,7 @@ predictKernelSpline <- function(x,
       rank <- NCOL(model.z.unique$x) ## same for all models
   }
 
-  console <- printClear(console)
-  console <- printPop(console)
+  .crs_progress_status_clear(progress.status)
 
   ## Need to return kernel probability estimates. The kernel function
   ## we use does not sum to one so the probability estimates will not
@@ -816,8 +818,17 @@ preditFactorSpline <- function(x,
   if(!is.null(z)) z <- data.frame(z)
   if(!is.null(zeval)) zeval <- data.frame(zeval)
 
-  console <- newLineConsole()
-  if(display.nomad.progress) console <- printPush("Working...",console = console)
+  progress.status <- .crs_progress_status_begin(
+    enabled = display.nomad.progress,
+    surface = "solver"
+  )
+  set_status <- function(msg = NULL) {
+    .crs_progress_status_clear(progress.status)
+    if (!is.null(msg)) {
+      .crs_progress_status_update(progress.status, msg)
+    }
+  }
+  set_status("Working...")
 
   if(any(K[,1] > 0)||any(I>0)) {
 
@@ -854,8 +865,7 @@ preditFactorSpline <- function(x,
         cv <- mean(residuals(model)^2/(1-hatvalues(model))^2)
       else
         suppressWarnings(cv <- cv.rq(model,tau=tau,weights=weights))
-      console <- printClear(console)
-      if(display.nomad.progress) console <- printPush("Pruning...",console = console)
+      set_status("Pruning...")
       if(basis=="additive" || basis=="glp") {
         if(is.null(tau))
           model.pruned <- stepCV(lm(y~.,data=P.df,weights=weights),
@@ -1015,8 +1025,7 @@ preditFactorSpline <- function(x,
     fit.spline <- cbind(fit.spline, se = se.fit)
   }
 
-  console <- printClear(console)
-  console <- printPop(console)
+  set_status()
 
   if(is.null(tau))
     htt <- hatvalues(model)

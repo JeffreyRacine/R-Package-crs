@@ -561,6 +561,53 @@ ls.ml <- function(x=NULL,
 
   if(missing(x)) stop(" You must provide data")
 
+  progress.env <- new.env(parent = emptyenv())
+  progress.env$enabled <- isTRUE(display.nomad.progress) &&
+    isTRUE(getOption("crs.messages", TRUE))
+  progress.env$count <- 0L
+  progress.env$state <- NULL
+  progress.env$label <- if (isTRUE(NOMAD)) "NOMAD search" else "Logspline search"
+  progress.env$surface <- if (isTRUE(NOMAD)) "nomad" else "solver"
+
+  progress_step <- function(detail = NULL) {
+    if (!isTRUE(progress.env$enabled)) {
+      return(invisible(NULL))
+    }
+
+    progress.env$count <- progress.env$count + 1L
+    if (is.null(progress.env$state)) {
+      progress.env$state <- .crs_progress_begin(
+        progress.env$label,
+        surface = progress.env$surface
+      )
+    }
+    progress.env$state <- .crs_progress_step(
+      progress.env$state,
+      done = progress.env$count,
+      detail = detail
+    )
+    invisible(NULL)
+  }
+
+  progress_note <- function(detail) {
+    if (isTRUE(progress.env$enabled)) {
+      .crs_progress_note(detail)
+    }
+    invisible(NULL)
+  }
+
+  progress_end <- function(detail = NULL) {
+    if (!is.null(progress.env$state)) {
+      .crs_progress_end(progress.env$state, detail = detail)
+      progress.env$state <- NULL
+    }
+    invisible(NULL)
+  }
+
+  on.exit({
+    progress_end()
+  }, add = TRUE)
+
   if(!NOMAD) {
 
     ## We set some initial parameters that are placeholders to get
@@ -587,11 +634,14 @@ ls.ml <- function(x=NULL,
 
       while(s <= segments.max) {
 
-        if(display.nomad.progress && isTRUE(getOption("crs.messages"))) {
-          if(verbose) cat("\n")
-          cat("\r                                                                                                  ")
-          cat("\rOptimizing, degree = ",d,", segments = ",s,", degree.opt = ",d.opt, ", segments.opt = ",s.opt," ",sep="")
-        }
+        progress_step(
+          detail = paste0(
+            "degree=", d,
+            ", segments=", s,
+            ", best degree=", d.opt,
+            ", best segments=", s.opt
+          )
+        )
 
         ## Generate objects that need not be recomputed for a given d
         ## and s
@@ -722,6 +772,7 @@ ls.ml <- function(x=NULL,
       max.attempts <- params$max.attempts
       verbose <- params$verbose
       display.warnings <- params$display.warnings
+      progress.env <- params$progress.env
 
       length.x <- length(x)
       length.xnorm <- length(xnorm)
@@ -789,10 +840,23 @@ ls.ml <- function(x=NULL,
 
       }
 
-      if(display.nomad.progress && isTRUE(getOption("crs.messages"))) {
-        if(verbose) cat("\n")
-        cat("\r                                                                                                  ")
-        cat("\rOptimizing, degree = ",d,", segments = ",s,", log likelihood = ",optim.out$value,sep="")
+      if (isTRUE(progress.env$enabled)) {
+        progress.env$count <- progress.env$count + 1L
+        if (is.null(progress.env$state)) {
+          progress.env$state <- .crs_progress_begin(
+            progress.env$label,
+            surface = progress.env$surface
+          )
+        }
+        progress.env$state <- .crs_progress_step(
+          progress.env$state,
+          done = progress.env$count,
+          detail = paste0(
+            "degree=", d,
+            ", segments=", s,
+            ", log likelihood=", format(optim.out$value)
+          )
+        )
       }
 
       fv <- -optim.out$value
@@ -831,6 +895,9 @@ ls.ml <- function(x=NULL,
     params$max.attempts <- max.attempts
     params$verbose <- verbose
     params$display.warnings <- display.warnings
+    params$progress.env <- progress.env
+
+    progress_note("Calling NOMAD (Nonsmooth Optimization by Mesh Adaptive Direct Search)")
 
     solution <- snomadr(eval.f=eval.f,
                         n=2,## number of variables
@@ -882,6 +949,8 @@ ls.ml <- function(x=NULL,
 
     m.attempts <- 0
 
+    progress_note("Recovering optimal spline coefficients at NOMAD solution")
+
     while(tryCatch(suppressWarnings(optim.out <- optim(par=par.init,
                                                        fn=sum.log.density,
                                                        gr=if(do.gradient){sum.log.density.gradient}else{NULL},
@@ -922,10 +991,17 @@ ls.ml <- function(x=NULL,
     par.opt <- optim.out$par
     value.opt <- optim.out$value
 
+    progress_end(
+      detail = paste0(
+        "best degree=", d.opt,
+        ", best segments=", s.opt,
+        ", log likelihood=", format(value.opt)
+      )
+    )
+
   }
 
   if(isTRUE(getOption("crs.messages"))) {
-    cat("\r                                                                            ")
     if(display.warnings) {
       if(!(degree.min==degree.max) && (d.opt==degree.max)) warning(paste(" optimal degree equals search maximum (", d.opt,"): rerun with larger degree.max",sep=""))
       if(!(segments.min==segments.max) && (s.opt==segments.max)) warning(paste(" optimal segment equals search maximum (", s.opt,"): rerun with larger segments.max",sep=""))

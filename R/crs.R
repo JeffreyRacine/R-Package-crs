@@ -1265,9 +1265,17 @@ plot.crs <- function(x,
 
   object <- x
 
-  console <- newLineConsole()
-  console <- printClear(console)
-  console <- printPop(console)
+  progress.status <- .crs_progress_status_begin(
+    enabled = display.nomad.progress,
+    surface = "plot"
+  )
+  set_status <- function(msg = NULL) {
+    .crs_progress_status_clear(progress.status)
+    if (!is.null(msg)) {
+      .crs_progress_status_update(progress.status, msg)
+    }
+  }
+  set_status()
 
   xq <- double(ncol(object$xz)) + xq
 
@@ -1283,9 +1291,7 @@ plot.crs <- function(x,
 
     ## Residuals versus fitted
 
-    console <- printClear(console)
-    console <- printPop(console)
-    if(display.nomad.progress) console <- printPush("\rWorking...",console = console)
+    set_status("Working...")
 
     plot(fitted(object),
          residuals(object),
@@ -1296,9 +1302,7 @@ plot.crs <- function(x,
 
     ## QQ plot
 
-    console <- printClear(console)
-    console <- printPop(console)
-    if(display.nomad.progress) console <- printPush("\rWorking...",console = console)
+    set_status("Working...")
 
     std.res <- residuals(object)/sqrt(mean(residuals(object)^2))
 
@@ -1309,9 +1313,7 @@ plot.crs <- function(x,
 
     ## Standardized versus fitted
 
-    console <- printClear(console)
-    console <- printPop(console)
-    if(display.nomad.progress) console <- printPush("\rWorking...",console = console)
+    set_status("Working...")
 
     plot(fitted(object),
          sqrt(abs(residuals(object,"pearson"))),
@@ -1328,9 +1330,7 @@ plot.crs <- function(x,
 
     if(!object$kernel) {
 
-      console <- printClear(console)
-      console <- printPop(console)
-      if(display.nomad.progress) console <- printPush("\rWorking...",console = console)
+      set_status("Working...")
 
       sigmasq <- sum(residuals(object)^2)/object$df.residual
       cook <- (residuals(object)^2*object$hatvalues)/(sigmasq*(1-object$hatvalues)^2*object$k)
@@ -1343,8 +1343,7 @@ plot.crs <- function(x,
 
     }
 
-    console <- printClear(console)
-    console <- printPop(console)
+    set_status()
 
   }
 
@@ -1513,8 +1512,7 @@ plot.crs <- function(x,
           }
         }
 
-        console <- printClear(console)
-        console <- printPop(console)
+        set_status()
 
       }
 
@@ -1661,8 +1659,7 @@ plot.crs <- function(x,
     }
 
     if(plot.behavior!="plot") {
-      console <- printClear(console)
-      console <- printPop(console)
+      set_status()
       if(!persp.rgl) par(mfrow=c(1,1))
       return(mg)
     }
@@ -1940,8 +1937,7 @@ plot.crs <- function(x,
 
         }
 
-        console <- printClear(console)
-        console <- printPop(console)
+        set_status()
 
       }
 
@@ -2031,8 +2027,7 @@ plot.crs <- function(x,
       }
 
       if(plot.behavior!="plot") {
-        console <- printClear(console)
-        console <- printPop(console)
+        set_status()
         par(mfrow=c(1,1))
         return(rg)
       }
@@ -2043,8 +2038,7 @@ plot.crs <- function(x,
 
   ## Reset par to 1,1 (can be modified above)
 
-  console <- printClear(console)
-  console <- printPop(console)
+  set_status()
 
 }
 

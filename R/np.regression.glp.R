@@ -1032,9 +1032,16 @@ glpregEst <- function(tydat=NULL,
   ## Check whether it appears that training and evaluation data are
   ## conformable
 
-  console <- newLineConsole()
-  console <- printClear(console)
-  console <- printPop(console)
+  progress.status <- .crs_progress_status_begin(
+    enabled = display.warnings,
+    surface = "solver"
+  )
+  on.exit(.crs_progress_status_clear(progress.status), add = TRUE)
+  status_warning <- function(msg) {
+    if (display.warnings) {
+      .crs_progress_status_update(progress.status, msg)
+    }
+  }
 
   if(ncol(txdat)!=ncol(exdat))
     stop(" Error: training and evaluation data have unequal number of columns\n")
@@ -1196,7 +1203,7 @@ glpregEst <- function(tydat=NULL,
       ## the rest of the sample this may not be the case.
       for(i in seq_len(n.eval)) {
         if(!is.fullrank(tww[,,i])) {
-          if(display.warnings) console <- printPush(paste("\rWarning: is.fullrank required for inversion at obs. ", i," failed      ",sep=""),console = console)
+          status_warning(paste("Warning: is.fullrank required for inversion at obs. ", i," failed",sep=""))
           return(cv.maxPenalty)
         }
       }
@@ -1233,7 +1240,7 @@ glpregEst <- function(tydat=NULL,
                    return(c(ridge.state$ridge.lc[i], rep(0, nc-1)))
                  }
                  ridge.state$doridge[i] <- TRUE
-                 if(display.warnings) console <- printPush(paste("\rWarning: ridging required for inversion at obs. ", i, ", ridge = ",formatC(ridge.state$ridge[i],digits=4,format="f"),"        ",sep=""),console = console)
+                 status_warning(paste("Warning: ridging required for inversion at obs. ", i, ", ridge = ",formatC(ridge.state$ridge[i],digits=4,format="f"),sep=""))
                  return(rep(cv.maxPenalty,nc))
                })
     }
@@ -1321,6 +1328,7 @@ minimand.cv.ls <- function(bws=NULL,
                            display.warnings=TRUE,
                            display.nomad.progress=TRUE,
                            bandwidth.scale.categorical=NULL,
+                           progress.status=NULL,
                            ...,
                            mpi=FALSE,
                            smooth.penalty=TRUE,
@@ -1359,9 +1367,22 @@ minimand.cv.ls <- function(bws=NULL,
     }
   }
 
-  console <- newLineConsole()
-  console <- printClear(console)
-  console <- printPop(console)
+  local.progress.status <- is.null(progress.status)
+  if (local.progress.status) {
+    progress.status <- .crs_progress_status_begin(
+      enabled = display.warnings || display.nomad.progress,
+      surface = "nomad"
+    )
+    on.exit(.crs_progress_status_clear(progress.status), add = TRUE)
+  }
+  status_update <- function(msg) {
+    .crs_progress_status_update(progress.status, msg)
+  }
+  status_fv <- function(value) {
+    if (display.nomad.progress) {
+      status_update(paste("fv = ", format(value), " ", sep = ""))
+    }
+  }
 
   ## IMPROVEMENT 1: Smooth penalty for degrees of freedom issues
   if(!is.null(W)) {
@@ -1374,18 +1395,18 @@ minimand.cv.ls <- function(bws=NULL,
         deficit <- abs(df_remaining) + 1
         if(deficit > 20) {
           ## Completely infeasible
-          if(display.warnings) console <- printPush(paste("\rWarning: severe negative degrees of freedom (deficit=",deficit,")                           ",sep=""),console = console)
+          if(display.warnings) status_update(paste("Warning: severe negative degrees of freedom (deficit=",deficit,")",sep=""))
           return(cv.maxPenalty)
         } else {
           ## Smooth penalty that grows exponentially
           penalty_mult <- exp(deficit / penalty.growth.rate)
           base_cv <- penalty.scale
-          if(display.warnings) console <- printPush(paste("\rWarning: negative degrees of freedom, using smooth penalty                           ",sep=""),console = console)
+          if(display.warnings) status_update("Warning: negative degrees of freedom, using smooth penalty")
           return(base_cv * penalty_mult)
         }
       } else {
         ## Original hard cutoff behavior
-        if(display.warnings) console <- printPush(paste("\rWarning: negative degrees of freedom                           ",sep=""),console = console)
+        if(display.warnings) status_update("Warning: negative degrees of freedom")
         return(cv.maxPenalty)
       }
     }
@@ -1397,16 +1418,16 @@ minimand.cv.ls <- function(bws=NULL,
         qr_W <- qr(W)
         rank_deficit <- ncol(W) - qr_W$rank
         if(rank_deficit > 10) {
-          if(display.warnings) console <- printPush(paste("\rWarning: severe rank deficiency                           ",sep=""),console = console)
+          if(display.warnings) status_update("Warning: severe rank deficiency")
           return(cv.maxPenalty)
         } else {
           penalty_mult <- exp(rank_deficit / penalty.growth.rate)
-          if(display.warnings) console <- printPush(paste("\rWarning: rank deficiency, using smooth penalty                           ",sep=""),console = console)
+          if(display.warnings) status_update("Warning: rank deficiency, using smooth penalty")
           return(penalty.scale * penalty_mult)
         }
       } else {
         ## Original hard cutoff
-        if(display.warnings) console <- printPush(paste("\rWarning: rank deficiency                           ",sep=""),console = console)
+        if(display.warnings) status_update("Warning: rank deficiency")
         return(cv.maxPenalty)
       }
     }
@@ -1472,8 +1493,7 @@ minimand.cv.ls <- function(bws=NULL,
 
     if(!is.finite(fv)) fv <- cv.maxPenalty
 
-    console <- printPush("\r                                                                         ",console = console)
-    if(display.nomad.progress) console <- printPush(paste("\rfv = ",format(fv)," ",sep=""),console = console)
+    status_fv(fv)
 
     return(fv)
 
@@ -1510,17 +1530,17 @@ minimand.cv.ls <- function(bws=NULL,
         if(smooth.penalty) {
           if(n_rank_fail > 0.5 * n) {
             ## Too many failures
-            if(display.warnings) console <- printPush(paste("\rWarning: is.fullrank failed for ",n_rank_fail," obs.      ",sep=""),console = console)
+            if(display.warnings) status_update(paste("Warning: is.fullrank failed for ",n_rank_fail," obs.",sep=""))
             return(cv.maxPenalty)
           } else {
             ## Some failures - smooth penalty
             penalty_mult <- exp(n_rank_fail / n * 10)
-            if(display.warnings) console <- printPush(paste("\rWarning: is.fullrank failed for ",n_rank_fail," obs., using smooth penalty      ",sep=""),console = console)
+            if(display.warnings) status_update(paste("Warning: is.fullrank failed for ",n_rank_fail," obs., using smooth penalty",sep=""))
             return(penalty.scale * penalty_mult)
           }
         } else {
           ## Original behavior - fail on first
-          if(display.warnings) console <- printPush(paste("\rWarning: is.fullrank required for inversion failed      ",sep=""),console = console)
+          if(display.warnings) status_update("Warning: is.fullrank required for inversion failed")
           return(cv.maxPenalty)
         }
       }
@@ -1573,7 +1593,7 @@ minimand.cv.ls <- function(bws=NULL,
             mean.loo[i] <- cv.maxPenalty
           } else {
             doridge[i] <- TRUE
-            if(display.warnings) console <- printPush(paste("\rWarning: ridging required for inversion at obs. ", i, ", ridge = ",formatC(ridge[i],digits=4,format="f"),"        ",sep=""),console = console)
+            if(display.warnings) status_update(paste("Warning: ridging required for inversion at obs. ", i, ", ridge = ",formatC(ridge[i],digits=4,format="f"),sep=""))
           }
         } else {
           mean.loo[i] <- (1-ridge[i])*val + ridge.lc[i]
@@ -1608,8 +1628,7 @@ minimand.cv.ls <- function(bws=NULL,
 
     if(!is.finite(fv)) fv <- cv.maxPenalty
 
-    console <- printPush("\r                                                                         ",console = console)
-    if(display.nomad.progress) console <- printPush(paste("\rfv = ",format(fv)," ",sep=""),console = console)
+    status_fv(fv)
 
     return(fv)
 
@@ -1637,6 +1656,7 @@ minimand.cv.aic <- function(bws=NULL,
                             display.warnings=TRUE,
                             display.nomad.progress=TRUE,
                             bandwidth.scale.categorical=NULL,
+                            progress.status=NULL,
                             ...,
                             mpi=FALSE,
                             smooth.penalty=TRUE,
@@ -1661,9 +1681,22 @@ minimand.cv.aic <- function(bws=NULL,
 
   n <- length(ydat)
 
-  console <- newLineConsole()
-  console <- printClear(console)
-  console <- printPop(console)
+  local.progress.status <- is.null(progress.status)
+  if (local.progress.status) {
+    progress.status <- .crs_progress_status_begin(
+      enabled = display.warnings || display.nomad.progress,
+      surface = "nomad"
+    )
+    on.exit(.crs_progress_status_clear(progress.status), add = TRUE)
+  }
+  status_update <- function(msg) {
+    .crs_progress_status_update(progress.status, msg)
+  }
+  status_fv <- function(value) {
+    if (display.nomad.progress) {
+      status_update(paste("fv = ", format(value), " ", sep = ""))
+    }
+  }
 
   ## IMPROVEMENT 1: Smooth penalty for degrees of freedom and rank issues
   if(!is.null(W)) {
@@ -1674,15 +1707,15 @@ minimand.cv.aic <- function(bws=NULL,
       if(smooth.penalty) {
         deficit <- abs(df_remaining) + 1
         if(deficit > 20) {
-          if(display.warnings) console <- printPush(paste("\rWarning: severe negative degrees of freedom                           ",sep=""),console = console)
+          if(display.warnings) status_update("Warning: severe negative degrees of freedom")
           return(cv.maxPenalty)
         } else {
           penalty_mult <- exp(deficit / penalty.growth.rate)
-          if(display.warnings) console <- printPush(paste("\rWarning: negative degrees of freedom, using smooth penalty                           ",sep=""),console = console)
+          if(display.warnings) status_update("Warning: negative degrees of freedom, using smooth penalty")
           return(penalty.scale * penalty_mult)
         }
       } else {
-        if(display.warnings) console <- printPush(paste("\rWarning: negative degrees of freedom                           ",sep=""),console = console)
+        if(display.warnings) status_update("Warning: negative degrees of freedom")
         return(cv.maxPenalty)
       }
     }
@@ -1692,15 +1725,15 @@ minimand.cv.aic <- function(bws=NULL,
         qr_W <- qr(W)
         rank_deficit <- ncol(W) - qr_W$rank
         if(rank_deficit > 10) {
-          if(display.warnings) console <- printPush(paste("\rWarning: severe rank deficiency                           ",sep=""),console = console)
+          if(display.warnings) status_update("Warning: severe rank deficiency")
           return(cv.maxPenalty)
         } else {
           penalty_mult <- exp(rank_deficit / penalty.growth.rate)
-          if(display.warnings) console <- printPush(paste("\rWarning: rank deficiency, using smooth penalty                           ",sep=""),console = console)
+          if(display.warnings) status_update("Warning: rank deficiency, using smooth penalty")
           return(penalty.scale * penalty_mult)
         }
       } else {
-        if(display.warnings) console <- printPush(paste("\rWarning: rank deficiency                           ",sep=""),console = console)
+        if(display.warnings) status_update("Warning: rank deficiency")
         return(cv.maxPenalty)
       }
     }
@@ -1825,15 +1858,15 @@ minimand.cv.aic <- function(bws=NULL,
       if(n_rank_fail > 0) {
         if(smooth.penalty) {
           if(n_rank_fail > 0.5 * n) {
-            if(display.warnings) console <- printPush(paste("\rWarning: is.fullrank failed for ",n_rank_fail," obs.      ",sep=""),console = console)
+            if(display.warnings) status_update(paste("Warning: is.fullrank failed for ",n_rank_fail," obs.",sep=""))
             return(cv.maxPenalty)
           } else {
             penalty_mult <- exp(n_rank_fail / n * 10)
-            if(display.warnings) console <- printPush(paste("\rWarning: is.fullrank failed for ",n_rank_fail," obs., using smooth penalty      ",sep=""),console = console)
+            if(display.warnings) status_update(paste("Warning: is.fullrank failed for ",n_rank_fail," obs., using smooth penalty",sep=""))
             return(penalty.scale * penalty_mult)
           }
         } else {
-          if(display.warnings) console <- printPush(paste("\rWarning: is.fullrank required for inversion failed      ",sep=""),console = console)
+          if(display.warnings) status_update("Warning: is.fullrank required for inversion failed")
           return(cv.maxPenalty)
         }
       }
@@ -1883,7 +1916,7 @@ minimand.cv.aic <- function(bws=NULL,
             ghat[i] <- cv.maxPenalty
           } else {
             doridge[i] <- TRUE
-            if(display.warnings) console <- printPush(paste("\rWarning: ridging required for inversion at obs. ", i, ", ridge = ",formatC(ridge[i],digits=4,format="f"),"        ",sep=""),console = console)
+            if(display.warnings) status_update(paste("Warning: ridging required for inversion at obs. ", i, ", ridge = ",formatC(ridge[i],digits=4,format="f"),sep=""))
           }
         } else {
           ghat[i] <- (1-ridge[i])*res$val + ridge.lc[i]
@@ -1938,8 +1971,7 @@ minimand.cv.aic <- function(bws=NULL,
 
     if(!is.finite(fv)) fv <- cv.maxPenalty
 
-    console <- printPush("\r                                                                         ",console = console)
-    if(display.nomad.progress) console <- printPush(paste("\rfv = ",format(fv)," ",sep=""),console = console)
+    status_fv(fv)
 
     return(fv)
 
@@ -2041,6 +2073,7 @@ glpcvNOMAD <- function(ydat=NULL,
     Bernstein <- params$Bernstein
     bw.switch <- params$bw.switch
     bandwidth.scale.categorical=params$bandwidth.scale.categorical
+    progress.status <- params$progress.status
 
     bw.gamma <- input[seq_len(num.bw)]
     if(cv=="degree-bandwidth") {
@@ -2057,9 +2090,13 @@ glpcvNOMAD <- function(ydat=NULL,
                degree=degree,
                Bernstein=Bernstein)
 
-    console <- newLineConsole()
-    console <- printClear(console)
-    console <- printPop(console)
+    status_fv <- function(value) {
+      if (display.nomad.progress) {
+        .crs_progress_status_update(progress.status, paste("fv = ", format(value), " ", sep = ""))
+      }
+    }
+
+    emitted.fv <- FALSE
 
     if(all(bw.gamma < bw.switch)) {
       ## No bandwidths hit their upper bounds
@@ -2078,8 +2115,10 @@ glpcvNOMAD <- function(ydat=NULL,
                              display.warnings=display.warnings,
                              display.nomad.progress=display.nomad.progress,
                              bandwidth.scale.categorical=bandwidth.scale.categorical,
+                             progress.status=progress.status,
                              mpi=params$mpi,
                              ...)
+      emitted.fv <- isTRUE(display.nomad.progress)
     } else if(all(bw.gamma >= bw.switch)) {
       ## All bandwidths hit their upper bounds
       if(all(degree==0)) {
@@ -2108,11 +2147,12 @@ glpcvNOMAD <- function(ydat=NULL,
                              display.warnings=display.warnings,
                              display.nomad.progress=display.nomad.progress,
                              bandwidth.scale.categorical=bandwidth.scale.categorical,
+                             progress.status=progress.status,
                              mpi=params$mpi,
                              ...)
+      emitted.fv <- isTRUE(display.nomad.progress)
     }
-    console <- printPush("\r                                                                         ",console = console)
-    if(display.nomad.progress) console <- printPush(paste("\rfv = ",format(lscv)," ",sep=""),console = console)
+    if(!emitted.fv) status_fv(lscv)
     return(lscv)
   }
 
@@ -2145,6 +2185,7 @@ glpcvNOMAD <- function(ydat=NULL,
     Bernstein <- params$Bernstein
     bw.switch <- params$bw.switch
     bandwidth.scale.categorical=params$bandwidth.scale.categorical
+    progress.status <- params$progress.status
 
     bw.gamma <- input[seq_len(num.bw)]
     if(cv=="degree-bandwidth") {
@@ -2161,9 +2202,13 @@ glpcvNOMAD <- function(ydat=NULL,
                degree=degree,
                Bernstein=Bernstein)
 
-    console <- newLineConsole()
-    console <- printClear(console)
-    console <- printPop(console)
+    status_fv <- function(value) {
+      if (display.nomad.progress) {
+        .crs_progress_status_update(progress.status, paste("fv = ", format(value), " ", sep = ""))
+      }
+    }
+
+    emitted.fv <- FALSE
 
     if(all(bw.gamma < bw.switch)) {
       ## No bandwidths hit their upper bounds
@@ -2182,8 +2227,10 @@ glpcvNOMAD <- function(ydat=NULL,
                               display.warnings=display.warnings,
                               display.nomad.progress=display.nomad.progress,
                               bandwidth.scale.categorical=bandwidth.scale.categorical,
+                              progress.status=progress.status,
                               mpi=params$mpi,
                               ...)
+      emitted.fv <- isTRUE(display.nomad.progress)
     } else if(all(bw.gamma >= bw.switch)) {
       ## All bandwidths hit their upper bounds
       if(all(degree==0)) {
@@ -2212,11 +2259,12 @@ glpcvNOMAD <- function(ydat=NULL,
                               display.warnings=display.warnings,
                               display.nomad.progress=display.nomad.progress,
                               bandwidth.scale.categorical=bandwidth.scale.categorical,
+                              progress.status=progress.status,
                               mpi=params$mpi,
                               ...)
+      emitted.fv <- isTRUE(display.nomad.progress)
     }
-    console <- printPush("\r                                                                         ",console = console)
-    if(display.nomad.progress) console <- printPush(paste("\rfv = ",format(aicc)," ",sep=""),console = console)
+    if(!emitted.fv) status_fv(aicc)
     return(aicc)
   }
 
@@ -2454,9 +2502,15 @@ glpcvNOMAD <- function(ydat=NULL,
     }
   }
 
-  console <- newLineConsole()
-  if(display.nomad.progress){
-    if(display.nomad.progress) console <- printPush("\rCalling NOMAD (Nonsmooth Optimization by Mesh Adaptive Direct Search)\n",console = console)
+  progress.status <- .crs_progress_status_begin(
+    enabled = display.nomad.progress || display.warnings,
+    surface = "nomad"
+  )
+  on.exit(.crs_progress_status_clear(progress.status), add = TRUE)
+  params$progress.status <- progress.status
+
+  if(display.nomad.progress) {
+    .crs_progress_note("Calling NOMAD (Nonsmooth Optimization by Mesh Adaptive Direct Search)")
   }
 
   ## Use bandwidth for initial values if provided
@@ -2633,10 +2687,6 @@ glpcvNOMAD <- function(ydat=NULL,
   for(i in seq_len(num.bw)) {
     if(display.warnings && isTRUE(all.equal(bw.opt[i],lb[i]))) warning(paste(" Optimal bandwidth for predictor ",i," equals search lower bound (", formatC(lb[i],digits=3,format="g"),"): rerun with smaller bandwidth.min",sep=""))
   }
-
-  console <- printPush("\r                        ",console = console)
-  console <- printClear(console)
-  console <- printPop(console)
 
   ## Restore seed
 
@@ -2882,10 +2932,17 @@ plot.npglpreg <- function(x,
 
   xq <- double(ncol(txdat)) + xq
 
-  console <- newLineConsole()
-  console <- printClear(console)
-  console <- printPop(console)
-  if(display.nomad.progress) console <- printPush("\rWorking...",console = console)
+  progress.status <- .crs_progress_status_begin(
+    enabled = display.nomad.progress,
+    surface = "plot"
+  )
+  set_status <- function(msg = NULL) {
+    .crs_progress_status_clear(progress.status)
+    if (!is.null(msg)) {
+      .crs_progress_status_update(progress.status, msg)
+    }
+  }
+  set_status("Working...")
 
   ## Mean
 
@@ -2943,9 +3000,7 @@ plot.npglpreg <- function(x,
 
         } else {
 
-          console <- printClear(console)
-          console <- printPop(console)
-          if(display.nomad.progress) console <- printPush(paste("\rConducting ",plot.errors.boot.num," bootstrap resamples for predictor ",i,"...",sep=""),console = console)
+          set_status(paste("Conducting ",plot.errors.boot.num," bootstrap resamples for predictor ",i,"...",sep=""))
 
           ci.out <- compute.bootstrap.errors(tydat=tydat,
                                              txdat=txdat,
@@ -3118,8 +3173,7 @@ plot.npglpreg <- function(x,
     }
 
     if(plot.behavior!="plot") {
-      console <- printClear(console)
-      console <- printPop(console)
+      set_status()
       return(mg)
     }
 
@@ -3191,9 +3245,7 @@ plot.npglpreg <- function(x,
 
       } else {
 
-        console <- printClear(console)
-        console <- printPop(console)
-        if(display.nomad.progress) console <- printPush(paste("\rConducting ",plot.errors.boot.num," bootstrap resamples for predictor ",i,"...",sep=""),console = console)
+        set_status(paste("Conducting ",plot.errors.boot.num," bootstrap resamples for predictor ",i,"...",sep=""))
 
         if(!is.factor(object$x[,i])) {
           ci.out <- compute.bootstrap.errors(tydat=tydat,
@@ -3332,15 +3384,13 @@ plot.npglpreg <- function(x,
     }
 
     if(plot.behavior!="plot") {
-      console <- printClear(console)
-      console <- printPop(console)
+      set_status()
       return(rg)
     }
 
   }
 
-  console <- printClear(console)
-  console <- printPop(console)
+  set_status()
 
   ## Reset par to 1,1 (can be modified above)
 

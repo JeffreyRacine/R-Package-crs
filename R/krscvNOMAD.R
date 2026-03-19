@@ -114,6 +114,18 @@ krscvNOMAD <- function(xz,
     ## both degree and knots. The values used to evaluate the cv
     ## function are passed below.
 
+    progress.env <- new.env(parent = emptyenv())
+    progress.env$emit <- isTRUE(print.output)
+    progress.env$count <- 0L
+    progress.env$state <- NULL
+
+    on.exit({
+      if (!is.null(progress.env$state)) {
+        .crs_progress_end(progress.env$state)
+        progress.env$state <- NULL
+      }
+    }, add = TRUE)
+
     eval.cv <- function(input, params){
 
       complexity <- params$complexity
@@ -255,11 +267,18 @@ krscvNOMAD <- function(xz,
 
       attr(cv, "basis.opt")<-basis.opt
 
-      console <- newLineConsole()
-      console <- printClear(console)
-      console <- printPop(console)
-      console <- printPush("\r                                                ",console = console)
-      if(display.nomad.progress) console <- printPush(paste("\rfv = ",format(cv)," ", sep=""),console = console)
+      progress.env <- params$progress.env
+      if (isTRUE(progress.env$emit)) {
+        progress.env$count <- progress.env$count + 1L
+        if (is.null(progress.env$state)) {
+          progress.env$state <- .crs_progress_begin("NOMAD search", surface = "nomad")
+        }
+        progress.env$state <- .crs_progress_step(
+          progress.env$state,
+          done = progress.env$count,
+          detail = paste0("fv=", format(cv))
+        )
+      }
 
       return(cv)
 
@@ -288,6 +307,7 @@ krscvNOMAD <- function(xz,
     params$weights <- weights
     params$singular.ok <- singular.ok
     params$cv.df.min <- cv.df.min
+    params$progress.env <- progress.env
 
     # initial value
     num.z <- NCOL(z)
@@ -375,6 +395,15 @@ krscvNOMAD <- function(xz,
                       opts=opts,
                       display.nomad.progress=print.output,
                       params=params);
+
+    if (!is.null(progress.env$state)) {
+      progress.env$state <- .crs_progress_end(
+        progress.env$state,
+        detail = paste0("best fv=", format(solution$objective))
+      )
+      progress.env$state <- NULL
+    }
+    progress.env$emit <- FALSE
 
     if(basis == "auto"){
       cv.basis <- eval.cv(solution$solution, params)
@@ -521,9 +550,8 @@ krscvNOMAD <- function(xz,
 
   print.output <- display.nomad.progress
 
-  console <- newLineConsole()
   if(display.nomad.progress){
-    if(display.nomad.progress) console <- printPush("Calling NOMAD (Nonsmooth Optimization by Mesh Adaptive Direct Search)\n",console = console)
+    .crs_progress_note("Calling NOMAD (Nonsmooth Optimization by Mesh Adaptive Direct Search)")
   }
 
   ## solve by NOMAD
@@ -593,9 +621,6 @@ krscvNOMAD <- function(xz,
   ## weights= will fail, so set to machine epsilon in this case
 
   lambda.opt <- pmax(lambda.opt, .Machine$double.eps)
-
-  console <- printClear(console)
-  console <- printPop(console)
 
   ## Set number of segments when degree==0 to 1 (or NA)
 

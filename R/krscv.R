@@ -167,8 +167,8 @@ krscv <- function(xz,
       msg <- paste(tmp.1,tmp.3,tmp.4,sep="")
     }
 
-    console.state$console <- printClear(console.state$console)
-    console.state$console <- printPush(msg,console = console.state$console)
+    .crs_progress_status_clear(progress.status)
+    .crs_progress_status_update(progress.status, msg)
 
     return(cv)
 
@@ -211,9 +211,11 @@ krscv <- function(xz,
 
   if(degree.max < 1 || segments.max < 1 ) stop(" degree.max or segments.max must be greater than or equal to 1")
 
-  console.state <- new.env(parent = emptyenv())
-  console.state$console <- newLineConsole()
-  if(display.nomad.progress) console.state$console <- printPush("Working...",console = console.state$console)
+  progress.status <- .crs_progress_status_begin(
+    enabled = display.nomad.progress,
+    surface = "cv"
+  )
+  .crs_progress_status_update(progress.status, "Working...")
 
   ## Exhaustive evaluation over all combinations of K, search over
   ## lambda for each combination
@@ -652,8 +654,7 @@ krscv <- function(xz,
   segments <- K.opt[.crs_index_block(num.x, num.x)]
   if(!is.null(z)) I.opt <- K.opt[.crs_index_block(2 * num.x, num.z)]
 
-  console.state$console <- printClear(console.state$console)
-  console.state$console <- printPop(console.state$console)
+  .crs_progress_status_clear(progress.status)
 
   ## Set number of segments when degree==0 to 1 (or NA)
   segments[degree==0] <- 1

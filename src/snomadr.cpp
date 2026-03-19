@@ -49,6 +49,105 @@ static std::string trim(const std::string& s) {
   return s.substr(b, e - b);
 }
 
+static std::string to_upper_copy(std::string s) {
+  std::transform(
+    s.begin(),
+    s.end(),
+    s.begin(),
+    [](unsigned char ch) {
+      return static_cast<char>(std::toupper(ch));
+    }
+  );
+  return s;
+}
+
+static std::string option_key_from_line(const std::string& line) {
+  const std::string clean = trim(line);
+  if (clean.empty()) {
+    return std::string();
+  }
+
+  const std::size_t split = clean.find_first_of(" \t");
+  if (split == std::string::npos) {
+    return to_upper_copy(clean);
+  }
+
+  return to_upper_copy(clean.substr(0, split));
+}
+
+static bool is_native_display_option_key(const std::string& key) {
+  const std::string upper = to_upper_copy(trim(key));
+  if (upper.empty()) {
+    return false;
+  }
+
+  return upper == "DISPLAY_DEGREE" ||
+         upper == "DISPLAY_STATS" ||
+         upper == "STATS_FILE" ||
+         upper == "DISPLAY_ALL_EVAL" ||
+         upper == "DISPLAY_UNSUCCESSFUL" ||
+         upper == "DISPLAY_INFEASIBLE" ||
+         upper == "DISPLAY_MAX_STEP_LEVEL" ||
+         upper == "QUAD_MODEL_DISPLAY" ||
+         upper == "SGTELIB_MODEL_DISPLAY";
+}
+
+static bool options_request_native_display(SEXP sopts) {
+  if (Rf_isNull(sopts) || TYPEOF(sopts) != VECSXP) {
+    return false;
+  }
+
+  const int n_groups = Rf_length(sopts);
+  for (int i = 0; i < n_groups; ++i) {
+    SEXP group = VECTOR_ELT(sopts, i);
+    if (Rf_isNull(group) || TYPEOF(group) != VECSXP) {
+      continue;
+    }
+
+    SEXP names = Rf_getAttrib(group, R_NamesSymbol);
+    if (Rf_isNull(names)) {
+      continue;
+    }
+
+    const int n_opts = Rf_length(names);
+    for (int j = 0; j < n_opts; ++j) {
+      if (is_native_display_option_key(CHAR(STRING_ELT(names, j)))) {
+        return true;
+      }
+    }
+  }
+
+  return false;
+}
+
+static bool nomad_opt_file_requests_native_display() {
+  std::ifstream fin("nomad.opt");
+  if (!fin.good()) {
+    return false;
+  }
+
+  std::string line;
+  while (std::getline(fin, line)) {
+    const std::string clean = trim(line);
+    if (clean.empty() || clean[0] == '#') {
+      continue;
+    }
+
+    if (is_native_display_option_key(option_key_from_line(clean))) {
+      return true;
+    }
+  }
+
+  return false;
+}
+
+static void suppress_native_nomad_display(NomadProblem pb) {
+  addNomadValParam(pb, "DISPLAY_DEGREE", 0);
+  addNomadBoolParam(pb, "DISPLAY_ALL_EVAL", false);
+  addNomadBoolParam(pb, "DISPLAY_UNSUCCESSFUL", false);
+  addNomadBoolParam(pb, "DISPLAY_INFEASIBLE", false);
+}
+
 static bool r_eval_single(int nb_inputs,
                           double* x,
                           int nb_outputs,
@@ -695,6 +794,9 @@ static SEXP solve_nomad4(SEXP args, bool use_multi) {
     print_output = (Rf_asLogical(sprint) == TRUE) ? 1 : 0;
   }
 
+  const bool native_display_requested =
+    options_request_native_display(sopts) || nomad_opt_file_requests_native_display();
+
   std::vector<int> bbin(static_cast<std::size_t>(N), 0);
   std::vector<double> lb(static_cast<std::size_t>(N), -std::numeric_limits<double>::infinity());
   std::vector<double> ub(static_cast<std::size_t>(N), std::numeric_limits<double>::infinity());
@@ -741,15 +843,15 @@ static SEXP solve_nomad4(SEXP args, bool use_multi) {
     Rf_error("Failed to set UPPER_BOUND for NOMAD4.");
   }
 
-  // Hide progress when print.output is FALSE.
-  if (!print_output) {
-    addNomadValParam(pb, "DISPLAY_DEGREE", 0);
-    addNomadBoolParam(pb, "DISPLAY_ALL_EVAL", false);
-    addNomadBoolParam(pb, "DISPLAY_UNSUCCESSFUL", false);
-  }
-
   apply_options(pb, sopts, N, bbin, lb, ub);
   apply_nomad_opt_file(pb);
+
+  // By default, keep NOMAD's native stats stream suppressed so the R-side
+  // single-line progress renderer owns the terminal. Explicit display options
+  // in opts/nomad.opt still take precedence.
+  if (!print_output || !native_display_requested) {
+    suppress_native_nomad_display(pb);
+  }
 
   std::vector<double> x0s;
   build_starting_points(sx0, N, nstart, bbin, lb, ub, seed, x0s);

@@ -5,10 +5,17 @@ newLineConsole <- function(parentConsole = NULL){
                      tabLen = 8,
                      lineLen = 0,
                      startCol = 1,
-                     lineMsg = '')
+                     lineMsg = '',
+                     progress = NULL)
 
-  if(!is.null(parentConsole))
+  if(!is.null(parentConsole)) {
     newConsole$startCol <- parentConsole$startCol + parentConsole$lineLen
+    newConsole$progress <- parentConsole$progress
+  }
+
+  if(is.null(newConsole$progress)) {
+    newConsole$progress <- .crs_progress_status_begin(surface = "console")
+  }
   return(newConsole)
 }
 
@@ -57,31 +64,30 @@ printPush <- function(msg, console = stop("no console provided")){
     console$lineList[[console$numLineElements]] <- toMsg(msg = msg, console = console)
     console$lineLen <- console$lineLen + console$lineList[[console$numLineElements]]$len
     console$lineMsg <- paste(console$lineMsg, console$lineList[[console$numLineElements]]$msg, sep = '')
-    cat(console$lineList[[console$numLineElements]]$msg)
-    flush.console()
+    .crs_progress_status_update(console$progress, console$lineMsg)
   }
   return(console)
 }
 
 printPop <- function(console = stop("no console provided")){
   if(console$numLineElements > 0 && isTRUE(getOption("crs.messages"))) {
-    cat(paste(rep('\b',console$lineList[[console$numLineElements]]$len), collapse=''))
-    flush.console()
     console$lineLen <- console$lineLen - console$lineList[[console$numLineElements]]$len
     console$lineMsg <- substr(console$lineMsg, 1, console$lineLen)
     stopifnot(console$lineLen >= 0)
     console$lineList[console$numLineElements] <- NULL
     console$numLineElements <- console$numLineElements - 1
+    if(console$numLineElements > 0 && nzchar(console$lineMsg)) {
+      .crs_progress_status_update(console$progress, console$lineMsg)
+    } else {
+      .crs_progress_status_clear(console$progress)
+    }
   }
   return(console)
 }
 
 printClear <- function(console = stop("no console provided")){
   if(console$numLineElements > 0 && isTRUE(getOption("crs.messages"))){
-    cat(paste(rep('\b', nchar(console$lineMsg)), collapse=''))
-    cat(paste(rep(' ', nchar(console$lineMsg)), collapse=''))
-    cat(paste(rep('\b', nchar(console$lineMsg)), collapse=''))
-    flush.console()
+    .crs_progress_status_clear(console$progress)
     console$lineLen <- 0
     console <- newLineConsole(console)
   }

@@ -100,7 +100,7 @@ frscv <- function(xz,
     ## Degree is first column of K K[,1], segments second column K[,2]
     ## - could create a tmp vector for i/o, or could switch
 
-    console.state$console <- printClear(console.state$console)
+    .crs_progress_status_clear(progress.status)
 
     ## Format function...
     fw.format.2 <- function(input) sapply(input,sprintf,fmt="%#.2f")
@@ -167,15 +167,17 @@ frscv <- function(xz,
       msg <- paste(tmp.1,tmp.3,sep="")
     }
 
-    console.state$console <- printPush(msg,console = console.state$console)
+    .crs_progress_status_update(progress.status, msg)
 
     return(cv)
 
   }
 
-  console.state <- new.env(parent = emptyenv())
-  console.state$console <- newLineConsole()
-  if(display.nomad.progress) console.state$console <- printPush("Working...",console = console.state$console)
+  progress.status <- .crs_progress_status_begin(
+    enabled = display.nomad.progress,
+    surface = "cv"
+  )
+  .crs_progress_status_update(progress.status, "Working...")
 
   ## Take data frame x and parse into factors (z) and numeric (x)
 
@@ -419,8 +421,7 @@ frscv <- function(xz,
 
   if(!is.null(z)) I.opt <- K.opt[.crs_index_block(2 * num.x, num.z)]
 
-  console.state$console <- printClear(console.state$console)
-  console.state$console <- printPop(console.state$console)
+  .crs_progress_status_clear(progress.status)
 
   ## Set number of segments when degree==0 to 1 (or NA)
 

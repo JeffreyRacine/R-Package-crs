@@ -80,7 +80,16 @@ crsivderiv.default <- function(y,
                    nmulti = nmulti)
   }
 
-  console <- newLineConsole()
+  progress.status <- .crs_progress_status_begin(
+    enabled = display.nomad.progress,
+    surface = "solver"
+  )
+  set_status <- function(msg = NULL) {
+    .crs_progress_status_clear(progress.status)
+    if (!is.null(msg)) {
+      .crs_progress_status_update(progress.status, msg)
+    }
+  }
 
   ## Basic error checking
 
@@ -155,12 +164,11 @@ crsivderiv.default <- function(y,
 
   ## We begin the iteration computing phi.prime.0
 
-  console <- printClear(console)
-  console <- printPop(console)
+  set_status()
   if(is.null(x)) {
-    if(display.nomad.progress) console <- printPush(paste("Computing optimal smoothing for f(z) and S(z) for iteration 1"," of at most ", iterate.max,"...",sep=""),console)
+    set_status(paste("Computing optimal smoothing for f(z) and S(z) for iteration 1"," of at most ", iterate.max,"...",sep=""))
   } else {
-    if(display.nomad.progress) console <- printPush(paste("Computing optimal smoothing  f(z) and S(z) for iteration 1"," of at most ", iterate.max,"...",sep=""),console)
+    set_status(paste("Computing optimal smoothing  f(z) and S(z) for iteration 1"," of at most ", iterate.max,"...",sep=""))
   }
 
   ## Note - here I am only treating the univariate case, so let's
@@ -192,12 +200,11 @@ crsivderiv.default <- function(y,
 
   if(is.null(starting.values)) {
 
-    console <- printClear(console)
-    console <- printPop(console)
+    set_status()
     if(is.null(x)) {
-      if(display.nomad.progress) console <- printPush(paste("Computing optimal smoothing for E(y|z) for iteration 1 of at most ", iterate.max,"...",sep=""),console)
+      set_status(paste("Computing optimal smoothing for E(y|z) for iteration 1 of at most ", iterate.max,"...",sep=""))
     } else {
-      if(display.nomad.progress) console <- printPush(paste("Computing optimal smoothing  for E(y|z,x) for iteration 1 of at most ", iterate.max,"...",sep=""),console)
+      set_status(paste("Computing optimal smoothing  for E(y|z,x) for iteration 1 of at most ", iterate.max,"...",sep=""))
     }
 
     if(start.from == "Eyz") {
@@ -245,12 +252,11 @@ crsivderiv.default <- function(y,
   ## compute \varphi_{0,i}, we require \mu_{0,i}. For j=0 (first
   ## term in the series), \mu_{0,i} is Y_i.
 
-  console <- printClear(console)
-  console <- printPop(console)
+  set_status()
   if(is.null(x)) {
-    if(display.nomad.progress) console <- printPush(paste("Computing optimal smoothing for E(y|w) (stopping rule) for iteration 1 of at most ", iterate.max,"...",sep=""),console)
+    set_status(paste("Computing optimal smoothing for E(y|w) (stopping rule) for iteration 1 of at most ", iterate.max,"...",sep=""))
   } else {
-    if(display.nomad.progress) console <- printPush(paste("Computing optimal smoothing  for E(y|w) (stopping rule) for iteration 1 of at most ", iterate.max,"...",sep=""),console)
+    set_status(paste("Computing optimal smoothing  for E(y|w) (stopping rule) for iteration 1 of at most ", iterate.max,"...",sep=""))
   }
 
   ## NOTE - this presumes univariate z case... in general this would
@@ -410,12 +416,11 @@ crsivderiv.default <- function(y,
 
     ## Save previous run in case stop norm increases
 
-    console <- printClear(console)
-    console <- printPop(console)
+    set_status()
     if(is.null(x)) {
-      if(display.nomad.progress) console <- printPush(paste("Computing optimal smoothing and phi(z) for iteration ", j," of at most ", iterate.max,"...",sep=""),console)
+      set_status(paste("Computing optimal smoothing and phi(z) for iteration ", j," of at most ", iterate.max,"...",sep=""))
     } else {
-      if(display.nomad.progress) console <- printPush(paste("Computing optimal smoothing and phi(z,x) for iteration ", j," of at most ", iterate.max,"...",sep=""),console)
+      set_status(paste("Computing optimal smoothing and phi(z,x) for iteration ", j," of at most ", iterate.max,"...",sep=""))
     }
 
     ## NOTE - this presumes univariate z case... in general this would
@@ -571,8 +576,7 @@ crsivderiv.default <- function(y,
   phi <- phi.mat[,j]
   phi.prime <- phi.prime.mat[,j]
 
-  console <- printClear(console)
-  console <- printPop(console)
+  set_status()
 
   .crsiv_warn_iterate_max(display.warnings, j, iterate.max)
 
