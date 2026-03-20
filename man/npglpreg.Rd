@@ -282,8 +282,17 @@ for each dimension of the continuous \code{x} in \code{txdat}}
 
   \item{nmulti}{
     integer number of times to restart the process of finding extrema of
-    the cross-validation function from different (random) initial
-    points (default \code{nmulti=5})
+    the cross-validation function from different initial points
+    (default \code{nmulti=5}). When \code{degree} or \code{bws} are
+    supplied, those user values define NOMAD multistart 1. Otherwise,
+    multistart 1 uses a clipped degree-one vector for searchable
+    polynomial degrees together with the usual bandwidth start. Later
+    multistarts draw reproducibly from conservative restart proposals
+    and screen polynomial starts using \code{dimBS()} so the
+    initial GLP basis dimension remains well below the training-sample
+    limit. This makes starts cheaper and less likely to fall in flat
+    penalty or heavily ridged regions without shrinking the full search
+    region explored by NOMAD.
   }
 
   \item{okertype}{
@@ -381,6 +390,17 @@ for each dimension of the continuous \code{x} in \code{txdat}}
   performance while being mindful of excessive computation - of course,
   no one setting can be globally optimal.
 
+  For direct joint degree/bandwidth search, \code{npglpreg} separates
+  the full search box from the restart proposal box. NOMAD still
+  searches the user-requested degree bounds, but restart starts are made
+  more conservative: multistart 1 is user supplied when available,
+  otherwise clipped degree-one values are used for searchable
+  polynomial coordinates; later starts are generated reproducibly from a
+  \eqn{q}-aware proposal box and screened by \code{dimBS()} so the
+  initial GLP basis dimension remains well below \eqn{n-1}. This is a
+  numerical-stability and runtime heuristic for initialization only,
+  not a restriction on the admissible degree search region.
+
 }
 \value{
   
@@ -428,6 +448,13 @@ for each dimension of the continuous \code{x} in \code{txdat}}
   \item{call}{ a symbolic description of the model  }
   
   \item{r.squared}{ coefficient of determination (Doksum and Samarov (1995))}
+
+  When joint NOMAD search is used, the returned object stores the NOMAD
+  multistart matrix in \code{nomad.starts}, together with
+  \code{nomad.degree.starts}, \code{nomad.bandwidth.starts},
+  \code{nomad.start.info}, and \code{nomad.nmulti} for
+  inspection/debugging. The full cross-validation helper return is also
+  retained in \code{model.cv}.
 
 }
 \references{

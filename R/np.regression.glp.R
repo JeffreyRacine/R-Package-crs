@@ -964,6 +964,19 @@ npglpreg.formula <- function(formula,
   est$nmulti <- nmulti
   est$ptm <- proc.time() - ptm.start
   est$bws.sf <- bws.sf
+  if (exists("model.cv", inherits = FALSE) && is.list(model.cv)) {
+    est$model.cv <- model.cv
+    if (!is.null(model.cv$nomad.starts))
+      est$nomad.starts <- model.cv$nomad.starts
+    if (!is.null(model.cv$nomad.degree.starts))
+      est$nomad.degree.starts <- model.cv$nomad.degree.starts
+    if (!is.null(model.cv$nomad.bandwidth.starts))
+      est$nomad.bandwidth.starts <- model.cv$nomad.bandwidth.starts
+    if (!is.null(model.cv$nomad.start.info))
+      est$nomad.start.info <- model.cv$nomad.start.info
+    if (!is.null(model.cv$nomad.nmulti))
+      est$nomad.nmulti <- model.cv$nomad.nmulti
+  }
 
   return(est)
 
@@ -2034,6 +2047,126 @@ minimand.cv.aic <- function(bws=NULL,
   pmax(degree.min, pmin(degree.upper, rep.int(1L, length(degree.upper))))
 }
 
+.crs_glp_nomad_dim_budget <- function(nobs) {
+  max(1L, as.integer(floor(0.25 * (as.integer(nobs)[1L] - 1L))))
+}
+
+.crs_glp_nomad_proposal_upper <- function(degree.min, degree.upper) {
+  degree.min <- as.integer(degree.min)
+  degree.upper <- as.integer(degree.upper)
+  q <- length(degree.upper)
+  if (!q)
+    return(integer(0L))
+  as.integer(pmin(
+    degree.upper,
+    pmax(degree.min + 1L, ceiling(degree.upper / max(1L, q)))
+  ))
+}
+
+.crs_glp_nomad_basis_dim <- function(degree) {
+  degree <- as.integer(degree)
+  dimBS(
+    basis = "glp",
+    kernel = TRUE,
+    degree = degree,
+    segments = rep.int(1L, length(degree))
+  )
+}
+
+.crs_glp_nomad_reduce_degree_start <- function(degree,
+                                               degree.min,
+                                               dim.budget = Inf) {
+  out <- as.integer(degree)
+  degree.min <- as.integer(degree.min)
+
+  if (!is.finite(dim.budget))
+    return(out)
+
+  repeat {
+    current.dim <- tryCatch(
+      .crs_glp_nomad_basis_dim(out),
+      error = function(e) Inf
+    )
+    if (is.finite(current.dim) && current.dim <= dim.budget)
+      break
+
+    idx <- which(out > degree.min)
+    if (!length(idx))
+      break
+
+    drop.idx <- idx[which.max(out[idx])][1L]
+    out[drop.idx] <- out[drop.idx] - 1L
+  }
+
+  out
+}
+
+.crs_glp_nomad_build_degree_starts <- function(nmulti,
+                                               initial,
+                                               degree.min,
+                                               degree.upper,
+                                               nobs,
+                                               max.tries = 256L,
+                                               user.supplied = FALSE) {
+  degree.min <- as.integer(degree.min)
+  degree.upper <- as.integer(degree.upper)
+  q <- length(degree.upper)
+  nstart <- max(1L, as.integer(nmulti)[1L])
+
+  if (!q)
+    return(matrix(integer(0L), nrow = nstart, ncol = 0L))
+
+  starts <- matrix(0L, nrow = nstart, ncol = q)
+  dim.budget <- .crs_glp_nomad_dim_budget(nobs)
+  proposal.upper <- .crs_glp_nomad_proposal_upper(degree.min, degree.upper)
+
+  initial <- as.integer(pmax(degree.min, pmin(degree.upper, initial)))
+  if (!isTRUE(user.supplied)) {
+    initial <- .crs_glp_nomad_reduce_degree_start(
+      degree = initial,
+      degree.min = degree.min,
+      dim.budget = dim.budget
+    )
+  }
+  starts[1L, ] <- initial
+
+  if (nstart <= 1L)
+    return(starts)
+
+  max.tries <- max(1L, as.integer(max.tries[1L]))
+  for (j in 2L:nstart) {
+    accepted <- FALSE
+    fallback <- starts[1L, ]
+    for (k in seq_len(max.tries)) {
+      candidate <- vapply(
+        seq_len(q),
+        function(i) sample.int(proposal.upper[i] - degree.min[i] + 1L, 1L) + degree.min[i] - 1L,
+        integer(1L)
+      )
+      fallback <- candidate
+      candidate.dim <- tryCatch(
+        .crs_glp_nomad_basis_dim(candidate),
+        error = function(e) Inf
+      )
+      if (is.finite(candidate.dim) && candidate.dim <= dim.budget) {
+        starts[j, ] <- as.integer(candidate)
+        accepted <- TRUE
+        break
+      }
+    }
+
+    if (!accepted) {
+      starts[j, ] <- .crs_glp_nomad_reduce_degree_start(
+        degree = fallback,
+        degree.min = degree.min,
+        dim.budget = dim.budget
+      )
+    }
+  }
+
+  starts
+}
+
 .crs_glp_nomad_random_bandwidth_start <- function(num.bw,
                                                   xdat.numeric,
                                                   bwtype,
@@ -2121,21 +2254,39 @@ minimand.cv.aic <- function(bws=NULL,
   }
 
   deg.idx <- integer(0L)
-  degree.start <- integer(0L)
+  degree.starts <- matrix(integer(0L), nrow = max(1L, as.integer(nmulti)[1L]), ncol = 0L)
+  degree.start.info <- NULL
   if (identical(cv, "degree-bandwidth")) {
     deg.idx <- num.bw + seq_len(num.numeric)
     degree.upper <- as.integer(ub[deg.idx])
+    degree.lower <- rep.int(as.integer(degree.min), num.numeric)
     if (is.null(degree)) {
       degree.start <- .crs_glp_nomad_default_degree_start(
-        degree.min = rep.int(as.integer(degree.min), num.numeric),
+        degree.min = degree.lower,
         degree.upper = degree.upper
       )
+      degree.user.supplied <- FALSE
     } else {
       degree.start <- pmin(
         degree.upper,
-        pmax(rep.int(as.integer(degree.min), num.numeric), as.integer(round(degree)))
+        pmax(degree.lower, as.integer(round(degree)))
       )
+      degree.user.supplied <- TRUE
     }
+    degree.starts <- .crs_glp_nomad_build_degree_starts(
+      nmulti = nmulti,
+      initial = degree.start,
+      degree.min = degree.lower,
+      degree.upper = degree.upper,
+      nobs = NROW(xdat),
+      user.supplied = degree.user.supplied
+    )
+    degree.start.info <- list(
+      basis = "glp",
+      dim_budget = .crs_glp_nomad_dim_budget(NROW(xdat)),
+      proposal.upper = .crs_glp_nomad_proposal_upper(degree.lower, degree.upper),
+      user_supplied_start = degree.user.supplied
+    )
   }
 
   ncol.starts <- num.bw + if (identical(cv, "degree-bandwidth")) num.numeric else 0L
@@ -2159,20 +2310,17 @@ minimand.cv.aic <- function(bws=NULL,
       next
     }
 
-    current.degree.start <- if (iMulti == 1L) {
-      degree.start
-    } else {
-      vapply(
-        seq_len(num.numeric),
-        function(i) sample.int(as.integer(ub[deg.idx[i]] - degree.min + 1L), 1L) + as.integer(degree.min) - 1L,
-        integer(1L)
-      )
-    }
+    current.degree.start <- degree.starts[iMulti, ]
 
     x0.pts[iMulti, ] <- c(current.bandwidth.start, current.degree.start)
   }
 
-  x0.pts
+  list(
+    starts = x0.pts,
+    degree.starts = degree.starts,
+    bandwidth.starts = if (num.bw > 0L) x0.pts[, seq_len(num.bw), drop = FALSE] else matrix(numeric(0L), nrow = nrow(x0.pts), ncol = 0L),
+    start.info = degree.start.info
+  )
 }
 
 glpcvNOMAD <- function(ydat=NULL,
@@ -2713,7 +2861,7 @@ glpcvNOMAD <- function(ydat=NULL,
   ## Generate all initial points for multiple restarting. Start 1 is
   ## deterministic/user-supplied when available, while later starts
   ## randomize both bandwidths and searchable degrees.
-  x0.pts <- .crs_glp_nomad_build_start_matrix(
+  x0.setup <- .crs_glp_nomad_build_start_matrix(
     nmulti = nmulti,
     num.bw = num.bw,
     num.numeric = num.numeric,
@@ -2731,6 +2879,7 @@ glpcvNOMAD <- function(ydat=NULL,
     bandwidth.scale.categorical = bandwidth.scale.categorical,
     display.warnings = display.warnings
   )
+  x0.pts <- x0.setup$starts
 
   nmulti.nomad <- if(nmulti == 1) 0 else nmulti
 
@@ -2860,6 +3009,9 @@ glpcvNOMAD <- function(ydat=NULL,
               fv.vec=fv.vec,
               degree=degree.opt,
               nomad.starts=x0.pts,
+              nomad.degree.starts=x0.setup$degree.starts,
+              nomad.bandwidth.starts=x0.setup$bandwidth.starts,
+              nomad.start.info=x0.setup$start.info,
               nomad.nmulti=nmulti,
               bwtype=bwtype,
               ckertype=ckertype,
