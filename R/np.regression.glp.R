@@ -2028,6 +2028,153 @@ minimand.cv.aic <- function(bws=NULL,
 ## in the np package. But npglpreg() may in fact scale better with n
 ## while it admits generalized polynomials that npreg() lacks.
 
+.crs_glp_nomad_default_degree_start <- function(degree.min, degree.upper) {
+  degree.min <- as.integer(degree.min)
+  degree.upper <- as.integer(degree.upper)
+  pmax(degree.min, pmin(degree.upper, rep.int(1L, length(degree.upper))))
+}
+
+.crs_glp_nomad_random_bandwidth_start <- function(num.bw,
+                                                  xdat.numeric,
+                                                  bwtype,
+                                                  lb,
+                                                  ub) {
+  xdat.numeric <- as.logical(xdat.numeric)
+  init.search.vals <- numeric(num.bw)
+  for (i in seq_len(num.bw)) {
+    if (xdat.numeric[i] && bwtype == "fixed") {
+      init.search.vals[i] <- runif(1L, lb[i], 1.5)
+    }
+    if (xdat.numeric[i] && bwtype != "fixed") {
+      init.search.vals[i] <- round(runif(1L, lb[i], sqrt(ub[i])))
+    }
+    if (!xdat.numeric[i]) {
+      init.search.vals[i] <- runif(1L, lb[i], ub[i])
+    }
+  }
+  init.search.vals
+}
+
+.crs_glp_nomad_supplied_bandwidth_start <- function(bandwidth,
+                                                    num.bw,
+                                                    xdat.numeric,
+                                                    bwtype,
+                                                    xdat,
+                                                    ydat,
+                                                    num.numeric,
+                                                    ckerorder,
+                                                    bandwidth.scale.categorical,
+                                                    display.warnings) {
+  xdat.numeric <- as.logical(xdat.numeric)
+  init.search.vals <- bandwidth
+  for (i in seq_len(num.bw)) {
+    if (xdat.numeric[i] && bwtype == "fixed") {
+      init.search.vals[i] <- bandwidth[i] /
+        (scale_robust(xdat[, i], display.warnings = display.warnings) *
+           length(ydat)^(-1 / (num.numeric + 2 * ckerorder)))
+    }
+    if (!xdat.numeric[i]) {
+      init.search.vals[i] <- bandwidth[i] * bandwidth.scale.categorical
+    }
+  }
+  init.search.vals
+}
+
+.crs_glp_nomad_build_start_matrix <- function(nmulti,
+                                              num.bw,
+                                              num.numeric,
+                                              xdat.numeric,
+                                              bwtype,
+                                              lb,
+                                              ub,
+                                              bandwidth,
+                                              degree,
+                                              degree.min,
+                                              cv,
+                                              xdat,
+                                              ydat,
+                                              ckerorder,
+                                              bandwidth.scale.categorical,
+                                              display.warnings) {
+  xdat.numeric <- as.logical(xdat.numeric)
+  if (is.null(bandwidth)) {
+    initial.bandwidth.start <- .crs_glp_nomad_random_bandwidth_start(
+      num.bw = num.bw,
+      xdat.numeric = xdat.numeric,
+      bwtype = bwtype,
+      lb = lb,
+      ub = ub
+    )
+  } else {
+    initial.bandwidth.start <- .crs_glp_nomad_supplied_bandwidth_start(
+      bandwidth = bandwidth,
+      num.bw = num.bw,
+      xdat.numeric = xdat.numeric,
+      bwtype = bwtype,
+      xdat = xdat,
+      ydat = ydat,
+      num.numeric = num.numeric,
+      ckerorder = ckerorder,
+      bandwidth.scale.categorical = bandwidth.scale.categorical,
+      display.warnings = display.warnings
+    )
+  }
+
+  deg.idx <- integer(0L)
+  degree.start <- integer(0L)
+  if (identical(cv, "degree-bandwidth")) {
+    deg.idx <- num.bw + seq_len(num.numeric)
+    degree.upper <- as.integer(ub[deg.idx])
+    if (is.null(degree)) {
+      degree.start <- .crs_glp_nomad_default_degree_start(
+        degree.min = rep.int(as.integer(degree.min), num.numeric),
+        degree.upper = degree.upper
+      )
+    } else {
+      degree.start <- pmin(
+        degree.upper,
+        pmax(rep.int(as.integer(degree.min), num.numeric), as.integer(round(degree)))
+      )
+    }
+  }
+
+  ncol.starts <- num.bw + if (identical(cv, "degree-bandwidth")) num.numeric else 0L
+  x0.pts <- matrix(0, nrow = nmulti, ncol = ncol.starts)
+
+  for (iMulti in seq_len(nmulti)) {
+    current.bandwidth.start <- if (iMulti == 1L) {
+      initial.bandwidth.start
+    } else {
+      .crs_glp_nomad_random_bandwidth_start(
+        num.bw = num.bw,
+        xdat.numeric = xdat.numeric,
+        bwtype = bwtype,
+        lb = lb,
+        ub = ub
+      )
+    }
+
+    if (!identical(cv, "degree-bandwidth")) {
+      x0.pts[iMulti, ] <- current.bandwidth.start
+      next
+    }
+
+    current.degree.start <- if (iMulti == 1L) {
+      degree.start
+    } else {
+      vapply(
+        seq_len(num.numeric),
+        function(i) sample.int(as.integer(ub[deg.idx[i]] - degree.min + 1L), 1L) + as.integer(degree.min) - 1L,
+        integer(1L)
+      )
+    }
+
+    x0.pts[iMulti, ] <- c(current.bandwidth.start, current.degree.start)
+  }
+
+  x0.pts
+}
+
 glpcvNOMAD <- function(ydat=NULL,
                        xdat=NULL,
                        degree=NULL,
@@ -2457,6 +2604,17 @@ glpcvNOMAD <- function(ydat=NULL,
   if(cv == "degree-bandwidth") {
     deg.idx <- num.bw + seq_len(num.numeric)
     ub[deg.idx] <- pmin(ub[deg.idx], degree.max.vec)
+    if (any(ub[deg.idx] < degree.min)) {
+      bad.idx <- which(ub[deg.idx] < degree.min)[1L]
+      stop(paste(
+        " Error: degree.min for numeric predictor ",
+        bad.idx,
+        " exceeds the largest numerically admissible degree (",
+        ub[deg.idx[bad.idx]],
+        ") after conditioning checks",
+        sep = ""
+      ))
+    }
     for(i in deg.idx) {
       INITIAL.MESH.SIZE[[i]] <- initial.mesh.size.integer
       MIN.MESH.SIZE[[i]] <- min.mesh.size.integer
@@ -2474,12 +2632,11 @@ glpcvNOMAD <- function(ydat=NULL,
 
   if(is.null(degree)) {
     if(cv == "degree-bandwidth") {
-      degree <- numeric(num.numeric)
-      for(i in seq_len(num.numeric)) {
-        ## We adopt the convention to always start from a polynomial
-        ## or degree 1 for the first search attempt
-        degree[i] <- 1
-      }
+      deg.idx <- num.bw + seq_len(num.numeric)
+      degree <- .crs_glp_nomad_default_degree_start(
+        degree.min = rep.int(as.integer(degree.min), num.numeric),
+        degree.upper = as.integer(ub[deg.idx])
+      )
     }
     else {
       stop(paste(" Error: degree must be given when optimizing only bandwidth"))
@@ -2553,71 +2710,27 @@ glpcvNOMAD <- function(ydat=NULL,
     on.exit(.crs_progress_activity_end(nomad.activity), add = TRUE)
   }
 
-  ## Use bandwidth for initial values if provided
-
-  if(is.null(bandwidth)) {
-    init.search.vals <- numeric()
-    for(i in seq_len(num.bw)) {
-      if(xdat.numeric[i] && bwtype=="fixed") {
-        init.search.vals[i] <- runif(1,lb[i],1.5)
-      }
-      if(xdat.numeric[i] && bwtype!="fixed") {
-        init.search.vals[i] <- round(runif(1,lb[i],sqrt(ub[i])))
-      }
-      if(!xdat.numeric[i]) {
-        init.search.vals[i] <- runif(1,lb[i],ub[i])
-      }
-    }
-  } else {
-    ## If bandwidths are provided, need to convert those for the
-    ## numeric variables into scale factors (level on which snomadr is
-    ## optimizing)
-    init.search.vals <- bandwidth
-    for(i in seq_len(num.bw)) {
-      if(xdat.numeric[i] && bwtype=="fixed") {
-        init.search.vals[i] <- bandwidth[i]/(scale_robust(xdat[,i],display.warnings=display.warnings)*length(ydat)^{-1/(num.numeric+2*ckerorder)})
-      }
-      if(!xdat.numeric[i]) {
-        init.search.vals[i] <- bandwidth[i]*bandwidth.scale.categorical
-      }
-    }
-  }
-
-  ## Generate all initial points for the multiple restarting
-
-  x0.pts <- matrix(numeric(1), nmulti, length(bbin))
-
-  for(iMulti in seq_len(nmulti)) {
-    if(iMulti != 1) {
-      init.search.vals <- numeric()
-      for(i in seq_len(num.bw)) {
-        if(xdat.numeric[i] && bwtype=="fixed") {
-          init.search.vals[i] <- runif(1,lb[i],1.5)
-        }
-        if(xdat.numeric[i] && bwtype!="fixed") {
-          init.search.vals[i] <- round(runif(1,lb[i],sqrt(ub[i])))
-        }
-        if(!xdat.numeric[i]) {
-          init.search.vals[i] <- runif(1,lb[i],ub[i])
-        }
-      }
-    }
-
-    if(cv == "degree-bandwidth" && iMulti != 1) {
-      deg.idx <- num.bw + seq_len(num.numeric)
-      for(i in seq_len(num.numeric)) {
-        degree[i] <- sample(degree.min:ub[deg.idx[i]], 1)
-      }
-    }
-
-    if(cv =="degree-bandwidth"){
-      x0.pts[iMulti, ] <- c(init.search.vals, degree)
-    }
-    else {
-      x0.pts[iMulti, ] <- c(init.search.vals)
-    }
-
-  }
+  ## Generate all initial points for multiple restarting. Start 1 is
+  ## deterministic/user-supplied when available, while later starts
+  ## randomize both bandwidths and searchable degrees.
+  x0.pts <- .crs_glp_nomad_build_start_matrix(
+    nmulti = nmulti,
+    num.bw = num.bw,
+    num.numeric = num.numeric,
+    xdat.numeric = xdat.numeric,
+    bwtype = bwtype,
+    lb = lb,
+    ub = ub,
+    bandwidth = bandwidth,
+    degree = if (identical(cv, "degree-bandwidth")) degree else NULL,
+    degree.min = degree.min,
+    cv = cv,
+    xdat = xdat,
+    ydat = ydat,
+    ckerorder = ckerorder,
+    bandwidth.scale.categorical = bandwidth.scale.categorical,
+    display.warnings = display.warnings
+  )
 
   nmulti.nomad <- if(nmulti == 1) 0 else nmulti
 
@@ -2746,6 +2859,8 @@ glpcvNOMAD <- function(ydat=NULL,
               best=best,
               fv.vec=fv.vec,
               degree=degree.opt,
+              nomad.starts=x0.pts,
+              nomad.nmulti=nmulti,
               bwtype=bwtype,
               ckertype=ckertype,
               ckerorder=ckerorder,
