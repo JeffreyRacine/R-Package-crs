@@ -566,6 +566,7 @@ ls.ml <- function(x=NULL,
     isTRUE(getOption("crs.messages", TRUE))
   progress.env$count <- 0L
   progress.env$state <- NULL
+  progress.env$activity <- NULL
   progress.env$label <- if (isTRUE(NOMAD)) "NOMAD search" else "Logspline search"
   progress.env$surface <- if (isTRUE(NOMAD)) "nomad" else "solver"
 
@@ -590,8 +591,26 @@ ls.ml <- function(x=NULL,
   }
 
   progress_note <- function(detail) {
-    if (isTRUE(progress.env$enabled)) {
-      .crs_progress_note(detail)
+    if (!isTRUE(progress.env$enabled)) {
+      return(invisible(NULL))
+    }
+
+    if (!is.null(progress.env$activity)) {
+      .crs_progress_activity_end(progress.env$activity)
+      progress.env$activity <- NULL
+    }
+
+    progress.env$activity <- .crs_progress_activity_begin(
+      detail,
+      surface = progress.env$surface
+    )
+    invisible(NULL)
+  }
+
+  progress_note_end <- function() {
+    if (!is.null(progress.env$activity)) {
+      .crs_progress_activity_end(progress.env$activity)
+      progress.env$activity <- NULL
     }
     invisible(NULL)
   }
@@ -601,6 +620,7 @@ ls.ml <- function(x=NULL,
       .crs_progress_end(progress.env$state, detail = detail)
       progress.env$state <- NULL
     }
+    progress_note_end()
     invisible(NULL)
   }
 
@@ -911,6 +931,8 @@ ls.ml <- function(x=NULL,
                         opts=opts,
                         params=params)
 
+    progress_note_end()
+
     value.opt <- solution$objective
 
     d <- solution$solution[1]
@@ -985,6 +1007,8 @@ ls.ml <- function(x=NULL,
       m.attempts <- m.attempts+1
 
     }
+
+    progress_note_end()
 
     d.opt <- d
     s.opt <- s

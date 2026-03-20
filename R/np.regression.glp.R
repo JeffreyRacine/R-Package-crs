@@ -2543,9 +2543,14 @@ glpcvNOMAD <- function(ydat=NULL,
   )
   on.exit(.crs_progress_status_clear(progress.status), add = TRUE)
   params$progress.status <- progress.status
+  nomad.activity <- NULL
 
   if(display.nomad.progress) {
-    .crs_progress_note("Calling NOMAD (Nonsmooth Optimization by Mesh Adaptive Direct Search)")
+    nomad.activity <- .crs_progress_activity_begin(
+      "Calling NOMAD (Nonsmooth Optimization by Mesh Adaptive Direct Search)",
+      surface = "nomad"
+    )
+    on.exit(.crs_progress_activity_end(nomad.activity), add = TRUE)
   }
 
   ## Use bandwidth for initial values if provided
@@ -2673,6 +2678,11 @@ glpcvNOMAD <- function(ydat=NULL,
                                            display.nomad.progress=display.nomad.progress,
                                            params=params,
                                            ...);
+  }
+
+  if (!is.null(nomad.activity)) {
+    .crs_progress_activity_end(nomad.activity)
+    nomad.activity <- NULL
   }
 
   fv.vec[1] <- solution$objective
@@ -2901,6 +2911,18 @@ compute.bootstrap.errors <- function(tydat,
   }
 
   ## Fitted values for the training data required
+  prep.activity <- NULL
+  interval.activity <- NULL
+
+  if (isTRUE(display.nomad.progress)) {
+    prep.activity <- .crs_plot_activity_begin(
+      .crs_plot_bootstrap_stage_label(
+        stage = "Preparing plot bootstrap",
+        target_label = progress.target
+      )
+    )
+    on.exit(.crs_plot_activity_end(prep.activity), add = TRUE)
+  }
 
   est <- npglpreg(tydat=tydat,
                   txdat=txdat,
@@ -2915,16 +2937,15 @@ compute.bootstrap.errors <- function(tydat,
                 Bernstein=Bernstein,
                 display.warnings=display.warnings,
                 display.nomad.progress=FALSE,
-                ...)
+                  ...)
 
   model.fitted <- est$fitted.values
+  if (!is.null(prep.activity)) {
+    .crs_plot_activity_end(prep.activity)
+    prep.activity <- NULL
+  }
+
   if (isTRUE(display.nomad.progress)) {
-    .crs_progress_note(
-      .crs_plot_bootstrap_stage_label(
-        stage = "Preparing plot bootstrap",
-        target_label = progress.target
-      )
-    )
     progress <- .crs_plot_stage_progress_begin(
       total = plot.errors.boot.num,
       label = .crs_plot_bootstrap_stage_label(
@@ -2953,12 +2974,13 @@ compute.bootstrap.errors <- function(tydat,
   boot.out <- list(t0 = as.numeric(boot.center), t = boot.t)
 
   if (isTRUE(display.nomad.progress)) {
-    .crs_progress_note(
+    interval.activity <- .crs_plot_activity_begin(
       .crs_plot_bootstrap_stage_label(
         stage = sprintf("Constructing bootstrap %s bands", plot.errors.type),
         target_label = progress.target
       )
     )
+    on.exit(.crs_plot_activity_end(interval.activity), add = TRUE)
   }
 
   boot.all.err <- NULL
@@ -2967,6 +2989,11 @@ compute.bootstrap.errors <- function(tydat,
     boot.err[,1:2] <- boot.all.err$pointwise
   } else {
     boot.err[,1:2] <- npglp.bootstrap.bounds(boot.t = boot.out$t, alpha = plot.errors.alpha, band.type = plot.errors.type, center = boot.out$t0)
+  }
+
+  if (!is.null(interval.activity)) {
+    .crs_plot_activity_end(interval.activity)
+    interval.activity <- NULL
   }
 
   return(list(center = boot.out$t0, bounds = boot.err, bounds.all = boot.all.err, boot.mat = boot.out$t))

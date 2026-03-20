@@ -159,7 +159,7 @@
 }
 
 .crs_progress_single_line_surfaces <- function() {
-  c("console", "nomad", "bootstrap", "plot", "solver", "cv")
+  c("console", "nomad", "bootstrap", "plot", "plot_activity", "solver", "cv")
 }
 
 .crs_progress_renderer_for_surface <- function(surface, capability) {
@@ -216,18 +216,34 @@
 .crs_progress_show_now <- function(state,
                                    done = state$last_done,
                                    detail = state$last_emitted_detail) {
-  if (is.null(state)) {
-    return(NULL)
+  if (is.null(state) || !isTRUE(state$enabled) || !isTRUE(state$visible)) {
+    return(state)
   }
 
-  state$last_emit <- -Inf
-  .crs_progress_step_at(
+  if (!is.null(done)) {
+    state$last_done <- done
+  }
+
+  now <- state$started
+  line <- .crs_progress_format_line(
     state = state,
-    now = .crs_progress_now(),
-    done = done,
+    done = state$last_done,
     detail = detail,
-    force = TRUE
+    now = now
   )
+  state <- .crs_progress_render(
+    state = state,
+    line = line,
+    event = "start",
+    now = now,
+    done = state$last_done,
+    detail = detail
+  )
+  state$start_note_pending <- FALSE
+  state$last_emit <- now
+  state$last_emitted_done <- state$last_done
+  state$last_emitted_detail <- detail
+  state
 }
 
 .crs_plot_progress_enabled <- function() {
@@ -383,6 +399,52 @@
   }
 
   .crs_progress_show_now(state = state, done = 0L)
+}
+
+.crs_progress_activity_begin <- function(label, domain = "general", surface = domain) {
+  enabled <- if (identical(domain, "plot")) {
+    .crs_plot_progress_enabled()
+  } else {
+    .crs_progress_enabled(domain = domain)
+  }
+
+  if (!isTRUE(enabled)) {
+    return(NULL)
+  }
+
+  label <- as.character(label)[1L]
+  state <- .crs_progress_begin(label = label, domain = domain, surface = surface)
+  state$enabled <- isTRUE(enabled)
+  state$throttle_sec <- Inf
+  state$last_emit <- state$started - state$throttle_sec
+  if (identical(domain, "plot")) {
+    state$start_note_grace_sec <- .crs_plot_progress_start_grace_sec()
+  }
+  state <- .crs_progress_show_now(state = state)
+  .crs_progress_release_owner(state$id)
+  state
+}
+
+.crs_progress_activity_end <- function(state) {
+  if (is.null(state)) {
+    return(invisible(NULL))
+  }
+
+  state <- .crs_progress_maybe_emit_start_note(state = state, now = .crs_progress_now())
+  .crs_progress_end(state = state)
+  invisible(NULL)
+}
+
+.crs_plot_activity_begin <- function(label) {
+  .crs_progress_activity_begin(
+    label = label,
+    domain = "plot",
+    surface = "plot_activity"
+  )
+}
+
+.crs_plot_activity_end <- function(state) {
+  .crs_progress_activity_end(state)
 }
 
 .crs_plot_progress_tick <- function(state, done, detail = NULL, force = FALSE) {
@@ -726,7 +788,7 @@
   if (identical(event, "finish")) {
     clear_width <- max(snapshot$last_width, width, .crs_progress_output_width())
     clear_line <- if (clear_width > 0L) strrep(" ", clear_width) else ""
-    base::cat("\r", clear_line, "\r\n", file = con, sep = "")
+    base::cat("\r", clear_line, "\r", file = con, sep = "")
     flush(con)
     flush.console()
     return(invisible(snapshot))

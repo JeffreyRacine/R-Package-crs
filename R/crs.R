@@ -1201,18 +1201,27 @@ summary.crs <- function(object,
                                   display.nomad.progress = TRUE,
                                   progress.target = NULL) {
   n <- nrow(object$xz)
-  pred0 <- predict(object, newdata = newdata, deriv = deriv)
-  center <- if (deriv > 0) attr(pred0, "deriv.mat")[,deriv.index] else as.numeric(pred0)
-  boot.mat <- matrix(NA_real_, nrow = boot.num, ncol = nrow(newdata))
-  progress <- NULL
-
+  prep.activity <- NULL
   if (isTRUE(display.nomad.progress)) {
-    .crs_progress_note(
+    prep.activity <- .crs_plot_activity_begin(
       .crs_plot_bootstrap_stage_label(
         stage = "Preparing plot bootstrap",
         target_label = progress.target
       )
     )
+    on.exit(.crs_plot_activity_end(prep.activity), add = TRUE)
+  }
+  pred0 <- predict(object, newdata = newdata, deriv = deriv)
+  center <- if (deriv > 0) attr(pred0, "deriv.mat")[,deriv.index] else as.numeric(pred0)
+  boot.mat <- matrix(NA_real_, nrow = boot.num, ncol = nrow(newdata))
+  progress <- NULL
+
+  if (!is.null(prep.activity)) {
+    .crs_plot_activity_end(prep.activity)
+    prep.activity <- NULL
+  }
+
+  if (isTRUE(display.nomad.progress)) {
     progress <- .crs_plot_stage_progress_begin(
       total = boot.num,
       label = .crs_plot_bootstrap_stage_label(

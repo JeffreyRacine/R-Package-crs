@@ -375,9 +375,14 @@ frscvNOMAD <- function(xz,
   }
 
   print.output <- display.nomad.progress
+  nomad.activity <- NULL
 
   if(display.nomad.progress){
-    .crs_progress_note("Calling NOMAD (Nonsmooth Optimization by Mesh Adaptive Direct Search)")
+    nomad.activity <- .crs_progress_activity_begin(
+      "Calling NOMAD (Nonsmooth Optimization by Mesh Adaptive Direct Search)",
+      surface = "nomad"
+    )
+    on.exit(.crs_progress_activity_end(nomad.activity), add = TRUE)
   }
 
   ## Take data frame x and parse into factors (z) and numeric (x)
@@ -476,6 +481,11 @@ frscvNOMAD <- function(xz,
                              tau=tau,
                              weights=weights,
                              singular.ok=singular.ok)
+
+  if (!is.null(nomad.activity)) {
+    .crs_progress_activity_end(nomad.activity)
+    nomad.activity <- NULL
+  }
 
   t2 <- Sys.time()
 

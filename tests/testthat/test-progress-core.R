@@ -14,6 +14,21 @@ normalize_messages <- function(x) {
   sub("\n$", "", x)
 }
 
+capture_stderr_text <- function(expr) {
+  path <- tempfile()
+  con <- file(path, open = "wt")
+  sink(con, type = "message")
+  on.exit({
+    sink(type = "message")
+    close(con)
+  }, add = TRUE)
+  force(expr)
+  sink(type = "message")
+  close(con)
+  on.exit(NULL, add = FALSE)
+  readChar(path, nchars = file.info(path)$size, useBytes = TRUE)
+}
+
 progress_time_values <- function(values) {
   force(values)
   i <- 0L
@@ -153,4 +168,46 @@ test_that("status helpers route through the shared progress runtime", {
       expect_null(status$state)
     }
   )
+})
+
+test_that("single-line finish clear does not emit a trailing newline", {
+  render <- getFromNamespace(".crs_progress_render_single_line", "crs")
+
+  output <- with_crs_progress_bindings(
+    list(.crs_progress_output_width = function() 24L),
+    capture_stderr_text(
+      render(
+        list(
+          render_line = "[crs] Working...",
+          last_width = 18L
+        ),
+        event = "finish"
+      )
+    )
+  )
+
+  expect_false(grepl("\n", output, fixed = TRUE))
+  expect_true(startsWith(output, "\r"))
+  expect_true(endsWith(output, "\r"))
+})
+
+test_that("activity helpers emit and clear through the shared renderer", {
+  begin_activity <- getFromNamespace(".crs_progress_activity_begin", "crs")
+  end_activity <- getFromNamespace(".crs_progress_activity_end", "crs")
+
+  old_opts <- options(crs.messages = TRUE)
+  on.exit(options(old_opts), add = TRUE)
+
+  actual <- capture_crs_progress_shadow_trace(
+    {
+      state <- begin_activity("Calling NOMAD", surface = "nomad")
+      end_activity(state)
+    },
+    force_renderer = "single_line",
+    now = progress_time_values(c(0, 0, 0)),
+    interactive = TRUE
+  )
+
+  expect_true(any(vapply(actual$trace, function(x) identical(x$event, "finish"), logical(1L))))
+  expect_true(any(grepl("Calling NOMAD", vapply(actual$trace, `[[`, character(1L), "line"), fixed = TRUE)))
 })
