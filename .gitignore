@@ -1,0 +1,6 @@
+.DS_Store
+*.o
+*.so
+tests/testthat/Rplots.pdf
+*.tar.gz
+*.Rcheck/

@@ -12,8 +12,8 @@
 ## Helper to compute hat values from .lm.fit output
 hat.from.lm.fit <- function(obj) {
   if(!is.null(obj$qr) && !is.null(obj$qraux) && !is.null(obj$rank)) {
-    res <- try(.Call("crs_hat_diag", obj$qr, obj$qraux, as.integer(obj$rank),
-                     PACKAGE="crs"), silent=TRUE)
+    res <- try(.Call(crs_hat_diag, obj$qr, obj$qraux, as.integer(obj$rank)),
+               silent = TRUE)
     if(!inherits(res, "try-error")) return(res)
   }
   qr_obj <- list(qr=obj$qr, qraux=obj$qraux, pivot=obj$pivot, tol=obj$tol, rank=obj$rank)
@@ -44,7 +44,7 @@ prod.spline <- function(x,
   ## Additive and glp models have intercept=FALSE in gsl.bs but
   ## intercept=TRUE in lm()
 
-  gsl.intercept <- ifelse(basis=="additive" || basis=="glp", FALSE, TRUE)
+  gsl.intercept <- !(basis=="additive" || basis=="glp")
 
   ## Care in passing (extra cast) and ensure K is a matrix of integers
   ## (K contains the spline degree [integer] for each dimension in
@@ -83,7 +83,7 @@ prod.spline <- function(x,
   if(any(K[,1] > 0)||any(I != 0)) {
     tp <- list()
     j <- 1
-    for(i in 1:num.x) {
+    for(i in seq_len(num.x)) {
       if(K[i,1] > 0) {
         ## nbreak is K[i,2]+1
         if(knots=="uniform") {
@@ -112,7 +112,7 @@ prod.spline <- function(x,
         j <- j+1
       }
     }
-    if(!is.null(z)) for(i in 1:num.z) {
+    if(!is.null(z)) for(i in seq_len(num.z)) {
       if(I[i] == 1) {
         if(is.null(zeval)) {
           tp[[j]] <- model.matrix(~z[,i])[,-1,drop=FALSE]
@@ -129,7 +129,7 @@ prod.spline <- function(x,
       ## First create all basis matrices for all continuous predictors
       ## (in essence, additive by default)
       P <- tp[[1]]
-      for(i in 2:NROW(tp)) P <- cbind(P,tp[[i]])
+      for (i in seq.int(2L, NROW(tp))) P <- cbind(P,tp[[i]])
       dim.P.no.tensor <- NCOL(P)
       ## Solely tensor if basis==tensor
       if(basis=="tensor") P <- tensor.prod.model.matrix(tp)
@@ -137,8 +137,8 @@ prod.spline <- function(x,
         P <- glp.model.matrix(tp)
         if(deriv!=0) {
           P.deriv <- list()
-          for(i in 1:length(tp)) P.deriv[[i]] <- matrix(0,1,ncol(tp[[i]]))
-          deriv.index <- deriv.index - length(which((K[1:deriv.index,1]==0)))
+          for(i in seq_along(tp)) P.deriv[[i]] <- matrix(0,1,ncol(tp[[i]]))
+          deriv.index <- deriv.index - length(which(K[.crs_index_block(0L, deriv.index), 1] == 0))
           while(deriv.index<=0) deriv.index <- deriv.index + 1
           P.deriv[[deriv.index]] <- matrix(NA,1,ncol(tp[[deriv.index]]))
           P[,!is.na(as.numeric(glp.model.matrix(P.deriv)))] <- 0
@@ -194,8 +194,11 @@ predictKernelSpline <- function(x,
 
   if(!is.null(z)) z <- as.matrix(z)
 
-  console <- newLineConsole()
-  if(display.nomad.progress) console <- printPush("Working...",console = console)
+  progress.status <- .crs_progress_status_begin(
+    enabled = display.nomad.progress,
+    surface = "solver"
+  )
+  .crs_progress_status_update(progress.status, "Working...")
 
   model <- NULL ## Returned if model=FALSE and there exist categorical
   ## predictors
@@ -245,15 +248,21 @@ predictKernelSpline <- function(x,
 
     if(is.null(tau))
       fit.spline <- cbind(fit.spline[[1]],se=fit.spline[[2]])
-    else
-      fit.spline <- cbind(fit.spline,se=ifelse(NCOL(fit.spline)>1,(fit.spline[,3]-fit.spline[,1])/qnorm(0.975),NA))
+    else {
+      if(NCOL(fit.spline) > 1) {
+        se.fit <- (fit.spline[,3]-fit.spline[,1])/qnorm(0.975)
+      } else {
+        se.fit <- NA
+      }
+      fit.spline <- cbind(fit.spline, se = se.fit)
+    }
 
     if(is.null(tau))
       htt <- hatvalues(model)
     else
       htt <- hat(model$qr)
 
-    htt <- ifelse(htt < 1, htt, 1-.Machine$double.eps)
+    htt <- pmin(htt, 1-.Machine$double.eps)
 
     if(is.null(tau))
       rank <- model$rank
@@ -286,7 +295,7 @@ predictKernelSpline <- function(x,
         fit.spline <- matrix(NA,nrow=n,ncol=4)
         htt <- numeric(length=n)
         P.hat <- numeric(length=n)
-        for(i in 1:nrow.z.unique) {
+        for(i in seq_len(nrow.z.unique)) {
           zz <- ind == ind.vals[i]
           L <- prod.kernel.matrix(Z=z,z=z.unique[ind.vals[i],],lambda=lambda,is.ordered.z=is.ordered.z)
           if(!is.null(weights)) L <- weights*L
@@ -338,7 +347,7 @@ predictKernelSpline <- function(x,
         fit.spline <- matrix(NA,nrow=num.eval,ncol=4)
         htt <- NULL ## No hatvalues for evaluation
         P.hat <- NULL
-        for(i in 1:nrow.zeval.unique) {
+        for(i in seq_len(nrow.zeval.unique)) {
           zz <- ind.zeval == ind.zeval.vals[i]
           L <- prod.kernel.matrix(Z=z,z=zeval.unique[ind.zeval.vals[i],],lambda=lambda,is.ordered.z=is.ordered.z)
           if(!is.null(weights)) L <- weights*L
@@ -377,7 +386,7 @@ predictKernelSpline <- function(x,
         htt <- numeric(length=n)
         P.hat <- numeric(length=n)
         x.intercept <- rep(1,n)
-        for(i in 1:nrow.z.unique) {
+        for(i in seq_len(nrow.z.unique)) {
           zz <- ind == ind.vals[i]
           L <- prod.kernel.matrix(Z=z,z=z.unique[ind.vals[i],],lambda=lambda,is.ordered.z=is.ordered.z)
           if(!is.null(weights)) L <- weights*L
@@ -422,7 +431,7 @@ predictKernelSpline <- function(x,
         htt <- NULL ## No hatvalues for evaluation
         P.hat <- NULL
         x.intercept <- rep(1,n)
-        for(i in 1:nrow.zeval.unique) {
+        for(i in seq_len(nrow.zeval.unique)) {
           zz <- ind.zeval == ind.zeval.vals[i]
           L <- prod.kernel.matrix(Z=z,z=zeval.unique[ind.zeval.vals[i],],lambda=lambda,is.ordered.z=is.ordered.z)
           if(!is.null(weights)) L <- weights*L
@@ -451,8 +460,7 @@ predictKernelSpline <- function(x,
       rank <- NCOL(model.z.unique$x) ## same for all models
   }
 
-  console <- printClear(console)
-  console <- printPop(console)
+  .crs_progress_status_clear(progress.status)
 
   ## Need to return kernel probability estimates. The kernel function
   ## we use does not sum to one so the probability estimates will not
@@ -463,7 +471,8 @@ predictKernelSpline <- function(x,
   ## trap this case.
 
   P.hat <- P.hat/(sum(unique(P.hat/n))*n)
-  P.hat <- ifelse(P.hat==1,1/nrow.z.unique,P.hat)
+  idx.one <- which(P.hat == 1)
+  if(length(idx.one) > 0) P.hat[idx.one] <- 1/nrow.z.unique
 
   return(list(fitted.values=fit.spline,
               df.residual=length(y)-rank,
@@ -514,8 +523,10 @@ derivKernelSpline <- function(x,
 
   if(basis=="additive" || basis=="glp") {
     K.additive <- K
-    K.additive[,2] <- ifelse(K[,1]==0,0,K[,2])
-    K.additive[,1] <- ifelse(K[,1]>0,K[,1]-1,K[,1])
+    K.additive[,2] <- K[,2]
+    K.additive[K[,1] == 0,2] <- 0
+    K.additive[,1] <- K[,1]
+    K.additive[K[,1] > 0,1] <- K[K[,1] > 0,1] - 1
   }
 
   if(!is.null(z)) z <- as.matrix(z)
@@ -538,7 +549,7 @@ derivKernelSpline <- function(x,
           suppressWarnings(model <- rq(y~P,tau=tau,method="fn",weights=weights))
 
         dim.P.deriv <- sum(K.additive[deriv.index,])
-        deriv.start <- ifelse(deriv.index!=1,sum(K.additive[1:(deriv.index-1),])+1,1)
+        deriv.start <- if (deriv.index != 1) sum(K.additive[.crs_index_block(0L, deriv.index - 1L), ]) + 1 else 1
         deriv.end <- deriv.start+sum(K.additive[deriv.index,])-1
         deriv.ind.vec <- max(1,deriv.start:deriv.end - length(which(K[,1]==0)))
         deriv.spline <- P.deriv[,deriv.ind.vec,drop=FALSE]%*%(coef(model)[-1])[deriv.ind.vec]
@@ -548,7 +559,7 @@ derivKernelSpline <- function(x,
         else
           suppressWarnings(vcov.model <- summary(model,covariance=TRUE)$cov[-1,-1,drop=FALSE])
 
-        se.deriv <- sapply(1:NROW(P.deriv), function(i){ sqrt(P.deriv[i,deriv.ind.vec,drop=FALSE]%*%vcov.model[deriv.ind.vec,deriv.ind.vec]%*%t(P.deriv[i,deriv.ind.vec,drop=FALSE])) })
+        se.deriv <- sapply(seq_len(NROW(P.deriv)), function(i){ sqrt(P.deriv[i,deriv.ind.vec,drop=FALSE]%*%vcov.model[deriv.ind.vec,deriv.ind.vec]%*%t(P.deriv[i,deriv.ind.vec,drop=FALSE])) })
       } else if(basis=="tensor") {
         if(is.null(tau))
           model <- lm(y~P-1,weights=weights)
@@ -562,7 +573,7 @@ derivKernelSpline <- function(x,
         else
           suppressWarnings(vcov.model <- summary(model,covariance=TRUE)$cov)
 
-        se.deriv <- sapply(1:NROW(P.deriv), function(i){ sqrt(P.deriv[i,,drop=FALSE]%*%vcov.model%*%t(P.deriv[i,,drop=FALSE])) })
+        se.deriv <- sapply(seq_len(NROW(P.deriv)), function(i){ sqrt(P.deriv[i,,drop=FALSE]%*%vcov.model%*%t(P.deriv[i,,drop=FALSE])) })
       } else if(basis=="glp") {
         if(is.null(tau))
           model <- lm(y~P,weights=weights)
@@ -575,7 +586,7 @@ derivKernelSpline <- function(x,
         else
           suppressWarnings(vcov.model <- summary(model,covariance=TRUE)$cov[-1,-1,drop=FALSE])
 
-        se.deriv <- sapply(1:NROW(P.deriv), function(i){ sqrt(P.deriv[i,,drop=FALSE]%*%vcov.model%*%t(P.deriv[i,,drop=FALSE])) })
+        se.deriv <- sapply(seq_len(NROW(P.deriv)), function(i){ sqrt(P.deriv[i,,drop=FALSE]%*%vcov.model%*%t(P.deriv[i,,drop=FALSE])) })
       }
 
     } else {
@@ -610,7 +621,7 @@ derivKernelSpline <- function(x,
                                    display.warnings=display.warnings)
         deriv.spline <- numeric(length=n)
         se.deriv <- numeric(length=n)
-        for(i in 1:nrow.z.unique) {
+        for(i in seq_len(nrow.z.unique)) {
           zz <- ind == ind.vals[i]
           L <- prod.kernel.matrix(Z=z,z=z.unique[ind.vals[i],],lambda=lambda,is.ordered.z=is.ordered.z)
           if(!is.null(weights)) L <- weights*L
@@ -627,7 +638,7 @@ derivKernelSpline <- function(x,
             else
               suppressWarnings(model <- rq(y~P,tau=tau,method="fn",weights=L))
             dim.P.deriv <- sum(K.additive[deriv.index,])
-            deriv.start <- ifelse(deriv.index!=1,sum(K.additive[1:(deriv.index-1),])+1,1)
+            deriv.start <- if (deriv.index != 1) sum(K.additive[.crs_index_block(0L, deriv.index - 1L), ]) + 1 else 1
             deriv.end <- deriv.start+sum(K.additive[deriv.index,])-1
             deriv.ind.vec <- deriv.start:deriv.end
             deriv.spline[zz] <- P.deriv[,deriv.ind.vec,drop=FALSE]%*%(coef(model)[-1])[deriv.ind.vec]
@@ -636,7 +647,7 @@ derivKernelSpline <- function(x,
             else
               suppressWarnings(vcov.model <- summary(model,covariance=TRUE)$cov[-1,-1,drop=FALSE])
 
-            se.deriv[zz] <- sapply(1:NROW(P.deriv), function(i){ sqrt(P.deriv[i,deriv.ind.vec,drop=FALSE]%*%vcov.model[deriv.ind.vec,deriv.ind.vec]%*%t(P.deriv[i,deriv.ind.vec,drop=FALSE])) })
+            se.deriv[zz] <- sapply(seq_len(NROW(P.deriv)), function(i){ sqrt(P.deriv[i,deriv.ind.vec,drop=FALSE]%*%vcov.model[deriv.ind.vec,deriv.ind.vec]%*%t(P.deriv[i,deriv.ind.vec,drop=FALSE])) })
           } else if(basis=="tensor") {
             if(is.null(tau))
               model <- lm(y~P-1,weights=L)
@@ -650,7 +661,7 @@ derivKernelSpline <- function(x,
             else
               suppressWarnings(vcov.model <- summary(model,covariance=TRUE)$cov)
 
-            se.deriv[zz] <- sapply(1:NROW(P.deriv), function(i){ sqrt(P.deriv[i,,drop=FALSE]%*%vcov.model%*%t(P.deriv[i,,drop=FALSE])) })
+            se.deriv[zz] <- sapply(seq_len(NROW(P.deriv)), function(i){ sqrt(P.deriv[i,,drop=FALSE]%*%vcov.model%*%t(P.deriv[i,,drop=FALSE])) })
           } else if(basis=="glp") {
             if(is.null(tau))
               model <- lm(y~P,weights=L)
@@ -664,7 +675,7 @@ derivKernelSpline <- function(x,
             else
               suppressWarnings(vcov.model <- summary(model,covariance=TRUE)$cov[-1,-1,drop=FALSE])
 
-            se.deriv[zz] <- sapply(1:NROW(P.deriv), function(i){ sqrt(P.deriv[i,,drop=FALSE]%*%vcov.model%*%t(P.deriv[i,,drop=FALSE])) })
+            se.deriv[zz] <- sapply(seq_len(NROW(P.deriv)), function(i){ sqrt(P.deriv[i,,drop=FALSE]%*%vcov.model%*%t(P.deriv[i,,drop=FALSE])) })
           }
 
         }
@@ -685,7 +696,7 @@ derivKernelSpline <- function(x,
 
         deriv.spline <- numeric(length(num.eval))
         se.deriv <- numeric(length=num.eval)
-        for(i in 1:nrow.zeval.unique) {
+        for(i in seq_len(nrow.zeval.unique)) {
           zz <- ind.zeval == ind.zeval.vals[i]
           L <- prod.kernel.matrix(Z=z,z=zeval.unique[ind.zeval.vals[i],],lambda=lambda,is.ordered.z=is.ordered.z)
           if(!is.null(weights)) L <- weights*L
@@ -703,7 +714,7 @@ derivKernelSpline <- function(x,
               suppressWarnings(model <- rq(y~P,weights=L,tau=tau,method="fn"))
 
             dim.P.deriv <- sum(K.additive[deriv.index,])
-            deriv.start <- ifelse(deriv.index!=1,sum(K.additive[1:(deriv.index-1),])+1,1)
+            deriv.start <- if (deriv.index != 1) sum(K.additive[.crs_index_block(0L, deriv.index - 1L), ]) + 1 else 1
             deriv.end <- deriv.start+sum(K.additive[deriv.index,])-1
             deriv.ind.vec <- deriv.start:deriv.end
             deriv.spline[zz] <- P.deriv[,deriv.ind.vec,drop=FALSE]%*%(coef(model)[-1])[deriv.ind.vec]
@@ -712,7 +723,7 @@ derivKernelSpline <- function(x,
             else
               suppressWarnings(vcov.model <- summary(model,covariance=TRUE)$cov[-1,-1,drop=FALSE])
 
-            se.deriv[zz] <- sapply(1:NROW(P.deriv), function(i){ sqrt(P.deriv[i,deriv.ind.vec,drop=FALSE]%*%vcov.model[deriv.ind.vec,deriv.ind.vec]%*%t(P.deriv[i,deriv.ind.vec,drop=FALSE])) })
+            se.deriv[zz] <- sapply(seq_len(NROW(P.deriv)), function(i){ sqrt(P.deriv[i,deriv.ind.vec,drop=FALSE]%*%vcov.model[deriv.ind.vec,deriv.ind.vec]%*%t(P.deriv[i,deriv.ind.vec,drop=FALSE])) })
           } else if(basis=="tensor") {
             if(is.null(tau))
               model <- lm(y~P-1,weights=L)
@@ -725,7 +736,7 @@ derivKernelSpline <- function(x,
             else
               suppressWarnings(vcov.model <- summary(model,covariance=TRUE)$cov)
 
-            se.deriv[zz] <- sapply(1:NROW(P.deriv), function(i){ sqrt(P.deriv[i,,drop=FALSE]%*%vcov.model%*%t(P.deriv[i,,drop=FALSE])) })
+            se.deriv[zz] <- sapply(seq_len(NROW(P.deriv)), function(i){ sqrt(P.deriv[i,,drop=FALSE]%*%vcov.model%*%t(P.deriv[i,,drop=FALSE])) })
           } else if(basis=="glp") {
             if(is.null(tau))
               model <- lm(y~P,weights=L)
@@ -738,7 +749,7 @@ derivKernelSpline <- function(x,
             else
               suppressWarnings(vcov.model <- summary(model,covariance=TRUE)$cov[-1,-1,drop=FALSE])
 
-            se.deriv[zz] <- sapply(1:NROW(P.deriv), function(i){ sqrt(P.deriv[i,,drop=FALSE]%*%vcov.model%*%t(P.deriv[i,,drop=FALSE])) })
+            se.deriv[zz] <- sapply(seq_len(NROW(P.deriv)), function(i){ sqrt(P.deriv[i,,drop=FALSE]%*%vcov.model%*%t(P.deriv[i,,drop=FALSE])) })
           }
 
         }
@@ -807,8 +818,17 @@ preditFactorSpline <- function(x,
   if(!is.null(z)) z <- data.frame(z)
   if(!is.null(zeval)) zeval <- data.frame(zeval)
 
-  console <- newLineConsole()
-  if(display.nomad.progress) console <- printPush("Working...",console = console)
+  progress.status <- .crs_progress_status_begin(
+    enabled = display.nomad.progress,
+    surface = "solver"
+  )
+  set_status <- function(msg = NULL) {
+    .crs_progress_status_clear(progress.status)
+    if (!is.null(msg)) {
+      .crs_progress_status_update(progress.status, msg)
+    }
+  }
+  set_status("Working...")
 
   if(any(K[,1] > 0)||any(I>0)) {
 
@@ -829,7 +849,7 @@ preditFactorSpline <- function(x,
       ## test and stop())
 
       P.df <- data.frame(P)
-      names(P.df) <- paste("P",seq(1,NCOL(P.df)),sep="")
+      names(P.df) <- paste("P", seq_len(NCOL(P.df)), sep = "")
       if(basis=="additive" || basis=="glp") {
         if(is.null(tau))
           model <- lm(y~.,data=P.df,weights=weights)
@@ -845,8 +865,7 @@ preditFactorSpline <- function(x,
         cv <- mean(residuals(model)^2/(1-hatvalues(model))^2)
       else
         suppressWarnings(cv <- cv.rq(model,tau=tau,weights=weights))
-      console <- printClear(console)
-      if(display.nomad.progress) console <- printPush("Pruning...",console = console)
+      set_status("Pruning...")
       if(basis=="additive" || basis=="glp") {
         if(is.null(tau))
           model.pruned <- stepCV(lm(y~.,data=P.df,weights=weights),
@@ -883,7 +902,7 @@ preditFactorSpline <- function(x,
 
       if(cv.pruned <= cv) {
         IND <- logical()
-        for(i in 1:NCOL(P.df)) IND[i] <- any(names(P.df)[i]==names(model.pruned$model[,-1,drop=FALSE]))
+        for(i in seq_len(NCOL(P.df))) IND[i] <- any(names(P.df)[i]==names(model.pruned$model[,-1,drop=FALSE]))
         if(basis=="additive" || basis=="glp") {
           if(is.null(tau))
             model <- lm(y~P[,IND,drop=FALSE],weights=weights)
@@ -997,11 +1016,16 @@ preditFactorSpline <- function(x,
 
   if(is.null(tau))
     fit.spline <- cbind(fit.spline[[1]],se=fit.spline[[2]])
-  else
-    fit.spline <- cbind(fit.spline,se=ifelse(NCOL(fit.spline)>1,(fit.spline[,3]-fit.spline[,1])/qnorm(0.975),NA))
+  else {
+    if(NCOL(fit.spline) > 1) {
+      se.fit <- (fit.spline[,3]-fit.spline[,1])/qnorm(0.975)
+    } else {
+      se.fit <- NA
+    }
+    fit.spline <- cbind(fit.spline, se = se.fit)
+  }
 
-  console <- printClear(console)
-  console <- printPop(console)
+  set_status()
 
   if(is.null(tau))
     htt <- hatvalues(model)
@@ -1062,8 +1086,10 @@ derivFactorSpline <- function(x,
 
   if(basis=="additive" || basis=="glp") {
     K.additive <- K
-    K.additive[,2] <- ifelse(K[,1]==0,0,K[,2])
-    K.additive[,1] <- ifelse(K[,1]>0,K[,1]-1,K[,1])
+    K.additive[,2] <- K[,2]
+    K.additive[K[,1] == 0,2] <- 0
+    K.additive[,1] <- K[,1]
+    K.additive[K[,1] > 0,1] <- K[K[,1] > 0,1] - 1
   }
   if(K[deriv.index,1]!=0) {
 
@@ -1098,10 +1124,10 @@ derivFactorSpline <- function(x,
         suppressWarnings(vcov.mat.model[prune.index,prune.index] <- summary(model,covariance=TRUE)$cov[-1,-1,drop=FALSE])
 
       dim.P.deriv <- sum(K.additive[deriv.index,])
-      deriv.start <- ifelse(deriv.index!=1,sum(K.additive[1:(deriv.index-1),])+1,1)
+      deriv.start <- if (deriv.index != 1) sum(K.additive[.crs_index_block(0L, deriv.index - 1L), ]) + 1 else 1
       deriv.end <- deriv.start+sum(K.additive[deriv.index,])-1
       deriv.ind.vec[deriv.start:deriv.end] <- TRUE
-      deriv.ind.vec <- ifelse(prune.index,deriv.ind.vec,FALSE)
+      deriv.ind.vec <- deriv.ind.vec & prune.index
     } else if(basis=="tensor") {
       if(is.null(tau))
         model <- lm(y~P[,prune.index,drop=FALSE]-1,weights=weights)
@@ -1114,8 +1140,8 @@ derivFactorSpline <- function(x,
       else
         suppressWarnings(vcov.mat.model[prune.index,prune.index] <- summary(model,covariance=TRUE)$cov)
 
-      deriv.ind.vec[1:dim.P.tensor] <- TRUE
-      deriv.ind.vec <- ifelse(prune.index,deriv.ind.vec,FALSE)
+      deriv.ind.vec[seq_len(dim.P.tensor)] <- TRUE
+      deriv.ind.vec <- deriv.ind.vec & prune.index
     } else if(basis=="glp") {
       if(is.null(tau))
         model <- lm(y~P[,prune.index,drop=FALSE],weights=weights)
@@ -1128,12 +1154,12 @@ derivFactorSpline <- function(x,
       else
         suppressWarnings(vcov.mat.model[prune.index,prune.index] <- summary(model,covariance=TRUE)$cov[-1,-1,drop=FALSE])
 
-      deriv.ind.vec[1:dim.P.tensor] <- TRUE
-      deriv.ind.vec <- ifelse(prune.index,deriv.ind.vec,FALSE)
+      deriv.ind.vec[seq_len(dim.P.tensor)] <- TRUE
+      deriv.ind.vec <- deriv.ind.vec & prune.index
     }
 
     deriv.spline <- P.deriv[,deriv.ind.vec,drop=FALSE]%*%coef.vec.model[deriv.ind.vec]
-    se.deriv <- sapply(1:NROW(P.deriv[,deriv.ind.vec,drop=FALSE]), function(i){ sqrt(P.deriv[i,deriv.ind.vec,drop=FALSE]%*%vcov.mat.model[deriv.ind.vec,deriv.ind.vec]%*%t(P.deriv[i,deriv.ind.vec,drop=FALSE])) })
+    se.deriv <- sapply(seq_len(NROW(P.deriv[,deriv.ind.vec,drop=FALSE])), function(i){ sqrt(P.deriv[i,deriv.ind.vec,drop=FALSE]%*%vcov.mat.model[deriv.ind.vec,deriv.ind.vec]%*%t(P.deriv[i,deriv.ind.vec,drop=FALSE])) })
     lwr <- deriv.spline - qnorm(0.975)*se.deriv
     upr <- deriv.spline + qnorm(0.975)*se.deriv
 
@@ -1399,7 +1425,7 @@ cv.factor.spline <- function(x,
     categories <- NULL
   } else {
     categories <- numeric()
-    for(i in 1:NCOL(z)) categories[i] <- length(unique(z[,i]))
+    for(i in seq_len(NCOL(z))) categories[i] <- length(unique(z[,i]))
   }
 
   ## Calculate expected degrees of freedom
@@ -1565,7 +1591,7 @@ cv.factor.spline <- function(x,
         ## For augmented formulation: use hat values from augmented fit
         ## but only for original observations
         htt_aug <- hat.from.lm.fit(model)
-        htt <- htt_aug[1:n]
+        htt <- htt_aug[seq_len(n)]
       } else {
         htt <- hat.from.lm.fit(model)
       }
@@ -1631,10 +1657,14 @@ cv.factor.spline <- function(x,
       sigmasq <- mean(check.function(epsilon, tau))
       penalty <- ((1 + traceH/n) / (1 - (traceH + 2)/n)) * (0.5/sqrt(tau*(1-tau)))
     }
-    cv <- ifelse(penalty < 0, cv.maxPenalty, log(sigmasq) + penalty)
+    if(penalty < 0) {
+      cv <- cv.maxPenalty
+    } else {
+      cv <- log(sigmasq) + penalty
+    }
   }
 
-  return(ifelse(!is.na(cv), cv, cv.maxPenalty))
+  return(if(is.na(cv)) cv.maxPenalty else cv)
 }
 
 ## Drop-in replacement for cv.kernel.spline with improved handling of
@@ -1945,7 +1975,7 @@ cv.kernel.spline <- function(x,
       }
 
       htt <- hat(P)
-      htt <- ifelse(htt < 1, htt, 1-.Machine$double.eps)
+      htt <- pmin(htt, 1-.Machine$double.eps)
 
     } else {
       htt <- rep(1/n, n)
@@ -2002,7 +2032,7 @@ cv.kernel.spline <- function(x,
         XP <- P
       }
 
-      for(i in 1:nrow.z.unique) {
+      for(i in seq_len(nrow.z.unique)) {
         if(!is.null(ind.list)) {
           zz <- ind.list[[i]]
         } else {
@@ -2181,7 +2211,7 @@ cv.kernel.spline <- function(x,
             epsilon[zz] <- (y - fitted_vals)[zz]
             ## For ridge: hat values from augmented system, take first n
             htt_all <- hat.from.lm.fit(model)
-            htt[zz] <- htt_all[1:n][zz]
+            htt[zz] <- htt_all[seq_len(n)][zz]
           } else {
             epsilon[zz] <- (model$residuals/sw)[zz]
             htt[zz] <- hat.from.lm.fit(model)[zz]
@@ -2195,13 +2225,13 @@ cv.kernel.spline <- function(x,
     } else {
       ## No predictors for which degree > 0
       z.factor <- data.frame(factor(z[,1]), ordered=is.ordered.z[1])
-      if(num.z > 1) for(i in 2:num.z)
+      if(num.z > 1) for(i in seq.int(2, num.z))
         z.factor <- data.frame(z.factor, factor(z[,i], ordered=is.ordered.z[i]))
 
       ## Hoist matrix creation out of loop
       X0 <- matrix(1, n, 1)
 
-      for(i in 1:nrow.z.unique) {
+      for(i in seq_len(nrow.z.unique)) {
         if(!is.null(ind.list)) {
           zz <- ind.list[[i]]
         } else {
@@ -2237,7 +2267,7 @@ cv.kernel.spline <- function(x,
       }
     }
 
-    htt <- ifelse(htt < 1, htt, 1-.Machine$double.eps)
+    htt <- pmin(htt, 1-.Machine$double.eps)
 
   }
 
@@ -2263,10 +2293,14 @@ cv.kernel.spline <- function(x,
       sigmasq <- mean(check.function(epsilon, tau))
       penalty <- ((1 + traceH/n) / (1 - (traceH + 2)/n)) * (0.5/sqrt(tau*(1-tau)))
     }
-    cv <- ifelse(penalty < 0, cv.maxPenalty, log(sigmasq) + penalty)
+    if(penalty < 0) {
+      cv <- cv.maxPenalty
+    } else {
+      cv <- log(sigmasq) + penalty
+    }
   }
 
-  return(ifelse(!is.na(cv), cv, cv.maxPenalty))
+  return(if(is.na(cv)) cv.maxPenalty else cv)
 }
 
 ## ============================================================================
@@ -2294,25 +2328,29 @@ svd_lm_fit <- function(x, y, tol = 1e-7) {
       rank = 0,
       qr = matrix(0, n, p),
       qraux = rep(0, p),
-      pivot = 1:p,
+      pivot = seq_len(p),
       tol = tol,
       effects = rep(0, n)
     ))
   }
 
   ## Truncate to effective rank
-  d_inv <- ifelse(d > max(tol * d[1], 0), 1/d, 0)
+  d_inv <- numeric(length(d))
+  d_tol <- max(tol * d[1], 0)
+  keep <- d > d_tol
+  d_inv[keep] <- 1/d[keep]
 
   ## Compute coefficients: beta = V D^{-1} U' y
-  u_truncated <- svd_x$u[, 1:rank, drop = FALSE]
-  v_truncated <- svd_x$v[, 1:rank, drop = FALSE]
+  rank_idx <- seq_len(rank)
+  u_truncated <- svd_x$u[, rank_idx, drop = FALSE]
+  v_truncated <- svd_x$v[, rank_idx, drop = FALSE]
 
-  coefficients <- v_truncated %*% (d_inv[1:rank] * (t(u_truncated) %*% y))
+  coefficients <- v_truncated %*% (d_inv[rank_idx] * (t(u_truncated) %*% y))
 
   ## Ensure full length coefficient vector
   if(length(coefficients) < p) {
     coef_full <- rep(0, p)
-    coef_full[1:length(coefficients)] <- coefficients
+    coef_full[seq_along(coefficients)] <- coefficients
     coefficients <- coef_full
   }
 
@@ -2336,6 +2374,6 @@ svd_lm_fit <- function(x, y, tol = 1e-7) {
     qraux = qr_obj$qraux,
     pivot = qr_obj$pivot,
     tol = tol,
-    effects = d[1:min(rank, length(d))]
+    effects = d[seq_len(min(rank, length(d)))]
   ))
 }

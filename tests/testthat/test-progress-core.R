@@ -130,8 +130,11 @@ test_that("plot progress emits checkpoint updates even when throttled", {
   expect_true(any(grepl("Plot bootstrap 6/8", lines, fixed = TRUE)))
 })
 
-test_that("console helpers route through the shared progress runtime", {
+test_that("status helpers route through the shared progress runtime", {
   reset <- getFromNamespace(".crs_progress_reset_registry", "crs")
+  begin_status <- getFromNamespace(".crs_progress_status_begin", "crs")
+  update_status <- getFromNamespace(".crs_progress_status_update", "crs")
+  clear_status <- getFromNamespace(".crs_progress_status_clear", "crs")
 
   old_opts <- options(crs.messages = TRUE)
   on.exit(options(old_opts), add = TRUE)
@@ -143,11 +146,11 @@ test_that("console helpers route through the shared progress runtime", {
     ),
     {
       reset()
-      console <- newLineConsole()
-      console <- printPush("Working...", console)
-      expect_false(is.null(console$progress$state))
-      console <- printClear(console)
-      expect_null(console$progress$state)
+      status <- begin_status(surface = "console")
+      status <- update_status(status, "Working...")
+      expect_false(is.null(status$state))
+      status <- clear_status(status)
+      expect_null(status$state)
     }
   )
 })
