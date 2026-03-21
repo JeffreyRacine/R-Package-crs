@@ -90,6 +90,34 @@ test_that("npglpreg degree-bandwidth CV works", {
   expect_true(all(model$bws > 0))
 })
 
+test_that("npglpreg NOMAD nmulti stores true outer restart results", {
+  set.seed(7)
+  n <- 30
+  x <- runif(n)
+  y <- sin(2 * pi * x) + rnorm(n, sd = 0.1)
+
+  model <- npglpreg(
+    y ~ x,
+    cv = "degree-bandwidth",
+    nmulti = 3,
+    max.bb.eval = 20,
+    display.warnings = FALSE,
+    display.nomad.progress = FALSE
+  )
+
+  expect_s3_class(model, "npglpreg")
+  expect_identical(model$nmulti, 3)
+  expect_identical(model$nomad.nmulti, 3)
+  expect_equal(nrow(model$nomad.starts), 3L)
+  expect_length(model$nomad.restart.results, 3L)
+  expect_length(model$nomad.restart.fval, 3L)
+  expect_true(all(is.finite(model$nomad.restart.fval)))
+  expect_identical(as.numeric(model$nomad.restart.fval),
+                   as.numeric(vapply(model$nomad.restart.results, `[[`, numeric(1L), "objective")))
+  expect_identical(model$nomad.best.restart, which.min(model$nomad.restart.fval))
+  expect_equal(as.numeric(model$fv), as.numeric(model$nomad.restart.fval[model$nomad.best.restart]))
+})
+
 test_that("npglpreg categorical predictors work", {
   set.seed(42)
   n <- 50

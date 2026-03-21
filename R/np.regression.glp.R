@@ -974,6 +974,12 @@ npglpreg.formula <- function(formula,
       est$nomad.bandwidth.starts <- model.cv$nomad.bandwidth.starts
     if (!is.null(model.cv$nomad.start.info))
       est$nomad.start.info <- model.cv$nomad.start.info
+    if (!is.null(model.cv$nomad.restart.results))
+      est$nomad.restart.results <- model.cv$nomad.restart.results
+    if (!is.null(model.cv$nomad.best.restart))
+      est$nomad.best.restart <- model.cv$nomad.best.restart
+    if (!is.null(model.cv$fv.vec))
+      est$nomad.restart.fval <- model.cv$fv.vec
     if (!is.null(model.cv$nomad.nmulti))
       est$nomad.nmulti <- model.cv$nomad.nmulti
   }
@@ -2880,74 +2886,72 @@ glpcvNOMAD <- function(ydat=NULL,
     display.warnings = display.warnings
   )
   x0.pts <- x0.setup$starts
+  eval.nomad <- if (bwmethod == "cv.ls") eval.lscv else eval.aicc
+  nomad_restart_results <- vector("list", nmulti)
+  best.restart <- NA_integer_
+  solution <- NULL
 
-  nmulti.nomad <- if(nmulti == 1) 0 else nmulti
+  run_nomad_once <- function(start) {
+    snomadr(eval.f=eval.nomad,
+            n=length(bbin),
+            x0=as.numeric(start),
+            bbin=bbin,
+            bbout=0,
+            lb=lb,
+            ub=ub,
+            nmulti=0,
+            random.seed=random.seed,
+            opts=opts,
+            display.nomad.progress=display.nomad.progress,
+            params=params,
+            ...)
+  }
 
-  if(bwmethod == "cv.ls" ) {
-    solution<-snomadr(eval.f=eval.lscv,
-                      n=length(bbin),
-                      x0=as.numeric(x0.pts),
-                      bbin=bbin,
-                      bbout=0,
-                      lb=lb,
-                      ub=ub,
-                      nmulti=nmulti.nomad,
-                      random.seed=random.seed,
-                      opts=opts,
-                      display.nomad.progress=display.nomad.progress,
-                      params=params,
-                      ...);
+  for(i in seq_len(nmulti)) {
+    if(display.nomad.progress && nmulti > 1L) {
+      .crs_progress_status_update(
+        progress.status,
+        paste0("Calling NOMAD (Nonsmooth Optimization by Mesh Adaptive Direct Search) ",
+               "multistart ", i, "/", nmulti)
+      )
+    }
 
-    if(restart.from.min) solution<-snomadr(eval.f=eval.lscv,
-                                           n=length(bbin),
-                                           x0=solution$solution,
-                                           bbin=bbin,
-                                           bbout=0,
-                                           lb=lb,
-                                           ub=ub,
-                                           nmulti=1,
-                                           random.seed=random.seed,
-                                           opts=opts,
-                                           display.nomad.progress=display.nomad.progress,
-                                           params=params,
-                                           ...);
+    solution.i <- run_nomad_once(x0.pts[i, ])
+    fv.vec[i] <- solution.i$objective
+    nomad_restart_results[[i]] <- list(
+      restart = i,
+      start = as.numeric(x0.pts[i, ]),
+      degree.start = if (!is.null(x0.setup$degree.starts) && nrow(x0.setup$degree.starts) >= i) {
+        as.integer(x0.setup$degree.starts[i, ])
+      } else {
+        integer(0L)
+      },
+      objective = as.numeric(solution.i$objective),
+      bbe = if (!is.null(solution.i$bbe)) as.numeric(solution.i$bbe[1L]) else NA_real_,
+      iterations = if (!is.null(solution.i$iterations)) as.numeric(solution.i$iterations[1L]) else NA_real_,
+      solution = if (!is.null(solution.i$solution)) as.numeric(solution.i$solution) else NULL
+    )
 
-  } else {
-    solution<-snomadr(eval.f=eval.aicc,
-                      n=length(bbin),
-                      x0=as.numeric(x0.pts),
-                      bbin=bbin,
-                      bbout=0,
-                      lb=lb,
-                      ub=ub,
-                      nmulti=nmulti.nomad,
-                      random.seed=random.seed,
-                      opts=opts,
-                      display.nomad.progress=display.nomad.progress,
-                      params=params,
-                      ...);
+    if(is.null(solution) || isTRUE(solution.i$objective < solution$objective)) {
+      solution <- solution.i
+      best.restart <- as.integer(i)
+    }
+  }
 
-    if(restart.from.min) solution<-snomadr(eval.f=eval.aicc,
-                                           n=length(bbin),
-                                           x0=solution$solution,
-                                           bbin=bbin,
-                                           bbout=0,
-                                           lb=lb,
-                                           ub=ub,
-                                           nmulti=1,
-                                           random.seed=random.seed,
-                                           opts=opts,
-                                           display.nomad.progress=display.nomad.progress,
-                                           params=params,
-                                           ...);
+  if(restart.from.min) {
+    if(display.nomad.progress) {
+      .crs_progress_status_update(
+        progress.status,
+        "Refining NOMAD solution from best restart"
+      )
+    }
+    solution <- run_nomad_once(solution$solution)
   }
 
   if (!is.null(nomad.activity)) {
     .crs_progress_activity_end(nomad.activity)
     nomad.activity <- NULL
   }
-
-  fv.vec[1] <- solution$objective
 
   bw.opt.sf <- solution$solution[seq_len(num.bw)]
 
@@ -2981,8 +2985,13 @@ glpcvNOMAD <- function(ydat=NULL,
 
   if(!is.null(opts$MAX_BB_EVAL)){
     if(display.warnings) {
-      if(nmulti>0) {if(nmulti*opts$MAX_BB_EVAL <= solution$bbe) warning(paste(" MAX_BB_EVAL reached in NOMAD: perhaps use a larger value...", sep=""))}
-      if(nmulti==0) {if(opts$MAX_BB_EVAL <= solution$bbe) warning(paste(" MAX_BB_EVAL reached in NOMAD: perhaps use a larger value...", sep="")) }
+      total.bbe <- sum(vapply(
+        nomad_restart_results,
+        function(x) if (is.null(x$bbe) || !length(x$bbe) || is.na(x$bbe)) 0 else as.numeric(x$bbe[1L]),
+        numeric(1L)
+      ))
+      if(nmulti*opts$MAX_BB_EVAL <= total.bbe) warning(paste(" MAX_BB_EVAL reached in NOMAD: perhaps use a larger value...", sep=""))
+      if(restart.from.min && !is.null(solution$bbe) && opts$MAX_BB_EVAL <= solution$bbe) warning(paste(" MAX_BB_EVAL reached in NOMAD: perhaps use a larger value...", sep=""))
     }
   }
 
@@ -3012,6 +3021,8 @@ glpcvNOMAD <- function(ydat=NULL,
               nomad.degree.starts=x0.setup$degree.starts,
               nomad.bandwidth.starts=x0.setup$bandwidth.starts,
               nomad.start.info=x0.setup$start.info,
+              nomad.restart.results=nomad_restart_results,
+              nomad.best.restart=best.restart,
               nomad.nmulti=nmulti,
               bwtype=bwtype,
               ckertype=ckertype,
