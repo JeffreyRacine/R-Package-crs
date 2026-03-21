@@ -2,7 +2,9 @@ Package: crs
 Version: 0.15-41
 Date: 2026-03-19
 Imports: boot, stats, np, quantreg
-Suggests: ggplot2, logspline, MASS, npRmpi, quadprog, rgl, testthat (>= 3.0.0)
+Suggests: ggplot2, knitr, logspline, MASS, npRmpi, quadprog, rgl,
+        rmarkdown, testthat (>= 3.0.0)
+VignetteBuilder: knitr
 Config/testthat/edition: 3
 Title: Categorical Regression Splines
 Authors@R: c(person(given = "Jeffrey S.", family = "Racine", role = c("aut","cre"), email = "racinej@mcmaster.ca"),
@@ -13,4 +15,3 @@ License: GPL (>=3)
 URL: https://github.com/JeffreyRacine/R-Package-crs
 BugReports: https://github.com/JeffreyRacine/R-Package-crs/issues
 Repository: CRAN
-

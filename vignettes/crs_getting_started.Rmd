@@ -1,0 +1,85 @@
+---
+title: "Getting Started with crs"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{Getting Started with crs}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>"
+)
+options(crs.messages = FALSE)
+```
+
+This vignette is meant to be the minimal package-side introduction to `crs`.
+It focuses on one clean first run and a simple reminder of where spline
+methods fit relative to the rest of the ecosystem.
+
+Longer conceptual and tuning material is better carried by the gallery site:
+
+- <https://jeffreyracine.github.io/gallery/crs.html>
+- <https://jeffreyracine.github.io/gallery/spline_primer.html>
+
+## A small spline regression example
+
+```{r}
+library(crs)
+set.seed(42)
+n <- 250
+x1 <- runif(n)
+x2 <- runif(n)
+y <- sin(2 * pi * x1) + x2 + rnorm(n, sd = 0.2)
+dat <- data.frame(y, x1, x2)
+
+fit <- crs(y ~ x1 + x2, data = dat)
+summary(fit)
+```
+
+## A simple prediction plot
+
+```{r, fig.width = 6, fig.height = 4}
+plot(x1, y, cex = 0.35, col = "grey")
+
+grid_x1 <- seq(min(x1), max(x1), length.out = 200)
+newdata <- data.frame(
+  x1 = grid_x1,
+  x2 = mean(x2)
+)
+pred <- predict(fit, newdata = newdata)
+
+lines(grid_x1, pred, col = 2, lwd = 2)
+```
+
+## When to use `crs`
+
+Use `crs` when regression splines, derivative structure, or shape restrictions
+are the natural tool. For kernel-based workflows, see the `np` package
+instead.
+
+Two common next stops after this first vignette are:
+
+- `?crssigtest` for spline significance testing,
+- <https://jeffreyracine.github.io/gallery/spline_primer.html> for the
+  conceptual background.
+
+## A practical note on search
+
+If cross-validated spline search feels expensive, begin by confirming the
+modeling problem on a smaller example first. Then narrow the search only if
+needed by restricting options such as degree or knot complexity.
+
+It is also useful to remember that `crs` contains simple linear-regression-style
+specifications as special cases when the basis is restricted appropriately.
+
+## Where to go next
+
+- `?crs` and `?crssigtest` for help pages
+- <https://jeffreyracine.github.io/gallery/spline_primer.html> for the
+  conceptual introduction
+- <https://jeffreyracine.github.io/gallery/spline_search_and_tuning.html> for
+  practical search and tuning guidance
+- package demos via `demo(package = "crs")`
