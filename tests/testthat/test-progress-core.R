@@ -191,6 +191,26 @@ test_that("single-line finish clear does not emit a trailing newline", {
   expect_true(endsWith(output, "\r"))
 })
 
+test_that("single-line finish clear uses ANSI erase on capable ttys", {
+  render <- getFromNamespace(".crs_progress_render_single_line", "crs")
+
+  output <- with_crs_progress_bindings(
+    list(.crs_progress_single_line_supports_ansi = function(con) TRUE),
+    capture_stderr_text(
+      render(
+        list(
+          render_line = "[crs] Working...",
+          last_width = 18L
+        ),
+        event = "finish"
+      )
+    )
+  )
+
+  expect_false(grepl("\n", output, fixed = TRUE))
+  expect_identical(output, "\r\033[2K\r")
+})
+
 test_that("activity helpers emit and clear through the shared renderer", {
   begin_activity <- getFromNamespace(".crs_progress_activity_begin", "crs")
   end_activity <- getFromNamespace(".crs_progress_activity_end", "crs")

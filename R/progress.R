@@ -779,13 +779,28 @@
   .crs_progress_ellipsize_middle(line, max_width = max_width)
 }
 
+.crs_progress_single_line_supports_ansi <- function(con = .crs_progress_single_line_connection()) {
+  if (identical(.Platform$OS.type, "windows")) {
+    return(FALSE)
+  }
+
+  tryCatch(isTRUE(isatty(con)), error = function(...) FALSE)
+}
+
 .crs_progress_render_single_line <- function(snapshot, event = c("render", "finish", "abort")) {
   event <- match.arg(event)
   render_line <- snapshot$render_line
   con <- .crs_progress_single_line_connection()
+  use_ansi <- isTRUE(.crs_progress_single_line_supports_ansi(con))
   width <- nchar(render_line, type = "width")
 
   if (identical(event, "finish")) {
+    if (use_ansi) {
+      base::cat("\r\033[2K\r", file = con, sep = "")
+      flush(con)
+      flush.console()
+      return(invisible(snapshot))
+    }
     clear_width <- max(snapshot$last_width, width, .crs_progress_output_width())
     clear_line <- if (clear_width > 0L) strrep(" ", clear_width) else ""
     base::cat("\r", clear_line, "\r", file = con, sep = "")
@@ -797,7 +812,11 @@
   pad <- max(0L, snapshot$last_width - width)
   suffix <- if (pad > 0L) paste(rep(" ", pad), collapse = "") else ""
 
-  base::cat("\r", render_line, suffix, file = con, sep = "")
+  if (use_ansi) {
+    base::cat("\r\033[2K", render_line, file = con, sep = "")
+  } else {
+    base::cat("\r", render_line, suffix, file = con, sep = "")
+  }
   if (identical(event, "abort")) {
     base::cat("\n", file = con, sep = "")
   }

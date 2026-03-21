@@ -2854,14 +2854,11 @@ glpcvNOMAD <- function(ydat=NULL,
   )
   on.exit(.crs_progress_status_clear(progress.status), add = TRUE)
   params$progress.status <- progress.status
-  nomad.activity <- NULL
-
   if(display.nomad.progress) {
-    nomad.activity <- .crs_progress_activity_begin(
-      "Calling NOMAD (Nonsmooth Optimization by Mesh Adaptive Direct Search)",
-      surface = "nomad"
+    .crs_progress_status_update(
+      progress.status,
+      "Calling NOMAD (Nonsmooth Optimization by Mesh Adaptive Direct Search)"
     )
-    on.exit(.crs_progress_activity_end(nomad.activity), add = TRUE)
   }
 
   ## Generate all initial points for multiple restarting. Start 1 is
@@ -2946,11 +2943,6 @@ glpcvNOMAD <- function(ydat=NULL,
       )
     }
     solution <- run_nomad_once(solution$solution)
-  }
-
-  if (!is.null(nomad.activity)) {
-    .crs_progress_activity_end(nomad.activity)
-    nomad.activity <- NULL
   }
 
   bw.opt.sf <- solution$solution[seq_len(num.bw)]
