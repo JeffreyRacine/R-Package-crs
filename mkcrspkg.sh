@@ -17,11 +17,6 @@ rm DESCRIPTION.bak
 
 (cd R || exit 1
 
-echo updating zzz.R
-sed -i.bak -e 's/version [0-9.][0-9.]*-[0-9][0-9]*/'"version $maver-$miver/" zzz.R 
-
-rm zzz.R.bak
-
 cp spline.R ../demo
 
 ) # end subshell
