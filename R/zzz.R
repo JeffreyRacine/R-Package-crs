@@ -2,7 +2,7 @@
   packageStartupMessage(
     sprintf(
       'crs %s: vignette("crs_getting_started", package = "crs")',
-      utils::packageVersion(pkg)
+      utils::packageDescription(pkg, fields = "Version")
     ),
     domain = NULL,
     appendLF = TRUE
