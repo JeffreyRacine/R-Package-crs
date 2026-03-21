@@ -1,5 +1,12 @@
 .onAttach <- function (lib, pkg) {
-  packageStartupMessage("Categorical Regression Splines (version 0.15-41)\n[vignette(\"crs_faq\") provides answers to frequently asked questions]", domain = NULL,  appendLF = TRUE)
+  packageStartupMessage(
+    sprintf(
+      'crs %s: vignette("crs_getting_started", package = "crs")',
+      utils::packageVersion(pkg)
+    ),
+    domain = NULL,
+    appendLF = TRUE
+  )
 }
 
 .onLoad <- function (lib, pkg) {
