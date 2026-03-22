@@ -172,6 +172,8 @@ static bool r_eval_single(int nb_inputs,
     UNPROTECT(nprotect);
     return false;
   }
+  result = PROTECT(result);
+  ++nprotect;
 
   if (!Rf_isNumeric(result)) {
     UNPROTECT(nprotect);
