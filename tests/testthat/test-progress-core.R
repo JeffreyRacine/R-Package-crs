@@ -33,6 +33,7 @@ capture_single_line_output <- function(bindings, code) {
   path <- tempfile(fileext = ".log")
   con <- file(path, open = "wb")
   closed <- FALSE
+  reset <- getFromNamespace(".crs_progress_reset_registry", "crs")
 
   on.exit({
     if (!closed) {
@@ -42,6 +43,8 @@ capture_single_line_output <- function(bindings, code) {
   }, add = TRUE)
 
   bindings$.crs_progress_single_line_connection <- function() con
+  reset()
+  on.exit(reset(), add = TRUE)
   with_crs_progress_bindings(bindings, code)
 
   close(con)
@@ -236,6 +239,7 @@ test_that("single-line render clears stale suffix across state handoff in non-AN
   output_width <- 120L
   long <- "[crs] Calling NOMAD (Nonsmooth Optimization by Mesh Adaptive Direct Search)... elapsed 0.0s"
   short <- "[crs] NOMAD search..."
+  medium <- "[crs] NOMAD search... iteration 20, elapsed 2.5s: fv=0.2585065"
 
   output <- capture_single_line_output(
     list(
@@ -245,6 +249,7 @@ test_that("single-line render clears stale suffix across state handoff in non-AN
     {
       render(list(render_line = long, last_width = 0L), event = "render")
       render(list(render_line = short, last_width = 0L), event = "render")
+      render(list(render_line = medium, last_width = nchar(short, type = "width")), event = "render")
     }
   )
 
@@ -252,7 +257,8 @@ test_that("single-line render clears stale suffix across state handoff in non-AN
     output,
     paste0(
       "\r", long,
-      "\r", short, strrep(" ", nchar(long, type = "width") - nchar(short, type = "width"))
+      "\r", short, strrep(" ", nchar(long, type = "width") - nchar(short, type = "width")),
+      "\r", medium, strrep(" ", nchar(long, type = "width") - nchar(medium, type = "width"))
     )
   )
 })

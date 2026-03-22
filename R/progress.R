@@ -829,7 +829,7 @@
     .crs_progress_registry$last_single_line_width <- 0L
     base::cat("\n", file = con, sep = "")
   } else {
-    .crs_progress_registry$last_single_line_width <- width
+    .crs_progress_registry$last_single_line_width <- max(width, global_width)
   }
   flush(con)
   flush.console()

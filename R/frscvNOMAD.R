@@ -100,7 +100,23 @@ frscvNOMAD <- function(xz,
     progress.env <- new.env(parent = emptyenv())
     progress.env$emit <- isTRUE(print.output)
     progress.env$count <- 0L
-    progress.env$state <- NULL
+    progress.env$state <- if (isTRUE(print.output)) {
+      state <- .crs_progress_begin("NOMAD search", surface = "nomad")
+      intro.now <- .crs_progress_now()
+      state <- .crs_progress_render(
+        state = state,
+        line = paste0(
+          .crs_io_pkg_prefix(),
+          " Calling NOMAD (Nonsmooth Optimization by Mesh Adaptive Direct Search)... elapsed 0.0s"
+        ),
+        event = "start",
+        now = intro.now
+      )
+      state <- .crs_progress_show_now(state)
+      state
+    } else {
+      NULL
+    }
 
     on.exit({
       if (!is.null(progress.env$state)) {
@@ -224,13 +240,12 @@ frscvNOMAD <- function(xz,
       progress.env <- params$progress.env
       if (isTRUE(progress.env$emit)) {
         progress.env$count <- progress.env$count + 1L
-        if (is.null(progress.env$state)) {
-          progress.env$state <- .crs_progress_begin("NOMAD search", surface = "nomad")
-        }
-        progress.env$state <- .crs_progress_step(
+        progress.env$state <- .crs_progress_step_at(
           progress.env$state,
+          now = .crs_progress_now(),
           done = progress.env$count,
-          detail = paste0("fv=", format(cv))
+          detail = paste0("fv=", format(cv)),
+          force = (progress.env$count == 1L)
         )
       }
 
@@ -375,15 +390,6 @@ frscvNOMAD <- function(xz,
   }
 
   print.output <- display.nomad.progress
-  nomad.activity <- NULL
-
-  if(display.nomad.progress){
-    nomad.activity <- .crs_progress_activity_begin(
-      "Calling NOMAD (Nonsmooth Optimization by Mesh Adaptive Direct Search)",
-      surface = "nomad"
-    )
-    on.exit(.crs_progress_activity_end(nomad.activity), add = TRUE)
-  }
 
   ## Take data frame x and parse into factors (z) and numeric (x)
 
