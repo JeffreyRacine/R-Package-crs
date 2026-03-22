@@ -23,6 +23,33 @@ test_that("crs works with default method", {
   expect_s3_class(model, "crs")
 })
 
+test_that("crs default method routes nmulti through model selection", {
+  set.seed(21)
+  n <- 80
+  x1 <- runif(n)
+  x2 <- runif(n)
+  z <- factor(rbinom(n, 1, .5))
+  y <- cos(2 * pi * x1) + sin(2 * pi * x2) + as.numeric(z) - 1 + rnorm(n, sd = .25)
+  xz <- data.frame(x1 = x1, x2 = x2, z = z)
+
+  model <- crs(
+    xz = xz,
+    y = y,
+    kernel = TRUE,
+    nmulti = 2,
+    degree.max = 2,
+    segments.max = 2,
+    max.bb.eval = 40,
+    random.seed = 7,
+    display.warnings = FALSE,
+    display.nomad.progress = FALSE
+  )
+
+  expect_s3_class(model, "crs")
+  expect_identical(model$nmulti, 2)
+  expect_equal(length(predict(model)), n)
+})
+
 test_that("plot.crs bootstrap progress stays visible", {
   test_time_values <- function(values) {
     i <- 0L

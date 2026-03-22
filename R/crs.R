@@ -16,6 +16,103 @@
 
 crs <- function(...) UseMethod("crs")
 
+.crs_default_selector_args <- function() {
+  c("cv",
+    "cv.df.min",
+    "cv.func",
+    "cv.threshold",
+    "degree.max",
+    "degree.min",
+    "display.nomad.progress",
+    "initial.mesh.size.integer",
+    "initial.mesh.size.real",
+    "lambda.discrete",
+    "lambda.discrete.num",
+    "max.bb.eval",
+    "min.mesh.size.integer",
+    "min.mesh.size.real",
+    "min.frame.size.integer",
+    "min.frame.size.real",
+    "nmulti",
+    "opts",
+    "random.seed",
+    "restarts",
+    "segments.max",
+    "segments.min",
+    "singular.ok")
+}
+
+.crs_default_should_select <- function(xz,
+                                       kernel,
+                                       degree,
+                                       segments,
+                                       include,
+                                       lambda,
+                                       dots) {
+  xz.df <- as.data.frame(xz)
+  dot.names <- names(dots)
+
+  has.numeric <- any(vapply(xz.df, is.numeric, logical(1L)))
+  has.categorical <- any(vapply(xz.df, is.factor, logical(1L)))
+  has.selector.args <- !is.null(dot.names) &&
+    any(nzchar(dot.names) & dot.names %in% .crs_default_selector_args())
+
+  missing.continuous.spec <- has.numeric && (is.null(degree) || is.null(segments))
+  missing.categorical.spec <- has.categorical &&
+    if (kernel) is.null(lambda) else is.null(include)
+
+  has.selector.args || missing.continuous.spec || missing.categorical.spec
+}
+
+.crs_default_delegate <- function(xz,
+                                  y,
+                                  basis,
+                                  complexity,
+                                  data.return,
+                                  degree,
+                                  deriv,
+                                  display.nomad.progress,
+                                  display.warnings,
+                                  include,
+                                  kernel,
+                                  knots,
+                                  lambda,
+                                  model.return,
+                                  prune,
+                                  tau,
+                                  weights,
+                                  dots) {
+  xz.df <- as.data.frame(xz)
+  response.name <- make.unique(c(".crs_response", names(xz.df)))[1L]
+  data <- xz.df
+  data[[response.name]] <- y
+
+  args <- c(
+    list(
+      formula = reformulate(names(xz.df), response = response.name),
+      basis = basis,
+      complexity = complexity,
+      data = data,
+      data.return = data.return,
+      degree = degree,
+      deriv = deriv,
+      display.nomad.progress = display.nomad.progress,
+      display.warnings = display.warnings,
+      include = include,
+      kernel = kernel,
+      knots = knots,
+      lambda = lambda,
+      model.return = model.return,
+      prune = prune,
+      tau = tau,
+      weights = weights
+    ),
+    dots
+  )
+
+  do.call(crs.formula, args)
+}
+
 ## This function computes the fit and returns the fit, degree
 ## (vector), segments (vector), and include (vector) for categorical
 ## predictors. Note that degree of zero and include of zero drop the
@@ -331,6 +428,36 @@ crs.default <- function(xz,
                         tau=NULL,
                         weights=NULL,
                         ...) {
+  dots <- list(...)
+
+  if (.crs_default_should_select(xz = xz,
+                                 kernel = kernel,
+                                 degree = degree,
+                                 segments = segments,
+                                 include = include,
+                                 lambda = lambda,
+                                 dots = dots)) {
+    est <- .crs_default_delegate(xz = xz,
+                                 y = y,
+                                 basis = basis,
+                                 complexity = complexity,
+                                 data.return = data.return,
+                                 degree = degree,
+                                 deriv = deriv,
+                                 display.nomad.progress = display.nomad.progress,
+                                 display.warnings = display.warnings,
+                                 include = include,
+                                 kernel = kernel,
+                                 knots = knots,
+                                 lambda = lambda,
+                                 model.return = model.return,
+                                 prune = prune,
+                                 tau = tau,
+                                 weights = weights,
+                                 dots = dots)
+    est$call <- match.call(expand.dots = FALSE)
+    return(est)
+  }
 
   complexity <- match.arg(complexity)
   knots <- match.arg(knots)
