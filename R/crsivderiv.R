@@ -63,23 +63,6 @@ crsivderiv.default <- function(y,
   dots.preloop <- dot.prep$dots.preloop
   dots.loop <- dot.prep$dots.loop
 
-  fit.crs <- function(formula, data, dots, deriv = NULL, degree = NULL,
-                      segments = NULL, lambda = NULL, include = NULL,
-                      nmulti = NULL) {
-    .crsiv_fit_crs(formula = formula,
-                   data = data,
-                   dots = dots,
-                   opts = opts,
-                   display.nomad.progress = display.nomad.progress,
-                   display.warnings = display.warnings,
-                   deriv = deriv,
-                   degree = degree,
-                   segments = segments,
-                   lambda = lambda,
-                   include = include,
-                   nmulti = nmulti)
-  }
-
   progress.status <- .crs_progress_status_begin(
     enabled = display.nomad.progress,
     surface = "solver"
@@ -89,6 +72,42 @@ crsivderiv.default <- function(y,
     if (!is.null(msg)) {
       .crs_progress_status_update(progress.status, msg)
     }
+  }
+
+  with_nested_crs_progress <- function(expr) {
+    expr <- substitute(expr)
+
+    if (isTRUE(display.nomad.progress)) {
+      set_status()
+    }
+
+    .crs_set_messages(crs.messages, isTRUE(display.nomad.progress))
+    on.exit(.crs_set_messages(crs.messages, TRUE), add = TRUE)
+
+    eval(expr, envir = parent.frame())
+  }
+
+  fit.crs <- function(formula, data, dots, deriv = NULL, degree = NULL,
+                      segments = NULL, lambda = NULL, include = NULL,
+                      nmulti = NULL) {
+    with_nested_crs_progress(
+      .crsiv_fit_crs(formula = formula,
+                     data = data,
+                     dots = dots,
+                     opts = opts,
+                     display.nomad.progress = display.nomad.progress,
+                     display.warnings = display.warnings,
+                     deriv = deriv,
+                     degree = degree,
+                     segments = segments,
+                     lambda = lambda,
+                     include = include,
+                     nmulti = nmulti)
+    )
+  }
+
+  run.crs <- function(...) {
+    with_nested_crs_progress(crs(...))
   }
 
   ## Basic error checking
@@ -210,7 +229,7 @@ crsivderiv.default <- function(y,
     if(start.from == "Eyz") {
       ## Start from E(Y|z)
       .crs_set_messages(crs.messages, FALSE)
-      model.E.y.z <- crs(formula.yz,
+      model.E.y.z <- run.crs(formula.yz,
                          opts=opts,display.nomad.progress=display.nomad.progress,display.warnings=display.warnings,
                          data=traindata,
                          deriv=1,
@@ -227,9 +246,9 @@ crsivderiv.default <- function(y,
       }
     } else {
       ## Start from E(E(Y|w)|z)
-      tmp.model <- crs(formula.yw,opts=opts,display.nomad.progress=display.nomad.progress,display.warnings=display.warnings,data=traindata,...)
+      tmp.model <- run.crs(formula.yw,opts=opts,display.nomad.progress=display.nomad.progress,display.warnings=display.warnings,data=traindata,...)
       E.y.w <- fitted(tmp.model)
-      model.E.E.y.w.z <- crs(formula.Eywz,opts=opts,display.nomad.progress=display.nomad.progress,display.warnings=display.warnings,data=traindata,deriv=1,...)
+      model.E.E.y.w.z <- run.crs(formula.Eywz,opts=opts,display.nomad.progress=display.nomad.progress,display.warnings=display.warnings,data=traindata,deriv=1,...)
       phi.0 <- model.E.E.y.w.z
       if(is.eval.train) {
         E.E.y.w.z <- model.E.E.y.w.z$fitted.values
@@ -244,7 +263,7 @@ crsivderiv.default <- function(y,
   } else {
     phi.prime <- starting.values
     .crs_set_messages(crs.messages, FALSE)
-    phi.0 <- crs(formula.yz,opts=opts,data=traindata,display.nomad.progress=display.nomad.progress,display.warnings=display.warnings,...)
+    phi.0 <- run.crs(formula.yz,opts=opts,data=traindata,display.nomad.progress=display.nomad.progress,display.warnings=display.warnings,...)
     .crs_set_messages(crs.messages, TRUE)
   }
 
@@ -275,7 +294,7 @@ crsivderiv.default <- function(y,
   ## For stopping rule...
 
     .crs_set_messages(crs.messages, FALSE)
-    model.E.y.w <- crs(formula.yw,
+    model.E.y.w <- run.crs(formula.yw,
                        opts=opts,display.nomad.progress=display.nomad.progress,display.warnings=display.warnings,
                        data=traindata,
                        ...)
@@ -298,7 +317,7 @@ crsivderiv.default <- function(y,
 
   .crs_set_messages(crs.messages, FALSE)
   traindata$phi <- phi
-  model.E.phi.w <- crs(formula.phiw,
+  model.E.phi.w <- run.crs(formula.phiw,
                        opts=opts,display.nomad.progress=display.nomad.progress,display.warnings=display.warnings,
                        data=traindata,
                        ...)
@@ -583,7 +602,7 @@ crsivderiv.default <- function(y,
   .crs_set_messages(crs.messages, FALSE)
   traindata$y <- traindata$y - (fitted(phi.0)-phi)
 
-  model <- crs(formula.yz,
+  model <- run.crs(formula.yz,
                cv="none",
                degree=phi.0$degree,
                segments=phi.0$segments,
