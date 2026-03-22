@@ -488,11 +488,6 @@ frscvNOMAD <- function(xz,
                              weights=weights,
                              singular.ok=singular.ok)
 
-  if (!is.null(nomad.activity)) {
-    .crs_progress_activity_end(nomad.activity)
-    nomad.activity <- NULL
-  }
-
   t2 <- Sys.time()
 
   ##output
