@@ -29,6 +29,26 @@ capture_stderr_text <- function(expr) {
   readChar(path, nchars = file.info(path)$size, useBytes = TRUE)
 }
 
+capture_single_line_output <- function(bindings, code) {
+  path <- tempfile(fileext = ".log")
+  con <- file(path, open = "wb")
+  closed <- FALSE
+
+  on.exit({
+    if (!closed) {
+      close(con)
+    }
+    unlink(path)
+  }, add = TRUE)
+
+  bindings$.crs_progress_single_line_connection <- function() con
+  with_crs_progress_bindings(bindings, code)
+
+  close(con)
+  closed <- TRUE
+  readChar(path, nchars = file.info(path)$size, useBytes = TRUE)
+}
+
 progress_time_values <- function(values) {
   force(values)
   i <- 0L
@@ -209,6 +229,32 @@ test_that("single-line finish clear uses ANSI erase on capable ttys", {
 
   expect_false(grepl("\n", output, fixed = TRUE))
   expect_identical(output, "\r\033[2K\r")
+})
+
+test_that("single-line render clears stale suffix across state handoff in non-ANSI mode", {
+  render <- getFromNamespace(".crs_progress_render_single_line", "crs")
+  output_width <- 120L
+  long <- "[crs] Calling NOMAD (Nonsmooth Optimization by Mesh Adaptive Direct Search)... elapsed 0.0s"
+  short <- "[crs] NOMAD search..."
+
+  output <- capture_single_line_output(
+    list(
+      .crs_progress_output_width = function() output_width,
+      .crs_progress_single_line_supports_ansi = function(con) FALSE
+    ),
+    {
+      render(list(render_line = long, last_width = 0L), event = "render")
+      render(list(render_line = short, last_width = 0L), event = "render")
+    }
+  )
+
+  expect_identical(
+    output,
+    paste0(
+      "\r", long,
+      "\r", short, strrep(" ", nchar(long, type = "width") - nchar(short, type = "width"))
+    )
+  )
 })
 
 test_that("activity helpers emit and clear through the shared renderer", {

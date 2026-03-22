@@ -108,6 +108,7 @@
   env <- new.env(parent = emptyenv())
   env$next_id <- 0L
   env$active_id <- NULL
+  env$last_single_line_width <- 0L
   env
 }
 
@@ -116,6 +117,7 @@
 .crs_progress_reset_registry <- function() {
   .crs_progress_registry$next_id <- 0L
   .crs_progress_registry$active_id <- NULL
+  .crs_progress_registry$last_single_line_width <- 0L
   invisible(NULL)
 }
 
@@ -793,23 +795,29 @@
   con <- .crs_progress_single_line_connection()
   use_ansi <- isTRUE(.crs_progress_single_line_supports_ansi(con))
   width <- nchar(render_line, type = "width")
+  global_width <- suppressWarnings(as.integer(.crs_progress_registry$last_single_line_width)[1L])
+  if (is.na(global_width) || global_width < 0L) {
+    global_width <- 0L
+  }
 
   if (identical(event, "finish")) {
     if (use_ansi) {
+      .crs_progress_registry$last_single_line_width <- 0L
       base::cat("\r\033[2K\r", file = con, sep = "")
       flush(con)
       flush.console()
       return(invisible(snapshot))
     }
-    clear_width <- max(snapshot$last_width, width, .crs_progress_output_width())
+    clear_width <- max(snapshot$last_width, width, global_width, .crs_progress_output_width())
     clear_line <- if (clear_width > 0L) strrep(" ", clear_width) else ""
+    .crs_progress_registry$last_single_line_width <- 0L
     base::cat("\r", clear_line, "\r", file = con, sep = "")
     flush(con)
     flush.console()
     return(invisible(snapshot))
   }
 
-  pad <- max(0L, snapshot$last_width - width)
+  pad <- max(0L, max(snapshot$last_width, global_width) - width)
   suffix <- if (pad > 0L) paste(rep(" ", pad), collapse = "") else ""
 
   if (use_ansi) {
@@ -818,7 +826,10 @@
     base::cat("\r", render_line, suffix, file = con, sep = "")
   }
   if (identical(event, "abort")) {
+    .crs_progress_registry$last_single_line_width <- 0L
     base::cat("\n", file = con, sep = "")
+  } else {
+    .crs_progress_registry$last_single_line_width <- width
   }
   flush(con)
   flush.console()
