@@ -2329,6 +2329,115 @@ minimand.cv.aic <- function(bws=NULL,
   )
 }
 
+.crs_glp_nomad_format_degree <- function(degree) {
+  if (is.null(degree) || !length(degree))
+    return("pending")
+
+  sprintf("(%s)", paste(format(as.integer(degree)), collapse = ","))
+}
+
+.crs_glp_nomad_progress_begin <- function(progress.status,
+                                          nmulti,
+                                          display.nomad.progress) {
+  env <- new.env(parent = emptyenv())
+  env$enabled <- isTRUE(display.nomad.progress)
+  env$progress.status <- progress.status
+  env$nmulti <- max(1L, as.integer(nmulti)[1L])
+  env$started <- .crs_progress_now()
+  env$iteration <- 0L
+  env$restart_index <- 1L
+  env$restart_eval <- 0L
+  env$best_objective <- Inf
+  env$best_degree <- NULL
+  env
+}
+
+.crs_glp_nomad_progress_update_line <- function(progress,
+                                                degree,
+                                                value,
+                                                start = FALSE) {
+  if (is.null(progress) || !isTRUE(progress$enabled))
+    return(invisible(NULL))
+
+  elapsed <- max(0, .crs_progress_now() - progress$started)
+  fields <- c(
+    sprintf("multistart %s/%s", format(progress$restart_index), format(progress$nmulti)),
+    sprintf("eval %s", format(progress$restart_eval)),
+    sprintf("deg %s", .crs_glp_nomad_format_degree(degree)),
+    sprintf("best %s", .crs_glp_nomad_format_degree(progress$best_degree))
+  )
+
+  if (!is.null(value) && is.finite(value)) {
+    fields <- c(fields, sprintf("fv=%s", format(value)))
+  } else if (isTRUE(start)) {
+    fields <- c(fields, "fv=pending")
+  }
+
+  line <- sprintf(
+    "Selecting polynomial degree and bw... iteration %s, elapsed %ss: %s",
+    format(progress$iteration),
+    .crs_progress_fmt_num(elapsed),
+    paste(fields, collapse = ", ")
+  )
+
+  .crs_progress_status_update(progress$progress.status, line)
+  invisible(NULL)
+}
+
+.crs_glp_nomad_progress_restart <- function(progress,
+                                            restart_index,
+                                            degree_start) {
+  if (is.null(progress))
+    return(invisible(NULL))
+
+  progress$restart_index <- max(1L, as.integer(restart_index)[1L])
+  progress$restart_eval <- 0L
+  progress$iteration <- max(progress$iteration, 0L) + 1L
+  .crs_glp_nomad_progress_update_line(
+    progress = progress,
+    degree = degree_start,
+    value = NULL,
+    start = TRUE
+  )
+}
+
+.crs_glp_nomad_progress_eval <- function(progress,
+                                         degree,
+                                         value) {
+  if (is.null(progress) || !isTRUE(progress$enabled))
+    return(invisible(NULL))
+
+  progress$iteration <- progress$iteration + 1L
+  progress$restart_eval <- progress$restart_eval + 1L
+
+  if (!is.null(value) && is.finite(value) &&
+      (is.null(progress$best_degree) || isTRUE(value < progress$best_objective))) {
+    progress$best_objective <- value
+    progress$best_degree <- if (is.null(degree)) NULL else as.integer(degree)
+  }
+
+  .crs_glp_nomad_progress_update_line(
+    progress = progress,
+    degree = degree,
+    value = value
+  )
+}
+
+.crs_glp_nomad_progress_finish <- function(progress) {
+  if (is.null(progress) || !isTRUE(progress$enabled))
+    return(invisible(NULL))
+
+  elapsed <- max(0, .crs_progress_now() - progress$started)
+  line <- sprintf(
+    "Selecting polynomial degree and bw... elapsed %ss: best %s, fv=%s",
+    .crs_progress_fmt_num(elapsed),
+    .crs_glp_nomad_format_degree(progress$best_degree),
+    if (is.finite(progress$best_objective)) format(progress$best_objective) else "pending"
+  )
+  .crs_progress_status_update(progress$progress.status, line)
+  invisible(NULL)
+}
+
 glpcvNOMAD <- function(ydat=NULL,
                        xdat=NULL,
                        degree=NULL,
@@ -2403,6 +2512,7 @@ glpcvNOMAD <- function(ydat=NULL,
     bw.switch <- params$bw.switch
     bandwidth.scale.categorical=params$bandwidth.scale.categorical
     progress.status <- params$progress.status
+    nomad.progress <- params$nomad.progress
     verbose <- params$verbose
 
     bw.gamma <- input[seq_len(num.bw)]
@@ -2422,7 +2532,11 @@ glpcvNOMAD <- function(ydat=NULL,
 
     status_fv <- function(value) {
       if (display.nomad.progress) {
-        .crs_progress_status_update(progress.status, paste("fv = ", format(value), " ", sep = ""))
+        .crs_glp_nomad_progress_eval(
+          progress = nomad.progress,
+          degree = degree,
+          value = value
+        )
       }
     }
 
@@ -2443,13 +2557,12 @@ glpcvNOMAD <- function(ydat=NULL,
                              cv.shrink=cv.shrink,
                              cv.maxPenalty=cv.maxPenalty,
                              display.warnings=display.warnings,
-                             display.nomad.progress=display.nomad.progress,
+                             display.nomad.progress=FALSE,
                              bandwidth.scale.categorical=bandwidth.scale.categorical,
                              progress.status=progress.status,
                              mpi=params$mpi,
                              verbose=verbose,
                              ...)
-      emitted.fv <- isTRUE(display.nomad.progress)
     } else if(all(bw.gamma >= bw.switch)) {
       ## All bandwidths hit their upper bounds
       if(all(degree==0)) {
@@ -2476,13 +2589,12 @@ glpcvNOMAD <- function(ydat=NULL,
                              cv.shrink=cv.shrink,
                              cv.maxPenalty=cv.maxPenalty,
                              display.warnings=display.warnings,
-                             display.nomad.progress=display.nomad.progress,
+                             display.nomad.progress=FALSE,
                              bandwidth.scale.categorical=bandwidth.scale.categorical,
                              progress.status=progress.status,
                              mpi=params$mpi,
                              verbose=verbose,
                              ...)
-      emitted.fv <- isTRUE(display.nomad.progress)
     }
     if(!emitted.fv) status_fv(lscv)
     return(lscv)
@@ -2518,6 +2630,7 @@ glpcvNOMAD <- function(ydat=NULL,
     bw.switch <- params$bw.switch
     bandwidth.scale.categorical=params$bandwidth.scale.categorical
     progress.status <- params$progress.status
+    nomad.progress <- params$nomad.progress
     verbose <- params$verbose
 
     bw.gamma <- input[seq_len(num.bw)]
@@ -2537,7 +2650,11 @@ glpcvNOMAD <- function(ydat=NULL,
 
     status_fv <- function(value) {
       if (display.nomad.progress) {
-        .crs_progress_status_update(progress.status, paste("fv = ", format(value), " ", sep = ""))
+        .crs_glp_nomad_progress_eval(
+          progress = nomad.progress,
+          degree = degree,
+          value = value
+        )
       }
     }
 
@@ -2558,13 +2675,12 @@ glpcvNOMAD <- function(ydat=NULL,
                               cv.shrink=cv.shrink,
                               cv.maxPenalty=cv.maxPenalty,
                               display.warnings=display.warnings,
-                              display.nomad.progress=display.nomad.progress,
+                              display.nomad.progress=FALSE,
                               bandwidth.scale.categorical=bandwidth.scale.categorical,
                               progress.status=progress.status,
                               mpi=params$mpi,
                               verbose=verbose,
                               ...)
-      emitted.fv <- isTRUE(display.nomad.progress)
     } else if(all(bw.gamma >= bw.switch)) {
       ## All bandwidths hit their upper bounds
       if(all(degree==0)) {
@@ -2591,13 +2707,12 @@ glpcvNOMAD <- function(ydat=NULL,
                               cv.shrink=cv.shrink,
                               cv.maxPenalty=cv.maxPenalty,
                               display.warnings=display.warnings,
-                              display.nomad.progress=display.nomad.progress,
+                              display.nomad.progress=FALSE,
                               bandwidth.scale.categorical=bandwidth.scale.categorical,
                               progress.status=progress.status,
                               mpi=params$mpi,
                               verbose=verbose,
                               ...)
-      emitted.fv <- isTRUE(display.nomad.progress)
     }
     if(!emitted.fv) status_fv(aicc)
     return(aicc)
@@ -2854,12 +2969,12 @@ glpcvNOMAD <- function(ydat=NULL,
   )
   on.exit(.crs_progress_status_clear(progress.status), add = TRUE)
   params$progress.status <- progress.status
-  if(display.nomad.progress) {
-    .crs_progress_status_update(
-      progress.status,
-      "Calling NOMAD (Nonsmooth Optimization by Mesh Adaptive Direct Search)"
-    )
-  }
+  nomad.progress <- .crs_glp_nomad_progress_begin(
+    progress.status = progress.status,
+    nmulti = nmulti,
+    display.nomad.progress = display.nomad.progress
+  )
+  params$nomad.progress <- nomad.progress
 
   ## Generate all initial points for multiple restarting. Start 1 is
   ## deterministic/user-supplied when available, while later starts
@@ -2905,13 +3020,15 @@ glpcvNOMAD <- function(ydat=NULL,
   }
 
   for(i in seq_len(nmulti)) {
-    if(display.nomad.progress && nmulti > 1L) {
-      .crs_progress_status_update(
-        progress.status,
-        paste0("Calling NOMAD (Nonsmooth Optimization by Mesh Adaptive Direct Search) ",
-               "multistart ", i, "/", nmulti)
-      )
-    }
+    .crs_glp_nomad_progress_restart(
+      progress = nomad.progress,
+      restart_index = i,
+      degree_start = if (!is.null(x0.setup$degree.starts) && nrow(x0.setup$degree.starts) >= i) {
+        as.integer(x0.setup$degree.starts[i, ])
+      } else {
+        degree
+      }
+    )
 
     solution.i <- run_nomad_once(x0.pts[i, ])
     fv.vec[i] <- solution.i$objective
@@ -2988,6 +3105,8 @@ glpcvNOMAD <- function(ydat=NULL,
   }
 
   fv <- solution$objective
+
+  .crs_glp_nomad_progress_finish(nomad.progress)
 
   best <- NULL
   numimp <- 0

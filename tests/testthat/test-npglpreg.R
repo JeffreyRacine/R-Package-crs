@@ -118,6 +118,89 @@ test_that("npglpreg NOMAD nmulti stores true outer restart results", {
   expect_equal(as.numeric(model$fv), as.numeric(model$nomad.restart.fval[model$nomad.best.restart]))
 })
 
+test_that("npglpreg NOMAD progress uses one rich managed line", {
+  test_time_values <- function(values) {
+    i <- 0L
+    force(values)
+    function() {
+      i <<- min(i + 1L, length(values))
+      values[[i]]
+    }
+  }
+
+  set.seed(42)
+  n <- 30L
+  x <- runif(n)
+  y <- sin(2 * pi * x) + rnorm(n, sd = 0.1)
+
+  traced <- capture_crs_progress_shadow_trace(
+    suppressWarnings(
+      npglpreg(
+        y ~ x,
+        cv = "degree-bandwidth",
+        nmulti = 3,
+        max.bb.eval = 20,
+        display.warnings = FALSE,
+        display.nomad.progress = TRUE
+      )
+    ),
+    force_renderer = "legacy",
+    now = test_time_values(seq(0, 20, by = 0.25)),
+    interactive = TRUE
+  )
+
+  lines <- vapply(traced$trace, `[[`, character(1L), "line")
+
+  expect_true(any(grepl("^\\[crs\\] Selecting polynomial degree and bw\\.\\.\\.", lines)))
+  expect_true(any(grepl("multistart 1/3", lines, fixed = TRUE)))
+  expect_true(any(grepl("eval 1", lines, fixed = TRUE)))
+  expect_true(any(grepl("deg (", lines, fixed = TRUE)))
+  expect_true(any(grepl("best (", lines, fixed = TRUE)))
+  expect_true(any(grepl("fv=", lines, fixed = TRUE)))
+  expect_false(any(grepl("Calling NOMAD", lines, fixed = TRUE)))
+  expect_false(any(grepl("^\\[crs\\] fv = ", lines)))
+})
+
+test_that("npglpreg NOMAD progress does not change fixed-seed results", {
+  set.seed(19)
+  n <- 30L
+  x <- runif(n)
+  y <- sin(2 * pi * x) + rnorm(n, sd = 0.1)
+  dat <- data.frame(y = y, x = x)
+
+  silent <- suppressWarnings(
+    npglpreg(
+      y ~ x,
+      data = dat,
+      cv = "degree-bandwidth",
+      nmulti = 2,
+      max.bb.eval = 20,
+      display.warnings = FALSE,
+      display.nomad.progress = FALSE
+    )
+  )
+
+  noisy <- suppressWarnings(
+    npglpreg(
+      y ~ x,
+      data = dat,
+      cv = "degree-bandwidth",
+      nmulti = 2,
+      max.bb.eval = 20,
+      display.warnings = FALSE,
+      display.nomad.progress = TRUE
+    )
+  )
+
+  expect_equal(as.numeric(noisy$degree), as.numeric(silent$degree))
+  expect_equal(as.numeric(noisy$bws), as.numeric(silent$bws))
+  expect_equal(as.numeric(noisy$fv), as.numeric(silent$fv), tolerance = 1e-12)
+  expect_identical(noisy$nomad.best.restart, silent$nomad.best.restart)
+  expect_equal(as.numeric(noisy$nomad.restart.fval),
+               as.numeric(silent$nomad.restart.fval),
+               tolerance = 1e-12)
+})
+
 test_that("npglpreg categorical predictors work", {
   set.seed(42)
   n <- 50
