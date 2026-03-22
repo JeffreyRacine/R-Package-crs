@@ -99,30 +99,15 @@ frscvNOMAD <- function(xz,
 
     progress.env <- new.env(parent = emptyenv())
     progress.env$emit <- isTRUE(print.output)
-    progress.env$count <- 0L
-    progress.env$state <- if (isTRUE(print.output)) {
-      state <- .crs_progress_begin("NOMAD search", surface = "nomad")
-      intro.now <- .crs_progress_now()
-      state <- .crs_progress_render(
-        state = state,
-        line = paste0(
-          .crs_io_pkg_prefix(),
-          " Calling NOMAD (Nonsmooth Optimization by Mesh Adaptive Direct Search)... elapsed 0.0s"
-        ),
-        event = "start",
-        now = intro.now
-      )
-      state <- .crs_progress_show_now(state)
-      state
-    } else {
-      NULL
-    }
+    progress.env$progress.status <- .crs_progress_status_begin(
+      enabled = isTRUE(print.output),
+      surface = "nomad"
+    )
+    progress.env$nomad.progress <- NULL
 
     on.exit({
-      if (!is.null(progress.env$state)) {
-        .crs_progress_end(progress.env$state)
-        progress.env$state <- NULL
-      }
+      .crs_progress_status_clear(progress.env$progress.status)
+      progress.env$nomad.progress <- NULL
     }, add = TRUE)
 
     eval.cv <- function(input, params){
@@ -239,13 +224,19 @@ frscvNOMAD <- function(xz,
 
       progress.env <- params$progress.env
       if (isTRUE(progress.env$emit)) {
-        progress.env$count <- progress.env$count + 1L
-        progress.env$state <- .crs_progress_step_at(
-          progress.env$state,
-          now = .crs_progress_now(),
-          done = progress.env$count,
-          detail = paste0("fv=", format(cv)),
-          force = (progress.env$count == 1L)
+        .crs_nomad_progress_maybe_restart(
+          progress = progress.env$nomad.progress,
+          input = input,
+          degree = K[, 1L],
+          segments = K[, 2L],
+          aux = I
+        )
+        .crs_nomad_progress_eval(
+          progress = progress.env$nomad.progress,
+          degree = K[, 1L],
+          segments = K[, 2L],
+          aux = I,
+          value = cv
         )
       }
 
@@ -335,9 +326,32 @@ frscvNOMAD <- function(xz,
     ## Manual says precede by r means relative to up and lb... not
     ## quite what I was looking for
 
+    x0.starts <- if (isTRUE(print.output)) {
+      .crs_nomad_capture_start_matrix(
+        x0 = x0,
+        nstart = if (nmulti > 0L) as.integer(nmulti) else 1L,
+        bbin = bbin,
+        bbout = bbout,
+        lb = lb,
+        ub = ub,
+        random.seed = random.seed,
+        opts = opts
+      )
+    } else {
+      NULL
+    }
+
+    progress.env$nomad.progress <- .crs_nomad_progress_begin(
+      progress.status = progress.env$progress.status,
+      label = "Selecting spline model",
+      starts = if (!is.null(x0.starts)) x0.starts else matrix(as.numeric(x0), nrow = 1L, byrow = TRUE),
+      aux.label = if (!is.null(z)) "include" else NULL,
+      aux.type = "int"
+    )
+
     solution<-snomadr(eval.f=eval.cv,
                       n=length(x0),
-                      x0=as.numeric(x0),
+                      x0=if (!is.null(x0.starts)) as.numeric(x0.starts) else as.numeric(x0),
                       bbin=bbin,
                       bbout=bbout,
                       lb=lb,
@@ -348,13 +362,7 @@ frscvNOMAD <- function(xz,
                       display.nomad.progress=print.output,
                       params=params);
 
-    if (!is.null(progress.env$state)) {
-      progress.env$state <- .crs_progress_end(
-        progress.env$state,
-        detail = paste0("best fv=", format(solution$objective))
-      )
-      progress.env$state <- NULL
-    }
+    .crs_nomad_progress_finish(progress.env$nomad.progress)
     progress.env$emit <- FALSE
 
     if(basis == "auto") {
