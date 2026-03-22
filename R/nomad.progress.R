@@ -106,17 +106,16 @@
   probe.opts$MAX_BB_EVAL <- 1L
 
   probe.env <- new.env(parent = baseenv())
-  probe.env$points <- list()
-
-  eval.capture <- function(x) {
-    points[[length(points) + 1L]] <<- as.numeric(x)
-    0
+  probe.env$captured_points <- list()
+  probe.env$eval.capture <- function(x) {
+      captured_points[[length(captured_points) + 1L]] <- as.numeric(x)
+      0
   }
 
   try(
     suppressWarnings(
       snomadr(
-        eval.f = eval.capture,
+        eval.f = probe.env$eval.capture,
         n = n,
         x0 = as.numeric(x0),
         bbin = bbin,
@@ -133,9 +132,9 @@
     silent = TRUE
   )
 
-  if (length(probe.env$points) >= nstart) {
+  if (length(probe.env$captured_points) >= nstart) {
     starts <- matrix(
-      unlist(probe.env$points[seq_len(nstart)], use.names = FALSE),
+      unlist(probe.env$captured_points[seq_len(nstart)], use.names = FALSE),
       nrow = nstart,
       ncol = n,
       byrow = TRUE
