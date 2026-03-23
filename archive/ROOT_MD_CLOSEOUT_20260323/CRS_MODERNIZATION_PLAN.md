@@ -121,10 +121,9 @@ This section consolidates high-value continuity notes from the broader NOMAD + m
 
 1. Scope split (authoritative):
    - this file is the source for `crs` R-layer and non-NOMAD C modernization checkpoints,
-   - NOMAD integration/tuning/benchmark history is tracked in dedicated files under `/Users/jracine/Development/crs/`:
-     - `NOMAD_FORWARD_GUIDE.md`
+   - live NOMAD integration/tuning/benchmark history is tracked in:
      - `NOMAD_STATUS_AND_GATES.md`
-     - `NOMAD_INTEGRATION_MAP.md`
+   - durable NOMAD option/provenance companions are:
      - `NOMAD_391_TO_450_OPTION_MAP.md`
      - `archive/ROOT_MD_CLOSEOUT_20260313/NOMAD_FORENSIC_AUDIT.md`
 2. Workflow invariants carried forward:

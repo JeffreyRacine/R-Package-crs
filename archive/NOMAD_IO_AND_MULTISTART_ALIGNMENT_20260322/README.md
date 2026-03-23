@@ -20,8 +20,9 @@ Why archived:
 2. current behavior should be validated from code, tests, and the committed
    checkpoints rather than from these draft planning notes.
 
-Live documents intentionally kept in the repo root:
+Documents that were live in the repo root when this plan was written, and were
+later archived on 2026-03-23:
 
-1. `/Users/jracine/Development/crs/NOMAD_STATUS_AND_GATES.md`
-2. `/Users/jracine/Development/crs/NOMAD_391_TO_450_OPTION_MAP.md`
-3. `/Users/jracine/Development/crs/CRS_MODERNIZATION_PLAN.md`
+1. `/Users/jracine/Development/crs/archive/ROOT_MD_CLOSEOUT_20260323/NOMAD_STATUS_AND_GATES.md`
+2. `/Users/jracine/Development/crs/archive/ROOT_MD_CLOSEOUT_20260323/NOMAD_391_TO_450_OPTION_MAP.md`
+3. `/Users/jracine/Development/crs/archive/ROOT_MD_CLOSEOUT_20260323/CRS_MODERNIZATION_PLAN.md`

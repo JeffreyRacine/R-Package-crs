@@ -6,9 +6,10 @@ Purpose:
 - keep one live canonical NOMAD note in the repo root,
 - preserve superseded companion notes in a dated archive bundle.
 
-Live canonical note after consolidation:
+Live canonical note after consolidation (superseded on 2026-03-23 by full root
+archive):
 
-- `/Users/jracine/Development/crs/NOMAD_STATUS_AND_GATES.md`
+- `/Users/jracine/Development/crs/archive/ROOT_MD_CLOSEOUT_20260323/NOMAD_STATUS_AND_GATES.md`
 
 Files archived here:
 
@@ -20,13 +21,13 @@ Files archived here:
      integration snapshot and OpenMP implications are now summarized in the
      canonical status file.
 
-Files intentionally kept live in the repo root:
+Files later archived from the repo root on 2026-03-23:
 
-1. `/Users/jracine/Development/crs/NOMAD_STATUS_AND_GATES.md`
-   - active canonical NOMAD architecture/status/gates/OpenMP note
-2. `/Users/jracine/Development/crs/NOMAD_391_TO_450_OPTION_MAP.md`
+1. `/Users/jracine/Development/crs/archive/ROOT_MD_CLOSEOUT_20260323/NOMAD_STATUS_AND_GATES.md`
+   - canonical NOMAD architecture/status/gates/OpenMP note at the time
+2. `/Users/jracine/Development/crs/archive/ROOT_MD_CLOSEOUT_20260323/NOMAD_391_TO_450_OPTION_MAP.md`
    - durable option/provenance mapping reference
-3. `/Users/jracine/Development/crs/CRS_MODERNIZATION_PLAN.md`
+3. `/Users/jracine/Development/crs/archive/ROOT_MD_CLOSEOUT_20260323/CRS_MODERNIZATION_PLAN.md`
    - broader package modernization tracker
 
 Follow-up captured in the canonical note:

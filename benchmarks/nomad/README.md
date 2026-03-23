@@ -4,7 +4,7 @@ This folder provides strict pre/post parity and performance harnesses for NOMAD-
 
 Canonical result/status tracker:
 
-- `/Users/jracine/Development/crs/NOMAD_STATUS_AND_GATES.md`
+- `/Users/jracine/Development/crs/archive/ROOT_MD_CLOSEOUT_20260323/NOMAD_STATUS_AND_GATES.md`
 
 ## Scripts
 

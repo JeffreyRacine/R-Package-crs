@@ -1,8 +1,12 @@
 # NOMAD Status and Gates (`crs`)
 
-Last updated: 2026-02-23
+Last updated: 2026-03-22
 
 This file tracks dynamic findings, gate outcomes, and unresolved issues for the NOMAD4 migration.
+
+This is the live canonical NOMAD note for `crs`. Overlapping companion notes
+have been archived when superseded; keep durable architecture, active OpenMP
+policy, gate outcomes, and restart pointers here.
 
 ## Scope completed so far
 
@@ -25,6 +29,22 @@ This file tracks dynamic findings, gate outcomes, and unresolved issues for the 
    - settings that improve `frscvNOMAD`/`krscvNOMAD` can degrade `npglpreg` parity
    - settings that speed direct `snomadr` can alter solution/objective
 4. Option handling must stay dimension-aware and type-aware (especially for integer/binary/categorical mapped inputs).
+
+## Current canonical integration snapshot
+
+1. `crs` is wired to embedded NOMAD `4.5.0` vendored under `src/nomad4_src`.
+2. `src/Makevars` compiles the vendored NOMAD sources directly; upstream NOMAD
+   CMake OpenMP discovery is not the package build path used by `crs`.
+3. The `snomadr()` bridge enters NOMAD through the embedded C interface and
+   evaluates objectives by re-entering R via `R_tryEval(...)`.
+4. Current package wiring exposes single-point objective callbacks only; no
+   dedicated batch/vectorized objective callback is exposed by `crs` for NOMAD
+   block evaluation.
+5. Practical implication:
+   - arbitrary `snomadr(eval.f=...)` objectives are not a production-safe target
+     for `NB_THREADS_PARALLEL_EVAL > 1`,
+   - any future threaded-NOMAD revisit must first move evaluation to a
+     thread-safe native or external black-box path.
 
 ## Latest gate artifacts
 
@@ -528,6 +548,62 @@ Decision:
 1. Keep production `crs` on non-OpenMP NOMAD build for now.
 2. Do not recommend or document `NB_THREADS_PARALLEL_EVAL > 1` for current `crs`/`npglpreg` paths.
 3. Revisit only if evaluation callbacks are moved to a thread-safe native path that avoids concurrent R API re-entry.
+
+## 2026-03-22 OpenMP follow-up assessment
+
+Question revisited:
+
+- Is there still a realistic OpenMP path worth preserving for future NOMAD work
+  in `crs`, `np`, and `npRmpi`?
+
+External references reviewed:
+
+1. NOMAD4 upstream README and user guide:
+   - NOMAD4 uses OpenMP for parallel evaluations when available.
+   - users must set `NB_THREADS_PARALLEL_EVAL`; otherwise evaluation dispatch
+     remains effectively single-threaded.
+2. macOS OpenMP guidance for R:
+   - Apple clang/Xcode does not provide turnkey OpenMP support,
+   - local experimentation can work with `libomp` plus explicit compile/link
+     flags, but this is a local opt-in path rather than a package-default
+     recommendation.
+
+Code-path reassessment:
+
+1. The current experimental build path in `src/Makevars` remains a valid local
+   in-tree hook:
+   - `CRS_EXPERIMENTAL_OPENMP=1 R CMD INSTALL crs`
+2. Because `crs` compiles vendored NOMAD directly from `src/Makevars`, upstream
+   NOMAD CMake `find_package(OpenMP)` logic is informative but not sufficient to
+   prove package-level OpenMP enablement.
+3. The bridge still constructs NOMAD problems with the single-evaluation
+   callback path only.
+4. The embedded C interface does support a block-evaluation callback in
+   principle, but `crs` does not currently wire that path.
+
+Updated findings:
+
+1. OpenMP experimentation can remain in-tree and quarantined behind the current
+   experimental build toggle; no fork is required for further investigation.
+2. That investigation should not be framed as "turn on OpenMP for ordinary
+   `snomadr()` use":
+   - the present R-callback architecture is the binding constraint, not only
+     compiler/linker flags.
+3. If OpenMP is revisited in the future, the promising routes are:
+   - a native compiled objective path that avoids concurrent R API re-entry, or
+   - an external/batch black-box path using NOMAD block evaluation.
+4. The current `np` and `npRmpi` NOMAD-based local-polynomial degree/bandwidth
+   searches also call `crs::snomadr()` with wrapped R closures, so the same
+   OpenMP limitation carries over there as currently wired.
+
+Current recommendation after reassessment:
+
+1. Keep default and release-facing `crs` builds non-OpenMP.
+2. Keep `NB_THREADS_PARALLEL_EVAL` at safe default `1` for current `crs`,
+   `npglpreg`, `np`, and `npRmpi` routes that use `crs::snomadr()`.
+3. Preserve the experimental build hook for local research only.
+4. Re-open only if the evaluation boundary changes, not merely because new
+   Makevars or compiler flags become available.
 
 ## 2026-02-23 `krscvNOMAD` time-budget frontier (strict vs aggressive)
 
