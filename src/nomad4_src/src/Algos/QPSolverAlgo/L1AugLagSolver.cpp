@@ -52,6 +52,8 @@
  */
 #include "L1AugLagSolver.hpp"
 
+#include <R_ext/Print.h>
+
 #include "../../Nomad/nomad.hpp"
 #include "QPModelUtils.hpp"
 
@@ -148,15 +150,15 @@ NOMAD::L1AugLagSolverStatus NOMAD::L1AugLagSolver::solve(SGTELIB::Matrix& x,
     const bool verbose = verbose_level > 0;
     if (verbose)
     {
-        std::printf("\nL1 augmented lagrangian algorithm\n");
-        std::printf("Number of total variables: %d\n", n);
-        std::printf("Number of inequality constraints: %d\n", nbCons);
-        std::printf("Stopping criterion tolerance for optimality: %e\n", 1e-7);
-        std::printf("Stopping criterion tolerance for feasibility: %e\n", 1e-7);
-        std::printf("Maximum number of iterations allowed for outer loop: %zu\n", max_iter_outer);
-        std::printf("Maximum number of iterations allowed for inner loop: %zu\n\n", max_iter_inner);
+        Rprintf("\nL1 augmented lagrangian algorithm\n");
+        Rprintf("Number of total variables: %d\n", n);
+        Rprintf("Number of inequality constraints: %d\n", nbCons);
+        Rprintf("Stopping criterion tolerance for optimality: %e\n", 1e-7);
+        Rprintf("Stopping criterion tolerance for feasibility: %e\n", 1e-7);
+        Rprintf("Maximum number of iterations allowed for outer loop: %zu\n", max_iter_outer);
+        Rprintf("Maximum number of iterations allowed for inner loop: %zu\n\n", max_iter_inner);
 
-        std::printf("%12s %15s %22s %28s %16s %18s %8s %10s %8s %12s %12s %20s %12s\n",
+        Rprintf("%12s %15s %22s %28s %16s %18s %8s %10s %8s %12s %12s %20s %12s\n",
                     "iter (outer)", "f(x)", "|| max(c(x), 0) ||_inf", "|| x - P[x-grad L(x)] ||_inf",
                     "|| lambda ||_inf", "|| lambda_B ||_inf",
                     "|Active|", "|Infeasible|",
@@ -164,9 +166,9 @@ NOMAD::L1AugLagSolverStatus NOMAD::L1AugLagSolver::solve(SGTELIB::Matrix& x,
         constexpr int maxLineWidth = 207;
         for (int i = 0; i < maxLineWidth; ++i)
         {
-            std::printf("-");
+            Rprintf("-");
         }
-        std::printf("\n");
+        Rprintf("\n");
     }
 
     // Outer loop
@@ -215,7 +217,7 @@ NOMAD::L1AugLagSolverStatus NOMAD::L1AugLagSolver::solve(SGTELIB::Matrix& x,
 
             if (iter_outer == 0)
             {
-                std::printf(" %-12zu %14e %16e %25e %23e %16e %10s %10s %16e %10e %10e %12e %12s\n",
+                Rprintf(" %-12zu %14e %16e %25e %23e %16e %10s %10s %16e %10e %10e %12e %12s\n",
                             iter_outer, objVal, normCxMax0, ngproj,
                             lambda_l.norm(), lambdaB.norm(),
                             "-", "-", mu_l, omega_l, eta_l,
@@ -224,7 +226,7 @@ NOMAD::L1AugLagSolverStatus NOMAD::L1AugLagSolver::solve(SGTELIB::Matrix& x,
             {
                 const int nbActive = (int) std::count(activeConstraints.begin(), activeConstraints.end(), true);
                 const int nbInfeasible = (int) std::count(infeasibleConstraints.begin(), infeasibleConstraints.end(), true);
-                std::printf(" %-12zu %14e %16e %25e %23e %16e %10d %10d %16e %10e %10e %12e %12s\n",
+                Rprintf(" %-12zu %14e %16e %25e %23e %16e %10d %10d %16e %10e %10e %12e %12s\n",
                             iter_outer, objVal, normCxMax0, ngproj,
                             lambda_l.norm(), lambdaB.norm(),
                             nbActive, nbInfeasible, mu_l, omega_l, eta_l,
@@ -313,35 +315,35 @@ NOMAD::L1AugLagSolverStatus NOMAD::L1AugLagSolver::solve(SGTELIB::Matrix& x,
 
     if (verbose)
     {
-        std::printf("\nStatus: ");
-        std::printf("f(x*) = %e\n", QPModelUtils::getModelObj(QPModel, x));
+        Rprintf("\nStatus: ");
+        Rprintf("f(x*) = %e\n", QPModelUtils::getModelObj(QPModel, x));
         double normCxMax0 = 0;
         for (int i = 0; i < nbCons; ++i)
         {
             normCxMax0 = std::max(cons.get(i, 0), normCxMax0);
         }
-        std::printf("|| max (c(x), 0) ||_inf = %e\n", normCxMax0);
+        Rprintf("|| max (c(x), 0) ||_inf = %e\n", normCxMax0);
 
         if (status == L1AugLagSolverStatus::SOLVED)
         {
-            std::printf("Has reached the minimum tolerance\n");
-            // std::printf("|| x - P[x - grad L(x)] ||_inf = %e <= max(1.0, || x - P[x - grad f(x)] ||) * atol_opt = %e and\n",
+            Rprintf("Has reached the minimum tolerance\n");
+            // Rprintf("|| x - P[x - grad L(x)] ||_inf = %e <= max(1.0, || x - P[x - grad f(x)] ||) * atol_opt = %e and\n",
             //             err_metric.projlagGradNorm, std::max(1.0, err_metric.projObjGrad) * atol_opt);
-            // std::printf("|| max(0, c(x)) ||_inf = %e <= max(1.0, || max(0, c(x0)) ||_inf) * atol_feas = %e\n",
+            // Rprintf("|| max(0, c(x)) ||_inf = %e <= max(1.0, || max(0, c(x0)) ||_inf) * atol_feas = %e\n",
             //             err_metric.cxNorm, std::max(1.0, err_metric.cxInitNorm) * atol_feas);
         }
         else if (status == L1AugLagSolverStatus::STAGNATION_ITERATES)
         {
-            std::printf("Outer steps have stagnated:\n");
-            std::printf("|| x - xp || = %e <= %e\n", distXOuterLoop, tol_dist_successive_x);
+            Rprintf("Outer steps have stagnated:\n");
+            Rprintf("|| x - xp || = %e <= %e\n", distXOuterLoop, tol_dist_successive_x);
         }
         else if (status == L1AugLagSolverStatus::MAX_ITER_REACHED)
         {
-            std::printf("The maximum number of outer iterations has been reached\n");
+            Rprintf("The maximum number of outer iterations has been reached\n");
         }
         else
         {
-            std::printf("Unknown stopping criterion\n");
+            Rprintf("Unknown stopping criterion\n");
         }
     }
 
@@ -418,16 +420,16 @@ NOMAD::L1AugLagSolverStatus NOMAD::L1AugLagSolver::solveInnerProblem(SGTELIB::Ma
     const bool verbose = verbose_level > 1;
     if (verbose)
     {
-        std::printf("\nL1 augmented lagrangian inner loop algorithm\n");
-        std::printf("Number of variables: %d\n", n);
-        std::printf("Number of inequality constraints: %d\n", lambda.get_nb_rows());
-        std::printf("Maximum number of iterations allowed for inner loop: %zu\n", max_iter_inner);
-        std::printf("mu parameter: %e\n", mu);
-        std::printf("stopping tolerance parameter (omega): %e\n", omega);
-        std::printf("min_inner_tol_opt parameter: %e\n", min_inner_tol_opt);
-        std::printf("min_inner_precision_cst parameter: %e\n\n", min_inner_precision_cst);
+        Rprintf("\nL1 augmented lagrangian inner loop algorithm\n");
+        Rprintf("Number of variables: %d\n", n);
+        Rprintf("Number of inequality constraints: %d\n", lambda.get_nb_rows());
+        Rprintf("Maximum number of iterations allowed for inner loop: %zu\n", max_iter_inner);
+        Rprintf("mu parameter: %e\n", mu);
+        Rprintf("stopping tolerance parameter (omega): %e\n", omega);
+        Rprintf("min_inner_tol_opt parameter: %e\n", min_inner_tol_opt);
+        Rprintf("min_inner_precision_cst parameter: %e\n\n", min_inner_precision_cst);
 
-        std::printf("%12s %12s %24s %26s %19s %10s %13s %13s %14s %14s %12s %13s %17s %10s %16s\n",
+        Rprintf("%12s %12s %24s %26s %19s %10s %13s %13s %14s %14s %12s %13s %17s %10s %16s\n",
                     "iter (inner)", "L(x)", "|| max(0, c(x)) ||_inf", "|| x - P[x-grad Ld(x)] ||",
                     "|| lambda_B ||_inf", "|| h ||", "|| v ||", "|| d ||", "|| s ||", "step size",
                     "|Active|", "|Infeasible|",
@@ -435,9 +437,9 @@ NOMAD::L1AugLagSolverStatus NOMAD::L1AugLagSolver::solveInnerProblem(SGTELIB::Ma
         constexpr int maxLineWidth = 240;
         for (int i = 0; i < maxLineWidth; ++i)
         {
-            std::printf("-");
+            Rprintf("-");
         }
-        std::printf("\n");
+        Rprintf("\n");
     }
 
     double distXInnerLoop = NOMAD::INF;
@@ -506,51 +508,51 @@ NOMAD::L1AugLagSolverStatus NOMAD::L1AugLagSolver::solveInnerProblem(SGTELIB::Ma
                 normMaxCx0 = std::max(cons.get(i, 0), normMaxCx0);
             }
 
-            std::printf(" %-12zu", iter_inner);
-            std::printf(" %12e", lagVal);
-            std::printf(" %18e", normMaxCx0);
-            std::printf(" %24e", nLdproj);
-            std::printf(" %22e", lambdaB.norm());
+            Rprintf(" %-12zu", iter_inner);
+            Rprintf(" %12e", lagVal);
+            Rprintf(" %18e", normMaxCx0);
+            Rprintf(" %24e", nLdproj);
+            Rprintf(" %22e", lambdaB.norm());
             if (horizontalStepExecuted)
             {
-                std::printf(" %16e", h_k.norm());
+                Rprintf(" %16e", h_k.norm());
             }
             else
             {
-                std::printf(" %16s", "-     ");
+                Rprintf(" %16s", "-     ");
             }
             if (verticalStepExecuted)
             {
-                std::printf(" %14e", v_k.norm());
+                Rprintf(" %14e", v_k.norm());
             }
             else
             {
-                std::printf(" %14s", "-     ");
+                Rprintf(" %14s", "-     ");
             }
             if (dropConstraintStepExecuted)
             {
-                std::printf(" %14e", d_k.norm());
+                Rprintf(" %14e", d_k.norm());
             }
             else
             {
-                std::printf(" %14s", "-       ");
+                Rprintf(" %14s", "-       ");
             }
             if (strenghtenedStepExecuted)
             {
-                std::printf(" %14e", h_k.norm());
+                Rprintf(" %14e", h_k.norm());
             }
             else
             {
-                std::printf(" %14s", "-       ");
+                Rprintf(" %14s", "-       ");
             }
-            std::printf(" %10e", stepSizeLogVal);
+            Rprintf(" %10e", stepSizeLogVal);
             const int nbActiveConstraints = (int) std::count(activeConstraints.begin(), activeConstraints.end(), true);
-            std::printf(" %6d", nbActiveConstraints);
+            Rprintf(" %6d", nbActiveConstraints);
             const int nbInfeasibleConstraints = (int) std::count(infeasibleConstraints.begin(), infeasibleConstraints.end(), true);
-            std::printf(" %10d", nbInfeasibleConstraints);
-            std::printf(" %20e", distXInnerLoop);
-            std::printf(" %16e", inner_tol_opt);
-            std::printf(" %11e\n", inner_precision_cst);
+            Rprintf(" %10d", nbInfeasibleConstraints);
+            Rprintf(" %20e", distXInnerLoop);
+            Rprintf(" %16e", inner_tol_opt);
+            Rprintf(" %11e\n", inner_precision_cst);
         }
 
         if (nLdproj <= omega && checkLambdaBCriticality(lambdaB, mu))
@@ -823,46 +825,46 @@ NOMAD::L1AugLagSolverStatus NOMAD::L1AugLagSolver::solveInnerProblem(SGTELIB::Ma
 
     if (verbose)
     {
-        std::printf("\nStatus: ");
-        std::printf("L(x*) = %e\n", QPModelUtils::getModelLagrangian(QPModel, X_k, lambda));
+        Rprintf("\nStatus: ");
+        Rprintf("L(x*) = %e\n", QPModelUtils::getModelLagrangian(QPModel, X_k, lambda));
         double normMaxCx0 = 0;
         for (int i = 0; i < n; ++i)
         {
             normMaxCx0 = std::max(cons.get(i, 0), normMaxCx0);
         }
-        std::printf("|| max(0, c(x*)) ||_inf = %e\n", normMaxCx0);
+        Rprintf("|| max(0, c(x*)) ||_inf = %e\n", normMaxCx0);
         if (status == L1AugLagSolverStatus::SOLVED)
         {
-            std::printf("Has reached the minimum tolerance:\n");
-            std::printf("|| x - P[x - grad Ld(x)] || = %e <= omega = %e or\n",
+            Rprintf("Has reached the minimum tolerance:\n");
+            Rprintf("|| x - P[x - grad Ld(x)] || = %e <= omega = %e or\n",
                         nLdproj, omega);
-            std::printf("|| Zk' pseudo grad(x)] || = %e <= tol = %e and\n",
+            Rprintf("|| Zk' pseudo grad(x)] || = %e <= tol = %e and\n",
                         projPGradNorm, min_inner_tol_opt);
-            std::printf(" all constraints below tol = %e and\n", min_inner_precision_cst);
-            std::printf(" all lambdaB coordinates between [0, 1/mu] = [0, %e]\n", 1.0 / mu);
+            Rprintf(" all constraints below tol = %e and\n", min_inner_precision_cst);
+            Rprintf(" all lambdaB coordinates between [0, 1/mu] = [0, %e]\n", 1.0 / mu);
         }
         else if (status == L1AugLagSolverStatus::STAGNATION_ITERATES)
         {
-            std::printf("Inner steps have stagnated:\n");
-            std::printf("|| x - xp || = %e <= %e\n", distXInnerLoop, tol_dist_successive_x);
+            Rprintf("Inner steps have stagnated:\n");
+            Rprintf("|| x - xp || = %e <= %e\n", distXInnerLoop, tol_dist_successive_x);
         }
         else if (status == L1AugLagSolverStatus::MAX_ITER_REACHED)
         {
-            std::printf("Max inner iterations reached\n");
+            Rprintf("Max inner iterations reached\n");
         }
         else if (status == L1AugLagSolverStatus::TOO_MANY_ACTIVE_CONSTRAINTS)
         {
             const size_t nbActiveConstraints = std::count(activeConstraints.begin(),
                                                       activeConstraints.end(), true);
-            std::printf("At x, %zu constraints are active and ", nbActiveConstraints);
-            std::printf("minimum constraint tolerance min tol = %f is reached (tol = %f)\n",
+            Rprintf("At x, %zu constraints are active and ", nbActiveConstraints);
+            Rprintf("minimum constraint tolerance min tol = %f is reached (tol = %f)\n",
                         min_inner_precision_cst, inner_precision_cst);
         }
         else
         {
-            std::printf("Unknown stopping criterion\n");
+            Rprintf("Unknown stopping criterion\n");
         }
-        std::printf("\n");
+        Rprintf("\n");
     }
 
     return status;
@@ -1084,7 +1086,7 @@ bool NOMAD::L1AugLagSolver::computeVerticalStep(SGTELIB::Matrix& v_k,
     {
         std::string err = "L1AugLagSolver::solve error: the number of active constraints does ";
         err += "not match the dimensions of the active Jacobian matrix";
-        std::printf("%s\n", err.c_str());
+        Rprintf("%s\n", err.c_str());
         return false;
     }
 
@@ -1132,7 +1134,7 @@ double NOMAD::L1AugLagSolver::piecewiseLineSearch(const SGTELIB::Matrix& X,
     double ak = SGTELIB::Matrix::dot(d, pseudoGradient);
     if (ak >= 0)
     {
-        std::printf(
+        Rprintf(
             "L1AugLagSolver::solve warning: in the piecewise line search procedure, the slope should be negative\n");
         return 0.0;
     }
@@ -1210,7 +1212,7 @@ double NOMAD::L1AugLagSolver::piecewiseLineSearch(const SGTELIB::Matrix& X,
     {
         std::string warn = "L1AugLagSolver::solve warning: in the piecewise line search procedure, ";
         warn += "no sufficient decrease found";
-        std::printf("%s\n", warn.c_str());
+        Rprintf("%s\n", warn.c_str());
     }
 
     return gamma_lk;
@@ -1226,7 +1228,7 @@ bool NOMAD::L1AugLagSolver::checkDimensions(const SGTELIB::Matrix& x,
     if (n != std::max(x.get_nb_rows(), x.get_nb_cols()) && (x.get_nb_cols() != 1))
     {
         std::string err = "L1AugLagSolver::solve error: x must be a column vector";
-        std::printf("%s\n", err.c_str());
+        Rprintf("%s\n", err.c_str());
         return false;
     }
 
@@ -1235,7 +1237,7 @@ bool NOMAD::L1AugLagSolver::checkDimensions(const SGTELIB::Matrix& x,
         std::string err = "L1AugLagSolver::solve error: bound constraints dimensions ";
         err += "nlb = " + std::to_string(lb.get_nb_cols()) + " nub = " + std::to_string(ub.get_nb_cols());
         err += " are not compatible with dimension of x (n = " + std::to_string(n) + ")";
-        std::printf("%s\n", err.c_str());
+        Rprintf("%s\n", err.c_str());
         return false;
     }
 
@@ -1245,7 +1247,7 @@ bool NOMAD::L1AugLagSolver::checkDimensions(const SGTELIB::Matrix& x,
         std::string err = "L1AugLagSolver::solve error: ";
         err += "the number of params of the model nbParams = (n+1) * (n+2) / 2 = " + std::to_string(nbParams);
         err += " is not compatible with the dimension of the solution n = " + std::to_string(n);
-        std::printf("%s\n", err.c_str());
+        Rprintf("%s\n", err.c_str());
         return false;
     }
 
@@ -1254,7 +1256,7 @@ bool NOMAD::L1AugLagSolver::checkDimensions(const SGTELIB::Matrix& x,
     {
         std::string err = "L1AugLagSolver::solve error: ";
         err += "the model has no constraints";
-        std::printf("%s\n", err.c_str());
+        Rprintf("%s\n", err.c_str());
         return false;
     }
 
@@ -1272,7 +1274,7 @@ bool NOMAD::L1AugLagSolver::checkBoundsCompatibilities(const SGTELIB::Matrix& lb
         {
             std::string err = "L1AugLagSolver::solve error: ";
             err += "no compatibility between lower bound and upper bound for index " + std::to_string(i);
-            std::printf("%s\n", err.c_str());
+            Rprintf("%s\n", err.c_str());
             return false;
         }
     }

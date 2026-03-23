@@ -52,6 +52,8 @@
  */
 #include "LevenbergMarquardtSolver.hpp"
 
+#include <R_ext/Print.h>
+
 #include "../../Algos/QPSolverAlgo/QPModelUtils.hpp"
 #include "../../Algos/QPSolverAlgo/DoglegTRSolver.hpp"
 
@@ -130,12 +132,12 @@ NOMAD::LMSolverStatus NOMAD::LevenbergMarquardtSolver::solve(SGTELIB::Matrix& x,
     const bool verbose = verbose_level > 0;
     if (verbose)
     {
-        std::printf("\nLevenberg-Marquardt algorithm\n");
-        std::printf("Number of variables: %d\n", n);
-        std::printf("Number of inequality constraints: %d\n", nbCons);
-        std::printf("Stopping criterion tolerance: %f\n", feasibility_tol);
-        std::printf("Maximum number of iterations allowed: %zu\n", max_iter);
-        std::printf("Initial trust-region radius: %e\n\n", Delta);
+        Rprintf("\nLevenberg-Marquardt algorithm\n");
+        Rprintf("Number of variables: %d\n", n);
+        Rprintf("Number of inequality constraints: %d\n", nbCons);
+        Rprintf("Stopping criterion tolerance: %f\n", feasibility_tol);
+        Rprintf("Maximum number of iterations allowed: %zu\n", max_iter);
+        Rprintf("Initial trust-region radius: %e\n\n", Delta);
     }
 
     // Compute first stopping criterion and check it is satisfied as soon as possible
@@ -144,9 +146,9 @@ NOMAD::LMSolverStatus NOMAD::LevenbergMarquardtSolver::solve(SGTELIB::Matrix& x,
     {
         if (verbose)
         {
-            std::printf("\nStatus:\n");
-            std::printf("|| c(x*) + s* || = %e\n", errVal);
-            std::printf("Has reached the minimum tolerance || c(x*) + s* || = %e <= tol = %e\n", errVal, feasibility_tol);
+            Rprintf("\nStatus:\n");
+            Rprintf("|| c(x*) + s* || = %e\n", errVal);
+            Rprintf("Has reached the minimum tolerance || c(x*) + s* || = %e <= tol = %e\n", errVal, feasibility_tol);
             return LMSolverStatus::SOLVED;
         }
     }
@@ -184,9 +186,9 @@ NOMAD::LMSolverStatus NOMAD::LevenbergMarquardtSolver::solve(SGTELIB::Matrix& x,
     {
         if (verbose)
         {
-            std::printf("\nStatus:\n");
-            std::printf("|| c(x*) + s* || = %e\n", errVal);
-            std::printf("Has reached the minimum tolerance || [ Jx Iq ]' (c(x) + s) || = %e <= tol = %e\n",
+            Rprintf("\nStatus:\n");
+            Rprintf("|| c(x*) + s* || = %e\n", errVal);
+            Rprintf("Has reached the minimum tolerance || [ Jx Iq ]' (c(x) + s) || = %e <= tol = %e\n",
                         wqNorm, tol);
             return LMSolverStatus::SOLVED;
         }
@@ -204,15 +206,15 @@ NOMAD::LMSolverStatus NOMAD::LevenbergMarquardtSolver::solve(SGTELIB::Matrix& x,
     // Initial logging
     if (verbose)
     {
-        std::printf("%5s %14s %16s %14s %17s %10s %14s %13s %24s\n",
+        Rprintf("%5s %14s %16s %14s %17s %10s %14s %13s %24s\n",
                     "iter", "|| c(x) + s ||", "norm residual", "|| W ' W r ||" , "|| x - xp ||_inf", "|| v ||",
                     "TR radius", "TR ratio", "Backtrack step size");
         constexpr int maxLineWidth = 135;
         for (int i = 0; i < maxLineWidth; ++i)
         {
-            std::printf("-");
+            Rprintf("-");
         }
-        std::printf("\n");
+        Rprintf("\n");
     }
 
     double distXLoop = 1e15;
@@ -225,12 +227,12 @@ NOMAD::LMSolverStatus NOMAD::LevenbergMarquardtSolver::solve(SGTELIB::Matrix& x,
         {
             if (pred != 0)
             {
-                std::printf(" %-4d %+10e %16e %+15e %15e %15e %13e %13e %18e\n",
+                Rprintf(" %-4d %+10e %16e %+15e %15e %15e %13e %13e %18e\n",
                             iter, errVal, r.norm(), WtWr.norm(), distXLoop, vxs.norm(), Delta, ared / pred, backtrackStepSize);
             }
             else
             {
-                std::printf(" %-4d %+10e %16e %+15e %15e %15e %13e %13e/0 %16e\n",
+                Rprintf(" %-4d %+10e %16e %+15e %15e %15e %13e %13e/0 %16e\n",
                             iter, errVal, r.norm(), WtWr.norm(), distXLoop, vxs.norm(), Delta, ared, backtrackStepSize);
             }
         }
@@ -274,11 +276,11 @@ NOMAD::LMSolverStatus NOMAD::LevenbergMarquardtSolver::solve(SGTELIB::Matrix& x,
             {
                 if (xi < li)
                 {
-                    std::printf("Warning: xi = %e < li = %e for index %d\n", xi, li, i);
+                    Rprintf("Warning: xi = %e < li = %e for index %d\n", xi, li, i);
                 }
                 if (xi > ui)
                 {
-                    std::printf("Warning: xi = %e > ui = %e for index %d\n", xi, ui, i);
+                    Rprintf("Warning: xi = %e > ui = %e for index %d\n", xi, ui, i);
                 }
             }
             else
@@ -399,36 +401,36 @@ NOMAD::LMSolverStatus NOMAD::LevenbergMarquardtSolver::solve(SGTELIB::Matrix& x,
 
     if (verbose)
     {
-        std::printf("\nStatus:\n");
-        std::printf("|| c(x*) + s* || = %e\n", errVal);
+        Rprintf("\nStatus:\n");
+        Rprintf("|| c(x*) + s* || = %e\n", errVal);
         if (status == LMSolverStatus::SOLVED)
         {
-            std::printf("Has reached the feasibility tolerance || (c(x*) + s*) || = %e <= tol = %e or\n",
+            Rprintf("Has reached the feasibility tolerance || (c(x*) + s*) || = %e <= tol = %e or\n",
                         errVal, feasibility_tol);
-            std::printf("The step norm || v || = %e is below its tolerance tol = %e or\n", vxs.norm(), small_v);
-            std::printf("A first order condition has been reached: || W' W r || = %e <= tol = %e\n",
+            Rprintf("The step norm || v || = %e is below its tolerance tol = %e or\n", vxs.norm(), small_v);
+            Rprintf("A first order condition has been reached: || W' W r || = %e <= tol = %e\n",
                         WtWr.norm(), tol);
         }
         else if (errVal < errValInit)
         {
-            std::printf("Has improved the solution\n");
+            Rprintf("Has improved the solution\n");
             status = LMSolverStatus::IMPROVED;
         }
         else if (status == LMSolverStatus::MAX_ITER_REACHED)
         {
-            std::printf("Has reached the maximum number of iterations\n");
+            Rprintf("Has reached the maximum number of iterations\n");
         }
         else if (status == LMSolverStatus::STAGNATION_ITERATES)
         {
-            std::printf("The algorithm has failed: \n");
-            std::printf("|| x - xp || = %e below tolerance tol = %e or\n", distXLoop, tol_dist_successive_x);
-            std::printf("backtrack step size value = %e is equal 0\n", backtrackStepSize);
+            Rprintf("The algorithm has failed: \n");
+            Rprintf("|| x - xp || = %e below tolerance tol = %e or\n", distXLoop, tol_dist_successive_x);
+            Rprintf("backtrack step size value = %e is equal 0\n", backtrackStepSize);
         }
         else
         {
-            std::printf("Unknown stopping criterion\n");
+            Rprintf("Unknown stopping criterion\n");
         }
-        std::printf("\n");
+        Rprintf("\n");
     }
 
     if (status == LMSolverStatus::SOLVED)
@@ -463,7 +465,7 @@ bool NOMAD::LevenbergMarquardtSolver::checkDimensions(const SGTELIB::Matrix& x,
     if (n != std::max(x.get_nb_rows(), x.get_nb_cols()) && (x.get_nb_cols() != 1))
     {
         std::string err = "LevenbergMarquardtSolver::solve error: x must be a column vector";
-        std::printf("%s\n", err.c_str());
+        Rprintf("%s\n", err.c_str());
         return false;
     }
 
@@ -473,7 +475,7 @@ bool NOMAD::LevenbergMarquardtSolver::checkDimensions(const SGTELIB::Matrix& x,
         std::string err = "LevenbergMarquardtSolver::solve error: ";
         err += "the number of params of the model nbParams = (n+1) * (n+2) / 2 = " + std::to_string(nbParams);
         err += " is not compatible with the dimension of the solution n = " + std::to_string(n);
-        std::printf("%s\n", err.c_str());
+        Rprintf("%s\n", err.c_str());
         return false;
     }
 
@@ -482,7 +484,7 @@ bool NOMAD::LevenbergMarquardtSolver::checkDimensions(const SGTELIB::Matrix& x,
     {
         std::string err = "LevenbergMarquardtSolver::solve error: ";
         err += "the model has no constraints";
-        std::printf("%s\n", err.c_str());
+        Rprintf("%s\n", err.c_str());
         return false;
     }
 
@@ -491,7 +493,7 @@ bool NOMAD::LevenbergMarquardtSolver::checkDimensions(const SGTELIB::Matrix& x,
         std::string err = "LevenbergMarquardtSolver::solve error: ";
         err += "the number of constraints of the model nbCons = " + std::to_string(nbCons);
         err += " is not compatible with the dimension of the cons vector q = " + std::to_string(cons.get_nb_rows());
-        std::printf("%s\n", err.c_str());
+        Rprintf("%s\n", err.c_str());
         return false;
     }
 
@@ -499,7 +501,7 @@ bool NOMAD::LevenbergMarquardtSolver::checkDimensions(const SGTELIB::Matrix& x,
     if (nbVar != std::max(XS.get_nb_rows(), XS.get_nb_cols()) && (XS.get_nb_cols() != 1))
     {
         std::string err = "LevenbergMarquardtSolver::solve error: XS must be a column vector";
-        std::printf("%s\n", err.c_str());
+        Rprintf("%s\n", err.c_str());
         return false;
     }
 
@@ -509,7 +511,7 @@ bool NOMAD::LevenbergMarquardtSolver::checkDimensions(const SGTELIB::Matrix& x,
         err += "the dimension of vector XS (nbVar = n + nbCons = " + std::to_string(nbVar);
         err += " ) is not compatible with the dimension of the vector x (n = " + std::to_string(n);
         err += " ) and the number of constraints (nbCons = " + std::to_string(nbCons) + ")";
-        std::printf("%s\n", err.c_str());
+        Rprintf("%s\n", err.c_str());
         return false;
     }
 
@@ -518,7 +520,7 @@ bool NOMAD::LevenbergMarquardtSolver::checkDimensions(const SGTELIB::Matrix& x,
         std::string err = "LevenbergMarquardtSolver::solve error: bound constraints dimensions ";
         err += " (nlb = " + std::to_string(lvar.get_nb_cols()) + " and nub = " + std::to_string(uvar.get_nb_cols());
         err += " ) are not compatible with dimension of XS (n = " + std::to_string(nbVar) + ")";
-        std::printf("%s\n", err.c_str());
+        Rprintf("%s\n", err.c_str());
         return false;
     }
 
@@ -536,7 +538,7 @@ bool NOMAD::LevenbergMarquardtSolver::checkBoundsCompatibilities(const SGTELIB::
         {
             std::string err = "TRIPMSolver::solve error: ";
             err += "no compatibility between lower bound and upper bound for index " + std::to_string(i);
-            std::printf("%s\n", err.c_str());
+            Rprintf("%s\n", err.c_str());
             return false;
         }
     }
@@ -571,14 +573,14 @@ bool NOMAD::LevenbergMarquardtSolver::checkStartingPointInBounds(const SGTELIB::
         const double xi = XS.get(i, 0);
         if ((sol_be_strict) && ((li >= xi) || ui <= xi))
         {
-            std::printf("LevenbergMarquardtSolver::solve error: x is not strictly inside [lvar, uvar]:");
-            std::printf(" for index i = %d, lb[i] = %e, ub[i] =  %e, x[i] = %e\n", i, li, ui, xi);
+            Rprintf("LevenbergMarquardtSolver::solve error: x is not strictly inside [lvar, uvar]:");
+            Rprintf(" for index i = %d, lb[i] = %e, ub[i] =  %e, x[i] = %e\n", i, li, ui, xi);
             return false;
         }
         if (li > xi || ui < xi)
         {
-            std::printf("LevenbergMarquardtSolver::solve error: x is not inside [lvar, uvar]:");
-            std::printf(" for index i = %d, lb[i] = %e, ub[i] =  %e, x[i] = %e\n", i, li, ui, xi);
+            Rprintf("LevenbergMarquardtSolver::solve error: x is not inside [lvar, uvar]:");
+            Rprintf(" for index i = %d, lb[i] = %e, ub[i] =  %e, x[i] = %e\n", i, li, ui, xi);
             return false;
         }
     }
@@ -589,8 +591,8 @@ bool NOMAD::LevenbergMarquardtSolver::checkStartingPointInBounds(const SGTELIB::
         const double xi = XS.get(i, 0);
         if (li > xi || ui < xi)
         {
-            std::printf("LevenbergMarquardtSolver::solve error: x is not inside [lvar, uvar]:");
-            std::printf(" for index i = %d, lb[i] = %e, ub[i] =  %e, x[i] = %e\n", i, li, ui, xi);
+            Rprintf("LevenbergMarquardtSolver::solve error: x is not inside [lvar, uvar]:");
+            Rprintf(" for index i = %d, lb[i] = %e, ub[i] =  %e, x[i] = %e\n", i, li, ui, xi);
             return false;
         }
     }

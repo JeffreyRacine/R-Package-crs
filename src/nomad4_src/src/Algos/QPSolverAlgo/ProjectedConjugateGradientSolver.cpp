@@ -52,6 +52,8 @@
  */
 #include "ProjectedConjugateGradientSolver.hpp"
 
+#include <R_ext/Print.h>
+
 #include <cstdio>
 
 #include "../../Math/MathUtils.hpp"
@@ -365,20 +367,20 @@ NOMAD::ProjectedConjugateGradientSolverStatus NOMAD::ProjectedConjugateGradientS
 
     if (verbose)
     {
-        std::printf("\nProjected conjugate gradient algorithm\n");
-        std::printf("Number of variables: %d\n", n);
-        std::printf("Number of equality constraints: %d\n", m);
-        std::printf("Trust-region radius: %f\n\n", delta);
-        std::printf("Stopping criterion tolerance: %f\n", tol_CG);
-        std::printf("Maximum number of iterations allowed: %zu\n\n", max_iter);
+        Rprintf("\nProjected conjugate gradient algorithm\n");
+        Rprintf("Number of variables: %d\n", n);
+        Rprintf("Number of equality constraints: %d\n", m);
+        Rprintf("Trust-region radius: %f\n\n", delta);
+        Rprintf("Stopping criterion tolerance: %f\n", tol_CG);
+        Rprintf("Maximum number of iterations allowed: %zu\n\n", max_iter);
 
-        std::printf("%5s %12s %25s %13s %14s %13s %18s\n", "iter", "f(x)", "Projected residual norm", "|| x ||", "d'Gd", "cos theta", "|| Ax - b ||_inf");
+        Rprintf("%5s %12s %25s %13s %14s %13s %18s\n", "iter", "f(x)", "Projected residual norm", "|| x ||", "d'Gd", "cos theta", "|| Ax - b ||_inf");
         constexpr int maxLineWidth = 107;
         for (int i = 0; i < maxLineWidth; ++i)
         {
-            std::printf("-");
+            Rprintf("-");
         }
-        std::printf("\n");
+        Rprintf("\n");
     }
 
     auto solverStatus = NOMAD::ProjectedConjugateGradientSolverStatus::MAX_ITER_REACHED;
@@ -394,7 +396,7 @@ NOMAD::ProjectedConjugateGradientSolverStatus NOMAD::ProjectedConjugateGradientS
             SGTELIB::Matrix::inplace_product(Ax, A, x);
             init_ro = b;
             init_ro.sub(Ax);
-            std::printf(" %-4d %+9e %23e %15e %13e %13e %18e\n", iter, objVal, rg, x.norm(), dtGd, cosTheta, init_ro.norm_inf());
+            Rprintf(" %-4d %+9e %23e %15e %13e %13e %18e\n", iter, objVal, rg, x.norm(), dtGd, cosTheta, init_ro.norm_inf());
         }
 
         // Detection of a negative curvature: in this case, return a solution x
@@ -552,29 +554,29 @@ NOMAD::ProjectedConjugateGradientSolverStatus NOMAD::ProjectedConjugateGradientS
 
     if (verbose)
     {
-        std::printf("\nStatus: ");
+        Rprintf("\nStatus: ");
         if (solverStatus == NOMAD::ProjectedConjugateGradientSolverStatus::SOLVED)
         {
-            std::printf("Has reached the minimum tolerance (r'g = %e <= tol_CG = %e, ", rg, tol_CG);
-            std::printf("|| x || = %e): solved\n", x.norm());
+            Rprintf("Has reached the minimum tolerance (r'g = %e <= tol_CG = %e, ", rg, tol_CG);
+            Rprintf("|| x || = %e): solved\n", x.norm());
         }
         else if (solverStatus == NOMAD::ProjectedConjugateGradientSolverStatus::NEGATIVE_CURVATURE)
         {
-           std::printf("Detection of a negative curvature ");
-            std::printf("(|| x || = %e): stop\n", x.norm());
+           Rprintf("Detection of a negative curvature ");
+            Rprintf("(|| x || = %e): stop\n", x.norm());
         }
         else if (solverStatus == NOMAD::ProjectedConjugateGradientSolverStatus::BOUNDARY_REACHED)
         {
-            std::printf("Has reached the trust-region boundary (|| x || = %e ~ radius = %f): stop\n", x.norm(), delta);
+            Rprintf("Has reached the trust-region boundary (|| x || = %e ~ radius = %f): stop\n", x.norm(), delta);
         }
         else if (solverStatus == NOMAD::ProjectedConjugateGradientSolverStatus::QUAD_ROOTS_ERROR)
         {
-            std::printf("Quadratic roots resolution error: stop\n");
+            Rprintf("Quadratic roots resolution error: stop\n");
         }
         else if (solverStatus == NOMAD::ProjectedConjugateGradientSolverStatus::MAX_ITER_REACHED)
         {
-            std::printf("Maximal number of iterations reached ");
-            std::printf("(|| x || = %e): stop\n", x.norm());
+            Rprintf("Maximal number of iterations reached ");
+            Rprintf("(|| x || = %e): stop\n", x.norm());
         }
     }
 

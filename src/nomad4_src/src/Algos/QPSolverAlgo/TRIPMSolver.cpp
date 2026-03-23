@@ -52,6 +52,8 @@
  */
 #include "TRIPMSolver.hpp"
 
+#include <R_ext/Print.h>
+
 #include "../../Nomad/nomad.hpp"
 #include "../../Algos/QPSolverAlgo/DoglegTRSolver.hpp"
 #include "../../Algos/QPSolverAlgo/LevenbergMarquardtSolver.hpp"
@@ -107,9 +109,9 @@ NOMAD::TRIPMSolverStatus NOMAD::TRIPMSolver::solve(SGTELIB::Matrix& x,
 
     if (verbose)
     {
-        std::printf("\nTrust-region interior point method algorithm\n");
-        std::printf("Number of total variables: %d\n", n);
-        std::printf("Number of fixed variables: %zu\n", nbFixedVars);
+        Rprintf("\nTrust-region interior point method algorithm\n");
+        Rprintf("Number of total variables: %d\n", n);
+        Rprintf("Number of fixed variables: %zu\n", nbFixedVars);
     }
 
     // Solve problem in full dimensions
@@ -257,21 +259,21 @@ NOMAD::TRIPMSolverStatus NOMAD::TRIPMSolver::solveReducedPb(SGTELIB::Matrix& x,
 
     if (verbose)
     {
-        std::printf("Number of inequality constraints: %d\n", nbCons);
-        std::printf("Stopping criterion tolerance for optimality: %f\n", atol_opt);
-        std::printf("Stopping criterion tolerance for feasibility: %f\n", std::max(1.0, err_metric.cxInitNorm) * atol_feas);
-        std::printf("Maximum number of iterations allowed for outer loop: %zu\n", max_iter_outer);
-        std::printf("Maximum number of iterations allowed for inner loop: %zu\n\n", max_iter_inner);
+        Rprintf("Number of inequality constraints: %d\n", nbCons);
+        Rprintf("Stopping criterion tolerance for optimality: %f\n", atol_opt);
+        Rprintf("Stopping criterion tolerance for feasibility: %f\n", std::max(1.0, err_metric.cxInitNorm) * atol_feas);
+        Rprintf("Maximum number of iterations allowed for outer loop: %zu\n", max_iter_outer);
+        Rprintf("Maximum number of iterations allowed for inner loop: %zu\n\n", max_iter_inner);
 
-        std::printf("%10s %10s %26s %16s %22s %18s %9s %15s %20s %18s %15s\n",
+        Rprintf("%10s %10s %26s %16s %22s %18s %9s %15s %20s %18s %15s\n",
                     "iter (outer)", "f(x)", "|| max(c(x), 0) ||_inf", "|| c(x) + s ||",
                     "|| Proj grad L(x) ||_inf", "|| S lambda ||_inf", "mu", "tol_mu", "|| lambda ||_inf", "|| x - xp ||_inf", "status inner");
         constexpr int maxLineWidth = 195;
         for (int i = 0; i < maxLineWidth; ++i)
         {
-            std::printf("-");
+            Rprintf("-");
         }
-        std::printf("\n");
+        Rprintf("\n");
     }
 
     TRIPMSolverStatus status = TRIPMSolverStatus::MAX_ITER_REACHED;
@@ -308,7 +310,7 @@ NOMAD::TRIPMSolverStatus NOMAD::TRIPMSolver::solveReducedPb(SGTELIB::Matrix& x,
                 return "error";
             }(innerStatus);
 
-            std::printf(" %-9d %+15e %15e %23e %18e %21e %18e %13e %14e %18e %18s\n",
+            Rprintf(" %-9d %+15e %15e %23e %18e %21e %18e %13e %14e %18e %18s\n",
                         iter, objVal, normCxMax0, cx, err_metric.projlagGradNorm, err_metric.slackLambdaMuNorm, mu, tol_mu,
                         lambda.norm_inf(), distXOuterLoop, statusLog.c_str());
         }
@@ -344,7 +346,10 @@ NOMAD::TRIPMSolverStatus NOMAD::TRIPMSolver::solveReducedPb(SGTELIB::Matrix& x,
                                              (int) verbose_level - 1);
         if (innerStatus == BarrierSolverStatus::NUM_ERROR)
         {
-            verbose && std::printf("TRIPMSolver::solve numerical error: stop the procedure\n");
+            if (verbose)
+            {
+                Rprintf("TRIPMSolver::solve numerical error: stop the procedure\n");
+            }
             return TRIPMSolverStatus::NUM_ERROR;
         }
 
@@ -446,41 +451,41 @@ NOMAD::TRIPMSolverStatus NOMAD::TRIPMSolver::solveReducedPb(SGTELIB::Matrix& x,
 
     if (verbose)
     {
-        std::printf("\nStatus: ");
-        std::printf("f(x*) = %e\n", QPModelUtils::getModelObj(QPModel, x));
-        std::printf("|| c(x*) + s* || = %e\n", cxp);
+        Rprintf("\nStatus: ");
+        Rprintf("f(x*) = %e\n", QPModelUtils::getModelObj(QPModel, x));
+        Rprintf("|| c(x*) + s* || = %e\n", cxp);
         double normCxMax0 = 0;
         for (int i = 0; i < nbCons; ++i)
         {
             normCxMax0 = std::max(cons.get(i, 0), normCxMax0);
         }
-        std::printf("|| max (c(x), 0) ||_inf = %e\n", normCxMax0);
+        Rprintf("|| max (c(x), 0) ||_inf = %e\n", normCxMax0);
         if (status == TRIPMSolverStatus::SOLVED)
         {
-            std::printf("Has reached the minimum tolerance\n");
-            std::printf("|| x - P[x - grad L(x)] ||_inf = %e <= max(1.0, || x - P[x - grad f(x)] ||) * atol_opt = %e and\n",
+            Rprintf("Has reached the minimum tolerance\n");
+            Rprintf("|| x - P[x - grad L(x)] ||_inf = %e <= max(1.0, || x - P[x - grad f(x)] ||) * atol_opt = %e and\n",
                         err_metric.projlagGradNorm, std::max(1.0, err_metric.projObjGrad) * atol_opt);
-            std::printf("|| S lambda ||_inf = %e <= max(1.0, || x - P[x - grad f(x)] ||_inf) * atol_opt = %e and\n",
+            Rprintf("|| S lambda ||_inf = %e <= max(1.0, || x - P[x - grad f(x)] ||_inf) * atol_opt = %e and\n",
                         err_metric.slackLambdaMuNorm, std::max(1.0, err_metric.projObjGrad) * atol_opt);
-            std::printf("|| max(0, c(x)) ||_inf = %e <= max(1.0, || max(0, c(x0)) ||_inf) * atol_feas = %e\n",
+            Rprintf("|| max(0, c(x)) ||_inf = %e <= max(1.0, || max(0, c(x0)) ||_inf) * atol_feas = %e\n",
                         err_metric.cxNorm, std::max(1.0, err_metric.cxInitNorm) * atol_feas);
         }
         else if (status == TRIPMSolverStatus::STAGNATION_ITERATES)
         {
-            std::printf("Outer steps have stagnated:\n");
-            std::printf("|| x - xp || = %e <= %e or\n", distXOuterLoop, tol_dist_successive_x);
-            std::printf("barrier parameter mu = %e is below the following tolerance %e or\n", mu,
+            Rprintf("Outer steps have stagnated:\n");
+            Rprintf("|| x - xp || = %e <= %e or\n", distXOuterLoop, tol_dist_successive_x);
+            Rprintf("barrier parameter mu = %e is below the following tolerance %e or\n", mu,
                         std::min(atol_opt, atol_feas) / mu_decrease);
-            std::printf("the number of successive failure %zu has reached its maximum value %zu",
+            Rprintf("the number of successive failure %zu has reached its maximum value %zu",
                         successiveFailure, maxSuccessiveFailures);
         }
         else if (status == TRIPMSolverStatus::MAX_ITER_REACHED)
         {
-            std::printf("The maximum number of outer iterations has been reached\n");
+            Rprintf("The maximum number of outer iterations has been reached\n");
         }
         else
         {
-            std::printf("Unknown stopping criterion\n");
+            Rprintf("Unknown stopping criterion\n");
         }
     }
     return status;
@@ -495,7 +500,7 @@ bool NOMAD::TRIPMSolver::checkDimensions(const SGTELIB::Matrix& x,
     if (n != std::max(x.get_nb_rows(), x.get_nb_cols()) && (x.get_nb_cols() != 1))
     {
         std::string err = "TRIPMSolver::solve error: x must be a column vector";
-        std::printf("%s\n", err.c_str());
+        Rprintf("%s\n", err.c_str());
         return false;
     }
 
@@ -504,7 +509,7 @@ bool NOMAD::TRIPMSolver::checkDimensions(const SGTELIB::Matrix& x,
         std::string err = "TRIPMSolver::solve error: bound constraints dimensions ";
         err += "nlb = " + std::to_string(lb.get_nb_cols()) + " nub = " + std::to_string(ub.get_nb_cols());
         err += " are not compatible with dimension of x (n = " + std::to_string(n) + ")";
-        std::printf("%s\n", err.c_str());
+        Rprintf("%s\n", err.c_str());
         return false;
     }
 
@@ -514,7 +519,7 @@ bool NOMAD::TRIPMSolver::checkDimensions(const SGTELIB::Matrix& x,
         std::string err = "TRIPMSolver::solve error: ";
         err += "the number of params of the model nbParams = (n+1) * (n+2) / 2 = " + std::to_string(nbParams);
         err += " is not compatible with the dimension of the solution n = " + std::to_string(n);
-        std::printf("%s\n", err.c_str());
+        Rprintf("%s\n", err.c_str());
         return false;
     }
 
@@ -523,7 +528,7 @@ bool NOMAD::TRIPMSolver::checkDimensions(const SGTELIB::Matrix& x,
     {
         std::string err = "TRIPMSolver::solve error: ";
         err += "the model has no constraints";
-        std::printf("%s\n", err.c_str());
+        Rprintf("%s\n", err.c_str());
         return false;
     }
 
@@ -541,7 +546,7 @@ bool NOMAD::TRIPMSolver::checkBoundsCompatibilities(const SGTELIB::Matrix& lb,
         {
             std::string err = "TRIPMSolver::solve error: ";
             err += "no compatibility between lower bound and upper bound for index " + std::to_string(i);
-            std::printf("%s\n", err.c_str());
+            Rprintf("%s\n", err.c_str());
             return false;
         }
     }
@@ -554,7 +559,7 @@ bool NOMAD::TRIPMSolver::checkParams() const
     {
         std::string err = "TRIPMSolver::solve error: ";
         err += "mu_decrease parameter value must be superior to 1";
-        std::printf("%s\n", err.c_str());
+        Rprintf("%s\n", err.c_str());
         return false;
     }
 
@@ -616,7 +621,7 @@ bool NOMAD::TRIPMSolver::computeStrictlyFeasiblePoint(SGTELIB::Matrix& x,
         {
             std::string err = "TRIPMSolver::solve warning: ";
             err += "x is not strictly feasible for index variable i = " + std::to_string(i);
-            std::printf("%s: lb[i] = %f, ub[i] = %f, x[i] = %f\n", err.c_str(), li, ui, xi);
+            Rprintf("%s: lb[i] = %f, ub[i] = %f, x[i] = %f\n", err.c_str(), li, ui, xi);
             return false;
         }
     }
@@ -783,7 +788,7 @@ NOMAD::TRIPMSolver::BarrierSolverStatus NOMAD::TRIPMSolver::solveBarrierSubprobl
             {
                 std::string err = "TRIPMSolver::solveBarrierSubproblem error: ";
                 err += "current iterate x is not strictly feasible for index i = " + std::to_string(n);
-                std::printf("%s: lb[i] = %f, ub[i] = %f, x[i] = %f\n", err.c_str(),
+                Rprintf("%s: lb[i] = %f, ub[i] = %f, x[i] = %f\n", err.c_str(),
                             lvar.get(i, 0), uvar.get(i, 0), xs.get(i, 0));
                 return false;
             }
@@ -903,16 +908,16 @@ NOMAD::TRIPMSolver::BarrierSolverStatus NOMAD::TRIPMSolver::solveBarrierSubprobl
     // Initial logging
     if (verbose)
     {
-        std::printf("\nBarrier subproblem algorithm\n");
-        std::printf("Number of variables: %d\n", n);
-        std::printf("Number of inequality constraints: %d\n", nbCons);
-        std::printf("Maximum number of iterations allowed for inner loop: %zu\n", max_iter_inner);
-        std::printf("Initial trust-region radius: %e\n", Delta);
-        std::printf("mu parameter: %e\n", mu);
-        std::printf("tol_mu_opt parameter: %e\n", tol_mu_opt);
-        std::printf("tol_mu_feas parameter: %e\n\n", tol_mu_feas);
+        Rprintf("\nBarrier subproblem algorithm\n");
+        Rprintf("Number of variables: %d\n", n);
+        Rprintf("Number of inequality constraints: %d\n", nbCons);
+        Rprintf("Maximum number of iterations allowed for inner loop: %zu\n", max_iter_inner);
+        Rprintf("Initial trust-region radius: %e\n", Delta);
+        Rprintf("mu parameter: %e\n", mu);
+        Rprintf("tol_mu_opt parameter: %e\n", tol_mu_opt);
+        Rprintf("tol_mu_feas parameter: %e\n\n", tol_mu_feas);
 
-        std::printf("%5s %s %9s %27s %15s %13s %13s %10s %19s %17s %17s %10s %13s %13s %16s\n",
+        Rprintf("%5s %s %9s %27s %15s %13s %13s %10s %19s %17s %17s %10s %13s %13s %16s\n",
                     "iter (inner)", "nb successive unsuccessful iter", "f(x)", "|| max(0, c(x)) ||_inf",
                     "|| c(x) + s ||", "|| x - P[x - grad L(x)] ||", "|| S lambda + mu ||",
                     "nu", "norm residual",
@@ -920,9 +925,9 @@ NOMAD::TRIPMSolver::BarrierSolverStatus NOMAD::TRIPMSolver::solveBarrierSubprobl
         constexpr int maxLineWidth = 270;
         for (int i = 0; i < maxLineWidth; ++i)
         {
-            std::printf("-");
+            Rprintf("-");
         }
-        std::printf("\n");
+        Rprintf("\n");
     }
 
     double ared =0 , pred = 0;
@@ -944,14 +949,14 @@ NOMAD::TRIPMSolver::BarrierSolverStatus NOMAD::TRIPMSolver::solveBarrierSubprobl
 
             if (pred != 0)
             {
-                std::printf(" %-12d %-10zu %+33e %16e %21e %21e %22e %18e %14e %14e %18e %15e %13e %13e %15e\n",
+                Rprintf(" %-12d %-10zu %+33e %16e %21e %21e %22e %18e %14e %14e %18e %15e %13e %13e %15e\n",
                             iter, successiveUnsuccessful, objVal, normMaxCx0, cx,
                             errMetric.projlagGradNorm, errMetric.slackLambdaMuNorm, nu, nr,
                             lambda.norm_inf(), distXInnerLoop, np, nv, ared/pred, Delta);
             }
             else
             {
-                std::printf(" %-12d %-10zu %+33e %16e %21e %21e %22e %18e %14e %14e %18e %15e %13e %13e/0 %13e\n",
+                Rprintf(" %-12d %-10zu %+33e %16e %21e %21e %22e %18e %14e %14e %18e %15e %13e %13e/0 %13e\n",
                             iter, successiveUnsuccessful, objVal, normMaxCx0, cx,
                             errMetric.projlagGradNorm, errMetric.slackLambdaMuNorm, nu, nr,
                             lambda.norm_inf(), distXInnerLoop, np, nv, ared, Delta);
@@ -1053,11 +1058,11 @@ NOMAD::TRIPMSolver::BarrierSolverStatus NOMAD::TRIPMSolver::solveBarrierSubprobl
             {
                 if (xi < li)
                 {
-                    std::printf("Warning: xi = %e < li = %e for index %d\n", xi, li, i);
+                    Rprintf("Warning: xi = %e < li = %e for index %d\n", xi, li, i);
                 }
                 if (xi > ui)
                 {
-                    std::printf("Warning: xi = %e > ui = %e for index %d\n", xi, ui, i);
+                    Rprintf("Warning: xi = %e > ui = %e for index %d\n", xi, ui, i);
                 }
             }
             else
@@ -1150,15 +1155,15 @@ NOMAD::TRIPMSolver::BarrierSolverStatus NOMAD::TRIPMSolver::solveBarrierSubprobl
             solverStatus == NOMAD::ProjectedConjugateGradientSolverStatus::MATRIX_DIMENSIONS_FAILURE)
         {
 
-            std::printf("TRIPMSolver::solveBarrierSubproblem error: Projected Conjugate Gradient has failed.\n");
-            std::printf("Status:\n");
+            Rprintf("TRIPMSolver::solveBarrierSubproblem error: Projected Conjugate Gradient has failed.\n");
+            Rprintf("Status:\n");
             if (solverStatus == NOMAD::ProjectedConjugateGradientSolverStatus::QUAD_ROOTS_ERROR)
             {
-                std::printf("Quadratic resolution root error\n");
+                Rprintf("Quadratic resolution root error\n");
             }
             else
             {
-                std::printf("Wrong parameters\n");
+                Rprintf("Wrong parameters\n");
             }
             return BarrierSolverStatus::NUM_ERROR;
         }
@@ -1184,11 +1189,11 @@ NOMAD::TRIPMSolver::BarrierSolverStatus NOMAD::TRIPMSolver::solveBarrierSubprobl
             {
                 if (xi < li)
                 {
-                    std::printf("Warning: xi = %e < li = %e for index %d\n", xi, li, i);
+                    Rprintf("Warning: xi = %e < li = %e for index %d\n", xi, li, i);
                 }
                 if (xi > ui)
                 {
-                    std::printf("Warning: xi = %e > ui = %e for index %d\n", xi, ui, i);
+                    Rprintf("Warning: xi = %e > ui = %e for index %d\n", xi, ui, i);
                 }
             }
             else
@@ -1455,40 +1460,40 @@ NOMAD::TRIPMSolver::BarrierSolverStatus NOMAD::TRIPMSolver::solveBarrierSubprobl
     }
     if (verbose)
     {
-        std::printf("\nStatus: ");
-        std::printf("f(x*) = %e\n", QPModelUtils::getModelObj(QPModel, x));
-        std::printf("|| c(x*) + s* || = %e\n", cslack.norm());
+        Rprintf("\nStatus: ");
+        Rprintf("f(x*) = %e\n", QPModelUtils::getModelObj(QPModel, x));
+        Rprintf("|| c(x*) + s* || = %e\n", cslack.norm());
         double normMaxCx0 = 0;
         for (int i = 0; i < n; ++i)
         {
             normMaxCx0 = std::max(cons.get(i, 0), normMaxCx0);
         }
-        std::printf("|| max(0, c(x*)) ||_inf = %e\n", normMaxCx0);
+        Rprintf("|| max(0, c(x*)) ||_inf = %e\n", normMaxCx0);
         if (status == BarrierSolverStatus::SOLVED)
         {
-            std::printf("Has reached the minimum tolerance:\n");
-            //std::printf("E(x,s,y;mu) = %e <= tol = %e or\n", errorInnerVal, tol_mu);
-            std::printf("Trust-region radius %e below tol = %e or\n", Delta, tol_TR_radius);
-            std::printf("|| p || = %e below tol = %e\n", np, small_p);
+            Rprintf("Has reached the minimum tolerance:\n");
+            //Rprintf("E(x,s,y;mu) = %e <= tol = %e or\n", errorInnerVal, tol_mu);
+            Rprintf("Trust-region radius %e below tol = %e or\n", Delta, tol_TR_radius);
+            Rprintf("|| p || = %e below tol = %e\n", np, small_p);
         }
         else if (status == BarrierSolverStatus::STAGNATION_ITERATES)
         {
-            std::printf("Inner steps have stagnated:\n");
-            std::printf("|| x - xp || = %e <= %e\n", distXInnerLoop, tol_dist_successive_x);
+            Rprintf("Inner steps have stagnated:\n");
+            Rprintf("|| x - xp || = %e <= %e\n", distXInnerLoop, tol_dist_successive_x);
         }
         else if (status == BarrierSolverStatus::ONE_STEP_MADE)
         {
-            std::printf("At least one step has been made\n");
+            Rprintf("At least one step has been made\n");
         }
         else if (status == BarrierSolverStatus::FAILURE)
         {
-            std::printf("Has failed\n");
+            Rprintf("Has failed\n");
         }
         else
         {
-            std::printf("Unknown stopping criterion\n");
+            Rprintf("Unknown stopping criterion\n");
         }
-        std::printf("\n");
+        Rprintf("\n");
     }
     return status;
 }
