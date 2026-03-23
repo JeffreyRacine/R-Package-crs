@@ -24,7 +24,19 @@
 /*-------------------------------------------------------------------------------------*/
 
 #include "TrainingSet.hpp"
+#include <R_ext/Print.h>
+#include <sstream>
 using namespace SGTELIB;
+
+namespace {
+template <class Writer>
+inline void training_set_write_console(Writer&& writer)
+{
+  std::ostringstream oss;
+  writer(oss);
+  Rprintf("%s", oss.str().c_str());
+}
+}  // namespace
 
 /*--------------------------------------*/
 /*              constructor             */
@@ -163,7 +175,9 @@ SGTELIB::TrainingSet::TrainingSet ( const TrainingSet & C ) :
 /*               info (debug)           */
 /*--------------------------------------*/
 void SGTELIB::TrainingSet::info (void) const{
-  std::cout << "   ## ## TrainingSet::info  " << this << " " << _ready << " " << _p << "\n";
+  training_set_write_console([&](std::ostringstream& oss) {
+    oss << "   ## ## TrainingSet::info  " << this << " " << _ready << " " << _p << "\n";
+  });
 }
 
 /*--------------------------------------*/
@@ -363,7 +377,9 @@ void SGTELIB::TrainingSet::build ( void ){
 /*--------------------------------------*/
 void SGTELIB::TrainingSet::check_ready (void) const{
   if ( ! _ready){
-    std::cout << "TrainingSet: NOT READY!\n";
+    training_set_write_console([&](std::ostringstream& oss) {
+      oss << "TrainingSet: NOT READY!\n";
+    });
     throw Exception ( __FILE__ , __LINE__ , "TrainingSet::check_ready(): TrainingSet not ready. Use method TrainingSet::build()" );
   }
 }//
@@ -376,7 +392,9 @@ void SGTELIB::TrainingSet::check_ready (const std::string & file,
 /*--------------------------------------*/
 void SGTELIB::TrainingSet::check_ready (const std::string & s) const{
   if ( ! _ready){
-    std::cout << "TrainingSet: NOT READY! (" << s << ")\n";
+    training_set_write_console([&](std::ostringstream& oss) {
+      oss << "TrainingSet: NOT READY! (" << s << ")\n";
+    });
     throw Exception ( __FILE__ , __LINE__ , "TrainingSet::check_ready(): TrainingSet not ready. Use method TrainingSet::build()" );
   }
 }//
@@ -1329,7 +1347,9 @@ std::list<int> SGTELIB::TrainingSet::select_greedy ( const Matrix & X,
   const int n = X.get_nb_cols();
 
   if ( pS<3 || pS>=p ){
-    std::cout << "pS = " << pS << "\n";
+    training_set_write_console([&](std::ostringstream& oss) {
+      oss << "pS = " << pS << "\n";
+    });
     throw Exception ( __FILE__ , __LINE__ ,"TrainingSet::TrainingSet(): wrong value of pS" );
   }
 
@@ -1492,8 +1512,10 @@ void SGTELIB::TrainingSet::display ( std::ostream & out ) const {
       out << _Z_scaling_b[j]     <<"|\n";
     }
     out << "------------------------------------------------------------------------------------\n";
-    std::cout << "fs_min: " << _fs_min << "\n";
-    std::cout << "f_min:  " << _f_min << "\n";
+    training_set_write_console([&](std::ostringstream& oss) {
+      oss << "fs_min: " << _fs_min << "\n";
+      oss << "f_min:  " << _f_min << "\n";
+    });
   }
 
 
