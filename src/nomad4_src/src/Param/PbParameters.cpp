@@ -50,6 +50,8 @@
 #include "../Param/PbParameters.hpp"
 #include "../Type/BBInputType.hpp"
 
+#include <R_ext/Print.h>
+
 /*----------------------------------------*/
 /*         initializations (private)      */
 /*----------------------------------------*/
@@ -704,7 +706,7 @@ void NOMAD::PbParameters::setInitialMeshParameters()
             if (initialFrameSize[i].isDefined() && warningInitialFrameSizeReset)
             {
                 warningInitialFrameSizeReset = false;
-                std::cout << "Warning: initial frame size reset from initial mesh." << std::endl;
+                Rprintf("Warning: initial frame size reset from initial mesh.\n");
             }
             initialFrameSize[i] = initialMeshSize[i] * pow(n, 0.5);
             // Adjust value with granularity
@@ -790,7 +792,7 @@ void NOMAD::PbParameters::setInitialMeshParameters()
         std::string err = "Warning: initial mesh size reset from initial frame size.\n";
         err += "INITIAL_MESH_SIZE: " + initialMeshSize.display() + "\n";
         err += "INITIAL_FRAME_SIZE: " + initialFrameSize.display() + "\n";
-        std::cout << err;
+        Rprintf("%s", err.c_str());
 
         // Show the warning only once.
         _showWarningMeshSizeRedefined = false;
@@ -855,6 +857,5 @@ void NOMAD::PbParameters::checkForGranularity(const std::string &paramName, cons
         throw NOMAD::InvalidParameter(__FILE__, __LINE__, oss.str());
     }
 }
-
 
 

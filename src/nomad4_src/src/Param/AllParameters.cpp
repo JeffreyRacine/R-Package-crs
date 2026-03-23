@@ -49,6 +49,8 @@
 #include "../Type/EvalSortType.hpp"
 #include "../Util/fileutils.hpp"
 
+#include <R_ext/Print.h>
+
 // Do we need to call checkAndComply() ?
 bool NOMAD::AllParameters::toBeChecked() const
 {
@@ -145,7 +147,7 @@ void NOMAD::AllParameters::readParamLine(const std::string &line)
     else
     {
         std::string err = "Unknown parameter: " + name;
-        std::cout << err << std::endl;
+        Rprintf("%s\n", err.c_str());
     }
 
 }
@@ -322,7 +324,7 @@ void NOMAD::AllParameters::display(std::ostream & os, bool flagHelp )
 {
     if (toBeChecked())
     {
-        std::cout << "Warning: AllParameters::display(): Parameters are not checked." << std::endl;
+        Rprintf("Warning: AllParameters::display(): Parameters are not checked.\n");
     }
 
     os << "----- RUN PARAMETERS -----" << std::endl;
@@ -346,5 +348,4 @@ void NOMAD::AllParameters::display(std::ostream & os, bool flagHelp )
     os << "----- DISPLAY PARAMETERS -----" << std::endl;
     _dispParams->display(os,flagHelp);
 }
-
 

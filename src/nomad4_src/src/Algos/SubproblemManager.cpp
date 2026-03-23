@@ -116,7 +116,7 @@ void NOMAD::SubproblemManager::reset()
     if (!_map.empty())
     {
         // Should not happen. Warn the user.
-        std::cout << "Warning: SubproblemManager::clear() called on non-empty SubproblemManager" << std::endl;
+        REprintf("Warning: SubproblemManager::clear() called on non-empty SubproblemManager\n");
     }
 #ifdef _OPENMP
     omp_set_lock(&_mapLock);

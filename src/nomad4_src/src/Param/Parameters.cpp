@@ -1301,7 +1301,7 @@ void NOMAD::Parameters::display(std::ostream & os, bool helpInfo)
 {
     if ( !helpInfo && toBeChecked())
     {
-        std::cout << "Warning: Parameters::display(): Parameters are not checked." << std::endl;
+        Rprintf("Warning: Parameters::display(): Parameters are not checked.\n");
     }
 
     for(const auto &att: _attributes)

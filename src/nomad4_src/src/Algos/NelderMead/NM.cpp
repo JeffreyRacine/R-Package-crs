@@ -52,6 +52,8 @@
 #include "../../Eval/ProgressiveBarrier.hpp"
 #include "../../Util/fileutils.hpp"
 
+#include <R_ext/Print.h>
+
 // NM specific
 #include "../../Algos/NelderMead/NM.hpp"
 #include "../../Algos/NelderMead/NMInitialization.hpp"
@@ -145,7 +147,7 @@ void NOMAD::NM::readInformationForHotRestart()
         const std::string& hotRestartFile = _runParams->getAttributeValue<std::string>("HOT_RESTART_FILE");
         if (NOMAD::checkReadFile(hotRestartFile))
         {
-            std::cout << "Read hot restart file " << hotRestartFile << std::endl;
+            Rprintf("Read hot restart file %s\n", hotRestartFile.c_str());
 
             // Create a GMesh and a MegaIteration with default values, to be filled
             // by istream is.

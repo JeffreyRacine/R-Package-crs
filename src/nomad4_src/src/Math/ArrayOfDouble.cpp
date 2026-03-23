@@ -52,6 +52,7 @@
  \see    ArrayOfDouble.hpp
  */
 #include "../Math/ArrayOfDouble.hpp"
+#include <R_ext/Print.h>
 #include <algorithm>
 #include <iomanip>  // For std::setprecision, std::setw
 
@@ -374,7 +375,7 @@ void NOMAD::ArrayOfDouble::readValuesAsArray(const NOMAD::ArrayOfString& strDoub
     {
         if (strDouble.size() != 2)
         {
-            std::cout << "Warning: Expecting an array of size 2 for this parameter entry: " << valueString << std::endl;
+            REprintf("Warning: Expecting an array of size 2 for this parameter entry: %s\n", valueString.c_str());
         }
 
         if (!d.atof(strDouble[1]))

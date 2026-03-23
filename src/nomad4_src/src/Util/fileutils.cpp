@@ -55,6 +55,8 @@
 #include "../Util/fileutils.hpp"
 #include "../Util/utils.hpp"
 
+#include <R_ext/Print.h>
+
 #ifdef _WIN32
 #include <direct.h>     // for getcwd
 #include <cctype>       // for isalpha
@@ -105,7 +107,7 @@ std::string NOMAD::curdir()
     char dirbuff[1024];
     if (nullptr == getcwd(dirbuff, 1024))
     {
-        std::cout << "Warning: Could not get current directory" << std::endl;
+        REprintf("Warning: Could not get current directory\n");
     }
     std::string dir(dirbuff);
 

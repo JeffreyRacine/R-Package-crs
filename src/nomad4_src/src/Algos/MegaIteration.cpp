@@ -48,6 +48,8 @@
 #include "../Algos/MegaIteration.hpp"
 #include "../Algos/EvcInterface.hpp"
 
+#include <R_ext/Print.h>
+
 // Constructor
 NOMAD::MegaIteration::MegaIteration(const Step* parentStep,
                               size_t k,
@@ -160,7 +162,8 @@ void NOMAD::MegaIteration::computeMaxXFeasXInf(size_t &maxXFeas, size_t &maxXInf
         if (maxXFeas + maxXInf > maxIter)
         {
             // This case should not happen and should be debugged.
-            std::cout << "Warning: Bad computation in computeMaxXFeasXInf. maxIter = " << maxIter << " maxXFeas = " << maxXFeas << " (was " << maxXFeas0 << ") maxXInf = " << maxXInf << " (was " << maxXInf0 << ")" << std::endl;
+            REprintf("Warning: Bad computation in computeMaxXFeasXInf. maxIter = %zu maxXFeas = %zu (was %zu) maxXInf = %zu (was %zu)\n",
+                     maxIter, maxXFeas, maxXFeas0, maxXInf, maxXInf0);
         }
     }
 }

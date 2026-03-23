@@ -53,6 +53,8 @@
  */
 #include <utility>
 
+#include <R_ext/Print.h>
+
 #include "../Eval/Eval.hpp"
 #include "../Type/EvalType.hpp"
 
@@ -912,7 +914,7 @@ std::ostream& NOMAD::operator<<(std::ostream& out, const NOMAD::EvalStatusType &
             break;
         default:
             // Do not throw.
-            std::cout << "Warning: Unknown eval status type" << std::endl;
+            REprintf("Warning: Unknown eval status type\n");
             // We do not want a small mistake to disrupt the flow.
             break;
     }

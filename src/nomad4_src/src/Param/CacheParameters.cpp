@@ -48,6 +48,8 @@
 #include "../Param/CacheParameters.hpp"
 #include "../Util/fileutils.hpp"
 
+#include <R_ext/Print.h>
+
 /*----------------------------------------*/
 /*         initializations (private)      */
 /*----------------------------------------*/
@@ -100,7 +102,9 @@ void NOMAD::CacheParameters::checkAndComply(const std::shared_ptr<NOMAD::RunPara
         if (cacheFileName.empty())
         {
             cacheFileName = "cache.txt";
-            std::cout << "Warning: " << ((hotRestartWrite) ? "HOT_RESTART_WRITE_FILES" : "HOT_RESTART_READ_FILES") << " is set. CACHE_FILE set to \"" << cacheFileName << "\"" << std::endl;
+            Rprintf("Warning: %s is set. CACHE_FILE set to \"%s\"\n",
+                    ((hotRestartWrite) ? "HOT_RESTART_WRITE_FILES" : "HOT_RESTART_READ_FILES"),
+                    cacheFileName.c_str());
 
             NOMAD::completeFileName(cacheFileName, problemDir);
             setAttributeValue("CACHE_FILE", cacheFileName);
@@ -111,5 +115,4 @@ void NOMAD::CacheParameters::checkAndComply(const std::shared_ptr<NOMAD::RunPara
 
 }
 // End checkAndComply()
-
 
