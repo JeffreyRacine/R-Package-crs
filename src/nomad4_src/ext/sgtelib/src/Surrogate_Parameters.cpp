@@ -24,7 +24,19 @@
 /*-------------------------------------------------------------------------------------*/
 
 #include "Surrogate_Parameters.hpp"
+#include <R_ext/Print.h>
+#include <sstream>
 using namespace SGTELIB;
+
+namespace {
+template <class Writer>
+inline void sgtelib_write_console(Writer&& writer)
+{
+  std::ostringstream oss;
+  writer(oss);
+  Rprintf("%s", oss.str().c_str());
+}
+}  // namespace
 /*---------------------------------------------------------------*/
 /*         constructor                                           */
 /* Use a model_type to define the model, then use default values */
@@ -84,7 +96,9 @@ SGTELIB::model_t SGTELIB::Surrogate_Parameters::read_model_type ( const std::str
     }
   }
   // If nothing was found
-  std::cout << "model_description: " << model_description << "\n";
+  sgtelib_write_console([&](std::ostringstream& oss) {
+    oss << "model_description: " << model_description << "\n";
+  });
   throw SGTELIB::Exception ( __FILE__ , __LINE__ , "No field \"TYPE\" found.");
 }//
 
@@ -158,7 +172,9 @@ std::string SGTELIB::Surrogate_Parameters::to_standard_field_name (const std::st
   if ( streqi(field,"TYPE_DISTANCE") )  return "DISTANCE_TYPE";
 
 
-  std::cout << "Field: " << field << "\n";
+  sgtelib_write_console([&](std::ostringstream& oss) {
+    oss << "Field: " << field << "\n";
+  });
   throw SGTELIB::Exception ( __FILE__ , __LINE__ , "Field not recognized: \""+field+"\"" );
   return "ERROR";
 }
@@ -178,25 +194,35 @@ void SGTELIB::Surrogate_Parameters::read_string (const std::string & model_descr
   std::istringstream in_line (model_description);	
   const bool display = false;
   if (display){
-    std::cout << "Model description: " << model_description << "\n";
+    sgtelib_write_console([&](std::ostringstream& oss) {
+      oss << "Model description: " << model_description << "\n";
+    });
   }
   while ( in_line >> field ){
 
     if (display){
-      std::cout << "FIELD: " << field ;
+      sgtelib_write_console([&](std::ostringstream& oss) {
+        oss << "FIELD: " << field;
+      });
     }
     // Convert the field name into a std field name
     field = to_standard_field_name(field);
     if (display){
-      std::cout << " (" << field << ")\n";
+      sgtelib_write_console([&](std::ostringstream& oss) {
+        oss << " (" << field << ")\n";
+      });
     }   
     // Check if this field is authorized for this type of model.
     if ( ! authorized_field(field) ){
-      std::cout << "model_description: " << model_description << "\n";
+      sgtelib_write_console([&](std::ostringstream& oss) {
+        oss << "model_description: " << model_description << "\n";
+      });
       throw SGTELIB::Exception ( __FILE__ , __LINE__ ,"Unauthorized field \""+field+"\" in a model of type "+model_type_to_str(_type) );
     }
     if (display){
-      std::cout << "CONTENT: " << content << "\n";
+      sgtelib_write_console([&](std::ostringstream& oss) {
+        oss << "CONTENT: " << content << "\n";
+      });
     }
     // Read the content 
     if ( !(in_line >> content) )
@@ -205,12 +231,16 @@ void SGTELIB::Surrogate_Parameters::read_string (const std::string & model_descr
     // Detect if the content is "OPTIM".
     content_is_optim = ( streqi(content,"OPTIM") || streqi(content,"OPTIMIZATION") || streqi(content,"OPTIMIZE") );
     if (display){
-      std::cout << "CONTENT IS OPTIM: " << content_is_optim << "\n";
+      sgtelib_write_console([&](std::ostringstream& oss) {
+        oss << "CONTENT IS OPTIM: " << content_is_optim << "\n";
+      });
     }
 
     // Check if optimization is allowed for this field.
     if ((content_is_optim) && (!authorized_optim(field))) {
-      std::cout << "model_description: " << model_description << "\n";
+      sgtelib_write_console([&](std::ostringstream& oss) {
+        oss << "model_description: " << model_description << "\n";
+      });
       throw SGTELIB::Exception ( __FILE__ , __LINE__ ,"Field \""+field+"\" cannot be optimized." );
     }
 
@@ -218,7 +248,9 @@ void SGTELIB::Surrogate_Parameters::read_string (const std::string & model_descr
       // If the field is "TYPE", then check that the model_type is consistent with the
       // one already detected.
       if ( str_to_model_type(content) != _type ){
-        std::cout << "model_description: " << model_description << "\n";
+        sgtelib_write_console([&](std::ostringstream& oss) {
+          oss << "model_description: " << model_description << "\n";
+        });
         throw SGTELIB::Exception ( __FILE__ , __LINE__ ,"Unconsistent model type!" );
       }
     }
@@ -338,7 +370,9 @@ void SGTELIB::Surrogate_Parameters::read_string (const std::string & model_descr
       // Cannot be optimized
     }
     else{
-      std::cout << "model_description: " << model_description << "\n";
+      sgtelib_write_console([&](std::ostringstream& oss) {
+        oss << "model_description: " << model_description << "\n";
+      });
       throw SGTELIB::Exception ( __FILE__ , __LINE__ , "Field not recognized: \""+field+"\"" );
     }
   }// end while read
@@ -453,7 +487,9 @@ bool SGTELIB::Surrogate_Parameters::authorized_optim ( const std::string & field
   if (streqi(field,"LAMBDA_P"))      return false; 
   if (streqi(field,"LAMBDA_PI"))     return false; 
 
-  std::cout << "Field : " << field << "\n";
+  sgtelib_write_console([&](std::ostringstream& oss) {
+    oss << "Field : " << field << "\n";
+  });
   throw SGTELIB::Exception ( __FILE__ , __LINE__ ,"Undefined field" );
 
   return false;
@@ -534,8 +570,10 @@ void SGTELIB::Surrogate_Parameters::check ( void ) {
            (_preset!="RG" ) &&
            (_preset!="REN") &&
            (_preset!="RGN") ){
-        std::cout << "LOWESS preset : " << _preset << "\n";
-        std::cout << "Possible values: D, DEN, DGN, RE, RG, REN, RGN.\n";
+        sgtelib_write_console([&](std::ostringstream& oss) {
+          oss << "LOWESS preset : " << _preset << "\n";
+          oss << "Possible values: D, DEN, DGN, RE, RG, REN, RGN.\n";
+        });
         throw SGTELIB::Exception ( __FILE__ , __LINE__ ,"preset not recognized" );
       }
       if ( ! SGTELIB::kernel_is_decreasing( _kernel_type ) )
@@ -955,8 +993,10 @@ SGTELIB::Matrix SGTELIB::Surrogate_Parameters::get_x ( void ){
     }
 
     if ( k != _nb_parameter_optimization){
-      std::cout << "k=" << k << "\n";
-      std::cout << "_nb_parameter_optimization=" << _nb_parameter_optimization << "\n";
+      sgtelib_write_console([&](std::ostringstream& oss) {
+        oss << "k=" << k << "\n";
+        oss << "_nb_parameter_optimization=" << _nb_parameter_optimization << "\n";
+      });
       throw SGTELIB::Exception ( __FILE__ , __LINE__ ,"Unconcistency in the value of k." );
     }
 
@@ -994,8 +1034,10 @@ void SGTELIB::Surrogate_Parameters::set_x ( const SGTELIB::Matrix& X ){
     } 
 
     if ( k != _nb_parameter_optimization ){
-      std::cout << "k=" << k << "\n";
-      std::cout << "_nb_parameter_optimization=" << _nb_parameter_optimization << "\n";
+      sgtelib_write_console([&](std::ostringstream& oss) {
+        oss << "k=" << k << "\n";
+        oss << "_nb_parameter_optimization=" << _nb_parameter_optimization << "\n";
+      });
       throw SGTELIB::Exception ( __FILE__ , __LINE__ ,"Unconcistency in the value of k." );
     }
 
@@ -1012,7 +1054,9 @@ void SGTELIB::Surrogate_Parameters::get_x_bounds ( SGTELIB::Matrix * LB ,
 
     // Check that the arrays or matrices are initialized.
     if ( (!LB) || (!UB) || (!domain) || (!logscale) ){
-      std::cout << LB << " " << UB << " " << domain << " " << logscale << "\n";
+      sgtelib_write_console([&](std::ostringstream& oss) {
+        oss << LB << " " << UB << " " << domain << " " << logscale << "\n";
+      });
       throw SGTELIB::Exception ( __FILE__ , __LINE__ ,"Pointers are NULL." );
     }
 
@@ -1102,8 +1146,10 @@ void SGTELIB::Surrogate_Parameters::get_x_bounds ( SGTELIB::Matrix * LB ,
     }
 
     if ( k != N){
-      std::cout << "k=" << k << "\n";
-      std::cout << "N=" << N << "\n";
+      sgtelib_write_console([&](std::ostringstream& oss) {
+        oss << "k=" << k << "\n";
+        oss << "N=" << N << "\n";
+      });
       throw SGTELIB::Exception ( __FILE__ , __LINE__ ,"Unconcistency in the value of k." );
     }
 
@@ -1114,22 +1160,28 @@ void SGTELIB::Surrogate_Parameters::get_x_bounds ( SGTELIB::Matrix * LB ,
       // Check bounds order
       if (LB->get(j)>=UB->get(j)){
         error=true;
-        std::cout << "Variable " << j << "\n";
-        std::cout << "LB (=" << LB->get(j) << ") >= UB (=" << UB->get(j) << ")\n";
+        sgtelib_write_console([&](std::ostringstream& oss) {
+          oss << "Variable " << j << "\n";
+          oss << "LB (=" << LB->get(j) << ") >= UB (=" << UB->get(j) << ")\n";
+        });
       }
       // Check that only continuous variables are using a log scale
       if ( (logscale[j]) && (domain[j]!=SGTELIB::PARAM_DOMAIN_CONTINUOUS) ){
         error=true;
-        std::cout << "Variable " << j << "\n";
-        std::cout << "Uses logscale and is not continuous.\n";
+        sgtelib_write_console([&](std::ostringstream& oss) {
+          oss << "Variable " << j << "\n";
+          oss << "Uses logscale and is not continuous.\n";
+        });
       }
       // Check that variables with log scale have bounds of the same sign.
       if (logscale[j]){
         if (LB->get(j)*UB->get(j)<=0){
           //error=true;
-          std::cout << "Variable " << j << "\n";
-          std::cout << "LB =" << LB->get(j) << "\nUB =" << UB->get(j) << "\n";
-          std::cout << "The bounds are not appropriate for logscale optimization.\n";
+          sgtelib_write_console([&](std::ostringstream& oss) {
+            oss << "Variable " << j << "\n";
+            oss << "LB =" << LB->get(j) << "\nUB =" << UB->get(j) << "\n";
+            oss << "The bounds are not appropriate for logscale optimization.\n";
+          });
         }
       }
 
@@ -1141,30 +1193,40 @@ void SGTELIB::Surrogate_Parameters::get_x_bounds ( SGTELIB::Matrix * LB ,
         case SGTELIB::PARAM_DOMAIN_CAT:
           if (double(round(LB->get(j)))!=LB->get(j)){
             error=true;
-            std::cout << "Variable " << j << " (Integer or Categorical)\n";
-            std::cout << "LB (=" << LB->get(j) << ") is not an integer\n";
+            sgtelib_write_console([&](std::ostringstream& oss) {
+              oss << "Variable " << j << " (Integer or Categorical)\n";
+              oss << "LB (=" << LB->get(j) << ") is not an integer\n";
+            });
           }
           if (double(round(UB->get(j)))!=UB->get(j)){
             error=true;
-            std::cout << "Variable " << j << " (Integer or Categorical)\n";
-            std::cout << "UB (=" << UB->get(j) << ") is not an integer\n";
+            sgtelib_write_console([&](std::ostringstream& oss) {
+              oss << "Variable " << j << " (Integer or Categorical)\n";
+              oss << "UB (=" << UB->get(j) << ") is not an integer\n";
+            });
           }
           break;
         case SGTELIB::PARAM_DOMAIN_BOOL:
           if (LB->get(j)==0){
             error=true;
-            std::cout << "Variable " << j << " (Boolean)\n";
-            std::cout << "LB (=" << LB->get(j) << ") is not 0\n";
+            sgtelib_write_console([&](std::ostringstream& oss) {
+              oss << "Variable " << j << " (Boolean)\n";
+              oss << "LB (=" << LB->get(j) << ") is not 0\n";
+            });
           }
           if (UB->get(j)==1){
             error=true;
-            std::cout << "Variable " << j << " (Boolean)\n";
-            std::cout << "UB (=" << UB->get(j) << ") is not 1\n";
+            sgtelib_write_console([&](std::ostringstream& oss) {
+              oss << "Variable " << j << " (Boolean)\n";
+              oss << "UB (=" << UB->get(j) << ") is not 1\n";
+            });
           }
           break;
         case SGTELIB::PARAM_DOMAIN_MISC:
           error=true;
-          std::cout << "Variable " << j << " is MISC\n";
+          sgtelib_write_console([&](std::ostringstream& oss) {
+            oss << "Variable " << j << " is MISC\n";
+          });
           break;
       }
     }
@@ -1185,13 +1247,17 @@ bool SGTELIB::Surrogate_Parameters::check_x ( void ){
     // Check dimension of X
     if (X.get_nb_rows()!=1){
       error = true;
-      std::cout << "Number of rows is not 1\n";
+      sgtelib_write_console([&](std::ostringstream& oss) {
+        oss << "Number of rows is not 1\n";
+      });
     }
     // Check dimension of X
     const int N = _nb_parameter_optimization;
     if (X.get_nb_cols()!=N){
       error = true;
-      std::cout << "Number of cols is not consistent with _nb_parameter_optimization\n";
+      sgtelib_write_console([&](std::ostringstream& oss) {
+        oss << "Number of cols is not consistent with _nb_parameter_optimization\n";
+      });
     }
 
     // Get bound info.
@@ -1205,11 +1271,15 @@ bool SGTELIB::Surrogate_Parameters::check_x ( void ){
       // Check bounds
       if (X[j]<LB->get(j)){
         error=true;
-        std::cout << "X[" << j << "] < lower bound\n";
+        sgtelib_write_console([&](std::ostringstream& oss) {
+          oss << "X[" << j << "] < lower bound\n";
+        });
       }
       if (X[j]>UB->get(j)){
         error=true;
-        std::cout << "X[" << j << "] > upper bound\n";
+        sgtelib_write_console([&](std::ostringstream& oss) {
+          oss << "X[" << j << "] > upper bound\n";
+        });
       }
       // Check types
       switch (domain[j]){
@@ -1219,20 +1289,26 @@ bool SGTELIB::Surrogate_Parameters::check_x ( void ){
         case SGTELIB::PARAM_DOMAIN_CAT:
           if (double(round(X[j]))!=X[j]){
             error=true;
-            std::cout << "Variable " << j << " (Integer or Categorical)\n";
-            std::cout << "X[" << j << "]=" << X[j] << " is not an integer\n";
+            sgtelib_write_console([&](std::ostringstream& oss) {
+              oss << "Variable " << j << " (Integer or Categorical)\n";
+              oss << "X[" << j << "]=" << X[j] << " is not an integer\n";
+            });
           }
           break;
         case SGTELIB::PARAM_DOMAIN_BOOL:
           if ((X[j]!=0) && (X[j]!=1)){
             error=true;
-            std::cout << "Variable " << j << " (Boolean)\n";
-            std::cout << "X[" << j << "]=" << X[j] << " is not a boolean\n";
+            sgtelib_write_console([&](std::ostringstream& oss) {
+              oss << "Variable " << j << " (Boolean)\n";
+              oss << "X[" << j << "]=" << X[j] << " is not a boolean\n";
+            });
           }
           break;
         case SGTELIB::PARAM_DOMAIN_MISC:
           error=true;
-          std::cout << "Variable " << j << " is MISC\n";
+          sgtelib_write_console([&](std::ostringstream& oss) {
+            oss << "Variable " << j << " is MISC\n";
+          });
           break;
       }
     }// End loop on j
@@ -1240,7 +1316,9 @@ bool SGTELIB::Surrogate_Parameters::check_x ( void ){
     // Check dimension of _covariance_coef
     if (_covariance_coef.get_nb_rows()>1){
       error = true;
-      std::cout << "Covariance_coef should have only one row.\n";
+      sgtelib_write_console([&](std::ostringstream& oss) {
+        oss << "Covariance_coef should have only one row.\n";
+      });
     }
     
     if (error){
@@ -1393,7 +1471,6 @@ void SGTELIB::Surrogate_Parameters::update_covariance_coef ( const int v ){
   // Add columns to _covariance_coef
   for (int i=0 ; i<v-v0 ; i++) _covariance_coef.add_cols(Add);
 }//
-
 
 
 
