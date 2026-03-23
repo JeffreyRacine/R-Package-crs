@@ -24,8 +24,20 @@
 /*-------------------------------------------------------------------------------------*/
 
 #include "Surrogate.hpp"
+#include <R_ext/Print.h>
+#include <sstream>
 
 using namespace SGTELIB;
+
+namespace {
+template <class Writer>
+inline void surrogate_write_console(Writer&& writer)
+{
+  std::ostringstream oss;
+  writer(oss);
+  Rprintf("%s", oss.str().c_str());
+}
+}  // namespace
 
 /*--------------------------------------*/
 /*              constructor             */
@@ -158,7 +170,9 @@ void SGTELIB::Surrogate::display ( std::ostream & out ) const {
 /*--------------------------------------*/
 void SGTELIB::Surrogate::reset_metrics ( void ) {
   #ifdef SGTELIB_DEBUG
-    std::cout << "Surrogate: reset_metrics...";
+    surrogate_write_console([&](std::ostringstream& oss) {
+      oss << "Surrogate: reset_metrics...";
+    });
   #endif
 
   if (_Zhs) delete _Zhs;
@@ -176,7 +190,9 @@ void SGTELIB::Surrogate::reset_metrics ( void ) {
   _metrics.clear();
 
   #ifdef SGTELIB_DEBUG
-    std::cout << "OK\n";
+    surrogate_write_console([&](std::ostringstream& oss) {
+      oss << "OK\n";
+    });
   #endif
 }//
 
@@ -186,7 +202,9 @@ void SGTELIB::Surrogate::reset_metrics ( void ) {
 bool SGTELIB::Surrogate::build ( void ) {
 
   #ifdef SGTELIB_DEBUG
-    std::cout << "Surrogate build - BEGIN\n";
+    surrogate_write_console([&](std::ostringstream& oss) {
+      oss << "Surrogate build - BEGIN\n";
+    });
   #endif
 
   if (streqi(_param.get_output(),"NULL")){
@@ -229,7 +247,9 @@ bool SGTELIB::Surrogate::build ( void ) {
 
   // Call to the private build
   #ifdef SGTELIB_DEBUG
-    std::cout << "Surrogate build - BUILD_PRIVATE\n";
+    surrogate_write_console([&](std::ostringstream& oss) {
+      oss << "Surrogate build - BUILD_PRIVATE\n";
+    });
   #endif
 
   bool ok;
@@ -244,8 +264,10 @@ bool SGTELIB::Surrogate::build ( void ) {
   if ( ! ok ) return false;
 
   #ifdef SGTELIB_DEBUG
-    std::cout << "Number of parameters to optimize : " << _param.get_nb_parameter_optimization() << "\n";
-    _param.display(std::cout);
+    surrogate_write_console([&](std::ostringstream& oss) {
+      oss << "Number of parameters to optimize : " << _param.get_nb_parameter_optimization() << "\n";
+      _param.display(oss);
+    });
   #endif
 
 
@@ -270,16 +292,32 @@ bool SGTELIB::Surrogate::build ( void ) {
   _p_old = _p;
 
   #ifdef SGTELIB_DEBUG
-    std::cout << "Surrogate build - END\n";
+    surrogate_write_console([&](std::ostringstream& oss) {
+      oss << "Surrogate build - END\n";
+    });
   #endif
 
   if (_display){
     _out.open(_param.get_output().c_str() , std::ios::out | std::ios::app);
-    if (_out.fail()) std::cout << "Out.fail1!!!\n";
-    std::cout << "Write in " << _param.get_output() << "\n";
-    if (_out.fail()) std::cout << "Out.fail2!!!\n";
+    if (_out.fail()) {
+      surrogate_write_console([&](std::ostringstream& oss) {
+        oss << "Out.fail1!!!\n";
+      });
+    }
+    surrogate_write_console([&](std::ostringstream& oss) {
+      oss << "Write in " << _param.get_output() << "\n";
+    });
+    if (_out.fail()) {
+      surrogate_write_console([&](std::ostringstream& oss) {
+        oss << "Out.fail2!!!\n";
+      });
+    }
     display(_out);
-    if (_out.fail()) std::cout << "Out.fail3!!!\n";
+    if (_out.fail()) {
+      surrogate_write_console([&](std::ostringstream& oss) {
+        oss << "Out.fail3!!!\n";
+      });
+    }
     _out.close();
   }
 
@@ -290,7 +328,9 @@ bool SGTELIB::Surrogate::build ( void ) {
 bool SGTELIB::Surrogate::init_private (void) {
   // Empty initialization function
   #ifdef SGTELIB_DEBUG
-    std::cout << model_type_to_str(get_type()) << " : init_private\n";
+    surrogate_write_console([&](std::ostringstream& oss) {
+      oss << model_type_to_str(get_type()) << " : init_private\n";
+    });
   #endif
   return true;
 }
@@ -314,8 +354,10 @@ void SGTELIB::Surrogate::check_ready (const std::string & s) const {
 
   // Check the tag _ready
   if ( ! _ready){
-    display(std::cout);
-    std::cout << "Surrogate: NOT READY! (" << s << ")\n";
+    surrogate_write_console([&](std::ostringstream& oss) {
+      display(oss);
+      oss << "Surrogate: NOT READY! (" << s << ")\n";
+    });
     throw SGTELIB::Exception ( __FILE__ , __LINE__ ,
                  "check_ready(): Not ready!" );
   }
@@ -326,8 +368,10 @@ void SGTELIB::Surrogate::check_ready (const std::string & s) const {
 
   // Check the new number of points in the trainingset
   if (_trainingset.get_nb_points()>_p_ts){
-    display(std::cout);
-    std::cout << "Surrogate: NOT READY! (" << s << ")\n";
+    surrogate_write_console([&](std::ostringstream& oss) {
+      display(oss);
+      oss << "Surrogate: NOT READY! (" << s << ")\n";
+    });
     throw SGTELIB::Exception ( __FILE__ , __LINE__ ,
                  "check_ready(): Not ready!" );
   }
@@ -387,8 +431,9 @@ void SGTELIB::Surrogate::predict ( const SGTELIB::Matrix & XX ,
 
   // Check the number of columns in XX
   if (XX.get_nb_cols() != _n){
-
-    display(std::cout);
+    surrogate_write_console([&](std::ostringstream& oss) {
+      display(oss);
+    });
     throw SGTELIB::Exception ( __FILE__ , __LINE__ ,
                  "predict(): dimension error" );
   }
@@ -432,19 +477,25 @@ void SGTELIB::Surrogate::predict ( const SGTELIB::Matrix & XX ,
     }
     if (std){
       if (std->has_nan()){
-        display(std::cout);
+        surrogate_write_console([&](std::ostringstream& oss) {
+          display(oss);
+        });
         throw SGTELIB::Exception ( __FILE__ , __LINE__ , "predict(): std has nan" );
       }
     }
     if (ei){
       if (ei->has_nan()){
-        display(std::cout);
+        surrogate_write_console([&](std::ostringstream& oss) {
+          display(oss);
+        });
         throw SGTELIB::Exception ( __FILE__ , __LINE__ , "predict(): ei has nan" );
       }
     }
     if (cdf){
       if (cdf->has_nan()){
-        display(std::cout);
+        surrogate_write_console([&](std::ostringstream& oss) {
+          display(oss);
+        });
         throw SGTELIB::Exception ( __FILE__ , __LINE__ , "predict(): cdf has nan" );
       }
     }
@@ -589,7 +640,9 @@ void SGTELIB::Surrogate::predict ( const SGTELIB::Matrix & XX ,
 
   // Check the number of columns in XX
   if (XX.get_nb_cols() != _n){
-    display(std::cout);
+    surrogate_write_console([&](std::ostringstream& oss) {
+      display(oss);
+    });
     throw SGTELIB::Exception ( __FILE__ , __LINE__ ,
                  "predict(): dimension error" );
   }
@@ -604,7 +657,9 @@ void SGTELIB::Surrogate::predict ( const SGTELIB::Matrix & XX ,
   predict_private( XXs , ZZ );
   #ifdef SGTELIB_DEBUG
     if (ZZ->has_nan()){
-      display(std::cout);
+      surrogate_write_console([&](std::ostringstream& oss) {
+        display(oss);
+      });
       throw SGTELIB::Exception ( __FILE__ , __LINE__ ,
                    "predict(): ZZ has nan" );
     }
@@ -657,7 +712,9 @@ const SGTELIB::Matrix * SGTELIB::Surrogate::get_matrix_Shs (void){
     check_ready(__FILE__,__FUNCTION__,__LINE__);
 
     #ifdef SGTELIB_DEBUG
-      std::cout << "Compute _Shs\n";
+      surrogate_write_console([&](std::ostringstream& oss) {
+        oss << "Compute _Shs\n";
+      });
     #endif
     // Init
     _Shs = new SGTELIB::Matrix("Shs",_p,_m);
@@ -921,9 +978,11 @@ double SGTELIB::Surrogate::get_metric (SGTELIB::metric_t mt , int j){
   if ( !compute_metric(mt) ) return SGTELIB::INF;
   // Return value
   #ifdef SGTELIB_DEBUG
-    std::cout << "metric " << SGTELIB::metric_type_to_str(mt) << "[" << j << "]";
-    if ( is_defined(mt,j) ) std::cout << " is def: " << _metrics[mt][j] << std::endl;
-    else std::cout << " NOT defined." << std::endl;
+    surrogate_write_console([&](std::ostringstream& oss) {
+      oss << "metric " << SGTELIB::metric_type_to_str(mt) << "[" << j << "]";
+      if ( is_defined(mt,j) ) oss << " is def: " << _metrics[mt][j] << "\n";
+      else oss << " NOT defined.\n";
+    });
   #endif
   if ( is_defined(mt,j) ) return _metrics[mt][j];
   // Is still not defined, return INF.
@@ -993,7 +1052,9 @@ void SGTELIB::Surrogate::compute_metric_linv (void){
   check_ready(__FILE__,__FUNCTION__,__LINE__);
   if ( !is_defined(SGTELIB::METRIC_LINV) ){
     #ifdef SGTELIB_DEBUG
-      std::cout << "Compute metric linv\n";
+      surrogate_write_console([&](std::ostringstream& oss) {
+        oss << "Compute metric linv\n";
+      });
     #endif
     // Init
     SGTELIB::Matrix v = SGTELIB::Matrix("v",1,_m);
@@ -1081,9 +1142,11 @@ SGTELIB::Matrix SGTELIB::Surrogate::compute_order_error ( const SGTELIB::Matrix 
     case SGTELIB::BBO_DUM:
       OE.set(0,j, -1 );
       break;
-    //===============================================//
-    default:
-      display(std::cout);
+      //===============================================//
+      default:
+      surrogate_write_console([&](std::ostringstream& oss) {
+        display(oss);
+      });
       throw SGTELIB::Exception ( __FILE__ , __LINE__ ,"Undefined type" );
     //===============================================//
     }// end switch
@@ -1132,16 +1195,20 @@ SGTELIB::Matrix SGTELIB::Surrogate::compute_fh (const SGTELIB::Matrix & Zs){
         break;
       //===============================================//
       default:
-        display(std::cout);
+        surrogate_write_console([&](std::ostringstream& oss) {
+          display(oss);
+        });
         throw SGTELIB::Exception ( __FILE__ , __LINE__ ,"Undefined type" );
       //===============================================//
       }// end switch
     }// end loop on j
   }
   else{
-    Zs.display_short(std::cout);
-    Zs.display_size(std::cout);
-    std::cout << _m << " " << m << " " << _p << std::endl;
+    surrogate_write_console([&](std::ostringstream& oss) {
+      Zs.display_short(oss);
+      Zs.display_size(oss);
+      oss << _m << " " << m << " " << _p << "\n";
+    });
     throw SGTELIB::Exception ( __FILE__ , __LINE__ ,"Dimension error" );
   }
   return fh;
@@ -1245,8 +1312,10 @@ bool SGTELIB::Surrogate::optimize_parameters ( void ) {
   double d;
   const bool display = false;
   if (display){
-    std::cout << "Begin parameter optimization\n";
-    std::cout << "Metric: " << SGTELIB::metric_type_to_str(_param.get_metric_type()) << "\n";
+    surrogate_write_console([&](std::ostringstream& oss) {
+      oss << "Begin parameter optimization\n";
+      oss << "Metric: " << SGTELIB::metric_type_to_str(_param.get_metric_type()) << "\n";
+    });
   }
 
   //-----------------------------------------
@@ -1293,20 +1362,22 @@ bool SGTELIB::Surrogate::optimize_parameters ( void ) {
   // Display the information about optimized parameters
   //-------------------------------------------------------
   if (display){
-    std::cout << "Model: " << get_short_string() << "\n";
-    std::cout << "lb: [ ";
-    for (i=0 ; i<N ; i++) std::cout << lb[i] << " ";
-    std::cout << "]\n";
-    std::cout << "ub: [ ";
-    for (i=0 ; i<N ; i++) std::cout << ub[i] << " ";
-    std::cout << "]\n";
-    std::cout << "scaling: [ ";
-    for (i=0 ; i<N ; i++){
-      std::cout << scaling[i];
-      if (logscale[i]) std::cout << "(log)";
-      std::cout << " ";
-    }
-    std::cout << "]\n";
+    surrogate_write_console([&](std::ostringstream& oss) {
+      oss << "Model: " << get_short_string() << "\n";
+      oss << "lb: [ ";
+      for (i=0 ; i<N ; i++) oss << lb[i] << " ";
+      oss << "]\n";
+      oss << "ub: [ ";
+      for (i=0 ; i<N ; i++) oss << ub[i] << " ";
+      oss << "]\n";
+      oss << "scaling: [ ";
+      for (i=0 ; i<N ; i++){
+        oss << scaling[i];
+        if (logscale[i]) oss << "(log)";
+        oss << " ";
+      }
+      oss << "]\n";
+    });
   }
 
 
@@ -1339,8 +1410,10 @@ bool SGTELIB::Surrogate::optimize_parameters ( void ) {
         for (i=0; i<nx0; i++){
           i2 = i + (int)std::floor(uniform_rand()*(nx0-i));
           if ( (i2<i) || (i2>=nx0) ){
-            std::cout << "Error in permutation indexes\n";
-            exit(0);
+            surrogate_write_console([&](std::ostringstream& oss) {
+              oss << "Error in permutation indexes\n";
+            });
+            throw SGTELIB::Exception ( __FILE__ , __LINE__ , "Error in permutation indexes" );
           }
           X0.swap(i,j,i2,j);
         }
@@ -1395,13 +1468,14 @@ bool SGTELIB::Surrogate::optimize_parameters ( void ) {
     success = false;
 
     if (display){
-      std::cout << "=================================================\n";
-      std::cout << "Budget: " << budget  << "\n";
-      // Display best solution
-      std::cout << "\nCurrent xmin:\n";
-      std::cout << "X=[ " ;
-      for (j=0 ; j<N ; j++) std::cout << xmin[j] << " ";
-      std::cout << "] => " << fmin << " / " << pmin <<  "\n\n";
+      surrogate_write_console([&](std::ostringstream& oss) {
+        oss << "=================================================\n";
+        oss << "Budget: " << budget  << "\n";
+        oss << "\nCurrent xmin:\n";
+        oss << "X=[ ";
+        for (j=0 ; j<N ; j++) oss << xmin[j] << " ";
+        oss << "] => " << fmin << " / " << pmin << "\n\n";
+      });
     }
 
 
@@ -1438,10 +1512,12 @@ bool SGTELIB::Surrogate::optimize_parameters ( void ) {
 
       // Display candidate
       if (display){
-        if (iter) std::cout << "X = [ " ;
-        else std::cout << "X0= [ " ;
-        for (j=0 ; j<N ; j++) std::cout << xtry[j] << " ";
-        std::cout << "] => ";
+        surrogate_write_console([&](std::ostringstream& oss) {
+          if (iter) oss << "X = [ ";
+          else oss << "X0= [ ";
+          for (j=0 ; j<N ; j++) oss << xtry[j] << " ";
+          oss << "] => ";
+        });
       }
 
       // Snap to bounds
@@ -1479,7 +1555,11 @@ bool SGTELIB::Surrogate::optimize_parameters ( void ) {
       // Check Cache
       cache_hit = (CACHE.find_row(xtry)!=-1);
       if (cache_hit){
-        if (display) std::cout << "Cache hit\n";
+        if (display) {
+          surrogate_write_console([&](std::ostringstream& oss) {
+            oss << "Cache hit\n";
+          });
+        }
       }
       else{
         // --------------------------------------
@@ -1500,24 +1580,34 @@ bool SGTELIB::Surrogate::optimize_parameters ( void ) {
 
         // Display f and p
         if (display){
-          if (ftry>=+INF) std::cout << "+inf" ;
-          else std::cout << ftry;
-          std::cout << " / " ;
-          if (ptry>=+INF) std::cout << "+inf" ;
-          else std::cout << ptry;
+          surrogate_write_console([&](std::ostringstream& oss) {
+            if (ftry>=+INF) oss << "+inf";
+            else oss << ftry;
+            oss << " / ";
+            if (ptry>=+INF) oss << "+inf";
+            else oss << ptry;
+          });
         }
 
         // Check for success
         // The point xtry is a success if there is an improvement in the metric,
         // or, for an equal metric, if there is an improvement in the penalty.
         if ( (ftry<fmin) || ((ftry==fmin) && (ptry<pmin)) ){
-          if (display) std::cout << "(!)";
+          if (display) {
+            surrogate_write_console([&](std::ostringstream& oss) {
+              oss << "(!)";
+            });
+          }
           xmin = xtry;
           fmin = ftry;
           pmin = ptry;
           success = true;
         }
-        if (display) std::cout << "\n";
+        if (display) {
+          surrogate_write_console([&](std::ostringstream& oss) {
+            oss << "\n";
+          });
+        }
       } // End Evaluation (i.e. No Cache Hit)
 
       // For iter==0, then we evaluate all the starting points.
@@ -1549,9 +1639,11 @@ bool SGTELIB::Surrogate::optimize_parameters ( void ) {
   eval_objective();
 
   if (display){
-    _param.display(std::cout);
-    std::cout << "End parameter optimization\n";
-    std::cout << "=================================\n";
+    surrogate_write_console([&](std::ostringstream& oss) {
+      _param.display(oss);
+      oss << "End parameter optimization\n";
+      oss << "=================================\n";
+    });
   }
 
   // Check for Nan
