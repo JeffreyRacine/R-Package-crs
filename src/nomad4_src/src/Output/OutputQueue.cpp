@@ -46,6 +46,7 @@
 /*---------------------------------------------------------------------------------*/
 
 #include <fstream>
+#include <R_ext/Print.h>
 #include "../Output/OutputQueue.hpp"
 #include "../Util/Exception.hpp"
 
@@ -240,7 +241,7 @@ void NOMAD::OutputQueue::setDisplayDegree(const int displayDegree)
     }
     else
     {
-        std::cout << "Unrecognized display degree to set: " << displayDegree << std::endl;
+        Rprintf("Unrecognized display degree to set: %d\n", displayDegree);
     }
 
     _maxOutputLevel = outputLevel;
@@ -290,7 +291,7 @@ void NOMAD::OutputQueue::flush()
     if (_maxOutputLevel >= NOMAD::OutputLevel::LEVEL_DEBUGDEBUG)
     {
         // hyper-debug
-        std::cout << "Output all " << _queue.size() << " elements." << std::endl;
+        Rprintf("Output all %zu elements.\n", _queue.size());
     }
 
 #ifdef _OPENMP
@@ -313,13 +314,13 @@ void NOMAD::OutputQueue::flush()
 
 void NOMAD::OutputQueue::startBlock()
 {
-    std::cout << " " << _blockStart;
+    Rprintf(" %s", _blockStart.c_str());
 }
 
 
 void NOMAD::OutputQueue::endBlock()
 {
-    std::cout << _blockEnd << " ";
+    Rprintf("%s ", _blockEnd.c_str());
 }
 
 
@@ -328,7 +329,7 @@ void NOMAD::OutputQueue::indent(int level)
     // Indent each line by level.
     for (int i = 0; i < level; i++)
     {
-        std::cout << "    ";
+        Rprintf("    ");
     }
 }
 
@@ -379,13 +380,13 @@ void NOMAD::OutputQueue::flushBlock(const NOMAD::OutputInfo &outputInfo)
                     endBlock();
                 }
 
-                std::cout << msg[i];
+                Rprintf("%s", msg[i].c_str());
 
                 if (outputInfo.isBlockStart())
                 {
                     startBlock();
                 }
-                std::cout << std::endl;
+                Rprintf("\n");
             }
         }
         else
@@ -395,7 +396,7 @@ void NOMAD::OutputQueue::flushBlock(const NOMAD::OutputInfo &outputInfo)
             if (_indentLevel == (int)_maxStepLevel + 1)
             {
                 indent(_indentLevel);
-                std::cout << "........................................" << std::endl;
+                Rprintf("........................................\n");
             }
         }
 
@@ -476,9 +477,9 @@ void NOMAD::OutputQueue::flushStatsToStdout(const NOMAD::StatsInfo *statsInfo)
         {
             if (_statsLineCount > 0)
             {
-                std::cout << std::endl;
+                Rprintf("\n");
             }
-            std::cout << statsInfo->displayHeader(displayStatsFormat, solFormat, _objWidth) << std::endl;
+            Rprintf("%s\n", statsInfo->displayHeader(displayStatsFormat, solFormat, _objWidth).c_str());
         }
 
         // To standard output
@@ -486,7 +487,7 @@ void NOMAD::OutputQueue::flushStatsToStdout(const NOMAD::StatsInfo *statsInfo)
         // when either all evaluations or all unsuccessful evaluations are shown.
         starSuccess = displayAllEval || displayUnsuccessful;
         appendComment = true;
-        std::cout << statsInfo->display(displayStatsFormat, solFormat, _objWidth, _hWidth, starSuccess, appendComment) << std::endl;
+        Rprintf("%s\n", statsInfo->display(displayStatsFormat, solFormat, _objWidth, _hWidth, starSuccess, appendComment).c_str());
         _statsLineCount++;
     }
 }
@@ -501,7 +502,7 @@ void NOMAD::OutputQueue::initStatsFile()
         _statsStream.open(_statsFile.c_str(), std::ofstream::out | std::ios::trunc);
         if (_statsStream.fail())
         {
-            std::cout << "Warning: could not open stats file " << _statsFile << std::endl;
+            Rprintf("Warning: could not open stats file %s\n", _statsFile.c_str());
         }
         _statsStream.setf(std::ios::fixed);
         // Set full precision on stats file.
@@ -539,6 +540,5 @@ void NOMAD::OutputQueue::flushStatsToStatsFile(const NOMAD::StatsInfo *statsInfo
         _statsWritten = true;
     }
 }
-
 
 
