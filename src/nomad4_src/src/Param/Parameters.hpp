@@ -60,6 +60,7 @@
 #include "../Type/ListOfVariableGroup.hpp"
 #include "../Type/DirectionType.hpp"
 #include "../Param/AttributeFactory.hpp"
+#include <type_traits>
 #include "../Param/ParameterEntries.hpp"
 #include "../nomad_platform.hpp"
 
@@ -658,17 +659,19 @@ public:
         }
         if (!sp->uniqueEntry())
         {
-            if (typeid(ArrayOfString).name() == _typeOfAttributes.at(name))
+            if constexpr (std::is_same<T, ArrayOfString>::value)
             {
-                // Special case for DISPLAY parameter
-                ArrayOfString* valueAsAos = (ArrayOfString*)(&value);
-                ArrayOfString* aos = (ArrayOfString*)(&sp->getValue());
-                for (size_t i = 0; i < valueAsAos->size(); i++)
+                if (typeid(ArrayOfString).name() == _typeOfAttributes.at(name))
                 {
-                    aos->add((*valueAsAos)[i]);
+                    // Special case for DISPLAY parameter
+                    ArrayOfString* valueAsAos = &value;
+                    ArrayOfString aos = sp->getValue();
+                    for (size_t i = 0; i < valueAsAos->size(); i++)
+                    {
+                        aos.add((*valueAsAos)[i]);
+                    }
+                    value = aos;
                 }
-                // Convert back to T
-                value = *((T*)(aos));
             }
         }
         sp->setValue(value);

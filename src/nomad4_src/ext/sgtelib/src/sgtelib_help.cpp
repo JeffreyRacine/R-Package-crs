@@ -31,7 +31,7 @@
 //  Get dimension of HELP_DATA
 //================================
 int SGTELIB::dim_help_data (void){
-  return 32;
+  return 33;
 }//
 
 //================================
@@ -39,7 +39,7 @@ int SGTELIB::dim_help_data (void){
 //================================
 std::string ** SGTELIB::get_help_data (void){
   int i;
-  const int NL = 32;
+  const int NL = 33;
   const int NC = 3;
   std::string ** HELP_DATA = new std::string * [NL];
   for (i = 0 ; i<NL ; i++) HELP_DATA[i] = new std::string [NC];

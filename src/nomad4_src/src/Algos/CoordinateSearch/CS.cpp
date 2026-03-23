@@ -76,7 +76,7 @@ bool NOMAD::CS::runImp()
     
     bool successFound = false;
     
-    NOMAD::SuccessType megaIterSuccess;
+    NOMAD::SuccessType megaIterSuccess = NOMAD::SuccessType::UNDEFINED;
     
     if (!_termination->terminate(k))
     {
