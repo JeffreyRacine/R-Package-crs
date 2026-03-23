@@ -58,8 +58,9 @@
 #include "Type/SgtelibModelFeasibilityType.hpp"
 #include "Type/SgtelibModelFormulationType.hpp"
 
+#include <R_ext/Print.h>
+
 #include <string>
-#include <iostream>
 
 struct NomadProblemInfo
 {
@@ -422,7 +423,7 @@ public:
     {
         if (_hasSgte)
         {
-            std::cerr << "Warning: Surrogate evaluations are not currently supported." << std::endl;
+            REprintf("Warning: Surrogate evaluations are not currently supported.\n");
             _hasSgte = false;
         }
     }
@@ -499,7 +500,7 @@ public:
     {
         if (_hasSgte)
         {
-            std::cerr << "Warning: Surrogate evaluations are not currently supported." << std::endl;
+            REprintf("Warning: Surrogate evaluations are not currently supported.\n");
             _hasSgte = false;
         }
     }
@@ -621,7 +622,7 @@ int solveNomadProblem(const NomadResult result,
 {
     if ((nb_starting_points < 1) || !x0s || !result || !nomad_problem)
     {
-        std::cerr << "All parameters must not be null" << std::endl;
+        REprintf("All parameters must not be null\n");
         return -7;
     }
 
@@ -694,7 +695,7 @@ int solveNomadProblem(const NomadResult result,
     }
     catch (std::exception& e)
     {
-        printf("NOMAD exception (report to developer):\n%s\n", e.what());
+        REprintf("NOMAD exception (report to developer):\n%s\n", e.what());
         cleanup_nomad_state();
         return -7;
     }
@@ -793,7 +794,7 @@ int solveNomadProblem(const NomadResult result,
     }
     catch (std::exception &e)
     {
-        printf("NOMAD exception (report to developer):\n%s\n", e.what());
+        REprintf("NOMAD exception (report to developer):\n%s\n", e.what());
         runFlag = -8;
     }
 
