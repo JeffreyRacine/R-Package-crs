@@ -24,6 +24,7 @@
 /*-------------------------------------------------------------------------------------*/
 
 #include "Surrogate_Utils.hpp"
+#include "RNG.hpp"
 
 #include <string>
 #include <sstream>
@@ -748,7 +749,7 @@ int SGTELIB::diff_ms(timeval t1, timeval t2){
 /*  uniform rand generator               */
 /*----------------------------------------*/
 double SGTELIB::uniform_rand (void){
-  return double(rand() / double(INT_MAX));
+  return NOMAD::RNG::rand(0.0, 1.0);
 }//
 
 /*----------------------------------------*/
@@ -771,7 +772,6 @@ double SGTELIB::rceil (double d){
   else if (d<0) return std::floor(d);
   else return 0.0;
 }//
-
 
 
 
