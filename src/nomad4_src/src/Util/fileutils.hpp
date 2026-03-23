@@ -63,6 +63,7 @@
 #endif
 
 #include <fstream>
+#include <R_ext/Print.h>
 
 #include "../nomad_platform.hpp"
 #include "../Util/defines.hpp"
@@ -153,7 +154,7 @@ bool write(const T &info, const std::string &filename)
 
     if (filename.empty())
     {
-        std::cout << "Warning: " << typeid(T).name() << ": Cannot write to file: file name is not defined.";
+        Rprintf("Warning: %s: Cannot write to file: file name is not defined.", typeid(T).name());
         writeSuccess = false;
     }
 
@@ -162,7 +163,7 @@ bool write(const T &info, const std::string &filename)
         fout.open(filename.c_str(), std::ofstream::out);
         if (fout.fail())
         {
-            std::cout << "Warning: " << typeid(T).name() << ": Cannot write to file " + filename << std::endl;
+            Rprintf("Warning: %s: Cannot write to file %s\n", typeid(T).name(), filename.c_str());
             writeSuccess = false;
             fout.close();
         }
@@ -191,7 +192,7 @@ bool read(T &info, const std::string &filename)
 
     if (filename.empty())
     {
-        std::cout << "Warning: " << typeid(T).name() << ": Cannot read file: file name is not defined.";
+        Rprintf("Warning: %s: Cannot read file: file name is not defined.", typeid(T).name());
         readSuccess = false;
     }
 
@@ -199,7 +200,7 @@ bool read(T &info, const std::string &filename)
     {
         if (!checkReadFile(filename))
         {
-            std::cout << "Warning: " << typeid(T).name() << ": File does not exist or cannot be read: " + filename << std::endl;
+            Rprintf("Warning: %s: File does not exist or cannot be read: %s\n", typeid(T).name(), filename.c_str());
             readSuccess = false;
         }
     }
@@ -209,7 +210,7 @@ bool read(T &info, const std::string &filename)
         fin.open(filename.c_str(), std::ifstream::out);
         if (fin.fail())
         {
-            std::cout << "Warning: " << typeid(T).name() << ": Cannot read from file " + filename << std::endl;
+            Rprintf("Warning: %s: Cannot read from file %s\n", typeid(T).name(), filename.c_str());
             readSuccess = false;
             fin.close();
         }

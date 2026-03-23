@@ -56,6 +56,7 @@
 
 #include <atomic>       // For atomic
 #include <vector>
+#include <R_ext/Print.h>
 
 #include "../nomad_platform.hpp"
 #include "../Eval/EvalPoint.hpp"
@@ -208,7 +209,7 @@ public:
      */
     virtual size_t computeMeanF(Double &mean) const
     {
-        std::cout << "Warning: computeMeanF is not implemented for this type of cache." << std::endl;
+        Rprintf("Warning: computeMeanF is not implemented for this type of cache.\n");
         mean.reset();
         return 0;
     }
@@ -223,7 +224,7 @@ public:
     typedef void (*EvalFunc_t)(EvalPoint&);
     virtual void processOnAllPoints(EvalFunc_t NOMAD_UNUSED(func), const int NOMAD_UNUSED(mainThreadNum) = -1)
     {
-        std::cout << "Warning: processOnAllPoints is not implemented for this type of cache." << std::endl;
+        Rprintf("Warning: processOnAllPoints is not implemented for this type of cache.\n");
     }
 
     virtual void deleteModelEvalOnly(const int mainThreadNum) = 0;
@@ -478,7 +479,7 @@ public:
      */
     virtual void purge()
     {
-        std::cout << "Warning: purge is not implemented for this type of cache." << std::endl;
+        Rprintf("Warning: purge is not implemented for this type of cache.\n");
     }
 
     /**
