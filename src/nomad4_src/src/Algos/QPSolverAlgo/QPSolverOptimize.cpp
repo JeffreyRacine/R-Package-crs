@@ -65,8 +65,34 @@
 #include "../../Math/MatrixUtils.hpp"
 
 #include <R_ext/Print.h>
+#include <sstream>
+#include <utility>
 
 #include "../../../ext/sgtelib/src/Surrogate_PRS.hpp"
+
+namespace {
+inline void qpsolver_write_console(const std::string& message)
+{
+    Rprintf("%s", message.c_str());
+}
+
+template <class Writer>
+inline void qpsolver_write_stream(Writer&& writer)
+{
+    std::ostringstream oss;
+    writer(oss);
+    qpsolver_write_console(oss.str());
+}
+
+template <class Writer>
+inline void qpsolver_write_verbose(const bool enabled, Writer&& writer)
+{
+    if (enabled)
+    {
+        qpsolver_write_stream(std::forward<Writer>(writer));
+    }
+}
+}  // namespace
 
 NOMAD::EvalPointPtr NOMAD::QPSolverOptimize::_prevFeasRefCenter = nullptr;
 NOMAD::EvalPointPtr NOMAD::QPSolverOptimize::_prevInfeasRefCenter = nullptr;
@@ -220,10 +246,14 @@ void NOMAD::QPSolverOptimize::generateTrialPointsImp()
     if (_verboseFull)
     {
         SGTELIB::Matrix out = getModelOut(X_k);
-        std::cout <<"Model output for RefCenter: " << std::endl;
-        out.display(std::cout);
+        qpsolver_write_stream([&](std::ostringstream& oss) {
+            oss << "Model output for RefCenter: " << std::endl;
+            out.display(oss);
+        });
         auto bbo = refCenter->getEval(NOMAD::EvalType::BB)->getBBOutput();
-        std::cout<< "Blackbox output of RefCenter: " << bbo.getBBO() << std::endl;
+        qpsolver_write_stream([&](std::ostringstream& oss) {
+            oss << "Blackbox output of RefCenter: " << bbo.getBBO() << std::endl;
+        });
     }
 
     auto isInBounds = [](const NOMAD::ArrayOfDouble& x,
@@ -295,7 +325,9 @@ void NOMAD::QPSolverOptimize::generateTrialPointsImp()
             // auto FrameSize = mesh->getDeltaFrameSize().max().todouble();
             MeshSize = mesh->getdeltaMeshSize().max().todouble();
             const auto meshIndex = mesh->getMeshIndex();
-            _verbose && std::cout << " meshIndex=" << meshIndex << std::endl;
+            qpsolver_write_verbose(_verbose, [&](std::ostringstream& oss) {
+                oss << " meshIndex=" << meshIndex << std::endl;
+            });
         }
 
         SGTELIB::Matrix Gk("Gk", static_cast<int>(_n), 1);
@@ -345,8 +377,13 @@ void NOMAD::QPSolverOptimize::generateTrialPointsImp()
         const auto SelectAlgo = _runParams->getAttributeValue<size_t>("QP_SelectAlgo");
         if (SelectAlgo == 0)
         {
-            _verbose && std::cout << "Run solveAugLag (n=" << _n << ", m=" << _nbCons << ")" << std::endl;
-            _verbose && std::cout << "atol=" << atol << " rtol=" << rtol << " tol=" << tol << " cond(H)=" << condHessian << " mesh=" << MeshSize << std::endl;
+            qpsolver_write_verbose(_verbose, [&](std::ostringstream& oss) {
+                oss << "Run solveAugLag (n=" << _n << ", m=" << _nbCons << ")" << std::endl;
+            });
+            qpsolver_write_verbose(_verbose, [&](std::ostringstream& oss) {
+                oss << "atol=" << atol << " rtol=" << rtol << " tol=" << tol
+                    << " cond(H)=" << condHessian << " mesh=" << MeshSize << std::endl;
+            });
             runOk = solveAugLag(X_k, maxIter, tolDistDX, atol, rtol, mu0, muDecrease, eta0, omega0, successRatio, maxIterInner, tolDistDXInner, maxSuccessiveFail);
         }
         else if (SelectAlgo == 1 || SelectAlgo == 2)
@@ -372,8 +409,13 @@ void NOMAD::QPSolverOptimize::generateTrialPointsImp()
             }
             if (SelectAlgo == 1)
             {
-                _verbose && std::cout << "Run solveTRIPM (n=" << _n << ", m=" << _nbCons << ")" << std::endl;
-                _verbose && std::cout << "atol=" << atol << " rtol=" << rtol << " tol=" << tol << " cond(H)=" << condHessian << std::endl;
+                qpsolver_write_verbose(_verbose, [&](std::ostringstream& oss) {
+                    oss << "Run solveTRIPM (n=" << _n << ", m=" << _nbCons << ")" << std::endl;
+                });
+                qpsolver_write_verbose(_verbose, [&](std::ostringstream& oss) {
+                    oss << "atol=" << atol << " rtol=" << rtol << " tol=" << tol
+                        << " cond(H)=" << condHessian << std::endl;
+                });
 
                 TRIPMSolver tripm_solver{mu0, muDecrease, 1e-12,
                                          80, 90, 0};
@@ -409,8 +451,13 @@ void NOMAD::QPSolverOptimize::generateTrialPointsImp()
         }
         else if (SelectAlgo == 3)
         { // feasibility only
-            _verbose && std::cout << "Run feasibility check (n=" << _n << ", m=" << _nbCons << ")" << std::endl;
-            _verbose && std::cout << "atol=" << atol << " rtol=" << rtol << " tol=" << tol << " cond(H)=" << condHessian << std::endl;
+            qpsolver_write_verbose(_verbose, [&](std::ostringstream& oss) {
+                oss << "Run feasibility check (n=" << _n << ", m=" << _nbCons << ")" << std::endl;
+            });
+            qpsolver_write_verbose(_verbose, [&](std::ostringstream& oss) {
+                oss << "atol=" << atol << " rtol=" << rtol << " tol=" << tol
+                    << " cond(H)=" << condHessian << std::endl;
+            });
 
             SGTELIB::Matrix cons("cons", _nbCons, 1);
             getModelCons(&cons, X_k);
@@ -421,7 +468,9 @@ void NOMAD::QPSolverOptimize::generateTrialPointsImp()
             SGTELIB::Matrix p("p", _n + _nbCons, 1);
 
             const bool strict = getStrictFeasiblePoint(X_k, XS, lvar, uvar, cons);
-            _verbose && std::cout << " strict feasibility found? " << strict << std::endl;
+            qpsolver_write_verbose(_verbose, [&](std::ostringstream& oss) {
+                oss << " strict feasibility found? " << strict << std::endl;
+            });
             if (strict)
             {
                 solveLM(X_k, XS, lvar, uvar, cons, mu0, tol, maxIterInner, tolDistDXInner, false, _verbose);
@@ -677,7 +726,9 @@ void NOMAD::QPSolverOptimize::solve_TR_constrained_QP(
     lencheck(n, g);
     sizecheck(n, n, H);
 
-    _verbose && std::cout << "Starting solve_TR_constrained_QP with delta=" << Delta << " nfree=" << nfree << std::endl;
+    qpsolver_write_verbose(_verbose, [&](std::ostringstream& oss) {
+        oss << "Starting solve_TR_constrained_QP with delta=" << Delta << " nfree=" << nfree << std::endl;
+    });
 
     // Pre-allocation of active sub-matrices of the Hessian and the gradient
     getModelGrad(&grad, X, H, g); // Hx + g
@@ -721,7 +772,9 @@ void NOMAD::QPSolverOptimize::solve_TR_constrained_QP(
     // NB: contrary to the title of this function, eigmin is not the minimum eigenvalue
     // of the hessian matrix, but it enables to indicate if the matrix is positive definite.
     const double eigmin = NOMAD::FindSmallestEigenvalue(D, nfree);
-    _verbose && std::cout << " smallest eigenvalue= " << eigmin << std::endl;
+    qpsolver_write_verbose(_verbose, [&](std::ostringstream& oss) {
+        oss << " smallest eigenvalue= " << eigmin << std::endl;
+    });
 
     if (eigmin > 0) // positive definite
     {
@@ -734,7 +787,9 @@ void NOMAD::QPSolverOptimize::solve_TR_constrained_QP(
     }
     else
     {
-        _verbose && std::cout << "Not positive definite. Delta= " << Delta << " l=" << eigmin << std::endl;
+        qpsolver_write_verbose(_verbose, [&](std::ostringstream& oss) {
+            oss << "Not positive definite. Delta= " << Delta << " l=" << eigmin << std::endl;
+        });
         
         SGTELIB::Matrix bk("bk", nfree, 1); // depend on X
         bool successInverseIteration = true;
@@ -905,8 +960,10 @@ void NOMAD::QPSolverOptimize::projectedGradient(
         // Update current iterates.
         const double qmp = getModelObj(X, H, g, g0);
         getModelGrad(&d_k, X, H, g);
-        verbose && std::cout << "  Projected-gradient k =" << k << " f(x) = " << qmp << " |A| = " << nfree << " " << nfree;
-        verbose && std::cout << " |d| = " << d_k.norm() << " amax = " << a_max << " ak = " << a_k << std::endl;
+        qpsolver_write_verbose(verbose, [&](std::ostringstream& oss) {
+            oss << "  Projected-gradient k =" << k << " f(x) = " << qmp << " |A| = " << nfree << " " << nfree
+                << " |d| = " << d_k.norm() << " amax = " << a_max << " ak = " << a_k << std::endl;
+        });
 
         // Compare active sets and update them
         bool checkActive = true;
@@ -1064,11 +1121,16 @@ bool NOMAD::QPSolverOptimize::conjugateGradient(
         iter += 1;
     }
 
-    verbose && std::cout << "CG tol: " << tol;
-    verbose && std::cout << " CG total niter: " << iter;
-    verbose && std::cout << " CG residual norm:" << rNorm;
-    verbose && solved && sAs <= 0 && std::cout << " Non positive curvature detected";
-    verbose && std::cout << std::endl;
+    qpsolver_write_verbose(verbose, [&](std::ostringstream& oss) {
+        oss << "CG tol: " << tol
+            << " CG total niter: " << iter
+            << " CG residual norm:" << rNorm;
+        if (solved && sAs <= 0)
+        {
+            oss << " Non positive curvature detected";
+        }
+        oss << std::endl;
+    });
 
     // Compute solution in full dimension
     for (int i = 0; i < n; i++)
@@ -1110,7 +1172,9 @@ bool NOMAD::QPSolverOptimize::solveBCQP(
     }
     if (!feasible)
     {
-        verbose && std::cout << "solveBCQP assertion error: X not feasible. Compute projection." << std::endl;
+        qpsolver_write_verbose(verbose, [&](std::ostringstream& oss) {
+            oss << "solveBCQP assertion error: X not feasible. Compute projection." << std::endl;
+        });
         snapToBounds(X, lvar, uvar);
     }
 
@@ -1121,7 +1185,9 @@ bool NOMAD::QPSolverOptimize::solveBCQP(
         const bool areBoundsCompatible = lvar.get(i, 0) <= uvar.get(i, 0);
         if (!feasible || !areBoundsCompatible)
         {
-            verbose && std::cout << lvar.get(i, 0) << " " << X.get(i, 0) << " " << uvar.get(i, 0);
+            qpsolver_write_verbose(verbose, [&](std::ostringstream& oss) {
+                oss << lvar.get(i, 0) << " " << X.get(i, 0) << " " << uvar.get(i, 0);
+            });
             throw NOMAD::Exception(__FILE__, __LINE__, "solveBCQP assertion error: Error compatibility lower and upper bound");
         }
     }
@@ -1168,8 +1234,12 @@ bool NOMAD::QPSolverOptimize::solveBCQP(
 
     // Start iterating
     int k = 0;
-    verbose && std::cout << "  k = " << k << " f(x0) = " << f0;
-    verbose && std::cout << " |W| = " << n - sum(active, n) << " |L| = " << sum(active_l, n) << " |U| = " << sum(active_u, n) << std::endl;
+    qpsolver_write_verbose(verbose, [&](std::ostringstream& oss) {
+        oss << "  k = " << k << " f(x0) = " << f0
+            << " |W| = " << n - sum(active, n)
+            << " |L| = " << sum(active_l, n)
+            << " |U| = " << sum(active_u, n) << std::endl;
+    });
     bool OK = false;
     while (!OK && (k < max_iter))
     {
@@ -1475,8 +1545,14 @@ bool NOMAD::QPSolverOptimize::solveBCQP(
         OK = !areActiveSetsChanged && ((Xm.norm() <= 1e-9) || (std::abs(fk - qCurrent) <= 1e-9));
 
         k++;
-        verbose && std::cout << "  k = " << k << " f(xk) = " << fk << " |d| = " << d_k.norm() << " a(amax) = " << a_k << " ( " << a_max << " )";
-        verbose && std::cout << " |W| = " << n - sum(active, n) << " |L| = " << sum(active_l, n) << " |U| = " << sum(active_u, n) << " OK? " << OK << std::endl;
+        qpsolver_write_verbose(verbose, [&](std::ostringstream& oss) {
+            oss << "  k = " << k << " f(xk) = " << fk << " |d| = " << d_k.norm()
+                << " a(amax) = " << a_k << " ( " << a_max << " )"
+                << " |W| = " << n - sum(active, n)
+                << " |L| = " << sum(active_l, n)
+                << " |U| = " << sum(active_u, n)
+                << " OK? " << OK << std::endl;
+        });
     }
 
     const bool success = getModelObj(X, H, g, g0) < f0;
@@ -1612,7 +1688,9 @@ bool NOMAD::QPSolverOptimize::solveL1AugLag(
     double ng = gradientLag_k.norm();
     const double ng0 = ng;
     const double tol = atol + ng0 * rtol;
-    verbose && std::cout << "Start solveL1AugLag with tol = " << tol << std::endl;
+    qpsolver_write_verbose(verbose, [&](std::ostringstream& oss) {
+        oss << "Start solveL1AugLag with tol = " << tol << std::endl;
+    });
 
     // Compute initial starting point and bounds
     SGTELIB::Matrix lvar("lvar", _n, 1);
@@ -1642,8 +1720,10 @@ bool NOMAD::QPSolverOptimize::solveL1AugLag(
         const bool feasible = (XS.get(i, 0) >= lvar.get(i, 0)) && (XS.get(i, 0) <= uvar.get(i, 0));
         if (!feasible)
         {
-            std::cout << XS.get(i, 0) - lvar.get(i, 0) << " " << uvar.get(i, 0) - XS.get(i, 0) << std::endl;
-            std::cout << "Error compatibility lower and upper bound" << std::endl;
+            qpsolver_write_stream([&](std::ostringstream& oss) {
+                oss << XS.get(i, 0) - lvar.get(i, 0) << " " << uvar.get(i, 0) - XS.get(i, 0) << std::endl;
+                oss << "Error compatibility lower and upper bound" << std::endl;
+            });
             throw NOMAD::Exception(__FILE__, __LINE__, "solveL1AugLag assertion error: Error XS is not feasible");
         }
     }
@@ -1702,7 +1782,10 @@ bool NOMAD::QPSolverOptimize::solveL1AugLag(
     double fk = getModelObj(X_k);
     double F_k = getPenalizedL1AugLagModelObj(X_k, cons, lambda_l, mu_l);
     double F_km1 = F_k;
-    verbose && std::cout << " |grad| = " << ng << " |Proj(x - grad) - x| = " << ngproj << " P = " << F_k << " f = " << fk << " |c| = " << cons.norm() << std::endl;
+    qpsolver_write_verbose(verbose, [&](std::ostringstream& oss) {
+        oss << " |grad| = " << ng << " |Proj(x - grad) - x| = " << ngproj
+            << " P = " << F_k << " f = " << fk << " |c| = " << cons.norm() << std::endl;
+    });
 
     // Outer iteration
     while (!outerFailure && !outerSuccess)
@@ -1848,7 +1931,10 @@ bool NOMAD::QPSolverOptimize::solveL1AugLag(
 
                     getModelCons(&cons, X_can);
                     F_k = getPenalizedL1AugLagModelObj(X_can, cons, lambda_l, mu_l);
-                    verbose && std::cout << " V: (l=" << iterInnerLoop << ") |v| = " << v_k.norm() << " Pk = " << F_k << " ||c|| = " << cons.norm() << std::endl;
+                    qpsolver_write_verbose(verbose, [&](std::ostringstream& oss) {
+                        oss << " V: (l=" << iterInnerLoop << ") |v| = " << v_k.norm()
+                            << " Pk = " << F_k << " ||c|| = " << cons.norm() << std::endl;
+                    });
                     // const bool decreasePenalty = F_k < F_km1; // This criterion is the simpler
                     const bool decreasePenalty = F_k - F_km1 <= - 0.01 * (activeJacobian_k.norm() + std::pow(ZtransposePseudoGrad_k.norm(), 2));
                     if (decreasePenalty)
@@ -1993,9 +2079,17 @@ bool NOMAD::QPSolverOptimize::solveL1AugLag(
             F_k = getPenalizedL1AugLagModelObj(X_k, cons, lambda_l, mu_l);
             const double deltaF = std::abs(F_k - F_km1);
             // double dual_norm = 0;
-            verbose && std::cout << " Inner: (l=" << iterInnerLoop << ") Pl = " << F_k << " |c| = " << cons.norm() << " |L| = " << ZtransposePseudoGrad_k.norm() << " |dF| = " << deltaF;
-            verbose && std::cout << " inner precision = " << innerPrecision << " bounds precision (inf) = " << innerTolBounds.norm_inf() << std::endl;
-            verbose && std::cout << " |cons|_epsilon = " << nbActive << " nb bds active = " << nbActiveBounds << std::endl;
+            qpsolver_write_verbose(verbose, [&](std::ostringstream& oss) {
+                oss << " Inner: (l=" << iterInnerLoop << ") Pl = " << F_k
+                    << " |c| = " << cons.norm()
+                    << " |L| = " << ZtransposePseudoGrad_k.norm()
+                    << " |dF| = " << deltaF
+                    << " inner precision = " << innerPrecision
+                    << " bounds precision (inf) = " << innerTolBounds.norm_inf()
+                    << std::endl
+                    << " |cons|_epsilon = " << nbActive
+                    << " nb bds active = " << nbActiveBounds << std::endl;
+            });
 
             iterInnerLoop++;
             quadModelNbEval++;
@@ -2074,7 +2168,10 @@ bool NOMAD::QPSolverOptimize::solveL1AugLag(
 
         iterOuterLoop++; // l = l + 1;
         fk = getModelObj(X_k);
-        verbose && std::cout << "k = " << iterOuterLoop <<  " |Proj(x - grad) - x| = " << ngproj  << " f(x) = " << fk << " |c(x)| = " << cons.norm() << std::endl;
+        qpsolver_write_verbose(verbose, [&](std::ostringstream& oss) {
+            oss << "k = " << iterOuterLoop << " |Proj(x - grad) - x| = " << ngproj
+                << " f(x) = " << fk << " |c(x)| = " << cons.norm() << std::endl;
+        });
 
         // Check failure
         for (int i = 0; i < _n; ++i)
@@ -2090,7 +2187,11 @@ bool NOMAD::QPSolverOptimize::solveL1AugLag(
         outerFailure = outerFailure || (iterOuterLoop >= maxIterOuterLoop);
         if (outerFailure)
         {
-            verbose && std::cout << "Early stop: |d| = " << distXOuterLoop << " inner? " << innerFailure << " unbounded? " << unbounded_subpb << std::endl;
+            qpsolver_write_verbose(verbose, [&](std::ostringstream& oss) {
+                oss << "Early stop: |d| = " << distXOuterLoop
+                    << " inner? " << innerFailure
+                    << " unbounded? " << unbounded_subpb << std::endl;
+            });
         }
 
     }
@@ -2688,8 +2789,10 @@ bool NOMAD::QPSolverOptimize::solveAugLag(
         const bool feasible = (XS.get(i, 0) >= lvar.get(i, 0)) && (XS.get(i, 0) <= uvar.get(i, 0));
         if (!feasible)
         {
-            std::cout << XS.get(i, 0) - lvar.get(i, 0) << " " << uvar.get(i, 0) - XS.get(i, 0) << std::endl;
-            std::cout << "Error compatibility lower and upper bound" << std::endl;
+            qpsolver_write_stream([&](std::ostringstream& oss) {
+                oss << XS.get(i, 0) - lvar.get(i, 0) << " " << uvar.get(i, 0) - XS.get(i, 0) << std::endl;
+                oss << "Error compatibility lower and upper bound" << std::endl;
+            });
             throw NOMAD::Exception(__FILE__, __LINE__, "solveAugLag assertion error: Error XS is not feasible");
         }
     }
@@ -2736,10 +2839,16 @@ bool NOMAD::QPSolverOptimize::solveAugLag(
     bool outerSuccess = ngproj < tol; // nonlinear equality constraints feasibility.
     bool outerFailure = (distXOuterLoop <= tolDistDX) || (iterOuterLoop >= max_iter);
 
-    _verbose && std::cout << "Outer ("<< iterOuterLoop <<"): |G| = " << GradPk.norm();
-    _verbose && std::cout << " |Proj(x - grad) - x| = " << ngproj << " P =" << Pk;
-    _verbose && std::cout << " f = " << fk << " |c+s| = " << cx;
-    _verbose && std::cout << " mu = " << mu_l << " omega = " << omega_l << " eta = " << eta_l << std::endl;
+    qpsolver_write_verbose(_verbose, [&](std::ostringstream& oss) {
+        oss << "Outer (" << iterOuterLoop << "): |G| = " << GradPk.norm()
+            << " |Proj(x - grad) - x| = " << ngproj
+            << " P =" << Pk
+            << " f = " << fk
+            << " |c+s| = " << cx
+            << " mu = " << mu_l
+            << " omega = " << omega_l
+            << " eta = " << eta_l << std::endl;
+    });
 
     size_t successiveFailure = 0;
     size_t successiveAcceptable = 0;
@@ -2873,29 +2982,44 @@ bool NOMAD::QPSolverOptimize::solveAugLag(
         outerFailure = outerFailure || (mu_l <= atol / mu_decrease);
         outerFailure = outerFailure || (successiveFailure >= maxSuccessiveFail);
 
-        _verbose && std::cout << "Outer ("<< iterOuterLoop <<") " << innerResult;
-        _verbose && std::cout << ": |Proj(x - grad) - x| = " << ngproj << " P = " << Pk << " f = " << fk;
-        _verbose && std::cout << " |c+s| = " << cx << " mu = " << mu_l << " omega = " << omega_l << " eta = " << eta_l << std::endl;
+        qpsolver_write_verbose(_verbose, [&](std::ostringstream& oss) {
+            oss << "Outer (" << iterOuterLoop << ") " << innerResult
+                << ": |Proj(x - grad) - x| = " << ngproj
+                << " P = " << Pk
+                << " f = " << fk
+                << " |c+s| = " << cx
+                << " mu = " << mu_l
+                << " omega = " << omega_l
+                << " eta = " << eta_l << std::endl;
+        });
     }
 
     // Ending output
-    _verbose && std::cout << "End of solveAugLag" << std::endl;
-    _verbose && std::cout << "f(x0) = " << f0 << " f(x*) = " << fk <<std::endl;
-    _verbose && std::cout << "|c(x*) + s*| = " << cxp << " tol = " << tol << std::endl;
+    qpsolver_write_verbose(_verbose, [&](std::ostringstream& oss) {
+        oss << "End of solveAugLag" << std::endl;
+        oss << "f(x0) = " << f0 << " f(x*) = " << fk << std::endl;
+        oss << "|c(x*) + s*| = " << cxp << " tol = " << tol << std::endl;
+    });
     if (outerSuccess)
     {
-        _verbose && std::cout << "success" << " : " << ngproj << " < " << tol << std::endl;
+        qpsolver_write_verbose(_verbose, [&](std::ostringstream& oss) {
+            oss << "success : " << ngproj << " < " << tol << std::endl;
+        });
     }
     else if (outerFailure)
     {
-        _verbose && std::cout << " failure" << " iter = " << iterOuterLoop << std::endl;
-        _verbose && std::cout << " dist = " << distXOuterLoop << " <= " << tolDistDX << std::endl;
-        _verbose && std::cout << " too small parameters? " << mu_l * mu_l << " <= " << atol << std::endl;
-        _verbose && std::cout << " successiveFailure = " << successiveFailure << std::endl;
+        qpsolver_write_verbose(_verbose, [&](std::ostringstream& oss) {
+            oss << " failure iter = " << iterOuterLoop << std::endl;
+            oss << " dist = " << distXOuterLoop << " <= " << tolDistDX << std::endl;
+            oss << " too small parameters? " << mu_l * mu_l << " <= " << atol << std::endl;
+            oss << " successiveFailure = " << successiveFailure << std::endl;
+        });
     }
     else
     {
-        _verbose && std::cout << "unknown stopping";
+        qpsolver_write_verbose(_verbose, [&](std::ostringstream& oss) {
+            oss << "unknown stopping";
+        });
     }
 
     return true;
@@ -2991,8 +3115,10 @@ int NOMAD::QPSolverOptimize::solveBoundAugLag(
 
     // Display initial information
     double Pk = getAugLagModelObj(XSp, lambda, mu);
-    verbose && std::cout << "Inner 0 ("<< iterInnerLoop <<") : |Proj(x - grad) - x| = " << ngproj;
-    verbose && std::cout << " P = " << Pk << " min tol = " << rtol_BCQP << std::endl;
+    qpsolver_write_verbose(verbose, [&](std::ostringstream& oss) {
+        oss << "Inner 0 (" << iterInnerLoop << ") : |Proj(x - grad) - x| = " << ngproj
+            << " P = " << Pk << " min tol = " << rtol_BCQP << std::endl;
+    });
 
     // Pre-allocations of trust-region problem variables
     SGTELIB::Matrix Xcan("Xcan", nvar, 1); // x candidate
@@ -3161,18 +3287,24 @@ int NOMAD::QPSolverOptimize::solveBoundAugLag(
         innerFailure = innerFailure || (successiveUnsuccessful > limitUnsuccessful);
     
         Pk = getAugLagModelObj(XSp, lambda, mu);
-        verbose && std::cout << "Inner ("<< iterInnerLoop <<") " << subPbSuccess;
-        verbose && std::cout << " " << pointAccepted;
-        verbose && std::cout << " |Proj(x - grad) - x| = " << ngproj;
-        verbose && std::cout << " P = " << Pk << " |d| = " << distXInnerLoop;
-        verbose && std::cout  << " TR radius = " << delta << " TR ratio = ";
-        if (pred == 0)
-        {
-            verbose && std::cout << ared << " / " << pred << std::endl;
-        } else
-        {
-            verbose && std::cout << ared / pred << std::endl;
-        }
+        qpsolver_write_verbose(verbose, [&](std::ostringstream& oss) {
+            oss << "Inner (" << iterInnerLoop << ") " << subPbSuccess
+                << " " << pointAccepted
+                << " |Proj(x - grad) - x| = " << ngproj
+                << " P = " << Pk
+                << " |d| = " << distXInnerLoop
+                << " TR radius = " << delta
+                << " TR ratio = ";
+            if (pred == 0)
+            {
+                oss << ared << " / " << pred;
+            }
+            else
+            {
+                oss << ared / pred;
+            }
+            oss << std::endl;
+        });
     }
 
     int result;
@@ -3184,7 +3316,9 @@ int NOMAD::QPSolverOptimize::solveBoundAugLag(
     }
     else if (!success)
     {
-        verbose && std::cout << "Trust-region failure: return XS" << std::endl; 
+        qpsolver_write_verbose(verbose, [&](std::ostringstream& oss) {
+            oss << "Trust-region failure: return XS" << std::endl;
+        });
         XSp = XS;
         result = 0;
     }
@@ -3557,10 +3691,14 @@ bool NOMAD::QPSolverOptimize::solveTRIPM(
     double fk = getModelObj(X);
     double f0 = fk;
 
-    verbose && std::cout << "Outer ("<< iterOuterLoop <<"): ";
-    verbose && std::cout << " |E(x,s,y;0)| = " << res;
-    verbose && std::cout << " f = " << fk << " |c+s| = " << cx;
-    verbose && std::cout << " mu = " << mu << " e_mu = " << tol_mu << std::endl;
+    qpsolver_write_verbose(verbose, [&](std::ostringstream& oss) {
+        oss << "Outer (" << iterOuterLoop << "): "
+            << " |E(x,s,y;0)| = " << res
+            << " f = " << fk
+            << " |c+s| = " << cx
+            << " mu = " << mu
+            << " e_mu = " << tol_mu << std::endl;
+    });
 
     // outer iteration
     while (!outerFailure && !outerSuccess)
@@ -3663,29 +3801,42 @@ bool NOMAD::QPSolverOptimize::solveTRIPM(
         outerFailure = outerFailure || (mu <= atol / mu_decrease);
         outerFailure = outerFailure || (successiveFailure >= maxSuccessiveFail);
 
-        verbose && std::cout << "Outer ("<< iterOuterLoop <<") " << innerResult;
-        verbose && std::cout << ": |E(x,s,y;0)| = " << res << " f = " << fk ;
-        verbose && std::cout << " |c+s| = " << cx << " mu = " << mu << " e_mu = " << tol_mu << std::endl;
+        qpsolver_write_verbose(verbose, [&](std::ostringstream& oss) {
+            oss << "Outer (" << iterOuterLoop << ") " << innerResult
+                << ": |E(x,s,y;0)| = " << res
+                << " f = " << fk
+                << " |c+s| = " << cx
+                << " mu = " << mu
+                << " e_mu = " << tol_mu << std::endl;
+        });
     }
 
     // Ending output
-    verbose && std::cout << "End of solveTR-IPM" << std::endl;
-    verbose && std::cout << "f(x0) = " << f0 << " f(x*) = " << fk <<std::endl;
-    verbose && std::cout << "|c(x*) + s*| = " << cxp << " tol = " << tol << std::endl;
+    qpsolver_write_verbose(verbose, [&](std::ostringstream& oss) {
+        oss << "End of solveTR-IPM" << std::endl;
+        oss << "f(x0) = " << f0 << " f(x*) = " << fk << std::endl;
+        oss << "|c(x*) + s*| = " << cxp << " tol = " << tol << std::endl;
+    });
     if (outerSuccess)
     {
-        verbose && std::cout << "success" << " : " << res << " < " << tol << std::endl;
+        qpsolver_write_verbose(verbose, [&](std::ostringstream& oss) {
+            oss << "success : " << res << " < " << tol << std::endl;
+        });
     }
     else if (outerFailure)
     {
-        verbose && std::cout << " failure" << " iter = " << iterOuterLoop << std::endl;
-        verbose && std::cout << " dist = " << distXOuterLoop << " <= " << tolDistDX << std::endl;
-        verbose && std::cout << " too small parameters? " << mu << "<= " << atol << std::endl;
-        verbose && std::cout << " successiveFailure = " << successiveFailure << std::endl;
+        qpsolver_write_verbose(verbose, [&](std::ostringstream& oss) {
+            oss << " failure iter = " << iterOuterLoop << std::endl;
+            oss << " dist = " << distXOuterLoop << " <= " << tolDistDX << std::endl;
+            oss << " too small parameters? " << mu << "<= " << atol << std::endl;
+            oss << " successiveFailure = " << successiveFailure << std::endl;
+        });
     }
     else
     {
-        verbose && std::cout << "unknown stopping";
+        qpsolver_write_verbose(verbose, [&](std::ostringstream& oss) {
+            oss << "unknown stopping";
+        });
     }
 
     const bool success = (fk < f0);
@@ -3901,8 +4052,10 @@ size_t NOMAD::QPSolverOptimize::solveLM(
     failure = failure || (distXInnerLoop <= tolDistDXInner);
     failure = failure || (iterInnerLoop >= maxIterInner);
 
-    _verbose && std::cout << " Feas. " << iterInnerLoop << " |c+s|=" << res;
-    _verbose && std::cout << " ? " << tol << " D=" << Delta << std::endl;
+    qpsolver_write_verbose(_verbose, [&](std::ostringstream& oss) {
+        oss << " Feas. " << iterInnerLoop << " |c+s|=" << res
+            << " ? " << tol << " D=" << Delta << std::endl;
+    });
 
     while (!failure && !success)
     {
@@ -3985,7 +4138,12 @@ size_t NOMAD::QPSolverOptimize::solveLM(
 
         if (f_normal_model < 0)
         {
-            _verbose && std::cout << " solver normal step: |v|=" << vxs.norm() << " f(v)=" << f_normal_model << " |c(xv) + sv|=" << checkslack.norm() << " |c(x) + s|=" << cslack.norm() << std::endl;
+            qpsolver_write_verbose(_verbose, [&](std::ostringstream& oss) {
+                oss << " solver normal step: |v|=" << vxs.norm()
+                    << " f(v)=" << f_normal_model
+                    << " |c(xv) + sv|=" << checkslack.norm()
+                    << " |c(x) + s|=" << cslack.norm() << std::endl;
+            });
         }
 
         // Compute the residual: r = Jx * vx + vs + (cx + s)
@@ -4052,10 +4210,16 @@ size_t NOMAD::QPSolverOptimize::solveLM(
         failure = failure || (iterInnerLoop >= maxIterInner);
         failure = failure || (backtrack_length == 0);
 
-        _verbose && std::cout << " Feas. " << iterInnerLoop << " |c+s|=" << res;
-        _verbose && std::cout << " ? " << tol << " D=" << Delta << " |v|=" << vxs.norm();
-        _verbose && std::cout << " ared=" << ared << " pred=" << pred << " r=" << ared/pred;
-        _verbose && std::cout << " back=" << backtrack_length << std::endl;
+        qpsolver_write_verbose(_verbose, [&](std::ostringstream& oss) {
+            oss << " Feas. " << iterInnerLoop << " |c+s|=" << res
+                << " ? " << tol
+                << " D=" << Delta
+                << " |v|=" << vxs.norm()
+                << " ared=" << ared
+                << " pred=" << pred
+                << " r=" << ared / pred
+                << " back=" << backtrack_length << std::endl;
+        });
     }
 
     size_t resultFeasibility;
@@ -4170,10 +4334,14 @@ int NOMAD::QPSolverOptimize::solver_barrier(
     double distXInnerLoop = INF;
     bool innerFailure = (distXInnerLoop <= tolDistDXInner) || (iterInnerLoop >= maxIterInner);
 
-    verbose && std::cout << "Inner 0 (-): ";
-    verbose && std::cout << " |E(x,s,y; mu)| = " << res << " mu = " << mu;
-    verbose && std::cout << " |c+s| = " << cslack.norm();
-    verbose && std::cout << " mu = " << mu << " e_mu = " << tol_mu << std::endl;
+    qpsolver_write_verbose(verbose, [&](std::ostringstream& oss) {
+        oss << "Inner 0 (-): "
+            << " |E(x,s,y; mu)| = " << res
+            << " mu = " << mu
+            << " |c+s| = " << cslack.norm()
+            << " mu = " << mu
+            << " e_mu = " << tol_mu << std::endl;
+    });
 
     size_t successiveUnsuccessful = 0;
     bool success = innerSuccess;
@@ -4392,15 +4560,24 @@ int NOMAD::QPSolverOptimize::solver_barrier(
         if (den < 0)
         {
             // We try a feasibility step only, in this case
-            verbose && std::cout << " p does not increase feasibility " << den <<", we try using v: ";
+            qpsolver_write_verbose(verbose, [&](std::ostringstream& oss) {
+                oss << " p does not increase feasibility " << den << ", we try using v: ";
+            });
             nr = checkslack.norm();
             den = cslack.norm() - nr;
-            verbose && std::cout << den << std::endl;
+            qpsolver_write_verbose(verbose, [&](std::ostringstream& oss) {
+                oss << den << std::endl;
+            });
             if (den <= 0)
             {
-                verbose && std::cout << " normal step: |v| = " << vxs.norm() << " f(v) = " << f_normal_model << " |c(xv) + sv| = " << nr << " |c(x) + s| = " << cslack.norm();
-                verbose && std::cout << " Wscalp - Wv = " << SGTELIB::Matrix::sub(SGTELIB::Matrix::product(Wscal, p), SGTELIB::Matrix::product(W, vxs)).norm();
-                verbose && std::cout << " Wp = " << SGTELIB::Matrix::product(Wscal, p).norm() << std::endl;
+                qpsolver_write_verbose(verbose, [&](std::ostringstream& oss) {
+                    oss << " normal step: |v| = " << vxs.norm()
+                        << " f(v) = " << f_normal_model
+                        << " |c(xv) + sv| = " << nr
+                        << " |c(x) + s| = " << cslack.norm()
+                        << " Wscalp - Wv = " << SGTELIB::Matrix::sub(SGTELIB::Matrix::product(Wscal, p), SGTELIB::Matrix::product(W, vxs)).norm()
+                        << " Wp = " << SGTELIB::Matrix::product(Wscal, p).norm() << std::endl;
+                });
                 nu = INF;
             }
             else
@@ -4501,13 +4678,19 @@ int NOMAD::QPSolverOptimize::solver_barrier(
         {
             if (pred < 0)
             {
-                verbose && std::cout << "quad = " << getModelObj(p, Q, qc) << " <= " << getModelObj(zer, Q, qc);
-                verbose && std::cout << " |Wscalp| = " << SGTELIB::Matrix::product(Wscal, p).norm() << " |Wp| = " << SGTELIB::Matrix::product(W, p).norm() << " |Wvxs| = " << SGTELIB::Matrix::product(W, vxs).norm();
-                verbose && std::cout << " |r| = " << nr << " |rv| = " << SGTELIB::Matrix::add(SGTELIB::Matrix::product(W, vxs), cslack).norm();
-                verbose && std::cout << " |c+s| = " << cslack.norm() << " nu = " << nu << std::endl;
-                verbose && std::cout << "pred = " << nu * cslack.norm();
-                verbose && std::cout << " + " << - getModelObj(p, Q, qc);
-                verbose && std::cout << " + " << - nu * nr << std::endl;
+                qpsolver_write_verbose(verbose, [&](std::ostringstream& oss) {
+                    oss << "quad = " << getModelObj(p, Q, qc) << " <= " << getModelObj(zer, Q, qc)
+                        << " |Wscalp| = " << SGTELIB::Matrix::product(Wscal, p).norm()
+                        << " |Wp| = " << SGTELIB::Matrix::product(W, p).norm()
+                        << " |Wvxs| = " << SGTELIB::Matrix::product(W, vxs).norm()
+                        << " |r| = " << nr
+                        << " |rv| = " << SGTELIB::Matrix::add(SGTELIB::Matrix::product(W, vxs), cslack).norm()
+                        << " |c+s| = " << cslack.norm()
+                        << " nu = " << nu << std::endl
+                        << "pred = " << nu * cslack.norm()
+                        << " + " << -getModelObj(p, Q, qc)
+                        << " + " << -nu * nr << std::endl;
+                });
             }
             // Decrease Delta
             Delta = std::max(gamma_1 * std::min(Delta, np), smallestDelta);
@@ -4515,17 +4698,22 @@ int NOMAD::QPSolverOptimize::solver_barrier(
         }
         iterInnerLoop += 1;
 
-        verbose && std::cout << "Inner " << iterInnerLoop << " (" << successiveUnsuccessful << "):";
-        verbose && std::cout << " |E(x,s,y;mu)| = " << res << " |r| = " << nr << " |c+s| = " << cslack.norm();
-        verbose && std::cout << " nu = " << nu;
-        if (pred != 0)
-        {
-            verbose && std::cout << " ared/pred = " << ared / pred;
-        } else
-        {
-            verbose && std::cout << " ared/pred = " << ared << "/" << pred;
-        }
-        verbose && std::cout << " Delta = " << Delta << " |p| = " << np << " |v| = " << vxs.norm() << std::endl;
+        qpsolver_write_verbose(verbose, [&](std::ostringstream& oss) {
+            oss << "Inner " << iterInnerLoop << " (" << successiveUnsuccessful << "):"
+                << " |E(x,s,y;mu)| = " << res
+                << " |r| = " << nr
+                << " |c+s| = " << cslack.norm()
+                << " nu = " << nu;
+            if (pred != 0)
+            {
+                oss << " ared/pred = " << ared / pred;
+            }
+            else
+            {
+                oss << " ared/pred = " << ared << "/" << pred;
+            }
+            oss << " Delta = " << Delta << " |p| = " << np << " |v| = " << vxs.norm() << std::endl;
+        });
 
         innerSuccess = (res <= tol_mu) || (np <= 1e-8) || (Delta < 1e-8); //(np <= small_p);
         innerFailure = innerFailure || (distXInnerLoop <= tolDistDXInner);
@@ -4608,9 +4796,11 @@ bool NOMAD::QPSolverOptimize::check_strict_feasible(const SGTELIB::Matrix& X,
 
     if (!strict_feasible)
     {
-        X.display(std::cout);
-        lvar.display(std::cout);
-        uvar.display(std::cout);
+        qpsolver_write_stream([&](std::ostringstream& oss) {
+            X.display(oss);
+            lvar.display(oss);
+            uvar.display(oss);
+        });
         throw NOMAD::Exception(__FILE__, __LINE__, X.get_name() + " is not strictly feasible.");
     }
 
@@ -4764,17 +4954,23 @@ bool NOMAD::QPSolverOptimize::Convex_TR_QP(
     const double slope = SGTELIB::Matrix::dot(g, *d);
     if (slope > 0)
     {
-        verbose && std::cout << "Numerical issue Newton direction is not positive definite, slope= " << slope << std::endl;
+        qpsolver_write_verbose(verbose, [&](std::ostringstream& oss) {
+            oss << "Numerical issue Newton direction is not positive definite, slope= " << slope << std::endl;
+        });
     }
 
     // Check if we solve a "fake" trust-region problem.
     const double nd = d->norm();
     if ((Delta < 1E15) && (nd > Delta))
     {
-        verbose && std::cout << " Newton direction is not inside the trust-region: " << nd << " >= " << Delta << std::endl;
+        qpsolver_write_verbose(verbose, [&](std::ostringstream& oss) {
+            oss << " Newton direction is not inside the trust-region: " << nd << " >= " << Delta << std::endl;
+        });
         d->multiply(Delta / nd);
     }
-    verbose && std::cout << "|d|= " << nd << " slope = " << slope << std::endl;
+    qpsolver_write_verbose(verbose, [&](std::ostringstream& oss) {
+        oss << "|d|= " << nd << " slope = " << slope << std::endl;
+    });
 
     delete [] sol;
 
@@ -4860,8 +5056,11 @@ bool NOMAD::QPSolverOptimize::InverseIteration(
         bk = bkp;
         SGTELIB::Matrix::inplace_product(invHWpbk, invHWp, bk);
 
-        verbose && std::cout << fix_point << " Ck=" << Ck;
-        verbose && std::cout << " |bk|=" << bk.norm() << " |bkp|=" << bkp.norm() << std::endl;
+        qpsolver_write_verbose(verbose, [&](std::ostringstream& oss) {
+            oss << fix_point << " Ck=" << Ck
+                << " |bk|=" << bk.norm()
+                << " |bkp|=" << bkp.norm() << std::endl;
+        });
 
         if (invHWpbk.norm() <= 0.0) {
             return false;
@@ -5059,10 +5258,13 @@ bool NOMAD::QPSolverOptimize::projected_conjugate_gradient (
     bool max_iter_reached = true;
     for (size_t iter = 0; iter < max_iter; ++iter)
     {
-        verbose && std::cout << "PCG-It " << iter << " :";
-        verbose && std::cout << " rg = " << rg << " tol = " << tol_CG;
-        verbose && std::cout << " dtGd = " << dtGd;
-        verbose && std::cout << " nx = " << x.norm() << " <= delta = " << delta << std::endl;
+        qpsolver_write_verbose(verbose, [&](std::ostringstream& oss) {
+            oss << "PCG-It " << iter << " :"
+                << " rg = " << rg
+                << " tol = " << tol_CG
+                << " dtGd = " << dtGd
+                << " nx = " << x.norm() << " <= delta = " << delta << std::endl;
+        });
 
         // Detection of a negative curvature: in this case, return a solution x
         // such that ||x||_2 = delta.
@@ -5072,7 +5274,9 @@ bool NOMAD::QPSolverOptimize::projected_conjugate_gradient (
             const auto roots = toBoundary(x, d, delta);
             const double theta = std::max(roots.first, roots.second);
             x.add(SGTELIB::Matrix::product(d, theta));
-            verbose && std::cout << "PCG: Detection of a negative curvature : stop" << std::endl;
+            qpsolver_write_verbose(verbose, [&](std::ostringstream& oss) {
+                oss << "PCG: Detection of a negative curvature : stop" << std::endl;
+            });
             max_iter_reached = false;
             break;
         }
@@ -5091,7 +5295,9 @@ bool NOMAD::QPSolverOptimize::projected_conjugate_gradient (
             const double theta = std::max(roots.first, roots.second);
             x = xtmp;
             x.add(SGTELIB::Matrix::product(d, theta));
-            verbose && std::cout << "PCG: has reached the trust region boundary : stop" << std::endl;
+            qpsolver_write_verbose(verbose, [&](std::ostringstream& oss) {
+                oss << "PCG: has reached the trust region boundary : stop" << std::endl;
+            });
             max_iter_reached = false;
             break;
         }
@@ -5125,7 +5331,9 @@ bool NOMAD::QPSolverOptimize::projected_conjugate_gradient (
         const double rgp = SGTELIB::Matrix::dot(rp, gp);
         if (rgp < tol_CG)
         {
-            verbose && std::cout << "PCG has reached the minimum tolerance : stop" << std::endl;
+            qpsolver_write_verbose(verbose, [&](std::ostringstream& oss) {
+                oss << "PCG has reached the minimum tolerance : stop" << std::endl;
+            });
             max_iter_reached = false;
             break;
         }
@@ -5167,7 +5375,9 @@ bool NOMAD::QPSolverOptimize::projected_conjugate_gradient (
     // Normally, one should retrieve the former direction if the feasibility has not be reached.
     if (max_iter_reached)
     {
-        verbose && std::cout << "PCG has reached the maximum number of iterations allowed : stop" << std::endl;
+        qpsolver_write_verbose(verbose, [&](std::ostringstream& oss) {
+            oss << "PCG has reached the maximum number of iterations allowed : stop" << std::endl;
+        });
     }
 
     return true;
@@ -5492,7 +5702,9 @@ void NOMAD::QPSolverOptimize::sizecheck(const int m, const int n, const SGTELIB:
 {
     if (X.get_nb_rows() != m || X.get_nb_cols() != n )
     {   
-        std::cout << X.get_nb_rows() << " != " << m << " and " << X.get_nb_cols() << " != " << n << std::endl;
+        qpsolver_write_stream([&](std::ostringstream& oss) {
+            oss << X.get_nb_rows() << " != " << m << " and " << X.get_nb_cols() << " != " << n << std::endl;
+        });
         throw NOMAD::Exception(__FILE__, __LINE__, X.get_name() + " has wrong dimensions!");
     }
 }
