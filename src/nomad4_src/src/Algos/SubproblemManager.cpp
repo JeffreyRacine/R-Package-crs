@@ -47,6 +47,8 @@
 
 #include "../Algos/SubproblemManager.hpp"
 
+#include <R_ext/Print.h>
+
 // Initialize singleton
 std::unique_ptr<NOMAD::SubproblemManager> NOMAD::SubproblemManager::_single=nullptr;
 
@@ -161,7 +163,7 @@ const NOMAD::Subproblem& NOMAD::SubproblemManager::getSubproblem(const NOMAD::St
     }
     catch (const std::out_of_range&)
     {
-        std::cerr << "Error: Subproblem not found for Algorithm " << algo->getName() << std::endl;
+        REprintf("Error: Subproblem not found for Algorithm %s\n", algo->getName().c_str());
     }
 
     err = "SubproblemManager could not get Subproblem for step " + step->getName();

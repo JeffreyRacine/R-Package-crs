@@ -64,6 +64,8 @@
 #include "../../Math/MathUtils.hpp"
 #include "../../Math/MatrixUtils.hpp"
 
+#include <R_ext/Print.h>
+
 #include "../../../ext/sgtelib/src/Surrogate_PRS.hpp"
 
 NOMAD::EvalPointPtr NOMAD::QPSolverOptimize::_prevFeasRefCenter = nullptr;
@@ -745,7 +747,7 @@ void NOMAD::QPSolverOptimize::solve_TR_constrained_QP(
 
         if (!successInverseIteration)
         {
-            std::cerr << "Error InverseIteration" << std::endl;
+            REprintf("Error InverseIteration\n");
             d->fill(0.0);
         }
         else 

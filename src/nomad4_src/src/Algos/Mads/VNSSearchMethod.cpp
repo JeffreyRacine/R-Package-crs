@@ -52,6 +52,8 @@
 #include "../../Algos/VNSMads/VNS.hpp"
 #include "../../Cache/CacheBase.hpp"
 #include "../../Output/OutputQueue.hpp"
+
+#include <R_ext/Print.h>
 //
 // Reference: File VNS_Search.cpp in NOMAD 3.9.1
 // Author: Christophe Tribes
@@ -82,7 +84,7 @@ void NOMAD::VNSSearchMethod::init()
             catch (NOMAD::Exception &e ) {
                 std::string error = e.what();
                 error += " VNS_MADS_SEARCH_WITH_SURROGATE is enabled but no registered surrogate evaluator is available.";
-                std::cerr << error << std::endl;
+                REprintf("%s\n", error.c_str());
             }
             
         }
@@ -294,5 +296,4 @@ void NOMAD::VNSSearchMethod::generateTrialPointsFinal()
      */
 
 }   // end generateTrialPoints
-
 

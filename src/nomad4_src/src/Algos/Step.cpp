@@ -54,6 +54,8 @@
 #include "../Cache/CacheBase.hpp"
 #include "../Output/OutputQueue.hpp"
 
+#include <R_ext/Print.h>
+
 /*-----------------------------------*/
 /*   static members initialization   */
 /*-----------------------------------*/
@@ -107,7 +109,7 @@ void NOMAD::Step::debugSegFault(int signalValue)
 #ifdef _OPENMP
     #pragma omp critical
 #endif
-    std::cerr << "Caught seg fault in thread " << NOMAD::getThreadNum() << std::endl;
+    REprintf("Caught seg fault in thread %d\n", NOMAD::getThreadNum());
     throw NOMAD::Exception(__FILE__,__LINE__,"Caught seg fault");
 }
 

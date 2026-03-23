@@ -53,6 +53,8 @@
 
 #include "../Nomad/nomad.hpp"
 
+#include <R_ext/Print.h>
+
 /*------------------------------------------*/
 /*            NOMAD main function           */
 /*------------------------------------------*/
@@ -147,7 +149,7 @@ int main (int argc, char ** argv)
                 {
                     NOMAD::OutputQueue::getInstance()->setDisplayDegree(1);
                     error = std::string("ERROR: Could not read file \"") + argv[1] + "\"";
-                    std::cerr << std::endl << error << std::endl << std::endl;
+                    REprintf("\n%s\n\n", error.c_str());
                     TheMainStep->displayUsage(argv[0]);
                 }
                 else
@@ -169,7 +171,7 @@ int main (int argc, char ** argv)
             {
                 error = "ERROR: ";
                 error += e.what();
-                std::cerr << std::endl << error << std::endl << std::endl;
+                REprintf("\n%s\n\n", error.c_str());
                 NOMAD::OutputQueue::getInstance()->setDisplayDegree(0);
             }
         }
@@ -179,5 +181,4 @@ int main (int argc, char ** argv)
 
     return (error.empty()) ? EXIT_SUCCESS : EXIT_FAILURE;
 }
-
 

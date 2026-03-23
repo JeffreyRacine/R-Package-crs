@@ -51,6 +51,8 @@
 #include "../Type/BBOutputType.hpp"
 #include "../Util/fileutils.hpp"
 
+#include <R_ext/Print.h>
+
 #include <thread>
 
 #include "../nomad_version.hpp"
@@ -491,14 +493,14 @@ void NOMAD::RunParameters::checkAndComply(
         int nb_threads = evaluatorControlGlobalParams->getAttributeValue<int>("NB_THREADS_PARALLEL_EVAL");
         if(nb_threads>1)
         {
-            std::cerr << "Warning: NB_THREADS_PARALLEL_EVAL>1. DiscoMads should not return any errors but it was not extensively validated with OpenMP. Prefer run on one thread if you want to stick to the theory." <<  std::endl;
+            REprintf("Warning: NB_THREADS_PARALLEL_EVAL>1. DiscoMads should not return any errors but it was not extensively validated with OpenMP. Prefer run on one thread if you want to stick to the theory.\n");
         }
 
         // Use with quad models search
         bool quadModelSearch = getAttributeValueProtected<bool>("QUAD_MODEL_SEARCH",false) || getAttributeValueProtected<bool>("QUAD_MODEL_SEARCH_SIMPLE_MADS",false);
         if(quadModelSearch)
         {
-            std::cerr << "Warning: it is currently not recommended to activate QUAD_MODEL_SEARCH or QUAD_MODEL_SEARCH_SIMPLE_MADS with DiscoMads as it may be much slower." <<  std::endl;
+            REprintf("Warning: it is currently not recommended to activate QUAD_MODEL_SEARCH or QUAD_MODEL_SEARCH_SIMPLE_MADS with DiscoMads as it may be much slower.\n");
         }
 
         // DiscoMads is currently not compatible with megaSearchPoll (because revealingPoll is not seen by the megaSearchPoll)

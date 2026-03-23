@@ -51,6 +51,8 @@
 #include "../Type/EvalSortType.hpp"
 #include "../Util/fileutils.hpp"
 
+#include <R_ext/Print.h>
+
 /*----------------------------------------*/
 /*         initializations (private)      */
 /*----------------------------------------*/
@@ -159,7 +161,7 @@ void NOMAD::EvalParameters::checkAndComply(const std::shared_ptr<NOMAD::RunParam
             }
             if(EBConstRevealing)
             {
-                std::cerr << "At least one EB constraint is set as revealing. This is ok but be aware that revelation will only be conducted for points satisfying all EB constraints."<<  std::endl;
+                REprintf("At least one EB constraint is set as revealing. This is ok but be aware that revelation will only be conducted for points satisfying all EB constraints.\n");
             }
         }
 
@@ -244,6 +246,5 @@ void NOMAD::EvalParameters::updateExeParam(const std::shared_ptr<NOMAD::RunParam
         }
     }
 }
-
 
 

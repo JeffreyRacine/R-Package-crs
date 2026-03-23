@@ -49,6 +49,7 @@
 #include "../../Algos/QPSolverAlgo/QPSolverAlgoMegaIteration.hpp"
 #include "../../Output/OutputQueue.hpp"
 
+#include <R_ext/Print.h>
 
 void NOMAD::QPSolverAlgoMegaIteration::init()
 {
@@ -199,7 +200,7 @@ void NOMAD::QPSolverAlgoMegaIteration::read(  std::istream& is )
             else
             {
                 std::string err = "Error: Reading a Barrier onto a NULL pointer";
-                std::cerr << err;
+                REprintf("%s", err.c_str());
             }
         }
         else

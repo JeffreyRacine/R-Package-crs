@@ -56,6 +56,8 @@
 #include "../../Eval/ComputeSuccessType.hpp"
 #include "../../Output/OutputQueue.hpp"
 
+#include <R_ext/Print.h>
+
 #include "../../../ext/sgtelib/src/Surrogate_Factory.hpp"
 //
 // Reference: File Sgtelib_Model_Manager.cpp in NOMAD 3.9.1
@@ -82,7 +84,7 @@ void NOMAD::SgtelibModel::init()
     {
         if (NOMAD::SgtelibModelFeasibilityType::C != modelFeasibility)
         {
-            std::cerr << "ERROR : Formulations FS and EIS can only be used with FeasibilityMethod C" << std::endl;
+            REprintf("ERROR : Formulations FS and EIS can only be used with FeasibilityMethod C\n");
             throw SGTELIB::Exception(__FILE__, __LINE__, "SgtelibModel: SGTELIB_MODEL_FEASIBILITY not valid");
         }
     }

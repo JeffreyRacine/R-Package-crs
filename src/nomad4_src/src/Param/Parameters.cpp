@@ -56,6 +56,9 @@
 #include "../Type/SgtelibModelFeasibilityType.hpp"
 #include "../Type/SgtelibModelFormulationType.hpp"
 #include "../Util/fileutils.hpp"
+
+#include <R_ext/Print.h>
+
 #ifdef _MSC_VER
 #include <io.h>    // For _access
 #define access _access
@@ -518,7 +521,7 @@ bool NOMAD::Parameters::isAlgoCompatible(const NOMAD::Parameters *p)
                 {
                     // Prepend info to string sdebug
                     sdebug = "Parameter values are not compatible: Parameter name: " + paramName + "; parameter type: " + paramType + "; parameter values:\n" + sdebug;
-                    std::cerr << sdebug << std::endl;
+                    REprintf("%s\n", sdebug.c_str());
                 }
                 break;
             }
@@ -604,7 +607,7 @@ void NOMAD::Parameters::readParamLine(const std::string &line, bool overwrite)
     {
         // Show exceptions thrown when reading entries from standard input,
         // but do not re-throw them.
-        std::cerr << "Warning: " << e.what() << std::endl;
+        REprintf("Warning: %s\n", e.what());
     }
 }
 
@@ -649,7 +652,7 @@ void NOMAD::Parameters::readParamLine(const std::string &line,
             }
             else
             {
-                std::cerr << "Warning: " << err << std::endl;
+                REprintf("Warning: %s\n", err.c_str());
             }
         }
     }
