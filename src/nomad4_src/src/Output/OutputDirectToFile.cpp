@@ -46,6 +46,7 @@
 /*---------------------------------------------------------------------------------*/
 
 #include <fstream>
+#include <R_ext/Print.h>
 #include "../Output/OutputDirectToFile.hpp"
 #include "../Util/Exception.hpp"
 
@@ -150,7 +151,7 @@ void NOMAD::OutputDirectToFile::initHistoryFile()
         _historyStream.open(_historyFile.c_str(), std::ofstream::out | std::ios::trunc);
         if (_historyStream.fail())
         {
-            std::cout << "Warning: could not open history file " << _historyFile << std::endl;
+            Rprintf("Warning: could not open history file %s\n", _historyFile.c_str());
         }
         _historyStream.setf(std::ios::fixed);
         // Set full precision on history file.
@@ -201,7 +202,7 @@ void NOMAD::OutputDirectToFile::write(const NOMAD::StatsInfo &info, bool writeIn
         }
         if (_solutionStream.fail())
         {
-            std::cout << "Warning: could not open solution file " << _solutionFile << std::endl;
+            Rprintf("Warning: could not open solution file %s\n", _solutionFile.c_str());
         }
         _solutionStream.setf(std::ios::fixed);
         // Set full precision on solution file.
@@ -216,6 +217,5 @@ void NOMAD::OutputDirectToFile::write(const NOMAD::StatsInfo &info, bool writeIn
 #endif // _OPENMP
 
 }
-
 
 

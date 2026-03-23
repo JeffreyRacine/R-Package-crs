@@ -55,6 +55,7 @@
 #include "../Util/AllStopReasons.hpp"
 #include "../Util/Clock.hpp"
 #include "../Util/MicroSleep.hpp"
+#include <R_ext/Print.h>
 
 /*-----------------------------------*/
 /*   static members initialization   */
@@ -225,7 +226,7 @@ void NOMAD::EvaluatorControl::destroy()
         // Show warnings and debug info.
         // Do not scare the user if display degree is medium or low.
         OUTPUT_INFO_START
-        std::cout << "Warning: deleting EvaluatorControl with EvalPoints remaining." << std::endl;
+        Rprintf("Warning: deleting EvaluatorControl with EvalPoints remaining.\n");
         OUTPUT_INFO_END
         bool showDebug = false;
         OUTPUT_DEBUG_START
@@ -239,7 +240,7 @@ void NOMAD::EvaluatorControl::destroy()
         if (remainsEvaluatedPoints(mainThreadNum))
         {
             OUTPUT_INFO_START
-            std::cout << "Warning: deleting EvaluatorControl with evaluated points remaining." << std::endl;
+            Rprintf("Warning: deleting EvaluatorControl with evaluated points remaining.\n");
             OUTPUT_INFO_END
             // Need to clear number of currently running before retrieving.
             while (getMainThreadInfo(mainThreadNum).getCurrentlyRunning() > 0)
@@ -375,7 +376,8 @@ void NOMAD::EvaluatorControl::setNbEval(const size_t nbEval)
 {
     if (nbEval < NOMAD::CacheBase::getNbCacheHits())
     {
-        std::cout << "Warning: trying to set EvaluatorControl NbEval to negative value: " << nbEval << " - " << NOMAD::CacheBase::getNbCacheHits() << std::endl;
+        Rprintf("Warning: trying to set EvaluatorControl NbEval to negative value: %zu - %zu\n",
+                nbEval, NOMAD::CacheBase::getNbCacheHits());
     }
     else
     {
@@ -1777,10 +1779,13 @@ void NOMAD::EvaluatorControl::debugDisplayQueue() const
     #pragma omp critical(displayQueue)
 #endif // _OPENMP
     {
-        std::cout << "Evaluation Queue" << (_evalPointQueue.empty() ? " is empty." : ":") << std::endl;
+        Rprintf("Evaluation Queue%s\n", _evalPointQueue.empty() ? " is empty." : ":");
         for (const auto& eqp : _evalPointQueue)
         {
-            std::cout << "    Main thread: " << eqp->getThreadAlgo() << " EvalType: " << eqp->getEvalType() << " " << eqp->displayAll(NOMAD::defaultFHComputeTypeS) << std::endl;
+            Rprintf("    Main thread: %d EvalType: %d %s\n",
+                    eqp->getThreadAlgo(),
+                    static_cast<int>(eqp->getEvalType()),
+                    eqp->displayAll(NOMAD::defaultFHComputeTypeS).c_str());
         }
     }
 #ifdef _OPENMP

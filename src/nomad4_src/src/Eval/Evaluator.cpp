@@ -47,6 +47,7 @@
 #include "../Eval/Evaluator.hpp"
 #include "../Output/OutputQueue.hpp"
 #include "../Util/fileutils.hpp"
+#include <R_ext/Print.h>
 #include <cstdio>  // For popen
 #include <fstream>  // For ofstream
 #ifndef _WIN32
@@ -361,7 +362,7 @@ std::vector<bool> NOMAD::Evaluator::evalXBBExe(NOMAD::Block &block,
     // Write a temp file for x0 and give that file as argument to bbExe.
     if (indexTmpFile >= _tmpFiles.size())
     {
-        std::cout << "Error: Evaluator: No enough temp file available." << std::endl;
+        REprintf("Error: Evaluator: No enough temp file available.\n");
         // Ugly early return
         return evalOk;
     }
@@ -384,7 +385,8 @@ std::vector<bool> NOMAD::Evaluator::evalXBBExe(NOMAD::Block &block,
         for (auto& it : block)
         {
             it->setEvalStatus(NOMAD::EvalStatusType::EVAL_ERROR, _evalType);
-            std::cout << "Error writing point " << it->display() << " to temporary file \"" << tmpfile << "\"" << std::endl;
+            REprintf("Error writing point %s to temporary file \"%s\"\n",
+                     it->display().c_str(), tmpfile.c_str());
         }
         // Ugly early return
         return evalOk;
@@ -439,7 +441,7 @@ std::vector<bool> NOMAD::Evaluator::evalXBBExe(NOMAD::Block &block,
             #pragma omp critical(warningEvalX)
 #endif
             {
-                std::cout << "Warning: Evaluation error with point " << it->display() << std::endl;
+                REprintf("Warning: Evaluation error with point %s\n", it->display().c_str());
             }
         }
     }
@@ -460,7 +462,8 @@ std::vector<bool> NOMAD::Evaluator::evalXBBExe(NOMAD::Block &block,
                 foutLogWithoutRedirection.open(tmplogfile.c_str(), std::ofstream::app );
                 if (foutLogWithoutRedirection.fail())
                 {
-                    std::cout << "Warning: fail to create log file for blackbox output (no redirection mode) \"" << tmplogfile << "\"" << std::endl;
+                    REprintf("Warning: fail to create log file for blackbox output (no redirection mode) \"%s\"\n",
+                             tmplogfile.c_str());
                 }
                 else
                 {
@@ -492,7 +495,8 @@ std::vector<bool> NOMAD::Evaluator::evalXBBExe(NOMAD::Block &block,
 #pragma omp critical(warningEvalX)
 #endif
                     {
-                        std::cout << "Warning: Cannot open output file " << tmpoutfile << " for point " << it->display() << std::endl;
+                        REprintf("Warning: Cannot open output file %s for point %s\n",
+                                 tmpoutfile.c_str(), it->display().c_str());
                     }
                 }
             }

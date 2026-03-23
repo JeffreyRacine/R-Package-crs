@@ -61,6 +61,7 @@
 #include "Eval.hpp"
 #include "EvalPoint.hpp"
 
+#include <R_ext/Print.h>
 #include <fstream>
 #include <iostream>
 #include <iterator>
@@ -358,7 +359,8 @@ bool NOMAD::CacheSet::smartInsert(const NOMAD::EvalPoint &evalPoint,
         }
         if (doEval)
         {
-            std::cout << "Warning: CacheSet: smartInsert: New evaluation of point found in cache " << (*ret.first).display() << std::endl;
+            Rprintf("Warning: CacheSet: smartInsert: New evaluation of point found in cache %s\n",
+                    (*ret.first).display().c_str());
         }
     }
 
@@ -569,7 +571,8 @@ size_t NOMAD::CacheSet::find(const NOMAD::Point & X,
                 err += NOMAD::itos(X.size());
                 err += " but the cache points are of size ";
                 err += NOMAD::itos(it->size());
-                std::cout << "Warning: CacheSet: find: Looking for a point of size " << X.size() << " but found cache point of size " << it->size() << std::endl;
+                Rprintf("Warning: CacheSet: find: Looking for a point of size %zu but found cache point of size %zu\n",
+                        X.size(), it->size());
                 errSizeDisplayed = true;
             }
             continue; // Points are in different dimensions -skip.
@@ -1106,7 +1109,7 @@ bool NOMAD::CacheSet::update(const NOMAD::EvalPoint& evalPoint, NOMAD::EvalType 
         // Cannot update to a null Eval. Warn the user.
         std::string err = "Warning: CacheSet: Update: Cannot update to a NULL Eval for Point ";
         err += evalPoint.displayAll();
-        std::cout << err << std::endl;
+        Rprintf("%s\n", err.c_str());
         return false;
     }
 
@@ -1118,7 +1121,7 @@ bool NOMAD::CacheSet::update(const NOMAD::EvalPoint& evalPoint, NOMAD::EvalType 
     if (it == _cache.end())
     {
         std::string err = "Warning: CacheSet: Update: Did not find EvalPoint to update in cache: " + evalPoint.displayAll();
-        std::cout << err << std::endl;
+        Rprintf("%s\n", err.c_str());
         NOMAD::OutputQueue::Add(err, NOMAD::OutputLevel::LEVEL_WARNING);
     }
     else
@@ -1199,7 +1202,8 @@ void NOMAD::CacheSet::clearModelEval(const int mainThreadNum)
 // Note June 2021: We are now ignoring points for which eval status is not EVAL_OK.
 void NOMAD::CacheSet::purge()
 {
-    std::cout << "Warning: Calling Cache purge. Size is " << _cache.size() << " max is " << _maxSize << ". Some points will be removed from the cache." << std::endl;
+    Rprintf("Warning: Calling Cache purge. Size is %zu max is %zu. Some points will be removed from the cache.\n",
+            _cache.size(), _maxSize);
     if ( _maxSize== NOMAD::INF_SIZE_T || _cache.size() < _maxSize)
     {
         // Do nothing
@@ -1496,5 +1500,4 @@ std::istream& NOMAD::operator>>(std::istream& is, NOMAD::CacheSet& cache)
 
     return is;
 }
-
 
