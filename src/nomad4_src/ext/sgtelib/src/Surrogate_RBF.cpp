@@ -24,6 +24,18 @@
 /*-------------------------------------------------------------------------------------*/
 
 #include "Surrogate_RBF.hpp"
+#include <R_ext/Print.h>
+#include <sstream>
+
+namespace {
+template <class Writer>
+inline void sgtelib_write_console(Writer&& writer)
+{
+  std::ostringstream oss;
+  writer(oss);
+  Rprintf("%s", oss.str().c_str());
+}
+}  // namespace
 
 
 /*----------------------------*/
@@ -42,7 +54,9 @@ SGTELIB::Surrogate_RBF::Surrogate_RBF ( SGTELIB::TrainingSet & trainingset,
   _Alpha             ( "alpha",0,0         ),
   _selected_kernel   (1,-1                 ){
   #ifdef SGTELIB_DEBUG
-    std::cout << "constructor RBF\n";
+    sgtelib_write_console([&](std::ostringstream& oss) {
+      oss << "constructor RBF\n";
+    });
   #endif
 }//
 
@@ -72,7 +86,9 @@ void SGTELIB::Surrogate_RBF::display_private ( std::ostream & out ) const {
 bool SGTELIB::Surrogate_RBF::init_private ( void ) {
 
   #ifdef SGTELIB_DEBUG
-    std::cout << "Surrogate_RBF : init_private\n";
+    sgtelib_write_console([&](std::ostringstream& oss) {
+      oss << "Surrogate_RBF : init_private\n";
+    });
   #endif
 
     _selected_kernel = {-1};
@@ -121,7 +137,9 @@ bool SGTELIB::Surrogate_RBF::init_private ( void ) {
     else if (dmin==0 ) _qprs = 1;
     else if (dmin==1 ) _qprs = 1 + _trainingset.get_nvar(); 
     else{
-      std::cout << "dmin = " << dmin << "\n";
+      sgtelib_write_console([&](std::ostringstream& oss) {
+        oss << "dmin = " << dmin << "\n";
+      });
       throw SGTELIB::Exception ( __FILE__ , __LINE__ ,"dmin out of range." );
     }
   }
