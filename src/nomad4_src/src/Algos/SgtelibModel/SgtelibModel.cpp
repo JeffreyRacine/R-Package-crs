@@ -57,6 +57,7 @@
 #include "../../Output/OutputQueue.hpp"
 
 #include <R_ext/Print.h>
+#include <sstream>
 
 #include "../../../ext/sgtelib/src/Surrogate_Factory.hpp"
 //
@@ -173,34 +174,20 @@ bool NOMAD::SgtelibModel::isReady() const
 /*-------------------------*/
 void NOMAD::SgtelibModel::info()
 {
-    std::cout << "  #===================================================== #" << std::endl;
-    std::cout << "SgtelibModel::info" << std::endl ;
-    std::cout << "SgtelibModel : " << this << std::endl;
-    std::cout << "Model : " << _model << std::endl;
-
-    std::cout << "Cache size : " << NOMAD::CacheBase::getInstance()->size() << std::endl;
-    std::cout << "Found feasible : " << _foundFeasible << std::endl;
-
-    // Display of the model's bounds.
-    std::cout << "Model Bounds, lower bounds : ( " << _modelLowerBound.display() << " ";
-
-    std::cout << ") , upper bounds : ( " << _modelUpperBound.display() << " )" << std::endl;
-
-    std::cout << "Model Extended Bounds, lower bounds : ( " << getExtendedLowerBound().display() << " ";
-
-    std::cout << ") , upper bounds : ( " << getExtendedUpperBound() << " )" << std::endl;
-
-    if ( _ready )
-    {
-        std::cout << "sgtelibModel model is ready" << std::endl;
-    }
-    else
-    {
-        std::cout << "sgtelibModel model is NOT ready" << std::endl;
-    }
-
-
-    std::cout << "  #===================================================== #" << std::endl;
+    std::ostringstream oss;
+    oss << "  #===================================================== #\n";
+    oss << "SgtelibModel::info\n";
+    oss << "SgtelibModel : " << this << "\n";
+    oss << "Model : " << _model << "\n";
+    oss << "Cache size : " << NOMAD::CacheBase::getInstance()->size() << "\n";
+    oss << "Found feasible : " << _foundFeasible << "\n";
+    oss << "Model Bounds, lower bounds : ( " << _modelLowerBound.display() << " ";
+    oss << ") , upper bounds : ( " << _modelUpperBound.display() << " )\n";
+    oss << "Model Extended Bounds, lower bounds : ( " << getExtendedLowerBound().display() << " ";
+    oss << ") , upper bounds : ( " << getExtendedUpperBound() << " )\n";
+    oss << (_ready ? "sgtelibModel model is ready" : "sgtelibModel model is NOT ready") << "\n";
+    oss << "  #===================================================== #\n";
+    Rprintf("%s", oss.str().c_str());
 }
 
 
@@ -406,12 +393,14 @@ NOMAD::Double NOMAD::SgtelibModel::getFMin() const
 
     if (_trainingSet->is_ready())
     {
-        std::cout << "(getFMin : training set is ready:) " << _trainingSet->get_nb_points() << ")" << std::endl;
+        std::ostringstream oss;
+        oss << "(getFMin : training set is ready:) " << _trainingSet->get_nb_points() << ")\n";
+        Rprintf("%s", oss.str().c_str());
         fMin = _trainingSet->get_f_min();
     }
     else
     {
-        std::cout << "(getFMin : training set is not ready) " << std::endl;
+        Rprintf("(getFMin : training set is not ready)\n");
         // Do nothing: fMin remains undefined.
     }
 

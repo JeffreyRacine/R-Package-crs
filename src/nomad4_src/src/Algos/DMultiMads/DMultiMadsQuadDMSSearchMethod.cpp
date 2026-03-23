@@ -56,6 +56,8 @@
 #include "../../Algos/SubproblemManager.hpp"
 #include "../../Eval/ProgressiveBarrier.hpp"
 #include "../../Type/DMultiMadsSearchStrategyType.hpp"
+#include <R_ext/Print.h>
+#include <sstream>
 
 
 void NOMAD::DMultiMadsQuadDMSSearchMethod::init()
@@ -534,14 +536,17 @@ bool NOMAD::DMultiMadsQuadDMSSearchMethod::selectObjCombination()
 
 void NOMAD::DMultiMadsQuadDMSSearchMethod::testObjCombinations()
 {
-    std::cout << "Objective combinations: ";
+    std::ostringstream oss;
+    oss << "Objective combinations: ";
     while (selectObjCombination())
     {
-        std::cout <<" [ ";
+        oss << " [ ";
         for(const auto i: _activeObjsIndex)
         {
-            std::cout << i << " " ;
+            oss << i << " ";
         }
-        std::cout << " ] ";
+        oss << " ] ";
     }
+    oss << "\n";
+    Rprintf("%s", oss.str().c_str());
 }
