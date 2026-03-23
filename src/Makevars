@@ -15,6 +15,7 @@ endif
 NOMAD4_SGTELIB_CPP = $(shell find $(NOMAD4_ROOT)/ext/sgtelib/src -type f -name '*.cpp')
 NOMAD4_SGTELIB_CPP := $(filter-out $(NOMAD4_ROOT)/ext/sgtelib/src/sgtelib.cpp,$(NOMAD4_SGTELIB_CPP))
 NOMAD4_SGTELIB_CPP := $(filter-out $(NOMAD4_ROOT)/ext/sgtelib/src/sgtelib_predict.cpp,$(NOMAD4_SGTELIB_CPP))
+NOMAD4_SGTELIB_CPP := $(filter-out $(NOMAD4_ROOT)/ext/sgtelib/src/Tests.cpp,$(NOMAD4_SGTELIB_CPP))
 NOMAD4_CINT_CPP = $(NOMAD4_ROOT)/interfaces/CInterface/NomadStdCInterface.cpp
 
 NOMAD4_OBJECTS = $(NOMAD4_SRC_CPP:.cpp=.o) $(NOMAD4_SGTELIB_CPP:.cpp=.o) $(NOMAD4_CINT_CPP:.cpp=.o)
