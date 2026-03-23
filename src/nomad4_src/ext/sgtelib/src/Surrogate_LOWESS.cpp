@@ -24,12 +24,24 @@
 /*-------------------------------------------------------------------------------------*/
 
 #include "Surrogate_LOWESS.hpp"
+#include <R_ext/Print.h>
+#include <sstream>
 
 //#define SGTELIB_LOWESS_DEV
 //#define SGTELIB_DEBUG
 
 
 const int GAMMA_EXP = 2;
+
+namespace {
+template <class Writer>
+inline void surrogate_lowess_write_console(Writer&& writer)
+{
+  std::ostringstream oss;
+  writer(oss);
+  Rprintf("%s", oss.str().c_str());
+}
+}  // namespace
 
 /*----------------------------*/
 /*         constructor        */
@@ -334,8 +346,10 @@ void SGTELIB::Surrogate_LOWESS::predict_private_single ( const SGTELIB::Matrix X
     std::cout << "mean var = " << mean << " " << var << "\n";
   #endif
   if ( (mean<0) || (var<0) ){
-    std::cout << "mean: " << mean << "\n";
-    std::cout << "var: " << var << "\n";
+    surrogate_lowess_write_console([&](std::ostringstream& oss) {
+      oss << "mean: " << mean << "\n";
+      oss << "var: " << var << "\n";
+    });
     throw SGTELIB::Exception ( __FILE__ , __LINE__ ,"Error on computation of mean and var" );
   }
   // Gamma parameters
@@ -847,8 +861,10 @@ void SGTELIB::Surrogate_LOWESS::predict_private_objective_single ( const SGTELIB
     std::cout << "mean var = " << mean << " " << var << "\n";
   #endif
   if ( (mean<0) || (var<0) ){
-    std::cout << "mean: " << mean << "\n";
-    std::cout << "var: " << var << "\n";
+    surrogate_lowess_write_console([&](std::ostringstream& oss) {
+      oss << "mean: " << mean << "\n";
+      oss << "var: " << var << "\n";
+    });
     throw SGTELIB::Exception ( __FILE__ , __LINE__ ,"Error on computation of mean and var" );
   }
   // Gamma parameters
@@ -1337,7 +1353,6 @@ const SGTELIB::Matrix * SGTELIB::Surrogate_LOWESS::get_matrix_Zvs (void){
   #endif
   return _Zvs;
 }//
-
 
 
 
