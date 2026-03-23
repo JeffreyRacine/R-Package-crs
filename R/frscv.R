@@ -100,8 +100,6 @@ frscv <- function(xz,
     ## Degree is first column of K K[,1], segments second column K[,2]
     ## - could create a tmp vector for i/o, or could switch
 
-    .crs_progress_status_clear(progress.status)
-
     ## Format function...
     fw.format.2 <- function(input) sapply(input,sprintf,fmt="%#.2f")
 
@@ -177,7 +175,6 @@ frscv <- function(xz,
     enabled = display.nomad.progress,
     surface = "cv"
   )
-  .crs_progress_status_update(progress.status, "Working...")
 
   ## Take data frame x and parse into factors (z) and numeric (x)
 

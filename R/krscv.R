@@ -167,7 +167,6 @@ krscv <- function(xz,
       msg <- paste(tmp.1,tmp.3,tmp.4,sep="")
     }
 
-    .crs_progress_status_clear(progress.status)
     .crs_progress_status_update(progress.status, msg)
 
     return(cv)
@@ -215,7 +214,6 @@ krscv <- function(xz,
     enabled = display.nomad.progress,
     surface = "cv"
   )
-  .crs_progress_status_update(progress.status, "Working...")
 
   ## Exhaustive evaluation over all combinations of K, search over
   ## lambda for each combination

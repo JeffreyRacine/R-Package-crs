@@ -167,6 +167,10 @@
   sprintf("(%s)", paste(vapply(as.numeric(x), format, character(1L)), collapse = ","))
 }
 
+.crs_nomad_progress_show_start <- function() {
+  isTRUE(getOption("crs.nomad.progress.show.start", TRUE))
+}
+
 .crs_nomad_start_equal <- function(x,
                                    y,
                                    tol = sqrt(.Machine$double.eps)) {
@@ -283,7 +287,27 @@
   idx <- progress$next.restart
   if (is.null(progress$starts) || idx > nrow(progress$starts)) {
     if (progress$iteration == 0L && progress$restart.eval == 0L) {
-      progress$iteration <- 1L
+      if (isTRUE(.crs_nomad_progress_show_start())) {
+        progress$iteration <- 1L
+        .crs_nomad_progress_update_line(
+          progress = progress,
+          degree = degree,
+          segments = segments,
+          aux = aux,
+          value = NULL,
+          start = TRUE
+        )
+      }
+    }
+    return(invisible(NULL))
+  }
+
+  if (.crs_nomad_start_equal(input, progress$starts[idx, ])) {
+    progress$restart.index <- idx
+    progress$restart.eval <- 0L
+    progress$next.restart <- idx + 1L
+    if (isTRUE(.crs_nomad_progress_show_start())) {
+      progress$iteration <- progress$iteration + 1L
       .crs_nomad_progress_update_line(
         progress = progress,
         degree = degree,
@@ -293,22 +317,6 @@
         start = TRUE
       )
     }
-    return(invisible(NULL))
-  }
-
-  if (.crs_nomad_start_equal(input, progress$starts[idx, ])) {
-    progress$restart.index <- idx
-    progress$restart.eval <- 0L
-    progress$iteration <- progress$iteration + 1L
-    progress$next.restart <- idx + 1L
-    .crs_nomad_progress_update_line(
-      progress = progress,
-      degree = degree,
-      segments = segments,
-      aux = aux,
-      value = NULL,
-      start = TRUE
-    )
   }
 
   invisible(NULL)

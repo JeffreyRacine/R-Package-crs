@@ -161,42 +161,66 @@ crsiv.default <- function(y,
     return(sum((CZ %*% phi - r)^2)/alpha)
   }
 
-  progress.state <- .crs_progress_iv_initialize_state(
-    .crs_progress_begin(
-      label = .crs_progress_iv_title(),
-      domain = "general",
-      surface = "iv_solve"
-    )
+  progress.status <- .crs_progress_status_begin(
+    enabled = display.nomad.progress,
+    surface = "iv_solve"
   )
-  on.exit({
-    progress.state <<- .crs_progress_end(progress.state)
-  }, add = TRUE)
+  on.exit(.crs_progress_status_clear(progress.status), add = TRUE)
+  iv.current.label <- NULL
+  iv.current.iteration <- NULL
+
+  iv_status_line <- function(label = NULL, iteration = NULL) {
+    title <- .crs_progress_iv_title()
+    if (is.null(label) && is.null(iteration)) {
+      return(sprintf("%s...", title))
+    }
+
+    fields <- character()
+    if (!is.null(label) && nzchar(label)) {
+      fields <- c(fields, label)
+    }
+    if (!is.null(iteration)) {
+      fields <- c(fields, sprintf("iteration %s", format(iteration)))
+    }
+    fields <- c(fields, sprintf("elapsed %ss", .crs_progress_fmt_num(max(0, .crs_progress_now() - ptm.start[["elapsed"]]))))
+
+    sprintf("%s (%s)", title, paste(fields, collapse = ", "))
+  }
+
+  iv_status_update <- function(label = NULL, iteration = NULL, clear = FALSE) {
+    if (!isTRUE(display.nomad.progress)) {
+      return(invisible(NULL))
+    }
+
+    if (isTRUE(clear)) {
+      .crs_progress_status_clear(progress.status)
+      return(invisible(NULL))
+    }
+
+    line <- iv_status_line(label = label, iteration = iteration)
+    .crs_progress_status_update(progress.status, line)
+    invisible(NULL)
+  }
+
+  iv_status_update()
+
+  iv_nested_context <- function() {
+    if (is.null(iv.current.label) || !nzchar(iv.current.label)) {
+      return(NULL)
+    }
+
+    if (is.null(iv.current.iteration)) {
+      return(iv.current.label)
+    }
+
+    sprintf("%s, iteration %s", iv.current.label, format(iv.current.iteration))
+  }
 
   with_nested_crs_progress <- function(expr) {
     expr <- substitute(expr)
-    handoff <- NULL
-
-    if (isTRUE(display.nomad.progress)) {
-      handoff <- list(
-        label = progress.state$iv_object_label,
-        iteration = progress.state$iv_iteration
-      )
-      progress.state <<- .crs_progress_end(progress.state)
-    }
-
-    .crs_set_messages(crs.messages, isTRUE(display.nomad.progress))
+    .crs_set_messages(crs.messages, FALSE)
     on.exit({
       .crs_set_messages(crs.messages, TRUE)
-      if (isTRUE(display.nomad.progress) && !is.null(handoff)) {
-        progress.state$iv_object_label <<- handoff$label
-        progress.state$iv_iteration <<- handoff$iteration
-        progress.state <<- .crs_progress_step_at(
-          state = progress.state,
-          now = .crs_progress_now(),
-          done = handoff$iteration,
-          force = TRUE
-        )
-      }
     }, add = TRUE)
 
     eval(expr, envir = parent.frame())
@@ -209,7 +233,7 @@ crsiv.default <- function(y,
                      data = data,
                      dots = dots,
                      opts = opts,
-                     display.nomad.progress = display.nomad.progress,
+                     display.nomad.progress = FALSE,
                      display.warnings = display.warnings,
                      degree = degree,
                      segments = segments,
@@ -220,7 +244,9 @@ crsiv.default <- function(y,
   }
 
   run.crs <- function(...) {
-    with_nested_crs_progress(crs(...))
+    args <- list(...)
+    args$display.nomad.progress <- FALSE
+    with_nested_crs_progress(do.call(crs, args))
   }
 
   ## Basic error checking
@@ -243,14 +269,14 @@ crsiv.default <- function(y,
       }
     }
 
-    progress.state$iv_object_label <<- label
-    progress.state$iv_iteration <<- iteration
-    progress.state <<- .crs_progress_step_at(
-      state = progress.state,
-      now = .crs_progress_now(),
-      done = iteration,
-      force = TRUE
-    )
+    if (identical(iv.current.label, label) &&
+        identical(iv.current.iteration, iteration)) {
+      return(invisible(NULL))
+    }
+
+    iv.current.label <<- label
+    iv.current.iteration <<- iteration
+    iv_status_update(label = label, iteration = iteration)
 
     invisible(NULL)
   }

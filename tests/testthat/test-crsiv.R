@@ -97,7 +97,7 @@ test_that("crsiv works when crs.messages option is unset", {
   expect_null(getOption("crs.messages"))
 })
 
-test_that("crsiv NOMAD progress hands off to nested crs selectors", {
+test_that("crsiv NOMAD progress mirrors outer IV stage ownership", {
   test_time_values <- function(values) {
     i <- 0L
     force(values)
@@ -142,10 +142,13 @@ test_that("crsiv NOMAD progress hands off to nested crs selectors", {
 
   lines <- unique(vapply(traced$trace, `[[`, character(1L), "line"))
   expect_true(any(grepl("IV regression", lines, fixed = TRUE)))
-  expect_true(any(grepl("^\\[crs\\] Selecting spline model\\.\\.\\.", lines)))
-  expect_true(any(grepl("multistart 1/2", lines, fixed = TRUE)))
-  expect_true(any(grepl("fv=", lines, fixed = TRUE)))
+  expect_true(any(grepl("^\\[crs\\] IV regression \\(", lines)))
+  expect_true(any(grepl("iteration 1", lines, fixed = TRUE)))
+  expect_false(any(grepl("^\\[crs\\] Selecting spline model\\.\\.\\.", lines)))
+  expect_false(any(grepl("multistart 1/2", lines, fixed = TRUE)))
+  expect_false(any(grepl("fv=", lines, fixed = TRUE)))
   expect_false(any(grepl("Calling NOMAD", lines, fixed = TRUE)))
+  expect_false(any(grepl("Working...", lines, fixed = TRUE)))
 })
 
 test_that("crsiv NOMAD progress does not change fixed-seed results", {

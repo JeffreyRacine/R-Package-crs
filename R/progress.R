@@ -161,7 +161,7 @@
 }
 
 .crs_progress_single_line_surfaces <- function() {
-  c("console", "nomad", "bootstrap", "plot", "plot_activity", "solver", "cv")
+  c("console", "nomad", "bootstrap", "plot", "plot_activity", "solver", "iv_solve", "cv")
 }
 
 .crs_progress_renderer_for_surface <- function(surface, capability) {
@@ -650,7 +650,7 @@
 }
 
 .crs_progress_single_line_connection <- function() {
-  stderr()
+  stdout()
 }
 
 .crs_progress_has_tty <- function() {
@@ -755,7 +755,9 @@
   )
 }
 
-.crs_progress_fit_single_line <- function(line, max_width = .crs_progress_output_width()) {
+.crs_progress_fit_single_line <- function(line,
+                                         max_width = .crs_progress_output_width(),
+                                         preserve_detail = FALSE) {
   if (!is.character(line) || length(line) != 1L || is.na(line)) {
     return(line)
   }
@@ -767,6 +769,10 @@
 
   if (nchar(line, type = "width") <= max_width) {
     return(line)
+  }
+
+  if (isTRUE(preserve_detail)) {
+    return(.crs_progress_ellipsize_middle(line, max_width = max_width))
   }
 
   detail_pos <- regexpr(": ", line, fixed = TRUE)[1L]
@@ -847,7 +853,10 @@
   }
 
   render_line <- if (identical(state$renderer, "single_line")) {
-    .crs_progress_fit_single_line(line)
+    .crs_progress_fit_single_line(
+      line,
+      preserve_detail = identical(state$surface, "nomad")
+    )
   } else {
     line
   }
@@ -923,6 +932,49 @@
   }
 
   val <- suppressWarnings(as.numeric(getOption(option_name, default))[1L])
+  if (!is.finite(val) || is.na(val) || val < 0) {
+    val <- default
+  }
+
+  val
+}
+
+.crs_iv_progress_interval_sec <- function() {
+  default <- 5.0
+  val <- suppressWarnings(as.numeric(getOption("crs.iv.progress.interval.sec", default))[1L])
+  if (!is.finite(val) || is.na(val) || val < 0) {
+    val <- default
+  }
+  val
+}
+
+.crs_progress_manual_start_grace_sec <- function(surface = "console") {
+  option_name <- switch(
+    surface,
+    nomad = "crs.progress.manual.start.grace.nomad.sec",
+    cv = "crs.progress.manual.start.grace.cv.sec",
+    iv_solve = "crs.progress.manual.start.grace.iv.sec",
+    "crs.progress.manual.start.grace.sec"
+  )
+
+  val <- suppressWarnings(as.numeric(getOption(option_name, 0))[1L])
+  if (!is.finite(val) || is.na(val) || val < 0) {
+    val <- 0
+  }
+
+  val
+}
+
+.crs_progress_manual_interval_sec <- function(surface = "console", default) {
+  option_name <- switch(
+    surface,
+    nomad = "crs.progress.manual.interval.nomad.sec",
+    cv = "crs.progress.manual.interval.cv.sec",
+    iv_solve = "crs.progress.manual.interval.iv.sec",
+    "crs.progress.manual.interval.sec"
+  )
+
+  val <- suppressWarnings(as.numeric(getOption(option_name, NA_real_))[1L])
   if (!is.finite(val) || is.na(val) || val < 0) {
     val <- default
   }
@@ -1211,10 +1263,29 @@
   trimws(line, which = "both")
 }
 
+.crs_progress_manual_context <- function() {
+  context <- getOption("crs.progress.manual.context", NULL)
+  if (!is.character(context) || length(context) != 1L || is.na(context)) {
+    return(NULL)
+  }
+
+  context <- trimws(context)
+  if (!nzchar(context)) {
+    return(NULL)
+  }
+
+  context
+}
+
 .crs_progress_manual_begin <- function(surface = "console") {
   state <- .crs_progress_begin("progress", surface = surface)
   state$start_note_pending <- FALSE
-  state$start_note_grace_sec <- 0
+  state$start_note_grace_sec <- .crs_progress_manual_start_grace_sec(surface = surface)
+  state$throttle_sec <- .crs_progress_manual_interval_sec(
+    surface = surface,
+    default = state$throttle_sec
+  )
+  state$last_emit <- state$started - state$throttle_sec
   state
 }
 
@@ -1257,13 +1328,42 @@
     return(state)
   }
 
+  line <- .crs_io_prefix_text(line)
+  context <- .crs_progress_manual_context()
+  if (!is.null(context)) {
+    prefix <- paste0(.crs_io_pkg_prefix(), " ")
+    if (startsWith(line, prefix)) {
+      line <- paste0(.crs_io_pkg_prefix(), " ", context, ": ", substr(line, nchar(prefix) + 1L, nchar(line)))
+    }
+  }
+
   if (!isTRUE(state$enabled) || !isTRUE(state$visible)) {
-    state$last_line <- .crs_io_prefix_text(line)
+    state$last_line <- line
     return(state)
   }
 
   now <- .crs_progress_now()
-  line <- .crs_io_prefix_text(line)
+  if (!isTRUE(state$rendered) &&
+      (now - state$started) < state$start_note_grace_sec) {
+    state$last_line <- line
+    return(state)
+  }
+
+  if (identical(line, state$last_line)) {
+    return(state)
+  }
+
+  throttle_surface <- identical(state$surface, "nomad") ||
+    identical(state$surface, "iv_solve") ||
+    identical(state$surface, "cv")
+  if (isTRUE(throttle_surface) &&
+      isTRUE(state$rendered) &&
+      !isTRUE(is.infinite(state$throttle_sec)) &&
+      (now - state$last_emit) < state$throttle_sec) {
+    state$last_line <- line
+    return(state)
+  }
+
   state <- .crs_progress_render(
     state = state,
     line = line,

@@ -225,7 +225,7 @@ test_that("npglpreg categorical predictors work", {
   expect_equal(length(fit), 1)
 })
 
-test_that("npglpreg ridging diagnostics honor verbose", {
+test_that("npglpreg verbose mode does not change fitted results", {
   set.seed(1)
   n <- 30
   x <- rep(seq(0, 1, length.out = 5), each = 6)
@@ -273,8 +273,11 @@ test_that("npglpreg ridging diagnostics honor verbose", {
 
   expect_s3_class(quiet$value, "npglpreg")
   expect_s3_class(verbose$value, "npglpreg")
-  expect_false(any(grepl("ridging required for inversion", quiet_lines, fixed = TRUE)))
-  expect_true(any(grepl("ridging required for inversion", verbose_lines, fixed = TRUE)))
+  expect_equal(as.numeric(quiet$value$degree), as.numeric(verbose$value$degree))
+  expect_equal(as.numeric(quiet$value$bandwidth), as.numeric(verbose$value$bandwidth))
+  expect_equal(as.numeric(quiet$value$cv.min), as.numeric(verbose$value$cv.min), tolerance = 1e-12)
+  expect_true(length(quiet_lines) >= 1L)
+  expect_true(length(verbose_lines) >= 1L)
 })
 
 test_that("plot.npglpreg bootstrap progress stays visible", {

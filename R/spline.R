@@ -198,7 +198,6 @@ predictKernelSpline <- function(x,
     enabled = display.nomad.progress,
     surface = "solver"
   )
-  .crs_progress_status_update(progress.status, "Working...")
 
   model <- NULL ## Returned if model=FALSE and there exist categorical
   ## predictors
@@ -828,7 +827,6 @@ preditFactorSpline <- function(x,
       .crs_progress_status_update(progress.status, msg)
     }
   }
-  set_status("Working...")
 
   if(any(K[,1] > 0)||any(I>0)) {
 

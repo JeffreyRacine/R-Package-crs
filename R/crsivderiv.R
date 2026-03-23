@@ -65,23 +65,33 @@ crsivderiv.default <- function(y,
 
   progress.status <- .crs_progress_status_begin(
     enabled = display.nomad.progress,
-    surface = "solver"
+    surface = "iv_solve"
   )
+  on.exit(.crs_progress_status_clear(progress.status), add = TRUE)
   set_status <- function(msg = NULL) {
-    .crs_progress_status_clear(progress.status)
-    if (!is.null(msg)) {
+    if (is.null(msg)) {
+      .crs_progress_status_clear(progress.status)
+    } else {
       .crs_progress_status_update(progress.status, msg)
     }
+    invisible(NULL)
+  }
+
+  iv_nested_context <- function(label, iteration = NULL) {
+    if (is.null(label) || !nzchar(label)) {
+      return(NULL)
+    }
+
+    if (is.null(iteration)) {
+      return(label)
+    }
+
+    sprintf("%s, iteration %s", label, format(iteration))
   }
 
   with_nested_crs_progress <- function(expr) {
     expr <- substitute(expr)
-
-    if (isTRUE(display.nomad.progress)) {
-      set_status()
-    }
-
-    .crs_set_messages(crs.messages, isTRUE(display.nomad.progress))
+    .crs_set_messages(crs.messages, FALSE)
     on.exit(.crs_set_messages(crs.messages, TRUE), add = TRUE)
 
     eval(expr, envir = parent.frame())
@@ -95,7 +105,7 @@ crsivderiv.default <- function(y,
                      data = data,
                      dots = dots,
                      opts = opts,
-                     display.nomad.progress = display.nomad.progress,
+                     display.nomad.progress = FALSE,
                      display.warnings = display.warnings,
                      deriv = deriv,
                      degree = degree,
@@ -107,7 +117,9 @@ crsivderiv.default <- function(y,
   }
 
   run.crs <- function(...) {
-    with_nested_crs_progress(crs(...))
+    args <- list(...)
+    args$display.nomad.progress <- FALSE
+    with_nested_crs_progress(do.call(crs, args))
   }
 
   ## Basic error checking
