@@ -66,6 +66,8 @@
 #include "../Type/EvalSortType.hpp"
 #include "../Util/Clock.hpp"
 #include "../Util/fileutils.hpp"
+#include <R_ext/Print.h>
+#include <sstream>
 
 // Specific algos
 #include "../Algos/LatinHypercubeSampling/LH.hpp"
@@ -124,6 +126,13 @@ NOMAD::MainStep::~MainStep()
     _algos.clear();
 }
 
+namespace {
+void npcrs_print_stream(std::ostringstream& oss)
+{
+    Rprintf("%s", oss.str().c_str());
+}
+}
+
 NOMAD::ArrayOfPoint NOMAD::MainStep::suggest()
 {
     NOMAD::ArrayOfPoint suggestedPoints;
@@ -139,7 +148,9 @@ NOMAD::ArrayOfPoint NOMAD::MainStep::suggest()
     // Display attributes and check attribute consistency
     if (_allParams->getAttributeValue<int>("DISPLAY_DEGREE") >= (int)NOMAD::OutputLevel::LEVEL_DEBUG)
     {
-        _allParams->display( std::cout );
+        std::ostringstream oss;
+        _allParams->display(oss);
+        npcrs_print_stream(oss);
     }
 
     NOMAD::OutputQueue::getInstance()->initParameters( _allParams->getDispParams() );
@@ -245,7 +256,9 @@ void NOMAD::MainStep::observe(const std::vector<NOMAD::EvalPoint>& evalPointList
     // Display attributes and check attribute consistency
     if (_allParams->getAttributeValue<int>("DISPLAY_DEGREE") >= (int)NOMAD::OutputLevel::LEVEL_DEBUG)
     {
-        _allParams->display(std::cout);
+        std::ostringstream oss;
+        _allParams->display(oss);
+        npcrs_print_stream(oss);
     }
 
     NOMAD::OutputQueue::getInstance()->initParameters(_allParams->getDispParams());
@@ -353,7 +366,9 @@ void NOMAD::MainStep::startImp()
     _allParams->checkAndComply();
     if (_allParams->getAttributeValue<int>("DISPLAY_DEGREE") >= (int)NOMAD::OutputLevel::LEVEL_DEBUG)
     {
-        _allParams->display( std::cout );
+        std::ostringstream oss;
+        _allParams->display(oss);
+        npcrs_print_stream(oss);
     }
 
     NOMAD::OutputQueue::getInstance()->initParameters( _allParams->getDispParams() );
@@ -633,7 +648,7 @@ void NOMAD::MainStep::startImp()
 
         if (nbLHEval > 0)
         {
-            std::cout << "Warning: LH_EVAL is performed but Mads is disabled. To perform LH initialization for Mads use LH_SEARCH."<<std::endl ;
+            Rprintf("Warning: LH_EVAL is performed but Mads is disabled. To perform LH initialization for Mads use LH_SEARCH.\n");
             return;
 
         }
@@ -983,7 +998,9 @@ void NOMAD::MainStep::displayInfo()
 /*------------------------------------------------------*/
 void NOMAD::MainStep::displayHelp( const std::string & helpSubject , bool devHelp )
 {
-    _allParams->displayHelp( helpSubject, devHelp, std::cout );
+    std::ostringstream oss;
+    _allParams->displayHelp(helpSubject, devHelp, oss);
+    npcrs_print_stream(oss);
 }
 
 /*------------------------------------------------------*/
@@ -991,7 +1008,9 @@ void NOMAD::MainStep::displayHelp( const std::string & helpSubject , bool devHel
 /*------------------------------------------------------*/
 void NOMAD::MainStep::displayCSVDoc()
 {
-    _allParams->displayCSVDoc( std::cout );
+    std::ostringstream oss;
+    _allParams->displayCSVDoc(oss);
+    npcrs_print_stream(oss);
 }
 
 // What to do when user interrupts NOMAD
@@ -1014,7 +1033,7 @@ void NOMAD::MainStep::hotRestartOnUserInterrupt()
 
     if (!getUserTerminate())
     {
-        std::cout << "Hot restart" ;
+        Rprintf("Hot restart");
 
         // Do not use a shared_ptr _evaluator because it is NULL in this function
         std::vector<std::string> paramLines;
@@ -1022,15 +1041,15 @@ void NOMAD::MainStep::hotRestartOnUserInterrupt()
 
         if (paramLines.empty())
         {
-            std::cout << std::endl << "Enter a parameter file name," << std::endl;
-            std::cout << "or enter parameter values, ending with CTRL-D." << std::endl;
+            Rprintf("\nEnter a parameter file name,\n");
+            Rprintf("or enter parameter values, ending with CTRL-D.\n");
 
             std::string line;
             std::getline(std::cin, line);
             // Is this line a parameter file?
             if (NOMAD::checkReadFile(line))
             {
-                std::cout << "Reading parameter file: " << line << std::endl;
+                Rprintf("Reading parameter file: %s\n", line.c_str());
                 _allParams->read(line, true /* overwrite */);
             }
             else
@@ -1046,7 +1065,7 @@ void NOMAD::MainStep::hotRestartOnUserInterrupt()
         }
         else
         {
-            std::cout << ": read parameters update" << std::endl;
+            Rprintf(": read parameters update\n");
             for (const auto& line : paramLines )
             {
                 _allParams->readParamLine( line );
@@ -1261,7 +1280,7 @@ void NOMAD::MainStep::displayDetailedStats() const
     evalStatsStream.open(evalStatsFile.c_str(), std::ofstream::out | std::ios::trunc);
     if (evalStatsStream.fail())
     {
-        std::cout << "Warning: could not open evaluation stats file " << evalStatsFile << std::endl;
+        Rprintf("Warning: could not open evaluation stats file %s\n", evalStatsFile.c_str());
     }
     evalStatsStream << paddedStats << std::endl;
     evalStatsStream.close();
@@ -1326,7 +1345,7 @@ void NOMAD::MainStep::addEvaluator(const EvaluatorPtr& ev)
             ( _allParams->getAttributeValue<bool>("VNS_MADS_SEARCH") &&
              ! _allParams->getAttributeValue<bool>("VNS_MADS_SEARCH_WITH_SURROGATE") ) )
         {
-            std::cout << "Warning: A SURROGATE evaluator is available but it will not be used. To use it, set EVAL_QUEUE_SORT to SURROGATE or set VNS_MADS_SEARCH_WITH_SURROGATE." << std::endl;
+            Rprintf("Warning: A SURROGATE evaluator is available but it will not be used. To use it, set EVAL_QUEUE_SORT to SURROGATE or set VNS_MADS_SEARCH_WITH_SURROGATE.\n");
         }
 
     }
