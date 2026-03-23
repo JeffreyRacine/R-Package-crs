@@ -24,6 +24,18 @@
 /*-------------------------------------------------------------------------------------*/
 
 #include "Matrix.hpp"
+#include <R_ext/Print.h>
+#include <sstream>
+
+namespace {
+template <class Writer>
+inline void matrix_write_console(Writer&& writer)
+{
+  std::ostringstream oss;
+  writer(oss);
+  Rprintf("%s", oss.str().c_str());
+}
+}  // namespace
 
 /*---------------------------*/
 /*        constructor 1      */
@@ -264,9 +276,11 @@ SGTELIB::Matrix SGTELIB::Matrix::string_to_row  ( const std::string & s , int nb
   int i=0;
   while( ss >> v ) row._X[0][i++] = v;
   if (i++!=nbCols){
-    std::cout << "In line \"" << s << "\"\n";
-    std::cout << "Found " << i << " components\n";
-    std::cout << "Expected " << nbCols << " components\n";
+    matrix_write_console([&](std::ostringstream& oss) {
+      oss << "In line \"" << s << "\"\n";
+      oss << "Found " << i << " components\n";
+      oss << "Expected " << nbCols << " components\n";
+    });
     throw SGTELIB::Exception ( __FILE__ , __LINE__ ,
        "Matrix::string_to_row : cannot read line "+s );
   }
@@ -568,9 +582,10 @@ void SGTELIB::Matrix::fill ( double v ) {
 void SGTELIB::Matrix::set ( const int i , const int j , const double d ) {
 
     if ( i < 0 || i >= _nbRows || j < 0 || j >= _nbCols ){
-      display(std::cout);
-      std::cout << "Error: try to set (" << i << "," << j << ") while dim is [" << _nbRows << "," << _nbCols << "]\n";
-      std::cout.flush();
+      matrix_write_console([&](std::ostringstream& oss) {
+        display(oss);
+        oss << "Error: try to set (" << i << "," << j << ") while dim is [" << _nbRows << "," << _nbCols << "]\n";
+      });
       throw SGTELIB::Exception ( __FILE__ , __LINE__ , "Matrix::set(i,j): bad index" );
     }
 
@@ -930,8 +945,10 @@ void SGTELIB::Matrix::inplace_product(
 {
 
     if (A.get_nb_cols()!=B.get_nb_rows()){
-        std::cout << "A (" << A.get_name() << ") : " << A.get_nb_rows() << " , " << A.get_nb_cols() << "\n";
-        std::cout << "B (" << B.get_name() << ") : " << B.get_nb_rows() << " , " << B.get_nb_cols() << "\n";
+        matrix_write_console([&](std::ostringstream& oss) {
+            oss << "A (" << A.get_name() << ") : " << A.get_nb_rows() << " , " << A.get_nb_cols() << "\n";
+            oss << "B (" << B.get_name() << ") : " << B.get_nb_rows() << " , " << B.get_nb_cols() << "\n";
+        });
         throw SGTELIB::Exception ( __FILE__ , __LINE__ , "Matrix::product(A,B): dimension error" );
     }
 
@@ -962,8 +979,10 @@ double SGTELIB::Matrix::dot ( const SGTELIB::Matrix & A,
     bool Arow, Brow;
     if (A.get_nb_cols()!=1 && A.get_nb_rows()!=1)
     {
-      std::cout << "A (" << A.get_name() << ") : " << A.get_nb_rows() << " , " << A.get_nb_cols() << "\n";
-      std::cout << "B (" << B.get_name() << ") : " << B.get_nb_rows() << " , " << B.get_nb_cols() << "\n";
+      matrix_write_console([&](std::ostringstream& oss) {
+        oss << "A (" << A.get_name() << ") : " << A.get_nb_rows() << " , " << A.get_nb_cols() << "\n";
+        oss << "B (" << B.get_name() << ") : " << B.get_nb_rows() << " , " << B.get_nb_cols() << "\n";
+      });
       throw SGTELIB::Exception ( __FILE__ , __LINE__ , "Matrix::product(A,B): dimension error" );
     }
     else if (A.get_nb_rows() > 1)
@@ -978,8 +997,10 @@ double SGTELIB::Matrix::dot ( const SGTELIB::Matrix & A,
     }
 
     if (B.get_nb_cols()!=1 && B.get_nb_rows()!=1){
-      std::cout << "A (" << A.get_name() << ") : " << A.get_nb_rows() << " , " << A.get_nb_cols() << "\n";
-      std::cout << "B (" << B.get_name() << ") : " << B.get_nb_rows() << " , " << B.get_nb_cols() << "\n";
+      matrix_write_console([&](std::ostringstream& oss) {
+        oss << "A (" << A.get_name() << ") : " << A.get_nb_rows() << " , " << A.get_nb_cols() << "\n";
+        oss << "B (" << B.get_name() << ") : " << B.get_nb_rows() << " , " << B.get_nb_cols() << "\n";
+      });
       throw SGTELIB::Exception ( __FILE__ , __LINE__ , "Matrix::product(A,B): dimension error" );
     }
     else if (B.get_nb_rows() > 1)
@@ -995,8 +1016,10 @@ double SGTELIB::Matrix::dot ( const SGTELIB::Matrix & A,
 
     if (nA!=nB)
     {
-        std::cout << "A (" << A.get_name() << ") : " << A.get_nb_rows() << " , " << A.get_nb_cols() << "\n";
-        std::cout << "B (" << B.get_name() << ") : " << B.get_nb_rows() << " , " << B.get_nb_cols() << "\n";
+        matrix_write_console([&](std::ostringstream& oss) {
+            oss << "A (" << A.get_name() << ") : " << A.get_nb_rows() << " , " << A.get_nb_cols() << "\n";
+            oss << "B (" << B.get_name() << ") : " << B.get_nb_rows() << " , " << B.get_nb_cols() << "\n";
+        });
         throw SGTELIB::Exception ( __FILE__ , __LINE__ , "Matrix::product(A,B): dimension error" );
     }
 
@@ -1296,8 +1319,10 @@ SGTELIB::Matrix SGTELIB::Matrix::diagA_product ( const SGTELIB::Matrix & A,
     return C;
   }
   else {
-    std::cout << "A (" << A.get_name() << ") : " << A.get_nb_rows() << " , " << A.get_nb_cols() << "\n";
-    std::cout << "B (" << B.get_name() << ") : " << B.get_nb_rows() << " , " << B.get_nb_cols() << "\n";
+    matrix_write_console([&](std::ostringstream& oss) {
+      oss << "A (" << A.get_name() << ") : " << A.get_nb_rows() << " , " << A.get_nb_cols() << "\n";
+      oss << "B (" << B.get_name() << ") : " << B.get_nb_rows() << " , " << B.get_nb_cols() << "\n";
+    });
     throw SGTELIB::Exception ( __FILE__ , __LINE__ , "Matrix::diagA_product(A,B): dimension error" );
   }
 
@@ -1352,8 +1377,10 @@ SGTELIB::Matrix SGTELIB::Matrix::diagB_product ( const SGTELIB::Matrix & A,
     return C;
   }
   else {
-    std::cout << "A (" << A.get_name() << ") : " << A.get_nb_rows() << " , " << A.get_nb_cols() << "\n";
-    std::cout << "B (" << B.get_name() << ") : " << B.get_nb_rows() << " , " << B.get_nb_cols() << "\n";
+    matrix_write_console([&](std::ostringstream& oss) {
+      oss << "A (" << A.get_name() << ") : " << A.get_nb_rows() << " , " << A.get_nb_cols() << "\n";
+      oss << "B (" << B.get_name() << ") : " << B.get_nb_rows() << " , " << B.get_nb_cols() << "\n";
+    });
     throw SGTELIB::Exception ( __FILE__ , __LINE__ , "Matrix::diagB_product(A,B): dimension error" );
   }
 }//
@@ -1400,7 +1427,9 @@ SGTELIB::Matrix SGTELIB::Matrix::transposeA_product ( const SGTELIB::Matrix & A,
 SGTELIB::Matrix SGTELIB::Matrix::get_matrix_P ( const SGTELIB::Matrix & Ai,
                                                 const SGTELIB::Matrix & H ){
   const int p = H.get_nb_rows();
-  std::cout << "Function get_matrix_P should be avoided !!\n";
+  matrix_write_console([&](std::ostringstream& oss) {
+    oss << "Function get_matrix_P should be avoided !!\n";
+  });
   return identity(p) - (H * Ai * H.transpose());
 }//
 
@@ -2671,7 +2700,9 @@ SGTELIB::Matrix SGTELIB::Matrix::null_space( const double rank_tol ) const
     }
 
     if (rank != ncon) {
-        std::cout << "Warning: M is not full column rank (rank deficient)" << std::endl;
+        matrix_write_console([&](std::ostringstream& oss) {
+            oss << "Warning: M is not full column rank (rank deficient)\n";
+        });
     }
     int nactif = nvar - rank;
 
@@ -3149,7 +3180,9 @@ SGTELIB::Matrix SGTELIB::Matrix::get_poll_directions ( const SGTELIB::Matrix& sc
   }
 
   if (k!=2*N){
-    std::cout << "k,N : " << k << " " << N << "\n";
+    matrix_write_console([&](std::ostringstream& oss) {
+      oss << "k,N : " << k << " " << N << "\n";
+    });
     throw SGTELIB::Exception ( __FILE__ , __LINE__ ,"Unconcistency in the value of k." );
   }
 
