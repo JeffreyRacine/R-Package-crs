@@ -80,17 +80,17 @@ bool NOMAD::Step::_showWarnings = true;
 /*---------------------------------------------------------*/
 void NOMAD::Step::userInterrupt(int signalValue)
 {
-    std::cout << std::endl << "NOMAD caught User interruption." << std::endl;
+    Rprintf("\nNOMAD caught User interruption.\n");
     if (_userInterrupt)
     {
         // This is the 2nd CTRL-C. Terminate.
-        std::cout << "Terminate NOMAD." << std::endl;
+        Rprintf("Terminate NOMAD.\n");
         setUserTerminate();
         throw NOMAD::UserTerminateException(__FILE__, __LINE__, "User termination");
     }
     else
     {
-        std::cout << "Please wait..." << std::endl;
+        Rprintf("Please wait...\n");
         // Some steps will check for _userInterrupt and then call
         // hotRestartOnUserInterrupt(). Here we are in a static method
         // so we cannot call it.
@@ -597,7 +597,7 @@ void NOMAD::Step::debugShowCallStack() const
     }
 
     // Show the steps in order, this is why we created the stack.
-    std::cout << "Call stack:" << std::endl;
+    Rprintf("Call stack:\n");
     // NOTE: Using "i < stepNameStack.size()" as condition for loop,
     // since value i is a size_t (it is always >= 0).
     for (size_t i = stepNameStack.size()-1; i < stepNameStack.size(); i--)
@@ -605,11 +605,11 @@ void NOMAD::Step::debugShowCallStack() const
         for (size_t j = 0; j < (stepNameStack.size()-i-1); j++)
         {
             // indentation
-            std::cout << "  ";
+            Rprintf("  ");
         }
-        std::cout << stepNameStack[i] << std::endl;
+        Rprintf("%s\n", stepNameStack[i].c_str());
     }
-    std::cout << std::endl;
+    Rprintf("\n");
 }
 
 void NOMAD::Step::updateParentSuccessStats()

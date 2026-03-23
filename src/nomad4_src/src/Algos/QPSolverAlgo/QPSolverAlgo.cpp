@@ -51,6 +51,8 @@
 #include "../../Eval/ProgressiveBarrier.hpp"
 #include "../../Util/fileutils.hpp"
 
+#include <R_ext/Print.h>
+
 // QPSolver algo specifics
 #include "../../Algos/QPSolverAlgo/QPSolverAlgo.hpp"
 #include "../../Algos/QPSolverAlgo/QPSolverAlgoMegaIteration.hpp"
@@ -149,7 +151,7 @@ void NOMAD::QPSolverAlgo::readInformationForHotRestart()
         const std::string& hotRestartFile = _runParams->getAttributeValue<std::string>("HOT_RESTART_FILE");
         if (NOMAD::checkReadFile(hotRestartFile))
         {
-            std::cout << "Read hot restart file " << hotRestartFile << std::endl;
+            Rprintf("Read hot restart file %s\n", hotRestartFile.c_str());
 
             auto barrier = _initialization->getBarrier();
             int k = 0;

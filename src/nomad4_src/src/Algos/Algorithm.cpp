@@ -57,6 +57,8 @@
 #include "../Math/RNG.hpp"
 #include "../Util/fileutils.hpp"
 
+#include <R_ext/Print.h>
+
 #ifdef TIME_STATS
 #include "../Util/Clock.hpp"
 #endif // TIME_STATS
@@ -298,8 +300,8 @@ void NOMAD::Algorithm::saveInformationForHotRestart() const
     }
     if ( _runParams->getAttributeValue<bool>("HOT_RESTART_WRITE_FILES"))
     {
-        std::cout << "Save information for hot restart." << std::endl;
-        std::cout << "Write hot restart file." << std::endl;
+        Rprintf("Save information for hot restart.\n");
+        Rprintf("Write hot restart file.\n");
         NOMAD::write(*this, _runParams->getAttributeValue<std::string>("HOT_RESTART_FILE"));
     }
 }

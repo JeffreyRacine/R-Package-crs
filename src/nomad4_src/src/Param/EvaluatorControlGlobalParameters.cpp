@@ -46,6 +46,7 @@
 /*---------------------------------------------------------------------------------*/
 
 #include "../Param/EvaluatorControlGlobalParameters.hpp"
+#include <R_ext/Print.h>
 #ifdef WINDOWS
 #include <tchar.h>
 #include <windows.h>
@@ -165,7 +166,7 @@ void NOMAD::EvaluatorControlGlobalParameters::checkAndComply(const std::shared_p
                 }
             }
             
-            std::cout << "All variables are granular. MAX_EVAL is set to " << new_max_eval << " to prevent algorithm from circling around best solution indefinitely" << std::endl;
+            Rprintf("All variables are granular. MAX_EVAL is set to %zu to prevent algorithm from circling around best solution indefinitely\n", new_max_eval);
             
             setAttributeValue("MAX_EVAL",new_max_eval);
         }
@@ -179,9 +180,8 @@ void NOMAD::EvaluatorControlGlobalParameters::checkAndComply(const std::shared_p
     auto modelMaxEval = quadModelMaxEval;
     if (quadModelChanged && sgtelibModelChanged && quadModelMaxEval != sgtelibModelMaxEval)
     {
-        std::cout << "Warning: Currently not supported: QUAD_MODEL_MAX_EVAL (";
-        std::cout << quadModelMaxEval << ") different than SGTELIB_MODEL_MAX_EVAL (";
-        std::cout << sgtelibModelMaxEval << "). Using only the value of QUAD_MODEL_MAX_EVAL." << std::endl;
+        Rprintf("Warning: Currently not supported: QUAD_MODEL_MAX_EVAL (%zu) different than SGTELIB_MODEL_MAX_EVAL (%zu). Using only the value of QUAD_MODEL_MAX_EVAL.\n",
+                quadModelMaxEval, sgtelibModelMaxEval);
         setAttributeValue("MODEL_MAX_EVAL", quadModelMaxEval);
     }
     else if (quadModelChanged)
@@ -224,9 +224,8 @@ void NOMAD::EvaluatorControlGlobalParameters::checkAndComply(const std::shared_p
     
     if (quadModelChanged && sgtelibModelChanged && quadModelBlockSize != sgtelibModelBlockSize)
     {
-        std::cout << "Warning: Currently not supported: QUAD_MODEL_MAX_BLOCK_SIZE (";
-        std::cout << quadModelBlockSize << ") different than SGTELIB_MODEL_MAX_BLOCK_SIZE (";
-        std::cout << sgtelibModelBlockSize << "). Using only the value of QUAD_MODEL_MAX_BLOCK_SIZE." << std::endl;
+        Rprintf("Warning: Currently not supported: QUAD_MODEL_MAX_BLOCK_SIZE (%zu) different than SGTELIB_MODEL_MAX_BLOCK_SIZE (%zu). Using only the value of QUAD_MODEL_MAX_BLOCK_SIZE.\n",
+                quadModelBlockSize, sgtelibModelBlockSize);
         setAttributeValue("MODEL_MAX_BLOCK_SIZE", quadModelBlockSize);
     }
     else if (quadModelChanged)
@@ -257,7 +256,7 @@ void NOMAD::EvaluatorControlGlobalParameters::checkAndComply(const std::shared_p
         std::string s = "Warning: NB_THREADS_PARALLEL_EVAL exceeds the number of threads registered for this hardware: ";
         s += NOMAD::itos(nbThreadsHard);
         s += ". If this is true, it is not efficient. Let's continue anyway.";
-        std::cout << s << std::endl;
+        Rprintf("%s\n", s.c_str());
     }
 #else
     if (nbThreadsParam > 1)
@@ -272,7 +271,6 @@ void NOMAD::EvaluatorControlGlobalParameters::checkAndComply(const std::shared_p
     
 }
 // End checkAndComply()
-
 
 
 

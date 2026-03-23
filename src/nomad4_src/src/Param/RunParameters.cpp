@@ -171,7 +171,7 @@ void NOMAD::RunParameters::checkAndComply(
         {
             if (!_warningUnknownParamShown)
             {
-                std::cout << "Warning: " << err << "Ignoring unknown parameters." << std::endl;
+                Rprintf("Warning: %sIgnoring unknown parameters.\n", err.c_str());
             }
         }
     }
@@ -214,7 +214,7 @@ void NOMAD::RunParameters::checkAndComply(
             setAttributeValue("QUAD_MODEL_SEARCH", false);
             setAttributeValue("QUAD_MODEL_SEARCH_SIMPLE_MADS", false);
             setAttributeValue("SGTELIB_MODEL_SEARCH", false);
-            std::cout << "Warning: Dimension " << n << " is greater than (or equal to) " << bigDim << ". Models are disabled." << std::endl;
+            Rprintf("Warning: Dimension %zu is greater than (or equal to) %zu. Models are disabled.\n", n, bigDim);
         }
     }
 
@@ -273,14 +273,14 @@ void NOMAD::RunParameters::checkAndComply(
         err = "Warning: Parameter SGTELIB_MODEL_SEARCH is set to true, but ";
         err += "Sgtelib Model sampling cannot be used. To be able to use Sgtelib Model ";
         err += "search method, NOMAD must be recompiled using option USE_SGTELIB=1.";
-        std::cout << err << std::endl;
+        Rprintf("%s\n", err.c_str());
     }
     if (getAttributeValueProtected<bool>("QUAD_MODEL_SEARCH", false) || getAttributeValueProtected<bool>("QUAD_MODEL_SEARCH_SIMPLE_MADS", false))
     {
         err = "Warning: Parameter QUAD_MODEL_SEARCH or QUAD_MODEL_SEARCH_SIMPLE_MADS is set to true, but ";
         err += "Quad Model sampling cannot be used. To be able to use Quad Model Search ";
         err += "search method, NOMAD must be recompiled using option USE_SGTELIB=1.";
-        std::cout << err << std::endl;
+        Rprintf("%s\n", err.c_str());
     }
 #endif
 
@@ -383,7 +383,7 @@ void NOMAD::RunParameters::checkAndComply(
             if ( primaryDirTypes[0] != defaultPrimaryDirTypes[0] )
             {
                 // Warn the user if he has changed the direction type. Otherwise, change silently to CS.
-                std::cout << "Warning: parameter DIRECTION_TYPE reset to CS because CS_OPTIMIZATION is enabled" <<  std::endl;
+                Rprintf("Warning: parameter DIRECTION_TYPE reset to CS because CS_OPTIMIZATION is enabled\n");
             }
             setAttributeValue("DIRECTION_TYPE", std::vector<NOMAD::DirectionType> {NOMAD::DirectionType::CS});
         }
@@ -399,7 +399,7 @@ void NOMAD::RunParameters::checkAndComply(
         if (hiddenConstraints)
         {
             // In this case, detection radius and limit rate are useless, detection radius should be put to 0
-            std::cout << "Warning: DiscoMads is used to reveal hidden constraints, so the detection radius and limit rate will not be considered. Detection radius is forced to 0." <<  std::endl;
+            Rprintf("Warning: DiscoMads is used to reveal hidden constraints, so the detection radius and limit rate will not be considered. Detection radius is forced to 0.\n");
             setAttributeValue<NOMAD::Double>("DISCO_MADS_DETECTION_RADIUS",0.0);
 
             // Check high value chosen for return of OBJ and PB constraints of failed evaluations
@@ -449,7 +449,7 @@ void NOMAD::RunParameters::checkAndComply(
         if (revealingPointsNb==0)
         {
             // Warn the user
-            std::cout << "Warning: the revealing poll is disabled as DISCO_MADS_REVEALING_POLL_NB_POINTS is null. This should only be used for testing as a strictly positive value is required for the convergence analysis." <<  std::endl;
+            Rprintf("Warning: the revealing poll is disabled as DISCO_MADS_REVEALING_POLL_NB_POINTS is null. This should only be used for testing as a strictly positive value is required for the convergence analysis.\n");
         }
 
         if (revealingPointsNb<0) // probably useless as size_t negative values are already checked in Parameters::checkFormatSizeT
@@ -486,7 +486,7 @@ void NOMAD::RunParameters::checkAndComply(
         }
         if(warning)
         {   // Warn the user
-            std::cout << "Warning: INITIAL_FRAME_SIZE > 1.1*REVEALING_POLL_RADIUS,  this may lead to poor convergence. Choose an INITIAL_FRAME_SIZE similar to REVEALING_POLL_RADIUS may help." <<  std::endl;
+            Rprintf("Warning: INITIAL_FRAME_SIZE > 1.1*REVEALING_POLL_RADIUS,  this may lead to poor convergence. Choose an INITIAL_FRAME_SIZE similar to REVEALING_POLL_RADIUS may help.\n");
         }
 
         // Use with openMP
@@ -583,7 +583,7 @@ void NOMAD::RunParameters::checkAndComply(
                 std::string s = "Warning: PSD_MADS_NB_SUBPROBLEM exceeds the number of threads registered for this hardware: ";
                 s += NOMAD::itos(nbThreadsHard);
                 s += ". If this is true, it is not efficient. Let's continue anyway.";
-                std::cout << s << std::endl;
+                Rprintf("%s\n", s.c_str());
             }
         }
 
