@@ -18,7 +18,6 @@ cfg <- list(
   degree_max = 4L,
   degree_min = 0L,
   max_bb_eval = 80L,
-  max_bb_eval_glp = 80L,
   max_bb_eval_basic = 120L,
   fixed_seeds = rep(42L, 5L),
   varying_seeds = c(1001L, 1002L, 1003L, 1004L, 1005L)

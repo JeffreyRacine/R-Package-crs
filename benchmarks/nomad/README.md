@@ -58,18 +58,11 @@ Canonical result/status tracker:
   - compares baseline vs aggressive profiles for:
     - `frscvNOMAD`
     - `krscvNOMAD`
-    - `npglpreg`
   - writes:
     - `<prefix>_raw.csv`
     - `<prefix>_compare.csv`
     - `<prefix>_agg_by_dim.csv`
     - `<prefix>_agg_overall.csv`
-- `run_nomad_exception_isolation.R`
-  - verifies that exception-only profiles do not poison later calls in the same R session
-  - compares in-session sequence vs isolated subprocess calls
-  - writes:
-    - `<prefix>_raw.csv`
-    - `<prefix>_summary.csv`
 
 ## Coverage
 
@@ -77,7 +70,6 @@ Each suite runs:
 
 - `frscvNOMAD`
 - `krscvNOMAD`
-- `npglpreg` (NOMAD-driven CV path)
 - `snomadr_basic_lib` (direct `snomadr` case extracted from `man/snomadr.Rd`)
 
 with both:
@@ -128,8 +120,4 @@ Rscript benchmarks/nomad/run_nomad_dimmix_tradeoff.R \
   /tmp/crs_nomad_dimmix_tradeoff \
   100
 
-# exception-isolation gate
-Rscript benchmarks/nomad/run_nomad_exception_isolation.R \
-  /tmp/crs_nomad_exception_isolation \
-  180
 ```

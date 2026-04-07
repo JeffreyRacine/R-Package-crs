@@ -55,9 +55,9 @@ crsivderiv(y, \dots)
   }
 
   \item{z}{
-    a \eqn{p}-variate data frame of endogenous predictors. The data
-    types may be continuous, discrete (unordered and ordered factors),
-    or some combination thereof
+    a one-column data frame of continuous endogenous predictors. The
+    current implementation of \code{crsivderiv} supports univariate
+    continuous \eqn{z} only
   }
   \item{w}{
     a \eqn{q}-variate data frame of instruments. The data types may be
@@ -70,9 +70,9 @@ crsivderiv(y, \dots)
     or some combination thereof
   }
   \item{zeval}{
-    a \eqn{p}-variate data frame of endogenous predictors on which the
-    regression will be estimated (evaluation data). By default, evaluation
-    takes place on the data provided by \code{z}
+    a one-column data frame of continuous endogenous predictors on
+    which the regression will be estimated (evaluation data). By
+    default, evaluation takes place on the data provided by \code{z}
   }
   \item{weval}{
     a \eqn{q}-variate data frame of instruments on which the regression
@@ -176,6 +176,10 @@ crsivderiv(y, \dots)
   guarantee an exact solution for each iteration (i.e. there will be no
   errors arising due to numerical search).
 
+  The current implementation supports a single continuous endogenous
+  regressor only. Instrument and exogenous regressor data may still be
+  mixed continuous and categorical.
+
 }
 \value{
   
@@ -190,8 +194,8 @@ crsivderiv(y, \dots)
     the data as a scatter plot) and \code{phi=FALSE} (a logical value
     indicating whether to plot the reconstructed structural function
     rather than its derivative). Note that the \code{\link{plot}}
-    method for \code{crsivderiv} objects currently only supports
-    univariate endogenous predictors \eqn{z}.
+    method for \code{crsivderiv} objects currently only supports a
+    univariate continuous endogenous predictor \eqn{z}.
     
     See \code{\link{crs}} for details on the return object components.
 
@@ -246,7 +250,7 @@ further notice.
 }
 
 \seealso{
-\code{\link[np]{npreg}}, \code{\link{crsiv}}, \code{\link{crs}}
+\code{npreg}, \code{\link{crsiv}}, \code{\link{crs}}
 }
 \examples{
 \dontrun{

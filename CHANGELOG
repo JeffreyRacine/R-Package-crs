@@ -1,3 +1,23 @@
+Changes from Version 0.15-40 to 0.15-41 [07-Apr-2026]
+
+* Removed the legacy `npglpreg` package surface from `crs`
+  (`R/`, `man/`, `tests/`, `demo/`, and `NAMESPACE`). Users should
+  now use `np::npreg(..., nomad = TRUE)` or
+  `npRmpi::npreg(..., nomad = TRUE)`.
+
+* Replaced the remaining `crsivderiv()` reliance on `np` density,
+  distribution, and kernel-sum helpers with internal gaussian
+  normal-reference helpers, eliminating the hard runtime dependency on
+  `np` for IV derivative estimation.
+
+* Removed `np` from the `DESCRIPTION` dependency fields entirely and
+  dropped the remaining optional `npreg()` comparison examples,
+  yielding a clean package-level break from `np`.
+
+* Restored the internal `resolve_cv_maxPenalty()` helper to the source
+  tree and validated the affected CV-penalty and `crsivderiv` routes on
+  an installed build.
+
 Changes from Version 0.15-39 to 0.15-40 [10-Feb-2026]
 
 * Major speedups in core CV/estimation helpers (kernel/spline paths),

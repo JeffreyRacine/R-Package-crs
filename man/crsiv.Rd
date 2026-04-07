@@ -311,7 +311,7 @@ This function should be considered to be in \sQuote{beta test} status until furt
 }
 
 \seealso{
-\code{\link[np]{npreg}}, \code{\link{crs}}
+\code{npreg}, \code{\link{crs}}
 }
 \examples{
 \dontrun{

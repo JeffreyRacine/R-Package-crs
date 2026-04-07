@@ -67,27 +67,6 @@ run_kr <- function(dat, cfg) {
   )
 }
 
-run_glp <- function(dat, cfg) {
-  out <- npglpreg(
-    y ~ x + z,
-    data = dat$df,
-    cv = "degree-bandwidth",
-    nmulti = cfg$nmulti,
-    max.bb.eval = cfg$max_bb_eval_glp,
-    degree.max = cfg$degree_max,
-    degree.min = cfg$degree_min,
-    display.warnings = FALSE,
-    display.nomad.progress = FALSE
-  )
-  list(
-    objective = unname(out$fv[1]),
-    degree = safe_collapse(out$degree),
-    segments = "",
-    lambda = "",
-    bws = safe_collapse(signif(out$bws, digits = 12))
-  )
-}
-
 run_snomadr_basic <- function(cfg) {
   eval.f <- function(x) {
     f <- c(Inf, Inf, Inf)
@@ -155,7 +134,6 @@ run_case <- function(case_id, seed, seed_policy, cfg) {
           case_id,
           frscvNOMAD = run_fr(dat, cfg),
           krscvNOMAD = run_kr(dat, cfg),
-          npglpreg = run_glp(dat, cfg),
           snomadr_basic_lib = run_snomadr_basic(cfg),
           stop(paste("unknown case", case_id))
         ),
@@ -267,7 +245,7 @@ run_suite <- function(cfg, out_prefix) {
   if (is.null(cfg$max_bb_eval_basic)) {
     cfg$max_bb_eval_basic <- cfg$max_bb_eval
   }
-  cases <- c("frscvNOMAD", "krscvNOMAD", "npglpreg", "snomadr_basic_lib")
+  cases <- c("frscvNOMAD", "krscvNOMAD", "snomadr_basic_lib")
   rows <- list()
   idx <- 1L
   for (seed in cfg$fixed_seeds) {

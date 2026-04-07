@@ -202,32 +202,16 @@ crsivderiv.default <- function(y,
     set_status(paste("Computing optimal smoothing  f(z) and S(z) for iteration 1"," of at most ", iterate.max,"...",sep=""))
   }
 
-  ## Note - here I am only treating the univariate case, so let's
-  ## throw a stop with warning for now...
+  ## The current derivative implementation only supports a continuous
+  ## univariate endogenous regressor. Compute the unconditional density,
+  ## survivor, and integral operator locally using the same gaussian
+  ## normal-reference smoothing that was previously sourced from np.
 
-  if(NCOL(z) > 1) stop(" This version supports univariate z only")
-
-  ## For all results we need the density function for Z and the
-  ## survivor function for Z (1-CDF of Z)
-
-  #  require(np)
-
-  ## Let's compute the bandwidth object for the unconditional density
-  ## for the moment. Use the normal-reference rule for speed
-  ## considerations (sensitivity analysis indicates this is not
-  ## problematic).
-
-  bw <- npudensbw(dat=z,
-                  bwmethod="normal-reference",
-                  ...)
-  model.fz <- npudens(tdat=z,
-                      bws=bw$bw,
-                      ...)
-  f.z <- if(is.eval.train) predict(model.fz) else predict(model.fz,newdata=evaldata)
-  model.Sz <- npudist(tdat=z,
-                      bws=bw$bw,
-                      ...)
-  S.z <- 1-(if(is.eval.train) predict(model.Sz) else predict(model.Sz,newdata=evaldata))
+  z.kernel <- .crsiv_extract_continuous_z(z, arg = "z")
+  zeval.kernel <- .crsiv_extract_continuous_z(zeval, arg = "zeval")
+  bw <- .crsiv_normal_reference_bw(z, display.warnings = display.warnings)
+  f.z <- .crsiv_gaussian_density(z.kernel, zeval.kernel, bw)
+  S.z <- .crsiv_gaussian_survivor(z.kernel, zeval.kernel, bw)
 
   if(is.null(starting.values)) {
 
@@ -419,11 +403,12 @@ crsivderiv.default <- function(y,
 
   ## Now we compute T^* applied to mu
 
-  cdf.weighted.average <- npksum(txdat=z,
-                                 exdat=zeval,
-                                 tydat=as.matrix(predicted.model.E.mu.w),
-                                 operator="integral",
-                                 bws=bw$bw)$ksum/nrow(traindata)
+  cdf.weighted.average <- .crsiv_gaussian_integral_apply(
+    z.train = z.kernel,
+    z.eval = zeval.kernel,
+    rhs = predicted.model.E.mu.w,
+    bw = bw
+  )
 
   survivor.weighted.average <- mean.predicted.model.E.mu.w - cdf.weighted.average
 
@@ -539,11 +524,12 @@ crsivderiv.default <- function(y,
 
     ## Now we compute T^* applied to mu
 
-    cdf.weighted.average <- npksum(txdat=z,
-                                   exdat=zeval,
-                                   tydat=as.matrix(predicted.model.E.mu.w),
-                                   operator="integral",
-                                   bws=bw$bw)$ksum/nrow(traindata)
+    cdf.weighted.average <- .crsiv_gaussian_integral_apply(
+      z.train = z.kernel,
+      z.eval = zeval.kernel,
+      rhs = predicted.model.E.mu.w,
+      bw = bw
+    )
 
     survivor.weighted.average <- mean.predicted.model.E.mu.w - cdf.weighted.average
 

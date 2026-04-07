@@ -523,7 +523,7 @@ curve)}
 %}
 
 \seealso{
-  \code{\link{smooth.spline}}, \code{\link{loess}}, \code{\link[np]{npreg}}
+  \code{\link{smooth.spline}}, \code{\link{loess}}, \code{npreg}
 }
 
 \examples{

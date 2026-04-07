@@ -300,7 +300,7 @@ krscvNOMAD(xz,
 %}
 
 \seealso{
-  \code{\link{loess}}, \code{\link[np]{npregbw}}, 
+  \code{\link{loess}}, \code{npregbw}
 }
 
 \examples{

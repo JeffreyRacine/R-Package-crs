@@ -75,25 +75,7 @@ plot(model,mean=TRUE)
 plot(model,deriv=1)
 ## Partial second derivative plots (control for non axis predictors)
 plot(model,deriv=2)
-## Compare with local linear kernel regression
-require(np)
-model <- npreg(lwage~married+
-               female+
-               nonwhite+                
-               educ+
-               exper+
-               tenure,
-               regtype="ll",
-               bwmethod="cv.aic",
-               data=wage1)
 
-summary(model)
-
-## Partial mean plots (control for non axis predictors)
-plot(model,common.scale=FALSE)
-## Partial first derivative plots (control for non axis predictors)
-plot(model,gradients=TRUE,common.scale=FALSE)
-detach("package:np")
 } % end dontrun
 }
 

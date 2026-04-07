@@ -85,6 +85,80 @@ NZD_pos <- function(a) {
   do.call(crs, c(args, dots))
 }
 
+.crsiv_extract_continuous_z <- function(data, arg = "z") {
+  data <- data.frame(data)
+
+  if (ncol(data) != 1L) {
+    stop(sprintf("%s must be univariate", arg))
+  }
+
+  values <- data[[1L]]
+  if (!inherits(values, c("integer", "numeric"))) {
+    stop(sprintf("%s must be continuous (numeric or integer)", arg))
+  }
+
+  as.numeric(values)
+}
+
+.crsiv_robust_scale <- function(y, display.warnings = TRUE) {
+  if (any(dim(as.matrix(y)) == 0)) {
+    return(0)
+  }
+
+  sd.vec <- apply(as.matrix(y), 2L, sd)
+  IQR.vec <- apply(as.matrix(y), 2L, IQR) / (qnorm(.25, lower.tail = FALSE) * 2)
+  mad.vec <- apply(as.matrix(y), 2L, mad)
+  scales <- cbind(sd.vec, IQR.vec, mad.vec)
+  scale.max <- apply(scales, 1L, max)
+
+  if (display.warnings && any(scale.max <= 0)) {
+    warning(paste("variable ", which(scale.max <= 0), " appears to be constant", sep = ""))
+  }
+
+  apply(scales, 1L, function(x) {
+    xpos <- x[x > 0]
+    if (length(xpos) == 0L) Inf else min(xpos)
+  })
+}
+
+.crsiv_normal_reference_bw <- function(z, display.warnings = TRUE) {
+  z <- data.frame(z)
+  scale <- .crsiv_robust_scale(z, display.warnings = display.warnings)
+  as.numeric(1.059224 * scale * nrow(z)^(-1.0 / (2.0 * 2.0 + ncol(z))))
+}
+
+.crsiv_gaussian_z_matrix <- function(z.train, z.eval, bw) {
+  outer(z.eval, z.train, "-") / bw
+}
+
+.crsiv_gaussian_density <- function(z.train, z.eval, bw) {
+  z.diff <- .crsiv_gaussian_z_matrix(z.train, z.eval, bw)
+  rowMeans(stats::dnorm(z.diff) / bw)
+}
+
+.crsiv_gaussian_survivor <- function(z.train, z.eval, bw) {
+  z.diff <- .crsiv_gaussian_z_matrix(z.train, z.eval, bw)
+  1 - rowMeans(stats::pnorm(z.diff))
+}
+
+.crsiv_gaussian_integral_apply <- function(z.train, z.eval, rhs, bw) {
+  rhs <- as.matrix(rhs)
+  storage.mode(rhs) <- "double"
+
+  if (nrow(rhs) != length(z.train)) {
+    stop("weighted integral right-hand side must match the number of training z observations")
+  }
+
+  z.diff <- .crsiv_gaussian_z_matrix(z.train, z.eval, bw)
+  out <- (bw * stats::pnorm(z.diff)) %*% rhs / length(z.train)
+
+  if (ncol(out) == 1L) {
+    return(as.vector(out))
+  }
+
+  out
+}
+
 scale_robust <- function(x, center=TRUE, scale=TRUE, display.warnings=TRUE){
   if(any(dim(as.matrix(x)) == 0))
     return(0)
@@ -217,7 +291,7 @@ check.max.spline.degree <- function(xdat=NULL,degree=NULL,display.warnings=TRUE)
           }
         }
         if(d[i] < degree[i]) {
-          if(display.warnings) warning(paste("\r Predictor ",i," B-spline basis is ill-conditioned beyond degree ",d[i],": see note in ?npglpreg",sep=""),immediate.=TRUE)
+          if(display.warnings) warning(paste("\r Predictor ",i," B-spline basis is ill-conditioned beyond degree ",d[i],".",sep=""),immediate.=TRUE)
           ill.conditioned <- TRUE
         }
       }
@@ -464,6 +538,69 @@ check.function <- function(u, tau = 0.5) {
   if (missing(u)) stop(" Error: u must be provided")
   if (tau <= 0 || tau >= 1) stop(" Error: tau must lie in (0,1)")
   u * (tau - (u < 0))
+}
+
+resolve_cv_maxPenalty <- function(cv.maxPenalty, ydat, weights = NULL,
+                                  multiplier = 10,
+                                  cv.func = c("cv.ls", "cv.gcv", "cv.aic")) {
+  if (!is.null(cv.maxPenalty)) {
+    return(cv.maxPenalty)
+  }
+
+  if (is.null(ydat)) {
+    return(sqrt(.Machine$double.xmax))
+  }
+
+  cv.func <- match.arg(cv.func)
+  y <- as.numeric(ydat)
+  y <- y[is.finite(y)]
+  n <- length(y)
+
+  if (n <= 1) {
+    return(sqrt(.Machine$double.xmax))
+  }
+
+  if (!is.null(weights)) {
+    w <- as.numeric(weights)
+    w <- w[is.finite(w)]
+
+    if (length(w) != n || any(w < 0)) {
+      return(sqrt(.Machine$double.xmax))
+    }
+
+    wsum <- sum(w)
+    if (!is.finite(wsum) || wsum <= 0) {
+      return(sqrt(.Machine$double.xmax))
+    }
+
+    mu <- sum(w * y) / wsum
+    mse <- sum(w * (y - mu)^2) / wsum
+  } else {
+    mu <- mean(y)
+    mse <- mean((y - mu)^2)
+  }
+
+  if (!is.finite(mse) || mse <= 0) {
+    return(sqrt(.Machine$double.xmax))
+  }
+
+  if (cv.func == "cv.aic") {
+    penalty <- (1 + 1 / n) / (1 - 3 / n)
+    base.aic <- log(mse) + penalty
+
+    if (!is.finite(base.aic)) {
+      return(sqrt(.Machine$double.xmax))
+    }
+
+    return(base.aic + multiplier)
+  }
+
+  base <- mse / (1 - 1 / n)^2
+  if (!is.finite(base) || base <= 0) {
+    return(sqrt(.Machine$double.xmax))
+  }
+
+  multiplier * base
 }
 
 

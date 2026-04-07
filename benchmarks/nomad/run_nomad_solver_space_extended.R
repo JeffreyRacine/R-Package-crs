@@ -15,8 +15,6 @@ mk_data <- function(scn, n, seed) {
     return(list(
       frkr_xz = data.frame(x = x, z = z),
       frkr_y = y,
-      np_df = data.frame(y = y, x = x, z = z),
-      np_formula = y ~ x + z,
       seg = c(2),
       dmax = 4,
       dmin = 0
@@ -31,8 +29,6 @@ mk_data <- function(scn, n, seed) {
   list(
     frkr_xz = data.frame(x1 = x1, x2 = x2, z = z),
     frkr_y = y,
-    np_df = data.frame(y = y, x1 = x1, x2 = x2, z = z),
-    np_formula = y ~ x1 + x2 + z,
     seg = c(2, 2),
     dmax = 4,
     dmin = 0
@@ -72,18 +68,6 @@ run_case <- function(case_id, d, strategy) {
         display.warnings = FALSE,
         display.nomad.progress = FALSE,
         opts = opts
-      ),
-      npglpreg = npglpreg(
-        formula = d$np_formula,
-        data = d$np_df,
-        cv = "degree-bandwidth",
-        nmulti = nmulti,
-        max.bb.eval = maxbb,
-        degree.max = d$dmax,
-        degree.min = d$dmin,
-        display.warnings = FALSE,
-        display.nomad.progress = FALSE,
-        opts = opts
       )
     )
   })[["elapsed"]]
@@ -91,8 +75,7 @@ run_case <- function(case_id, d, strategy) {
   obj <- switch(
     case_id,
     frscvNOMAD = out$cv.objc[1],
-    krscvNOMAD = out$cv.objc[1],
-    npglpreg = out$fv[1]
+    krscvNOMAD = out$cv.objc[1]
   )
 
   c(elapsed = as.numeric(tm), objective = as.numeric(obj))
@@ -126,27 +109,11 @@ strategies <- list(
     kr_nm_opt = list(nmulti = 2L, max_bb_eval = 100L, opts = list("NM_OPTIMIZATION" = "yes")),
     kr_qp_opt = list(nmulti = 2L, max_bb_eval = 100L, opts = list("QP_OPTIMIZATION" = "yes")),
     kr_random_opt = list(nmulti = 2L, max_bb_eval = 100L, opts = list("RANDOM_ALGO_OPTIMIZATION" = "yes"))
-  ),
-  npglpreg = list(
-    np_current = list(nmulti = 2L, max_bb_eval = 100L, opts = list()),
-    np_quadbox1 = list(nmulti = 2L, max_bb_eval = 100L, opts = list("QUAD_MODEL_SEARCH_BOX_FACTOR" = "1.0", "QUAD_MODEL_BOX_FACTOR" = "1.0")),
-    np_dir2n = list(nmulti = 2L, max_bb_eval = 100L, opts = list("DIRECTION_TYPE" = "ORTHO 2N")),
-    np_noquad = list(nmulti = 2L, max_bb_eval = 100L, opts = list("QUAD_MODEL_SEARCH" = "no", "EVAL_QUEUE_SORT" = "DIR_LAST_SUCCESS")),
-    np_noquad_nmulti4 = list(nmulti = 4L, max_bb_eval = 100L, opts = list("QUAD_MODEL_SEARCH" = "no", "EVAL_QUEUE_SORT" = "DIR_LAST_SUCCESS")),
-    np_noquad_eval200 = list(nmulti = 2L, max_bb_eval = 200L, opts = list("QUAD_MODEL_SEARCH" = "no", "EVAL_QUEUE_SORT" = "DIR_LAST_SUCCESS")),
-    np_spec_off = list(nmulti = 2L, max_bb_eval = 100L, opts = list("SPECULATIVE_SEARCH" = "no")),
-    np_nm_search_off = list(nmulti = 2L, max_bb_eval = 100L, opts = list("NM_SEARCH" = "no")),
-    np_simple_line = list(nmulti = 2L, max_bb_eval = 100L, opts = list("SIMPLE_LINE_SEARCH" = "yes", "SPECULATIVE_SEARCH" = "no")),
-    np_vns_search = list(nmulti = 2L, max_bb_eval = 100L, opts = list("VNS_MADS_SEARCH" = "yes", "VNS_MADS_SEARCH_TRIGGER" = 0.60)),
-    np_cs_fast = list(nmulti = 2L, max_bb_eval = 100L, opts = list("CS_OPTIMIZATION" = "yes")),
-    np_nm_opt = list(nmulti = 2L, max_bb_eval = 100L, opts = list("NM_OPTIMIZATION" = "yes")),
-    np_qp_opt = list(nmulti = 2L, max_bb_eval = 100L, opts = list("QP_OPTIMIZATION" = "yes")),
-    np_random_opt = list(nmulti = 2L, max_bb_eval = 100L, opts = list("RANDOM_ALGO_OPTIMIZATION" = "yes"))
   )
 )
 
-baselines <- c(frscvNOMAD = "fr_current", krscvNOMAD = "kr_current", npglpreg = "np_current")
-tols <- c(frscvNOMAD = 1e-10, krscvNOMAD = 1e-6, npglpreg = 5e-4)
+baselines <- c(frscvNOMAD = "fr_current", krscvNOMAD = "kr_current")
+tols <- c(frscvNOMAD = 1e-10, krscvNOMAD = 1e-6)
 
 rows <- list()
 idx <- 1L

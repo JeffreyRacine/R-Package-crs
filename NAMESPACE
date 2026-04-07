@@ -2,20 +2,19 @@ useDynLib(crs, .registration = TRUE)
 importFrom("grDevices", "extendrange", "topo.colors", "n2mfrow")
 importFrom("graphics", "legend", "par", "plot", "lines")
 importFrom("utils", "flush.console")
-import(stats, boot, np, quantreg)
+import(stats, boot, quantreg)
 export(clsd,
        crs,
        crsiv,
-       crsivderiv,       
+       crsivderiv,
        crssigtest,
        frscv,
-       frscvNOMAD, 
+       frscvNOMAD,
        gsl.bs,
        krscv,
        krscvNOMAD,
-       npglpreg,
        snomadr,
-       glp.model.matrix,       
+       glp.model.matrix,
        tensor.prod.model.matrix,
        uniquecombs)
 
@@ -55,10 +54,3 @@ S3method(gsl.bs, default)
 S3method(predict, gsl.bs)
 
 S3method(print, snomadr)
-
-S3method(npglpreg, formula)
-S3method(npglpreg, default)
-S3method(predict, npglpreg)
-S3method(print, npglpreg)
-S3method(summary, npglpreg)
-S3method(plot, npglpreg)

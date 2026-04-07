@@ -41,15 +41,10 @@ mk_data <- function(p_cont, p_cat, n, seed) {
   y <- y + rnorm(n, sd = 0.2)
 
   xz <- cbind(x, z)
-  np_df <- cbind(data.frame(y = y), x, z)
-  rhs <- paste(c(names(x), names(z)), collapse = " + ")
-  np_formula <- as.formula(paste("y ~", rhs))
 
   list(
     xz = xz,
     y = y,
-    np_df = np_df,
-    np_formula = np_formula,
     segments = rep(2L, p_cont),
     degree_max = 4L,
     degree_min = 0L
@@ -85,18 +80,6 @@ run_case <- function(case_id, dat, profile) {
         opts = profile$opts,
         display.warnings = FALSE,
         display.nomad.progress = FALSE
-      ),
-      npglpreg = npglpreg(
-        formula = dat$np_formula,
-        data = dat$np_df,
-        cv = "degree-bandwidth",
-        nmulti = as.integer(profile$nmulti),
-        max.bb.eval = as.integer(profile$max_bb_eval),
-        degree.max = dat$degree_max,
-        degree.min = dat$degree_min,
-        opts = profile$opts,
-        display.warnings = FALSE,
-        display.nomad.progress = FALSE
       )
     )
   })[["elapsed"]]
@@ -120,15 +103,6 @@ run_case <- function(case_id, dat, profile) {
         paste0("deg=", safe_collapse(out$degree)),
         paste0("seg=", safe_collapse(out$segments)),
         paste0("lam=", safe_collapse(signif(out$lambda, 10))),
-        sep = "|"
-      )
-    ),
-    npglpreg = list(
-      elapsed = as.numeric(tm),
-      objective = out$fv[1],
-      signature = paste(
-        paste0("deg=", safe_collapse(out$degree)),
-        paste0("bws=", safe_collapse(signif(out$bws, 10))),
         sep = "|"
       )
     )
@@ -156,27 +130,11 @@ profiles <- list(
       max_bb_eval = 140L,
       opts = list("DIRECTION_TYPE" = "ORTHO 2N")
     )
-  ),
-  npglpreg = list(
-    np_current = list(nmulti = 2L, max_bb_eval = 100L, opts = list()),
-    np_universal_aggr = list(
-      nmulti = 2L,
-      max_bb_eval = 140L,
-      opts = list("DIRECTION_TYPE" = "ORTHO 2N")
-    ),
-    np_noquad = list(
-      nmulti = 2L,
-      max_bb_eval = 100L,
-      opts = list(
-        "QUAD_MODEL_SEARCH" = "no",
-        "EVAL_QUEUE_SORT" = "DIR_LAST_SUCCESS"
-      )
-    )
   )
 )
 
-baselines <- c(frscvNOMAD = "fr_current", krscvNOMAD = "kr_current", npglpreg = "np_current")
-tols <- c(frscvNOMAD = 1e-10, krscvNOMAD = 1e-6, npglpreg = 5e-4)
+baselines <- c(frscvNOMAD = "fr_current", krscvNOMAD = "kr_current")
+tols <- c(frscvNOMAD = 1e-10, krscvNOMAD = 1e-6)
 
 dim_grid <- list(
   d1c1 = c(1L, 1L),
