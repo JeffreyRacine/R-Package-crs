@@ -32,6 +32,7 @@
  */
 
 #include "gsl_bspline.h"
+#include <stdint.h>
 
 /*
  * This module contains routines related to calculating B-splines.
