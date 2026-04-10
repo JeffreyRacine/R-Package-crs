@@ -1159,13 +1159,13 @@ bool NOMAD::LDLt_decomposition ( std::string & error_msg,
     {
         // lambda, vr = findmax(abs.(A[k+1:n, k]))
         vr = k + 1;
-        lambda = abs(M[vr][k]);
+        lambda = std::fabs(M[vr][k]);
         for (int j = k + 2; j < n; j++)
         {
-            if (abs(M[j][k]) > lambda)
+            if (std::fabs(M[j][k]) > lambda)
             {
                 vr = int(j);
-                lambda = abs(M[vr][k]);
+                lambda = std::fabs(M[vr][k]);
             }
         }
 
@@ -1174,7 +1174,7 @@ bool NOMAD::LDLt_decomposition ( std::string & error_msg,
         {
 
             swap = false;
-            if (abs(M[k][k]) >= alpha * lambda)
+            if (std::fabs(M[k][k]) >= alpha * lambda)
             {
                 s = 1;
             }
@@ -1186,16 +1186,16 @@ bool NOMAD::LDLt_decomposition ( std::string & error_msg,
                     sigma = -1;
                     for (int i = k; i < n; i++)
                     {
-                        if (abs(M[i][r]) > sigma)
+                        if (std::fabs(M[i][r]) > sigma)
                         {
-                            sigma = abs(M[i][r]); // σ = norm(A[k:n, r], Inf)
+                            sigma = std::fabs(M[i][r]); // σ = norm(A[k:n, r], Inf)
                         }
                     }
-                    if (alpha * lambda * lambda <= abs(M[k][k]) * sigma)
+                    if (alpha * lambda * lambda <= std::fabs(M[k][k]) * sigma)
                     {
                         s = 1;
                     }
-                    else if ( abs(M[r][r]) >= alpha * sigma )
+                    else if ( std::fabs(M[r][r]) >= alpha * sigma )
                     {
                         swap = true;
                         m1 = k;
@@ -1367,9 +1367,9 @@ bool NOMAD::LDLt_decomposition ( std::string & error_msg,
                {
                     for (int j = k + s; j < n; j++)
                     {
-                        if (abs(M[i][j]) > val)
+                        if (std::fabs(M[i][j]) > val)
                         {
-                            val = abs(M[i][j]);
+                            val = std::fabs(M[i][j]);
                         }
                     }
                }
