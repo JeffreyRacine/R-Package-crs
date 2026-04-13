@@ -1,3 +1,18 @@
+Changes from Version 0.15-41 to 0.15-42 [13-Apr-2026]
+
+* Sealed the unsupported experimental NOMAD OpenMP-only routes in the
+  shipped `crs` build so ambient `_OPENMP` settings can no longer
+  enable `COOP_MADS_OPTIMIZATION`, `PSD_MADS_OPTIMIZATION`, or
+  `NB_THREADS_PARALLEL_EVAL > 1`.
+
+* Fixed the source-build missing-symbol failure reported for
+  `COOPMads`/`PSDMads` by preventing those excluded translation units
+  from being referenced in the shipped package.
+
+* Added installed-build regression coverage for the shipped serial
+  `snomadr()` contract, including explicit checks that unsupported
+  NOMAD OpenMP-only options fail cleanly.
+
 Changes from Version 0.15-40 to 0.15-41 [07-Apr-2026]
 
 * Removed the legacy `npglpreg` package surface from `crs`

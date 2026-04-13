@@ -52,8 +52,20 @@
 #include <windows.h>
 #endif
 
+// Shipped crs builds do not expose NOMAD's optional OpenMP-only evaluation mode.
+#ifdef CRS_NOMAD_SHIPPED_OPENMP_FEATURES_ENABLED
+#undef CRS_NOMAD_SHIPPED_OPENMP_FEATURES_ENABLED
+#endif
+#define CRS_NOMAD_SHIPPED_OPENMP_FEATURES_ENABLED 0
+
+#if defined(_OPENMP) && CRS_NOMAD_SHIPPED_OPENMP_FEATURES_ENABLED
+#define CRS_NOMAD_SHIPPED_OPENMP_FEATURES_ACTIVE 1
+#else
+#define CRS_NOMAD_SHIPPED_OPENMP_FEATURES_ACTIVE 0
+#endif
+
 // For hardware thread number
-#ifdef _OPENMP
+#if CRS_NOMAD_SHIPPED_OPENMP_FEATURES_ACTIVE
 #include <thread>
 #endif
 
@@ -243,7 +255,7 @@ void NOMAD::EvaluatorControlGlobalParameters::checkAndComply(const std::shared_p
     }
     
     int nbThreadsParam = getAttributeValueProtected<int>("NB_THREADS_PARALLEL_EVAL",false);
-#ifdef _OPENMP
+#if CRS_NOMAD_SHIPPED_OPENMP_FEATURES_ACTIVE
     // Number of threads on which to do the evaluation.
     
     int nbThreadsHard = static_cast<int>(std::thread::hardware_concurrency());
@@ -261,16 +273,14 @@ void NOMAD::EvaluatorControlGlobalParameters::checkAndComply(const std::shared_p
 #else
     if (nbThreadsParam > 1)
     {
-        std::string s = "NB_THREADS_PARALLEL_EVAL>1 but OpenMP is not available. Build Nomad with OpenMP enabled.";
+        std::string s = "NB_THREADS_PARALLEL_EVAL>1 is not supported in the shipped crs build.";
         throw NOMAD::InvalidParameter(__FILE__, __LINE__, s);
     }
-#endif // _OPENMP
+#endif
     
     
     _toBeChecked = false;
     
 }
 // End checkAndComply()
-
-
 

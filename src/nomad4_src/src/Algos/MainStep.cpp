@@ -69,6 +69,18 @@
 #include <R_ext/Print.h>
 #include <sstream>
 
+// Shipped crs builds do not expose NOMAD's optional OpenMP-only algorithms.
+#ifdef CRS_NOMAD_SHIPPED_OPENMP_FEATURES_ENABLED
+#undef CRS_NOMAD_SHIPPED_OPENMP_FEATURES_ENABLED
+#endif
+#define CRS_NOMAD_SHIPPED_OPENMP_FEATURES_ENABLED 0
+
+#if defined(_OPENMP) && CRS_NOMAD_SHIPPED_OPENMP_FEATURES_ENABLED
+#define CRS_NOMAD_SHIPPED_OPENMP_FEATURES_ACTIVE 1
+#else
+#define CRS_NOMAD_SHIPPED_OPENMP_FEATURES_ACTIVE 0
+#endif
+
 // Specific algos
 #include "../Algos/LatinHypercubeSampling/LH.hpp"
 #include "../Algos/CoordinateSearch/CS.hpp"
@@ -78,7 +90,7 @@
 #include "../Algos/Mads/Search.hpp"
 #include "../Algos/Mads/VNSSearchMethod.hpp"
 #include "../Algos/NelderMead/NM.hpp"
-#ifdef _OPENMP
+#if CRS_NOMAD_SHIPPED_OPENMP_FEATURES_ACTIVE
 #include "../Algos/PSDMads/PSDMads.hpp"
 #include "../Algos/COOPMads/COOPMads.hpp"
 #endif
@@ -461,7 +473,7 @@ void NOMAD::MainStep::startImp()
 
     auto doCSoptimization = _allParams->getRunParams()->getAttributeValue<bool>("CS_OPTIMIZATION");
     auto doNMOptimization = _allParams->getRunParams()->getAttributeValue<bool>("NM_OPTIMIZATION");
-#ifdef _OPENMP
+#if CRS_NOMAD_SHIPPED_OPENMP_FEATURES_ACTIVE
     bool doPSDMads = _allParams->getRunParams()->getAttributeValue<bool>("PSD_MADS_OPTIMIZATION");
     bool doCOOPMads = _allParams->getRunParams()->getAttributeValue<bool>("COOP_MADS_OPTIMIZATION");
 #endif
@@ -526,7 +538,7 @@ void NOMAD::MainStep::startImp()
         _algos.push_back(cs);
     }
 
-#ifdef _OPENMP
+#if CRS_NOMAD_SHIPPED_OPENMP_FEATURES_ACTIVE
     else if (doPSDMads)
     {
         

@@ -57,6 +57,18 @@
 
 #include "../nomad_version.hpp"
 
+// Shipped crs builds do not expose NOMAD's optional OpenMP-only algorithms.
+#ifdef CRS_NOMAD_SHIPPED_OPENMP_FEATURES_ENABLED
+#undef CRS_NOMAD_SHIPPED_OPENMP_FEATURES_ENABLED
+#endif
+#define CRS_NOMAD_SHIPPED_OPENMP_FEATURES_ENABLED 0
+
+#if defined(_OPENMP) && CRS_NOMAD_SHIPPED_OPENMP_FEATURES_ENABLED
+#define CRS_NOMAD_SHIPPED_OPENMP_FEATURES_ACTIVE 1
+#else
+#define CRS_NOMAD_SHIPPED_OPENMP_FEATURES_ACTIVE 0
+#endif
+
 
 // Static members initialization
 bool NOMAD::RunParameters::_warningUnknownParamShown = false;
@@ -521,10 +533,10 @@ void NOMAD::RunParameters::checkAndComply(
 
     // COOP-Mads
     bool useAlgoCoopMads = getAttributeValueProtected<bool>("COOP_MADS_OPTIMIZATION", false);
-#ifndef _OPENMP
+#if !CRS_NOMAD_SHIPPED_OPENMP_FEATURES_ACTIVE
     if (useAlgoCoopMads)
     {
-        err = "Error: COOP_MADS_OPTIMIZATION can only be used when OpenMP is available. Please rebuild Nomad with OpenMP enabled.";
+        err = "Error: COOP_MADS_OPTIMIZATION is not supported in the shipped crs build.";
         throw NOMAD::Exception(__FILE__,__LINE__, err);
     }
 #else
@@ -541,10 +553,10 @@ void NOMAD::RunParameters::checkAndComply(
     // PSD-Mads
     bool useAlgoPSDMads = getAttributeValueProtected<bool>("PSD_MADS_OPTIMIZATION", false);
 
-#ifndef _OPENMP
+#if !CRS_NOMAD_SHIPPED_OPENMP_FEATURES_ACTIVE
     if (useAlgoPSDMads)
     {
-        err = "Error: PSD_MADS_OPTIMIZATION can only be used when OpenMP is available.";
+        err = "Error: PSD_MADS_OPTIMIZATION is not supported in the shipped crs build.";
         throw NOMAD::Exception(__FILE__,__LINE__, err);
     }
 #else
@@ -555,7 +567,7 @@ void NOMAD::RunParameters::checkAndComply(
         err = "Error: PSD-Mads requires to have more than one sub-problem to solve in parallel. PSD_MADS_NB_SUBPROBLEM must be greater than 1.";
         throw NOMAD::Exception(__FILE__,__LINE__, err);
     }
-#endif // _OPENMP
+#endif
 
     if (useAlgoPSDMads)
     {
