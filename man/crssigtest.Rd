@@ -18,6 +18,10 @@ crssigtest(model = NULL,
 }
 
 \arguments{
+\subsection{Model And Test Selection}{
+  Arguments that identify the fitted model and predictor columns to test.
+}
+
   \item{model}{
     a \code{crs} model object.
   }
@@ -26,6 +30,11 @@ crssigtest(model = NULL,
     test of significance is to be conducted. Defaults to (1,2,\dots,\eqn{p})
     where \eqn{p} is the number of columns in \code{model$xz}.
   }
+
+\subsection{Bootstrap Controls}{
+  Controls for bootstrap P-value computation and reproducibility.
+}
+
   \item{boot}{
     a logical value (default \code{TRUE}) indicating whether to compute
     the bootstrap P-value or simply return the asymptotic P-value.

@@ -4,13 +4,13 @@
 \title{Categorical Kernel Regression Spline Cross-Validation}
 
 \description{
-  
+
   \code{krscv} computes exhaustive cross-validation directed search for
   a regression spline estimate of a one (1) dimensional dependent
   variable on an \code{r}-dimensional vector of continuous and
   nominal/ordinal (\code{\link{factor}}/\code{\link{ordered}})
   predictors.
-  
+
 }
 
 \usage{
@@ -36,12 +36,20 @@ krscv(xz,
 
 \arguments{
 
+\subsection{Data Inputs}{
+  Response and predictor data supplied to the exhaustive kernel CV helper.
+}
+
   \item{xz}{ continuous and/or nominal/ordinal
     (\code{\link{factor}}/\code{\link{ordered}}) predictors }
 
   \item{y}{
     continuous univariate vector
   }
+
+\subsection{Basis And Spline Complexity}{
+  Controls that define the spline basis and the degree/segment search grid.
+}
 
   \item{basis}{ a character string (default \code{basis="additive"})
     indicating whether the additive or tensor product B-spline basis
@@ -63,28 +71,14 @@ krscv(xz,
   of knots held fixed) or the number of knots (spline degree held
   fixed) or both the spline degree and number of knots}
 
-  \item{cv.func}{a character string (default \code{cv.func="cv.ls"})
-    indicating which method to use to select smoothing
-    parameters. \code{cv.gcv} specifies generalized cross-validation
-    (Craven and Wahba (1979)), \code{cv.aic} specifies expected
-    Kullback-Leibler cross-validation (Hurvich, Simonoff, and Tsai
-    (1998)), and \code{cv.ls} specifies least-squares
-    cross-validation  }
-  
   \item{degree}{ integer/vector specifying the degree of the B-spline
   basis for each dimension of the continuous \code{x}}
 
   \item{degree.max}{ the maximum degree of the B-spline basis for
     each of the continuous predictors (default \code{degree.max=10})}
-  
+
   \item{degree.min}{ the minimum degree of the B-spline basis for
     each of the continuous predictors (default \code{degree.min=0})}
-
-  \item{display.nomad.progress}{ a logical value indicating whether to
-  display NOMAD progress (default \code{display.nomad.progress=TRUE}) }
-
-  \item{display.warnings}{ a logical value indicating whether to
-  display warnings (default \code{display.warnings=TRUE}) }
 
    \item{knots}{ a character string (default \code{knots="quantiles"})
   specifying where knots are to be placed. \sQuote{quantiles} specifies
@@ -93,6 +87,29 @@ krscv(xz,
   equally spaced intervals. If \code{knots="auto"}, the knot type will
   be automatically determined by cross-validation }
 
+  \item{segments}{ integer/vector specifying the number of segments of
+  the B-spline basis for each dimension of the continuous \code{x}
+  (i.e. number of knots minus one)}
+
+  \item{segments.max}{ the maximum segments of the B-spline basis for
+    each of the continuous predictors (default \code{segments.max=10})}
+
+  \item{segments.min}{ the minimum segments of the B-spline basis for
+    each of the continuous predictors (default \code{segments.min=1})}
+
+\subsection{Exhaustive Search And Kernel Bandwidth Controls}{
+  Controls for the cross-validation criterion, categorical-kernel bandwidth
+  search, and numerical safeguards used while evaluating the grid.
+}
+
+  \item{cv.func}{a character string (default \code{cv.func="cv.ls"})
+    indicating which method to use to select smoothing
+    parameters. \code{cv.gcv} specifies generalized cross-validation
+    (Craven and Wahba (1979)), \code{cv.aic} specifies expected
+    Kullback-Leibler cross-validation (Hurvich, Simonoff, and Tsai
+    (1998)), and \code{cv.ls} specifies least-squares
+    cross-validation  }
+
   \item{restarts}{
     number of times to restart \code{\link{optim}} from different initial
     random values (default \code{restarts=0}) when searching for optimal
@@ -100,21 +117,15 @@ krscv(xz,
     combination (i.e.\ \code{degree}/\code{segments})
   }
 
-  \item{segments}{ integer/vector specifying the number of segments of
-  the B-spline basis for each dimension of the continuous \code{x}
-  (i.e. number of knots minus one)}
-
-  \item{segments.max}{ the maximum segments of the B-spline basis for
-    each of the continuous predictors (default \code{segments.max=10})}
-  
-  \item{segments.min}{ the minimum segments of the B-spline basis for
-    each of the continuous predictors (default \code{segments.min=1})}
-
   \item{singular.ok}{
     a logical value (default \code{singular.ok=FALSE}) that, when
     \code{FALSE}, discards singular bases during cross-validation (a check
     for ill-conditioned bases is performed).
   }
+
+\subsection{Quantile And Weights}{
+  Controls for quantile regression splines and weighted fitting.
+}
 
   \item{tau}{
     if non-null a number in (0,1) denoting the quantile for which a quantile
@@ -127,6 +138,16 @@ krscv(xz,
     non-NULL, weighted least squares is used with weights
     \sQuote{weights} (that is, minimizing \sQuote{sum(w*e^2)});
     otherwise ordinary least squares is used.}
+
+\subsection{Warnings And Progress}{
+  Controls for user-visible warnings and progress reporting.
+}
+
+  \item{display.nomad.progress}{ a logical value indicating whether to
+  display NOMAD progress (default \code{display.nomad.progress=TRUE}) }
+
+  \item{display.warnings}{ a logical value indicating whether to
+  display warnings (default \code{display.warnings=TRUE}) }
 }
 
 \details{
@@ -151,7 +172,7 @@ krscv(xz,
 
   For the discrete predictors the product kernel function is of the
   \sQuote{Li-Racine} type (see Li and Racine (2007) for details).
-  
+
   For each unique combination of \code{degree} and \code{segment},
   numerical search for the bandwidth vector \code{lambda} is undertaken
   using \code{\link{optim}} and the box-constrained \code{L-BFGS-B}
@@ -177,7 +198,7 @@ krscv(xz,
 
   \item{K}{ scalar/vector containing optimal degree(s) of spline or
   number of segments }
-  \item{K.mat}{ vector/matrix of values of \code{K} evaluated during search }  
+  \item{K.mat}{ vector/matrix of values of \code{K} evaluated during search }
   \item{restarts}{ number of restarts during search, if any }
   \item{lambda}{ optimal bandwidths for categorical predictors }
   \item{lambda.mat}{ vector/matrix of optimal bandwidths for each degree of spline }

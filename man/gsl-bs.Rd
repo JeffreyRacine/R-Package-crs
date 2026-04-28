@@ -23,7 +23,16 @@ gsl.bs(\dots, display.warnings = TRUE)
 }
 \arguments{
 
+\subsection{Data Input}{
+  Predictor values used to construct the spline basis.
+}
+
 \item{x}{ the predictor variable.  Missing values are not allowed }
+
+\subsection{Spline Basis Controls}{
+  Controls for polynomial degree, breaks, knots, bounds, and intercept
+  handling.
+}
 
 \item{degree}{ degree of the piecewise polynomial - default is
 \sQuote{3} (cubic spline) }
@@ -45,6 +54,10 @@ basis; default is \sQuote{FALSE} }
 \item{knots}{ a vector (default \code{knots="NULL"}) specifying knots
   for the spline basis (default enables uniform knots, otherwise those
   provided are used)}
+
+\subsection{Warnings And Pass-Through Arguments}{
+  Controls for warnings and additional method arguments.
+}
 
 \item{display.warnings}{ a logical value indicating whether to
   display warnings (default \code{display.warnings=TRUE}) }
@@ -118,4 +131,3 @@ plot(x,y,cex=.5,col="grey")
 lines(x,fitted(lm(y~B)))
 }
 \keyword{nonparametric}
-

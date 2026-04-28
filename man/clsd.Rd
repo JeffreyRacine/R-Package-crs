@@ -44,11 +44,20 @@ clsd(x = NULL,
 }
 \arguments{
 
+\subsection{Data And Evaluation Inputs}{
+  Training data, optional evaluation data, and optional starting coefficients.
+}
+
   \item{x}{ a numeric vector of training data }
+
+  \item{xeval}{ a numeric vector of evaluation data }
 
   \item{beta}{ a numeric vector of coefficients (default \code{NULL}) }
 
-  \item{xeval}{ a numeric vector of evaluation data }  
+\subsection{Density Basis Structure}{
+  Controls that define the B-spline basis, knot placement, and spline
+  complexity.
+}
 
   \item{basis}{ a character string (default \code{basis="tensor"})
     indicating whether the additive or tensor product B-spline basis
@@ -64,6 +73,27 @@ clsd(x = NULL,
     continuous predictors (default \code{degree.min=2},
     \code{degree.max=25})}
 
+   \item{knots}{ a character string (default \code{knots="quantiles"})
+  specifying where knots are to be placed. \sQuote{quantiles} specifies
+  knots placed at equally spaced quantiles (equal number of observations
+  lie in each segment) and \sQuote{uniform} specifies knots placed at
+  equally spaced intervals }
+
+  \item{segments}{ integer/vector specifying the number of segments of the
+    B-spline basis for each dimension of the continuous \code{x}
+    (i.e. number of knots minus one) (default \code{segments=1}, i.e. Bezier
+    curve)}
+
+  \item{segments.min,segments.max}{ when \code{elastic.max=FALSE}, the
+    minimum/maximum segments of the B-spline basis for each of the
+    continuous predictors (default
+    \code{segments.min=1},\code{segments.max=100})}
+
+\subsection{Derivatives, Integration, And Quantiles}{
+  Controls for derivative output, extended-range integration, and quantile
+  evaluation.
+}
+
   \item{deriv}{ an integer \code{l} (default \code{deriv=1}) specifying
   whether to compute the univariate \code{l}th partial derivative for
   each continuous predictor (and difference in levels for each
@@ -76,31 +106,25 @@ clsd(x = NULL,
   specifying the index (currently only supports 1) of the variable whose
   derivative is requested  }
 
-  \item{display.nomad.progress}{ a logical value indicating whether to
-  display the progress of the NOMAD solver (default \code{display.nomad.progress=TRUE}) }
-
-  \item{display.warnings}{ a logical value indicating whether to
-  display warnings (default \code{display.warnings=TRUE}) }
-
-  \item{do.gradient}{ a logical value indicating whether or not to use
-     the analytical gradient during optimization (defaults to \code{TRUE})}
-
-  \item{elastic.max,elastic.diff}{ a logical value/integer indicating
-     whether to use \sQuote{elastic} search bounds such that the optimal
-     degree/segment must lie \code{elastic.diff} units from the
-     respective search bounds }
-
    \item{er}{
      a scalar indicating the fraction of data range to extend
      the tails (default \code{1/log(n)}, see \code{\link{extendrange}} for
      further details)
    }
 
-   \item{knots}{ a character string (default \code{knots="quantiles"})
-  specifying where knots are to be placed. \sQuote{quantiles} specifies
-  knots placed at equally spaced quantiles (equal number of observations
-  lie in each segment) and \sQuote{uniform} specifies knots placed at
-  equally spaced intervals }
+   \item{n.integrate}{
+     the number of evenly spaced integration points on the extended range specified by \code{er} (defaults to \code{500})
+   }
+
+   \item{quantile.seq}{
+     a sequence of numbers lying in \eqn{[0,1]} on which quantiles from
+     the logspline distribution are obtained
+   }
+
+\subsection{Support And Shape Controls}{
+  Controls for support bounds and monotonicity constraints in the density
+  basis.
+}
 
   \item{lbound,ubound}{
     lower/upper bound for the support of the density. For example, if
@@ -108,20 +132,6 @@ clsd(x = NULL,
     of 0, and has a discontinuity at 0, the user could specify lbound =
     0. However, if the density is essentially zero near 0, one does not
     need to specify lbound }
-
-   \item{max.attempts}{
-     maximum number of attempts to undertake if \code{\link{optim}}
-     fails for any set of initial parameters for each value of
-     \code{nmulti}
-   }
-
-  \item{maxit}{
-    maximum number of iterations used by \code{\link{optim}}
-   }
-   
-   \item{method}{
-     see \code{\link{optim}} for details
-   }
 
    \item{monotone}{ a logical value indicating whether modify
      the standard B-spline basis function so that it is tailored for
@@ -132,8 +142,31 @@ clsd(x = NULL,
      the linear segment coefficients used when (\code{monotone=FALSE})
    }
 
-   \item{n.integrate}{
-     the number of evenly spaced integration points on the extended range specified by \code{er} (defaults to \code{500})
+\subsection{Optimization Controls}{
+  Controls for local optimization, NOMAD search, restarts, and information
+  criterion penalties.
+}
+
+  \item{do.gradient}{ a logical value indicating whether or not to use
+     the analytical gradient during optimization (defaults to \code{TRUE})}
+
+  \item{elastic.max,elastic.diff}{ a logical value/integer indicating
+     whether to use \sQuote{elastic} search bounds such that the optimal
+     degree/segment must lie \code{elastic.diff} units from the
+     respective search bounds }
+
+   \item{max.attempts}{
+     maximum number of attempts to undertake if \code{\link{optim}}
+     fails for any set of initial parameters for each value of
+     \code{nmulti}
+   }
+
+  \item{maxit}{
+    maximum number of iterations used by \code{\link{optim}}
+   }
+
+   \item{method}{
+     see \code{\link{optim}} for details
    }
 
   \item{nmulti}{
@@ -152,24 +185,20 @@ clsd(x = NULL,
     (knots-1) that maximizes \code{2*logl-penalty*(degree+segments)}. The
     default is to use the penalty parameter of \code{log(n)/2} (\code{2}
     would deliver standard AIC, \code{log(n)} standard BIC)}
-  
-   \item{quantile.seq}{
-     a sequence of numbers lying in \eqn{[0,1]} on which quantiles from
-     the logspline distribution are obtained
-   }
 
    \item{random.seed}{ seeds the random number generator for initial
      parameter values when \code{\link{optim}} is called }
 
-  \item{segments}{ integer/vector specifying the number of segments of the
-    B-spline basis for each dimension of the continuous \code{x}
-    (i.e. number of knots minus one) (default \code{segments=1}, i.e. Bezier
-    curve)}
+\subsection{Warnings And Progress}{
+  Controls for user-visible warnings, NOMAD progress reporting, and verbose
+  optimizer output.
+}
 
-  \item{segments.min,segments.max}{ when \code{elastic.max=FALSE}, the
-    minimum/maximum segments of the B-spline basis for each of the
-    continuous predictors (default
-    \code{segments.min=1},\code{segments.max=100})}
+  \item{display.nomad.progress}{ a logical value indicating whether to
+  display the progress of the NOMAD solver (default \code{display.nomad.progress=TRUE}) }
+
+  \item{display.warnings}{ a logical value indicating whether to
+  display warnings (default \code{display.warnings=TRUE}) }
 
    \item{verbose}{
      a logical value which when \code{TRUE} produces verbose output
@@ -182,11 +211,11 @@ clsd(x = NULL,
   Typical usages are (see below for a  list of options and also
   the examples at the end of this help file)
   \preformatted{
-    
+
     model <- clsd(x)
 
     }
-    
+
   \code{clsd} computes a logspline density estimate of a one (1)
   dimensional continuous variable.
 
@@ -235,7 +264,7 @@ clsd(x = NULL,
 
   \item{degree}{ integer/vector specifying the degree of the B-spline
     basis for each dimension of the continuous \code{x}}
-  
+
   \item{segments}{ integer/vector specifying the number of segments of
     the B-spline basis for each dimension of the continuous \code{x}}
 
@@ -246,7 +275,7 @@ clsd(x = NULL,
   obtained}
 
 }
-  
+
 \section{Usage Issues}{
 
   This function should be considered to be in \sQuote{beta} status until
@@ -361,4 +390,3 @@ plot(model)
 } % end dontrun
 }
 \keyword{nonparametric}
-

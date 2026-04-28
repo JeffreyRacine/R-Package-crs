@@ -4,14 +4,14 @@
 \title{Categorical Kernel Regression Spline Cross-Validation}
 
 \description{
-  
+
   \code{krscvNOMAD} computes NOMAD-based (Nonsmooth Optimization by Mesh
   Adaptive Direct Search, Abramson, Audet, Couture and Le Digabel
   (2011)) cross-validation directed search for a regression spline
   estimate of a one (1) dimensional dependent variable on an
   \code{r}-dimensional vector of continuous and nominal/ordinal
   (\code{\link{factor}}/\code{\link{ordered}}) predictors.
-  
+
 }
 \usage{
 krscvNOMAD(xz,
@@ -21,27 +21,27 @@ krscvNOMAD(xz,
            cv.df.min = 1,
            cv.func = c("cv.ls","cv.gcv","cv.aic"),
            degree = degree,
-           degree.max = 10, 
-           degree.min = 0, 
+           degree.max = 10,
+           degree.min = 0,
            display.nomad.progress = TRUE,
            display.warnings = TRUE,
            initial.mesh.size.integer = "1",
            initial.mesh.size.real = "r0.1",
            knots = c("quantiles","uniform","auto"),
-           lambda = lambda, 
-           lambda.discrete = FALSE, 
-           lambda.discrete.num = 100, 
+           lambda = lambda,
+           lambda.discrete = FALSE,
+           lambda.discrete.num = 100,
            max.bb.eval = 140,
-           min.mesh.size.integer = "1", 
+           min.mesh.size.integer = "1",
            min.mesh.size.real = paste("r",sqrt(.Machine$double.eps),sep=""),
-           min.frame.size.integer = "1", 
+           min.frame.size.integer = "1",
            min.frame.size.real = "1",
            nmulti = 0,
            opts=list(),
            random.seed = 42,
-           segments = segments, 
-           segments.max = 10, 
-           segments.min = 1, 
+           segments = segments,
+           segments.max = 10,
+           segments.min = 1,
            singular.ok = FALSE,
            tau = NULL,
            weights = NULL)
@@ -49,12 +49,20 @@ krscvNOMAD(xz,
 
 \arguments{
 
+\subsection{Data Inputs}{
+  Response and predictor data supplied to the NOMAD kernel CV helper.
+}
+
   \item{xz}{ continuous and/or nominal/ordinal
     (\code{\link{factor}}/\code{\link{ordered}}) predictors }
 
   \item{y}{
     continuous univariate vector
   }
+
+\subsection{Basis And Spline Complexity}{
+  Controls that define the spline basis and the degree/segment search space.
+}
 
   \item{basis}{ a character string (default \code{basis="additive"})
     indicating whether the additive or tensor product B-spline basis
@@ -76,6 +84,52 @@ krscvNOMAD(xz,
   of knots held fixed) or the number of knots (spline degree held
   fixed) or both the spline degree and number of knots}
 
+  \item{degree}{ integer/vector specifying the degree of the B-spline
+  basis for each dimension of the continuous \code{x}}
+
+  \item{degree.max}{ the maximum degree of the B-spline basis for
+    each of the continuous predictors (default \code{degree.max=10})}
+
+  \item{degree.min}{ the minimum degree of the B-spline basis for
+    each of the continuous predictors (default \code{degree.min=0})}
+
+   \item{knots}{ a character string (default \code{knots="quantiles"})
+  specifying where knots are to be placed. \sQuote{quantiles} specifies
+  knots placed at equally spaced quantiles (equal number of observations
+  lie in each segment) and \sQuote{uniform} specifies knots placed at
+  equally spaced intervals. If \code{knots="auto"}, the knot type will
+  be automatically determined by cross-validation }
+
+  \item{segments}{ integer/vector specifying the number of segments of
+  the B-spline basis for each dimension of the continuous \code{x}
+  (i.e. number of knots minus one)}
+
+  \item{segments.max}{ the maximum segments of the B-spline basis for
+    each of the continuous predictors (default \code{segments.max=10})}
+
+  \item{segments.min}{ the minimum segments of the B-spline basis for
+    each of the continuous predictors (default \code{segments.min=1})}
+
+\subsection{Kernel Bandwidth Controls}{
+  Controls for categorical-kernel bandwidth initialization and discretization.
+}
+
+  \item{lambda}{ real/vector for the categorical predictors. If it is
+  not NULL, it will be the starting value(s) for lambda}
+
+  \item{lambda.discrete}{ if \code{lambda.discrete=TRUE}, the bandwidth
+      will be discretized into \code{lambda.discrete.num+1} points and
+      \code{lambda} will be chosen from these points}
+
+  \item{lambda.discrete.num}{a positive integer indicating the number of
+  discrete values that lambda can assume - this parameter will only be
+  used when \code{lambda.discrete=TRUE}}
+
+\subsection{NOMAD Search Controls}{
+  Controls for the cross-validation criterion, NOMAD solver, multistart
+  initialization, and numerical safeguards.
+}
+
   \item{cv.df.min}{ the minimum degrees of freedom to allow when
     conducting cross-validation (default \code{cv.df.min=1})}
 
@@ -86,21 +140,6 @@ krscvNOMAD(xz,
     Kullback-Leibler cross-validation (Hurvich, Simonoff, and Tsai
     (1998)), and \code{cv.ls} specifies least-squares
     cross-validation  }
-  
-  \item{degree}{ integer/vector specifying the degree of the B-spline
-  basis for each dimension of the continuous \code{x}}
-
-  \item{degree.max}{ the maximum degree of the B-spline basis for
-    each of the continuous predictors (default \code{degree.max=10})}
-  
-  \item{degree.min}{ the minimum degree of the B-spline basis for
-    each of the continuous predictors (default \code{degree.min=0})}
-
-  \item{display.nomad.progress}{ a logical value indicating whether to
-  display the progress of the NOMAD solver (default \code{display.nomad.progress=TRUE}) }
-
-  \item{display.warnings}{ a logical value indicating whether to
-  display warnings (default \code{display.warnings=TRUE}) }
 
   \item{initial.mesh.size.integer}{
     argument passed to the NOMAD solver (see \code{\link{snomadr}} for
@@ -111,24 +150,6 @@ krscvNOMAD(xz,
     argument passed to the NOMAD solver (see \code{\link{snomadr}} for
     further details)
   }
-
-   \item{knots}{ a character string (default \code{knots="quantiles"})
-  specifying where knots are to be placed. \sQuote{quantiles} specifies
-  knots placed at equally spaced quantiles (equal number of observations
-  lie in each segment) and \sQuote{uniform} specifies knots placed at
-  equally spaced intervals. If \code{knots="auto"}, the knot type will
-  be automatically determined by cross-validation }
-
-  \item{lambda}{ real/vector for the categorical predictors. If it is
-  not NULL, it will be the starting value(s) for lambda}
-
-  \item{lambda.discrete}{ if \code{lambda.discrete=TRUE}, the bandwidth
-      will be discretized into \code{lambda.discrete.num+1} points and
-      \code{lambda} will be chosen from these points}
-  
-  \item{lambda.discrete.num}{a positive integer indicating the number of
-  discrete values that lambda can assume - this parameter will only be
-  used when \code{lambda.discrete=TRUE}}
 
   \item{max.bb.eval}{
     argument passed to the NOMAD solver (see \code{\link{snomadr}} for
@@ -149,7 +170,7 @@ krscvNOMAD(xz,
   \item{min.frame.size.integer}{
     arguments passed to the NOMAD solver (see \code{\link{snomadr}} for
     further details)
-  }      
+  }
 
   \item{min.frame.size.real}{
     arguments passed to the NOMAD solver (see \code{\link{snomadr}} for
@@ -171,19 +192,9 @@ krscvNOMAD(xz,
   path. User-supplied \code{opts} entries always take precedence. }
 
 \item{random.seed}{
-  when it is not missing and not equal to 0, the initial points  will 
+  when it is not missing and not equal to 0, the initial points  will
   be generated using this seed when \code{nmulti > 0}
 }
-      
-  \item{segments}{ integer/vector specifying the number of segments of
-  the B-spline basis for each dimension of the continuous \code{x}
-  (i.e. number of knots minus one)}
-
-  \item{segments.max}{ the maximum segments of the B-spline basis for
-    each of the continuous predictors (default \code{segments.max=10})}
-  
-  \item{segments.min}{ the minimum segments of the B-spline basis for
-    each of the continuous predictors (default \code{segments.min=1})}
 
   \item{singular.ok}{
     a logical value (default \code{singular.ok=FALSE}) that, when
@@ -191,18 +202,32 @@ krscvNOMAD(xz,
     for ill-conditioned bases is performed).
   }
 
+\subsection{Quantile And Weights}{
+  Controls for quantile regression splines and weighted fitting.
+}
+
   \item{tau}{
     if non-null a number in (0,1) denoting the quantile for which a quantile
     regression spline is to be estimated rather than estimating the
     conditional mean (default \code{tau=NULL})
   }
-  
+
   \item{weights}{
     an optional vector of weights to be used in the fitting process.
     Should be \sQuote{NULL} or a numeric vector.  If non-NULL, weighted least
     squares is used with weights \sQuote{weights} (that is, minimizing
     \sQuote{sum(w*e^2)}); otherwise ordinary least squares is used.
   }
+
+\subsection{Warnings And Progress}{
+  Controls for user-visible warnings and NOMAD progress reporting.
+}
+
+  \item{display.nomad.progress}{ a logical value indicating whether to
+  display the progress of the NOMAD solver (default \code{display.nomad.progress=TRUE}) }
+
+  \item{display.warnings}{ a logical value indicating whether to
+  display warnings (default \code{display.warnings=TRUE}) }
 }
 
 \details{
@@ -213,7 +238,7 @@ krscvNOMAD(xz,
   (\code{\link{factor}}/\code{\link{ordered}}) predictors.  Numerical
   search for the optimal \code{degree}/\code{segments}/\code{lambda} is
   undertaken using \code{\link{snomadr}}.
-  
+
   The optimal \code{K}/\code{lambda} combination is returned along with
   other results (see below for return values). The method uses kernel
   functions appropriate for categorical (ordinal/nominal) predictors
@@ -230,7 +255,7 @@ krscvNOMAD(xz,
 
   For the discrete predictors the product kernel function is of the
   \sQuote{Li-Racine} type (see Li and Racine (2007) for details).
-  
+
 }
 
 \value{
@@ -241,7 +266,7 @@ krscvNOMAD(xz,
 
   \item{K}{ scalar/vector containing optimal degree(s) of spline or
   number of segments }
-  \item{K.mat}{ vector/matrix of values of \code{K} evaluated during search }  
+  \item{K.mat}{ vector/matrix of values of \code{K} evaluated during search }
   \item{degree.max}{ the maximum degree of the B-spline basis for
     each of the continuous predictors (default \code{degree.max=10})}
   \item{segments.max}{ the maximum segments of the B-spline basis for
@@ -278,7 +303,7 @@ krscvNOMAD(xz,
   Le Digabel, S. (2011), \dQuote{Algorithm 909: NOMAD: Nonlinear
   Optimization With The MADS Algorithm}. ACM Transactions on
   Mathematical Software, 37(4):44:1-44:15.
-  
+
   Li, Q. and J.S. Racine (2007), \emph{Nonparametric Econometrics:
     Theory and Practice,} Princeton University Press.
 

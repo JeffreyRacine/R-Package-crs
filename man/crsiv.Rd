@@ -57,6 +57,11 @@ crsiv(y, \dots)
 }
 
 \arguments{
+
+\subsection{Data Inputs}{
+  Structural variables supplied to the instrumental regression estimator.
+}
+
   \item{y}{
     a one (1) dimensional numeric or integer vector of dependent data, each
     element \eqn{i} corresponding to each observation (row) \eqn{i} of
@@ -78,6 +83,12 @@ crsiv(y, \dots)
     types may be continuous, discrete (unordered and ordered factors),
     or some combination thereof
   }
+
+\subsection{Evaluation Inputs}{
+  Optional evaluation data. When omitted, evaluation uses the corresponding
+  training data.
+}
+
   \item{zeval}{
     a \eqn{p}-variate data frame of endogenous predictors on which the
     regression will be estimated (evaluation data). By default, evaluation
@@ -93,6 +104,11 @@ crsiv(y, \dots)
     regression will be estimated (evaluation data). By default,
     evaluation takes place on the data provided by \code{x}
   }
+
+\subsection{Regularization And Iteration Controls}{
+  Controls for the Tikhonov and Landweber-Fridman regularization routes.
+}
+
   \item{alpha}{
     a numeric scalar that, if supplied, is used rather than numerically
     solving for \code{alpha}, when using \code{method="Tikhonov"}
@@ -113,18 +129,6 @@ crsiv(y, \dots)
 \item{constant}{
   the constant to use when using  \code{method="Landweber-Fridman"}
 }
-  \item{deriv}{ an integer \code{l} (default \code{deriv=0}) specifying
-  whether to compute the univariate \code{l}th partial derivative for
-  each continuous predictor (and difference in levels for each
-  categorical predictor) or not and if so what order. Note that if
-  \code{deriv} is higher than the spline degree of the associated
-  continuous predictor then the derivative will be zero and a warning
-  issued to this effect (see important note below)
-  }
-  \item{display.nomad.progress}{ a logical value indicating whether to
-  display the progress of the NOMAD solver (default \code{display.nomad.progress=TRUE}) }
-  \item{display.warnings}{ a logical value indicating whether to
-  display warnings (default \code{display.warnings=TRUE}) }
 \item{iterate.diff.tol}{
   the search tolerance for the difference in the stopping rule from
   iteration to iteration when using \code{method="Landweber-Fridman"}
@@ -135,14 +139,10 @@ crsiv(y, \dots)
   before termination occurs when using \code{method="Landweber-Fridman"}
 }
 \item{method}{
-  the regularization method employed (default
-   \code{"Landweber-Fridman"}, see Horowitz (2011); see Darolles, Fan,
-   Florens and Renault (2011) for details for \code{"Tikhonov"})
- }
-  \item{opts}{
-    arguments passed to the NOMAD solver (see \code{\link{snomadr}} for
-    further details)
-  }
+	  the regularization method employed (default
+	   \code{"Landweber-Fridman"}, see Horowitz (2011); see Darolles, Fan,
+	   Florens and Renault (2011) for details for \code{"Tikhonov"})
+	 }
 \item{penalize.iteration}{ a logical value indicating whether to
     penalize the norm by the number of iterations or not (default
     \code{TRUE})
@@ -169,9 +169,42 @@ crsiv(y, \dots)
   course of one iteration (i.e. it may be above the iteration tolerance
   but increased)
 }
+
+\subsection{Derivatives}{
+  Controls for derivative estimation in the fitted IV regression function.
+}
+
+  \item{deriv}{ an integer \code{l} (default \code{deriv=0}) specifying
+  whether to compute the univariate \code{l}th partial derivative for
+  each continuous predictor (and difference in levels for each
+  categorical predictor) or not and if so what order. Note that if
+  \code{deriv} is higher than the spline degree of the associated
+  continuous predictor then the derivative will be zero and a warning
+  issued to this effect (see important note below)
+  }
+
+\subsection{NOMAD And CRS Pass-Through Controls}{
+  Optimizer controls and additional arguments forwarded to \code{\link{crs}}.
+}
+
+  \item{opts}{
+    arguments passed to the NOMAD solver (see \code{\link{snomadr}} for
+    further details)
+  }
+
 \item{...}{
   additional arguments supplied to \code{\link{crs}}
 }
+
+\subsection{Warnings And Progress}{
+  Controls for user-visible warnings and NOMAD progress reporting.
+}
+
+  \item{display.nomad.progress}{ a logical value indicating whether to
+  display the progress of the NOMAD solver (default \code{display.nomad.progress=TRUE}) }
+
+  \item{display.warnings}{ a logical value indicating whether to
+  display warnings (default \code{display.warnings=TRUE}) }
 }
 \note{
   Using the option \code{deriv=} computes (effectively) the analytical

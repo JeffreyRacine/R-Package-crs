@@ -10,6 +10,7 @@ mkcrspkg.sh
 ^tests/testthat/.*\\.R$
 ^codex_work_summary\.md
 ^AGENTS\.md$
+^issue_notes
 ^NOMAD_.*\.md$
 ^CRS_MODERNIZATION_PLAN\.md$
 ^benchmarks$

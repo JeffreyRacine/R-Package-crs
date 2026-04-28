@@ -4,13 +4,13 @@
 \title{Categorical Factor Regression Spline Cross-Validation}
 
 \description{
-  
+
   \code{frscv} computes exhaustive cross-validation directed search for
   a regression spline estimate of a one (1) dimensional dependent
   variable on an \code{r}-dimensional vector of continuous predictors
   and nominal/ordinal (\code{\link{factor}}/\code{\link{ordered}})
   predictors.
-  
+
 }
 
 \usage{
@@ -35,12 +35,20 @@ frscv(xz,
 
 \arguments{
 
+\subsection{Data Inputs}{
+  Response and predictor data supplied to the exhaustive CV helper.
+}
+
   \item{xz}{ continuous and/or nominal/ordinal
     (\code{\link{factor}}/\code{\link{ordered}}) predictors }
 
   \item{y}{
     continuous univariate vector
   }
+
+\subsection{Basis And Spline Complexity}{
+  Controls that define the spline basis and the degree/segment search grid.
+}
 
 \item{basis}{ a character string (default \code{basis="additive"})
     indicating whether the additive or tensor product B-spline basis
@@ -62,28 +70,14 @@ frscv(xz,
   of knots held fixed) or the number of knots (spline degree held
   fixed) or both the spline degree and number of knots}
 
-  \item{cv.func}{a character string (default \code{cv.func="cv.ls"})
-    indicating which method to use to select smoothing
-    parameters. \code{cv.gcv} specifies generalized cross-validation
-    (Craven and Wahba (1979)), \code{cv.aic} specifies expected
-    Kullback-Leibler cross-validation (Hurvich, Simonoff, and Tsai
-    (1998)), and \code{cv.ls} specifies least-squares
-    cross-validation }
-  
   \item{degree}{ integer/vector specifying the degree of the B-spline
   basis for each dimension of the continuous \code{x}}
 
   \item{degree.max}{ the maximum degree of the B-spline basis for
     each of the continuous predictors (default \code{degree.max=10})}
-  
+
   \item{degree.min}{ the minimum degree of the B-spline basis for
     each of the continuous predictors (default \code{degree.min=0})}
-
-  \item{display.nomad.progress}{ a logical value indicating whether to
-  display NOMAD progress (default \code{display.nomad.progress=TRUE}) }
-
-  \item{display.warnings}{ a logical value indicating whether to
-  display warnings (default \code{display.warnings=TRUE}) }
 
    \item{knots}{ a character string (default \code{knots="quantiles"})
   specifying where knots are to be placed. \sQuote{quantiles} specifies
@@ -98,9 +92,22 @@ frscv(xz,
 
   \item{segments.max}{ the maximum segments of the B-spline basis for
     each of the continuous predictors (default \code{segments.max=10})}
-  
+
   \item{segments.min}{ the minimum segments of the B-spline basis for
     each of the continuous predictors (default \code{segments.min=1})}
+
+\subsection{Exhaustive Search Controls}{
+  Controls for the cross-validation criterion and numerical safeguards used
+  while evaluating the exhaustive grid.
+}
+
+  \item{cv.func}{a character string (default \code{cv.func="cv.ls"})
+    indicating which method to use to select smoothing
+    parameters. \code{cv.gcv} specifies generalized cross-validation
+    (Craven and Wahba (1979)), \code{cv.aic} specifies expected
+    Kullback-Leibler cross-validation (Hurvich, Simonoff, and Tsai
+    (1998)), and \code{cv.ls} specifies least-squares
+    cross-validation }
 
   \item{singular.ok}{
     a logical value (default \code{singular.ok=FALSE}) that, when
@@ -108,17 +115,31 @@ frscv(xz,
     for ill-conditioned bases is performed).
   }
 
+\subsection{Quantile And Weights}{
+  Controls for quantile regression splines and weighted fitting.
+}
+
   \item{tau}{
     if non-null a number in (0,1) denoting the quantile for which a quantile
     regression spline is to be estimated rather than estimating the
     conditional mean (default \code{tau=NULL})
   }
-  
+
   \item{weights}{ an optional vector of weights to be used in the
     fitting process.  Should be \sQuote{NULL} or a numeric vector.  If
     non-NULL, weighted least squares is used with weights
     \sQuote{weights} (that is, minimizing \sQuote{sum(w*e^2)});
     otherwise ordinary least squares is used.  }
+
+\subsection{Warnings And Progress}{
+  Controls for user-visible warnings and progress reporting.
+}
+
+  \item{display.nomad.progress}{ a logical value indicating whether to
+  display NOMAD progress (default \code{display.nomad.progress=TRUE}) }
+
+  \item{display.warnings}{ a logical value indicating whether to
+  display warnings (default \code{display.warnings=TRUE}) }
 }
 
 \details{
@@ -143,20 +164,20 @@ frscv(xz,
 }
 
 \value{
-  
+
   \code{frscv} returns a \code{crscv} object. Furthermore, the function
   \code{\link{summary}} supports objects of this type. The returned
   objects have the following components:
-  
+
   \item{K}{ scalar/vector containing optimal degree(s) of spline or
     number of segments }
-  
+
   \item{I}{ scalar/vector containing an indicator of whether the
     predictor is included or not for each dimension of the
     nominal/ordinal (\code{\link{factor}}/\code{\link{ordered}})
     predictors }
-  
-  \item{K.mat}{ vector/matrix of values of \code{K} evaluated during search }  
+
+  \item{K.mat}{ vector/matrix of values of \code{K} evaluated during search }
   \item{cv.func}{ objective function value at optimum }
   \item{cv.func.vec}{ vector of objective function values at each degree
     of spline or number of segments in \code{K.mat}}
