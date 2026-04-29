@@ -2,8 +2,9 @@ require(crs)
 
 set.seed(42)
 
-n <- 10000
-num.eval <- 50
+n <- as.integer(Sys.getenv("CRS_DEMO_N",
+                           unset = if(interactive()) "10000" else "100"))
+num.eval <- as.integer(Sys.getenv("CRS_DEMO_NUM_EVAL", unset = "50"))
 
 x1 <- runif(n,-5,5)
 x2 <- runif(n,-5,5)

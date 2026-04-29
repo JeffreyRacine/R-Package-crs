@@ -18,17 +18,40 @@ opts <- list("MAX_BB_EVAL"=10000,
 
 set.seed(42)
 
+.crs_demo_numeric <- function(prompt, default, env = NULL, choices = NULL) {
+  value <- if(!is.null(env)) Sys.getenv(env, unset = "") else ""
+  if(!nzchar(value) && interactive()) value <- readline(prompt = prompt)
+  if(!nzchar(value)) value <- as.character(default)
+  value <- suppressWarnings(as.numeric(value))
+  if(!is.finite(value) || (!is.null(choices) && !(value %in% choices))) {
+    value <- default
+  }
+  value
+}
+
 ## Interactively request number of observations, the method, whether
 ## to do NOMAD or exhaustive search, and if NOMAD the number of
 ## multistarts
 
-n <- as.numeric(readline(prompt="Input the number of observations desired: "))
-method <- as.numeric(readline(prompt="Input the method (0=Landweber-Fridman, 1=Tikhonov): "))
+n <- .crs_demo_numeric("Input the number of observations desired: ",
+                       100,
+                       "CRS_DEMO_N")
+method <- .crs_demo_numeric("Input the method (0=Landweber-Fridman, 1=Tikhonov): ",
+                            0,
+                            "CRS_DEMO_METHOD",
+                            choices = c(0, 1))
 method <- ifelse(method==0,"Landweber-Fridman","Tikhonov")
-cv <- as.numeric(readline(prompt="Input the cv method (0=nomad, 1=exhaustive): "))
+cv <- .crs_demo_numeric("Input the cv method (0=nomad, 1=exhaustive): ",
+                        1,
+                        "CRS_DEMO_CV",
+                        choices = c(0, 1))
 cv <- ifelse(cv==0,"nomad","exhaustive")
 nmulti <- 1
-if(cv=="nomad") nmulti <- as.numeric(readline(prompt="Input the number of multistarts desired (e.g. 10): "))
+if(cv=="nomad") {
+  nmulti <- .crs_demo_numeric("Input the number of multistarts desired (e.g. 10): ",
+                              1,
+                              "CRS_DEMO_NMULTI")
+}
 
 v  <- rnorm(n,mean=0,sd=.27)
 eps <- rnorm(n,mean=0,sd=0.05)
