@@ -43,20 +43,21 @@ clsd(x = NULL,
      verbose = FALSE)
 }
 \arguments{
-
-\subsection{Data And Evaluation Inputs}{
-  Training data, optional evaluation data, and optional starting coefficients.
+\subsection{Data, Model Inputs And Formula Interface}{
+These arguments identify training data, evaluation data, support bounds, and optional coefficients.
 }
-
-  \item{x}{ a numeric vector of training data }
-
-  \item{xeval}{ a numeric vector of evaluation data }
 
   \item{beta}{ a numeric vector of coefficients (default \code{NULL}) }
 
+
+  \item{x}{ a numeric vector of training data }
+
+
+  \item{xeval}{ a numeric vector of evaluation data }
+
+
 \subsection{Density Basis Structure}{
-  Controls that define the B-spline basis, knot placement, and spline
-  complexity.
+These arguments control basis type and spline complexity for constrained density estimation.
 }
 
   \item{basis}{ a character string (default \code{basis="tensor"})
@@ -64,14 +65,17 @@ clsd(x = NULL,
     matrix for a multivariate polynomial spline or generalized B-spline
     polynomial basis should be used }
 
+
   \item{degree}{ integer/vector specifying the polynomial degree of the
     B-spline basis for each dimension of the continuous \code{x} (default
     \code{degree=2})}
+
 
   \item{degree.min,degree.max}{ when \code{elastic.max=FALSE} the
     minimum/maximum degree of the B-spline basis for each of the
     continuous predictors (default \code{degree.min=2},
     \code{degree.max=25})}
+
 
    \item{knots}{ a character string (default \code{knots="quantiles"})
   specifying where knots are to be placed. \sQuote{quantiles} specifies
@@ -79,19 +83,21 @@ clsd(x = NULL,
   lie in each segment) and \sQuote{uniform} specifies knots placed at
   equally spaced intervals }
 
+
   \item{segments}{ integer/vector specifying the number of segments of the
     B-spline basis for each dimension of the continuous \code{x}
     (i.e. number of knots minus one) (default \code{segments=1}, i.e. Bezier
     curve)}
+
 
   \item{segments.min,segments.max}{ when \code{elastic.max=FALSE}, the
     minimum/maximum segments of the B-spline basis for each of the
     continuous predictors (default
     \code{segments.min=1},\code{segments.max=100})}
 
+
 \subsection{Derivatives, Integration, And Quantiles}{
-  Controls for derivative output, extended-range integration, and quantile
-  evaluation.
+These arguments control derivative extraction, numerical integration, and quantile evaluation.
 }
 
   \item{deriv}{ an integer \code{l} (default \code{deriv=1}) specifying
@@ -102,9 +108,11 @@ clsd(x = NULL,
   continuous predictor then the derivative will be zero and a warning
   issued to this effect }
 
+
   \item{deriv.index}{ an integer \code{l} (default \code{deriv.index=1})
   specifying the index (currently only supports 1) of the variable whose
   derivative is requested  }
+
 
    \item{er}{
      a scalar indicating the fraction of data range to extend
@@ -112,18 +120,75 @@ clsd(x = NULL,
      further details)
    }
 
+
    \item{n.integrate}{
      the number of evenly spaced integration points on the extended range specified by \code{er} (defaults to \code{500})
    }
+
 
    \item{quantile.seq}{
      a sequence of numbers lying in \eqn{[0,1]} on which quantiles from
      the logspline distribution are obtained
    }
 
+
+\subsection{Optimization Controls}{
+These arguments control optimizer choice, restart behavior, elastic search limits, and penalties.
+}
+
+  \item{do.gradient}{ a logical value indicating whether or not to use
+     the analytical gradient during optimization (defaults to \code{TRUE})}
+
+
+  \item{elastic.max,elastic.diff}{ a logical value/integer indicating
+     whether to use \sQuote{elastic} search bounds such that the optimal
+     degree/segment must lie \code{elastic.diff} units from the
+     respective search bounds }
+
+
+   \item{max.attempts}{
+     maximum number of attempts to undertake if \code{\link{optim}}
+     fails for any set of initial parameters for each value of
+     \code{nmulti}
+   }
+
+
+  \item{maxit}{
+    maximum number of iterations used by \code{\link{optim}}
+   }
+
+
+   \item{method}{
+     see \code{\link{optim}} for details
+   }
+
+
+  \item{nmulti}{
+    integer number of times to restart the process of finding extrema of
+    the cross-validation function from different (random) initial
+    points (default \code{nmulti=1})
+  }
+
+
+   \item{NOMAD}{
+     a logical value which when \code{TRUE} calls \code{\link{snomadr}}
+     to determine the optimal \code{degree} and \code{segments}
+     }
+
+
+  \item{penalty}{ the parameter to be used in the AIC criterion. The
+    method chooses the number of degrees plus number of segments
+    (knots-1) that maximizes \code{2*logl-penalty*(degree+segments)}. The
+    default is to use the penalty parameter of \code{log(n)/2} (\code{2}
+    would deliver standard AIC, \code{log(n)} standard BIC)}
+
+
+   \item{random.seed}{ seeds the random number generator for initial
+     parameter values when \code{\link{optim}} is called }
+
+
 \subsection{Support And Shape Controls}{
-  Controls for support bounds and monotonicity constraints in the density
-  basis.
+These arguments control support bounds and optional monotonicity constraints.
 }
 
   \item{lbound,ubound}{
@@ -133,79 +198,35 @@ clsd(x = NULL,
     0. However, if the density is essentially zero near 0, one does not
     need to specify lbound }
 
+
    \item{monotone}{ a logical value indicating whether modify
      the standard B-spline basis function so that it is tailored for
      density estimation (default \code{TRUE})
    }
 
+
    \item{monotone.lb}{ a negative bound specifying the lower bound on
      the linear segment coefficients used when (\code{monotone=FALSE})
    }
 
-\subsection{Optimization Controls}{
-  Controls for local optimization, NOMAD search, restarts, and information
-  criterion penalties.
-}
-
-  \item{do.gradient}{ a logical value indicating whether or not to use
-     the analytical gradient during optimization (defaults to \code{TRUE})}
-
-  \item{elastic.max,elastic.diff}{ a logical value/integer indicating
-     whether to use \sQuote{elastic} search bounds such that the optimal
-     degree/segment must lie \code{elastic.diff} units from the
-     respective search bounds }
-
-   \item{max.attempts}{
-     maximum number of attempts to undertake if \code{\link{optim}}
-     fails for any set of initial parameters for each value of
-     \code{nmulti}
-   }
-
-  \item{maxit}{
-    maximum number of iterations used by \code{\link{optim}}
-   }
-
-   \item{method}{
-     see \code{\link{optim}} for details
-   }
-
-  \item{nmulti}{
-    integer number of times to restart the process of finding extrema of
-    the cross-validation function from different (random) initial
-    points (default \code{nmulti=1})
-  }
-
-   \item{NOMAD}{
-     a logical value which when \code{TRUE} calls \code{\link{snomadr}}
-     to determine the optimal \code{degree} and \code{segments}
-     }
-
-  \item{penalty}{ the parameter to be used in the AIC criterion. The
-    method chooses the number of degrees plus number of segments
-    (knots-1) that maximizes \code{2*logl-penalty*(degree+segments)}. The
-    default is to use the penalty parameter of \code{log(n)/2} (\code{2}
-    would deliver standard AIC, \code{log(n)} standard BIC)}
-
-   \item{random.seed}{ seeds the random number generator for initial
-     parameter values when \code{\link{optim}} is called }
 
 \subsection{Warnings And Progress}{
-  Controls for user-visible warnings, NOMAD progress reporting, and verbose
-  optimizer output.
+These arguments control warnings, verbosity, and displayed optimizer progress.
 }
 
   \item{display.nomad.progress}{ a logical value indicating whether to
   display the progress of the NOMAD solver (default \code{display.nomad.progress=TRUE}) }
 
+
   \item{display.warnings}{ a logical value indicating whether to
   display warnings (default \code{display.warnings=TRUE}) }
+
 
    \item{verbose}{
      a logical value which when \code{TRUE} produces verbose output
      during optimization
    }
 }
-
 \details{
 
   Typical usages are (see below for a  list of options and also

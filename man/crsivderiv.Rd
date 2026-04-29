@@ -48,9 +48,22 @@ crsivderiv(y, \dots)
 }
 
 \arguments{
-\subsection{Data Inputs}{
-  Structural variables supplied to the IV derivative estimator.
+\subsection{Data, Model Inputs And Formula Interface}{
+These arguments identify the response, endogenous variables, instruments, and exogenous covariates.
 }
+
+  \item{w}{
+    a \eqn{q}-variate data frame of instruments. The data types may be
+    continuous, discrete (unordered and ordered factors), or some
+    combination thereof
+  }
+
+  \item{x}{
+    an \eqn{r}-variate data frame of exogenous predictors. The data
+    types may be continuous, discrete (unordered and ordered factors),
+    or some combination thereof
+  }
+
 
   \item{y}{
     a one (1) dimensional numeric or integer vector of dependent data, each
@@ -58,80 +71,79 @@ crsivderiv(y, \dots)
     \code{z}
   }
 
+
   \item{z}{
     a one-column data frame of continuous endogenous predictors. The
     current implementation of \code{crsivderiv} supports univariate
     continuous \eqn{z} only
   }
-  \item{w}{
-    a \eqn{q}-variate data frame of instruments. The data types may be
-    continuous, discrete (unordered and ordered factors), or some
-    combination thereof
-  }
-  \item{x}{
-    an \eqn{r}-variate data frame of exogenous predictors. The data
-    types may be continuous, discrete (unordered and ordered factors),
-    or some combination thereof
-  }
 
 \subsection{Evaluation Inputs}{
-  Optional evaluation data. When omitted, evaluation uses the corresponding
-  training data.
+These arguments identify evaluation data for the derivative fit.
 }
 
-  \item{zeval}{
-    a one-column data frame of continuous endogenous predictors on
-    which the regression will be estimated (evaluation data). By
-    default, evaluation takes place on the data provided by \code{z}
-  }
   \item{weval}{
     a \eqn{q}-variate data frame of instruments on which the regression
     will be estimated (evaluation data). By default, evaluation
     takes place on the data provided by \code{w}
   }
+
   \item{xeval}{
     an \eqn{r}-variate data frame of exogenous predictors on which the
     regression will be estimated (evaluation data). By default,
     evaluation takes place on the data provided by \code{x}
   }
 
+
+  \item{zeval}{
+    a one-column data frame of continuous endogenous predictors on
+    which the regression will be estimated (evaluation data). By
+    default, evaluation takes place on the data provided by \code{z}
+  }
+
 \subsection{Landweber-Fridman Iteration Controls}{
-  Controls for derivative iteration, stopping, starting values, and residual
-  smoothing.
+These arguments control iteration, residual smoothing, starting values, and stopping behavior.
 }
 
 \item{constant}{
   the constant to use when using  Landweber-Fridman iteration
 }
+
 \item{iterate.diff.tol}{
   the search tolerance for the difference in the stopping rule from
   iteration to iteration when using Landweber-Fridman
   (disable by setting to zero)
 }
+
 \item{iterate.max}{
   an integer indicating the maximum number of iterations permitted
   before termination occurs when using Landweber-Fridman iteration
 }
+
 \item{penalize.iteration}{ a logical value indicating whether to
     penalize the norm by the number of iterations or not (default
     \code{TRUE})
 }    
+
 \item{smooth.residuals}{
   a logical value (defaults to \code{TRUE}) indicating whether to
   optimize bandwidths for the regression of \eqn{y-\varphi(z)}{y-phi(z)}
   on \eqn{w} or for the regression of \eqn{\varphi(z)}{phi(z)} on
   \eqn{w} during iteration
  }
+
 \item{start.from}{ a character string indicating whether to start from
   \eqn{E(Y|z)} (default, \code{"Eyz"}) or from \eqn{E(E(Y|z)|z)} (this can
   be overridden by providing \code{starting.values} below)
 }  
+
 \item{starting.values}{ a value indicating whether to commence
   Landweber-Fridman assuming
   \eqn{\varphi'_{-1}=starting.values}{phi'[-1]=starting.values} (proper
   Landweber-Fridman) or instead begin from \eqn{E(y|z)} (defaults to
   \code{NULL}, see details below)
 }
+
 \item{stop.on.increase}{
   a logical value (defaults to \code{TRUE}) indicating whether to halt
   iteration if the stopping criterion (see below) increases over the
@@ -139,28 +151,31 @@ crsivderiv(y, \dots)
   but increased)
 }
 
-\subsection{NOMAD And CRS Pass-Through Controls}{
-  Optimizer controls and additional arguments forwarded to \code{\link{crs}}.
+
+\subsection{Warnings And Progress}{
+These arguments control warnings and displayed optimizer progress.
 }
 
-\item{opts}{
-  arguments passed to the NOMAD solver (see \code{\link{snomadr}} for
-  further details)
+\item{display.nomad.progress}{ a logical value indicating whether to
+  display the progress of the NOMAD solver (default \code{display.nomad.progress=TRUE}) }
+
+
+\item{display.warnings}{ a logical value indicating whether to
+  display warnings (default \code{display.warnings=TRUE}) }
+\subsection{Additional Arguments}{
+Further NOMAD and CRS controls are passed through to lower-level routines.
 }
 
 \item{...}{
   additional arguments supplied to \code{\link{crs}}
 }
 
-\subsection{Warnings And Progress}{
-  Controls for user-visible warnings and NOMAD progress reporting.
+
+\item{opts}{
+  arguments passed to the NOMAD solver (see \code{\link{snomadr}} for
+  further details)
 }
 
-\item{display.nomad.progress}{ a logical value indicating whether to
-  display the progress of the NOMAD solver (default \code{display.nomad.progress=TRUE}) }
-
-\item{display.warnings}{ a logical value indicating whether to
-  display warnings (default \code{display.warnings=TRUE}) }
 }
 \details{
 

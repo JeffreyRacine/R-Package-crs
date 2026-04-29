@@ -51,52 +51,39 @@ snomadr(eval.f,
 }
 
 \arguments{
-
 \subsection{Objective, Dimension, And Evaluation Environment}{
-  Core arguments that define the blackbox problem and the environment in
-  which user-supplied functions are evaluated.
+These arguments identify the objective, dimension, black-box types, and evaluation environment.
 }
-
-    \item{eval.f}{
-        function that returns the value of the objective function
-    }
-    \item{n}{
-        the number of variables
-    }
 
     \item{bbin}{
       types of variables. Variable types are 0 (CONTINUOUS), 1
         (INTEGER), 2 (CATEGORICAL), 3 (BINARY)
       }
 
+
     \item{bbout}{
       types of output of \code{eval.f}.  See the NOMAD User Guide
       \url{https://nomad-4-user-guide.readthedocs.io/en/latest/#}
     }
+
+
+    \item{eval.f}{
+        function that returns the value of the objective function
+    }
+
+    \item{n}{
+        the number of variables
+    }
+
 
     \item{snomadr.environment}{
         environment that is used to evaluate the functions. Use this to pass
         additional data or parameters to a function
     }
 
-\subsection{Starting Values, Bounds, And Variable Types}{
-  Controls that define the initial point and box constraints for the search.
-}
-
-    \item{x0}{
-      vector with starting values for the optimization. If it is
-        provided and nmulti is bigger than 1, \code{x0} will be the first
-        initial point for multiple initial points
-      }
-    \item{lb}{
-        vector with lower bounds of the controls (use -1.0e19 for controls without lower bound)
-    }
-    \item{ub}{
-        vector with upper bounds of the controls (use  1.0e19 for controls without upper bound)
-    }
 
 \subsection{Multi-Start Controls}{
-  Controls for single-start versus multiple-initial-point optimization.
+These arguments control multistart execution and reproducibility settings.
 }
 
     \item{nmulti}{
@@ -104,14 +91,32 @@ snomadr(eval.f,
         \code{snomadRSolve} will be called to solve the problem. Otherwise,
         \code{smultinomadRSolve} will be called
       }
+
     \item{random.seed}{
       when it is not missing and not equal to 0, the initial points  will
       be generated using this seed when \code{nmulti > 0}
       }
 
+
 \subsection{NOMAD Options And Information Queries}{
-  Controls for NOMAD options, help, version, and option-reference queries.
+These arguments control NOMAD options and optional information queries.
 }
+
+    \item{information}{
+      is a list. \code{snomadr} will call \code{snomadRInfo} to return
+      the information about NOMAD according to the values of \code{"info"},
+      \code{"version"} and \code{"help"}.
+
+      \code{"info"="-i"}: display the usage and copyright of NOMAD
+
+      \code{"version"="-v"}: display the version of NOMAD you are using
+
+      \code{"help"="-h"}: display all options
+
+      You also can display a specific option, for example,
+      \code{"help"="-h x0"}, this will tell you how to set \code{x0}
+    }
+
 
     \item{opts}{
       list of options for NOMAD, see the NOMAD user guide
@@ -162,36 +167,40 @@ snomadr(eval.f,
 
       }
 
-    \item{information}{
-      is a list. \code{snomadr} will call \code{snomadRInfo} to return
-      the information about NOMAD according to the values of \code{"info"},
-      \code{"version"} and \code{"help"}.
 
-      \code{"info"="-i"}: display the usage and copyright of NOMAD
+\subsection{Starting Values, Bounds, And Variable Types}{
+These arguments identify starting values, bounds, and variable types.
+}
 
-      \code{"version"="-v"}: display the version of NOMAD you are using
-
-      \code{"help"="-h"}: display all options
-
-      You also can display a specific option, for example,
-      \code{"help"="-h x0"}, this will tell you how to set \code{x0}
+    \item{lb}{
+        vector with lower bounds of the controls (use -1.0e19 for controls without lower bound)
     }
 
-\subsection{Progress And Pass-Through Arguments}{
-  Controls for user-visible progress and arguments passed to the objective or
-  constraint functions.
+    \item{ub}{
+        vector with upper bounds of the controls (use  1.0e19 for controls without upper bound)
+    }
+
+
+    \item{x0}{
+      vector with starting values for the optimization. If it is
+        provided and nmulti is bigger than 1, \code{x0} will be the first
+        initial point for multiple initial points
+      }
+
+\subsection{Additional Arguments}{
+These arguments control displayed progress and pass-through values.
 }
+
+    \item{...}{
+      arguments that will be passed to the user-defined objective and
+      constraints functions. See the examples below
+    }
 
     \item{display.nomad.progress}{
       when FALSE, no output from \code{snomadr} is displayed on the
       screen. If the NOMAD option \code{"DISPLAY_DEGREE"=0,} is set,
       there will also be no output from NOMAD. Higher integer values for
       \code{"DISPLAY_DEGREE"=} provide successively more detail
-    }
-
-    \item{...}{
-      arguments that will be passed to the user-defined objective and
-      constraints functions. See the examples below
     }
   }
 
@@ -217,6 +226,7 @@ snomadr(eval.f,
     \code{cv="exhaustive"} while using \code{\link{crs}}.
 
   }
+
 \value{
     The return value contains a list with the inputs, and additional elements
     \item{call}{the call that was made to solve}
