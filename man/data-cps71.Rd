@@ -27,13 +27,12 @@
 \examples{
 ## Example - fit a spline model for log wages as a function of age.
 
-data(cps71)
-attach(cps71)
+data(cps71, package = "crs")
 
-model.crs <- crs(logwage~age,complexity="degree-knots")
-plot(age,logwage,cex=0.25,col="grey",
-     sub=paste("crs-CV = ", formatC(model.crs$cv.score,format="f",digits=3)))
-lines(age,fitted(model.crs),lty=1,col=1)
+model.crs <- crs(logwage~age, data = cps71, complexity="degree-knots")
+with(cps71, plot(age, logwage, cex=0.25, col="grey",
+     sub=paste("crs-CV = ", formatC(model.crs$cv.score,format="f",digits=3))))
+lines(cps71$age, fitted(model.crs), lty=1, col=1)
 
 crs.txt <- paste("crs (R-squared = ",formatC(model.crs$r.squared,format="f",digits=3),")",sep="")
 legend(22.5,15,crs.txt,lty=1,col=1,bty="n")
