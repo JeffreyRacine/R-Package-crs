@@ -76,24 +76,26 @@ crs(\dots)
 }
 
 \arguments{
-
-\subsection{Model Inputs}{
-  Core data and formula arguments for the default and formula methods.
+\subsection{Data, Model Inputs And Formula Interface}{
+These arguments identify the model formula/data interface and explicit data inputs.
 }
-
-  \item{xz}{ numeric (\code{x}) and or nominal/ordinal
-  (\code{\link{factor}}/\code{\link{ordered}}) predictors (\code{z}) }
-
-\item{y}{ a numeric vector of responses. }
-
-  \item{formula}{ a symbolic description of the model to be fit }
 
   \item{data}{ an optional data frame containing the variables in the
   model }
 
+
+  \item{formula}{ a symbolic description of the model to be fit }
+
+
+  \item{xz}{ numeric (\code{x}) and or nominal/ordinal
+  (\code{\link{factor}}/\code{\link{ordered}}) predictors (\code{z}) }
+
+
+\item{y}{ a numeric vector of responses. }
+
+
 \subsection{Basis, Spline, And Kernel Structure}{
-  Controls that define the spline basis, spline complexity, categorical
-  predictor handling, and categorical-kernel bandwidths.
+These arguments control basis type, spline complexity, factor inclusion, and optional kernel smoothing.
 }
 
 \item{basis}{ a character string (default \code{basis="auto"})
@@ -107,6 +109,7 @@ crs(\dots)
     products}). Note also that if there is only one predictor this
     defaults to \code{basis="additive"} to avoid unnecessary computation
     as the spline bases are equivalent in this case }
+
 
   \item{complexity}{a character string (default
   \code{complexity="degree-knots"}) indicating whether model
@@ -122,18 +125,28 @@ crs(\dots)
   Scientific Library (\url{https://www.gnu.org/software/gsl/}) and the
   \code{\link{tensor.prod.model.matrix}} function }
 
+
 \item{degree}{ integer/vector specifying the polynomial degree of the
 B-spline basis for each dimension of the continuous \code{x}
 (default \code{degree=3}, i.e. cubic spline)}
 
+
   \item{degree.max}{ the maximum degree of the B-spline basis for
     each of the continuous predictors (default \code{degree.max=10})}
+
 
   \item{degree.min}{ the minimum degree of the B-spline basis for
     each of the continuous predictors (default \code{degree.min=0})}
 
+
+  \item{include}{ integer/vector specifying whether each of the
+nominal/ordinal (\code{\link{factor}}/\code{\link{ordered}}) predictors
+in \code{x} are included or omitted from the resulting estimate }
+
+
   \item{kernel}{ a logical value (default \code{kernel=TRUE})
     indicating whether to use kernel smoothing or not }
+
 
    \item{knots}{ a character string (default \code{knots="quantiles"})
   specifying where knots are to be placed. \sQuote{quantiles} specifies
@@ -142,35 +155,37 @@ B-spline basis for each dimension of the continuous \code{x}
   equally spaced intervals. If \code{knots="auto"}, the knot type will
   be automatically determined by cross-validation }
 
+
   \item{lambda}{ a vector of bandwidths for each dimension of the
     categorical \code{z}}
+
 
   \item{lambda.discrete}{ if \code{lambda.discrete=TRUE}, the bandwidth
       will be discretized into \code{lambda.discrete.num+1} points and
       \code{lambda} will be chosen from these points}
 
+
   \item{lambda.discrete.num}{a positive integer indicating the number of
   discrete values that lambda can assume - this parameter will only be
   used when \code{lambda.discrete=TRUE}}
 
-  \item{include}{ integer/vector specifying whether each of the
-nominal/ordinal (\code{\link{factor}}/\code{\link{ordered}}) predictors
-in \code{x} are included or omitted from the resulting estimate }
 
 \item{segments}{ integer/vector specifying the number of segments of the
 B-spline basis for each dimension of the continuous \code{x}
 (i.e. number of knots minus one) (default \code{segments=1}, i.e. Bezier
 curve)}
 
+
   \item{segments.max}{ the maximum segments of the B-spline basis for
     each of the continuous predictors (default \code{segments.max=10})}
+
 
   \item{segments.min}{ the minimum segments of the B-spline basis for
     each of the continuous predictors (default \code{segments.min=1})}
 
+
 \subsection{Cross-Validation And Search Controls}{
-  Controls for choosing whether and how smoothing parameters and model
-  complexity are selected.
+These arguments control cross-validation objective selection and restart behavior.
 }
 
 \item{cv}{ a character string (default \code{cv="nomad"}) indicating
@@ -178,9 +193,11 @@ curve)}
   search, or no search (i.e. use user supplied values for \code{degree},
   \code{segments}, and \code{lambda}) }
 
+
   \item{cv.df.min}{ the minimum degrees of freedom to allow when
     conducting NOMAD-based cross-validation (default
     \code{cv.df.min=1})}
+
 
   \item{cv.func}{a character string (default \code{cv.func="cv.ls"})
     indicating which method to use to select smoothing
@@ -190,6 +207,7 @@ curve)}
     (1998)), and \code{cv.ls} specifies least-squares
     cross-validation }
 
+
 \item{cv.threshold}{ an integer (default \code{cv.threshold=1000}) for
   simple problems with no categorical predictors
   (i.e. \code{kernel=FALSE} otherwise
@@ -198,25 +216,30 @@ curve)}
   is less than the threshold and \code{cv="nomad"}, instead use
   exhaustive search (\code{cv="exhaustive"}) }
 
+
   \item{nmulti}{
     integer number of times to restart the process of finding extrema of
     the cross-validation function from different (random) initial
     points (default \code{nmulti=5})
   }
 
+
   \item{prune}{ a logical value (default \code{prune=FALSE}) specifying
    whether the (final) model is to be \sQuote{pruned} using a stepwise
    cross-validation criterion based upon a modified version of
    \code{\link[MASS]{stepAIC}} (see below for details) }
+
 
   \item{random.seed}{ when it is not missing and not equal to 0, the
     initial points will be generated using this seed when using
     \code{\link{frscvNOMAD}} or \code{\link{krscvNOMAD}} and
     \code{nmulti > 0} }
 
+
 \item{restarts}{ integer specifying the number of times to restart the
     process of finding extrema of the cross-validation function (for the
     bandwidths only) from different (random) initial points }
+
 
   \item{singular.ok}{
     a logical value (default \code{singular.ok=FALSE}) that, when
@@ -224,9 +247,9 @@ curve)}
     for ill-conditioned bases is performed).
   }
 
+
 \subsection{NOMAD Controls}{
-  Controls forwarded to the NOMAD search route. See \code{\link{snomadr}}
-  for the underlying optimizer interface.
+These arguments control NOMAD mesh settings and optional solver controls.
 }
 
   \item{initial.mesh.size.integer}{
@@ -234,10 +257,12 @@ curve)}
     further details)
   }
 
+
   \item{initial.mesh.size.real}{
     argument passed to the NOMAD solver (see \code{\link{snomadr}} for
     further details)
   }
+
 
   \item{max.bb.eval}{
     argument passed to the NOMAD solver (default
@@ -245,32 +270,37 @@ curve)}
     details)
   }
 
-  \item{min.mesh.size.integer}{
-    arguments passed to the NOMAD solver (see \code{\link{snomadr}} for
-    further details)
-  }
-
-  \item{min.mesh.size.real}{
-    argument passed to the NOMAD solver (see \code{\link{snomadr}} for
-    further details)
-  }
 
   \item{min.frame.size.integer}{
     arguments passed to the NOMAD solver (see \code{\link{snomadr}} for
     further details)
   }
 
+
   \item{min.frame.size.real}{
     arguments passed to the NOMAD solver (see \code{\link{snomadr}} for
     further details)
   }
 
+
+  \item{min.mesh.size.integer}{
+    arguments passed to the NOMAD solver (see \code{\link{snomadr}} for
+    further details)
+  }
+
+
+  \item{min.mesh.size.real}{
+    argument passed to the NOMAD solver (see \code{\link{snomadr}} for
+    further details)
+  }
+
+
   \item{opts}{ list of optional arguments to be passed to
   \code{\link{snomadr}} }
 
+
 \subsection{Quantile, Weights, And Derivatives}{
-  Controls for quantile regression splines, weighted fitting, and derivative
-  estimation.
+These arguments control derivative extraction, quantile level, and observation weights.
 }
 
   \item{deriv}{ an integer \code{l} (default \code{deriv=0}) specifying
@@ -281,12 +311,14 @@ curve)}
   continuous predictor then the derivative will be zero and a warning
   issued to this effect }
 
+
   \item{tau}{
     if non-null a number in (0,1) denoting the quantile for which a quantile
     regression spline is to be estimated rather than estimating the
     conditional mean (default \code{tau=NULL}). Criterion function set
     by \code{cv.func=} are modified accordingly to admit quantile regression.
   }
+
 
   \item{weights}{
     an optional vector of weights to be used in the fitting process.
@@ -295,36 +327,39 @@ curve)}
     \sQuote{sum(w*e^2)}); otherwise ordinary least squares is used.
   }
 
+
 \subsection{Returned State And Output Controls}{
-  Controls that determine which fitted-model internals and data are retained
-  in the returned object.
+These arguments control whether fitted model state is returned.
 }
 
   \item{data.return}{ a logical value indicating whether to return
   \code{x,z,y} or not (default \code{data.return=FALSE}) }
 
+
   \item{model.return}{ a logical value indicating whether to return the
   list of \code{\link{lm}} models or not when \code{kernel=TRUE}
   (default \code{model.return=FALSE}) }
 
+
 \subsection{Warnings And Progress}{
-  Controls for user-visible warnings and NOMAD progress reporting.
+These arguments control warnings and displayed optimizer progress.
 }
 
   \item{display.nomad.progress}{ a logical value indicating whether to
   display the progress of the NOMAD solver (default \code{display.nomad.progress=TRUE}) }
 
+
   \item{display.warnings}{ a logical value indicating whether to
   display warnings (default \code{display.warnings=TRUE}) }
 
-\subsection{Pass-Through Arguments}{
-  Additional arguments reserved for methods and downstream calls.
+
+\subsection{Additional Arguments}{
+Further optional arguments are passed through to lower-level routines.
 }
 
   \item{\dots}{ optional arguments }
 
 }
-
 \details{
 
   Typical usages are (see below for a  list of options and also

@@ -35,20 +35,21 @@ krscv(xz,
 }
 
 \arguments{
-
-\subsection{Data Inputs}{
-  Response and predictor data supplied to the exhaustive kernel CV helper.
+\subsection{Data, Model Inputs And Formula Interface}{
+These arguments identify explicit data inputs for exhaustive kernel/spline search.
 }
 
   \item{xz}{ continuous and/or nominal/ordinal
     (\code{\link{factor}}/\code{\link{ordered}}) predictors }
 
+
   \item{y}{
     continuous univariate vector
   }
 
+
 \subsection{Basis And Spline Complexity}{
-  Controls that define the spline basis and the degree/segment search grid.
+These arguments control basis type and spline complexity.
 }
 
   \item{basis}{ a character string (default \code{basis="additive"})
@@ -63,6 +64,7 @@ krscv(xz,
     to avoid unnecessary computation as the spline bases are equivalent
     in this case }
 
+
   \item{complexity}{a character string (default
   \code{complexity="degree-knots"}) indicating whether model
   \sQuote{complexity} is determined by the degree of the spline or by
@@ -71,14 +73,18 @@ krscv(xz,
   of knots held fixed) or the number of knots (spline degree held
   fixed) or both the spline degree and number of knots}
 
+
   \item{degree}{ integer/vector specifying the degree of the B-spline
   basis for each dimension of the continuous \code{x}}
+
 
   \item{degree.max}{ the maximum degree of the B-spline basis for
     each of the continuous predictors (default \code{degree.max=10})}
 
+
   \item{degree.min}{ the minimum degree of the B-spline basis for
     each of the continuous predictors (default \code{degree.min=0})}
+
 
    \item{knots}{ a character string (default \code{knots="quantiles"})
   specifying where knots are to be placed. \sQuote{quantiles} specifies
@@ -87,19 +93,22 @@ krscv(xz,
   equally spaced intervals. If \code{knots="auto"}, the knot type will
   be automatically determined by cross-validation }
 
+
   \item{segments}{ integer/vector specifying the number of segments of
   the B-spline basis for each dimension of the continuous \code{x}
   (i.e. number of knots minus one)}
 
+
   \item{segments.max}{ the maximum segments of the B-spline basis for
     each of the continuous predictors (default \code{segments.max=10})}
+
 
   \item{segments.min}{ the minimum segments of the B-spline basis for
     each of the continuous predictors (default \code{segments.min=1})}
 
+
 \subsection{Exhaustive Search And Kernel Bandwidth Controls}{
-  Controls for the cross-validation criterion, categorical-kernel bandwidth
-  search, and numerical safeguards used while evaluating the grid.
+These arguments control exhaustive cross-validation search and kernel-bandwidth restarts.
 }
 
   \item{cv.func}{a character string (default \code{cv.func="cv.ls"})
@@ -110,6 +119,7 @@ krscv(xz,
     (1998)), and \code{cv.ls} specifies least-squares
     cross-validation  }
 
+
   \item{restarts}{
     number of times to restart \code{\link{optim}} from different initial
     random values (default \code{restarts=0}) when searching for optimal
@@ -117,14 +127,16 @@ krscv(xz,
     combination (i.e.\ \code{degree}/\code{segments})
   }
 
+
   \item{singular.ok}{
     a logical value (default \code{singular.ok=FALSE}) that, when
     \code{FALSE}, discards singular bases during cross-validation (a check
     for ill-conditioned bases is performed).
   }
 
+
 \subsection{Quantile And Weights}{
-  Controls for quantile regression splines and weighted fitting.
+These arguments control quantile level and observation weights.
 }
 
   \item{tau}{
@@ -133,23 +145,25 @@ krscv(xz,
     conditional mean (default \code{tau=NULL})
   }
 
+
   \item{weights}{ an optional vector of weights to be used in the
     fitting process.  Should be \sQuote{NULL} or a numeric vector.  If
     non-NULL, weighted least squares is used with weights
     \sQuote{weights} (that is, minimizing \sQuote{sum(w*e^2)});
     otherwise ordinary least squares is used.}
 
+
 \subsection{Warnings And Progress}{
-  Controls for user-visible warnings and progress reporting.
+These arguments control warnings and displayed optimizer progress.
 }
 
   \item{display.nomad.progress}{ a logical value indicating whether to
   display NOMAD progress (default \code{display.nomad.progress=TRUE}) }
 
+
   \item{display.warnings}{ a logical value indicating whether to
   display warnings (default \code{display.warnings=TRUE}) }
 }
-
 \details{
 
   \code{krscv} computes exhaustive cross-validation for a regression

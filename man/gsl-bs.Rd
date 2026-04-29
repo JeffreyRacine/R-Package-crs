@@ -22,50 +22,60 @@ gsl.bs(\dots, display.warnings = TRUE)
        \dots)
 }
 \arguments{
-
-\subsection{Data Input}{
-  Predictor values used to construct the spline basis.
+\subsection{Data, Model Inputs And Formula Interface}{
+This argument identifies the predictor variable for spline-basis construction.
 }
 
 \item{x}{ the predictor variable.  Missing values are not allowed }
 
+
 \subsection{Spline Basis Controls}{
-  Controls for polynomial degree, breaks, knots, bounds, and intercept
-  handling.
+These arguments control spline degree, derivative order, intercept inclusion, knots, and support bounds.
 }
 
 \item{degree}{ degree of the piecewise polynomial - default is
 \sQuote{3} (cubic spline) }
-        
-\item{nbreak}{ number of breaks in each interval - default is \sQuote{2}}
+
 
 \item{deriv}{ the order of the derivative to be computed-default if
 \code{0}}
 
-\item{x.min}{ the lower bound on which to construct the spline -
-defaults to \code{min(x)}}
-        
-\item{x.max}{ the upper bound on which to construct the spline -
-defaults to \code{max(x)}}
-        
+
 \item{intercept}{ if \sQuote{TRUE}, an intercept is included in the
 basis; default is \sQuote{FALSE} }
+
 
 \item{knots}{ a vector (default \code{knots="NULL"}) specifying knots
   for the spline basis (default enables uniform knots, otherwise those
   provided are used)}
 
-\subsection{Warnings And Pass-Through Arguments}{
-  Controls for warnings and additional method arguments.
+
+\item{nbreak}{ number of breaks in each interval - default is \sQuote{2}}
+
+
+\item{x.max}{ the upper bound on which to construct the spline -
+defaults to \code{max(x)}}
+
+
+\item{x.min}{ the lower bound on which to construct the spline -
+defaults to \code{min(x)}}
+
+
+\subsection{Warnings And Progress}{
+This argument controls warnings.
 }
 
 \item{display.warnings}{ a logical value indicating whether to
   display warnings (default \code{display.warnings=TRUE}) }
 
-\item{\dots}{ optional arguments }
-  
+
+\subsection{Additional Arguments}{
+Further optional arguments are passed through to lower-level routines.
 }
 
+\item{\dots}{ optional arguments }
+
+}
 \details{
 
   Typical usages are (see below for a  list of options and also
@@ -74,7 +84,7 @@ basis; default is \sQuote{FALSE} }
     B <- gsl.bs(x,degree=10)
     B.predict <- predict(gsl.bs(x,degree=10),newx=xeval)
   }
-    
+
 }
 
 \value{
@@ -87,9 +97,9 @@ basis; default is \sQuote{FALSE} }
   A primary use is in modelling formulas to directly specify a piecewise
   polynomial term in a model. See \url{https://www.gnu.org/software/gsl/}
   for further details.
-  
+
 }
-  
+
 \references{
 
   Li, Q. and J.S. Racine (2007), \emph{Nonparametric Econometrics:

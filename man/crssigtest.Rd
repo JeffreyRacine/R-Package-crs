@@ -18,53 +18,57 @@ crssigtest(model = NULL,
 }
 
 \arguments{
-\subsection{Model And Test Selection}{
-  Arguments that identify the fitted model and predictor columns to test.
+\subsection{Data, Model Inputs And Formula Interface}{
+These arguments identify the fitted model and tested indices.
 }
 
-  \item{model}{
-    a \code{crs} model object.
-  }
   \item{index}{
     a vector of indices for the columns of \code{model$xz} for which the
     test of significance is to be conducted. Defaults to (1,2,\dots,\eqn{p})
     where \eqn{p} is the number of columns in \code{model$xz}.
   }
 
+
+  \item{model}{
+    a \code{crs} model object.
+  }
+
 \subsection{Bootstrap Controls}{
-  Controls for bootstrap P-value computation and reproducibility.
+These arguments control bootstrap execution and reproducibility settings.
 }
 
   \item{boot}{
     a logical value (default \code{TRUE}) indicating whether to compute
     the bootstrap P-value or simply return the asymptotic P-value.
   }
+
   \item{boot.num}{
     an integer value specifying the number of bootstrap replications to
     use. Defaults to \code{399}.
   }
+
   \item{boot.type}{
     whether to conduct \sQuote{residual} bootstrapping (iid) or permute
     (reorder) in place the predictor being tested when imposing the
     null.
   }
+
   \item{random.seed}{
     an integer used to seed R's random number generator. This is to
     ensure replicability. Defaults to 42.
   }
 }
-
 \value{
   \code{crssigtest} returns an object of type
   \code{sigtest}. \code{\link{summary}} supports \code{sigtest}
   objects. It has the following components:
-  
+
   \item{index}{ the vector of indices input }
   \item{P}{ the vector of bootstrap P-values for each statistic in \code{F}}
   \item{P.asy}{ the vector of asymptotic P-values for each statistic in index }
   \item{F}{ the vector of pseudo F-statistics \code{F} }
   \item{F.boot}{ the matrix of bootstrapped pseudo F-statistics
-    generated under the null (one column  for each statistic in \code{F}) }  
+    generated under the null (one column  for each statistic in \code{F}) }
   \item{df1}{ the vector of numerator degrees of freedom for each
   statistic in \code{F} (based on the smoother matrix)}
   \item{df2}{ the vector of denominator degrees of freedom for each
@@ -72,7 +76,7 @@ crssigtest(model = NULL,
   \item{rss}{ the vector of restricted sums of squared residuals for
   each statistic in \code{F} }
   \item{uss}{ the vector of unrestricted sums of squared residuals for
-  each statistic in \code{F} }  
+  each statistic in \code{F} }
   \item{boot.num}{ the number of bootstrap replications }
   \item{boot.type}{ the \code{boot.type} }
   \item{xnames}{ the names of the variables in \code{model$xz} }
@@ -90,10 +94,10 @@ crssigtest(model = NULL,
 }
 
 \section{Usage Issues}{
-  
+
   This function should be considered to be in \sQuote{beta status}
   until further notice.
-  
+
   Caution: bootstrap methods are, by their nature, \emph{computationally
   intensive}. This can be frustrating for users possessing large
   datasets. For exploratory purposes, you may wish to override the
