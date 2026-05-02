@@ -437,7 +437,7 @@ static void apply_options(NomadProblem pb,
   int max_bb_eval_value = 0;
 
   if (!Rf_isNull(opts_integer)) {
-    SEXP names = Rf_getAttrib(opts_integer, R_NamesSymbol);
+    SEXP names = PROTECT(Rf_getAttrib(opts_integer, R_NamesSymbol));
     const int n = Rf_length(opts_integer);
     for (int i = 0; i < n; ++i) {
       const std::string key = CHAR(STRING_ELT(names, i));
@@ -465,10 +465,11 @@ static void apply_options(NomadProblem pb,
         apply_named_option_line(pb, key, oss.str());
       }
     }
+    UNPROTECT(1);
   }
 
   if (!Rf_isNull(opts_numeric)) {
-    SEXP names = Rf_getAttrib(opts_numeric, R_NamesSymbol);
+    SEXP names = PROTECT(Rf_getAttrib(opts_numeric, R_NamesSymbol));
     const int n = Rf_length(opts_numeric);
     for (int i = 0; i < n; ++i) {
       const std::string key = CHAR(STRING_ELT(names, i));
@@ -498,10 +499,11 @@ static void apply_options(NomadProblem pb,
         apply_named_option_line(pb, key, oss.str());
       }
     }
+    UNPROTECT(1);
   }
 
   if (!Rf_isNull(opts_string)) {
-    SEXP names = Rf_getAttrib(opts_string, R_NamesSymbol);
+    SEXP names = PROTECT(Rf_getAttrib(opts_string, R_NamesSymbol));
     const int n = Rf_length(opts_string);
     for (int i = 0; i < n; ++i) {
       const std::string key = CHAR(STRING_ELT(names, i));
@@ -542,6 +544,7 @@ static void apply_options(NomadProblem pb,
         apply_named_option_line(pb, key, val);
       }
     }
+    UNPROTECT(1);
   }
 
   if (!seen_max_eval && seen_max_bb_eval && max_bb_eval_value > 0) {
@@ -909,11 +912,12 @@ static SEXP solve_nomad4(SEXP args, bool use_multi) {
   const int status = map_run_flag_to_status(run_flag);
   const char* message = run_flag_message(run_flag);
 
-  SEXP ret = build_solution(status, message, bbe, iterations, objective, best_x);
+  SEXP ret = PROTECT(build_solution(status, message, bbe, iterations, objective, best_x));
 
   freeNomadResult(result);
   freeNomadProblem(pb);
 
+  UNPROTECT(1);
   return ret;
 }
 

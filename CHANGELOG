@@ -1,3 +1,8 @@
+Changes from Version 0.15-42 to 0.15-43 [02-May-2026]
+
+* Hardened native-code protection in the NOMAD interface to address rchk
+  reports, preserving existing optimizer behavior and user-facing semantics.
+
 Changes from Version 0.15-41 to 0.15-42 [29-Apr-2026]
 
 * Updated the package startup message to point first to the online gallery
