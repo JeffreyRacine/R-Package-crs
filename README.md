@@ -22,3 +22,28 @@ Note Windows users have to first install [Rtools](https://cran.r-project.org/bin
 
 For more information on this project please visit the maintainer's website (https://www.socialsciences.mcmaster.ca/people/racinej).
 
+## Release Validation
+
+CRAN-ready release claims should use the shared release gate:
+
+```sh
+cd /Users/jracine/Development
+./release_protocol/run_crs_release_gate.sh
+```
+
+The gate builds the source tarball, installs it into a private library, runs
+installed smoke tests, runs tarball-first `R CMD check --as-cran`, records
+reverse-dependency inventory, and runs the containerized `rchk` native-code
+protection check when feasible (`RUN_RCHK=auto` by default).
+
+For changes touching `src/`, NOMAD interface code, registered native
+interfaces, or `.C`/`.Call` payload lifetimes, require local `rchk` proof when
+infrastructure is available:
+
+```sh
+cd /Users/jracine/Development
+RUN_RCHK=1 ./release_protocol/run_crs_release_gate.sh
+```
+
+Use `RUN_RCHK=auto` for ordinary full release rehearsal; it records a precise
+`SKIP` when Docker/rchk infrastructure is unavailable.
