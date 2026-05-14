@@ -80,7 +80,7 @@ void NOMAD::ProgressiveBarrier::init(const NOMAD::Point& fixedVariable,
         {
             for (const auto &evalPoint : cachePoints)
             {
-                NOMAD::EvalPointPtr evalPointSub = std::make_shared<NOMAD::EvalPoint>( evalPoint.makeSubSpacePointFromFixed(fixedVariable));
+                NOMAD::EvalPointPtr evalPointSub(new NOMAD::EvalPoint(evalPoint.makeSubSpacePointFromFixed(fixedVariable)));
                 _xFeas.push_back(evalPointSub);
             }
             _incumbentsAndHMaxUpToDate = false;
@@ -92,7 +92,7 @@ void NOMAD::ProgressiveBarrier::init(const NOMAD::Point& fixedVariable,
                 // Points in progressive barrier must have h < INF.
                 if (evalPoint.getH(_computeType) < NOMAD::INF)
                 {
-                    NOMAD::EvalPointPtr evalPointSub = std::make_shared<NOMAD::EvalPoint>( evalPoint.makeSubSpacePointFromFixed(fixedVariable));
+                    NOMAD::EvalPointPtr evalPointSub(new NOMAD::EvalPoint(evalPoint.makeSubSpacePointFromFixed(fixedVariable)));
                     _xInf.push_back(evalPointSub);
                 }
             }

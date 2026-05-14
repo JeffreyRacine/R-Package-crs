@@ -106,9 +106,10 @@ void NOMAD::SgtelibSearchMethod::init()
         auto barrier = getMegaIterationBarrier();
         const NOMAD::MadsIteration* iteration = getParentOfType<NOMAD::MadsIteration*>();
         auto mesh = iteration->getMesh();
-        _modelAlgo = std::make_shared<NOMAD::SgtelibModel>(this, stopReasons,
-                                                           barrier, _runParams,
-                                                           _pbParams, mesh);
+        _modelAlgo = std::shared_ptr<NOMAD::SgtelibModel>(
+            new NOMAD::SgtelibModel(this, stopReasons,
+                                    barrier, _runParams,
+                                    _pbParams, mesh));
         _modelAlgo->setEndDisplay(false);
     }
 #endif
