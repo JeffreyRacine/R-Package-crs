@@ -3,7 +3,7 @@ Changes from Version 0.15-43 to 0.15-44 [XX-XX-XXXX]
 * Development version opened after CRAN publication of 0.15-43. No
   post-release user-visible changes have been recorded yet.
 
-Changes from Version 0.15-42 to 0.15-43 [14-May-2026]
+Changes from Version 0.15-42 to 0.15-43 [15-May-2026]
 
 * Hardened native-code protection in the NOMAD interface to address rchk
   reports, preserving existing optimizer behavior and user-facing semantics.
