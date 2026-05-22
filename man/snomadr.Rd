@@ -232,6 +232,11 @@ These arguments control displayed progress and pass-through values.
     \item{call}{the call that was made to solve}
     \item{status}{integer value with the status of the optimization }
     \item{message}{more informative message with the status of the optimization}
+    \item{bbe}{number of blackbox evaluations reported by the interface}
+    \item{cache.hits}{number of NOMAD native cache hits during the run}
+    \item{cache.size}{number of points in NOMAD's native cache at the end of the run}
+    \item{callback.evaluations}{number of evaluations sent to the R callback}
+    \item{total.evaluations}{total evaluations represented by callback evaluations plus cache hits}
     \item{iterations}{number of iterations that were executed, if multiple initial points are set,
         this number will be the sum for each initial point.}
     \item{objective}{value if the objective function in the solution}

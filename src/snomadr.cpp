@@ -706,22 +706,36 @@ static const char* run_flag_message(int run_flag) {
   }
 }
 
+static int size_to_int_saturated(std::size_t x) {
+  return (x > static_cast<std::size_t>(std::numeric_limits<int>::max()))
+             ? std::numeric_limits<int>::max()
+             : static_cast<int>(x);
+}
+
 static SEXP build_solution(int status,
                            const char* message,
                            int bbe,
+                           int cache_hits,
+                           int cache_size,
+                           int callback_evaluations,
+                           int total_evaluations,
                            int iterations,
                            double objective,
                            const std::vector<double>& solution) {
   const int n = static_cast<int>(solution.size());
-  SEXP out = PROTECT(Rf_allocVector(VECSXP, 6));
-  SEXP names = PROTECT(Rf_allocVector(STRSXP, 6));
+  SEXP out = PROTECT(Rf_allocVector(VECSXP, 10));
+  SEXP names = PROTECT(Rf_allocVector(STRSXP, 10));
 
   SET_STRING_ELT(names, 0, Rf_mkChar("status"));
   SET_STRING_ELT(names, 1, Rf_mkChar("message"));
   SET_STRING_ELT(names, 2, Rf_mkChar("bbe"));
-  SET_STRING_ELT(names, 3, Rf_mkChar("objective"));
-  SET_STRING_ELT(names, 4, Rf_mkChar("solution"));
-  SET_STRING_ELT(names, 5, Rf_mkChar("iterations"));
+  SET_STRING_ELT(names, 3, Rf_mkChar("cache.hits"));
+  SET_STRING_ELT(names, 4, Rf_mkChar("cache.size"));
+  SET_STRING_ELT(names, 5, Rf_mkChar("callback.evaluations"));
+  SET_STRING_ELT(names, 6, Rf_mkChar("total.evaluations"));
+  SET_STRING_ELT(names, 7, Rf_mkChar("objective"));
+  SET_STRING_ELT(names, 8, Rf_mkChar("solution"));
+  SET_STRING_ELT(names, 9, Rf_mkChar("iterations"));
   Rf_setAttrib(out, R_NamesSymbol, names);
 
   SEXP r_status = PROTECT(Rf_allocVector(INTSXP, 1));
@@ -736,21 +750,37 @@ static SEXP build_solution(int status,
   INTEGER(r_bbe)[0] = bbe;
   SET_VECTOR_ELT(out, 2, r_bbe);
 
+  SEXP r_cache_hits = PROTECT(Rf_allocVector(INTSXP, 1));
+  INTEGER(r_cache_hits)[0] = cache_hits;
+  SET_VECTOR_ELT(out, 3, r_cache_hits);
+
+  SEXP r_cache_size = PROTECT(Rf_allocVector(INTSXP, 1));
+  INTEGER(r_cache_size)[0] = cache_size;
+  SET_VECTOR_ELT(out, 4, r_cache_size);
+
+  SEXP r_callback_evaluations = PROTECT(Rf_allocVector(INTSXP, 1));
+  INTEGER(r_callback_evaluations)[0] = callback_evaluations;
+  SET_VECTOR_ELT(out, 5, r_callback_evaluations);
+
+  SEXP r_total_evaluations = PROTECT(Rf_allocVector(INTSXP, 1));
+  INTEGER(r_total_evaluations)[0] = total_evaluations;
+  SET_VECTOR_ELT(out, 6, r_total_evaluations);
+
   SEXP r_obj = PROTECT(Rf_allocVector(REALSXP, 1));
   REAL(r_obj)[0] = objective;
-  SET_VECTOR_ELT(out, 3, r_obj);
+  SET_VECTOR_ELT(out, 7, r_obj);
 
   SEXP r_sol = PROTECT(Rf_allocVector(REALSXP, n));
   for (int i = 0; i < n; ++i) {
     REAL(r_sol)[i] = solution[static_cast<std::size_t>(i)];
   }
-  SET_VECTOR_ELT(out, 4, r_sol);
+  SET_VECTOR_ELT(out, 8, r_sol);
 
   SEXP r_iter = PROTECT(Rf_allocVector(INTSXP, 1));
   INTEGER(r_iter)[0] = iterations;
-  SET_VECTOR_ELT(out, 5, r_iter);
+  SET_VECTOR_ELT(out, 9, r_iter);
 
-  UNPROTECT(8);
+  UNPROTECT(12);
   return out;
 }
 
@@ -891,28 +921,47 @@ static SEXP solve_nomad4(SEXP args, bool use_multi) {
   }
   const double objective = (nb_solutions > 0) ? best_out[static_cast<std::size_t>(objective_index)] : NA_REAL;
 
-  int bbe = g_bbe_counter.load(std::memory_order_relaxed);
+  const int callback_evaluations = g_bbe_counter.load(std::memory_order_relaxed);
+  int bbe = callback_evaluations;
+  int cache_hits = cacheHitsNomadResult(result);
+  int cache_size = cacheSizeNomadResult(result);
+  int total_evaluations = totalEvaluationsNomadResult(result);
   try {
     auto evc = NOMAD::EvcInterface::getEvaluatorControl();
     if (evc != nullptr) {
       const std::size_t nbe = evc->getNbEval();
-      const int bbe_evc = (nbe > static_cast<std::size_t>(std::numeric_limits<int>::max()))
-                              ? std::numeric_limits<int>::max()
-                              : static_cast<int>(nbe);
+      const int bbe_evc = size_to_int_saturated(nbe);
       if (bbe_evc > 0) {
         bbe = bbe_evc;
       }
     }
   } catch (...) {
     // Use a safe scalar fallback when evaluator metadata is unavailable.
-    bbe = 0;
+    bbe = callback_evaluations;
+  }
+  if (total_evaluations <= 0) {
+    total_evaluations = size_to_int_saturated(
+      static_cast<std::size_t>(std::max(0, callback_evaluations)) +
+      static_cast<std::size_t>(std::max(0, cache_hits))
+    );
   }
 
   const int iterations = 0;
   const int status = map_run_flag_to_status(run_flag);
   const char* message = run_flag_message(run_flag);
 
-  SEXP ret = PROTECT(build_solution(status, message, bbe, iterations, objective, best_x));
+  SEXP ret = PROTECT(build_solution(
+    status,
+    message,
+    bbe,
+    cache_hits,
+    cache_size,
+    callback_evaluations,
+    total_evaluations,
+    iterations,
+    objective,
+    best_x
+  ));
 
   freeNomadResult(result);
   freeNomadProblem(pb);

@@ -60,6 +60,7 @@
 
 #include <R_ext/Print.h>
 
+#include <limits>
 #include <string>
 
 struct NomadProblemInfo
@@ -101,10 +102,20 @@ struct NomadResultInfo
     int nb_inputs;
     int nb_outputs;
     int nb_solutions;
+    int cache_hits;
+    int cache_size;
+    int total_evaluations;
     bool feasible_solutions_found;
     double *solutions_inputs;
     double *solutions_outputs;
 };
+
+static int sizeToIntSaturated(std::size_t x)
+{
+    return (x > static_cast<std::size_t>(std::numeric_limits<int>::max()))
+               ? std::numeric_limits<int>::max()
+               : static_cast<int>(x);
+}
 
 // NomadProblem API functions
 
@@ -650,6 +661,9 @@ int solveNomadProblem(const NomadResult result,
     result->nb_inputs = 0;
     result->nb_outputs = 0;
     result->nb_solutions = 0;
+    result->cache_hits = 0;
+    result->cache_size = 0;
+    result->total_evaluations = 0;
     result->feasible_solutions_found = false;
     if (result->solutions_inputs)
     {
@@ -789,6 +803,15 @@ int solveNomadProblem(const NomadResult result,
             }
         }
 
+        result->cache_hits = sizeToIntSaturated(NOMAD::CacheBase::getNbCacheHits());
+        result->cache_size = sizeToIntSaturated(NOMAD::CacheBase::getInstance()->size());
+        if (NOMAD::EvcInterface::getEvaluatorControl() != nullptr)
+        {
+            result->total_evaluations = sizeToIntSaturated(
+                NOMAD::EvcInterface::getEvaluatorControl()->getNbEval()
+            );
+        }
+
         // reset parameters in case someone wants to restart an optimization again
         // nomad_problem->p->resetToDefaultValues();
     }
@@ -811,6 +834,9 @@ NomadResult createNomadResult()
     result->nb_inputs = 0;
     result->nb_outputs = 0;
     result->nb_solutions = 0;
+    result->cache_hits = 0;
+    result->cache_size = 0;
+    result->total_evaluations = 0;
     result->feasible_solutions_found = false;
     result->solutions_inputs = nullptr;
     result->solutions_outputs = nullptr;
@@ -855,6 +881,27 @@ bool feasibleSolutionsFoundNomadResult(const NomadResult result)
     if (result == nullptr)
         return false;
     return result->feasible_solutions_found;
+}
+
+int cacheHitsNomadResult(const NomadResult result)
+{
+    if (result == nullptr)
+        return 0;
+    return result->cache_hits;
+}
+
+int cacheSizeNomadResult(const NomadResult result)
+{
+    if (result == nullptr)
+        return 0;
+    return result->cache_size;
+}
+
+int totalEvaluationsNomadResult(const NomadResult result)
+{
+    if (result == nullptr)
+        return 0;
+    return result->total_evaluations;
 }
 
 bool loadInputSolutionsNomadResult(double *input_solutions,

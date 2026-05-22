@@ -108,6 +108,9 @@ DLL_EXPORT_API int nbInputsNomadResult(const NomadResult result);
 DLL_EXPORT_API int nbOutputsNomadResult(const NomadResult result);
 DLL_EXPORT_API int nbSolutionsNomadResult(const NomadResult result);
 DLL_EXPORT_API bool feasibleSolutionsFoundNomadResult(const NomadResult result);
+DLL_EXPORT_API int cacheHitsNomadResult(const NomadResult result);
+DLL_EXPORT_API int cacheSizeNomadResult(const NomadResult result);
+DLL_EXPORT_API int totalEvaluationsNomadResult(const NomadResult result);
 
 // Return true if all solutions have been loaded, false otherwise.
 // WARNING: it is the responsibility of the user to allocate the correct

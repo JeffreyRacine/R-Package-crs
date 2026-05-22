@@ -325,6 +325,10 @@ snomadr <-
     ret$status <- solution$status
     ret$message <- solution$message
     ret$bbe <- solution$bbe
+    ret$cache.hits <- solution$cache.hits
+    ret$cache.size <- solution$cache.size
+    ret$callback.evaluations <- solution$callback.evaluations
+    ret$total.evaluations <- solution$total.evaluations
     ret$iterations <- solution$iterations
     ret$objective <- solution$objective
     ret$solution <- solution$solution
