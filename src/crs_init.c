@@ -3,6 +3,7 @@
 #include <stdlib.h> // for NULL
 #include <R_ext/Rdynload.h>
 #include "mgcv.h"
+#include "../inst/include/crs_nomad_native.h"
 
 /* .C calls */
 extern void RuniqueCombs(void *, void *, void *, void *);
@@ -42,4 +43,6 @@ void R_init_crs(DllInfo *dll)
 {
     R_registerRoutines(dll, CEntries, CallEntries, NULL, NULL);
     R_useDynamicSymbols(dll, FALSE);
+    R_RegisterCCallable("crs", "crs_nomad_native_solve_v1",
+                        (DL_FUNC) crs_nomad_native_solve_v1);
 }

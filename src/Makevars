@@ -474,10 +474,10 @@ OBJECTS = RuniqueCombs.o \
   bspline.o \
   gsl_bspline.o \
   snomadr.o \
+  snomadr_native.o \
   crs_init.o \
   mgcv.o \
   hat_diag.o \
   $(NOMAD4_OBJECTS)
 
 PKG_CXXFLAGS = $(NOMAD4_INCLUDE_FLAGS) -DUSE_SGTELIB -DNOMAD_STATIC_BUILD
-
