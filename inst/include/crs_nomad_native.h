@@ -38,6 +38,7 @@ typedef struct {
   const int *bb_input_type;
   const double *lower;
   const double *upper;
+  /* 0 leaves MAX_BB_EVAL/MAX_EVAL unset; positive preserves v1 convenience budget. */
   int max_eval;
   unsigned int random_seed;
   int quiet;
@@ -80,8 +81,11 @@ typedef int (*crs_nomad_native_solve_fn_v1)(
  * - crs never returns memory that callers must free.
  * - callback pointers are borrowed for the duration of this call only.
  * - problem->options is a borrowed name/value array of NOMAD option values
- *   expressed as strings. Options are applied after core bounds, budget, seed,
- *   and quiet defaults, so explicit caller options take precedence.
+ *   expressed as strings. Options are applied after core bounds, optional
+ *   convenience budget, seed, and quiet defaults, so explicit caller options
+ *   take precedence. If max_eval is 0, crs does not set MAX_BB_EVAL or
+ *   MAX_EVAL unless provided in options. A MAX_BB_EVAL option without
+ *   MAX_EVAL follows snomadr() compatibility by also setting MAX_EVAL.
  *
  * Callback contract:
  * - return 0 on successful evaluation, nonzero on evaluation failure.

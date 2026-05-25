@@ -5,6 +5,7 @@
 #include <algorithm>
 #include <atomic>
 #include <cmath>
+#include <cstdlib>
 #include <cstring>
 #include <limits>
 #include <sstream>
@@ -186,8 +187,8 @@ int validate_problem(const crs_nomad_native_problem_v1 *problem,
   if (problem->upper == nullptr) {
     return fail(result, CRS_NOMAD_INVALID_INPUT, "problem upper pointer is null");
   }
-  if (problem->max_eval <= 0) {
-    return fail(result, CRS_NOMAD_INVALID_INPUT, "problem max_eval must be positive");
+  if (problem->max_eval < 0) {
+    return fail(result, CRS_NOMAD_INVALID_INPUT, "problem max_eval must be nonnegative");
   }
   if (result->solution == nullptr) {
     return fail(result, CRS_NOMAD_INVALID_INPUT, "result solution pointer is null");
@@ -285,14 +286,37 @@ bool native_eval_single(int nb_inputs,
 int apply_native_options(const crs_nomad_native_problem_v1 *problem,
                          NomadProblem pb,
                          crs_nomad_native_result_v1 *result) {
+  bool seen_max_eval = false;
+  bool seen_max_bb_eval = false;
+  int max_bb_eval_value = 0;
+
   for (int i = 0; i < problem->option_count; ++i) {
     const crs_nomad_native_option_v1 *option = problem->options + i;
+    if (std::strcmp(option->name, "MAX_EVAL") == 0) {
+      seen_max_eval = true;
+    }
+    if (std::strcmp(option->name, "MAX_BB_EVAL") == 0) {
+      char *endptr = nullptr;
+      const long parsed = std::strtol(option->value, &endptr, 10);
+      if (endptr != option->value && *endptr == '\0' &&
+          parsed > 0 && parsed <= std::numeric_limits<int>::max()) {
+        seen_max_bb_eval = true;
+        max_bb_eval_value = static_cast<int>(parsed);
+      }
+    }
     const std::string line = std::string(option->name) + " " + option->value;
     if (!addNomadParam(pb, line.c_str())) {
       const std::string message = std::string("failed to set NOMAD option ") + option->name;
       return fail(result, CRS_NOMAD_INVALID_INPUT, message.c_str());
     }
   }
+
+  if (!seen_max_eval && seen_max_bb_eval && max_bb_eval_value > 0) {
+    if (!addNomadValParam(pb, "MAX_EVAL", max_bb_eval_value)) {
+      return fail(result, CRS_NOMAD_INVALID_INPUT, "failed to synthesize NOMAD MAX_EVAL from MAX_BB_EVAL");
+    }
+  }
+
   return CRS_NOMAD_OK;
 }
 
@@ -315,11 +339,13 @@ int apply_problem_parameters(const crs_nomad_native_problem_v1 *problem,
   if (!addNomadArrayOfDoubleParam(pb, "UPPER_BOUND", problem->upper)) {
     return fail(result, CRS_NOMAD_INVALID_INPUT, "failed to set NOMAD UPPER_BOUND");
   }
-  if (!addNomadValParam(pb, "MAX_BB_EVAL", problem->max_eval)) {
-    return fail(result, CRS_NOMAD_INVALID_INPUT, "failed to set NOMAD MAX_BB_EVAL");
-  }
-  if (!addNomadValParam(pb, "MAX_EVAL", problem->max_eval)) {
-    return fail(result, CRS_NOMAD_INVALID_INPUT, "failed to set NOMAD MAX_EVAL");
+  if (problem->max_eval > 0) {
+    if (!addNomadValParam(pb, "MAX_BB_EVAL", problem->max_eval)) {
+      return fail(result, CRS_NOMAD_INVALID_INPUT, "failed to set NOMAD MAX_BB_EVAL");
+    }
+    if (!addNomadValParam(pb, "MAX_EVAL", problem->max_eval)) {
+      return fail(result, CRS_NOMAD_INVALID_INPUT, "failed to set NOMAD MAX_EVAL");
+    }
   }
   if (!addNomadValParam(pb, "SEED", static_cast<int>(problem->random_seed))) {
     return fail(result, CRS_NOMAD_INVALID_INPUT, "failed to set NOMAD SEED");
