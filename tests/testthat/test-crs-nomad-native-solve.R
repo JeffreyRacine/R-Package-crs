@@ -39,6 +39,28 @@ native_nomad_spec <- function(...,
   )
 }
 
+test_that("native R callback helper distinguishes success, errors, and interrupts", {
+  ok <- crs:::.crs_nomad_native_eval_r(function(x) sum(x), c(1, 2))
+  expect_identical(ok[[1]], 0L)
+  expect_equal(ok[[2]], 3)
+
+  err <- crs:::.crs_nomad_native_eval_r(function(x) stop("boom"), c(1, 2))
+  expect_identical(err[[1]], 2L)
+  expect_match(err[[3]], "boom")
+
+  intr <- crs:::.crs_nomad_native_eval_r(
+    function(x) {
+      stop(structure(
+        list(message = "simulated interrupt"),
+        class = c("interrupt", "condition")
+      ))
+    },
+    c(1, 2)
+  )
+  expect_identical(intr[[1]], 1L)
+  expect_match(intr[[3]], "simulated interrupt")
+})
+
 test_that("crs_nomad_solve succeeds through the direct C callback bridge", {
   res <- native_nomad_solve(native_nomad_spec(
     x0 = c(0, 0),

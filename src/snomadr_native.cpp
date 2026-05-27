@@ -1,6 +1,7 @@
 #include "../inst/include/crs_nomad_native.h"
 
 #include "NomadStdCInterface.h"
+#include "Algos/Step.hpp"
 
 #include <algorithm>
 #include <atomic>
@@ -45,6 +46,7 @@ struct NativeEvalContext {
   const int *bb_output_type;
   int callback_evaluations;
   int callback_failures;
+  bool user_interrupted;
 };
 
 struct NativeSolveHandles {
@@ -402,6 +404,7 @@ struct RCallbackEvalState {
   double *bb_outputs;
   NativeEvalContext *context;
   bool ok;
+  bool user_interrupted;
 };
 
 void native_eval_r_toplevel(void *data) {
@@ -424,11 +427,6 @@ void native_eval_r_toplevel(void *data) {
     return;
   }
 
-  SEXP rho = reinterpret_cast<SEXP>(callback->environment);
-  if (rho == R_NilValue || rho == nullptr) {
-    rho = R_GlobalEnv;
-  }
-
   int nprotect = 0;
   SEXP rargs = PROTECT(Rf_allocVector(REALSXP, nb_inputs));
   ++nprotect;
@@ -436,17 +434,54 @@ void native_eval_r_toplevel(void *data) {
     REAL(rargs)[i] = x[i];
   }
 
-  SEXP call = PROTECT(Rf_lang2(eval_f, rargs));
+  SEXP ns_name = PROTECT(Rf_mkString("crs"));
   ++nprotect;
-
-  int error = 0;
-  SEXP result = R_tryEvalSilent(call, rho, &error);
-  if (error || result == R_NilValue) {
+  SEXP ns = PROTECT(R_FindNamespace(ns_name));
+  ++nprotect;
+  SEXP helper = PROTECT(Rf_findFun(Rf_install(".crs_nomad_native_eval_r"), ns));
+  ++nprotect;
+  if (helper == R_UnboundValue || helper == R_NilValue || !Rf_isFunction(helper)) {
     UNPROTECT(nprotect);
     return;
   }
-  result = PROTECT(result);
+
+  SEXP call = PROTECT(Rf_lang3(helper, eval_f, rargs));
   ++nprotect;
+
+  int error = 0;
+  SEXP wrapped = R_tryEvalSilent(call, ns, &error);
+  if (error || wrapped == R_NilValue) {
+    if (error) {
+      R_CheckUserInterrupt();
+    }
+    UNPROTECT(nprotect);
+    return;
+  }
+  wrapped = PROTECT(wrapped);
+  ++nprotect;
+  if (!Rf_isNewList(wrapped) || Rf_length(wrapped) < 2) {
+    UNPROTECT(nprotect);
+    return;
+  }
+
+  SEXP status_sexp = VECTOR_ELT(wrapped, 0);
+  int wrapped_status = NA_INTEGER;
+  if (Rf_isInteger(status_sexp) && Rf_length(status_sexp) >= 1) {
+    wrapped_status = INTEGER(status_sexp)[0];
+  } else if (Rf_isReal(status_sexp) && Rf_length(status_sexp) >= 1) {
+    wrapped_status = static_cast<int>(REAL(status_sexp)[0]);
+  }
+  if (wrapped_status == 1) {
+    state->user_interrupted = true;
+    UNPROTECT(nprotect);
+    return;
+  }
+  if (wrapped_status != 0) {
+    UNPROTECT(nprotect);
+    return;
+  }
+
+  SEXP result = VECTOR_ELT(wrapped, 1);
 
   if (!Rf_isNumeric(result)) {
     UNPROTECT(nprotect);
@@ -484,8 +519,13 @@ bool native_eval_r(int nb_inputs,
   state.bb_outputs = bb_outputs;
   state.context = context;
   state.ok = false;
+  state.user_interrupted = false;
 
-  if (!R_ToplevelExec(native_eval_r_toplevel, &state) || !state.ok) {
+  const bool toplevel_ok = R_ToplevelExec(native_eval_r_toplevel, &state);
+  if ((!toplevel_ok || state.user_interrupted) && context != nullptr) {
+    context->user_interrupted = true;
+  }
+  if (!toplevel_ok || !state.ok) {
     return false;
   }
   return true;
@@ -524,6 +564,12 @@ bool native_eval_single(int nb_inputs,
     return false;
   }
 
+  if (context->callback_mode == CRS_NOMAD_CALLBACK_R &&
+      NOMAD::Step::getUserInterrupt()) {
+    context->user_interrupted = true;
+    return false;
+  }
+
   ++context->callback_evaluations;
   bool ok = false;
   if (context->callback_mode == CRS_NOMAD_CALLBACK_R) {
@@ -533,6 +579,12 @@ bool native_eval_single(int nb_inputs,
       return mark_callback_failure(nb_outputs, bb_outputs, count_eval, context);
     }
     ok = native_eval_c(nb_inputs, x, nb_outputs, bb_outputs, context);
+  }
+  if (context->user_interrupted) {
+    if (count_eval != nullptr) {
+      *count_eval = false;
+    }
+    return false;
   }
   if (!ok) {
     return mark_callback_failure(nb_outputs, bb_outputs, count_eval, context);
@@ -902,7 +954,9 @@ int solve_final_problem_with_starts(const crs_nomad_problem *problem,
   context.bb_output_type = problem->bb_output_type;
   context.callback_evaluations = 0;
   context.callback_failures = 0;
+  context.user_interrupted = false;
 
+  NOMAD::Step::resetUserInterrupt();
   const int run_flag = solveNomadProblem(nomad_result, pb, start_count, starts, &context);
   result->nomad_run_flag = run_flag;
   result->blackbox_evaluations = context.callback_evaluations;
@@ -923,6 +977,10 @@ int solve_final_problem_with_starts(const crs_nomad_problem *problem,
   }
   result->solution_count = nb_solutions;
   result->feasible_solution = feasibleSolutionsFoundNomadResult(nomad_result) ? 1 : 0;
+  if (context.user_interrupted) {
+    NOMAD::Step::resetUserInterrupt();
+    return fail(result, CRS_NOMAD_CALLBACK_FAILURE, "native R callback interrupted by user");
+  }
   if (nb_solutions > 0) {
     std::vector<double> best_x(static_cast<std::size_t>(problem->n), 0.0);
     std::vector<double> best_out(static_cast<std::size_t>(problem->m), 0.0);
