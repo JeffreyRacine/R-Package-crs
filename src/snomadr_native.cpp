@@ -51,14 +51,6 @@ void set_message(crs_nomad_result *result, const char *message) {
   result->message[sizeof(result->message) - 1] = '\0';
 }
 
-void set_message(crs_nomad_native_result_v1 *result, const char *message) {
-  if (result == nullptr) {
-    return;
-  }
-  std::strncpy(result->message, message, sizeof(result->message) - 1);
-  result->message[sizeof(result->message) - 1] = '\0';
-}
-
 void initialize_result(crs_nomad_result *result) {
   if (result == nullptr) {
     return;
@@ -87,59 +79,12 @@ void initialize_result(crs_nomad_result *result) {
   set_message(result, "");
 }
 
-void initialize_native_result(crs_nomad_native_result_v1 *result) {
-  if (result == nullptr) {
-    return;
-  }
-  result->status = CRS_NOMAD_INVALID_INPUT;
-  result->nomad_run_flag = 0;
-  result->blackbox_evaluations = 0;
-  result->callback_evaluations = 0;
-  result->cache_hits = 0;
-  result->cache_size = 0;
-  result->total_evaluations = 0;
-  result->iterations = 0;
-  result->solution_count = 0;
-  result->feasible_solution = 0;
-  result->objective = std::numeric_limits<double>::quiet_NaN();
-  set_message(result, "");
-}
-
 int fail(crs_nomad_result *result, crs_nomad_status status, const char *message) {
   if (result != nullptr) {
     result->status = status;
     set_message(result, message);
   }
   return status;
-}
-
-int fail_native(crs_nomad_native_result_v1 *result,
-                crs_nomad_status status,
-                const char *message) {
-  if (result != nullptr) {
-    result->status = status;
-    set_message(result, message);
-  }
-  return status;
-}
-
-void copy_final_to_native_result(const crs_nomad_result *source,
-                                 crs_nomad_native_result_v1 *target) {
-  if (source == nullptr || target == nullptr) {
-    return;
-  }
-  target->status = source->status;
-  target->nomad_run_flag = source->nomad_run_flag;
-  target->blackbox_evaluations = source->blackbox_evaluations;
-  target->callback_evaluations = source->callback_evaluations;
-  target->cache_hits = source->cache_hits;
-  target->cache_size = source->cache_size;
-  target->total_evaluations = source->total_evaluations;
-  target->iterations = source->iterations;
-  target->solution_count = source->solution_count;
-  target->feasible_solution = source->feasible_solution;
-  target->objective = source->objective;
-  set_message(target, source->message);
 }
 
 int size_to_int_saturated(std::size_t value) {
@@ -830,84 +775,6 @@ int solve_final_problem(const crs_nomad_problem *problem,
   return solve_final_problem_with_starts(&run_problem, starts.data(), start_count, eval, user_data, result);
 }
 
-crs_nomad_problem make_problem_from_v1(const crs_nomad_native_problem_v1 *problem,
-                                       const int *bb_output_type) {
-  crs_nomad_problem out;
-  out.api_version = CRS_NOMAD_API_VERSION;
-  out.struct_size = sizeof(crs_nomad_problem);
-  out.callback_mode = CRS_NOMAD_CALLBACK_C;
-  out.n = problem->n;
-  out.m = problem->m;
-  out.x0 = problem->x0;
-  out.bb_input_type = problem->bb_input_type;
-  out.bb_output_type = bb_output_type;
-  out.lower = problem->lower;
-  out.upper = problem->upper;
-  out.max_eval = problem->max_eval;
-  out.random_seed = problem->random_seed;
-  out.quiet = problem->quiet;
-  out.option_count = problem->option_count;
-  out.options = problem->options;
-  out.start_count = 0;
-  out.starts = nullptr;
-  out.read_nomad_opt_file = 0;
-  out.reserved_ptr1 = nullptr;
-  out.reserved_ptr2 = nullptr;
-  out.reserved_int1 = 0;
-  out.reserved_int2 = 0;
-  return out;
-}
-
-crs_nomad_problem make_problem_from_v2(const crs_nomad_native_problem_v2 *problem,
-                                       const int *bb_output_type) {
-  crs_nomad_problem out;
-  out.api_version = CRS_NOMAD_API_VERSION;
-  out.struct_size = sizeof(crs_nomad_problem);
-  out.callback_mode = CRS_NOMAD_CALLBACK_C;
-  out.n = problem->n;
-  out.m = problem->m;
-  out.x0 = problem->x0;
-  out.bb_input_type = problem->bb_input_type;
-  out.bb_output_type = bb_output_type;
-  out.lower = problem->lower;
-  out.upper = problem->upper;
-  out.max_eval = problem->max_eval;
-  out.random_seed = problem->random_seed;
-  out.quiet = problem->quiet;
-  out.option_count = problem->option_count;
-  out.options = problem->options;
-  out.start_count = problem->start_count;
-  out.starts = problem->starts;
-  out.read_nomad_opt_file = 0;
-  out.reserved_ptr1 = nullptr;
-  out.reserved_ptr2 = nullptr;
-  out.reserved_int1 = 0;
-  out.reserved_int2 = 0;
-  return out;
-}
-
-int solve_native_compat(const crs_nomad_problem *problem,
-                        crs_nomad_eval_fn eval,
-                        void *user_data,
-                        crs_nomad_native_result_v1 *result) {
-  std::vector<double> outputs(static_cast<std::size_t>(std::max(1, problem->m)), 0.0);
-  crs_nomad_result final_result;
-  final_result.api_version = CRS_NOMAD_API_VERSION;
-  final_result.struct_size = sizeof(crs_nomad_result);
-  final_result.solution = result->solution;
-  final_result.solution_len = result->solution_len;
-  final_result.outputs = outputs.data();
-  final_result.outputs_len = static_cast<int>(outputs.size());
-  final_result.reserved_ptr1 = nullptr;
-  final_result.reserved_ptr2 = nullptr;
-  final_result.reserved_int1 = 0;
-  final_result.reserved_int2 = 0;
-
-  int status = crs_nomad_solve(problem, eval, user_data, &final_result);
-  copy_final_to_native_result(&final_result, result);
-  return status;
-}
-
 } // namespace
 
 extern "C" int crs_nomad_solve(
@@ -944,77 +811,4 @@ extern "C" int crs_nomad_solve(
 
   native_solver_busy.clear(std::memory_order_release);
   return status;
-}
-
-extern "C" int crs_nomad_native_solve_v1(
-  const crs_nomad_native_problem_v1 *problem,
-  crs_nomad_native_eval_fn eval,
-  void *user_data,
-  crs_nomad_native_result_v1 *result
-) {
-  if (result == nullptr) {
-    return CRS_NOMAD_INVALID_INPUT;
-  }
-  if (result->api_version != CRS_NOMAD_NATIVE_API_VERSION) {
-    return fail_native(result, CRS_NOMAD_INVALID_INPUT, "unsupported result api_version");
-  }
-  if (result->struct_size < sizeof(crs_nomad_native_result_v1)) {
-    return fail_native(result, CRS_NOMAD_INVALID_INPUT, "result struct_size is too small");
-  }
-
-  initialize_native_result(result);
-
-  if (problem == nullptr) {
-    return fail_native(result, CRS_NOMAD_INVALID_INPUT, "problem pointer is null");
-  }
-  if (problem->api_version != CRS_NOMAD_NATIVE_API_VERSION) {
-    return fail_native(result, CRS_NOMAD_INVALID_INPUT, "unsupported problem api_version");
-  }
-  if (problem->struct_size < sizeof(crs_nomad_native_problem_v1)) {
-    return fail_native(result, CRS_NOMAD_INVALID_INPUT, "problem struct_size is too small");
-  }
-  if (problem->m != 1) {
-    return fail_native(result, CRS_NOMAD_INVALID_INPUT, "problem m must be 1 in native v1");
-  }
-
-  const int output_type = CRS_NOMAD_OUTPUT_OBJ;
-  const crs_nomad_problem final_problem = make_problem_from_v1(problem, &output_type);
-  return solve_native_compat(&final_problem, eval, user_data, result);
-}
-
-extern "C" int crs_nomad_native_solve_v2(
-  const crs_nomad_native_problem_v2 *problem,
-  crs_nomad_native_eval_fn eval,
-  void *user_data,
-  crs_nomad_native_result_v2 *result
-) {
-  if (result == nullptr) {
-    return CRS_NOMAD_INVALID_INPUT;
-  }
-  if (result->api_version != CRS_NOMAD_NATIVE_API_VERSION &&
-      result->api_version != CRS_NOMAD_NATIVE_API_VERSION_V2) {
-    return fail_native(result, CRS_NOMAD_INVALID_INPUT, "unsupported result api_version");
-  }
-  if (result->struct_size < sizeof(crs_nomad_native_result_v2)) {
-    return fail_native(result, CRS_NOMAD_INVALID_INPUT, "result struct_size is too small");
-  }
-
-  initialize_native_result(result);
-
-  if (problem == nullptr) {
-    return fail_native(result, CRS_NOMAD_INVALID_INPUT, "problem pointer is null");
-  }
-  if (problem->api_version != CRS_NOMAD_NATIVE_API_VERSION_V2) {
-    return fail_native(result, CRS_NOMAD_INVALID_INPUT, "unsupported problem api_version");
-  }
-  if (problem->struct_size < sizeof(crs_nomad_native_problem_v2)) {
-    return fail_native(result, CRS_NOMAD_INVALID_INPUT, "problem struct_size is too small");
-  }
-  if (problem->m != 1) {
-    return fail_native(result, CRS_NOMAD_INVALID_INPUT, "problem m must be 1 in native v2");
-  }
-
-  const int output_type = CRS_NOMAD_OUTPUT_OBJ;
-  const crs_nomad_problem final_problem = make_problem_from_v2(problem, &output_type);
-  return solve_native_compat(&final_problem, eval, user_data, result);
 }

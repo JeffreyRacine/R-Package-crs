@@ -20,10 +20,8 @@
   is an explicit bridge for routes whose objective still lives in R; callers
   pass a protected R function and environment through \code{crs_nomad_r_callback}.
 
-  Compatibility callables \code{crs_nomad_native_solve_v1} and
-  \code{crs_nomad_native_solve_v2} remain registered while downstream packages
-  migrate.  They are wrappers around the final engine and should not be used
-  for new integrations.
+  This is the only native NOMAD C callable exported by \pkg{crs}; legacy
+  v1/v2 development callables are intentionally not registered.
 }
 \section{Callback Contract}{
   C callbacks return \code{0} on successful evaluation, fill exactly
