@@ -8,6 +8,7 @@ extern "C" {
 #endif
 
 #define CRS_NOMAD_NATIVE_API_VERSION 1
+#define CRS_NOMAD_NATIVE_API_VERSION_V2 2
 
 typedef enum {
   CRS_NOMAD_OK = 0,
@@ -49,6 +50,29 @@ typedef struct {
 typedef struct {
   int api_version;
   size_t struct_size;
+  int n;
+  int m;
+  const double *x0;
+  const int *bb_input_type;
+  const double *lower;
+  const double *upper;
+  /* 0 leaves MAX_BB_EVAL/MAX_EVAL unset; positive preserves v1 convenience budget. */
+  int max_eval;
+  unsigned int random_seed;
+  int quiet;
+  int option_count;
+  const crs_nomad_native_option_v1 *options;
+  /*
+   * Optional row-major start matrix with start_count rows and n columns.
+   * If start_count <= 1 and starts is NULL, x0 is used exactly as in v1.
+   */
+  int start_count;
+  const double *starts;
+} crs_nomad_native_problem_v2;
+
+typedef struct {
+  int api_version;
+  size_t struct_size;
   int status;
   int nomad_run_flag;
   int blackbox_evaluations;
@@ -70,6 +94,15 @@ typedef int (*crs_nomad_native_solve_fn_v1)(
   crs_nomad_native_eval_fn eval,
   void *user_data,
   crs_nomad_native_result_v1 *result
+);
+
+typedef crs_nomad_native_result_v1 crs_nomad_native_result_v2;
+
+typedef int (*crs_nomad_native_solve_fn_v2)(
+  const crs_nomad_native_problem_v2 *problem,
+  crs_nomad_native_eval_fn eval,
+  void *user_data,
+  crs_nomad_native_result_v2 *result
 );
 
 /*
@@ -98,6 +131,18 @@ int crs_nomad_native_solve_v1(
   crs_nomad_native_eval_fn eval,
   void *user_data,
   crs_nomad_native_result_v1 *result
+);
+
+/*
+ * Native v2 extends v1 by accepting an explicit row-major start matrix for
+ * reproducing snomadr(nmulti=...) inner multistart without changing v1.
+ * Result output is unchanged and uses the v1/v2-compatible result layout.
+ */
+int crs_nomad_native_solve_v2(
+  const crs_nomad_native_problem_v2 *problem,
+  crs_nomad_native_eval_fn eval,
+  void *user_data,
+  crs_nomad_native_result_v2 *result
 );
 
 #ifdef __cplusplus
