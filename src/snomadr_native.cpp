@@ -4,6 +4,8 @@
 
 #include <algorithm>
 #include <atomic>
+#include <cerrno>
+#include <cctype>
 #include <cmath>
 #include <cstdlib>
 #include <cstring>
@@ -18,6 +20,7 @@
 #include <R.h>
 #include <Rinternals.h>
 #include <R_ext/Error.h>
+#include <R_ext/Utils.h>
 
 #ifdef length
 #undef length
@@ -39,8 +42,73 @@ struct NativeEvalContext {
   int callback_mode;
   crs_nomad_eval_fn eval;
   void *user_data;
+  const int *bb_output_type;
   int callback_evaluations;
   int callback_failures;
+};
+
+struct NativeSolveHandles {
+  NomadProblem problem;
+  NomadResult result;
+
+  NativeSolveHandles() : problem(nullptr), result(nullptr) {}
+};
+
+void release_nomad_handles(NativeSolveHandles *handles) {
+  if (handles == nullptr) {
+    return;
+  }
+  if (handles->result != nullptr) {
+    freeNomadResult(handles->result);
+    handles->result = nullptr;
+  }
+  if (handles->problem != nullptr) {
+    freeNomadProblem(handles->problem);
+    handles->problem = nullptr;
+  }
+}
+
+class NomadHandleGuard {
+ public:
+  explicit NomadHandleGuard(NativeSolveHandles *handles) : handles_(handles) {}
+  ~NomadHandleGuard() {
+    release_nomad_handles(handles_);
+  }
+
+  NomadHandleGuard(const NomadHandleGuard&) = delete;
+  NomadHandleGuard& operator=(const NomadHandleGuard&) = delete;
+
+ private:
+  NativeSolveHandles *handles_;
+};
+
+struct CrsNomadSolveState {
+  const crs_nomad_problem *problem;
+  crs_nomad_eval_fn eval;
+  void *user_data;
+  crs_nomad_result *result;
+  NativeSolveHandles handles;
+  int status;
+  bool busy_acquired;
+  bool preserved_eval;
+  bool preserved_env;
+  SEXP eval_f;
+  SEXP environment;
+
+  CrsNomadSolveState(const crs_nomad_problem *problem_,
+                     crs_nomad_eval_fn eval_,
+                     void *user_data_,
+                     crs_nomad_result *result_)
+    : problem(problem_),
+      eval(eval_),
+      user_data(user_data_),
+      result(result_),
+      status(CRS_NOMAD_INTERNAL_ERROR),
+      busy_acquired(false),
+      preserved_eval(false),
+      preserved_env(false),
+      eval_f(R_NilValue),
+      environment(R_NilValue) {}
 };
 
 void set_message(crs_nomad_result *result, const char *message) {
@@ -217,6 +285,70 @@ double finite_or_default(double value, double fallback) {
   return std::isfinite(value) ? value : fallback;
 }
 
+std::string trim_copy(const std::string &value) {
+  const std::size_t first = value.find_first_not_of(" \t\r\n");
+  if (first == std::string::npos) {
+    return std::string();
+  }
+  const std::size_t last = value.find_last_not_of(" \t\r\n");
+  return value.substr(first, last - first + 1);
+}
+
+std::string strip_inline_comment(const std::string &value) {
+  return trim_copy(value.substr(0, value.find('#')));
+}
+
+std::string ascii_upper_copy(const char *value) {
+  std::string out = trim_copy(value == nullptr ? std::string() : std::string(value));
+  for (std::size_t i = 0; i < out.size(); ++i) {
+    out[i] = static_cast<char>(std::toupper(static_cast<unsigned char>(out[i])));
+  }
+  return out;
+}
+
+bool parse_positive_int_like(const char *value, int *out) {
+  if (value == nullptr) {
+    return false;
+  }
+  const std::string clean = trim_copy(value);
+  if (clean.empty()) {
+    return false;
+  }
+  errno = 0;
+  char *endptr = nullptr;
+  const double parsed = std::strtod(clean.c_str(), &endptr);
+  if (endptr == clean.c_str() || *endptr != '\0' || errno == ERANGE ||
+      !std::isfinite(parsed) || parsed <= 0.0 ||
+      parsed > static_cast<double>(std::numeric_limits<int>::max())) {
+    return false;
+  }
+  const double rounded = std::round(parsed);
+  if (std::fabs(parsed - rounded) > 1e-9) {
+    return false;
+  }
+  if (out != nullptr) {
+    *out = static_cast<int>(rounded);
+  }
+  return true;
+}
+
+std::string first_token_upper(const std::string &line) {
+  const std::string clean = trim_copy(line);
+  const std::size_t split = clean.find_first_of(" \t\r\n");
+  return ascii_upper_copy((split == std::string::npos) ?
+                          clean.c_str() :
+                          clean.substr(0, split).c_str());
+}
+
+std::string second_token(const std::string &line) {
+  const std::string clean = trim_copy(line);
+  const std::size_t split = clean.find_first_of(" \t\r\n");
+  if (split == std::string::npos) {
+    return std::string();
+  }
+  return trim_copy(clean.substr(split + 1));
+}
+
 void fill_random_start(std::vector<double> &starts,
                        int point_index,
                        const crs_nomad_problem *problem,
@@ -255,29 +387,41 @@ bool native_eval_c(int nb_inputs,
       context->user_data
     );
   } catch (...) {
-    ++context->callback_failures;
     return false;
   }
   if (status != 0) {
-    ++context->callback_failures;
     return false;
   }
   return true;
 }
 
-bool native_eval_r(int nb_inputs,
-                   double *x,
-                   int nb_outputs,
-                   double *bb_outputs,
-                   NativeEvalContext *context) {
+struct RCallbackEvalState {
+  int nb_inputs;
+  double *x;
+  int nb_outputs;
+  double *bb_outputs;
+  NativeEvalContext *context;
+  bool ok;
+};
+
+void native_eval_r_toplevel(void *data) {
+  RCallbackEvalState *state = static_cast<RCallbackEvalState *>(data);
+  state->ok = false;
+  const int nb_inputs = state->nb_inputs;
+  double *x = state->x;
+  const int nb_outputs = state->nb_outputs;
+  double *bb_outputs = state->bb_outputs;
+  NativeEvalContext *context = state->context;
+
+  R_CheckUserInterrupt();
+
   crs_nomad_r_callback *callback =
     static_cast<crs_nomad_r_callback *>(context->user_data);
   SEXP eval_f = (callback == nullptr) ?
     R_NilValue : reinterpret_cast<SEXP>(callback->eval_f);
   if (callback == nullptr || eval_f == nullptr || eval_f == R_NilValue ||
       !Rf_isFunction(eval_f)) {
-    ++context->callback_failures;
-    return false;
+    return;
   }
 
   SEXP rho = reinterpret_cast<SEXP>(callback->environment);
@@ -296,19 +440,17 @@ bool native_eval_r(int nb_inputs,
   ++nprotect;
 
   int error = 0;
-  SEXP result = R_tryEval(call, rho, &error);
+  SEXP result = R_tryEvalSilent(call, rho, &error);
   if (error || result == R_NilValue) {
     UNPROTECT(nprotect);
-    ++context->callback_failures;
-    return false;
+    return;
   }
   result = PROTECT(result);
   ++nprotect;
 
   if (!Rf_isNumeric(result)) {
     UNPROTECT(nprotect);
-    ++context->callback_failures;
-    return false;
+    return;
   }
 
   SEXP rnum = result;
@@ -319,8 +461,7 @@ bool native_eval_r(int nb_inputs,
 
   if (Rf_length(rnum) < nb_outputs) {
     UNPROTECT(nprotect);
-    ++context->callback_failures;
-    return false;
+    return;
   }
 
   for (int i = 0; i < nb_outputs; ++i) {
@@ -328,6 +469,43 @@ bool native_eval_r(int nb_inputs,
   }
 
   UNPROTECT(nprotect);
+  state->ok = true;
+}
+
+bool native_eval_r(int nb_inputs,
+                   double *x,
+                   int nb_outputs,
+                   double *bb_outputs,
+                   NativeEvalContext *context) {
+  RCallbackEvalState state;
+  state.nb_inputs = nb_inputs;
+  state.x = x;
+  state.nb_outputs = nb_outputs;
+  state.bb_outputs = bb_outputs;
+  state.context = context;
+  state.ok = false;
+
+  if (!R_ToplevelExec(native_eval_r_toplevel, &state) || !state.ok) {
+    return false;
+  }
+  return true;
+}
+
+bool mark_callback_failure(int nb_outputs,
+                           double *bb_outputs,
+                           bool *count_eval,
+                           NativeEvalContext *context) {
+  if (context != nullptr) {
+    ++context->callback_failures;
+  }
+  if (bb_outputs != nullptr) {
+    for (int i = 0; i < nb_outputs; ++i) {
+      bb_outputs[i] = 1.0e6;
+    }
+  }
+  if (count_eval != nullptr) {
+    *count_eval = true;
+  }
   return true;
 }
 
@@ -352,19 +530,22 @@ bool native_eval_single(int nb_inputs,
     ok = native_eval_r(nb_inputs, x, nb_outputs, bb_outputs, context);
   } else {
     if (context->eval == nullptr) {
-      ++context->callback_failures;
-      return false;
+      return mark_callback_failure(nb_outputs, bb_outputs, count_eval, context);
     }
     ok = native_eval_c(nb_inputs, x, nb_outputs, bb_outputs, context);
   }
   if (!ok) {
-    return false;
+    return mark_callback_failure(nb_outputs, bb_outputs, count_eval, context);
   }
 
   for (int i = 0; i < nb_outputs; ++i) {
-    if (!std::isfinite(bb_outputs[i])) {
-      ++context->callback_failures;
-      return false;
+    if (std::isnan(bb_outputs[i])) {
+      return mark_callback_failure(nb_outputs, bb_outputs, count_eval, context);
+    }
+    if (!std::isfinite(bb_outputs[i]) &&
+        (context->bb_output_type == nullptr ||
+         context->bb_output_type[i] == CRS_NOMAD_OUTPUT_OBJ)) {
+      return mark_callback_failure(nb_outputs, bb_outputs, count_eval, context);
     }
   }
   if (count_eval != nullptr) {
@@ -511,16 +692,24 @@ int apply_native_options(const crs_nomad_problem *problem,
 
   for (int i = 0; i < problem->option_count; ++i) {
     const crs_nomad_option *option = problem->options + i;
-    if (std::strcmp(option->name, "MAX_EVAL") == 0) {
+    const std::string key = ascii_upper_copy(option->name);
+    if (key == "MAX_EVAL") {
       seen_max_eval = true;
     }
-    if (std::strcmp(option->name, "MAX_BB_EVAL") == 0) {
-      char *endptr = nullptr;
-      const long parsed = std::strtol(option->value, &endptr, 10);
-      if (endptr != option->value && *endptr == '\0' &&
-          parsed > 0 && parsed <= std::numeric_limits<int>::max()) {
+    if (key == "MAX_BB_EVAL") {
+      int parsed = 0;
+      if (parse_positive_int_like(option->value, &parsed)) {
         seen_max_bb_eval = true;
-        max_bb_eval_value = static_cast<int>(parsed);
+        max_bb_eval_value = parsed;
+      }
+    }
+    if (key == "NB_THREADS_PARALLEL_EVAL" &&
+        problem->callback_mode == CRS_NOMAD_CALLBACK_R) {
+      int parsed = 0;
+      if (parse_positive_int_like(option->value, &parsed) && parsed > 1) {
+        return fail(result,
+                    CRS_NOMAD_INVALID_INPUT,
+                    "NB_THREADS_PARALLEL_EVAL > 1 is not supported for native R callbacks");
       }
     }
     const std::string line = std::string(option->name) + " " + option->value;
@@ -539,18 +728,30 @@ int apply_native_options(const crs_nomad_problem *problem,
   return CRS_NOMAD_OK;
 }
 
-int apply_nomad_opt_file(NomadProblem pb, crs_nomad_result *result) {
+int apply_nomad_opt_file(const crs_nomad_problem *problem,
+                         NomadProblem pb,
+                         crs_nomad_result *result) {
   std::ifstream fin("nomad.opt");
   if (!fin.good()) {
     return CRS_NOMAD_OK;
   }
   std::string line;
   while (std::getline(fin, line)) {
-    std::size_t first = line.find_first_not_of(" \t\r\n");
-    if (first == std::string::npos || line[first] == '#') {
+    const std::string clean = strip_inline_comment(line);
+    if (clean.empty()) {
       continue;
     }
-    if (!addNomadParam(pb, line.c_str())) {
+    if (problem != nullptr && problem->callback_mode == CRS_NOMAD_CALLBACK_R &&
+        first_token_upper(clean) == "NB_THREADS_PARALLEL_EVAL") {
+      int parsed = 0;
+      const std::string value = second_token(clean);
+      if (parse_positive_int_like(value.c_str(), &parsed) && parsed > 1) {
+        return fail(result,
+                    CRS_NOMAD_INVALID_INPUT,
+                    "NB_THREADS_PARALLEL_EVAL > 1 is not supported for native R callbacks");
+      }
+    }
+    if (!addNomadParam(pb, clean.c_str())) {
       return fail(result, CRS_NOMAD_INVALID_INPUT, "failed to set NOMAD option from nomad.opt");
     }
   }
@@ -594,7 +795,7 @@ int apply_problem_parameters(const crs_nomad_problem *problem,
     suppress_native_nomad_display(pb);
   }
   if (problem->read_nomad_opt_file) {
-    const int file_status = apply_nomad_opt_file(pb, result);
+    const int file_status = apply_nomad_opt_file(problem, pb, result);
     if (file_status != CRS_NOMAD_OK) {
       return file_status;
     }
@@ -669,21 +870,28 @@ int solve_final_problem_with_starts(const crs_nomad_problem *problem,
                                     int start_count,
                                     crs_nomad_eval_fn eval,
                                     void *user_data,
-                                    crs_nomad_result *result) {
-  NomadProblem pb = createNomadProblem(native_eval_single, nullptr, problem->n, problem->m);
+                                    crs_nomad_result *result,
+                                    NativeSolveHandles *handles) {
+  NativeSolveHandles local_handles;
+  if (handles == nullptr) {
+    handles = &local_handles;
+  }
+  NomadHandleGuard handle_guard(handles);
+
+  handles->problem = createNomadProblem(native_eval_single, nullptr, problem->n, problem->m);
+  NomadProblem pb = handles->problem;
   if (pb == nullptr) {
     return fail(result, CRS_NOMAD_INTERNAL_ERROR, "unable to initialize NOMAD problem");
   }
 
   int status = apply_problem_parameters(problem, pb, result);
   if (status != CRS_NOMAD_OK) {
-    freeNomadProblem(pb);
     return status;
   }
 
-  NomadResult nomad_result = createNomadResult();
+  handles->result = createNomadResult();
+  NomadResult nomad_result = handles->result;
   if (nomad_result == nullptr) {
-    freeNomadProblem(pb);
     return fail(result, CRS_NOMAD_INTERNAL_ERROR, "unable to allocate NOMAD result");
   }
 
@@ -691,6 +899,7 @@ int solve_final_problem_with_starts(const crs_nomad_problem *problem,
   context.callback_mode = problem->callback_mode;
   context.eval = eval;
   context.user_data = user_data;
+  context.bb_output_type = problem->bb_output_type;
   context.callback_evaluations = 0;
   context.callback_failures = 0;
 
@@ -719,8 +928,6 @@ int solve_final_problem_with_starts(const crs_nomad_problem *problem,
     std::vector<double> best_out(static_cast<std::size_t>(problem->m), 0.0);
     if (!loadInputSolutionsNomadResult(best_x.data(), 1, nomad_result) ||
         !loadOutputSolutionsNomadResult(best_out.data(), 1, nomad_result)) {
-      freeNomadResult(nomad_result);
-      freeNomadProblem(pb);
       return fail(result, CRS_NOMAD_INTERNAL_ERROR, "failed to load NOMAD solution");
     }
     for (int i = 0; i < problem->n; ++i) {
@@ -740,16 +947,12 @@ int solve_final_problem_with_starts(const crs_nomad_problem *problem,
   }
 
   if (context.callback_failures > 0) {
-    freeNomadResult(nomad_result);
-    freeNomadProblem(pb);
     return fail(result, CRS_NOMAD_CALLBACK_FAILURE, "native callback reported evaluation failure");
   }
 
   if (nb_solutions > 0 && (run_flag == 1 || run_flag == 0 || run_flag == -6)) {
     result->status = CRS_NOMAD_OK;
     set_message(result, run_flag_message(run_flag));
-    freeNomadResult(nomad_result);
-    freeNomadProblem(pb);
     return CRS_NOMAD_OK;
   }
 
@@ -757,22 +960,168 @@ int solve_final_problem_with_starts(const crs_nomad_problem *problem,
     (run_flag == -3 || run_flag == -5 || run_flag == -8) ?
       CRS_NOMAD_CALLBACK_FAILURE : CRS_NOMAD_INTERNAL_ERROR;
   status = fail(result, failure_status, run_flag_message(run_flag));
-  freeNomadResult(nomad_result);
-  freeNomadProblem(pb);
   return status;
 }
 
 int solve_final_problem(const crs_nomad_problem *problem,
                         crs_nomad_eval_fn eval,
                         void *user_data,
-                        crs_nomad_result *result) {
+                        crs_nomad_result *result,
+                        NativeSolveHandles *handles) {
   int start_count = 1;
   const std::vector<double> starts = build_starting_points(problem, &start_count);
   crs_nomad_problem run_problem = *problem;
   if (problem->starts == nullptr && problem->start_count > 1) {
     run_problem.random_seed = 0;
   }
-  return solve_final_problem_with_starts(&run_problem, starts.data(), start_count, eval, user_data, result);
+  return solve_final_problem_with_starts(&run_problem, starts.data(), start_count, eval, user_data, result, handles);
+}
+
+void preserve_r_callback_objects(CrsNomadSolveState *state) {
+  if (state == nullptr || state->problem == nullptr ||
+      state->problem->callback_mode != CRS_NOMAD_CALLBACK_R ||
+      state->user_data == nullptr) {
+    return;
+  }
+  crs_nomad_r_callback *callback =
+    static_cast<crs_nomad_r_callback *>(state->user_data);
+  state->eval_f = reinterpret_cast<SEXP>(callback->eval_f);
+  state->environment = reinterpret_cast<SEXP>(callback->environment);
+  if (state->eval_f != nullptr && state->eval_f != R_NilValue) {
+    R_PreserveObject(state->eval_f);
+    state->preserved_eval = true;
+  }
+  if (state->environment != nullptr && state->environment != R_NilValue) {
+    R_PreserveObject(state->environment);
+    state->preserved_env = true;
+  }
+}
+
+void release_r_callback_objects(CrsNomadSolveState *state) {
+  if (state == nullptr) {
+    return;
+  }
+  if (state->preserved_env) {
+    R_ReleaseObject(state->environment);
+    state->preserved_env = false;
+  }
+  if (state->preserved_eval) {
+    R_ReleaseObject(state->eval_f);
+    state->preserved_eval = false;
+  }
+}
+
+SEXP crs_nomad_solve_unwind_body(void *data) {
+  CrsNomadSolveState *state = static_cast<CrsNomadSolveState *>(data);
+  state->status = CRS_NOMAD_INTERNAL_ERROR;
+  try {
+    state->status = validate_problem(state->problem, state->eval, state->result);
+    if (state->status == CRS_NOMAD_OK) {
+      state->status = solve_final_problem(state->problem,
+                                          state->eval,
+                                          state->user_data,
+                                          state->result,
+                                          &state->handles);
+    }
+  } catch (...) {
+    state->status = fail(state->result,
+                         CRS_NOMAD_INTERNAL_ERROR,
+                         "unexpected exception in native NOMAD solve");
+  }
+  return R_NilValue;
+}
+
+void crs_nomad_solve_unwind_cleanup(void *data, Rboolean jump) {
+  (void) jump;
+  CrsNomadSolveState *state = static_cast<CrsNomadSolveState *>(data);
+  release_nomad_handles(&state->handles);
+  release_r_callback_objects(state);
+  if (state->busy_acquired) {
+    native_solver_busy.clear(std::memory_order_release);
+    state->busy_acquired = false;
+  }
+}
+
+SEXP list_element(SEXP list, const char *name) {
+  if (list == R_NilValue || !Rf_isNewList(list)) {
+    return R_NilValue;
+  }
+  SEXP names = Rf_getAttrib(list, R_NamesSymbol);
+  if (names == R_NilValue) {
+    return R_NilValue;
+  }
+  const R_xlen_t n = XLENGTH(list);
+  for (R_xlen_t i = 0; i < n; ++i) {
+    if (std::strcmp(CHAR(STRING_ELT(names, i)), name) == 0) {
+      return VECTOR_ELT(list, i);
+    }
+  }
+  return R_NilValue;
+}
+
+int scalar_int_or(SEXP value, int fallback) {
+  if (value == R_NilValue || XLENGTH(value) < 1) {
+    return fallback;
+  }
+  return Rf_asInteger(value);
+}
+
+bool scalar_logical_or(SEXP value, bool fallback) {
+  if (value == R_NilValue || XLENGTH(value) < 1) {
+    return fallback;
+  }
+  const int v = Rf_asLogical(value);
+  return v == NA_LOGICAL ? fallback : (v != 0);
+}
+
+std::string scalar_string_or(SEXP value, const char *fallback) {
+  if (value == R_NilValue || XLENGTH(value) < 1) {
+    return std::string(fallback);
+  }
+  SEXP chr = Rf_asChar(value);
+  if (chr == NA_STRING) {
+    return std::string(fallback);
+  }
+  return std::string(CHAR(chr));
+}
+
+struct NativeTestEvalData {
+  std::string scenario;
+  double target;
+  int evaluations;
+};
+
+int native_test_eval(int n,
+                     const double *x,
+                     int m,
+                     double *bb_outputs,
+                     void *user_data) {
+  NativeTestEvalData *data = static_cast<NativeTestEvalData *>(user_data);
+  if (data == nullptr || x == nullptr || bb_outputs == nullptr || n <= 0 || m <= 0) {
+    return 1;
+  }
+  ++data->evaluations;
+  double objective = 0.0;
+  for (int i = 0; i < n; ++i) {
+    const double diff = x[i] - data->target;
+    objective += diff * diff;
+  }
+  for (int i = 0; i < m; ++i) {
+    bb_outputs[i] = 0.0;
+  }
+  bb_outputs[0] = objective;
+  if (data->scenario == "nan_obj") {
+    bb_outputs[0] = std::numeric_limits<double>::quiet_NaN();
+  } else if (data->scenario == "inf_obj") {
+    bb_outputs[0] = std::numeric_limits<double>::infinity();
+  } else if (data->scenario == "inf_constraint" && m > 1) {
+    bb_outputs[1] = std::numeric_limits<double>::infinity();
+  } else if (data->scenario == "negative_inf_constraint" && m > 1) {
+    bb_outputs[1] = -std::numeric_limits<double>::infinity();
+  } else if (data->scenario == "shifted") {
+    bb_outputs[0] = objective + 10.0;
+  }
+  return 0;
 }
 
 } // namespace
@@ -795,20 +1144,206 @@ extern "C" int crs_nomad_solve(
 
   initialize_result(result);
 
+  CrsNomadSolveState state(problem, eval, user_data, result);
+  preserve_r_callback_objects(&state);
+
   if (native_solver_busy.test_and_set(std::memory_order_acquire)) {
+    release_r_callback_objects(&state);
     return fail(result, CRS_NOMAD_INVALID_INPUT, "native NOMAD solver is already active");
   }
+  state.busy_acquired = true;
 
-  int status = CRS_NOMAD_INTERNAL_ERROR;
-  try {
-    status = validate_problem(problem, eval, result);
-    if (status == CRS_NOMAD_OK) {
-      status = solve_final_problem(problem, eval, user_data, result);
-    }
-  } catch (...) {
-    status = fail(result, CRS_NOMAD_INTERNAL_ERROR, "unexpected exception in native NOMAD solve");
+  SEXP unwind_token = PROTECT(R_MakeUnwindCont());
+  R_UnwindProtect(crs_nomad_solve_unwind_body,
+                  &state,
+                  crs_nomad_solve_unwind_cleanup,
+                  &state,
+                  unwind_token);
+  SETCAR(unwind_token, R_NilValue);
+  UNPROTECT(1);
+  return state.status;
+}
+
+extern "C" SEXP crs_nomad_native_test_solve(SEXP spec) {
+  if (!Rf_isNewList(spec)) {
+    Rf_error("crs_nomad_native_test_solve requires a list spec");
   }
 
-  native_solver_busy.clear(std::memory_order_release);
-  return status;
+  const std::string mode = scalar_string_or(list_element(spec, "mode"), "c");
+  const std::string scenario = scalar_string_or(list_element(spec, "scenario"), "quadratic");
+
+  SEXP x0_s = PROTECT(Rf_coerceVector(list_element(spec, "x0"), REALSXP));
+  SEXP lower_s = PROTECT(Rf_coerceVector(list_element(spec, "lower"), REALSXP));
+  SEXP upper_s = PROTECT(Rf_coerceVector(list_element(spec, "upper"), REALSXP));
+  SEXP input_type_s = PROTECT(Rf_coerceVector(list_element(spec, "input_type"), INTSXP));
+  SEXP output_type_s = PROTECT(Rf_coerceVector(list_element(spec, "output_type"), INTSXP));
+  int nprotect = 5;
+
+  const R_xlen_t n_x = XLENGTH(x0_s);
+  const R_xlen_t m_x = XLENGTH(output_type_s);
+  if (n_x <= 0 || m_x <= 0 ||
+      XLENGTH(lower_s) != n_x ||
+      XLENGTH(upper_s) != n_x ||
+      XLENGTH(input_type_s) != n_x ||
+      n_x > std::numeric_limits<int>::max() ||
+      m_x > std::numeric_limits<int>::max()) {
+    UNPROTECT(nprotect);
+    Rf_error("crs_nomad_native_test_solve received inconsistent dimensions");
+  }
+  const int n = static_cast<int>(n_x);
+  const int m = static_cast<int>(m_x);
+
+  std::vector<std::string> option_names;
+  std::vector<std::string> option_values;
+  std::vector<crs_nomad_option> options;
+  SEXP options_s = list_element(spec, "options");
+  if (options_s != R_NilValue) {
+    if (TYPEOF(options_s) != STRSXP) {
+      UNPROTECT(nprotect);
+      Rf_error("crs_nomad_native_test_solve options must be a named character vector");
+    }
+    const R_xlen_t n_options = XLENGTH(options_s);
+    if (n_options == 0) {
+      options_s = R_NilValue;
+    }
+  }
+  if (options_s != R_NilValue) {
+    SEXP names_s = Rf_getAttrib(options_s, R_NamesSymbol);
+    if (names_s == R_NilValue || XLENGTH(names_s) != XLENGTH(options_s)) {
+      UNPROTECT(nprotect);
+      Rf_error("crs_nomad_native_test_solve options must be named");
+    }
+    const R_xlen_t n_options = XLENGTH(options_s);
+    option_names.reserve(static_cast<std::size_t>(n_options));
+    option_values.reserve(static_cast<std::size_t>(n_options));
+    options.reserve(static_cast<std::size_t>(n_options));
+    for (R_xlen_t i = 0; i < n_options; ++i) {
+      option_names.push_back(CHAR(STRING_ELT(names_s, i)));
+      option_values.push_back(CHAR(STRING_ELT(options_s, i)));
+    }
+    for (std::size_t i = 0; i < option_names.size(); ++i) {
+      crs_nomad_option option;
+      option.name = option_names[i].c_str();
+      option.value = option_values[i].c_str();
+      options.push_back(option);
+    }
+  }
+
+  std::vector<double> solution(static_cast<std::size_t>(n), R_NaN);
+  std::vector<double> outputs(static_cast<std::size_t>(m), R_NaN);
+
+  crs_nomad_problem problem;
+  std::memset(&problem, 0, sizeof(problem));
+  problem.api_version = CRS_NOMAD_API_VERSION;
+  problem.struct_size = sizeof(problem);
+  problem.callback_mode = (mode == "r") ? CRS_NOMAD_CALLBACK_R : CRS_NOMAD_CALLBACK_C;
+  problem.n = n;
+  problem.m = m;
+  problem.x0 = REAL(x0_s);
+  problem.bb_input_type = INTEGER(input_type_s);
+  problem.bb_output_type = INTEGER(output_type_s);
+  problem.lower = REAL(lower_s);
+  problem.upper = REAL(upper_s);
+  problem.max_eval = scalar_int_or(list_element(spec, "max_eval"), 20);
+  problem.random_seed = static_cast<unsigned int>(
+    std::max(0, scalar_int_or(list_element(spec, "random_seed"), 42))
+  );
+  problem.quiet = scalar_logical_or(list_element(spec, "quiet"), true) ? 1 : 0;
+  problem.option_count = static_cast<int>(options.size());
+  problem.options = options.empty() ? nullptr : options.data();
+  problem.start_count = scalar_int_or(list_element(spec, "start_count"), 0);
+  problem.starts = nullptr;
+  problem.read_nomad_opt_file = scalar_logical_or(list_element(spec, "read_nomad_opt_file"), false) ? 1 : 0;
+
+  crs_nomad_result result;
+  std::memset(&result, 0, sizeof(result));
+  result.api_version = CRS_NOMAD_API_VERSION;
+  result.struct_size = sizeof(result);
+  result.solution = solution.data();
+  result.solution_len = n;
+  result.outputs = outputs.data();
+  result.outputs_len = m;
+
+  NativeTestEvalData test_data;
+  test_data.scenario = scenario;
+  SEXP target_s = list_element(spec, "target");
+  test_data.target = (target_s == R_NilValue || XLENGTH(target_s) < 1) ?
+    0.25 : Rf_asReal(target_s);
+  if (!std::isfinite(test_data.target)) {
+    test_data.target = 0.25;
+  }
+  test_data.evaluations = 0;
+
+  crs_nomad_r_callback r_callback;
+  std::memset(&r_callback, 0, sizeof(r_callback));
+  crs_nomad_eval_fn eval = native_test_eval;
+  void *user_data = &test_data;
+
+  if (mode == "r") {
+    SEXP eval_f = list_element(spec, "eval_f");
+    if (!Rf_isFunction(eval_f)) {
+      UNPROTECT(nprotect);
+      Rf_error("crs_nomad_native_test_solve R mode requires eval_f");
+    }
+    SEXP eval_env = list_element(spec, "eval_env");
+    if (eval_env == R_NilValue || TYPEOF(eval_env) != ENVSXP) {
+      eval_env = R_GlobalEnv;
+    }
+    r_callback.eval_f = reinterpret_cast<void *>(eval_f);
+    r_callback.environment = reinterpret_cast<void *>(eval_env);
+    eval = nullptr;
+    user_data = &r_callback;
+  }
+
+  const int status = crs_nomad_solve(&problem, eval, user_data, &result);
+
+  SEXP out = PROTECT(Rf_allocVector(VECSXP, 14)); ++nprotect;
+  SEXP names = PROTECT(Rf_allocVector(STRSXP, 14)); ++nprotect;
+  SEXP sol = PROTECT(Rf_allocVector(REALSXP, n)); ++nprotect;
+  SEXP bbout = PROTECT(Rf_allocVector(REALSXP, m)); ++nprotect;
+  for (int i = 0; i < n; ++i) {
+    REAL(sol)[i] = solution[static_cast<std::size_t>(i)];
+  }
+  for (int i = 0; i < m; ++i) {
+    REAL(bbout)[i] = outputs[static_cast<std::size_t>(i)];
+  }
+
+  SET_VECTOR_ELT(out, 0, Rf_ScalarInteger(status));
+  SET_VECTOR_ELT(out, 1, Rf_ScalarInteger(result.status));
+  SET_VECTOR_ELT(out, 2, Rf_mkString(result.message));
+  SET_VECTOR_ELT(out, 3, Rf_ScalarInteger(result.nomad_run_flag));
+  SET_VECTOR_ELT(out, 4, Rf_ScalarReal(result.objective));
+  SET_VECTOR_ELT(out, 5, sol);
+  SET_VECTOR_ELT(out, 6, bbout);
+  SET_VECTOR_ELT(out, 7, Rf_ScalarInteger(result.blackbox_evaluations));
+  SET_VECTOR_ELT(out, 8, Rf_ScalarInteger(result.callback_evaluations));
+  SET_VECTOR_ELT(out, 9, Rf_ScalarInteger(result.cache_hits));
+  SET_VECTOR_ELT(out, 10, Rf_ScalarInteger(result.cache_size));
+  SET_VECTOR_ELT(out, 11, Rf_ScalarInteger(result.total_evaluations));
+  SET_VECTOR_ELT(out, 12, Rf_ScalarInteger(result.solution_count));
+  SET_VECTOR_ELT(out, 13, Rf_ScalarInteger(test_data.evaluations));
+
+  const char *out_names[] = {
+    "status",
+    "result_status",
+    "message",
+    "nomad_run_flag",
+    "objective",
+    "solution",
+    "outputs",
+    "blackbox_evaluations",
+    "callback_evaluations",
+    "cache_hits",
+    "cache_size",
+    "total_evaluations",
+    "solution_count",
+    "test_evaluations"
+  };
+  for (int i = 0; i < 14; ++i) {
+    SET_STRING_ELT(names, i, Rf_mkChar(out_names[i]));
+  }
+  Rf_setAttrib(out, R_NamesSymbol, names);
+
+  UNPROTECT(nprotect);
+  return out;
 }

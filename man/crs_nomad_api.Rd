@@ -31,7 +31,26 @@
   R callback bridge users must ensure the R function and environment stored in
   \code{crs_nomad_r_callback} remain protected for the duration of
   \code{crs_nomad_solve}.  R errors are trapped and reported as callback
-  failures.
+  failures.  R callbacks are main-thread callbacks; explicit
+  \code{NB_THREADS_PARALLEL_EVAL > 1} is rejected for R callbacks, including
+  when supplied through \file{nomad.opt}.  Use the default or set it explicitly
+  to \code{1}.
+}
+\section{Numeric And Option Semantics}{
+  \code{random_seed > 0} sets NOMAD's \code{SEED}.  When \pkg{crs} generates
+  multi-start points, the same seed also controls that start generation;
+  \code{random_seed = 0} uses time-varying generated starts, matching the
+  historical \code{snomadr()} posture.
+
+  Bounds may use \code{-Inf} and \code{Inf} for unbounded coordinates.
+  \code{NaN} is invalid in starting points and bounds.  The embedded NOMAD4 C
+  interface represents categorical inputs through its integer input type, so
+  callers remain responsible for category encoding and decoding.
+
+  \code{NaN} black-box outputs are callback failures for all output types.
+  Infinite objective outputs are callback failures.  Infinite \code{PB} or
+  \code{EB} constraint outputs are passed through to NOMAD as infeasibility
+  signals.
 }
 \section{Ownership}{
   The problem structure and all pointer fields are borrowed and read-only.

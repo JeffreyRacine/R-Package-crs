@@ -142,6 +142,17 @@ typedef int (*crs_nomad_solve_fn)(
  *   take precedence. If max_eval is 0, crs does not set MAX_BB_EVAL or
  *   MAX_EVAL unless provided in options. A MAX_BB_EVAL option without
  *   MAX_EVAL follows snomadr() compatibility by also setting MAX_EVAL.
+ * - random_seed > 0 sets NOMAD's SEED. For generated multi-start points,
+ *   random_seed also controls crs-side start generation; random_seed = 0 uses
+ *   time-varying generated starts, matching the historical snomadr() posture.
+ * - lower/upper may contain -Inf/Inf to express unbounded coordinates. NaN is
+ *   invalid in x0, bounds, and generated/explicit starts.
+ * - CRS_NOMAD_INPUT_CATEGORICAL is currently represented through NOMAD's
+ *   integer input type in the embedded NOMAD4 C interface; callers remain
+ *   responsible for category-to-numeric encoding and decoding.
+ * - Black-box outputs of NaN are callback failures for all output types.
+ *   Infinite OBJ values are callback failures. Infinite PB/EB constraint
+ *   values are passed through to NOMAD as infeasibility signals.
  *
  * Callback contract for CRS_NOMAD_CALLBACK_C:
  * - return 0 on successful evaluation, nonzero on evaluation failure.
@@ -157,6 +168,9 @@ typedef int (*crs_nomad_solve_fn)(
  * - eval_f must be an R function accepting a numeric vector and returning a
  *   numeric vector of length at least m.
  * - R errors are trapped and returned as callback failures.
+ * - R callbacks run on R's main thread. Explicit
+ *   NB_THREADS_PARALLEL_EVAL > 1 is rejected for R callbacks, including when
+ *   supplied through nomad.opt. Use the default or set it explicitly to 1.
  */
 int crs_nomad_solve(
   const crs_nomad_problem *problem,
