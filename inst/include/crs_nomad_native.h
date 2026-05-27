@@ -64,6 +64,10 @@ typedef struct {
   const crs_nomad_native_option_v1 *options;
   /*
    * Optional row-major start matrix with start_count rows and n columns.
+   * If starts is NULL and start_count > 1, crs generates snomadr-compatible
+   * random starts from x0, bounds, input types, and random_seed. In that
+   * generated-start mode, random_seed applies to start generation; pass an
+   * explicit SEED option if NOMAD's internal search seed must also be set.
    * If start_count <= 1 and starts is NULL, x0 is used exactly as in v1.
    */
   int start_count;
@@ -134,8 +138,9 @@ int crs_nomad_native_solve_v1(
 );
 
 /*
- * Native v2 extends v1 by accepting an explicit row-major start matrix for
- * reproducing snomadr(nmulti=...) inner multistart without changing v1.
+ * Native v2 extends v1 by accepting either an explicit row-major start matrix
+ * or snomadr-compatible generated starts for inner multistart without
+ * changing v1.
  * Result output is unchanged and uses the v1/v2-compatible result layout.
  */
 int crs_nomad_native_solve_v2(

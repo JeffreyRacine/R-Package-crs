@@ -7,7 +7,9 @@
 #include <cmath>
 #include <cstdlib>
 #include <cstring>
+#include <ctime>
 #include <limits>
+#include <random>
 #include <sstream>
 #include <string>
 #include <vector>
@@ -172,6 +174,33 @@ double coerce_x0_value(double x, int input_type, double lower, double upper) {
   return x;
 }
 
+double finite_or_default(double value, double fallback) {
+  return std::isfinite(value) ? value : fallback;
+}
+
+void fill_random_start(std::vector<double> &starts,
+                       int point_index,
+                       const crs_nomad_native_problem_v2 *problem,
+                       std::mt19937_64 &rng) {
+  const int n = problem->n;
+  for (int i = 0; i < n; ++i) {
+    double lo = finite_or_default(problem->lower[i], -1.0);
+    double hi = finite_or_default(problem->upper[i], 1.0);
+    if (hi < lo) {
+      std::swap(lo, hi);
+    }
+    std::uniform_real_distribution<double> unif(lo, hi);
+    const double raw = unif(rng);
+    starts[static_cast<std::size_t>(point_index) * static_cast<std::size_t>(n) +
+           static_cast<std::size_t>(i)] = coerce_x0_value(
+      raw,
+      problem->bb_input_type[i],
+      problem->lower[i],
+      problem->upper[i]
+    );
+  }
+}
+
 int validate_problem(const crs_nomad_native_problem_v1 *problem,
                      crs_nomad_native_eval_fn eval,
                      crs_nomad_native_result_v1 *result) {
@@ -274,19 +303,18 @@ int validate_problem(const crs_nomad_native_problem_v2 *problem,
   if (problem->start_count < 0) {
     return fail(result, CRS_NOMAD_INVALID_INPUT, "problem start_count must be nonnegative");
   }
-  if (problem->start_count > 0 && problem->starts == nullptr) {
-    return fail(result, CRS_NOMAD_INVALID_INPUT, "problem starts pointer is null");
-  }
   if (problem->start_count > 0) {
     const std::size_t nstart = static_cast<std::size_t>(problem->start_count);
     const std::size_t n = static_cast<std::size_t>(problem->n);
     if (nstart > std::numeric_limits<std::size_t>::max() / n) {
       return fail(result, CRS_NOMAD_INVALID_INPUT, "problem start matrix is too large");
     }
-    for (std::size_t j = 0; j < nstart; ++j) {
-      for (std::size_t i = 0; i < n; ++i) {
-        if (is_bad_number(problem->starts[j * n + i])) {
-          return fail(result, CRS_NOMAD_INVALID_INPUT, "problem starts contains NaN");
+    if (problem->starts != nullptr) {
+      for (std::size_t j = 0; j < nstart; ++j) {
+        for (std::size_t i = 0; i < n; ++i) {
+          if (is_bad_number(problem->starts[j * n + i])) {
+            return fail(result, CRS_NOMAD_INVALID_INPUT, "problem starts contains NaN");
+          }
         }
       }
     }
@@ -405,8 +433,10 @@ int apply_problem_parameters(const crs_nomad_native_problem_v1 *problem,
       return fail(result, CRS_NOMAD_INVALID_INPUT, "failed to set NOMAD MAX_EVAL");
     }
   }
-  if (!addNomadValParam(pb, "SEED", static_cast<int>(problem->random_seed))) {
-    return fail(result, CRS_NOMAD_INVALID_INPUT, "failed to set NOMAD SEED");
+  if (problem->random_seed > 0) {
+    if (!addNomadValParam(pb, "SEED", static_cast<int>(problem->random_seed))) {
+      return fail(result, CRS_NOMAD_INVALID_INPUT, "failed to set NOMAD SEED");
+    }
   }
   if (problem->quiet) {
     suppress_native_nomad_display(pb);
@@ -429,7 +459,7 @@ std::vector<double> build_starting_point(const crs_nomad_native_problem_v1 *prob
 
 std::vector<double> build_starting_points(const crs_nomad_native_problem_v2 *problem,
                                           int *start_count) {
-  if (problem->start_count <= 0 || problem->starts == nullptr) {
+  if (problem->start_count <= 0) {
     if (start_count != nullptr) {
       *start_count = 1;
     }
@@ -443,6 +473,27 @@ std::vector<double> build_starting_points(const crs_nomad_native_problem_v2 *pro
   const std::size_t nstart = static_cast<std::size_t>(std::max(1, problem->start_count));
   const std::size_t n = static_cast<std::size_t>(problem->n);
   std::vector<double> starts(nstart * n, 0.0);
+
+  if (problem->starts == nullptr) {
+    std::mt19937_64 rng(
+      problem->random_seed == 0 ?
+        static_cast<unsigned int>(std::time(nullptr)) :
+        problem->random_seed
+    );
+    for (int j = 0; j < std::max(1, problem->start_count); ++j) {
+      fill_random_start(starts, j, problem, rng);
+    }
+    for (std::size_t i = 0; i < n; ++i) {
+      starts[i] = coerce_x0_value(
+        problem->x0[i],
+        problem->bb_input_type[i],
+        problem->lower[i],
+        problem->upper[i]
+      );
+    }
+    return starts;
+  }
+
   for (std::size_t j = 0; j < nstart; ++j) {
     for (std::size_t i = 0; i < n; ++i) {
       starts[j * n + i] = coerce_x0_value(
@@ -557,7 +608,10 @@ int solve_native_problem(const crs_nomad_native_problem_v2 *problem,
                          crs_nomad_native_result_v2 *result) {
   int start_count = 1;
   const std::vector<double> starts = build_starting_points(problem, &start_count);
-  const crs_nomad_native_problem_v1 view = problem_v1_view(problem);
+  crs_nomad_native_problem_v1 view = problem_v1_view(problem);
+  if (problem->starts == nullptr && problem->start_count > 1) {
+    view.random_seed = 0;
+  }
   return solve_native_problem_with_starts(&view, starts.data(), start_count, eval, user_data, result);
 }
 
