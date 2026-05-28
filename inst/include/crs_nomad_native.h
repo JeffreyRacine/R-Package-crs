@@ -151,8 +151,9 @@ typedef int (*crs_nomad_solve_fn)(
  *   integer input type in the embedded NOMAD4 C interface; callers remain
  *   responsible for category-to-numeric encoding and decoding.
  * - Black-box outputs of NaN are callback failures for all output types.
- *   Infinite OBJ values are callback failures. Infinite PB/EB constraint
- *   values are passed through to NOMAD as infeasibility signals.
+ *   Infinite OBJ values are coerced to +/-DBL_MAX, matching snomadr()
+ *   compatibility. Infinite PB/EB constraint values are passed through to
+ *   NOMAD as infeasibility signals.
  *
  * Callback contract for CRS_NOMAD_CALLBACK_C:
  * - return 0 on successful evaluation, nonzero on evaluation failure.

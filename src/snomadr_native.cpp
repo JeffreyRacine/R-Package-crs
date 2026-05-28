@@ -597,7 +597,8 @@ bool native_eval_single(int nb_inputs,
     if (!std::isfinite(bb_outputs[i]) &&
         (context->bb_output_type == nullptr ||
          context->bb_output_type[i] == CRS_NOMAD_OUTPUT_OBJ)) {
-      return mark_callback_failure(nb_outputs, bb_outputs, count_eval, context);
+      bb_outputs[i] = std::copysign(std::numeric_limits<double>::max(),
+                                    bb_outputs[i]);
     }
   }
   if (count_eval != nullptr) {
@@ -1172,6 +1173,8 @@ int native_test_eval(int n,
     bb_outputs[0] = std::numeric_limits<double>::quiet_NaN();
   } else if (data->scenario == "inf_obj") {
     bb_outputs[0] = std::numeric_limits<double>::infinity();
+  } else if (data->scenario == "negative_inf_obj") {
+    bb_outputs[0] = -std::numeric_limits<double>::infinity();
   } else if (data->scenario == "inf_constraint" && m > 1) {
     bb_outputs[1] = std::numeric_limits<double>::infinity();
   } else if (data->scenario == "negative_inf_constraint" && m > 1) {

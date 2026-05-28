@@ -205,7 +205,7 @@ test_that("nomad.opt input is trimmed and screened for R callback threading", {
   expect_match(rejected$message, "NB_THREADS_PARALLEL_EVAL > 1")
 })
 
-test_that("callback output validation distinguishes NaN, OBJ Inf, and constraint Inf", {
+test_that("callback output validation matches snomadr Inf/NaN contracts", {
   nan_obj <- native_nomad_solve(native_nomad_spec(
     scenario = "nan_obj",
     output_type = 0L,
@@ -221,8 +221,34 @@ test_that("callback output validation distinguishes NaN, OBJ Inf, and constraint
     max_eval = 1L,
     options = c(MAX_BB_EVAL = "1")
   ))
-  expect_equal(inf_obj$status, 2L)
-  expect_match(inf_obj$message, "callback", ignore.case = TRUE)
+  expect_equal(inf_obj$status, 0L)
+  expect_true(is.finite(inf_obj$objective))
+  expect_equal(inf_obj$objective, .Machine$double.xmax)
+
+  negative_inf_obj <- native_nomad_solve(native_nomad_spec(
+    scenario = "negative_inf_obj",
+    output_type = 0L,
+    max_eval = 1L,
+    options = c(MAX_BB_EVAL = "1")
+  ))
+  expect_equal(negative_inf_obj$status, 0L)
+  expect_true(is.finite(negative_inf_obj$objective))
+  expect_equal(negative_inf_obj$objective, -.Machine$double.xmax)
+
+  r_inf_obj <- native_nomad_solve(native_nomad_spec(
+    mode = "r",
+    eval_f = function(x) Inf,
+    x0 = 0,
+    lower = -1,
+    upper = 1,
+    input_type = 0L,
+    output_type = 0L,
+    max_eval = 1L,
+    options = c(MAX_BB_EVAL = "1")
+  ))
+  expect_equal(r_inf_obj$status, 0L)
+  expect_true(is.finite(r_inf_obj$objective))
+  expect_equal(r_inf_obj$objective, .Machine$double.xmax)
 
   inf_pb <- native_nomad_solve(native_nomad_spec(
     scenario = "inf_constraint",
