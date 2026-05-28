@@ -51,6 +51,13 @@
   Infinite objective outputs are callback failures.  Infinite \code{PB} or
   \code{EB} constraint outputs are passed through to NOMAD as infeasibility
   signals.
+
+  The native API currently requires NOMAD's evaluation cache
+  (\code{EVAL_USE_CACHE = TRUE}, the NOMAD default), because result recovery is
+  based on NOMAD's cache-backed incumbent state.  Supplying
+  \code{EVAL_USE_CACHE = FALSE} to \code{crs_nomad_solve} is rejected early
+  with a clear error.  The public R-level \code{snomadr()} interface retains
+  its separate cache option behavior.
 }
 \section{Ownership}{
   The problem structure and all pointer fields are borrowed and read-only.

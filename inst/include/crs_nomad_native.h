@@ -142,6 +142,8 @@ typedef int (*crs_nomad_solve_fn)(
  *   take precedence. If max_eval is 0, crs does not set MAX_BB_EVAL or
  *   MAX_EVAL unless provided in options. A MAX_BB_EVAL option without
  *   MAX_EVAL follows snomadr() compatibility by also setting MAX_EVAL.
+ *   EVAL_USE_CACHE = FALSE is currently rejected by crs_nomad_solve because
+ *   native result recovery depends on NOMAD's cache-backed incumbent state.
  * - random_seed > 0 sets NOMAD's SEED. For generated multi-start points,
  *   random_seed also controls crs-side start generation; random_seed = 0 uses
  *   time-varying generated starts, matching the historical snomadr() posture.

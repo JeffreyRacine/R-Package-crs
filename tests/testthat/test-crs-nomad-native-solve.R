@@ -100,6 +100,96 @@ test_that("crs_nomad_solve succeeds through the direct R callback bridge", {
   expect_true(res$callback_evaluations >= 1L)
 })
 
+test_that("crs_nomad_solve has an explicit native EVAL_USE_CACHE contract", {
+  cache_off_message <- "requires EVAL_USE_CACHE = TRUE"
+  eval_f <- function(x) sum((x - 0.25)^2)
+
+  c_on <- native_nomad_solve(native_nomad_spec(
+    x0 = c(0, 0),
+    lower = c(-1, -1),
+    upper = c(1, 1),
+    input_type = c(0L, 0L),
+    output_type = 0L,
+    options = c(MAX_BB_EVAL = "15", EVAL_USE_CACHE = "true")
+  ))
+  expect_equal(c_on$status, 0L)
+  expect_equal(c_on$result_status, 0L)
+  expect_true(c_on$callback_evaluations >= 1L)
+
+  c_on_upper <- native_nomad_solve(native_nomad_spec(
+    x0 = c(0, 0),
+    lower = c(-1, -1),
+    upper = c(1, 1),
+    input_type = c(0L, 0L),
+    output_type = 0L,
+    options = c(MAX_BB_EVAL = "15", EVAL_USE_CACHE = "TRUE")
+  ))
+  expect_equal(c_on_upper$status, 0L)
+  expect_equal(c_on_upper$result_status, 0L)
+
+  c_off <- native_nomad_solve(native_nomad_spec(
+    x0 = c(0, 0),
+    lower = c(-1, -1),
+    upper = c(1, 1),
+    input_type = c(0L, 0L),
+    output_type = 0L,
+    options = c(MAX_BB_EVAL = "15", EVAL_USE_CACHE = "false")
+  ))
+  expect_equal(c_off$status, 1L)
+  expect_equal(c_off$result_status, 1L)
+  expect_match(c_off$message, cache_off_message)
+  expect_equal(c_off$callback_evaluations, 0L)
+
+  r_on <- native_nomad_solve(native_nomad_spec(
+    mode = "r",
+    eval_f = eval_f,
+    x0 = c(0, 0),
+    lower = c(-1, -1),
+    upper = c(1, 1),
+    input_type = c(0L, 0L),
+    output_type = 0L,
+    options = c(MAX_BB_EVAL = "15", NB_THREADS_PARALLEL_EVAL = "1",
+                EVAL_USE_CACHE = "true")
+  ))
+  expect_equal(r_on$status, 0L)
+  expect_equal(r_on$result_status, 0L)
+  expect_true(r_on$callback_evaluations >= 1L)
+
+  r_off <- native_nomad_solve(native_nomad_spec(
+    mode = "r",
+    eval_f = eval_f,
+    x0 = c(0, 0),
+    lower = c(-1, -1),
+    upper = c(1, 1),
+    input_type = c(0L, 0L),
+    output_type = 0L,
+    options = c(MAX_BB_EVAL = "15", NB_THREADS_PARALLEL_EVAL = "1",
+                EVAL_USE_CACHE = "FALSE")
+  ))
+  expect_equal(r_off$status, 1L)
+  expect_equal(r_off$result_status, 1L)
+  expect_match(r_off$message, cache_off_message)
+  expect_equal(r_off$callback_evaluations, 0L)
+
+  oldwd <- setwd(tempdir())
+  on.exit(setwd(oldwd), add = TRUE)
+  writeLines("EVAL_USE_CACHE false", "nomad.opt")
+  file_off <- native_nomad_solve(native_nomad_spec(
+    x0 = c(0, 0),
+    lower = c(-1, -1),
+    upper = c(1, 1),
+    input_type = c(0L, 0L),
+    output_type = 0L,
+    options = c(MAX_BB_EVAL = "15"),
+    read_nomad_opt_file = TRUE
+  ))
+  unlink("nomad.opt")
+  expect_equal(file_off$status, 1L)
+  expect_equal(file_off$result_status, 1L)
+  expect_match(file_off$message, cache_off_message)
+  expect_equal(file_off$callback_evaluations, 0L)
+})
+
 test_that("R callback errors do not poison the next native solve", {
   bad_eval <- function(x) stop("intentional native R callback failure")
   good_eval <- function(x) sum((x - 0.25)^2)

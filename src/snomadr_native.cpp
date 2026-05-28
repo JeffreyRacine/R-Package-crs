@@ -334,6 +334,28 @@ bool parse_positive_int_like(const char *value, int *out) {
   return true;
 }
 
+bool parse_bool_like(const char *value, bool *out) {
+  if (value == nullptr) {
+    return false;
+  }
+  const std::string clean = ascii_upper_copy(value);
+  if (clean == "TRUE" || clean == "T" || clean == "YES" ||
+      clean == "Y" || clean == "1") {
+    if (out != nullptr) {
+      *out = true;
+    }
+    return true;
+  }
+  if (clean == "FALSE" || clean == "F" || clean == "NO" ||
+      clean == "N" || clean == "0") {
+    if (out != nullptr) {
+      *out = false;
+    }
+    return true;
+  }
+  return false;
+}
+
 std::string first_token_upper(const std::string &line) {
   const std::string clean = trim_copy(line);
   const std::size_t split = clean.find_first_of(" \t\r\n");
@@ -756,6 +778,14 @@ int apply_native_options(const crs_nomad_problem *problem,
         max_bb_eval_value = parsed;
       }
     }
+    if (key == "EVAL_USE_CACHE") {
+      bool parsed = true;
+      if (parse_bool_like(option->value, &parsed) && !parsed) {
+        return fail(result,
+                    CRS_NOMAD_INVALID_INPUT,
+                    "crs_nomad_solve currently requires EVAL_USE_CACHE = TRUE; cache-off native solves are not supported");
+      }
+    }
     if (key == "NB_THREADS_PARALLEL_EVAL" &&
         problem->callback_mode == CRS_NOMAD_CALLBACK_R) {
       int parsed = 0;
@@ -802,6 +832,15 @@ int apply_nomad_opt_file(const crs_nomad_problem *problem,
         return fail(result,
                     CRS_NOMAD_INVALID_INPUT,
                     "NB_THREADS_PARALLEL_EVAL > 1 is not supported for native R callbacks");
+      }
+    }
+    if (problem != nullptr && first_token_upper(clean) == "EVAL_USE_CACHE") {
+      bool parsed = true;
+      const std::string value = second_token(clean);
+      if (parse_bool_like(value.c_str(), &parsed) && !parsed) {
+        return fail(result,
+                    CRS_NOMAD_INVALID_INPUT,
+                    "crs_nomad_solve currently requires EVAL_USE_CACHE = TRUE; cache-off native solves are not supported");
       }
     }
     if (!addNomadParam(pb, clean.c_str())) {
