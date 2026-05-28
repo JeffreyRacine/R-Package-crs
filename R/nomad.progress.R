@@ -101,6 +101,9 @@
     return(matrix(as.numeric(x0), nrow = 1L, ncol = n, byrow = TRUE))
   }
 
+  seed.state <- .crs_capture_seed()
+  on.exit(.crs_restore_seed(seed.state), add = TRUE)
+
   probe.opts <- opts
   probe.opts$DISPLAY_DEGREE <- 0L
   probe.opts$MAX_BB_EVAL <- 1L
@@ -142,6 +145,9 @@
     return(starts)
   }
 
+  if (!is.null(random.seed) && length(random.seed)) {
+    set.seed(as.integer(random.seed[1L]))
+  }
   .crs_nomad_build_start_matrix_fallback(
     x0 = x0,
     nstart = nstart,

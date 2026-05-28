@@ -271,3 +271,45 @@ test_that("sequential native solves do not reuse stale objective values", {
   expect_true(second$callback_evaluations >= 1L)
   expect_true(second$objective > first$objective + 1)
 })
+
+test_that("direct NOMAD start capture preserves and respects RNG state", {
+  set.seed(314159)
+  before <- get(".Random.seed", envir = .GlobalEnv)
+  starts <- crs:::.crs_nomad_capture_start_matrix(
+    x0 = c(0.5, 1),
+    nstart = 3L,
+    bbin = c(0L, 0L),
+    bbout = 0L,
+    lb = c(0.1, 0.1),
+    ub = c(2, 2),
+    random.seed = 42L,
+    opts = list()
+  )
+  after <- get(".Random.seed", envir = .GlobalEnv)
+
+  expect_identical(after, before)
+  expect_equal(dim(starts), c(3L, 2L))
+
+  first <- crs:::.crs_nomad_capture_start_matrix(
+    x0 = c(0.5, 1),
+    nstart = 3L,
+    bbin = c(0L, 0L),
+    bbout = 0L,
+    lb = c(0.1, 0.1),
+    ub = c(2, 2),
+    random.seed = 99L,
+    opts = list()
+  )
+  second <- crs:::.crs_nomad_capture_start_matrix(
+    x0 = c(0.5, 1),
+    nstart = 3L,
+    bbin = c(0L, 0L),
+    bbout = 0L,
+    lb = c(0.1, 0.1),
+    ub = c(2, 2),
+    random.seed = 99L,
+    opts = list()
+  )
+
+  expect_equal(first, second, tolerance = 0)
+})
