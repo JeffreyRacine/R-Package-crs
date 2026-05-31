@@ -373,6 +373,125 @@ std::string second_token(const std::string &line) {
   return trim_copy(clean.substr(split + 1));
 }
 
+bool is_array_option_key(const std::string &key) {
+  return key == "INITIAL_MESH_SIZE" || key == "MIN_MESH_SIZE" ||
+         key == "INITIAL_FRAME_SIZE" || key == "MIN_FRAME_SIZE";
+}
+
+bool parse_mesh_frame_scalar(const std::string &token,
+                             int index,
+                             const crs_nomad_problem *problem,
+                             double *value) {
+  const std::string clean = trim_copy(token);
+  if (clean.empty()) {
+    return false;
+  }
+  const bool relative = clean[0] == 'r' || clean[0] == 'R';
+  const char *start = relative ? clean.c_str() + 1 : clean.c_str();
+  if (relative && *start == '\0') {
+    return false;
+  }
+  errno = 0;
+  char *endptr = nullptr;
+  const double parsed = std::strtod(start, &endptr);
+  if (endptr == start || *endptr != '\0' || errno == ERANGE ||
+      !std::isfinite(parsed) || parsed <= 0.0) {
+    return false;
+  }
+
+  double out = parsed;
+  if (relative) {
+    double span = 1.0;
+    if (problem != nullptr && index >= 0 && index < problem->n &&
+        std::isfinite(problem->lower[index]) &&
+        std::isfinite(problem->upper[index])) {
+      const double raw_span = problem->upper[index] - problem->lower[index];
+      if (std::isfinite(raw_span) && raw_span > 0.0) {
+        span = raw_span;
+      }
+    }
+    out *= span;
+  }
+
+  if (value != nullptr) {
+    *value = out;
+  }
+  return true;
+}
+
+bool parse_mesh_frame_values(const char *raw_value,
+                             const crs_nomad_problem *problem,
+                             std::vector<double> *values) {
+  if (raw_value == nullptr || problem == nullptr || values == nullptr ||
+      problem->n <= 0) {
+    return false;
+  }
+
+  std::string clean = trim_copy(raw_value);
+  if (clean.empty()) {
+    return false;
+  }
+  if (!clean.empty() && clean[0] == '*') {
+    clean = trim_copy(clean.substr(1));
+  }
+  if (clean.size() >= 2 && clean.front() == '(' && clean.back() == ')') {
+    clean = trim_copy(clean.substr(1, clean.size() - 2));
+  }
+  if (clean.empty()) {
+    return false;
+  }
+
+  std::istringstream iss(clean);
+  std::vector<std::string> tokens;
+  std::string token;
+  while (iss >> token) {
+    tokens.push_back(token);
+  }
+  if (tokens.empty()) {
+    return false;
+  }
+  if (!(tokens.size() == 1 ||
+        tokens.size() == static_cast<std::size_t>(problem->n))) {
+    return false;
+  }
+
+  values->assign(static_cast<std::size_t>(problem->n), 0.0);
+  if (tokens.size() == 1) {
+    double scalar = 0.0;
+    if (!parse_mesh_frame_scalar(tokens[0], 0, problem, &scalar)) {
+      return false;
+    }
+    std::fill(values->begin(), values->end(), scalar);
+  } else {
+    for (int i = 0; i < problem->n; ++i) {
+      double parsed = 0.0;
+      if (!parse_mesh_frame_scalar(tokens[static_cast<std::size_t>(i)], i, problem, &parsed)) {
+        return false;
+      }
+      (*values)[static_cast<std::size_t>(i)] = parsed;
+    }
+  }
+
+  for (int i = 0; i < problem->n; ++i) {
+    if (problem->bb_input_type[i] != CRS_NOMAD_INPUT_REAL &&
+        (*values)[static_cast<std::size_t>(i)] < 1.0) {
+      (*values)[static_cast<std::size_t>(i)] = 1.0;
+    }
+  }
+  return true;
+}
+
+bool apply_mesh_frame_array_option(NomadProblem pb,
+                                   const crs_nomad_problem *problem,
+                                   const std::string &key,
+                                   const char *raw_value) {
+  std::vector<double> values;
+  if (!parse_mesh_frame_values(raw_value, problem, &values)) {
+    return false;
+  }
+  return addNomadArrayOfDoubleParam(pb, key.c_str(), values.data());
+}
+
 void fill_random_start(std::vector<double> &starts,
                        int point_index,
                        const crs_nomad_problem *problem,
@@ -794,6 +913,14 @@ int apply_native_options(const crs_nomad_problem *problem,
                     CRS_NOMAD_INVALID_INPUT,
                     "NB_THREADS_PARALLEL_EVAL > 1 is not supported for native R callbacks");
       }
+    }
+    if (is_array_option_key(key)) {
+      if (!apply_mesh_frame_array_option(pb, problem, key, option->value)) {
+        const std::string message =
+          std::string("failed to set NOMAD array option ") + option->name;
+        return fail(result, CRS_NOMAD_INVALID_INPUT, message.c_str());
+      }
+      continue;
     }
     const std::string line = std::string(option->name) + " " + option->value;
     if (!addNomadParam(pb, line.c_str())) {
