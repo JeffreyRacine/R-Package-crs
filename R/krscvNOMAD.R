@@ -40,6 +40,9 @@ krscvNOMAD <- function(xz,
                        tau=NULL,
                        weights=NULL) {
 
+  min.frame.size.integer.supplied <- !missing(min.frame.size.integer)
+  min.frame.size.real.supplied <- !missing(min.frame.size.real)
+
   complexity <- match.arg(complexity)
   knots <- match.arg(knots)
   basis <- match.arg(basis)
@@ -520,40 +523,29 @@ krscvNOMAD <- function(xz,
       segments <- NULL
   }
 
-  INITIAL.MESH.SIZE <- list()
-  MIN.MESH.SIZE <- list()
-  MIN.FRAME.SIZE <- list()
+  geometry.roles <- character()
 
   if(complexity=="degree-knots") {
-    for(i in seq_len(2*num.x)) {
-      INITIAL.MESH.SIZE[[i]] <- initial.mesh.size.integer
-      MIN.MESH.SIZE[[i]] <- min.mesh.size.integer
-      MIN.FRAME.SIZE[[i]] <- min.frame.size.integer
-    }
-    for(i in .crs_index_block(2 * num.x, num.z)) {
-      INITIAL.MESH.SIZE[[i]] <- initial.mesh.size.real
-      MIN.MESH.SIZE[[i]] <- min.mesh.size.real
-      MIN.FRAME.SIZE[[i]] <- min.frame.size.real
-    }
+    geometry.roles <- c(rep("integer", 2 * num.x),
+                        rep(if (lambda.discrete) "lambda_integer_scaled" else "real", num.z))
   }
   else if(complexity=="degree" || complexity=="knots") {
-    for(i in seq_len(num.x)) {
-      INITIAL.MESH.SIZE[[i]] <- initial.mesh.size.integer
-      MIN.MESH.SIZE[[i]] <- min.mesh.size.integer
-      MIN.FRAME.SIZE[[i]] <- min.frame.size.integer
-    }
-    for(i in .crs_index_block(num.x, num.z)) {
-      INITIAL.MESH.SIZE[[i]] <- initial.mesh.size.real
-      MIN.MESH.SIZE[[i]] <- min.mesh.size.real
-      MIN.FRAME.SIZE[[i]] <- min.frame.size.real
-    }
+    geometry.roles <- c(rep("integer", num.x),
+                        rep(if (lambda.discrete) "lambda_integer_scaled" else "real", num.z))
   }
 
   opts$"EPSILON" <- .Machine$double.eps
   opts$"MAX_BB_EVAL" <- max.bb.eval
-  opts$"INITIAL_MESH_SIZE" <- INITIAL.MESH.SIZE
-  opts$"MIN_MESH_SIZE" <- MIN.MESH.SIZE
-  opts$"MIN_FRAME_SIZE" <- MIN.FRAME.SIZE
+  opts <- .crs_nomad_apply_source_geometry(
+    opts,
+    roles = geometry.roles,
+    initial.mesh.size.integer = initial.mesh.size.integer,
+    initial.mesh.size.real = initial.mesh.size.real,
+    min.mesh.size.integer = min.mesh.size.integer,
+    min.mesh.size.real = min.mesh.size.real,
+    min.frame.size.integer = if (min.frame.size.integer.supplied) min.frame.size.integer else NULL,
+    min.frame.size.real = if (min.frame.size.real.supplied) min.frame.size.real else NULL
+  )
 
   ## For kernel regression spline, if there is only one continuous
   ## predictor (i.e. num.x==1) disable auto, set to additive (which is

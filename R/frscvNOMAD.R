@@ -36,6 +36,8 @@ frscvNOMAD <- function(xz,
                        tau=NULL,
                        weights=NULL) {
 
+  min.frame.size.integer.supplied <- !missing(min.frame.size.integer)
+
   complexity <- match.arg(complexity)
   knots <- match.arg(knots)
   basis <- match.arg(basis)
@@ -383,22 +385,6 @@ frscvNOMAD <- function(xz,
     return(solution)
   }
 
-  opts$"EPSILON" <- .Machine$double.eps
-  opts$"MAX_BB_EVAL" <- max.bb.eval
-  opts$"INITIAL_MESH_SIZE" <- initial.mesh.size.integer
-  opts$"MIN_MESH_SIZE" <-  min.mesh.size.integer
-  opts$"MIN_FRAME_SIZE" <- min.frame.size.integer
-
-  if(display.nomad.progress) {
-    if(!is.null(opts$DISPLAY_DEGREE)){
-      if(opts$DISPLAY_DEGREE <= 0){
-        display.nomad.progress <- FALSE
-      }
-    }
-  }
-
-  print.output <- display.nomad.progress
-
   ## Take data frame x and parse into factors (z) and numeric (x)
 
   if(!is.data.frame(xz)) stop(" xz must be a data frame")
@@ -465,6 +451,32 @@ frscvNOMAD <- function(xz,
     else
       segments <- NULL
   }
+
+  geometry.roles <- if(complexity == "degree-knots") {
+    rep("integer", 2 * num.x + num.z)
+  } else {
+    rep("integer", num.x + num.z)
+  }
+
+  opts$"EPSILON" <- .Machine$double.eps
+  opts$"MAX_BB_EVAL" <- max.bb.eval
+  opts <- .crs_nomad_apply_source_geometry(
+    opts,
+    roles = geometry.roles,
+    initial.mesh.size.integer = initial.mesh.size.integer,
+    min.mesh.size.integer = min.mesh.size.integer,
+    min.frame.size.integer = if (min.frame.size.integer.supplied) min.frame.size.integer else NULL
+  )
+
+  if(display.nomad.progress) {
+    if(!is.null(opts$DISPLAY_DEGREE)){
+      if(opts$DISPLAY_DEGREE <= 0){
+        display.nomad.progress <- FALSE
+      }
+    }
+  }
+
+  print.output <- display.nomad.progress
 
   ## For factor regression spline, if there is only one predictor
   ## (i.e. num.x + num.z = 1) disable auto, set to additive (tensor in
