@@ -156,6 +156,11 @@ typedef int (*crs_nomad_solve_fn)(
  *   Infinite OBJ values are coerced to +/-DBL_MAX, matching snomadr()
  *   compatibility. Infinite PB/EB constraint values are passed through to
  *   NOMAD as infeasibility signals.
+ * - Thread affinity: crs_nomad_solve must be called from the main R
+ *   interpreter thread of the current process. It uses R's PROTECT stack,
+ *   R_UnwindProtect, and R_CheckUserInterrupt, and must not be invoked from
+ *   native worker threads, signal handlers, or any context that is not
+ *   executing through R or a registered native call on that thread.
  *
  * Callback contract for CRS_NOMAD_CALLBACK_C:
  * - return 0 on successful evaluation, nonzero on evaluation failure.

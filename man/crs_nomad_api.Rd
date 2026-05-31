@@ -22,6 +22,12 @@
 
   This is the only native NOMAD C callable exported by \pkg{crs}; legacy
   v1/v2 development callables are intentionally not registered.
+
+  The callable itself must be invoked from the main R interpreter thread of the
+  current process.  It uses R's protection stack, unwind protection, and user
+  interrupt machinery, and must not be called from native worker threads, signal
+  handlers, or contexts that are not executing through R or a registered native
+  call on that thread.
 }
 \section{Callback Contract}{
   C callbacks return \code{0} on successful evaluation, fill exactly
@@ -48,9 +54,9 @@
   callers remain responsible for category encoding and decoding.
 
   \code{NaN} black-box outputs are callback failures for all output types.
-  Infinite objective outputs are callback failures.  Infinite \code{PB} or
-  \code{EB} constraint outputs are passed through to NOMAD as infeasibility
-  signals.
+  Infinite objective outputs are coerced to \code{+/-DBL_MAX}, matching
+  \code{snomadr()} compatibility.  Infinite \code{PB} or \code{EB} constraint
+  outputs are passed through to NOMAD as infeasibility signals.
 
   The native API currently requires NOMAD's evaluation cache
   (\code{EVAL_USE_CACHE = TRUE}, the NOMAD default), because result recovery is

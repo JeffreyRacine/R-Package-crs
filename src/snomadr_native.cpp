@@ -1275,6 +1275,9 @@ SEXP list_element(SEXP list, const char *name) {
   if (names == R_NilValue) {
     return R_NilValue;
   }
+  if (XLENGTH(names) != XLENGTH(list)) {
+    return R_NilValue;
+  }
   const R_xlen_t n = XLENGTH(list);
   for (R_xlen_t i = 0; i < n; ++i) {
     if (std::strcmp(CHAR(STRING_ELT(names, i)), name) == 0) {
