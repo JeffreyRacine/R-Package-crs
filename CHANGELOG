@@ -1,3 +1,9 @@
+Changes from Version 0.15-44 to 0.15-45 [XX-XXX-XXXX]
+
+* Opened the 0.15-45 development cycle after CRAN publication of 0.15-44.
+  No `crs` source changes were required for the proactive `np`/`npRmpi`
+  memory-hardening and MPI nearest-neighbor cache reassessment tranche.
+
 Changes from Version 0.15-43 to 0.15-44 [01-Jun-2026]
 
 * Development version opened after CRAN publication of 0.15-43.

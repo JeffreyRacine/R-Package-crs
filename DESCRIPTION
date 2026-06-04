@@ -1,6 +1,6 @@
 Package: crs
-Version: 0.15-44
-Date: 2026-06-01
+Version: 0.15-45
+Date: 2026-06-03
 Imports: boot, stats, quantreg
 Suggests: ggplot2, knitr, logspline, MASS, quadprog, rgl,
         rmarkdown, testthat (>= 3.0.0)
