@@ -551,6 +551,7 @@ crs.formula <- function(formula,
                         ...) {
 
   ptm.start <- proc.time()
+  opts.supplied <- !missing(opts)
   cv <- match.arg(cv)
   cv.func <- match.arg(cv.func)
   complexity <- match.arg(complexity)
@@ -570,6 +571,7 @@ crs.formula <- function(formula,
   ## is not provided
 
   if(!isTRUE(getOption("crs.messages")) && is.null(opts[["DISPLAY_DEGREE"]])) opts$"DISPLAY_DEGREE"=0
+  opts.nomad <- if(opts.supplied) opts else list()
 
   ## If a weights vector is provided and there exists missing data
   ## then the weight vector must be parsed to contain weights
@@ -699,6 +701,7 @@ crs.formula <- function(formula,
                                degree=degree,
                                segments=segments,
                                nmulti=nmulti,
+                               opts=opts.nomad,
                                weights=weights,
                                singular.ok=singular.ok,
                                display.nomad.progress=display.nomad.progress,
@@ -770,6 +773,7 @@ crs.formula <- function(formula,
                                min.frame.size.real=min.frame.size.real,
                                min.frame.size.integer=min.frame.size.integer,
                                nmulti=nmulti,
+                               opts=opts.nomad,
                                tau=tau,
                                weights=weights,
                                singular.ok=singular.ok,

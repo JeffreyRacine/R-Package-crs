@@ -117,6 +117,55 @@ merge.nomad4.kr.defaults <- function(opts) {
   opts
 }
 
+.crs_nomad_option_value <- function(opts, key) {
+  opt.names <- names(opts)
+  if (is.null(opt.names))
+    return(NULL)
+  key <- toupper(key)
+  opt.index <- which(toupper(opt.names) == key)
+  if (!length(opt.index))
+    return(NULL)
+  opts[[opt.index[1L]]]
+}
+
+.crs_nomad_has_option <- function(opts, key) {
+  !is.null(.crs_nomad_option_value(opts, key))
+}
+
+.crs_nomad_display_degree <- function(opts) {
+  value <- .crs_nomad_option_value(opts, "DISPLAY_DEGREE")
+  if (is.null(value) || length(value) != 1L)
+    return(NULL)
+  value <- suppressWarnings(as.integer(value))
+  if (is.na(value))
+    return(NULL)
+  value
+}
+
+.crs_nomad_stop_unsafe_display_degree <- function(display.degree) {
+  message <- paste(
+    "NOMAD option DISPLAY_DEGREE >= 3 is currently unsafe in the embedded",
+    "snomadr() route because NOMAD4's native output queue can abort the R",
+    "session after repeated solves. Use DISPLAY_DEGREE 0, 1, or 2; keep the",
+    "default crs single-line progress display for routine fits.",
+    sep = " "
+  )
+  condition <- structure(
+    list(message = message,
+         call = NULL,
+         display.degree = display.degree),
+    class = c("crs_error_nomad_display_degree", "error", "condition")
+  )
+  stop(condition)
+}
+
+.crs_nomad_check_display_degree <- function(opts) {
+  display.degree <- .crs_nomad_display_degree(opts)
+  if (!is.null(display.degree) && display.degree >= 3L)
+    .crs_nomad_stop_unsafe_display_degree(display.degree)
+  invisible(opts)
+}
+
 snomadr <-
   function( eval.f,
             n,
@@ -174,6 +223,7 @@ snomadr <-
     if(missing(nmulti)||nmulti < 0) nmulti <- 0
     if(missing(display.nomad.progress)) display.nomad.progress <- TRUE
     opts <- merge.nomad4.mads.defaults(opts)
+    .crs_nomad_check_display_degree(opts)
 
     ## Define 'continuous' to types of variables
     if (is.null(bbin) ) { bbin <- rep (0, n)}

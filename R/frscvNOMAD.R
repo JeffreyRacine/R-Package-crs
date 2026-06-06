@@ -459,7 +459,8 @@ frscvNOMAD <- function(xz,
   }
 
   opts$"EPSILON" <- .Machine$double.eps
-  opts$"MAX_BB_EVAL" <- max.bb.eval
+  if(!.crs_nomad_has_option(opts, "MAX_BB_EVAL"))
+    opts$"MAX_BB_EVAL" <- max.bb.eval
   opts <- .crs_nomad_apply_source_geometry(
     opts,
     roles = geometry.roles,

@@ -161,9 +161,11 @@ These arguments control NOMAD options and optional information queries.
       Note that decreasing the maximum number of black box evaluations
       (\code{"MAX_BB_EVAL"}) will terminate search sooner and may result
       in a less accurate solution. For complicated problems you may want
-      to increase this value. When experimenting it is desirable to set
-      \code{"DISPLAY_DEGREE"=1} (or a larger integer) to get some sense
-      for how the algorithm is progressing
+      to increase this value. When experimenting, \code{"DISPLAY_DEGREE"=1}
+      or \code{"DISPLAY_DEGREE"=2} can provide additional native NOMAD
+      output. Higher native display degrees are currently rejected by the
+      embedded \code{snomadr()} interface because NOMAD4's verbose block
+      output queue can abort repeated R-session solves.
 
       }
 
@@ -199,8 +201,9 @@ These arguments control displayed progress and pass-through values.
     \item{display.nomad.progress}{
       when FALSE, no output from \code{snomadr} is displayed on the
       screen. If the NOMAD option \code{"DISPLAY_DEGREE"=0,} is set,
-      there will also be no output from NOMAD. Higher integer values for
-      \code{"DISPLAY_DEGREE"=} provide successively more detail
+      there will also be no output from NOMAD. Supported native
+      \code{"DISPLAY_DEGREE"} values are 0, 1, and 2 in this embedded
+      interface.
     }
   }
 
