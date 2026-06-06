@@ -1393,6 +1393,106 @@ summary.crs <- function(object,
   list(center = center, boot.mat = boot.mat)
 }
 
+.crs_plot_rgl_surface_colors <- function(z, num.colors = 1000L) {
+  colorlut <- topo.colors(num.colors)
+  mid <- max(1L, min(num.colors, ceiling(num.colors / 2)))
+  finite.z <- z[is.finite(z)]
+
+  if (!length(finite.z))
+    return(array(colorlut[mid], dim = dim(z)))
+
+  zmin <- min(finite.z)
+  zmax <- max(finite.z)
+
+  if (!is.finite(zmin) || !is.finite(zmax) || zmax <= zmin)
+    return(array(colorlut[mid], dim = dim(z)))
+
+  idx <- floor((num.colors - 1) * (z - zmin) / (zmax - zmin)) + 1L
+  idx[!is.finite(idx)] <- mid
+  idx <- pmax(1L, pmin(num.colors, idx))
+  colorlut[idx]
+}
+
+.crs_plot_render_surface_rgl <- function(x,
+                                         y,
+                                         z,
+                                         xlab,
+                                         ylab,
+                                         zlab,
+                                         main,
+                                         col,
+                                         display.warnings = TRUE) {
+  old.opts <- options(
+    rgl.useNULL = TRUE,
+    rgl.printRglwidget = TRUE
+  )
+  on.exit(options(old.opts), add = TRUE)
+
+  old.env <- Sys.getenv("RGL_USE_NULL", unset = NA_character_)
+  Sys.setenv(RGL_USE_NULL = "TRUE")
+  on.exit({
+    if (is.na(old.env)) {
+      Sys.unsetenv("RGL_USE_NULL")
+    } else {
+      Sys.setenv(RGL_USE_NULL = old.env)
+    }
+  }, add = TRUE)
+
+  if (!isTRUE(suppressWarnings(requireNamespace("rgl", quietly = TRUE)))) {
+    if(display.warnings) warning("rgl not installed, option persp.rgl ignored")
+    return(invisible(NULL))
+  }
+
+  devices.before <- try(rgl::rgl.dev.list(), silent = TRUE)
+  if (inherits(devices.before, "try-error") || is.null(devices.before))
+    devices.before <- integer(0L)
+
+  opened.dev <- NULL
+  cleanup <- function() {
+    devices.after <- try(rgl::rgl.dev.list(), silent = TRUE)
+    if (!inherits(devices.after, "try-error") && !is.null(devices.after)) {
+      new.devices <- setdiff(devices.after, devices.before)
+      if (length(new.devices)) {
+        for (dev in new.devices) try(rgl::close3d(dev = dev, silent = TRUE), silent = TRUE)
+        return(invisible(NULL))
+      }
+    }
+    if (!is.null(opened.dev)) {
+      try(rgl::close3d(dev = opened.dev, silent = TRUE), silent = TRUE)
+    } else {
+      try(rgl::close3d(silent = TRUE), silent = TRUE)
+    }
+    invisible(NULL)
+  }
+
+  tryCatch({
+    opened <- rgl::open3d(useNULL = TRUE, silent = TRUE)
+    opened.dev <- as.integer(opened[1L])
+    on.exit(cleanup(), add = TRUE)
+
+    rgl::par3d(windowRect=c(900,100,900+640,100+640))
+    rgl::view3d(theta = 0, phi = -70, fov = 80)
+
+    rgl::persp3d(x=x,y=y,z=z,
+                 xlab=xlab,ylab=ylab,zlab=zlab,
+                 ticktype="detailed",
+                 border="red",
+                 color=col,
+                 alpha=.7,
+                 back="lines",
+                 main=main)
+
+    rgl::grid3d(c("x", "y+", "z"))
+
+    widget <- rgl::rglwidget(x = rgl::scene3d())
+    print(widget)
+    invisible(widget)
+  }, error = function(e) {
+    stop(sprintf("rgl surface renderer failed (%s)", conditionMessage(e)),
+         call. = FALSE)
+  })
+}
+
 plot.crs <- function(x,
                      mean=FALSE,
                      deriv=0,
@@ -1810,35 +1910,15 @@ plot.crs <- function(x,
 
       if(plot.behavior!="data") {
 
-        num.colors <- 1000
-        colorlut <- topo.colors(num.colors)
-        col <- colorlut[ (num.colors-1)*(z-min(z))/(max(z)-min(z)) + 1 ]
+        col <- .crs_plot_rgl_surface_colors(z)
 
-        if(requireNamespace("rgl", quietly = TRUE)) {
-
-          rgl::open3d()
-
-          rgl::par3d(windowRect=c(900,100,900+640,100+640))
-          rgl::view3d(theta = 0, phi = -70, fov = 80)
-
-          rgl::persp3d(x=x1.seq,y=x2.seq,z=z,
-                       xlab=names(object$xz)[1],ylab=names(object$xz)[2],zlab="Y",
-                       ticktype="detailed",
-                       border="red",
-                       color=col,
-                       alpha=.7,
-                       back="lines",
-                       main=if(is.null(tau)) "Conditional Mean" else paste("Conditional Quantile (tau = ",format(tau),")",sep=""))
-
-          rgl::grid3d(c("x", "y+", "z"))
-
-          rgl::play3d(rgl::spin3d(axis=c(0,0,1), rpm=5), duration=15)
-
-        } else {
-
-          if(display.warnings) warning("rgl not installed, option persp.rgl ignored")
-
-        }
+        .crs_plot_render_surface_rgl(
+          x=x1.seq,y=x2.seq,z=z,
+          xlab=names(object$xz)[1],ylab=names(object$xz)[2],zlab="Y",
+          main=if(is.null(tau)) "Conditional Mean" else paste("Conditional Quantile (tau = ",format(tau),")",sep=""),
+          col=col,
+          display.warnings=display.warnings
+        )
 
       }
 
