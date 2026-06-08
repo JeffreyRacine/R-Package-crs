@@ -55,7 +55,7 @@ crs(\dots)
     lambda = NULL,
     lambda.discrete = FALSE,
     lambda.discrete.num = 100,
-    max.bb.eval = 140,
+    max.bb.eval = NULL,
     min.mesh.size.integer = 1,
     min.mesh.size.real = paste(sqrt(.Machine$double.eps)),
     min.frame.size.integer = 1,
@@ -265,9 +265,14 @@ These arguments control NOMAD mesh settings and optional solver controls.
 
 
   \item{max.bb.eval}{
-    argument passed to the NOMAD solver (default
-    \code{max.bb.eval=140}; see \code{\link{snomadr}} for further
-    details)
+    argument passed to the NOMAD solver. The default \code{NULL} lets
+    \code{crs} choose a route-specific evaluation budget:
+    \code{10000} for continuous-only \code{\link{frscvNOMAD}} search and
+    \code{1000} for kernel/categorical \code{\link{krscvNOMAD}} search.
+    These defaults were set on the basis of simulation evidence and
+    real-world applications. User-supplied values are passed through to
+    the selected NOMAD route; see \code{\link{snomadr}} for further
+    details.
   }
 
 

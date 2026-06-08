@@ -146,8 +146,10 @@ These arguments control NOMAD search, cross-validation objective selection, and 
 
 
   \item{max.bb.eval}{
-    argument passed to the NOMAD solver (see \code{\link{snomadr}} for
-    further details)
+    argument passed to the NOMAD solver (default \code{10000}). This
+    default was set on the basis of simulation evidence and real-world
+    applications for the continuous-only \code{frscvNOMAD} search route;
+    see \code{\link{snomadr}} for further details.
   }
 
 

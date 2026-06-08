@@ -531,7 +531,7 @@ crs.formula <- function(formula,
                         lambda=NULL,
                         lambda.discrete=FALSE,
                         lambda.discrete.num=100,
-                        max.bb.eval=140,
+                        max.bb.eval=NULL,
                         min.mesh.size.integer=1,
                         min.mesh.size.real=paste(sqrt(.Machine$double.eps)),
                         min.frame.size.integer=1,
@@ -687,6 +687,8 @@ crs.formula <- function(formula,
 
     if(cv=="nomad") {
 
+      max.bb.eval.fr <- if(is.null(max.bb.eval)) 10000 else max.bb.eval
+
       cv.return <- frscvNOMAD(xz=xz,
                                y=y,
                                degree.max=degree.max,
@@ -700,8 +702,14 @@ crs.formula <- function(formula,
                                cv.func=cv.func,
                                degree=degree,
                                segments=segments,
+                               random.seed=random.seed,
+                               max.bb.eval=max.bb.eval.fr,
+                               initial.mesh.size.integer=initial.mesh.size.integer,
+                               min.mesh.size.integer=min.mesh.size.integer,
+                               min.frame.size.integer=min.frame.size.integer,
                                nmulti=nmulti,
                                opts=opts.nomad,
+                               tau=tau,
                                weights=weights,
                                singular.ok=singular.ok,
                                display.nomad.progress=display.nomad.progress,
@@ -748,6 +756,8 @@ crs.formula <- function(formula,
 
     if(cv=="nomad") {
 
+      max.bb.eval.kr <- if(is.null(max.bb.eval)) 1000 else max.bb.eval
+
       cv.return <- krscvNOMAD(xz=xz,
                                y=y,
                                degree.max=degree.max,
@@ -765,7 +775,7 @@ crs.formula <- function(formula,
                                lambda.discrete=lambda.discrete,
                                lambda.discrete.num=lambda.discrete.num,
                                random.seed=random.seed,
-                               max.bb.eval=max.bb.eval,
+                               max.bb.eval=max.bb.eval.kr,
                                initial.mesh.size.real=initial.mesh.size.real,
                                initial.mesh.size.integer=initial.mesh.size.integer,
                                min.mesh.size.real=min.mesh.size.real,

@@ -31,7 +31,7 @@ krscvNOMAD(xz,
            lambda = lambda,
            lambda.discrete = FALSE,
            lambda.discrete.num = 100,
-           max.bb.eval = 140,
+           max.bb.eval = 1000,
            min.mesh.size.integer = "1",
            min.mesh.size.real = paste("r",sqrt(.Machine$double.eps),sep=""),
            min.frame.size.integer = "1",
@@ -169,8 +169,9 @@ These arguments control NOMAD search, cross-validation objective selection, and 
 
   \item{max.bb.eval}{
     argument passed to the NOMAD solver (see \code{\link{snomadr}} for
-    further details). Default is \code{140} for the aggressive
-    speed-oriented profile.
+    further details). Default is \code{1000}, set on the basis of
+    simulation evidence and real-world applications for the
+    kernel/categorical \code{krscvNOMAD} search route.
   }
 
 

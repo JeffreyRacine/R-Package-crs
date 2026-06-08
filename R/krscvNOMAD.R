@@ -25,7 +25,7 @@ krscvNOMAD <- function(xz,
                        lambda=lambda,
                        lambda.discrete=FALSE,
                        lambda.discrete.num=100,
-                       max.bb.eval=140,
+                       max.bb.eval=1000,
                        min.mesh.size.integer="1",
                        min.mesh.size.real=paste("r",sqrt(.Machine$double.eps),sep=""),
                        min.frame.size.integer="1",
@@ -392,7 +392,7 @@ krscvNOMAD <- function(xz,
     ## Manual says precede by r means relative to up and lb... not
     ## quite what I was looking for
 
-    x0.starts <- if (isTRUE(print.output)) {
+    x0.starts <- if (as.integer(nmulti) > 1L) {
       .crs_nomad_capture_start_matrix(
         x0 = x0,
         nstart = if (nmulti > 0L) as.integer(nmulti) else 1L,
