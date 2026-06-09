@@ -1,3 +1,24 @@
+# crs 0.15-45
+
+* Changed the public `crs.formula()` NOMAD evaluation-budget default
+  `max.bb.eval` to `NULL`, allowing `crs()` to choose route-specific
+  defaults after route selection. Continuous-only `frscvNOMAD` searches
+  now default to `max.bb.eval=10000`, while kernel/categorical
+  `krscvNOMAD` searches default to `max.bb.eval=1000`. These defaults
+  were set on the basis of simulation evidence and real-world
+  applications; explicit user-supplied values continue to override the
+  route defaults.
+
+* Repaired public-wrapper consistency so `crs()` forwards NOMAD search
+  controls to `frscvNOMAD` consistently with `krscvNOMAD`, including
+  `random.seed`, `max.bb.eval`, integer mesh/frame geometry controls,
+  and quantile level `tau`.
+
+* Made NOMAD multistart generation invariant to progress/display
+  settings in `frscvNOMAD` and `krscvNOMAD`, so enabling or suppressing
+  optimizer progress no longer changes the starting-value geometry or
+  fitted result.
+
 # crs 0.15-44
 
 * Added the final package-author native NOMAD C API

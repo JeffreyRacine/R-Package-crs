@@ -4,6 +4,25 @@ Changes from Version 0.15-44 to 0.15-45 [XX-XXX-XXXX]
   No `crs` source changes were required for the proactive `np`/`npRmpi`
   memory-hardening and MPI nearest-neighbor cache reassessment tranche.
 
+* Changed the public `crs.formula()` NOMAD evaluation-budget default
+  `max.bb.eval` to `NULL`, with route-specific defaults resolved after
+  route selection. Continuous-only `frscvNOMAD` searches default to
+  `max.bb.eval=10000`, while kernel/categorical `krscvNOMAD` searches
+  default to `max.bb.eval=1000`. These defaults were set on the basis
+  of simulation evidence and real-world applications, and explicit
+  user-supplied `max.bb.eval` values continue to pass through to the
+  selected NOMAD route.
+
+* Repaired public-wrapper consistency so `crs.formula()` forwards
+  `random.seed`, `max.bb.eval`, integer mesh/frame geometry controls,
+  and `tau` to `frscvNOMAD`, matching the existing `krscvNOMAD`
+  forwarding contract.
+
+* Made NOMAD multistart generation invariant to progress/display
+  settings in `frscvNOMAD` and `krscvNOMAD`, so displaying optimizer
+  progress no longer changes the starting-value geometry or fitted
+  result.
+
 Changes from Version 0.15-43 to 0.15-44 [01-Jun-2026]
 
 * Development version opened after CRAN publication of 0.15-43.
