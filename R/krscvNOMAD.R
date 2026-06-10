@@ -426,7 +426,8 @@ krscvNOMAD <- function(xz,
                                random.seed=random.seed,
                                opts=opts,
                                display.nomad.progress=print.output,
-                               params=params)
+                               params=params,
+                               use.cache=FALSE)
     } else {
       snomadr(eval.f=eval.cv,
               n=length(x0),

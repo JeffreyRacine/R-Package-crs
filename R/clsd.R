@@ -961,7 +961,8 @@ ls.ml <- function(x=NULL,
                                random.seed=random.seed,
                                opts=opts,
                                display.nomad.progress=display.nomad.progress,
-                               params=params)
+                               params=params,
+                               use.cache=!isTRUE(display.nomad.progress))
     } else {
       snomadr(eval.f=eval.f,
               n=2,## number of variables
