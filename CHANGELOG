@@ -4,6 +4,17 @@ Changes from Version 0.15-44 to 0.15-45 [XX-XXX-XXXX]
   No `crs` source changes were required for the proactive `np`/`npRmpi`
   memory-hardening and MPI nearest-neighbor cache reassessment tranche.
 
+* Improved mixed-data cross-validation efficiency by using a guarded
+  weighted least-squares Gram/Cholesky solve with QR/SVD fallback for
+  kernel and factor spline CV routes. The change covers `cv.ls`, `cv.gcv`,
+  and `cv.aic` for additive, tensor, and GLP bases consistently across
+  weighted and unweighted mean-regression CV, while preserving the existing
+  rank, fallback, and objective contracts.
+
+* Restored the GLP model-matrix column oracle used to select generalized
+  local-polynomial interactions while retaining compiled column-product
+  construction, preserving GLP stability and shape compatibility.
+
 * Changed the public `crs.formula()` NOMAD evaluation-budget default
   `max.bb.eval` to `NULL`, with route-specific defaults resolved after
   route selection. Continuous-only `frscvNOMAD` searches default to

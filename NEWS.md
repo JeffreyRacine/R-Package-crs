@@ -1,5 +1,16 @@
 # crs 0.15-45
 
+* Improved mixed-data cross-validation efficiency by using a guarded
+  weighted least-squares Gram/Cholesky solve with QR/SVD fallback for
+  kernel and factor spline CV routes. The change covers `cv.ls`, `cv.gcv`,
+  and `cv.aic` for additive, tensor, and GLP bases consistently across
+  weighted and unweighted mean-regression CV, while preserving the existing
+  rank, fallback, and objective contracts.
+
+* Restored the GLP model-matrix column oracle used to select generalized
+  local-polynomial interactions while retaining compiled column-product
+  construction, preserving GLP stability and shape compatibility.
+
 * Changed the public `crs.formula()` NOMAD evaluation-budget default
   `max.bb.eval` to `NULL`, allowing `crs()` to choose route-specific
   defaults after route selection. Continuous-only `frscvNOMAD` searches
