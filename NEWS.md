@@ -18,6 +18,13 @@
   unweighted routes while preserving fitted values, intervals, standard
   errors, hatvalues, rank, and residual degrees of freedom.
 
+* Improved categorical-kernel mean-gradient efficiency by reusing the same
+  guarded weighted least-squares Gram/Cholesky primitive for non-quantile
+  derivative solves in training and evaluation routes. The change covers
+  additive, tensor, and GLP bases consistently across weighted and unweighted
+  routes while preserving derivative estimates and normal-approximation
+  intervals to numerical roundoff.
+
 * Changed the public `crs.formula()` NOMAD evaluation-budget default
   `max.bb.eval` to `NULL`, allowing `crs()` to choose route-specific
   defaults after route selection. Continuous-only `frscvNOMAD` searches

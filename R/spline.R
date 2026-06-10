@@ -225,6 +225,86 @@ hat.from.lm.fit <- function(obj) {
        rcond = core$rcond)
 }
 
+.crs_weighted_ls_deriv_lm <- function(P.train,
+                                      y,
+                                      P.deriv,
+                                      basis,
+                                      weights = NULL,
+                                      deriv.ind.vec = NULL,
+                                      rcond.min = 1e-8,
+                                      use.svd.fallback = TRUE) {
+  X <- .crs_weighted_ls_design(P.train, basis)
+  if(is.null(weights)) {
+    weights <- rep(1, NROW(X))
+  }
+
+  core <- .crs_weighted_ls_core(
+    X = X,
+    y = y,
+    weights = weights,
+    rcond.min = rcond.min,
+    allow.fallback = TRUE,
+    use.svd.fallback = use.svd.fallback
+  )
+
+  if(is.null(core$coefficients)) {
+    return(NULL)
+  }
+
+  rank <- if(identical(core$method, "chol_gram")) ncol(X) else core$qr$rank
+  if(rank < ncol(X)) {
+    return(NULL)
+  }
+  df.residual <- NROW(X) - rank
+  if(df.residual <= 0) {
+    return(NULL)
+  }
+
+  if(identical(core$method, "chol_gram")) {
+    Ginv <- chol2inv(core$chol)
+  } else {
+    R <- tryCatch(qr.R(core$qr), error = function(e) NULL)
+    if(is.null(R)) return(NULL)
+    Ginv.pivot <- chol2inv(R)
+    pivot <- core$qr$pivot[seq_len(ncol(X))]
+    if(is.null(pivot)) {
+      pivot <- seq_len(ncol(X))
+    }
+    Ginv <- matrix(0, ncol(X), ncol(X))
+    Ginv[pivot, pivot] <- Ginv.pivot
+  }
+
+  coefficients <- drop(core$coefficients)
+  fitted.train <- drop(X %*% coefficients)
+  residuals.train <- y - fitted.train
+  sigma2 <- sum(weights * residuals.train^2) / df.residual
+
+  if(basis=="additive") {
+    if(is.null(deriv.ind.vec)) {
+      stop(" additive derivative columns are missing")
+    }
+    beta.deriv <- coefficients[-1][deriv.ind.vec]
+    Ginv.deriv <- Ginv[-1,-1,drop=FALSE][deriv.ind.vec,deriv.ind.vec,drop=FALSE]
+    P.deriv <- P.deriv[,deriv.ind.vec,drop=FALSE]
+  } else if(basis=="glp") {
+    beta.deriv <- coefficients[-1]
+    Ginv.deriv <- Ginv[-1,-1,drop=FALSE]
+  } else {
+    beta.deriv <- coefficients
+    Ginv.deriv <- Ginv
+  }
+
+  deriv.fit <- drop(P.deriv %*% beta.deriv)
+  se.deriv <- sqrt(rowSums((P.deriv %*% Ginv.deriv) * P.deriv) * sigma2)
+
+  list(deriv = deriv.fit,
+       se = se.deriv,
+       rank = rank,
+       df.residual = df.residual,
+       method = core$method,
+       rcond = core$rcond)
+}
+
 .crs_weighted_ls_cv_rows <- function(X,
                                      y,
                                      weights = NULL,
@@ -925,14 +1005,27 @@ derivKernelSpline <- function(x,
           dim.P.tensor <- NCOL(P)
 
           if(basis=="additive") {
-            if(is.null(tau))
-              model <- lm(y~P,weights=L)
-            else
-              suppressWarnings(model <- rq(y~P,tau=tau,method="fn",weights=L))
             dim.P.deriv <- sum(K.additive[deriv.index,])
             deriv.start <- if (deriv.index != 1) sum(K.additive[.crs_index_block(0L, deriv.index - 1L), ]) + 1 else 1
             deriv.end <- deriv.start+sum(K.additive[deriv.index,])-1
             deriv.ind.vec <- deriv.start:deriv.end
+            if(is.null(tau)) {
+              tmp.fast <- .crs_weighted_ls_deriv_lm(P.train=P,
+                                                    y=y,
+                                                    P.deriv=P.deriv,
+                                                    basis=basis,
+                                                    weights=L,
+                                                    deriv.ind.vec=deriv.ind.vec)
+              if(!is.null(tmp.fast)) {
+                deriv.spline[zz] <- tmp.fast$deriv
+                se.deriv[zz] <- tmp.fast$se
+                next
+              }
+            }
+            if(is.null(tau))
+              model <- lm(y~P,weights=L)
+            else
+              suppressWarnings(model <- rq(y~P,tau=tau,method="fn",weights=L))
             deriv.spline[zz] <- P.deriv[,deriv.ind.vec,drop=FALSE]%*%(coef(model)[-1])[deriv.ind.vec]
             if(is.null(tau))
               vcov.model <- vcov(model)[-1,-1,drop=FALSE]
@@ -941,6 +1034,18 @@ derivKernelSpline <- function(x,
 
             se.deriv[zz] <- sapply(seq_len(NROW(P.deriv)), function(i){ sqrt(P.deriv[i,deriv.ind.vec,drop=FALSE]%*%vcov.model[deriv.ind.vec,deriv.ind.vec]%*%t(P.deriv[i,deriv.ind.vec,drop=FALSE])) })
           } else if(basis=="tensor") {
+            if(is.null(tau)) {
+              tmp.fast <- .crs_weighted_ls_deriv_lm(P.train=P,
+                                                    y=y,
+                                                    P.deriv=P.deriv,
+                                                    basis=basis,
+                                                    weights=L)
+              if(!is.null(tmp.fast)) {
+                deriv.spline[zz] <- tmp.fast$deriv
+                se.deriv[zz] <- tmp.fast$se
+                next
+              }
+            }
             if(is.null(tau))
               model <- lm(y~P-1,weights=L)
             else
@@ -955,6 +1060,18 @@ derivKernelSpline <- function(x,
 
             se.deriv[zz] <- sapply(seq_len(NROW(P.deriv)), function(i){ sqrt(P.deriv[i,,drop=FALSE]%*%vcov.model%*%t(P.deriv[i,,drop=FALSE])) })
           } else if(basis=="glp") {
+            if(is.null(tau)) {
+              tmp.fast <- .crs_weighted_ls_deriv_lm(P.train=P,
+                                                    y=y,
+                                                    P.deriv=P.deriv,
+                                                    basis=basis,
+                                                    weights=L)
+              if(!is.null(tmp.fast)) {
+                deriv.spline[zz] <- tmp.fast$deriv
+                se.deriv[zz] <- tmp.fast$se
+                next
+              }
+            }
             if(is.null(tau))
               model <- lm(y~P,weights=L)
             else
@@ -1000,15 +1117,28 @@ derivKernelSpline <- function(x,
           dim.P.tensor <- NCOL(P)
 
           if(basis=="additive") {
+            dim.P.deriv <- sum(K.additive[deriv.index,])
+            deriv.start <- if (deriv.index != 1) sum(K.additive[.crs_index_block(0L, deriv.index - 1L), ]) + 1 else 1
+            deriv.end <- deriv.start+sum(K.additive[deriv.index,])-1
+            deriv.ind.vec <- deriv.start:deriv.end
+            if(is.null(tau)) {
+              tmp.fast <- .crs_weighted_ls_deriv_lm(P.train=P,
+                                                    y=y,
+                                                    P.deriv=P.deriv,
+                                                    basis=basis,
+                                                    weights=L,
+                                                    deriv.ind.vec=deriv.ind.vec)
+              if(!is.null(tmp.fast)) {
+                deriv.spline[zz] <- tmp.fast$deriv
+                se.deriv[zz] <- tmp.fast$se
+                next
+              }
+            }
             if(is.null(tau))
               model <- lm(y~P,weights=L)
             else
               suppressWarnings(model <- rq(y~P,weights=L,tau=tau,method="fn"))
 
-            dim.P.deriv <- sum(K.additive[deriv.index,])
-            deriv.start <- if (deriv.index != 1) sum(K.additive[.crs_index_block(0L, deriv.index - 1L), ]) + 1 else 1
-            deriv.end <- deriv.start+sum(K.additive[deriv.index,])-1
-            deriv.ind.vec <- deriv.start:deriv.end
             deriv.spline[zz] <- P.deriv[,deriv.ind.vec,drop=FALSE]%*%(coef(model)[-1])[deriv.ind.vec]
             if(is.null(tau))
               vcov.model <- vcov(model)[-1,-1,drop=FALSE]
@@ -1017,6 +1147,18 @@ derivKernelSpline <- function(x,
 
             se.deriv[zz] <- sapply(seq_len(NROW(P.deriv)), function(i){ sqrt(P.deriv[i,deriv.ind.vec,drop=FALSE]%*%vcov.model[deriv.ind.vec,deriv.ind.vec]%*%t(P.deriv[i,deriv.ind.vec,drop=FALSE])) })
           } else if(basis=="tensor") {
+            if(is.null(tau)) {
+              tmp.fast <- .crs_weighted_ls_deriv_lm(P.train=P,
+                                                    y=y,
+                                                    P.deriv=P.deriv,
+                                                    basis=basis,
+                                                    weights=L)
+              if(!is.null(tmp.fast)) {
+                deriv.spline[zz] <- tmp.fast$deriv
+                se.deriv[zz] <- tmp.fast$se
+                next
+              }
+            }
             if(is.null(tau))
               model <- lm(y~P-1,weights=L)
             else
@@ -1030,6 +1172,18 @@ derivKernelSpline <- function(x,
 
             se.deriv[zz] <- sapply(seq_len(NROW(P.deriv)), function(i){ sqrt(P.deriv[i,,drop=FALSE]%*%vcov.model%*%t(P.deriv[i,,drop=FALSE])) })
           } else if(basis=="glp") {
+            if(is.null(tau)) {
+              tmp.fast <- .crs_weighted_ls_deriv_lm(P.train=P,
+                                                    y=y,
+                                                    P.deriv=P.deriv,
+                                                    basis=basis,
+                                                    weights=L)
+              if(!is.null(tmp.fast)) {
+                deriv.spline[zz] <- tmp.fast$deriv
+                se.deriv[zz] <- tmp.fast$se
+                next
+              }
+            }
             if(is.null(tau))
               model <- lm(y~P,weights=L)
             else
