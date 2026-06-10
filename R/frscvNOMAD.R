@@ -351,18 +351,32 @@ frscvNOMAD <- function(xz,
       aux.type = "int"
     )
 
-    solution<-snomadr(eval.f=eval.cv,
-                      n=length(x0),
-                      x0=if (!is.null(x0.starts)) as.numeric(x0.starts) else as.numeric(x0),
-                      bbin=bbin,
-                      bbout=bbout,
-                      lb=lb,
-                      ub=ub,
-                      nmulti=as.integer(nmulti),
-                      random.seed=random.seed,
-                      opts=opts,
-                      display.nomad.progress=print.output,
-                      params=params);
+    solution <- if (!is.null(x0.starts)) {
+      .crs_nomad_restart_sweep(eval.f=eval.cv,
+                               n=length(x0),
+                               starts=x0.starts,
+                               bbin=bbin,
+                               bbout=bbout,
+                               lb=lb,
+                               ub=ub,
+                               random.seed=random.seed,
+                               opts=opts,
+                               display.nomad.progress=print.output,
+                               params=params)
+    } else {
+      snomadr(eval.f=eval.cv,
+              n=length(x0),
+              x0=as.numeric(x0),
+              bbin=bbin,
+              bbout=bbout,
+              lb=lb,
+              ub=ub,
+              nmulti=as.integer(nmulti),
+              random.seed=random.seed,
+              opts=opts,
+              display.nomad.progress=print.output,
+              params=params)
+    }
 
     .crs_nomad_progress_finish(progress.env$nomad.progress)
     progress.env$emit <- FALSE
@@ -585,6 +599,10 @@ frscvNOMAD <- function(xz,
         cv.objc.vec=cv.vec,
         num.x=num.x,
         cv.func=cv.func,
-        tau=tau)
+        tau=tau,
+        nomad.restart.contract=nomad.solution$restart.contract,
+        nomad.best.restart=nomad.solution$best.restart,
+        nomad.restart.objectives=nomad.solution$restart.fval,
+        nomad.restart.evaluations=nomad.solution$restart.results)
 
 }

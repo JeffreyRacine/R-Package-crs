@@ -18,7 +18,11 @@ crscv <- function(K,
                   cv.objc.vec,
                   num.x,
                   cv.func,
-                  tau) {
+                  tau,
+                  nomad.restart.contract = NULL,
+                  nomad.best.restart = NULL,
+                  nomad.restart.objectives = NULL,
+                  nomad.restart.evaluations = NULL) {
 
   tregcv = list(K=K,
                 I=I,
@@ -41,6 +45,19 @@ crscv <- function(K,
                 num.x=num.x,
                 cv.func=cv.func,
                 tau=tau)
+
+  if (!is.null(nomad.restart.contract)) {
+    tregcv$nomad.restart.contract <- nomad.restart.contract
+  }
+  if (!is.null(nomad.best.restart)) {
+    tregcv$nomad.best.restart <- nomad.best.restart
+  }
+  if (!is.null(nomad.restart.objectives)) {
+    tregcv$nomad.restart.objectives <- nomad.restart.objectives
+  }
+  if (!is.null(nomad.restart.evaluations)) {
+    tregcv$nomad.restart.evaluations <- nomad.restart.evaluations
+  }
 
   class(tregcv) <- "crscv"
 

@@ -679,6 +679,7 @@ crs.formula <- function(formula,
   if(!is.logical(singular.ok)) stop("singular.ok must be logical (TRUE/FALSE)")
 
   cv.min <- NULL
+  cv.return <- NULL
   cv.maxPenalty <- resolve_cv_maxPenalty(NULL, y, weights = weights, cv.func = cv.func)
 
   if(!kernel) {
@@ -865,6 +866,18 @@ crs.formula <- function(formula,
   est$restarts <- restarts
   est$ptm <- proc.time() - ptm.start
   est$nmulti <- nmulti
+  if (!is.null(cv.return) && !is.null(cv.return$nomad.restart.contract)) {
+    est$nomad.restart.contract <- cv.return$nomad.restart.contract
+  }
+  if (!is.null(cv.return) && !is.null(cv.return$nomad.best.restart)) {
+    est$nomad.best.restart <- cv.return$nomad.best.restart
+  }
+  if (!is.null(cv.return) && !is.null(cv.return$nomad.restart.objectives)) {
+    est$nomad.restart.objectives <- cv.return$nomad.restart.objectives
+  }
+  if (!is.null(cv.return) && !is.null(cv.return$nomad.restart.evaluations)) {
+    est$nomad.restart.evaluations <- cv.return$nomad.restart.evaluations
+  }
 
   return(est)
 
