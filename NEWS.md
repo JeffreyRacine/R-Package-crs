@@ -11,6 +11,13 @@
   local-polynomial interactions while retaining compiled column-product
   construction, preserving GLP stability and shape compatibility.
 
+* Improved categorical-kernel mean fit and evaluation efficiency by reusing
+  the guarded weighted least-squares Gram/Cholesky primitive for the
+  non-quantile prediction ingredients when `model.return=FALSE`, covering
+  additive, tensor, and GLP bases consistently across weighted and
+  unweighted routes while preserving fitted values, intervals, standard
+  errors, hatvalues, rank, and residual degrees of freedom.
+
 * Changed the public `crs.formula()` NOMAD evaluation-budget default
   `max.bb.eval` to `NULL`, allowing `crs()` to choose route-specific
   defaults after route selection. Continuous-only `frscvNOMAD` searches

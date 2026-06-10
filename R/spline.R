@@ -140,6 +140,91 @@ hat.from.lm.fit <- function(obj) {
   )
 }
 
+.crs_weighted_ls_design <- function(P, basis) {
+  if(basis=="additive" || basis=="glp") {
+    cbind("(Intercept)" = 1, as.matrix(P))
+  } else {
+    as.matrix(P)
+  }
+}
+
+.crs_weighted_ls_predict_lm <- function(P.train,
+                                        y,
+                                        P.eval,
+                                        basis,
+                                        weights = NULL,
+                                        hat.rows = NULL,
+                                        rcond.min = 1e-8,
+                                        use.svd.fallback = TRUE) {
+  X <- .crs_weighted_ls_design(P.train, basis)
+  X.eval <- .crs_weighted_ls_design(P.eval, basis)
+  if(is.null(weights)) {
+    weights <- rep(1, NROW(X))
+  }
+
+  core <- .crs_weighted_ls_core(
+    X = X,
+    y = y,
+    weights = weights,
+    rcond.min = rcond.min,
+    allow.fallback = TRUE,
+    use.svd.fallback = use.svd.fallback
+  )
+
+  if(is.null(core$coefficients)) {
+    return(NULL)
+  }
+
+  rank <- if(identical(core$method, "chol_gram")) ncol(X) else core$qr$rank
+  if(rank < ncol(X)) {
+    return(NULL)
+  }
+
+  if(identical(core$method, "chol_gram")) {
+    Ginv <- chol2inv(core$chol)
+  } else {
+    R <- tryCatch(qr.R(core$qr), error = function(e) NULL)
+    if(is.null(R)) return(NULL)
+    Ginv.pivot <- chol2inv(R)
+    pivot <- core$qr$pivot[seq_len(ncol(X))]
+    if(is.null(pivot)) {
+      pivot <- seq_len(ncol(X))
+    }
+    Ginv <- matrix(0, ncol(X), ncol(X))
+    Ginv[pivot, pivot] <- Ginv.pivot
+  }
+
+  coefficients <- core$coefficients
+  fitted.train <- drop(X %*% coefficients)
+  residuals.train <- y - fitted.train
+  df.residual <- NROW(X) - rank
+  if(df.residual <= 0) {
+    return(NULL)
+  }
+  sigma2 <- sum(weights * residuals.train^2) / df.residual
+
+  fit <- drop(X.eval %*% coefficients)
+  se.fit <- sqrt(pmax(0, rowSums((X.eval %*% Ginv) * X.eval) * sigma2))
+  half.width <- qt(0.975, df.residual) * se.fit
+  fit.spline <- cbind(fit = fit,
+                      lwr = fit - half.width,
+                      upr = fit + half.width,
+                      se = se.fit)
+
+  hatvalues <- NULL
+  if(!is.null(hat.rows)) {
+    X.hat <- X[hat.rows, , drop = FALSE]
+    hatvalues <- weights[hat.rows] * rowSums((X.hat %*% Ginv) * X.hat)
+  }
+
+  list(fitted.values = fit.spline,
+       hatvalues = hatvalues,
+       rank = rank,
+       df.residual = df.residual,
+       method = core$method,
+       rcond = core$rcond)
+}
+
 .crs_weighted_ls_cv_rows <- function(X,
                                      y,
                                      weights = NULL,
@@ -462,47 +547,64 @@ predictKernelSpline <- function(x,
       ## Degree > 0, fitted/evaluation
       P.train <- prod.spline(x=x, K=K, knots=knots, basis=basis,
                              display.warnings=display.warnings)
-      if(is.null(xeval)) {
-        P.eval <- P.train
-        fit.spline <- matrix(NA,nrow=n,ncol=4)
-        htt <- numeric(length=n)
-        P.hat <- numeric(length=n)
-        for(i in seq_len(nrow.z.unique)) {
-          zz <- ind == ind.vals[i]
-          L <- prod.kernel.matrix(Z=z,z=z.unique[ind.vals[i],],lambda=lambda,is.ordered.z=is.ordered.z)
-          if(!is.null(weights)) L <- weights*L
-          P <- P.train
-          k <- NCOL(P)
-          if(basis=="additive" || basis=="glp") {
-            if(is.null(tau))
-              model.z.unique <- lm(y~P,weights=L)
-            else
-              suppressWarnings(model.z.unique <- rq(y~P,weights=L,tau=tau,method="fn"))
-            model.z.unique.hat <- lm(y~P,weights=L)
-          } else {
-            if(is.null(tau))
-              model.z.unique <- lm(y~P-1,weights=L)
-            else
-              suppressWarnings(model.z.unique <- rq(y~P-1,weights=L,tau=tau,method="fn"))
-            model.z.unique.hat <- lm(y~P-1,weights=L)
-          }
-          if(model.return) model[[i]] <- model.z.unique
-          if(is.null(tau))
-            htt[zz] <- hatvalues(model.z.unique)[zz]
-          else
-            htt[zz] <- hatvalues(model.z.unique.hat)[zz]
+	      if(is.null(xeval)) {
+	        P.eval <- P.train
+	        fit.spline <- matrix(NA,nrow=n,ncol=4)
+	        htt <- numeric(length=n)
+	        P.hat <- numeric(length=n)
+	        rank.kernel <- NULL
+	        for(i in seq_len(nrow.z.unique)) {
+	          zz <- ind == ind.vals[i]
+	          L <- prod.kernel.matrix(Z=z,z=z.unique[ind.vals[i],],lambda=lambda,is.ordered.z=is.ordered.z)
+	          if(!is.null(weights)) L <- weights*L
+	          P <- P.train
+	          k <- NCOL(P)
+	          P.hat[zz] <- sum(L)
+	          P <- P.eval[zz,,drop=FALSE]
+	          if(is.null(tau) && !model.return) {
+	            tmp.fast <- .crs_weighted_ls_predict_lm(P.train=P.train,
+	                                                    y=y,
+	                                                    P.eval=P,
+	                                                    basis=basis,
+	                                                    weights=L,
+	                                                    hat.rows=which(zz))
+	            if(!is.null(tmp.fast)) {
+	              htt[zz] <- tmp.fast$hatvalues
+	              fit.spline[zz,] <- tmp.fast$fitted.values
+	              rank.kernel <- tmp.fast$rank
+	              next
+	            }
+	          }
+	          P <- P.train
+	          if(basis=="additive" || basis=="glp") {
+	            if(is.null(tau))
+	              model.z.unique <- lm(y~P,weights=L)
+	            else
+	              suppressWarnings(model.z.unique <- rq(y~P,weights=L,tau=tau,method="fn"))
+	            model.z.unique.hat <- lm(y~P,weights=L)
+	          } else {
+	            if(is.null(tau))
+	              model.z.unique <- lm(y~P-1,weights=L)
+	            else
+	              suppressWarnings(model.z.unique <- rq(y~P-1,weights=L,tau=tau,method="fn"))
+	            model.z.unique.hat <- lm(y~P-1,weights=L)
+	          }
+	          if(model.return) model[[i]] <- model.z.unique
+	          if(is.null(tau))
+	            htt[zz] <- hatvalues(model.z.unique)[zz]
+	          else
+	            htt[zz] <- hatvalues(model.z.unique.hat)[zz]
+	          P <- P.eval[zz,,drop=FALSE]
+	          tmp <- predict(model.z.unique,newdata=data.frame(as.matrix(P)),interval="confidence",se.fit=TRUE)
 
-          P.hat[zz] <- sum(L)
-          P <- P.eval[zz,,drop=FALSE]
-          tmp <- predict(model.z.unique,newdata=data.frame(as.matrix(P)),interval="confidence",se.fit=TRUE)
-
-          if(is.null(tau))
-            fit.spline[zz,] <- cbind(tmp[[1]],tmp[[2]])
-          else
-            fit.spline[zz,] <- cbind(tmp,(tmp[,3]-tmp[,1])/qnorm(0.975))
-          rm(tmp)
-        }
-      } else {
+	          if(is.null(tau))
+	            fit.spline[zz,] <- cbind(tmp[[1]],tmp[[2]])
+	          else
+	            fit.spline[zz,] <- cbind(tmp,(tmp[,3]-tmp[,1])/qnorm(0.975))
+	          rank.kernel <- if(is.null(tau)) model.z.unique$rank else NCOL(model.z.unique$x)
+	          rm(tmp)
+	        }
+	      } else {
 
         ## Degree > 0, evaluation
         P.eval <- prod.spline(x=x, K=K, xeval=xeval, knots=knots, basis=basis,
@@ -514,39 +616,55 @@ predictKernelSpline <- function(x,
         ind.zeval.vals <-  unique(ind.zeval)
         nrow.zeval.unique <- nrow(zeval.unique)
 
-        num.eval <- nrow(zeval)
+	        num.eval <- nrow(zeval)
 
-        fit.spline <- matrix(NA,nrow=num.eval,ncol=4)
-        htt <- NULL ## No hatvalues for evaluation
-        P.hat <- NULL
-        for(i in seq_len(nrow.zeval.unique)) {
-          zz <- ind.zeval == ind.zeval.vals[i]
-          L <- prod.kernel.matrix(Z=z,z=zeval.unique[ind.zeval.vals[i],],lambda=lambda,is.ordered.z=is.ordered.z)
-          if(!is.null(weights)) L <- weights*L
-          P <- P.train
-          k <- NCOL(P)
-          if(basis=="additive" || basis=="glp") {
-            if(is.null(tau))
-              model.z.unique <- lm(y~P,weights=L)
-            else
-              suppressWarnings(model.z.unique <- rq(y~P,weights=L,tau=tau,method="fn"))
-          } else {
-            if(is.null(tau))
-              model.z.unique <- lm(y~P-1,weights=L)
-            else
-              suppressWarnings(model.z.unique <- rq(y~P-1,weights=L,tau=tau,method="fn"))
-          }
-          if(model.return) model[[i]] <- model.z.unique
-          P <- P.eval[zz,,drop=FALSE]
-          tmp <- predict(model.z.unique,newdata=data.frame(as.matrix(P)),interval="confidence",se.fit=TRUE)
+	        fit.spline <- matrix(NA,nrow=num.eval,ncol=4)
+	        htt <- NULL ## No hatvalues for evaluation
+	        P.hat <- NULL
+	        rank.kernel <- NULL
+	        for(i in seq_len(nrow.zeval.unique)) {
+	          zz <- ind.zeval == ind.zeval.vals[i]
+	          L <- prod.kernel.matrix(Z=z,z=zeval.unique[ind.zeval.vals[i],],lambda=lambda,is.ordered.z=is.ordered.z)
+	          if(!is.null(weights)) L <- weights*L
+	          P <- P.train
+	          k <- NCOL(P)
+	          P <- P.eval[zz,,drop=FALSE]
+	          if(is.null(tau) && !model.return) {
+	            tmp.fast <- .crs_weighted_ls_predict_lm(P.train=P.train,
+	                                                    y=y,
+	                                                    P.eval=P,
+	                                                    basis=basis,
+	                                                    weights=L)
+	            if(!is.null(tmp.fast)) {
+	              fit.spline[zz,] <- tmp.fast$fitted.values
+	              rank.kernel <- tmp.fast$rank
+	              next
+	            }
+	          }
+	          P <- P.train
+	          if(basis=="additive" || basis=="glp") {
+	            if(is.null(tau))
+	              model.z.unique <- lm(y~P,weights=L)
+	            else
+	              suppressWarnings(model.z.unique <- rq(y~P,weights=L,tau=tau,method="fn"))
+	          } else {
+	            if(is.null(tau))
+	              model.z.unique <- lm(y~P-1,weights=L)
+	            else
+	              suppressWarnings(model.z.unique <- rq(y~P-1,weights=L,tau=tau,method="fn"))
+	          }
+	          if(model.return) model[[i]] <- model.z.unique
+	          P <- P.eval[zz,,drop=FALSE]
+	          tmp <- predict(model.z.unique,newdata=data.frame(as.matrix(P)),interval="confidence",se.fit=TRUE)
 
-          if(is.null(tau))
-            fit.spline[zz,] <- cbind(tmp[[1]],tmp[[2]])
-          else
-            fit.spline[zz,] <- cbind(tmp,(tmp[,3]-tmp[,1])/qnorm(0.975))
+	          if(is.null(tau))
+	            fit.spline[zz,] <- cbind(tmp[[1]],tmp[[2]])
+	          else
+	            fit.spline[zz,] <- cbind(tmp,(tmp[,3]-tmp[,1])/qnorm(0.975))
+	          rank.kernel <- if(is.null(tau)) model.z.unique$rank else NCOL(model.z.unique$x)
 
-          rm(tmp)
-        }
+	          rm(tmp)
+	        }
 
       }
     } else {
@@ -626,11 +744,13 @@ predictKernelSpline <- function(x,
 
     }
 
-    if(is.null(tau))
-      rank <- model.z.unique$rank ## same for all models
-    else
-      rank <- NCOL(model.z.unique$x) ## same for all models
-  }
+	    if(exists("rank.kernel") && !is.null(rank.kernel))
+	      rank <- rank.kernel
+	    else if(is.null(tau))
+	      rank <- model.z.unique$rank ## same for all models
+	    else
+	      rank <- NCOL(model.z.unique$x) ## same for all models
+	  }
 
   .crs_progress_status_clear(progress.status)
 
