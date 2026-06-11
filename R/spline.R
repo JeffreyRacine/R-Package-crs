@@ -2474,6 +2474,9 @@ cv.kernel.spline <- function(x,
         }
       }
 
+      use_noncat_cv_rows <- is.null(tau) && is.null(weights) && !use_ridge_now
+      htt.computed <- FALSE
+
       if(basis=="additive" || basis=="glp") {
         X <- cbind(1, P)
 
@@ -2490,23 +2493,49 @@ cv.kernel.spline <- function(x,
 
         ## Additive spline regression models have an intercept
         if(is.null(tau)) {
-          ls.fit <- .crs_weighted_ls_core(
-            X = X,
-            y = y,
-            weights = weights,
-            ridge.lambda = if(use_ridge_now) ridge.lambda else NULL,
-            rcond.min = if(use.gram.cv) gram.rcond.min else Inf,
-            allow.fallback = TRUE,
-            use.svd.fallback = use.svd.fallback
-          )
+          if(use_noncat_cv_rows) {
+            ls.fit <- .crs_weighted_ls_cv_rows(
+              X = X,
+              y = y,
+              weights = NULL,
+              rows = seq_len(n),
+              ridge.lambda = NULL,
+              rcond.min = if(use.gram.cv) gram.rcond.min else Inf,
+              allow.fallback = TRUE,
+              use.svd.fallback = use.svd.fallback
+            )
+          } else {
+            ls.fit <- .crs_weighted_ls_core(
+              X = X,
+              y = y,
+              weights = weights,
+              ridge.lambda = if(use_ridge_now) ridge.lambda else NULL,
+              rcond.min = if(use.gram.cv) gram.rcond.min else Inf,
+              allow.fallback = TRUE,
+              use.svd.fallback = use.svd.fallback
+            )
+          }
           gram.stats <- .crs_gram_stats_update(gram.stats, ls.fit)
 
-          if(is.null(ls.fit$coefficients)) return(cv.maxPenalty)
-          epsilon <- y - drop(X %*% ls.fit$coefficients)
+          if(use_noncat_cv_rows) {
+            if(is.null(ls.fit$residuals.rows)) return(cv.maxPenalty)
+            epsilon <- ls.fit$residuals.rows
+            htt <- ls.fit$hat.rows
+            htt.computed <- TRUE
+          } else {
+            if(is.null(ls.fit$coefficients)) return(cv.maxPenalty)
+            epsilon <- y - drop(X %*% ls.fit$coefficients)
+          }
 
           ## Check rank (only if not using ridge)
           if(!singular.ok && !use_ridge_now) {
-            fit.rank <- if(!is.null(ls.fit$qr)) ls.fit$qr$rank else ncol(X)
+            fit.rank <- if(!is.null(ls.fit$rank)) {
+              ls.fit$rank
+            } else if(!is.null(ls.fit$qr)) {
+              ls.fit$qr$rank
+            } else {
+              ncol(X)
+            }
             if(fit.rank < ncol(X)) {
               if(smooth.penalty) {
                 rank_deficit <- ncol(X) - fit.rank
@@ -2548,22 +2577,48 @@ cv.kernel.spline <- function(x,
         }
 
         if(is.null(tau)) {
-          ls.fit <- .crs_weighted_ls_core(
-            X = X,
-            y = y,
-            weights = weights,
-            ridge.lambda = if(use_ridge_now) ridge.lambda else NULL,
-            rcond.min = if(use.gram.cv) gram.rcond.min else Inf,
-            allow.fallback = TRUE,
-            use.svd.fallback = use.svd.fallback
-          )
+          if(use_noncat_cv_rows) {
+            ls.fit <- .crs_weighted_ls_cv_rows(
+              X = X,
+              y = y,
+              weights = NULL,
+              rows = seq_len(n),
+              ridge.lambda = NULL,
+              rcond.min = if(use.gram.cv) gram.rcond.min else Inf,
+              allow.fallback = TRUE,
+              use.svd.fallback = use.svd.fallback
+            )
+          } else {
+            ls.fit <- .crs_weighted_ls_core(
+              X = X,
+              y = y,
+              weights = weights,
+              ridge.lambda = if(use_ridge_now) ridge.lambda else NULL,
+              rcond.min = if(use.gram.cv) gram.rcond.min else Inf,
+              allow.fallback = TRUE,
+              use.svd.fallback = use.svd.fallback
+            )
+          }
           gram.stats <- .crs_gram_stats_update(gram.stats, ls.fit)
 
-          if(is.null(ls.fit$coefficients)) return(cv.maxPenalty)
-          epsilon <- y - drop(X %*% ls.fit$coefficients)
+          if(use_noncat_cv_rows) {
+            if(is.null(ls.fit$residuals.rows)) return(cv.maxPenalty)
+            epsilon <- ls.fit$residuals.rows
+            htt <- ls.fit$hat.rows
+            htt.computed <- TRUE
+          } else {
+            if(is.null(ls.fit$coefficients)) return(cv.maxPenalty)
+            epsilon <- y - drop(X %*% ls.fit$coefficients)
+          }
 
           if(!singular.ok && !use_ridge_now) {
-            fit.rank <- if(!is.null(ls.fit$qr)) ls.fit$qr$rank else ncol(X)
+            fit.rank <- if(!is.null(ls.fit$rank)) {
+              ls.fit$rank
+            } else if(!is.null(ls.fit$qr)) {
+              ls.fit$qr$rank
+            } else {
+              ncol(X)
+            }
             if(fit.rank < ncol(X)) {
               if(smooth.penalty) {
                 rank_deficit <- ncol(X) - fit.rank
@@ -2590,7 +2645,9 @@ cv.kernel.spline <- function(x,
         }
       }
 
-      htt <- hat(P)
+      if(!htt.computed) {
+        htt <- hat(P)
+      }
       htt <- pmin(htt, 1-.Machine$double.eps)
 
     } else {
