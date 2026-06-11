@@ -6,9 +6,15 @@
 \usage{
 crshat(object, ...)
 
-\method{crshat}{crs}(object, newdata = NULL, y = NULL,
-  output = c("matrix", "apply", "constraint"), deriv = 0,
-  deriv.index = 1, rcond.min = 1e-08, use.svd.fallback = TRUE, ...)
+\method{crshat}{crs}(object, 
+       newdata = NULL, 
+       y = NULL,
+       output = c("matrix", "apply", "constraint"), 
+       deriv = 0,
+       deriv.index = 1, 
+       rcond.min = 1e-08, 
+       use.svd.fallback = TRUE, 
+       ...)
 }
 \arguments{
   \item{object}{A fitted mean-regression object of class \code{"crs"}.}
