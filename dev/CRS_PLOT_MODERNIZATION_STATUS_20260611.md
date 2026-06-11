@@ -8,17 +8,19 @@ Live repo mutation: none.
 
 ## Candidate State
 
-This scratch branch contains an opt-in modern plot candidate. It does not
-change legacy defaults.
+This scratch branch contains the modern `plot.crs()` default candidate.
+`plot.crs()` now displays fitted function surfaces by default.
 
-Opt-in selector:
+Selector:
 
 - `plot.view = "fit"`
 
-Legacy defaults retained:
+Default behavior:
 
-- `plot.crs()` still enters the diagnostic path.
-- `plot.crs(mean = TRUE)` still enters the legacy fitted/mean path.
+- `plot.crs()` enters the fitted mean/quantile path.
+- The old lm-style diagnostic panel has been removed from `plot.crs()`.
+- `plot.crs(mean = TRUE)` remains accepted for compatibility and enters the
+  same fitted path.
 - `plot.crsiv()`, `plot.crsivderiv()`, and `plot.clsd()` still enter their
   legacy paths unless `plot.view = "fit"` is supplied.
 
@@ -29,17 +31,18 @@ Legacy defaults retained:
 - Object-fed IV derivative-object payloads for `crsivderiv`.
 - Object-fed CLSD density/distribution/derivative payloads.
 - Minimal CRS-owned plot donor helpers adapted from `np`.
-- Opt-in 1D CRS fitted/quantile route with asymptotic interval parity.
-- Opt-in 2D CRS point-estimate surface route for exactly two continuous
+- Default 1D CRS fitted/quantile route with asymptotic interval parity and
+  bootstrap mean intervals.
+- Default CRS derivative/gradient data and render route with asymptotic
+  intervals.
+- Default 2D CRS point-estimate surface route for exactly two continuous
   predictors.
 - Opt-in `crsiv`, `crsivderiv`, and `clsd` curve routes with `output="data"`.
 
 ## Fail-Closed Boundaries
 
-- Bootstrap intervals are not enabled through the opt-in CRS route yet.
+- Bootstrap derivative intervals are not enabled and fail closed.
 - 2D interval surfaces are not enabled yet.
-- Derivative CRS plots are not enabled through the modern regression payload
-  route yet.
 - Contradictory `persp.rgl=TRUE` and `renderer!="rgl"` errors.
 - Unsupported surface predictor shapes error through the payload builder.
 
@@ -53,6 +56,8 @@ Legacy defaults retained:
 - `2e0654c` - quantile fit plot parity proof.
 - `5001062` - fit interval plot parity proof.
 - `cc8e61b` - opt-in modern curve plot routes.
+- `83962cb` - switch `plot.crs()` default to fitted displays and remove the
+  diagnostic monolith.
 
 ## Installed Proof
 
@@ -67,6 +72,11 @@ Passed from the scratch-installed package:
 - `test-crsivderiv.R`
 - `test-clsd.R`
 - `test-crs.R`
+
+Additional default-switch proof:
+
+- `R CMD check --no-manual --no-build-vignettes` completed on the scratch
+  tarball after the default switch.
 
 Package check:
 
@@ -84,9 +94,10 @@ during model construction before plot code was reached. The additive analogue
 fit successfully and matched legacy surface data through the opt-in plot route.
 This is recorded as a non-plot observation, not as a plot-route regression.
 
-## Remaining Promotion Decision
+## Remaining Promotion Work
 
-The next high-risk decision is whether and when to switch the public
-`plot.crs()` default from diagnostics to fitted function display. That should
-be a separate tranche with documentation and NEWS updates because it changes
-user-facing behavior even though the opt-in route is now proven in scratch.
+- Live repo promotion still requires explicit approval.
+- NEWS/CHANGELOG language should call out the intentional `plot.crs()`
+  default change from diagnostics to fitted function display.
+- 2D interval surfaces and bootstrap derivative intervals remain future
+  fail-closed extension points.
