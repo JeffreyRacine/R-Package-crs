@@ -44,6 +44,15 @@
   optimizer progress no longer changes the starting-value geometry or
   fitted result.
 
+* Modernized CRS plot methods toward the current `np` plot interface.
+  `plot.crs()` now displays fitted mean/quantile functions by default,
+  accepts NP-style controls such as `errors`, `band`, `B`, `output`,
+  `data_overlay`, `data_rug`, `perspective`, `renderer`, and `view`, and
+  supports transparent viridis base surfaces, base rotation, rgl surface
+  extras, data overlays, rugs, and fitted-surface asymptotic/inid-bootstrap
+  intervals. Legacy CRS plot switches such as `ci`, `mean`, `plot.rug`,
+  and `plot.errors.*` now fail fast with NP-interface guidance.
+
 # crs 0.15-44
 
 * Added the final package-author native NOMAD C API

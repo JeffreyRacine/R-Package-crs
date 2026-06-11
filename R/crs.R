@@ -1420,34 +1420,29 @@ summary.crs <- function(object,
   list(center = center, boot.mat = boot.mat)
 }
 
-.crs_plot_rgl_surface_colors <- function(z, num.colors = 1000L) {
-  colorlut <- topo.colors(num.colors)
-  mid <- max(1L, min(num.colors, ceiling(num.colors / 2)))
-  finite.z <- z[is.finite(z)]
-
-  if (!length(finite.z))
-    return(array(colorlut[mid], dim = dim(z)))
-
-  zmin <- min(finite.z)
-  zmax <- max(finite.z)
-
-  if (!is.finite(zmin) || !is.finite(zmax) || zmax <= zmin)
-    return(array(colorlut[mid], dim = dim(z)))
-
-  idx <- floor((num.colors - 1) * (z - zmin) / (zmax - zmin)) + 1L
-  idx[!is.finite(idx)] <- mid
-  idx <- pmax(1L, pmin(num.colors, idx))
-  colorlut[idx]
-}
-
 .crs_plot_render_surface_rgl <- function(x,
                                          y,
                                          z,
+                                         zlim = NULL,
                                          xlab,
                                          ylab,
                                          zlab,
                                          main,
-                                         col,
+                                         col = NULL,
+                                         border = .crs_plot_color("surface_border"),
+                                         theta = 45,
+                                         phi = 30,
+                                         par3d.args = list(),
+                                         view3d.args = list(),
+                                         persp3d.args = list(),
+                                         grid3d.args = list(),
+                                         widget.args = list(),
+                                         draw.extras = NULL,
+                                         data_overlay = FALSE,
+                                         data_rug = FALSE,
+                                         overlay_x1 = NULL,
+                                         overlay_x2 = NULL,
+                                         overlay_y = NULL,
                                          display.warnings = TRUE) {
   old.opts <- options(
     rgl.useNULL = TRUE,
@@ -1497,21 +1492,63 @@ summary.crs <- function(object,
     opened.dev <- as.integer(opened[1L])
     on.exit(cleanup(), add = TRUE)
 
-    rgl::par3d(windowRect=c(900,100,900+640,100+640))
-    rgl::view3d(theta = 0, phi = -70, fov = 80)
+    par3d.call <- .crs_plot_merge_user_args(
+      list(windowRect = c(900, 100, 900 + 640, 100 + 640)),
+      par3d.args
+    )
+    do.call(rgl::par3d, par3d.call)
 
-    rgl::persp3d(x=x,y=y,z=z,
-                 xlab=xlab,ylab=ylab,zlab=zlab,
-                 ticktype="detailed",
-                 border="red",
-                 color=col,
-                 alpha=.7,
-                 back="lines",
-                 main=main)
+    view3d.call <- .crs_plot_merge_user_args(
+      list(theta = theta, phi = phi, fov = 80),
+      view3d.args
+    )
+    do.call(rgl::view3d, view3d.call)
 
-    rgl::grid3d(c("x", "y+", "z"))
+    persp3d.call <- .crs_plot_merge_user_args(
+      list(x = x, y = y, z = z,
+           zlim = zlim,
+           xlab = xlab, ylab = ylab, zlab = zlab,
+           ticktype = "detailed",
+           border = border,
+           color = .crs_plot_rgl_surface_colors(z = z, col = col),
+           alpha = 0.6,
+           back = "lines",
+           main = main),
+      persp3d.args
+    )
+    do.call(rgl::persp3d, persp3d.call)
+
+    grid.side <- c("x", "y+", "z")
+    if (!is.null(grid3d.args$side)) {
+      grid.side <- grid3d.args$side
+      grid3d.args$side <- NULL
+    }
+    do.call(rgl::grid3d, c(list(grid.side), grid3d.args))
+
+    if (!is.null(draw.extras)) {
+      draw.extras()
+    }
+
+    if (isTRUE(data_overlay) && !is.null(overlay_x1) &&
+        !is.null(overlay_x2) && !is.null(overlay_y)) {
+      ok <- is.finite(overlay_x1) & is.finite(overlay_x2) &
+        is.finite(overlay_y)
+      if (any(ok)) {
+        rgl::points3d(overlay_x1[ok], overlay_x2[ok], overlay_y[ok],
+                      color = .crs_plot_color("data_overlay"),
+                      alpha = 0.35, size = 2)
+      }
+    }
+
+    if (isTRUE(data_rug) && !is.null(overlay_x1) && !is.null(overlay_x2) &&
+        !is.null(zlim)) {
+      .crs_plot_draw_floor_rug_rgl(overlay_x1, overlay_x2, zlim)
+    }
 
     widget <- rgl::rglwidget(x = rgl::scene3d())
+    if (length(widget.args))
+      widget <- do.call(rgl::rglwidget, c(list(x = rgl::scene3d()),
+                                         widget.args))
     print(widget)
     invisible(widget)
   }, error = function(e) {

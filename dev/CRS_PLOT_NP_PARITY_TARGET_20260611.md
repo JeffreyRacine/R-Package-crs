@@ -44,10 +44,14 @@ than local-kernel bandwidth objects.
 - CRS bootstrap intervals currently implement only the existing resampling
   route; NP bootstrap choices such as `wild`, `fixed`, and `geom` must either
   be implemented or rejected explicitly by route.
-- CRS surface intervals and surface gradients are not implemented in the
-  current scratch route.
+- CRS fitted surface intervals now work for asymptotic and inid-bootstrap
+  mean/quantile surfaces, including base and `rgl` renderers. Surface gradients
+  remain unsupported and must fail closed until a CRS evaluator route exists.
 - CRS IV and CLSD routes still require full NP-argument cleanup after the main
   `plot.crs()` adapter is stabilized.
+- `np_grid_control(xtrim=...)` parity should be revisited separately: the
+  modern constructor follows endpoint-quantile validation, while the inherited
+  NP regression plot engines still use scalar symmetric trimming internally.
 
 ## Acceptance Gates
 
@@ -60,3 +64,5 @@ than local-kernel bandwidth objects.
   remediation pointing to the NP argument.
 - Plot parity sentinels must cover mean, quantile, gradients, 2D surface,
   bootstrap intervals, IV structural function, IV derivative, and CLSD.
+- Surface sentinels must include `data_rug`, `data_overlay`, base `persp`,
+  `renderer="rgl"`, asymptotic intervals, and bootstrap intervals.

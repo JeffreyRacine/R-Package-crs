@@ -104,6 +104,67 @@ test_that("plot route defaults render without hidden legacy bridge arguments", {
   expect_silent(crs_plot_pdf(plot(fitq, neval = 6)))
 })
 
+test_that("plot.crs consumes NP-style data_rug and uses overlay data range", {
+  set.seed(105)
+  d <- data.frame(x = runif(34))
+  d$y <- sin(2 * pi * d$x) + rnorm(34, sd = 0.05)
+  model <- crs(
+    y ~ x,
+    data = d,
+    cv = "none",
+    degree = 2,
+    segments = 1,
+    display.warnings = FALSE,
+    display.nomad.progress = FALSE
+  )
+  model$y[1L] <- 100
+
+  expect_warning(
+    crs_plot_pdf(plot(model, neval = 7, data_rug = TRUE)),
+    NA
+  )
+  overlay_range <- getFromNamespace(".crs_plot_overlay_range", "crs")
+  expect_equal(overlay_range(c(-1, 1), model$y),
+               c(min(-1, min(model$y)), max(model$y)))
+})
+
+test_that("plot.crs surface zlim follows NP-style data overlay range", {
+  set.seed(106)
+  d <- data.frame(x1 = runif(36), x2 = runif(36))
+  d$y <- sin(2 * pi * d$x1) + d$x2 + rnorm(36, sd = 0.05)
+  model <- crs(
+    y ~ x1 + x2,
+    data = d,
+    cv = "none",
+    kernel = FALSE,
+    basis = "tensor",
+    degree = c(2, 2),
+    segments = c(1, 1),
+    display.warnings = FALSE,
+    display.nomad.progress = FALSE
+  )
+  model$y[1L] <- 100
+
+  expect_warning(
+    crs_plot_pdf(plot(model, neval = 5, perspective = TRUE,
+                      data_rug = TRUE)),
+    NA
+  )
+  payload <- getFromNamespace(".crs_plot_payload_regression", "crs")(
+    object = model,
+    deriv = 0L,
+    ci = FALSE,
+    num.eval = 5L,
+    xtrim = 0,
+    perspective = TRUE,
+    legacy = FALSE,
+    display.nomad.progress = FALSE
+  )
+  overlay_range <- getFromNamespace(".crs_plot_overlay_range", "crs")
+  expect_equal(overlay_range(range(payload$z, finite = TRUE), model$y)[2L],
+               100)
+})
+
 test_that("curve plot routes keep their documented NP-compatible controls", {
   set.seed(104)
   n <- 32

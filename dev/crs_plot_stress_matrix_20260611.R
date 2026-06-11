@@ -53,7 +53,11 @@ run_pdf <- function(expr) {
   force(expr)
 }
 
-run_case <- function(name, expected = c("ok", "error"), pattern = "", expr) {
+run_case <- function(name,
+                     expected = c("ok", "error"),
+                     pattern = "",
+                     max_warnings = Inf,
+                     expr) {
   expected <- match.arg(expected)
   warn_log <- character()
   err <- ""
@@ -76,8 +80,9 @@ run_case <- function(name, expected = c("ok", "error"), pattern = "", expr) {
   )
   elapsed <- proc.time()[["elapsed"]] - t0
   nonfinite <- if (!is.null(value)) isTRUE(has_bad_numeric(value)) else FALSE
+  warn_ok <- length(warn_log) <= max_warnings
   pass <- if (identical(expected, "ok")) {
-    identical(status, "ok") && !isTRUE(nonfinite)
+    identical(status, "ok") && !isTRUE(nonfinite) && isTRUE(warn_ok)
   } else {
     identical(status, "error") &&
       (!nzchar(pattern) || grepl(pattern, err, fixed = FALSE))
@@ -91,6 +96,7 @@ run_case <- function(name, expected = c("ok", "error"), pattern = "", expr) {
     status = status,
     pass = isTRUE(pass),
     warn_count = length(warn_log),
+    max_warnings = max_warnings,
     nonfinite = isTRUE(nonfinite),
     elapsed_sec = elapsed,
     error = err,
@@ -238,13 +244,38 @@ cases <- list(
   quote(run_case("crs_mean_render", "ok",
                  expr = run_pdf(plot(fit_1d, neval = neval,
                                      data_overlay = TRUE, main = "CRS fit")))),
+  quote(run_case("crs_mean_data_rug_render_clean", "ok",
+                 max_warnings = 0L,
+                 expr = run_pdf(plot(fit_1d, neval = neval,
+                                     data_overlay = TRUE,
+                                     data_rug = TRUE)))),
   quote(run_case("crs_surface_data", "ok",
                  expr = plot(fit_2d, output = "data", perspective = TRUE,
                              renderer = "base", neval = 5))),
   quote(run_case("crs_surface_render", "ok",
                  expr = run_pdf(plot(fit_2d, perspective = TRUE,
                                      renderer = "base", neval = 5,
-                                     theta = 30, phi = 25)))),
+                                     theta = 30, phi = 25,
+                                     view = "fixed")))),
+  quote(run_case("crs_surface_data_rug_render_clean", "ok",
+                 max_warnings = 0L,
+                 expr = run_pdf(plot(fit_2d, perspective = TRUE,
+                                     renderer = "base", neval = 5,
+                                     data_overlay = TRUE,
+                                     data_rug = TRUE,
+                                     view = "fixed")))),
+  quote(run_case("crs_surface_bootstrap_data", "ok",
+                 expr = plot(fit_2d, output = "data", perspective = TRUE,
+                             errors = "bootstrap", bootstrap = "inid",
+                             B = B, neval = 4))),
+  quote(run_case("crs_surface_bootstrap_render", "ok",
+                 expr = run_pdf(plot(fit_2d, perspective = TRUE,
+                                     renderer = "base",
+                                     errors = "bootstrap",
+                                     bootstrap = "inid", B = B,
+                                     neval = 4, data_overlay = TRUE,
+                                     data_rug = TRUE,
+                                     view = "fixed")))),
   quote(run_case("crs_quantile_data", "ok",
                  expr = plot(fit_q, output = "data", neval = neval))),
   quote(run_case("crs_quantile_gradient", "ok",
@@ -294,10 +325,10 @@ cases <- list(
                  expr = plot(fit_1d, output = "data", gradients = TRUE,
                              errors = "bootstrap", bootstrap = "inid",
                              B = B))),
-  quote(run_case("crs_reject_surface_intervals", "error",
-                 "surface route",
+  quote(run_case("crs_surface_asymptotic_data", "ok",
                  expr = plot(fit_2d, output = "data", perspective = TRUE,
-                             errors = "asymptotic"))),
+                             errors = "asymptotic", band = "pmzsd",
+                             neval = 4))),
   quote(run_case("crs_reject_unknown_arg", "error",
                  "unused plot argument: foo",
                  expr = plot(fit_1d, output = "data",

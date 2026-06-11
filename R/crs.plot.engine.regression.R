@@ -39,7 +39,12 @@
     stop("only perspective CRS payloads can be converted to surface data")
 
   xnames <- names(payload$data)[seq_len(2L)]
-  out <- data.frame(payload$data[, xnames, drop = FALSE], payload$z)
+  out <- data.frame(payload$data[, xnames, drop = FALSE],
+                    fit = as.vector(payload$z))
+  if (isTRUE(payload$ci) && all(c("lwr", "upr") %in% names(payload$data))) {
+    out$lwr <- payload$data$lwr
+    out$upr <- payload$data$upr
+  }
   list(out)
 }
 
@@ -61,8 +66,11 @@
                                            ci = FALSE,
                                            common.scale = TRUE,
                                            data_overlay = TRUE,
+                                           data_rug = FALSE,
                                            ...) {
   ylim <- .crs_plot_slice_ylim(slices, ci = ci, common.scale = common.scale)
+  if (isTRUE(data_overlay) && identical(as.integer(deriv), 0L))
+    ylim <- .crs_plot_overlay_range(ylim, object$y)
   if (!is.null(object$num.z) || object$num.x > 1L)
     graphics::par(mfrow = grDevices::n2mfrow(length(slices)))
 
@@ -82,7 +90,11 @@
       paste("Conditional Quantile (tau = ", format(object$tau), ")", sep = "")
     }
     local.ylim <- if (is.null(ylim)) {
-      range(as.numeric(unlist(slice[, -1L, drop = FALSE])), finite = TRUE)
+      local <- range(as.numeric(unlist(slice[, -1L, drop = FALSE])),
+                     finite = TRUE)
+      if (isTRUE(data_overlay) && identical(as.integer(deriv), 0L))
+        local <- .crs_plot_overlay_range(local, object$y)
+      local
     } else {
       ylim
     }
@@ -95,13 +107,11 @@
 
     if (isTRUE(data_overlay) && identical(as.integer(deriv), 0L) &&
         nm %in% names(object$xz)) {
-      yy <- object$y
       xx <- object$xz[[nm]]
-      if (!is.factor(xx)) {
-        graphics::points(xx, yy, col = .crs_plot_color("data_overlay", 0.25),
-                         pch = 16, cex = 0.6)
-      }
+      .crs_plot_overlay_points_1d(xx, object$y)
     }
+    if (isTRUE(data_rug) && nm %in% names(object$xz))
+      .crs_plot_draw_rug_1d(object$xz[[nm]])
 
     if (isTRUE(ci) && all(c("lwr", "upr") %in% names(slice))) {
       graphics::lines(x, slice$lwr, col = .crs_plot_color("interval"),
@@ -395,66 +405,229 @@
   slices
 }
 
+.crs_plot_surface_intervals <- function(object,
+                                        payload,
+                                        plot.errors.method = "none",
+                                        plot.errors.type = "standard",
+                                        plot.errors.alpha = 0.05,
+                                        plot.errors.boot.num = 99L,
+                                        display.nomad.progress = FALSE,
+                                        display.warnings = TRUE) {
+  if (identical(plot.errors.method, "none")) {
+    return(list(plot.errors = FALSE,
+                lerr = NULL, herr = NULL,
+                lerr.all = NULL, herr.all = NULL,
+                data = payload$data))
+  }
+
+  nx <- length(payload$x)
+  ny <- length(payload$y)
+  ngrid <- nx * ny
+  if (!identical(NROW(payload$data), ngrid))
+    stop("surface payload/data dimension mismatch", call. = FALSE)
+
+  if (identical(plot.errors.method, "asymptotic")) {
+    frame <- .crs_plot_prediction_frame(
+      object = object,
+      newdata = payload$data[, names(object$xz), drop = FALSE],
+      deriv = 0L,
+      ci = TRUE
+    )
+    if (!all(c("lwr", "upr") %in% names(frame)))
+      stop("asymptotic surface intervals are unavailable for this CRS object",
+           call. = FALSE)
+    return(list(plot.errors = TRUE,
+                lerr = matrix(frame$lwr, nx, ny),
+                herr = matrix(frame$upr, nx, ny),
+                lerr.all = NULL,
+                herr.all = NULL,
+                data = frame))
+  }
+
+  boot <- .crs.bootstrap.matrix(
+    object = object,
+    newdata = payload$data[, names(object$xz), drop = FALSE],
+    deriv = 0L,
+    deriv.index = 1L,
+    boot.num = plot.errors.boot.num,
+    display.warnings = display.warnings,
+    display.nomad.progress = display.nomad.progress,
+    progress.target = "surface"
+  )
+  bounds <- .crs.bootstrap.bounds(
+    boot$boot.mat,
+    alpha = plot.errors.alpha,
+    band.type = plot.errors.type,
+    center = boot$center
+  )
+
+  frame <- payload$data
+  if (identical(plot.errors.type, "all")) {
+    frame$lwr <- bounds$pointwise[, 1L]
+    frame$upr <- bounds$pointwise[, 2L]
+    frame$lwr.sim <- bounds$simultaneous[, 1L]
+    frame$upr.sim <- bounds$simultaneous[, 2L]
+    frame$lwr.bonf <- bounds$bonferroni[, 1L]
+    frame$upr.bonf <- bounds$bonferroni[, 2L]
+    lerr.all <- lapply(bounds, function(x) matrix(x[, 1L], nx, ny))
+    herr.all <- lapply(bounds, function(x) matrix(x[, 2L], nx, ny))
+    return(list(plot.errors = TRUE,
+                lerr = lerr.all$pointwise,
+                herr = herr.all$pointwise,
+                lerr.all = lerr.all,
+                herr.all = herr.all,
+                data = frame))
+  }
+
+  frame$lwr <- bounds[, 1L]
+  frame$upr <- bounds[, 2L]
+  list(plot.errors = TRUE,
+       lerr = matrix(bounds[, 1L], nx, ny),
+       herr = matrix(bounds[, 2L], nx, ny),
+       lerr.all = NULL,
+       herr.all = NULL,
+       data = frame)
+}
+
 .crs_plot_render_regression_surface <- function(object,
                                                 payload,
                                                 renderer = c("base", "rgl"),
                                                 data_overlay = TRUE,
+                                                data_rug = FALSE,
+                                                plot.errors = FALSE,
+                                                plot.errors.type = "standard",
+                                                lerr = NULL,
+                                                herr = NULL,
+                                                lerr.all = NULL,
+                                                herr.all = NULL,
                                                 ...) {
   renderer <- match.arg(renderer)
+  zlim <- if (isTRUE(plot.errors)) {
+    if (identical(plot.errors.type, "all") &&
+        !is.null(lerr.all) && !is.null(herr.all)) {
+      range(c(unlist(lerr.all, use.names = FALSE),
+              unlist(herr.all, use.names = FALSE)),
+            finite = TRUE)
+    } else {
+      range(c(lerr, herr), finite = TRUE)
+    }
+  } else {
+    range(payload$z, finite = TRUE)
+  }
+  zlim <- .crs_plot_overlay_range(zlim,
+                                  if (isTRUE(data_overlay)) object$y else NULL)
   zlab <- if (is.null(object$tau)) {
     "Conditional Mean"
   } else {
     paste("Conditional Quantile (tau = ", format(object$tau), ")", sep = "")
   }
   main <- zlab
+  dots <- list(...)
+  theta <- .crs_plot_scalar_default(dots$theta, 45)
+  phi <- .crs_plot_scalar_default(dots$phi, 30)
+  view <- .crs_plot_scalar_default(dots$view, "rotate")
+  view <- .crs_plot_scalar_match(view, c("rotate", "fixed"), "view")
+  rotate <- identical(view, "rotate")
 
   if (identical(renderer, "rgl")) {
-    col <- .crs_plot_rgl_surface_colors(payload$z)
     return(.crs_plot_render_surface_rgl(
       x = payload$x,
       y = payload$y,
       z = payload$z,
+      zlim = zlim,
       xlab = names(object$xz)[1L],
       ylab = names(object$xz)[2L],
       zlab = "Y",
       main = main,
-      col = col
+      theta = theta,
+      phi = phi,
+      border = .crs_plot_color("surface_border"),
+      par3d.args = .crs_plot_user_args(dots, "rgl.par3d"),
+      view3d.args = .crs_plot_user_args(dots, "rgl.view3d"),
+      persp3d.args = .crs_plot_user_args(dots, "rgl.persp3d"),
+      grid3d.args = .crs_plot_user_args(dots, "rgl.grid3d"),
+      widget.args = .crs_plot_user_args(dots, "rgl.widget"),
+      draw.extras = function() {
+        if (isTRUE(plot.errors)) {
+          .crs_plot_error_surfaces_rgl(
+            x = payload$x,
+            y = payload$y,
+            plot.errors.type = plot.errors.type,
+            lerr = lerr,
+            herr = herr,
+            lerr.all = lerr.all,
+            herr.all = herr.all
+          )
+        }
+      },
+      data_overlay = data_overlay,
+      data_rug = data_rug,
+      overlay_x1 = object$xz[, 1L],
+      overlay_x2 = object$xz[, 2L],
+      overlay_y = object$y
     ))
   }
 
-  col <- matrix(.crs_plot_surface_colors(payload$z), nrow = NROW(payload$z))
-  persp.args <- .crs_plot_merge_user_args(
-    list(x = payload$x,
-         y = payload$y,
-         z = payload$z,
-         xlab = names(object$xz)[1L],
-         ylab = names(object$xz)[2L],
-         zlab = "Y",
-         main = main,
-         col = col,
-         border = .crs_plot_color("surface_border"),
-         ticktype = "detailed",
-         theta = 45,
-         phi = 30),
-    .crs_plot_user_args(list(...), "persp")
+  persp.col <- grDevices::adjustcolor(
+    .crs_plot_persp_surface_colors(payload$z,
+                                   col = .crs_plot_user_args(dots, "persp")$col),
+    alpha.f = 0.5
   )
-  persp.mat <- do.call(graphics::persp, persp.args)
+  dtheta <- 5.625
+  frame.theta <- (0:((360 %/% dtheta - 1L) * rotate)) * dtheta + theta
+  persp.mat <- NULL
 
-  if (isTRUE(data_overlay)) {
-    dots <- list(...)
-    points.args <- .crs_plot_merge_user_args(
-      list(x = object$xz[, 1L],
-           y = object$xz[, 2L],
-           z = object$y,
-           pmat = persp.mat,
-           col = .crs_plot_color("data_overlay", 0.35),
-           pch = 16,
-           cex = 0.5),
-      .crs_plot_user_args(dots, "points")
+  for (frame.idx in seq_along(frame.theta)) {
+    persp.args <- .crs_plot_merge_user_args(
+      list(x = payload$x,
+           y = payload$y,
+           z = payload$z,
+           zlim = zlim,
+           xlab = names(object$xz)[1L],
+           ylab = names(object$xz)[2L],
+           zlab = "Y",
+           main = main,
+           col = persp.col,
+           border = .crs_plot_color("surface_border"),
+           ticktype = "detailed",
+           theta = frame.theta[[frame.idx]],
+           phi = phi),
+      .crs_plot_user_args(dots, "persp")
     )
-    xy <- do.call(grDevices::trans3d, points.args[c("x", "y", "z", "pmat")])
-    points.args <- points.args[setdiff(names(points.args), c("x", "y", "z", "pmat"))]
-    do.call(graphics::points, c(list(x = xy$x, y = xy$y), points.args))
+    persp.args$col <- persp.col
+    persp.mat <- do.call(graphics::persp, persp.args)
+
+    .crs_plot_draw_box_grid_persp(
+      xlim = range(payload$x, finite = TRUE),
+      ylim = range(payload$y, finite = TRUE),
+      zlim = zlim,
+      persp.mat = persp.mat
+    )
+    if (isTRUE(data_rug))
+      .crs_plot_draw_floor_rug_persp(object$xz[, 1L], object$xz[, 2L],
+                                     zlim = zlim, persp.mat = persp.mat)
+    if (isTRUE(plot.errors))
+      .crs_plot_draw_error_wireframes_persp(
+        x = payload$x,
+        y = payload$y,
+        persp.mat = persp.mat,
+        plot.errors.type = plot.errors.type,
+        lerr = lerr,
+        herr = herr,
+        lerr.all = lerr.all,
+        herr.all = herr.all
+      )
+    if (isTRUE(data_overlay)) {
+      points.args <- .crs_plot_merge_user_args(
+        list(x1 = object$xz[, 1L],
+             x2 = object$xz[, 2L],
+             y = object$y,
+             persp.mat = persp.mat),
+        .crs_plot_user_args(dots, "points")
+      )
+      do.call(.crs_plot_overlay_points_persp, points.args)
+    }
+    if (isTRUE(rotate)) Sys.sleep(0.24)
   }
 
   invisible(persp.mat)
@@ -479,6 +652,7 @@
   xq <- .crs_plot_scalar_default(dots$xq, 0.5)
   common.scale <- isTRUE(.crs_plot_scalar_default(dots$common.scale, TRUE))
   data_overlay <- isTRUE(.crs_plot_scalar_default(dots$plot.data.overlay, TRUE))
+  data_rug <- isTRUE(.crs_plot_scalar_default(dots$plot.rug, FALSE))
   perspective <- isTRUE(.crs_plot_scalar_default(dots$perspective, FALSE))
   if (isTRUE(perspective))
     stop("modern 2D regression plot route is not implemented yet",
@@ -541,6 +715,8 @@
     on.exit(graphics::par(oldpar), add = TRUE)
     render.dots <- dots[setdiff(names(dots),
                                 c("plot.behavior", "plot.data.overlay",
+                                  "plot.rug", "plot.par.mfrow",
+                                  "plot.bxp", "plot.bxp.out",
                                   "num.eval", "xtrim", "xq", "ci",
                                   "common.scale", "deriv",
                                   "plot.errors.method", "plot.errors.type",
@@ -554,7 +730,8 @@
                    deriv = deriv,
                    ci = ci,
                    common.scale = common.scale,
-                   data_overlay = data_overlay),
+                   data_overlay = data_overlay,
+                   data_rug = data_rug),
               render.dots))
   }
 
@@ -576,14 +753,25 @@
     "plot"
   }
   ci <- isTRUE(.crs_plot_scalar_default(dots$ci, FALSE))
-  if (isTRUE(ci))
-    stop("modern 2D regression plot route does not yet support intervals",
-         call. = FALSE)
   num.eval <- as.integer(.crs_plot_scalar_default(dots$num.eval, 100L))
   xtrim <- .crs_plot_scalar_default(dots$xtrim, 0)
   renderer <- .crs_plot_scalar_default(dots$renderer, "base")
   renderer <- match.arg(renderer, c("base", "rgl"))
   data_overlay <- isTRUE(.crs_plot_scalar_default(dots$plot.data.overlay, TRUE))
+  data_rug <- isTRUE(.crs_plot_scalar_default(dots$plot.rug, FALSE))
+  plot.errors.method <- .crs_plot_scalar_default(dots$plot.errors.method,
+                                                 "none")
+  plot.errors.type <- .crs_plot_scalar_default(dots$plot.errors.type,
+                                               "standard")
+  plot.errors.alpha <- .crs_plot_scalar_default(dots$plot.errors.alpha, 0.05)
+  plot.errors.boot.num <- as.integer(.crs_plot_scalar_default(
+    dots$plot.errors.boot.num, 99L
+  ))
+  display.nomad.progress <- isTRUE(.crs_plot_scalar_default(
+    dots$display.nomad.progress, FALSE
+  ))
+  display.warnings <- isTRUE(.crs_plot_scalar_default(dots$display.warnings,
+                                                      TRUE))
 
   payload <- .crs_plot_payload_regression(object = object,
                                           deriv = 0L,
@@ -593,18 +781,43 @@
                                           perspective = TRUE,
                                           legacy = FALSE,
                                           display.nomad.progress = FALSE)
+  intervals <- .crs_plot_surface_intervals(
+    object = object,
+    payload = payload,
+    plot.errors.method = plot.errors.method,
+    plot.errors.type = plot.errors.type,
+    plot.errors.alpha = plot.errors.alpha,
+    plot.errors.boot.num = plot.errors.boot.num,
+    display.nomad.progress = display.nomad.progress,
+    display.warnings = display.warnings
+  )
+  payload$data <- intervals$data
+  payload$ci <- isTRUE(intervals$plot.errors)
   surface <- .crs_plot_payload_to_legacy_surface(payload)
 
   if (!identical(plot.behavior, "data")) {
     render.dots <- dots[setdiff(names(dots),
                                 c("plot.behavior", "plot.data.overlay",
+                                  "plot.rug", "plot.par.mfrow",
+                                  "plot.bxp", "plot.bxp.out",
                                   "num.eval", "xtrim", "ci", "perspective",
-                                  "renderer"))]
+                                  "renderer", "plot.errors.method",
+                                  "plot.errors.type", "plot.errors.alpha",
+                                  "plot.errors.boot.num",
+                                  "display.nomad.progress",
+                                  "display.warnings"))]
     do.call(.crs_plot_render_regression_surface,
             c(list(object = object,
                    payload = payload,
                    renderer = renderer,
-                   data_overlay = data_overlay),
+                   data_overlay = data_overlay,
+                   data_rug = data_rug,
+                   plot.errors = intervals$plot.errors,
+                   plot.errors.type = plot.errors.type,
+                   lerr = intervals$lerr,
+                   herr = intervals$herr,
+                   lerr.all = intervals$lerr.all,
+                   herr.all = intervals$herr.all),
               render.dots))
   }
 
@@ -717,9 +930,6 @@
          call. = FALSE)
 
   if (isTRUE(surface.request)) {
-    if (isTRUE(ci))
-      stop("plot.crs surface route currently supports point estimates only",
-           call. = FALSE)
     bridge$renderer <- renderer
     return(do.call(.crs_plot_regression_surface_shadow,
                    c(list(object = object, .plot_dots_call = raw.dots),

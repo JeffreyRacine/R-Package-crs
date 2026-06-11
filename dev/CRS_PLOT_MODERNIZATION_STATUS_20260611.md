@@ -2,9 +2,10 @@
 
 Date: 2026-06-11
 
-Branch: `codex/crs-plot-modernization-scratch`
+Branch: local `crs` development tree
 
-Live repo mutation: none.
+Live repo mutation: yes. This note records the repair tranche after the
+premature plot promotion exposed public argument and surface-rendering gaps.
 
 ## Candidate State
 
@@ -40,16 +41,20 @@ Default behavior:
   bootstrap mean intervals.
 - Default CRS derivative/gradient data and render route with asymptotic
   intervals.
-- Default 2D CRS point-estimate surface route for exactly two continuous
-  predictors.
+- Default 2D CRS surface route for exactly two continuous predictors, including
+  point estimates, asymptotic intervals, and inid-bootstrap intervals.
+- NP-shaped surface rendering helpers for viridis transparent base `persp`,
+  base rotation via `view`, floor rugs, data overlays, interval wireframes,
+  and corresponding `rgl` extras.
 - Direct `crsiv`, `crsivderiv`, and `clsd` curve routes with `output="data"`.
 
 ## Fail-Closed Boundaries
 
 - Bootstrap derivative intervals are not enabled and fail closed.
-- 2D interval surfaces are not enabled yet.
-- Contradictory `perspective = TRUE, renderer = "rgl"` and `renderer!="rgl"` errors.
+- Unsupported bootstrap methods (`wild`, `fixed`, `geom`) fail closed in CRS
+  until implemented; inid bootstrap is enabled.
 - Unsupported surface predictor shapes error through the payload builder.
+- Surface gradients are not enabled.
 
 ## Checkpoints
 
@@ -125,10 +130,37 @@ during model construction before plot code was reached. The additive analogue
 fit successfully and matched legacy surface data through the opt-in plot route.
 This is recorded as a non-plot observation, not as a plot-route regression.
 
-## Remaining Promotion Work
+## 2026-06-11 Repair Tranche
 
-- Live repo promotion still requires explicit approval.
+The user contradicted the earlier green claim with `plot(model,
+data_rug=TRUE)` and surface `errors="bootstrap"` examples. The repair replaced
+the thin CRS surface renderer with NP-shaped helpers and added direct public
+stress cases for:
+
+- 1D mean render with `data_rug=TRUE` and zero argument-leak warnings.
+- 2D base surface render with `data_rug=TRUE`.
+- 2D base/rgl surface support for data overlays and floor rugs.
+- 2D surface `errors="asymptotic"` data output.
+- 2D surface `errors="bootstrap", bootstrap="inid"` data and render output.
+
+Latest scratch proof:
+
+- Isolated install:
+  `/Users/jracine/Development/tmp/crs_plot_np_parity_repair_20260611/Rlib`
+- Focused plot tests:
+  `plot-public-contract|plot-regression-shadow|plot-rgl|plot-helpers|plot-payload`
+  passed.
+- Expanded stress:
+  `/Users/jracine/Development/tmp/crs_plot_np_parity_repair_20260611/stress_np_parity_004`
+  passed.
+- Full installed `testthat` suite passed. New plot-surface bootstrap tests
+  emit expected tiny-sample boundary-knot warnings from bootstrap refits.
+
+Remaining boundaries:
+
 - NEWS/CHANGELOG language should call out the intentional `plot.crs()`
   default change from diagnostics to fitted function display.
-- 2D interval surfaces and bootstrap derivative intervals remain future
+- Bootstrap derivative intervals and surface gradients remain future
   fail-closed extension points.
+- The `np_grid_control(xtrim=...)` endpoint-vector versus scalar-regression
+  trimming mismatch should be handled in a separate focused tranche if needed.

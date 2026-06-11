@@ -108,6 +108,8 @@ crs_render_control <- function(...) {
     interval_context = "#D55E00",
     data_overlay = "#000000",
     support = "#999999",
+    support_floor = "#1F4E79",
+    support_grid = "#D0D0D0",
     surface_border = "#3A3A3A",
     context_wire = "#D55E00",
     context_border = "#555555",
@@ -134,20 +136,74 @@ crs_render_control <- function(...) {
   grDevices::adjustcolor(pal[idx], alpha.f = alpha)
 }
 
+.crs_plot_persp_surface_colors <- function(z, col = NULL,
+                                           num.colors = 1000L) {
+  if (!is.null(col)) return(col)
+  z <- as.matrix(z)
+  if (nrow(z) < 2L || ncol(z) < 2L)
+    return(.crs_plot_color("primary"))
+  z.facet <- (z[-1L, -1L, drop = FALSE] +
+                z[-nrow(z), -1L, drop = FALSE] +
+                z[-1L, -ncol(z), drop = FALSE] +
+                z[-nrow(z), -ncol(z), drop = FALSE]) / 4
+  matrix(.crs_plot_surface_colors(z.facet,
+                                  num.colors = num.colors,
+                                  alpha = 1),
+         nrow = nrow(z) - 1L,
+         ncol = ncol(z) - 1L)
+}
+
+.crs_plot_rgl_surface_colors <- function(z, col = NULL, num.colors = 1000L) {
+  if (!is.null(col)) return(col)
+  z <- as.matrix(z)
+  colorlut <- grDevices::hcl.colors(as.integer(num.colors),
+                                    palette = "viridis")
+  finite.z <- z[is.finite(z)]
+  if (!length(finite.z))
+    return(matrix(colorlut[1L], nrow = nrow(z), ncol = ncol(z)))
+  zmin <- min(finite.z)
+  zmax <- max(finite.z)
+  if (!is.finite(zmin) || !is.finite(zmax) || zmax <= zmin)
+    return(matrix(colorlut[ceiling(num.colors / 2)],
+                  nrow = nrow(z), ncol = ncol(z)))
+  idx <- floor((num.colors - 1L) * (z - zmin) / (zmax - zmin)) + 1L
+  idx[!is.finite(idx)] <- 1L
+  idx <- pmax.int(1L, pmin.int(num.colors, idx))
+  matrix(colorlut[idx], nrow = nrow(z), ncol = ncol(z))
+}
+
 .crs_plot_user_args <- function(dots, type) {
   if (is.null(dots) || !length(dots)) return(list())
   prefix <- paste0(type, ".")
   nms <- names(dots)
   if (is.null(nms)) return(list())
 
-  direct <- dots[[type]]
-  if (!is.null(direct)) {
-    if (!is.list(direct))
+  direct.names <- switch(type,
+    plot = unique(c(
+      setdiff(names(formals(graphics::plot.default)), c("x", "y", "...")),
+      names(graphics::par(no.readonly = TRUE)),
+      "type", "lty", "lwd", "col", "pch", "cex", "main", "sub",
+      "xlab", "ylab", "xlim", "ylim"
+    )),
+    persp = {
+      persp.default <- utils::getS3method("persp", "default", optional = TRUE)
+      if (is.null(persp.default)) {
+        character()
+      } else {
+        setdiff(names(formals(persp.default)), c("x", "y", "z", "..."))
+      }
+    },
+    character()
+  )
+
+  direct <- dots[intersect(nms, direct.names)]
+  grouped <- dots[[type]]
+  if (!is.null(grouped)) {
+    if (!is.list(grouped))
       stop(sprintf("%s must be a list when supplied as a grouped plot argument",
                    type),
            call. = FALSE)
-  } else {
-    direct <- list()
+    direct <- c(direct, grouped)
   }
 
   prefixed <- dots[startsWith(nms, prefix)]
@@ -163,6 +219,277 @@ crs_render_control <- function(...) {
   if (!length(user.args)) return(base.args)
   for (nm in names(user.args)) base.args[[nm]] <- user.args[[nm]]
   base.args
+}
+
+.crs_plot_overlay_range <- function(existing.range, y) {
+  if (is.null(y)) return(existing.range)
+  yr <- range(y, finite = TRUE)
+  if (!length(yr) || any(!is.finite(yr))) return(existing.range)
+  if (is.null(existing.range) || length(existing.range) < 2L ||
+      all(!is.finite(existing.range))) {
+    return(yr)
+  }
+  c(min(existing.range[1L], yr[1L], na.rm = TRUE),
+    max(existing.range[2L], yr[2L], na.rm = TRUE))
+}
+
+.crs_plot_overlay_points_1d <- function(x,
+                                        y,
+                                        col = .crs_plot_color("data_overlay",
+                                                              0.25),
+                                        pch = 16,
+                                        cex = 0.6,
+                                        ...) {
+  if (is.null(x) || is.null(y) || is.factor(x) || is.ordered(x))
+    return(invisible(FALSE))
+  ok <- is.finite(x) & is.finite(y)
+  if (!any(ok)) return(invisible(FALSE))
+  graphics::points(x[ok], y[ok], col = col, pch = pch, cex = cex, ...)
+  invisible(TRUE)
+}
+
+.crs_plot_draw_rug_1d <- function(x, col = .crs_plot_color("support"),
+                                  quiet = TRUE, ...) {
+  if (is.null(x) || is.factor(x) || is.ordered(x))
+    return(invisible(FALSE))
+  x <- as.vector(x)
+  ok <- is.finite(x)
+  if (!any(ok)) return(invisible(FALSE))
+  graphics::rug(x[ok], col = col, quiet = quiet, ...)
+  invisible(TRUE)
+}
+
+.crs_plot_overlay_points_persp <- function(x1,
+                                           x2,
+                                           y,
+                                           persp.mat,
+                                           col = .crs_plot_color("data_overlay",
+                                                                 0.35),
+                                           pch = 16,
+                                           cex = 0.5,
+                                           ...) {
+  if (is.null(x1) || is.null(x2) || is.null(y) || is.null(persp.mat))
+    return(invisible(FALSE))
+  ok <- is.finite(x1) & is.finite(x2) & is.finite(y)
+  if (!any(ok)) return(invisible(FALSE))
+  xy <- grDevices::trans3d(x1[ok], x2[ok], y[ok], persp.mat)
+  graphics::points(xy$x, xy$y, col = col, pch = pch, cex = cex, ...)
+  invisible(TRUE)
+}
+
+.crs_plot_draw_floor_rug_persp <- function(x1,
+                                           x2,
+                                           zlim,
+                                           persp.mat,
+                                           col = .crs_plot_color("support_floor"),
+                                           lwd = 1,
+                                           ...) {
+  if (is.null(x1) || is.null(x2) || is.null(zlim) || is.null(persp.mat))
+    return(invisible(FALSE))
+  ok <- is.finite(x1) & is.finite(x2)
+  if (!any(ok)) return(invisible(FALSE))
+  zlim <- as.double(zlim)
+  if (length(zlim) < 2L || !all(is.finite(zlim))) return(invisible(FALSE))
+  zfloor <- zlim[1L]
+  zspan <- diff(range(zlim))
+  if (!is.finite(zspan) || zspan <= 0) zspan <- max(1, abs(zfloor))
+  ztop <- zfloor + 0.02 * zspan
+  lower <- grDevices::trans3d(x1[ok], x2[ok],
+                              rep.int(zfloor, sum(ok)), persp.mat)
+  upper <- grDevices::trans3d(x1[ok], x2[ok],
+                              rep.int(ztop, sum(ok)), persp.mat)
+  graphics::segments(lower$x, lower$y, upper$x, upper$y,
+                     col = col, lwd = lwd, ...)
+  invisible(TRUE)
+}
+
+.crs_plot_draw_floor_rug_rgl <- function(x1,
+                                         x2,
+                                         zlim,
+                                         color = .crs_plot_color("support_floor"),
+                                         alpha = 0.40,
+                                         lwd = 1,
+                                         ...) {
+  if (is.null(x1) || is.null(x2) || is.null(zlim))
+    return(invisible(FALSE))
+  ok <- is.finite(x1) & is.finite(x2)
+  if (!any(ok)) return(invisible(FALSE))
+  zlim <- as.double(zlim)
+  if (length(zlim) < 2L || !all(is.finite(zlim))) return(invisible(FALSE))
+  zfloor <- zlim[1L]
+  zspan <- diff(range(zlim))
+  if (!is.finite(zspan) || zspan <= 0) zspan <- max(1, abs(zfloor))
+  ztop <- zfloor + 0.02 * zspan
+  rgl::segments3d(
+    x = rbind(x1[ok], x1[ok]),
+    y = rbind(x2[ok], x2[ok]),
+    z = rbind(rep.int(zfloor, sum(ok)), rep.int(ztop, sum(ok))),
+    color = color,
+    alpha = alpha,
+    lwd = lwd,
+    ...
+  )
+  invisible(TRUE)
+}
+
+.crs_plot_draw_box_grid_persp <- function(xlim,
+                                          ylim,
+                                          zlim,
+                                          persp.mat,
+                                          col = .crs_plot_color("support_grid"),
+                                          lwd = 1) {
+  if (is.null(xlim) || is.null(ylim) || is.null(zlim) || is.null(persp.mat))
+    return(invisible(FALSE))
+  xlim <- as.double(xlim)
+  ylim <- as.double(ylim)
+  zlim <- as.double(zlim)
+  if (length(xlim) < 2L || length(ylim) < 2L || length(zlim) < 2L)
+    return(invisible(FALSE))
+  if (!all(is.finite(c(xlim, ylim, zlim))))
+    return(invisible(FALSE))
+
+  x.at <- pretty(xlim, n = 5L)
+  y.at <- pretty(ylim, n = 5L)
+  z.at <- pretty(zlim, n = 5L)
+  x.at <- x.at[x.at >= min(xlim) & x.at <= max(xlim)]
+  y.at <- y.at[y.at >= min(ylim) & y.at <= max(ylim)]
+  z.at <- z.at[z.at >= min(zlim) & z.at <= max(zlim)]
+
+  draw_segment <- function(x0, y0, z0, x1, y1, z1) {
+    pts <- grDevices::trans3d(c(x0, x1), c(y0, y1), c(z0, z1),
+                              persp.mat)
+    graphics::segments(pts$x[1L], pts$y[1L], pts$x[2L], pts$y[2L],
+                       col = col, lwd = lwd)
+  }
+
+  xmin <- min(xlim); xmax <- max(xlim)
+  ymin <- min(ylim); ymax <- max(ylim)
+  zmin <- min(zlim); zmax <- max(zlim)
+  for (yy in y.at) draw_segment(xmin, yy, zmin, xmax, yy, zmin)
+  for (xx in x.at) draw_segment(xx, ymin, zmin, xx, ymax, zmin)
+  for (yy in y.at) draw_segment(xmin, yy, zmin, xmin, yy, zmax)
+  for (zz in z.at) draw_segment(xmin, ymin, zz, xmin, ymax, zz)
+  for (xx in x.at) draw_segment(xx, ymax, zmin, xx, ymax, zmax)
+  for (zz in z.at) draw_segment(xmin, ymax, zz, xmax, ymax, zz)
+  invisible(TRUE)
+}
+
+.crs_plot_wireframe_templates_persp <- function(x, y) {
+  x <- as.double(x)
+  y <- as.double(y)
+  nx <- length(x)
+  ny <- length(y)
+  list(
+    row_x = matrix(rep(x, ny), nrow = nx, ncol = ny),
+    row_y = matrix(rep(y, each = nx), nrow = nx, ncol = ny),
+    col_x = matrix(rep(x, each = ny), nrow = ny, ncol = nx),
+    col_y = matrix(rep(y, nx), nrow = ny, ncol = nx),
+    nx = nx,
+    ny = ny
+  )
+}
+
+.crs_plot_project_wire_matrix_persp <- function(xmat, ymat, zmat, pmat) {
+  tr <- cbind(as.vector(xmat), as.vector(ymat), as.vector(zmat), 1) %*% pmat
+  list(
+    x = matrix(tr[, 1L] / tr[, 4L], nrow = nrow(xmat), ncol = ncol(xmat)),
+    y = matrix(tr[, 2L] / tr[, 4L], nrow = nrow(ymat), ncol = ncol(ymat))
+  )
+}
+
+.crs_plot_draw_wire_surface_persp <- function(templates,
+                                              zmat,
+                                              persp.mat,
+                                              col,
+                                              lwd = 1) {
+  if (is.null(zmat) || !any(is.finite(zmat)))
+    return(invisible(FALSE))
+  row_pts <- .crs_plot_project_wire_matrix_persp(
+    xmat = templates$row_x,
+    ymat = templates$row_y,
+    zmat = zmat,
+    pmat = persp.mat
+  )
+  for (j in seq_len(templates$ny))
+    graphics::lines(row_pts$x[, j], row_pts$y[, j], col = col, lwd = lwd)
+
+  col_pts <- .crs_plot_project_wire_matrix_persp(
+    xmat = templates$col_x,
+    ymat = templates$col_y,
+    zmat = t(zmat),
+    pmat = persp.mat
+  )
+  for (i in seq_len(templates$nx))
+    graphics::lines(col_pts$x[, i], col_pts$y[, i], col = col, lwd = lwd)
+  invisible(TRUE)
+}
+
+.crs_plot_all_band_colors <- function() {
+  c(pointwise = "#D55E00",
+    simultaneous = "#009E73",
+    bonferroni = "#0072B2")
+}
+
+.crs_plot_draw_error_wireframes_persp <- function(x,
+                                                  y,
+                                                  persp.mat,
+                                                  plot.errors.type,
+                                                  lerr = NULL,
+                                                  herr = NULL,
+                                                  lerr.all = NULL,
+                                                  herr.all = NULL,
+                                                  lwd = 1) {
+  templates <- .crs_plot_wireframe_templates_persp(x = x, y = y)
+  if (identical(plot.errors.type, "all") &&
+      !is.null(lerr.all) && !is.null(herr.all)) {
+    band.cols <- .crs_plot_all_band_colors()
+    for (bn in c("pointwise", "simultaneous", "bonferroni")) {
+      col <- grDevices::adjustcolor(band.cols[[bn]], alpha.f = 0.50)
+      .crs_plot_draw_wire_surface_persp(templates, lerr.all[[bn]],
+                                        persp.mat, col = col, lwd = lwd)
+      .crs_plot_draw_wire_surface_persp(templates, herr.all[[bn]],
+                                        persp.mat, col = col, lwd = lwd)
+    }
+    return(invisible(TRUE))
+  }
+  wire.col <- grDevices::adjustcolor(.crs_plot_color("primary"),
+                                     alpha.f = 0.45)
+  .crs_plot_draw_wire_surface_persp(templates, lerr, persp.mat,
+                                    col = wire.col, lwd = lwd)
+  .crs_plot_draw_wire_surface_persp(templates, herr, persp.mat,
+                                    col = wire.col, lwd = lwd)
+  invisible(TRUE)
+}
+
+.crs_plot_error_surfaces_rgl <- function(x,
+                                         y,
+                                         plot.errors.type,
+                                         lerr = NULL,
+                                         herr = NULL,
+                                         lerr.all = NULL,
+                                         herr.all = NULL,
+                                         ...) {
+  draw_one <- function(z, color) {
+    if (is.null(z) || !any(is.finite(z)))
+      return(invisible(FALSE))
+    rgl::surface3d(x = x, y = y, z = z, color = color, alpha = 0.20,
+                   front = "lines", back = "lines", lit = FALSE, ...)
+    invisible(TRUE)
+  }
+  if (identical(plot.errors.type, "all") &&
+      !is.null(lerr.all) && !is.null(herr.all)) {
+    band.cols <- .crs_plot_all_band_colors()
+    for (bn in c("pointwise", "simultaneous", "bonferroni")) {
+      col <- grDevices::adjustcolor(band.cols[[bn]], alpha.f = 0.50)
+      draw_one(lerr.all[[bn]], col)
+      draw_one(herr.all[[bn]], col)
+    }
+    return(invisible(TRUE))
+  }
+  col <- grDevices::adjustcolor(.crs_plot_color("primary"), alpha.f = 0.45)
+  draw_one(lerr, col)
+  draw_one(herr, col)
+  invisible(TRUE)
 }
 
 .crs_plot_stop_unused_args <- function(bad, allowed) {

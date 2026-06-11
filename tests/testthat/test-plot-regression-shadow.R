@@ -376,11 +376,63 @@ test_that("public opt-in surface route renders with base persp", {
       perspective = TRUE,
       output = "plot",
       neval = 6,
-      data_overlay = TRUE
+      data_overlay = TRUE,
+      view = "fixed"
     )),
     NA
   )
   expect_true(file.exists(pdf.file))
+})
+
+test_that("public surface route supports NP-style bootstrap intervals", {
+  set.seed(2801)
+  d <- data.frame(x1 = runif(30), x2 = runif(30))
+  d$y <- sin(2 * pi * d$x1) + d$x2 + rnorm(30, sd = 0.08)
+
+  model <- crs(
+    y ~ x1 + x2,
+    data = d,
+    cv = "none",
+    basis = "tensor",
+    degree = c(2, 2),
+    segments = c(1, 1),
+    display.warnings = FALSE,
+    display.nomad.progress = FALSE
+  )
+
+  dat <- plot(
+    model,
+    perspective = TRUE,
+    output = "data",
+    errors = "bootstrap",
+    bootstrap = "inid",
+    B = 3,
+    neval = 4
+  )
+  expect_type(dat, "list")
+  expect_named(dat[[1]][1:5], c("x1", "x2", "fit", "lwr", "upr"))
+  expect_true(all(is.finite(dat[[1]]$lwr)))
+  expect_true(all(is.finite(dat[[1]]$upr)))
+
+  pdf.file <- tempfile(fileext = ".pdf")
+  grDevices::pdf(pdf.file)
+  on.exit({
+    grDevices::dev.off()
+    unlink(pdf.file)
+  }, add = TRUE)
+  expect_error(
+    invisible(plot(
+      model,
+      perspective = TRUE,
+      errors = "bootstrap",
+      bootstrap = "inid",
+      B = 3,
+      neval = 4,
+      view = "fixed",
+      data_rug = TRUE
+    )),
+    NA
+  )
 })
 
 test_that("public opt-in surface route rejects contradictory renderer controls", {
