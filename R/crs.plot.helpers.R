@@ -248,9 +248,14 @@ crs_render_control <- function(...) {
   if ("plot.view" %in% nms)
     stop("unused plot argument: plot.view; CRS plot methods now use the NP plot interface",
          call. = FALSE)
+  legacy <- intersect(nms, .crs_plot_legacy_arg_names())
+  if (length(legacy)) {
+    stop(sprintf("unused plot argument: %s; use NP-style plot arguments",
+                 legacy[1L]),
+         call. = FALSE)
+  }
   allowed <- unique(c(.crs_plot_graphics_arg_names(),
                       .crs_plot_canonical_arg_names(),
-                      .crs_plot_legacy_arg_names(),
                       extra))
   bad <- nms[nzchar(nms) & !(nms %in% allowed) &
                !grepl("^(plot|lines|points|persp|rgl\\.[A-Za-z0-9_]+)\\.",

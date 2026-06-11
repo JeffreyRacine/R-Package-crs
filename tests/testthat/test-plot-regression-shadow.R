@@ -28,8 +28,7 @@ test_that("shadow 1D regression route matches legacy plot-data oracle", {
   legacy <- plot(
     model,
     output = "data",
-    neval = 8,
-    display.nomad.progress = FALSE
+    neval = 8
   )
   names(legacy) <- names(model$xz)
 
@@ -98,8 +97,7 @@ test_that("shadow 1D regression route supports interval payloads", {
     model,
     output = "data",
     neval = 7,
-    errors = "asymptotic",
-    display.nomad.progress = FALSE
+    errors = "asymptotic"
   )
 
   expect_named(shadow[[1]], c("x", "mean", "lwr", "upr"))
@@ -167,14 +165,12 @@ test_that("public opt-in fit route matches legacy mean data oracle", {
   modern <- plot(
     model,
     output = "data",
-    neval = 8,
-    display.nomad.progress = FALSE
+    neval = 8
   )
   legacy <- plot(
     model,
     output = "data",
-    neval = 8,
-    display.nomad.progress = FALSE
+    neval = 8
   )
   names(legacy) <- names(model$xz)
 
@@ -202,14 +198,12 @@ test_that("plot.crs defaults to fitted function data route", {
   default <- plot(
     model,
     output = "data",
-    neval = 8,
-    display.nomad.progress = FALSE
+    neval = 8
   )
   explicit <- plot(
     model,
     output = "data",
-    neval = 8,
-    display.nomad.progress = FALSE
+    neval = 8
   )
 
   expect_named(default[[1]], c("x", "mean"))
@@ -256,15 +250,13 @@ test_that("public opt-in fit route matches legacy asymptotic interval data", {
     model,
     output = "data",
     neval = 7,
-    errors = "asymptotic",
-    display.nomad.progress = FALSE
+    errors = "asymptotic"
   )
   legacy <- plot(
     model,
     output = "data",
     neval = 7,
-    errors = "asymptotic",
-    display.nomad.progress = FALSE
+    errors = "asymptotic"
   )
 
   expect_equal(modern[[1]], legacy[[1]], tolerance = 1e-10)
@@ -288,8 +280,7 @@ test_that("public fit route supports mean bootstrap and derivative data", {
     output = "data",
     errors = "bootstrap",
     B = 3,
-    neval = 6,
-    display.nomad.progress = FALSE
+    neval = 6
   ))
   expect_named(boot[[1]], c("x", "mean", "lwr", "upr"))
   expect_equal(nrow(boot[[1]]), 6)
@@ -298,8 +289,7 @@ test_that("public fit route supports mean bootstrap and derivative data", {
     model,
     output = "data",
     gradients = TRUE,
-    neval = 6,
-    display.nomad.progress = FALSE
+    neval = 6
   ))
   expect_named(grad[[1]], c("x", "deriv"))
   expect_equal(nrow(grad[[1]]), 6)
@@ -310,8 +300,7 @@ test_that("public fit route supports mean bootstrap and derivative data", {
       output = "data",
       gradients = TRUE,
       errors = "bootstrap",
-      B = 3,
-      display.nomad.progress = FALSE
+      B = 3
     ),
     "bootstrap intervals for derivative plots"
   )
@@ -319,8 +308,7 @@ test_that("public fit route supports mean bootstrap and derivative data", {
     plot(
       model,
       output = "data",
-      perspective = TRUE,
-      display.nomad.progress = FALSE
+      perspective = TRUE
     ),
     "two continuous predictors"
   )
@@ -347,15 +335,13 @@ test_that("public opt-in surface route matches legacy surface data oracle", {
     model,
     perspective = TRUE,
     output = "data",
-    neval = 6,
-    display.nomad.progress = FALSE
+    neval = 6
   )
   legacy <- plot(
     model,
     perspective = TRUE, renderer = "rgl",
     output = "data",
-    neval = 6,
-    display.nomad.progress = FALSE
+    neval = 6
   )
 
   expect_equal(modern, legacy, tolerance = 1e-10)
@@ -390,8 +376,7 @@ test_that("public opt-in surface route renders with base persp", {
       perspective = TRUE,
       output = "plot",
       neval = 6,
-      data_overlay = TRUE,
-      display.nomad.progress = FALSE
+      data_overlay = TRUE
     )),
     NA
   )
@@ -417,8 +402,7 @@ test_that("public opt-in surface route rejects contradictory renderer controls",
       model,
       perspective = TRUE,
       renderer = "base",
-      output = "data",
-      display.nomad.progress = FALSE
+      output = "data"
     ),
     NA
   )
@@ -445,14 +429,12 @@ test_that("public opt-in fit route mirrors legacy quantile plot data", {
   modern <- suppressWarnings(plot(
     model,
     output = "data",
-    neval = 7,
-    display.nomad.progress = FALSE
+    neval = 7
   ))
   legacy <- suppressWarnings(plot(
     model,
     output = "data",
-    neval = 7,
-    display.nomad.progress = FALSE
+    neval = 7
   ))
   names(legacy) <- names(model$xz)
 
@@ -481,15 +463,13 @@ test_that("public opt-in surface route mirrors legacy quantile surface data", {
     model,
     perspective = TRUE,
     output = "data",
-    neval = 6,
-    display.nomad.progress = FALSE
+    neval = 6
   ))
   legacy <- suppressWarnings(plot(
     model,
     perspective = TRUE, renderer = "rgl",
     output = "data",
-    neval = 6,
-    display.nomad.progress = FALSE
+    neval = 6
   ))
 
   expect_equal(modern, legacy, tolerance = 1e-10)
