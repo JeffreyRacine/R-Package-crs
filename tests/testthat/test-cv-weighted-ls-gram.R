@@ -255,6 +255,66 @@ test_that("weighted LS primitive matches QR residual and leverage references", {
   }
 })
 
+test_that("QR fallback residuals are pivot-safe for rank-deficient designs", {
+  set.seed(20260611)
+  n <- 18L
+  x <- seq_len(n) / n
+  X <- cbind(
+    intercept = 1,
+    x = x,
+    x_duplicate = x,
+    z = rep(c(0, 1), length.out = n)
+  )
+  y <- sin(2 * pi * x) + rnorm(n, sd = 0.05)
+  rows <- c(1L, 4L, 9L, 13L, 18L)
+
+  cases <- expand.grid(
+    weighted = c(FALSE, TRUE),
+    ridge = c(FALSE, TRUE),
+    stringsAsFactors = FALSE
+  )
+
+  for(i in seq_len(nrow(cases))) {
+    row <- cases[i, ]
+    weights <- if(row$weighted) seq(0.6, 1.4, length.out = n) else NULL
+    ridge.lambda <- if(row$ridge) 1e-3 else NULL
+    weights.fit <- if(is.null(weights)) rep(1, n) else weights
+    sw <- sqrt(weights.fit)
+
+    if(is.null(ridge.lambda)) {
+      X.fit <- X
+      y.fit <- y
+      sw.fit <- sw
+    } else {
+      p <- ncol(X)
+      X.fit <- rbind(X, sqrt(ridge.lambda) * diag(p))
+      y.fit <- c(y, rep(0, p))
+      sw.fit <- c(sw, rep(1, p))
+    }
+
+    ref <- .lm.fit(X.fit * sw.fit, y.fit * sw.fit, tol = 1e-7)
+    ref.residuals <- ref$residuals[seq_len(n)] / sw
+    ref.hat <- crs:::hat.from.lm.fit(ref)
+    ref.hat <- ref.hat[seq_len(n)]
+
+    fit <- crs:::.crs_weighted_ls_cv_rows(
+      X = X,
+      y = y,
+      weights = weights,
+      rows = rows,
+      ridge.lambda = ridge.lambda,
+      rcond.min = 1,
+      allow.fallback = TRUE
+    )
+
+    expect_true(fit$status %in% c("fallback_rcond", "fallback_chol"))
+    expect_true(fit$method %in% c("qr", "svd"))
+    expect_equal(fit$residuals.rows, ref.residuals[rows], tolerance = 1e-12)
+    expect_equal(fit$hat.rows, ref.hat[rows], tolerance = 1e-12)
+    expect_false(anyNA(fit$residuals.rows))
+  }
+})
+
 test_that("categorical kernel CV Gram path preserves objectives and fallback", {
   data <- make_cv_efficiency_data(n = 120L, seed = 94001L)
   kidx <- cv_efficiency_kernel_index(data$z_kernel)

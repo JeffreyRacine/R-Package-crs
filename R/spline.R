@@ -56,6 +56,63 @@ hat.from.lm.fit <- function(obj) {
   list(model = model, method = if(is.null(model)) "none" else method)
 }
 
+.crs_weighted_ls_qr_result <- function(X,
+                                       y,
+                                       weights,
+                                       ridge.lambda,
+                                       status,
+                                       rcond = NA_real_,
+                                       use.svd.fallback = TRUE) {
+  qr.fit <- .crs_weighted_ls_qr_fit(X, y, weights, ridge.lambda,
+                                    use.svd.fallback = use.svd.fallback)
+  if(is.null(qr.fit$model)) {
+    return(list(status = status,
+                method = qr.fit$method,
+                coefficients = NULL,
+                qr = NULL,
+                chol = NULL,
+                rcond = rcond))
+  }
+  list(status = status,
+       method = qr.fit$method,
+       coefficients = qr.fit$model$coefficients,
+       qr = qr.fit$model,
+       chol = NULL,
+       rcond = rcond)
+}
+
+.crs_gram_stats_init <- function(use.gram.cv, record.gram.stats) {
+  if(use.gram.cv && record.gram.stats) {
+    list(used = 0L, fallback_rcond = 0L, fallback_chol = 0L,
+         min_rcond = Inf)
+  } else {
+    NULL
+  }
+}
+
+.crs_gram_stats_update <- function(stats, fit) {
+  if(is.null(stats)) return(stats)
+  if(is.finite(fit$rcond)) {
+    stats$min_rcond <- min(stats$min_rcond, fit$rcond)
+  }
+  if(identical(fit$status, "gram")) {
+    stats$used <- stats$used + 1L
+  } else if(identical(fit$status, "fallback_chol")) {
+    stats$fallback_chol <- stats$fallback_chol + 1L
+  } else {
+    stats$fallback_rcond <- stats$fallback_rcond + 1L
+  }
+  stats
+}
+
+.crs_gram_stats_attach <- function(cv.out, stats) {
+  if(!is.null(stats)) {
+    if(is.infinite(stats$min_rcond)) stats$min_rcond <- NA_real_
+    attr(cv.out, "gram.stats") <- stats
+  }
+  cv.out
+}
+
 .crs_weighted_ls_core <- function(X,
                                   y,
                                   weights = NULL,
@@ -63,40 +120,32 @@ hat.from.lm.fit <- function(obj) {
                                   rcond.min = 1e-8,
                                   allow.fallback = TRUE,
                                   use.svd.fallback = TRUE) {
-  if(is.null(weights)) {
-    weights <- rep(1, NROW(X))
-  }
-
-  G <- crossprod(X, X * weights)
-  if(!is.null(ridge.lambda)) {
-    G <- G + ridge.lambda * diag(ncol(X))
-  }
-  rc <- rcond(G)
-  if(!is.finite(rc) || rc < rcond.min) {
+  if(!is.finite(rcond.min)) {
     if(!allow.fallback) {
       return(list(status = "fallback_rcond",
                   method = "none",
                   coefficients = NULL,
                   qr = NULL,
                   chol = NULL,
-                  rcond = rc))
+                  rcond = NA_real_))
     }
-    qr.fit <- .crs_weighted_ls_qr_fit(X, y, weights, ridge.lambda,
-                                      use.svd.fallback = use.svd.fallback)
-    if(is.null(qr.fit$model)) {
-      return(list(status = "fallback_rcond",
-                  method = qr.fit$method,
-                  coefficients = NULL,
-                  qr = NULL,
-                  chol = NULL,
-                  rcond = rc))
-    }
-    return(list(status = "fallback_rcond",
-                method = qr.fit$method,
-                coefficients = qr.fit$model$coefficients,
-                qr = qr.fit$model,
-                chol = NULL,
-                rcond = rc))
+    return(.crs_weighted_ls_qr_result(X, y, weights, ridge.lambda,
+                                      status = "fallback_rcond",
+                                      rcond = NA_real_,
+                                      use.svd.fallback = use.svd.fallback))
+  }
+
+  if(is.null(weights)) {
+    G <- crossprod(X)
+    rhs <- crossprod(X, y)
+  } else {
+    sw <- sqrt(weights)
+    Xw <- X * sw
+    G <- crossprod(Xw)
+    rhs <- crossprod(Xw, y * sw)
+  }
+  if(!is.null(ridge.lambda)) {
+    G <- G + ridge.lambda * diag(ncol(X))
   }
 
   R <- tryCatch(chol(G), error = function(e) NULL)
@@ -107,28 +156,32 @@ hat.from.lm.fit <- function(obj) {
                   coefficients = NULL,
                   qr = NULL,
                   chol = NULL,
-                  rcond = rc))
+                  rcond = NA_real_))
     }
-    qr.fit <- .crs_weighted_ls_qr_fit(X, y, weights, ridge.lambda,
-                                      use.svd.fallback = use.svd.fallback)
-    if(is.null(qr.fit$model)) {
-      return(list(status = "fallback_chol",
-                  method = qr.fit$method,
+    return(.crs_weighted_ls_qr_result(X, y, weights, ridge.lambda,
+                                      status = "fallback_chol",
+                                      rcond = NA_real_,
+                                      use.svd.fallback = use.svd.fallback))
+  }
+
+  rc.factor <- rcond(R, triangular = TRUE)
+  rc <- rc.factor^2
+  if(!is.finite(rc) || rc < rcond.min) {
+    if(!allow.fallback) {
+      return(list(status = "fallback_rcond",
+                  method = "none",
                   coefficients = NULL,
                   qr = NULL,
                   chol = NULL,
                   rcond = rc))
     }
-    return(list(status = "fallback_chol",
-                method = qr.fit$method,
-                coefficients = qr.fit$model$coefficients,
-                qr = qr.fit$model,
-                chol = NULL,
-                rcond = rc))
+    return(.crs_weighted_ls_qr_result(X, y, weights, ridge.lambda,
+                                      status = "fallback_rcond",
+                                      rcond = rc,
+                                      use.svd.fallback = use.svd.fallback))
   }
 
-  rhs <- crossprod(X, y * weights)
-  beta <- backsolve(R, forwardsolve(t(R), rhs))
+  beta <- backsolve(R, backsolve(R, rhs, transpose = TRUE))
 
   list(
     status = "gram",
@@ -158,9 +211,7 @@ hat.from.lm.fit <- function(obj) {
                                         use.svd.fallback = TRUE) {
   X <- .crs_weighted_ls_design(P.train, basis)
   X.eval <- .crs_weighted_ls_design(P.eval, basis)
-  if(is.null(weights)) {
-    weights <- rep(1, NROW(X))
-  }
+  weights.work <- if(is.null(weights)) rep(1, NROW(X)) else weights
 
   core <- .crs_weighted_ls_core(
     X = X,
@@ -201,7 +252,7 @@ hat.from.lm.fit <- function(obj) {
   if(df.residual <= 0) {
     return(NULL)
   }
-  sigma2 <- sum(weights * residuals.train^2) / df.residual
+  sigma2 <- sum(weights.work * residuals.train^2) / df.residual
 
   fit <- drop(X.eval %*% coefficients)
   se.fit <- sqrt(pmax(0, rowSums((X.eval %*% Ginv) * X.eval) * sigma2))
@@ -214,7 +265,7 @@ hat.from.lm.fit <- function(obj) {
   hatvalues <- NULL
   if(!is.null(hat.rows)) {
     X.hat <- X[hat.rows, , drop = FALSE]
-    hatvalues <- weights[hat.rows] * rowSums((X.hat %*% Ginv) * X.hat)
+    hatvalues <- weights.work[hat.rows] * rowSums((X.hat %*% Ginv) * X.hat)
   }
 
   list(fitted.values = fit.spline,
@@ -234,9 +285,7 @@ hat.from.lm.fit <- function(obj) {
                                       rcond.min = 1e-8,
                                       use.svd.fallback = TRUE) {
   X <- .crs_weighted_ls_design(P.train, basis)
-  if(is.null(weights)) {
-    weights <- rep(1, NROW(X))
-  }
+  weights.work <- if(is.null(weights)) rep(1, NROW(X)) else weights
 
   core <- .crs_weighted_ls_core(
     X = X,
@@ -277,7 +326,7 @@ hat.from.lm.fit <- function(obj) {
   coefficients <- drop(core$coefficients)
   fitted.train <- drop(X %*% coefficients)
   residuals.train <- y - fitted.train
-  sigma2 <- sum(weights * residuals.train^2) / df.residual
+  sigma2 <- sum(weights.work * residuals.train^2) / df.residual
 
   if(basis=="additive") {
     if(is.null(deriv.ind.vec)) {
@@ -313,9 +362,7 @@ hat.from.lm.fit <- function(obj) {
                                      rcond.min = 1e-8,
                                      allow.fallback = TRUE,
                                      use.svd.fallback = TRUE) {
-  if(is.null(weights)) {
-    weights <- rep(1, NROW(X))
-  }
+  weights.work <- if(is.null(weights)) rep(1, NROW(X)) else weights
 
   core <- .crs_weighted_ls_core(
     X = X,
@@ -336,17 +383,20 @@ hat.from.lm.fit <- function(obj) {
                 rcond = core$rcond))
   }
 
-  fitted <- drop(X %*% core$coefficients)
   X.rows <- X[rows, , drop = FALSE]
 
   if(identical(core$method, "chol_gram")) {
-    q <- forwardsolve(t(core$chol), t(X.rows))
-    hat.rows <- weights[rows] * colSums(q * q)
+    q <- backsolve(core$chol, t(X.rows), transpose = TRUE)
+    hat.rows <- weights.work[rows] * colSums(q * q)
+    residuals.rows <- y[rows] - drop(X.rows %*% core$coefficients)
   } else if(!is.null(ridge.lambda)) {
     hat.all <- hat.from.lm.fit(core$qr)
     hat.rows <- hat.all[seq_len(NROW(X))][rows]
+    raw.residuals <- core$qr$residuals[seq_len(NROW(X))] / sqrt(weights.work)
+    residuals.rows <- raw.residuals[rows]
   } else {
     hat.rows <- hat.from.lm.fit(core$qr)[rows]
+    residuals.rows <- (core$qr$residuals / sqrt(weights.work))[rows]
   }
 
   list(
@@ -354,7 +404,7 @@ hat.from.lm.fit <- function(obj) {
     method = core$method,
     rcond = core$rcond,
     rank = if(identical(core$method, "chol_gram")) ncol(X) else core$qr$rank,
-    residuals.rows = (y - fitted)[rows],
+    residuals.rows = residuals.rows,
     hat.rows = hat.rows
   )
 }
@@ -1646,7 +1696,8 @@ cv.kernel.spline.wrapper <- function(x,
                                      singular.ok=FALSE,
                                      display.warnings=TRUE,
                                      use.gram.cv=TRUE,
-                                     gram.rcond.min=1e-8) {
+                                     gram.rcond.min=1e-8,
+                                     record.gram.stats=FALSE) {
 
   knots.opt <- knots;
 
@@ -1674,7 +1725,8 @@ cv.kernel.spline.wrapper <- function(x,
                            singular.ok=singular.ok,
                            display.warnings=display.warnings,
                            use.gram.cv=use.gram.cv,
-                           gram.rcond.min=gram.rcond.min)
+                           gram.rcond.min=gram.rcond.min,
+                           record.gram.stats=record.gram.stats)
 
     cv.uniform <- cv.kernel.spline(x=x,
                                    y=y,
@@ -1696,7 +1748,8 @@ cv.kernel.spline.wrapper <- function(x,
                                    singular.ok=singular.ok,
                                    display.warnings=display.warnings,
                                    use.gram.cv=use.gram.cv,
-                                   gram.rcond.min=gram.rcond.min)
+                                   gram.rcond.min=gram.rcond.min,
+                                   record.gram.stats=record.gram.stats)
     if(cv > cv.uniform) {
       cv <- cv.uniform
       knots.opt <- "uniform"
@@ -1724,7 +1777,8 @@ cv.kernel.spline.wrapper <- function(x,
                            singular.ok=singular.ok,
                            display.warnings=display.warnings,
                            use.gram.cv=use.gram.cv,
-                           gram.rcond.min=gram.rcond.min)
+                           gram.rcond.min=gram.rcond.min,
+                           record.gram.stats=record.gram.stats)
 
   }
 
@@ -1887,12 +1941,7 @@ cv.factor.spline <- function(x,
   have_w <- !is.null(weights)
   is_add <- (basis == "additive" || basis == "glp")
   cv.maxPenalty <- resolve_cv_maxPenalty(NULL, y, weights = weights, cv.func = cv.func)
-  gram.stats <- if(use.gram.cv && record.gram.stats) {
-    list(used = 0L, fallback_rcond = 0L, fallback_chol = 0L,
-         min_rcond = Inf)
-  } else {
-    NULL
-  }
+  gram.stats <- .crs_gram_stats_init(use.gram.cv, record.gram.stats)
 
   ## Check dimension of P prior to calculating the basis
 
@@ -1993,17 +2042,7 @@ cv.factor.spline <- function(x,
         allow.fallback = TRUE,
         use.svd.fallback = use.svd.fallback
       )
-      if(!is.null(gram.stats)) {
-        gram.stats$min_rcond <- min(gram.stats$min_rcond,
-                                    model$rcond, na.rm = TRUE)
-        if(identical(model$status, "gram")) {
-          gram.stats$used <- gram.stats$used + 1L
-        } else if(identical(model$status, "fallback_rcond")) {
-          gram.stats$fallback_rcond <- gram.stats$fallback_rcond + 1L
-        } else {
-          gram.stats$fallback_chol <- gram.stats$fallback_chol + 1L
-        }
-      }
+      gram.stats <- .crs_gram_stats_update(gram.stats, model)
 
       if(is.null(model$residuals.rows)) {
         return(cv.maxPenalty)
@@ -2095,10 +2134,7 @@ cv.factor.spline <- function(x,
   }
 
   cv.out <- if(is.na(cv)) cv.maxPenalty else cv
-  if(!is.null(gram.stats)) {
-    attr(cv.out, "gram.stats") <- gram.stats
-  }
-  return(cv.out)
+  return(.crs_gram_stats_attach(cv.out, gram.stats))
 }
 
 ## Drop-in replacement for cv.kernel.spline with improved handling of
@@ -2174,12 +2210,7 @@ cv.kernel.spline <- function(x,
 
   n <- length(y)
   cv.maxPenalty <- resolve_cv_maxPenalty(NULL, y, weights = weights, cv.func = cv.func)
-  gram.stats <- if(use.gram.cv && record.gram.stats) {
-    list(used = 0L, fallback_rcond = 0L, fallback_chol = 0L,
-         min_rcond = Inf)
-  } else {
-    NULL
-  }
+  gram.stats <- .crs_gram_stats_init(use.gram.cv, record.gram.stats)
 
   ## Check dimension of P prior to calculating the basis
   k_expected <- dimBS(basis=basis, kernel=TRUE, degree=K[,1], segments=K[,2])
@@ -2318,17 +2349,7 @@ cv.kernel.spline <- function(x,
             allow.fallback = TRUE,
             use.svd.fallback = use.svd.fallback
           )
-          if(!is.null(gram.stats)) {
-            gram.stats$min_rcond <- min(gram.stats$min_rcond,
-                                        ls.fit$rcond, na.rm = TRUE)
-            if(identical(ls.fit$status, "gram")) {
-              gram.stats$used <- gram.stats$used + 1L
-            } else if(identical(ls.fit$status, "fallback_rcond")) {
-              gram.stats$fallback_rcond <- gram.stats$fallback_rcond + 1L
-            } else {
-              gram.stats$fallback_chol <- gram.stats$fallback_chol + 1L
-            }
-          }
+          gram.stats <- .crs_gram_stats_update(gram.stats, ls.fit)
 
           if(is.null(ls.fit$coefficients)) return(cv.maxPenalty)
           epsilon <- y - drop(X %*% ls.fit$coefficients)
@@ -2386,17 +2407,7 @@ cv.kernel.spline <- function(x,
             allow.fallback = TRUE,
             use.svd.fallback = use.svd.fallback
           )
-          if(!is.null(gram.stats)) {
-            gram.stats$min_rcond <- min(gram.stats$min_rcond,
-                                        ls.fit$rcond, na.rm = TRUE)
-            if(identical(ls.fit$status, "gram")) {
-              gram.stats$used <- gram.stats$used + 1L
-            } else if(identical(ls.fit$status, "fallback_rcond")) {
-              gram.stats$fallback_rcond <- gram.stats$fallback_rcond + 1L
-            } else {
-              gram.stats$fallback_chol <- gram.stats$fallback_chol + 1L
-            }
-          }
+          gram.stats <- .crs_gram_stats_update(gram.stats, ls.fit)
 
           if(is.null(ls.fit$coefficients)) return(cv.maxPenalty)
           epsilon <- y - drop(X %*% ls.fit$coefficients)
@@ -2549,17 +2560,7 @@ cv.kernel.spline <- function(x,
               allow.fallback = TRUE,
               use.svd.fallback = use.svd.fallback
             )
-            if(!is.null(gram.stats)) {
-              gram.stats$min_rcond <- min(gram.stats$min_rcond,
-                                          gram.fit$rcond, na.rm = TRUE)
-              if(identical(gram.fit$status, "gram")) {
-                gram.stats$used <- gram.stats$used + 1L
-              } else if(identical(gram.fit$status, "fallback_rcond")) {
-                gram.stats$fallback_rcond <- gram.stats$fallback_rcond + 1L
-              } else {
-                gram.stats$fallback_chol <- gram.stats$fallback_chol + 1L
-              }
-            }
+            gram.stats <- .crs_gram_stats_update(gram.stats, gram.fit)
 
             if(is.null(gram.fit$residuals.rows)) {
               return(cv.maxPenalty)
@@ -2613,17 +2614,7 @@ cv.kernel.spline <- function(x,
               allow.fallback = TRUE,
               use.svd.fallback = use.svd.fallback
             )
-            if(!is.null(gram.stats)) {
-              gram.stats$min_rcond <- min(gram.stats$min_rcond,
-                                          gram.fit$rcond, na.rm = TRUE)
-              if(identical(gram.fit$status, "gram")) {
-                gram.stats$used <- gram.stats$used + 1L
-              } else if(identical(gram.fit$status, "fallback_rcond")) {
-                gram.stats$fallback_rcond <- gram.stats$fallback_rcond + 1L
-              } else {
-                gram.stats$fallback_chol <- gram.stats$fallback_chol + 1L
-              }
-            }
+            gram.stats <- .crs_gram_stats_update(gram.stats, gram.fit)
 
             if(is.null(gram.fit$residuals.rows)) {
               return(cv.maxPenalty)
@@ -2753,11 +2744,7 @@ cv.kernel.spline <- function(x,
   }
 
   cv.out <- if(is.na(cv)) cv.maxPenalty else cv
-  if(!is.null(gram.stats)) {
-    if(is.infinite(gram.stats$min_rcond)) gram.stats$min_rcond <- NA_real_
-    attr(cv.out, "gram.stats") <- gram.stats
-  }
-  return(cv.out)
+  return(.crs_gram_stats_attach(cv.out, gram.stats))
 }
 
 ## ============================================================================
