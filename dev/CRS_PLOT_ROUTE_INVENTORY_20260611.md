@@ -42,3 +42,11 @@ oracle.
 - Renderer behavior is unchanged in this tranche.
 - Payload tests must compare statistical content, not only successful drawing.
 
+## Scratch Notes
+
+- During quantile plot-route proof, `crs(..., tau = 0.5, basis = "tensor")`
+  with two continuous predictors failed during model fitting before any plot
+  code was reached (`quantreg::rq()` received a non-scalar method). The same
+  synthetic route fitted with `basis = "additive"`, and the opt-in plot surface
+  matched legacy surface data. This observation is not treated as a plot-route
+  regression gate in this tranche.

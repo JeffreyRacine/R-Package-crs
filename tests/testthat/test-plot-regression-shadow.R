@@ -322,3 +322,78 @@ test_that("public opt-in surface route rejects contradictory renderer controls",
     "cannot supply persp.rgl=TRUE"
   )
 })
+
+test_that("public opt-in fit route mirrors legacy quantile plot data", {
+  set.seed(30)
+  n <- 48
+  d <- data.frame(x = runif(n), z = factor(sample(c("a", "b"), n, TRUE)))
+  d$y <- 0.5 + d$x + as.numeric(d$z == "b") + rt(n, df = 4) * 0.1
+
+  model <- suppressWarnings(crs(
+    y ~ x + z,
+    data = d,
+    tau = 0.5,
+    cv = "none",
+    degree = 3,
+    segments = 1,
+    include = 1,
+    display.warnings = FALSE,
+    display.nomad.progress = FALSE
+  ))
+
+  modern <- suppressWarnings(plot(
+    model,
+    plot.view = "fit",
+    output = "data",
+    neval = 7,
+    display.nomad.progress = FALSE
+  ))
+  legacy <- suppressWarnings(plot(
+    model,
+    mean = TRUE,
+    plot.behavior = "data",
+    num.eval = 7,
+    display.nomad.progress = FALSE
+  ))
+  names(legacy) <- names(model$xz)
+
+  expect_equal(modern, legacy, tolerance = 1e-10)
+})
+
+test_that("public opt-in surface route mirrors legacy quantile surface data", {
+  set.seed(31)
+  n <- 46
+  d <- data.frame(x1 = runif(n), x2 = runif(n))
+  d$y <- d$x1 - 0.5 * d$x2 + rt(n, df = 5) * 0.1
+
+  model <- suppressWarnings(crs(
+    y ~ x1 + x2,
+    data = d,
+    tau = 0.5,
+    cv = "none",
+    basis = "additive",
+    degree = c(3, 3),
+    segments = c(1, 1),
+    display.warnings = FALSE,
+    display.nomad.progress = FALSE
+  ))
+
+  modern <- suppressWarnings(plot(
+    model,
+    plot.view = "fit",
+    perspective = TRUE,
+    output = "data",
+    neval = 6,
+    display.nomad.progress = FALSE
+  ))
+  legacy <- suppressWarnings(plot(
+    model,
+    mean = TRUE,
+    persp.rgl = TRUE,
+    plot.behavior = "data",
+    num.eval = 6,
+    display.nomad.progress = FALSE
+  ))
+
+  expect_equal(modern, legacy, tolerance = 1e-10)
+})
