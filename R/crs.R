@@ -1532,6 +1532,7 @@ plot.crs <- function(x,
                      xtrim = 0.0,
                      xq = 0.5,
                      plot.behavior = c("plot","plot-data","data"),
+                     plot.view = c("legacy","fit"),
                      common.scale=TRUE,
                      persp.rgl=FALSE,
                      display.warnings=TRUE,
@@ -1539,6 +1540,7 @@ plot.crs <- function(x,
                      ...) {
 
   plot.behavior <- match.arg(plot.behavior)
+  plot.view <- match.arg(plot.view)
   plot.errors.method <- match.arg(plot.errors.method)
   plot.errors.type <- match.arg(plot.errors.type)
 
@@ -1553,6 +1555,26 @@ plot.crs <- function(x,
   }
 
   object <- x
+
+  if (!identical(plot.view, "legacy")) {
+    return(.crs_plot_regression_1d_public(
+      object = object,
+      plot.call = match.call(expand.dots = FALSE),
+      mean = mean,
+      deriv = deriv,
+      ci = ci,
+      plot.errors.method = plot.errors.method,
+      num.eval = num.eval,
+      xtrim = xtrim,
+      xq = xq,
+      plot.behavior = plot.behavior,
+      common.scale = common.scale,
+      persp.rgl = persp.rgl,
+      display.nomad.progress = display.nomad.progress,
+      display.warnings = display.warnings,
+      ...
+    ))
+  }
 
   progress.status <- .crs_progress_status_begin(
     enabled = display.nomad.progress,

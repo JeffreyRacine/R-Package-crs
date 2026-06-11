@@ -108,6 +108,10 @@
   xq <- .crs_plot_scalar_default(dots$xq, 0.5)
   common.scale <- isTRUE(.crs_plot_scalar_default(dots$common.scale, TRUE))
   data_overlay <- isTRUE(.crs_plot_scalar_default(dots$plot.data.overlay, TRUE))
+  perspective <- isTRUE(.crs_plot_scalar_default(dots$perspective, FALSE))
+  if (isTRUE(perspective))
+    stop("modern 2D regression plot route is not implemented yet",
+         call. = FALSE)
 
   payload <- .crs_plot_payload_regression(object = object,
                                           deriv = 0L,
@@ -138,4 +142,66 @@
 
   if (!identical(plot.behavior, "plot")) return(slices)
   invisible(slices)
+}
+
+.crs_plot_regression_1d_public <- function(object,
+                                           plot.call,
+                                           mean,
+                                           deriv,
+                                           ci,
+                                           plot.errors.method,
+                                           num.eval,
+                                           xtrim,
+                                           xq,
+                                           plot.behavior,
+                                           common.scale,
+                                           persp.rgl,
+                                           display.nomad.progress,
+                                           display.warnings,
+                                           ...) {
+  if (!inherits(object, "crs")) stop("object must inherit from class 'crs'")
+  if (isTRUE(persp.rgl))
+    stop("modern 2D regression plot route is not implemented yet",
+         call. = FALSE)
+  if (!isTRUE(mean) && identical(deriv, 0))
+    mean <- TRUE
+  if (!isTRUE(mean) || !identical(as.numeric(deriv), 0))
+    stop("plot.view=\"fit\" currently supports fitted mean/quantile plots only",
+         call. = FALSE)
+  if (isTRUE(ci) && !identical(plot.errors.method, "asymptotic"))
+    stop("plot.view=\"fit\" currently supports asymptotic intervals only",
+         call. = FALSE)
+
+  dots <- list(...)
+  supplied <- names(plot.call)
+  raw.dots <- plot.call$...
+  dot.names <- names(raw.dots)
+  if (is.null(dot.names)) dot.names <- character()
+  effective.errors.method <- plot.errors.method
+  if ("errors" %in% dot.names) {
+    effective.errors.method <- .crs_plot_scalar_match(
+      raw.dots$errors,
+      c("none", "bootstrap", "asymptotic"),
+      "errors"
+    )
+  }
+
+  bridge <- dots
+  if (!("output" %in% dot.names)) bridge$plot.behavior <- plot.behavior
+  bridge$ci <- ci
+  if (!("neval" %in% dot.names)) bridge$num.eval <- num.eval
+  bridge$xtrim <- xtrim
+  bridge$xq <- xq
+  bridge$common.scale <- common.scale
+  bridge$display.nomad.progress <- display.nomad.progress
+  bridge$display.warnings <- display.warnings
+
+  if ("plot.behavior" %in% supplied && "output" %in% dot.names)
+    bridge$plot.behavior <- plot.behavior
+  if (isTRUE(ci) && !identical(effective.errors.method, "asymptotic"))
+    stop("plot.view=\"fit\" currently supports asymptotic intervals only",
+         call. = FALSE)
+
+  do.call(.crs_plot_regression_1d_shadow,
+          c(list(object = object, .plot_dots_call = raw.dots), bridge))
 }
