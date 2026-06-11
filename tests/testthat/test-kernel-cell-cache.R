@@ -124,3 +124,40 @@ test_that("cell cache toggle does not override disabled Gram CV route", {
   expect_equal(as.numeric(cached_arg), as.numeric(direct), tolerance = 0)
   expect_null(attr(cached_arg, "gram.stats"))
 })
+
+test_that("batched cell cache systems match per-cell recombination", {
+  data <- make_cell_cache_data("sparse", seed = 73001L)
+  kidx <- cell_cache_kernel_index(data$z)
+  P <- crs:::prod.spline(
+    x = data$x,
+    K = matrix(c(3, 2, 2, 2), ncol = 2L, byrow = TRUE),
+    knots = "quantiles",
+    basis = "glp",
+    display.warnings = FALSE
+  )
+  X <- cbind(1, P)
+  cache <- crs:::.crs_cell_cache_build(
+    X = X,
+    y = data$y,
+    ind = kidx$ind,
+    ind.vals = kidx$ind_vals,
+    weights = data$weights
+  )
+  cell_weights <- crs:::.crs_kernel_cell_weights(
+    z.unique = kidx$z_unique,
+    ind.vals = kidx$ind_vals,
+    lambda = c(0.35, 0.65),
+    is.ordered.z = data$is_ordered
+  )
+  systems <- crs:::.crs_cell_cache_systems(cache, cell_weights, max.bytes = Inf)
+
+  expect_false(is.null(systems))
+  for(i in seq_along(kidx$ind_vals)) {
+    direct <- crs:::.crs_cell_cache_system(cache, cell_weights[i, ])
+    batched <- crs:::.crs_cell_cache_system_at(systems, i)
+    expect_equal(batched$G, direct$G, tolerance = 1e-12)
+    expect_equal(batched$rhs, direct$rhs, tolerance = 1e-12)
+  }
+
+  expect_null(crs:::.crs_cell_cache_systems(cache, cell_weights, max.bytes = 1))
+})

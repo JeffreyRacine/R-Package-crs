@@ -478,6 +478,7 @@ OBJECTS = RuniqueCombs.o \
   crs_init.o \
   mgcv.o \
   hat_diag.o \
+  kernel_matrix.o \
   $(NOMAD4_OBJECTS)
 
 PKG_CXXFLAGS = $(NOMAD4_INCLUDE_FLAGS) -DUSE_SGTELIB -DNOMAD_STATIC_BUILD

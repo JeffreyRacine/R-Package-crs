@@ -85,23 +85,6 @@ prod.kernel.matrix <- function(Z,
     stop(paste(" incompatible dimensions for Z, z, and lambda (",
                num.z, ",", NROW(z), ",", NROW(lambda), ")", sep = ""))
 
-  n <- NROW(Z)
-  prodker <- rep.int(1, n)
-  z_vec <- as.vector(z)
-  lambda_vec <- as.vector(lambda)
-
-  for (j in seq_len(num.z)) {
-    if (!is.ordered.z[j]) {
-      tmp <- rep.int(lambda_vec[j], n)
-      eq <- Z[, j] == z_vec[j]
-      tmp[eq] <- 1
-    } else {
-      tmp <- lambda_vec[j]^abs(Z[, j] - z_vec[j])
-      eq <- Z[, j] == z_vec[j]
-      tmp[eq] <- 1
-    }
-    prodker <- prodker * tmp
-  }
-
-  prodker
+  .Call(crs_prod_kernel_matrix, Z, as.vector(z), as.vector(lambda),
+        as.logical(is.ordered.z))
 }

@@ -459,6 +459,35 @@ hat.from.lm.fit <- function(obj) {
   list(G = G, rhs = rhs)
 }
 
+.crs_cell_cache_systems <- function(cache,
+                                    cell.weights,
+                                    max.bytes = getOption("crs.cell.cache.systems.max.bytes",
+                                                          512 * 1024^2)) {
+  ncell <- nrow(cell.weights)
+  needed.bytes <- 8 * (as.double(cache$p) * cache$p * ncell +
+                         as.double(cache$p) * ncell)
+  if(is.finite(max.bytes) && needed.bytes > max.bytes) {
+    return(NULL)
+  }
+
+  list(
+    G.flat = cache$G.flat %*% t(cell.weights),
+    rhs = cache$rhs %*% t(cell.weights),
+    p = cache$p
+  )
+}
+
+.crs_cell_cache_system_at <- function(systems,
+                                      index,
+                                      ridge.lambda = NULL) {
+  G <- matrix(systems$G.flat[, index], systems$p, systems$p)
+  rhs <- systems$rhs[, index]
+  if(!is.null(ridge.lambda)) {
+    G <- G + ridge.lambda * diag(systems$p)
+  }
+  list(G = G, rhs = rhs)
+}
+
 .crs_weighted_ls_cv_rows_system <- function(X,
                                             y,
                                             rows,
@@ -2721,6 +2750,10 @@ cv.kernel.spline <- function(x,
           lambda = lambda,
           is.ordered.z = is.ordered.z
         )
+        cell.systems <- .crs_cell_cache_systems(
+          cache = cell.cache,
+          cell.weights = cell.kernel.weights
+        )
       }
 
       rank.full.positive.weights <- NULL
@@ -2777,11 +2810,19 @@ cv.kernel.spline <- function(x,
 
           if(is.null(tau)) {
             if(use.cell.cache.now) {
-              cache.system <- .crs_cell_cache_system(
-                cache = cell.cache,
-                cell.weights = cell.kernel.weights[i, ],
-                ridge.lambda = if(use_ridge_subset) ridge.lambda.subset else NULL
-              )
+              cache.system <- if(!is.null(cell.systems)) {
+                .crs_cell_cache_system_at(
+                  systems = cell.systems,
+                  index = i,
+                  ridge.lambda = if(use_ridge_subset) ridge.lambda.subset else NULL
+                )
+              } else {
+                .crs_cell_cache_system(
+                  cache = cell.cache,
+                  cell.weights = cell.kernel.weights[i, ],
+                  ridge.lambda = if(use_ridge_subset) ridge.lambda.subset else NULL
+                )
+              }
               gram.fit <- .crs_weighted_ls_cv_rows_system(
                 X = XP,
                 y = y,
@@ -2852,11 +2893,19 @@ cv.kernel.spline <- function(x,
           ## Tensor case
           if(is.null(tau)) {
             if(use.cell.cache.now) {
-              cache.system <- .crs_cell_cache_system(
-                cache = cell.cache,
-                cell.weights = cell.kernel.weights[i, ],
-                ridge.lambda = if(use_ridge_subset) ridge.lambda.subset else NULL
-              )
+              cache.system <- if(!is.null(cell.systems)) {
+                .crs_cell_cache_system_at(
+                  systems = cell.systems,
+                  index = i,
+                  ridge.lambda = if(use_ridge_subset) ridge.lambda.subset else NULL
+                )
+              } else {
+                .crs_cell_cache_system(
+                  cache = cell.cache,
+                  cell.weights = cell.kernel.weights[i, ],
+                  ridge.lambda = if(use_ridge_subset) ridge.lambda.subset else NULL
+                )
+              }
               gram.fit <- .crs_weighted_ls_cv_rows_system(
                 X = P,
                 y = y,
