@@ -617,11 +617,11 @@
                                            ...) {
   if (!inherits(object, "crs")) stop("object must inherit from class 'crs'")
 
-  dots <- list(...)
   raw.dots <- plot.call$...
   dot.names <- names(raw.dots)
   if (is.null(dot.names)) dot.names <- character()
   .crs_plot_validate_public_dots(raw.dots, context = "plot.crs")
+  dots <- list(...)
   dots <- .crs_plot_normalize_public_dots(dots, context = "plot.crs")
 
   plot.behavior <- if (!is.null(dots$plot.behavior)) {

@@ -127,6 +127,20 @@ test_that("shadow 1D regression route rejects unknown public dots", {
     ),
     "unused plot argument"
   )
+
+  forced <- FALSE
+  expect_error(
+    plot(
+      model,
+      output = "data",
+      foo = {
+        forced <<- TRUE
+        stop("should not evaluate")
+      }
+    ),
+    "unused plot argument: foo"
+  )
+  expect_false(forced)
 })
 
 test_that("public opt-in fit route matches legacy mean data oracle", {

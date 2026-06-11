@@ -63,6 +63,7 @@ Default behavior:
 - `cc8e61b` - opt-in modern curve plot routes.
 - `83962cb` - switch `plot.crs()` default to fitted displays and remove the
   diagnostic monolith.
+- `d6a4613` - adopt NP-style CRS plot interface in scratch.
 
 ## Installed Proof
 
@@ -86,11 +87,36 @@ Additional default-switch proof:
 Package check:
 
 - Command:
-  `R CMD check --no-manual --no-build-vignettes --library=/Users/jracine/Development/tmp/crs_plot_modernization_20260611/Rlib /Users/jracine/Development/tmp/crs_plot_modernization_20260611/check/crs_0.15-45.tar.gz`
-- Result: completed.
-- Warnings: two vignette-output warnings caused by checking with
-  `--no-build-vignettes` and no `inst/doc`; examples and vignette R code
-  passed.
+  `R CMD check --no-manual --library=/Users/jracine/Development/tmp/crs_plot_modernization_20260611/Rlib /Users/jracine/Development/tmp/crs_plot_modernization_20260611/check_stress/crs_0.15-45.tar.gz`
+- Result: `Status: OK`.
+
+## Stress Gate
+
+The archived `np` plot closeout matrices were adapted into a CRS scratch stress
+runner:
+
+- Script:
+  `dev/crs_plot_stress_matrix_20260611.R`
+- Result directory:
+  `/Users/jracine/Development/tmp/crs_plot_modernization_20260611/plot_stress_20260611`
+- Result: 30/30 cases passed with `B = 5` and `neval = 7`.
+
+Coverage includes:
+
+- CRS fitted mean data/render routes.
+- CRS asymptotic and inid-bootstrap interval payloads.
+- CRS gradient payloads and asymptotic gradient intervals.
+- CRS 2D fitted surfaces.
+- CRS quantile fitted and gradient routes.
+- `crsiv`, `crsivderiv`, and `clsd` data/render routes.
+- Fail-fast cases for legacy CRS-only plot arguments, unsupported interval
+  combinations, unsupported bootstrap combinations, and unknown arguments.
+
+The first stress run exposed a real public-adapter bug: `plot.crs()` evaluated
+unknown `...` promises before rejecting them. The adapter now validates the
+unevaluated call object before forcing `list(...)`, and
+`test-plot-regression-shadow.R` contains a focused regression test for this
+contract.
 
 ## Scratch Observation
 
