@@ -100,7 +100,12 @@
     }
     plot.args <- .crs_plot_merge_user_args(
       list(x = x, y = y, xlab = nm, ylab = ylab, ylim = local.ylim,
-           type = "l", col = .crs_plot_color("fit"), lwd = 2),
+           type = "l",
+           col = graphics::par()$col,
+           lwd = graphics::par()$lwd,
+           lty = graphics::par()$lty,
+           main = "",
+           sub = ""),
       .crs_plot_user_args(list(...), "plot")
     )
     do.call(graphics::plot, plot.args)
@@ -516,18 +521,23 @@
   }
   zlim <- .crs_plot_overlay_range(zlim,
                                   if (isTRUE(data_overlay)) object$y else NULL)
-  zlab <- if (is.null(object$tau)) {
+  default.zlab <- if (is.null(object$tau)) {
     "Conditional Mean"
   } else {
     paste("Conditional Quantile (tau = ", format(object$tau), ")", sep = "")
   }
-  main <- zlab
   dots <- list(...)
-  theta <- .crs_plot_scalar_default(dots$theta, 45)
-  phi <- .crs_plot_scalar_default(dots$phi, 30)
+  xlab.val <- .crs_plot_scalar_default(dots$xlab, names(object$xz)[1L])
+  ylab.val <- .crs_plot_scalar_default(dots$ylab, names(object$xz)[2L])
+  zlab.val <- .crs_plot_scalar_default(dots$zlab, default.zlab)
+  main.val <- .crs_plot_scalar_default(dots$main, NULL)
+  theta <- .crs_plot_scalar_default(dots$theta, 0)
+  phi <- .crs_plot_scalar_default(dots$phi, 20)
   view <- .crs_plot_scalar_default(dots$view, "rotate")
   view <- .crs_plot_scalar_match(view, c("rotate", "fixed"), "view")
   rotate <- identical(view, "rotate")
+  rgl.phi <- if (isTRUE(all.equal(theta, 0)) &&
+                 isTRUE(all.equal(phi, 20))) -70 else phi
 
   if (identical(renderer, "rgl")) {
     return(.crs_plot_render_surface_rgl(
@@ -535,12 +545,12 @@
       y = payload$y,
       z = payload$z,
       zlim = zlim,
-      xlab = names(object$xz)[1L],
-      ylab = names(object$xz)[2L],
-      zlab = "Y",
-      main = main,
+      xlab = xlab.val,
+      ylab = ylab.val,
+      zlab = zlab.val,
+      main = main.val,
       theta = theta,
-      phi = phi,
+      phi = rgl.phi,
       border = .crs_plot_color("surface_border"),
       par3d.args = .crs_plot_user_args(dots, "rgl.par3d"),
       view3d.args = .crs_plot_user_args(dots, "rgl.view3d"),
@@ -583,13 +593,18 @@
            y = payload$y,
            z = payload$z,
            zlim = zlim,
-           xlab = names(object$xz)[1L],
-           ylab = names(object$xz)[2L],
-           zlab = "Y",
-           main = main,
+           xlab = xlab.val,
+           ylab = ylab.val,
+           zlab = zlab.val,
+           main = main.val,
            col = persp.col,
            border = .crs_plot_color("surface_border"),
            ticktype = "detailed",
+           cex.axis = graphics::par()$cex.axis,
+           cex.lab = graphics::par()$cex.lab,
+           cex.main = graphics::par()$cex.main,
+           cex.sub = graphics::par()$cex.sub,
+           lwd = .crs_plot_lwd("surface_border", graphics::par()$lwd),
            theta = frame.theta[[frame.idx]],
            phi = phi),
       .crs_plot_user_args(dots, "persp")

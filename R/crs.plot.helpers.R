@@ -155,6 +155,31 @@ crs_render_control <- function(...) {
          1)
 }
 
+.crs_plot_lwd <- function(role, base = graphics::par()$lwd) {
+  base <- as.double(base)[1L]
+  switch(as.character(role)[1L],
+         primary = base,
+         surface_border = 0.8 * base,
+         interval = base,
+         band_all_surface = 2.15 * base,
+         interval_surface = 2 * base,
+         support = 1.25 * base,
+         support_floor = 2 * base,
+         support_grid = 0.9 * base,
+         base)
+}
+
+.crs_plot_lty <- function(role) {
+  switch(as.character(role)[1L],
+         solid = 1L,
+         interval = 2L,
+         center = 3L,
+         pointwise = 2L,
+         simultaneous = 3L,
+         bonferroni = 4L,
+         1L)
+}
+
 .crs_plot_surface_colors <- function(z, num.colors = 100L, alpha = 0.90) {
   z <- as.numeric(z)
   pal <- grDevices::hcl.colors(num.colors, palette = "viridis")
@@ -174,17 +199,27 @@ crs_render_control <- function(...) {
                                            num.colors = 1000L) {
   if (!is.null(col)) return(col)
   z <- as.matrix(z)
+  z.range <- range(z, finite = TRUE)
+  palette_fun <- function(n) grDevices::hcl.colors(as.integer(n),
+                                                   palette = "viridis")
+  if (!all(is.finite(z.range)))
+    return(palette_fun(1L))
   if (nrow(z) < 2L || ncol(z) < 2L)
-    return(.crs_plot_color("primary"))
+    return(palette_fun(1L))
+  if (isTRUE(all.equal(z.range[1L], z.range[2L])))
+    return(palette_fun(1L))
   z.facet <- (z[-1L, -1L, drop = FALSE] +
                 z[-nrow(z), -1L, drop = FALSE] +
                 z[-1L, -ncol(z), drop = FALSE] +
                 z[-nrow(z), -ncol(z), drop = FALSE]) / 4
-  matrix(.crs_plot_surface_colors(z.facet,
-                                  num.colors = num.colors,
-                                  alpha = 1),
-         nrow = nrow(z) - 1L,
-         ncol = ncol(z) - 1L)
+  colorlut <- palette_fun(num.colors)
+  scaled <- 1L + floor((length(colorlut) - 1L) *
+                         (z.facet - z.range[1L]) / diff(z.range))
+  scaled[!is.finite(scaled)] <- 1L
+  scaled <- pmax.int(1L, pmin.int(length(colorlut), scaled))
+  as.vector(matrix(colorlut[scaled],
+                   nrow = nrow(z.facet),
+                   ncol = ncol(z.facet)))
 }
 
 .crs_plot_rgl_surface_colors <- function(z, col = NULL, num.colors = 1000L) {
@@ -314,7 +349,7 @@ crs_render_control <- function(...) {
                                            zlim,
                                            persp.mat,
                                            col = .crs_plot_color("support_floor"),
-                                           lwd = 1,
+                                           lwd = .crs_plot_lwd("support"),
                                            ...) {
   if (is.null(x1) || is.null(x2) || is.null(zlim) || is.null(persp.mat))
     return(invisible(FALSE))
@@ -340,7 +375,7 @@ crs_render_control <- function(...) {
                                          zlim,
                                          color = .crs_plot_color("support_floor"),
                                          alpha = 0.40,
-                                         lwd = 1,
+                                         lwd = .crs_plot_lwd("support"),
                                          ...) {
   if (is.null(x1) || is.null(x2) || is.null(zlim))
     return(invisible(FALSE))
@@ -369,7 +404,7 @@ crs_render_control <- function(...) {
                                           zlim,
                                           persp.mat,
                                           col = .crs_plot_color("support_grid"),
-                                          lwd = 1) {
+                                          lwd = .crs_plot_lwd("support_grid")) {
   if (is.null(xlim) || is.null(ylim) || is.null(zlim) || is.null(persp.mat))
     return(invisible(FALSE))
   xlim <- as.double(xlim)
@@ -470,26 +505,34 @@ crs_render_control <- function(...) {
                                                   herr = NULL,
                                                   lerr.all = NULL,
                                                   herr.all = NULL,
-                                                  lwd = 1) {
+                                                  lwd = graphics::par()$lwd) {
   templates <- .crs_plot_wireframe_templates_persp(x = x, y = y)
   if (identical(plot.errors.type, "all") &&
       !is.null(lerr.all) && !is.null(herr.all)) {
     band.cols <- .crs_plot_all_band_colors()
     for (bn in c("pointwise", "simultaneous", "bonferroni")) {
       col <- grDevices::adjustcolor(band.cols[[bn]], alpha.f = 0.50)
-      .crs_plot_draw_wire_surface_persp(templates, lerr.all[[bn]],
-                                        persp.mat, col = col, lwd = lwd)
-      .crs_plot_draw_wire_surface_persp(templates, herr.all[[bn]],
-                                        persp.mat, col = col, lwd = lwd)
+      .crs_plot_draw_wire_surface_persp(
+        templates, lerr.all[[bn]], persp.mat, col = col,
+        lwd = .crs_plot_lwd("band_all_surface", lwd)
+      )
+      .crs_plot_draw_wire_surface_persp(
+        templates, herr.all[[bn]], persp.mat, col = col,
+        lwd = .crs_plot_lwd("band_all_surface", lwd)
+      )
     }
     return(invisible(TRUE))
   }
   wire.col <- grDevices::adjustcolor(.crs_plot_color("primary"),
                                      alpha.f = 0.45)
-  .crs_plot_draw_wire_surface_persp(templates, lerr, persp.mat,
-                                    col = wire.col, lwd = lwd)
-  .crs_plot_draw_wire_surface_persp(templates, herr, persp.mat,
-                                    col = wire.col, lwd = lwd)
+  .crs_plot_draw_wire_surface_persp(
+    templates, lerr, persp.mat, col = wire.col,
+    lwd = .crs_plot_lwd("interval_surface", lwd)
+  )
+  .crs_plot_draw_wire_surface_persp(
+    templates, herr, persp.mat, col = wire.col,
+    lwd = .crs_plot_lwd("interval_surface", lwd)
+  )
   invisible(TRUE)
 }
 
