@@ -299,6 +299,25 @@ crs_render_control <- function(...) {
   base.args
 }
 
+.crs_plot_merge_override_args <- function(base.args, override.args) {
+  if (is.null(override.args) || !length(override.args))
+    return(base.args)
+  if (is.null(base.args) || !length(base.args))
+    return(override.args)
+
+  base.names <- names(base.args)
+  override.names <- names(override.args)
+  dup <- intersect(override.names[!(is.na(override.names) |
+                                      override.names == "")],
+                   base.names[!(is.na(base.names) |
+                                  base.names == "")])
+  if (length(dup)) {
+    keep <- is.na(base.names) | base.names == "" | !(base.names %in% dup)
+    base.args <- base.args[keep]
+  }
+  c(base.args, override.args)
+}
+
 .crs_plot_overlay_range <- function(existing.range, y) {
   if (is.null(y)) return(existing.range)
   yr <- range(y, finite = TRUE)
@@ -506,6 +525,12 @@ crs_render_control <- function(...) {
   )
 }
 
+.crs_plot_all_band_alpha <- function() {
+  c(pointwise = 0.14,
+    simultaneous = 0.10,
+    bonferroni = 0.08)
+}
+
 .crs_plot_all_band_legend <- function(legend = TRUE, where = "topright",
                                       lty = .crs_plot_lty("solid"),
                                       lwd = .crs_plot_lwd("band_all_1d"),
@@ -535,6 +560,50 @@ crs_render_control <- function(...) {
 
   do.call(graphics::legend, args)
   invisible(TRUE)
+}
+
+.crs_plot_merge_rgl_legend_control <- function(legend3d.args,
+                                               legend = TRUE) {
+  legend.value <- if (is.list(legend) &&
+                      any(names(legend) %in% c("tau", "bands"))) {
+    if (!is.null(legend$bands)) legend$bands else TRUE
+  } else {
+    legend
+  }
+
+  if (is.null(legend.value))
+    return(.crs_plot_merge_override_args(legend3d.args, list(plot = FALSE)))
+
+  if (is.logical(legend.value)) {
+    if (length(legend.value) != 1L)
+      stop("legend must be TRUE/FALSE, NULL, NA, a legend position string, or a list of graphics::legend arguments",
+           call. = FALSE)
+    if (is.na(legend.value) || !isTRUE(legend.value))
+      return(.crs_plot_merge_override_args(legend3d.args,
+                                           list(plot = FALSE)))
+    return(legend3d.args)
+  }
+
+  if (is.character(legend.value) && length(legend.value) == 1L &&
+      !is.na(legend.value))
+    return(.crs_plot_merge_override_args(list(x = legend.value),
+                                         legend3d.args))
+
+  if (is.list(legend.value)) {
+    show <- legend.value$show
+    if (!is.null(show)) {
+      if (!is.logical(show) || length(show) != 1L)
+        stop("legend$show must be TRUE or FALSE", call. = FALSE)
+      legend.value$show <- NULL
+      if (is.na(show) || !isTRUE(show))
+        return(.crs_plot_merge_override_args(legend3d.args,
+                                             list(plot = FALSE)))
+    }
+    return(.crs_plot_merge_override_args(legend.value, legend3d.args))
+  }
+
+  stop("legend must be TRUE/FALSE, NULL, NA, a legend position string, or a list of graphics::legend arguments",
+       call. = FALSE)
 }
 
 .crs_plot_draw_error_wireframes_persp <- function(x,
@@ -583,22 +652,51 @@ crs_render_control <- function(...) {
                                          herr = NULL,
                                          lerr.all = NULL,
                                          herr.all = NULL,
+                                         surface3d.args = list(),
+                                         legend3d.args = list(),
                                          ...) {
   draw_one <- function(z, color) {
     if (is.null(z) || !any(is.finite(z)))
       return(invisible(FALSE))
-    rgl::surface3d(x = x, y = y, z = z, color = color, alpha = 0.20,
-                   front = "lines", back = "lines", lit = FALSE, ...)
+    surf.args <- .crs_plot_merge_override_args(
+      list(x = x, y = y, z = z, color = color, alpha = 0.20,
+           front = "lines", back = "lines", lit = FALSE),
+      .crs_plot_merge_override_args(surface3d.args, list(...))
+    )
+    do.call(rgl::surface3d, surf.args)
     invisible(TRUE)
   }
   if (identical(plot.errors.type, "all") &&
       !is.null(lerr.all) && !is.null(herr.all)) {
     band.cols <- .crs_plot_all_band_colors()
+    band.alpha <- .crs_plot_all_band_alpha()
+    drawn.bands <- character(0L)
     for (bn in c("pointwise", "simultaneous", "bonferroni")) {
-      col <- grDevices::adjustcolor(band.cols[[bn]], alpha.f = 0.50)
-      draw_one(lerr.all[[bn]], col)
-      draw_one(herr.all[[bn]], col)
+      col <- grDevices::adjustcolor(band.cols[[bn]],
+                                    alpha.f = band.alpha[[bn]])
+      drawn.lower <- draw_one(lerr.all[[bn]], col)
+      drawn.upper <- draw_one(herr.all[[bn]], col)
+      if (isTRUE(drawn.lower) || isTRUE(drawn.upper))
+        drawn.bands <- c(drawn.bands, bn)
     }
+    if (!length(drawn.bands))
+      return(invisible(FALSE))
+    legend3d.call <- .crs_plot_merge_override_args(
+      list(
+        "topright",
+        legend = c(pointwise = "Pointwise",
+                   simultaneous = "Simultaneous",
+                   bonferroni = "Bonferroni")[drawn.bands],
+        col = unname(band.cols[drawn.bands]),
+        lty = .crs_plot_lty("solid"),
+        lwd = .crs_plot_lwd("band_all_surface"),
+        cex = .crs_plot_cex("legend"),
+        bg = .crs_plot_color("legend_bg"),
+        bty = "n"
+      ),
+      legend3d.args
+    )
+    do.call(rgl::legend3d, legend3d.call)
     return(invisible(TRUE))
   }
   col <- grDevices::adjustcolor(.crs_plot_color("primary"), alpha.f = 0.45)

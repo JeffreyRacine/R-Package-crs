@@ -661,6 +661,11 @@
                  isTRUE(all.equal(phi, 20))) -70 else phi
 
   if (identical(renderer, "rgl")) {
+    rgl.legend3d.args <- .crs_plot_merge_rgl_legend_control(
+      .crs_plot_user_args(dots, "rgl.legend3d"),
+      .crs_plot_scalar_default(dots$legend, TRUE)
+    )
+    rgl.surface3d.args <- .crs_plot_user_args(dots, "rgl.surface3d")
     return(.crs_plot_render_surface_rgl(
       x = payload$x,
       y = payload$y,
@@ -687,7 +692,9 @@
             lerr = lerr,
             herr = herr,
             lerr.all = lerr.all,
-            herr.all = herr.all
+            herr.all = herr.all,
+            surface3d.args = rgl.surface3d.args,
+            legend3d.args = rgl.legend3d.args
           )
         }
       },
