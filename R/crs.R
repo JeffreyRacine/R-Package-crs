@@ -1535,7 +1535,7 @@ summary.crs <- function(object,
         is.finite(overlay_y)
       if (any(ok)) {
         rgl::points3d(overlay_x1[ok], overlay_x2[ok], overlay_y[ok],
-                      color = .crs_plot_color("data_overlay"),
+                      color = .crs_plot_color("data_overlay", alpha = 1),
                       alpha = 0.35, size = 2)
       }
     }

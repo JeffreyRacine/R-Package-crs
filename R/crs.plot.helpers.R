@@ -99,26 +99,60 @@ crs_render_control <- function(...) {
   if (is.null(value)) default else value
 }
 
+.crs_plot_viridis_at <- function(x, begin = 0.12, end = 0.88, alpha = 1) {
+  x <- as.double(x)
+  x <- pmax.int(0, pmin.int(1, x))
+  grid <- grDevices::hcl.colors(256L, palette = "viridis")
+  pos <- begin + x * (end - begin)
+  idx <- 1L + round(pos * (length(grid) - 1L))
+  idx <- pmax.int(1L, pmin.int(length(grid), idx))
+  cols <- grid[idx]
+  if (!identical(alpha, 1))
+    cols <- grDevices::adjustcolor(cols, alpha.f = alpha)
+  cols
+}
+
+.crs_plot_viridis_role <- function(x) {
+  unname(.crs_plot_viridis_at(x))[1L]
+}
+
 .crs_plot_color <- function(role, alpha = NULL) {
-  roles <- list(
-    primary = "#0072B2",
-    secondary = "#D55E00",
-    fit = "#0072B2",
-    interval = "#D55E00",
-    interval_context = "#D55E00",
-    data_overlay = "#000000",
-    support = "#999999",
-    support_floor = "#1F4E79",
-    support_grid = "#D0D0D0",
-    surface_border = "#3A3A3A",
-    context_wire = "#D55E00",
-    context_border = "#555555",
-    legend_bg = "#FFFFFF"
+  spec <- switch(
+    as.character(role)[1L],
+    primary = list(col = .crs_plot_viridis_role(0.02), alpha = 1),
+    secondary = list(col = .crs_plot_viridis_role(0.78), alpha = 1),
+    fit = list(col = .crs_plot_viridis_role(0.02), alpha = 1),
+    interval = list(col = .crs_plot_viridis_role(0.78), alpha = 1),
+    interval_context = list(col = .crs_plot_viridis_role(0.78), alpha = 1),
+    data_overlay = list(col = .crs_plot_viridis_role(0.08), alpha = 0.35),
+    support = list(col = .crs_plot_viridis_role(0.12), alpha = 0.60),
+    support_floor = list(col = .crs_plot_viridis_role(0.18), alpha = 0.55),
+    support_grid = list(col = .crs_plot_viridis_role(0.50), alpha = 0.45),
+    surface_border = list(col = .crs_plot_viridis_role(0.02), alpha = 1),
+    context_wire = list(col = .crs_plot_viridis_role(0.25), alpha = 1),
+    context_border = list(col = .crs_plot_viridis_role(0.30), alpha = 1),
+    legend_bg = list(col = .crs_plot_viridis_role(0.98), alpha = 0.18),
+    list(col = as.character(role)[1L], alpha = 1)
   )
-  col <- roles[[role]]
-  if (is.null(col)) col <- role
-  if (!is.null(alpha)) col <- grDevices::adjustcolor(col, alpha.f = alpha)
-  col
+  alpha <- if (is.null(alpha)) spec$alpha else alpha
+  if (isTRUE(all.equal(alpha, 1))) {
+    spec$col
+  } else {
+    grDevices::adjustcolor(spec$col, alpha.f = alpha)
+  }
+}
+
+.crs_plot_pch <- function(role) {
+  switch(as.character(role)[1L],
+         data_overlay = 20L,
+         20L)
+}
+
+.crs_plot_cex <- function(role) {
+  switch(as.character(role)[1L],
+         data_overlay = 0.5,
+         legend = 0.8,
+         1)
 }
 
 .crs_plot_surface_colors <- function(z, num.colors = 100L, alpha = 0.90) {
@@ -235,10 +269,9 @@ crs_render_control <- function(...) {
 
 .crs_plot_overlay_points_1d <- function(x,
                                         y,
-                                        col = .crs_plot_color("data_overlay",
-                                                              0.25),
-                                        pch = 16,
-                                        cex = 0.6,
+                                        col = .crs_plot_color("data_overlay"),
+                                        pch = .crs_plot_pch("data_overlay"),
+                                        cex = .crs_plot_cex("data_overlay"),
                                         ...) {
   if (is.null(x) || is.null(y) || is.factor(x) || is.ordered(x))
     return(invisible(FALSE))
@@ -263,10 +296,9 @@ crs_render_control <- function(...) {
                                            x2,
                                            y,
                                            persp.mat,
-                                           col = .crs_plot_color("data_overlay",
-                                                                 0.35),
-                                           pch = 16,
-                                           cex = 0.5,
+                                           col = .crs_plot_color("data_overlay"),
+                                           pch = .crs_plot_pch("data_overlay"),
+                                           cex = .crs_plot_cex("data_overlay"),
                                            ...) {
   if (is.null(x1) || is.null(x2) || is.null(y) || is.null(persp.mat))
     return(invisible(FALSE))
