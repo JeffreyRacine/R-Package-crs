@@ -100,6 +100,7 @@ crs_render_control <- function(...) {
 }
 
 .crs_plot_viridis_at <- function(x, begin = 0.12, end = 0.88, alpha = 1) {
+  x.names <- names(x)
   x <- as.double(x)
   x <- pmax.int(0, pmin.int(1, x))
   grid <- grDevices::hcl.colors(256L, palette = "viridis")
@@ -109,6 +110,7 @@ crs_render_control <- function(...) {
   cols <- grid[idx]
   if (!identical(alpha, 1))
     cols <- grDevices::adjustcolor(cols, alpha.f = alpha)
+  names(cols) <- x.names
   cols
 }
 
@@ -120,6 +122,7 @@ crs_render_control <- function(...) {
   spec <- switch(
     as.character(role)[1L],
     primary = list(col = .crs_plot_viridis_role(0.02), alpha = 1),
+    median = list(col = .crs_plot_viridis_role(0.02), alpha = 1),
     secondary = list(col = .crs_plot_viridis_role(0.78), alpha = 1),
     fit = list(col = .crs_plot_viridis_role(0.02), alpha = 1),
     interval = list(col = .crs_plot_viridis_role(0.78), alpha = 1),
@@ -128,6 +131,7 @@ crs_render_control <- function(...) {
     support = list(col = .crs_plot_viridis_role(0.12), alpha = 0.60),
     support_floor = list(col = .crs_plot_viridis_role(0.18), alpha = 0.55),
     support_grid = list(col = .crs_plot_viridis_role(0.50), alpha = 0.45),
+    component_context = list(col = .crs_plot_viridis_role(0.68), alpha = 1),
     surface_border = list(col = .crs_plot_viridis_role(0.02), alpha = 1),
     context_wire = list(col = .crs_plot_viridis_role(0.25), alpha = 1),
     context_border = list(col = .crs_plot_viridis_role(0.30), alpha = 1),
@@ -161,11 +165,14 @@ crs_render_control <- function(...) {
          primary = base,
          surface_border = 0.8 * base,
          interval = base,
+         band_all_1d = 2 * base,
          band_all_surface = 2.15 * base,
          interval_surface = 2 * base,
          support = 1.25 * base,
          support_floor = 2 * base,
          support_grid = 0.9 * base,
+         quantile_multi = 1.5 * base,
+         component_context = base,
          base)
 }
 
@@ -174,6 +181,8 @@ crs_render_control <- function(...) {
          solid = 1L,
          interval = 2L,
          center = 3L,
+         lower_quantile = 2L,
+         upper_quantile = 4L,
          pointwise = 2L,
          simultaneous = 3L,
          bonferroni = 4L,
@@ -492,13 +501,15 @@ crs_render_control <- function(...) {
 }
 
 .crs_plot_all_band_colors <- function() {
-  c(pointwise = "#D55E00",
-    simultaneous = "#009E73",
-    bonferroni = "#0072B2")
+  .crs_plot_viridis_at(
+    c(pointwise = 0.18, simultaneous = 0.50, bonferroni = 0.78)
+  )
 }
 
 .crs_plot_all_band_legend <- function(legend = TRUE, where = "topright",
-                                      lwd = 2, ...) {
+                                      lty = .crs_plot_lty("solid"),
+                                      lwd = .crs_plot_lwd("band_all_1d"),
+                                      ...) {
   if (is.null(legend)) legend <- TRUE
   if (identical(legend, FALSE)) return(invisible(FALSE))
 
@@ -507,9 +518,7 @@ crs_render_control <- function(...) {
     x = where,
     legend = c("Pointwise", "Simultaneous", "Bonferroni"),
     col = unname(cols[c("pointwise", "simultaneous", "bonferroni")]),
-    lty = c(.crs_plot_lty("pointwise"),
-            .crs_plot_lty("simultaneous"),
-            .crs_plot_lty("bonferroni")),
+    lty = lty,
     lwd = lwd,
     bty = "n",
     cex = .crs_plot_cex("legend")

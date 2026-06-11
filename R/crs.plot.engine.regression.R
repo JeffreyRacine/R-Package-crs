@@ -128,18 +128,23 @@
               names(slice))) {
         cols <- .crs_plot_all_band_colors()
         graphics::lines(x, slice$lwr, col = cols[["pointwise"]],
-                        lty = .crs_plot_lty("pointwise"))
+                        lty = .crs_plot_lty("interval"))
         graphics::lines(x, slice$upr, col = cols[["pointwise"]],
-                        lty = .crs_plot_lty("pointwise"))
+                        lty = .crs_plot_lty("interval"))
         graphics::lines(x, slice$lwr.sim, col = cols[["simultaneous"]],
-                        lty = .crs_plot_lty("simultaneous"))
+                        lty = .crs_plot_lty("interval"))
         graphics::lines(x, slice$upr.sim, col = cols[["simultaneous"]],
-                        lty = .crs_plot_lty("simultaneous"))
+                        lty = .crs_plot_lty("interval"))
         graphics::lines(x, slice$lwr.bonf, col = cols[["bonferroni"]],
-                        lty = .crs_plot_lty("bonferroni"))
+                        lty = .crs_plot_lty("interval"))
         graphics::lines(x, slice$upr.bonf, col = cols[["bonferroni"]],
-                        lty = .crs_plot_lty("bonferroni"))
-        .crs_plot_all_band_legend(dots$legend)
+                        lty = .crs_plot_lty("interval"))
+        .crs_plot_all_band_legend(
+          dots$legend,
+          where = "topleft",
+          lty = .crs_plot_lty("interval"),
+          lwd = .crs_plot_lwd("band_all_1d")
+        )
       } else {
         graphics::lines(x, slice$lwr, col = .crs_plot_color("interval"),
                         lty = 2)
@@ -750,7 +755,12 @@
       )
     if (isTRUE(plot.errors) && identical(plot.errors.type, "all") &&
         (!isTRUE(rotate) || identical(frame.idx, length(frame.theta)))) {
-      .crs_plot_all_band_legend(dots$legend)
+      .crs_plot_all_band_legend(
+        dots$legend,
+        where = "topright",
+        lty = .crs_plot_lty("solid"),
+        lwd = .crs_plot_lwd("band_all_surface")
+      )
     }
     if (isTRUE(data_overlay)) {
       points.args <- .crs_plot_merge_user_args(
