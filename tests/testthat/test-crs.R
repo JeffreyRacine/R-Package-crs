@@ -296,9 +296,7 @@ test_that("plot.crs bootstrap progress stays visible", {
         B = 3,
         output = "data",
         perspective = FALSE,
-        neval = 8,
-        display.warnings = FALSE,
-        display.nomad.progress = TRUE
+        neval = 8
       )
     ),
     force_renderer = "legacy",

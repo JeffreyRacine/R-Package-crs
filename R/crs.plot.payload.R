@@ -105,18 +105,24 @@
   num.eval <- as.integer(num.eval)
 
   if (isTRUE(legacy)) {
-    errors <- if (isTRUE(ci)) "asymptotic" else "none"
+    plot.errors.method <- if (isTRUE(ci)) "asymptotic" else "none"
+    shadow.args <- list(
+      object = object,
+      .plot_dots_call = list(),
+      plot.behavior = "data",
+      plot.errors.method = plot.errors.method,
+      plot.errors.type = "standard",
+      deriv = deriv,
+      num.eval = num.eval,
+      xtrim = xtrim,
+      xq = xq,
+      display.nomad.progress = display.nomad.progress,
+      display.warnings = display.warnings
+    )
     if (deriv > 0) {
-      payload <- plot(object, gradients = TRUE, gradient_order = deriv,
-                      errors = errors, neval = num.eval,
-                      xtrim = xtrim, xq = xq, output = "data",
-                      display.nomad.progress = display.nomad.progress,
-                      display.warnings = display.warnings)
+      payload <- do.call(.crs_plot_regression_1d_shadow, shadow.args)
     } else {
-      payload <- plot(object, errors = errors, neval = num.eval,
-                      xtrim = xtrim, xq = xq, output = "data",
-                      display.nomad.progress = display.nomad.progress,
-                      display.warnings = display.warnings)
+      payload <- do.call(.crs_plot_regression_1d_shadow, shadow.args)
     }
     if (is.list(payload) && is.null(names(payload)) &&
         length(payload) == NCOL(object$xz))

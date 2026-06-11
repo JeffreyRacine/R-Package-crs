@@ -22,8 +22,7 @@ test_that("rgl data route preserves payload without loading rgl", {
     model,
     perspective = TRUE, renderer = "rgl",
     output = "data",
-    neval = num.eval,
-    display.nomad.progress = FALSE
+    neval = num.eval
   )
 
   expect_type(payload, "list")
@@ -120,8 +119,7 @@ test_that("rgl plot route completes in rgl null mode", {
       plot(
         model,
         perspective = TRUE, renderer = "rgl",
-        neval = 8,
-        display.nomad.progress = FALSE
+        neval = 8
       )
     ),
     NA
