@@ -409,6 +409,151 @@ hat.from.lm.fit <- function(obj) {
   )
 }
 
+.crs_kernel_cell_weights <- function(z.unique,
+                                     ind.vals,
+                                     lambda,
+                                     is.ordered.z) {
+  cells <- z.unique[ind.vals, , drop = FALSE]
+  out <- matrix(NA_real_, nrow = length(ind.vals), ncol = length(ind.vals))
+  for(i in seq_along(ind.vals)) {
+    out[i, ] <- prod.kernel.matrix(
+      Z = cells,
+      z = z.unique[ind.vals[i], ],
+      lambda = lambda,
+      is.ordered.z = is.ordered.z
+    )
+  }
+  out
+}
+
+.crs_cell_cache_build <- function(X,
+                                  y,
+                                  ind,
+                                  ind.vals,
+                                  weights = NULL) {
+  if(is.null(weights)) weights <- rep(1, NROW(X))
+  p <- NCOL(X)
+  ncell <- length(ind.vals)
+  G.flat <- matrix(0, nrow = p * p, ncol = ncell)
+  rhs <- matrix(0, nrow = p, ncol = ncell)
+
+  for(j in seq_along(ind.vals)) {
+    rows <- ind == ind.vals[j]
+    sw <- sqrt(weights[rows])
+    Xw <- X[rows, , drop = FALSE] * sw
+    G.flat[, j] <- as.vector(crossprod(Xw))
+    rhs[, j] <- drop(crossprod(Xw, y[rows] * sw))
+  }
+
+  list(G.flat = G.flat, rhs = rhs, p = p, ncell = ncell)
+}
+
+.crs_cell_cache_system <- function(cache,
+                                   cell.weights,
+                                   ridge.lambda = NULL) {
+  G <- matrix(drop(cache$G.flat %*% cell.weights), cache$p, cache$p)
+  rhs <- drop(cache$rhs %*% cell.weights)
+  if(!is.null(ridge.lambda)) {
+    G <- G + ridge.lambda * diag(cache$p)
+  }
+  list(G = G, rhs = rhs)
+}
+
+.crs_weighted_ls_cv_rows_system <- function(X,
+                                            y,
+                                            rows,
+                                            row.weights,
+                                            G,
+                                            rhs,
+                                            fallback.weights = NULL,
+                                            ridge.lambda = NULL,
+                                            rcond.min = 1e-8,
+                                            allow.fallback = TRUE,
+                                            use.svd.fallback = TRUE) {
+  if(!is.finite(rcond.min)) {
+    if(allow.fallback && !is.null(fallback.weights)) {
+      return(.crs_weighted_ls_cv_rows(
+        X = X,
+        y = y,
+        weights = fallback.weights,
+        rows = rows,
+        ridge.lambda = ridge.lambda,
+        rcond.min = Inf,
+        allow.fallback = TRUE,
+        use.svd.fallback = use.svd.fallback
+      ))
+    }
+    return(list(status = "fallback_rcond",
+                method = "none",
+                residuals.rows = NULL,
+                hat.rows = NULL,
+                rank = NULL,
+                rcond = NA_real_))
+  }
+
+  R <- tryCatch(chol(G), error = function(e) NULL)
+  if(is.null(R)) {
+    if(allow.fallback && !is.null(fallback.weights)) {
+      fit <- .crs_weighted_ls_cv_rows(
+        X = X,
+        y = y,
+        weights = fallback.weights,
+        rows = rows,
+        ridge.lambda = ridge.lambda,
+        rcond.min = Inf,
+        allow.fallback = TRUE,
+        use.svd.fallback = use.svd.fallback
+      )
+      fit$status <- "fallback_chol"
+      fit$rcond <- NA_real_
+      return(fit)
+    }
+    return(list(status = "fallback_chol",
+                method = "none",
+                residuals.rows = NULL,
+                hat.rows = NULL,
+                rank = NULL,
+                rcond = NA_real_))
+  }
+
+  rc <- rcond(R, triangular = TRUE)^2
+  if(!is.finite(rc) || rc < rcond.min) {
+    if(allow.fallback && !is.null(fallback.weights)) {
+      fit <- .crs_weighted_ls_cv_rows(
+        X = X,
+        y = y,
+        weights = fallback.weights,
+        rows = rows,
+        ridge.lambda = ridge.lambda,
+        rcond.min = Inf,
+        allow.fallback = TRUE,
+        use.svd.fallback = use.svd.fallback
+      )
+      fit$status <- "fallback_rcond"
+      fit$rcond <- rc
+      return(fit)
+    }
+    return(list(status = "fallback_rcond",
+                method = "none",
+                residuals.rows = NULL,
+                hat.rows = NULL,
+                rank = NULL,
+                rcond = rc))
+  }
+
+  beta <- backsolve(R, backsolve(R, rhs, transpose = TRUE))
+  X.rows <- X[rows, , drop = FALSE]
+  q <- backsolve(R, t(X.rows), transpose = TRUE)
+  list(
+    status = "gram",
+    method = "chol_gram",
+    rcond = rc,
+    rank = ncol(X),
+    residuals.rows = y[rows] - drop(X.rows %*% beta),
+    hat.rows = row.weights[rows] * colSums(q * q)
+  )
+}
+
 prod.spline <- function(x,
                         z=NULL,
                         K=NULL,
@@ -1697,7 +1842,8 @@ cv.kernel.spline.wrapper <- function(x,
                                      display.warnings=TRUE,
                                      use.gram.cv=TRUE,
                                      gram.rcond.min=1e-8,
-                                     record.gram.stats=FALSE) {
+                                     record.gram.stats=FALSE,
+                                     use.cell.cache=TRUE) {
 
   knots.opt <- knots;
 
@@ -1726,7 +1872,8 @@ cv.kernel.spline.wrapper <- function(x,
                            display.warnings=display.warnings,
                            use.gram.cv=use.gram.cv,
                            gram.rcond.min=gram.rcond.min,
-                           record.gram.stats=record.gram.stats)
+                           record.gram.stats=record.gram.stats,
+                           use.cell.cache=use.cell.cache)
 
     cv.uniform <- cv.kernel.spline(x=x,
                                    y=y,
@@ -1749,7 +1896,8 @@ cv.kernel.spline.wrapper <- function(x,
                                    display.warnings=display.warnings,
                                    use.gram.cv=use.gram.cv,
                                    gram.rcond.min=gram.rcond.min,
-                                   record.gram.stats=record.gram.stats)
+                                   record.gram.stats=record.gram.stats,
+                                   use.cell.cache=use.cell.cache)
     if(cv > cv.uniform) {
       cv <- cv.uniform
       knots.opt <- "uniform"
@@ -1778,7 +1926,8 @@ cv.kernel.spline.wrapper <- function(x,
                            display.warnings=display.warnings,
                            use.gram.cv=use.gram.cv,
                            gram.rcond.min=gram.rcond.min,
-                           record.gram.stats=record.gram.stats)
+                           record.gram.stats=record.gram.stats,
+                           use.cell.cache=use.cell.cache)
 
   }
 
@@ -2193,7 +2342,8 @@ cv.kernel.spline <- function(x,
                              penalty.scale=1000,
                              use.gram.cv=TRUE,
                              gram.rcond.min=1e-8,
-                             record.gram.stats=FALSE) {
+                             record.gram.stats=FALSE,
+                             use.cell.cache=TRUE) {
 
   if(missing(x) || missing(y) || missing(K)) stop(" must provide x, y and K")
 
@@ -2497,6 +2647,25 @@ cv.kernel.spline <- function(x,
       } else {
         XP <- P
       }
+
+      use.cell.cache.now <- isTRUE(use.cell.cache) &&
+        isTRUE(use.gram.cv) &&
+        is.null(tau)
+      if(use.cell.cache.now) {
+        obs.weights.cache <- if(is.null(weights)) rep(1, n) else weights
+        cell.cache <- .crs_cell_cache_build(X = XP,
+                                            y = y,
+                                            ind = ind,
+                                            ind.vals = ind.vals,
+                                            weights = obs.weights.cache)
+        cell.kernel.weights <- .crs_kernel_cell_weights(
+          z.unique = z.unique,
+          ind.vals = ind.vals,
+          lambda = lambda,
+          is.ordered.z = is.ordered.z
+        )
+      }
+
       rank.full.positive.weights <- NULL
       if(!singular.ok &&
          isTRUE(all(lambda > 0)) &&
@@ -2550,16 +2719,37 @@ cv.kernel.spline <- function(x,
           }
 
           if(is.null(tau)) {
-            gram.fit <- .crs_weighted_ls_cv_rows(
-              X = XP,
-              y = y,
-              weights = L,
-              rows = zz,
-              rcond.min = if(use.gram.cv) gram.rcond.min else Inf,
-              ridge.lambda = if(use_ridge_subset) ridge.lambda.subset else NULL,
-              allow.fallback = TRUE,
-              use.svd.fallback = use.svd.fallback
-            )
+            if(use.cell.cache.now) {
+              cache.system <- .crs_cell_cache_system(
+                cache = cell.cache,
+                cell.weights = cell.kernel.weights[i, ],
+                ridge.lambda = if(use_ridge_subset) ridge.lambda.subset else NULL
+              )
+              gram.fit <- .crs_weighted_ls_cv_rows_system(
+                X = XP,
+                y = y,
+                rows = zz,
+                row.weights = L,
+                G = cache.system$G,
+                rhs = cache.system$rhs,
+                fallback.weights = L,
+                ridge.lambda = if(use_ridge_subset) ridge.lambda.subset else NULL,
+                rcond.min = if(use.gram.cv) gram.rcond.min else Inf,
+                allow.fallback = TRUE,
+                use.svd.fallback = use.svd.fallback
+              )
+            } else {
+              gram.fit <- .crs_weighted_ls_cv_rows(
+                X = XP,
+                y = y,
+                weights = L,
+                rows = zz,
+                rcond.min = if(use.gram.cv) gram.rcond.min else Inf,
+                ridge.lambda = if(use_ridge_subset) ridge.lambda.subset else NULL,
+                allow.fallback = TRUE,
+                use.svd.fallback = use.svd.fallback
+              )
+            }
             gram.stats <- .crs_gram_stats_update(gram.stats, gram.fit)
 
             if(is.null(gram.fit$residuals.rows)) {
@@ -2604,16 +2794,37 @@ cv.kernel.spline <- function(x,
         } else {
           ## Tensor case
           if(is.null(tau)) {
-            gram.fit <- .crs_weighted_ls_cv_rows(
-              X = P,
-              y = y,
-              weights = L,
-              rows = zz,
-              rcond.min = if(use.gram.cv) gram.rcond.min else Inf,
-              ridge.lambda = if(use_ridge_subset) ridge.lambda.subset else NULL,
-              allow.fallback = TRUE,
-              use.svd.fallback = use.svd.fallback
-            )
+            if(use.cell.cache.now) {
+              cache.system <- .crs_cell_cache_system(
+                cache = cell.cache,
+                cell.weights = cell.kernel.weights[i, ],
+                ridge.lambda = if(use_ridge_subset) ridge.lambda.subset else NULL
+              )
+              gram.fit <- .crs_weighted_ls_cv_rows_system(
+                X = P,
+                y = y,
+                rows = zz,
+                row.weights = L,
+                G = cache.system$G,
+                rhs = cache.system$rhs,
+                fallback.weights = L,
+                ridge.lambda = if(use_ridge_subset) ridge.lambda.subset else NULL,
+                rcond.min = if(use.gram.cv) gram.rcond.min else Inf,
+                allow.fallback = TRUE,
+                use.svd.fallback = use.svd.fallback
+              )
+            } else {
+              gram.fit <- .crs_weighted_ls_cv_rows(
+                X = P,
+                y = y,
+                weights = L,
+                rows = zz,
+                rcond.min = if(use.gram.cv) gram.rcond.min else Inf,
+                ridge.lambda = if(use_ridge_subset) ridge.lambda.subset else NULL,
+                allow.fallback = TRUE,
+                use.svd.fallback = use.svd.fallback
+              )
+            }
             gram.stats <- .crs_gram_stats_update(gram.stats, gram.fit)
 
             if(is.null(gram.fit$residuals.rows)) {
