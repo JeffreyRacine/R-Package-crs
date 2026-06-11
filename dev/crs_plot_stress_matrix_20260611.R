@@ -10,7 +10,7 @@ get_arg <- function(name, default = NULL) {
 
 repo <- normalizePath(get_arg("--repo", getwd()), mustWork = FALSE)
 lib <- normalizePath(
-  get_arg("--lib", "/Users/jracine/Development/tmp/crs_plot_modernization_20260611/Rlib"),
+  get_arg("--lib", "/Users/jracine/Development/tmp/crs_plot_contract_20260611/Rlib"),
   mustWork = FALSE
 )
 out_dir <- normalizePath(
@@ -96,6 +96,32 @@ run_case <- function(name, expected = c("ok", "error"), pattern = "", expr) {
     error = err,
     stringsAsFactors = FALSE
   )
+}
+
+stale_plot_args <- c(
+  "ci", "deriv", "mean", "plot.view", "intervals", "boot", "bands",
+  "plot.errors.method", "plot.errors.type", "plot.errors.alpha",
+  "plot.errors.boot.method", "plot.errors.boot.num",
+  "plot.errors.boot.nonfixed", "plot.errors.boot.wild",
+  "plot.errors.boot.blocklen", "plot.errors.center", "plot.errors.style",
+  "plot.errors.bar", "plot.errors.bar.num", "plot.behavior",
+  "plot.data.overlay", "plot.rug", "plot.par.mfrow", "plot.bxp",
+  "plot.bxp.out", "num.eval", "persp", "xtrim", "xq", "common.scale",
+  "display.nomad.progress", "display.warnings"
+)
+
+make_stale_case <- function(arg) {
+  scenario <- paste0("crs_reject_stale_", gsub("[^[:alnum:]]+", "_", arg))
+  substitute(run_case(
+    NAME,
+    "error",
+    "unused plot argument",
+    expr = {
+      call.args <- list(fit_1d, output = "data")
+      call.args[[ARG]] <- TRUE
+      do.call(plot, call.args)
+    }
+  ), list(NAME = scenario, ARG = arg))
 }
 
 set.seed(20260611)
@@ -277,6 +303,8 @@ cases <- list(
                  expr = plot(fit_1d, output = "data",
                              foo = stop("must not evaluate"))))
 )
+
+cases <- c(cases, lapply(stale_plot_args, make_stale_case))
 
 rows <- lapply(cases, eval)
 res <- do.call(rbind, rows)
