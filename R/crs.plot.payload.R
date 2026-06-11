@@ -125,8 +125,34 @@
                      class = "crs_plot_payload"))
   }
 
-  if (deriv > 0)
-    stop("modern derivative plot payload is not implemented yet; use legacy=TRUE")
+  if (deriv > 0) {
+    if (isTRUE(perspective))
+      stop("2D derivative plot payloads are not implemented yet")
+    raw.slices <- .crs_plot_derivative_slices(
+      object = object,
+      deriv = deriv,
+      ci = ci,
+      num.eval = num.eval,
+      xtrim = xtrim,
+      xq = xq,
+      plot.errors.type = "standard",
+      display.warnings = display.warnings
+    )
+    slices <- Map(function(slice, nm) {
+      names(slice)[2L] <- "fit"
+      slice
+    }, raw.slices, names(raw.slices))
+    names(slices) <- names(raw.slices)
+    return(structure(list(route = "crs",
+                          view = "derivative",
+                          source = "payload",
+                          deriv = deriv,
+                          ci = isTRUE(ci),
+                          tau = object$tau,
+                          perspective = FALSE,
+                          slices = slices),
+                     class = "crs_plot_payload"))
+  }
 
   if (isTRUE(perspective)) {
     surface <- .crs_plot_surface_newdata(object, num.eval = num.eval,

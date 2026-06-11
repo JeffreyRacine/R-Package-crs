@@ -183,7 +183,8 @@
     "plot.errors.style", "plot.errors.bar", "plot.errors.bar.num",
     "plot.behavior", "plot.data.overlay", "plot.rug", "plot.par.mfrow",
     "plot.bxp", "plot.bxp.out", "num.eval", "persp", "persp.rgl",
-    "mean", "deriv", "ci", "xtrim", "xq", "common.scale", "plot.view")
+    "mean", "deriv", "ci", "xtrim", "xq", "common.scale", "plot.view",
+    "display.nomad.progress", "display.warnings")
 }
 
 .crs_plot_validate_public_dots <- function(dots_call,

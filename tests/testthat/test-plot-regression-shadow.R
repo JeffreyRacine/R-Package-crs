@@ -174,6 +174,39 @@ test_that("public opt-in fit route matches legacy mean data oracle", {
   }
 })
 
+test_that("plot.crs defaults to fitted function data route", {
+  set.seed(33)
+  d <- data.frame(x = runif(34))
+  d$y <- sin(2 * pi * d$x) + rnorm(34, sd = 0.05)
+
+  model <- crs(
+    y ~ x,
+    data = d,
+    cv = "none",
+    degree = 3,
+    segments = 1,
+    display.warnings = FALSE,
+    display.nomad.progress = FALSE
+  )
+
+  default <- plot(
+    model,
+    output = "data",
+    neval = 8,
+    display.nomad.progress = FALSE
+  )
+  explicit <- plot(
+    model,
+    mean = TRUE,
+    output = "data",
+    neval = 8,
+    display.nomad.progress = FALSE
+  )
+
+  expect_named(default[[1]], c("x", "mean"))
+  expect_equal(default, explicit, tolerance = 1e-10)
+})
+
 test_that("public opt-in fit route matches legacy asymptotic interval data", {
   set.seed(32)
   d <- data.frame(x = runif(38))
@@ -209,7 +242,7 @@ test_that("public opt-in fit route matches legacy asymptotic interval data", {
   expect_equal(modern[[1]], legacy[[1]], tolerance = 1e-10)
 })
 
-test_that("public opt-in fit route rejects unsupported modern combinations", {
+test_that("public fit route supports mean bootstrap and derivative data", {
   set.seed(26)
   d <- data.frame(x = runif(24), y = rnorm(24))
   model <- crs(
@@ -222,32 +255,43 @@ test_that("public opt-in fit route rejects unsupported modern combinations", {
     display.nomad.progress = FALSE
   )
 
+  boot <- suppressWarnings(plot(
+    model,
+    output = "data",
+    errors = "bootstrap",
+    B = 3,
+    ci = TRUE,
+    neval = 6,
+    display.nomad.progress = FALSE
+  ))
+  expect_named(boot[[1]], c("x", "mean", "lwr", "upr"))
+  expect_equal(nrow(boot[[1]]), 6)
+
+  grad <- suppressWarnings(plot(
+    model,
+    output = "data",
+    deriv = 1,
+    neval = 6,
+    display.nomad.progress = FALSE
+  ))
+  expect_named(grad[[1]], c("x", "deriv"))
+  expect_equal(nrow(grad[[1]]), 6)
+
   expect_error(
     plot(
       model,
-      plot.view = "fit",
       output = "data",
+      deriv = 1,
       errors = "bootstrap",
       B = 3,
       ci = TRUE,
       display.nomad.progress = FALSE
     ),
-    "asymptotic intervals only"
+    "bootstrap intervals for derivative plots"
   )
   expect_error(
     plot(
       model,
-      plot.view = "fit",
-      output = "data",
-      deriv = 1,
-      display.nomad.progress = FALSE
-    ),
-    "fitted mean/quantile plots only"
-  )
-  expect_error(
-    plot(
-      model,
-      plot.view = "fit",
       output = "data",
       perspective = TRUE,
       display.nomad.progress = FALSE

@@ -67,10 +67,8 @@ model <- crs(lwage~married+
              
 summary(model)
 
-## Residual plots
-plot(model)
 ## Partial mean plots (control for non axis predictors)
-plot(model,mean=TRUE)
+plot(model)
 ## Partial first derivative plots (control for non axis predictors)
 plot(model,deriv=1)
 ## Partial second derivative plots (control for non axis predictors)

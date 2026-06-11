@@ -83,7 +83,7 @@ test_that("regression plot payload carries quantile object state", {
                tolerance = 1e-10)
 })
 
-test_that("regression plot payload fails closed for modern derivatives", {
+test_that("regression plot payload supports modern derivatives", {
   set.seed(13)
   d <- data.frame(y = rnorm(30), x = runif(30))
   model <- crs(
@@ -96,15 +96,17 @@ test_that("regression plot payload fails closed for modern derivatives", {
     display.nomad.progress = FALSE
   )
 
-  expect_error(
-    getFromNamespace(".crs_plot_payload_regression", "crs")(
-      model,
-      deriv = 1,
-      num.eval = 7,
-      display.nomad.progress = FALSE
-    ),
-    "derivative plot payload is not implemented"
+  modern <- getFromNamespace(".crs_plot_payload_regression", "crs")(
+    model,
+    deriv = 1,
+    num.eval = 7,
+    display.nomad.progress = FALSE
   )
+  expect_s3_class(modern, "crs_plot_payload")
+  expect_identical(modern$source, "payload")
+  expect_identical(modern$view, "derivative")
+  expect_named(modern$slices$x, c("x", "fit"))
+  expect_equal(nrow(modern$slices$x), 7)
 
   legacy <- getFromNamespace(".crs_plot_payload_regression", "crs")(
     model,
