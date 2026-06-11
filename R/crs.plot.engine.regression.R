@@ -196,11 +196,20 @@
       stop("plot.crs bootstrap intervals currently support bootstrap=\"wild\" or bootstrap=\"inid\"",
            call. = FALSE)
     }
+    interval.label <- .crs_plot_bootstrap_stage_label(
+      stage = sprintf("Constructing bootstrap %s bands", plot.errors.type),
+      target_label = target.label
+    )
+    interval.summary <- .crs_plot_bootstrap_interval_summary(
+      boot.t = boot$boot.mat,
+      t0 = boot$center,
+      alpha = plot.errors.alpha,
+      band.type = plot.errors.type,
+      progress.label = interval.label,
+      display.nomad.progress = display.nomad.progress
+    )
     if (identical(plot.errors.type, "all")) {
-      all.bounds <- .crs.bootstrap.bounds(boot$boot.mat,
-                                          plot.errors.alpha,
-                                          "all",
-                                          boot$center)
+      all.bounds <- interval.summary$all.bounds
       slices[[i]] <- data.frame(newdata[, i],
                                 boot$center,
                                 all.bounds$pointwise[, 1L],
@@ -212,10 +221,7 @@
       names(slices[[i]]) <- c(names(newdata)[i], "mean", "lwr", "upr",
                               "lwr.sim", "upr.sim", "lwr.bonf", "upr.bonf")
     } else {
-      bounds <- .crs.bootstrap.bounds(boot$boot.mat,
-                                      plot.errors.alpha,
-                                      plot.errors.type,
-                                      boot$center)
+      bounds <- interval.summary$bounds
       slices[[i]] <- data.frame(newdata[, i], boot$center, bounds)
       names(slices[[i]]) <- c(names(newdata)[i], "mean", "lwr", "upr")
     }

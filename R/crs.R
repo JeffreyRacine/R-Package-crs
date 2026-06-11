@@ -1272,71 +1272,255 @@ summary.crs <- function(object,
 
 }
 
-.crs.SCSrank <- function(x, conf.level = 0.95, alternative = "two.sided") {
+.crs.SCSrank <- function(x,
+                         conf.level = 0.95,
+                         alternative = "two.sided",
+                         progress_tick = NULL,
+                         progress_offset = 0L) {
   alternative <- match.arg(alternative, choices = c("two.sided", "less", "greater"))
   DataMatrix <- x
   N <- nrow(DataMatrix)
+  K <- ncol(DataMatrix)
   k <- round(conf.level * N, 0)
-  RankDat <- apply(DataMatrix, 2, rank)
+
+  row.max <- rep.int(-Inf, N)
+  row.min <- rep.int(Inf, N)
+  for(j in seq_len(K)) {
+    ranks.j <- rank(DataMatrix[, j])
+    row.max <- pmax(row.max, ranks.j)
+    row.min <- pmin(row.min, ranks.j)
+    if(is.function(progress_tick)) progress_tick(progress_offset + j)
+  }
+
+  SCS <- matrix(NA_real_, nrow = K, ncol = 2L)
   switch(alternative,
          "two.sided" = {
-           W1 <- apply(RankDat, 1, max)
-           W2 <- N + 1 - apply(RankDat, 1, min)
-           Wmat <- cbind(W1, W2)
-           w <- apply(Wmat, 1, max)
-           tstar <- round(sort(w)[k], 0)
-           SCI <- function(x) {
-             sortx <- sort(x)
-             cbind(sortx[N + 1 - tstar], sortx[tstar])
+           tstar <- round(sort.int(pmax(row.max, N + 1 - row.min))[k], 0)
+           lower.idx <- N + 1 - tstar
+           upper.idx <- tstar
+           for(j in seq_len(K)) {
+             sortx <- sort.int(DataMatrix[, j])
+             SCS[j, ] <- c(sortx[lower.idx], sortx[upper.idx])
+             if(is.function(progress_tick)) progress_tick(progress_offset + K + j)
            }
-           SCS <- t(apply(DataMatrix, 2, SCI))
          },
          "less" = {
-           W1 <- apply(RankDat, 1, max)
-           tstar <- round(sort(W1)[k], 0)
-           SCI <- function(x) {
-             sortx <- sort(x)
-             cbind(-Inf, sortx[tstar])
+           tstar <- round(sort.int(row.max)[k], 0)
+           for(j in seq_len(K)) {
+             sortx <- sort.int(DataMatrix[, j])
+             SCS[j, ] <- c(-Inf, sortx[tstar])
+             if(is.function(progress_tick)) progress_tick(progress_offset + K + j)
            }
-           SCS <- t(apply(DataMatrix, 2, SCI))
          },
          "greater" = {
-           W2 <- N + 1 - apply(RankDat, 1, min)
-           tstar <- round(sort(W2)[k], 0)
-           SCI <- function(x) {
-             sortx <- sort(x)
-             cbind(sortx[N + 1 - tstar], Inf)
+           tstar <- round(sort.int(N + 1 - row.min)[k], 0)
+           lower.idx <- N + 1 - tstar
+           for(j in seq_len(K)) {
+             sortx <- sort.int(DataMatrix[, j])
+             SCS[j, ] <- c(sortx[lower.idx], Inf)
+             if(is.function(progress_tick)) progress_tick(progress_offset + K + j)
            }
-           SCS <- t(apply(DataMatrix, 2, SCI))
          })
   colnames(SCS) <- c("lower", "upper")
   list(conf.int = SCS)
 }
 
-.crs.bootstrap.bounds <- function(boot.t, alpha, band.type, center) {
+.crs_plot_quantile_type7_sorted <- function(sorted.x, probs) {
+  n <- length(sorted.x)
+  probs <- pmin(pmax(as.double(probs), 0), 1)
+  if(n < 1L) return(rep.int(NA_real_, length(probs)))
+
+  h <- 1 + (n - 1) * probs
+  lo <- floor(h)
+  hi <- ceiling(h)
+  q <- sorted.x[lo] + (h - lo) * (sorted.x[hi] - sorted.x[lo])
+  q[probs <= 0] <- sorted.x[1L]
+  q[probs >= 1] <- sorted.x[n]
+  q
+}
+
+.crs_plot_quantile_bounds_single <- function(boot.t,
+                                             probs,
+                                             progress_tick = NULL,
+                                             progress_offset = 0L) {
   neval <- ncol(boot.t)
-  if (band.type == "standard") {
-    z <- qnorm(1 - alpha/2)
-    se <- sqrt(diag(cov(boot.t)))
-    return(cbind(center - z * se, center + z * se))
+  out <- matrix(NA_real_, nrow = neval, ncol = length(probs))
+  row.names <- colnames(boot.t)
+  if(!is.null(row.names)) rownames(out) <- row.names
+  colnames(out) <- names(stats::quantile(c(0, 1), probs = probs))
+
+  for(j in seq_len(neval)) {
+    out[j, ] <- stats::quantile(boot.t[, j], probs = probs)
+    if(is.function(progress_tick)) progress_tick(progress_offset + j)
   }
+  out
+}
+
+.crs_plot_quantile_bounds_multi <- function(boot.t,
+                                            probs.list,
+                                            progress_tick = NULL,
+                                            progress_offset = 0L) {
+  probs.list <- unclass(probs.list)
+  if(!length(probs.list)) return(list())
+
+  neval <- ncol(boot.t)
+  row.names <- colnames(boot.t)
+  out <- lapply(probs.list, function(probs) {
+    prob.names <- names(stats::quantile(c(0, 1), probs = probs))
+    matrix(NA_real_,
+           nrow = neval,
+           ncol = length(probs),
+           dimnames = list(row.names, prob.names))
+  })
+  names(out) <- names(probs.list)
+
+  for(j in seq_len(neval)) {
+    sorted.j <- sort.int(boot.t[, j])
+    for(nm in names(probs.list)) {
+      out[[nm]][j, ] <- .crs_plot_quantile_type7_sorted(sorted.j, probs.list[[nm]])
+    }
+    if(is.function(progress_tick)) progress_tick(progress_offset + j)
+  }
+  out
+}
+
+.crs_plot_bootstrap_col_sds <- function(boot.t) {
+  boot.t <- as.matrix(boot.t)
+  B <- nrow(boot.t)
+  if(B <= 1L) return(rep.int(0.0, ncol(boot.t)))
+
+  mu <- colMeans(boot.t)
+  sqrt(colSums((sweep(boot.t, 2L, mu, "-"))^2) / (B - 1L))
+}
+
+.crs.bootstrap.quantile.bounds <- function(boot.t,
+                                           alpha,
+                                           band.type,
+                                           progress_tick = NULL,
+                                           progress_offset = 0L) {
+  neval <- ncol(boot.t)
   if (band.type == "pointwise") {
-    return(t(apply(boot.t, 2, quantile, probs = c(alpha/2, 1 - alpha/2))))
+    return(.crs_plot_quantile_bounds_single(
+      boot.t = boot.t,
+      probs = c(alpha / 2.0, 1.0 - alpha / 2.0),
+      progress_tick = progress_tick,
+      progress_offset = progress_offset))
   }
   if (band.type == "bonferroni") {
-    return(t(apply(boot.t, 2, quantile, probs = c(alpha/(2 * neval), 1 - alpha/(2 * neval)))))
+    return(.crs_plot_quantile_bounds_single(
+      boot.t = boot.t,
+      probs = c(alpha / (2.0 * neval), 1.0 - alpha / (2.0 * neval)),
+      progress_tick = progress_tick,
+      progress_offset = progress_offset))
   }
   if (band.type == "simultaneous") {
-    return(.crs.SCSrank(boot.t, conf.level = 1 - alpha)$conf.int)
+    return(.crs.SCSrank(boot.t,
+                        conf.level = 1 - alpha,
+                        progress_tick = progress_tick,
+                        progress_offset = progress_offset)$conf.int)
   }
   if (band.type == "all") {
+    quantile.bounds <- .crs_plot_quantile_bounds_multi(
+      boot.t = boot.t,
+      probs.list = list(
+        pointwise = c(alpha / 2.0, 1.0 - alpha / 2.0),
+        bonferroni = c(alpha / (2.0 * neval), 1.0 - alpha / (2.0 * neval))
+      ),
+      progress_tick = progress_tick,
+      progress_offset = progress_offset)
     return(list(
-      pointwise = .crs.bootstrap.bounds(boot.t, alpha, "pointwise", center),
-      simultaneous = .crs.bootstrap.bounds(boot.t, alpha, "simultaneous", center),
-      bonferroni = .crs.bootstrap.bounds(boot.t, alpha, "bonferroni", center)
+      pointwise = quantile.bounds$pointwise,
+      bonferroni = quantile.bounds$bonferroni,
+      simultaneous = .crs.bootstrap.quantile.bounds(
+        boot.t = boot.t,
+        alpha = alpha,
+        band.type = "simultaneous",
+        progress_tick = progress_tick,
+        progress_offset = progress_offset + neval)
     ))
   }
-  stop("'band.type' must be one of standard, pointwise, bonferroni, simultaneous, all")
+  stop("'band.type' must be one of pointwise, bonferroni, simultaneous, all")
+}
+
+.crs_plot_bootstrap_interval_summary <- function(boot.t,
+                                                 t0,
+                                                 alpha,
+                                                 band.type,
+                                                 progress.label = NULL,
+                                                 display.nomad.progress = TRUE) {
+  if(!(band.type %in% c("standard", "pointwise", "bonferroni", "simultaneous", "all"))) {
+    stop("'band.type' must be one of standard, pointwise, bonferroni, simultaneous, all")
+  }
+
+  neval <- max(1L, ncol(boot.t))
+  progress.total <- switch(
+    band.type,
+    standard = 2L,
+    pointwise = neval,
+    bonferroni = neval,
+    simultaneous = 2L * neval,
+    all = 3L * neval
+  )
+  progress <- NULL
+  if(isTRUE(display.nomad.progress)) {
+    label <- if(is.null(progress.label)) {
+      sprintf("Constructing bootstrap %s bands", band.type)
+    } else {
+      progress.label
+    }
+    progress <- .crs_plot_stage_progress_begin(total = progress.total,
+                                               label = label)
+    on.exit(.crs_plot_progress_end(progress), add = TRUE)
+  }
+  progress_tick <- local({
+    function(done) {
+      progress <<- .crs_plot_progress_tick(progress, done = done)
+      invisible(NULL)
+    }
+  })
+
+  if(identical(band.type, "standard")) {
+    boot.sd <- .crs_plot_bootstrap_col_sds(boot.t)
+    progress <- .crs_plot_progress_tick(progress, done = 1L, force = TRUE)
+    z <- qnorm(1 - alpha / 2)
+    bounds <- cbind(t0 - z * boot.sd, t0 + z * boot.sd)
+    progress <- .crs_plot_progress_tick(progress, done = 2L, force = TRUE)
+    all.bounds <- NULL
+  } else if(identical(band.type, "all")) {
+    all.bounds <- .crs.bootstrap.quantile.bounds(
+      boot.t = boot.t,
+      alpha = alpha,
+      band.type = "all",
+      progress_tick = progress_tick)
+    bounds <- all.bounds$pointwise
+  } else {
+    bounds <- .crs.bootstrap.quantile.bounds(
+      boot.t = boot.t,
+      alpha = alpha,
+      band.type = band.type,
+      progress_tick = progress_tick)
+    all.bounds <- NULL
+  }
+
+  list(
+    bounds = bounds,
+    all.bounds = all.bounds,
+    err = cbind(t0 - bounds[, 1L], bounds[, 2L] - t0),
+    all.err = if(is.null(all.bounds)) NULL else lapply(all.bounds, function(bb) {
+      cbind(t0 - bb[, 1L], bb[, 2L] - t0)
+    })
+  )
+}
+
+.crs.bootstrap.bounds <- function(boot.t, alpha, band.type, center) {
+  summary <- .crs_plot_bootstrap_interval_summary(
+    boot.t = boot.t,
+    t0 = center,
+    alpha = alpha,
+    band.type = band.type,
+    display.nomad.progress = FALSE
+  )
+  if(identical(band.type, "all")) summary$all.bounds else summary$bounds
 }
 
 .crs.draw.all <- function(x, all.bounds, add.legend = TRUE, legend.loc = "topleft") {
@@ -1592,25 +1776,23 @@ summary.crs <- function(object,
   ystar <- ystar + fit.mean
 
   block.rows <- .crs_plot_wild_hat_block_rows(ntrain = ntrain, neval = neval)
-  nblocks <- as.integer(ceiling(neval / block.rows))
   progress <- NULL
   if(isTRUE(display.nomad.progress)) {
-    progress <- .crs_plot_stage_progress_begin(total = nblocks,
+    progress <- .crs_plot_stage_progress_begin(total = boot.num,
                                                label = progress.label)
     on.exit(.crs_plot_progress_end(progress), add = TRUE)
   }
 
   start <- 1L
-  done <- 0L
   while(start <= neval) {
     stopi <- min(neval, start + block.rows - 1L)
     H <- crshat(object,
                 newdata = newdata[start:stopi, , drop = FALSE],
                 output = "matrix")
     boot.mat[, start:stopi] <- t(H %*% ystar)
-    done <- done + 1L
+    done <- min(boot.num, as.integer(ceiling(boot.num * stopi / neval)))
     progress <- .crs_plot_progress_tick(progress, done = done,
-                                        force = (done == 1L))
+                                        force = (start == 1L))
     start <- stopi + 1L
   }
   list(center = center, boot.mat = boot.mat)

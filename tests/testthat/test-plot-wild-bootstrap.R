@@ -89,6 +89,93 @@ test_that("CRS wild bootstrap block route reuses draws across evaluation blocks"
   expect_equal(helper$boot.mat, oracle, tolerance = 1e-10)
 })
 
+test_that("CRS bootstrap interval summary matches separate band construction", {
+  set.seed(6210)
+  boot.t <- matrix(rnorm(17 * 9), nrow = 17, ncol = 9)
+  t0 <- colMeans(boot.t)
+  summary <- getFromNamespace(".crs_plot_bootstrap_interval_summary", "crs")(
+    boot.t = boot.t,
+    t0 = t0,
+    alpha = 0.1,
+    band.type = "all",
+    display.nomad.progress = FALSE
+  )
+  separate.pointwise <- getFromNamespace(".crs.bootstrap.bounds", "crs")(
+    boot.t, 0.1, "pointwise", t0
+  )
+  separate.sim <- getFromNamespace(".crs.bootstrap.bounds", "crs")(
+    boot.t, 0.1, "simultaneous", t0
+  )
+  separate.bonf <- getFromNamespace(".crs.bootstrap.bounds", "crs")(
+    boot.t, 0.1, "bonferroni", t0
+  )
+
+  expect_named(summary, c("bounds", "all.bounds", "err", "all.err"))
+  expect_equal(summary$bounds, summary$all.bounds$pointwise)
+  expect_equal(summary$all.bounds$pointwise, separate.pointwise)
+  expect_equal(summary$all.bounds$simultaneous, separate.sim)
+  expect_equal(summary$all.bounds$bonferroni, separate.bonf)
+  expect_equal(summary$err, cbind(t0 - summary$bounds[, 1L],
+                                  summary$bounds[, 2L] - t0))
+})
+
+test_that("CRS wild bootstrap block progress reports B and interval construction", {
+  test_time_values <- function(values) {
+    i <- 0L
+    force(values)
+    function() {
+      i <<- min(i + 1L, length(values))
+      values[[i]]
+    }
+  }
+  set.seed(6211)
+  old_opts <- options(
+    crs.messages = TRUE,
+    crs.plot.wild.dense.hat.threshold.bytes = 0,
+    crs.plot.wild.hat.block.bytes = 8 * 30 * 3,
+    crs.plot.progress.start.grace.sec = 0,
+    crs.plot.progress.interval.sec = 0
+  )
+  on.exit(options(old_opts), add = TRUE)
+
+  d <- data.frame(x = runif(30))
+  d$y <- cos(2 * pi * d$x) + rnorm(30, sd = 0.04)
+  fit <- crs(
+    y ~ x,
+    data = d,
+    cv = "none",
+    degree = 2,
+    segments = 1,
+    display.warnings = FALSE,
+    display.nomad.progress = FALSE
+  )
+
+  traced <- capture_crs_progress_shadow_trace(
+    suppressWarnings(
+      plot(
+        fit,
+        output = "data",
+        errors = "bootstrap",
+        bootstrap = "wild",
+        band = "all",
+        B = 8L,
+        neval = 11L
+      )
+    ),
+    force_renderer = "legacy",
+    now = test_time_values(seq(0, 20, by = 0.05)),
+    interactive = TRUE
+  )
+
+  lines <- vapply(traced$trace, `[[`, character(1L), "line")
+  expect_true(any(grepl("Plot bootstrap", lines, fixed = TRUE)))
+  expect_true(any(grepl("8/8", lines, fixed = TRUE)))
+  expect_false(any(grepl("/4", lines, fixed = TRUE)))
+  expect_true(any(grepl("Constructing bootstrap all bands", lines, fixed = TRUE)))
+  expect_true(any(grepl("33/33", lines, fixed = TRUE)))
+  expect_type(traced$value, "list")
+})
+
 test_that("plot.crs accepts explicit wild bootstrap for 1D and surface routes", {
   set.seed(6203)
   d1 <- data.frame(x = runif(30))
