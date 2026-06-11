@@ -254,6 +254,10 @@
   slices
 }
 
+.crs_plot_default_bootstrap_method <- function(object) {
+  if (is.null(object$tau)) "wild" else "inid"
+}
+
 .crs_plot_derivative_slices <- function(object,
                                         deriv,
                                         ci,
@@ -800,7 +804,7 @@
     dots$plot.errors.boot.num, 1999L
   ))
   plot.errors.boot.method <- .crs_plot_scalar_default(
-    dots$plot.errors.boot.method, "wild"
+    dots$plot.errors.boot.method, .crs_plot_default_bootstrap_method(object)
   )
   plot.errors.boot.wild <- .crs_plot_scalar_default(
     dots$plot.errors.boot.wild, "rademacher"
@@ -918,7 +922,7 @@
     dots$plot.errors.boot.num, 1999L
   ))
   plot.errors.boot.method <- .crs_plot_scalar_default(
-    dots$plot.errors.boot.method, "wild"
+    dots$plot.errors.boot.method, .crs_plot_default_bootstrap_method(object)
   )
   plot.errors.boot.wild <- .crs_plot_scalar_default(
     dots$plot.errors.boot.wild, "rademacher"
@@ -1046,7 +1050,7 @@
     dots$plot.errors.boot.num, 1999L
   ))
   plot.errors.boot.method <- .crs_plot_scalar_default(
-    dots$plot.errors.boot.method, "wild"
+    dots$plot.errors.boot.method, .crs_plot_default_bootstrap_method(object)
   )
   plot.errors.boot.wild <- .crs_plot_scalar_default(
     dots$plot.errors.boot.wild, "rademacher"

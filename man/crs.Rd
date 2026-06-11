@@ -495,7 +495,11 @@ Further optional arguments are passed through to lower-level routines.
   \code{B=1999}) following the modern \pkg{np} interface; the legacy
   refit bootstrap remains available with \code{bootstrap="inid"}, and
   \pkg{np}-style block refit bootstraps are available with
-  \code{bootstrap="fixed"} and \code{bootstrap="geom"}.
+  \code{bootstrap="fixed"} and \code{bootstrap="geom"}. Quantile CRS
+  plots fit with \code{tau} follow the \pkg{npqreg} convention and
+  default to the refit \code{bootstrap="inid"} selector; \code{fixed}
+  and \code{geom} are available for quantile fitted curves, while
+  \code{wild} remains mean-only.
   Bootstrap derivative bounds and surface
   gradient bounds in \code{plot.crs} are not implemented and fail closed; use
   asymptotic derivative intervals with \code{errors="asymptotic"}.}

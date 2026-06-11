@@ -227,13 +227,18 @@ test_that("plot.crs accepts explicit wild bootstrap for 1D and surface routes", 
                  "lwr.bonf", "upr.bonf"))
 })
 
-test_that("plot.crs bootstrap defaults are NP-style wild with 1999 replications", {
+test_that("plot.crs bootstrap defaults are object-aware with 1999 replications", {
   fn <- getFromNamespace(".crs_plot_regression_1d_public", "crs")
   body.txt <- paste(deparse(body(fn)), collapse = "\n")
-  expect_match(body.txt, 'dots\\$plot.errors.boot.method,\\s*"wild"',
-               fixed = FALSE)
   expect_match(body.txt, 'dots\\$plot.errors.boot.num,\\s*1999L',
                fixed = FALSE)
+
+  default_method <- getFromNamespace(".crs_plot_default_bootstrap_method",
+                                    "crs")
+  mean.object <- list(tau = NULL)
+  quantile.object <- list(tau = 0.5)
+  expect_identical(default_method(mean.object), "wild")
+  expect_identical(default_method(quantile.object), "inid")
 })
 
 test_that("CRS block count drawer produces valid fixed and geometric counts", {
@@ -317,6 +322,62 @@ test_that("plot.crs accepts fixed and geom bootstraps for mean routes", {
     neval = 4L
   )
   expect_named(surface[[1L]], c("x1", "x2", "fit", "lwr", "upr"))
+})
+
+test_that("plot.crs quantile bootstrap defaults to NPQREG-style refit selectors", {
+  set.seed(6217)
+  d <- data.frame(x = runif(30))
+  d$y <- sin(2 * pi * d$x) + rnorm(30, sd = 0.08)
+  fit <- crs(
+    y ~ x,
+    data = d,
+    cv = "none",
+    degree = 2,
+    segments = 1,
+    tau = 0.5,
+    display.warnings = FALSE,
+    display.nomad.progress = FALSE
+  )
+  default <- suppressWarnings(plot(
+    fit,
+    output = "data",
+    errors = "bootstrap",
+    B = 3L,
+    neval = 5L
+  ))
+  fixed <- suppressWarnings(plot(
+    fit,
+    output = "data",
+    errors = "bootstrap",
+    bootstrap = "fixed",
+    boot_control = crs_boot_control(blocklen = 2),
+    B = 3L,
+    neval = 5L
+  ))
+  geom <- suppressWarnings(plot(
+    fit,
+    output = "data",
+    errors = "bootstrap",
+    bootstrap = "geom",
+    boot_control = crs_boot_control(blocklen = 2),
+    B = 3L,
+    neval = 5L
+  ))
+
+  expect_named(default[[1L]], c("x", "mean", "lwr", "upr"))
+  expect_named(fixed[[1L]], c("x", "mean", "lwr", "upr"))
+  expect_named(geom[[1L]], c("x", "mean", "lwr", "upr"))
+  expect_error(
+    plot(
+      fit,
+      output = "data",
+      errors = "bootstrap",
+      bootstrap = "wild",
+      B = 3L,
+      neval = 5L
+    ),
+    "mean CRS objects only"
+  )
 })
 
 test_that("plot.crs fixed bootstrap computes an NP-style default block length", {

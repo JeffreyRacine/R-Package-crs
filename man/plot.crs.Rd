@@ -38,7 +38,11 @@ remains available with \code{bootstrap="inid"}. Mean plots also support
 the \pkg{np}-style block refit bootstraps \code{bootstrap="fixed"} and
 \code{bootstrap="geom"}; use \code{np_boot_control(blocklen=...)} to set
 the block length explicitly, otherwise the \pkg{np} automatic
-block-length selector is used.
+block-length selector is used. Quantile CRS plots, i.e. objects fit with
+\code{tau}, follow the \pkg{npqreg} convention and default to the refit
+\code{bootstrap="inid"} selector; \code{bootstrap="fixed"} and
+\code{bootstrap="geom"} are also available for quantile fitted-curve
+plots, while \code{bootstrap="wild"} remains mean-only.
 
 Use \code{output="data"} to return the plotting payload without drawing,
 or \code{output="plot-data"} to draw and return the payload.
@@ -71,5 +75,7 @@ plot(model, errors = "bootstrap", band = "all")
 plot(model, errors = "bootstrap", bootstrap = "inid", B = 99)
 plot(model, errors = "bootstrap", bootstrap = "fixed", B = 99,
      boot_control = np_boot_control(blocklen = 5))
+qmodel <- crs(y ~ x, cv = "none", degree = 3, segments = 1, tau = 0.5)
+plot(qmodel, errors = "bootstrap", B = 99)
 }
 }
