@@ -1124,11 +1124,24 @@ plot.clsd <- function(x,
                       er=TRUE,
                       distribution=FALSE,
                       derivative=FALSE,
+                      plot.view = c("legacy","fit"),
                       ylim,
                       ylab,
                       xlab,
                       type,
                       ...) {
+
+  plot.view <- match.arg(plot.view)
+  if (!identical(plot.view, "legacy")) {
+    return(.crs_plot_clsd_public(
+      object = x,
+      plot.call = match.call(expand.dots = FALSE),
+      er = er,
+      distribution = distribution,
+      derivative = derivative,
+      ...
+    ))
+  }
 
   if(missing(xlab)) xlab <- "Data"
   if(missing(type)) type <- "l"

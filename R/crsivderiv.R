@@ -706,9 +706,21 @@ summary.crsivderiv <- function(object, ...) {
 plot.crsivderiv <- function(x,
                             plot.data = FALSE,
                             phi = FALSE,
+                            plot.view = c("legacy","fit"),
                             ...) {
 
   object <- x
+  plot.view <- match.arg(plot.view)
+
+  if (!identical(plot.view, "legacy")) {
+    return(.crs_plot_iv_deriv_public(
+      object = object,
+      plot.call = match.call(expand.dots = FALSE),
+      plot.data = plot.data,
+      phi = phi,
+      ...
+    ))
+  }
 
   ## We only support univariate endogenous predictor z
   if(object$num.x > 1 || !is.null(object$num.z)) stop(" only univariate z is supported")
