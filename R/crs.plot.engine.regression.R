@@ -473,7 +473,6 @@
   } else {
     "plot"
   }
-  ci <- isTRUE(.crs_plot_scalar_default(dots$ci, FALSE))
   deriv <- as.numeric(.crs_plot_scalar_default(dots$deriv, 0L))
   num.eval <- as.integer(.crs_plot_scalar_default(dots$num.eval, 100L))
   xtrim <- .crs_plot_scalar_default(dots$xtrim, 0)
@@ -485,7 +484,10 @@
     stop("modern 2D regression plot route is not implemented yet",
          call. = FALSE)
   plot.errors.method <- .crs_plot_scalar_default(dots$plot.errors.method,
-                                                 "asymptotic")
+                                                 "none")
+  ci <- isTRUE(.crs_plot_scalar_default(
+    dots$ci, !identical(plot.errors.method, "none")
+  ))
   plot.errors.type <- .crs_plot_scalar_default(dots$plot.errors.type,
                                                "standard")
   plot.errors.alpha <- .crs_plot_scalar_default(dots$plot.errors.alpha, 0.05)
@@ -612,86 +614,112 @@
 
 .crs_plot_regression_1d_public <- function(object,
                                            plot.call,
-                                           mean,
-                                           deriv,
-                                           ci,
-                                           plot.errors.method,
-                                           plot.errors.boot.num,
-                                           plot.errors.type,
-                                           plot.errors.alpha,
-                                           num.eval,
-                                           xtrim,
-                                           xq,
-                                           plot.behavior,
-                                           common.scale,
-                                           persp.rgl,
-                                           display.nomad.progress,
-                                           display.warnings,
                                            ...) {
   if (!inherits(object, "crs")) stop("object must inherit from class 'crs'")
-  if (!isTRUE(mean) && identical(deriv, 0))
-    mean <- TRUE
-  if (!isTRUE(mean) && !isTRUE(as.numeric(deriv) > 0))
-    stop("plot.crs supports fitted mean/quantile and derivative displays",
-         call. = FALSE)
 
   dots <- list(...)
-  supplied <- names(plot.call)
   raw.dots <- plot.call$...
   dot.names <- names(raw.dots)
   if (is.null(dot.names)) dot.names <- character()
-  surface.request <- isTRUE(persp.rgl)
-  if ("perspective" %in% dot.names)
-    surface.request <- isTRUE(raw.dots$perspective)
-  if ("renderer" %in% dot.names)
-    surface.request <- TRUE
-  if (isTRUE(persp.rgl) && "renderer" %in% dot.names &&
-      !identical(as.character(raw.dots$renderer), "rgl"))
-    stop("cannot supply persp.rgl=TRUE with renderer other than \"rgl\"",
-         call. = FALSE)
-  effective.errors.method <- plot.errors.method
-  if ("errors" %in% dot.names) {
-    effective.errors.method <- .crs_plot_scalar_match(
-      raw.dots$errors,
-      c("none", "bootstrap", "asymptotic"),
-      "errors"
-    )
+  .crs_plot_validate_public_dots(raw.dots, context = "plot.crs")
+  dots <- .crs_plot_normalize_public_dots(dots, context = "plot.crs")
+
+  plot.behavior <- if (!is.null(dots$plot.behavior)) {
+    match.arg(dots$plot.behavior, c("plot", "plot-data", "data"))
+  } else {
+    "plot"
   }
+  gradients <- isTRUE(.crs_plot_scalar_default(dots$gradients, FALSE))
+  gradient.order <- .crs_plot_scalar_default(dots$gradient.order, 1L)
+  if (!is.numeric(gradient.order) || any(is.na(gradient.order)) ||
+      any(gradient.order < 1L))
+    stop("gradient_order must contain positive numeric values",
+         call. = FALSE)
+  if (length(gradient.order) != 1L)
+    stop("plot.crs gradients currently require scalar gradient_order",
+         call. = FALSE)
+  deriv <- if (isTRUE(gradients)) as.integer(gradient.order) else 0L
+
+  num.eval <- as.integer(.crs_plot_scalar_default(dots$num.eval, 50L))
+  xtrim <- .crs_plot_scalar_default(dots$xtrim, 0)
+  xq <- .crs_plot_scalar_default(dots$xq, 0.5)
+  common.scale <- isTRUE(.crs_plot_scalar_default(dots$common.scale, TRUE))
+  display.nomad.progress <- isTRUE(.crs_plot_scalar_default(
+    dots$display.nomad.progress, TRUE
+  ))
+  display.warnings <- isTRUE(.crs_plot_scalar_default(
+    dots$display.warnings, TRUE
+  ))
+  plot.errors.method <- .crs_plot_scalar_default(dots$plot.errors.method,
+                                                 "none")
+  plot.errors.method <- .crs_plot_scalar_match(plot.errors.method,
+                                               c("none", "bootstrap",
+                                                 "asymptotic"),
+                                               "errors")
+  plot.errors.type <- .crs_plot_scalar_default(dots$plot.errors.type,
+                                               "standard")
+  plot.errors.alpha <- .crs_plot_scalar_default(dots$plot.errors.alpha, 0.05)
+  plot.errors.boot.num <- as.integer(.crs_plot_scalar_default(
+    dots$plot.errors.boot.num, 99L
+  ))
+  plot.errors.boot.method <- .crs_plot_scalar_default(
+    dots$plot.errors.boot.method, "inid"
+  )
+  plot.errors.center <- .crs_plot_scalar_default(dots$plot.errors.center,
+                                                 "estimate")
+  if (!identical(plot.errors.center, "estimate"))
+    stop("plot.crs currently supports center=\"estimate\" only",
+         call. = FALSE)
+  if (identical(plot.errors.method, "bootstrap") &&
+      !identical(plot.errors.boot.method, "inid"))
+    stop("plot.crs bootstrap intervals currently support bootstrap=\"inid\" only",
+         call. = FALSE)
+  if (identical(plot.errors.method, "asymptotic") &&
+      !identical(plot.errors.type, "standard"))
+    stop("plot.crs asymptotic intervals currently support band=\"pmzsd\" only",
+         call. = FALSE)
+
+  ci <- !identical(plot.errors.method, "none")
+  perspective <- isTRUE(.crs_plot_scalar_default(dots$perspective, TRUE))
+  renderer <- .crs_plot_scalar_default(dots$renderer, "base")
+  renderer <- match.arg(renderer, c("base", "rgl"))
+  surface.supported <- is.null(object$num.z) && identical(object$num.x, 2L)
+  if ("perspective" %in% dot.names && isTRUE(perspective) &&
+      !isTRUE(surface.supported) && !isTRUE(gradients))
+    stop("2D plot surfaces are supported only for two continuous predictors",
+         call. = FALSE)
+  surface.request <- isTRUE(perspective) && isTRUE(surface.supported) &&
+    !isTRUE(gradients)
+  if ("renderer" %in% dot.names && !isTRUE(surface.request))
+    stop("renderer is supported only for 2D fitted-function surfaces",
+         call. = FALSE)
 
   bridge <- dots
-  if (!("output" %in% dot.names)) bridge$plot.behavior <- plot.behavior
+  bridge$plot.behavior <- plot.behavior
   bridge$ci <- ci
   bridge$deriv <- deriv
-  if (!("neval" %in% dot.names)) bridge$num.eval <- num.eval
+  bridge$num.eval <- num.eval
   bridge$xtrim <- xtrim
   bridge$xq <- xq
   bridge$common.scale <- common.scale
   bridge$display.nomad.progress <- display.nomad.progress
   bridge$display.warnings <- display.warnings
-  if (!("errors" %in% dot.names))
-    bridge$plot.errors.method <- plot.errors.method
-  if (!("band" %in% dot.names))
-    bridge$plot.errors.type <- plot.errors.type
-  if (!("alpha" %in% dot.names))
-    bridge$plot.errors.alpha <- plot.errors.alpha
-  if (identical(plot.errors.method, "bootstrap") || "plot.errors.boot.num" %in% supplied)
+  bridge$plot.errors.method <- plot.errors.method
+  bridge$plot.errors.type <- plot.errors.type
+  bridge$plot.errors.alpha <- plot.errors.alpha
+  if (identical(plot.errors.method, "bootstrap"))
     bridge$plot.errors.boot.num <- plot.errors.boot.num
 
-  if ("plot.behavior" %in% supplied && "output" %in% dot.names)
-    bridge$plot.behavior <- plot.behavior
-  if (isTRUE(ci) && as.numeric(deriv) > 0 &&
-      identical(effective.errors.method, "bootstrap"))
+  if (isTRUE(ci) && isTRUE(gradients) &&
+      identical(plot.errors.method, "bootstrap"))
     stop("bootstrap intervals for derivative plots are not implemented",
          call. = FALSE)
-  if (isTRUE(persp.rgl) && !("renderer" %in% dot.names))
-    bridge$renderer <- "rgl"
 
   if (isTRUE(surface.request)) {
-    if (as.numeric(deriv) > 0)
-      stop("surface derivative plots are not implemented", call. = FALSE)
     if (isTRUE(ci))
-      stop("plot.view=\"fit\" surface route currently supports point estimates only",
+      stop("plot.crs surface route currently supports point estimates only",
            call. = FALSE)
+    bridge$renderer <- renderer
     return(do.call(.crs_plot_regression_surface_shadow,
                    c(list(object = object, .plot_dots_call = raw.dots),
                      bridge)))

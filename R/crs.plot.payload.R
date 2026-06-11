@@ -79,8 +79,11 @@
 
 .crs_plot_payload_regression <- function(object,
                                          deriv = 0L,
+                                         gradients = FALSE,
+                                         gradient.order = 1L,
                                          ci = FALSE,
                                          num.eval = 100L,
+                                         neval = NULL,
                                          xtrim = 0,
                                          xq = 0.5,
                                          perspective = FALSE,
@@ -88,6 +91,8 @@
                                          display.nomad.progress = FALSE,
                                          display.warnings = TRUE) {
   if (!inherits(object, "crs")) stop("object must inherit from class 'crs'")
+  if (!is.null(neval)) num.eval <- neval
+  if (isTRUE(gradients)) deriv <- gradient.order
   if (!is.numeric(deriv) || length(deriv) != 1L || is.na(deriv) || deriv < 0)
     stop("deriv must be a non-negative scalar")
   if (!is.numeric(num.eval) || length(num.eval) != 1L || is.na(num.eval) ||
@@ -100,14 +105,16 @@
   num.eval <- as.integer(num.eval)
 
   if (isTRUE(legacy)) {
+    errors <- if (isTRUE(ci)) "asymptotic" else "none"
     if (deriv > 0) {
-      payload <- plot(object, deriv = deriv, ci = ci, num.eval = num.eval,
-                      xtrim = xtrim, xq = xq, plot.behavior = "data",
+      payload <- plot(object, gradients = TRUE, gradient_order = deriv,
+                      errors = errors, neval = num.eval,
+                      xtrim = xtrim, xq = xq, output = "data",
                       display.nomad.progress = display.nomad.progress,
                       display.warnings = display.warnings)
     } else {
-      payload <- plot(object, mean = TRUE, ci = ci, num.eval = num.eval,
-                      xtrim = xtrim, xq = xq, plot.behavior = "data",
+      payload <- plot(object, errors = errors, neval = num.eval,
+                      xtrim = xtrim, xq = xq, output = "data",
                       display.nomad.progress = display.nomad.progress,
                       display.warnings = display.warnings)
     }
@@ -198,6 +205,7 @@
 .crs_plot_payload_iv <- function(object,
                                  deriv = FALSE,
                                  ci = FALSE,
+                                 errors = "none",
                                  xtrim = 0) {
   if (!inherits(object, "crsiv")) stop("object must inherit from class 'crsiv'")
   if (object$num.x > 1 || !is.null(object$num.z))
@@ -206,6 +214,10 @@
     stop("deriv must be TRUE/FALSE")
   if (!is.logical(ci) || length(ci) != 1L || is.na(ci))
     stop("ci must be TRUE/FALSE")
+  errors <- .crs_plot_scalar_match(errors,
+                                   c("none", "bootstrap", "asymptotic"),
+                                   "errors")
+  ci <- isTRUE(ci) || !identical(errors, "none")
   if (!is.numeric(xtrim) || length(xtrim) != 1L || is.na(xtrim) ||
       xtrim < 0 || xtrim >= 0.5)
     stop("xtrim must be in [0, 0.5)")

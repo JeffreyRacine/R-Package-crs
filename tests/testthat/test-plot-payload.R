@@ -22,12 +22,12 @@ test_that("regression plot payload shadows legacy mean slices", {
 
   modern <- getFromNamespace(".crs_plot_payload_regression", "crs")(
     model,
-    num.eval = 9,
+    neval = 9,
     display.nomad.progress = FALSE
   )
   legacy <- getFromNamespace(".crs_plot_payload_regression", "crs")(
     model,
-    num.eval = 9,
+    neval = 9,
     legacy = TRUE,
     display.nomad.progress = FALSE
   )
@@ -67,12 +67,12 @@ test_that("regression plot payload carries quantile object state", {
 
   modern <- getFromNamespace(".crs_plot_payload_regression", "crs")(
     model,
-    num.eval = 7,
+    neval = 7,
     display.nomad.progress = FALSE
   )
   legacy <- getFromNamespace(".crs_plot_payload_regression", "crs")(
     model,
-    num.eval = 7,
+    neval = 7,
     legacy = TRUE,
     display.nomad.progress = FALSE
   )
@@ -98,8 +98,8 @@ test_that("regression plot payload supports modern derivatives", {
 
   modern <- getFromNamespace(".crs_plot_payload_regression", "crs")(
     model,
-    deriv = 1,
-    num.eval = 7,
+    gradients = TRUE,
+    neval = 7,
     display.nomad.progress = FALSE
   )
   expect_s3_class(modern, "crs_plot_payload")
@@ -110,8 +110,8 @@ test_that("regression plot payload supports modern derivatives", {
 
   legacy <- getFromNamespace(".crs_plot_payload_regression", "crs")(
     model,
-    deriv = 1,
-    num.eval = 7,
+    gradients = TRUE,
+    neval = 7,
     legacy = TRUE,
     display.nomad.progress = FALSE
   )
@@ -139,7 +139,7 @@ test_that("2D regression payload returns object-fed surface data", {
 
   payload <- getFromNamespace(".crs_plot_payload_regression", "crs")(
     model,
-    num.eval = 6,
+    neval = 6,
     perspective = TRUE,
     display.nomad.progress = FALSE
   )
@@ -172,7 +172,7 @@ test_that("IV and IV derivative payloads expose sorted object state", {
   deriv.payload <- getFromNamespace(".crs_plot_payload_iv", "crs")(
     iv,
     deriv = TRUE,
-    ci = TRUE
+    errors = "asymptotic"
   )
 
   expect_equal(fit.payload$data$z, sort(z), tolerance = 0)

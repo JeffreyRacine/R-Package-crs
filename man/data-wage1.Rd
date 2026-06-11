@@ -70,9 +70,9 @@ summary(model)
 ## Partial mean plots (control for non axis predictors)
 plot(model)
 ## Partial first derivative plots (control for non axis predictors)
-plot(model,deriv=1)
+plot(model,gradients = TRUE)
 ## Partial second derivative plots (control for non axis predictors)
-plot(model,deriv=2)
+plot(model,gradients = TRUE, gradient_order = 2)
 
 } % end dontrun
 }

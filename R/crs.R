@@ -1516,55 +1516,10 @@ summary.crs <- function(object,
   })
 }
 
-plot.crs <- function(x,
-                     mean=TRUE,
-                     deriv=0,
-                     ci=FALSE,
-                     plot.errors.method = c("asymptotic","bootstrap"),
-                     plot.errors.boot.num = 99,
-                     plot.errors.type = c("standard","pointwise","bonferroni","simultaneous","all"),
-                     plot.errors.alpha = 0.05,
-                     num.eval=100,
-                     xtrim = 0.0,
-                     xq = 0.5,
-                     plot.behavior = c("plot","plot-data","data"),
-                     plot.view = c("fit"),
-                     common.scale=TRUE,
-                     persp.rgl=FALSE,
-                     display.warnings=TRUE,
-                     display.nomad.progress=TRUE,
-                     ...) {
-
-  plot.behavior <- match.arg(plot.behavior)
-  plot.view <- match.arg(plot.view)
-  plot.errors.method <- match.arg(plot.errors.method)
-  plot.errors.type <- match.arg(plot.errors.type)
-
-  if (ci && plot.errors.method == "asymptotic" &&
-      plot.errors.type != "standard") {
-    stop("asymptotic intervals support only plot.errors.type='standard'",
-         call. = FALSE)
-  }
-  if (deriv < 0) stop("derivative order must be a non-negative integer")
-
+plot.crs <- function(x, ...) {
   .crs_plot_regression_1d_public(
     object = x,
     plot.call = match.call(expand.dots = FALSE),
-    mean = mean,
-    deriv = deriv,
-    ci = ci,
-    plot.errors.method = plot.errors.method,
-    plot.errors.boot.num = plot.errors.boot.num,
-    plot.errors.type = plot.errors.type,
-    plot.errors.alpha = plot.errors.alpha,
-    num.eval = num.eval,
-    xtrim = xtrim,
-    xq = xq,
-    plot.behavior = plot.behavior,
-    common.scale = common.scale,
-    persp.rgl = persp.rgl,
-    display.nomad.progress = display.nomad.progress,
-    display.warnings = display.warnings,
     ...
   )
 }

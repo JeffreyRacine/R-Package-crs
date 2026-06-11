@@ -1124,74 +1124,20 @@ plot.clsd <- function(x,
                       er=TRUE,
                       distribution=FALSE,
                       derivative=FALSE,
-                      plot.view = c("legacy","fit"),
                       ylim,
                       ylab,
                       xlab,
                       type,
                       ...) {
 
-  plot.view <- match.arg(plot.view)
-  if (!identical(plot.view, "legacy")) {
-    return(.crs_plot_clsd_public(
-      object = x,
-      plot.call = match.call(expand.dots = FALSE),
-      er = er,
-      distribution = distribution,
-      derivative = derivative,
-      ...
-    ))
-  }
-
-  if(missing(xlab)) xlab <- "Data"
-  if(missing(type)) type <- "l"
-
-  if(!er) {
-    order.x <- order(x$x)
-    if(distribution){
-      y <- x$distribution[order.x]
-      if(missing(ylab)) ylab <- "Distribution"
-      if(missing(ylim)) ylim <- c(0,1)
-    }
-    if(!distribution && !derivative) {
-      y <- x$density[order.x]
-      if(missing(ylab)) ylab <- "Density"
-      if(missing(ylim)) ylim <- c(0,max(y))
-    }
-    if(derivative) {
-      y <- x$density.deriv[order.x]
-      if(missing(ylab)) ylab <- "Density Derivative"
-      if(missing(ylim)) ylim <- c(min(y),max(y))
-    }
-    x <- x$x[order.x]
-  } else {
-    order.xer <- order(x$xer)
-    if(distribution){
-      y <- x$distribution.er[order.xer]
-      if(missing(ylab)) ylab <- "Distribution"
-      if(missing(ylim)) ylim <- c(0,1)
-    }
-    if(!distribution && !derivative) {
-      y <- x$density.er[order.xer]
-      if(missing(ylab)) ylab <- "Density"
-      if(missing(ylim)) ylim <- c(0,max(y))
-    }
-    if(derivative){
-      y <- x$density.deriv.er[order.xer]
-      if(missing(ylab)) ylab <- "Density Derivative"
-      if(missing(ylim)) ylim <- c(min(y),max(y))
-    }
-    x <- x$xer[order.xer]
-  }
-
-  x <- plot(x,
-            y,
-            ylim=ylim,
-            ylab=ylab,
-            xlab=xlab,
-            type=type,
-            ...)
-
+  .crs_plot_clsd_public(
+    object = x,
+    plot.call = match.call(expand.dots = FALSE),
+    er = er,
+    distribution = distribution,
+    derivative = derivative,
+    ...
+  )
 }
 
 coef.clsd <- function(object, ...) {

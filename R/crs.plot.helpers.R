@@ -1,8 +1,7 @@
-## Internal CRS plot helpers copied/adapted from the modern np plot layer.
+## CRS plot helpers copied/adapted from the modern np plot layer.
 ##
-## This file intentionally starts small. It provides the normalization and
-## rendering-adjacent primitives needed by shadow plot engines without changing
-## any public plot method defaults.
+## The public plot argument grammar is intentionally NP-shaped. CRS-specific
+## internals translate those public controls into spline prediction payloads.
 
 .crs_plot_scalar_match <- function(value, choices, argname) {
   if (is.null(value)) return(NULL)
@@ -20,9 +19,9 @@
   value
 }
 
-.crs_boot_control <- function(nonfixed = c("exact", "frozen"),
-                              wild = c("rademacher", "mammen"),
-                              blocklen = NULL) {
+np_boot_control <- function(nonfixed = c("exact", "frozen"),
+                            wild = c("rademacher", "mammen"),
+                            blocklen = NULL) {
   nonfixed <- match.arg(nonfixed)
   wild <- match.arg(wild)
   if (!is.null(blocklen) &&
@@ -30,10 +29,10 @@
        is.na(blocklen) || blocklen <= 0))
     stop("blocklen must be a positive numeric scalar", call. = FALSE)
   structure(list(nonfixed = nonfixed, wild = wild, blocklen = blocklen),
-            class = "crs_boot_control")
+            class = "np_boot_control")
 }
 
-.crs_grid_control <- function(xtrim = NULL, xq = NULL, slices = NULL) {
+np_grid_control <- function(xtrim = NULL, xq = NULL, slices = NULL) {
   if (!is.null(xtrim) &&
       (!is.numeric(xtrim) || length(xtrim) != 2L ||
        any(is.na(xtrim)) || any(xtrim < 0) || any(xtrim > 1) ||
@@ -41,12 +40,12 @@
     stop("xtrim must be a numeric length-two vector with 0 <= xtrim[1] < xtrim[2] <= 1",
          call. = FALSE)
   structure(list(xtrim = xtrim, xq = xq, slices = slices),
-            class = "crs_grid_control")
+            class = "np_grid_control")
 }
 
-.crs_render_control <- function(style = c("band", "bar"),
-                                bar = c("|", "I"),
-                                bar_num = NULL) {
+np_render_control <- function(style = c("band", "bar"),
+                              bar = c("|", "I"),
+                              bar_num = NULL) {
   style <- match.arg(style)
   bar <- match.arg(bar)
   if (!is.null(bar_num) &&
@@ -54,7 +53,39 @@
        is.na(bar_num) || bar_num < 1))
     stop("bar_num must be a positive numeric scalar", call. = FALSE)
   structure(list(style = style, bar = bar, bar_num = bar_num),
-            class = "crs_render_control")
+            class = "np_render_control")
+}
+
+crs_boot_control <- function(...) {
+  out <- np_boot_control(...)
+  class(out) <- c("crs_boot_control", class(out))
+  out
+}
+
+crs_grid_control <- function(...) {
+  out <- np_grid_control(...)
+  class(out) <- c("crs_grid_control", class(out))
+  out
+}
+
+crs_render_control <- function(...) {
+  out <- np_render_control(...)
+  class(out) <- c("crs_render_control", class(out))
+  out
+}
+
+.crs_boot_control <- crs_boot_control
+.crs_grid_control <- crs_grid_control
+.crs_render_control <- crs_render_control
+
+.crs_plot_dot_names <- function(dots_call) {
+  if (is.null(dots_call) || length(dots_call) == 0L)
+    return(character())
+  nms <- names(dots_call)
+  if (is.null(nms))
+    rep.int("", length(dots_call))
+  else
+    nms
 }
 
 .crs_plot_match_flag <- function(value, argname) {
@@ -171,7 +202,10 @@
 .crs_plot_canonical_arg_names <- function() {
   c("errors", "band", "alpha", "bootstrap", "B", "center",
     "output", "data_overlay", "data_rug", "layout", "legend",
-    "gradient_order", "common_scale", "renderer", "neval", "perspective",
+    "factor_boxplot", "boxplot_outliers",
+    "gradient", "gradients", "gradient.order", "gradient_order",
+    "common_scale",
+    "renderer", "neval", "perspective", "view", "behavior",
     "boot_control", "grid_control", "render_control")
 }
 
@@ -182,20 +216,38 @@
     "plot.errors.boot.blocklen", "plot.errors.center",
     "plot.errors.style", "plot.errors.bar", "plot.errors.bar.num",
     "plot.behavior", "plot.data.overlay", "plot.rug", "plot.par.mfrow",
-    "plot.bxp", "plot.bxp.out", "num.eval", "persp", "persp.rgl",
-    "mean", "deriv", "ci", "xtrim", "xq", "common.scale", "plot.view",
-    "display.nomad.progress", "display.warnings")
+    "plot.bxp", "plot.bxp.out", "num.eval", "persp", "xtrim", "xq",
+    "common.scale", "display.nomad.progress", "display.warnings")
 }
 
 .crs_plot_validate_public_dots <- function(dots_call,
                                            context = "plot",
                                            extra = character()) {
-  nms <- if (is.null(dots_call) || length(dots_call) == 0L) {
-    character()
-  } else {
-    names(dots_call)
-  }
-  if (is.null(nms)) nms <- rep.int("", length(dots_call))
+  nms <- .crs_plot_dot_names(dots_call)
+  if (any(!nzchar(nms)))
+    stop(sprintf("unnamed plot arguments are not supported for %s", context),
+         call. = FALSE)
+  if ("intervals" %in% nms)
+    stop("unused plot argument: intervals; did you mean errors?",
+         call. = FALSE)
+  if ("boot" %in% nms)
+    stop("unused plot argument: boot; did you mean bootstrap?",
+         call. = FALSE)
+  if ("bands" %in% nms)
+    stop("unused plot argument: bands; did you mean band?",
+         call. = FALSE)
+  if ("ci" %in% nms)
+    stop("unused plot argument: ci; use errors instead",
+         call. = FALSE)
+  if ("deriv" %in% nms)
+    stop("unused plot argument: deriv; use gradients and gradient_order instead",
+         call. = FALSE)
+  if ("mean" %in% nms)
+    stop("unused plot argument: mean; plot.crs displays fitted functions by default",
+         call. = FALSE)
+  if ("plot.view" %in% nms)
+    stop("unused plot argument: plot.view; CRS plot methods now use the NP plot interface",
+         call. = FALSE)
   allowed <- unique(c(.crs_plot_graphics_arg_names(),
                       .crs_plot_canonical_arg_names(),
                       .crs_plot_legacy_arg_names(),
@@ -208,17 +260,41 @@
 }
 
 .crs_plot_set_normalized_arg <- function(dots, public, internal, value) {
-  if (!is.null(dots[[internal]]))
-    stop(sprintf("cannot supply both %s and %s", public, internal),
+  same <- !is.null(dots[[internal]]) &&
+    isTRUE(all.equal(dots[[internal]], value, check.attributes = FALSE))
+  if (!is.null(dots[[internal]]) && !same)
+    stop(sprintf("conflicting plot arguments: %s and %s specify different values",
+                 public, internal),
          call. = FALSE)
   dots[[internal]] <- value
   dots
+}
+
+.crs_plot_match_layout <- function(value) {
+  if (is.logical(value)) {
+    if (length(value) != 1L || is.na(value))
+      stop("layout must be TRUE/FALSE or one of \"auto\", \"current\"",
+           call. = FALSE)
+    return(isTRUE(value))
+  }
+  layout <- .crs_plot_scalar_match(value, c("auto", "current"), "layout")
+  identical(layout, "auto")
 }
 
 .crs_plot_normalize_public_dots <- function(dots, context = "plot") {
   if (is.null(dots)) dots <- list()
   supplied <- names(dots)
   has <- function(nm) !is.null(dots[[nm]])
+
+  if (has("intervals"))
+    stop("unused plot argument: intervals; did you mean errors?",
+         call. = FALSE)
+  if (has("boot"))
+    stop("unused plot argument: boot; did you mean bootstrap?",
+         call. = FALSE)
+  if (has("bands"))
+    stop("unused plot argument: bands; did you mean band?",
+         call. = FALSE)
 
   if (has("errors")) {
     errors <- .crs_plot_scalar_match(dots$errors,
@@ -230,21 +306,33 @@
   }
   if (has("band")) {
     band <- .crs_plot_scalar_match(dots$band,
-                                   c("standard", "pointwise", "bonferroni",
+                                   c("pmzsd", "pointwise", "bonferroni",
                                      "simultaneous", "all"),
                                    "band")
     dots$band <- NULL
+    if (identical(band, "pmzsd")) band <- "standard"
     dots <- .crs_plot_set_normalized_arg(dots, "band",
                                          "plot.errors.type", band)
   }
   if (has("alpha")) {
     alpha <- dots$alpha
     if (!is.numeric(alpha) || length(alpha) != 1L || is.na(alpha) ||
-        alpha <= 0 || alpha >= 1)
-      stop("alpha must be a numeric scalar in (0, 1)", call. = FALSE)
+        alpha <= 0 || alpha >= 0.5)
+      stop("alpha must lie in (0, 0.5)", call. = FALSE)
     dots$alpha <- NULL
     dots <- .crs_plot_set_normalized_arg(dots, "alpha",
                                          "plot.errors.alpha", alpha)
+  }
+  if (has("bootstrap")) {
+    if (is.list(dots$bootstrap))
+      stop("unused plot argument: bootstrap list; use scalar bootstrap, B, and boot_control",
+           call. = FALSE)
+    bootstrap <- .crs_plot_scalar_match(dots$bootstrap,
+                                        c("wild", "inid", "fixed", "geom"),
+                                        "bootstrap")
+    dots$bootstrap <- NULL
+    dots <- .crs_plot_set_normalized_arg(dots, "bootstrap",
+                                         "plot.errors.boot.method", bootstrap)
   }
   if (has("B")) {
     B <- dots$B
@@ -255,12 +343,30 @@
                                          "plot.errors.boot.num",
                                          as.integer(B))
   }
+  if (has("center")) {
+    center <- .crs_plot_scalar_match(dots$center,
+                                     c("estimate", "bias-corrected"),
+                                     "center")
+    dots$center <- NULL
+    dots <- .crs_plot_set_normalized_arg(dots, "center",
+                                         "plot.errors.center", center)
+  }
   if (has("output")) {
-    output <- .crs_plot_scalar_match(dots$output, c("plot", "plot-data", "data"),
+    output <- .crs_plot_scalar_match(dots$output,
+                                     c("plot", "data", "both", "plot-data"),
                                      "output")
+    if (identical(output, "both")) output <- "plot-data"
     dots$output <- NULL
     dots <- .crs_plot_set_normalized_arg(dots, "output",
                                          "plot.behavior", output)
+  }
+  if (has("behavior")) {
+    behavior <- .crs_plot_scalar_match(dots$behavior,
+                                       c("plot", "plot-data", "data"),
+                                       "behavior")
+    dots$behavior <- NULL
+    dots <- .crs_plot_set_normalized_arg(dots, "behavior",
+                                         "plot.behavior", behavior)
   }
   if (has("data_overlay")) {
     data_overlay <- .crs_plot_match_flag(dots$data_overlay, "data_overlay")
@@ -274,6 +380,26 @@
     dots <- .crs_plot_set_normalized_arg(dots, "data_rug",
                                          "plot.rug", data_rug)
   }
+  if (has("layout")) {
+    layout <- .crs_plot_match_layout(dots$layout)
+    dots$layout <- NULL
+    dots <- .crs_plot_set_normalized_arg(dots, "layout",
+                                         "plot.par.mfrow", layout)
+  }
+  if (has("factor_boxplot")) {
+    factor_boxplot <- .crs_plot_match_flag(dots$factor_boxplot,
+                                           "factor_boxplot")
+    dots$factor_boxplot <- NULL
+    dots <- .crs_plot_set_normalized_arg(dots, "factor_boxplot",
+                                         "plot.bxp", factor_boxplot)
+  }
+  if (has("boxplot_outliers")) {
+    boxplot_outliers <- .crs_plot_match_flag(dots$boxplot_outliers,
+                                             "boxplot_outliers")
+    dots$boxplot_outliers <- NULL
+    dots <- .crs_plot_set_normalized_arg(dots, "boxplot_outliers",
+                                         "plot.bxp.out", boxplot_outliers)
+  }
   if (has("neval")) {
     neval <- dots$neval
     if (!is.numeric(neval) || length(neval) != 1L || is.na(neval) ||
@@ -282,6 +408,29 @@
     dots$neval <- NULL
     dots <- .crs_plot_set_normalized_arg(dots, "neval", "num.eval",
                                          as.integer(neval))
+  }
+  if (has("gradient_order")) {
+    gradient_order <- dots$gradient_order
+    if (!is.numeric(gradient_order) || any(is.na(gradient_order)) ||
+        any(gradient_order < 1L))
+      stop("gradient_order must contain positive numeric values",
+           call. = FALSE)
+    dots$gradient_order <- NULL
+    dots <- .crs_plot_set_normalized_arg(dots, "gradient_order",
+                                         "gradient.order",
+                                         as.integer(gradient_order))
+  }
+  if (has("gradient")) {
+    gradient <- .crs_plot_match_flag(dots$gradient, "gradient")
+    dots$gradient <- NULL
+    dots <- .crs_plot_set_normalized_arg(dots, "gradient",
+                                         "gradients", gradient)
+  }
+  if (has("common_scale")) {
+    common_scale <- .crs_plot_match_flag(dots$common_scale, "common_scale")
+    dots$common_scale <- NULL
+    dots <- .crs_plot_set_normalized_arg(dots, "common_scale",
+                                         "common.scale", common_scale)
   }
   if (has("perspective")) {
     perspective <- .crs_plot_match_flag(dots$perspective, "perspective")
@@ -297,8 +446,9 @@
                                          renderer)
   }
   if (has("boot_control")) {
-    if (!inherits(dots$boot_control, "crs_boot_control"))
-      stop("boot_control must be created by .crs_boot_control()",
+    if (!inherits(dots$boot_control, "np_boot_control") &&
+        !inherits(dots$boot_control, "crs_boot_control"))
+      stop("boot_control must be created by np_boot_control()",
            call. = FALSE)
     ctrl <- dots$boot_control
     dots$boot_control <- NULL
@@ -313,8 +463,9 @@
                                            ctrl$blocklen)
   }
   if (has("grid_control")) {
-    if (!inherits(dots$grid_control, "crs_grid_control"))
-      stop("grid_control must be created by .crs_grid_control()",
+    if (!inherits(dots$grid_control, "np_grid_control") &&
+        !inherits(dots$grid_control, "crs_grid_control"))
+      stop("grid_control must be created by np_grid_control()",
            call. = FALSE)
     ctrl <- dots$grid_control
     dots$grid_control <- NULL
@@ -329,8 +480,9 @@
            call. = FALSE)
   }
   if (has("render_control")) {
-    if (!inherits(dots$render_control, "crs_render_control"))
-      stop("render_control must be created by .crs_render_control()",
+    if (!inherits(dots$render_control, "np_render_control") &&
+        !inherits(dots$render_control, "crs_render_control"))
+      stop("render_control must be created by np_render_control()",
            call. = FALSE)
     ctrl <- dots$render_control
     dots$render_control <- NULL

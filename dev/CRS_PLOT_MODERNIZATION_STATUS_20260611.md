@@ -8,21 +8,26 @@ Live repo mutation: none.
 
 ## Candidate State
 
-This scratch branch contains the modern `plot.crs()` default candidate.
-`plot.crs()` now displays fitted function surfaces by default.
+This scratch branch contains an NP-interface plot candidate for CRS objects.
+`plot.crs()` now displays fitted function surfaces by default and uses
+NP-style public plot arguments.
 
 Selector:
 
-- `plot.view = "fit"`
+- `errors`
+- `gradients`
+- `gradient_order`
+- `output`
+- `perspective`
+- `renderer`
+- `neval`
 
 Default behavior:
 
 - `plot.crs()` enters the fitted mean/quantile path.
 - The old lm-style diagnostic panel has been removed from `plot.crs()`.
-- `plot.crs(mean = TRUE)` remains accepted for compatibility and enters the
-  same fitted path.
-- `plot.crsiv()`, `plot.crsivderiv()`, and `plot.clsd()` still enter their
-  legacy paths unless `plot.view = "fit"` is supplied.
+- `plot.crsiv()`, `plot.crsivderiv()`, and `plot.clsd()` now enter their
+  modern curve routes directly.
 
 ## Implemented Routes
 
@@ -37,13 +42,13 @@ Default behavior:
   intervals.
 - Default 2D CRS point-estimate surface route for exactly two continuous
   predictors.
-- Opt-in `crsiv`, `crsivderiv`, and `clsd` curve routes with `output="data"`.
+- Direct `crsiv`, `crsivderiv`, and `clsd` curve routes with `output="data"`.
 
 ## Fail-Closed Boundaries
 
 - Bootstrap derivative intervals are not enabled and fail closed.
 - 2D interval surfaces are not enabled yet.
-- Contradictory `persp.rgl=TRUE` and `renderer!="rgl"` errors.
+- Contradictory `perspective = TRUE, renderer = "rgl"` and `renderer!="rgl"` errors.
 - Unsupported surface predictor shapes error through the payload builder.
 
 ## Checkpoints

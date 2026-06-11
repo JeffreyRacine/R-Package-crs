@@ -19,7 +19,7 @@ test_that("crsiv opt-in plot route returns sorted structural data", {
     display.nomad.progress = FALSE
   )
 
-  out <- plot(model, plot.view = "fit", output = "data")
+  out <- plot(model,output = "data")
   ord <- order(model$xz[, 1])
 
   expect_s3_class(out, "data.frame")
@@ -51,8 +51,8 @@ test_that("crsiv opt-in derivative route returns interval data", {
     display.nomad.progress = FALSE
   )
 
-  out <- plot(model, plot.view = "fit", output = "data", deriv = TRUE,
-              ci = TRUE)
+  out <- plot(model,output = "data", deriv = TRUE,
+              errors = "asymptotic")
 
   expect_s3_class(out, "data.frame")
   expect_named(out, c("z", "fit", "lwr", "upr"))
@@ -79,8 +79,8 @@ test_that("crsivderiv opt-in plot route exposes derivative and phi data", {
     display.warnings = FALSE
   )
 
-  deriv.out <- plot(model, plot.view = "fit", output = "data")
-  phi.out <- plot(model, plot.view = "fit", output = "data", phi = TRUE)
+  deriv.out <- plot(model,output = "data")
+  phi.out <- plot(model,output = "data", phi = TRUE)
   ord <- order(model$xz[, 1])
 
   expect_equal(deriv.out$z, model$xz[, 1][ord])
@@ -100,10 +100,10 @@ test_that("clsd opt-in plot route exposes selected density-family data", {
     display.nomad.progress = FALSE
   )
 
-  dens <- plot(model, plot.view = "fit", output = "data")
-  dist <- plot(model, plot.view = "fit", output = "data",
+  dens <- plot(model,output = "data")
+  dist <- plot(model,output = "data",
                distribution = TRUE)
-  deriv <- plot(model, plot.view = "fit", output = "data",
+  deriv <- plot(model,output = "data",
                 derivative = TRUE)
 
   expect_named(dens, c("x", "fit"))
@@ -134,7 +134,7 @@ test_that("curve opt-in plot routes render to a graphics device", {
   }, add = TRUE)
 
   expect_error(
-    invisible(plot(model, plot.view = "fit", output = "plot")),
+    invisible(plot(model,output = "plot")),
     NA
   )
   expect_true(file.exists(pdf.file))

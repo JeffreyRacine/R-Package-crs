@@ -238,12 +238,11 @@ test_that("plot.crs bootstrap progress stays visible", {
     suppressWarnings(
       plot(
         model,
-        mean = TRUE,
-        ci = TRUE,
-        plot.errors.method = "bootstrap",
-        plot.errors.boot.num = 3,
-        plot.behavior = "data",
-        num.eval = 8,
+        errors = "bootstrap",
+        B = 3,
+        output = "data",
+        perspective = FALSE,
+        neval = 8,
         display.warnings = FALSE,
         display.nomad.progress = TRUE
       )

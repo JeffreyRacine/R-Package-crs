@@ -1,4 +1,4 @@
-test_that("persp.rgl data route preserves payload without loading rgl", {
+test_that("rgl data route preserves payload without loading rgl", {
   rgl.loaded.before <- "rgl" %in% loadedNamespaces()
 
   set.seed(42)
@@ -20,10 +20,9 @@ test_that("persp.rgl data route preserves payload without loading rgl", {
 
   payload <- plot(
     model,
-    mean = TRUE,
-    persp.rgl = TRUE,
-    plot.behavior = "data",
-    num.eval = num.eval,
+    perspective = TRUE, renderer = "rgl",
+    output = "data",
+    neval = num.eval,
     display.nomad.progress = FALSE
   )
 
@@ -81,7 +80,7 @@ test_that("rgl surface helper restores option and environment state", {
                    "crs-test-sentinel")
 })
 
-test_that("persp.rgl plot route completes in rgl null mode", {
+test_that("rgl plot route completes in rgl null mode", {
   old.opts <- options(rgl.useNULL = TRUE, rgl.printRglwidget = TRUE)
   on.exit(options(old.opts), add = TRUE)
   old.env <- Sys.getenv("RGL_USE_NULL", unset = NA_character_)
@@ -120,9 +119,8 @@ test_that("persp.rgl plot route completes in rgl null mode", {
     capture.output(
       plot(
         model,
-        mean = TRUE,
-        persp.rgl = TRUE,
-        num.eval = 8,
+        perspective = TRUE, renderer = "rgl",
+        neval = 8,
         display.nomad.progress = FALSE
       )
     ),
