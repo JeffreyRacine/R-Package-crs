@@ -157,6 +157,8 @@
                                             xtrim,
                                             xq,
                                             plot.errors.boot.num,
+                                            plot.errors.boot.method = "wild",
+                                            plot.errors.boot.wild = "rademacher",
                                             plot.errors.type,
                                             plot.errors.alpha,
                                             display.nomad.progress,
@@ -172,14 +174,28 @@
       slice.index = i,
       gradients = FALSE
     )
-    boot <- .crs.bootstrap.matrix(object = object,
-                                  newdata = newdata,
-                                  deriv = 0L,
-                                  deriv.index = i,
-                                  boot.num = plot.errors.boot.num,
-                                  display.warnings = display.warnings,
-                                  display.nomad.progress = display.nomad.progress,
-                                  progress.target = target.label)
+    boot <- if(identical(plot.errors.boot.method, "wild")) {
+      .crs.bootstrap.matrix.wild(
+        object = object,
+        newdata = newdata,
+        boot.num = plot.errors.boot.num,
+        wild = plot.errors.boot.wild,
+        display.nomad.progress = display.nomad.progress,
+        progress.target = target.label
+      )
+    } else if(identical(plot.errors.boot.method, "inid")) {
+      .crs.bootstrap.matrix(object = object,
+                            newdata = newdata,
+                            deriv = 0L,
+                            deriv.index = i,
+                            boot.num = plot.errors.boot.num,
+                            display.warnings = display.warnings,
+                            display.nomad.progress = display.nomad.progress,
+                            progress.target = target.label)
+    } else {
+      stop("plot.crs bootstrap intervals currently support bootstrap=\"wild\" or bootstrap=\"inid\"",
+           call. = FALSE)
+    }
     if (identical(plot.errors.type, "all")) {
       all.bounds <- .crs.bootstrap.bounds(boot$boot.mat,
                                           plot.errors.alpha,
@@ -438,7 +454,9 @@
                                         plot.errors.method = "none",
                                         plot.errors.type = "standard",
                                         plot.errors.alpha = 0.05,
-                                        plot.errors.boot.num = 99L,
+                                        plot.errors.boot.num = 1999L,
+                                        plot.errors.boot.method = "wild",
+                                        plot.errors.boot.wild = "rademacher",
                                         display.nomad.progress = FALSE,
                                         display.warnings = TRUE) {
   if (identical(plot.errors.method, "none")) {
@@ -472,16 +490,31 @@
                 data = frame))
   }
 
-  boot <- .crs.bootstrap.matrix(
-    object = object,
-    newdata = payload$data[, names(object$xz), drop = FALSE],
-    deriv = 0L,
-    deriv.index = 1L,
-    boot.num = plot.errors.boot.num,
-    display.warnings = display.warnings,
-    display.nomad.progress = display.nomad.progress,
-    progress.target = "surface"
-  )
+  newdata <- payload$data[, names(object$xz), drop = FALSE]
+  boot <- if(identical(plot.errors.boot.method, "wild")) {
+    .crs.bootstrap.matrix.wild(
+      object = object,
+      newdata = newdata,
+      boot.num = plot.errors.boot.num,
+      wild = plot.errors.boot.wild,
+      display.nomad.progress = display.nomad.progress,
+      progress.target = "surface"
+    )
+  } else if(identical(plot.errors.boot.method, "inid")) {
+    .crs.bootstrap.matrix(
+      object = object,
+      newdata = newdata,
+      deriv = 0L,
+      deriv.index = 1L,
+      boot.num = plot.errors.boot.num,
+      display.warnings = display.warnings,
+      display.nomad.progress = display.nomad.progress,
+      progress.target = "surface"
+    )
+  } else {
+    stop("plot.crs bootstrap intervals currently support bootstrap=\"wild\" or bootstrap=\"inid\"",
+         call. = FALSE)
+  }
   bounds <- .crs.bootstrap.bounds(
     boot$boot.mat,
     alpha = plot.errors.alpha,
@@ -708,8 +741,19 @@
                                                "standard")
   plot.errors.alpha <- .crs_plot_scalar_default(dots$plot.errors.alpha, 0.05)
   plot.errors.boot.num <- as.integer(.crs_plot_scalar_default(
-    dots$plot.errors.boot.num, 99L
+    dots$plot.errors.boot.num, 1999L
   ))
+  plot.errors.boot.method <- .crs_plot_scalar_default(
+    dots$plot.errors.boot.method, "wild"
+  )
+  plot.errors.boot.wild <- .crs_plot_scalar_default(
+    dots$plot.errors.boot.wild, "rademacher"
+  )
+  plot.errors.boot.wild <- .crs_plot_normalize_wild(plot.errors.boot.wild)
+  if (identical(plot.errors.method, "bootstrap") &&
+      !(plot.errors.boot.method %in% c("wild", "inid")))
+    stop("plot.crs bootstrap intervals currently support bootstrap=\"wild\" or bootstrap=\"inid\"",
+         call. = FALSE)
 
   if (deriv > 0) {
     if (isTRUE(ci) && identical(plot.errors.method, "bootstrap"))
@@ -732,6 +776,8 @@
       xtrim = xtrim,
       xq = xq,
       plot.errors.boot.num = plot.errors.boot.num,
+      plot.errors.boot.method = plot.errors.boot.method,
+      plot.errors.boot.wild = plot.errors.boot.wild,
       plot.errors.type = plot.errors.type,
       plot.errors.alpha = plot.errors.alpha,
       display.nomad.progress = .crs_plot_scalar_default(
@@ -765,6 +811,7 @@
                                   "plot.errors.alpha",
                                   "plot.errors.boot.num",
                                   "plot.errors.boot.method",
+                                  "plot.errors.boot.wild",
                                   "plot.errors.center",
                                   "display.nomad.progress",
                                   "display.warnings"))]
@@ -809,8 +856,19 @@
                                                "standard")
   plot.errors.alpha <- .crs_plot_scalar_default(dots$plot.errors.alpha, 0.05)
   plot.errors.boot.num <- as.integer(.crs_plot_scalar_default(
-    dots$plot.errors.boot.num, 99L
+    dots$plot.errors.boot.num, 1999L
   ))
+  plot.errors.boot.method <- .crs_plot_scalar_default(
+    dots$plot.errors.boot.method, "wild"
+  )
+  plot.errors.boot.wild <- .crs_plot_scalar_default(
+    dots$plot.errors.boot.wild, "rademacher"
+  )
+  plot.errors.boot.wild <- .crs_plot_normalize_wild(plot.errors.boot.wild)
+  if (identical(plot.errors.method, "bootstrap") &&
+      !(plot.errors.boot.method %in% c("wild", "inid")))
+    stop("plot.crs bootstrap intervals currently support bootstrap=\"wild\" or bootstrap=\"inid\"",
+         call. = FALSE)
   display.nomad.progress <- isTRUE(.crs_plot_scalar_default(
     dots$display.nomad.progress, FALSE
   ))
@@ -832,6 +890,8 @@
     plot.errors.type = plot.errors.type,
     plot.errors.alpha = plot.errors.alpha,
     plot.errors.boot.num = plot.errors.boot.num,
+    plot.errors.boot.method = plot.errors.boot.method,
+    plot.errors.boot.wild = plot.errors.boot.wild,
     display.nomad.progress = display.nomad.progress,
     display.warnings = display.warnings
   )
@@ -849,6 +909,7 @@
                                   "plot.errors.type", "plot.errors.alpha",
                                   "plot.errors.boot.num",
                                   "plot.errors.boot.method",
+                                  "plot.errors.boot.wild",
                                   "plot.errors.center",
                                   "display.nomad.progress",
                                   "display.warnings"))]
@@ -920,19 +981,23 @@
                                                "standard")
   plot.errors.alpha <- .crs_plot_scalar_default(dots$plot.errors.alpha, 0.05)
   plot.errors.boot.num <- as.integer(.crs_plot_scalar_default(
-    dots$plot.errors.boot.num, 99L
+    dots$plot.errors.boot.num, 1999L
   ))
   plot.errors.boot.method <- .crs_plot_scalar_default(
-    dots$plot.errors.boot.method, "inid"
+    dots$plot.errors.boot.method, "wild"
   )
+  plot.errors.boot.wild <- .crs_plot_scalar_default(
+    dots$plot.errors.boot.wild, "rademacher"
+  )
+  plot.errors.boot.wild <- .crs_plot_normalize_wild(plot.errors.boot.wild)
   plot.errors.center <- .crs_plot_scalar_default(dots$plot.errors.center,
                                                  "estimate")
   if (!identical(plot.errors.center, "estimate"))
     stop("plot.crs currently supports center=\"estimate\" only",
          call. = FALSE)
   if (identical(plot.errors.method, "bootstrap") &&
-      !identical(plot.errors.boot.method, "inid"))
-    stop("plot.crs bootstrap intervals currently support bootstrap=\"inid\" only",
+      !(plot.errors.boot.method %in% c("wild", "inid")))
+    stop("plot.crs bootstrap intervals currently support bootstrap=\"wild\" or bootstrap=\"inid\"",
          call. = FALSE)
   if (identical(plot.errors.method, "asymptotic") &&
       !identical(plot.errors.type, "standard"))
@@ -967,8 +1032,11 @@
   bridge$plot.errors.method <- plot.errors.method
   bridge$plot.errors.type <- plot.errors.type
   bridge$plot.errors.alpha <- plot.errors.alpha
-  if (identical(plot.errors.method, "bootstrap"))
+  if (identical(plot.errors.method, "bootstrap")) {
     bridge$plot.errors.boot.num <- plot.errors.boot.num
+    bridge$plot.errors.boot.method <- plot.errors.boot.method
+    bridge$plot.errors.boot.wild <- plot.errors.boot.wild
+  }
 
   if (isTRUE(ci) && isTRUE(gradients) &&
       identical(plot.errors.method, "bootstrap"))

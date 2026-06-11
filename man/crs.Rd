@@ -490,7 +490,11 @@ Further optional arguments are passed through to lower-level routines.
   \code{interval="confidence"}. When plotting with
   \code{errors = "bootstrap"}, bootstrap-based bounds are used
   instead for mean plots, including one-dimensional fitted curves and
-  two-dimensional fitted surfaces. Bootstrap derivative bounds and surface
+  two-dimensional fitted surfaces. Mean-regression plots default to the
+  fast fixed-design wild bootstrap (\code{bootstrap="wild"},
+  \code{B=1999}) following the modern \pkg{np} interface; the legacy
+  refit bootstrap remains available with \code{bootstrap="inid"}.
+  Bootstrap derivative bounds and surface
   gradient bounds in \code{plot.crs} are not implemented and fail closed; use
   asymptotic derivative intervals with \code{errors="asymptotic"}.}
 
@@ -663,6 +667,7 @@ plot(model,errors = "asymptotic")
 plot(model,data_rug=TRUE)
 ## For two continuous predictors, surface intervals are available through the
 ## same errors interface
+## plot(model2,perspective=TRUE,errors="bootstrap")
 ## plot(model2,perspective=TRUE,errors="bootstrap",bootstrap="inid",B=99)
 \dontrun{
 ## A plot example where we extract the partial surfaces, confidence

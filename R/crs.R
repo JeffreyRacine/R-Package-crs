@@ -1422,6 +1422,200 @@ summary.crs <- function(object,
   list(center = center, boot.mat = boot.mat)
 }
 
+.crs_mammen_draws <- function(n, B) {
+  a <- (1 - sqrt(5)) / 2
+  p.a <- (sqrt(5) + 1) / (2 * sqrt(5))
+  u <- matrix(stats::runif(n * B), nrow = n, ncol = B)
+  out <- matrix(1 - a, nrow = n, ncol = B)
+  out[u <= p.a] <- a
+  out
+}
+
+.crs_rademacher_draws <- function(n, B) {
+  u <- matrix(stats::runif(n * B), nrow = n, ncol = B)
+  out <- matrix(1, nrow = n, ncol = B)
+  out[u <= 0.5] <- -1
+  out
+}
+
+.crs_plot_normalize_wild <- function(wild = c("rademacher", "mammen")) {
+  if(length(wild) > 1L) wild <- wild[1L]
+  match.arg(wild, c("mammen", "rademacher"))
+}
+
+.crs_wild_chunk_size <- function(n, B) {
+  chunk.opt <- getOption("crs.plot.wild.chunk.size")
+  if(!is.null(chunk.opt)) {
+    chunk.opt <- as.integer(chunk.opt)
+    if(length(chunk.opt) != 1L || is.na(chunk.opt) || chunk.opt < 1L) {
+      stop("option 'crs.plot.wild.chunk.size' must be a positive integer",
+           call. = FALSE)
+    }
+    return(min(as.integer(B), chunk.opt))
+  }
+  target.bytes <- 64 * 1024 * 1024
+  chunk <- as.integer(floor(target.bytes / (8 * max(1L, as.integer(n)))))
+  if(!is.finite(chunk) || is.na(chunk) || chunk < 1L) chunk <- 1L
+  min(as.integer(B), chunk)
+}
+
+.crs_plot_wild_hat_block_rows <- function(ntrain, neval) {
+  target <- getOption("crs.plot.wild.hat.block.bytes", 4 * 1024^2)
+  target <- suppressWarnings(as.numeric(target)[1L])
+  if(!is.finite(target) || is.na(target) || target <= 0) target <- 4 * 1024^2
+  rows <- as.integer(floor(target / (8 * max(1L, as.integer(ntrain)))))
+  max(1L, min(as.integer(neval), rows))
+}
+
+.crs_plot_wild_dense_hat_enabled <- function(ntrain, neval) {
+  threshold <- getOption("crs.plot.wild.dense.hat.threshold.bytes",
+                         128 * 1024^2)
+  threshold <- suppressWarnings(as.numeric(threshold)[1L])
+  if(!is.finite(threshold) || is.na(threshold) || threshold < 0) {
+    threshold <- 128 * 1024^2
+  }
+  as.double(ntrain) * as.double(neval) * 8.0 <= threshold
+}
+
+.crs_wild_boot_from_hat <- function(H,
+                                    y,
+                                    fit.mean,
+                                    B,
+                                    wild,
+                                    display.nomad.progress = TRUE,
+                                    progress.label = "Plot bootstrap wild") {
+  y <- as.double(y)
+  fit.mean <- as.double(fit.mean)
+  n <- length(y)
+  if(length(fit.mean) != n) {
+    stop("length mismatch between fitted means and response for wild bootstrap",
+         call. = FALSE)
+  }
+  B <- as.integer(B)
+  if(B < 1L) stop("B must be a positive integer", call. = FALSE)
+  wild <- .crs_plot_normalize_wild(wild)
+  draw.fun <- if(identical(wild, "mammen")) {
+    .crs_mammen_draws
+  } else {
+    .crs_rademacher_draws
+  }
+  residuals <- y - fit.mean
+  boot.mat <- matrix(NA_real_, nrow = B, ncol = NROW(H))
+  chunk.size <- .crs_wild_chunk_size(n = n, B = B)
+
+  progress <- NULL
+  if(isTRUE(display.nomad.progress)) {
+    progress <- .crs_plot_stage_progress_begin(total = B, label = progress.label)
+    on.exit(.crs_plot_progress_end(progress), add = TRUE)
+  }
+
+  start <- 1L
+  while(start <= B) {
+    stopi <- min(B, start + chunk.size - 1L)
+    bsz <- stopi - start + 1L
+    draws <- draw.fun(n = n, B = bsz)
+    ystar <- residuals * draws
+    ystar <- ystar + fit.mean
+    boot.mat[start:stopi, ] <- t(H %*% ystar)
+    progress <- .crs_plot_progress_tick(progress, done = stopi,
+                                        force = (start == 1L))
+    start <- stopi + 1L
+  }
+
+  list(t = boot.mat, t0 = as.vector(H %*% y))
+}
+
+.crs.bootstrap.matrix.wild <- function(object,
+                                       newdata,
+                                       boot.num = 99,
+                                       wild = c("rademacher", "mammen"),
+                                       display.nomad.progress = TRUE,
+                                       progress.target = NULL) {
+  if(!is.null(object$tau)) {
+    stop("bootstrap=\"wild\" currently supports mean CRS objects only",
+         call. = FALSE)
+  }
+  wild <- .crs_plot_normalize_wild(wild)
+  boot.num <- as.integer(boot.num)
+  if(boot.num < 1L) stop("B must be a positive integer", call. = FALSE)
+
+  prep.activity <- NULL
+  if(isTRUE(display.nomad.progress)) {
+    prep.activity <- .crs_plot_activity_begin(
+      .crs_plot_bootstrap_stage_label(
+        stage = "Preparing plot bootstrap",
+        method_label = "wild",
+        target_label = progress.target
+      )
+    )
+    on.exit(.crs_plot_activity_end(prep.activity), add = TRUE)
+  }
+
+  fit.mean <- as.vector(crshat(object, output = "apply"))
+  ntrain <- NROW(object$xz)
+  neval <- NROW(newdata)
+  center <- as.vector(crshat(object, newdata = newdata, output = "apply"))
+
+  if(!is.null(prep.activity)) {
+    .crs_plot_activity_end(prep.activity)
+    prep.activity <- NULL
+  }
+
+  progress.label <- .crs_plot_bootstrap_stage_label(
+    stage = "Plot bootstrap",
+    method_label = "wild",
+    target_label = progress.target
+  )
+
+  if(.crs_plot_wild_dense_hat_enabled(ntrain = ntrain, neval = neval)) {
+    H <- crshat(object, newdata = newdata, output = "matrix")
+    boot <- .crs_wild_boot_from_hat(
+      H = H,
+      y = object$y,
+      fit.mean = fit.mean,
+      B = boot.num,
+      wild = wild,
+      display.nomad.progress = display.nomad.progress,
+      progress.label = progress.label
+    )
+    return(list(center = center, boot.mat = boot$t))
+  }
+
+  boot.mat <- matrix(NA_real_, nrow = boot.num, ncol = neval)
+  draw.fun <- if(identical(wild, "mammen")) {
+    .crs_mammen_draws
+  } else {
+    .crs_rademacher_draws
+  }
+  draws <- draw.fun(n = ntrain, B = boot.num)
+  ystar <- (as.double(object$y) - fit.mean) * draws
+  ystar <- ystar + fit.mean
+
+  block.rows <- .crs_plot_wild_hat_block_rows(ntrain = ntrain, neval = neval)
+  nblocks <- as.integer(ceiling(neval / block.rows))
+  progress <- NULL
+  if(isTRUE(display.nomad.progress)) {
+    progress <- .crs_plot_stage_progress_begin(total = nblocks,
+                                               label = progress.label)
+    on.exit(.crs_plot_progress_end(progress), add = TRUE)
+  }
+
+  start <- 1L
+  done <- 0L
+  while(start <= neval) {
+    stopi <- min(neval, start + block.rows - 1L)
+    H <- crshat(object,
+                newdata = newdata[start:stopi, , drop = FALSE],
+                output = "matrix")
+    boot.mat[, start:stopi] <- t(H %*% ystar)
+    done <- done + 1L
+    progress <- .crs_plot_progress_tick(progress, done = done,
+                                        force = (done == 1L))
+    start <- stopi + 1L
+  }
+  list(center = center, boot.mat = boot.mat)
+}
+
 .crs_plot_render_surface_rgl <- function(x,
                                          y,
                                          z,
