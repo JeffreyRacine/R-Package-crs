@@ -216,6 +216,27 @@ test_that("plot.crs defaults to fitted function data route", {
   expect_equal(default, explicit, tolerance = 1e-10)
 })
 
+test_that("plot.crs default plot route does not expose internal bridge arguments", {
+  set.seed(34)
+  d <- data.frame(x = runif(34))
+  d$y <- sin(2 * pi * d$x) + rnorm(34, sd = 0.05)
+
+  model <- crs(
+    y ~ x,
+    data = d,
+    cv = "none",
+    degree = 3,
+    segments = 1,
+    display.warnings = FALSE,
+    display.nomad.progress = FALSE
+  )
+
+  grDevices::pdf(NULL)
+  on.exit(grDevices::dev.off(), add = TRUE)
+
+  expect_silent(plot(model))
+})
+
 test_that("public opt-in fit route matches legacy asymptotic interval data", {
   set.seed(32)
   d <- data.frame(x = runif(38))

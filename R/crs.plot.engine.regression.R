@@ -618,6 +618,7 @@
   if (!inherits(object, "crs")) stop("object must inherit from class 'crs'")
 
   raw.dots <- plot.call$...
+  if (is.null(raw.dots)) raw.dots <- list()
   dot.names <- names(raw.dots)
   if (is.null(dot.names)) dot.names <- character()
   .crs_plot_validate_public_dots(raw.dots, context = "plot.crs")
