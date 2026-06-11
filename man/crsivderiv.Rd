@@ -233,12 +233,17 @@ Further NOMAD and CRS controls are passed through to lower-level routines.
     \code{\link{plot}} support objects of this type.
 
     For the \code{\link{plot}} function, the options are
-    \code{plot.data=FALSE} (a logical value indicating whether to plot
-    the data as a scatter plot) and \code{phi=FALSE} (a logical value
-    indicating whether to plot the reconstructed structural function
-    rather than its derivative). Note that the \code{\link{plot}}
-    method for \code{crsivderiv} objects currently only supports a
-    univariate continuous endogenous predictor \eqn{z}.
+    \code{plot.data=FALSE} or \code{data_overlay=FALSE} (logical values
+    indicating whether to plot the data as a scatter plot),
+    \code{phi=FALSE} (a logical value indicating whether to plot the
+    reconstructed structural function rather than its derivative), and
+    \code{output=c("plot","data","plot-data")} or \code{behavior}
+    (whether to draw, return the plot data, or both). Bootstrap,
+    asymptotic interval, surface-rendering, rug, legend, and regression
+    gradient plot controls are not supported for this curve route and
+    fail fast when supplied. Note that the \code{\link{plot}} method for
+    \code{crsivderiv} objects currently only supports a univariate
+    continuous endogenous predictor \eqn{z}.
     
     See \code{\link{crs}} for details on the return object components.
 

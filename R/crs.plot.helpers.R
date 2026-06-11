@@ -697,6 +697,31 @@ crs_render_control <- function(...) {
   invisible(TRUE)
 }
 
+.crs_plot_reject_curve_controls <- function(dots,
+                                            context = "plot",
+                                            allow.data.overlay = FALSE) {
+  if (is.null(dots) || !length(dots)) return(invisible(TRUE))
+  nms <- names(dots)
+  if (is.null(nms)) return(invisible(TRUE))
+
+  unsupported <- c("errors", "band", "alpha", "bootstrap", "B", "center",
+                   "data_rug", "layout", "legend",
+                   "factor_boxplot", "boxplot_outliers",
+                   "gradient", "gradients", "gradient.order",
+                   "gradient_order", "common_scale",
+                   "renderer", "neval", "perspective", "view",
+                   "boot_control", "grid_control", "render_control")
+  if (!isTRUE(allow.data.overlay))
+    unsupported <- c(unsupported, "data_overlay")
+  bad <- intersect(nms, unsupported)
+  if (length(bad)) {
+    stop(sprintf("%s does not support plot argument %s; this curve route supports output/behavior plus ordinary graphics arguments",
+                 context, bad[1L]),
+         call. = FALSE)
+  }
+  invisible(TRUE)
+}
+
 .crs_plot_set_normalized_arg <- function(dots, public, internal, value) {
   same <- !is.null(dots[[internal]]) &&
     isTRUE(all.equal(dots[[internal]], value, check.attributes = FALSE))

@@ -243,4 +243,21 @@ test_that("curve plot routes keep their documented NP-compatible controls", {
                   "data.frame")
   expect_s3_class(plot(fit.clsd, output = "data", derivative = TRUE),
                   "data.frame")
+
+  expect_error(plot(fit.iv, output = "data", errors = "bootstrap"),
+               "does not support bootstrap errors")
+  expect_error(plot(fit.iv, output = "data", data_rug = TRUE),
+               "plot.crsiv does not support plot argument data_rug")
+  expect_error(plot(fit.iv, output = "data", renderer = "rgl"),
+               "plot.crsiv does not support plot argument renderer")
+  expect_error(plot(fit.iv, output = "data", B = 5),
+               "plot.crsiv does not support plot argument B")
+  expect_error(plot(fit.ivd, output = "data", errors = "bootstrap"),
+               "plot.crsivderiv does not support plot argument errors")
+  expect_error(plot(fit.ivd, output = "data", boot_control = np_boot_control()),
+               "plot.crsivderiv does not support plot argument boot_control")
+  expect_error(plot(fit.clsd, output = "data", data_overlay = TRUE),
+               "plot.clsd does not support plot argument data_overlay")
+  expect_error(plot(fit.clsd, output = "data", legend = TRUE),
+               "plot.clsd does not support plot argument legend")
 })

@@ -938,11 +938,14 @@ plot.crsiv <- function(x,
                        plot.data = FALSE,
                        deriv = FALSE,
                        xtrim = 0.0,
-                       errors = c("none", "asymptotic"),
+                       errors = c("none", "asymptotic", "bootstrap"),
                        ...) {
 
   object <- x
   errors <- match.arg(errors)
+  if (identical(errors, "bootstrap"))
+    stop("plot.crsiv does not support bootstrap errors; use errors = \"asymptotic\" or errors = \"none\"",
+         call. = FALSE)
   .crs_plot_iv_public(
     object = object,
     plot.call = match.call(expand.dots = FALSE),

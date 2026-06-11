@@ -258,10 +258,16 @@ These arguments control warnings, verbosity, and displayed optimizer progress.
 
   \code{clsd} returns a \code{clsd} object.  The generic functions
     \code{\link{coef}}, \code{\link{fitted}}, \code{\link{plot}} and
-    \code{\link{summary}} support objects of this type (\code{er=FALSE}
-    plots the density on the sample realizations (default is \sQuote{extended
-    range} data), see \code{er} above, \code{distribution=TRUE} plots
-    the distribution). The returned object has the following components:
+    \code{\link{summary}} support objects of this type. The
+    \code{\link{plot}} method supports \code{er=FALSE} to plot the
+    density on the sample realizations (default is \sQuote{extended
+    range} data), \code{distribution=TRUE} to plot the distribution,
+    \code{derivative=TRUE} to plot the density derivative, and
+    \code{output=c("plot","data","plot-data")} or \code{behavior} to
+    draw, return the plot data, or both. Bootstrap, interval,
+    surface-rendering, rug, legend, overlay, and regression-gradient plot
+    controls are not supported for this curve route and fail fast when
+    supplied. The returned object has the following components:
 
   \item{density}{ estimates of the density function
     at the sample points}

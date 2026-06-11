@@ -80,6 +80,8 @@
                                            "line.lty", "line.col", "ci.lty",
                                            "ci.lwd", "ci.col"))
   dots <- list(...)
+  .crs_plot_reject_curve_controls(dots, context = "plot.crsiv",
+                                  allow.data.overlay = TRUE)
   plot.behavior <- .crs_plot_curve_behavior(dots)
   if (!is.null(dots$output)) dots$output <- NULL
   if (!is.null(dots$plot.behavior)) dots$plot.behavior <- NULL
@@ -119,6 +121,8 @@
   .crs_plot_validate_public_dots(raw.dots, context = "plot.crsivderiv",
                                  extra = c("plot.data", "phi"))
   dots <- list(...)
+  .crs_plot_reject_curve_controls(dots, context = "plot.crsivderiv",
+                                  allow.data.overlay = TRUE)
   plot.behavior <- .crs_plot_curve_behavior(dots)
   if (!is.null(dots$output)) dots$output <- NULL
   if (!is.null(dots$plot.behavior)) dots$plot.behavior <- NULL
@@ -159,6 +163,8 @@
   .crs_plot_validate_public_dots(raw.dots, context = "plot.clsd",
                                  extra = c("er", "distribution", "derivative"))
   dots <- list(...)
+  .crs_plot_reject_curve_controls(dots, context = "plot.clsd",
+                                  allow.data.overlay = FALSE)
   plot.behavior <- .crs_plot_curve_behavior(dots)
   if (!is.null(dots$output)) dots$output <- NULL
   if (!is.null(dots$plot.behavior)) dots$plot.behavior <- NULL
