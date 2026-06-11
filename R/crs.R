@@ -1536,11 +1536,165 @@ summary.crs <- function(object,
   }
 }
 
+.crs_bstar_lam <- function(s) {
+  ((abs(s) >= 0) * (abs(s) < 0.5)) +
+    2 * (1 - abs(s)) * (abs(s) >= 0.5) * (abs(s) <= 1)
+}
+
+.crs_b_star <- function(data,
+                        Kn = NULL,
+                        mmax = NULL,
+                        Bmax = NULL,
+                        c = NULL,
+                        round = FALSE) {
+  data <- data.frame(data)
+  keep <- vapply(data, function(x) {
+    x <- as.numeric(x)
+    stats::var(x, na.rm = TRUE) > 0
+  }, logical(1L))
+  data <- data[keep]
+  if (!length(data)) return(matrix(1, nrow = 1L, ncol = 2L))
+
+  n <- nrow(data)
+  k <- ncol(data)
+  if (is.null(Kn)) Kn <- max(5, ceiling(log10(n)))
+  if (is.null(mmax)) mmax <- ceiling(sqrt(n)) + Kn
+  if (is.null(Bmax)) Bmax <- ceiling(min(3 * sqrt(n), n / 3))
+  if (is.null(c)) c <- stats::qnorm(0.975)
+
+  BstarSB <- numeric(length = k)
+  BstarCB <- numeric(length = k)
+
+  for (i in seq_len(k)) {
+    xi <- as.numeric(data[[i]])
+    rho.k <- stats::acf(xi,
+                        lag.max = mmax,
+                        type = "correlation",
+                        plot = FALSE)$acf[-1L]
+    rho.k.crit <- c * sqrt(log10(n) / n)
+    num.insignificant <- vapply(seq_len(max(mmax - Kn + 1L, 0L)),
+                                function(j) {
+                                  sum((abs(rho.k) < rho.k.crit)[j:(j + Kn - 1L)])
+                                },
+                                integer(1L))
+    if (any(num.insignificant == Kn)) {
+      mhat <- which(num.insignificant == Kn)[1L]
+    } else if (any(abs(rho.k) > rho.k.crit)) {
+      lag.sig <- which(abs(rho.k) > rho.k.crit)
+      mhat <- if (length(lag.sig) == 1L) lag.sig else max(lag.sig)
+    } else {
+      mhat <- 1L
+    }
+
+    M <- min(2 * mhat, mmax)
+    kk <- seq(-M, M)
+    R.k <- stats::ccf(xi, xi,
+                      lag.max = M,
+                      type = "covariance",
+                      plot = FALSE)$acf
+    Ghat <- sum(.crs_bstar_lam(kk / M) * abs(kk) * R.k)
+    DCBhat <- 4 / 3 * sum(.crs_bstar_lam(kk / M) * R.k)^2
+    DSBhat <- 2 * sum(.crs_bstar_lam(kk / M) * R.k)^2
+    BstarSB[i] <- ((2 * Ghat^2) / DSBhat)^(1 / 3) * n^(1 / 3)
+    BstarCB[i] <- ((2 * (Ghat^2) / DCBhat)^(1 / 3)) * (n^(1 / 3))
+  }
+
+  if (isTRUE(round)) {
+    BstarSB <- pmax(1, pmin(Bmax, round(BstarSB)))
+    BstarCB <- pmax(1, pmin(Bmax, round(BstarCB)))
+  } else {
+    BstarSB <- pmin(BstarSB, Bmax)
+    BstarCB <- pmin(BstarCB, Bmax)
+  }
+
+  cbind(BstarSB, BstarCB)
+}
+
+.crs_block_bootstrap_default_blocklen <- function(xdat) {
+  xmat <- data.matrix(xdat)
+  out <- .crs_b_star(xmat, round = TRUE)
+  blocklen <- as.integer(out[1L, 1L])
+  if (length(blocklen) != 1L || is.na(blocklen) || blocklen < 1L)
+    stop("could not determine a valid block bootstrap length; specify boot_control = crs_boot_control(blocklen = ...)",
+         call. = FALSE)
+  blocklen
+}
+
+.crs_block_counts_drawer <- function(n,
+                                     B,
+                                     blocklen,
+                                     sim = c("fixed", "geom"),
+                                     n.sim = n,
+                                     endcorr = TRUE) {
+  sim <- match.arg(sim)
+  n <- as.integer(n)
+  B <- as.integer(B)
+  n.sim <- as.integer(n.sim)
+  blocklen <- as.integer(blocklen)
+
+  if (n < 1L || B < 1L || n.sim < 1L)
+    stop("invalid block bootstrap dimensions", call. = FALSE)
+  if (length(blocklen) != 1L || is.na(blocklen) ||
+      blocklen < 1L || blocklen > n)
+    stop("invalid block length for block bootstrap", call. = FALSE)
+
+  if (identical(blocklen, 1L)) {
+    prob <- rep.int(1 / n, n)
+    return(function(start, stopi) {
+      start <- as.integer(start)
+      stopi <- as.integer(stopi)
+      if (start < 1L || stopi < start || stopi > B)
+        stop("invalid block bootstrap chunk bounds", call. = FALSE)
+      stats::rmultinom(n = stopi - start + 1L, size = n.sim, prob = prob)
+    })
+  }
+
+  ts.array <- utils::getFromNamespace("ts.array", "boot")
+  make.ends <- utils::getFromNamespace("make.ends", "boot")
+
+  function(start, stopi) {
+    start <- as.integer(start)
+    stopi <- as.integer(stopi)
+    if (start < 1L || stopi < start || stopi > B)
+      stop("invalid block bootstrap chunk bounds", call. = FALSE)
+
+    bsz <- stopi - start + 1L
+    ts.draws <- ts.array(n = n,
+                         n.sim = n.sim,
+                         R = bsz,
+                         l = blocklen,
+                         sim = sim,
+                         endcorr = isTRUE(endcorr))
+    starts <- as.matrix(ts.draws$starts)
+    lengths <- ts.draws$lengths
+    out <- matrix(0.0, nrow = n, ncol = bsz)
+
+    for (jj in seq_len(bsz)) {
+      ends <- if (identical(sim, "geom")) {
+        cbind(starts[jj, ], lengths[jj, ])
+      } else {
+        cbind(starts[jj, ], lengths)
+      }
+      inds <- apply(ends, 1L, make.ends, n)
+      inds <- if (is.list(inds)) {
+        as.integer(unlist(inds)[seq_len(n.sim)])
+      } else {
+        as.integer(inds)[seq_len(n.sim)]
+      }
+      out[, jj] <- tabulate(inds, nbins = n)
+    }
+
+    out
+  }
+}
+
 .crs.bootstrap.matrix <- function(object,
                                   newdata,
                                   deriv = 0,
                                   deriv.index = 1,
                                   boot.num = 99,
+                                  counts.drawer = NULL,
+                                  bootstrap.method = "inid",
                                   display.warnings = TRUE,
                                   display.nomad.progress = TRUE,
                                   progress.target = NULL) {
@@ -1549,7 +1703,7 @@ summary.crs <- function(object,
   if (isTRUE(display.nomad.progress)) {
     prep.activity <- .crs_plot_activity_begin(
       .crs_plot_bootstrap_stage_label(
-        stage = "Preparing plot bootstrap",
+        stage = sprintf("Preparing plot bootstrap %s", bootstrap.method),
         target_label = progress.target
       )
     )
@@ -1569,7 +1723,7 @@ summary.crs <- function(object,
     progress <- .crs_plot_stage_progress_begin(
       total = boot.num,
       label = .crs_plot_bootstrap_stage_label(
-        stage = "Plot bootstrap",
+        stage = sprintf("Plot bootstrap %s", bootstrap.method),
         target_label = progress.target
       )
     )
@@ -1577,7 +1731,15 @@ summary.crs <- function(object,
   }
 
   for (b in seq_len(boot.num)) {
-    idx <- sample.int(n, size = n, replace = TRUE)
+    idx <- if (is.null(counts.drawer)) {
+      sample.int(n, size = n, replace = TRUE)
+    } else {
+      counts <- counts.drawer(b, b)[, 1L]
+      if (length(counts) != n || any(!is.finite(counts)) ||
+          any(counts < 0) || sum(counts) < 1L)
+        stop("invalid block bootstrap counts", call. = FALSE)
+      rep.int(seq_len(n), as.integer(counts))
+    }
     fit.b <- crs.default(
       xz = object$xz[idx,,drop=FALSE],
       y = object$y[idx],

@@ -159,6 +159,7 @@
                                             plot.errors.boot.num,
                                             plot.errors.boot.method = "wild",
                                             plot.errors.boot.wild = "rademacher",
+                                            plot.errors.boot.blocklen = NULL,
                                             plot.errors.type,
                                             plot.errors.alpha,
                                             display.nomad.progress,
@@ -191,9 +192,32 @@
                             boot.num = plot.errors.boot.num,
                             display.warnings = display.warnings,
                             display.nomad.progress = display.nomad.progress,
+                            bootstrap.method = plot.errors.boot.method,
+                            progress.target = target.label)
+    } else if(plot.errors.boot.method %in% c("fixed", "geom")) {
+      blocklen <- if (is.null(plot.errors.boot.blocklen)) {
+        .crs_block_bootstrap_default_blocklen(object$xz)
+      } else {
+        as.integer(plot.errors.boot.blocklen)
+      }
+      counts.drawer <- .crs_block_counts_drawer(
+        n = nrow(object$xz),
+        B = plot.errors.boot.num,
+        blocklen = blocklen,
+        sim = plot.errors.boot.method
+      )
+      .crs.bootstrap.matrix(object = object,
+                            newdata = newdata,
+                            deriv = 0L,
+                            deriv.index = i,
+                            boot.num = plot.errors.boot.num,
+                            counts.drawer = counts.drawer,
+                            bootstrap.method = plot.errors.boot.method,
+                            display.warnings = display.warnings,
+                            display.nomad.progress = display.nomad.progress,
                             progress.target = target.label)
     } else {
-      stop("plot.crs bootstrap intervals currently support bootstrap=\"wild\" or bootstrap=\"inid\"",
+      stop("plot.crs bootstrap intervals currently support bootstrap=\"wild\", bootstrap=\"inid\", bootstrap=\"fixed\", or bootstrap=\"geom\"",
            call. = FALSE)
     }
     interval.label <- .crs_plot_bootstrap_stage_label(
@@ -463,6 +487,7 @@
                                         plot.errors.boot.num = 1999L,
                                         plot.errors.boot.method = "wild",
                                         plot.errors.boot.wild = "rademacher",
+                                        plot.errors.boot.blocklen = NULL,
                                         display.nomad.progress = FALSE,
                                         display.warnings = TRUE) {
   if (identical(plot.errors.method, "none")) {
@@ -513,12 +538,37 @@
       deriv = 0L,
       deriv.index = 1L,
       boot.num = plot.errors.boot.num,
+      bootstrap.method = plot.errors.boot.method,
+      display.warnings = display.warnings,
+      display.nomad.progress = display.nomad.progress,
+      progress.target = "surface"
+    )
+  } else if(plot.errors.boot.method %in% c("fixed", "geom")) {
+    blocklen <- if (is.null(plot.errors.boot.blocklen)) {
+      .crs_block_bootstrap_default_blocklen(object$xz)
+    } else {
+      as.integer(plot.errors.boot.blocklen)
+    }
+    counts.drawer <- .crs_block_counts_drawer(
+      n = nrow(object$xz),
+      B = plot.errors.boot.num,
+      blocklen = blocklen,
+      sim = plot.errors.boot.method
+    )
+    .crs.bootstrap.matrix(
+      object = object,
+      newdata = newdata,
+      deriv = 0L,
+      deriv.index = 1L,
+      boot.num = plot.errors.boot.num,
+      counts.drawer = counts.drawer,
+      bootstrap.method = plot.errors.boot.method,
       display.warnings = display.warnings,
       display.nomad.progress = display.nomad.progress,
       progress.target = "surface"
     )
   } else {
-    stop("plot.crs bootstrap intervals currently support bootstrap=\"wild\" or bootstrap=\"inid\"",
+    stop("plot.crs bootstrap intervals currently support bootstrap=\"wild\", bootstrap=\"inid\", bootstrap=\"fixed\", or bootstrap=\"geom\"",
          call. = FALSE)
   }
   bounds <- .crs.bootstrap.bounds(
@@ -756,9 +806,10 @@
     dots$plot.errors.boot.wild, "rademacher"
   )
   plot.errors.boot.wild <- .crs_plot_normalize_wild(plot.errors.boot.wild)
+  plot.errors.boot.blocklen <- dots$plot.errors.boot.blocklen
   if (identical(plot.errors.method, "bootstrap") &&
-      !(plot.errors.boot.method %in% c("wild", "inid")))
-    stop("plot.crs bootstrap intervals currently support bootstrap=\"wild\" or bootstrap=\"inid\"",
+      !(plot.errors.boot.method %in% c("wild", "inid", "fixed", "geom")))
+    stop("plot.crs bootstrap intervals currently support bootstrap=\"wild\", bootstrap=\"inid\", bootstrap=\"fixed\", or bootstrap=\"geom\"",
          call. = FALSE)
 
   if (deriv > 0) {
@@ -784,6 +835,7 @@
       plot.errors.boot.num = plot.errors.boot.num,
       plot.errors.boot.method = plot.errors.boot.method,
       plot.errors.boot.wild = plot.errors.boot.wild,
+      plot.errors.boot.blocklen = plot.errors.boot.blocklen,
       plot.errors.type = plot.errors.type,
       plot.errors.alpha = plot.errors.alpha,
       display.nomad.progress = .crs_plot_scalar_default(
@@ -818,6 +870,7 @@
                                   "plot.errors.boot.num",
                                   "plot.errors.boot.method",
                                   "plot.errors.boot.wild",
+                                  "plot.errors.boot.blocklen",
                                   "plot.errors.center",
                                   "display.nomad.progress",
                                   "display.warnings"))]
@@ -871,9 +924,10 @@
     dots$plot.errors.boot.wild, "rademacher"
   )
   plot.errors.boot.wild <- .crs_plot_normalize_wild(plot.errors.boot.wild)
+  plot.errors.boot.blocklen <- dots$plot.errors.boot.blocklen
   if (identical(plot.errors.method, "bootstrap") &&
-      !(plot.errors.boot.method %in% c("wild", "inid")))
-    stop("plot.crs bootstrap intervals currently support bootstrap=\"wild\" or bootstrap=\"inid\"",
+      !(plot.errors.boot.method %in% c("wild", "inid", "fixed", "geom")))
+    stop("plot.crs bootstrap intervals currently support bootstrap=\"wild\", bootstrap=\"inid\", bootstrap=\"fixed\", or bootstrap=\"geom\"",
          call. = FALSE)
   display.nomad.progress <- isTRUE(.crs_plot_scalar_default(
     dots$display.nomad.progress, FALSE
@@ -898,6 +952,7 @@
     plot.errors.boot.num = plot.errors.boot.num,
     plot.errors.boot.method = plot.errors.boot.method,
     plot.errors.boot.wild = plot.errors.boot.wild,
+    plot.errors.boot.blocklen = plot.errors.boot.blocklen,
     display.nomad.progress = display.nomad.progress,
     display.warnings = display.warnings
   )
@@ -916,6 +971,7 @@
                                   "plot.errors.boot.num",
                                   "plot.errors.boot.method",
                                   "plot.errors.boot.wild",
+                                  "plot.errors.boot.blocklen",
                                   "plot.errors.center",
                                   "display.nomad.progress",
                                   "display.warnings"))]
@@ -996,14 +1052,15 @@
     dots$plot.errors.boot.wild, "rademacher"
   )
   plot.errors.boot.wild <- .crs_plot_normalize_wild(plot.errors.boot.wild)
+  plot.errors.boot.blocklen <- dots$plot.errors.boot.blocklen
   plot.errors.center <- .crs_plot_scalar_default(dots$plot.errors.center,
                                                  "estimate")
   if (!identical(plot.errors.center, "estimate"))
     stop("plot.crs currently supports center=\"estimate\" only",
          call. = FALSE)
   if (identical(plot.errors.method, "bootstrap") &&
-      !(plot.errors.boot.method %in% c("wild", "inid")))
-    stop("plot.crs bootstrap intervals currently support bootstrap=\"wild\" or bootstrap=\"inid\"",
+      !(plot.errors.boot.method %in% c("wild", "inid", "fixed", "geom")))
+    stop("plot.crs bootstrap intervals currently support bootstrap=\"wild\", bootstrap=\"inid\", bootstrap=\"fixed\", or bootstrap=\"geom\"",
          call. = FALSE)
   if (identical(plot.errors.method, "asymptotic") &&
       !identical(plot.errors.type, "standard"))
@@ -1042,6 +1099,7 @@
     bridge$plot.errors.boot.num <- plot.errors.boot.num
     bridge$plot.errors.boot.method <- plot.errors.boot.method
     bridge$plot.errors.boot.wild <- plot.errors.boot.wild
+    bridge$plot.errors.boot.blocklen <- plot.errors.boot.blocklen
   }
 
   if (isTRUE(ci) && isTRUE(gradients) &&

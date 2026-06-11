@@ -493,7 +493,9 @@ Further optional arguments are passed through to lower-level routines.
   two-dimensional fitted surfaces. Mean-regression plots default to the
   fast fixed-design wild bootstrap (\code{bootstrap="wild"},
   \code{B=1999}) following the modern \pkg{np} interface; the legacy
-  refit bootstrap remains available with \code{bootstrap="inid"}.
+  refit bootstrap remains available with \code{bootstrap="inid"}, and
+  \pkg{np}-style block refit bootstraps are available with
+  \code{bootstrap="fixed"} and \code{bootstrap="geom"}.
   Bootstrap derivative bounds and surface
   gradient bounds in \code{plot.crs} are not implemented and fail closed; use
   asymptotic derivative intervals with \code{errors="asymptotic"}.}

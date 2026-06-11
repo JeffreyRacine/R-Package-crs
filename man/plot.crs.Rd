@@ -34,7 +34,11 @@ suppress the legend or pass a legend position/list to customize it.
 For mean-regression plots, \code{errors="bootstrap"} defaults to the
 fast fixed-design wild bootstrap used by \pkg{np}, with
 \code{bootstrap="wild"} and \code{B=1999}. The legacy refit bootstrap
-remains available with \code{bootstrap="inid"}.
+remains available with \code{bootstrap="inid"}. Mean plots also support
+the \pkg{np}-style block refit bootstraps \code{bootstrap="fixed"} and
+\code{bootstrap="geom"}; use \code{np_boot_control(blocklen=...)} to set
+the block length explicitly, otherwise the \pkg{np} automatic
+block-length selector is used.
 
 Use \code{output="data"} to return the plotting payload without drawing,
 or \code{output="plot-data"} to draw and return the payload.
@@ -65,5 +69,7 @@ plot(model, data_rug = TRUE)
 \dontrun{
 plot(model, errors = "bootstrap", band = "all")
 plot(model, errors = "bootstrap", bootstrap = "inid", B = 99)
+plot(model, errors = "bootstrap", bootstrap = "fixed", B = 99,
+     boot_control = np_boot_control(blocklen = 5))
 }
 }

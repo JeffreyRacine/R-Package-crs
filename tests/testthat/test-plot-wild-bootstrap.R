@@ -236,9 +236,92 @@ test_that("plot.crs bootstrap defaults are NP-style wild with 1999 replications"
                fixed = FALSE)
 })
 
-test_that("plot.crs rejects unsupported bootstrap selectors explicitly", {
+test_that("CRS block count drawer produces valid fixed and geometric counts", {
+  set.seed(6215)
+  fixed.drawer <- getFromNamespace(".crs_block_counts_drawer", "crs")(
+    n = 12L,
+    B = 5L,
+    blocklen = 3L,
+    sim = "fixed"
+  )
+  geom.drawer <- getFromNamespace(".crs_block_counts_drawer", "crs")(
+    n = 12L,
+    B = 5L,
+    blocklen = 3L,
+    sim = "geom"
+  )
+  fixed <- fixed.drawer(1L, 5L)
+  geom <- geom.drawer(1L, 5L)
+
+  expect_equal(dim(fixed), c(12L, 5L))
+  expect_equal(dim(geom), c(12L, 5L))
+  expect_true(all(fixed >= 0))
+  expect_true(all(geom >= 0))
+  expect_equal(colSums(fixed), rep(12, 5))
+  expect_equal(colSums(geom), rep(12, 5))
+})
+
+test_that("plot.crs accepts fixed and geom bootstraps for mean routes", {
   set.seed(6204)
-  d <- data.frame(x = runif(24), y = rnorm(24))
+  d <- data.frame(x = runif(28), y = rnorm(28))
+  fit1 <- crs(
+    y ~ x,
+    data = d,
+    cv = "none",
+    degree = 2,
+    segments = 1,
+    display.warnings = FALSE,
+    display.nomad.progress = FALSE
+  )
+  fixed <- plot(
+    fit1,
+    output = "data",
+    errors = "bootstrap",
+    bootstrap = "fixed",
+    boot_control = crs_boot_control(blocklen = 3),
+    B = 4L,
+    neval = 5L
+  )
+  geom <- plot(
+    fit1,
+    output = "data",
+    errors = "bootstrap",
+    bootstrap = "geom",
+    boot_control = crs_boot_control(blocklen = 3),
+    B = 4L,
+    neval = 5L
+  )
+  expect_named(fixed[[1L]], c("x", "mean", "lwr", "upr"))
+  expect_named(geom[[1L]], c("x", "mean", "lwr", "upr"))
+
+  d2 <- data.frame(x1 = runif(30), x2 = runif(30))
+  d2$y <- d2$x1 - d2$x2 + rnorm(30, sd = 0.04)
+  fit2 <- crs(
+    y ~ x1 + x2,
+    data = d2,
+    cv = "none",
+    basis = "tensor",
+    degree = c(2, 2),
+    segments = c(1, 1),
+    display.warnings = FALSE,
+    display.nomad.progress = FALSE
+  )
+  surface <- plot(
+    fit2,
+    output = "data",
+    perspective = TRUE,
+    errors = "bootstrap",
+    bootstrap = "fixed",
+    boot_control = crs_boot_control(blocklen = 2),
+    B = 3L,
+    neval = 4L
+  )
+  expect_named(surface[[1L]], c("x1", "x2", "fit", "lwr", "upr"))
+})
+
+test_that("plot.crs fixed bootstrap computes an NP-style default block length", {
+  set.seed(6216)
+  d <- data.frame(x = runif(26), y = rnorm(26))
   fit <- crs(
     y ~ x,
     data = d,
@@ -248,7 +331,13 @@ test_that("plot.crs rejects unsupported bootstrap selectors explicitly", {
     display.warnings = FALSE,
     display.nomad.progress = FALSE
   )
-  expect_error(plot(fit, output = "data", errors = "bootstrap",
-                    bootstrap = "fixed", B = 3L),
-               "bootstrap=\"wild\" or bootstrap=\"inid\"")
+  out <- plot(
+    fit,
+    output = "data",
+    errors = "bootstrap",
+    bootstrap = "fixed",
+    B = 3L,
+    neval = 4L
+  )
+  expect_named(out[[1L]], c("x", "mean", "lwr", "upr"))
 })

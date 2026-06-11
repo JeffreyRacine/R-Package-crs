@@ -35,7 +35,10 @@ crs_render_control(...)
 \arguments{
   \item{nonfixed}{Handling for nonfixed regressors in bootstrap plots.}
   \item{wild}{Wild-bootstrap multiplier family.}
-  \item{blocklen}{Optional positive block length.}
+  \item{blocklen}{Optional positive block length for
+  \code{bootstrap="fixed"} and \code{bootstrap="geom"}. If omitted for
+  mean \code{\link{crs}} plots, CRS uses the same automatic
+  block-length selector as \pkg{np}.}
   \item{xtrim}{Optional length-two trimming quantiles for plot grids.}
   \item{xq}{Optional conditioning quantile or vector of conditioning quantiles.}
   \item{slices}{Reserved for future explicit slice selection.}
