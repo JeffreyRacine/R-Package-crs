@@ -217,6 +217,108 @@ test_that("public opt-in fit route rejects unsupported modern combinations", {
       perspective = TRUE,
       display.nomad.progress = FALSE
     ),
-    "modern 2D regression plot route is not implemented yet"
+    "two continuous predictors"
+  )
+})
+
+test_that("public opt-in surface route matches legacy surface data oracle", {
+  set.seed(27)
+  n <- 44
+  d <- data.frame(x1 = runif(n), x2 = runif(n))
+  d$y <- sin(2 * pi * d$x1) + d$x2 + rnorm(n, sd = 0.05)
+
+  model <- crs(
+    y ~ x1 + x2,
+    data = d,
+    cv = "none",
+    basis = "tensor",
+    degree = c(3, 3),
+    segments = c(1, 1),
+    display.warnings = FALSE,
+    display.nomad.progress = FALSE
+  )
+
+  modern <- plot(
+    model,
+    plot.view = "fit",
+    perspective = TRUE,
+    output = "data",
+    neval = 6,
+    display.nomad.progress = FALSE
+  )
+  legacy <- plot(
+    model,
+    mean = TRUE,
+    persp.rgl = TRUE,
+    plot.behavior = "data",
+    num.eval = 6,
+    display.nomad.progress = FALSE
+  )
+
+  expect_equal(modern, legacy, tolerance = 1e-10)
+})
+
+test_that("public opt-in surface route renders with base persp", {
+  set.seed(28)
+  d <- data.frame(x1 = runif(36), x2 = runif(36))
+  d$y <- d$x1 - d$x2 + rnorm(36, sd = 0.05)
+
+  model <- crs(
+    y ~ x1 + x2,
+    data = d,
+    cv = "none",
+    basis = "tensor",
+    degree = c(3, 3),
+    segments = c(1, 1),
+    display.warnings = FALSE,
+    display.nomad.progress = FALSE
+  )
+
+  pdf.file <- tempfile(fileext = ".pdf")
+  grDevices::pdf(pdf.file)
+  on.exit({
+    grDevices::dev.off()
+    unlink(pdf.file)
+  }, add = TRUE)
+
+  expect_error(
+    invisible(plot(
+      model,
+      plot.view = "fit",
+      perspective = TRUE,
+      output = "plot",
+      neval = 6,
+      data_overlay = TRUE,
+      display.nomad.progress = FALSE
+    )),
+    NA
+  )
+  expect_true(file.exists(pdf.file))
+})
+
+test_that("public opt-in surface route rejects contradictory renderer controls", {
+  set.seed(29)
+  d <- data.frame(x1 = runif(30), x2 = runif(30), y = rnorm(30))
+  model <- crs(
+    y ~ x1 + x2,
+    data = d,
+    cv = "none",
+    basis = "tensor",
+    degree = c(3, 3),
+    segments = c(1, 1),
+    display.warnings = FALSE,
+    display.nomad.progress = FALSE
+  )
+
+  expect_error(
+    plot(
+      model,
+      plot.view = "fit",
+      persp.rgl = TRUE,
+      renderer = "base",
+      output = "data",
+      display.nomad.progress = FALSE
+    ),
+    "cannot supply persp.rgl=TRUE"
   )
 })
