@@ -214,8 +214,11 @@ These arguments control cross-validation objective selection and restart behavio
   (i.e. \code{kernel=FALSE} otherwise
   \code{\link{optim}}/\code{\link{snomadr}} search is necessary) such
   that, if the number of combinations of \code{degree}/\code{segments}
-  is less than the threshold and \code{cv="nomad"}, instead use
-  exhaustive search (\code{cv="exhaustive"}) }
+  is less than or equal to the threshold and \code{cv="nomad"}, instead
+  use exhaustive search (\code{cv="exhaustive"}). Setting
+  \code{cv.threshold=0} disables this automatic switch and keeps
+  \code{cv="nomad"} on the NOMAD path; use \code{cv="exhaustive"} to
+  force exhaustive search. }
 
 
   \item{nmulti}{

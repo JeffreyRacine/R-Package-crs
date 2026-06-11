@@ -50,6 +50,60 @@ test_that("crs default method routes nmulti through model selection", {
   expect_equal(length(predict(model)), n)
 })
 
+test_that("crs cv.threshold and exhaustive search semantics are explicit", {
+  set.seed(17)
+  n <- 80
+  x <- runif(n)
+  y <- sin(2 * pi * x) + rnorm(n, sd = 0.2)
+
+  default_auto <- crs(
+    y ~ x,
+    cv = "nomad",
+    degree.max = 3,
+    segments.max = 3,
+    display.warnings = FALSE,
+    display.nomad.progress = FALSE
+  )
+
+  threshold_zero <- crs(
+    y ~ x,
+    cv = "nomad",
+    cv.threshold = 0,
+    degree.max = 3,
+    segments.max = 3,
+    max.bb.eval = 20,
+    display.warnings = FALSE,
+    display.nomad.progress = FALSE
+  )
+
+  exhaustive <- crs(
+    y ~ x,
+    cv = "exhaustive",
+    nmulti = 7,
+    degree.max = 3,
+    segments.max = 3,
+    display.warnings = FALSE,
+    display.nomad.progress = FALSE
+  )
+
+  expect_identical(default_auto$cv, "exhaustive")
+  expect_null(default_auto$nomad.restart.contract)
+
+  expect_identical(threshold_zero$cv, "nomad")
+  expect_false(is.null(threshold_zero$nomad.restart.contract))
+
+  expect_identical(exhaustive$cv, "exhaustive")
+  expect_null(exhaustive$nomad.restart.contract)
+
+  exhaustive_summary <- capture.output(summary(exhaustive))
+  nomad_summary <- capture.output(summary(threshold_zero))
+
+  expect_true(any(grepl("Search method: exhaustive", exhaustive_summary, fixed = TRUE)))
+  expect_false(any(grepl("Number of multistarts", exhaustive_summary, fixed = TRUE)))
+  expect_true(any(grepl("Search method: nomad", nomad_summary, fixed = TRUE)))
+  expect_true(any(grepl("Number of multistarts", nomad_summary, fixed = TRUE)))
+})
+
 test_that("crs NOMAD progress uses rich managed lines for kernel and factor routes", {
   test_time_values <- function(values) {
     i <- 0L

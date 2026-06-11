@@ -605,7 +605,7 @@ crs.formula <- function(formula,
   ## large use exhaustive search
 
   if(cv=="nomad" && is.null(num.z) && ((degree.max-degree.min)*(segments.max-segments.min))**num.x <= cv.threshold) {
-    if(display.warnings) warning(" Dynamically changing search from nomad to exhaustive (if unwanted set cv.threshold to 0)")
+    if(display.warnings) warning(" Dynamically changing search from nomad to exhaustive (set cv.threshold=0 to keep NOMAD search)")
     cv <- "exhaustive"
   }
 
@@ -1253,7 +1253,11 @@ summary.crs <- function(object,
     if(!is.null(object$cv.score)) cat(paste("\n\nCross-validation score (weighted): ", format(object$cv.score,digits=8), sep=""))
   }
 
-  if(object$cv != "none") cat(paste("\nNumber of multistarts: ", format(object$nmulti), sep=""))
+  if(object$cv != "none") {
+    cat(paste("\nSearch method: ", format(object$cv), sep=""))
+    if(identical(object$cv, "nomad"))
+      cat(paste("\nNumber of multistarts: ", format(object$nmulti), sep=""))
+  }
 
   if(sigtest && !object$kernel) {
     cat("\n\nPredictor significance test:\n")
