@@ -498,6 +498,9 @@ clsd <- function(x=NULL,
   if (!is.null(ls.ml.out) && !is.null(ls.ml.out$nomad.restart.evaluations)) {
     clsd.return$nomad.restart.evaluations <- ls.ml.out$nomad.restart.evaluations
   }
+  if (!is.null(ls.ml.out) && !is.null(ls.ml.out$nomad.summary)) {
+    clsd.return$nomad.summary <- ls.ml.out$nomad.summary
+  }
 
   class(clsd.return) <- "clsd"
   return(clsd.return)
@@ -1092,6 +1095,7 @@ ls.ml <- function(x=NULL,
     out$nomad.best.restart <- solution$best.restart
     out$nomad.restart.objectives <- solution$restart.fval
     out$nomad.restart.evaluations <- solution$restart.results
+    out$nomad.summary <- .crs_nomad_summary_from_solution(solution)
   }
 
   return(out)
@@ -1109,6 +1113,7 @@ summary.clsd <- function(object,
   cat(paste("\nTraining observations: ", format(object$nobs), sep=""))
   cat(paste("\nLog-likelihood: ", format(object$logl), sep=""))
   cat(paste("\nNumber of multistarts: ", format(object$nmulti), sep=""))
+  .crs_nomad_summary_print(object)
   cat(paste("\nEstimation time: ", formatC(object$ptm[1],digits=1,format="f"), " seconds",sep=""))
 
   cat("\n\n")

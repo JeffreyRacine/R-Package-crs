@@ -2,7 +2,6 @@
 \alias{crs}
 \alias{crs.default}
 \alias{crs.formula}
-\alias{plot.crs}
 \title{Categorical Regression Splines}
 
 \description{ \code{crs} computes a regression spline estimate of a
@@ -62,7 +61,7 @@ crs(\dots)
     min.frame.size.integer = 1,
     min.frame.size.real = 1,
     model.return = FALSE,
-    nmulti = 5,
+    nmulti = 2,
     opts=list(),
     prune = FALSE,
     random.seed = 42,
@@ -224,7 +223,7 @@ These arguments control cross-validation objective selection and restart behavio
   \item{nmulti}{
     integer number of times to restart the process of finding extrema of
     the cross-validation function from different (random) initial
-    points (default \code{nmulti=5})
+    points (default \code{nmulti=2})
   }
 
 
@@ -471,7 +470,7 @@ Further optional arguments are passed through to lower-level routines.
     \code{\link{fitted}} and \code{\link{residuals}} extract (or
     generate) estimated values and residuals. Furthermore, the functions
     \code{\link{summary}}, \code{\link{predict}}, and \code{\link{plot}}
-    support objects of this type. The \code{plot} method follows the
+	    support objects of this type. The \code{\link{plot.crs}} method follows the
     modern \pkg{np} plotting interface, including
     \code{errors=c("none","asymptotic","bootstrap")},
     \code{gradients=TRUE}, \code{gradient_order},
@@ -513,6 +512,9 @@ Further optional arguments are passed through to lower-level routines.
   used (\code{kernel=TRUE}) or not }
 
   \item{lambda}{ vector of bandwidths used if \code{kernel=TRUE}}
+
+  \item{nomad.summary}{ summary of NOMAD blackbox evaluations and cache
+    activity, present only when NOMAD search was used}
 
   \item{call}{ a symbolic description of the model  }
 

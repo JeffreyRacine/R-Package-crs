@@ -261,12 +261,6 @@
     fields <- c(fields, paste("best", best.aux.field))
   }
 
-  if (!is.null(value) && is.finite(value)) {
-    fields <- c(fields, sprintf("fv=%s", format(value)))
-  } else if (isTRUE(start)) {
-    fields <- c(fields, "fv=pending")
-  }
-
   .crs_progress_status_update(
     progress$progress.status,
     sprintf(
@@ -374,14 +368,6 @@
   if (!is.null(best.aux.field)) {
     fields <- c(fields, paste("best", best.aux.field))
   }
-
-  fields <- c(
-    fields,
-    sprintf(
-      "fv=%s",
-      if (is.finite(progress$best.objective)) format(progress$best.objective) else "pending"
-    )
-  )
 
   .crs_progress_status_update(
     progress$progress.status,

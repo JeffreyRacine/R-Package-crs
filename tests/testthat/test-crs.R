@@ -100,8 +100,10 @@ test_that("crs cv.threshold and exhaustive search semantics are explicit", {
 
   expect_true(any(grepl("Search method: exhaustive", exhaustive_summary, fixed = TRUE)))
   expect_false(any(grepl("Number of multistarts", exhaustive_summary, fixed = TRUE)))
+  expect_false(any(grepl("Number of Function Evaluations", exhaustive_summary, fixed = TRUE)))
   expect_true(any(grepl("Search method: nomad", nomad_summary, fixed = TRUE)))
   expect_true(any(grepl("Number of multistarts", nomad_summary, fixed = TRUE)))
+  expect_true(any(grepl("Number of Function Evaluations", nomad_summary, fixed = TRUE)))
 })
 
 test_that("crs NOMAD progress uses rich managed lines for kernel and factor routes", {
@@ -154,7 +156,7 @@ test_that("crs NOMAD progress uses rich managed lines for kernel and factor rout
   expect_true(any(grepl("seg (", kernel.lines, fixed = TRUE)))
   expect_true(any(grepl("lambda (", kernel.lines, fixed = TRUE)))
   expect_true(any(grepl("best deg (", kernel.lines, fixed = TRUE)))
-  expect_true(any(grepl("fv=", kernel.lines, fixed = TRUE)))
+  expect_false(any(grepl("fv=", kernel.lines, fixed = TRUE)))
   expect_false(any(grepl("Calling NOMAD", kernel.lines, fixed = TRUE)))
   expect_false(any(grepl("NOMAD search", kernel.lines, fixed = TRUE)))
 
@@ -166,7 +168,7 @@ test_that("crs NOMAD progress uses rich managed lines for kernel and factor rout
   expect_true(any(grepl("seg (", factor.lines, fixed = TRUE)))
   expect_true(any(grepl("include (", factor.lines, fixed = TRUE)))
   expect_true(any(grepl("best deg (", factor.lines, fixed = TRUE)))
-  expect_true(any(grepl("fv=", factor.lines, fixed = TRUE)))
+  expect_false(any(grepl("fv=", factor.lines, fixed = TRUE)))
   expect_false(any(grepl("Calling NOMAD", factor.lines, fixed = TRUE)))
   expect_false(any(grepl("NOMAD search", factor.lines, fixed = TRUE)))
 })

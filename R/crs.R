@@ -537,7 +537,7 @@ crs.formula <- function(formula,
                         min.frame.size.integer=1,
                         min.frame.size.real=1,
                         model.return=FALSE,
-                        nmulti=5,
+                        nmulti=2,
                         opts=list(),
                         prune=FALSE,
                         random.seed=42,
@@ -878,6 +878,7 @@ crs.formula <- function(formula,
   if (!is.null(cv.return) && !is.null(cv.return$nomad.restart.evaluations)) {
     est$nomad.restart.evaluations <- cv.return$nomad.restart.evaluations
   }
+  est <- .crs_nomad_attach_summary(est, cv.return)
 
   return(est)
 
@@ -1257,6 +1258,7 @@ summary.crs <- function(object,
     cat(paste("\nSearch method: ", format(object$cv), sep=""))
     if(identical(object$cv, "nomad"))
       cat(paste("\nNumber of multistarts: ", format(object$nmulti), sep=""))
+    .crs_nomad_summary_print(object)
   }
 
   if(sigtest && !object$kernel) {

@@ -58,6 +58,37 @@ test_that("plot.crs accepts canonical NP-style plot controls", {
   )
   expect_type(gout, "list")
   expect_named(gout[[1L]], c("x", "deriv"))
+
+  bout <- plot(
+    model,
+    output = "data",
+    errors = "bootstrap",
+    band = "all",
+    bootstrap = "inid",
+    B = 3,
+    neval = 6
+  )
+  expect_named(bout[[1L]],
+               c("x", "mean", "lwr", "upr", "lwr.sim", "upr.sim",
+                 "lwr.bonf", "upr.bonf"))
+  expect_silent(crs_plot_pdf(plot(
+    model,
+    errors = "bootstrap",
+    band = "all",
+    bootstrap = "inid",
+    B = 3,
+    neval = 6,
+    legend = FALSE
+  )))
+  expect_silent(crs_plot_pdf(plot(
+    model,
+    errors = "bootstrap",
+    band = "all",
+    bootstrap = "inid",
+    B = 3,
+    neval = 6,
+    legend = list(x = "bottomleft")
+  )))
 })
 
 test_that("plot route defaults render without hidden legacy bridge arguments", {

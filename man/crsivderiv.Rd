@@ -184,7 +184,7 @@ Further NOMAD and CRS controls are passed through to lower-level routines.
   is used to terminate iteration. However, if local rather than global
   optima are encountered the resulting estimates can be overly noisy. To
   best guard against this eventuality set \code{nmulti} to a larger
-  number than the default \code{nmulti=5} for \code{\link{crs}} when
+  number than the default \code{nmulti=2} for \code{\link{crs}} when
   using \code{cv="nomad"} or instead use \code{cv="exhaustive"} if
   possible (this may not be feasible for non-trivial problems).
 
@@ -197,7 +197,7 @@ Further NOMAD and CRS controls are passed through to lower-level routines.
   optimal parameters serve as the first of the multiple initial points
   (a warm start), while any remaining restarts are cold starts. If
   \code{nmulti} is not explicitly supplied by the user, it defaults to
-  the \code{\link{crs}} default (5) for the first iteration and to 1 for
+  the \code{\link{crs}} default (2) for the first iteration and to 1 for
   all subsequent iterations. This strategy provides a balance between
   computational efficiency and robustness, allowing the NOMAD solver to
   refine the structural parameters as the residuals evolve

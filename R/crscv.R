@@ -22,7 +22,8 @@ crscv <- function(K,
                   nomad.restart.contract = NULL,
                   nomad.best.restart = NULL,
                   nomad.restart.objectives = NULL,
-                  nomad.restart.evaluations = NULL) {
+                  nomad.restart.evaluations = NULL,
+                  nomad.summary = NULL) {
 
   tregcv = list(K=K,
                 I=I,
@@ -58,6 +59,9 @@ crscv <- function(K,
   if (!is.null(nomad.restart.evaluations)) {
     tregcv$nomad.restart.evaluations <- nomad.restart.evaluations
   }
+  if (!is.null(nomad.summary)) {
+    tregcv$nomad.summary <- nomad.summary
+  }
 
   class(tregcv) <- "crscv"
 
@@ -84,6 +88,7 @@ print.crscv <- function(x, ...){
     cat(paste("\n\nMaximum spline degree for search: ",format(x$degree.max),sep=""),sep="")
     cat(paste("\nBasis: ", x$basis,sep=""))
     if(x$restarts>0) cat(paste("\nNumber of restarts = ", format(x$restarts),sep=""),sep="")
+    .crs_nomad_summary_print(x)
     cat("\n\n")
   } else if(!is.null(x$I)) {
     cat("\nFactor Regression Spline Cross-Validation",sep="")
@@ -102,6 +107,7 @@ print.crscv <- function(x, ...){
     cat(paste("\n\nMaximum spline degree for search: ",format(x$degree.max),sep=""),sep="")
     cat(paste("\nBasis: ", x$basis,sep=""))
     if(!is.null(x$restarts) && (x$restarts > 0)) cat(paste("\nNumber of restarts = ", format(x$restarts),sep=""),sep="")
+    .crs_nomad_summary_print(x)
     cat("\n\n")
   } else {
     cat("\nRegression Spline Cross-Validation",sep="")
@@ -121,6 +127,7 @@ print.crscv <- function(x, ...){
     cat(paste("\n\nMaximum spline degree for search: ",format(x$degree.max),sep=""),sep="")
     cat(paste("\nBasis: ", x$basis,sep=""))
     if(!is.null(x$restarts) && (x$restarts > 0)) cat(paste("\nNumber of restarts = ", format(x$restarts),sep=""),sep="")
+    .crs_nomad_summary_print(x)
     cat("\n\n")
   }
 }

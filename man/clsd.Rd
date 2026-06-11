@@ -295,6 +295,9 @@ These arguments control warnings, verbosity, and displayed optimizer progress.
   user (lying in \code{[0,1]}) from which the quantiles \code{xq} are
   obtained}
 
+  \item{nomad.summary}{ summary of NOMAD blackbox evaluations and cache
+    activity, present only when NOMAD search was used}
+
 }
 
 \section{Usage Issues}{

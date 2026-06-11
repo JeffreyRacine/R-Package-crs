@@ -57,7 +57,6 @@ gsl.bs.default <- function(x,
   outside <- ol | or
 
   if(any(outside)){
-    if(display.warnings) warning("some 'x' values beyond boundary knots may cause ill-conditioned bases")
     ord <- degree + 1
     derivs<- deriv:degree
     if(ord == deriv)

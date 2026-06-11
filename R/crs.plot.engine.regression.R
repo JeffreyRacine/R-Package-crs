@@ -44,6 +44,10 @@
   if (isTRUE(payload$ci) && all(c("lwr", "upr") %in% names(payload$data))) {
     out$lwr <- payload$data$lwr
     out$upr <- payload$data$upr
+    all.band <- c("lwr.sim", "upr.sim", "lwr.bonf", "upr.bonf")
+    for (nm in intersect(all.band, names(payload$data))) {
+      out[[nm]] <- payload$data[[nm]]
+    }
   }
   list(out)
 }
@@ -68,6 +72,7 @@
                                            data_overlay = TRUE,
                                            data_rug = FALSE,
                                            ...) {
+  dots <- list(...)
   ylim <- .crs_plot_slice_ylim(slices, ci = ci, common.scale = common.scale)
   if (isTRUE(data_overlay) && identical(as.integer(deriv), 0L))
     ylim <- .crs_plot_overlay_range(ylim, object$y)
@@ -106,7 +111,7 @@
            lty = graphics::par()$lty,
            main = "",
            sub = ""),
-      .crs_plot_user_args(list(...), "plot")
+      .crs_plot_user_args(dots, "plot")
     )
     do.call(graphics::plot, plot.args)
 
@@ -119,10 +124,28 @@
       .crs_plot_draw_rug_1d(object$xz[[nm]])
 
     if (isTRUE(ci) && all(c("lwr", "upr") %in% names(slice))) {
-      graphics::lines(x, slice$lwr, col = .crs_plot_color("interval"),
-                      lty = 2)
-      graphics::lines(x, slice$upr, col = .crs_plot_color("interval"),
-                      lty = 2)
+      if (all(c("lwr.sim", "upr.sim", "lwr.bonf", "upr.bonf") %in%
+              names(slice))) {
+        cols <- .crs_plot_all_band_colors()
+        graphics::lines(x, slice$lwr, col = cols[["pointwise"]],
+                        lty = .crs_plot_lty("pointwise"))
+        graphics::lines(x, slice$upr, col = cols[["pointwise"]],
+                        lty = .crs_plot_lty("pointwise"))
+        graphics::lines(x, slice$lwr.sim, col = cols[["simultaneous"]],
+                        lty = .crs_plot_lty("simultaneous"))
+        graphics::lines(x, slice$upr.sim, col = cols[["simultaneous"]],
+                        lty = .crs_plot_lty("simultaneous"))
+        graphics::lines(x, slice$lwr.bonf, col = cols[["bonferroni"]],
+                        lty = .crs_plot_lty("bonferroni"))
+        graphics::lines(x, slice$upr.bonf, col = cols[["bonferroni"]],
+                        lty = .crs_plot_lty("bonferroni"))
+        .crs_plot_all_band_legend(dots$legend)
+      } else {
+        graphics::lines(x, slice$lwr, col = .crs_plot_color("interval"),
+                        lty = 2)
+        graphics::lines(x, slice$upr, col = .crs_plot_color("interval"),
+                        lty = 2)
+      }
     }
   }
 
@@ -632,6 +655,10 @@
         lerr.all = lerr.all,
         herr.all = herr.all
       )
+    if (isTRUE(plot.errors) && identical(plot.errors.type, "all") &&
+        (!isTRUE(rotate) || identical(frame.idx, length(frame.theta)))) {
+      .crs_plot_all_band_legend(dots$legend)
+    }
     if (isTRUE(data_overlay)) {
       points.args <- .crs_plot_merge_user_args(
         list(x1 = object$xz[, 1L],
@@ -737,6 +764,8 @@
                                   "plot.errors.method", "plot.errors.type",
                                   "plot.errors.alpha",
                                   "plot.errors.boot.num",
+                                  "plot.errors.boot.method",
+                                  "plot.errors.center",
                                   "display.nomad.progress",
                                   "display.warnings"))]
     do.call(.crs_plot_render_regression_1d,
@@ -819,6 +848,8 @@
                                   "renderer", "plot.errors.method",
                                   "plot.errors.type", "plot.errors.alpha",
                                   "plot.errors.boot.num",
+                                  "plot.errors.boot.method",
+                                  "plot.errors.center",
                                   "display.nomad.progress",
                                   "display.warnings"))]
     do.call(.crs_plot_render_regression_surface,

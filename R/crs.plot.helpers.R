@@ -497,6 +497,37 @@ crs_render_control <- function(...) {
     bonferroni = "#0072B2")
 }
 
+.crs_plot_all_band_legend <- function(legend = TRUE, where = "topright",
+                                      lwd = 2, ...) {
+  if (is.null(legend)) legend <- TRUE
+  if (identical(legend, FALSE)) return(invisible(FALSE))
+
+  cols <- .crs_plot_all_band_colors()
+  args <- list(
+    x = where,
+    legend = c("Pointwise", "Simultaneous", "Bonferroni"),
+    col = unname(cols[c("pointwise", "simultaneous", "bonferroni")]),
+    lty = c(.crs_plot_lty("pointwise"),
+            .crs_plot_lty("simultaneous"),
+            .crs_plot_lty("bonferroni")),
+    lwd = lwd,
+    bty = "n",
+    cex = .crs_plot_cex("legend")
+  )
+
+  if (is.character(legend) && length(legend) == 1L) {
+    args$x <- legend
+  } else if (is.list(legend)) {
+    for (nm in names(legend)) args[[nm]] <- legend[[nm]]
+  } else if (!is.logical(legend) || length(legend) != 1L || is.na(legend)) {
+    stop("legend must be TRUE, FALSE, a legend position, or a list",
+         call. = FALSE)
+  }
+
+  do.call(graphics::legend, args)
+  invisible(TRUE)
+}
+
 .crs_plot_draw_error_wireframes_persp <- function(x,
                                                   y,
                                                   persp.mat,

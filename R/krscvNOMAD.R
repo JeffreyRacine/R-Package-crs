@@ -692,6 +692,7 @@ krscvNOMAD <- function(xz,
         nomad.restart.contract=nomad.solution$restart.contract,
         nomad.best.restart=nomad.solution$best.restart,
         nomad.restart.objectives=nomad.solution$restart.fval,
-        nomad.restart.evaluations=nomad.solution$restart.results)
+        nomad.restart.evaluations=nomad.solution$restart.results,
+        nomad.summary=.crs_nomad_summary_from_solution(nomad.solution))
 
 }

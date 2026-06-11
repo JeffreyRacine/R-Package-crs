@@ -405,12 +405,15 @@ test_that("public surface route supports NP-style bootstrap intervals", {
     perspective = TRUE,
     output = "data",
     errors = "bootstrap",
+    band = "all",
     bootstrap = "inid",
     B = 3,
     neval = 4
   )
   expect_type(dat, "list")
-  expect_named(dat[[1]][1:5], c("x1", "x2", "fit", "lwr", "upr"))
+  expect_named(dat[[1]],
+               c("x1", "x2", "fit", "lwr", "upr", "lwr.sim", "upr.sim",
+                 "lwr.bonf", "upr.bonf"))
   expect_true(all(is.finite(dat[[1]]$lwr)))
   expect_true(all(is.finite(dat[[1]]$upr)))
 
@@ -425,11 +428,13 @@ test_that("public surface route supports NP-style bootstrap intervals", {
       model,
       perspective = TRUE,
       errors = "bootstrap",
+      band = "all",
       bootstrap = "inid",
       B = 3,
       neval = 4,
       view = "fixed",
-      data_rug = TRUE
+      data_rug = TRUE,
+      legend = list(x = "topleft")
     )),
     NA
   )

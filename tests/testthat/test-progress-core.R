@@ -279,7 +279,7 @@ test_that("IV wrappers can suppress pending NOMAD start frames without losing fi
   expect_false(any(grepl("best deg pending", lines, fixed = TRUE)))
   expect_true(any(grepl("iteration 1", lines, fixed = TRUE)))
   expect_true(any(grepl("eval 1", lines, fixed = TRUE)))
-  expect_true(any(grepl("fv=0.25", lines, fixed = TRUE)))
+  expect_false(any(grepl("fv=", lines, fixed = TRUE)))
 })
 
 test_that("single-line NOMAD rendering keeps detail when the line is wide", {

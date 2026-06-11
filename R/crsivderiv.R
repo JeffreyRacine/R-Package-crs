@@ -699,6 +699,7 @@ summary.crsivderiv <- function(object, ...) {
   cat(paste("\nStopping rule value: ", format(object$norm.stop[length(object$norm.stop)],digits=8), sep=""))
 
   cat(paste("\nNumber of multistarts: ", format(object$nmulti), sep=""))
+  .crs_nomad_summary_print(object)
   cat(paste("\nEstimation time: ", formatC(object$ptm[1],digits=1,format="f"), " seconds",sep=""))
   cat("\n\n")
 }
