@@ -476,9 +476,8 @@ Further optional arguments are passed through to lower-level routines.
     \code{gradients=TRUE}, \code{gradient_order},
     \code{output=c("plot","data","plot-data","both")},
     \code{perspective}, \code{renderer}, \code{view}, \code{neval},
-    \code{band}, \code{alpha}, \code{bootstrap}, \code{B},
-    \code{np_grid_control}, \code{np_boot_control}, and
-    \code{np_render_control}. The
+    \code{band}, \code{alpha}, \code{bootstrap}, \code{B}, and the
+    control helpers documented in \code{\link{plot.crs}}. The
     returned object has the following components:
 
   \item{fitted.values}{ estimates of the regression function
@@ -499,10 +498,10 @@ Further optional arguments are passed through to lower-level routines.
   plots fit with \code{tau} follow the \pkg{npqreg} convention and
   default to the refit \code{bootstrap="inid"} selector; \code{fixed}
   and \code{geom} are available for quantile fitted curves, while
-  \code{wild} remains mean-only.
-  Bootstrap derivative bounds and surface
-  gradient bounds in \code{plot.crs} are not implemented and fail closed; use
-  asymptotic derivative intervals with \code{errors="asymptotic"}.}
+  \code{wild} remains mean-only. Mean CRS gradient/effect plots requested with
+  \code{gradients=TRUE} also support bootstrap derivative/effect intervals;
+  numeric continuous panels use the corresponding \code{crshat()} derivative
+  operator, and categorical panels use focal-minus-baseline effect operators.}
 
   \item{residuals}{ residuals computed at the sample points or
   evaluation points }

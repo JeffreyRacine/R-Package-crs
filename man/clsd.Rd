@@ -267,7 +267,8 @@ These arguments control warnings, verbosity, and displayed optimizer progress.
     draw, return the plot data, or both. Bootstrap, interval,
     surface-rendering, rug, legend, overlay, and regression-gradient plot
     controls are not supported for this curve route and fail fast when
-    supplied. The returned object has the following components:
+    supplied. See \code{\link{plot.crs}} for the shared CRS plot-output
+    conventions. The returned object has the following components:
 
   \item{density}{ estimates of the density function
     at the sample points}
@@ -331,7 +332,7 @@ These arguments control warnings, verbosity, and displayed optimizer progress.
 }
 
 \seealso{
-  \code{\link[logspline]{logspline}}
+  \code{\link[logspline]{logspline}}, \code{\link{plot.crs}}
 }
 
 \examples{

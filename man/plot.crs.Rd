@@ -1,13 +1,36 @@
 \name{plot.crs}
 \alias{plot.crs}
+\alias{np_boot_control}
+\alias{np_grid_control}
+\alias{np_render_control}
+\alias{crs_boot_control}
+\alias{crs_grid_control}
+\alias{crs_render_control}
 \title{Plot Categorical Regression Spline Fits}
 \description{
   Plot fitted conditional mean, conditional quantile, gradient, and
   bivariate surface displays for \code{\link{crs}} objects using the
-  modern \pkg{np}-style plot interface.
+  modern \pkg{np}-style plot interface. This page is the canonical
+  reference for CRS plot options and plot control helper objects.
 }
 \usage{
 \method{plot}{crs}(x, \dots)
+
+np_boot_control(nonfixed = c("exact", "frozen"),
+                wild = c("rademacher", "mammen"),
+                blocklen = NULL)
+
+np_grid_control(xtrim = NULL, xq = NULL, slices = NULL)
+
+np_render_control(style = c("band", "bar"),
+                  bar = c("|", "I"),
+                  bar_num = NULL)
+
+crs_boot_control(...)
+
+crs_grid_control(...)
+
+crs_render_control(...)
 }
 \arguments{
 \subsection{Plot Object}{
@@ -18,6 +41,45 @@ This argument identifies the fitted CRS object to plot.
     an object of class \code{"crs"} returned by \code{\link{crs}}.
     Mean-regression objects plot fitted conditional means by default.
     Objects fit with \code{tau} plot fitted conditional quantiles.
+  }
+
+\subsection{Control Helper Constructors}{
+These arguments configure optional S3 control objects consumed by CRS plot
+methods. The \code{np_*_control()} names intentionally mirror the
+corresponding \pkg{np} plot interface; the \code{crs_*_control()} names are
+package-local aliases returning compatible objects.
+}
+
+  \item{nonfixed}{
+    handling for non-fixed regressors in bootstrap plots.
+  }
+  \item{wild}{
+    wild-bootstrap multiplier family.
+  }
+  \item{blocklen}{
+    optional positive block length for \code{bootstrap="fixed"} and
+    \code{bootstrap="geom"}. If omitted for mean \code{\link{crs}} plots,
+    CRS uses the same automatic block-length selector as \pkg{np}.
+  }
+  \item{xtrim}{
+    optional trimming information stored on a grid control object. For
+    ordinary CRS regression plots, use the top-level scalar
+    \code{xtrim} argument documented below.
+  }
+  \item{xq}{
+    optional conditioning quantile or vector of conditioning quantiles.
+  }
+  \item{slices}{
+    reserved for future explicit slice selection.
+  }
+  \item{style}{
+    interval rendering style.
+  }
+  \item{bar}{
+    error-bar glyph style.
+  }
+  \item{bar_num}{
+    optional number of error bars to draw.
   }
 
 \subsection{Plot Options Passed Through \code{\dots}}{
@@ -40,9 +102,11 @@ Named options passed via \code{\dots} include:
         variables fixed when drawing one-dimensional slices.
       }
       \item{\code{xtrim}}{
-        trimming/expansion control for the evaluation support. The
-        default evaluates over the observed support of the plotted
-        continuous variable.
+        scalar trimming/expansion control for the evaluation support.
+        Values in \code{[0,0.5)} trim both tails by the requested
+        quantile amount; negative values expand the support. The default
+        evaluates over the observed support of the plotted continuous
+        variable.
       }
     }
 
@@ -192,24 +256,18 @@ Named options passed via \code{\dots} include:
       }
     }
 
-    \strong{Reproducibility controls}
-    \describe{
-      \item{\code{random.seed}}{
-        an optional random seed used to make bootstrap plotting
-        reproducible.
-      }
-    }
-
 \subsection{Additional Arguments}{
 Further plotting controls are passed through \code{\dots} to the relevant
 plot route.
 }
 
   \item{\dots}{
-    additional arguments supplied to control plotting behavior or passed
-    through to underlying plotting helpers where supported. Supported
-    named plotting controls are summarized above; standard graphical
-    parameters are forwarded where relevant.
+    for \code{plot.crs}, additional arguments supplied to control plotting
+    behavior or passed through to underlying plotting helpers where supported.
+    Supported named plotting controls are summarized above; standard graphical
+    parameters are forwarded where relevant. For the \code{crs_*_control()}
+    helper constructors, arguments are forwarded to the corresponding
+    \code{np_*_control()} helper.
   }
 }
 \details{
@@ -262,15 +320,15 @@ plot route.
 \value{
   Invisibly returns the plotted object for ordinary plotting calls.
   When \code{output="data"} or \code{output="both"} is requested, returns
-  the plotting payload.
+  the plotting payload. The control helper constructors return small S3
+  lists consumed by \code{plot.crs()} and related CRS plot methods.
 }
 \author{
 Jeffrey S. Racine \email{racinej@mcmaster.ca}
 }
 \seealso{
-  \code{\link{crs}}, \code{\link{np_plot_controls}},
-  \code{\link{np_grid_control}}, \code{\link{np_boot_control}},
-  \code{\link{np_render_control}}
+  \code{\link{crs}}, \code{\link{crsiv}}, \code{\link{crsivderiv}},
+  \code{\link{clsd}}
 }
 \examples{
 set.seed(42)

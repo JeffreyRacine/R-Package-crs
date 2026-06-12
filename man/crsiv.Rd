@@ -314,9 +314,10 @@ Further NOMAD and CRS controls are passed through to lower-level routines.
     used to trim the plotted support of \eqn{z} by quantiles). Bootstrap,
     surface-rendering, rug, legend, and regression-gradient plot
     controls are not supported for this curve route and fail fast when
-    supplied. Note that the \code{\link{plot}} method for \code{crsiv}
-    objects currently only supports univariate endogenous predictors
-    \eqn{z}.
+    supplied. See \code{\link{plot.crs}} for the shared CRS plot-output and
+    data-overlay conventions. Note that the \code{\link{plot}} method for
+    \code{crsiv} objects currently only supports univariate endogenous
+    predictors \eqn{z}.
     
     See \code{\link{crs}} for details on the return object components.
 
@@ -371,7 +372,7 @@ This function should be considered to be in \sQuote{beta test} status until furt
 }
 
 \seealso{
-\code{npreg}, \code{\link{crs}}
+\code{npreg}, \code{\link{crs}}, \code{\link{plot.crs}}
 }
 \examples{
 \dontrun{

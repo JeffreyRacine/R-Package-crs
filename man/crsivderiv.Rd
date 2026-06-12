@@ -241,8 +241,9 @@ Further NOMAD and CRS controls are passed through to lower-level routines.
     (whether to draw, return the plot data, or both). Bootstrap,
     asymptotic interval, surface-rendering, rug, legend, and regression
     gradient plot controls are not supported for this curve route and
-    fail fast when supplied. Note that the \code{\link{plot}} method for
-    \code{crsivderiv} objects currently only supports a univariate
+    fail fast when supplied. See \code{\link{plot.crs}} for the shared CRS
+    plot-output and data-overlay conventions. Note that the \code{\link{plot}}
+    method for \code{crsivderiv} objects currently only supports a univariate
     continuous endogenous predictor \eqn{z}.
     
     See \code{\link{crs}} for details on the return object components.
@@ -298,7 +299,8 @@ further notice.
 }
 
 \seealso{
-\code{npreg}, \code{\link{crsiv}}, \code{\link{crs}}
+\code{npreg}, \code{\link{crsiv}}, \code{\link{crs}},
+\code{\link{plot.crs}}
 }
 \examples{
 \dontrun{
