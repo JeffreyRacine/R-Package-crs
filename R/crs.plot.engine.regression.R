@@ -824,7 +824,7 @@
         herr.all = herr.all
       )
     if (isTRUE(plot.errors) && identical(plot.errors.type, "all") &&
-        (!isTRUE(rotate) || identical(frame.idx, length(frame.theta)))) {
+        !is.null(lerr.all) && !is.null(herr.all)) {
       .crs_plot_all_band_legend(
         dots$legend,
         where = "topright",
