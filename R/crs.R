@@ -884,6 +884,30 @@ crs.formula <- function(formula,
 
 }
 
+.crs_predict_deriv_order <- function(object,
+                                     deriv,
+                                     deriv.supplied) {
+
+  if(!isTRUE(deriv.supplied)) {
+    deriv <- object$deriv
+    if(is.null(deriv) || length(deriv) == 0L) {
+      deriv <- 0L
+    }
+  }
+
+  if(!is.numeric(deriv) ||
+     length(deriv) != 1L ||
+     is.na(deriv) ||
+     !is.finite(deriv) ||
+     deriv < 0 ||
+     abs(deriv - round(deriv)) > sqrt(.Machine$double.eps)) {
+    stop("deriv must be a non-negative integer scalar", call. = FALSE)
+  }
+
+  as.integer(round(deriv))
+
+}
+
 ## Method for predicting given a new data frame.
 
 predict.crs <- function(object,
@@ -891,7 +915,9 @@ predict.crs <- function(object,
                         deriv=0,
                         ...) {
 
-  if(is.null(newdata)) {
+  deriv.supplied <- !missing(deriv)
+
+  if(is.null(newdata) && !isTRUE(deriv.supplied)) {
 
     ## If no new data provided, return sample fit.
     fitted.values <- fitted(object)
@@ -904,11 +930,17 @@ predict.crs <- function(object,
 
   } else{
 
+    if(is.null(newdata)) {
+      newdata <- object$xz
+    }
+
     ## Get training data from object (xz and y) and parse into factors
     ## and numeric.
 
     basis <- object$basis
-    deriv <- object$deriv
+    deriv <- .crs_predict_deriv_order(object=object,
+                                      deriv=deriv,
+                                      deriv.supplied=deriv.supplied)
     prune <- object$prune
     prune.index <- object$prune.index
     tau <- object$tau

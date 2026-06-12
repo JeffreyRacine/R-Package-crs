@@ -317,7 +317,10 @@ These arguments control derivative extraction, quantile level, and observation w
   categorical predictor) or not and if so what order. Note that if
   \code{deriv} is higher than the spline degree of the associated
   continuous predictor then the derivative will be zero and a warning
-  issued to this effect }
+  issued to this effect. For \code{predict.crs()}, an explicitly supplied
+  \code{deriv=} overrides the value stored on the fitted object; when
+  \code{deriv} is omitted, prediction preserves the fitted object's
+  derivative setting. }
 
 
   \item{tau}{
@@ -477,7 +480,11 @@ Further optional arguments are passed through to lower-level routines.
     \code{output=c("plot","data","plot-data","both")},
     \code{perspective}, \code{renderer}, \code{view}, \code{neval},
     \code{band}, \code{alpha}, \code{bootstrap}, \code{B}, and the
-    control helpers documented in \code{\link{plot.crs}}. The
+    control helpers documented in \code{\link{plot.crs}}.
+    \code{predict.crs()} honors explicit \code{deriv=} requests for new
+    evaluation data and, when \code{newdata} is omitted, computes explicit
+    derivative requests at the training data; ordinary \code{predict(object)}
+    calls retain the stored fitted-value behavior. The
     returned object has the following components:
 
   \item{fitted.values}{ estimates of the regression function
