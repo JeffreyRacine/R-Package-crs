@@ -19,9 +19,9 @@
   value
 }
 
-np_boot_control <- function(nonfixed = c("exact", "frozen"),
-                            wild = c("rademacher", "mammen"),
-                            blocklen = NULL) {
+crs_boot_control <- function(nonfixed = c("exact", "frozen"),
+                             wild = c("rademacher", "mammen"),
+                             blocklen = NULL) {
   nonfixed <- match.arg(nonfixed)
   wild <- match.arg(wild)
   if (!is.null(blocklen) &&
@@ -29,10 +29,10 @@ np_boot_control <- function(nonfixed = c("exact", "frozen"),
        is.na(blocklen) || blocklen <= 0))
     stop("blocklen must be a positive numeric scalar", call. = FALSE)
   structure(list(nonfixed = nonfixed, wild = wild, blocklen = blocklen),
-            class = "np_boot_control")
+            class = "crs_boot_control")
 }
 
-np_grid_control <- function(xtrim = NULL, xq = NULL, slices = NULL) {
+crs_grid_control <- function(xtrim = NULL, xq = NULL, slices = NULL) {
   if (!is.null(xtrim) &&
       (!is.numeric(xtrim) || length(xtrim) != 2L ||
        any(is.na(xtrim)) || any(xtrim < 0) || any(xtrim > 1) ||
@@ -40,12 +40,12 @@ np_grid_control <- function(xtrim = NULL, xq = NULL, slices = NULL) {
     stop("xtrim must be a numeric length-two vector with 0 <= xtrim[1] < xtrim[2] <= 1",
          call. = FALSE)
   structure(list(xtrim = xtrim, xq = xq, slices = slices),
-            class = "np_grid_control")
+            class = "crs_grid_control")
 }
 
-np_render_control <- function(style = c("band", "bar"),
-                              bar = c("|", "I"),
-                              bar_num = NULL) {
+crs_render_control <- function(style = c("band", "bar"),
+                               bar = c("|", "I"),
+                               bar_num = NULL) {
   style <- match.arg(style)
   bar <- match.arg(bar)
   if (!is.null(bar_num) &&
@@ -53,25 +53,7 @@ np_render_control <- function(style = c("band", "bar"),
        is.na(bar_num) || bar_num < 1))
     stop("bar_num must be a positive numeric scalar", call. = FALSE)
   structure(list(style = style, bar = bar, bar_num = bar_num),
-            class = "np_render_control")
-}
-
-crs_boot_control <- function(...) {
-  out <- np_boot_control(...)
-  class(out) <- c("crs_boot_control", class(out))
-  out
-}
-
-crs_grid_control <- function(...) {
-  out <- np_grid_control(...)
-  class(out) <- c("crs_grid_control", class(out))
-  out
-}
-
-crs_render_control <- function(...) {
-  out <- np_render_control(...)
-  class(out) <- c("crs_render_control", class(out))
-  out
+            class = "crs_render_control")
 }
 
 .crs_boot_control <- crs_boot_control
@@ -1080,9 +1062,8 @@ crs_render_control <- function(...) {
                                          renderer)
   }
   if (has("boot_control")) {
-    if (!inherits(dots$boot_control, "np_boot_control") &&
-        !inherits(dots$boot_control, "crs_boot_control"))
-      stop("boot_control must be created by np_boot_control()",
+    if (!inherits(dots$boot_control, "crs_boot_control"))
+      stop("boot_control must be created by crs_boot_control()",
            call. = FALSE)
     ctrl <- dots$boot_control
     dots$boot_control <- NULL
@@ -1097,9 +1078,8 @@ crs_render_control <- function(...) {
                                            ctrl$blocklen)
   }
   if (has("grid_control")) {
-    if (!inherits(dots$grid_control, "np_grid_control") &&
-        !inherits(dots$grid_control, "crs_grid_control"))
-      stop("grid_control must be created by np_grid_control()",
+    if (!inherits(dots$grid_control, "crs_grid_control"))
+      stop("grid_control must be created by crs_grid_control()",
            call. = FALSE)
     ctrl <- dots$grid_control
     dots$grid_control <- NULL
@@ -1114,9 +1094,8 @@ crs_render_control <- function(...) {
            call. = FALSE)
   }
   if (has("render_control")) {
-    if (!inherits(dots$render_control, "np_render_control") &&
-        !inherits(dots$render_control, "crs_render_control"))
-      stop("render_control must be created by np_render_control()",
+    if (!inherits(dots$render_control, "crs_render_control"))
+      stop("render_control must be created by crs_render_control()",
            call. = FALSE)
     ctrl <- dots$render_control
     dots$render_control <- NULL

@@ -1,8 +1,5 @@
 \name{plot.crs}
 \alias{plot.crs}
-\alias{np_boot_control}
-\alias{np_grid_control}
-\alias{np_render_control}
 \alias{crs_boot_control}
 \alias{crs_grid_control}
 \alias{crs_render_control}
@@ -16,21 +13,15 @@
 \usage{
 \method{plot}{crs}(x, \dots)
 
-np_boot_control(nonfixed = c("exact", "frozen"),
-                wild = c("rademacher", "mammen"),
-                blocklen = NULL)
+crs_boot_control(nonfixed = c("exact", "frozen"),
+                 wild = c("rademacher", "mammen"),
+                 blocklen = NULL)
 
-np_grid_control(xtrim = NULL, xq = NULL, slices = NULL)
+crs_grid_control(xtrim = NULL, xq = NULL, slices = NULL)
 
-np_render_control(style = c("band", "bar"),
-                  bar = c("|", "I"),
-                  bar_num = NULL)
-
-crs_boot_control(...)
-
-crs_grid_control(...)
-
-crs_render_control(...)
+crs_render_control(style = c("band", "bar"),
+                   bar = c("|", "I"),
+                   bar_num = NULL)
 }
 \arguments{
 \subsection{Plot Object}{
@@ -45,9 +36,9 @@ This argument identifies the fitted CRS object to plot.
 
 \subsection{Control Helper Constructors}{
 These arguments configure optional S3 control objects consumed by CRS plot
-methods. The \code{np_*_control()} names intentionally mirror the
-corresponding \pkg{np} plot interface; the \code{crs_*_control()} names are
-package-local aliases returning compatible objects.
+methods. The \code{crs_*_control()} helpers use the same argument conventions
+as the corresponding modern \pkg{np} plot controls where the CRS plot route
+supports the same feature.
 }
 
   \item{nonfixed}{
@@ -90,7 +81,7 @@ Named options passed via \code{\dots} include:
     \describe{
       \item{\code{grid_control}}{
         optional detailed grid controls created by
-        \code{\link{np_grid_control}}.
+        \code{\link{crs_grid_control}}.
       }
       \item{\code{neval}}{
         the number of evaluation points used for each plotted continuous
@@ -153,7 +144,7 @@ Named options passed via \code{\dots} include:
       }
       \item{\code{boot_control}}{
         optional detailed bootstrap controls created by
-        \code{\link{np_boot_control}}. This controls non-fixed
+        \code{\link{crs_boot_control}}. This controls non-fixed
         bootstrap behavior, wild-bootstrap multipliers, and dependent
         bootstrap block length.
       }
@@ -218,7 +209,7 @@ Named options passed via \code{\dots} include:
       }
       \item{\code{render_control}}{
         optional detailed rendering controls created by
-        \code{\link{np_render_control}}, including band-versus-bar
+        \code{\link{crs_render_control}}, including band-versus-bar
         uncertainty display controls for curve routes.
       }
       \item{\code{renderer}}{
@@ -265,9 +256,7 @@ plot route.
     for \code{plot.crs}, additional arguments supplied to control plotting
     behavior or passed through to underlying plotting helpers where supported.
     Supported named plotting controls are summarized above; standard graphical
-    parameters are forwarded where relevant. For the \code{crs_*_control()}
-    helper constructors, arguments are forwarded to the corresponding
-    \code{np_*_control()} helper.
+    parameters are forwarded where relevant.
   }
 }
 \details{
@@ -292,7 +281,7 @@ plot route.
   \code{bootstrap="wild"} and \code{B=1999}. The refit bootstrap remains
   available with \code{bootstrap="inid"}. Mean plots also support the
   \pkg{np}-style block refit bootstraps \code{bootstrap="fixed"} and
-  \code{bootstrap="geom"}; use \code{np_boot_control(blocklen=...)} to
+  \code{bootstrap="geom"}; use \code{crs_boot_control(blocklen=...)} to
   set the block length explicitly, otherwise the \pkg{np} automatic
   block-length selector is used.
 
@@ -344,7 +333,7 @@ plot(model, data_rug = TRUE)
 plot(model, errors = "bootstrap", band = "all")
 plot(model, errors = "bootstrap", bootstrap = "inid", B = 99)
 plot(model, errors = "bootstrap", bootstrap = "fixed", B = 99,
-     boot_control = np_boot_control(blocklen = 5))
+     boot_control = crs_boot_control(blocklen = 5))
 
 z <- runif(n)
 y2 <- sin(2*pi*x) + z + rnorm(n, sd = 0.25)
