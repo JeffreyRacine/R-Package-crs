@@ -322,16 +322,16 @@
 }
 
 .crs_plot_default_gradient_bootstrap_method <- function(object) {
-  "inid"
+  if (is.null(object$tau)) "wild" else "inid"
 }
 
-.crs_plot_derivative_bootstrap_method_check <- function(method) {
-  if(identical(method, "wild")) {
-    stop("bootstrap=\"wild\" is not yet implemented for CRS gradient plots; use bootstrap=\"inid\", \"fixed\", or \"geom\"",
+.crs_plot_derivative_bootstrap_method_check <- function(method, object) {
+  if(identical(method, "wild") && !is.null(object$tau)) {
+    stop("bootstrap=\"wild\" currently supports mean CRS gradient plots only",
          call. = FALSE)
   }
-  if(!(method %in% c("inid", "fixed", "geom"))) {
-    stop("plot.crs gradient bootstrap intervals currently support bootstrap=\"inid\", bootstrap=\"fixed\", or bootstrap=\"geom\"",
+  if(!(method %in% c("wild", "inid", "fixed", "geom"))) {
+    stop("plot.crs gradient bootstrap intervals currently support bootstrap=\"wild\", bootstrap=\"inid\", bootstrap=\"fixed\", or bootstrap=\"geom\"",
          call. = FALSE)
   }
   invisible(TRUE)
@@ -483,7 +483,7 @@
                                                   plot.errors.alpha,
                                                   display.nomad.progress,
                                                   display.warnings) {
-  .crs_plot_derivative_bootstrap_method_check(plot.errors.boot.method)
+  .crs_plot_derivative_bootstrap_method_check(plot.errors.boot.method, object)
 
   basis <- object$basis
   prune <- object$prune
@@ -586,30 +586,53 @@
     )
 
     boot <- if(!is.factor(object$xz[, i])) {
-      .crs_plot_derivative_bootstrap_numeric(
-        object = object,
-        newdata = newdata,
-        deriv = deriv,
-        deriv.index = m,
-        boot.num = plot.errors.boot.num,
-        counts.drawer = counts.drawer,
-        bootstrap.method = plot.errors.boot.method,
-        display.warnings = display.warnings,
-        display.nomad.progress = display.nomad.progress,
-        progress.target = target.label
-      )
+      if(identical(plot.errors.boot.method, "wild")) {
+        .crs.bootstrap.matrix.wild(
+          object = object,
+          newdata = newdata,
+          deriv = deriv,
+          deriv.index = m,
+          boot.num = plot.errors.boot.num,
+          display.nomad.progress = display.nomad.progress,
+          progress.target = target.label
+        )
+      } else {
+        .crs_plot_derivative_bootstrap_numeric(
+          object = object,
+          newdata = newdata,
+          deriv = deriv,
+          deriv.index = m,
+          boot.num = plot.errors.boot.num,
+          counts.drawer = counts.drawer,
+          bootstrap.method = plot.errors.boot.method,
+          display.warnings = display.warnings,
+          display.nomad.progress = display.nomad.progress,
+          progress.target = target.label
+        )
+      }
     } else {
-      .crs_plot_derivative_bootstrap_factor(
-        object = object,
-        newdata = newdata,
-        newdata.base = newdata.base,
-        boot.num = plot.errors.boot.num,
-        counts.drawer = counts.drawer,
-        bootstrap.method = plot.errors.boot.method,
-        display.warnings = display.warnings,
-        display.nomad.progress = display.nomad.progress,
-        progress.target = target.label
-      )
+      if(identical(plot.errors.boot.method, "wild")) {
+        .crs.bootstrap.matrix.wild(
+          object = object,
+          newdata = newdata,
+          newdata.base = newdata.base,
+          boot.num = plot.errors.boot.num,
+          display.nomad.progress = display.nomad.progress,
+          progress.target = target.label
+        )
+      } else {
+        .crs_plot_derivative_bootstrap_factor(
+          object = object,
+          newdata = newdata,
+          newdata.base = newdata.base,
+          boot.num = plot.errors.boot.num,
+          counts.drawer = counts.drawer,
+          bootstrap.method = plot.errors.boot.method,
+          display.warnings = display.warnings,
+          display.nomad.progress = display.nomad.progress,
+          progress.target = target.label
+        )
+      }
     }
 
     interval.label <- .crs_plot_bootstrap_stage_label(
@@ -1231,7 +1254,7 @@
 
   if (deriv > 0) {
     if (isTRUE(ci) && identical(plot.errors.method, "bootstrap")) {
-      .crs_plot_derivative_bootstrap_method_check(plot.errors.boot.method)
+      .crs_plot_derivative_bootstrap_method_check(plot.errors.boot.method, object)
       slices <- .crs_plot_derivative_bootstrap_slices(
         object = object,
         deriv = deriv,
@@ -1547,7 +1570,7 @@
 
   if (isTRUE(ci) && isTRUE(gradients) &&
       identical(plot.errors.method, "bootstrap"))
-    .crs_plot_derivative_bootstrap_method_check(plot.errors.boot.method)
+    .crs_plot_derivative_bootstrap_method_check(plot.errors.boot.method, object)
 
   if (isTRUE(surface.request)) {
     bridge$renderer <- renderer

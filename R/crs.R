@@ -1874,6 +1874,9 @@ summary.crs <- function(object,
 
 .crs.bootstrap.matrix.wild <- function(object,
                                        newdata,
+                                       newdata.base = NULL,
+                                       deriv = 0L,
+                                       deriv.index = 1L,
                                        boot.num = 99,
                                        wild = c("rademacher", "mammen"),
                                        display.nomad.progress = TRUE,
@@ -1885,6 +1888,9 @@ summary.crs <- function(object,
   wild <- .crs_plot_normalize_wild(wild)
   boot.num <- as.integer(boot.num)
   if(boot.num < 1L) stop("B must be a positive integer", call. = FALSE)
+  deriv <- as.integer(deriv)
+  deriv.index <- as.integer(deriv.index)
+  is.effect <- !is.null(newdata.base)
 
   prep.activity <- NULL
   if(isTRUE(display.nomad.progress)) {
@@ -1901,7 +1907,13 @@ summary.crs <- function(object,
   fit.mean <- as.vector(crshat(object, output = "apply"))
   ntrain <- NROW(object$xz)
   neval <- NROW(newdata)
-  center <- as.vector(crshat(object, newdata = newdata, output = "apply"))
+  center <- as.vector(crshat(object, newdata = newdata, output = "apply",
+                             deriv = deriv, deriv.index = deriv.index))
+  if(is.effect) {
+    center.base <- as.vector(crshat(object, newdata = newdata.base,
+                                    output = "apply"))
+    center <- center - center.base
+  }
 
   if(!is.null(prep.activity)) {
     .crs_plot_activity_end(prep.activity)
@@ -1915,7 +1927,11 @@ summary.crs <- function(object,
   )
 
   if(.crs_plot_wild_dense_hat_enabled(ntrain = ntrain, neval = neval)) {
-    H <- crshat(object, newdata = newdata, output = "matrix")
+    H <- crshat(object, newdata = newdata, output = "matrix",
+                deriv = deriv, deriv.index = deriv.index)
+    if(is.effect) {
+      H <- H - crshat(object, newdata = newdata.base, output = "matrix")
+    }
     boot <- .crs_wild_boot_from_hat(
       H = H,
       y = object$y,
@@ -1951,7 +1967,14 @@ summary.crs <- function(object,
     stopi <- min(neval, start + block.rows - 1L)
     H <- crshat(object,
                 newdata = newdata[start:stopi, , drop = FALSE],
-                output = "matrix")
+                output = "matrix",
+                deriv = deriv,
+                deriv.index = deriv.index)
+    if(is.effect) {
+      H <- H - crshat(object,
+                      newdata = newdata.base[start:stopi, , drop = FALSE],
+                      output = "matrix")
+    }
     boot.mat[, start:stopi] <- t(H %*% ystar)
     done <- min(boot.num, as.integer(ceiling(boot.num * stopi / neval)))
     progress <- .crs_plot_progress_tick(progress, done = done,

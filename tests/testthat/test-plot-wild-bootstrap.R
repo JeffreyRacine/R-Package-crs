@@ -44,6 +44,90 @@ test_that("CRS wild bootstrap helper matches explicit hat-operator oracle", {
   expect_equal(helper$boot.mat, oracle, tolerance = 1e-10)
 })
 
+test_that("CRS wild bootstrap helper matches derivative and effect hat oracles", {
+  set.seed(6203)
+  n <- 30
+  d <- data.frame(
+    x = runif(n),
+    z = runif(n),
+    f = factor(sample(c("a", "b"), n, replace = TRUE))
+  )
+  d$y <- sin(2 * pi * d$x) + 0.5 * d$z + 0.3 * (d$f == "b") +
+    rnorm(n, sd = 0.04)
+  model <- crs(
+    y ~ x + z + f,
+    data = d,
+    cv = "none",
+    kernel = FALSE,
+    basis = "additive",
+    degree = c(3, 2),
+    segments = c(1, 1),
+    display.warnings = FALSE,
+    display.nomad.progress = FALSE
+  )
+  nd <- data.frame(
+    x = seq(0.15, 0.85, length.out = 7),
+    z = mean(d$z),
+    f = factor(levels(d$f)[1L], levels = levels(d$f))
+  )
+  H.deriv <- crshat(model, newdata = nd, output = "matrix",
+                   deriv = 1, deriv.index = 1)
+  fit.mean <- as.vector(crshat(model, output = "apply"))
+
+  set.seed(6204)
+  helper.deriv <- getFromNamespace(".crs.bootstrap.matrix.wild", "crs")(
+    object = model,
+    newdata = nd,
+    deriv = 1,
+    deriv.index = 1,
+    boot.num = 6L,
+    wild = "rademacher",
+    display.nomad.progress = FALSE
+  )
+  set.seed(6204)
+  draws <- getFromNamespace(".crs_rademacher_draws", "crs")(
+    n = length(model$y),
+    B = 6L
+  )
+  ystar <- (model$y - fit.mean) * draws
+  ystar <- ystar + fit.mean
+  oracle.deriv <- t(H.deriv %*% ystar)
+
+  expect_equal(helper.deriv$center, as.vector(H.deriv %*% model$y),
+               tolerance = 1e-10)
+  expect_equal(helper.deriv$boot.mat, oracle.deriv, tolerance = 1e-10)
+
+  nd.focal <- nd
+  nd.base <- nd
+  nd.focal$f <- factor(levels(d$f)[2L], levels = levels(d$f))
+  nd.base$f <- factor(levels(d$f)[1L], levels = levels(d$f))
+  H.effect <- crshat(model, newdata = nd.focal, output = "matrix") -
+    crshat(model, newdata = nd.base, output = "matrix")
+
+  set.seed(6207)
+  helper.effect <- getFromNamespace(".crs.bootstrap.matrix.wild", "crs")(
+    object = model,
+    newdata = nd.focal,
+    newdata.base = nd.base,
+    boot.num = 6L,
+    wild = "rademacher",
+    display.nomad.progress = FALSE
+  )
+  set.seed(6207)
+  draws.effect <- getFromNamespace(".crs_rademacher_draws", "crs")(
+    n = length(model$y),
+    B = 6L
+  )
+  ystar.effect <- (model$y - fit.mean) * draws.effect
+  ystar.effect <- ystar.effect + fit.mean
+  oracle.effect <- t(H.effect %*% ystar.effect)
+
+  expect_equal(helper.effect$center, as.vector(H.effect %*% model$y),
+               tolerance = 1e-10)
+  expect_equal(helper.effect$boot.mat, oracle.effect, tolerance = 1e-10,
+               ignore_attr = TRUE)
+})
+
 test_that("CRS wild bootstrap block route reuses draws across evaluation blocks", {
   set.seed(6205)
   d <- data.frame(x = runif(26))

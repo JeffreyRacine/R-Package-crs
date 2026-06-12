@@ -25,8 +25,11 @@ crshat(object, ...)
     operator is applied directly without returning a dense hat matrix.}
   \item{output}{One of \code{"matrix"}, \code{"apply"}, or
     \code{"constraint"}.}
-  \item{deriv, deriv.index}{Derivative controls reserved for future use.
-    Currently only \code{deriv=0} is supported.}
+  \item{deriv}{Non-negative integer derivative order. \code{deriv=0}
+    returns the fitted-mean hat operator. Positive values return the
+    derivative hat operator for continuous predictor \code{deriv.index}.}
+  \item{deriv.index}{Positive integer identifying the continuous predictor
+    whose derivative operator is requested.}
   \item{rcond.min}{Minimum reciprocal condition number used by the weighted
     least-squares primitive before falling back to QR/SVD policy.}
   \item{use.svd.fallback}{Logical value controlling the weighted
@@ -50,8 +53,17 @@ including basis family, degree, segments, pruning state, categorical-kernel
 bandwidths, weights, and the package's weighted least-squares rank policy. It
 does not run bandwidth or degree selection.
 
-Quantile CRS objects and derivative operators are intentionally unsupported at
-present and fail with explicit errors.
+For \code{deriv > 0}, \code{crshat()} returns the derivative operator
+\eqn{H^{(s)}} such that \eqn{H^{(s)} y} matches the corresponding CRS
+gradient prediction at \code{newdata}. This is the CRS analogue of
+\code{npreghat}'s derivative-selector behavior in \pkg{np}. Derivative operators
+are available for fixed-structure mean CRS fits across additive, tensor, and
+GLP bases, including categorical-kernel fits. If the requested derivative
+order exceeds the fitted spline degree for that predictor, the returned
+operator is zero.
+
+Quantile CRS objects remain intentionally unsupported because quantile
+estimation is not linear in the response.
 }
 \value{
 For \code{output="matrix"}, a matrix of dimension
@@ -73,4 +85,6 @@ nd <- data.frame(x = seq(0.1, 0.9, length.out = 5))
 H <- crshat(fit, newdata = nd)
 drop(H \%*\% fit$y)
 crshat(fit, newdata = nd, output = "apply")
+Hd <- crshat(fit, newdata = nd, deriv = 1, deriv.index = 1)
+drop(Hd \%*\% fit$y)
 }

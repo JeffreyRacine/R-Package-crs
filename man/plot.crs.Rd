@@ -98,11 +98,10 @@ Named options passed via \code{\dots} include:
         \code{"wild"}, \code{"inid"}, \code{"fixed"}, and
         \code{"geom"}. Quantile CRS plots default to \code{"inid"} and
         support \code{"inid"}, \code{"fixed"}, and \code{"geom"};
-        \code{"wild"} is mean-only. Gradient/effect plots support the
-        refit bootstrap schemes \code{"inid"}, \code{"fixed"}, and
-        \code{"geom"}; explicit \code{bootstrap="wild"} fails fast for
-        gradient/effect plots because the wild derivative operator is not
-        yet implemented.
+        \code{"wild"} is mean-only. Mean CRS gradient/effect plots also
+        support \code{"wild"}, \code{"inid"}, \code{"fixed"}, and
+        \code{"geom"}; quantile CRS gradient plots support the refit
+        schemes only.
       }
       \item{\code{center}}{
         interval centering control. CRS currently supports
@@ -245,15 +244,16 @@ plot route.
   \code{bootstrap="geom"} are also available for quantile fitted-curve
   plots, while \code{bootstrap="wild"} remains mean-only.
 
-  For gradient/effect plots requested with \code{gradients=TRUE},
-  \code{errors="bootstrap"} uses a refit bootstrap by default so that
-  the ordinary user call produces derivative/effect intervals without
-  silently remapping an explicitly selected bootstrap method. Numeric
-  continuous panels report derivative intervals. Categorical panels
-  report focal-minus-baseline effect intervals. Explicit
-  \code{bootstrap="wild"} remains unsupported for gradient/effect plots
-  until the wild-bootstrap derivative operator is implemented and
-  validated.
+  For mean CRS gradient/effect plots requested with
+  \code{gradients=TRUE}, \code{errors="bootstrap"} also defaults to the
+  fixed-design wild bootstrap. Numeric continuous panels report derivative
+  intervals computed with the corresponding \code{crshat()} derivative
+  operator. Categorical panels report focal-minus-baseline effect intervals.
+  Refit gradient/effect bootstrap intervals remain available with
+  \code{bootstrap="inid"}, \code{bootstrap="fixed"}, and
+  \code{bootstrap="geom"}. For quantile CRS gradient plots,
+  \code{bootstrap="wild"} is not available because quantile estimation is not
+  linear in the response.
 
   Unsupported legacy CRS plot arguments such as \code{ci},
   \code{deriv}, and \code{mean} now fail fast. New public plot controls

@@ -72,6 +72,64 @@ crshat <- function(object, ...) {
        X.eval = .crs_weighted_ls_design(P.eval, basis))
 }
 
+.crs_hat_additive_deriv_indices <- function(K, deriv.index) {
+  K.additive <- K
+  K.additive[, 2L] <- K[, 2L]
+  K.additive[K[, 1L] == 0, 2L] <- 0
+  K.additive[, 1L] <- K[, 1L]
+  K.additive[K[, 1L] > 0, 1L] <- K[K[, 1L] > 0, 1L] - 1L
+  deriv.start <- if(deriv.index != 1L) {
+    sum(K.additive[.crs_index_block(0L, deriv.index - 1L), ]) + 1L
+  } else {
+    1L
+  }
+  deriv.end <- deriv.start + sum(K.additive[deriv.index, ]) - 1L
+  deriv.start:deriv.end
+}
+
+.crs_hat_build_deriv_design <- function(P.train,
+                                        P.deriv,
+                                        basis,
+                                        K,
+                                        deriv.index,
+                                        prune.index = NULL) {
+  X <- .crs_weighted_ls_design(P.train, basis)
+  X.eval <- matrix(0, nrow = NROW(P.deriv), ncol = NCOL(X))
+
+  if(identical(basis, "additive")) {
+    deriv.ind.vec <- .crs_hat_additive_deriv_indices(K, deriv.index)
+    if(!is.null(prune.index)) {
+      keep <- prune.index
+      P.train <- P.train[, keep, drop = FALSE]
+      P.deriv <- P.deriv[, keep, drop = FALSE]
+      deriv.ind.vec <- match(deriv.ind.vec, keep)
+      deriv.ind.vec <- deriv.ind.vec[!is.na(deriv.ind.vec)]
+      X <- .crs_weighted_ls_design(P.train, basis)
+      X.eval <- matrix(0, nrow = NROW(P.deriv), ncol = NCOL(X))
+    }
+    if(length(deriv.ind.vec) > 0L) {
+      X.eval[, 1L + deriv.ind.vec] <- P.deriv[, deriv.ind.vec, drop = FALSE]
+    }
+  } else if(identical(basis, "glp")) {
+    if(!is.null(prune.index)) {
+      P.train <- P.train[, prune.index, drop = FALSE]
+      P.deriv <- P.deriv[, prune.index, drop = FALSE]
+      X <- .crs_weighted_ls_design(P.train, basis)
+      X.eval <- matrix(0, nrow = NROW(P.deriv), ncol = NCOL(X))
+    }
+    X.eval[, -1L] <- P.deriv
+  } else {
+    if(!is.null(prune.index)) {
+      P.train <- P.train[, prune.index, drop = FALSE]
+      P.deriv <- P.deriv[, prune.index, drop = FALSE]
+      X <- .crs_weighted_ls_design(P.train, basis)
+    }
+    X.eval <- P.deriv
+  }
+
+  list(X = X, X.eval = X.eval)
+}
+
 .crs_hat_apply_design <- function(X,
                                   X.eval,
                                   Y,
@@ -172,6 +230,8 @@ crshat <- function(object, ...) {
                                eval.data,
                                y,
                                output,
+                               deriv,
+                               deriv.index,
                                rcond.min,
                                use.svd.fallback) {
   train.split <- .crs_hat_split(object, object$xz)
@@ -185,21 +245,57 @@ crshat <- function(object, ...) {
   weights <- object$weights
   prune.index <- if(isTRUE(object$prune)) object$prune.index else NULL
 
+  deriv <- as.integer(deriv)
+  deriv.index <- as.integer(deriv.index)
+
   if(any(K[, 1L] > 0) || any(object$include > 0)) {
     P.train <- prod.spline(x = x, z = z, K = K, I = object$include,
                            knots = object$knots, basis = basis,
                            display.warnings = FALSE)
-    P.eval <- prod.spline(x = x, z = z, K = K, I = object$include,
-                          xeval = xeval, zeval = zeval,
-                          knots = object$knots, basis = basis,
-                          display.warnings = FALSE)
-    design <- .crs_hat_build_design(P.train, P.eval, basis, prune.index)
+    design <- if(deriv > 0L) {
+      if(deriv.index < 1L || deriv.index > NROW(K)) {
+        stop("deriv.index is invalid", call. = FALSE)
+      }
+      if(K[deriv.index, 1L] == 0L || deriv > K[deriv.index, 1L]) {
+        X <- .crs_weighted_ls_design(
+          if(is.null(prune.index)) P.train else P.train[, prune.index, drop = FALSE],
+          basis
+        )
+        list(X = X, X.eval = matrix(0, nrow = NROW(xeval), ncol = NCOL(X)))
+      } else {
+        P.deriv <- prod.spline(x = x, z = z, K = K, I = object$include,
+                               xeval = xeval, zeval = zeval,
+                               knots = object$knots, basis = basis,
+                               deriv.index = deriv.index, deriv = deriv,
+                               display.warnings = FALSE)
+        .crs_hat_build_deriv_design(P.train, P.deriv, basis, K,
+                                    deriv.index, prune.index)
+      }
+    } else {
+      P.eval <- prod.spline(x = x, z = z, K = K, I = object$include,
+                            xeval = xeval, zeval = zeval,
+                            knots = object$knots, basis = basis,
+                            display.warnings = FALSE)
+      .crs_hat_build_design(P.train, P.eval, basis, prune.index)
+    }
     if(identical(output, "apply")) {
       return(.crs_hat_apply_design(design$X, design$X.eval, y, weights,
                                    rcond.min, use.svd.fallback))
     }
     return(.crs_hat_matrix_design(design$X, design$X.eval, weights,
                                   rcond.min, use.svd.fallback))
+  }
+
+  if(deriv > 0L) {
+    if(identical(output, "apply")) {
+      return(list(value = matrix(0, nrow = NROW(xeval),
+                                 ncol = NCOL(as.matrix(y))),
+                  method = "constant_derivative",
+                  rcond = NA_real_, rank = 1L))
+    }
+    return(list(H = matrix(0, nrow = NROW(xeval), ncol = NROW(x)),
+                method = "constant_derivative",
+                rcond = NA_real_, rank = 1L))
   }
 
   if(identical(output, "apply")) {
@@ -214,6 +310,8 @@ crshat <- function(object, ...) {
                             eval.data,
                             y,
                             output,
+                            deriv,
+                            deriv.index,
                             rcond.min,
                             use.svd.fallback) {
   train.split <- .crs_hat_split(object, object$xz)
@@ -229,21 +327,51 @@ crshat <- function(object, ...) {
   weights <- object$weights
   ntrain <- NROW(x)
   neval <- NROW(xeval)
+  deriv <- as.integer(deriv)
+  deriv.index <- as.integer(deriv.index)
 
   if(is.null(z)) {
     if(any(K[, 1L] > 0)) {
       P.train <- prod.spline(x = x, K = K, knots = object$knots,
                              basis = basis, display.warnings = FALSE)
-      P.eval <- prod.spline(x = x, K = K, xeval = xeval,
-                            knots = object$knots, basis = basis,
-                            display.warnings = FALSE)
-      design <- .crs_hat_build_design(P.train, P.eval, basis)
+      design <- if(deriv > 0L) {
+        if(deriv.index < 1L || deriv.index > NROW(K)) {
+          stop("deriv.index is invalid", call. = FALSE)
+        }
+        if(K[deriv.index, 1L] == 0L || deriv > K[deriv.index, 1L]) {
+          X <- .crs_weighted_ls_design(P.train, basis)
+          list(X = X, X.eval = matrix(0, nrow = NROW(xeval), ncol = NCOL(X)))
+        } else {
+          P.deriv <- prod.spline(x = x, K = K, xeval = xeval,
+                                 knots = object$knots, basis = basis,
+                                 deriv.index = deriv.index, deriv = deriv,
+                                 display.warnings = FALSE)
+          .crs_hat_build_deriv_design(P.train, P.deriv, basis, K,
+                                      deriv.index)
+        }
+      } else {
+        P.eval <- prod.spline(x = x, K = K, xeval = xeval,
+                              knots = object$knots, basis = basis,
+                              display.warnings = FALSE)
+        .crs_hat_build_design(P.train, P.eval, basis)
+      }
       if(identical(output, "apply")) {
         return(.crs_hat_apply_design(design$X, design$X.eval, y, weights,
                                      rcond.min, use.svd.fallback))
       }
       return(.crs_hat_matrix_design(design$X, design$X.eval, weights,
                                     rcond.min, use.svd.fallback))
+    }
+    if(deriv > 0L) {
+      if(identical(output, "apply")) {
+        return(list(value = matrix(0, nrow = neval,
+                                   ncol = NCOL(as.matrix(y))),
+                    method = "constant_derivative",
+                    rcond = NA_real_, rank = 1L))
+      }
+      return(list(H = matrix(0, nrow = neval, ncol = ntrain),
+                  method = "constant_derivative",
+                  rcond = NA_real_, rank = 1L))
     }
     if(identical(output, "apply")) {
       return(.crs_hat_constant_apply(ntrain = ntrain, neval = neval,
@@ -256,12 +384,26 @@ crshat <- function(object, ...) {
   if(any(K[, 1L] > 0)) {
     P.train <- prod.spline(x = x, K = K, knots = object$knots,
                            basis = basis, display.warnings = FALSE)
-    P.eval <- prod.spline(x = x, K = K, xeval = xeval,
-                          knots = object$knots, basis = basis,
-                          display.warnings = FALSE)
+    P.eval <- if(deriv > 0L) {
+      if(deriv.index < 1L || deriv.index > NROW(K)) {
+        stop("deriv.index is invalid", call. = FALSE)
+      }
+      if(K[deriv.index, 1L] == 0L || deriv > K[deriv.index, 1L]) {
+        NULL
+      } else {
+        prod.spline(x = x, K = K, xeval = xeval,
+                    knots = object$knots, basis = basis,
+                    deriv.index = deriv.index, deriv = deriv,
+                    display.warnings = FALSE)
+      }
+    } else {
+      prod.spline(x = x, K = K, xeval = xeval,
+                  knots = object$knots, basis = basis,
+                  display.warnings = FALSE)
+    }
   } else {
     P.train <- matrix(1, nrow = ntrain, ncol = 1L)
-    P.eval <- matrix(1, nrow = neval, ncol = 1L)
+    P.eval <- if(deriv > 0L) NULL else matrix(1, nrow = neval, ncol = 1L)
     basis <- "tensor"
   }
 
@@ -282,8 +424,17 @@ crshat <- function(object, ...) {
                               lambda = object$lambda,
                               is.ordered.z = object$is.ordered.z)
       if(!is.null(weights)) L <- weights * L
-      design <- .crs_hat_build_design(P.train, P.eval[zz, , drop = FALSE],
-                                      basis)
+      design <- if(deriv > 0L) {
+        if(is.null(P.eval)) {
+          X <- .crs_weighted_ls_design(P.train, basis)
+          list(X = X, X.eval = matrix(0, nrow = sum(zz), ncol = NCOL(X)))
+        } else {
+          .crs_hat_build_deriv_design(P.train, P.eval[zz, , drop = FALSE],
+                                      basis, K, deriv.index)
+        }
+      } else {
+        .crs_hat_build_design(P.train, P.eval[zz, , drop = FALSE], basis)
+      }
       tmp <- .crs_hat_apply_design(design$X, design$X.eval, Y, L,
                                    rcond.min, use.svd.fallback)
       if(is.null(tmp)) return(NULL)
@@ -309,8 +460,17 @@ crshat <- function(object, ...) {
                             lambda = object$lambda,
                             is.ordered.z = object$is.ordered.z)
     if(!is.null(weights)) L <- weights * L
-    design <- .crs_hat_build_design(P.train, P.eval[zz, , drop = FALSE],
-                                    basis)
+    design <- if(deriv > 0L) {
+      if(is.null(P.eval)) {
+        X <- .crs_weighted_ls_design(P.train, basis)
+        list(X = X, X.eval = matrix(0, nrow = sum(zz), ncol = NCOL(X)))
+      } else {
+        .crs_hat_build_deriv_design(P.train, P.eval[zz, , drop = FALSE],
+                                    basis, K, deriv.index)
+      }
+    } else {
+      .crs_hat_build_design(P.train, P.eval[zz, , drop = FALSE], basis)
+    }
     tmp <- .crs_hat_matrix_design(design$X, design$X.eval, L,
                                   rcond.min, use.svd.fallback)
     if(is.null(tmp)) return(NULL)
@@ -342,9 +502,13 @@ crshat.crs <- function(object,
     stop("crshat currently supports mean CRS objects only (tau must be NULL)",
          call. = FALSE)
   }
-  if(!identical(as.integer(deriv), 0L)) {
-    stop("crshat derivative operators are not implemented yet",
-         call. = FALSE)
+  deriv <- as.integer(deriv)
+  deriv.index <- as.integer(deriv.index)
+  if(length(deriv) != 1L || is.na(deriv) || deriv < 0L) {
+    stop("deriv must be a non-negative integer", call. = FALSE)
+  }
+  if(length(deriv.index) != 1L || is.na(deriv.index) || deriv.index < 1L) {
+    stop("deriv.index must be a positive integer", call. = FALSE)
   }
   if(is.null(object$xz) || is.null(object$y)) {
     stop("crshat requires a CRS object carrying training data",
@@ -359,10 +523,10 @@ crshat.crs <- function(object,
   }
   eval.data <- .crs_hat_prepare_newdata(object, newdata)
   fit <- if(isTRUE(object$kernel)) {
-    .crs_hat_kernel(object, eval.data, y, output, rcond.min,
+    .crs_hat_kernel(object, eval.data, y, output, deriv, deriv.index, rcond.min,
                     use.svd.fallback)
   } else {
-    .crs_hat_nonkernel(object, eval.data, y, output, rcond.min,
+    .crs_hat_nonkernel(object, eval.data, y, output, deriv, deriv.index, rcond.min,
                        use.svd.fallback)
   }
   if(is.null(fit)) {
