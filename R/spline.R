@@ -1465,6 +1465,7 @@ preditFactorSpline <- function(x,
                                weights=NULL,
                                display.warnings=TRUE,
                                display.nomad.progress=TRUE,
+                               fast.predict.only=FALSE,
                                ...){
 
   if(missing(x) || missing(y) || missing (K)) stop(" must provide x, y and K")
@@ -1499,6 +1500,34 @@ preditFactorSpline <- function(x,
     ## Degree > 0
 
     P <- prod.spline(x=x,z=z,K=K,I=I,knots=knots,basis=basis,display.warnings=display.warnings)
+
+    if(isTRUE(fast.predict.only) &&
+       is.null(z) &&
+       is.null(tau) &&
+       !isTRUE(prune) &&
+       !is.null(xeval)) {
+      P.eval <- prod.spline(x=x,z=z,K=K,I=I,xeval=xeval,zeval=zeval,
+                            knots=knots,basis=basis,
+                            display.warnings=display.warnings)
+      tmp.fast <- .crs_weighted_ls_predict_lm(P.train=P,
+                                              y=y,
+                                              P.eval=P.eval,
+                                              basis=basis,
+                                              weights=weights)
+      if(!is.null(tmp.fast)) {
+        set_status()
+        return(list(fitted.values=tmp.fast$fitted.values,
+                    df.residual=tmp.fast$df.residual,
+                    rank=tmp.fast$rank,
+                    model=NULL,
+                    hatvalues=NULL,
+                    cv=NULL,
+                    cv.pruned=NULL,
+                    prune=prune,
+                    prune.index=!logical(length=NCOL(P)),
+                    tau=tau))
+      }
+    }
 
     if(prune && is.null(prune.index)) {
 

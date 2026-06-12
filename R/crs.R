@@ -970,7 +970,8 @@ predict.crs <- function(object,
                                 prune=prune,
                                 prune.index=prune.index,
                                 tau=tau,
-                                weights=weights)$fitted.values
+                                weights=weights,
+                                fast.predict.only=TRUE)$fitted.values
 
       fitted.values <- tmp[,1]
       lwr <- tmp[,2]
