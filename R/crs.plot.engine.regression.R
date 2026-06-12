@@ -71,12 +71,13 @@
                                            common.scale = TRUE,
                                            data_overlay = TRUE,
                                            data_rug = FALSE,
+                                           par.mfrow = TRUE,
                                            ...) {
   dots <- list(...)
   ylim <- .crs_plot_slice_ylim(slices, ci = ci, common.scale = common.scale)
   if (isTRUE(data_overlay) && identical(as.integer(deriv), 0L))
     ylim <- .crs_plot_overlay_range(ylim, object$y)
-  if (!is.null(object$num.z) || object$num.x > 1L)
+  if (isTRUE(par.mfrow) && (!is.null(object$num.z) || object$num.x > 1L))
     graphics::par(mfrow = grDevices::n2mfrow(length(slices)))
 
   for (nm in names(slices)) {
@@ -405,7 +406,7 @@
 .crs_plot_derivative_bootstrap_numeric <- function(object,
                                                    newdata,
                                                    deriv,
-                                                   deriv.index,
+                                                   predict.deriv.col,
                                                    boot.num,
                                                    counts.drawer = NULL,
                                                    bootstrap.method = "inid",
@@ -416,7 +417,7 @@
   object.deriv <- object
   object.deriv$deriv <- deriv
   pred0 <- predict(object.deriv, newdata = newdata)
-  center <- attr(pred0, "deriv.mat")[, deriv.index]
+  center <- attr(pred0, "deriv.mat")[, predict.deriv.col]
   boot.mat <- matrix(NA_real_, nrow = boot.num, ncol = nrow(newdata))
 
   progress <- NULL
@@ -464,7 +465,7 @@
     if (!is.null(object$terms)) fit.b$terms <- object$terms
     if (!is.null(object$xlevels)) fit.b$xlevels <- object$xlevels
     pred.b <- predict(fit.b, newdata = newdata)
-    boot.mat[b,] <- attr(pred.b, "deriv.mat")[, deriv.index]
+    boot.mat[b,] <- attr(pred.b, "deriv.mat")[, predict.deriv.col]
     progress <- .crs_plot_progress_tick(progress, done = b, force = (b == 1L))
   }
 
@@ -601,7 +602,7 @@
           object = object,
           newdata = newdata,
           deriv = deriv,
-          deriv.index = m,
+          predict.deriv.col = i,
           boot.num = plot.errors.boot.num,
           counts.drawer = counts.drawer,
           bootstrap.method = plot.errors.boot.method,
@@ -1339,7 +1340,10 @@
                    ci = ci,
                    common.scale = common.scale,
                    data_overlay = data_overlay,
-                   data_rug = data_rug),
+                   data_rug = data_rug,
+                   par.mfrow = isTRUE(.crs_plot_scalar_default(
+                     dots$plot.par.mfrow, TRUE
+                   ))),
               render.dots))
   }
 

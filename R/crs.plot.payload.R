@@ -98,9 +98,7 @@
   if (!is.numeric(num.eval) || length(num.eval) != 1L || is.na(num.eval) ||
       num.eval < 2L)
     stop("num.eval must be a scalar integer >= 2")
-  if (!is.numeric(xtrim) || length(xtrim) != 1L || is.na(xtrim) ||
-      xtrim < 0 || xtrim >= 0.5)
-    stop("xtrim must be in [0, 0.5)")
+  xtrim <- .crs_plot_validate_xtrim(xtrim)
 
   num.eval <- as.integer(num.eval)
 
@@ -224,9 +222,7 @@
                                    c("none", "bootstrap", "asymptotic"),
                                    "errors")
   ci <- isTRUE(ci) || !identical(errors, "none")
-  if (!is.numeric(xtrim) || length(xtrim) != 1L || is.na(xtrim) ||
-      xtrim < 0 || xtrim >= 0.5)
-    stop("xtrim must be in [0, 0.5)")
+  xtrim <- .crs_plot_validate_xtrim(xtrim)
 
   z <- object$xz[, 1L]
   xlim <- if (xtrim == 0) {
@@ -254,6 +250,9 @@
     upr <- if (isTRUE(ci) && !is.null(object$phi.upr))
       object$phi.upr[keep][ord] else NULL
   }
+  if (isTRUE(ci) && (is.null(lwr) || is.null(upr)))
+    stop("plot.crsiv asymptotic intervals are unavailable for this object",
+         call. = FALSE)
 
   frame <- data.frame(z = z.plot, fit = fit)
   if (!is.null(lwr) && !is.null(upr)) {

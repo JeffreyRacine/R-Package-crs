@@ -1135,14 +1135,19 @@ plot.clsd <- function(x,
                       type,
                       ...) {
 
-  .crs_plot_clsd_public(
-    object = x,
-    plot.call = match.call(expand.dots = FALSE),
-    er = er,
-    distribution = distribution,
-    derivative = derivative,
-    ...
-  )
+  dots <- list(...)
+  if (!missing(ylim)) dots$ylim <- ylim
+  if (!missing(ylab)) dots$ylab <- ylab
+  if (!missing(xlab)) dots$xlab <- xlab
+  if (!missing(type)) dots$type <- type
+
+  do.call(.crs_plot_clsd_public,
+          c(list(object = x,
+                 plot.call = as.list(match.call(expand.dots = FALSE)),
+                 er = er,
+                 distribution = distribution,
+                 derivative = derivative),
+            dots))
 }
 
 coef.clsd <- function(object, ...) {

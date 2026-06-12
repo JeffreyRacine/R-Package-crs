@@ -19,46 +19,41 @@
   value
 }
 
-crs_boot_control <- function(nonfixed = c("exact", "frozen"),
-                             wild = c("rademacher", "mammen"),
-                             blocklen = NULL) {
-  nonfixed <- match.arg(nonfixed)
+crs_boot_control <- function(wild = c("rademacher", "mammen"),
+                             blocklen = NULL,
+                             ...) {
+  extra <- list(...)
+  if (length(extra)) {
+    bad <- names(extra)
+    if (is.null(bad) || !nzchar(bad[1L])) bad <- "..."
+    stop(sprintf("crs_boot_control does not support %s; CRS plot bootstraps currently use fixed smoothing parameters",
+                 bad[1L]),
+         call. = FALSE)
+  }
   wild <- match.arg(wild)
   if (!is.null(blocklen) &&
       (!is.numeric(blocklen) || length(blocklen) != 1L ||
        is.na(blocklen) || blocklen <= 0))
     stop("blocklen must be a positive numeric scalar", call. = FALSE)
-  structure(list(nonfixed = nonfixed, wild = wild, blocklen = blocklen),
+  structure(list(wild = wild, blocklen = blocklen),
             class = "crs_boot_control")
 }
 
 crs_grid_control <- function(xtrim = NULL, xq = NULL, slices = NULL) {
-  if (!is.null(xtrim) &&
-      (!is.numeric(xtrim) || length(xtrim) != 2L ||
-       any(is.na(xtrim)) || any(xtrim < 0) || any(xtrim > 1) ||
-       xtrim[1L] >= xtrim[2L]))
-    stop("xtrim must be a numeric length-two vector with 0 <= xtrim[1] < xtrim[2] <= 1",
-         call. = FALSE)
+  if (!is.null(xtrim)) xtrim <- .crs_plot_validate_xtrim(xtrim)
   structure(list(xtrim = xtrim, xq = xq, slices = slices),
             class = "crs_grid_control")
 }
 
-crs_render_control <- function(style = c("band", "bar"),
-                               bar = c("|", "I"),
-                               bar_num = NULL) {
-  style <- match.arg(style)
-  bar <- match.arg(bar)
-  if (!is.null(bar_num) &&
-      (!is.numeric(bar_num) || length(bar_num) != 1L ||
-       is.na(bar_num) || bar_num < 1))
-    stop("bar_num must be a positive numeric scalar", call. = FALSE)
-  structure(list(style = style, bar = bar, bar_num = bar_num),
-            class = "crs_render_control")
-}
-
 .crs_boot_control <- crs_boot_control
 .crs_grid_control <- crs_grid_control
-.crs_render_control <- crs_render_control
+
+.crs_plot_validate_xtrim <- function(xtrim) {
+  if (!is.numeric(xtrim) || length(xtrim) != 1L || is.na(xtrim) ||
+      xtrim >= 0.5)
+    stop("xtrim must be a numeric scalar less than 0.5", call. = FALSE)
+  xtrim
+}
 
 .crs_plot_dot_names <- function(dots_call) {
   if (is.null(dots_call) || length(dots_call) == 0L)
@@ -126,6 +121,18 @@ crs_render_control <- function(style = c("band", "bar"),
   } else {
     grDevices::adjustcolor(spec$col, alpha.f = alpha)
   }
+}
+
+.crs_plot_par_arg_names <- function() {
+  c("adj", "ann", "ask", "bg", "bty", "cex", "cex.axis", "cex.lab",
+    "cex.main", "cex.sub", "col", "col.axis", "col.lab", "col.main",
+    "col.sub", "crt", "err", "family", "fg", "fig", "fin", "font",
+    "font.axis", "font.lab", "font.main", "font.sub", "lab", "las", "lend",
+    "lheight", "ljoin", "lmitre", "lty", "lwd", "mai", "mar", "mex",
+    "mfcol", "mfg", "mfrow", "mgp", "mkh", "new", "oma", "omd", "omi",
+    "page", "pch", "pin", "plt", "ps", "pty", "smo", "srt", "tck", "tcl",
+    "usr", "xaxp", "xaxs", "xaxt", "xlog", "xpd", "yaxp", "yaxs", "yaxt",
+    "ylbias", "ylog")
 }
 
 .crs_plot_pch <- function(role) {
@@ -242,7 +249,7 @@ crs_render_control <- function(style = c("band", "bar"),
   direct.names <- switch(type,
     plot = unique(c(
       setdiff(names(formals(graphics::plot.default)), c("x", "y", "...")),
-      names(graphics::par(no.readonly = TRUE)),
+      .crs_plot_par_arg_names(),
       "type", "lty", "lwd", "col", "pch", "cex", "main", "sub",
       "xlab", "ylab", "xlim", "ylim"
     )),
@@ -729,7 +736,7 @@ crs_render_control <- function(style = c("band", "bar"),
 .crs_plot_graphics_arg_names <- function() {
   unique(c(
     setdiff(names(formals(graphics::plot.default)), c("x", "y", "...")),
-    names(graphics::par(no.readonly = TRUE)),
+    .crs_plot_par_arg_names(),
     "panel.first", "panel.last", "zlab", "zlim", "theta", "phi", "border",
     "view", "type", "lty", "lwd", "col", "pch", "cex", "main", "sub",
     "xlab", "ylab", "xlim", "ylim"
@@ -741,7 +748,7 @@ crs_render_control <- function(style = c("band", "bar"),
     "output", "data_overlay", "data_rug", "layout", "legend",
     "factor_boxplot", "boxplot_outliers",
     "gradient", "gradients", "gradient.order", "gradient_order",
-    "common_scale",
+    "common_scale", "xtrim", "xq",
     "renderer", "neval", "perspective", "view", "behavior",
     "boot_control", "grid_control", "render_control")
 }
@@ -753,7 +760,7 @@ crs_render_control <- function(style = c("band", "bar"),
     "plot.errors.boot.blocklen", "plot.errors.center",
     "plot.errors.style", "plot.errors.bar", "plot.errors.bar.num",
     "plot.behavior", "plot.data.overlay", "plot.rug", "plot.par.mfrow",
-    "plot.bxp", "plot.bxp.out", "num.eval", "persp", "xtrim", "xq",
+    "plot.bxp", "plot.bxp.out", "num.eval", "persp",
     "common.scale", "display.nomad.progress", "display.warnings")
 }
 
@@ -996,6 +1003,18 @@ crs_render_control <- function(style = c("band", "bar"),
     dots <- .crs_plot_set_normalized_arg(dots, "data_rug",
                                          "plot.rug", data_rug)
   }
+  if (has("xtrim")) {
+    xtrim <- .crs_plot_validate_xtrim(dots$xtrim)
+    dots$xtrim <- NULL
+    dots <- .crs_plot_set_normalized_arg(dots, "xtrim", "xtrim", xtrim)
+  }
+  if (has("xq")) {
+    xq <- dots$xq
+    if (!is.numeric(xq) || any(is.na(xq)) || any(xq < 0) || any(xq > 1))
+      stop("xq must be numeric values in [0, 1]", call. = FALSE)
+    dots$xq <- NULL
+    dots <- .crs_plot_set_normalized_arg(dots, "xq", "xq", xq)
+  }
   if (has("layout")) {
     layout <- .crs_plot_match_layout(dots$layout)
     dots$layout <- NULL
@@ -1003,18 +1022,10 @@ crs_render_control <- function(style = c("band", "bar"),
                                          "plot.par.mfrow", layout)
   }
   if (has("factor_boxplot")) {
-    factor_boxplot <- .crs_plot_match_flag(dots$factor_boxplot,
-                                           "factor_boxplot")
-    dots$factor_boxplot <- NULL
-    dots <- .crs_plot_set_normalized_arg(dots, "factor_boxplot",
-                                         "plot.bxp", factor_boxplot)
+    stop("factor_boxplot is not implemented for CRS plots", call. = FALSE)
   }
   if (has("boxplot_outliers")) {
-    boxplot_outliers <- .crs_plot_match_flag(dots$boxplot_outliers,
-                                             "boxplot_outliers")
-    dots$boxplot_outliers <- NULL
-    dots <- .crs_plot_set_normalized_arg(dots, "boxplot_outliers",
-                                         "plot.bxp.out", boxplot_outliers)
+    stop("boxplot_outliers is not implemented for CRS plots", call. = FALSE)
   }
   if (has("neval")) {
     neval <- dots$neval
@@ -1067,9 +1078,6 @@ crs_render_control <- function(style = c("band", "bar"),
            call. = FALSE)
     ctrl <- dots$boot_control
     dots$boot_control <- NULL
-    dots <- .crs_plot_set_normalized_arg(dots, "boot_control$nonfixed",
-                                         "plot.errors.boot.nonfixed",
-                                         ctrl$nonfixed)
     dots <- .crs_plot_set_normalized_arg(dots, "boot_control$wild",
                                          "plot.errors.boot.wild", ctrl$wild)
     if (!is.null(ctrl$blocklen))
@@ -1094,19 +1102,8 @@ crs_render_control <- function(style = c("band", "bar"),
            call. = FALSE)
   }
   if (has("render_control")) {
-    if (!inherits(dots$render_control, "crs_render_control"))
-      stop("render_control must be created by crs_render_control()",
-           call. = FALSE)
-    ctrl <- dots$render_control
-    dots$render_control <- NULL
-    dots <- .crs_plot_set_normalized_arg(dots, "render_control$style",
-                                         "plot.errors.style", ctrl$style)
-    dots <- .crs_plot_set_normalized_arg(dots, "render_control$bar",
-                                         "plot.errors.bar", ctrl$bar)
-    if (!is.null(ctrl$bar_num))
-      dots <- .crs_plot_set_normalized_arg(dots, "render_control$bar_num",
-                                           "plot.errors.bar.num",
-                                           ctrl$bar_num)
+    stop("render_control is not implemented for CRS plots; use ordinary plot, lines, points, persp, or rgl.* arguments",
+         call. = FALSE)
   }
 
   method <- if (!is.null(dots$plot.errors.method)) {

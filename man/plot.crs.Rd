@@ -2,7 +2,6 @@
 \alias{plot.crs}
 \alias{crs_boot_control}
 \alias{crs_grid_control}
-\alias{crs_render_control}
 \title{Plot Categorical Regression Spline Fits}
 \description{
   Plot fitted conditional mean, conditional quantile, gradient, and
@@ -13,15 +12,11 @@
 \usage{
 \method{plot}{crs}(x, \dots)
 
-crs_boot_control(nonfixed = c("exact", "frozen"),
-                 wild = c("rademacher", "mammen"),
-                 blocklen = NULL)
+crs_boot_control(wild = c("rademacher", "mammen"),
+                 blocklen = NULL,
+                 \dots)
 
 crs_grid_control(xtrim = NULL, xq = NULL, slices = NULL)
-
-crs_render_control(style = c("band", "bar"),
-                   bar = c("|", "I"),
-                   bar_num = NULL)
 }
 \arguments{
 \subsection{Plot Object}{
@@ -41,9 +36,6 @@ as the corresponding modern \pkg{np} plot controls where the CRS plot route
 supports the same feature.
 }
 
-  \item{nonfixed}{
-    handling for non-fixed regressors in bootstrap plots.
-  }
   \item{wild}{
     wild-bootstrap multiplier family.
   }
@@ -53,8 +45,8 @@ supports the same feature.
     CRS uses the same automatic block-length selector as \pkg{np}.
   }
   \item{xtrim}{
-    optional trimming information stored on a grid control object. For
-    ordinary CRS regression plots, use the top-level scalar
+    optional scalar trimming/expansion control stored on a grid control
+    object. This uses the same scalar CRS contract as the top-level
     \code{xtrim} argument documented below.
   }
   \item{xq}{
@@ -62,15 +54,6 @@ supports the same feature.
   }
   \item{slices}{
     reserved for future explicit slice selection.
-  }
-  \item{style}{
-    interval rendering style.
-  }
-  \item{bar}{
-    error-bar glyph style.
-  }
-  \item{bar_num}{
-    optional number of error bars to draw.
   }
 
 \subsection{Plot Options Passed Through \code{\dots}}{
@@ -144,9 +127,9 @@ Named options passed via \code{\dots} include:
       }
       \item{\code{boot_control}}{
         optional detailed bootstrap controls created by
-        \code{\link{crs_boot_control}}. This controls non-fixed
-        bootstrap behavior, wild-bootstrap multipliers, and dependent
-        bootstrap block length.
+        \code{\link{crs_boot_control}}. This controls wild-bootstrap
+        multipliers and dependent-bootstrap block length. CRS plot
+        refit bootstraps currently keep fitted tuning parameters fixed.
       }
       \item{\code{bootstrap}}{
         the bootstrap resampling scheme. Mean CRS plots support
@@ -207,11 +190,6 @@ Named options passed via \code{\dots} include:
         defaults \code{theta=0}, \code{phi=20} to a more informative
         oblique view.
       }
-      \item{\code{render_control}}{
-        optional detailed rendering controls created by
-        \code{\link{crs_render_control}}, including band-versus-bar
-        uncertainty display controls for curve routes.
-      }
       \item{\code{renderer}}{
         the surface-rendering backend for eligible bivariate continuous
         plots. \code{"base"} uses \code{\link{persp}}-style graphics.
@@ -256,7 +234,8 @@ plot route.
     for \code{plot.crs}, additional arguments supplied to control plotting
     behavior or passed through to underlying plotting helpers where supported.
     Supported named plotting controls are summarized above; standard graphical
-    parameters are forwarded where relevant.
+    parameters are forwarded where relevant. For \code{crs_boot_control()},
+    unsupported helper options fail fast rather than being silently ignored.
   }
 }
 \details{

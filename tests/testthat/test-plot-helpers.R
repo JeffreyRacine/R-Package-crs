@@ -1,30 +1,25 @@
 test_that("CRS plot controls validate their inputs", {
   boot <- getFromNamespace("crs_boot_control", "crs")(
-    nonfixed = "frozen",
     wild = "mammen",
     blocklen = 3
   )
   grid <- getFromNamespace("crs_grid_control", "crs")(
-    xtrim = c(0.1, 0.9),
+    xtrim = 0.1,
     xq = 0.25
-  )
-  render <- getFromNamespace("crs_render_control", "crs")(
-    style = "bar",
-    bar = "I",
-    bar_num = 10
   )
   crs.boot <- getFromNamespace(".crs_boot_control", "crs")()
 
   expect_s3_class(boot, "crs_boot_control")
   expect_s3_class(grid, "crs_grid_control")
-  expect_s3_class(render, "crs_render_control")
   expect_s3_class(crs.boot, "crs_boot_control")
+  expect_error(getFromNamespace("crs_boot_control", "crs")(nonfixed = "frozen"),
+               "does not support nonfixed")
   expect_error(getFromNamespace("crs_boot_control", "crs")(blocklen = 0),
                "positive numeric scalar")
-  expect_error(getFromNamespace("crs_grid_control", "crs")(xtrim = c(0.9, 0.1)),
-               "xtrim")
-  expect_error(getFromNamespace("crs_render_control", "crs")(bar_num = 0),
-               "positive numeric scalar")
+  expect_error(getFromNamespace("crs_grid_control", "crs")(xtrim = c(0.1, 0.9)),
+               "numeric scalar")
+  expect_error(getFromNamespace("crs_grid_control", "crs")(xtrim = 0.5),
+               "less than 0.5")
 })
 
 test_that("CRS plot public dot validation accepts canonical and prefixed args", {
@@ -41,11 +36,8 @@ test_that("CRS plot public dot validation accepts canonical and prefixed args", 
 test_that("CRS plot public dot normalization maps np-style aliases", {
   normalize <- getFromNamespace(".crs_plot_normalize_public_dots", "crs")
   boot <- getFromNamespace("crs_boot_control", "crs")(blocklen = 4)
-  grid <- getFromNamespace("crs_grid_control", "crs")(xtrim = c(0.05, 0.95),
-                                                        xq = 0.4)
-  render <- getFromNamespace("crs_render_control", "crs")(style = "bar",
-                                                            bar = "I",
-                                                            bar_num = 8)
+  grid <- getFromNamespace("crs_grid_control", "crs")(xtrim = 0.05,
+                                                      xq = 0.4)
 
   dots <- normalize(list(errors = "bootstrap",
                          band = "pointwise",
@@ -59,8 +51,7 @@ test_that("CRS plot public dot normalization maps np-style aliases", {
                          neval = 12,
                          renderer = "base",
                          boot_control = boot,
-                         grid_control = grid,
-                         render_control = render),
+                         grid_control = grid),
                     context = "plot.crs")
 
   expect_identical(dots$plot.errors.method, "bootstrap")
@@ -74,14 +65,19 @@ test_that("CRS plot public dot normalization maps np-style aliases", {
   expect_true(dots$gradients)
   expect_identical(dots$num.eval, 12L)
   expect_identical(dots$renderer, "base")
-  expect_identical(dots$plot.errors.boot.nonfixed, "exact")
   expect_identical(dots$plot.errors.boot.wild, "rademacher")
   expect_equal(dots$plot.errors.boot.blocklen, 4)
-  expect_equal(dots$xtrim, c(0.05, 0.95))
+  expect_equal(dots$xtrim, 0.05)
   expect_equal(dots$xq, 0.4)
-  expect_identical(dots$plot.errors.style, "bar")
-  expect_identical(dots$plot.errors.bar, "I")
-  expect_equal(dots$plot.errors.bar.num, 8)
+  expect_error(normalize(list(render_control = list()),
+                         context = "plot.crs"),
+               "render_control is not implemented")
+  expect_error(normalize(list(factor_boxplot = TRUE),
+                         context = "plot.crs"),
+               "factor_boxplot is not implemented")
+  expect_error(normalize(list(boxplot_outliers = TRUE),
+                         context = "plot.crs"),
+               "boxplot_outliers is not implemented")
 })
 
 test_that("CRS plot normalization rejects ambiguous or inconsistent controls", {

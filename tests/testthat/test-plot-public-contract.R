@@ -43,8 +43,8 @@ test_that("plot.crs accepts canonical NP-style plot controls", {
     data_rug = FALSE,
     layout = "current",
     common_scale = TRUE,
-    grid_control = crs_grid_control(xq = 0.5),
-    render_control = crs_render_control(style = "band")
+    xtrim = 0.05,
+    grid_control = crs_grid_control(xq = 0.5)
   )
   expect_type(out, "list")
   expect_named(out[[1L]], c("x", "mean"))
@@ -159,6 +159,78 @@ test_that("plot.crs consumes NP-style data_rug and uses overlay data range", {
                c(min(-1, min(model$y)), max(model$y)))
 })
 
+test_that("plot.crs refit gradient bootstrap uses overall derivative columns", {
+  set.seed(107)
+  d <- data.frame(
+    f = factor(rep(c("a", "b"), each = 18)),
+    x = runif(36)
+  )
+  d$y <- 1 + 0.5 * (d$f == "b") + sin(2 * pi * d$x) + rnorm(36, sd = 0.04)
+  fit <- crs(
+    y ~ f + x,
+    data = d,
+    cv = "none",
+    degree = 2,
+    segments = 1,
+    display.warnings = FALSE,
+    display.nomad.progress = FALSE
+  )
+
+  out <- suppressWarnings(plot(
+    fit,
+    output = "data",
+    gradients = TRUE,
+    gradient_order = 1,
+    errors = "bootstrap",
+    bootstrap = "inid",
+    B = 2L,
+    neval = 5L
+  ))
+  x.slice <- out[["x"]]
+  expect_named(x.slice, c("x", "deriv", "lwr", "upr"))
+
+  nd <- data.frame(
+    f = factor(rep(getFromNamespace("uocquantile", "crs")(fit$xz$f, prob = 0.5),
+                   nrow(x.slice)),
+               levels = levels(fit$xz$f)),
+    x = x.slice$x
+  )
+  fit.deriv <- fit
+  fit.deriv$deriv <- 1L
+  pred <- predict(fit.deriv, newdata = nd)
+  x.col <- match("x", names(fit$xz))
+  f.col <- match("f", names(fit$xz))
+
+  expect_equal(x.slice$deriv, attr(pred, "deriv.mat")[, x.col],
+               tolerance = 1e-10)
+  expect_false(isTRUE(all.equal(x.slice$deriv,
+                                attr(pred, "deriv.mat")[, f.col],
+                                tolerance = 1e-7)))
+})
+
+test_that("plot.crs output=data has no graphics device side effect", {
+  set.seed(108)
+  d <- data.frame(x = runif(28))
+  d$y <- sin(2 * pi * d$x) + rnorm(28, sd = 0.05)
+  fit <- crs(
+    y ~ x,
+    data = d,
+    cv = "none",
+    degree = 2,
+    segments = 1,
+    display.warnings = FALSE,
+    display.nomad.progress = FALSE
+  )
+
+  oldwd <- getwd()
+  tmp <- tempfile("crs-plot-data-")
+  dir.create(tmp)
+  on.exit(setwd(oldwd), add = TRUE)
+  setwd(tmp)
+  expect_type(plot(fit, output = "data", neval = 5), "list")
+  expect_false(file.exists(file.path(tmp, "Rplots.pdf")))
+})
+
 test_that("plot.crs surface zlim follows NP-style data overlay range", {
   set.seed(106)
   d <- data.frame(x1 = runif(36), x2 = runif(36))
@@ -246,6 +318,8 @@ test_that("curve plot routes keep their documented NP-compatible controls", {
 
   expect_error(plot(fit.iv, output = "data", errors = "bootstrap"),
                "does not support bootstrap errors")
+  expect_error(plot(fit.iv, output = "data", errors = "asymptotic"),
+               "asymptotic intervals are unavailable")
   expect_error(plot(fit.iv, output = "data", data_rug = TRUE),
                "plot.crsiv does not support plot argument data_rug")
   expect_error(plot(fit.iv, output = "data", renderer = "rgl"),
@@ -260,4 +334,9 @@ test_that("curve plot routes keep their documented NP-compatible controls", {
                "plot.clsd does not support plot argument data_overlay")
   expect_error(plot(fit.clsd, output = "data", legend = TRUE),
                "plot.clsd does not support plot argument legend")
+  expect_warning(
+    crs_plot_pdf(plot(fit.clsd, ylab = "Density", xlab = "Support",
+                      ylim = c(0, 1), type = "l")),
+    NA
+  )
 })

@@ -1710,7 +1710,9 @@ summary.crs <- function(object,
     )
     on.exit(.crs_plot_activity_end(prep.activity), add = TRUE)
   }
-  pred0 <- predict(object, newdata = newdata, deriv = deriv)
+  object.pred <- object
+  if (deriv > 0) object.pred$deriv <- deriv
+  pred0 <- predict(object.pred, newdata = newdata, deriv = deriv)
   center <- if (deriv > 0) attr(pred0, "deriv.mat")[,deriv.index] else as.numeric(pred0)
   boot.mat <- matrix(NA_real_, nrow = boot.num, ncol = nrow(newdata))
   progress <- NULL
@@ -1760,6 +1762,7 @@ summary.crs <- function(object,
     )
     fit.b$xz <- object$xz[idx,,drop=FALSE]
     fit.b$y <- object$y[idx]
+    if (deriv > 0) fit.b$deriv <- deriv
     if (!is.null(object$terms)) fit.b$terms <- object$terms
     if (!is.null(object$xlevels)) fit.b$xlevels <- object$xlevels
     pred.b <- predict(fit.b, newdata = newdata, deriv = deriv)
