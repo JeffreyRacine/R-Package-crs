@@ -1502,7 +1502,6 @@ preditFactorSpline <- function(x,
     P <- prod.spline(x=x,z=z,K=K,I=I,knots=knots,basis=basis,display.warnings=display.warnings)
 
     if(isTRUE(fast.predict.only) &&
-       is.null(z) &&
        is.null(tau) &&
        !isTRUE(prune) &&
        !is.null(xeval)) {
