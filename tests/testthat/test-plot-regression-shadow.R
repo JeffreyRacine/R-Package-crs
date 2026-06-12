@@ -294,15 +294,29 @@ test_that("public fit route supports mean bootstrap and derivative data", {
   expect_named(grad[[1]], c("x", "deriv"))
   expect_equal(nrow(grad[[1]]), 6)
 
+  grad_boot <- suppressWarnings(plot(
+    model,
+    output = "data",
+    gradients = TRUE,
+    errors = "bootstrap",
+    bootstrap = "inid",
+    B = 3,
+    neval = 6
+  ))
+  expect_named(grad_boot[[1]], c("x", "deriv", "lwr", "upr"))
+  expect_equal(nrow(grad_boot[[1]]), 6)
+
   expect_error(
     plot(
       model,
       output = "data",
       gradients = TRUE,
       errors = "bootstrap",
+      bootstrap = "wild",
       B = 3
     ),
-    "bootstrap intervals for derivative plots"
+    'bootstrap="wild" is not yet implemented',
+    fixed = TRUE
   )
   expect_error(
     plot(
@@ -312,6 +326,52 @@ test_that("public fit route supports mean bootstrap and derivative data", {
     ),
     "two continuous predictors"
   )
+})
+
+test_that("public derivative bootstrap supports aliases and factor effects", {
+  set.seed(2601)
+  n <- 32
+  d <- data.frame(
+    x = runif(n),
+    z = runif(n),
+    f = factor(sample(c("a", "b"), n, replace = TRUE))
+  )
+  d$y <- sin(2 * pi * d$x) + 0.4 * d$z + ifelse(d$f == "b", 0.25, 0) +
+    rnorm(n, sd = 0.05)
+
+  model <- crs(
+    y ~ x + z + f,
+    data = d,
+    cv = "none",
+    basis = "additive",
+    degree = c(3, 2),
+    segments = c(1, 1),
+    kernel = FALSE,
+    display.warnings = FALSE,
+    display.nomad.progress = FALSE
+  )
+
+  grad <- suppressWarnings(plot(
+    model,
+    output = "data",
+    gradients = TRUE,
+    gradient_order = 2,
+    errors = "bootstrap",
+    bootstrap = "fixed",
+    B = 3,
+    neval = 5
+  ))
+
+  expect_true(length(grad) >= 3L)
+  expect_named(grad[[1]], c("x", "deriv", "lwr", "upr"))
+  expect_equal(nrow(grad[[1]]), 5)
+
+  factor.panel <- Filter(
+    function(panel) is.data.frame(panel) && "f" %in% names(panel),
+    grad
+  )
+  expect_length(factor.panel, 1L)
+  expect_named(factor.panel[[1]], c("f", "deriv", "lwr", "upr"))
 })
 
 test_that("public opt-in surface route matches legacy surface data oracle", {

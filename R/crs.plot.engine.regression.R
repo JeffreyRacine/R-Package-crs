@@ -321,6 +321,332 @@
   if (is.null(object$tau)) "wild" else "inid"
 }
 
+.crs_plot_default_gradient_bootstrap_method <- function(object) {
+  "inid"
+}
+
+.crs_plot_derivative_bootstrap_method_check <- function(method) {
+  if(identical(method, "wild")) {
+    stop("bootstrap=\"wild\" is not yet implemented for CRS gradient plots; use bootstrap=\"inid\", \"fixed\", or \"geom\"",
+         call. = FALSE)
+  }
+  if(!(method %in% c("inid", "fixed", "geom"))) {
+    stop("plot.crs gradient bootstrap intervals currently support bootstrap=\"inid\", bootstrap=\"fixed\", or bootstrap=\"geom\"",
+         call. = FALSE)
+  }
+  invisible(TRUE)
+}
+
+.crs_plot_derivative_bootstrap_factor <- function(object,
+                                                  newdata,
+                                                  newdata.base,
+                                                  boot.num,
+                                                  counts.drawer = NULL,
+                                                  bootstrap.method = "inid",
+                                                  display.warnings = TRUE,
+                                                  display.nomad.progress = TRUE,
+                                                  progress.target = NULL) {
+  n <- nrow(object$xz)
+  center <- as.numeric(predict(object, newdata = newdata)) -
+    as.numeric(predict(object, newdata = newdata.base))
+  boot.mat <- matrix(NA_real_, nrow = boot.num, ncol = nrow(newdata))
+
+  progress <- NULL
+  if (isTRUE(display.nomad.progress)) {
+    progress <- .crs_plot_stage_progress_begin(
+      total = boot.num,
+      label = .crs_plot_bootstrap_stage_label(
+        stage = sprintf("Plot bootstrap %s", bootstrap.method),
+        target_label = progress.target
+      )
+    )
+    on.exit(.crs_plot_progress_end(progress), add = TRUE)
+  }
+
+  for (b in seq_len(boot.num)) {
+    idx <- if (is.null(counts.drawer)) {
+      sample.int(n, size = n, replace = TRUE)
+    } else {
+      counts <- counts.drawer(b, b)[, 1L]
+      if (length(counts) != n || any(!is.finite(counts)) ||
+          any(counts < 0) || sum(counts) < 1L)
+        stop("invalid block bootstrap counts", call. = FALSE)
+      rep.int(seq_len(n), as.integer(counts))
+    }
+    fit.b <- crs.default(
+      xz = object$xz[idx,,drop=FALSE],
+      y = object$y[idx],
+      basis = object$basis,
+      complexity = object$complexity,
+      degree = object$degree,
+      include = object$include,
+      kernel = object$kernel,
+      knots = object$knots,
+      lambda = object$lambda,
+      prune = object$prune,
+      segments = object$segments,
+      tau = object$tau,
+      weights = if (is.null(object$weights)) NULL else object$weights[idx],
+      display.warnings = display.warnings,
+      display.nomad.progress = FALSE
+    )
+    fit.b$xz <- object$xz[idx,,drop=FALSE]
+    fit.b$y <- object$y[idx]
+    if (!is.null(object$terms)) fit.b$terms <- object$terms
+    if (!is.null(object$xlevels)) fit.b$xlevels <- object$xlevels
+    boot.mat[b,] <- as.numeric(predict(fit.b, newdata = newdata)) -
+      as.numeric(predict(fit.b, newdata = newdata.base))
+    progress <- .crs_plot_progress_tick(progress, done = b, force = (b == 1L))
+  }
+
+  list(center = center, boot.mat = boot.mat)
+}
+
+.crs_plot_derivative_bootstrap_numeric <- function(object,
+                                                   newdata,
+                                                   deriv,
+                                                   deriv.index,
+                                                   boot.num,
+                                                   counts.drawer = NULL,
+                                                   bootstrap.method = "inid",
+                                                   display.warnings = TRUE,
+                                                   display.nomad.progress = TRUE,
+                                                   progress.target = NULL) {
+  n <- nrow(object$xz)
+  object.deriv <- object
+  object.deriv$deriv <- deriv
+  pred0 <- predict(object.deriv, newdata = newdata)
+  center <- attr(pred0, "deriv.mat")[, deriv.index]
+  boot.mat <- matrix(NA_real_, nrow = boot.num, ncol = nrow(newdata))
+
+  progress <- NULL
+  if (isTRUE(display.nomad.progress)) {
+    progress <- .crs_plot_stage_progress_begin(
+      total = boot.num,
+      label = .crs_plot_bootstrap_stage_label(
+        stage = sprintf("Plot bootstrap %s", bootstrap.method),
+        target_label = progress.target
+      )
+    )
+    on.exit(.crs_plot_progress_end(progress), add = TRUE)
+  }
+
+  for (b in seq_len(boot.num)) {
+    idx <- if (is.null(counts.drawer)) {
+      sample.int(n, size = n, replace = TRUE)
+    } else {
+      counts <- counts.drawer(b, b)[, 1L]
+      if (length(counts) != n || any(!is.finite(counts)) ||
+          any(counts < 0) || sum(counts) < 1L)
+        stop("invalid block bootstrap counts", call. = FALSE)
+      rep.int(seq_len(n), as.integer(counts))
+    }
+    fit.b <- crs.default(
+      xz = object$xz[idx,,drop=FALSE],
+      y = object$y[idx],
+      basis = object$basis,
+      complexity = object$complexity,
+      degree = object$degree,
+      include = object$include,
+      kernel = object$kernel,
+      knots = object$knots,
+      lambda = object$lambda,
+      prune = object$prune,
+      segments = object$segments,
+      tau = object$tau,
+      weights = if (is.null(object$weights)) NULL else object$weights[idx],
+      display.warnings = display.warnings,
+      display.nomad.progress = FALSE
+    )
+    fit.b$xz <- object$xz[idx,,drop=FALSE]
+    fit.b$y <- object$y[idx]
+    fit.b$deriv <- deriv
+    if (!is.null(object$terms)) fit.b$terms <- object$terms
+    if (!is.null(object$xlevels)) fit.b$xlevels <- object$xlevels
+    pred.b <- predict(fit.b, newdata = newdata)
+    boot.mat[b,] <- attr(pred.b, "deriv.mat")[, deriv.index]
+    progress <- .crs_plot_progress_tick(progress, done = b, force = (b == 1L))
+  }
+
+  list(center = center, boot.mat = boot.mat)
+}
+
+.crs_plot_derivative_bootstrap_slices <- function(object,
+                                                  deriv,
+                                                  num.eval,
+                                                  xtrim,
+                                                  xq,
+                                                  plot.errors.boot.num,
+                                                  plot.errors.boot.method = "inid",
+                                                  plot.errors.boot.blocklen = NULL,
+                                                  plot.errors.type,
+                                                  plot.errors.alpha,
+                                                  display.nomad.progress,
+                                                  display.warnings) {
+  .crs_plot_derivative_bootstrap_method_check(plot.errors.boot.method)
+
+  basis <- object$basis
+  prune <- object$prune
+  prune.index <- object$prune.index
+  xz <- object$xz
+  y <- object$y
+
+  if (!object$kernel) {
+    xztmp <- splitFrame(xz)
+  } else {
+    xztmp <- splitFrame(xz, factor.to.numeric = TRUE)
+  }
+  x <- xztmp$x
+  z <- xztmp$z
+  is.ordered.z <- xztmp$is.ordered.z
+
+  knots <- object$knots
+  K <- object$K
+  degree <- object$degree
+  include <- object$include
+  lambda <- object$lambda
+  tau <- object$tau
+  weights <- object$weights
+  xq <- .crs_plot_xq_vector(object, xq)
+
+  counts.drawer <- NULL
+  if(plot.errors.boot.method %in% c("fixed", "geom")) {
+    blocklen <- if (is.null(plot.errors.boot.blocklen)) {
+      .crs_block_bootstrap_default_blocklen(object$xz)
+    } else {
+      as.integer(plot.errors.boot.blocklen)
+    }
+    counts.drawer <- .crs_block_counts_drawer(
+      n = nrow(object$xz),
+      B = plot.errors.boot.num,
+      blocklen = blocklen,
+      sim = plot.errors.boot.method
+    )
+  }
+
+  slices <- vector("list", NCOL(object$xz))
+  names(slices) <- names(object$xz)
+  m <- 0L
+  i.numeric <- 0L
+
+  for (i in seq_len(NCOL(object$xz))) {
+    if (!is.factor(object$xz[, i])) {
+      i.numeric <- i.numeric + 1L
+      newdata <- matrix(NA, nrow = num.eval, ncol = NCOL(object$xz))
+      neval <- num.eval
+      m <- m + 1L
+    } else {
+      newdata <- matrix(NA,
+                        nrow = length(levels(object$xz[, i])),
+                        ncol = NCOL(object$xz))
+      neval <- length(levels(object$xz[, i]))
+    }
+
+    newdata <- data.frame(newdata)
+    newdata.base <- data.frame(newdata)
+
+    if (!is.factor(object$xz[, i])) {
+      xlim <- trim.quantiles(object$xz[, i], xtrim)
+      newdata[, i] <- seq(xlim[1L], xlim[2L], length = neval)
+    } else {
+      newdata[, i] <- factor(levels(object$xz[, i]),
+                             levels = levels(object$xz[, i]),
+                             ordered = is.ordered(object$xz[, i]))
+      newdata.base[, i] <- factor(rep(levels(object$xz[, i])[1L], neval),
+                                  levels = levels(object$xz[, i]),
+                                  ordered = is.ordered(object$xz[, i]))
+    }
+
+    for (j in (seq_len(NCOL(object$xz)))[-i]) {
+      if (!is.factor(object$xz[, j])) {
+        newdata[, j] <- rep(uocquantile(object$xz[, j], prob = xq[j]), neval)
+        newdata.base[, j] <- rep(uocquantile(object$xz[, j], prob = xq[j]),
+                                 neval)
+      } else {
+        newdata[, j] <- factor(rep(uocquantile(object$xz[, j], prob = xq[j]),
+                                   neval),
+                               levels = levels(object$xz[, j]),
+                               ordered = is.ordered(object$xz[, j]))
+        newdata.base[, j] <- factor(rep(uocquantile(object$xz[, j],
+                                                    prob = xq[j]), neval),
+                                    levels = levels(object$xz[, j]),
+                                    ordered = is.ordered(object$xz[, j]))
+      }
+    }
+
+    newdata <- data.frame(newdata)
+    names(newdata) <- names(object$xz)
+    newdata.base <- data.frame(newdata.base)
+    names(newdata.base) <- names(object$xz)
+
+    target.label <- .crs_plot_regression_bootstrap_target_label(
+      object = object,
+      slice.index = i,
+      gradients = TRUE
+    )
+
+    boot <- if(!is.factor(object$xz[, i])) {
+      .crs_plot_derivative_bootstrap_numeric(
+        object = object,
+        newdata = newdata,
+        deriv = deriv,
+        deriv.index = m,
+        boot.num = plot.errors.boot.num,
+        counts.drawer = counts.drawer,
+        bootstrap.method = plot.errors.boot.method,
+        display.warnings = display.warnings,
+        display.nomad.progress = display.nomad.progress,
+        progress.target = target.label
+      )
+    } else {
+      .crs_plot_derivative_bootstrap_factor(
+        object = object,
+        newdata = newdata,
+        newdata.base = newdata.base,
+        boot.num = plot.errors.boot.num,
+        counts.drawer = counts.drawer,
+        bootstrap.method = plot.errors.boot.method,
+        display.warnings = display.warnings,
+        display.nomad.progress = display.nomad.progress,
+        progress.target = target.label
+      )
+    }
+
+    interval.label <- .crs_plot_bootstrap_stage_label(
+      stage = sprintf("Constructing bootstrap %s bands", plot.errors.type),
+      target_label = target.label
+    )
+    interval.summary <- .crs_plot_bootstrap_interval_summary(
+      boot.t = boot$boot.mat,
+      t0 = boot$center,
+      alpha = plot.errors.alpha,
+      band.type = plot.errors.type,
+      progress.label = interval.label,
+      display.nomad.progress = display.nomad.progress
+    )
+
+    if (identical(plot.errors.type, "all")) {
+      all.bounds <- interval.summary$all.bounds
+      slices[[i]] <- data.frame(newdata[, i],
+                                boot$center,
+                                all.bounds$pointwise[, 1L],
+                                all.bounds$pointwise[, 2L],
+                                all.bounds$simultaneous[, 1L],
+                                all.bounds$simultaneous[, 2L],
+                                all.bounds$bonferroni[, 1L],
+                                all.bounds$bonferroni[, 2L])
+      names(slices[[i]]) <- c(names(newdata)[i], "deriv", "lwr", "upr",
+                              "lwr.sim", "upr.sim", "lwr.bonf", "upr.bonf")
+    } else {
+      bounds <- interval.summary$bounds
+      slices[[i]] <- data.frame(newdata[, i], boot$center, bounds)
+      names(slices[[i]]) <- c(names(newdata)[i], "deriv", "lwr", "upr")
+    }
+  }
+
+  slices
+}
+
 .crs_plot_derivative_slices <- function(object,
                                         deriv,
                                         ci,
@@ -889,7 +1215,9 @@
     dots$plot.errors.boot.num, 1999L
   ))
   plot.errors.boot.method <- .crs_plot_scalar_default(
-    dots$plot.errors.boot.method, .crs_plot_default_bootstrap_method(object)
+    dots$plot.errors.boot.method,
+    if(deriv > 0L) .crs_plot_default_gradient_bootstrap_method(object)
+    else .crs_plot_default_bootstrap_method(object)
   )
   plot.errors.boot.wild <- .crs_plot_scalar_default(
     dots$plot.errors.boot.wild, "rademacher"
@@ -902,19 +1230,36 @@
          call. = FALSE)
 
   if (deriv > 0) {
-    if (isTRUE(ci) && identical(plot.errors.method, "bootstrap"))
-      stop("bootstrap intervals for derivative plots are not implemented",
-           call. = FALSE)
-    slices <- .crs_plot_derivative_slices(
-      object = object,
-      deriv = deriv,
-      ci = ci,
-      num.eval = num.eval,
-      xtrim = xtrim,
-      xq = xq,
-      plot.errors.type = plot.errors.type,
-      display.warnings = .crs_plot_scalar_default(dots$display.warnings, TRUE)
-    )
+    if (isTRUE(ci) && identical(plot.errors.method, "bootstrap")) {
+      .crs_plot_derivative_bootstrap_method_check(plot.errors.boot.method)
+      slices <- .crs_plot_derivative_bootstrap_slices(
+        object = object,
+        deriv = deriv,
+        num.eval = num.eval,
+        xtrim = xtrim,
+        xq = xq,
+        plot.errors.boot.num = plot.errors.boot.num,
+        plot.errors.boot.method = plot.errors.boot.method,
+        plot.errors.boot.blocklen = plot.errors.boot.blocklen,
+        plot.errors.type = plot.errors.type,
+        plot.errors.alpha = plot.errors.alpha,
+        display.nomad.progress = .crs_plot_scalar_default(
+          dots$display.nomad.progress, FALSE
+        ),
+        display.warnings = .crs_plot_scalar_default(dots$display.warnings, TRUE)
+      )
+    } else {
+      slices <- .crs_plot_derivative_slices(
+        object = object,
+        deriv = deriv,
+        ci = ci,
+        num.eval = num.eval,
+        xtrim = xtrim,
+        xq = xq,
+        plot.errors.type = plot.errors.type,
+        display.warnings = .crs_plot_scalar_default(dots$display.warnings, TRUE)
+      )
+    }
   } else if (isTRUE(ci) && identical(plot.errors.method, "bootstrap")) {
     slices <- .crs_plot_mean_bootstrap_slices(
       object = object,
@@ -1135,8 +1480,16 @@
   plot.errors.boot.num <- as.integer(.crs_plot_scalar_default(
     dots$plot.errors.boot.num, 1999L
   ))
+  explicit.boot.method <- any(dot.names %in%
+                                c("bootstrap", "plot.errors.boot.method"))
   plot.errors.boot.method <- .crs_plot_scalar_default(
-    dots$plot.errors.boot.method, .crs_plot_default_bootstrap_method(object)
+    dots$plot.errors.boot.method,
+    if(isTRUE(gradients) && identical(plot.errors.method, "bootstrap") &&
+       !isTRUE(explicit.boot.method)) {
+      .crs_plot_default_gradient_bootstrap_method(object)
+    } else {
+      .crs_plot_default_bootstrap_method(object)
+    }
   )
   plot.errors.boot.wild <- .crs_plot_scalar_default(
     dots$plot.errors.boot.wild, "rademacher"
@@ -1194,8 +1547,7 @@
 
   if (isTRUE(ci) && isTRUE(gradients) &&
       identical(plot.errors.method, "bootstrap"))
-    stop("bootstrap intervals for derivative plots are not implemented",
-         call. = FALSE)
+    .crs_plot_derivative_bootstrap_method_check(plot.errors.boot.method)
 
   if (isTRUE(surface.request)) {
     bridge$renderer <- renderer
