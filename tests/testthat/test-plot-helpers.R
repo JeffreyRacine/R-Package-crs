@@ -1,30 +1,29 @@
 test_that("CRS plot controls validate their inputs", {
-  boot <- getFromNamespace("np_boot_control", "crs")(
+  boot <- getFromNamespace("crs_boot_control", "crs")(
     nonfixed = "frozen",
     wild = "mammen",
     blocklen = 3
   )
-  grid <- getFromNamespace("np_grid_control", "crs")(
+  grid <- getFromNamespace("crs_grid_control", "crs")(
     xtrim = c(0.1, 0.9),
     xq = 0.25
   )
-  render <- getFromNamespace("np_render_control", "crs")(
+  render <- getFromNamespace("crs_render_control", "crs")(
     style = "bar",
     bar = "I",
     bar_num = 10
   )
   crs.boot <- getFromNamespace(".crs_boot_control", "crs")()
 
-  expect_s3_class(boot, "np_boot_control")
-  expect_s3_class(grid, "np_grid_control")
-  expect_s3_class(render, "np_render_control")
+  expect_s3_class(boot, "crs_boot_control")
+  expect_s3_class(grid, "crs_grid_control")
+  expect_s3_class(render, "crs_render_control")
   expect_s3_class(crs.boot, "crs_boot_control")
-  expect_s3_class(crs.boot, "np_boot_control")
-  expect_error(getFromNamespace("np_boot_control", "crs")(blocklen = 0),
+  expect_error(getFromNamespace("crs_boot_control", "crs")(blocklen = 0),
                "positive numeric scalar")
-  expect_error(getFromNamespace("np_grid_control", "crs")(xtrim = c(0.9, 0.1)),
+  expect_error(getFromNamespace("crs_grid_control", "crs")(xtrim = c(0.9, 0.1)),
                "xtrim")
-  expect_error(getFromNamespace("np_render_control", "crs")(bar_num = 0),
+  expect_error(getFromNamespace("crs_render_control", "crs")(bar_num = 0),
                "positive numeric scalar")
 })
 
@@ -41,12 +40,12 @@ test_that("CRS plot public dot validation accepts canonical and prefixed args", 
 
 test_that("CRS plot public dot normalization maps np-style aliases", {
   normalize <- getFromNamespace(".crs_plot_normalize_public_dots", "crs")
-  boot <- getFromNamespace("np_boot_control", "crs")(blocklen = 4)
-  grid <- getFromNamespace("np_grid_control", "crs")(xtrim = c(0.05, 0.95),
-                                                       xq = 0.4)
-  render <- getFromNamespace("np_render_control", "crs")(style = "bar",
-                                                           bar = "I",
-                                                           bar_num = 8)
+  boot <- getFromNamespace("crs_boot_control", "crs")(blocklen = 4)
+  grid <- getFromNamespace("crs_grid_control", "crs")(xtrim = c(0.05, 0.95),
+                                                        xq = 0.4)
+  render <- getFromNamespace("crs_render_control", "crs")(style = "bar",
+                                                            bar = "I",
+                                                            bar_num = 8)
 
   dots <- normalize(list(errors = "bootstrap",
                          band = "pointwise",

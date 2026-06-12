@@ -43,8 +43,8 @@ test_that("plot.crs accepts canonical NP-style plot controls", {
     data_rug = FALSE,
     layout = "current",
     common_scale = TRUE,
-    grid_control = np_grid_control(xq = 0.5),
-    render_control = np_render_control(style = "band")
+    grid_control = crs_grid_control(xq = 0.5),
+    render_control = crs_render_control(style = "band")
   )
   expect_type(out, "list")
   expect_named(out[[1L]], c("x", "mean"))
@@ -254,7 +254,7 @@ test_that("curve plot routes keep their documented NP-compatible controls", {
                "plot.crsiv does not support plot argument B")
   expect_error(plot(fit.ivd, output = "data", errors = "bootstrap"),
                "plot.crsivderiv does not support plot argument errors")
-  expect_error(plot(fit.ivd, output = "data", boot_control = np_boot_control()),
+  expect_error(plot(fit.ivd, output = "data", boot_control = crs_boot_control()),
                "plot.crsivderiv does not support plot argument boot_control")
   expect_error(plot(fit.clsd, output = "data", data_overlay = TRUE),
                "plot.clsd does not support plot argument data_overlay")

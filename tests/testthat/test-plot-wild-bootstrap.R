@@ -408,6 +408,33 @@ test_that("plot.crs accepts fixed and geom bootstraps for mean routes", {
   expect_named(surface[[1L]], c("x1", "x2", "fit", "lwr", "upr"))
 })
 
+test_that("plot.crs consumes fixed bootstrap controls before base graphics", {
+  set.seed(6205)
+  d <- data.frame(x = runif(30))
+  d$y <- sin(2 * pi * d$x) + rnorm(30, sd = 0.05)
+  fit <- crs(
+    y ~ x,
+    data = d,
+    cv = "none",
+    degree = 2,
+    segments = 1,
+    display.warnings = FALSE,
+    display.nomad.progress = FALSE
+  )
+
+  expect_warning(
+    crs_plot_pdf(plot(
+      fit,
+      errors = "bootstrap",
+      bootstrap = "fixed",
+      boot_control = crs_boot_control(blocklen = 5),
+      B = 4L,
+      neval = 5L
+    )),
+    NA
+  )
+})
+
 test_that("plot.crs quantile bootstrap defaults to NPQREG-style refit selectors", {
   set.seed(6217)
   d <- data.frame(x = runif(30))
