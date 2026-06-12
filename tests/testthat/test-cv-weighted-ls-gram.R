@@ -343,6 +343,10 @@ test_that("categorical kernel CV Gram path preserves objectives and fallback", {
                 gram_stats$fallback_chol, 0)
     expect_equal(fallback_stats$used, 0)
     expect_gt(fallback_stats$fallback_rcond, 0)
+    expect_equal(gram_stats$fallback_weights_built, 0L)
+    expect_gt(fallback_stats$fallback_weights_built, 0L)
+    expect_equal(gram_stats$cell_cache_builds, 1L)
+    expect_equal(fallback_stats$cell_cache_builds, 1L)
   }
 })
 

@@ -84,10 +84,20 @@ hat.from.lm.fit <- function(obj) {
 .crs_gram_stats_init <- function(use.gram.cv, record.gram.stats) {
   if(use.gram.cv && record.gram.stats) {
     list(used = 0L, fallback_rcond = 0L, fallback_chol = 0L,
-         min_rcond = Inf)
+         min_rcond = Inf, fallback_weights_built = 0L,
+         cell_cache_builds = 0L, cell_cache_systems_batched = 0L,
+         cell_cache_systems_batched_cells = 0L,
+         cell_cache_systems_direct = 0L,
+         rank_cell_cache = 0L, rank_direct = 0L)
   } else {
     NULL
   }
+}
+
+.crs_gram_stats_increment <- function(stats, name, by = 1L) {
+  if(is.null(stats)) return(stats)
+  stats[[name]] <- stats[[name]] + by
+  stats
 }
 
 .crs_gram_stats_update <- function(stats, fit) {
@@ -101,6 +111,9 @@ hat.from.lm.fit <- function(obj) {
     stats$fallback_chol <- stats$fallback_chol + 1L
   } else {
     stats$fallback_rcond <- stats$fallback_rcond + 1L
+  }
+  if(isTRUE(fit$fallback.weights.built)) {
+    stats$fallback_weights_built <- stats$fallback_weights_built + 1L
   }
   stats
 }
@@ -448,6 +461,12 @@ hat.from.lm.fit <- function(obj) {
   list(G.flat = G.flat, rhs = rhs, p = p, ncell = ncell)
 }
 
+.crs_is_fullrank_gram <- function(G, n, p) {
+  e <- eigen(G, symmetric = TRUE, only.values = TRUE)$values
+  e[1] > 0 && abs(e[length(e)] / e[1]) >
+    max(n, p) * max(sqrt(abs(e))) * .Machine$double.eps
+}
+
 .crs_cell_cache_system <- function(cache,
                                    cell.weights,
                                    ridge.lambda = NULL) {
@@ -495,79 +514,55 @@ hat.from.lm.fit <- function(obj) {
                                             G,
                                             rhs,
                                             fallback.weights = NULL,
+                                            fallback.weights.fun = NULL,
                                             ridge.lambda = NULL,
                                             rcond.min = 1e-8,
                                             allow.fallback = TRUE,
                                             use.svd.fallback = TRUE) {
-  if(!is.finite(rcond.min)) {
-    if(allow.fallback && !is.null(fallback.weights)) {
-      return(.crs_weighted_ls_cv_rows(
+  fallback_fit <- function(status, rcond) {
+    weights.fallback <- fallback.weights
+    fallback.weights.built <- FALSE
+    if(is.null(weights.fallback) && is.function(fallback.weights.fun)) {
+      weights.fallback <- fallback.weights.fun()
+      fallback.weights.built <- TRUE
+    }
+    if(allow.fallback && !is.null(weights.fallback)) {
+      fit <- .crs_weighted_ls_cv_rows(
         X = X,
         y = y,
-        weights = fallback.weights,
+        weights = weights.fallback,
         rows = rows,
         ridge.lambda = ridge.lambda,
         rcond.min = Inf,
         allow.fallback = TRUE,
         use.svd.fallback = use.svd.fallback
-      ))
+      )
+      fit$status <- status
+      fit$rcond <- rcond
+      fit$fallback.weights.built <- fallback.weights.built
+      return(fit)
     }
-    return(list(status = "fallback_rcond",
-                method = "none",
-                residuals.rows = NULL,
-                hat.rows = NULL,
-                rank = NULL,
-                rcond = NA_real_))
+    list(status = status,
+         method = "none",
+         residuals.rows = NULL,
+         hat.rows = NULL,
+         rank = NULL,
+         rcond = rcond,
+         fallback.weights.built = fallback.weights.built)
+  }
+
+  if(!is.finite(rcond.min)) {
+    return(fallback_fit("fallback_rcond", NA_real_))
   }
 
   R <- tryCatch(chol(G), error = function(e) NULL)
   if(is.null(R)) {
-    if(allow.fallback && !is.null(fallback.weights)) {
-      fit <- .crs_weighted_ls_cv_rows(
-        X = X,
-        y = y,
-        weights = fallback.weights,
-        rows = rows,
-        ridge.lambda = ridge.lambda,
-        rcond.min = Inf,
-        allow.fallback = TRUE,
-        use.svd.fallback = use.svd.fallback
-      )
-      fit$status <- "fallback_chol"
-      fit$rcond <- NA_real_
-      return(fit)
-    }
-    return(list(status = "fallback_chol",
-                method = "none",
-                residuals.rows = NULL,
-                hat.rows = NULL,
-                rank = NULL,
-                rcond = NA_real_))
+    return(fallback_fit("fallback_chol", NA_real_))
   }
 
   rc <- rcond(R, triangular = TRUE)^2
   if(!is.finite(rc) || rc < rcond.min) {
-    if(allow.fallback && !is.null(fallback.weights)) {
-      fit <- .crs_weighted_ls_cv_rows(
-        X = X,
-        y = y,
-        weights = fallback.weights,
-        rows = rows,
-        ridge.lambda = ridge.lambda,
-        rcond.min = Inf,
-        allow.fallback = TRUE,
-        use.svd.fallback = use.svd.fallback
-      )
-      fit$status <- "fallback_rcond"
-      fit$rcond <- rc
-      return(fit)
-    }
-    return(list(status = "fallback_rcond",
-                method = "none",
-                residuals.rows = NULL,
-                hat.rows = NULL,
-                rank = NULL,
-                rcond = rc))
+    return(fallback_fit("fallback_rcond", rc))
   }
 
   beta <- backsolve(R, backsolve(R, rhs, transpose = TRUE))
@@ -2709,6 +2704,8 @@ cv.kernel.spline <- function(x,
                                             ind = ind,
                                             ind.vals = ind.vals,
                                             weights = obs.weights.cache)
+        gram.stats <- .crs_gram_stats_increment(gram.stats,
+                                                "cell_cache_builds")
         cell.kernel.weights <- .crs_kernel_cell_weights(
           z.unique = z.unique,
           ind.vals = ind.vals,
@@ -2719,13 +2716,36 @@ cv.kernel.spline <- function(x,
           cache = cell.cache,
           cell.weights = cell.kernel.weights
         )
+        if(!is.null(cell.systems)) {
+          gram.stats <- .crs_gram_stats_increment(
+            gram.stats,
+            "cell_cache_systems_batched"
+          )
+          gram.stats <- .crs_gram_stats_increment(
+            gram.stats,
+            "cell_cache_systems_batched_cells",
+            by = nrow.z.unique
+          )
+        }
       }
 
       rank.full.positive.weights <- NULL
       if(!singular.ok &&
          isTRUE(all(lambda > 0)) &&
          (is.null(weights) || isTRUE(all(weights > 0)))) {
-        rank.full.positive.weights <- is.fullrank(XP)
+        if(use.cell.cache.now && is.null(weights)) {
+          rank.full.positive.weights <- .crs_is_fullrank_gram(
+            matrix(rowSums(cell.cache$G.flat), cell.cache$p, cell.cache$p),
+            n = n,
+            p = cell.cache$p
+          )
+          gram.stats <- .crs_gram_stats_increment(gram.stats,
+                                                  "rank_cell_cache")
+        } else {
+          rank.full.positive.weights <- is.fullrank(XP)
+          gram.stats <- .crs_gram_stats_increment(gram.stats,
+                                                  "rank_direct")
+        }
       }
 
       for(i in seq_len(nrow.z.unique)) {
@@ -2734,9 +2754,15 @@ cv.kernel.spline <- function(x,
         } else {
           zz <- ind == ind.vals[i]
         }
-        L <- prod.kernel.matrix(Z=z, z=z.unique[ind.vals[i],], lambda=lambda,
-                         is.ordered.z=is.ordered.z)
-        if(!is.null(weights)) L <- weights * L
+        L <- NULL
+        get_L <- function() {
+          if(is.null(L)) {
+            L <<- prod.kernel.matrix(Z=z, z=z.unique[ind.vals[i],], lambda=lambda,
+                                     is.ordered.z=is.ordered.z)
+            if(!is.null(weights)) L <<- weights * L
+          }
+          L
+        }
 
         ## Calculate ratio for this subset
         ratio_subset <- ncol(XP) / sum(zz)
@@ -2762,7 +2788,7 @@ cv.kernel.spline <- function(x,
             full.rank <- if(!is.null(rank.full.positive.weights)) {
               rank.full.positive.weights
             } else {
-              is.fullrank(XP*L)
+              is.fullrank(XP*get_L())
             }
             if(!full.rank) {
               if(smooth.penalty) {
@@ -2782,6 +2808,10 @@ cv.kernel.spline <- function(x,
                   ridge.lambda = if(use_ridge_subset) ridge.lambda.subset else NULL
                 )
               } else {
+                gram.stats <- .crs_gram_stats_increment(
+                  gram.stats,
+                  "cell_cache_systems_direct"
+                )
                 .crs_cell_cache_system(
                   cache = cell.cache,
                   cell.weights = cell.kernel.weights[i, ],
@@ -2792,10 +2822,10 @@ cv.kernel.spline <- function(x,
                 X = XP,
                 y = y,
                 rows = zz,
-                row.weights = L,
+                row.weights = obs.weights.cache,
                 G = cache.system$G,
                 rhs = cache.system$rhs,
-                fallback.weights = L,
+                fallback.weights.fun = get_L,
                 ridge.lambda = if(use_ridge_subset) ridge.lambda.subset else NULL,
                 rcond.min = if(use.gram.cv) gram.rcond.min else Inf,
                 allow.fallback = TRUE,
@@ -2805,7 +2835,7 @@ cv.kernel.spline <- function(x,
               gram.fit <- .crs_weighted_ls_cv_rows(
                 X = XP,
                 y = y,
-                weights = L,
+                weights = get_L(),
                 rows = zz,
                 rcond.min = if(use.gram.cv) gram.rcond.min else Inf,
                 ridge.lambda = if(use_ridge_subset) ridge.lambda.subset else NULL,
@@ -2835,7 +2865,7 @@ cv.kernel.spline <- function(x,
               full.rank <- if(!is.null(rank.full.positive.weights)) {
                 rank.full.positive.weights
               } else {
-                is.fullrank(XP*L)
+                is.fullrank(XP*get_L())
               }
             }
             if(!singular.ok && !full.rank) {
@@ -2846,6 +2876,7 @@ cv.kernel.spline <- function(x,
               }
             }
 
+            L <- get_L()
             model <- tryCatch(rq.wfit(XP, y, weights=L, tau=tau, method="fn"),
                               error=function(e){FALSE})
             if(is.logical(model))
@@ -2865,6 +2896,10 @@ cv.kernel.spline <- function(x,
                   ridge.lambda = if(use_ridge_subset) ridge.lambda.subset else NULL
                 )
               } else {
+                gram.stats <- .crs_gram_stats_increment(
+                  gram.stats,
+                  "cell_cache_systems_direct"
+                )
                 .crs_cell_cache_system(
                   cache = cell.cache,
                   cell.weights = cell.kernel.weights[i, ],
@@ -2875,10 +2910,10 @@ cv.kernel.spline <- function(x,
                 X = P,
                 y = y,
                 rows = zz,
-                row.weights = L,
+                row.weights = obs.weights.cache,
                 G = cache.system$G,
                 rhs = cache.system$rhs,
-                fallback.weights = L,
+                fallback.weights.fun = get_L,
                 ridge.lambda = if(use_ridge_subset) ridge.lambda.subset else NULL,
                 rcond.min = if(use.gram.cv) gram.rcond.min else Inf,
                 allow.fallback = TRUE,
@@ -2888,7 +2923,7 @@ cv.kernel.spline <- function(x,
               gram.fit <- .crs_weighted_ls_cv_rows(
                 X = P,
                 y = y,
-                weights = L,
+                weights = get_L(),
                 rows = zz,
                 rcond.min = if(use.gram.cv) gram.rcond.min else Inf,
                 ridge.lambda = if(use_ridge_subset) ridge.lambda.subset else NULL,
@@ -2918,7 +2953,7 @@ cv.kernel.spline <- function(x,
               full.rank <- if(!is.null(rank.full.positive.weights)) {
                 rank.full.positive.weights
               } else {
-                is.fullrank(P*L)
+                is.fullrank(P*get_L())
               }
             }
             if(!singular.ok && !full.rank) {
@@ -2929,6 +2964,7 @@ cv.kernel.spline <- function(x,
               }
             }
 
+            L <- get_L()
             model <- tryCatch(rq.wfit(P, y, weights=L, tau=tau, method="fn"),
                               error=function(e){FALSE})
             if(is.logical(model))

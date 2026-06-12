@@ -70,3 +70,21 @@ test_that("native prod.kernel.matrix preserves validation errors", {
   expect_error(crs:::prod.kernel.matrix(Z, z = c(1, 2), lambda = c(0.5, 0.5), is.ordered.z = FALSE),
                "is.ordered.z and Z incompatible")
 })
+
+test_that("native prod.kernel.matrix pins NA behavior", {
+  Z <- cbind(
+    unordered = c(NA_real_, 1, 2),
+    ordered = c(1, NA_real_, 2)
+  )
+
+  out <- crs:::prod.kernel.matrix(
+    Z = Z,
+    z = c(1, 1),
+    lambda = c(0.25, 0.5),
+    is.ordered.z = c(FALSE, TRUE)
+  )
+
+  expect_equal(out[1], 0.25, tolerance = 0)
+  expect_true(is.na(out[2]))
+  expect_equal(out[3], 0.125, tolerance = 0)
+})
