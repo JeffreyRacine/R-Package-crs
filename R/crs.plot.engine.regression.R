@@ -83,16 +83,17 @@
     slice <- slices[[nm]]
     x <- slice[[1L]]
     y <- slice[[2L]]
+    x.train <- if (nm %in% names(object$xz)) object$xz[[nm]] else NULL
+    x.factor <- is.factor(x.train) || is.ordered(x.train)
+    response.label <- .crs_plot_response_label(object, "Conditional Mean")
     ylab <- if (deriv > 0L) {
-      if (!is.factor(object$xz[[nm]])) {
-        paste("Order", deriv, "Derivative")
+      if (!is.factor(x.train)) {
+        paste("Order", deriv, "Derivative of", response.label)
       } else {
-        "Difference in Levels"
+        paste("Delta", response.label)
       }
-    } else if (is.null(object$tau)) {
-      "Conditional Mean"
     } else {
-      paste("Conditional Quantile (tau = ", format(object$tau), ")", sep = "")
+      response.label
     }
     local.ylim <- if (is.null(ylim)) {
       local <- range(as.numeric(unlist(slice[, -1L, drop = FALSE])),
@@ -113,32 +114,81 @@
            sub = ""),
       .crs_plot_user_args(dots, "plot")
     )
-    do.call(graphics::plot, plot.args)
 
-    if (isTRUE(data_overlay) && identical(as.integer(deriv), 0L) &&
-        nm %in% names(object$xz)) {
-      xx <- object$xz[[nm]]
-      .crs_plot_overlay_points_1d(xx, object$y)
+    if (isTRUE(x.factor)) {
+      axis.labels <- levels(x)
+      if (is.null(axis.labels) && !is.null(x.train))
+        axis.labels <- levels(x.train)
+      axis.at <- seq_along(axis.labels)
+      add.axis <- is.null(.crs_plot_user_args(dots, "plot")$xaxt)
+      base.args <- plot.args
+      base.args$x <- as.numeric(x)
+      base.args$type <- "n"
+      if (is.null(base.args$xlim))
+        base.args$xlim <- c(0.5, length(axis.labels) + 0.5)
+      if (isTRUE(add.axis))
+        base.args$xaxt <- "n"
+      do.call(graphics::plot.default, base.args)
+      if (isTRUE(add.axis))
+        graphics::axis(1, at = axis.at, labels = axis.labels)
+      if (isTRUE(data_overlay) && identical(as.integer(deriv), 0L) &&
+          !is.null(x.train)) {
+        do.call(.crs_plot_overlay_points_factor,
+                c(list(x = x.train, y = object$y),
+                  .crs_plot_user_args(dots, "points")))
+      }
+      .crs_plot_draw_factor_fit(
+        x = x, y = y,
+        col = plot.args$col,
+        lty = .crs_plot_lty("interval"),
+        lwd = plot.args$lwd
+      )
+    } else {
+      do.call(graphics::plot, plot.args)
+
+      if (isTRUE(data_overlay) && identical(as.integer(deriv), 0L) &&
+          nm %in% names(object$xz)) {
+        xx <- object$xz[[nm]]
+        .crs_plot_overlay_points_1d(xx, object$y)
+      }
+      if (isTRUE(data_rug) && nm %in% names(object$xz))
+        .crs_plot_draw_rug_1d(object$xz[[nm]])
     }
-    if (isTRUE(data_rug) && nm %in% names(object$xz))
-      .crs_plot_draw_rug_1d(object$xz[[nm]])
 
     if (isTRUE(ci) && all(c("lwr", "upr") %in% names(slice))) {
       if (all(c("lwr.sim", "upr.sim", "lwr.bonf", "upr.bonf") %in%
               names(slice))) {
         cols <- .crs_plot_all_band_colors()
-        graphics::lines(x, slice$lwr, col = cols[["pointwise"]],
-                        lty = .crs_plot_lty("interval"))
-        graphics::lines(x, slice$upr, col = cols[["pointwise"]],
-                        lty = .crs_plot_lty("interval"))
-        graphics::lines(x, slice$lwr.sim, col = cols[["simultaneous"]],
-                        lty = .crs_plot_lty("interval"))
-        graphics::lines(x, slice$upr.sim, col = cols[["simultaneous"]],
-                        lty = .crs_plot_lty("interval"))
-        graphics::lines(x, slice$lwr.bonf, col = cols[["bonferroni"]],
-                        lty = .crs_plot_lty("interval"))
-        graphics::lines(x, slice$upr.bonf, col = cols[["bonferroni"]],
-                        lty = .crs_plot_lty("interval"))
+        if (isTRUE(x.factor)) {
+          .crs_plot_draw_interval_bars(
+            x, slice$lwr, slice$upr, col = cols[["pointwise"]],
+            lty = .crs_plot_lty("interval"),
+            lwd = .crs_plot_lwd("band_all_1d")
+          )
+          .crs_plot_draw_interval_bars(
+            x, slice$lwr.sim, slice$upr.sim, col = cols[["simultaneous"]],
+            lty = .crs_plot_lty("interval"),
+            lwd = .crs_plot_lwd("band_all_1d")
+          )
+          .crs_plot_draw_interval_bars(
+            x, slice$lwr.bonf, slice$upr.bonf, col = cols[["bonferroni"]],
+            lty = .crs_plot_lty("interval"),
+            lwd = .crs_plot_lwd("band_all_1d")
+          )
+        } else {
+          graphics::lines(x, slice$lwr, col = cols[["pointwise"]],
+                          lty = .crs_plot_lty("interval"))
+          graphics::lines(x, slice$upr, col = cols[["pointwise"]],
+                          lty = .crs_plot_lty("interval"))
+          graphics::lines(x, slice$lwr.sim, col = cols[["simultaneous"]],
+                          lty = .crs_plot_lty("interval"))
+          graphics::lines(x, slice$upr.sim, col = cols[["simultaneous"]],
+                          lty = .crs_plot_lty("interval"))
+          graphics::lines(x, slice$lwr.bonf, col = cols[["bonferroni"]],
+                          lty = .crs_plot_lty("interval"))
+          graphics::lines(x, slice$upr.bonf, col = cols[["bonferroni"]],
+                          lty = .crs_plot_lty("interval"))
+        }
         .crs_plot_all_band_legend(
           dots$legend,
           where = "topleft",
@@ -146,10 +196,18 @@
           lwd = .crs_plot_lwd("band_all_1d")
         )
       } else {
-        graphics::lines(x, slice$lwr, col = .crs_plot_color("interval"),
-                        lty = 2)
-        graphics::lines(x, slice$upr, col = .crs_plot_color("interval"),
-                        lty = 2)
+        if (isTRUE(x.factor)) {
+          .crs_plot_draw_interval_bars(
+            x, slice$lwr, slice$upr,
+            col = .crs_plot_color("interval"),
+            lty = 1
+          )
+        } else {
+          graphics::lines(x, slice$lwr, col = .crs_plot_color("interval"),
+                          lty = 2)
+          graphics::lines(x, slice$upr, col = .crs_plot_color("interval"),
+                          lty = 2)
+        }
       }
     }
   }
@@ -626,6 +684,7 @@
                                                 herr = NULL,
                                                 lerr.all = NULL,
                                                 herr.all = NULL,
+                                                display.nomad.progress = FALSE,
                                                 ...) {
   renderer <- match.arg(renderer)
   zlim <- if (isTRUE(plot.errors)) {
@@ -642,11 +701,7 @@
   }
   zlim <- .crs_plot_overlay_range(zlim,
                                   if (isTRUE(data_overlay)) object$y else NULL)
-  default.zlab <- if (is.null(object$tau)) {
-    "Conditional Mean"
-  } else {
-    paste("Conditional Quantile (tau = ", format(object$tau), ")", sep = "")
-  }
+  default.zlab <- .crs_plot_response_label(object, "Conditional Mean")
   dots <- list(...)
   xlab.val <- .crs_plot_scalar_default(dots$xlab, names(object$xz)[1L])
   ylab.val <- .crs_plot_scalar_default(dots$ylab, names(object$xz)[2L])
@@ -714,6 +769,14 @@
   dtheta <- 5.625
   frame.theta <- (0:((360 %/% dtheta - 1L) * rotate)) * dtheta + theta
   persp.mat <- NULL
+  rotation.progress <- NULL
+  if (isTRUE(rotate) && isTRUE(display.nomad.progress)) {
+    rotation.progress <- .crs_plot_stage_progress_begin(
+      total = length(frame.theta),
+      label = "Rotating plot"
+    )
+    on.exit(.crs_plot_progress_end(rotation.progress), add = TRUE)
+  }
 
   for (frame.idx in seq_along(frame.theta)) {
     persp.args <- .crs_plot_merge_user_args(
@@ -779,6 +842,11 @@
       )
       do.call(.crs_plot_overlay_points_persp, points.args)
     }
+    rotation.progress <- .crs_plot_progress_tick(
+      rotation.progress,
+      done = frame.idx,
+      force = (frame.idx == 1L)
+    )
     if (isTRUE(rotate)) Sys.sleep(0.24)
   }
 
@@ -1007,7 +1075,8 @@
                    lerr = intervals$lerr,
                    herr = intervals$herr,
                    lerr.all = intervals$lerr.all,
-                   herr.all = intervals$herr.all),
+                   herr.all = intervals$herr.all,
+                   display.nomad.progress = display.nomad.progress),
               render.dots))
   }
 

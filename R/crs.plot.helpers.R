@@ -149,6 +149,7 @@ crs_render_control <- function(...) {
 .crs_plot_pch <- function(role) {
   switch(as.character(role)[1L],
          data_overlay = 20L,
+         fit = 1L,
          20L)
 }
 
@@ -339,6 +340,20 @@ crs_render_control <- function(...) {
   if (is.null(x) || is.null(y) || is.factor(x) || is.ordered(x))
     return(invisible(FALSE))
   ok <- is.finite(x) & is.finite(y)
+  if (!any(ok)) return(invisible(FALSE))
+  graphics::points(x[ok], y[ok], col = col, pch = pch, cex = cex, ...)
+  invisible(TRUE)
+}
+
+.crs_plot_overlay_points_factor <- function(x,
+                                            y,
+                                            col = .crs_plot_color("data_overlay"),
+                                            pch = .crs_plot_pch("data_overlay"),
+                                            cex = .crs_plot_cex("data_overlay"),
+                                            ...) {
+  if (is.null(x) || is.null(y) || !(is.factor(x) || is.ordered(x)))
+    return(invisible(FALSE))
+  ok <- !is.na(x) & is.finite(y)
   if (!any(ok)) return(invisible(FALSE))
   graphics::points(x[ok], y[ok], col = col, pch = pch, cex = cex, ...)
   invisible(TRUE)
@@ -826,6 +841,55 @@ crs_render_control <- function(...) {
                  context, bad[1L]),
          call. = FALSE)
   }
+  invisible(TRUE)
+}
+
+.crs_plot_response_label <- function(object, fallback = "Conditional Mean") {
+  if (!is.null(object$formula)) {
+    vars <- all.vars(object$formula)
+    if (length(vars) >= 1L && nzchar(vars[1L]))
+      return(vars[1L])
+  }
+  if (!is.null(object$terms)) {
+    vars <- attr(object$terms, "variables")
+    if (length(vars) >= 2L) {
+      lab <- deparse(vars[[2L]], width.cutoff = 500L)
+      if (length(lab) && nzchar(lab[1L]))
+        return(lab[1L])
+    }
+  }
+  fallback
+}
+
+.crs_plot_draw_factor_fit <- function(x, y, col = graphics::par()$col,
+                                      lty = .crs_plot_lty("interval"),
+                                      lwd = graphics::par()$lwd,
+                                      pch = .crs_plot_pch("fit"),
+                                      cex = 1, bg = NULL) {
+  l.f <- rep(x, each = 3L)
+  l.f[3L * seq_along(x)] <- NA
+  l.y <- unlist(lapply(y, function(p) c(0, p, NA)), use.names = FALSE)
+  graphics::lines(x = l.f, y = l.y, col = col, lty = lty, lwd = lwd)
+  point.args <- list(x = x, y = y, col = col, pch = pch, cex = cex)
+  if (!is.null(bg)) point.args$bg <- bg
+  do.call(graphics::points, point.args)
+  invisible(TRUE)
+}
+
+.crs_plot_draw_interval_bars <- function(x, lower, upper, col,
+                                         lty = .crs_plot_lty("interval"),
+                                         lwd = graphics::par()$lwd,
+                                         cap = 0.08) {
+  ok <- is.finite(as.numeric(x)) & is.finite(lower) & is.finite(upper)
+  if (!any(ok)) return(invisible(FALSE))
+  xx <- as.numeric(x[ok])
+  lower <- lower[ok]
+  upper <- upper[ok]
+  graphics::segments(xx, lower, xx, upper, col = col, lty = lty, lwd = lwd)
+  graphics::segments(xx - cap, lower, xx + cap, lower,
+                     col = col, lty = lty, lwd = lwd)
+  graphics::segments(xx - cap, upper, xx + cap, upper,
+                     col = col, lty = lty, lwd = lwd)
   invisible(TRUE)
 }
 
