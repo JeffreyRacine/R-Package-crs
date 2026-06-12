@@ -54,26 +54,23 @@ model <- crs(y~x1+x2,
 
 summary(model)
 
-# Perspective plot
+## Perspective plot
+plot(model,perspective=TRUE,view="fixed",main="Conditional Mean")
+
+## Derivative surface plots
 x1.seq <- seq(min(x1),max(x1),length=num.eval)
 x2.seq <- seq(min(x2),max(x2),length=num.eval)
 x.grid <- expand.grid(x1.seq,x2.seq)
 newdata <- data.frame(x1=x.grid[,1],x2=x.grid[,2])
-z <- matrix(predict(model,newdata=newdata),num.eval,num.eval)
-persp(x=x1.seq,y=x2.seq,z=z,
-      xlab="X1",ylab="X2",zlab="Y",
-      ticktype="detailed",      
-      border="red",
-      main="Conditional Mean",
-      theta=45,phi=45)
 
 ## Perspective plot - derivative wrt x1
 z <- matrix(attr(predict(model,newdata=newdata),"deriv.mat")[,1],num.eval,num.eval)
 
 persp(x=x1.seq,y=x2.seq,z=z,
       xlab="X1",ylab="X2",zlab="Y",
-      ticktype="detailed",      
-      border="red",
+      ticktype="detailed",
+      col=grDevices::adjustcolor("red",alpha.f=0.35),
+      border=grDevices::adjustcolor("red",alpha.f=0.60),
       main="d g(x1,x2)/d x1 (x2=med(x2))",
       theta=45,phi=45)
 
@@ -82,7 +79,8 @@ z <- matrix(attr(predict(model,newdata=newdata),"deriv.mat")[,2],num.eval,num.ev
 
 persp(x=x1.seq,y=x2.seq,z=z,
       xlab="X1",ylab="X2",zlab="Y",
-      ticktype="detailed",      
-      border="red",
+      ticktype="detailed",
+      col=grDevices::adjustcolor("red",alpha.f=0.35),
+      border=grDevices::adjustcolor("red",alpha.f=0.60),
       main="d g(x1,x2)/d x2 (x1=med(x1))",
       theta=45,phi=45)

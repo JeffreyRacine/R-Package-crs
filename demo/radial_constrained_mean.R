@@ -15,7 +15,6 @@ require(quadprog)
 set.seed(42)
 
 n <- 1000
-n.eval <- 50
 
 x.min <- -5
 x.max <- 5
@@ -44,12 +43,7 @@ y <- sin(sqrt(x1^2+x2^2))/sqrt(x1^2+x2^2) + rnorm(n,sd=.1)
 
 data.train <- data.frame(y,x1,x2)
 
-x1.seq <- seq(min(x1),max(x1),length=n.eval)
-x2.seq <- seq(min(x2),max(x2),length=n.eval)
-
 rm(y,x1,x2)
-
-data.eval <- data.frame(y=0,expand.grid(x1=x1.seq,x2=x2.seq))
 
 model.unres <- crs(y~x1+x2,
                    data=data.train,
@@ -61,12 +55,9 @@ summary(model.unres)
 ## If you wish to alter the constraints, you need to modify Amat and
 ## bvec.
 
-## Generate the estimated model computed for the training data. Note -
-## we need to premultiply the weights by n and each column must be
-## multiplied by y
+## Construct the response-scaled constraint operator.
 
-B <- model.matrix(model.unres$model.lm)
-Aymat.res <- t(B%*%solve(t(B)%*%B)%*%t(B))*data.train$y
+Aymat.res <- crshat(model.unres, y=data.train$y, output="constraint")
 
 ## Here is Amat
 
@@ -101,47 +92,23 @@ data.trans <- data.frame(y=p.hat*data.train$y,data.train[,2:ncol(data.train),dro
 model.res <- crs(y~x1+x2,cv="none",
                  degree=model.unres$degree,
                  segments=model.unres$segments,
-                 basis=model.unres$basis,                                  
+                 basis=model.unres$basis,
                  data=data.trans,
                  deriv=1)
 
 ## That's it!
 
-## Create a 3D perspective plot of the constrained and unconstrained
-## surfaces
-
-fitted.unres <- matrix(predict(model.unres,newdata=data.eval), n.eval, n.eval)
-fitted.res <- matrix(predict(model.res,newdata=data.eval), n.eval, n.eval)
-
-zlim <- c(min(fitted.unres,fitted.res),max(fitted.unres,fitted.res))
+## Create perspective plots of the constrained and unconstrained surfaces.
 
 par(mfrow=c(1,2))
 
-persp(x1.seq, x2.seq,
-      fitted.unres,
-      main="Unconstrained Regression Spline",
-      col="lightblue",
-      ticktype="detailed", 
-      ylab="X2",
-      xlab="X1",
-      zlim=zlim,
-      zlab="Conditional Expectation",
-      theta=300,
-      phi=30)
+plot(model.unres,perspective=TRUE,view="fixed",
+     main="Unconstrained Regression Spline",
+     zlab="Conditional Expectation")
 
-persp(x1.seq, x2.seq,
-      fitted.res,
-      main="Constrained Regression Spline",
-      sub="0 <= g(x1,x2) <= 1/2",
-      col="lightblue",
-      ticktype="detailed", 
-      ylab="X2",
-      xlab="X1",
-      zlim=zlim,
-      zlab="Conditional Expectation",
-      theta=300,
-      phi=30)
+plot(model.res,perspective=TRUE,view="fixed",
+     main="Constrained Regression Spline",
+     sub="0 <= g(x1,x2) <= 1/2",
+     zlab="Conditional Expectation")
 
 par(mfrow=c(1,1))
-
-

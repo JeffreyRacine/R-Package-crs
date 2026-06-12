@@ -79,8 +79,7 @@ model.unres <- crs(y~x1+x2,
 ## If you wish to alter the constraints, you need to modify Amat and
 ## bvec.
 
-B <- model.matrix(model.unres$model.lm)
-Aymat.res <- t(B%*%solve(t(B)%*%B)%*%t(B))*data.train$y
+Aymat.res <- crshat(model.unres, y=data.train$y, output="constraint")
 
 ## Here is Amat
 
@@ -111,72 +110,71 @@ p.hat <- QP.output$solution
 D.stat <- D(p.hat)
 
 if(D.stat > 0) {
-  
+
   ## Generate fitted values and data from constrained model
-  
+
   data.trans <- data.frame(y=p.hat*data.train$y,data.train[,2:ncol(data.train)])
   names(data.trans) <- names(data.train) ## Necessary when there is only 1 regressor
   model.res <- crs(y~x1+x2,cv="none",
                    degree=model.unres$degree,
                    segments=model.unres$segments,
-                   basis=model.unres$basis,                                  
+                   basis=model.unres$basis,
                    data=data.trans)
-  
+
   yhat <- fitted(model.res)
   model.resid <- data.train$y - fitted(model.unres)
-  
+
   for(b in 1:num.boot) {
 
     ## Draw a bootstrap resample from the constrained model
-    
+
     y.star <- yhat + sample(model.resid,replace=TRUE)
-    
+
     ## Now compute model for bootstrap resample...
-    
+
     data.boot <- data.frame(y=y.star,data.train[,2:ncol(data.train)])
     names(data.boot) <- names(data.train) ## Necessary when there is only 1 regressor
     model.boot <- crs(y~x1+x2,cv="none",
                       degree=model.unres$degree,
                       segments=model.unres$segments,
-                      basis=model.unres$basis,                                  
+                      basis=model.unres$basis,
                       data=data.boot)
 
-    B <- model.matrix(model.boot$model.lm)
-    Aymat.res <- t(B%*%solve(t(B)%*%B)%*%t(B))*data.boot$y
+    Aymat.res <- crshat(model.boot, y=data.boot$y, output="constraint")
 
     ## Here is Amat
-    
+
     Amat <- cbind(Aymat.res,
                   -Aymat.res)
-    
+
     ## Here is bvec
-    
+
     bvec <- c(rep(lower,n),
               -rep(upper,n))
-    
+
     ## Solve the quadratic programming problem
-    
+
     QP.output <- solve.QP(Dmat=diag(n),dvec=rep(1,n),Amat=Amat,bvec=bvec)
 
     if(is.nan(QP.output$value)) stop(" solve.QP failed. Try smoother curve (larger bandwidths or polynomial order)")
-    
+
     ## Get the solution
-    
+
     p.hat <- QP.output$solution
-    
+
     D.boot[b] <- D(p.hat)
-    
+
   }
-  
+
   D.boot <- sort(D.boot)
-  
+
 }
 
 if(D.stat > 0 ) {
-  
+
   P <- mean(ifelse(D.boot > D.stat, 1, 0))
   ## Check for degenerate case (all bootstrap D statistics identical)
-  if(length(unique(D.boot))==1) P <- runif(1) 
+  if(length(unique(D.boot))==1) P <- runif(1)
 
   plot(density(D.boot),
        main="Null Distribution",
@@ -187,8 +185,7 @@ if(D.stat > 0 ) {
 
   ## If the D statistic is zero then the constraints are non-binding
   ## and the test is degenerate, so issue a warning to this effect
-  
-  warning("The test statistic is 0, the bootstrap is degenerate, and the constraints are non-binding")
-  
-}
 
+  warning("The test statistic is 0, the bootstrap is degenerate, and the constraints are non-binding")
+
+}
