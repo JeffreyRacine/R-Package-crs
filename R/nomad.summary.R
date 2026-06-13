@@ -11,6 +11,11 @@
   format(round(x), big.mark = ",", trim = TRUE, scientific = FALSE)
 }
 
+.crs_nomad_format_percent <- function(hits, requests) {
+  format(round(100 * as.numeric(hits)[1L] / as.numeric(requests)[1L], 1L),
+         nsmall = 1L, trim = TRUE)
+}
+
 .crs_nomad_native_cache_line <- function(summary) {
   hits <- summary$cache.hits
   requests <- summary$total.evaluations
@@ -20,50 +25,56 @@
       is.finite(hits) &&
       is.finite(requests) &&
       requests > 0 &&
-      hits > 0) {
-    pct <- 100 * hits / requests
+      hits > 0 &&
+      requests >= hits) {
     return(paste0(
       "NOMAD cache: ",
-      format(round(pct, 1L), nsmall = 1L, trim = TRUE),
-      "% hits (",
       .crs_nomad_format_count(hits),
-      "/",
+      " repeated point lookups avoided out of ",
       .crs_nomad_format_count(requests),
-      " point requests)"
+      " (",
+      .crs_nomad_format_percent(hits, requests),
+      "%)"
     ))
   }
 
   if (!.crs_nomad_is_missing_number(hits) &&
       is.finite(hits) &&
       hits > 0) {
-    return(paste0("NOMAD cache: ", .crs_nomad_format_count(hits), " hits"))
+    return(paste0("NOMAD cache: ", .crs_nomad_format_count(hits),
+                  " repeated point lookups avoided"))
   }
 
   NULL
 }
 
 .crs_nomad_restart_cache_line <- function(summary) {
-  cache.parts <- character()
-  if (!.crs_nomad_is_missing_number(summary$callback.cache.hits) &&
-      is.finite(summary$callback.cache.hits)) {
-    cache.parts <- c(cache.parts, paste(.crs_nomad_format_count(summary$callback.cache.hits),
-                                        "hits"))
-  }
-  if (!.crs_nomad_is_missing_number(summary$callback.cache.misses) &&
-      is.finite(summary$callback.cache.misses)) {
-    cache.parts <- c(cache.parts, paste(.crs_nomad_format_count(summary$callback.cache.misses),
-                                        "misses"))
-  }
-  if (!.crs_nomad_is_missing_number(summary$callback.cache.size) &&
-      is.finite(summary$callback.cache.size)) {
-    cache.parts <- c(cache.parts, paste(.crs_nomad_format_count(summary$callback.cache.size),
-                                        "stored points"))
-  }
-  if (length(cache.parts)) {
-    return(paste("CRS restart cache:", paste(cache.parts, collapse = ", ")))
+  hits <- summary$callback.cache.hits
+  callbacks <- summary$callback.evaluations
+
+  if (.crs_nomad_is_missing_number(hits) ||
+      !is.finite(hits) ||
+      hits <= 0) {
+    return(NULL)
   }
 
-  NULL
+  if (!.crs_nomad_is_missing_number(callbacks) &&
+      is.finite(callbacks) &&
+      callbacks > 0 &&
+      callbacks >= hits) {
+    return(paste0(
+      "CRS restart cache: ",
+      .crs_nomad_format_count(hits),
+      " repeated objective callbacks avoided out of ",
+      .crs_nomad_format_count(callbacks),
+      " (",
+      .crs_nomad_format_percent(hits, callbacks),
+      "%)"
+    ))
+  }
+
+  paste0("CRS restart cache: ", .crs_nomad_format_count(hits),
+         " repeated objective callbacks avoided")
 }
 
 .crs_nomad_summary_from_solution <- function(x) {

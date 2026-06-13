@@ -15,7 +15,7 @@ test_that("NOMAD summary prints compact native cache diagnostics", {
 
   expect_true(any(grepl("Number of Function Evaluations: 252",
                         out, fixed = TRUE)))
-  expect_true(any(grepl("NOMAD cache: 98.7% hits (19,762/20,014 point requests)",
+  expect_true(any(grepl("NOMAD cache: 19,762 repeated point lookups avoided out of 20,014 (98.7%)",
                         out, fixed = TRUE)))
   expect_false(any(grepl("total = ", out, fixed = TRUE)))
   expect_false(any(grepl("callbacks = ", out, fixed = TRUE)))
@@ -57,7 +57,7 @@ test_that("NOMAD summary handles partial native cache metadata conservatively", 
 
   expect_true(any(grepl("Number of Function Evaluations: 10",
                         out, fixed = TRUE)))
-  expect_true(any(grepl("NOMAD cache: 1,200 hits",
+  expect_true(any(grepl("NOMAD cache: 1,200 repeated point lookups avoided",
                         out, fixed = TRUE)))
   expect_false(any(grepl("point requests", out, fixed = TRUE)))
 })
@@ -76,11 +76,43 @@ test_that("NOMAD summary prints CRS restart cache separately", {
 
   out <- capture.output(print_summary(object))
 
-  expect_true(any(grepl("NOMAD cache: 98.7% hits (19,762/20,014 point requests)",
+  expect_true(any(grepl("NOMAD cache: 19,762 repeated point lookups avoided out of 20,014 (98.7%)",
                         out, fixed = TRUE)))
-  expect_true(any(grepl("CRS restart cache: 14 hits, 238 misses, 238 stored points",
+  expect_true(any(grepl("CRS restart cache: 14 repeated objective callbacks avoided out of 252 (5.6%)",
                         out, fixed = TRUE)))
+  expect_false(any(grepl("misses", out, fixed = TRUE)))
+  expect_false(any(grepl("stored points", out, fixed = TRUE)))
   expect_false(any(grepl("NOMAD Cache Summary", out, fixed = TRUE)))
+})
+
+test_that("NOMAD summary restart cache omits zero hits and handles partial metadata", {
+  print_summary <- getFromNamespace(".crs_nomad_summary_print", "crs")
+  zero_object <- list(nomad.summary = list(
+    num.feval = 252,
+    cache.hits = NA_real_,
+    total.evaluations = NA_real_,
+    callback.evaluations = 252,
+    callback.cache.hits = 0,
+    callback.cache.misses = 252,
+    callback.cache.size = 252
+  ))
+  partial_object <- list(nomad.summary = list(
+    num.feval = 252,
+    cache.hits = NA_real_,
+    total.evaluations = NA_real_,
+    callback.evaluations = NA_real_,
+    callback.cache.hits = 14,
+    callback.cache.misses = 238,
+    callback.cache.size = 238
+  ))
+
+  zero_out <- capture.output(print_summary(zero_object))
+  partial_out <- capture.output(print_summary(partial_object))
+
+  expect_false(any(grepl("CRS restart cache:", zero_out, fixed = TRUE)))
+  expect_true(any(grepl("CRS restart cache: 14 repeated objective callbacks avoided",
+                        partial_out, fixed = TRUE)))
+  expect_false(any(grepl("out of", partial_out, fixed = TRUE)))
 })
 
 test_that("NOMAD summary printer is used by live CRS summaries", {
