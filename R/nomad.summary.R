@@ -7,6 +7,65 @@
   length(x) != 1L || is.na(x)
 }
 
+.crs_nomad_format_count <- function(x) {
+  format(round(x), big.mark = ",", trim = TRUE, scientific = FALSE)
+}
+
+.crs_nomad_native_cache_line <- function(summary) {
+  hits <- summary$cache.hits
+  requests <- summary$total.evaluations
+
+  if (!.crs_nomad_is_missing_number(hits) &&
+      !.crs_nomad_is_missing_number(requests) &&
+      is.finite(hits) &&
+      is.finite(requests) &&
+      requests > 0 &&
+      hits > 0) {
+    pct <- 100 * hits / requests
+    return(paste0(
+      "NOMAD cache: ",
+      format(round(pct, 1L), nsmall = 1L, trim = TRUE),
+      "% hits (",
+      .crs_nomad_format_count(hits),
+      "/",
+      .crs_nomad_format_count(requests),
+      " point requests)"
+    ))
+  }
+
+  if (!.crs_nomad_is_missing_number(hits) &&
+      is.finite(hits) &&
+      hits > 0) {
+    return(paste0("NOMAD cache: ", .crs_nomad_format_count(hits), " hits"))
+  }
+
+  NULL
+}
+
+.crs_nomad_restart_cache_line <- function(summary) {
+  cache.parts <- character()
+  if (!.crs_nomad_is_missing_number(summary$callback.cache.hits) &&
+      is.finite(summary$callback.cache.hits)) {
+    cache.parts <- c(cache.parts, paste(.crs_nomad_format_count(summary$callback.cache.hits),
+                                        "hits"))
+  }
+  if (!.crs_nomad_is_missing_number(summary$callback.cache.misses) &&
+      is.finite(summary$callback.cache.misses)) {
+    cache.parts <- c(cache.parts, paste(.crs_nomad_format_count(summary$callback.cache.misses),
+                                        "misses"))
+  }
+  if (!.crs_nomad_is_missing_number(summary$callback.cache.size) &&
+      is.finite(summary$callback.cache.size)) {
+    cache.parts <- c(cache.parts, paste(.crs_nomad_format_count(summary$callback.cache.size),
+                                        "stored points"))
+  }
+  if (length(cache.parts)) {
+    return(paste("CRS restart cache:", paste(cache.parts, collapse = ", ")))
+  }
+
+  NULL
+}
+
 .crs_nomad_summary_from_solution <- function(x) {
   if (is.null(x)) return(NULL)
 
@@ -84,35 +143,19 @@
 
   nfe <- summary$num.feval
   if (!.crs_nomad_is_missing_number(nfe)) {
-    label <- paste("\nNumber of Function Evaluations: ", format(nfe), sep = "")
-    parts <- character()
-    if (!.crs_nomad_is_missing_number(summary$total.evaluations)) {
-      parts <- c(parts, paste("total = ", format(summary$total.evaluations), sep = ""))
-    }
-    if (!.crs_nomad_is_missing_number(summary$cache.hits)) {
-      parts <- c(parts, paste("cache hits = ", format(summary$cache.hits), sep = ""))
-    }
-    if (!.crs_nomad_is_missing_number(summary$callback.evaluations)) {
-      parts <- c(parts, paste("callbacks = ", format(summary$callback.evaluations), sep = ""))
-    }
-    if (length(parts)) {
-      label <- paste0(label, " (", paste(parts, collapse = ", "), ")")
-    }
-    cat(label)
+    cat(paste("\nNumber of Function Evaluations: ",
+              .crs_nomad_format_count(nfe),
+              sep = ""))
   }
 
-  cache.parts <- character()
-  if (!.crs_nomad_is_missing_number(summary$cache.size)) {
-    cache.parts <- c(cache.parts, paste("native size = ", format(summary$cache.size), sep = ""))
+  native.cache.line <- .crs_nomad_native_cache_line(summary)
+  if (!is.null(native.cache.line)) {
+    cat(paste("\n", native.cache.line, sep = ""))
   }
-  if (!.crs_nomad_is_missing_number(summary$callback.cache.hits)) {
-    cache.parts <- c(cache.parts, paste("callback hits = ", format(summary$callback.cache.hits), sep = ""))
-  }
-  if (!.crs_nomad_is_missing_number(summary$callback.cache.misses)) {
-    cache.parts <- c(cache.parts, paste("callback misses = ", format(summary$callback.cache.misses), sep = ""))
-  }
-  if (length(cache.parts)) {
-    cat(paste("\nNOMAD Cache Summary: ", paste(cache.parts, collapse = ", "), sep = ""))
+
+  restart.cache.line <- .crs_nomad_restart_cache_line(summary)
+  if (!is.null(restart.cache.line)) {
+    cat(paste("\n", restart.cache.line, sep = ""))
   }
 
   invisible(TRUE)
