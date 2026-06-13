@@ -601,11 +601,10 @@ crs.formula <- function(formula,
     include <- NULL
   }
 
-  ## Check for dynamic cv and if number of combinations is not overly
-  ## large use exhaustive search
+  ## For simple non-categorical searches, exhaustive enumeration is cheap and
+  ## deterministic. See ?crs, cv.threshold for the override contract.
 
   if(cv=="nomad" && is.null(num.z) && ((degree.max-degree.min)*(segments.max-segments.min))**num.x <= cv.threshold) {
-    if(display.warnings) warning(" Dynamically changing search from nomad to exhaustive (set cv.threshold=0 to keep NOMAD search)")
     cv <- "exhaustive"
   }
 

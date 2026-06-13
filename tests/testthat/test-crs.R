@@ -64,6 +64,17 @@ test_that("crs cv.threshold and exhaustive search semantics are explicit", {
     display.warnings = FALSE,
     display.nomad.progress = FALSE
   )
+  expect_warning(
+    quiet_default_auto <- crs(
+      y ~ x,
+      cv = "nomad",
+      degree.max = 3,
+      segments.max = 3,
+      display.warnings = TRUE,
+      display.nomad.progress = FALSE
+    ),
+    NA
+  )
 
   threshold_zero <- crs(
     y ~ x,
@@ -87,6 +98,7 @@ test_that("crs cv.threshold and exhaustive search semantics are explicit", {
   )
 
   expect_identical(default_auto$cv, "exhaustive")
+  expect_identical(quiet_default_auto$cv, "exhaustive")
   expect_null(default_auto$nomad.restart.contract)
 
   expect_identical(threshold_zero$cv, "nomad")

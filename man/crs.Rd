@@ -208,16 +208,15 @@ These arguments control cross-validation objective selection and restart behavio
     cross-validation }
 
 
-\item{cv.threshold}{ an integer (default \code{cv.threshold=1000}) for
-  simple problems with no categorical predictors
-  (i.e. \code{kernel=FALSE} otherwise
-  \code{\link{optim}}/\code{\link{snomadr}} search is necessary) such
-  that, if the number of combinations of \code{degree}/\code{segments}
-  is less than or equal to the threshold and \code{cv="nomad"}, instead
-  use exhaustive search (\code{cv="exhaustive"}). Setting
-  \code{cv.threshold=0} disables this automatic switch and keeps
-  \code{cv="nomad"} on the NOMAD path; use \code{cv="exhaustive"} to
-  force exhaustive search. }
+\item{cv.threshold}{ an integer (default \code{cv.threshold=1000}) that
+  controls the automatic switch from NOMAD to exhaustive search for
+  simple problems with no categorical predictors. If \code{cv="nomad"}
+  and the number of \code{degree}/\code{segments} combinations is less
+  than or equal to \code{cv.threshold}, \code{crs} quietly uses
+  \code{cv="exhaustive"} because enumeration is cheap and deterministic.
+  Set \code{cv.threshold=0} to disable this automatic switch and keep
+  \code{cv="nomad"} on the NOMAD path. Use \code{cv="exhaustive"} to
+  request exhaustive search explicitly. }
 
 
   \item{nmulti}{
