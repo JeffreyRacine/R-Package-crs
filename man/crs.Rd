@@ -56,6 +56,7 @@ crs(\dots)
     lambda.discrete = FALSE,
     lambda.discrete.num = 100,
     max.bb.eval = NULL,
+    max.eval = NULL,
     min.mesh.size.integer = 1,
     min.mesh.size.real = paste(sqrt(.Machine$double.eps)),
     min.frame.size.integer = 1,
@@ -275,6 +276,17 @@ These arguments control NOMAD mesh settings and optional solver controls.
     real-world applications. User-supplied values are passed through to
     the selected NOMAD route; see \code{\link{snomadr}} for further
     details.
+  }
+
+  \item{max.eval}{
+    optional NOMAD total point-lookup budget. This is distinct from
+    \code{max.bb.eval}: \code{max.bb.eval} limits true blackbox objective
+    computations, while \code{max.eval} limits total NOMAD point lookups,
+    including cache hits. The default \code{NULL} preserves the historical
+    CRS behavior by using the selected route's \code{MAX_BB_EVAL} value as
+    \code{MAX_EVAL}. If supplied, \code{max.eval} is passed to NOMAD as
+    \code{MAX_EVAL}. Supplying both \code{max.eval} and
+    \code{opts$MAX_EVAL} with conflicting values is an error.
   }
 
 
@@ -528,8 +540,9 @@ Further optional arguments are passed through to lower-level routines.
 
   \item{lambda}{ vector of bandwidths used if \code{kernel=TRUE}}
 
-  \item{nomad.summary}{ summary of NOMAD blackbox evaluations and cache
-    activity, present only when NOMAD search was used}
+  \item{nomad.summary}{ summary of NOMAD blackbox evaluations, cache
+    activity, and effective NOMAD options, present only when NOMAD search
+    was used}
 
   \item{call}{ a symbolic description of the model  }
 

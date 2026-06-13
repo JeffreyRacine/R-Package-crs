@@ -28,6 +28,7 @@ frscvNOMAD(xz,
            initial.mesh.size.integer = "1",
            knots = c("quantiles","uniform","auto"),
            max.bb.eval = 10000,
+           max.eval = NULL,
            min.mesh.size.integer = "1",
            min.frame.size.integer = "1",
            nmulti = 0,
@@ -150,6 +151,17 @@ These arguments control NOMAD search, cross-validation objective selection, and 
     default was set on the basis of simulation evidence and real-world
     applications for the continuous-only \code{frscvNOMAD} search route;
     see \code{\link{snomadr}} for further details.
+  }
+
+  \item{max.eval}{
+    optional NOMAD total point-lookup budget. This is distinct from
+    \code{max.bb.eval}: \code{max.bb.eval} limits true blackbox objective
+    computations, while \code{max.eval} limits total NOMAD point lookups,
+    including cache hits. The default \code{NULL} preserves historical
+    behavior by using \code{max.bb.eval} as \code{MAX_EVAL}. If supplied,
+    \code{max.eval} is passed to NOMAD as \code{MAX_EVAL}. Supplying both
+    \code{max.eval} and \code{opts$MAX_EVAL} with conflicting values is an
+    error.
   }
 
 

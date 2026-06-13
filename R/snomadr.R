@@ -132,6 +132,71 @@ merge.nomad4.kr.defaults <- function(opts) {
   !is.null(.crs_nomad_option_value(opts, key))
 }
 
+.crs_nomad_option_text <- function(x) {
+  if (is.null(x)) return(NULL)
+  paste(as.character(x), collapse = " ")
+}
+
+.crs_nomad_apply_eval_budget <- function(opts,
+                                         max.bb.eval = NULL,
+                                         max.eval = NULL,
+                                         context = "NOMAD") {
+  if (!.crs_nomad_has_option(opts, "MAX_BB_EVAL") && !is.null(max.bb.eval))
+    opts$"MAX_BB_EVAL" <- max.bb.eval
+
+  if (!is.null(max.eval)) {
+    old <- .crs_nomad_option_value(opts, "MAX_EVAL")
+    if (!is.null(old) &&
+        !identical(.crs_nomad_option_text(old),
+                   .crs_nomad_option_text(max.eval))) {
+      stop(paste0(
+        context,
+        " received conflicting MAX_EVAL controls; use either max.eval or ",
+        "opts$MAX_EVAL, not both with different values"
+      ), call. = FALSE)
+    }
+    opts$"MAX_EVAL" <- max.eval
+  } else if (!.crs_nomad_has_option(opts, "MAX_EVAL")) {
+    max.bb <- .crs_nomad_option_value(opts, "MAX_BB_EVAL")
+    max.bb.num <- suppressWarnings(as.numeric(max.bb))
+    if (length(max.bb.num) == 1L && is.finite(max.bb.num) && max.bb.num > 0)
+      opts$"MAX_EVAL" <- max.bb
+  }
+
+  opts
+}
+
+.crs_nomad_effective_options <- function(opts) {
+  keys <- c("MAX_BB_EVAL",
+            "MAX_EVAL",
+            "DIRECTION_TYPE",
+            "EVAL_QUEUE_SORT",
+            "EVAL_OPPORTUNISTIC",
+            "SPECULATIVE_SEARCH",
+            "SIMPLE_LINE_SEARCH",
+            "QUAD_MODEL_SEARCH",
+            "SGTELIB_MODEL_SEARCH",
+            "NM_SEARCH",
+            "INITIAL_MESH_SIZE",
+            "MIN_MESH_SIZE",
+            "MIN_FRAME_SIZE",
+            "INITIAL_FRAME_SIZE")
+
+  out <- list()
+  for (key in keys) {
+    value <- .crs_nomad_option_value(opts, key)
+    if (!is.null(value))
+      out[[key]] <- value
+  }
+  out
+}
+
+.crs_nomad_attach_effective_options <- function(summary, opts) {
+  if (is.null(summary)) return(NULL)
+  summary$effective.options <- .crs_nomad_effective_options(opts)
+  summary
+}
+
 .crs_nomad_display_degree <- function(opts) {
   value <- .crs_nomad_option_value(opts, "DISPLAY_DEGREE")
   if (is.null(value) || length(value) != 1L)

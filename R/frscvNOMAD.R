@@ -24,6 +24,7 @@ frscvNOMAD <- function(xz,
                        initial.mesh.size.integer="1",
                        knots=c("quantiles","uniform", "auto"),
                        max.bb.eval=10000,
+                       max.eval=NULL,
                        min.mesh.size.integer="1", #paste("r",sqrt(.Machine$double.eps),sep=""),
                        min.frame.size.integer="1",  #paste("r",sqrt(.Machine$double.eps),sep=""),
                        nmulti=0,
@@ -474,8 +475,10 @@ frscvNOMAD <- function(xz,
   }
 
   opts$"EPSILON" <- .Machine$double.eps
-  if(!.crs_nomad_has_option(opts, "MAX_BB_EVAL"))
-    opts$"MAX_BB_EVAL" <- max.bb.eval
+  opts <- .crs_nomad_apply_eval_budget(opts,
+                                       max.bb.eval = max.bb.eval,
+                                       max.eval = max.eval,
+                                       context = "frscvNOMAD")
   opts <- .crs_nomad_apply_source_geometry(
     opts,
     roles = geometry.roles,
@@ -605,6 +608,9 @@ frscvNOMAD <- function(xz,
         nomad.best.restart=nomad.solution$best.restart,
         nomad.restart.objectives=nomad.solution$restart.fval,
         nomad.restart.evaluations=nomad.solution$restart.results,
-        nomad.summary=.crs_nomad_summary_from_solution(nomad.solution))
+        nomad.summary=.crs_nomad_attach_effective_options(
+          .crs_nomad_summary_from_solution(nomad.solution),
+          opts
+        ))
 
 }

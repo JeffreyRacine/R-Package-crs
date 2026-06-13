@@ -32,6 +32,7 @@ krscvNOMAD(xz,
            lambda.discrete = FALSE,
            lambda.discrete.num = 100,
            max.bb.eval = 1000,
+           max.eval = NULL,
            min.mesh.size.integer = "1",
            min.mesh.size.real = paste("r",sqrt(.Machine$double.eps),sep=""),
            min.frame.size.integer = "1",
@@ -172,6 +173,17 @@ These arguments control NOMAD search, cross-validation objective selection, and 
     further details). Default is \code{1000}, set on the basis of
     simulation evidence and real-world applications for the
     kernel/categorical \code{krscvNOMAD} search route.
+  }
+
+  \item{max.eval}{
+    optional NOMAD total point-lookup budget. This is distinct from
+    \code{max.bb.eval}: \code{max.bb.eval} limits true blackbox objective
+    computations, while \code{max.eval} limits total NOMAD point lookups,
+    including cache hits. The default \code{NULL} preserves historical
+    behavior by using \code{max.bb.eval} as \code{MAX_EVAL}. If supplied,
+    \code{max.eval} is passed to NOMAD as \code{MAX_EVAL}. Supplying both
+    \code{max.eval} and \code{opts$MAX_EVAL} with conflicting values is an
+    error.
   }
 
 
