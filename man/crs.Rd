@@ -282,8 +282,10 @@ These arguments control NOMAD mesh settings and optional solver controls.
     optional NOMAD total point-lookup budget. This is distinct from
     \code{max.bb.eval}: \code{max.bb.eval} limits true blackbox objective
     computations, while \code{max.eval} limits total NOMAD point lookups,
-    including cache hits. The default \code{NULL} preserves the historical
-    CRS behavior by using the selected route's \code{MAX_BB_EVAL} value as
+    including cache hits. The default \code{NULL} uses the selected route's
+    default \code{MAX_EVAL}: continuous-only NOMAD search uses
+    \code{MAX_EVAL = 1000}, while mixed/kernel NOMAD search retains the
+    historical route behavior of using \code{MAX_BB_EVAL} as
     \code{MAX_EVAL}. If supplied, \code{max.eval} is passed to NOMAD as
     \code{MAX_EVAL}. Supplying both \code{max.eval} and
     \code{opts$MAX_EVAL} with conflicting values is an error.

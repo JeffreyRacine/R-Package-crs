@@ -140,6 +140,7 @@ merge.nomad4.kr.defaults <- function(opts) {
 .crs_nomad_apply_eval_budget <- function(opts,
                                          max.bb.eval = NULL,
                                          max.eval = NULL,
+                                         default.max.eval = NULL,
                                          context = "NOMAD") {
   if (!.crs_nomad_has_option(opts, "MAX_BB_EVAL") && !is.null(max.bb.eval))
     opts$"MAX_BB_EVAL" <- max.bb.eval
@@ -156,6 +157,9 @@ merge.nomad4.kr.defaults <- function(opts) {
       ), call. = FALSE)
     }
     opts$"MAX_EVAL" <- max.eval
+  } else if (!.crs_nomad_has_option(opts, "MAX_EVAL") &&
+             !is.null(default.max.eval)) {
+    opts$"MAX_EVAL" <- default.max.eval
   } else if (!.crs_nomad_has_option(opts, "MAX_EVAL")) {
     max.bb <- .crs_nomad_option_value(opts, "MAX_BB_EVAL")
     max.bb.num <- suppressWarnings(as.numeric(max.bb))

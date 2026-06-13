@@ -157,11 +157,12 @@ These arguments control NOMAD search, cross-validation objective selection, and 
     optional NOMAD total point-lookup budget. This is distinct from
     \code{max.bb.eval}: \code{max.bb.eval} limits true blackbox objective
     computations, while \code{max.eval} limits total NOMAD point lookups,
-    including cache hits. The default \code{NULL} preserves historical
-    behavior by using \code{max.bb.eval} as \code{MAX_EVAL}. If supplied,
+    including cache hits. The default \code{NULL} uses
+    \code{MAX_EVAL = 1000} for this continuous-only NOMAD route. If supplied,
     \code{max.eval} is passed to NOMAD as \code{MAX_EVAL}. Supplying both
     \code{max.eval} and \code{opts$MAX_EVAL} with conflicting values is an
-    error.
+    error. Use an explicit \code{max.eval} or \code{opts$MAX_EVAL} to request a
+    larger point-lookup budget.
   }
 
 

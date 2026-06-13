@@ -478,6 +478,7 @@ frscvNOMAD <- function(xz,
   opts <- .crs_nomad_apply_eval_budget(opts,
                                        max.bb.eval = max.bb.eval,
                                        max.eval = max.eval,
+                                       default.max.eval = 1000,
                                        context = "frscvNOMAD")
   opts <- .crs_nomad_apply_source_geometry(
     opts,
