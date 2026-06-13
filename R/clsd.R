@@ -1114,7 +1114,9 @@ summary.clsd <- function(object,
   cat(paste("\nLog-likelihood: ", format(object$logl), sep=""))
   cat(paste("\nNumber of multistarts: ", format(object$nmulti), sep=""))
   .crs_nomad_summary_print(object)
-  cat(paste("\nEstimation time: ", formatC(object$ptm[1],digits=1,format="f"), " seconds",sep=""))
+  est.elapsed <- .crs_elapsed_seconds(object$ptm)
+  if (is.finite(est.elapsed))
+    cat(paste("\nEstimation time: ", formatC(est.elapsed,digits=1,format="f"), " seconds",sep=""))
 
   cat("\n\n")
 

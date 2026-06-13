@@ -1302,7 +1302,9 @@ summary.crs <- function(object,
     crs.sigtest(object)
   }
 
-  cat(paste("\nEstimation time: ", formatC(object$ptm[1],digits=1,format="f"), " seconds",sep=""))
+  est.elapsed <- .crs_elapsed_seconds(object$ptm)
+  if (is.finite(est.elapsed))
+    cat(paste("\nEstimation time: ", formatC(est.elapsed,digits=1,format="f"), " seconds",sep=""))
 
   cat("\n\n")
 

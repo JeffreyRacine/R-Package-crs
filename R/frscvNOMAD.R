@@ -612,6 +612,7 @@ frscvNOMAD <- function(xz,
         nomad.summary=.crs_nomad_attach_effective_options(
           .crs_nomad_summary_from_solution(nomad.solution),
           opts
-        ))
+        ),
+        cv.elapsed=as.numeric(difftime(t2, t1, units = "secs")))
 
 }
