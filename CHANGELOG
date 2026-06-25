@@ -1,4 +1,4 @@
-Changes from Version 0.15-44 to 0.15-45 [XX-XXX-XXXX]
+Changes from Version 0.15-44 to 0.15-45 [26-Jun-2026]
 
 * Opened the 0.15-45 development cycle after CRAN publication of 0.15-44.
   No `crs` source changes were required for the proactive `np`/`npRmpi`
@@ -47,6 +47,47 @@ Changes from Version 0.15-44 to 0.15-45 [XX-XXX-XXXX]
   settings in `frscvNOMAD` and `krscvNOMAD`, so displaying optimizer
   progress no longer changes the starting-value geometry or fitted
   result.
+
+* Implemented independent native NOMAD restart sweeps for CRS
+  cross-validation searches, preserving the public multistart contract while
+  keeping restart diagnostics explicit.
+
+* Added public `max.eval` control for NOMAD point-lookup budgets and changed
+  continuous-only `frscvNOMAD` defaults so `MAX_EVAL` and `MAX_BB_EVAL` can be
+  controlled independently. The default point-lookup cap for continuous-only
+  CRS NOMAD searches is now 1000, reducing duplicate NOMAD cache lookups while
+  preserving the established black-box evaluation budget.
+
+* Clarified NOMAD cache reporting in summaries. User-facing output now
+  distinguishes true objective/function evaluations from repeated NOMAD point
+  lookups avoided by the native cache.
+
+* Added elapsed-time recording and reporting for CRS cross-validation and
+  summary paths using wall-clock elapsed time rather than user CPU time.
+
+* Modernized CRS plot methods toward the current `np` plot interface,
+  including fitted mean/quantile displays by default, NP-style controls such
+  as `errors`, `band`, `B`, `output`, `data_overlay`, `data_rug`,
+  `perspective`, `renderer`, and `view`, plus base/rgl surface rendering,
+  data overlays, rugs, and asymptotic/inid/wild/bootstrap interval support
+  where defined.
+
+* Hardened CRS plot argument validation and public plot contracts. Legacy
+  CRS plot switches that no longer match the NP-style interface now fail fast
+  with guidance, and unsupported controls such as renderer-level switches are
+  rejected explicitly rather than silently ignored.
+
+* Added refit and wild-bootstrap interval support for CRS gradient plots and
+  aligned categorical/factor plot rendering, legends, and interval displays
+  more closely with `np`.
+
+* Repaired explicit derivative handling in `predict.crs()` so caller-supplied
+  derivative orders are honored rather than bypassed by the fitted-object fast
+  path.
+
+* Expanded the `crs_nomad_api` help page with package-author guidance,
+  direct C-callback and R-callback bridge skeletons, and explanations of the
+  most important native result fields.
 
 Changes from Version 0.15-43 to 0.15-44 [01-Jun-2026]
 

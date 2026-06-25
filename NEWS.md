@@ -44,6 +44,23 @@
   optimizer progress no longer changes the starting-value geometry or
   fitted result.
 
+* Implemented independent native NOMAD restart sweeps for CRS
+  cross-validation searches, preserving the public multistart contract while
+  keeping restart diagnostics explicit.
+
+* Added public `max.eval` control for NOMAD point-lookup budgets and changed
+  continuous-only `frscvNOMAD` defaults so `MAX_EVAL` and `MAX_BB_EVAL` can be
+  controlled independently. The default point-lookup cap for continuous-only
+  CRS NOMAD searches is now 1000, reducing duplicate NOMAD cache lookups while
+  preserving the established black-box evaluation budget.
+
+* Clarified NOMAD cache reporting in summaries. User-facing output now
+  distinguishes true objective/function evaluations from repeated NOMAD point
+  lookups avoided by the native cache.
+
+* Added elapsed-time recording and reporting for CRS cross-validation and
+  summary paths using wall-clock elapsed time rather than user CPU time.
+
 * Modernized CRS plot methods toward the current `np` plot interface.
   `plot.crs()` now displays fitted mean/quantile functions by default,
   accepts NP-style controls such as `errors`, `band`, `B`, `output`,
@@ -52,6 +69,19 @@
   extras, data overlays, rugs, and fitted-surface asymptotic/inid-bootstrap
   intervals. Legacy CRS plot switches such as `ci`, `mean`, `plot.rug`,
   and `plot.errors.*` now fail fast with NP-interface guidance.
+
+* Hardened CRS plot argument validation and public plot contracts. Unsupported
+  controls now fail explicitly rather than being silently ignored, categorical
+  plot rendering and legends are aligned more closely with `np`, and CRS
+  gradient plots now support refit and wild-bootstrap intervals where defined.
+
+* Repaired explicit derivative handling in `predict.crs()` so caller-supplied
+  derivative orders are honored rather than bypassed by the fitted-object fast
+  path.
+
+* Expanded the `crs_nomad_api` help page with package-author guidance,
+  direct C-callback and R-callback bridge skeletons, and explanations of the
+  most important native result fields.
 
 # crs 0.15-44
 
