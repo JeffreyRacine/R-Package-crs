@@ -7,6 +7,7 @@
 #include <atomic>
 #include <cerrno>
 #include <cctype>
+#include <chrono>
 #include <cmath>
 #include <cstdlib>
 #include <cstring>
@@ -39,6 +40,9 @@ namespace {
 
 std::atomic_flag native_solver_busy = ATOMIC_FLAG_INIT;
 
+struct NativeObserverRuntime;
+NativeObserverRuntime *active_observer_runtime = nullptr;
+
 struct NativeEvalContext {
   int callback_mode;
   crs_nomad_eval_fn eval;
@@ -47,6 +51,34 @@ struct NativeEvalContext {
   int callback_evaluations;
   int callback_failures;
   bool user_interrupted;
+  NativeObserverRuntime *observer_runtime;
+};
+
+struct NativeObserverRuntime {
+  crs_nomad_observer *observer;
+  NativeEvalContext *eval_context;
+  const double *current_x;
+  const double *current_outputs;
+  int current_n;
+  int current_m;
+  int current_evaluation;
+  bool outputs_available;
+  bool active;
+  std::chrono::steady_clock::time_point started;
+  std::chrono::steady_clock::time_point last_emit;
+
+  NativeObserverRuntime()
+    : observer(nullptr),
+      eval_context(nullptr),
+      current_x(nullptr),
+      current_outputs(nullptr),
+      current_n(0),
+      current_m(0),
+      current_evaluation(0),
+      outputs_available(false),
+      active(false),
+      started(),
+      last_emit() {}
 };
 
 struct NativeSolveHandles {
@@ -88,7 +120,9 @@ struct CrsNomadSolveState {
   const crs_nomad_problem *problem;
   crs_nomad_eval_fn eval;
   void *user_data;
+  crs_nomad_observer *observer;
   crs_nomad_result *result;
+  NativeObserverRuntime observer_runtime;
   NativeSolveHandles handles;
   int status;
   bool busy_acquired;
@@ -100,10 +134,12 @@ struct CrsNomadSolveState {
   CrsNomadSolveState(const crs_nomad_problem *problem_,
                      crs_nomad_eval_fn eval_,
                      void *user_data_,
+                     crs_nomad_observer *observer_,
                      crs_nomad_result *result_)
     : problem(problem_),
       eval(eval_),
       user_data(user_data_),
+      observer(observer_),
       result(result_),
       status(CRS_NOMAD_INTERNAL_ERROR),
       busy_acquired(false),
@@ -119,6 +155,55 @@ void set_message(crs_nomad_result *result, const char *message) {
   }
   std::strncpy(result->message, message, sizeof(result->message) - 1);
   result->message[sizeof(result->message) - 1] = '\0';
+}
+
+int fail(crs_nomad_result *result, crs_nomad_status status, const char *message);
+
+void set_observer_message(crs_nomad_observer *observer, const char *message) {
+  if (observer == nullptr) {
+    return;
+  }
+  std::strncpy(observer->message, message, sizeof(observer->message) - 1);
+  observer->message[sizeof(observer->message) - 1] = '\0';
+}
+
+void initialize_observer(crs_nomad_observer *observer) {
+  if (observer == nullptr) {
+    return;
+  }
+  observer->state = CRS_NOMAD_OBSERVER_ACTIVE;
+  observer->outcome = CRS_NOMAD_OBSERVER_OUTCOME_OK;
+  observer->events_emitted = 0;
+  observer->poll_calls = 0;
+  set_observer_message(observer, "");
+}
+
+int validate_observer(crs_nomad_observer *observer,
+                      crs_nomad_result *result) {
+  if (observer == nullptr) {
+    return CRS_NOMAD_OK;
+  }
+  if (observer->api_version != CRS_NOMAD_OBSERVER_API_VERSION) {
+    return fail(result,
+                CRS_NOMAD_INVALID_INPUT,
+                "unsupported observer api_version");
+  }
+  if (observer->struct_size < sizeof(crs_nomad_observer)) {
+    return fail(result,
+                CRS_NOMAD_INVALID_INPUT,
+                "observer struct_size is too small");
+  }
+  if (observer->observe == nullptr) {
+    return fail(result,
+                CRS_NOMAD_INVALID_INPUT,
+                "observer callback is null");
+  }
+  if (!std::isfinite(observer->interval_sec) || observer->interval_sec < 0.0) {
+    return fail(result,
+                CRS_NOMAD_INVALID_INPUT,
+                "observer interval_sec must be finite and nonnegative");
+  }
+  return CRS_NOMAD_OK;
 }
 
 void initialize_result(crs_nomad_result *result) {
@@ -672,6 +757,107 @@ bool native_eval_r(int nb_inputs,
   return true;
 }
 
+struct NativeObserverCallState {
+  NativeObserverRuntime *runtime;
+  int phase;
+  int status;
+  char message[256];
+};
+
+void native_observer_toplevel(void *data) {
+  NativeObserverCallState *state = static_cast<NativeObserverCallState *>(data);
+  state->status = CRS_NOMAD_OBSERVER_OUTCOME_ERROR;
+  state->message[0] = '\0';
+  if (state->runtime == nullptr || state->runtime->observer == nullptr) {
+    std::strncpy(state->message,
+                 "observer runtime is unavailable",
+                 sizeof(state->message) - 1);
+    state->message[sizeof(state->message) - 1] = '\0';
+    return;
+  }
+
+  R_CheckUserInterrupt();
+
+  crs_nomad_observer *observer = state->runtime->observer;
+  if (observer->observe == nullptr) {
+    std::strncpy(state->message,
+                 "observer callback is unavailable",
+                 sizeof(state->message) - 1);
+    state->message[sizeof(state->message) - 1] = '\0';
+    return;
+  }
+
+  crs_nomad_observer_event event;
+  event.phase = state->phase;
+  event.evaluation = state->runtime->current_evaluation;
+  event.n = state->runtime->current_n;
+  event.x = state->runtime->current_x;
+  event.m = state->runtime->outputs_available ? state->runtime->current_m : 0;
+  event.outputs = state->runtime->outputs_available ?
+    state->runtime->current_outputs : nullptr;
+  event.elapsed_sec = std::chrono::duration<double>(
+    std::chrono::steady_clock::now() - state->runtime->started
+  ).count();
+  state->status = observer->observe(&event,
+                                    observer->user_data,
+                                    state->message,
+                                    sizeof(state->message));
+}
+
+bool native_observer_due(const NativeObserverRuntime *runtime) {
+  if (runtime == nullptr || runtime->observer == nullptr || !runtime->active ||
+      runtime->observer->state != CRS_NOMAD_OBSERVER_ACTIVE ||
+      runtime->current_x == nullptr || runtime->current_n <= 0 ||
+      runtime->current_evaluation <= 0) {
+    return false;
+  }
+  if (runtime->observer->interval_sec <= 0.0) {
+    return true;
+  }
+  const double elapsed = std::chrono::duration<double>(
+    std::chrono::steady_clock::now() - runtime->last_emit
+  ).count();
+  return elapsed >= runtime->observer->interval_sec;
+}
+
+bool native_observer_emit(NativeObserverRuntime *runtime, int phase) {
+  if (!native_observer_due(runtime)) {
+    return false;
+  }
+
+  NativeObserverCallState state;
+  state.runtime = runtime;
+  state.phase = phase;
+  state.status = CRS_NOMAD_OBSERVER_OUTCOME_ERROR;
+  state.message[0] = '\0';
+
+  const bool toplevel_ok = R_ToplevelExec(native_observer_toplevel, &state);
+  crs_nomad_observer *observer = runtime->observer;
+  if (!toplevel_ok || state.status == CRS_NOMAD_OBSERVER_OUTCOME_INTERRUPT) {
+    observer->state = CRS_NOMAD_OBSERVER_INTERRUPT_PENDING;
+    observer->outcome = CRS_NOMAD_OBSERVER_OUTCOME_INTERRUPT;
+    set_observer_message(observer,
+                         state.message[0] == '\0' ?
+                           "observer interrupted by user" : state.message);
+    if (runtime->eval_context != nullptr) {
+      runtime->eval_context->user_interrupted = true;
+    }
+    return false;
+  }
+  if (state.status != CRS_NOMAD_OBSERVER_OUTCOME_OK) {
+    observer->state = CRS_NOMAD_OBSERVER_DISABLED_ERROR;
+    observer->outcome = CRS_NOMAD_OBSERVER_OUTCOME_ERROR;
+    set_observer_message(observer,
+                         state.message[0] == '\0' ?
+                           "observer callback failed" : state.message);
+    return false;
+  }
+
+  ++observer->events_emitted;
+  runtime->last_emit = std::chrono::steady_clock::now();
+  return true;
+}
+
 bool mark_callback_failure(int nb_outputs,
                            double *bb_outputs,
                            bool *count_eval,
@@ -712,6 +898,22 @@ bool native_eval_single(int nb_inputs,
   }
 
   ++context->callback_evaluations;
+  if (context->observer_runtime != nullptr && context->observer_runtime->active) {
+    context->observer_runtime->eval_context = context;
+    context->observer_runtime->current_x = x;
+    context->observer_runtime->current_outputs = nullptr;
+    context->observer_runtime->current_n = nb_inputs;
+    context->observer_runtime->current_m = nb_outputs;
+    context->observer_runtime->current_evaluation = context->callback_evaluations;
+    context->observer_runtime->outputs_available = false;
+    native_observer_emit(context->observer_runtime,
+                         CRS_NOMAD_OBSERVER_EVALUATION_BEGIN);
+    if (context->user_interrupted) {
+      context->observer_runtime->current_x = nullptr;
+      context->observer_runtime->eval_context = nullptr;
+      return false;
+    }
+  }
   bool ok = false;
   if (context->callback_mode == CRS_NOMAD_CALLBACK_R) {
     ok = native_eval_r(nb_inputs, x, nb_outputs, bb_outputs, context);
@@ -725,14 +927,32 @@ bool native_eval_single(int nb_inputs,
     if (count_eval != nullptr) {
       *count_eval = false;
     }
+    if (context->observer_runtime != nullptr) {
+      context->observer_runtime->current_x = nullptr;
+      context->observer_runtime->current_outputs = nullptr;
+      context->observer_runtime->outputs_available = false;
+      context->observer_runtime->eval_context = nullptr;
+    }
     return false;
   }
   if (!ok) {
+    if (context->observer_runtime != nullptr) {
+      context->observer_runtime->current_x = nullptr;
+      context->observer_runtime->current_outputs = nullptr;
+      context->observer_runtime->outputs_available = false;
+      context->observer_runtime->eval_context = nullptr;
+    }
     return mark_callback_failure(nb_outputs, bb_outputs, count_eval, context);
   }
 
   for (int i = 0; i < nb_outputs; ++i) {
     if (std::isnan(bb_outputs[i])) {
+      if (context->observer_runtime != nullptr) {
+        context->observer_runtime->current_x = nullptr;
+        context->observer_runtime->current_outputs = nullptr;
+        context->observer_runtime->outputs_available = false;
+        context->observer_runtime->eval_context = nullptr;
+      }
       return mark_callback_failure(nb_outputs, bb_outputs, count_eval, context);
     }
     if (!std::isfinite(bb_outputs[i]) &&
@@ -741,6 +961,26 @@ bool native_eval_single(int nb_inputs,
       bb_outputs[i] = std::copysign(std::numeric_limits<double>::max(),
                                     bb_outputs[i]);
     }
+  }
+  if (context->observer_runtime != nullptr && context->observer_runtime->active) {
+    context->observer_runtime->current_outputs = bb_outputs;
+    context->observer_runtime->outputs_available = true;
+    native_observer_emit(context->observer_runtime,
+                         CRS_NOMAD_OBSERVER_EVALUATION_END);
+    if (context->user_interrupted) {
+      context->observer_runtime->current_x = nullptr;
+      context->observer_runtime->current_outputs = nullptr;
+      context->observer_runtime->outputs_available = false;
+      context->observer_runtime->eval_context = nullptr;
+      if (count_eval != nullptr) {
+        *count_eval = false;
+      }
+      return false;
+    }
+    context->observer_runtime->current_x = nullptr;
+    context->observer_runtime->current_outputs = nullptr;
+    context->observer_runtime->outputs_available = false;
+    context->observer_runtime->eval_context = nullptr;
   }
   if (count_eval != nullptr) {
     *count_eval = true;
@@ -1090,7 +1330,8 @@ int solve_final_problem_with_starts(const crs_nomad_problem *problem,
                                     crs_nomad_eval_fn eval,
                                     void *user_data,
                                     crs_nomad_result *result,
-                                    NativeSolveHandles *handles) {
+                                    NativeSolveHandles *handles,
+                                    NativeObserverRuntime *observer_runtime) {
   NativeSolveHandles local_handles;
   if (handles == nullptr) {
     handles = &local_handles;
@@ -1122,6 +1363,7 @@ int solve_final_problem_with_starts(const crs_nomad_problem *problem,
   context.callback_evaluations = 0;
   context.callback_failures = 0;
   context.user_interrupted = false;
+  context.observer_runtime = observer_runtime;
 
   NOMAD::Step::resetUserInterrupt();
   const int run_flag = solveNomadProblem(nomad_result, pb, start_count, starts, &context);
@@ -1192,34 +1434,46 @@ int solve_final_problem(const crs_nomad_problem *problem,
                         crs_nomad_eval_fn eval,
                         void *user_data,
                         crs_nomad_result *result,
-                        NativeSolveHandles *handles) {
+                        NativeSolveHandles *handles,
+                        NativeObserverRuntime *observer_runtime) {
   int start_count = 1;
   const std::vector<double> starts = build_starting_points(problem, &start_count);
   crs_nomad_problem run_problem = *problem;
   if (problem->starts == nullptr && problem->start_count > 1) {
     run_problem.random_seed = 0;
   }
-  return solve_final_problem_with_starts(&run_problem, starts.data(), start_count, eval, user_data, result, handles);
+  return solve_final_problem_with_starts(&run_problem,
+                                         starts.data(),
+                                         start_count,
+                                         eval,
+                                         user_data,
+                                         result,
+                                         handles,
+                                         observer_runtime);
 }
 
 void preserve_r_callback_objects(CrsNomadSolveState *state) {
-  if (state == nullptr || state->problem == nullptr ||
-      state->problem->callback_mode != CRS_NOMAD_CALLBACK_R ||
-      state->user_data == nullptr) {
+  if (state == nullptr) {
     return;
   }
-  crs_nomad_r_callback *callback =
-    static_cast<crs_nomad_r_callback *>(state->user_data);
-  state->eval_f = reinterpret_cast<SEXP>(callback->eval_f);
-  state->environment = reinterpret_cast<SEXP>(callback->environment);
-  if (state->eval_f != nullptr && state->eval_f != R_NilValue) {
-    R_PreserveObject(state->eval_f);
-    state->preserved_eval = true;
+
+  if (state->problem != nullptr &&
+      state->problem->callback_mode == CRS_NOMAD_CALLBACK_R &&
+      state->user_data != nullptr) {
+    crs_nomad_r_callback *callback =
+      static_cast<crs_nomad_r_callback *>(state->user_data);
+    state->eval_f = reinterpret_cast<SEXP>(callback->eval_f);
+    state->environment = reinterpret_cast<SEXP>(callback->environment);
+    if (state->eval_f != nullptr && state->eval_f != R_NilValue) {
+      R_PreserveObject(state->eval_f);
+      state->preserved_eval = true;
+    }
+    if (state->environment != nullptr && state->environment != R_NilValue) {
+      R_PreserveObject(state->environment);
+      state->preserved_env = true;
+    }
   }
-  if (state->environment != nullptr && state->environment != R_NilValue) {
-    R_PreserveObject(state->environment);
-    state->preserved_env = true;
-  }
+
 }
 
 void release_r_callback_objects(CrsNomadSolveState *state) {
@@ -1246,7 +1500,9 @@ SEXP crs_nomad_solve_unwind_body(void *data) {
                                           state->eval,
                                           state->user_data,
                                           state->result,
-                                          &state->handles);
+                                          &state->handles,
+                                          state->observer == nullptr ?
+                                            nullptr : &state->observer_runtime);
     }
   } catch (...) {
     state->status = fail(state->result,
@@ -1259,6 +1515,17 @@ SEXP crs_nomad_solve_unwind_body(void *data) {
 void crs_nomad_solve_unwind_cleanup(void *data, Rboolean jump) {
   (void) jump;
   CrsNomadSolveState *state = static_cast<CrsNomadSolveState *>(data);
+  if (active_observer_runtime == &state->observer_runtime) {
+    active_observer_runtime = nullptr;
+  }
+  state->observer_runtime.active = false;
+  state->observer_runtime.eval_context = nullptr;
+  state->observer_runtime.current_x = nullptr;
+  state->observer_runtime.current_outputs = nullptr;
+  state->observer_runtime.outputs_available = false;
+  if (state->observer != nullptr) {
+    state->observer->state = CRS_NOMAD_OBSERVER_CLOSED;
+  }
   release_nomad_handles(&state->handles);
   release_r_callback_objects(state);
   if (state->busy_acquired) {
@@ -1319,6 +1586,99 @@ struct NativeTestEvalData {
   int evaluations;
 };
 
+struct NativeTestObserverData {
+  SEXP observe_f;
+  SEXP environment;
+};
+
+int native_test_observe(const crs_nomad_observer_event *event,
+                        void *user_data,
+                        char *message,
+                        size_t message_size) {
+  NativeTestObserverData *data =
+    static_cast<NativeTestObserverData *>(user_data);
+  if (event == nullptr || data == nullptr ||
+      data->observe_f == R_NilValue || !Rf_isFunction(data->observe_f)) {
+    if (message != nullptr && message_size > 0) {
+      std::snprintf(message, message_size, "native test observer is unavailable");
+    }
+    return CRS_NOMAD_OBSERVER_OUTCOME_ERROR;
+  }
+
+  const char *phase = "activity";
+  if (event->phase == CRS_NOMAD_OBSERVER_EVALUATION_BEGIN) {
+    phase = "evaluation_begin";
+  } else if (event->phase == CRS_NOMAD_OBSERVER_EVALUATION_END) {
+    phase = "evaluation_end";
+  }
+
+  int nprotect = 0;
+  SEXP event_r = PROTECT(Rf_allocVector(VECSXP, 5)); ++nprotect;
+  SEXP names = PROTECT(Rf_allocVector(STRSXP, 5)); ++nprotect;
+  SEXP x = PROTECT(Rf_allocVector(REALSXP, event->n)); ++nprotect;
+  for (int i = 0; i < event->n; ++i) {
+    REAL(x)[i] = event->x[i];
+  }
+  SEXP outputs = R_NilValue;
+  if (event->outputs != nullptr && event->m > 0) {
+    outputs = PROTECT(Rf_allocVector(REALSXP, event->m)); ++nprotect;
+    for (int i = 0; i < event->m; ++i) {
+      REAL(outputs)[i] = event->outputs[i];
+    }
+  }
+  SET_VECTOR_ELT(event_r, 0, Rf_mkString(phase));
+  SET_VECTOR_ELT(event_r, 1, Rf_ScalarInteger(event->evaluation));
+  SET_VECTOR_ELT(event_r, 2, x);
+  SET_VECTOR_ELT(event_r, 3, outputs);
+  SET_VECTOR_ELT(event_r, 4, Rf_ScalarReal(event->elapsed_sec));
+  const char *event_names[] = {"phase", "evaluation", "x", "outputs", "elapsed"};
+  for (int i = 0; i < 5; ++i) {
+    SET_STRING_ELT(names, i, Rf_mkChar(event_names[i]));
+  }
+  Rf_setAttrib(event_r, R_NamesSymbol, names);
+
+  SEXP call = PROTECT(Rf_lang2(data->observe_f, event_r)); ++nprotect;
+  int error = 0;
+  SEXP value = R_tryEvalSilent(call, data->environment, &error);
+  if (error) {
+    if (message != nullptr && message_size > 0) {
+      std::snprintf(message,
+                    message_size,
+                    "native test observer evaluation failed");
+    }
+    UNPROTECT(nprotect);
+    return CRS_NOMAD_OBSERVER_OUTCOME_ERROR;
+  }
+  value = PROTECT(value); ++nprotect;
+
+  int status = CRS_NOMAD_OBSERVER_OUTCOME_OK;
+  SEXP status_value = value;
+  SEXP message_value = R_NilValue;
+  if (Rf_isNewList(value) && XLENGTH(value) >= 1) {
+    status_value = VECTOR_ELT(value, 0);
+    if (XLENGTH(value) >= 2) {
+      message_value = VECTOR_ELT(value, 1);
+    }
+  }
+  if ((TYPEOF(status_value) == INTSXP || TYPEOF(status_value) == REALSXP) &&
+      XLENGTH(status_value) >= 1) {
+    const int candidate = Rf_asInteger(status_value);
+    if (candidate >= CRS_NOMAD_OBSERVER_OUTCOME_OK &&
+        candidate <= CRS_NOMAD_OBSERVER_OUTCOME_INTERRUPT) {
+      status = candidate;
+    }
+  }
+  if (message != nullptr && message_size > 0 &&
+      message_value != R_NilValue && XLENGTH(message_value) >= 1) {
+    SEXP message_char = Rf_asChar(message_value);
+    if (message_char != NA_STRING) {
+      std::snprintf(message, message_size, "%s", CHAR(message_char));
+    }
+  }
+  UNPROTECT(nprotect);
+  return status;
+}
+
 int native_test_eval(int n,
                      const double *x,
                      int m,
@@ -1329,6 +1689,13 @@ int native_test_eval(int n,
     return 1;
   }
   ++data->evaluations;
+  if (data->scenario == "poll") {
+    crs_nomad_observer_poll();
+  } else if (data->scenario == "many_polls") {
+    for (int i = 0; i < 8; ++i) {
+      crs_nomad_observer_poll();
+    }
+  }
   double objective = 0.0;
   for (int i = 0; i < n; ++i) {
     const double diff = x[i] - data->target;
@@ -1356,10 +1723,11 @@ int native_test_eval(int n,
 
 } // namespace
 
-extern "C" int crs_nomad_solve(
+int crs_nomad_solve_impl(
   const crs_nomad_problem *problem,
   crs_nomad_eval_fn eval,
   void *user_data,
+  crs_nomad_observer *observer,
   crs_nomad_result *result
 ) {
   if (result == nullptr) {
@@ -1373,15 +1741,31 @@ extern "C" int crs_nomad_solve(
   }
 
   initialize_result(result);
+  const int observer_status = validate_observer(observer, result);
+  if (observer_status != CRS_NOMAD_OK) {
+    return observer_status;
+  }
+  initialize_observer(observer);
 
-  CrsNomadSolveState state(problem, eval, user_data, result);
+  CrsNomadSolveState state(problem, eval, user_data, observer, result);
   preserve_r_callback_objects(&state);
 
   if (native_solver_busy.test_and_set(std::memory_order_acquire)) {
     release_r_callback_objects(&state);
+    if (observer != nullptr) {
+      observer->state = CRS_NOMAD_OBSERVER_CLOSED;
+    }
     return fail(result, CRS_NOMAD_INVALID_INPUT, "native NOMAD solver is already active");
   }
   state.busy_acquired = true;
+
+  if (observer != nullptr) {
+    state.observer_runtime.observer = observer;
+    state.observer_runtime.active = true;
+    state.observer_runtime.started = std::chrono::steady_clock::now();
+    state.observer_runtime.last_emit = state.observer_runtime.started;
+    active_observer_runtime = &state.observer_runtime;
+  }
 
   SEXP unwind_token = PROTECT(R_MakeUnwindCont());
   R_UnwindProtect(crs_nomad_solve_unwind_body,
@@ -1392,6 +1776,38 @@ extern "C" int crs_nomad_solve(
   SETCAR(unwind_token, R_NilValue);
   UNPROTECT(1);
   return state.status;
+}
+
+extern "C" int crs_nomad_solve(
+  const crs_nomad_problem *problem,
+  crs_nomad_eval_fn eval,
+  void *user_data,
+  crs_nomad_result *result
+) {
+  return crs_nomad_solve_impl(problem, eval, user_data, nullptr, result);
+}
+
+extern "C" int crs_nomad_solve_observed(
+  const crs_nomad_problem *problem,
+  crs_nomad_eval_fn eval,
+  void *user_data,
+  crs_nomad_observer *observer,
+  crs_nomad_result *result
+) {
+  return crs_nomad_solve_impl(problem, eval, user_data, observer, result);
+}
+
+extern "C" int crs_nomad_observer_poll(void) {
+  NativeObserverRuntime *runtime = active_observer_runtime;
+  if (runtime == nullptr || !runtime->active || runtime->observer == nullptr) {
+    return 0;
+  }
+  ++runtime->observer->poll_calls;
+  if (runtime->current_x == nullptr || runtime->current_n <= 0 ||
+      runtime->current_evaluation <= 0) {
+    return 0;
+  }
+  return native_observer_emit(runtime, CRS_NOMAD_OBSERVER_ACTIVITY) ? 1 : 0;
 }
 
 extern "C" SEXP crs_nomad_native_test_solve(SEXP spec) {
@@ -1525,10 +1941,37 @@ extern "C" SEXP crs_nomad_native_test_solve(SEXP spec) {
     user_data = &r_callback;
   }
 
-  const int status = crs_nomad_solve(&problem, eval, user_data, &result);
+  crs_nomad_observer observer;
+  std::memset(&observer, 0, sizeof(observer));
+  NativeTestObserverData observer_data;
+  observer_data.observe_f = R_NilValue;
+  observer_data.environment = R_GlobalEnv;
+  bool observed = false;
+  SEXP observe_f = list_element(spec, "observe_f");
+  if (Rf_isFunction(observe_f)) {
+    SEXP observe_env = list_element(spec, "observe_env");
+    if (observe_env == R_NilValue || TYPEOF(observe_env) != ENVSXP) {
+      observe_env = R_GlobalEnv;
+    }
+    SEXP interval_s = list_element(spec, "observe_interval");
+    double interval = (interval_s == R_NilValue || XLENGTH(interval_s) < 1) ?
+      0.0 : Rf_asReal(interval_s);
+    observer.api_version = CRS_NOMAD_OBSERVER_API_VERSION;
+    observer.struct_size = sizeof(observer);
+    observer_data.observe_f = observe_f;
+    observer_data.environment = observe_env;
+    observer.observe = native_test_observe;
+    observer.user_data = &observer_data;
+    observer.interval_sec = interval;
+    observed = true;
+  }
 
-  SEXP out = PROTECT(Rf_allocVector(VECSXP, 14)); ++nprotect;
-  SEXP names = PROTECT(Rf_allocVector(STRSXP, 14)); ++nprotect;
+  const int status = observed ?
+    crs_nomad_solve_observed(&problem, eval, user_data, &observer, &result) :
+    crs_nomad_solve(&problem, eval, user_data, &result);
+
+  SEXP out = PROTECT(Rf_allocVector(VECSXP, 19)); ++nprotect;
+  SEXP names = PROTECT(Rf_allocVector(STRSXP, 19)); ++nprotect;
   SEXP sol = PROTECT(Rf_allocVector(REALSXP, n)); ++nprotect;
   SEXP bbout = PROTECT(Rf_allocVector(REALSXP, m)); ++nprotect;
   for (int i = 0; i < n; ++i) {
@@ -1552,6 +1995,11 @@ extern "C" SEXP crs_nomad_native_test_solve(SEXP spec) {
   SET_VECTOR_ELT(out, 11, Rf_ScalarInteger(result.total_evaluations));
   SET_VECTOR_ELT(out, 12, Rf_ScalarInteger(result.solution_count));
   SET_VECTOR_ELT(out, 13, Rf_ScalarInteger(test_data.evaluations));
+  SET_VECTOR_ELT(out, 14, Rf_ScalarInteger(observed ? observer.state : CRS_NOMAD_OBSERVER_OFF));
+  SET_VECTOR_ELT(out, 15, Rf_ScalarInteger(observed ? observer.outcome : CRS_NOMAD_OBSERVER_OUTCOME_OK));
+  SET_VECTOR_ELT(out, 16, Rf_ScalarInteger(observed ? observer.events_emitted : 0));
+  SET_VECTOR_ELT(out, 17, Rf_ScalarInteger(observed ? observer.poll_calls : 0));
+  SET_VECTOR_ELT(out, 18, Rf_mkString(observed ? observer.message : ""));
 
   const char *out_names[] = {
     "status",
@@ -1567,9 +2015,14 @@ extern "C" SEXP crs_nomad_native_test_solve(SEXP spec) {
     "cache_size",
     "total_evaluations",
     "solution_count",
-    "test_evaluations"
+    "test_evaluations",
+    "observer_state",
+    "observer_outcome",
+    "observer_events",
+    "observer_polls",
+    "observer_message"
   };
-  for (int i = 0; i < 14; ++i) {
+  for (int i = 0; i < 19; ++i) {
     SET_STRING_ELT(names, i, Rf_mkChar(out_names[i]));
   }
   Rf_setAttrib(out, R_NamesSymbol, names);

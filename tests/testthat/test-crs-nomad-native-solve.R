@@ -61,6 +61,102 @@ test_that("native R callback helper distinguishes success, errors, and interrupt
   expect_match(intr[[3]], "simulated interrupt")
 })
 
+test_that("observed native solves preserve legacy numerical and accounting results", {
+  spec <- native_nomad_spec(
+    x0 = c(0, 0),
+    lower = c(-1, -1),
+    upper = c(1, 1),
+    input_type = c(0L, 0L),
+    output_type = 0L,
+    options = c(MAX_BB_EVAL = "25")
+  )
+
+  legacy <- native_nomad_solve(spec)
+  events <- list()
+  observed <- native_nomad_solve(c(
+    spec,
+    list(
+      observe_f = function(event) events[[length(events) + 1L]] <<- event,
+      observe_interval = 0
+    )
+  ))
+
+  fields <- c(
+    "status", "result_status", "nomad_run_flag", "objective", "solution",
+    "outputs", "blackbox_evaluations", "callback_evaluations", "cache_hits",
+    "cache_size", "total_evaluations", "solution_count", "test_evaluations"
+  )
+  expect_identical(observed[fields], legacy[fields])
+  expect_identical(observed$observer_state, 4L)
+  expect_identical(observed$observer_outcome, 0L)
+  expect_gt(observed$observer_events, 0L)
+  expect_length(events, observed$observer_events)
+  expect_true(all(vapply(events, function(x) {
+    identical(names(x), c("phase", "evaluation", "x", "outputs", "elapsed"))
+  }, logical(1))))
+  expect_true(all(diff(vapply(events, `[[`, integer(1), "evaluation")) >= 0L))
+})
+
+test_that("cooperative observer polling emits activity without changing a solve", {
+  events <- list()
+  result <- native_nomad_solve(native_nomad_spec(
+    scenario = "poll",
+    observe_f = function(event) events[[length(events) + 1L]] <<- event,
+    observe_interval = 0,
+    options = c(MAX_BB_EVAL = "10")
+  ))
+
+  expect_identical(result$status, 0L)
+  expect_identical(result$observer_state, 4L)
+  expect_identical(result$observer_outcome, 0L)
+  expect_gt(result$observer_polls, 0L)
+  expect_true("activity" %in% vapply(events, `[[`, character(1), "phase"))
+})
+
+test_that("ordinary observer errors disable observation but preserve the solve", {
+  spec <- native_nomad_spec(options = c(MAX_BB_EVAL = "15"))
+  legacy <- native_nomad_solve(spec)
+  observed <- native_nomad_solve(c(
+    spec,
+    list(
+      observe_f = function(event) list(1L, "intentional observer failure"),
+      observe_interval = 0
+    )
+  ))
+
+  fields <- c(
+    "status", "result_status", "nomad_run_flag", "objective", "solution",
+    "outputs", "blackbox_evaluations", "callback_evaluations", "cache_hits",
+    "cache_size", "total_evaluations", "solution_count", "test_evaluations"
+  )
+  expect_identical(observed[fields], legacy[fields])
+  expect_identical(observed$observer_state, 4L)
+  expect_identical(observed$observer_outcome, 1L)
+  expect_match(observed$observer_message, "intentional observer failure")
+
+  next_solve <- native_nomad_solve(spec)
+  expect_identical(next_solve[fields], legacy[fields])
+})
+
+test_that("observer interrupts stop safely and do not poison the next solve", {
+  interrupted <- native_nomad_solve(native_nomad_spec(
+    observe_f = function(event) list(2L, "simulated observer interrupt"),
+    observe_interval = 0,
+    options = c(MAX_BB_EVAL = "15")
+  ))
+
+  expect_identical(interrupted$status, 2L)
+  expect_identical(interrupted$result_status, 2L)
+  expect_identical(interrupted$observer_state, 4L)
+  expect_identical(interrupted$observer_outcome, 2L)
+  expect_match(interrupted$observer_message, "simulated observer interrupt")
+
+  good <- native_nomad_solve(native_nomad_spec(
+    options = c(MAX_BB_EVAL = "15")
+  ))
+  expect_identical(good$status, 0L)
+})
+
 test_that("crs_nomad_solve succeeds through the direct C callback bridge", {
   res <- native_nomad_solve(native_nomad_spec(
     x0 = c(0, 0),

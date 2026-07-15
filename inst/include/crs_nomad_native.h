@@ -8,6 +8,7 @@ extern "C" {
 #endif
 
 #define CRS_NOMAD_API_VERSION 1
+#define CRS_NOMAD_OBSERVER_API_VERSION 1
 
 typedef enum {
   CRS_NOMAD_OK = 0,
@@ -51,6 +52,62 @@ typedef struct {
   void *eval_f;
   void *environment;
 } crs_nomad_r_callback;
+
+typedef enum {
+  CRS_NOMAD_OBSERVER_OFF = 0,
+  CRS_NOMAD_OBSERVER_ACTIVE = 1,
+  CRS_NOMAD_OBSERVER_DISABLED_ERROR = 2,
+  CRS_NOMAD_OBSERVER_INTERRUPT_PENDING = 3,
+  CRS_NOMAD_OBSERVER_CLOSED = 4
+} crs_nomad_observer_state;
+
+typedef enum {
+  CRS_NOMAD_OBSERVER_OUTCOME_OK = 0,
+  CRS_NOMAD_OBSERVER_OUTCOME_ERROR = 1,
+  CRS_NOMAD_OBSERVER_OUTCOME_INTERRUPT = 2
+} crs_nomad_observer_outcome;
+
+typedef enum {
+  CRS_NOMAD_OBSERVER_EVALUATION_BEGIN = 0,
+  CRS_NOMAD_OBSERVER_ACTIVITY = 1,
+  CRS_NOMAD_OBSERVER_EVALUATION_END = 2
+} crs_nomad_observer_phase;
+
+typedef struct {
+  int phase;
+  int evaluation;
+  int n;
+  const double *x;
+  int m;
+  const double *outputs;
+  double elapsed_sec;
+} crs_nomad_observer_event;
+
+typedef int (*crs_nomad_observe_fn)(
+  const crs_nomad_observer_event *event,
+  void *user_data,
+  char *message,
+  size_t message_size
+);
+
+typedef struct {
+  int api_version;
+  size_t struct_size;
+  crs_nomad_observe_fn observe;
+  void *user_data;
+  /* Minimum visible interval in seconds. Zero requests every available event. */
+  double interval_sec;
+  /* Provider-owned output fields. Callers initialize them to zero. */
+  int state;
+  int outcome;
+  int events_emitted;
+  int poll_calls;
+  char message[256];
+  void *reserved_ptr1;
+  void *reserved_ptr2;
+  int reserved_int1;
+  int reserved_int2;
+} crs_nomad_observer;
 
 typedef struct {
   int api_version;
@@ -127,6 +184,16 @@ typedef int (*crs_nomad_solve_fn)(
   crs_nomad_result *result
 );
 
+typedef int (*crs_nomad_solve_observed_fn)(
+  const crs_nomad_problem *problem,
+  crs_nomad_eval_fn eval,
+  void *user_data,
+  crs_nomad_observer *observer,
+  crs_nomad_result *result
+);
+
+typedef int (*crs_nomad_observer_poll_fn)(void);
+
 /*
  * Package-author native NOMAD API.
  *
@@ -186,6 +253,40 @@ int crs_nomad_solve(
   void *user_data,
   crs_nomad_result *result
 );
+
+/*
+ * Opt-in observed native NOMAD solve.
+ *
+ * A null observer is equivalent to crs_nomad_solve(). Observation is strictly
+ * out-of-band: it cannot change black-box outputs, count_eval, feasibility,
+ * cache state, stopping controls, or result recovery. Observation callbacks
+ * run synchronously on R's main thread through a protected crs trampoline.
+ * Ordinary observer errors disable observation while allowing the numerical
+ * solve to continue. User interrupts request an orderly NOMAD stop.
+ *
+ * The observer receives a borrowed event whose x and outputs pointers remain
+ * valid only for the duration of the callback. outputs is non-null only for an
+ * evaluation-end event. The callback returns a crs_nomad_observer_outcome and
+ * may place a diagnostic in message. It must not throw or long-jump across the
+ * C ABI. A consumer that enters R should trap ordinary R errors itself; an
+ * untrapped user interrupt is caught by the provider trampoline.
+ */
+int crs_nomad_solve_observed(
+  const crs_nomad_problem *problem,
+  crs_nomad_eval_fn eval,
+  void *user_data,
+  crs_nomad_observer *observer,
+  crs_nomad_result *result
+);
+
+/*
+ * Cooperative activity poll for a currently active observed solve. This is a
+ * no-op outside a native objective callback or when no update is due. It never
+ * prints directly and never long-jumps through the caller.
+ *
+ * Return value: 1 when an observer was entered successfully, 0 otherwise.
+ */
+int crs_nomad_observer_poll(void);
 
 #ifdef __cplusplus
 }

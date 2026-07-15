@@ -49,4 +49,8 @@ void R_init_crs(DllInfo *dll)
     R_useDynamicSymbols(dll, FALSE);
     R_RegisterCCallable("crs", "crs_nomad_solve",
                         (DL_FUNC) crs_nomad_solve);
+    R_RegisterCCallable("crs", "crs_nomad_solve_observed",
+                        (DL_FUNC) crs_nomad_solve_observed);
+    R_RegisterCCallable("crs", "crs_nomad_observer_poll",
+                        (DL_FUNC) crs_nomad_observer_poll);
 }
