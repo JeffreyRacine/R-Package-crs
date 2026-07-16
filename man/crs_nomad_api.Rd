@@ -265,10 +265,25 @@ SEXP my_nomad_solve_r_callback(SEXP eval_f, SEXP eval_env, SEXP x0_s)
   R callback bridge users must ensure the R function and environment stored in
   \code{crs_nomad_r_callback} remain protected for the duration of
   \code{crs_nomad_solve}.  R errors are trapped and reported as callback
-  failures.  R callbacks are main-thread callbacks; explicit
+  failures, with the first trapped R diagnostic retained in the fixed-capacity
+  result message.  R callbacks are main-thread callbacks; explicit
   \code{NB_THREADS_PARALLEL_EVAL > 1} is rejected for R callbacks, including
   when supplied through \file{nomad.opt}.  Use the default or set it explicitly
   to \code{1}.
+}
+\section{Interrupt Semantics}{
+  Serial consumers normally leave interrupt ownership at
+  \code{CRS_NOMAD_INTERRUPT_OWNERSHIP_DEFAULT}.  The solve-scoped handler
+  records only signal-safe state; NOMAD consumes it from ordinary solver
+  control flow, performs native cleanup, restores the previous process handler,
+  and returns \code{CRS_NOMAD_INTERRUPTED}.  If a callback failure occurs
+  before the same solve is interrupted, the interrupt status takes precedence.
+
+  Lockstep consumers such as MPI-backed packages may use
+  \code{CRS_NOMAD_INTERRUPT_OWNERSHIP_EXTERNAL}.  They must own protected
+  polling and defer any R unwind until a rank-common synchronization boundary.
+  This option does not add synchronization, messages, or payloads inside
+  \pkg{crs}.
 }
 \section{Numeric And Option Semantics}{
   \code{random_seed > 0} sets NOMAD's \code{SEED}.  When \pkg{crs} generates

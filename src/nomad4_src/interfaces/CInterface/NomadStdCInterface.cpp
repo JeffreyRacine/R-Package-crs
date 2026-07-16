@@ -82,9 +82,15 @@ public:
 
     ~NomadSignalHandlerGuard()
     {
+        restore();
+    }
+
+    void restore()
+    {
         if (_installed)
         {
             std::signal(SIGINT, _previous);
+            _installed = false;
         }
     }
 
@@ -875,6 +881,13 @@ int solveNomadProblem(const NomadResult result,
         runFlag = -8;
     }
 
+    // The solve-scoped handler is restored before cleanup. Consume any SIGINT
+    // latched during result recovery before cleanup resets NOMAD's globals.
+    signal_guard.restore();
+    if (NOMAD::Step::getUserInterrupt())
+    {
+        runFlag = -5;
+    }
     cleanup_nomad_state();
     return runFlag;
 }

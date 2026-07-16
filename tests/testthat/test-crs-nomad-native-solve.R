@@ -139,22 +139,48 @@ test_that("ordinary observer errors disable observation but preserve the solve",
 })
 
 test_that("observer interrupts stop safely and do not poison the next solve", {
-  interrupted <- native_nomad_solve(native_nomad_spec(
-    observe_f = function(event) list(2L, "simulated observer interrupt"),
-    observe_interval = 0,
-    options = c(MAX_BB_EVAL = "15")
-  ))
+  output <- capture.output(
+    interrupted <- native_nomad_solve(native_nomad_spec(
+      observe_f = function(event) list(2L, "simulated observer interrupt"),
+      observe_interval = 0,
+      options = c(MAX_BB_EVAL = "15")
+    )),
+    type = "output"
+  )
 
   expect_identical(interrupted$status, 4L)
   expect_identical(interrupted$result_status, 4L)
   expect_identical(interrupted$observer_state, 4L)
   expect_identical(interrupted$observer_outcome, 2L)
   expect_match(interrupted$observer_message, "simulated observer interrupt")
+  expect_false(any(grepl("NOMAD caught User interruption", output, fixed = TRUE)))
 
   good <- native_nomad_solve(native_nomad_spec(
     options = c(MAX_BB_EVAL = "15")
   ))
   expect_identical(good$status, 0L)
+})
+
+test_that("observer interrupts stop at the requested evaluation checkpoint", {
+  threshold <- 5L
+  interrupted <- native_nomad_solve(native_nomad_spec(
+    x0 = rep(0, 5L),
+    lower = rep(-1, 5L),
+    upper = rep(1, 5L),
+    input_type = rep(0L, 5L),
+    observe_f = function(event) {
+      if (event$evaluation >= threshold) {
+        return(list(2L, "checkpoint interrupt"))
+      }
+      0L
+    },
+    observe_interval = 0,
+    options = c(MAX_BB_EVAL = "1000")
+  ))
+
+  expect_identical(interrupted$status, 4L)
+  expect_identical(interrupted$nomad_run_flag, -5L)
+  expect_lte(interrupted$callback_evaluations, threshold + 2L)
 })
 
 test_that("thrown observer errors remain fail-open", {
@@ -324,7 +350,7 @@ test_that("R callback errors do not poison the next native solve", {
 
   expect_equal(bad$status, 2L)
   expect_equal(bad$result_status, 2L)
-  expect_match(bad$message, "callback", ignore.case = TRUE)
+  expect_match(bad$message, "intentional native R callback failure", fixed = TRUE)
 
   good <- native_nomad_solve(native_nomad_spec(
     mode = "r",

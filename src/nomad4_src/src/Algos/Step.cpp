@@ -61,6 +61,9 @@
 /*-----------------------------------*/
 bool NOMAD::Step::_userInterrupt = false;
 bool NOMAD::Step::_userTerminate = false;
+volatile std::sig_atomic_t NOMAD::Step::_pendingSignalCount = 0;
+bool NOMAD::Step::_signalInterruptReported = false;
+bool NOMAD::Step::_signalTerminateReported = false;
 
 
 // IMPORTANT
@@ -80,26 +83,37 @@ bool NOMAD::Step::_showWarnings = true;
 /*---------------------------------------------------------*/
 void NOMAD::Step::userInterrupt(int signalValue)
 {
-    Rprintf("\nNOMAD caught User interruption.\n");
-    if (_userInterrupt)
+    (void) signalValue;
+    const std::sig_atomic_t pending = _pendingSignalCount;
+    if (pending < 2)
     {
-        // This is the 2nd CTRL-C. Terminate.
-        Rprintf("Terminate NOMAD.\n");
-        setUserTerminate();
-        throw NOMAD::UserTerminateException(__FILE__, __LINE__, "User termination");
+        _pendingSignalCount = pending + 1;
     }
-    else
-    {
-        Rprintf("Please wait...\n");
-        // Some steps will check for _userInterrupt and then call
-        // hotRestartOnUserInterrupt(). Here we are in a static method
-        // so we cannot call it.
-    }
+}
 
+void NOMAD::Step::requestUserInterrupt()
+{
     // Set this stop reason to be tested by EvaluatorControl
     NOMAD::AllStopReasons::set(NOMAD::BaseStopType::HOT_RESTART);
+    _userInterrupt = true;
+}
 
-    NOMAD::Step::_userInterrupt = true;
+void NOMAD::Step::processPendingSignal()
+{
+    const std::sig_atomic_t pending = _pendingSignalCount;
+    if (pending >= 1 && !_signalInterruptReported)
+    {
+        Rprintf("\nNOMAD caught User interruption.\nPlease wait...\n");
+        requestUserInterrupt();
+        _signalInterruptReported = true;
+    }
+    if (pending >= 2 && !_signalTerminateReported)
+    {
+        Rprintf("Terminate NOMAD.\n");
+        setUserTerminate();
+        NOMAD::AllStopReasons::set(NOMAD::BaseStopType::CTRL_C);
+        _signalTerminateReported = true;
+    }
 }
 
 
@@ -675,6 +689,7 @@ void NOMAD::Step::updateParentSuccess()
 
 bool NOMAD::Step::getUserTerminate()
 {
+    processPendingSignal();
     return _userTerminate;
 }
 
@@ -690,12 +705,16 @@ void NOMAD::Step::resetUserTerminate()
 
 bool NOMAD::Step::getUserInterrupt()
 {
+    processPendingSignal();
     return _userInterrupt;
 }
 
 void  NOMAD::Step::resetUserInterrupt()
 {
     _userInterrupt = false;
+    _pendingSignalCount = 0;
+    _signalInterruptReported = false;
+    _signalTerminateReported = false;
 }
 
 

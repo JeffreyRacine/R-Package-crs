@@ -153,9 +153,11 @@ typedef struct {
   const void *reserved_ptr2;
   /*
    * Interrupt ownership policy. Zero retains NOMAD's solve-scoped SIGINT
-   * handler. CRS_NOMAD_INTERRUPT_OWNERSHIP_EXTERNAL leaves the process signal
-   * handler untouched so a lockstep consumer can defer interruption to its
-   * own rank-common boundary. Other values are invalid.
+   * handler. The handler records only signal-safe state; NOMAD consumes that
+   * state at an ordinary solver checkpoint and restores the prior process
+   * handler before returning. CRS_NOMAD_INTERRUPT_OWNERSHIP_EXTERNAL leaves
+   * the process signal handler untouched so a lockstep consumer can defer
+   * interruption to its own rank-common boundary. Other values are invalid.
    */
   int reserved_int1;
   int reserved_int2;
@@ -254,7 +256,8 @@ typedef int (*crs_nomad_observer_poll_fn)(void);
  *   duration of this call.
  * - eval_f must be an R function accepting a numeric vector and returning a
  *   numeric vector of length at least m.
- * - R errors are trapped and returned as callback failures.
+ * - R errors are trapped and returned as callback failures. The first trapped
+ *   R diagnostic is retained, subject to the fixed result-message capacity.
  * - R callbacks run on R's main thread. Explicit
  *   NB_THREADS_PARALLEL_EVAL > 1 is rejected for R callbacks, including when
  *   supplied through nomad.opt. Use the default or set it explicitly to 1.
@@ -276,8 +279,10 @@ int crs_nomad_solve(
  * Ordinary observer errors disable observation while allowing the numerical
  * solve to continue. An explicit CRS_NOMAD_OBSERVER_OUTCOME_INTERRUPT requests
  * an orderly NOMAD stop and returns CRS_NOMAD_INTERRUPTED only after native
- * cleanup has completed. A generic protected R unwind is treated as an
- * observer error, not inferred to be a user interrupt.
+ * cleanup has completed. Interrupt status takes precedence over an earlier
+ * callback failure when the same solve is subsequently interrupted. A generic
+ * protected R unwind is treated as an observer error, not inferred to be a
+ * user interrupt.
  *
  * The observer receives a borrowed event whose x and outputs pointers remain
  * valid only for the duration of the callback. outputs is non-null only for an

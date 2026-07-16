@@ -6,6 +6,13 @@
   black-box output memory. Existing native ABI values, layouts, callable names,
   and successful-run numerical/accounting behavior are unchanged.
 
+* Hardened native NOMAD interruption by limiting the operating-system signal
+  handler to signal-safe state capture, consuming interruption from ordinary
+  solver control flow, and restoring the prior process handler before return.
+  Interrupt status now takes precedence when a solve is interrupted after an
+  earlier callback failure, and R-callback failures retain their first trapped
+  diagnostic in the bounded result message.
+
 # crs 0.15-45
 
 * Improved mixed-data cross-validation efficiency by using a guarded

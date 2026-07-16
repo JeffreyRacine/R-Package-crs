@@ -9,6 +9,7 @@
 #include <cctype>
 #include <chrono>
 #include <cmath>
+#include <cstdio>
 #include <cstdlib>
 #include <cstring>
 #include <ctime>
@@ -50,8 +51,25 @@ struct NativeEvalContext {
   const int *bb_output_type;
   int callback_evaluations;
   int callback_failures;
+  char first_callback_error[256];
   bool user_interrupted;
   NativeObserverRuntime *observer_runtime;
+};
+
+class NomadInterruptHandlerPolicyGuard {
+public:
+  explicit NomadInterruptHandlerPolicyGuard(bool enabled)
+    : previous_(setNomadInterruptHandlerEnabled(enabled)) {}
+
+  ~NomadInterruptHandlerPolicyGuard() {
+    setNomadInterruptHandlerEnabled(previous_);
+  }
+
+  NomadInterruptHandlerPolicyGuard(const NomadInterruptHandlerPolicyGuard&) = delete;
+  NomadInterruptHandlerPolicyGuard& operator=(const NomadInterruptHandlerPolicyGuard&) = delete;
+
+private:
+  bool previous_;
 };
 
 struct NativeObserverRuntime {
@@ -703,6 +721,19 @@ void native_eval_r_toplevel(void *data) {
     return;
   }
   if (wrapped_status != 0) {
+    if (wrapped_status == 2 && context->first_callback_error[0] == '\0' &&
+        Rf_length(wrapped) >= 3) {
+      SEXP message = VECTOR_ELT(wrapped, 2);
+      if (message != R_NilValue && Rf_length(message) >= 1) {
+        SEXP message_char = Rf_asChar(message);
+        if (message_char != NA_STRING) {
+          std::snprintf(context->first_callback_error,
+                        sizeof(context->first_callback_error),
+                        "%s",
+                        CHAR(message_char));
+        }
+      }
+    }
     UNPROTECT(nprotect);
     return;
   }
@@ -840,6 +871,7 @@ bool native_observer_emit(NativeObserverRuntime *runtime, int phase) {
     if (runtime->eval_context != nullptr) {
       runtime->eval_context->user_interrupted = true;
     }
+    NOMAD::Step::requestUserInterrupt();
     return false;
   }
   if (!toplevel_ok || state.status != CRS_NOMAD_OBSERVER_OUTCOME_OK) {
@@ -1364,15 +1396,19 @@ int solve_final_problem_with_starts(const crs_nomad_problem *problem,
   context.bb_output_type = problem->bb_output_type;
   context.callback_evaluations = 0;
   context.callback_failures = 0;
+  context.first_callback_error[0] = '\0';
   context.user_interrupted = false;
   context.observer_runtime = observer_runtime;
 
   NOMAD::Step::resetUserInterrupt();
-  const bool previous_interrupt_handler = setNomadInterruptHandlerEnabled(
-    problem->reserved_int1 != CRS_NOMAD_INTERRUPT_OWNERSHIP_EXTERNAL
-  );
-  const int run_flag = solveNomadProblem(nomad_result, pb, start_count, starts, &context);
-  setNomadInterruptHandlerEnabled(previous_interrupt_handler);
+  NOMAD::Step::resetUserTerminate();
+  int run_flag = -8;
+  {
+    NomadInterruptHandlerPolicyGuard interrupt_policy(
+      problem->reserved_int1 != CRS_NOMAD_INTERRUPT_OWNERSHIP_EXTERNAL
+    );
+    run_flag = solveNomadProblem(nomad_result, pb, start_count, starts, &context);
+  }
   result->nomad_run_flag = run_flag;
   result->blackbox_evaluations = context.callback_evaluations;
   result->callback_evaluations = context.callback_evaluations;
@@ -1392,8 +1428,7 @@ int solve_final_problem_with_starts(const crs_nomad_problem *problem,
   }
   result->solution_count = nb_solutions;
   result->feasible_solution = feasibleSolutionsFoundNomadResult(nomad_result) ? 1 : 0;
-  if (context.user_interrupted ||
-      (run_flag == -5 && context.callback_failures == 0)) {
+  if (context.user_interrupted || run_flag == -5) {
     NOMAD::Step::resetUserInterrupt();
     return fail(result, CRS_NOMAD_INTERRUPTED, "native NOMAD solve interrupted by user");
   }
@@ -1421,7 +1456,17 @@ int solve_final_problem_with_starts(const crs_nomad_problem *problem,
   }
 
   if (context.callback_failures > 0) {
-    return fail(result, CRS_NOMAD_CALLBACK_FAILURE, "native callback reported evaluation failure");
+    if (context.first_callback_error[0] != '\0') {
+      char message[384];
+      std::snprintf(message,
+                    sizeof(message),
+                    "native callback reported evaluation failure: %s",
+                    context.first_callback_error);
+      return fail(result, CRS_NOMAD_CALLBACK_FAILURE, message);
+    }
+    return fail(result,
+                CRS_NOMAD_CALLBACK_FAILURE,
+                "native callback reported evaluation failure");
   }
 
   if (nb_solutions > 0 && (run_flag == 1 || run_flag == 0 || run_flag == -6)) {

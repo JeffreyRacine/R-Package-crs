@@ -58,6 +58,8 @@
 #include "../Type/EvalType.hpp"
 #include "../Util/AllStopReasons.hpp"
 
+#include <csignal>
+
 #include "../nomad_nsbegin.hpp"
 
 class Step;
@@ -72,6 +74,12 @@ class DLL_ALGO_API Step
 private:
     static bool _userInterrupt; ///< Interrupt NOMAD if Ctrl-C is pressed.
     static bool _userTerminate; ///< Terminate NOMAD if Ctrl-C is pressed again.
+    static volatile std::sig_atomic_t _pendingSignalCount; ///< SIGINT latch.
+    static bool _signalInterruptReported; ///< First latched SIGINT consumed.
+    static bool _signalTerminateReported; ///< Repeated latched SIGINT consumed.
+
+    /// Consume signal state from ordinary solver control flow.
+    static void processPendingSignal();
     
     // By default, always show warnings.
     // Some warnings do not need to be shown in some cases, ex. unit tests.
@@ -240,6 +248,9 @@ public:
      */
     static void userInterrupt(int signalValue);
     static void debugSegFault(int signalValue);
+
+    /// Request the same orderly stop without entering through a signal handler.
+    static void requestUserInterrupt();
 
     static bool getUserInterrupt(); // not inline (dll pb)
 
