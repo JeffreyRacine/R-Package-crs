@@ -60,8 +60,50 @@
 
 #include <R_ext/Print.h>
 
+#include <csignal>
 #include <limits>
 #include <string>
+
+namespace {
+
+bool nomad_interrupt_handler_enabled = true;
+
+class NomadSignalHandlerGuard {
+public:
+    NomadSignalHandlerGuard()
+        : _installed(false), _previous(SIG_DFL)
+    {
+        if (nomad_interrupt_handler_enabled)
+        {
+            _previous = std::signal(SIGINT, NOMAD::Step::userInterrupt);
+            _installed = (_previous != SIG_ERR);
+        }
+    }
+
+    ~NomadSignalHandlerGuard()
+    {
+        if (_installed)
+        {
+            std::signal(SIGINT, _previous);
+        }
+    }
+
+    NomadSignalHandlerGuard(const NomadSignalHandlerGuard&) = delete;
+    NomadSignalHandlerGuard& operator=(const NomadSignalHandlerGuard&) = delete;
+
+private:
+    bool _installed;
+    void (*_previous)(int);
+};
+
+} // namespace
+
+bool setNomadInterruptHandlerEnabled(bool enabled)
+{
+    const bool previous = nomad_interrupt_handler_enabled;
+    nomad_interrupt_handler_enabled = enabled;
+    return previous;
+}
 
 struct NomadProblemInfo
 {
@@ -460,13 +502,17 @@ public:
             // call function
             eval_ok = _bb_single(_nbInputs, bb_inputs, _nbOutputs, bb_outputs, &countEval, _data_user_ptr);
 
-            // collect outputs parameters
-            std::string bbo;
-            for (size_t i = 0; i < (size_t)_nbOutputs; ++i)
+            // Failed callbacks leave the point unevaluated. In particular, do
+            // not read or publish an output buffer the callback did not fill.
+            if (eval_ok)
             {
-                bbo += std::to_string(bb_outputs[i]) + " ";
+                std::string bbo;
+                for (size_t i = 0; i < (size_t)_nbOutputs; ++i)
+                {
+                    bbo += std::to_string(bb_outputs[i]) + " ";
+                }
+                x.setBBO(bbo,_bbOutputTypeList, _evalType);
             }
-            x.setBBO(bbo,_bbOutputTypeList, _evalType);
         }
         catch (std::exception &e)
         {
@@ -537,13 +583,17 @@ public:
             // call function
             eval_ok = _bb_single(_nbInputs, bb_inputs, _nbOutputs, bb_outputs, &countEval, _data_user_ptr);
 
-            // collect outputs parameters
-            std::string bbo;
-            for (size_t i = 0; i < (size_t)_nbOutputs; ++i)
+            // Failed callbacks leave the point unevaluated. In particular, do
+            // not read or publish an output buffer the callback did not fill.
+            if (eval_ok)
             {
-                bbo += std::to_string(bb_outputs[i]) + " ";
+                std::string bbo;
+                for (size_t i = 0; i < (size_t)_nbOutputs; ++i)
+                {
+                    bbo += std::to_string(bb_outputs[i]) + " ";
+                }
+                x.setBBO(bbo,_bbOutputTypeList, _evalType);
             }
-            x.setBBO(bbo,_bbOutputTypeList, _evalType);
         }
         catch (std::exception &e)
         {
@@ -592,12 +642,15 @@ public:
             // collect outputs parameters
             for (size_t index = 0; index < block_size; ++index)
             {
-                std::string bbo;
-                for (size_t i = 0; i < (size_t)_nbOutputs; ++i)
+                if (eval_ok[index])
                 {
-                    bbo += std::to_string(bb_outputs[index * _nbOutputs + i]) + " ";
+                    std::string bbo;
+                    for (size_t i = 0; i < (size_t)_nbOutputs; ++i)
+                    {
+                        bbo += std::to_string(bb_outputs[index * _nbOutputs + i]) + " ";
+                    }
+                    block[index]->setBBO(bbo, _bbOutputTypeList, _evalType);
                 }
-                block[index]->setBBO(bbo, _bbOutputTypeList, _evalType);
             }
 
             // Set evalOk and countEval
@@ -716,6 +769,7 @@ int solveNomadProblem(const NomadResult result,
 
     // Resolution
     int runFlag = -8;
+    NomadSignalHandlerGuard signal_guard;
     try
     {
         NOMAD::MainStep TheMainStep;

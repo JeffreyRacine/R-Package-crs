@@ -1,5 +1,11 @@
 # crs 0.15-46
 
+* Finalized the observed native NOMAD interface so explicit user interruption
+  has a dedicated status after orderly native cleanup, ordinary observer
+  errors remain fail-open, and a failed callback cannot expose unwritten
+  black-box output memory. Existing native ABI values, layouts, callable names,
+  and successful-run numerical/accounting behavior are unchanged.
+
 # crs 0.15-45
 
 * Improved mixed-data cross-validation efficiency by using a guarded

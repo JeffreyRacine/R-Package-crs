@@ -9,12 +9,15 @@ extern "C" {
 
 #define CRS_NOMAD_API_VERSION 1
 #define CRS_NOMAD_OBSERVER_API_VERSION 1
+#define CRS_NOMAD_INTERRUPT_OWNERSHIP_DEFAULT 0
+#define CRS_NOMAD_INTERRUPT_OWNERSHIP_EXTERNAL 1
 
 typedef enum {
   CRS_NOMAD_OK = 0,
   CRS_NOMAD_INVALID_INPUT = 1,
   CRS_NOMAD_CALLBACK_FAILURE = 2,
-  CRS_NOMAD_INTERNAL_ERROR = 3
+  CRS_NOMAD_INTERNAL_ERROR = 3,
+  CRS_NOMAD_INTERRUPTED = 4
 } crs_nomad_status;
 
 typedef enum {
@@ -148,6 +151,12 @@ typedef struct {
   int read_nomad_opt_file;
   const void *reserved_ptr1;
   const void *reserved_ptr2;
+  /*
+   * Interrupt ownership policy. Zero retains NOMAD's solve-scoped SIGINT
+   * handler. CRS_NOMAD_INTERRUPT_OWNERSHIP_EXTERNAL leaves the process signal
+   * handler untouched so a lockstep consumer can defer interruption to its
+   * own rank-common boundary. Other values are invalid.
+   */
   int reserved_int1;
   int reserved_int2;
 } crs_nomad_problem;
@@ -225,9 +234,12 @@ typedef int (*crs_nomad_observer_poll_fn)(void);
  *   NOMAD as infeasibility signals.
  * - Thread affinity: crs_nomad_solve must be called from the main R
  *   interpreter thread of the current process. It uses R's PROTECT stack,
- *   R_UnwindProtect, and R_CheckUserInterrupt, and must not be invoked from
+ *   R_UnwindProtect, and protected interrupt handling, and must not be invoked from
  *   native worker threads, signal handlers, or any context that is not
  *   executing through R or a registered native call on that thread.
+ * - Interrupt ownership defaults to NOMAD for serial consumers. A consumer
+ *   using CRS_NOMAD_INTERRUPT_OWNERSHIP_EXTERNAL must provide its own protected
+ *   polling and must not unwind until its external synchronization boundary.
  *
  * Callback contract for CRS_NOMAD_CALLBACK_C:
  * - return 0 on successful evaluation, nonzero on evaluation failure.
@@ -262,14 +274,18 @@ int crs_nomad_solve(
  * cache state, stopping controls, or result recovery. Observation callbacks
  * run synchronously on R's main thread through a protected crs trampoline.
  * Ordinary observer errors disable observation while allowing the numerical
- * solve to continue. User interrupts request an orderly NOMAD stop.
+ * solve to continue. An explicit CRS_NOMAD_OBSERVER_OUTCOME_INTERRUPT requests
+ * an orderly NOMAD stop and returns CRS_NOMAD_INTERRUPTED only after native
+ * cleanup has completed. A generic protected R unwind is treated as an
+ * observer error, not inferred to be a user interrupt.
  *
  * The observer receives a borrowed event whose x and outputs pointers remain
  * valid only for the duration of the callback. outputs is non-null only for an
  * evaluation-end event. The callback returns a crs_nomad_observer_outcome and
  * may place a diagnostic in message. It must not throw or long-jump across the
- * C ABI. A consumer that enters R should trap ordinary R errors itself; an
- * untrapped user interrupt is caught by the provider trampoline.
+ * C ABI. A consumer that enters R must trap and report user interruption
+ * explicitly; unclassified protected R unwinds disable observation and leave
+ * the numerical solve intact.
  */
 int crs_nomad_solve_observed(
   const crs_nomad_problem *problem,

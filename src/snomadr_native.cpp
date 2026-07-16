@@ -748,7 +748,7 @@ bool native_eval_r(int nb_inputs,
   state.user_interrupted = false;
 
   const bool toplevel_ok = R_ToplevelExec(native_eval_r_toplevel, &state);
-  if ((!toplevel_ok || state.user_interrupted) && context != nullptr) {
+  if (state.user_interrupted && context != nullptr) {
     context->user_interrupted = true;
   }
   if (!toplevel_ok || !state.ok) {
@@ -775,8 +775,6 @@ void native_observer_toplevel(void *data) {
     state->message[sizeof(state->message) - 1] = '\0';
     return;
   }
-
-  R_CheckUserInterrupt();
 
   crs_nomad_observer *observer = state->runtime->observer;
   if (observer->observe == nullptr) {
@@ -833,7 +831,7 @@ bool native_observer_emit(NativeObserverRuntime *runtime, int phase) {
 
   const bool toplevel_ok = R_ToplevelExec(native_observer_toplevel, &state);
   crs_nomad_observer *observer = runtime->observer;
-  if (!toplevel_ok || state.status == CRS_NOMAD_OBSERVER_OUTCOME_INTERRUPT) {
+  if (state.status == CRS_NOMAD_OBSERVER_OUTCOME_INTERRUPT) {
     observer->state = CRS_NOMAD_OBSERVER_INTERRUPT_PENDING;
     observer->outcome = CRS_NOMAD_OBSERVER_OUTCOME_INTERRUPT;
     set_observer_message(observer,
@@ -844,7 +842,7 @@ bool native_observer_emit(NativeObserverRuntime *runtime, int phase) {
     }
     return false;
   }
-  if (state.status != CRS_NOMAD_OBSERVER_OUTCOME_OK) {
+  if (!toplevel_ok || state.status != CRS_NOMAD_OBSERVER_OUTCOME_OK) {
     observer->state = CRS_NOMAD_OBSERVER_DISABLED_ERROR;
     observer->outcome = CRS_NOMAD_OBSERVER_OUTCOME_ERROR;
     set_observer_message(observer,
@@ -1030,6 +1028,10 @@ int validate_problem(const crs_nomad_problem *problem,
   }
   if (problem->max_eval < 0) {
     return fail(result, CRS_NOMAD_INVALID_INPUT, "problem max_eval must be nonnegative");
+  }
+  if (problem->reserved_int1 != CRS_NOMAD_INTERRUPT_OWNERSHIP_DEFAULT &&
+      problem->reserved_int1 != CRS_NOMAD_INTERRUPT_OWNERSHIP_EXTERNAL) {
+    return fail(result, CRS_NOMAD_INVALID_INPUT, "unsupported interrupt ownership policy");
   }
   if (result->solution == nullptr) {
     return fail(result, CRS_NOMAD_INVALID_INPUT, "result solution pointer is null");
@@ -1366,7 +1368,11 @@ int solve_final_problem_with_starts(const crs_nomad_problem *problem,
   context.observer_runtime = observer_runtime;
 
   NOMAD::Step::resetUserInterrupt();
+  const bool previous_interrupt_handler = setNomadInterruptHandlerEnabled(
+    problem->reserved_int1 != CRS_NOMAD_INTERRUPT_OWNERSHIP_EXTERNAL
+  );
   const int run_flag = solveNomadProblem(nomad_result, pb, start_count, starts, &context);
+  setNomadInterruptHandlerEnabled(previous_interrupt_handler);
   result->nomad_run_flag = run_flag;
   result->blackbox_evaluations = context.callback_evaluations;
   result->callback_evaluations = context.callback_evaluations;
@@ -1386,9 +1392,10 @@ int solve_final_problem_with_starts(const crs_nomad_problem *problem,
   }
   result->solution_count = nb_solutions;
   result->feasible_solution = feasibleSolutionsFoundNomadResult(nomad_result) ? 1 : 0;
-  if (context.user_interrupted) {
+  if (context.user_interrupted ||
+      (run_flag == -5 && context.callback_failures == 0)) {
     NOMAD::Step::resetUserInterrupt();
-    return fail(result, CRS_NOMAD_CALLBACK_FAILURE, "native R callback interrupted by user");
+    return fail(result, CRS_NOMAD_INTERRUPTED, "native NOMAD solve interrupted by user");
   }
   if (nb_solutions > 0) {
     std::vector<double> best_x(static_cast<std::size_t>(problem->n), 0.0);

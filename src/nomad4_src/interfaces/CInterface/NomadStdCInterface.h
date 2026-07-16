@@ -99,6 +99,9 @@ DLL_EXPORT_API int solveNomadProblem(
     const double *x0s,            // starting points
     NomadUserDataPtr user_data_ptr); // Anything, responsibility is on you
 
+// Configure solve-scoped SIGINT ownership. Returns the previous setting.
+DLL_EXPORT_API bool setNomadInterruptHandlerEnabled(bool enabled);
+
 // Nomad result API
 
 DLL_EXPORT_API NomadResult createNomadResult(void);

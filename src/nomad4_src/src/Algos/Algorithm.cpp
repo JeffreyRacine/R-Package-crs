@@ -120,11 +120,6 @@ void NOMAD::Algorithm::init()
         evc->setComputeType(computeType);
     }
 
-    /** Step::userInterrupt() will be called if CTRL-C is pressed.
-     * Currently, the main thread will wait for all evaluations to be complete.
-     */
-    signal(SIGINT, userInterrupt);
-
 }
 
 

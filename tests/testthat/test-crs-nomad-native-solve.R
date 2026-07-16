@@ -145,8 +145,8 @@ test_that("observer interrupts stop safely and do not poison the next solve", {
     options = c(MAX_BB_EVAL = "15")
   ))
 
-  expect_identical(interrupted$status, 2L)
-  expect_identical(interrupted$result_status, 2L)
+  expect_identical(interrupted$status, 4L)
+  expect_identical(interrupted$result_status, 4L)
   expect_identical(interrupted$observer_state, 4L)
   expect_identical(interrupted$observer_outcome, 2L)
   expect_match(interrupted$observer_message, "simulated observer interrupt")
@@ -155,6 +155,26 @@ test_that("observer interrupts stop safely and do not poison the next solve", {
     options = c(MAX_BB_EVAL = "15")
   ))
   expect_identical(good$status, 0L)
+})
+
+test_that("thrown observer errors remain fail-open", {
+  spec <- native_nomad_spec(options = c(MAX_BB_EVAL = "15"))
+  legacy <- native_nomad_solve(spec)
+  observed <- native_nomad_solve(c(
+    spec,
+    list(
+      observe_f = function(event) stop("observer boom"),
+      observe_interval = 0
+    )
+  ))
+
+  fields <- c(
+    "status", "result_status", "nomad_run_flag", "objective", "solution",
+    "outputs", "blackbox_evaluations", "callback_evaluations", "cache_hits",
+    "cache_size", "total_evaluations", "solution_count", "test_evaluations"
+  )
+  expect_identical(observed[fields], legacy[fields])
+  expect_identical(observed$observer_outcome, 1L)
 })
 
 test_that("crs_nomad_solve succeeds through the direct C callback bridge", {
