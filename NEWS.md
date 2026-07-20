@@ -1,5 +1,14 @@
 # crs 0.15-46
 
+* Corrected fitted-value centering throughout `crsivderiv()` so both empirical
+  terms of the Equation (14) adjoint use the same fitted conditional-residual
+  vector. The initial adjoint had centered its second term on the raw
+  residual, while the constructed-residual route also averaged the wrong
+  constructed quantity in both initial and recursive states. This can
+  materially change derivative trajectories, stopping states, and fitted
+  curves, and removes catastrophic finite-sample losses observed under the
+  malformed constructed-residual adjoint.
+
 * Made `crsivderiv()` Landweber-Fridman states coherent with the estimator
   definition: iteration `N` now stores the matched derivative, integrated
   curve, and stopping criterion after exactly `N` updates. Explicit

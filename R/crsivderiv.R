@@ -324,8 +324,6 @@ crsivderiv.default <- function(y,
   ## Now we repeat this entire process using mu = y - phi.0 rather
   ## than y
 
-  mean.mu <- mean(mu)
-
   if(smooth.residuals) {
 
     ## Smooth residuals (smooth of (y-phi) on w)
@@ -391,7 +389,7 @@ crsivderiv.default <- function(y,
 
     ## We again require the mean of the fitted values
 
-    mean.predicted.model.E.mu.w <- mean(E.y.w) - mean(predicted.model.E.mu.w)
+    mean.predicted.model.E.mu.w <- mean(predicted.model.E.mu.w)
 
   }
 
@@ -406,7 +404,10 @@ crsivderiv.default <- function(y,
 
   survivor.weighted.average <- mean.predicted.model.E.mu.w - cdf.weighted.average
 
-  T.star.mu <- (survivor.weighted.average-S.z*mean.mu)/f.z
+  ## Equation (14) uses the same fitted conditional-residual vector in both
+  ## empirical-adjoint terms.
+
+  T.star.mu <- (survivor.weighted.average-S.z*mean.predicted.model.E.mu.w)/f.z
 
   phi.prime.mat <- matrix(NA, nrow=length(phi.prime), ncol=iterate.max)
   phi.mat <- matrix(NA, nrow=length(phi), ncol=iterate.max)
@@ -504,7 +505,7 @@ crsivderiv.default <- function(y,
 
       ## We again require the mean of the fitted values
 
-      mean.predicted.model.E.mu.w <- mean(E.y.w) - mean(predicted.model.E.mu.w)
+      mean.predicted.model.E.mu.w <- mean(predicted.model.E.mu.w)
 
     }
 

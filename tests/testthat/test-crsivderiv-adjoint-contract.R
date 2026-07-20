@@ -24,3 +24,29 @@ test_that("crsivderiv Gaussian integral helper preserves matrix right-hand sides
   expect_equal(observed, expected, tolerance = 1e-14)
   expect_identical(dim(observed), c(2L, 2L))
 })
+
+test_that("crsivderiv centers both adjoint terms on the fitted residual", {
+  src_path <- testthat::test_path("..", "..", "R", "crsivderiv.R")
+  skip_if_not(file.exists(src_path), "source R files unavailable")
+  src <- paste(readLines(src_path, warn = FALSE), collapse = "\n")
+
+  fitted_second_term <- gregexpr(
+    "S\\.z\\*mean\\.predicted\\.model\\.E\\.mu\\.w",
+    src,
+    perl = TRUE
+  )[[1L]]
+  fitted_mean <- gregexpr(
+    "mean\\.predicted\\.model\\.E\\.mu\\.w <- mean\\(predicted\\.model\\.E\\.mu\\.w\\)",
+    src,
+    perl = TRUE
+  )[[1L]]
+
+  expect_length(fitted_second_term[fitted_second_term > 0L], 2L)
+  expect_length(fitted_mean[fitted_mean > 0L], 4L)
+  expect_false(grepl("S\\.z\\*mean\\.mu", src, perl = TRUE))
+  expect_false(grepl(
+    "mean\\(E\\.y\\.w\\) - mean\\(predicted\\.model\\.E\\.mu\\.w\\)",
+    src,
+    perl = TRUE
+  ))
+})
