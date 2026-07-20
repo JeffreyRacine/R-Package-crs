@@ -116,8 +116,9 @@ These arguments control iteration, residual smoothing, starting values, and stop
 }
 
 \item{iterate.max}{
-  an integer indicating the maximum number of iterations permitted
-  before termination occurs when using Landweber-Fridman iteration
+  an integer indicating the maximum number of complete positive-index
+  Landweber-Fridman states that may be evaluated. The initialization state
+  \eqn{N=0} is not counted
 }
 
 \item{penalize.iteration}{ a logical value indicating whether to
@@ -137,11 +138,11 @@ These arguments control iteration, residual smoothing, starting values, and stop
   be overridden by providing \code{starting.values} below)
 }  
 
-\item{starting.values}{ a value indicating whether to commence
-  Landweber-Fridman assuming
-  \eqn{\varphi'_{-1}=starting.values}{phi'[-1]=starting.values} (proper
-  Landweber-Fridman) or instead begin from \eqn{E(y|z)} (defaults to
-  \code{NULL}, see details below)
+\item{starting.values}{ optional derivative values for the initialization
+  state \eqn{\varphi'_0}{phi'[0]}. They are used directly before the first
+  reported update; no hidden \eqn{-1} to \eqn{0} update is performed. When
+  \code{NULL}, the initialization is obtained from \eqn{E(y|z)} according to
+  \code{start.from} (see details below)
 }
 
 \item{stop.on.increase}{
@@ -178,6 +179,18 @@ Further NOMAD and CRS controls are passed through to lower-level routines.
 
 }
 \details{
+
+  The iteration index has a single meaning throughout the returned object.
+  The initialization consists of \eqn{\varphi'_0}{phi'[0]} and its centered
+  integral \eqn{\varphi_0}{phi[0]}. For \eqn{N=1,2,\ldots}, one adjoint
+  update produces \eqn{\varphi'_N}{phi'[N]}, integration and centering produce
+  \eqn{\varphi_N}{phi[N]}, and the residual at that same curve produces the
+  stopping value for state \eqn{N}. Thus column \eqn{N} of
+  \code{phi.prime.mat} and \code{phi.mat}, and element \eqn{N} of
+  \code{norm.stop}, always describe one coherent state. With
+  \code{penalize.iteration=TRUE}, that element is \eqn{N q_N}, where
+  \eqn{q_N} is the normalized squared residual criterion at
+  \eqn{\varphi_N}{phi[N]}.
 
   For Landweber-Fridman iteration, an optimal stopping rule based upon
   \eqn{||E(y|w)-E(\varphi_k(z,x)|w)||^2 }{||E(y|w)-E(phi(z,x)|w)||^2 }
@@ -252,6 +265,12 @@ Further NOMAD and CRS controls are passed through to lower-level routines.
     \code{crsivderiv} returns components \code{phi.prime}, \code{phi},
     \code{phi.prime.mat}, \code{phi.mat}, \code{num.iterations},
     \code{norm.stop}, \code{norm.value} and \code{convergence}.
+    \code{num.iterations} is the selected positive-index state, and
+    \code{phi.prime} and \code{phi} are taken from that same column of their
+    respective matrices. The matrices and \code{norm.stop} contain all
+    evaluated states, so their common length can exceed
+    \code{num.iterations} when a later evaluated state triggers stopping or
+    the stopping-rule selector chooses an earlier state.
     
 }
   

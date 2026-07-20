@@ -19,7 +19,13 @@ test_that("crsivderiv works with Landweber-Fridman", {
   expect_type(model$phi.prime, "double")
   expect_equal(length(model$phi), n)
   expect_equal(length(model$phi.prime), n)
-  expect_equal(ncol(model$phi.mat), model$num.iterations)
+  expect_equal(ncol(model$phi.mat), length(model$norm.stop))
+  expect_equal(ncol(model$phi.prime.mat), length(model$norm.stop))
+  expect_true(model$num.iterations >= 1L)
+  expect_true(model$num.iterations <= length(model$norm.stop))
+  expect_equal(model$phi, model$phi.mat[, model$num.iterations])
+  expect_equal(model$phi.prime,
+               model$phi.prime.mat[, model$num.iterations])
 })
 
 test_that("crsivderiv handles evaluation data correctly", {

@@ -1,5 +1,15 @@
 # crs 0.15-46
 
+* Made `crsivderiv()` Landweber-Fridman states coherent with the estimator
+  definition: iteration `N` now stores the matched derivative, integrated
+  curve, and stopping criterion after exactly `N` updates. Explicit
+  `starting.values` are the state used immediately before update 1, without a
+  hidden preliminary update. Returned `phi` and `phi.prime`, the reported
+  iteration, and the summary stopping value now all refer to the selected
+  state. This corrects the previous one-column mismatch between the curve and
+  derivative histories; results can change when that mismatch affected state
+  selection or extraction.
+
 * Corrected the private Gaussian integral operator used by `crsivderiv()` so
   the empirical adjoint applies the ordinary kernel CDF required by Equation
   (14) of Florens, Centorrino, and Racine. The helper had multiplied the CDF

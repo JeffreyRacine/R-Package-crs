@@ -197,9 +197,9 @@ crsivderiv.default <- function(y,
 
   set_status()
   if(is.null(x)) {
-    set_status(paste("Computing optimal smoothing for f(z) and S(z) for iteration 1"," of at most ", iterate.max,"...",sep=""))
+    set_status("Computing f(z) and S(z) for the initialization state...")
   } else {
-    set_status(paste("Computing optimal smoothing  f(z) and S(z) for iteration 1"," of at most ", iterate.max,"...",sep=""))
+    set_status("Computing f(z) and S(z) for the initialization state...")
   }
 
   ## The current derivative implementation only supports a continuous
@@ -217,9 +217,9 @@ crsivderiv.default <- function(y,
 
     set_status()
     if(is.null(x)) {
-      set_status(paste("Computing optimal smoothing for E(y|z) for iteration 1 of at most ", iterate.max,"...",sep=""))
+      set_status("Computing E(y|z) for the initialization state...")
     } else {
-      set_status(paste("Computing optimal smoothing  for E(y|z,x) for iteration 1 of at most ", iterate.max,"...",sep=""))
+      set_status("Computing E(y|z,x) for the initialization state...")
     }
 
     if(start.from == "Eyz") {
@@ -263,15 +263,13 @@ crsivderiv.default <- function(y,
     .crs_set_messages(crs.messages, TRUE)
   }
 
-  ## Step 1 - begin iteration - for this we require \varphi_0. To
-  ## compute \varphi_{0,i}, we require \mu_{0,i}. For j=0 (first
-  ## term in the series), \mu_{0,i} is Y_i.
+  ## Initialize the recursion at phi'_0 and its integrated curve phi_0.
 
   set_status()
   if(is.null(x)) {
-    set_status(paste("Computing optimal smoothing for E(y|w) (stopping rule) for iteration 1 of at most ", iterate.max,"...",sep=""))
+    set_status("Computing E(y|w) for the initialization state...")
   } else {
-    set_status(paste("Computing optimal smoothing  for E(y|w) (stopping rule) for iteration 1 of at most ", iterate.max,"...",sep=""))
+    set_status("Computing E(y|w) for the initialization state...")
   }
 
   ## NOTE - this presumes univariate z case... in general this would
@@ -307,8 +305,6 @@ crsivderiv.default <- function(y,
     znames.w <- model.E.y.w$znames
 
     E.y.w <- if(is.eval.train) fitted(model.E.y.w) else predict(model.E.y.w,newdata=evaldata,...)
-  norm.stop <- numeric()
-
   ## For the stopping rule, we require E.phi.w
 
   .crs_set_messages(crs.messages, FALSE)
@@ -399,8 +395,6 @@ crsivderiv.default <- function(y,
 
   }
 
-  norm.stop[1] <- sum(predicted.model.E.mu.w^2)/sum(E.y.w^2)
-
   ## Now we compute T^* applied to mu
 
   cdf.weighted.average <- .crsiv_gaussian_integral_apply(
@@ -414,29 +408,24 @@ crsivderiv.default <- function(y,
 
   T.star.mu <- (survivor.weighted.average-S.z*mean.mu)/f.z
 
-  ## Now we update phi.prime.0, this provides phi.prime.1, and now
-  ## we can iterate until convergence... note we replace phi.prime.0
-  ## with phi.prime.1 (i.e. overwrite phi.prime)
-
-  phi.prime <- phi.prime + constant*T.star.mu
-
   phi.prime.mat <- matrix(NA, nrow=length(phi.prime), ncol=iterate.max)
   phi.mat <- matrix(NA, nrow=length(phi), ncol=iterate.max)
-  phi.prime.mat[,1] <- phi.prime
-  phi.mat[,1] <- phi
+  norm.stop <- numeric(iterate.max)
 
-  ## This we iterate...
+  ## Column N records the complete state after N derivative updates:
+  ## phi_N, phi'_N, and the stopping rule evaluated at phi_N.
 
   convergence <- "ITERATE_MAX"
-  if (iterate.max > 1L) for (j in seq.int(2L, iterate.max)) {
+  N.evaluated <- 0L
+  for (N in seq_len(iterate.max)) {
 
-    ## Save previous run in case stop norm increases
+    phi.prime <- phi.prime + constant*T.star.mu
 
     set_status()
     if(is.null(x)) {
-      set_status(paste("Computing optimal smoothing and phi(z) for iteration ", j," of at most ", iterate.max,"...",sep=""))
+      set_status(paste("Computing optimal smoothing and phi(z) for iteration ", N," of at most ", iterate.max,"...",sep=""))
     } else {
-      set_status(paste("Computing optimal smoothing and phi(z,x) for iteration ", j," of at most ", iterate.max,"...",sep=""))
+      set_status(paste("Computing optimal smoothing and phi(z,x) for iteration ", N," of at most ", iterate.max,"...",sep=""))
     }
 
     ## NOTE - this presumes univariate z case... in general this would
@@ -520,26 +509,10 @@ crsivderiv.default <- function(y,
     }
 
     norm.raw <- sum(predicted.model.E.mu.w^2) / sum(E.y.w^2)
-    norm.stop[j] <- if (penalize.iteration) j * norm.raw else norm.raw
-
-    ## Now we compute T^* applied to mu
-
-    cdf.weighted.average <- .crsiv_gaussian_integral_apply(
-      z.train = z.kernel,
-      z.eval = zeval.kernel,
-      rhs = predicted.model.E.mu.w,
-      bw = bw
-    )
-
-    survivor.weighted.average <- mean.predicted.model.E.mu.w - cdf.weighted.average
-
-    T.star.mu <- (survivor.weighted.average-S.z*mean.predicted.model.E.mu.w)/f.z
-
-    ## Now we update, this provides phi.prime.1, and now we can iterate until convergence...
-
-    phi.prime <- phi.prime + constant*T.star.mu
-    phi.prime.mat[,j] <- phi.prime
-    phi.mat[,j] <- phi
+    norm.stop[N] <- if (penalize.iteration) N * norm.raw else norm.raw
+    phi.prime.mat[,N] <- phi.prime
+    phi.mat[,N] <- phi
+    N.evaluated <- N
 
     ## The number of iterations in LF is asymptotically equivalent to
     ## 1/alpha (where alpha is the regularization parameter in
@@ -553,25 +526,46 @@ crsivderiv.default <- function(y,
     ## N^0.5. Note that derivative estimation seems to require more
     ## iterations hence the heuristic sqrt(N)
 
-    if(j > round(sqrt(nrow(traindata)))  && !is.monotone.increasing(norm.stop)) {
+    should.break <- FALSE
+    if(N > round(sqrt(nrow(traindata))) &&
+       !is.monotone.increasing(norm.stop[seq_len(N)])) {
       ## If stopping rule criterion increases or we are below stopping
       ## tolerance then break
 
-      if(stop.on.increase && norm.stop[j] > norm.stop[j-1]) {
+      if(stop.on.increase && norm.stop[N] > norm.stop[N-1L]) {
         convergence <- "STOP_ON_INCREASE"
-        break()
+        should.break <- TRUE
       }
-      if(abs(norm.stop[j-1]-norm.stop[j]) < iterate.diff.tol) {
+      if(abs(norm.stop[N-1L]-norm.stop[N]) < iterate.diff.tol) {
         convergence <- "ITERATE_DIFF_TOL"
-        break()
+        should.break <- TRUE
       }
 
     }
 
+    if(should.break) break
+
+    ## The current state's residual supplies the adjoint for update N+1.
+    ## Do not compute it when state N is the terminal iterate.max state.
+
+    if(N < iterate.max) {
+      cdf.weighted.average <- .crsiv_gaussian_integral_apply(
+        z.train = z.kernel,
+        z.eval = zeval.kernel,
+        rhs = predicted.model.E.mu.w,
+        bw = bw
+      )
+
+      survivor.weighted.average <- mean.predicted.model.E.mu.w - cdf.weighted.average
+
+      T.star.mu <- (survivor.weighted.average-S.z*mean.predicted.model.E.mu.w)/f.z
+    }
+
   }
 
-  phi.mat <- phi.mat[, seq_along(norm.stop), drop = FALSE]
-  phi.prime.mat <- phi.prime.mat[, seq_along(norm.stop), drop = FALSE]
+  norm.stop <- norm.stop[seq_len(N.evaluated)]
+  phi.mat <- phi.mat[, seq_len(N.evaluated), drop = FALSE]
+  phi.prime.mat <- phi.prime.mat[, seq_len(N.evaluated), drop = FALSE]
 
   ## Extract minimum, and check for monotone increasing function and
   ## issue warning in that case. Otherwise allow for an increasing
@@ -589,13 +583,13 @@ crsivderiv.default <- function(y,
     #    phi <- starting.values.phi
     #    phi.prime <- starting.values.phi.prime
   }
-  j <- stop.pick$index
-  phi <- phi.mat[,j]
-  phi.prime <- phi.prime.mat[,j]
+  N.selected <- stop.pick$index
+  phi <- phi.mat[,N.selected]
+  phi.prime <- phi.prime.mat[,N.selected]
 
   set_status()
 
-  .crsiv_warn_iterate_max(display.warnings, j, iterate.max)
+  .crsiv_warn_iterate_max(display.warnings, N.evaluated, iterate.max)
 
   .crs_set_messages(crs.messages, FALSE)
   traindata$y <- traindata$y - (fitted(phi.0)-phi)
@@ -619,7 +613,7 @@ crsivderiv.default <- function(y,
   model$phi.prime <- phi.prime
   model$phi.mat <- phi.mat
   model$phi.prime.mat <- phi.prime.mat
-  model$num.iterations <- j
+  model$num.iterations <- N.selected
   model$norm.stop <- norm.stop
   model$norm.value <- norm.value
   model$convergence <- convergence
@@ -696,7 +690,7 @@ summary.crsivderiv <- function(object, ...) {
 
   cat(paste("\n\nRegularization method: Landweber-Fridman",sep=""))
   cat(paste("\nNumber of iterations: ", format(object$num.iterations), sep=""))
-  cat(paste("\nStopping rule value: ", format(object$norm.stop[length(object$norm.stop)],digits=8), sep=""))
+  cat(paste("\nStopping rule value: ", format(object$norm.stop[object$num.iterations],digits=8), sep=""))
 
   cat(paste("\nNumber of multistarts: ", format(object$nmulti), sep=""))
   .crs_nomad_summary_print(object)
