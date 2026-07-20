@@ -150,7 +150,7 @@ NZD_pos <- function(a) {
   }
 
   z.diff <- .crsiv_gaussian_z_matrix(z.train, z.eval, bw)
-  out <- (bw * stats::pnorm(z.diff)) %*% rhs / length(z.train)
+  out <- stats::pnorm(z.diff) %*% rhs / length(z.train)
 
   if (ncol(out) == 1L) {
     return(as.vector(out))

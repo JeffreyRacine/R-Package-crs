@@ -1,5 +1,12 @@
 # crs 0.15-46
 
+* Corrected the private Gaussian integral operator used by `crsivderiv()` so
+  the empirical adjoint applies the ordinary kernel CDF required by Equation
+  (14) of Florens, Centorrino, and Racine. The helper had multiplied the CDF
+  average by the continuous bandwidth, producing the same malformed scaling
+  implicated in `np` issue #57. Other spline fitting, bandwidth, stopping,
+  optimizer, and public helper behavior is unchanged.
+
 * Finalized the observed native NOMAD interface so explicit user interruption
   has a dedicated status after orderly native cleanup, ordinary observer
   errors remain fail-open, and a failed callback cannot expose unwritten
