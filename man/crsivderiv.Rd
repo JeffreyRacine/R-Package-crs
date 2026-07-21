@@ -1,6 +1,7 @@
 \name{crsivderiv}
 \alias{crsivderiv}
 \alias{crsivderiv.default}
+\alias{crsivderiv.formula}
 
 \title{
 Nonparametric Instrumental Derivatives
@@ -20,6 +21,8 @@ Nonparametric Instrumental Derivatives
 }
 \usage{
 crsivderiv(y, \dots)
+
+\method{crsivderiv}{formula}(y, data = NULL, subset, na.action, \dots)
 
 \method{crsivderiv}{default}(y,
            z,
@@ -49,8 +52,29 @@ crsivderiv(y, \dots)
 
 \arguments{
 \subsection{Data, Model Inputs And Formula Interface}{
-These arguments identify the response, endogenous variables, instruments, and exogenous covariates.
+These arguments identify the response, endogenous variable, instruments, and
+exogenous covariates. The formula interface uses
+\code{y ~ z | w} or \code{y ~ z | w | x}. Each partition may contain
+multiple additive terms and scalar transformations. Dot notation,
+interaction operators, offsets, and matrix-valued terms are not supported.
 }
+
+  \item{data}{
+    an optional data frame, list, or environment containing the variables in
+    the IV formula. When \code{data} is supplied, every formula variable must
+    be present in it; ambient variables do not fill missing columns
+  }
+
+  \item{subset}{
+    an optional specification of observations to retain when using the
+    formula interface
+  }
+
+  \item{na.action}{
+    a function specifying the action for missing observations when using the
+    formula interface. With \code{na.exclude}, \code{fitted()} and
+    \code{residuals()} restore omitted rows as \code{NA}
+  }
 
   \item{w}{
     a \eqn{q}-variate data frame of instruments. The data types may be
@@ -66,9 +90,9 @@ These arguments identify the response, endogenous variables, instruments, and ex
 
 
   \item{y}{
-    a one (1) dimensional numeric or integer vector of dependent data, each
-    element \eqn{i} corresponding to each observation (row) \eqn{i} of
-    \code{z}
+    either a one-dimensional numeric or integer response vector, with element
+    \eqn{i} corresponding to row \eqn{i} of \code{z}, or an IV formula of the
+    form \code{y ~ z | w} or \code{y ~ z | w | x}
   }
 
 
@@ -168,7 +192,12 @@ Further NOMAD and CRS controls are passed through to lower-level routines.
 }
 
 \item{...}{
-  additional arguments supplied to \code{\link{crs}}
+  additional arguments supplied to \code{\link{crs}}. In formula calls,
+  \code{weights} and observation-indexed \code{starting.values} are aligned
+  through the same model frame as the response and IV roles. Formula-time
+  evaluation arguments (\code{newdata}, \code{zeval}, \code{weval}, and
+  \code{xeval}) are deliberately not supported; use the native vector
+  interface for evaluation-grid fitting
 }
 
 
@@ -179,6 +208,18 @@ Further NOMAD and CRS controls are passed through to lower-level routines.
 
 }
 \details{
+
+  The formula method is a training-grid interface. It constructs one model
+  frame for the response, endogenous variable, instruments, optional
+  exogenous variables, weights, and observation-indexed starting values, then
+  calls the established native estimator once. Thus \code{subset}, missing
+  values, and row-indexed controls cannot acquire different row maps. Formula
+  fits support \code{fitted()}, \code{residuals()}, \code{predict()} without
+  \code{newdata}, \code{predict(..., deriv=1)} for the selected derivative,
+  \code{summary()}, and \code{plot()}. Arbitrary formula \code{newdata} is
+  deferred because evaluating a retained spline projection is not generally
+  the same operation as resolving the IV problem on a new grid. Native
+  objects retain their established post-fit CRS projection route.
 
   The iteration index has a single meaning throughout the returned object.
   The initialization consists of \eqn{\varphi'_0}{phi'[0]} and its centered
@@ -271,6 +312,16 @@ Further NOMAD and CRS controls are passed through to lower-level routines.
     evaluated states, so their common length can exceed
     \code{num.iterations} when a later evaluated state triggers stopping or
     the stopping-rule selector chooses an earlier state.
+
+    \code{fitted()} and \code{predict()} without \code{newdata} return the
+    selected structural state \code{phi}; \code{predict(..., deriv=1)} without
+    \code{newdata} returns the matching selected \code{phi.prime}. On a
+    training-grid fit, \code{residuals()} returns the original response minus
+    that same selected structural state. \code{summary()} returns a structured
+    \code{summary.crsivderiv} object. New objects also contain a namespaced
+    \code{iv} component recording the public IV call, role labels, row map,
+    original response, evaluation grid, and selected-state metadata; inherited
+    CRS fields are retained unchanged.
     
 }
   
@@ -327,7 +378,7 @@ further notice.
 ## <samuele.centorrino@univ-tlse1.fr>
 
 set.seed(42)
-n <- 1000
+n <- 500
 
 ## For trimming the plot (trim .5\% from each tail)
 
@@ -376,26 +427,18 @@ phi <- fun1
 ivdata <- data.frame(y,z,w,u,v)
 ivdata <- ivdata[order(ivdata$z),]
 rm(y,z,w,u,v)
-attach(ivdata)
 
-## Setting cv.threshold = 0 forces NOMAD search instead of exhaustive search
-## when no categorical predictors are present. This avoids unnecessary
-## evaluation of all degree/segment combinations in the examples and, for
-## crsiv() and crsivderiv(), ensures that the warm-start strategy is used.
-model.ivderiv <- crsivderiv(y=y,z=z,w=w,cv.threshold=0)
+model.ivderiv <- crsivderiv(y ~ z | w, data=ivdata)
 
-ylim <-c(quantile(model.ivderiv$phi.prime,trim),
-         quantile(model.ivderiv$phi.prime,1-trim))
-
-plot(z,model.ivderiv$phi.prime,
-     xlim=quantile(z,c(trim,1-trim)),
+plot(ivdata$z,model.ivderiv$phi.prime,
+     xlim=quantile(ivdata$z,c(trim,1-trim)),
      main="",
-     ylim=ylim,
      xlab="Z",
      ylab="Derivative",
      type="l",
      lwd=2)
-rug(z)
+
+rug(ivdata$z)
 } % end dontrun
 }
 \keyword{ instrument }

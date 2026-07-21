@@ -1,6 +1,7 @@
 \name{crsiv}
 \alias{crsiv}
 \alias{crsiv.default}
+\alias{crsiv.formula}
 
 \title{
 Nonparametric Instrumental Regression
@@ -23,6 +24,8 @@ the \pkg{crs} package.
 }
 \usage{
 crsiv(y, \dots)
+
+\method{crsiv}{formula}(y, data = NULL, subset, na.action, \dots)
 
 \method{crsiv}{default}(y,
       z,
@@ -58,8 +61,29 @@ crsiv(y, \dots)
 
 \arguments{
 \subsection{Data, Model Inputs And Formula Interface}{
-These arguments identify the response, endogenous variables, instruments, and exogenous covariates.
+These arguments identify the response, endogenous variables, instruments, and
+exogenous covariates. The formula interface uses
+\code{y ~ z | w} or \code{y ~ z | w | x}. Each partition may contain
+multiple additive terms and scalar transformations. Dot notation,
+interaction operators, offsets, and matrix-valued terms are not supported.
 }
+
+  \item{data}{
+    an optional data frame, list, or environment containing the variables in
+    the IV formula. When \code{data} is supplied, every formula variable must
+    be present in it; ambient variables do not fill missing columns
+  }
+
+  \item{subset}{
+    an optional specification of observations to retain when using the
+    formula interface
+  }
+
+  \item{na.action}{
+    a function specifying the action for missing observations when using the
+    formula interface. With \code{na.exclude}, \code{fitted()} and
+    \code{residuals()} restore omitted rows as \code{NA}
+  }
 
   \item{w}{
     a \eqn{q}-variate data frame of instruments. The data types may be
@@ -75,9 +99,9 @@ These arguments identify the response, endogenous variables, instruments, and ex
 
 
   \item{y}{
-    a one (1) dimensional numeric or integer vector of dependent data, each
-    element \eqn{i} corresponding to each observation (row) \eqn{i} of
-    \code{z}
+    either a one-dimensional numeric or integer response vector, with element
+    \eqn{i} corresponding to row \eqn{i} of \code{z}, or an IV formula of the
+    form \code{y ~ z | w} or \code{y ~ z | w | x}
   }
 
 
@@ -217,7 +241,12 @@ Further NOMAD and CRS controls are passed through to lower-level routines.
 }
 
 \item{...}{
-  additional arguments supplied to \code{\link{crs}}
+  additional arguments supplied to \code{\link{crs}}. In formula calls,
+  \code{weights} and observation-indexed \code{starting.values} are aligned
+  through the same model frame as the response and IV roles. Formula-time
+  evaluation arguments (\code{newdata}, \code{zeval}, \code{weval}, and
+  \code{xeval}) are deliberately not supported; use the native vector
+  interface for evaluation-grid fitting
 }
 
 
@@ -236,6 +265,17 @@ Further NOMAD and CRS controls are passed through to lower-level routines.
   practitioners may desire one over the other hence we provide both.
  }
 \details{
+  The formula method is a training-grid interface. It constructs one model
+  frame for the response, endogenous variables, instruments, optional
+  exogenous variables, weights, and observation-indexed starting values, then
+  calls the established native estimator once. Thus \code{subset}, missing
+  values, and row-indexed controls cannot acquire different row maps. Formula
+  fits support \code{fitted()}, \code{residuals()}, \code{predict()} without
+  \code{newdata}, \code{summary()}, and \code{plot()}. Arbitrary formula
+  \code{newdata} is deferred because evaluating a retained spline projection
+  is not generally the same operation as resolving the IV problem on a new
+  grid. Native objects retain their established post-fit CRS projection route.
+
   Tikhonov regularization requires computation of weight matrices of
   dimension \eqn{n\times n}{n x n} which can be computationally costly
   in terms of memory requirements and may be unsuitable
@@ -326,6 +366,14 @@ Further NOMAD and CRS controls are passed through to lower-level routines.
     when \code{method="Tikhonov"} or \code{phi}, \code{phi.mat},
     \code{num.iterations}, \code{norm.stop}, \code{norm.value} and
     \code{convergence} when \code{method="Landweber-Fridman"}.
+
+    \code{fitted()} and \code{predict()} without \code{newdata} return the
+    selected structural state \code{phi}. On a training-grid fit,
+    \code{residuals()} returns the original response minus that same selected
+    state. \code{summary()} returns a structured \code{summary.crsiv} object.
+    New objects also contain a namespaced \code{iv} component recording the
+    public IV call, role labels, row map, original response, evaluation grid,
+    and selected-state metadata; inherited CRS fields are retained unchanged.
     
 }
   
@@ -380,7 +428,11 @@ This function should be considered to be in \sQuote{beta test} status until furt
 ## <samuele.centorrino@univ-tlse1.fr>
 
 set.seed(42)
-n <- 1500
+n <- 500
+
+## For trimming the plot (trim .5\% from each tail)
+
+trim <- 0.005
 
 ## The DGP is as follows:
 
@@ -420,55 +472,24 @@ y2 <- fun2(z) + u
 y <- y1
 phi <- fun1
 
-## Create an evaluation dataset sorting on z (for plotting)
+## Sort on z for plotting and fit through the formula/data interface.
 
-evaldata <- data.frame(y,z,w)
-evaldata <- evaldata[order(evaldata$z),]
+ivdata <- data.frame(y,z,w,u,v)
+ivdata <- ivdata[order(ivdata$z),]
+rm(y,z,w,u,v)
 
-## Compute the non-IV regression spline estimator of E(y|z)
+model.iv <- crsiv(y ~ z | w, data=ivdata)
 
-model.noniv <- crs(y~z,opts=opts)
-mean.noniv <- predict(model.noniv,newdata=evaldata)
+plot(ivdata$z,fitted(model.iv),
+     xlim=quantile(ivdata$z,c(trim,1-trim)),
+     main="",
+     xlab="Z",
+     ylab="Structural function",
+     type="l",
+     lwd=2)
 
-## Compute the IV-regression spline estimator of phi(z)
-
-## Setting cv.threshold = 0 forces NOMAD search instead of exhaustive search
-## when no categorical predictors are present. This avoids unnecessary
-## evaluation of all degree/segment combinations in the examples and, for
-## crsiv() and crsivderiv(), ensures that the warm-start strategy is used.
-model.iv <- crsiv(y=y,z=z,w=w,cv.threshold=0)
-phi.iv <- predict(model.iv,newdata=evaldata)
-
-## For the plots, restrict focal attention to the bulk of the data
-## (i.e. for the plotting area trim out 1/4 of one percent from each
-## tail of y and z)
-
-trim <- 0.0025
-
-curve(phi,min(z),max(z),
-      xlim=quantile(z,c(trim,1-trim)),
-      ylim=quantile(y,c(trim,1-trim)),
-      ylab="Y",
-      xlab="Z",
-      main="Nonparametric Instrumental Spline Regression",
-      sub=paste("Landweber-Fridman: iterations = ", model.iv$num.iterations,sep=""),
-      lwd=1,lty=1)
-
-points(z,y,type="p",cex=.25,col="grey")
-
-lines(evaldata$z,evaldata$z^2 -0.325*evaldata$z,lwd=1,lty=1)
-
-lines(evaldata$z,phi.iv,col="blue",lwd=2,lty=2)
-
-lines(evaldata$z,mean.noniv,col="red",lwd=2,lty=4)
-
-legend(quantile(z,trim),quantile(y,1-trim),
-       c(expression(paste(varphi(z),", E(y|z)",sep="")),
-         expression(paste("Nonparametric ",hat(varphi)(z))),
-         "Nonparametric E(y|z)"),
-       lty=c(1,2,4),
-       col=c("black","blue","red"),
-       lwd=c(1,2,2))
-} % end dontrun       
+lines(ivdata$z,phi(ivdata$z),lty=2)
+rug(ivdata$z)
+} % end dontrun
 }
 \keyword{ instrument }

@@ -1,5 +1,15 @@
 # crs 0.15-46
 
+* Modernized `crsiv()` and `crsivderiv()` with training-grid formula/data
+  interfaces (`y ~ z | w` and `y ~ z | w | x`), one authoritative row map for
+  subset/NA/weights/starting values, collision-safe internal role names, and
+  namespaced IV metadata. Added selected-state `fitted()`, `residuals()`, and
+  `predict()` semantics, structured summaries, corrected original-response
+  plot overlays, and self-contained formula-based examples. Native evaluation
+  interfaces and established CRS post-fit projection remain available;
+  formula-time evaluation and formula-object `newdata` are deliberately
+  deferred and fail clearly.
+
 * Corrected fitted-value centering throughout `crsivderiv()` so both empirical
   terms of the Equation (14) adjoint use the same fitted conditional-residual
   vector. The initial adjoint had centered its second term on the raw
