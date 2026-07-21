@@ -221,6 +221,20 @@ density.deriv.basis <- function(x=NULL,
 }
 
 
+.crs_validate_scalar_condition <- function(value, argname) {
+  invalid <- function()
+    stop(sprintf("%s must be TRUE or FALSE", argname), call. = FALSE)
+
+  if (length(value) != 1L)
+    invalid()
+
+  value <- tryCatch(value && TRUE, error = function(e) NA)
+  if (is.na(value))
+    invalid()
+
+  value
+}
+
 clsd <- function(x=NULL,
                  beta=NULL,
                  xeval=NULL,
@@ -254,6 +268,9 @@ clsd <- function(x=NULL,
                  segments.min=1,
                  ubound=NULL,
                  verbose=FALSE) {
+
+  elastic.max <- .crs_validate_scalar_condition(elastic.max, "elastic.max")
+  NOMAD <- .crs_validate_scalar_condition(NOMAD, "NOMAD")
 
   if(elastic.max && !NOMAD) {
     degree.max <- 3

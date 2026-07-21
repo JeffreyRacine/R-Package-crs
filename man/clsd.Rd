@@ -140,10 +140,14 @@ These arguments control optimizer choice, restart behavior, elastic search limit
      the analytical gradient during optimization (defaults to \code{TRUE})}
 
 
-  \item{elastic.max,elastic.diff}{ a logical value/integer indicating
-     whether to use \sQuote{elastic} search bounds such that the optimal
-     degree/segment must lie \code{elastic.diff} units from the
-     respective search bounds }
+  \item{elastic.max}{ a single, non-missing logical condition indicating
+     whether to use \sQuote{elastic} search bounds. Numeric scalar
+     conditions retain their historical R interpretation, although
+     \code{TRUE} or \code{FALSE} is recommended }
+
+
+  \item{elastic.diff}{ an integer indicating how many units the optimal
+     degree/segment must lie from the respective elastic search bounds }
 
 
    \item{max.attempts}{
@@ -171,8 +175,10 @@ These arguments control optimizer choice, restart behavior, elastic search limit
 
 
    \item{NOMAD}{
-     a logical value which when \code{TRUE} calls \code{\link{snomadr}}
-     to determine the optimal \code{degree} and \code{segments}
+     a single, non-missing logical condition which when \code{TRUE} calls
+     \code{\link{snomadr}} to determine the optimal \code{degree} and
+     \code{segments}. Numeric scalar conditions retain their historical R
+     interpretation, although \code{TRUE} or \code{FALSE} is recommended
      }
 
 

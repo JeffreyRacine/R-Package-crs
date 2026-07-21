@@ -1,5 +1,11 @@
 # crs 0.15-46
 
+* Hardened the public `clsd()` scalar-condition contract for `elastic.max`
+  and `NOMAD`. Ambiguous vectors, empty values, missing values, and values
+  which cannot be interpreted by the historical scalar operator semantics now
+  fail early with argument-specific errors; valid logical and numeric scalar
+  controls retain their existing search routes and fitted results.
+
 * Modernized `crsiv()` and `crsivderiv()` with training-grid formula/data
   interfaces (`y ~ z | w` and `y ~ z | w | x`), one authoritative row map for
   subset/NA/weights/starting values, collision-safe internal role names, and
