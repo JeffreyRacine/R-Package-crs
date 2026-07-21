@@ -98,8 +98,9 @@
   names(frame)[1L] <- payload$xname
   yname <- if (isTRUE(deriv)) paste("d", "y", "/d", payload$xname, sep = "") else "y"
   data <- if (isTRUE(data_overlay) && !isTRUE(deriv)) {
-    data.frame(setNames(list(object$xz[, 1L]), payload$xname),
-               y = object$y)
+    training <- .crs_iv_plot_training_data(object)
+    data.frame(setNames(list(training[["z"]]), payload$xname),
+               y = training[["y"]], check.names = FALSE)
   } else {
     NULL
   }
@@ -138,8 +139,9 @@
   names(frame)[1L] <- payload$xname
   yname <- if (isTRUE(phi)) "y" else paste("d", "y", "/d", payload$xname, sep = "")
   data <- if (isTRUE(data_overlay) && isTRUE(phi)) {
-    data.frame(setNames(list(object$xz[, 1L]), payload$xname),
-               y = object$y)
+    training <- .crs_iv_plot_training_data(object)
+    data.frame(setNames(list(training[["z"]]), payload$xname),
+               y = training[["y"]], check.names = FALSE)
   } else {
     NULL
   }

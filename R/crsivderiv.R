@@ -55,6 +55,8 @@ crsivderiv.default <- function(y,
   on.exit(options(crs.messages = old.crs.messages), add = TRUE)
   crs.messages <- isTRUE(old.crs.messages)
   is.eval.train <- is.null(zeval) && is.null(weval) && is.null(xeval)
+  iv.public.call <- .crs_iv_compact_public_call(match.call())
+  iv.public.call[[1L]] <- quote(crsivderiv)
 
   dot.args <- list(...)
   dot.prep <- .crsiv_prepare_dot_args(dot.args)
@@ -174,6 +176,20 @@ crsivderiv.default <- function(y,
   } else {
     traindata <- data.frame(y,z,w,x)
     evaldata <- data.frame(zeval,weval,xeval)
+  }
+
+  finalize.iv.model <- function(model) {
+    .crs_iv_attach_native_metadata(
+      object = model,
+      estimator = "crsivderiv",
+      public.call = iv.public.call,
+      y = y,
+      z = z,
+      w = w,
+      x = x,
+      zeval = zeval,
+      is.training.grid = is.eval.train
+    )
   }
 
   if(!is.null(starting.values) && (NROW(starting.values) != NROW(evaldata))) stop(paste("starting.values must be of length",NROW(evaldata)))
@@ -635,70 +651,20 @@ crsivderiv.default <- function(y,
 
   class(model) <- c("crsivderiv", "crs")
 
-  return(model)
+  return(finalize.iv.model(model))
 
 }
 
 print.crsivderiv <- function(x, ...) {
   cat("Call:\n")
-  print(x$call)
+  print(.crs_iv_public_call(x))
+  invisible(x)
 }
 
 summary.crsivderiv <- function(object, ...) {
-  cat("Call:\n")
-  print(object$call)
-
-  if(!object$kernel) {
-    if(is.null(object$tau))
-      cat("\nNonparametric Instrumental Spline Derivative Estimation\n",sep="")
-    else
-      cat("\nNonparametric Instrumental Spline Quantile Derivative Estimation\n",sep="")
-  } else {
-    if(is.null(object$tau))
-      cat("\nNonparametric Instrumental Spline Derivative Estimation (Kernel Weighting)\n",sep="")
-    else
-      cat("\nNonparametric Instrumental Spline Quantile Derivative Estimation (Kernel Weighting)\n",sep="")
-  }
-
-  if(!is.null(object$tau)) cat(paste("\nQuantile estimated: tau = ",format(object$tau),sep=""),sep="")
-
-  cat(paste("\nThere are ",format(object$num.x), " continuous predictors",sep=""),sep="")
-  if(!is.null(object$num.z)) cat(paste("\nThere are ",format(object$num.z), " categorical predictors",sep=""),sep="")
-
-  for(j in seq_len(object$num.x))
-    cat(paste("\nSpline degree/number of segments for ",format(object$xnames[j]),": ",format(object$degree[j]),"/",format(object$segments[j]),sep=""),sep="")
-  if(!is.null(object$include)) for(j in seq_along(object$include))
-    cat(paste("\nInclusion indicator for ",format(object$znames[j]),": ",format(object$include[j]),sep=""),sep="")
-  if(!is.null(object$lambda)) for(j in seq_along(object$lambda))
-    cat(paste("\nBandwidth for ",format(object$znames[j]),": ",format(object$lambda[j]),sep=""),sep="")
-
-  if(!is.null(object$num.x.w)) {
-    for(j in seq_len(object$num.x.w))
-      cat(paste("\nSpline degree/number of segments for ",format(object$xnames.w[j]),": ",format(object$degree.w[j]),"/",format(object$segments.w[j]),sep=""),sep="")
-  }
-  if(!is.null(object$num.z.w)) {
-    if(!is.null(object$include.w)) for(j in seq_along(object$include.w))
-      cat(paste("\nInclusion indicator for ",format(object$znames.w[j]),": ",format(object$include.w[j]),sep=""),sep="")
-    if(!is.null(object$lambda.w)) for(j in seq_along(object$lambda.w))
-      cat(paste("\nBandwidth for ",format(object$znames.w[j]),": ",format(object$lambda.w[j]),sep=""),sep="")
-  }
-
-  cat(paste("\nModel complexity proxy: ", format(object$complexity), sep=""))
-  cat(paste("\nKnot type: ", format(object$knots), sep=""))
-  if(object$num.x > 1) cat(paste("\nBasis type: ",format(object$basis),sep=""))
-
-  cat(paste("\nTraining observations: ", format(object$nobs), sep=""))
-
-  cat(paste("\n\nRegularization method: Landweber-Fridman",sep=""))
-  cat(paste("\nNumber of iterations: ", format(object$num.iterations), sep=""))
-  cat(paste("\nStopping rule value: ", format(object$norm.stop[object$num.iterations],digits=8), sep=""))
-
-  cat(paste("\nNumber of multistarts: ", format(object$nmulti), sep=""))
-  .crs_nomad_summary_print(object)
-  est.elapsed <- .crs_elapsed_seconds(object$ptm)
-  if (is.finite(est.elapsed))
-    cat(paste("\nEstimation time: ", formatC(est.elapsed,digits=1,format="f"), " seconds",sep=""))
-  cat("\n\n")
+  ans <- .crs_iv_summary_payload(object, derivative = TRUE)
+  class(ans) <- "summary.crsivderiv"
+  ans
 }
 
 plot.crsivderiv <- function(x,

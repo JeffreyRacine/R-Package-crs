@@ -224,7 +224,7 @@
   ci <- isTRUE(ci) || !identical(errors, "none")
   xtrim <- .crs_plot_validate_xtrim(xtrim)
 
-  z <- object$xz[, 1L]
+  z <- .crs_iv_evaluation_z(object)[[1L]]
   xlim <- if (xtrim == 0) {
     range(z, na.rm = TRUE)
   } else {
@@ -265,7 +265,7 @@
                  ci = isTRUE(ci),
                  data = frame,
                  xlim = xlim,
-                 xname = object$xnames[1L]),
+                 xname = .crs_iv_plot_xname(object)),
             class = "crs_plot_payload")
 }
 
@@ -277,14 +277,14 @@
   if (!is.logical(phi) || length(phi) != 1L || is.na(phi))
     stop("phi must be TRUE/FALSE")
 
-  z <- object$xz[, 1L]
+  z <- .crs_iv_evaluation_z(object)[[1L]]
   fit <- if (isTRUE(phi)) object$phi else object$phi.prime
   ord <- order(z)
 
   structure(list(route = "crsivderiv",
                  view = if (isTRUE(phi)) "fit" else "derivative",
                  data = data.frame(z = z[ord], fit = fit[ord]),
-                 xname = object$xnames[1L]),
+                 xname = .crs_iv_plot_xname(object)),
             class = "crs_plot_payload")
 }
 
