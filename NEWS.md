@@ -1,5 +1,13 @@
 # crs 0.15-46
 
+* Added the opt-in observed native NOMAD solve interface used by downstream
+  packages for throttled progress heartbeats during long objective
+  evaluations. The versioned C API reports evaluation and cooperative-activity
+  events out of band, preserves the numerical solve and cache/accounting
+  contracts, disables only observation after ordinary observer errors, and
+  converts explicit user interruption into an orderly native stop. The
+  original native solve entry point remains source- and binary-compatible.
+
 * Hardened the public `clsd()` scalar-condition contract for `elastic.max`
   and `NOMAD`. Ambiguous vectors, empty values, missing values, and values
   which cannot be interpreted by the historical scalar operator semantics now
@@ -42,7 +50,7 @@
   implicated in `np` issue #57. Other spline fitting, bandwidth, stopping,
   optimizer, and public helper behavior is unchanged.
 
-* Finalized the observed native NOMAD interface so explicit user interruption
+* Hardened the observed native NOMAD interface so explicit user interruption
   has a dedicated status after orderly native cleanup, ordinary observer
   errors remain fail-open, and a failed callback cannot expose unwritten
   black-box output memory. Existing native ABI values, layouts, callable names,
