@@ -70,6 +70,28 @@ test_that("gsl.bs basis and predict paths return stable dimensions", {
   expect_equal(ncol(p1), ncol(b1))
 })
 
+test_that("gsl.bs .Call wrappers preserve the protection stack", {
+  x <- seq(0, 1, length.out = 25)
+  knots <- seq(0, 1, length.out = 6)
+
+  expect_no_warning(crs:::bs.des(
+    x, degree = 3L, nbreak = 6L, deriv = integer(length(x)),
+    x.min = 0, x.max = 1, knots = NULL
+  ))
+  expect_no_warning(crs:::bs.des(
+    x, degree = 3L, nbreak = 6L, deriv = rep(1L, length(x)),
+    x.min = 0, x.max = 1, knots = NULL
+  ))
+  expect_no_warning(crs:::bs.des(
+    x, degree = 3L, nbreak = 6L, deriv = integer(length(x)),
+    x.min = 0, x.max = 1, knots = knots
+  ))
+  expect_no_warning(crs:::bs.des(
+    x, degree = 3L, nbreak = 6L, deriv = rep(1L, length(x)),
+    x.min = 0, x.max = 1, knots = knots
+  ))
+})
+
 test_that("hat.from.lm.fit matches qr-based hat values", {
   set.seed(103)
   n <- 80
