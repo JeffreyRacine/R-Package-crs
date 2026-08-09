@@ -1,0 +1,15 @@
+#!/bin/sh
+
+set -eu
+
+sed -i bak -f sed_dontrun.scr clsd.Rd
+sed -i bak -f sed_dontrun.scr crs.Rd
+sed -i bak -f sed_dontrun.scr crsiv.Rd
+sed -i bak -f sed_dontrun.scr crsivderiv.Rd
+sed -i bak -f sed_dontrun.scr crssigtest.Rd
+sed -i bak -f sed_dontrun.scr data-Engel95.Rd
+sed -i bak -f sed_dontrun.scr data-wage1.Rd
+sed -i bak -f sed_dontrun.scr plot.crs.Rd
+sed -i bak -f sed_dontrun.scr snomadr.Rd
+
+rm -f -- ./*.Rdbak

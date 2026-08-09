@@ -1,0 +1,15 @@
+#!/bin/sh
+
+set -eu
+
+sed -i bak -f sed_run.scr clsd.Rd
+sed -i bak -f sed_run.scr crs.Rd
+sed -i bak -f sed_run.scr crsiv.Rd
+sed -i bak -f sed_run.scr crsivderiv.Rd
+sed -i bak -f sed_run.scr crssigtest.Rd
+sed -i bak -f sed_run.scr data-Engel95.Rd
+sed -i bak -f sed_run.scr data-wage1.Rd
+sed -i bak -f sed_run.scr plot.crs.Rd
+sed -i bak -f sed_run.scr snomadr.Rd
+
+rm -f -- ./*.Rdbak

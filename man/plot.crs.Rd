@@ -324,5 +324,5 @@ plot(smodel, perspective = TRUE, renderer = "rgl",
 
 qmodel <- crs(y ~ x, cv = "none", degree = 3, segments = 1, tau = 0.5)
 plot(qmodel, errors = "bootstrap", B = 99)
-}
+} % end dontrun
 }
