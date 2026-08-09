@@ -14,10 +14,3 @@ echo updating DESCRIPTION
 sed -i.bak -e 's/Version[:].*/'"Version: $maver-$miver/" -e 's/Date[:].*/'"Date: $(date +%Y-%m-%d)/" DESCRIPTION
 
 rm DESCRIPTION.bak
-
-(cd R || exit 1
-
-cp spline.R ../demo
-
-) # end subshell
-cd ..

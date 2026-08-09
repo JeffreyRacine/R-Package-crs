@@ -1,5 +1,12 @@
 # crs 0.15-46
 
+* Retired the duplicated `demo/spline.R` implementation and its release-time
+  copy step. The constrained mean, first-derivative, second-derivative, and
+  bootstrap-test demos already use the exported `crshat()` operator backed by
+  the canonical package implementation, so fitted and constraint arithmetic
+  are unchanged while the package no longer ships a second copy of its spline
+  engine.
+
 * Added the opt-in observed native NOMAD solve interface used by downstream
   packages for throttled progress heartbeats during long objective
   evaluations. The versioned C API reports evaluation and cooperative-activity
