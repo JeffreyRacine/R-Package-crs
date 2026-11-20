@@ -6,9 +6,9 @@
 #include "../inst/include/crs_nomad_native.h"
 
 /* .C calls */
-extern void RuniqueCombs(void *, void *, void *, void *);
-extern void gsl_bspline(void *, void *, void *, void *, void *, void *, void *, void *, void *);
-extern void gsl_bspline_deriv(void *, void *, void *, void *, void *, void *, void *, void *, void *, void *, void *);
+extern void RuniqueCombs(double *, int *, int *, int *);
+extern int gsl_bspline(double *, int *, int *, int *, double *, double *, double *, int *, double *);
+extern int gsl_bspline_deriv(double *, int *, int *, int *, int *, int *, double *, double *, double *, int *, double *);
 
 /* .Call calls */
 extern SEXP smultinomadRSolve(SEXP);
